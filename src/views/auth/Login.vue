@@ -31,23 +31,32 @@ const handleSubmit = async () => {
     style="padding: 20px"
   >
     <div class="w-full max-w-md space-y-8">
-      <!-- Logo/Brand -->
       <div class="flex items-center gap-4">
         <div class="w-16 h-16 relative flex items-center justify-center">
-          <!-- Background circle -->
-          <div
+
+          <!-- <div
             class="w-16 h-16 absolute bg-gradient-to-br from-primary-100 to-primary-200 rounded-full"
           ></div>
-          <!-- Overlapping smaller circle -->
+
           <div
             class="w-10 h-10 absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full opacity-90"
           ></div>
-          <!-- Lucide icon -->
-          <BuildingIcon class="w-5 h-5 text-white relative z-10" />
+
+          <BuildingIcon class="w-5 h-5 text-white relative z-10" /> -->
+          <img
+            src="/images/jcd-only-color.png"
+            alt="Company Logo"
+            class="w-30 h-30 relative z-10 object-contain"
+          />
         </div>
         <div>
-          <h1 class="text-brand-dark text-lg font-bold">JCD-HRIS</h1>
-          <p class="text-brand-dark text-xs font-normal">Manager Dashboard</p>
+           <h1 class="text-brand-dark text-xl font-bold">
+            HRIS
+            <span class="text-xs font-medium text-gray-400 ml-1"> v1.0 </span>
+          </h1>
+          <p class="text-brand-dark text-xs font-normal">
+            PT. Jendela Cakra Digital
+          </p>
         </div>
       </div>
 
