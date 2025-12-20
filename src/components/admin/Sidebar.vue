@@ -376,7 +376,7 @@ const onNavigate = () => emit("navigate");
               :class="{
                 'text-brand-white': $route.name?.startsWith('admin.account-password'),
               }"
-              >Account Password</span
+              >Credential Account</span
             >
           </RouterLink>
 

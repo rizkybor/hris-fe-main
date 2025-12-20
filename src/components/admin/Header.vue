@@ -96,6 +96,22 @@ const titles = {
     title: "Payroll Details",
     subtitle: "View payroll summary",
   },
+  "admin.account-password.dashboard": {
+    title: "Credential Account",
+    subtitle: "Manage and monitor company credential passwords",
+  },
+  "admin.account-password.detail": {
+    title: "Credential Detail",
+    subtitle: "View detailed information of the credential password",
+  },
+  "admin.account-password.create": {
+    title: "Create Credential",
+    subtitle: "Set a new credential password for the company account",
+  },
+  "admin.account-password.edit": {
+    title: "Edit Credential",
+    subtitle: "Update and change the company account password",
+  },
   "employee.profile": {
     title: "My Profile",
     subtitle: "Manage your personal information",

@@ -1,14 +1,7 @@
 <script setup>
 import { onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import {
-  Shield,
-  Key,
-  Users,
-  Clock,
-  Eye,
-  Copy,
-} from "lucide-vue-next";
+import { Shield, Key, Users, Clock, Eye, Copy, Pencil } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
 
@@ -75,9 +68,7 @@ const formatDate = (date) => {
           </div>
 
           <div class="flex items-center gap-3 mt-auto">
-            <span class="text-brand-white-70 text-xs">
-              Restricted Access
-            </span>
+            <span class="text-brand-white-70 text-xs"> Restricted Access </span>
           </div>
         </div>
       </div>
@@ -88,15 +79,11 @@ const formatDate = (date) => {
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-sm font-medium">
-              Systems
-            </p>
+            <p class="text-brand-dark text-sm font-medium">Systems</p>
             <p class="text-brand-dark text-3xl font-extrabold my-2">
               {{ loading ? "..." : statistics.total_systems }}
             </p>
-            <p class="text-success text-sm font-medium">
-              Active
-            </p>
+            <p class="text-success text-sm font-medium">Active</p>
           </div>
           <div
             class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center"
@@ -112,15 +99,11 @@ const formatDate = (date) => {
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-sm font-medium">
-              Users
-            </p>
+            <p class="text-brand-dark text-sm font-medium">Users</p>
             <p class="text-brand-dark text-3xl font-extrabold my-2">
               {{ loading ? "..." : statistics.total_users }}
             </p>
-            <p class="text-purple-600 text-sm font-medium">
-              Assigned
-            </p>
+            <p class="text-purple-600 text-sm font-medium">Assigned</p>
           </div>
           <div
             class="w-12 h-12 bg-purple-50 rounded-[16px] flex items-center justify-center"
@@ -136,15 +119,11 @@ const formatDate = (date) => {
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-sm font-medium">
-              Last Update
-            </p>
+            <p class="text-brand-dark text-sm font-medium">Last Update</p>
             <p class="text-brand-dark text-lg font-bold my-2">
               {{ statistics.last_updated }}
             </p>
-            <p class="text-brand-light text-sm">
-              Latest credential change
-            </p>
+            <p class="text-brand-light text-sm">Latest credential change</p>
           </div>
           <div
             class="w-12 h-12 bg-green-50 rounded-[16px] flex items-center justify-center"
@@ -159,9 +138,18 @@ const formatDate = (date) => {
 
     <!-- ================= ACCOUNT LIST ================= -->
     <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
-      <h3 class="text-brand-dark text-lg font-bold mb-4">
-        Stored Account Credentials
-      </h3>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-brand-dark text-lg font-bold">
+          Stored Account Credentials
+        </h3>
+
+        <router-link
+          :to="{ name: 'admin.account-password.create' }"
+          class="px-4 py-2 rounded-xl bg-[#0C51D9] text-white text-sm font-semibold hover:hover:bg-[#0A45BF] transition"
+        >
+          + Add Credential
+        </router-link>
+      </div>
 
       <div class="space-y-4">
         <div
@@ -181,36 +169,67 @@ const formatDate = (date) => {
 
           <!-- Info -->
           <div class="flex-1">
+            <!-- Label -->
             <p class="text-brand-dark text-lg font-bold">
-              {{ account.system_name }}
+              {{ account.label }}
             </p>
-            <p class="text-brand-dark text-sm">
+
+            <!-- Username -->
+            <p class="text-brand-dark text-sm font-mono">
               {{ account.username }}
             </p>
+
+            <!-- Badges -->
+            <div class="flex items-center gap-2 mt-1">
+              <span
+                v-if="account.website"
+                class="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold"
+              >
+                Has Website
+              </span>
+
+              <span
+                v-if="account.notes"
+                class="text-xs px-2 py-1 rounded-md bg-yellow-50 text-yellow-700 font-semibold"
+              >
+                Has Notes
+              </span>
+            </div>
+
+            <!-- Meta -->
             <p class="text-brand-light text-xs mt-1">
               Updated on {{ formatDate(account.updated_at) }}
             </p>
           </div>
 
-          <!-- Role -->
-          <span
-            class="px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-800"
-          >
-            {{ account.role }}
-          </span>
-
           <!-- Password -->
-          <div class="font-mono tracking-widest text-brand-dark">
-            ••••••••
-          </div>
+          <div class="font-mono tracking-widest text-brand-dark">••••••••</div>
 
           <!-- Actions -->
           <div class="flex items-center gap-2">
-            <button
+            <!-- Detail -->
+            <router-link
+              :to="{
+                name: 'admin.account-password.detail',
+                params: { id: account.id },
+              }"
               class="border border-[#DCDEDD] rounded-xl p-2 hover:ring-2 hover:ring-[#0C51D9]"
             >
               <Eye class="w-4 h-4 text-gray-600" />
-            </button>
+            </router-link>
+
+            <!-- Edit -->
+            <router-link
+              :to="{
+                name: 'admin.account-password.edit',
+                params: { id: account.id },
+              }"
+              class="border border-[#DCDEDD] rounded-xl p-2 hover:ring-2 hover:ring-[#0C51D9]"
+            >
+              <Pencil class="w-4 h-4 text-gray-600" />
+            </router-link>
+
+            <!-- Copy -->
             <button
               @click="copyPassword(account.password)"
               class="border border-[#DCDEDD] rounded-xl p-2 hover:ring-2 hover:ring-[#0C51D9]"
