@@ -5,6 +5,8 @@ import Alert from "@/components/common/Alert.vue";
 import Input from "@/components/common/form/Input.vue";
 import { AtSign, BuildingIcon, Lock } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
+import LoadingOverlay from "@/components/common/LoadingOverlay.vue"
+
 
 const authStore = useAuthStore();
 const { loading, error } = storeToRefs(authStore);
@@ -25,6 +27,8 @@ const handleSubmit = async () => {
 </script>
 
 <template>
+  <LoadingOverlay :show="loading" text="Authenticating user..." />
+
   <!-- Right Side - Login Form -->
   <div
     class="w-full lg:w-1/2 flex items-center justify-center"
