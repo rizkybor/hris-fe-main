@@ -11,6 +11,7 @@ import {
   LogOutIcon,
   MenuIcon,
 } from "lucide-vue-next";
+import ConfirmActionModal from "@/components/common/ConfirmationModal.vue";
 import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import { ref, computed } from "vue";
@@ -25,6 +26,9 @@ const isOpen = ref(false);
 const emit = defineEmits(["toggle-sidebar"]);
 
 const route = useRoute();
+
+const showLogoutModal = ref(false);
+const logoutLoading = ref(false);
 
 const titles = {
   "admin.dashboard": {
@@ -147,10 +151,15 @@ const pageInfo = computed(() => {
 const pageTitle = computed(() => pageInfo.value.title);
 const pageSubtitle = computed(() => pageInfo.value.subtitle);
 
-const handleLogout = async () => {
-  if (confirm("Are you sure you want to logout?")) {
-    await logout();
-  }
+const handleLogout = () => {
+  showLogoutModal.value = true;
+};
+
+const confirmLogout = async () => {
+  logoutLoading.value = true;
+  await logout();
+  logoutLoading.value = false;
+  showLogoutModal.value = false;
 };
 </script>
 
@@ -286,5 +295,17 @@ const handleLogout = async () => {
         </div>
       </div>
     </div>
+
+    <ConfirmActionModal
+      :show="showLogoutModal"
+      title="Keluar dari Sistem"
+      message="Anda yakin ingin keluar? Semua sesi aktif akan dihentikan."
+      confirm-text="Keluar"
+      cancel-text="Batal"
+      type="danger"
+      :loading="logoutLoading"
+      @cancel="showLogoutModal = false"
+      @confirm="confirmLogout"
+    />
   </header>
 </template>
