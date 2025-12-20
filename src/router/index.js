@@ -15,6 +15,8 @@ import EmployeeCreateLayout from '@/layouts/EmployeeCreateLayout.vue';
 import projectRoutes from './project';
 import attendanceRoutes from './attendance';
 import payrollRoutes from './payroll';
+import accountPasswordRoutes from './accountPassword';
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,6 +55,7 @@ const router = createRouter({
         ...projectRoutes,
         ...attendanceRoutes,
         ...payrollRoutes,
+        ...accountPasswordRoutes,
         {
           path: 'my-profile',
           name: 'employee.profile',

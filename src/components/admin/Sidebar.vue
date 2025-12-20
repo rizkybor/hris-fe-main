@@ -356,14 +356,29 @@ const onNavigate = () => emit("navigate");
       <div>
         <h3 class="section-title">Company</h3>
         <div class="space-y-3">
-          <a
-            href="#"
+          <RouterLink
+            :to="{ name: 'admin.account-password.dashboard' }"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.account-password'),
+            }"
+            v-if="can('account-password-menu')"
             @click="onNavigate"
           >
-            <KeyRoundIcon class="w-5 h-5 text-gray-600" />
-            <span class="text-brand-dark text-base font-medium">Account</span>
-          </a>
+            <KeyRoundIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.account-password'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('admin.account-password'),
+              }"
+              >Credential Account</span
+            >
+          </RouterLink>
 
           <a
             href="#"
