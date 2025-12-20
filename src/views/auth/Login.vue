@@ -134,12 +134,12 @@ const handleSubmit = async () => {
       </form>
 
       <!-- Divider -->
-      <div class="divider-custom">
+      <!-- <div class="divider-custom">
         <span>Or continue with</span>
-      </div>
+      </div> -->
 
       <!-- Social Login -->
-      <div class="grid grid-cols-2 gap-3">
+      <!-- <div class="grid grid-cols-2 gap-3">
         <button
           class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center gap-2 px-4 py-3 w-full"
         >
@@ -183,7 +183,7 @@ const handleSubmit = async () => {
             >Facebook</span
           >
         </button>
-      </div>
+      </div> -->
 
       <!-- Sign Up Link -->
       <div class="text-center">
