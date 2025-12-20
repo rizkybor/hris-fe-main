@@ -356,6 +356,15 @@ const onNavigate = () => emit("navigate");
       <div>
         <h3 class="section-title">Company</h3>
         <div class="space-y-3">
+          <a
+            href="#"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            @click="onNavigate"
+          >
+            <FileTextIcon class="w-5 h-5 text-gray-600" />
+            <span class="text-brand-dark text-base font-medium">Summary</span>
+          </a>
+
           <RouterLink
             :to="{ name: 'admin.account-password.dashboard' }"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
@@ -380,14 +389,29 @@ const onNavigate = () => emit("navigate");
             >
           </RouterLink>
 
-          <a
-            href="#"
+           <RouterLink
+            :to="{ name: 'admin.files-company.dashboard' }"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.files-company'),
+            }"
+            v-if="can('files-company-menu')"
             @click="onNavigate"
           >
-            <FolderClosedIcon class="w-5 h-5 text-gray-600" />
-            <span class="text-brand-dark text-base font-medium">Files</span>
-          </a>
+            <FolderClosedIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.files-company'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('admin.files-company'),
+              }"
+              >Files</span
+            >
+          </RouterLink>
         </div>
       </div>
 
@@ -417,11 +441,11 @@ const onNavigate = () => emit("navigate");
     </nav>
 
     <!-- Upgrade to Pro Box -->
-    <div class="px-6 pb-6 mt-auto">
+    <!-- <div class="px-6 pb-6 mt-auto">
       <div
         class="upgrade-card bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-[16px] relative overflow-hidden p-5"
       >
-        <!-- Background Pattern -->
+
         <div class="absolute inset-0 opacity-5">
           <div
             class="absolute top-2 right-4 w-8 h-8 bg-blue-500 rounded-full"
@@ -435,14 +459,12 @@ const onNavigate = () => emit("navigate");
         </div>
 
         <div class="relative z-10">
-          <!-- Icon -->
           <div
             class="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-[12px] flex items-center justify-center mb-3"
           >
             <CrownIcon class="w-5 h-5 text-white" />
           </div>
 
-          <!-- Content -->
           <h4 class="text-brand-dark text-base font-bold mb-1">
             Upgrade to Pro
           </h4>
@@ -450,7 +472,6 @@ const onNavigate = () => emit("navigate");
             Unlock advanced features and insights
           </p>
 
-          <!-- CTA Button -->
           <button
             class="btn-primary w-full rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3"
           >
@@ -461,6 +482,6 @@ const onNavigate = () => emit("navigate");
           </button>
         </div>
       </div>
-    </div>
+    </div> -->
   </aside>
 </template>
