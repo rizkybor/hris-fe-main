@@ -16,6 +16,7 @@ import projectRoutes from './project';
 import attendanceRoutes from './attendance';
 import payrollRoutes from './payroll';
 import accountPasswordRoutes from './accountPassword';
+import filesCompanyRoutes from './filesCompany';
 
 
 const router = createRouter({
@@ -56,6 +57,7 @@ const router = createRouter({
         ...attendanceRoutes,
         ...payrollRoutes,
         ...accountPasswordRoutes,
+        ...filesCompanyRoutes,
         {
           path: 'my-profile',
           name: 'employee.profile',
