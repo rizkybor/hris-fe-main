@@ -47,7 +47,7 @@ const copyPassword = async () => {
 
 onMounted(async () => {
   try {
-    await store.fetchAccountById(route.params.id);
+    await store.fetchAccount(route.params.id);
     account.value = store.currentAccount;
   } catch (err) {
     error.value = "Data credential tidak ditemukan.";
@@ -119,7 +119,7 @@ onMounted(async () => {
         <div class="flex items-center gap-3">
           <Tag class="w-5 h-5 text-gray-400" />
           <p class="text-brand-dark font-semibold">
-            {{ account.label }}
+            {{ account.label_password || account.label }}
           </p>
         </div>
       </div>
@@ -132,7 +132,7 @@ onMounted(async () => {
         <div class="flex items-center gap-3">
           <User class="w-5 h-5 text-gray-400" />
           <p class="text-brand-dark font-mono font-semibold">
-            {{ account.username || "—" }}
+            {{ account.username_email || account.username || "—" }}
           </p>
         </div>
       </div>
