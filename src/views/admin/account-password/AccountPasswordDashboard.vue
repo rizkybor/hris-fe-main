@@ -171,12 +171,12 @@ const formatDate = (date) => {
           <div class="flex-1">
             <!-- Label -->
             <p class="text-brand-dark text-lg font-bold">
-              {{ account.label }}
+              {{ account.label_password || account.label }}
             </p>
 
             <!-- Username -->
             <p class="text-brand-dark text-sm font-mono">
-              {{ account.username }}
+              {{ account.username_email || account.username }}
             </p>
 
             <!-- Badges -->
