@@ -30,8 +30,8 @@ const showPassword = ref(false);
 const rotatePassword = ref(false);
 
 const form = ref({
-  label: "",
-  username: "",
+  label_password: "",
+  username_email: "",
   website: "",
   password: "",
   notes: "",
@@ -45,7 +45,7 @@ const submit = async () => {
   error.value = "";
   success.value = "";
 
-  if (!form.value.label || !form.value.username) {
+  if (!form.value.label_password || !form.value.username_email) {
     error.value = "Label Password dan Username / Email wajib diisi.";
     return;
   }
@@ -56,8 +56,8 @@ const submit = async () => {
   }
 
   const payload = {
-    label: form.value.label,
-    username: form.value.username,
+    label_password: form.value.label_password,
+    username_email: form.value.username_email,
     website: form.value.website,
     notes: form.value.notes,
   };
@@ -86,13 +86,13 @@ const submit = async () => {
 
 onMounted(async () => {
   try {
-    await store.fetchAccountById(route.params.id);
+    await store.fetchAccount(route.params.id);
     const data = store.currentAccount;
 
-    form.value.label = data.label;
-    form.value.username = data.username;
-    form.value.website = data.website;
-    form.value.notes = data.notes;
+    form.value.label_password = data.label_password || data.label || "";
+    form.value.username_email = data.username_email || data.username || "";
+    form.value.website = data.website || "";
+    form.value.notes = data.notes || "";
   } catch (err) {
     error.value = "Data credential tidak ditemukan.";
   } finally {
@@ -153,7 +153,7 @@ onMounted(async () => {
             <Tag class="w-5 h-5 text-gray-400" />
           </div>
           <input
-            v-model="form.label"
+            v-model="form.label_password"
             type="text"
             class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"
           />
@@ -170,7 +170,7 @@ onMounted(async () => {
             <User class="w-5 h-5 text-gray-400" />
           </div>
           <input
-            v-model="form.username"
+            v-model="form.username_email"
             type="text"
             placeholder="e.g. admin@company.com / admin.erp"
             class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"

@@ -24,8 +24,8 @@ const error = ref("");
 const success = ref("");
 
 const form = ref({
-  label: "",
-  username: "",
+  label_password: "",
+  username_email: "",
   website: "",
   password: "",
   notes: "",
@@ -39,7 +39,7 @@ const submit = async () => {
   error.value = "";
   success.value = "";
 
-  if (!form.value.label || !form.value.username || !form.value.password) {
+  if (!form.value.label_password || !form.value.username_email || !form.value.password) {
     error.value = "Label Password, Username/Email, dan Password wajib diisi.";
     return;
   }
@@ -99,7 +99,7 @@ const submit = async () => {
             <Tag class="w-5 h-5 text-gray-400" />
           </div>
           <input
-            v-model="form.label"
+            v-model="form.label_password"
             type="text"
             placeholder="e.g. ERP Finance Admin, VPN Office"
             class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
@@ -119,7 +119,7 @@ const submit = async () => {
             <User class="w-5 h-5 text-gray-400" />
           </div>
           <input
-            v-model="form.username"
+            v-model="form.username_email"
             type="text"
             placeholder="e.g. admin@company.com / admin.erp"
             class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
