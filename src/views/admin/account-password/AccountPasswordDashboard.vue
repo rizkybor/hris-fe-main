@@ -150,7 +150,7 @@ const formatDate = (date) => {
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
       >
         <h3 class="text-brand-dark text-lg font-bold">
-          Stored Account Credentials
+          List Accounts
         </h3>
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
