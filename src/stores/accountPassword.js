@@ -23,7 +23,7 @@ export const useAccountPasswordStore = defineStore("accountPassword", {
     error: null,
     success: null,
   }),
-
+  
   actions: {
     /* =============================
      * GET ALL CREDENTIAL ACCOUNTS
@@ -47,6 +47,9 @@ export const useAccountPasswordStore = defineStore("accountPassword", {
         } else {
           this.accounts = response.data.data ?? [];
         }
+
+        this.statistics.total_accounts = response.data.data.length
+
       } catch (error) {
         this.error = handleError(error);
       } finally {
