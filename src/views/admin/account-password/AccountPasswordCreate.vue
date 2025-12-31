@@ -82,8 +82,18 @@ const submit = async () => {
       </div>
     </div>
 
-    <Alert type="success" :title="success" :show="success" />
-    <Alert type="error" :title="error" :show="error" />
+    <!-- <Alert type="success" :title="success" :show="success" /> -->
+    <div class="mb-6">
+      <Transition name="fade">
+        <Alert 
+          v-if="error" 
+          type="error" 
+          :title="error" 
+          :show="!!error" 
+          @close="error = ''" 
+        />
+      </Transition>
+    </div>
 
     <!-- Form Card -->
     <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
@@ -218,3 +228,16 @@ const submit = async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>

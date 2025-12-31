@@ -130,8 +130,27 @@ onMounted(async () => {
       </div>
     </div>
 
-    <Alert type="success" :title="success" :show="success" />
-    <Alert type="error" :title="error" :show="error" />
+    <template>
+  <div class="max-w-4xl mx-auto">
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+      </div>
+
+    <div class="mb-6">
+      <Transition name="fade">
+        <Alert 
+          v-if="error" 
+          type="error" 
+          :title="error" 
+          :show="!!error" 
+          @close="error = ''" 
+        />
+      </Transition>
+    </div>
+
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+       </div>
+  </div>
+</template>
 
     <!-- Loading -->
     <div v-if="loading" class="text-center py-20 text-gray-500">
@@ -280,3 +299,16 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>
