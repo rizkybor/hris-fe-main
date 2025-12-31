@@ -15,7 +15,6 @@ import {
   Tag,
   User,
 } from "lucide-vue-next";
-import Alert from "@/components/common/Alert.vue";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
 
 const route = useRoute();
@@ -98,8 +97,6 @@ onMounted(async () => {
         </button>
       </div>
     </div>
-
-    <Alert type="error" :title="error" :show="error" />
 
     <!-- Loading -->
     <div v-if="loading" class="text-center py-20 text-gray-500">
