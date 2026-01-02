@@ -1,6 +1,5 @@
 <script setup>
 import {
-  BuildingIcon,
   HomeIcon,
   FileTextIcon,
   UsersIcon,
@@ -14,6 +13,7 @@ import {
   XIcon,
   FolderClosedIcon,
   KeyRoundIcon,
+  Building2Icon,
 } from "lucide-vue-next";
 
 import { can } from "@/helpers/permissionHelper";
@@ -356,22 +356,51 @@ const onNavigate = () => emit("navigate");
       <div>
         <h3 class="section-title">Company</h3>
         <div class="space-y-3">
-          <a
+          <!-- <a
             href="#"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
             @click="onNavigate"
           >
             <FileTextIcon class="w-5 h-5 text-gray-600" />
-            <span class="text-brand-dark text-base font-medium">Summary</span>
-          </a>
+            <span class="text-brand-dark text-base font-medium">Company About</span>
+          </a> -->
+          <RouterLink
+            :to="{ name: 'admin.company-about.dashboard' }"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith(
+                'admin.company-about'
+              ),
+            }"
+            v-if="can('company-about-menu')"
+            @click="onNavigate"
+          >
+            <Building2Icon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.company-about'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith(
+                  'admin.company-about'
+                ),
+              }"
+              >Company About</span
+            >
+          </RouterLink>
 
           <RouterLink
             :to="{ name: 'admin.account-password.dashboard' }"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
             :class="{
-              'nav-link-active': $route.name?.startsWith('admin.account-password'),
+              'nav-link-active': $route.name?.startsWith(
+                'admin.account-password'
+              ),
             }"
-            v-if="can('account-password-menu')"
+            v-if="can('credential-account-list')"
             @click="onNavigate"
           >
             <KeyRoundIcon
@@ -383,13 +412,15 @@ const onNavigate = () => emit("navigate");
             <span
               class="text-brand-dark text-base font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.account-password'),
+                'text-brand-white': $route.name?.startsWith(
+                  'admin.account-password'
+                ),
               }"
-              >Credential Account</span
+              >Credential</span
             >
           </RouterLink>
 
-           <RouterLink
+          <RouterLink
             :to="{ name: 'admin.files-company.dashboard' }"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
             :class="{
@@ -407,9 +438,34 @@ const onNavigate = () => emit("navigate");
             <span
               class="text-brand-dark text-base font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.files-company'),
+                'text-brand-white': $route.name?.startsWith(
+                  'admin.files-company'
+                ),
               }"
-              >Files</span
+              >Document</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.vendors.dashboard' }"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.vendors'),
+            }"
+            @click="onNavigate"
+          >
+            <CrownIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.vendors'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('admin.vendors'),
+              }"
+              >Vendor</span
             >
           </RouterLink>
         </div>
