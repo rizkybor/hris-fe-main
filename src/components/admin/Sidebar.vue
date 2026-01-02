@@ -5,7 +5,6 @@ import {
   UsersIcon,
   SettingsIcon,
   CrownIcon,
-  ArrowRightIcon,
   ClockIcon,
   UserIcon,
   CalendarIcon,
@@ -14,6 +13,7 @@ import {
   FolderClosedIcon,
   KeyRoundIcon,
   Building2Icon,
+  CircleDollarSign,
 } from "lucide-vue-next";
 
 import { can } from "@/helpers/permissionHelper";
@@ -401,7 +401,7 @@ const onNavigate = () => emit("navigate");
             v-if="can('files-company-menu')"
             @click="onNavigate"
           >
-            <FolderClosedIcon
+            <CircleDollarSign
               class="w-5 h-5 text-gray-600"
               :class="{
                 'text-white': $route.name?.startsWith('admin.files-company'),
