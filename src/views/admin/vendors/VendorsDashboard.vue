@@ -73,26 +73,20 @@ const handlePerPageChange = (perPage) => {
           <Briefcase class="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">All Projects</h3>
+          <h3 class="text-brand-dark text-xl font-bold">All Vendors</h3>
           <p class="text-brand-light text-sm font-normal">
-            View and manage all project information
+            View and manage all vendor information
           </p>
         </div>
       </div>
       <div class="flex items-center gap-4" v-if="can('project-create')">
-        <button
-          class="bg-white border border-[#DCDEDD] text-brand-dark py-3 px-4 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
-        >
-          <Upload class="w-4 h-4" />
-          <span class="text-sm font-semibold">Import CSV</span>
-        </button>
         <RouterLink
           class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
           :to="{ name: 'admin.projects.create' }"
         >
           <Plus class="w-4 h-4 text-white" />
           <span class="text-brand-white text-sm font-semibold"
-            >Add Project</span
+            >Add Vendor</span
           >
         </RouterLink>
       </div>
@@ -110,7 +104,7 @@ const handlePerPageChange = (perPage) => {
           <input
             type="text"
             class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-            placeholder="Search projects..."
+            placeholder="Search vendors..."
             v-model="filters.search"
           />
         </div>
@@ -133,7 +127,7 @@ const handlePerPageChange = (perPage) => {
     <div class="text-center py-12" v-if="projects.length === 0">
       <SearchX class="w-16 h-16 text-gray-400 mx-auto mb-4" />
       <h4 class="text-brand-dark text-lg font-semibold mb-2">
-        No projects found
+        No vendors found
       </h4>
       <p class="text-brand-light text-sm">
         Try adjusting your search terms or filters
