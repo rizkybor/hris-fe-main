@@ -116,6 +116,14 @@ const titles = {
     title: "Edit Credential",
     subtitle: "Update and change the company account password",
   },
+  "admin.vendors.dashboard": {
+    title: "Dashboard Vendors",
+    subtitle: "View All Vendors",
+  },
+  "admin.company-about.dashboard": {
+    title: "Company About",
+    subtitle: "View Company About Detail",
+  },
   "employee.profile": {
     title: "My Profile",
     subtitle: "Manage your personal information",
