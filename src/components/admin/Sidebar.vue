@@ -392,6 +392,32 @@ const onNavigate = () => emit("navigate");
             >
           </RouterLink>
 
+           <RouterLink
+            :to="{ name: 'admin.files-company.dashboard' }"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.files-company'),
+            }"
+            v-if="can('files-company-menu')"
+            @click="onNavigate"
+          >
+            <FolderClosedIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.files-company'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith(
+                  'admin.files-company'
+                ),
+              }"
+              >Operational Cost</span
+            >
+          </RouterLink>
+
           <RouterLink
             :to="{ name: 'admin.account-password.dashboard' }"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
