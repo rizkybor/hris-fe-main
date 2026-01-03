@@ -9,41 +9,42 @@ import { storeToRefs } from "pinia";
 const store = useCompanyFinanceStore();
 const { loadingStatistics } = storeToRefs(store);
 
-// Pastikan TypeScript aman jika store belum ada data
-const statisticsData = computed(
-  () =>
-    store.statistics || {
-      fixed_cost: {
-        summary: {
-          total_budget: 0,
-          total_actual: 0,
-          variance: 0,
-          total_items: 0,
-        },
-        items: [],
-      },
-      sdm_resource: {
-        summary: {
-          total_budget: 0,
-          total_actual: 0,
-          variance: 0,
-          total_status_green: 0,
-          total_status_amber: 0,
-          total_status_red: 0,
-        },
-        items: [],
-      },
-      infrastructure: {
-        summary: {
-          total_monthly_fee: 0,
-          total_annual_fee: 0,
-          total_infra_active: 0,
-        },
-        items: [],
-      },
-      company_balance: "0.00",
-    }
-);
+const statisticsData = computed(() => ({
+  fixed_cost: {
+    summary: store.statistics?.fixed_cost?.summary ?? {
+      total_budget: 0,
+      total_actual: 0,
+      variance: 0,
+      total_items: 0,
+    },
+    items: store.statistics?.fixed_cost?.items ?? [],
+  },
+  sdm_resource: {
+    summary: store.statistics?.sdm_resource?.summary ?? {
+      total_budget: 0,
+      total_actual: 0,
+      variance: 0,
+      total_status_green: 0,
+      total_status_amber: 0,
+      total_status_red: 0,
+    },
+    items: store.statistics?.sdm_resource?.items ?? [],
+  },
+  infrastructure: {
+    summary: store.statistics?.infrastructure?.summary ?? {
+      total_monthly_fee: 0,
+      total_annual_fee: 0,
+      total_infra_active: 0,
+    },
+    items: store.statistics?.infrastructure?.items ?? [],
+  },
+
+  fixed_cost_byMonth: store.statistics?.fixed_cost_byMonth ?? [],
+  sdm_resource_byMonth: store.statistics?.sdm_resource_byMonth ?? [],
+  infrastructure_byMonth: store.statistics?.infrastructure_byMonth ?? [],
+
+  company_balance: store.statistics?.company_balance ?? "0.00",
+}));
 
 // Fixed Cost
 const fixedBudget = computed(
@@ -87,14 +88,6 @@ const infraActive = computed(
   () => statisticsData.value.infrastructure.summary.total_infra_active
 );
 
-// Overall totals
-const totalBudget = computed(
-  () => fixedBudget.value + sdmBudget.value + infraMonthly.value
-);
-const totalActual = computed(
-  () => fixedActual.value + sdmActual.value + infraAnnual.value
-);
-
 // Helper format Rupiah
 const formatRp = (value: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -103,33 +96,92 @@ const formatRp = (value: number) =>
     minimumFractionDigits: 0,
   }).format(value);
 
-// Fetch statistics on mount
 onMounted(() => {
   store.fetchStatistics();
 });
 
-// Chart series dinamis berdasarkan data dari store
 const chartSeries = computed(() => [
   {
     name: "Fixed Cost",
-    data: Array(6).fill(fixedActual.value), // isi per bulan sama, bisa nanti diganti API monthly
-    color: "#3B82F6", // biru
+    data: normalizeByYear(
+      statisticsData.value.fixed_cost_byMonth,
+      "total_actual",
+      selectedYear.value
+    ),
+    color: "#3B82F6",
   },
   {
     name: "SDM Resource",
-    data: Array(6).fill(sdmActual.value),
-    color: "#F59E0B", // kuning/orange
+    data: normalizeByYear(
+      statisticsData.value.sdm_resource_byMonth,
+      "total_actual",
+      selectedYear.value
+    ),
+    color: "#F59E0B",
   },
   {
     name: "Infrastructure",
-    data: Array(6).fill(infraAnnual.value),
-    color: "#8B5CF6", // ungu
+    data: normalizeByYear(
+      statisticsData.value.infrastructure_byMonth,
+      "total_monthly_fee",
+      selectedYear.value
+    ),
+    color: "#8B5CF6",
   },
 ]);
 
-// Chart options tetap sama, cukup pastikan warna series tidak di-override
-const chartOptions = ref({
-  chart: { type: "area", height: 250, toolbar: { show: false } },
+const currentYear = new Date().getFullYear();
+const selectedYear = ref(currentYear);
+
+const MONTHS = [
+  "01",
+  "02",
+  "03",
+  "04",
+  "05",
+  "06",
+  "07",
+  "08",
+  "09",
+  "10",
+  "11",
+  "12",
+];
+
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Agu",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+];
+
+const normalizeByYear = (data: any[], valueKey: string, year: number) => {
+  const map = new Map<string, number>();
+
+  data.forEach((item) => {
+    const [y, m] = item.month.split("-");
+    if (Number(y) === year) {
+      map.set(m, Number(item[valueKey]));
+    }
+  });
+
+  return MONTHS.map((month) => map.get(month) ?? 0);
+};
+
+const chartOptions = computed(() => ({
+  chart: {
+    type: "area",
+    height: 250,
+    toolbar: { show: false },
+  },
   stroke: { curve: "smooth", width: 3 },
   fill: {
     type: "gradient",
@@ -145,19 +197,29 @@ const chartOptions = ref({
     padding: { top: 20, right: 20, bottom: 20, left: 20 },
   },
   xaxis: {
-    categories: [
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ],
+    categories: MONTH_LABELS,
   },
-  yaxis: { min: 0, tickAmount: 8 },
-  tooltip: { enabled: true, theme: "light" },
+  yaxis: {
+    min: 0,
+    labels: {
+      formatter: (val: number) =>
+        new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+        }).format(val),
+    },
+  },
+  tooltip: {
+    y: {
+      formatter: (val: number) =>
+        new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+        }).format(val),
+    },
+  },
   dataLabels: { enabled: false },
-});
+}));
 </script>
 
 <template>
@@ -183,10 +245,8 @@ const chartOptions = ref({
             }}</span>
           </p>
           <p class="text-success text-base font-medium">
-            Actual / 
-             <span class="text-gray-300">Budget
-
-             </span>
+            Actual /
+            <span class="text-gray-300">Budget </span>
           </p>
           <p
             class="mt-2 text-sm font-semibold px-2 py-1 rounded-lg inline-block"
@@ -220,10 +280,8 @@ const chartOptions = ref({
             }}</span>
           </p>
           <p class="text-success text-base font-medium">
-            Actual / 
-             <span class="text-gray-300">Budget
-
-             </span>
+            Actual /
+            <span class="text-gray-300">Budget </span>
           </p>
           <!-- Divider tipis -->
           <div class="my-2 border-t border-gray-200"></div>
@@ -290,17 +348,36 @@ const chartOptions = ref({
     <div
       class="xl:col-span-4 bg-white border rounded-[16px] p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300 mt-4"
     >
-      <div class="flex items-center gap-3 mb-6">
-        <div
-          class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
-        >
-          <TrendingUp class="w-6 h-6 text-purple-600" />
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-3 mb-2">
+          <div
+            class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+          >
+            <TrendingUp class="w-6 h-6 text-purple-600" />
+          </div>
+          <div>
+            <h3 class="font-bold text-brand-dark text-lg">
+              Operational Cost Trend
+            </h3>
+            <p class="text-sm text-gray-500">
+              Monthly cost overview by category
+            </p>
+          </div>
         </div>
+
         <div>
-          <h3 class="font-bold text-brand-dark text-lg">
-            Operational Cost Trend
-          </h3>
-          <p class="text-sm text-gray-500">Monthly cost overview by category</p>
+          <select
+            v-model="selectedYear"
+            class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition cursor-pointer"
+          >
+            <option
+              v-for="year in [2024, 2025, 2026]"
+              :key="year"
+              :value="year"
+            >
+              {{ year }}
+            </option>
+          </select>
         </div>
       </div>
       <div class="relative w-full" style="height: 250px">
@@ -308,7 +385,7 @@ const chartOptions = ref({
           :options="chartOptions"
           :series="chartSeries"
           type="area"
-          height="250"
+          height="300"
         />
       </div>
     </div>
