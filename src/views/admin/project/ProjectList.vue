@@ -80,12 +80,12 @@ const handlePerPageChange = (perPage) => {
         </div>
       </div>
       <div class="flex items-center gap-4" v-if="can('project-create')">
-        <button
+        <!-- <button
           class="bg-white border border-[#DCDEDD] text-brand-dark py-3 px-4 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
         >
           <Upload class="w-4 h-4" />
           <span class="text-sm font-semibold">Import CSV</span>
-        </button>
+        </button> -->
         <RouterLink
           class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
           :to="{ name: 'admin.projects.create' }"
