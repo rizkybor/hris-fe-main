@@ -28,6 +28,23 @@ const cleanedMission = computed(() => {
   return missionArray.map((m) => String(m).replace(/\s+/g, " ").trim());
 });
 
+// // --- Clean branches jadi array
+const cleanedBranches = computed(() => {
+  const branches = company.value?.branches;
+  console.log(branches,'<< cek')
+  if (!branches) return [];
+
+  let branchesArray = [];
+
+  try {
+    branchesArray = Array.isArray(branches) ? branches : JSON.parse(branches);
+  } catch {
+    branchesArray = [mission];
+  }
+
+  return branchesArray.map((m) => String(m).replace(/\s+/g, " ").trim());
+});
+
 // Format tanggal
 const formattedDate = computed(() =>
   company.value?.established_date
@@ -166,31 +183,6 @@ const saveCompany = async () => {
         </h2>
       </div>
 
-      <!-- Description -->
-      <small class="text-gray-400 text-sm md:text-base mb-4 italic">
-        {{ company.description || "-" }}
-      </small>
-
-      <br/>
-
-      <!-- Vision -->
-      <div class="mb-4 p-4 bg-blue-50 rounded-xl">
-        <h3 class="font-semibold text-blue-700 mb-1">Vision :</h3>
-        <p class="text-gray-600 text-sm md:text-base">
-          {{ company.vision || "-" }}
-        </p>
-      </div>
-
-      <!-- Mission -->
-      <div v-if="cleanedMission.length" class="mb-4 p-4 bg-blue-50 rounded-xl">
-        <h3 class="font-semibold text-blue-700 mb-2">Mission :</h3>
-        <ul
-          class="list-decimal list-inside text-gray-700 text-sm md:text-base space-y-1"
-        >
-          <li v-for="(m, index) in cleanedMission" :key="index">{{ m }}</li>
-        </ul>
-      </div>
-
       <!-- Established & Contact Info -->
       <div
         class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4 text-sm md:text-base text-gray-600"
@@ -213,18 +205,41 @@ const saveCompany = async () => {
         </div>
       </div>
 
-      <!-- Branches -->
-      <div
-        v-if="company.branches?.length"
-        class="mb-4 p-4 bg-green-50 rounded-xl"
-      >
-        <h3 class="font-semibold text-green-700 mb-2">Branches</h3>
+      <!-- Vision -->
+      <div class="mb-4 p-4 bg-blue-50 rounded-xl">
+        <h3 class="font-semibold text-blue-700 mb-1">Vision :</h3>
+        <p class="text-gray-600 text-sm md:text-base">
+          {{ company.vision || "-" }}
+        </p>
+      </div>
+
+      <!-- Mission -->
+      <div v-if="cleanedMission.length" class="mb-4 p-4 bg-blue-50 rounded-xl">
+        <h3 class="font-semibold text-blue-700 mb-2">Mission :</h3>
         <ul
-          class="list-disc list-inside text-gray-700 text-sm md:text-base space-y-1"
+          class="list-decimal list-inside text-gray-700 text-sm md:text-base space-y-1"
         >
-          <li v-for="(b, index) in company.branches" :key="index">{{ b }}</li>
+          <li v-for="(m, index) in cleanedMission" :key="index">{{ m }}</li>
         </ul>
       </div>
+
+      <!-- Description -->
+      <p class="text-gray-400 text-xs md:text-base p-2 italic">
+        {{ company.description || "-" }}
+      </p>
+
+      <br />
+
+      <!-- Branches -->
+      <div v-if="cleanedBranches.length" class="p-4">
+        <h3 class="font-semibold text-gray-700 mb-2 text-sm">Sub Company :</h3>
+        <ul
+          class="list-decimal list-inside text-gray-700 text-sm md:text-base space-y-1"
+        >
+          <li v-for="(m, index) in cleanedBranches" :key="index">{{ m }}</li>
+        </ul>
+      </div>
+
     </div>
 
     <!-- Empty State -->
