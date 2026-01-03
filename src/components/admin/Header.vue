@@ -117,8 +117,8 @@ const titles = {
     subtitle: "Update and change the company account password",
   },
   "admin.vendors.dashboard": {
-    title: "Dashboard Vendors",
-    subtitle: "View All Vendors",
+    title: "Vendors",
+    subtitle: "View All Vendors on Dashboard",
   },
   "admin.company-about.dashboard": {
     title: "Company About",
@@ -127,6 +127,10 @@ const titles = {
   "admin.company-finance.dashboard": {
     title: "Operational Cost",
     subtitle: "Company Operational Cost Overview",
+  },
+  "admin.files-company.dashboard": {
+    title: "Document",
+    subtitle: "View Document Company",
   },
 
   // EMPLOYEE
