@@ -371,7 +371,7 @@ const chartOptions = computed(() => ({
             class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition cursor-pointer"
           >
             <option
-              v-for="year in [2024, 2025, 2026]"
+              v-for="year in [2025, 2026, 2027, 2028, 2029, 2030]"
               :key="year"
               :value="year"
             >
