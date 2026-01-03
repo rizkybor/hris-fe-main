@@ -167,12 +167,12 @@ const saveCompany = async () => {
       </div>
 
       <!-- Description -->
-      <p class="text-gray-600 text-sm md:text-base mb-4">
+      <p class="text-gray-600 text-sm md:text-base mb-4 italic">
         {{ company.description || "-" }}
       </p>
 
       <!-- Vision -->
-      <div class="mb-4">
+      <div class="mb-4 p-4 bg-blue-50 rounded-xl">
         <h3 class="font-semibold text-gray-800 mb-1">Vision</h3>
         <p class="text-gray-600 text-sm md:text-base">
           {{ company.vision || "-" }}
