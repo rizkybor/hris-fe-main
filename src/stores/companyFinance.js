@@ -11,10 +11,37 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       company_balance: "0.00",
     },
     statistics: {
-      total_budget: 0,
-      total_actual: 0,
-      variance: 0,
+      fixed_cost: {
+        summary: {
+          total_budget: 0,
+          total_actual: 0,
+          variance: 0,
+          total_items: 0,
+        },
+        items: [],
+      },
+      sdm_resource: {
+        summary: {
+          total_budget: 0,
+          total_actual: 0,
+          variance: 0,
+          total_status_green: 0,
+          total_status_amber: 0,
+          total_status_red: 0,
+        },
+        items: [],
+      },
+      infrastructure: {
+        summary: {
+          total_monthly_fee: 0,
+          total_annual_fee: 0,
+          total_infra_active: 0,
+        },
+        items: [],
+      },
+      company_balance: "0.00",
     },
+
     loading: false,
     loadingStatistics: false,
     error: null,
@@ -26,7 +53,9 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       this.loading = true;
 
       try {
-        const response = await axiosInstance.get(`company-finance`, { params });
+        const response = await axiosInstance.get(`company-finances`, {
+          params,
+        });
 
         this.companyFinance = response.data.data;
       } catch (error) {
@@ -58,7 +87,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       this.loading = true;
 
       try {
-        const response = await axiosInstance.get(`company-finance/${id}`);
+        const response = await axiosInstance.get(`company-finances/${id}`);
 
         return response.data.data;
       } catch (error) {
@@ -72,7 +101,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       this.loading = true;
 
       try {
-        const response = await axiosInstance.get(`company-finance/${id}`);
+        const response = await axiosInstance.get(`company-finances/${id}`);
 
         return response.data.data;
       } catch (error) {
@@ -86,7 +115,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       this.loading = true;
 
       try {
-        const response = await axiosInstance.post("company-finance", payload);
+        const response = await axiosInstance.post("company-finances", payload);
 
         this.success = response.data.message;
       } catch (error) {
@@ -100,7 +129,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       this.loading = true;
 
       try {
-        const response = await axiosInstance.post(`company-finance/${id}`, {
+        const response = await axiosInstance.post(`company-finances/${id}`, {
           ...payload,
           _method: "PUT",
         });
@@ -118,7 +147,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       this.error = null;
 
       try {
-        const response = await axiosInstance.get("/company-finance/statistic");
+        const response = await axiosInstance.get("/company-finances/statistic");
 
         this.statistics = response.data.data;
       } catch (error) {
