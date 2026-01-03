@@ -40,6 +40,9 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         items: [],
       },
       company_balance: "0.00",
+      fixed_cost_byMonth: [],
+      sdm_resource_byMonth: [],
+      infrastructure_byMonth: [],
     },
 
     loading: false,
