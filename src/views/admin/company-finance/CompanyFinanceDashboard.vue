@@ -1,53 +1,176 @@
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { debounce } from "lodash";
 import { Briefcase } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { can } from "@/helpers/permissionHelper";
 import Statistics from "@/components/admin/company-finance/list/Statistic.vue";
+import { Eye, Edit, Trash2 } from "lucide-vue-next";
+import { useCompanyFinanceStore } from "@/stores/companyFinance";
+
+const store = useCompanyFinanceStore();
+
+// Fetch data ketika komponen di-mount
+onMounted(() => {
+  fetchFixedCostData();
+});
+
+const fetchFixedCostData = async () => {
+  const params = { page: 1, per_page: 5 }; // Tentukan parameter pagination
+  await store.fetchFixedCostPaginated(params); // Panggil action fetch data dari store
+};
+
+// Action untuk view, edit, dan delete Fixed Cost
+const viewFixedCost = (item) => {
+  console.log("View Fixed Cost", item);
+};
+
+const editFixedCost = (item) => {
+  console.log("Edit Fixed Cost", item);
+};
+
+const deleteFixedCost = (item) => {
+  if (confirm(`Are you sure you want to delete "${item.financial_items}"?`)) {
+    store.fixedCostData.items = store.fixedCostData.items.filter(
+      (i) => i.id !== item.id
+    );
+  }
+};
+
+/* ================= INFRA ACTION METHODS ================= */
+const addInfra = () => {
+  console.log("Add new Infrastructure");
+  // Bisa buka modal form tambah data
+};
+
+const viewInfra = (item) => {
+  console.log("View Infrastructure", item);
+  // Bisa tampilkan modal detail
+};
+
+const editInfra = (item) => {
+  console.log("Edit Infrastructure", item);
+  // Bisa redirect ke form edit
+};
+
+const deleteInfra = (item) => {
+  if (
+    confirm(`Are you sure you want to delete "${item.tech_stack_component}"?`)
+  ) {
+    infrastructures.value = infrastructures.value.filter(
+      (i) => i.id !== item.id
+    );
+  }
+};
+
+/* ================= SDM ACTION METHODS ================= */
+const addSdm = () => {
+  console.log("Add new SDM");
+  // Bisa buka modal form tambah data
+};
+
+const viewSdm = (item) => {
+  console.log("View SDM", item);
+  // Bisa tampilkan modal detail
+};
+
+const editSdm = (item) => {
+  console.log("Edit SDM", item);
+  // Bisa redirect ke form edit
+};
+
+const deleteSdm = (item) => {
+  if (confirm(`Are you sure you want to delete "${item.sdm_component}"?`)) {
+    sdmResources.value = sdmResources.value.filter((i) => i.id !== item.id);
+  }
+};
+
+/* ================= ACTION METHODS ================= */
+const viewItem = (item) => {
+  console.log("View", item);
+  // bisa tambahkan modal view disini
+};
+const editItem = (item) => {
+  console.log("Edit", item);
+  // bisa redirect ke edit form
+};
+const deleteItem = (item) => {
+  if (confirm(`Are you sure you want to delete "${item.financial_items}"?`)) {
+    store.fixedCostData.value = store.fixedCostData.value.filter(
+      (i) => i.id !== item.id
+    );
+  }
+};
 
 /* =======================
    STATE
 ======================= */
 const loading = ref(false);
 // const success = ref("Operational cost loaded successfully");
-
 /* =======================
    DUMMY DATA
 ======================= */
-const fixedCosts = ref(
-  Array.from({ length: 23 }, (_, i) => ({
-    id: i + 1,
-    financial_items: `Service ${i + 1}`,
-    budget: 10000000 + i * 1000000,
-    actual: 8000000 + i * 900000,
-    notes: "Operational cost",
-  }))
-);
+const sdmResourcesDummy = {
+  success: true,
+  message: "SDM Resources Retrieved Successfully",
+  data: {
+    data: [
+      {
+        id: 1,
+        sdm_component: "Utilisasi Tim",
+        metrik: "Jam Kerja Proyek vs Internal",
+        capacity_target: "80% Proyek",
+        budget: 6000000,
+        actual: 5000000,
+        rag_status: "green",
+        notes: "Tim berhasil mencapai target utilisasi dengan baik.",
+        created_at: "2026-01-03T08:45:13.000000Z",
+        updated_at: "2026-01-03T08:45:13.000000Z",
+      },
+    ],
+    meta: {
+      current_page: 1,
+      from: 1,
+      last_page: 1,
+      path: "http://localhost:8000/api/v1/sdm-resources/all/paginated",
+      per_page: 10,
+      to: 1,
+      total: 1,
+    },
+  },
+};
+const sdmResources = ref(sdmResourcesDummy.data.data);
 
-const sdmResources = ref(
-  Array.from({ length: 17 }, (_, i) => ({
-    id: i + 1,
-    sdm_component: `Engineer ${i + 1}`,
-    metrik: "Man Power",
-    capacity_target: 3,
-    rag_status: i % 3 === 0 ? "red" : i % 2 ? "amber" : "green",
-    budget: 15000000,
-    actual: 14000000,
-  }))
-);
-
-const infrastructures = ref(
-  Array.from({ length: 14 }, (_, i) => ({
-    id: i + 1,
-    tech_stack_component: `Tool ${i + 1}`,
-    vendor: "Vendor X",
-    monthly_fee: 3000000,
-    annual_fee: 36000000,
-    expired_date: "2026-06-30",
-    status: "active",
-  }))
-);
+const infrastructuresDummy = {
+  success: true,
+  message: "Infrastructure Tools Retrieved Successfully",
+  data: {
+    data: [
+      {
+        id: 1,
+        tech_stack_component: "GitHub",
+        vendor: "GitHub Inc.",
+        monthly_fee: 29000000.99,
+        annual_fee: 299000000.99,
+        expired_date: "2026-09-18T00:00:00.000000Z",
+        status: "active",
+        notes: "Version control and collaboration platform",
+        created_at: "2026-01-03T08:45:02.000000Z",
+        updated_at: "2026-01-03T08:45:02.000000Z",
+      },
+    ],
+    meta: {
+      current_page: 1,
+      from: 1,
+      last_page: 1,
+      path: "http://localhost:8000/api/v1/infrastructure-tools/all/paginated",
+      per_page: 10,
+      to: 1,
+      total: 1,
+    },
+  },
+};
+const infrastructures = ref(infrastructuresDummy.data.data);
 
 /* =======================
    PAGINATION STATE
@@ -75,16 +198,27 @@ const pageCount = (data) => Math.ceil(data.length / perPage);
 /* =======================
    COMPUTED
 ======================= */
-const filteredFixed = computed(() =>
-  fixedCosts.value.filter((item) =>
-    item.financial_items.toLowerCase().includes(fixedSearch.value.toLowerCase())
-  )
+const filteredFixed = computed(() => {
+  if (store.fixedCostData && store.fixedCostData.items) {
+    return store.fixedCostData.items.filter((item) =>
+      item.financial_items
+        .toLowerCase()
+        .includes(fixedSearch.value.toLowerCase())
+    );
+  }
+  return []; // Kembalikan array kosong jika store.fixedCostData atau items belum ada
+});
+const fixedPaginated = computed(() =>
+  paginate(filteredFixed.value, fixedPage.value)
 );
+
 const filteredSdm = computed(() =>
   sdmResources.value.filter((item) =>
     item.sdm_component.toLowerCase().includes(sdmSearch.value.toLowerCase())
   )
 );
+const sdmPaginated = computed(() => paginate(filteredSdm.value, sdmPage.value));
+
 const filteredInfra = computed(() =>
   infrastructures.value.filter((item) =>
     item.tech_stack_component
@@ -92,11 +226,6 @@ const filteredInfra = computed(() =>
       .includes(infraSearch.value.toLowerCase())
   )
 );
-
-const fixedPaginated = computed(() =>
-  paginate(filteredFixed.value, fixedPage.value)
-);
-const sdmPaginated = computed(() => paginate(filteredSdm.value, sdmPage.value));
 const infraPaginated = computed(() =>
   paginate(filteredInfra.value, infraPage.value)
 );
@@ -127,7 +256,14 @@ watch(
   <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
     <!-- ================= FIXED COST ================= -->
     <section class="mb-12">
-      <h4 class="text-lg font-bold mb-4">Fixed Cost</h4>
+      <div class="flex justify-between items-center mb-4">
+        <h4 class="text-lg font-bold">Fixed Cost</h4>
+        <button
+          class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+        >
+          + Add Data
+        </button>
+      </div>
 
       <!-- SEARCH -->
       <div class="mb-4 max-w-md">
@@ -143,18 +279,58 @@ watch(
         <table class="w-full text-sm sm:text-base">
           <thead class="bg-gray-50">
             <tr>
+              <th class="px-3 py-2">No</th>
               <th class="px-3 py-2 text-left">Item</th>
               <th class="px-3 py-2 text-right">Budget</th>
               <th class="px-3 py-2 text-right">Actual</th>
               <th class="px-3 py-2 text-left">Notes</th>
+              <th class="px-3 py-2 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in fixedPaginated" :key="item.id" class="border-t">
+            <tr
+              v-for="(item, index) in fixedPaginated"
+              :key="item.id"
+              class="border-t"
+            >
+              <td class="px-3 py-2">
+                {{ (fixedPage - 1) * perPage + index + 1 }}
+              </td>
               <td class="px-3 py-2 font-medium">{{ item.financial_items }}</td>
-              <td class="px-3 py-2 text-right">{{ item.budget }}</td>
-              <td class="px-3 py-2 text-right">{{ item.actual }}</td>
+              <td class="px-3 py-2 text-right">
+                {{ item.budget.toLocaleString() }}
+              </td>
+              <td class="px-3 py-2 text-right">
+                {{ item.actual.toLocaleString() }}
+              </td>
               <td class="px-3 py-2 text-gray-500">{{ item.notes }}</td>
+              <td class="px-3 py-2 text-center flex justify-center gap-2">
+                <Eye
+                  class="w-5 h-5 text-blue-500 cursor-pointer"
+                  @click="viewItem(item)"
+                />
+                <Edit
+                  class="w-5 h-5 text-yellow-500 cursor-pointer"
+                  @click="editItem(item)"
+                />
+                <Trash2
+                  class="w-5 h-5 text-red-500 cursor-pointer"
+                  @click="deleteItem(item)"
+                />
+              </td>
+            </tr>
+
+            <tr v-if="filteredFixed.length === 0">
+              <td colspan="6" class="text-center py-4 text-gray-500">
+                No Fixed Cost data found.
+              </td>
+            </tr>
+
+            <!-- Jika tidak ada data -->
+            <tr v-if="filteredFixed.length === 0">
+              <td colspan="6" class="text-center py-4 text-gray-500">
+                No Fixed Cost data found.
+              </td>
             </tr>
           </tbody>
         </table>
@@ -187,8 +363,17 @@ watch(
 
     <!-- ================= SDM ================= -->
     <section class="mb-12">
-      <h4 class="text-lg font-bold mb-4">SDM Resource</h4>
+      <div class="flex justify-between items-center mb-4">
+        <h4 class="text-lg font-bold">SDM Resource</h4>
+        <button
+          class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+          @click="addSdm"
+        >
+          + Add Data
+        </button>
+      </div>
 
+      <!-- SEARCH -->
       <div class="mb-4 max-w-md">
         <input
           v-model="sdmSearch"
@@ -208,6 +393,7 @@ watch(
               <th class="px-3 py-2">RAG</th>
               <th class="px-3 py-2 text-right">Budget</th>
               <th class="px-3 py-2 text-right">Actual</th>
+              <th class="px-3 py-2 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -228,13 +414,39 @@ watch(
                   {{ item.rag_status }}
                 </span>
               </td>
-              <td class="px-3 py-2 text-right">{{ item.budget }}</td>
-              <td class="px-3 py-2 text-right">{{ item.actual }}</td>
+              <td class="px-3 py-2 text-right">
+                {{ item.budget.toLocaleString() }}
+              </td>
+              <td class="px-3 py-2 text-right">
+                {{ item.actual.toLocaleString() }}
+              </td>
+              <td class="px-3 py-2 text-center flex justify-center gap-2">
+                <Eye
+                  class="w-5 h-5 text-blue-500 cursor-pointer"
+                  @click="viewSdm(item)"
+                />
+                <Edit
+                  class="w-5 h-5 text-yellow-500 cursor-pointer"
+                  @click="editSdm(item)"
+                />
+                <Trash2
+                  class="w-5 h-5 text-red-500 cursor-pointer"
+                  @click="deleteSdm(item)"
+                />
+              </td>
+            </tr>
+
+            <!-- Jika tidak ada data -->
+            <tr v-if="filteredSdm.length === 0">
+              <td colspan="7" class="text-center py-4 text-gray-500">
+                No SDM Resource data found.
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
+      <!-- Pagination -->
       <div
         class="flex flex-wrap justify-between items-center mt-4 gap-2 text-sm sm:text-base"
       >
@@ -262,8 +474,17 @@ watch(
 
     <!-- ================= INFRA ================= -->
     <section>
-      <h4 class="text-lg font-bold mb-4">Infrastructure Tools</h4>
+      <div class="flex justify-between items-center mb-4">
+        <h4 class="text-lg font-bold">Infrastructure Tools</h4>
+        <button
+          class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+          @click="addInfra"
+        >
+          + Add Data
+        </button>
+      </div>
 
+      <!-- SEARCH -->
       <div class="mb-4 max-w-md">
         <input
           v-model="infraSearch"
@@ -283,6 +504,7 @@ watch(
               <th class="px-3 py-2 text-right">Annual</th>
               <th class="px-3 py-2">Expired</th>
               <th class="px-3 py-2">Status</th>
+              <th class="px-3 py-2 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -291,15 +513,41 @@ watch(
                 {{ item.tech_stack_component }}
               </td>
               <td class="px-3 py-2">{{ item.vendor }}</td>
-              <td class="px-3 py-2 text-right">{{ item.monthly_fee }}</td>
-              <td class="px-3 py-2 text-right">{{ item.annual_fee }}</td>
+              <td class="px-3 py-2 text-right">
+                {{ item.monthly_fee.toLocaleString() }}
+              </td>
+              <td class="px-3 py-2 text-right">
+                {{ item.annual_fee.toLocaleString() }}
+              </td>
               <td class="px-3 py-2">{{ item.expired_date }}</td>
               <td class="px-3 py-2">{{ item.status }}</td>
+              <td class="px-3 py-2 text-center flex justify-center gap-2">
+                <Eye
+                  class="w-5 h-5 text-blue-500 cursor-pointer"
+                  @click="viewInfra(item)"
+                />
+                <Edit
+                  class="w-5 h-5 text-yellow-500 cursor-pointer"
+                  @click="editInfra(item)"
+                />
+                <Trash2
+                  class="w-5 h-5 text-red-500 cursor-pointer"
+                  @click="deleteInfra(item)"
+                />
+              </td>
+            </tr>
+
+            <!-- Jika tidak ada data -->
+            <tr v-if="filteredInfra.length === 0">
+              <td colspan="7" class="text-center py-4 text-gray-500">
+                No Infrastructure Tools data found.
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
+      <!-- Pagination -->
       <div
         class="flex flex-wrap justify-between items-center mt-4 gap-2 text-sm sm:text-base"
       >
