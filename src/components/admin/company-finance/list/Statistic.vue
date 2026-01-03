@@ -9,61 +9,106 @@ import { storeToRefs } from "pinia";
 const store = useCompanyFinanceStore();
 const { loadingStatistics } = storeToRefs(store);
 
-// Pastikan TypeScript aman
+// Pastikan TypeScript aman jika store belum ada data
 const statisticsData = computed(
   () =>
-    (store.statistics as any) || {
+    store.statistics || {
       fixed_cost: {
-        summary: { total_budget: 0, total_actual: 0, variance: 0 },
+        summary: {
+          total_budget: 0,
+          total_actual: 0,
+          variance: 0,
+          total_items: 0,
+        },
         items: [],
       },
       sdm_resource: {
-        summary: { total_budget: 0, total_actual: 0, variance: 0 },
+        summary: {
+          total_budget: 0,
+          total_actual: 0,
+          variance: 0,
+          total_status_green: 0,
+          total_status_amber: 0,
+          total_status_red: 0,
+        },
         items: [],
       },
       infrastructure: {
-        summary: { total_monthly_fee: 0, total_annual_fee: 0 },
+        summary: {
+          total_monthly_fee: 0,
+          total_annual_fee: 0,
+          total_infra_active: 0,
+        },
         items: [],
       },
       company_balance: "0.00",
     }
 );
 
-// Total Budget & Actual per category
+// Fixed Cost
 const fixedBudget = computed(
-  () => statisticsData.value.fixed_cost?.summary?.total_budget || 0
+  () => statisticsData.value.fixed_cost.summary.total_budget
 );
 const fixedActual = computed(
-  () => statisticsData.value.fixed_cost?.summary?.total_actual || 0
+  () => statisticsData.value.fixed_cost.summary.total_actual
+);
+const fixedVariance = computed(
+  () => statisticsData.value.fixed_cost.summary.variance
 );
 
+// SDM Resource
 const sdmBudget = computed(
-  () => statisticsData.value.sdm_resource?.summary?.total_budget || 0
+  () => statisticsData.value.sdm_resource.summary.total_budget
 );
 const sdmActual = computed(
-  () => statisticsData.value.sdm_resource?.summary?.total_actual || 0
+  () => statisticsData.value.sdm_resource.summary.total_actual
+);
+const sdmVariance = computed(
+  () => statisticsData.value.sdm_resource.summary.variance
+);
+const totalStatusGreen = computed(
+  () => statisticsData.value.sdm_resource.summary.total_status_green
+);
+const totalStatusAmber = computed(
+  () => statisticsData.value.sdm_resource.summary.total_status_amber
+);
+const totalStatusRed = computed(
+  () => statisticsData.value.sdm_resource.summary.total_status_red
 );
 
-const infraBudget = computed(
-  () => statisticsData.value.infrastructure?.summary?.total_monthly_fee || 0
+// Infrastructure
+const infraMonthly = computed(
+  () => statisticsData.value.infrastructure.summary.total_monthly_fee
 );
-const infraActual = computed(
-  () => statisticsData.value.infrastructure?.summary?.total_annual_fee || 0
+const infraAnnual = computed(
+  () => statisticsData.value.infrastructure.summary.total_annual_fee
+);
+const infraActive = computed(
+  () => statisticsData.value.infrastructure.summary.total_infra_active
 );
 
 // Overall totals
 const totalBudget = computed(
-  () => fixedBudget.value + sdmBudget.value + infraBudget.value
+  () => fixedBudget.value + sdmBudget.value + infraMonthly.value
 );
 const totalActual = computed(
-  () => fixedActual.value + sdmActual.value + infraActual.value
+  () => fixedActual.value + sdmActual.value + infraAnnual.value
 );
 
+// Helper format Rupiah
+const formatRp = (value: number) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(value);
+
+// Fetch statistics on mount
 onMounted(() => {
   store.fetchStatistics();
 });
 
-// Chart setup (dummy data, bisa diganti API nanti)
+// Chart dummy setup (bisa diganti dinamis)
 const chartOptions = ref({
   chart: { type: "area", height: 250, toolbar: { show: false } },
   stroke: { curve: "smooth", width: 3, colors: ["#8A63F9"] },
@@ -79,7 +124,6 @@ const chartOptions = ref({
   colors: ["#8A63F9"],
   grid: {
     borderColor: "#f1f1f1",
-    strokeDashArray: 0,
     padding: { top: 20, right: 20, bottom: 20, left: 20 },
   },
   xaxis: {
@@ -98,45 +142,15 @@ const chartOptions = ref({
 });
 
 const chartSeries = ref([
-  {
-    name: "Fixed Cost",
-    data: [
-      fixedActual.value,
-      fixedActual.value,
-      fixedActual.value,
-      fixedActual.value,
-      fixedActual.value,
-      fixedActual.value,
-    ],
-  },
-  {
-    name: "SDM Resource",
-    data: [
-      sdmActual.value,
-      sdmActual.value,
-      sdmActual.value,
-      sdmActual.value,
-      sdmActual.value,
-      sdmActual.value,
-    ],
-  },
-  {
-    name: "Infrastructure",
-    data: [
-      infraActual.value,
-      infraActual.value,
-      infraActual.value,
-      infraActual.value,
-      infraActual.value,
-      infraActual.value,
-    ],
-  },
+  { name: "Fixed Cost", data: Array(6).fill(fixedActual.value) },
+  { name: "SDM Resource", data: Array(6).fill(sdmActual.value) },
+  { name: "Infrastructure", data: Array(6).fill(infraAnnual.value) },
 ]);
 </script>
 
 <template>
   <div class="mb-5">
-    <div class="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6 mb-6">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 mb-6">
       <!-- Fixed Cost -->
       <div
         class="bg-white border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
@@ -150,11 +164,21 @@ const chartSeries = ref([
           </div>
         </div>
         <div class="mt-auto">
-          <p class="text-3xl font-extrabold">
-            {{ loadingStatistics ? "-" : fixedActual }}
+          <p class="text-lg font-extrabold text-success">
+            {{ loadingStatistics ? "-" : formatRp(fixedActual) }} /
+            <span class="text-gray-700">{{
+              loadingStatistics ? "-" : formatRp(fixedBudget)
+            }}</span>
           </p>
-          <p class="text-success text-base font-medium">
-            Actual / Budget {{ fixedBudget }}
+          <p class="t text-base font-medium">Actual / Budget</p>
+          <p
+            class="mt-2 text-sm font-semibold px-2 py-1 rounded-lg inline-block"
+            :class="{
+              'bg-gray-100 text-gray-800': fixedVariance >= 0,
+              'bg-red-100 text-red-800': fixedVariance < 0,
+            }"
+          >
+            Variance: {{ loadingStatistics ? "-" : formatRp(fixedVariance) }}
           </p>
         </div>
       </div>
@@ -164,19 +188,50 @@ const chartSeries = ref([
         class="bg-white border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
       >
         <div class="flex justify-between mb-4">
-          <p class="font-medium">SDM Resource</p>
+          <p class="font-medium">SDM Resources</p>
           <div
-            class="w-12 h-12 bg-green-50 rounded-[16px] flex items-center justify-center"
+            class="w-12 h-12 bg-amber-50 rounded-[16px] flex items-center justify-center"
           >
-            <PlayCircle class="w-6 h-6 text-green-600" />
+            <PlayCircle class="w-6 h-6 text-amber-600" />
           </div>
         </div>
         <div class="mt-auto">
-          <p class="text-3xl font-extrabold">
-            {{ loadingStatistics ? "-" : sdmActual }}
+          <p class="text-lg font-extrabold text-success">
+            {{ loadingStatistics ? "-" : formatRp(sdmActual) }} /
+            <span class="text-gray-700">{{
+              loadingStatistics ? "-" : formatRp(sdmBudget)
+            }}</span>
           </p>
-          <p class="text-success text-base font-medium">
-            Actual / Budget {{ sdmBudget }}
+          <p class="text-base font-medium">Actual / Budget</p>
+          <!-- Divider tipis -->
+          <div class="my-2 border-t border-gray-200"></div>
+
+          <div class="mt-2 flex gap-2 text-sm font-medium">
+            <span
+              class="px-3 py-1 rounded-full bg-green-100 text-green-800 shadow-sm"
+            >
+              Green: {{ totalStatusGreen }}
+            </span>
+            <span
+              class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 shadow-sm"
+            >
+              Amber: {{ totalStatusAmber }}
+            </span>
+            <span
+              class="px-3 py-1 rounded-full bg-red-100 text-red-800 shadow-sm"
+            >
+              Red: {{ totalStatusRed }}
+            </span>
+          </div>
+
+          <p
+            class="mt-2 text-sm font-semibold px-2 py-1 rounded-lg inline-block"
+            :class="{
+              'bg-gray-100 text-gray-800': sdmVariance >= 0,
+              'bg-red-100 text-red-800': sdmVariance < 0,
+            }"
+          >
+            Variance: {{ loadingStatistics ? "-" : formatRp(sdmVariance) }}
           </p>
         </div>
       </div>
@@ -193,32 +248,17 @@ const chartSeries = ref([
             <TrendingUp class="w-6 h-6 text-purple-600" />
           </div>
         </div>
-        <div class="mt-auto">
-          <p class="text-3xl font-extrabold">
-            {{ loadingStatistics ? "-" : infraActual }}
+        <div class="mt-auto space-y-1">
+          <p class="text-base font-medium text-gray-500">
+            Monthly: {{ loadingStatistics ? "-" : formatRp(infraMonthly) }}
           </p>
-          <p class="text-success text-base font-medium">Monthly / Annual</p>
-        </div>
-      </div>
-
-      <!-- Overall -->
-      <div
-        class="bg-white border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
-      >
-        <div class="flex justify-between mb-4">
-          <p class="font-medium">Overall</p>
-          <div
-            class="w-12 h-12 bg-yellow-50 rounded-[16px] flex items-center justify-center"
+          <p class="text-base font-medium text-gray-500">
+            Annual: {{ loadingStatistics ? "-" : formatRp(infraAnnual) }}
+          </p>
+          <p
+            class="text-sm font-medium inline-block px-2 py-1 rounded bg-gray-100 text-gray-800"
           >
-            <Briefcase class="w-6 h-6 text-yellow-600" />
-          </div>
-        </div>
-        <div class="mt-auto">
-          <p class="text-3xl font-extrabold">
-            {{ loadingStatistics ? "-" : totalActual }}
-          </p>
-          <p class="text-success text-base font-medium">
-            Actual / Budget {{ totalBudget }}
+            Active: {{ infraActive }}
           </p>
         </div>
       </div>
