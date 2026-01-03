@@ -398,11 +398,7 @@ const onNavigate = () => emit("navigate");
                 'admin.company-finance'
               ),
             }"
-            v-if="
-              can(
-                'company-finance-menu'
-              )
-            "
+            v-if="can('company-finance-menu')"
             @click="onNavigate"
           >
             <CircleDollarSign
@@ -525,6 +521,46 @@ const onNavigate = () => emit("navigate");
         </div>
       </div>
     </nav>
+
+    <div class="px-6 pb-6 mt-auto">
+      <div
+        class="upgrade-card bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-[16px] relative overflow-hidden p-5"
+      >
+        <!-- Dekorasi latar belakang -->
+        <div class="absolute inset-0 opacity-5">
+          <div
+            class="absolute top-2 right-4 w-8 h-8 bg-blue-500 rounded-full"
+          ></div>
+          <div
+            class="absolute bottom-4 left-2 w-6 h-6 bg-blue-400 rounded-full"
+          ></div>
+          <div
+            class="absolute top-1/2 left-1/2 w-4 h-4 bg-blue-600 rounded-full"
+          ></div>
+        </div>
+
+        <!-- Konten utama -->
+        <div class="relative z-10">
+          <!-- Ikon untuk memberikan kesan inspiratif -->
+          <div
+            class="w-12 h-12 rounded-[12px] flex items-center justify-center mb-4"
+          >
+            <img
+              src="/images/jcd-only-color.png"
+              alt="Background Image"
+              class="w-full h-full object-cover"
+            />
+          </div>
+
+          <!-- Judul -->
+          <h4 class="text-blue-800 text-base font-bold mb-2">
+            "Success doesn’t come from what you do occasionally, it comes from
+            what you do consistently."
+          </h4>
+          <p class="text-blue-700 text-sm italic">– Marie Forleo</p>
+        </div>
+      </div>
+    </div>
 
     <!-- Upgrade to Pro Box -->
     <!-- <div class="px-6 pb-6 mt-auto">
