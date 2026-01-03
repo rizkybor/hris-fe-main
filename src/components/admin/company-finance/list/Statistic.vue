@@ -108,10 +108,29 @@ onMounted(() => {
   store.fetchStatistics();
 });
 
-// Chart dummy setup (bisa diganti dinamis)
+// Chart series dinamis berdasarkan data dari store
+const chartSeries = computed(() => [
+  {
+    name: "Fixed Cost",
+    data: Array(6).fill(fixedActual.value), // isi per bulan sama, bisa nanti diganti API monthly
+    color: "#3B82F6", // biru
+  },
+  {
+    name: "SDM Resource",
+    data: Array(6).fill(sdmActual.value),
+    color: "#F59E0B", // kuning/orange
+  },
+  {
+    name: "Infrastructure",
+    data: Array(6).fill(infraAnnual.value),
+    color: "#8B5CF6", // ungu
+  },
+]);
+
+// Chart options tetap sama, cukup pastikan warna series tidak di-override
 const chartOptions = ref({
   chart: { type: "area", height: 250, toolbar: { show: false } },
-  stroke: { curve: "smooth", width: 3, colors: ["#8A63F9"] },
+  stroke: { curve: "smooth", width: 3 },
   fill: {
     type: "gradient",
     gradient: {
@@ -121,7 +140,6 @@ const chartOptions = ref({
       stops: [0, 100],
     },
   },
-  colors: ["#8A63F9"],
   grid: {
     borderColor: "#f1f1f1",
     padding: { top: 20, right: 20, bottom: 20, left: 20 },
@@ -140,12 +158,6 @@ const chartOptions = ref({
   tooltip: { enabled: true, theme: "light" },
   dataLabels: { enabled: false },
 });
-
-const chartSeries = ref([
-  { name: "Fixed Cost", data: Array(6).fill(fixedActual.value) },
-  { name: "SDM Resource", data: Array(6).fill(sdmActual.value) },
-  { name: "Infrastructure", data: Array(6).fill(infraAnnual.value) },
-]);
 </script>
 
 <template>
@@ -153,10 +165,10 @@ const chartSeries = ref([
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 mb-6">
       <!-- Fixed Cost -->
       <div
-        class="bg-white border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
+        class="main-card border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
       >
         <div class="flex justify-between mb-4">
-          <p class="font-medium">Fixed Cost</p>
+          <p class="text-white font-medium">Fixed Cost</p>
           <div
             class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center"
           >
@@ -166,11 +178,16 @@ const chartSeries = ref([
         <div class="mt-auto">
           <p class="text-lg font-extrabold text-success">
             {{ loadingStatistics ? "-" : formatRp(fixedActual) }} /
-            <span class="text-gray-700">{{
+            <span class="text-gray-300">{{
               loadingStatistics ? "-" : formatRp(fixedBudget)
             }}</span>
           </p>
-          <p class="t text-base font-medium">Actual / Budget</p>
+          <p class="text-success text-base font-medium">
+            Actual / 
+             <span class="text-gray-300">Budget
+
+             </span>
+          </p>
           <p
             class="mt-2 text-sm font-semibold px-2 py-1 rounded-lg inline-block"
             :class="{
@@ -185,10 +202,10 @@ const chartSeries = ref([
 
       <!-- SDM Resource -->
       <div
-        class="bg-white border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
+        class="main-card border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
       >
         <div class="flex justify-between mb-4">
-          <p class="font-medium">SDM Resources</p>
+          <p class="text-white font-medium">SDM Resources</p>
           <div
             class="w-12 h-12 bg-amber-50 rounded-[16px] flex items-center justify-center"
           >
@@ -198,11 +215,16 @@ const chartSeries = ref([
         <div class="mt-auto">
           <p class="text-lg font-extrabold text-success">
             {{ loadingStatistics ? "-" : formatRp(sdmActual) }} /
-            <span class="text-gray-700">{{
+            <span class="text-gray-300">{{
               loadingStatistics ? "-" : formatRp(sdmBudget)
             }}</span>
           </p>
-          <p class="text-base font-medium">Actual / Budget</p>
+          <p class="text-success text-base font-medium">
+            Actual / 
+             <span class="text-gray-300">Budget
+
+             </span>
+          </p>
           <!-- Divider tipis -->
           <div class="my-2 border-t border-gray-200"></div>
 
@@ -238,10 +260,10 @@ const chartSeries = ref([
 
       <!-- Infrastructure -->
       <div
-        class="bg-white border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
+        class="main-card border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
       >
         <div class="flex justify-between mb-4">
-          <p class="font-medium">Infrastructure</p>
+          <p class="text-white font-medium">Infrastructure</p>
           <div
             class="w-12 h-12 bg-purple-50 rounded-[16px] flex items-center justify-center"
           >
@@ -249,16 +271,16 @@ const chartSeries = ref([
           </div>
         </div>
         <div class="mt-auto space-y-1">
-          <p class="text-base font-medium text-gray-500">
+          <p class="text-base font-medium text-gray-300">
             Monthly: {{ loadingStatistics ? "-" : formatRp(infraMonthly) }}
           </p>
-          <p class="text-base font-medium text-gray-500">
+          <p class="text-base font-medium text-gray-300">
             Annual: {{ loadingStatistics ? "-" : formatRp(infraAnnual) }}
           </p>
           <p
             class="text-sm font-medium inline-block px-2 py-1 rounded bg-gray-100 text-gray-800"
           >
-            Active: {{ infraActive }}
+            Infrastructure Active: {{ infraActive }}
           </p>
         </div>
       </div>
