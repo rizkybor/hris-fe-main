@@ -167,13 +167,13 @@ const saveCompany = async () => {
       </div>
 
       <!-- Description -->
-      <p class="text-gray-600 text-sm md:text-base mb-4 italic">
+      <small class="text-gray-300 text-sm md:text-base mb-4 italic">
         {{ company.description || "-" }}
-      </p>
+      </small>
 
       <!-- Vision -->
       <div class="mb-4 p-4 bg-blue-50 rounded-xl">
-        <h3 class="font-semibold text-gray-800 mb-1">Vision</h3>
+        <h3 class="font-semibold text-blue-700 mb-1">Vision :</h3>
         <p class="text-gray-600 text-sm md:text-base">
           {{ company.vision || "-" }}
         </p>
@@ -181,7 +181,7 @@ const saveCompany = async () => {
 
       <!-- Mission -->
       <div v-if="cleanedMission.length" class="mb-4 p-4 bg-blue-50 rounded-xl">
-        <h3 class="font-semibold text-blue-700 mb-2">Mission:</h3>
+        <h3 class="font-semibold text-blue-700 mb-2">Mission :</h3>
         <ul
           class="list-decimal list-inside text-gray-700 text-sm md:text-base space-y-1"
         >
