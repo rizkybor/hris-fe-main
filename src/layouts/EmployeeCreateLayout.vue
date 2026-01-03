@@ -21,7 +21,7 @@ const router = useRouter();
 const route = useRoute();
 
 // Check if editing or creating
-const isEditing = computed(() => route.name === 'admin.employees.edit');
+const isEditing = computed(() => route.name === "admin.employees.edit");
 
 // Main content ref for scrolling
 const mainContentRef = ref(null);
@@ -34,7 +34,7 @@ const scrollToTop = () => {
   if (mainContentRef.value) {
     mainContentRef.value.scrollTo({
       top: 0,
-      behavior: 'smooth'
+      behavior: "smooth",
     });
   }
 };
@@ -85,10 +85,20 @@ const getStepTitle = () => {
 };
 
 // Reset step when route changes
-watch(() => route.params.id, () => {
-  currentStep.value = 1;
-  scrollToTop();
-});
+watch(
+  () => route.params.id,
+  () => {
+    currentStep.value = 1;
+    scrollToTop();
+  }
+);
+
+const getInitials = (name) => {
+  if (!name) return "";
+  const nameParts = name.split(" ");
+  const initials = nameParts.map((part) => part.charAt(0).toUpperCase());
+  return initials.slice(0, 2).join("");
+};
 </script>
 
 <template>
@@ -110,7 +120,7 @@ watch(() => route.params.id, () => {
             </button>
             <div>
               <h2 class="text-brand-dark text-2xl font-extrabold">
-                {{ isEditing ? 'Edit Employee' : 'Add New Employee' }}
+                {{ isEditing ? "Edit Employee" : "Add New Employee" }}
               </h2>
               <p class="text-brand-light text-sm font-normal mt-1">
                 Step {{ currentStep }} of {{ totalSteps }}: {{ getStepTitle() }}
@@ -150,11 +160,19 @@ watch(() => route.params.id, () => {
                 v-if="user?.profile_photo"
               />
               <div
+                v-else
+                class="w-12 h-12 rounded-full flex items-center justify-center bg-gray-100"
+              >
+                <span class="text-gray-400 text-lg font-semibold">
+                  {{ getInitials(user?.name) }}
+                </span>
+              </div>
+              <!-- <div
                 class="w-12 h-12 rounded-full flex items-center justify-center bg-gray-100"
                 v-else
               >
                 <UserIcon class="w-5 h-5 text-gray-400" />
-              </div>
+              </div> -->
               <div class="text-left">
                 <p class="text-brand-dark text-base font-semibold">
                   {{ user?.name }}
