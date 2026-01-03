@@ -167,9 +167,11 @@ const saveCompany = async () => {
       </div>
 
       <!-- Description -->
-      <small class="text-gray-300 text-sm md:text-base mb-4 italic">
+      <small class="text-gray-400 text-sm md:text-base mb-4 italic">
         {{ company.description || "-" }}
       </small>
+
+      <br/>
 
       <!-- Vision -->
       <div class="mb-4 p-4 bg-blue-50 rounded-xl">
