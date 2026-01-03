@@ -10,7 +10,7 @@ import Statistics from "@/components/admin/company-finance/list/Statistic.vue";
    STATE
 ======================= */
 const loading = ref(false);
-const success = ref("Operational cost loaded successfully");
+// const success = ref("Operational cost loaded successfully");
 
 /* =======================
    DUMMY DATA
@@ -52,7 +52,7 @@ const infrastructures = ref(
 /* =======================
    PAGINATION STATE
 ======================= */
-const perPage = 10;
+const perPage = 5;
 const fixedPage = ref(1);
 const sdmPage = ref(1);
 const infraPage = ref(1);
@@ -114,7 +114,7 @@ watch(
 
 <template>
   <Statistics v-if="can('project-statistic')" />
-  <Alert type="success" :title="success" :show="success" />
+  <!-- <Alert type="success" :title="success" :show="success" /> -->
 
   <!-- ================= FIXED COST ================= -->
   <section class="mb-12 mt-10">
