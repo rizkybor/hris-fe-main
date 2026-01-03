@@ -179,6 +179,13 @@ const confirmLogout = async () => {
   logoutLoading.value = false;
   showLogoutModal.value = false;
 };
+
+const getInitials = (name) => {
+  if (!name) return '';
+  const nameParts = name.split(' ');
+  const initials = nameParts.map(part => part.charAt(0).toUpperCase());
+  return initials.slice(0, 2).join('');
+};
 </script>
 
 <template>
@@ -232,18 +239,20 @@ const confirmLogout = async () => {
             class="flex items-center gap-2 sm:gap-3 cursor-pointer"
             @click="isOpen = !isOpen"
           >
-            <img
-              :src="user?.profile_photo"
-              alt="User Avatar"
-              class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
-              v-if="user?.profile_photo"
-            />
-            <div
+             <div v-if="user?.profile_photo" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full">
+              <img :src="user?.profile_photo" alt="User Avatar" class="w-full h-full rounded-full object-cover" />
+            </div>
+            <div v-else class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-gray-100">
+              <span class="text-gray-400 text-lg font-semibold">
+                {{ getInitials(user?.name) }}
+              </span>
+            </div>
+            <!-- <div
               class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-gray-100"
               v-else
             >
               <UserIcon class="w-5 h-5 text-gray-400" />
-            </div>
+            </div> -->
             <div class="hidden md:block text-left">
               <p class="text-brand-dark text-sm sm:text-base font-semibold">
                 {{ user?.name }}
