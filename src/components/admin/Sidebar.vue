@@ -368,9 +368,7 @@ const onNavigate = () => emit("navigate");
             :to="{ name: 'admin.company-about.dashboard' }"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
             :class="{
-              'nav-link-active': $route.name?.startsWith(
-                'admin.company-about'
-              ),
+              'nav-link-active': $route.name?.startsWith('admin.company-about'),
             }"
             v-if="can('company-about-menu')"
             @click="onNavigate"
@@ -392,26 +390,32 @@ const onNavigate = () => emit("navigate");
             >
           </RouterLink>
 
-           <RouterLink
-            :to="{ name: 'admin.files-company.dashboard' }"
+          <RouterLink
+            :to="{ name: 'admin.company-finance.dashboard' }"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
             :class="{
-              'nav-link-active': $route.name?.startsWith('admin.files-company'),
+              'nav-link-active': $route.name?.startsWith(
+                'admin.company-finance'
+              ),
             }"
-            v-if="can('files-company-menu')"
+            v-if="
+              can(
+                'company-finance-menu'
+              )
+            "
             @click="onNavigate"
           >
             <CircleDollarSign
               class="w-5 h-5 text-gray-600"
               :class="{
-                'text-white': $route.name?.startsWith('admin.files-company'),
+                'text-white': $route.name?.startsWith('admin.company-finance'),
               }"
             />
             <span
               class="text-brand-dark text-base font-medium"
               :class="{
                 'text-brand-white': $route.name?.startsWith(
-                  'admin.files-company'
+                  'admin.company-finance'
                 ),
               }"
               >Operational Cost</span

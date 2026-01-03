@@ -124,6 +124,12 @@ const titles = {
     title: "Company About",
     subtitle: "View Company About Detail",
   },
+  "admin.company-finance.dashboard": {
+    title: "Operational Cost",
+    subtitle: "Company Operational Cost Overview",
+  },
+
+  // EMPLOYEE
   "employee.profile": {
     title: "My Profile",
     subtitle: "Manage your personal information",
