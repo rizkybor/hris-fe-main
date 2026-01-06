@@ -5,6 +5,10 @@ import { Briefcase } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { can } from "@/helpers/permissionHelper";
 import Statistics from "@/components/admin/company-finance/list/Statistic.vue";
+import FixedCostsModal from "@/components/admin/company-finance/modals/FixedCostsModal.vue";
+import SdmResourcesModal from "@/components/admin/company-finance/modals/SdmResourcesModal.vue";
+import InfraToolsModal from "@/components/admin/company-finance/modals/InfraToolsModal.vue";
+
 import { Eye, Edit, Trash2 } from "lucide-vue-next";
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
 
@@ -13,20 +17,54 @@ const store = useCompanyFinanceStore();
 // Fetch data ketika komponen di-mount
 onMounted(() => {
   fetchFixedCostData();
+  fetchSdmResourcesData();
+  fetchInfraToolsData();
 });
 
+/* ================= FIX COST ACTION METHODS ================= */
 const fetchFixedCostData = async () => {
-  const params = { page: 1, per_page: 5 }; // Tentukan parameter pagination
-  await store.fetchFixedCostPaginated(params); // Panggil action fetch data dari store
+  const params = { page: 1, per_page: 5 };
+  await store.fetchFixedCostPaginated(params);
 };
 
-// Action untuk view, edit, dan delete Fixed Cost
+const addFixCost = () => {
+  fixedCostMode.value = "add";
+  selectedFixedCost.value = null;
+  showAddFixedCost.value = true;
+};
+
+const submitFixedCost = async (payload) => {
+  try {
+    console.log(payload, "<<<<< PAYLOAD");
+    // loading.value = true;
+
+    // // OPTIONAL: casting number
+    // payload.monthly_fee = Number(payload.monthly_fee);
+    // payload.annual_fee = Number(payload.annual_fee);
+
+    // await store.createInfraTool(payload); // pastikan ada di store
+
+    // // refresh list
+    // await fetchInfraToolsData();
+
+    // showAddInfra.value = false;
+  } catch (error) {
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
 const viewFixedCost = (item) => {
-  console.log("View Fixed Cost", item);
+  fixedCostMode.value = "view";
+  selectedFixedCost.value = null;
+  showAddFixedCost.value = true;
 };
 
 const editFixedCost = (item) => {
-  console.log("Edit Fixed Cost", item);
+  fixedCostMode.value = "edit";
+  selectedFixedCost.value = null;
+  showAddFixedCost.value = true;
 };
 
 const deleteFixedCost = (item) => {
@@ -37,20 +75,102 @@ const deleteFixedCost = (item) => {
   }
 };
 
+/* ================= SDM ACTION METHODS ================= */
+const fetchSdmResourcesData = async () => {
+  const params = { page: 1, per_page: 5 };
+  await store.fetchSdmResourcePaginated(params);
+};
+
+const addSdm = () => {
+  sdmResourceMode.value = "add";
+  selectedSdmResource.value = null;
+  showAddSdmResource.value = true;
+};
+
+const submitSdm = async (payload) => {
+  try {
+    console.log(payload, "<<<<< PAYLOAD");
+    // loading.value = true;
+
+    // // OPTIONAL: casting number
+    // payload.monthly_fee = Number(payload.monthly_fee);
+    // payload.annual_fee = Number(payload.annual_fee);
+
+    // await store.createInfraTool(payload); // pastikan ada di store
+
+    // // refresh list
+    // await fetchInfraToolsData();
+
+    // showAddInfra.value = false;
+  } catch (error) {
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const viewSdm = (item) => {
+  sdmResourceMode.value = "view";
+  selectedSdmResource.value = item;
+  showAddSdmResource.value = true;
+};
+
+const editSdm = (item) => {
+  sdmResourceMode.value = "edit";
+  selectedSdmResource.value = item;
+  showAddSdmResource.value = true;
+};
+
+const deleteSdm = (item) => {
+  if (confirm(`Are you sure you want to delete "${item.sdm_component}"?`)) {
+    sdmResources.value = sdmResources.value.filter((i) => i.id !== item.id);
+  }
+};
+
 /* ================= INFRA ACTION METHODS ================= */
+const fetchInfraToolsData = async () => {
+  const params = { page: 1, per_page: 5 };
+  await store.fetchInfraToolsPaginated(params);
+};
+
 const addInfra = () => {
-  console.log("Add new Infrastructure");
-  // Bisa buka modal form tambah data
+  infraMode.value = "add";
+  selectedInfra.value = null;
+  showAddInfra.value = true;
+};
+
+const submitInfra = async (payload) => {
+  try {
+    console.log(payload, "<<<<< PAYLOAD");
+    // loading.value = true;
+
+    // // OPTIONAL: casting number
+    // payload.monthly_fee = Number(payload.monthly_fee);
+    // payload.annual_fee = Number(payload.annual_fee);
+
+    // await store.createInfraTool(payload); // pastikan ada di store
+
+    // // refresh list
+    // await fetchInfraToolsData();
+
+    // showAddInfra.value = false;
+  } catch (error) {
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
 };
 
 const viewInfra = (item) => {
-  console.log("View Infrastructure", item);
-  // Bisa tampilkan modal detail
+  infraMode.value = "view";
+  selectedInfra.value = item;
+  showAddInfra.value = true;
 };
 
 const editInfra = (item) => {
-  console.log("Edit Infrastructure", item);
-  // Bisa redirect ke form edit
+  infraMode.value = "edit";
+  selectedInfra.value = item;
+  showAddInfra.value = true;
 };
 
 const deleteInfra = (item) => {
@@ -63,114 +183,19 @@ const deleteInfra = (item) => {
   }
 };
 
-/* ================= SDM ACTION METHODS ================= */
-const addSdm = () => {
-  console.log("Add new SDM");
-  // Bisa buka modal form tambah data
-};
-
-const viewSdm = (item) => {
-  console.log("View SDM", item);
-  // Bisa tampilkan modal detail
-};
-
-const editSdm = (item) => {
-  console.log("Edit SDM", item);
-  // Bisa redirect ke form edit
-};
-
-const deleteSdm = (item) => {
-  if (confirm(`Are you sure you want to delete "${item.sdm_component}"?`)) {
-    sdmResources.value = sdmResources.value.filter((i) => i.id !== item.id);
-  }
-};
-
-/* ================= ACTION METHODS ================= */
-const viewItem = (item) => {
-  console.log("View", item);
-  // bisa tambahkan modal view disini
-};
-const editItem = (item) => {
-  console.log("Edit", item);
-  // bisa redirect ke edit form
-};
-const deleteItem = (item) => {
-  if (confirm(`Are you sure you want to delete "${item.financial_items}"?`)) {
-    store.fixedCostData.value = store.fixedCostData.value.filter(
-      (i) => i.id !== item.id
-    );
-  }
-};
-
 /* =======================
    STATE
 ======================= */
 const loading = ref(false);
-// const success = ref("Operational cost loaded successfully");
-/* =======================
-   DUMMY DATA
-======================= */
-const sdmResourcesDummy = {
-  success: true,
-  message: "SDM Resources Retrieved Successfully",
-  data: {
-    data: [
-      {
-        id: 1,
-        sdm_component: "Utilisasi Tim",
-        metrik: "Jam Kerja Proyek vs Internal",
-        capacity_target: "80% Proyek",
-        budget: 6000000,
-        actual: 5000000,
-        rag_status: "green",
-        notes: "Tim berhasil mencapai target utilisasi dengan baik.",
-        created_at: "2026-01-03T08:45:13.000000Z",
-        updated_at: "2026-01-03T08:45:13.000000Z",
-      },
-    ],
-    meta: {
-      current_page: 1,
-      from: 1,
-      last_page: 1,
-      path: "http://localhost:8000/api/v1/sdm-resources/all/paginated",
-      per_page: 10,
-      to: 1,
-      total: 1,
-    },
-  },
-};
-const sdmResources = ref(sdmResourcesDummy.data.data);
-
-const infrastructuresDummy = {
-  success: true,
-  message: "Infrastructure Tools Retrieved Successfully",
-  data: {
-    data: [
-      {
-        id: 1,
-        tech_stack_component: "GitHub",
-        vendor: "GitHub Inc.",
-        monthly_fee: 29000000.99,
-        annual_fee: 299000000.99,
-        expired_date: "2026-09-18T00:00:00.000000Z",
-        status: "active",
-        notes: "Version control and collaboration platform",
-        created_at: "2026-01-03T08:45:02.000000Z",
-        updated_at: "2026-01-03T08:45:02.000000Z",
-      },
-    ],
-    meta: {
-      current_page: 1,
-      from: 1,
-      last_page: 1,
-      path: "http://localhost:8000/api/v1/infrastructure-tools/all/paginated",
-      per_page: 10,
-      to: 1,
-      total: 1,
-    },
-  },
-};
-const infrastructures = ref(infrastructuresDummy.data.data);
+const showAddFixedCost = ref(false);
+const fixedCostMode = ref("add");
+const selectedFixedCost = ref(null);
+const showAddSdmResource = ref(false);
+const sdmResourceMode = ref("add");
+const selectedSdmResource = ref(null);
+const showAddInfra = ref(false);
+const infraMode = ref("add");
+const selectedInfra = ref(null);
 
 /* =======================
    PAGINATION STATE
@@ -195,6 +220,11 @@ const paginate = (data, page) =>
 
 const pageCount = (data) => Math.ceil(data.length / perPage);
 
+const formatDate = (date) => {
+  if (!date) return "";
+  return date.split("T")[0];
+};
+
 /* =======================
    COMPUTED
 ======================= */
@@ -206,26 +236,32 @@ const filteredFixed = computed(() => {
         .includes(fixedSearch.value.toLowerCase())
     );
   }
-  return []; // Kembalikan array kosong jika store.fixedCostData atau items belum ada
+  return [];
 });
 const fixedPaginated = computed(() =>
   paginate(filteredFixed.value, fixedPage.value)
 );
 
-const filteredSdm = computed(() =>
-  sdmResources.value.filter((item) =>
-    item.sdm_component.toLowerCase().includes(sdmSearch.value.toLowerCase())
-  )
-);
+const filteredSdm = computed(() => {
+  if (store.sdmResourceData && store.sdmResourceData.items) {
+    return store.sdmResourceData.items.filter((item) =>
+      item.sdm_component.toLowerCase().includes(sdmSearch.value.toLowerCase())
+    );
+  }
+  return [];
+});
 const sdmPaginated = computed(() => paginate(filteredSdm.value, sdmPage.value));
 
-const filteredInfra = computed(() =>
-  infrastructures.value.filter((item) =>
-    item.tech_stack_component
-      .toLowerCase()
-      .includes(infraSearch.value.toLowerCase())
-  )
-);
+const filteredInfra = computed(() => {
+  if (store.infraToolsData && store.infraToolsData.items) {
+    return store.infraToolsData.items.filter((item) =>
+      item.tech_stack_component
+        .toLowerCase()
+        .includes(infraSearch.value.toLowerCase())
+    );
+  }
+  return [];
+});
 const infraPaginated = computed(() =>
   paginate(filteredInfra.value, infraPage.value)
 );
@@ -325,13 +361,6 @@ watch(
                 No Fixed Cost data found.
               </td>
             </tr>
-
-            <!-- Jika tidak ada data -->
-            <tr v-if="filteredFixed.length === 0">
-              <td colspan="6" class="text-center py-4 text-gray-500">
-                No Fixed Cost data found.
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -387,6 +416,7 @@ watch(
         <table class="w-full text-sm sm:text-base">
           <thead class="bg-gray-50">
             <tr>
+              <th class="px-3 py-2">No</th>
               <th class="px-3 py-2">Component</th>
               <th class="px-3 py-2">Metric</th>
               <th class="px-3 py-2">Capacity</th>
@@ -397,7 +427,14 @@ watch(
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in sdmPaginated" :key="item.id" class="border-t">
+            <tr
+              v-for="(item, index) in sdmPaginated"
+              :key="item.id"
+              class="border-t"
+            >
+              <td class="px-3 py-2">
+                {{ (sdmPage - 1) * perPage + index + 1 }}
+              </td>
               <td class="px-3 py-2 font-medium">{{ item.sdm_component }}</td>
               <td class="px-3 py-2">{{ item.metrik }}</td>
               <td class="px-3 py-2">{{ item.capacity_target }}</td>
@@ -498,6 +535,7 @@ watch(
         <table class="w-full text-sm sm:text-base">
           <thead class="bg-gray-50">
             <tr>
+              <th class="px-3 py-2">No</th>
               <th class="px-3 py-2">Tech Stack</th>
               <th class="px-3 py-2">Vendor</th>
               <th class="px-3 py-2 text-right">Monthly</th>
@@ -508,18 +546,25 @@ watch(
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in infraPaginated" :key="item.id" class="border-t">
+            <tr
+              v-for="(item, index) in infraPaginated"
+              :key="item.id"
+              class="border-t"
+            >
+              <td class="px-3 py-2">
+                {{ (infraPage - 1) * perPage + index + 1 }}
+              </td>
               <td class="px-3 py-2 font-medium">
                 {{ item.tech_stack_component }}
               </td>
               <td class="px-3 py-2">{{ item.vendor }}</td>
               <td class="px-3 py-2 text-right">
-                {{ item.monthly_fee.toLocaleString() }}
+                Rp. {{ item.monthly_fee.toLocaleString() }}
               </td>
               <td class="px-3 py-2 text-right">
-                {{ item.annual_fee.toLocaleString() }}
+                Rp. {{ item.annual_fee.toLocaleString() }}
               </td>
-              <td class="px-3 py-2">{{ item.expired_date }}</td>
+              <td class="px-3 py-2">{{ formatDate(item.expired_date) }}</td>
               <td class="px-3 py-2">{{ item.status }}</td>
               <td class="px-3 py-2 text-center flex justify-center gap-2">
                 <Eye
@@ -571,4 +616,31 @@ watch(
       </div>
     </section>
   </div>
+
+  <FixedCostsModal
+    :show="showAddFixedCost"
+    :loading="loading"
+    :mode="fixedCostMode"
+    :data="selectedFixedCost"
+    @close="showAddFixedCost = false"
+    @submit="submitFixedCost"
+  />
+
+  <SdmResourcesModal
+    :show="showAddSdmResource"
+    :loading="loading"
+    :mode="sdmResourceMode"
+    :data="selectedSdmResource"
+    @close="showAddSdmResource = false"
+    @submit="submitSdm"
+  />
+
+  <InfraToolsModal
+    :show="showAddInfra"
+    :loading="loading"
+    :mode="infraMode"
+    :data="selectedInfra"
+    @close="showAddInfra = false"
+    @submit="submitInfra"
+  />
 </template>
