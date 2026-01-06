@@ -149,17 +149,16 @@ const formatDate = (date) => {
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
       >
-        <h3 class="text-brand-dark text-lg font-bold">
-          Accounts
-        </h3>
+        <h3 class="text-brand-dark text-lg font-bold">Accounts</h3>
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <!-- SEARCH -->
           <div class="relative w-full sm:w-auto flex-1 sm:flex-none">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-  <Search class="w-4 h-4 text-blue-400" />
-</div>
-
+            <div
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10"
+            >
+              <Search class="w-4 h-4 text-blue-400" />
+            </div>
 
             <input
               v-model="searchQuery"
@@ -171,9 +170,11 @@ const formatDate = (date) => {
 
           <router-link
             :to="{ name: 'admin.account-password.create' }"
-            class="w-full sm:w-auto text-center px-4 py-2 rounded-xl bg-[#0C51D9] text-white text-sm font-semibold hover:bg-[#0A45BF] transition"
+            class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
           >
-            + Add Credential
+            <span class="text-brand-white text-sm font-semibold">
+              Create Credential
+            </span>
           </router-link>
         </div>
       </div>

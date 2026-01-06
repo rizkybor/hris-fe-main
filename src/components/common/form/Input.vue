@@ -26,6 +26,7 @@
         :required="required"
         :min="min"
         :step="step"
+        :readonly="readonly"
         :class="[
           'w-full pl-10 pr-4 border rounded-[16px] transition-all duration-300',
           'hover:border-[#0C51D9] hover:border-2',
@@ -57,6 +58,7 @@ const props = defineProps({
   error: { type: String, default: "" },
   min: { type: [String, Number], default: undefined },
   step: { type: [String, Number], default: undefined },
+  readonly: { type: Boolean, default: false },
 });
 const emit = defineEmits(["update:modelValue"]);
 
