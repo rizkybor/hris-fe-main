@@ -27,7 +27,7 @@ const fetchFixedCostData = async () => {
   await store.fetchFixedCostPaginated(params);
 };
 
-const addFixCost = () => {
+const addFixedCost = () => {
   fixedCostMode.value = "add";
   selectedFixedCost.value = null;
   showAddFixedCost.value = true;
@@ -296,6 +296,7 @@ watch(
         <h4 class="text-lg font-bold">Fixed Cost</h4>
         <button
           class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+           @click="addFixedCost"
         >
           + Add Data
         </button>
