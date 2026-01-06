@@ -57,13 +57,13 @@ const submitFixedCost = async (payload) => {
 
 const viewFixedCost = (item) => {
   fixedCostMode.value = "view";
-  selectedFixedCost.value = null;
+  selectedFixedCost.value = item;
   showAddFixedCost.value = true;
 };
 
 const editFixedCost = (item) => {
   fixedCostMode.value = "edit";
-  selectedFixedCost.value = null;
+  selectedFixedCost.value = item;
   showAddFixedCost.value = true;
 };
 
