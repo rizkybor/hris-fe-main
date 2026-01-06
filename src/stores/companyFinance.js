@@ -4,10 +4,7 @@ import { handleError } from "@/helpers/errorHelper";
 
 export const useCompanyFinanceStore = defineStore("company-finance", {
   state: () => ({
-    companyFinance: {
-      fixed_cost: { items: [], summary: {} },
-      sdm_resource: { items: [], summary: {} },
-      infrastructure: { items: [], summary: {} },
+    saldo: {
       company_balance: "0.00",
     },
     statistics: {
@@ -58,25 +55,27 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         last_page: 1,
       },
     },
+    sdmResourceData: {
+      items: [],
+      meta: {
+        current_page: 1,
+        per_page: 10,
+        total: 1,
+        last_page: 1,
+      },
+    },
+    infraToolsData: {
+      items: [],
+      meta: {
+        current_page: 1,
+        per_page: 10,
+        total: 1,
+        last_page: 1,
+      },
+    },
   }),
 
   actions: {
-    async fetchOperationalCost(params) {
-      this.loading = true;
-
-      try {
-        const response = await axiosInstance.get(`company-finances`, {
-          params,
-        });
-
-        this.companyFinance = response.data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
-    },
-
     async fetchOperationalCostPaginated(params) {
       this.loading = true;
 
@@ -86,7 +85,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
           { params }
         );
 
-        this.companyFinance = response.data.data.data;
+        this.saldo.company_balance = response.data.data.data;
         this.meta = response.data.data.meta;
       } catch (error) {
         this.error = handleError(error);
@@ -96,20 +95,6 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
     },
 
     async fetchOperationalCostById(id) {
-      this.loading = true;
-
-      try {
-        const response = await axiosInstance.get(`company-finances/${id}`);
-
-        return response.data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async fetchOperationalCost(id) {
       this.loading = true;
 
       try {
@@ -174,22 +159,17 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       this.loading = true;
 
       try {
-        // Ubah URL untuk mencocokkan endpoint yang benar
-        const response = await axiosInstance.get(
-          "/fixed-costs/all/paginated", // URL endpoint yang benar
-          {
-            params: {
-              row_per_page: params.per_page || 10, // Parameter untuk pagination
-              search: params.search || "", // Parameter untuk search jika ada
-            },
-          }
-        );
+        const response = await axiosInstance.get("/fixed-costs/all/paginated", {
+          params: {
+            row_per_page: params.per_page || 10,
+            search: params.search || "",
+          },
+        });
 
         // Menyimpan data yang diterima
-        this.fixedCostData.items = response.data.data.data; // Menyimpan items
-        this.fixedCostData.meta = response.data.data.meta; // Menyimpan meta
+        this.fixedCostData.items = response.data.data.data;
+        this.fixedCostData.meta = response.data.data.meta;
 
-        // Memperbarui summary (jika ada fungsi ini)
         this.updateFixedCostSummary();
       } catch (error) {
         // Menangani error jika ada
@@ -212,6 +192,99 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         total_actual: totalActual,
         variance: variance,
         total_items: items.length,
+      };
+    },
+
+    /* ================= SDM RESOURCE ACTION METHODS ================= */
+    async fetchSdmResourcePaginated(params) {
+      this.loading = true;
+      try {
+        const response = await axiosInstance.get(
+          "/sdm-resources/all/paginated",
+          {
+            params: {
+              row_per_page: params.per_page || 10,
+              search: params.search || "",
+            },
+          }
+        );
+
+        // Menyimpan data yang diterima
+        this.sdmResourceData.items = response.data.data.data;
+        this.sdmResourceData.meta = response.data.data.meta;
+
+        this.updateSdmResourceSummary();
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Update the SDM Resource summary
+    updateSdmResourceSummary() {
+      // sesuai struktur JSON API
+      const items = this.sdmResourceData.items;
+      const totalBudget = items.reduce(
+        (acc, item) => acc + Number(item.budget || 0),
+        0
+      );
+      const totalActual = items.reduce(
+        (acc, item) => acc + Number(item.actual || 0),
+        0
+      );
+      const variance = totalBudget - totalActual;
+      this.statistics.sdm_resources.summary = {
+        total_budget: totalBudget,
+        total_actual: totalActual,
+        variance,
+        total_items: items.length,
+      };
+    },
+
+    /* ================= INFRA TOOLS ACTION METHODS ================= */
+    async fetchInfraToolsPaginated(params) {
+      this.loading = true;
+      try {
+        const response = await axiosInstance.get(
+          "/infrastructure-tools/all/paginated",
+          {
+            params: {
+              row_per_page: params.per_page || 10,
+              search: params.search || "",
+            },
+          }
+        );
+
+        // Menyimpan data yang diterima
+        this.infraToolsData.items = response.data.data.data;
+        this.infraToolsData.meta = response.data.data.meta;
+        this.updateInfraToolsSummary();
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Update the Infra Tools summary
+    updateInfraToolsSummary() {
+      const items = this.infraToolsData.items;
+      const total_monthly_fee = items.reduce(
+        (acc, item) => acc + Number(item.monthly_fee || 0),
+        0
+      );
+      const total_annual_fee = items.reduce(
+        (acc, item) => acc + Number(item.annual_fee || 0),
+        0
+      );
+      const total_infra_active = items.filter(
+        (item) => item.status === "active"
+      ).length;
+      this.statistics.infrastructure.summary = {
+        total_monthly_fee,
+        total_annual_fee,
+        total_infra_active,
       };
     },
   },
