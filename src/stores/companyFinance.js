@@ -234,7 +234,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         0
       );
       const variance = totalBudget - totalActual;
-      this.statistics.sdm_resources.summary = {
+      this.statistics.sdm_resource.summary = {
         total_budget: totalBudget,
         total_actual: totalActual,
         variance,
