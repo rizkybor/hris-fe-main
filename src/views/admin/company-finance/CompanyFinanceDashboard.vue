@@ -343,15 +343,15 @@ watch(
               <td class="px-3 py-2 text-center flex justify-center gap-2">
                 <Eye
                   class="w-5 h-5 text-blue-500 cursor-pointer"
-                  @click="viewItem(item)"
+                  @click="viewFixedCost(item)"
                 />
                 <Edit
                   class="w-5 h-5 text-yellow-500 cursor-pointer"
-                  @click="editItem(item)"
+                  @click="editFixedCost(item)"
                 />
                 <Trash2
                   class="w-5 h-5 text-red-500 cursor-pointer"
-                  @click="deleteItem(item)"
+                  @click="deleteFixedCost(item)"
                 />
               </td>
             </tr>
