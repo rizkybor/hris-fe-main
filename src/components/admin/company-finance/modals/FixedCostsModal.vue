@@ -28,6 +28,14 @@ const form = reactive({
   notes: "",
 });
 
+const buildPayload = () => ({
+  financial_items: form.financial_items,
+  description: form.description,
+  budget: Number(form.budget),
+  actual: Number(form.actual),
+  notes: form.notes,
+});
+
 // Error state
 const errors = reactive({
   financial_items: "",
@@ -104,15 +112,18 @@ const validate = () => {
 };
 
 // Submit
-const submit = () => {
+ const submit = () => {
   if (!validate()) return;
 
   emit("submit", {
-    ...form,
-    budget: Number(form.budget),
-    actual: Number(form.actual),
+    mode: props.mode,
+    id: props.data?.id,
+    payload: buildPayload(),
   });
+
+  emit("close");
 };
+
 </script>
 
 <template>
