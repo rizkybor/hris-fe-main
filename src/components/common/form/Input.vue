@@ -5,8 +5,9 @@
       class="block mb-2 text-gray-700 font-semibold font-jakarta text-[14px]"
       v-if="label"
     >
-      {{ label }}
+      {{ label }}<span v-if="required" class="text-red-600 ml-1">*</span>
     </label>
+
 
     <div class="relative">
       <!-- slot icon -->
@@ -21,12 +22,12 @@
         :id="id"
         :name="name"
         :type="type"
-        v-model="modelValue"
         :placeholder="placeholder"
         :required="required"
         :min="min"
         :step="step"
         :readonly="readonly"
+        :value="modelValue"
         :class="[
           'w-full pl-10 pr-4 border rounded-[16px] transition-all duration-300',
           'hover:border-[#0C51D9] hover:border-2',
@@ -34,7 +35,7 @@
           borderColor,
         ]"
         :style="inputStyle"
-        @input="modelValue = $event.target.value"
+        @input="onInput"
       />
     </div>
 
@@ -59,6 +60,7 @@ const props = defineProps({
   min: { type: [String, Number], default: undefined },
   step: { type: [String, Number], default: undefined },
   readonly: { type: Boolean, default: false },
+  onlyNumber: { type: Boolean, default: false },
 });
 const emit = defineEmits(["update:modelValue"]);
 
@@ -80,6 +82,19 @@ const inputStyle = {
   gap: "10px",
   background: "#ffffff",
 };
+
+const onInput = (event) => {
+  let value = event.target.value;
+
+  if (props.onlyNumber) {
+    value = value.replace(/[^0-9]/g, "");
+    event.target.value = value;
+  }
+
+  emit("update:modelValue", value);
+};
+
+
 
 const errorStyle = {
   color: "#dc2626",

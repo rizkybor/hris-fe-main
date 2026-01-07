@@ -1,7 +1,7 @@
 <template>
   <div>
     <label :for="id" class="block mb-2" :style="labelStyle">
-      {{ label }}
+      {{ label }}<span v-if="required" class="text-red-600 ml-1">*</span>
     </label>
 
     <div class="relative">
@@ -18,7 +18,9 @@
         :name="name"
         v-model="modelValue"
         :required="required"
+        :disabled="readonly"
         :class="[
+          readonly ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer',
           'w-full pl-10 pr-4 py-3 border rounded-[16px] transition-all duration-300 font-semibold',
           'hover:border-[#0C51D9] hover:border-2',
           'focus:border-[#0C51D9] focus:border-2 focus:bg-white',
@@ -48,13 +50,14 @@ const props = defineProps({
   id: { type: String, required: true },
   name: { type: String, default: "" },
   label: { type: String, required: true },
-  placeholder: { type: String, default: "" }, // optional first option
+  placeholder: { type: String, default: "" },
   required: { type: Boolean, default: false },
   modelValue: { type: [String, Number], default: "" },
   options: {
     type: Array,
-    default: () => [], // [{ value:'dev', label:'Development' }]
+    default: () => [],
   },
+  readonly: { type: Boolean, default: false },
   error: { type: String, default: "" },
 });
 const emit = defineEmits(["update:modelValue"]);

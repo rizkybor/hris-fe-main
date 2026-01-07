@@ -8,7 +8,7 @@ const props = defineProps({
   loading: Boolean,
   mode: {
     type: String,
-    default: "add", // add | edit | view
+    default: "add",
   },
   data: {
     type: Object,
@@ -31,6 +31,7 @@ const form = reactive({
 // Error state
 const errors = reactive({
   financial_items: "",
+  description: "",
   budget: "",
   actual: "",
 });
@@ -92,8 +93,8 @@ const validate = () => {
   let valid = true;
 
   errors.financial_items = form.financial_items ? "" : "Item is required";
+  errors.description = form.description ? "" : "Description is required";
   errors.budget = form.budget !== "" ? "" : "Budget is required";
-  errors.actual = form.actual !== "" ? "" : "Actual is required";
 
   Object.values(errors).forEach((e) => {
     if (e) valid = false;
@@ -122,7 +123,7 @@ const submit = () => {
     <div
       class="bg-white rounded-[20px] w-full max-w-md max-h-[90vh] overflow-y-auto p-6 shadow-xl"
     >
-      <h3 class="text-xl font-bold mb-4">
+      <h3 class="text-xl font-bold">
         {{
           props.mode === "add"
             ? "Add Fixed Cost"
@@ -132,12 +133,23 @@ const submit = () => {
         }}
       </h3>
 
+      <h6 class="text-sm text-gray-400 italic mb-4">
+        {{
+          props.mode === "add"
+            ? "create a new fixed cost record."
+            : props.mode === "edit"
+            ? "modify the fixed cost details."
+            : "details of the selected fixed cost."
+        }}
+      </h6>
+
       <div class="space-y-4">
         <!-- Item -->
         <div>
           <BaseInput
             id="financial_items"
             label="Item"
+            placeholder="add your financial item"
             v-model="form.financial_items"
             :readonly="props.mode === 'view'"
             :required="props.mode !== 'view'"
@@ -152,19 +164,26 @@ const submit = () => {
           <BaseInput
             id="description"
             label="Description"
+            placeholder="add description item"
             v-model="form.description"
             :readonly="props.mode === 'view'"
+            :required="props.mode !== 'view'"
           />
+          <p v-if="errors.description" class="text-red-500 text-sm mt-1">
+            {{ errors.description }}
+          </p>
         </div>
 
         <!-- Budget -->
         <div>
           <BaseInput
             id="budget"
-            label="Budget"
+            label="Budget (Rp.)"
+            placeholder="add price budget item"
             v-model="budgetModel"
             :readonly="props.mode === 'view'"
             :required="props.mode !== 'view'"
+            only-number
           />
           <p v-if="errors.budget" class="text-red-500 text-sm mt-1">
             {{ errors.budget }}
@@ -172,28 +191,23 @@ const submit = () => {
         </div>
 
         <!-- Actual -->
-        <div>
-          <BaseInput
-            id="actual"
-            label="Actual"
-            v-model="actualModel"
-            :readonly="props.mode === 'view'"
-            :required="props.mode !== 'view'"
-          />
-          <p v-if="errors.actual" class="text-red-500 text-sm mt-1">
-            {{ errors.actual }}
-          </p>
-        </div>
+        <BaseInput
+          id="actual"
+          label="Actual (Rp.)"
+          placeholder="add price actual item"
+          v-model="actualModel"
+          :readonly="props.mode === 'view'"
+          only-number
+        />
 
         <!-- Notes -->
-        <fiv>
-          <BaseInput
-            id="notes"
-            label="Notes"
-            v-model="form.notes"
-            :readonly="props.mode === 'view'"
-          />
-        </fiv>
+        <BaseInput
+          id="notes"
+          label="Notes"
+          placeholder="add notes item"
+          v-model="form.notes"
+          :readonly="props.mode === 'view'"
+        />
       </div>
 
       <!-- Buttons -->
