@@ -295,10 +295,12 @@ watch(
       <div class="flex justify-between items-center mb-4">
         <h4 class="text-lg font-bold">Fixed Cost</h4>
         <button
-          class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
-           @click="addFixedCost"
+          @click="addFixedCost"
+          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
         >
-          + Add Data
+          <span class="text-brand-white text-sm font-semibold">
+            + Fixed Cost
+          </span>
         </button>
       </div>
 
@@ -335,10 +337,10 @@ watch(
               </td>
               <td class="px-3 py-2 font-medium">{{ item.financial_items }}</td>
               <td class="px-3 py-2 text-right">
-                {{ item.budget.toLocaleString() }}
+                Rp. {{ item.budget.toLocaleString() }}
               </td>
               <td class="px-3 py-2 text-right">
-                {{ item.actual.toLocaleString() }}
+                Rp. {{ item.actual.toLocaleString() }}
               </td>
               <td class="px-3 py-2 text-gray-500">{{ item.notes }}</td>
               <td class="px-3 py-2 text-center flex justify-center gap-2">
@@ -396,10 +398,12 @@ watch(
       <div class="flex justify-between items-center mb-4">
         <h4 class="text-lg font-bold">SDM Resource</h4>
         <button
-          class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
           @click="addSdm"
+          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
         >
-          + Add Data
+          <span class="text-brand-white text-sm font-semibold">
+            + SDM Resource
+          </span>
         </button>
       </div>
 
@@ -453,10 +457,10 @@ watch(
                 </span>
               </td>
               <td class="px-3 py-2 text-right">
-                {{ item.budget.toLocaleString() }}
+                Rp. {{ item.budget.toLocaleString() }}
               </td>
               <td class="px-3 py-2 text-right">
-                {{ item.actual.toLocaleString() }}
+                Rp. {{ item.actual.toLocaleString() }}
               </td>
               <td class="px-3 py-2 text-center flex justify-center gap-2">
                 <Eye
@@ -515,10 +519,12 @@ watch(
       <div class="flex justify-between items-center mb-4">
         <h4 class="text-lg font-bold">Infrastructure Tools</h4>
         <button
-          class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
           @click="addInfra"
+          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
         >
-          + Add Data
+          <span class="text-brand-white text-sm font-semibold">
+            + Infrastructure Tools
+          </span>
         </button>
       </div>
 

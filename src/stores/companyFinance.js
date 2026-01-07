@@ -180,6 +180,37 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       }
     },
 
+    async createFixedCost(payload) {
+      this.loading = true;
+
+      try {
+        const response = await axiosInstance.post("fixed-costs", payload);
+
+        this.success = response.data.message;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async updateFixedCost(id, payload) {
+      this.loading = true;
+
+      try {
+        const response = await axiosInstance.post(`fixed-costs/${id}`, {
+          ...payload,
+          _method: "PUT",
+        });
+
+        this.success = response.data.message;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
     // Update the Fixed Cost summary
     updateFixedCostSummary() {
       const items = this.fixedCostData.items;
