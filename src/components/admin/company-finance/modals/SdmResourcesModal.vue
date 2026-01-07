@@ -1,6 +1,7 @@
 <script setup>
 import BaseInput from "@/components/common/form/Input.vue";
-import { reactive, watch } from "vue";
+import BaseSelect from "@/components/common/form/Select.vue";
+import { reactive, watch, computed } from "vue";
 
 const props = defineProps({
   show: Boolean,
@@ -15,6 +16,12 @@ const props = defineProps({
   },
 });
 
+const ragOptions = [
+  { value: "red", label: "🔴 Red (Critical)" },
+  { value: "amber", label: "🟡 Amber (At Risk)" },
+  { value: "green", label: "🟢 Green (On Track)" },
+];
+
 const emit = defineEmits(["submit", "close"]);
 
 const form = reactive({
@@ -25,6 +32,15 @@ const form = reactive({
   actual: "",
   rag_status: "",
   notes: "",
+});
+
+// Error state
+const errors = reactive({
+  sdm_component: "",
+  metrik: "",
+  capacity_target: "",
+  budget: "",
+  rag_status: "",
 });
 
 watch(
@@ -45,7 +61,59 @@ watch(
   { immediate: true }
 );
 
+// ===== Rupiah formatting =====
+const formatRupiah = (value) => {
+  if (!value && value !== 0) return "";
+  const number = Number(value.toString().replace(/\D/g, ""));
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(number);
+};
+
+const parseRupiah = (value) => {
+  if (!value) return "";
+  return Number(value.toString().replace(/[^0-9]/g, ""));
+};
+
+// Computed: budget & actual dengan read-only protection
+const budgetModel = computed({
+  get: () => formatRupiah(form.budget),
+  set: (val) => {
+    if (props.mode !== "view") form.budget = parseRupiah(val);
+  },
+});
+
+const actualModel = computed({
+  get: () => formatRupiah(form.actual),
+  set: (val) => {
+    if (props.mode !== "view") form.actual = parseRupiah(val);
+  },
+});
+
+// ===== Validation =====
+const validate = () => {
+  let valid = true;
+
+  errors.sdm_component = form.sdm_component ? "" : "Item is required";
+  errors.metrik = form.metrik ? "" : "Metrik is required";
+  errors.capacity_target = form.capacity_target
+    ? ""
+    : "Capacity of Target is required";
+  errors.budget = form.budget !== "" ? "" : "Budget is required";
+  errors.rag_status = form.rag_status ? "" : "Status is required";
+
+  Object.values(errors).forEach((e) => {
+    if (e) valid = false;
+  });
+
+  return valid;
+};
+
 const submit = () => {
+  if (!validate()) return;
+
   emit("submit", {
     ...form,
     budget: Number(form.budget),
@@ -62,7 +130,7 @@ const submit = () => {
     <div
       class="bg-white rounded-[20px] w-full max-w-md max-h-[90vh] overflow-y-auto p-6 shadow-xl"
     >
-      <h3 class="text-xl font-bold mb-4">
+      <h3 class="text-xl font-bold">
         {{
           props.mode === "add"
             ? "Add SDM Resource"
@@ -72,54 +140,102 @@ const submit = () => {
         }}
       </h3>
 
+      <h6 class="text-sm text-gray-400 italic mb-4">
+        {{
+          props.mode === "add"
+            ? "create a new sdm resource record."
+            : props.mode === "edit"
+            ? "modify the sdm resource details."
+            : "details of the selected sdm resource."
+        }}
+      </h6>
+
       <div class="space-y-4">
-        <BaseInput
-          id="sdm_component"
-          label="Component"
-          v-model="form.sdm_component"
-          :readonly="props.mode === 'view'"
-        />
+        <div>
+          <BaseInput
+            id="sdm_component"
+            label="Component"
+            placeholder="add your component sdm item"
+            v-model="form.sdm_component"
+            :readonly="props.mode === 'view'"
+            :required="props.mode !== 'view'"
+          />
+          <p v-if="errors.sdm_component" class="text-red-500 text-sm mt-1">
+            {{ errors.sdm_component }}
+          </p>
+        </div>
 
-        <BaseInput
-          id="metrik"
-          label="Metric"
-          v-model="form.metrik"
-          :readonly="props.mode === 'view'"
-        />
+        <div>
+          <BaseInput
+            id="metrik"
+            label="Metric"
+            placeholder="add metric item"
+            v-model="form.metrik"
+            :readonly="props.mode === 'view'"
+            :required="props.mode !== 'view'"
+          />
+          <p v-if="errors.metrik" class="text-red-500 text-sm mt-1">
+            {{ errors.metrik }}
+          </p>
+        </div>
 
-        <BaseInput
-          id="capacity_target"
-          label="Capacity Target"
-          v-model="form.capacity_target"
-          :readonly="props.mode === 'view'"
-        />
+        <div>
+          <BaseInput
+            id="capacity_target"
+            label="Capacity Target"
+            placeholder="add capacity of target"
+            v-model="form.capacity_target"
+            :readonly="props.mode === 'view'"
+            :required="props.mode !== 'view'"
+          />
+          <p v-if="errors.capacity_target" class="text-red-500 text-sm mt-1">
+            {{ errors.capacity_target }}
+          </p>
+        </div>
 
-        <BaseInput
-          id="budget"
-          type="number"
-          label="Budget"
-          v-model="form.budget"
-          :readonly="props.mode === 'view'"
-        />
+        <div>
+          <BaseInput
+            id="budget"
+            label="Budget"
+            placeholder="add price budget item"
+            v-model="budgetModel"
+            :readonly="props.mode === 'view'"
+            :required="props.mode !== 'view'"
+            only-number
+          />
+          <p v-if="errors.budget" class="text-red-500 text-sm mt-1">
+            {{ errors.budget }}
+          </p>
+        </div>
 
         <BaseInput
           id="actual"
-          type="number"
           label="Actual"
-          v-model="form.actual"
+          placeholder="add price actual item"
+          v-model="actualModel"
           :readonly="props.mode === 'view'"
+          only-number
         />
 
-        <BaseInput
-          id="rag_status"
-          label="RAG Status"
-          v-model="form.rag_status"
-          :readonly="props.mode === 'view'"
-        />
+        <div>
+          <BaseSelect
+            id="rag_status"
+            label="RAG Status"
+            placeholder="Select RAG status"
+            v-model="form.rag_status"
+            :options="ragOptions"
+            :required="props.mode !== 'view'"
+            :readonly="props.mode === 'view'"
+          />
+          <p v-if="errors.rag_status" class="text-red-500 text-sm mt-1">
+            {{ errors.rag_status }}
+          </p>
+        </div>
 
         <BaseInput
           id="notes"
           label="Notes"
+          placeholder="add notes item"
           v-model="form.notes"
           :readonly="props.mode === 'view'"
         />

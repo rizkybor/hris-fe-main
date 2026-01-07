@@ -39,7 +39,11 @@ const submit = async () => {
   error.value = "";
   success.value = "";
 
-  if (!form.value.label_password || !form.value.username_email || !form.value.password) {
+  if (
+    !form.value.label_password ||
+    !form.value.username_email ||
+    !form.value.password
+  ) {
     error.value = "Label Password, Username/Email, dan Password wajib diisi.";
     return;
   }
@@ -85,12 +89,12 @@ const submit = async () => {
     <!-- <Alert type="success" :title="success" :show="success" /> -->
     <div class="mb-6">
       <Transition name="fade">
-        <Alert 
-          v-if="error" 
-          type="error" 
-          :title="error" 
-          :show="!!error" 
-          @close="error = ''" 
+        <Alert
+          v-if="error"
+          type="error"
+          :title="error"
+          :show="!!error"
+          @close="error = ''"
         />
       </Transition>
     </div>
@@ -215,7 +219,7 @@ const submit = async () => {
           Cancel
         </button>
 
-        <button
+        <!-- <button
           type="button"
           @click="submit"
           :disabled="loading"
@@ -223,6 +227,15 @@ const submit = async () => {
         >
           <Save class="w-4 h-4" />
           {{ loading ? "Saving..." : "Save Credential" }}
+        </button> -->
+
+        <button
+          @click="submit"
+          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
+        >
+          <span class="text-brand-white text-sm font-semibold">
+            {{ loading ? "Saving..." : "Save " }}
+          </span>
         </button>
       </div>
     </div>
