@@ -34,6 +34,16 @@ const form = reactive({
   notes: "",
 });
 
+const buildPayload = () => ({
+  sdm_component: form.sdm_component,
+  metrik: form.metrik,
+  capacity_target: form.capacity_target,
+  budget: Number(form.budget),
+  actual: Number(form.actual),
+  rag_status: form.rag_status,
+  notes: form.notes,
+});
+
 // Error state
 const errors = reactive({
   sdm_component: "",
@@ -111,14 +121,18 @@ const validate = () => {
   return valid;
 };
 
-const submit = () => {
+// Submit
+ const submit = () => {
+    console.log(props, 'cek')
   if (!validate()) return;
 
   emit("submit", {
-    ...form,
-    budget: Number(form.budget),
-    actual: Number(form.actual),
+    mode: props.mode,
+    id: props.data?.id,
+    payload: buildPayload(),
   });
+
+  emit("close");
 };
 </script>
 
@@ -196,7 +210,7 @@ const submit = () => {
         <div>
           <BaseInput
             id="budget"
-            label="Budget"
+            label="Budget (Rp.)"
             placeholder="add price budget item"
             v-model="budgetModel"
             :readonly="props.mode === 'view'"
@@ -210,7 +224,7 @@ const submit = () => {
 
         <BaseInput
           id="actual"
-          label="Actual"
+          label="Actual (Rp.)"
           placeholder="add price actual item"
           v-model="actualModel"
           :readonly="props.mode === 'view'"
