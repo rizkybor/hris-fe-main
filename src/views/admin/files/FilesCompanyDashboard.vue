@@ -1,32 +1,77 @@
 <script setup>
-import { onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { storeToRefs } from "pinia";
 import {
   Archive,
   Upload,
   Calendar,
-  User,
   Eye,
   Pencil,
   Download,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 
 const archiveStore = useFilesCompanyStore();
-const { archives, statistics, loading, success } = storeToRefs(archiveStore);
+const { archives, statistics, loading, success, error, pagination } = storeToRefs(archiveStore);
 
-onMounted(async () => {
-  await archiveStore.fetchStatistics();
-  await archiveStore.fetchArchives();
-});
+// Input search
+const searchQuery = ref("");
 
-const formatDate = (date) =>
-  new Date(date).toLocaleDateString("id-ID", {
+// Rows per page (bisa diubah dari parent)
+const rowsPerPage = ref(10);
+
+// Format tanggal
+const formatDate = (date) => {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("id-ID", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+};
+
+// Fetch stats & first page on mount
+onMounted(async () => {
+  await archiveStore.fetchStatistics();
+  await archiveStore.fetchArchives({ page: 1, perPage: rowsPerPage.value });
+});
+
+// Watch searchQuery dan reload archives dengan debounce
+watch(
+  searchQuery,
+  async (newQuery) => {
+    await archiveStore.fetchArchives({
+      search: newQuery,
+      page: 1,
+      perPage: rowsPerPage.value,
+    });
+  },
+  { debounce: 500 }
+);
+
+// Pagination
+const goToPage = async (page) => {
+  await archiveStore.fetchArchives({
+    search: searchQuery.value,
+    page,
+    perPage: rowsPerPage.value,
+  });
+};
+
+const prevPage = () => {
+  if (pagination.value.current_page > 1) {
+    goToPage(pagination.value.current_page - 1);
+  }
+};
+
+const nextPage = () => {
+  if (pagination.value.current_page < pagination.value.last_page) {
+    goToPage(pagination.value.current_page + 1);
+  }
+};
 </script>
 
 <template>
@@ -46,7 +91,7 @@ const formatDate = (date) =>
       <div class="bg-white border rounded-[20px] p-5">
         <p class="text-sm text-gray-500">Last Upload</p>
         <p class="text-lg font-bold my-3">
-          {{ statistics.last_uploaded }}
+          {{ statistics.last_uploaded ? formatDate(statistics.last_uploaded) : "-" }}
         </p>
         <div class="flex items-center gap-2 text-sm text-blue-600">
           <Calendar class="w-4 h-4" /> Latest Archive
@@ -67,12 +112,24 @@ const formatDate = (date) =>
       </div>
     </div>
 
+    <!-- ================= ALERT ================= -->
     <Alert type="success" :title="success" :show="success" />
+    <Alert type="error" :title="error" :show="error" />
 
     <!-- ================= ARCHIVE LIST ================= -->
     <div class="bg-white border rounded-[20px] p-5">
-      <h3 class="text-lg font-bold mb-4">File Archives</h3>
+      <!-- Header -->
+      <div class="mb-4 flex justify-between items-center">
+        <h3 class="text-lg font-bold">File Archives</h3>
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search archives..."
+          class="border rounded-xl p-2 w-1/3"
+        />
+      </div>
 
+      <!-- Archive items -->
       <div class="space-y-4">
         <div
           v-for="archive in archives"
@@ -87,35 +144,27 @@ const formatDate = (date) =>
             <p class="text-lg font-bold">{{ archive.file_name }}</p>
             <p class="text-sm text-gray-600">{{ archive.description }}</p>
             <p class="text-xs text-gray-400 mt-1">
-              Uploaded {{ formatDate(archive.uploaded_at) }}
-              by {{ archive.uploaded_by }}
+              Uploaded {{ formatDate(archive.created_at) }} by {{ archive.uploaded_by || "System" }}
             </p>
           </div>
 
           <div class="flex items-center gap-2">
-            <a
-              :href="archive.file_url"
-              target="_blank"
+            <button
+              @click="archiveStore.downloadArchive(archive)"
               class="border p-2 rounded-xl"
             >
               <Download class="w-4 h-4" />
-            </a>
+            </button>
 
             <router-link
-              :to="{
-                name: 'admin.files-company.detail',
-                params: { id: archive.id },
-              }"
+              :to="{ name: 'admin.files-company.detail', params: { id: archive.id } }"
               class="border p-2 rounded-xl"
             >
               <Eye class="w-4 h-4" />
             </router-link>
 
             <router-link
-              :to="{
-                name: 'admin.files-company.edit',
-                params: { id: archive.id },
-              }"
+              :to="{ name: 'admin.files-company.edit', params: { id: archive.id } }"
               class="border p-2 rounded-xl"
             >
               <Pencil class="w-4 h-4" />
@@ -123,11 +172,33 @@ const formatDate = (date) =>
           </div>
         </div>
 
-        <div
-          v-if="!loading && archives.length === 0"
-          class="text-center py-10 text-gray-400"
-        >
+        <!-- Empty state -->
+        <div v-if="!loading && archives.length === 0" class="text-center py-10 text-gray-400">
           No archived files available
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex justify-between items-center mt-6">
+        <span class="text-sm text-gray-600">
+          Page {{ pagination.current_page }} of {{ pagination.last_page }}
+        </span>
+        <div class="flex gap-2">
+          <button
+            @click="prevPage"
+            :disabled="pagination.current_page === 1"
+            class="px-3 py-1 border rounded-lg disabled:opacity-50"
+          >
+            <ChevronLeft class="w-4 h-4 inline" /> Prev
+          </button>
+
+          <button
+            @click="nextPage"
+            :disabled="pagination.current_page === pagination.last_page"
+            class="px-3 py-1 border rounded-lg disabled:opacity-50"
+          >
+            Next <ChevronRight class="w-4 h-4 inline" />
+          </button>
         </div>
       </div>
     </div>
