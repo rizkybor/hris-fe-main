@@ -156,7 +156,7 @@ const addSdm = () => {
   showAddSdmResource.value = true;
 };
 
-const submitSdm = async (payload) => {
+const submitSdm = async ({ mode, id, payload }) => {
   try {
     loading.value = true;
     console.log(payload, "<<< cek");
@@ -246,7 +246,7 @@ const addInfra = () => {
   showAddInfra.value = true;
 };
 
-const submitInfra = async (payload) => {
+const submitInfra = async ({ mode, id, payload }) => {
   try {
     loading.value = true;
 
