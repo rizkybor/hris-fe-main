@@ -8,11 +8,45 @@ import Statistics from "@/components/admin/company-finance/list/Statistic.vue";
 import FixedCostsModal from "@/components/admin/company-finance/modals/FixedCostsModal.vue";
 import SdmResourcesModal from "@/components/admin/company-finance/modals/SdmResourcesModal.vue";
 import InfraToolsModal from "@/components/admin/company-finance/modals/InfraToolsModal.vue";
-
+import DeleteConfirmationModal from "@/components/common/ConfirmationModal.vue";
 import { Eye, Edit, Trash2 } from "lucide-vue-next";
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
 
 const store = useCompanyFinanceStore();
+
+// const alert = ref({
+//   show: false,
+//   type: "success", // success | danger
+//   title: "",
+//   message: "",
+// });
+
+const showSectionAlert = (section, type, title, message) => {
+  section.value = {
+    show: true,
+    type,
+    title,
+    message,
+  };
+
+  setTimeout(() => {
+    section.value.show = false;
+  }, 3000);
+};
+
+// const showAlert = (type, title, message) => {
+//   alert.value = {
+//     show: true,
+//     type,
+//     title,
+//     message,
+//   };
+
+//   // auto hide after 3s
+//   setTimeout(() => {
+//     alert.value.show = false;
+//   }, 3000);
+// };
 
 // Fetch data ketika komponen di-mount
 onMounted(() => {
@@ -33,23 +67,39 @@ const addFixedCost = () => {
   showAddFixedCost.value = true;
 };
 
-const submitFixedCost = async (payload) => {
+const submitFixedCost = async ({ mode, id, payload }) => {
   try {
-    console.log(payload, "<<<<< PAYLOAD");
-    // loading.value = true;
+    loading.value = true;
 
-    // // OPTIONAL: casting number
-    // payload.monthly_fee = Number(payload.monthly_fee);
-    // payload.annual_fee = Number(payload.annual_fee);
+    if (mode === "add") {
+      await store.createFixedCost(payload);
+      showSectionAlert(
+        fixedAlert,
+        "success",
+        "Fixed Cost Created",
+        "Fixed cost has been successfully added."
+      );
+    }
 
-    // await store.createInfraTool(payload); // pastikan ada di store
+    if (mode === "edit") {
+      await store.updateFixedCost(id, payload);
+      showSectionAlert(
+        fixedAlert,
+        "success",
+        "Fixed Cost Updated",
+        "Fixed cost has been successfully updated."
+      );
+    }
 
-    // // refresh list
-    // await fetchInfraToolsData();
-
-    // showAddInfra.value = false;
+    await fetchFixedCostData();
+    showAddFixedCost.value = false;
   } catch (error) {
-    console.error(error);
+    showSectionAlert(
+      fixedAlert,
+      "danger",
+      "Failed",
+      "Failed to save fixed cost."
+    );
   } finally {
     loading.value = false;
   }
@@ -67,12 +117,32 @@ const editFixedCost = (item) => {
   showAddFixedCost.value = true;
 };
 
-const deleteFixedCost = (item) => {
-  if (confirm(`Are you sure you want to delete "${item.financial_items}"?`)) {
-    store.fixedCostData.items = store.fixedCostData.items.filter(
-      (i) => i.id !== item.id
-    );
-  }
+const deleteFixedCostHandler = (item) => {
+  openDeleteModal({
+    title: "Delete Fixed Cost",
+    message: `Are you sure you want to delete "${item.financial_items}"?`,
+    type: "danger",
+    onConfirm: async () => {
+      try {
+        await store.deleteFixedCost(item.id);
+
+        showSectionAlert(
+          fixedAlert,
+          "success",
+          "Deleted",
+          `Fixed Cost "${item.financial_items}" has been deleted.`
+        );
+      } catch (error) {
+        showSectionAlert(
+          fixedAlert,
+          "danger",
+          "Failed",
+          `Failed to delete "${item.financial_items}".`
+        );
+        console.error(error);
+      }
+    },
+  });
 };
 
 /* ================= SDM ACTION METHODS ================= */
@@ -121,7 +191,7 @@ const editSdm = (item) => {
   showAddSdmResource.value = true;
 };
 
-const deleteSdm = (item) => {
+const deleteSdmHandler = (item) => {
   if (confirm(`Are you sure you want to delete "${item.sdm_component}"?`)) {
     sdmResources.value = sdmResources.value.filter((i) => i.id !== item.id);
   }
@@ -173,7 +243,7 @@ const editInfra = (item) => {
   showAddInfra.value = true;
 };
 
-const deleteInfra = (item) => {
+const deleteInfraHandler = (item) => {
   if (
     confirm(`Are you sure you want to delete "${item.tech_stack_component}"?`)
   ) {
@@ -196,6 +266,34 @@ const selectedSdmResource = ref(null);
 const showAddInfra = ref(false);
 const infraMode = ref("add");
 const selectedInfra = ref(null);
+const fixedAlert = ref({
+  show: false,
+  type: "success",
+  title: "",
+  message: "",
+});
+
+const sdmAlert = ref({
+  show: false,
+  type: "success",
+  title: "",
+  message: "",
+});
+
+const infraAlert = ref({
+  show: false,
+  type: "success",
+  title: "",
+  message: "",
+});
+const showDeleteModal = ref(false);
+const deleteLoading = ref(false);
+const deletePayload = ref({
+  title: "",
+  message: "",
+  type: "danger",
+  onConfirm: null,
+});
 
 /* =======================
    PAGINATION STATE
@@ -223,6 +321,23 @@ const pageCount = (data) => Math.ceil(data.length / perPage);
 const formatDate = (date) => {
   if (!date) return "";
   return date.split("T")[0];
+};
+
+const openDeleteModal = ({ title, message, type = "danger", onConfirm }) => {
+  deletePayload.value = { title, message, type, onConfirm };
+  showDeleteModal.value = true;
+};
+
+const confirmDelete = async () => {
+  if (!deletePayload.value.onConfirm) return;
+
+  try {
+    deleteLoading.value = true;
+    await deletePayload.value.onConfirm();
+  } finally {
+    deleteLoading.value = false;
+    showDeleteModal.value = false;
+  }
 };
 
 /* =======================
@@ -285,13 +400,28 @@ watch(
 
 <template>
   <Statistics v-if="can('project-statistic')" />
-  <!-- <Alert type="success" :title="success" :show="success" /> -->
+  <!-- <Alert
+    v-if="alert.show"
+    :type="alert.type"
+    :title="alert.title"
+    :message="alert.message"
+    :show="alert.show"
+  /> -->
+
   <br />
   <br />
 
   <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
     <!-- ================= FIXED COST ================= -->
     <section class="mb-12">
+      <Alert
+        v-if="fixedAlert.show"
+        :type="fixedAlert.type"
+        :title="fixedAlert.title"
+        :message="fixedAlert.message"
+        :show="fixedAlert.show"
+      />
+
       <div class="flex justify-between items-center mb-4">
         <h4 class="text-lg font-bold">Fixed Cost</h4>
         <button
@@ -339,7 +469,7 @@ watch(
               <td class="px-3 py-2 text-right">
                 Rp. {{ item.budget.toLocaleString() }}
               </td>
-              <td class="px-3 py-2 text-right">
+              <td class="px-3 py-2 text-right text-success">
                 Rp. {{ item.actual.toLocaleString() }}
               </td>
               <td class="px-3 py-2 text-gray-500">{{ item.notes }}</td>
@@ -354,7 +484,7 @@ watch(
                 />
                 <Trash2
                   class="w-5 h-5 text-red-500 cursor-pointer"
-                  @click="deleteFixedCost(item)"
+                  @click="deleteFixedCostHandler(item)"
                 />
               </td>
             </tr>
@@ -459,7 +589,7 @@ watch(
               <td class="px-3 py-2 text-right">
                 Rp. {{ item.budget.toLocaleString() }}
               </td>
-              <td class="px-3 py-2 text-right">
+              <td class="px-3 py-2 text-right text-success">
                 Rp. {{ item.actual.toLocaleString() }}
               </td>
               <td class="px-3 py-2 text-center flex justify-center gap-2">
@@ -650,4 +780,17 @@ watch(
     @close="showAddInfra = false"
     @submit="submitInfra"
   />
+
+  <DeleteConfirmationModal
+    :show="showDeleteModal"
+    :title="deletePayload.title"
+    :message="deletePayload.message"
+    :loading="deleteLoading"
+    :type="deletePayload.type"
+    confirmText="Delete"
+    cancelText="Cancel"
+    @confirm="confirmDelete"
+    @cancel="showDeleteModal = false"
+  >
+  </DeleteConfirmationModal>
 </template>

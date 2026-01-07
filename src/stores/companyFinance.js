@@ -180,6 +180,22 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       }
     },
 
+    // Update the Fixed Cost summary
+    updateFixedCostSummary() {
+      const items = this.fixedCostData.items;
+      const totalBudget = items.reduce((acc, item) => acc + item.budget, 0);
+      const totalActual = items.reduce((acc, item) => acc + item.actual, 0);
+      const variance = totalBudget - totalActual;
+
+      this.statistics.fixed_cost.summary = {
+        total_budget: totalBudget,
+        total_actual: totalActual,
+        variance: variance,
+        total_items: items.length,
+      };
+    },
+
+    // Create new the Fixed Cost
     async createFixedCost(payload) {
       this.loading = true;
 
@@ -194,6 +210,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       }
     },
 
+    // Edit update the Fixed Cost
     async updateFixedCost(id, payload) {
       this.loading = true;
 
@@ -211,19 +228,27 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       }
     },
 
-    // Update the Fixed Cost summary
-    updateFixedCostSummary() {
-      const items = this.fixedCostData.items;
-      const totalBudget = items.reduce((acc, item) => acc + item.budget, 0);
-      const totalActual = items.reduce((acc, item) => acc + item.actual, 0);
-      const variance = totalBudget - totalActual;
+    // Delete the Fixed Cost
+    async deleteFixedCost(id) {
+      this.loading = true;
 
-      this.statistics.fixed_cost.summary = {
-        total_budget: totalBudget,
-        total_actual: totalActual,
-        variance: variance,
-        total_items: items.length,
-      };
+      try {
+        await axiosInstance.delete(`/fixed-costs/${id}`);
+
+        // Hapus dari state lokal
+        this.fixedCostData.items = this.fixedCostData.items.filter(
+          (item) => item.id !== id
+        );
+
+        // Update summary
+        this.updateFixedCostSummary();
+
+        this.success = "Fixed Cost item deleted successfully";
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
     },
 
     /* ================= SDM RESOURCE ACTION METHODS ================= */
@@ -273,6 +298,61 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       };
     },
 
+    // Create new the SDM Resources
+    async createSdmResource(payload) {
+      this.loading = true;
+
+      try {
+        const response = await axiosInstance.post("sdm-resources", payload);
+
+        this.success = response.data.message;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Edit update the Sdm Resources
+    async updateSdmResource(id, payload) {
+      this.loading = true;
+
+      try {
+        const response = await axiosInstance.post(`sdm-resources/${id}`, {
+          ...payload,
+          _method: "PUT",
+        });
+
+        this.success = response.data.message;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Delete the Sdm Resources
+    async deleteSdmResource(id) {
+      this.loading = true;
+
+      try {
+        await axiosInstance.delete(`/sdm-resources/${id}`);
+
+        this.sdmResourceData.items = this.sdmResourceData.items.filter(
+          (item) => item.id !== id
+        );
+
+        // Update summary
+        this.updateSdmResourceSummary();
+
+        this.success = "SDM Resource item deleted successfully";
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
     /* ================= INFRA TOOLS ACTION METHODS ================= */
     async fetchInfraToolsPaginated(params) {
       this.loading = true;
@@ -317,6 +397,61 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         total_annual_fee,
         total_infra_active,
       };
+    },
+
+        // Create new the Infra Tools
+    async createInfraTools(payload) {
+      this.loading = true;
+
+      try {
+        const response = await axiosInstance.post("infrastructure-tools", payload);
+
+        this.success = response.data.message;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Edit update the Infra Tools
+    async updateInfraTools(id, payload) {
+      this.loading = true;
+
+      try {
+        const response = await axiosInstance.post(`infrastructurre-tools/${id}`, {
+          ...payload,
+          _method: "PUT",
+        });
+
+        this.success = response.data.message;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Delete the Infra Tools
+    async deleteInfraTools(id) {
+      this.loading = true;
+
+      try {
+        await axiosInstance.delete(`/infrastructure-tools/${id}`);
+
+        this.infraToolsData.items = this.infraToolsData.items.filter(
+          (item) => item.id !== id
+        );
+
+        // Update summary
+        this.updateInfraToolsSummary();
+
+        this.success = "Infrastructure item deleted successfully";
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
     },
   },
 });
