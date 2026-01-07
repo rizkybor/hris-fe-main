@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   Shield,
@@ -37,10 +37,16 @@ const form = ref({
   notes: "",
 });
 
+/* =====================
+ * UI helpers
+ * ===================== */
 const togglePassword = () => {
   showPassword.value = !showPassword.value;
 };
 
+/* =====================
+ * Submit update
+ * ===================== */
 const submit = async () => {
   error.value = "";
   success.value = "";
@@ -58,18 +64,22 @@ const submit = async () => {
   const payload = {
     label_password: form.value.label_password,
     username_email: form.value.username_email,
-    website: form.value.website,
-    notes: form.value.notes,
+    website: form.value.website || null,
+    notes: form.value.notes || null,
+    ...(rotatePassword.value && { password: form.value.password }),
   };
 
-  if (rotatePassword.value) {
-    payload.password = form.value.password;
-  }
-
   submitting.value = true;
+
   try {
+    // 🔥 updateAccount SUDAH fetch ulang di store
     await store.updateAccount(route.params.id, payload);
+
     success.value = "Credential berhasil diperbarui.";
+
+    // reset field sensitif
+    form.value.password = "";
+    rotatePassword.value = false;
 
     setTimeout(() => {
       router.push({
@@ -77,29 +87,49 @@ const submit = async () => {
         params: { id: route.params.id },
       });
     }, 1200);
-  } catch (err) {
-    error.value = err?.message || "Gagal memperbarui credential.";
+  } catch (e) {
+    error.value = e?.message || "Gagal memperbarui credential.";
   } finally {
     submitting.value = false;
   }
 };
 
-onMounted(async () => {
+/* =====================
+ * Fetch initial data
+ * ===================== */
+const loadData = async () => {
+  loading.value = true;
+  error.value = "";
+
   try {
     await store.fetchAccount(route.params.id);
-    const data = store.currentAccount;
-
-    form.value.label_password = data.label_password || data.label || "";
-    form.value.username_email = data.username_email || data.username || "";
-    form.value.website = data.website || "";
-    form.value.notes = data.notes || "";
-  } catch (err) {
+  } catch {
     error.value = "Data credential tidak ditemukan.";
   } finally {
     loading.value = false;
   }
-});
+};
+
+onMounted(loadData);
+
+/* =====================
+ * Sync store → form
+ * (aman saat fetch ulang)
+ * ===================== */
+watch(
+  () => store.currentAccount,
+  (data) => {
+    if (!data) return;
+
+    form.value.label_password = data.label_password ?? data.label ?? "";
+    form.value.username_email = data.username_email ?? data.username ?? "";
+    form.value.website = data.website ?? "";
+    form.value.notes = data.notes ?? "";
+  },
+  { immediate: true }
+);
 </script>
+
 
 <template>
   <div class="max-w-4xl mx-auto">
