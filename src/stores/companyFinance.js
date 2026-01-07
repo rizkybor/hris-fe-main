@@ -354,22 +354,29 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
     },
 
     /* ================= INFRA TOOLS ACTION METHODS ================= */
-    async fetchInfraToolsPaginated(params) {
+    async fetchInfraToolsPaginated({
+      page = 1,
+      per_page = 10,
+      search = "",
+    } = {}) {
       this.loading = true;
       try {
         const response = await axiosInstance.get(
           "/infrastructure-tools/all/paginated",
           {
             params: {
-              row_per_page: params.per_page || 10,
-              search: params.search || "",
+              page,
+              row_per_page: per_page,
+              search,
             },
           }
         );
 
-        // Menyimpan data yang diterima
+        // Simpan data & meta
         this.infraToolsData.items = response.data.data.data;
         this.infraToolsData.meta = response.data.data.meta;
+
+        // Optional: summary / stats
         this.updateInfraToolsSummary();
       } catch (error) {
         this.error = handleError(error);
@@ -399,12 +406,15 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       };
     },
 
-        // Create new the Infra Tools
+    // Create new the Infra Tools
     async createInfraTools(payload) {
       this.loading = true;
 
       try {
-        const response = await axiosInstance.post("infrastructure-tools", payload);
+        const response = await axiosInstance.post(
+          "infrastructure-tools",
+          payload
+        );
 
         this.success = response.data.message;
       } catch (error) {
@@ -419,10 +429,13 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       this.loading = true;
 
       try {
-        const response = await axiosInstance.post(`infrastructurre-tools/${id}`, {
-          ...payload,
-          _method: "PUT",
-        });
+        const response = await axiosInstance.post(
+          `infrastructurre-tools/${id}`,
+          {
+            ...payload,
+            _method: "PUT",
+          }
+        );
 
         this.success = response.data.message;
       } catch (error) {
