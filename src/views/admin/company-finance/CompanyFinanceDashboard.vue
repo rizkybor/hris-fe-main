@@ -235,9 +235,13 @@ const deleteSdmHandler = (item) => {
 };
 
 /* ================= INFRA ACTION METHODS ================= */
-const fetchInfraToolsData = async () => {
-  const params = { page: 1, per_page: 5 };
-  await store.fetchInfraToolsPaginated(params);
+const fetchInfraToolsData = async (page = 1) => {
+  await store.fetchInfraToolsPaginated({
+    page,
+    per_page: perPage,
+    search: infraSearch.value,
+  });
+  infraPage.value = page;
 };
 
 const addInfra = () => {
@@ -448,9 +452,15 @@ const filteredInfra = computed(() => {
   }
   return [];
 });
-const infraPaginated = computed(() =>
-  paginate(filteredInfra.value, infraPage.value)
-);
+const infraPaginated = computed(() => store.infraToolsData.items || []);
+
+const changeInfraPage = async (page) => {
+  if (page < 1 || page > store.infraToolsData.meta.last_page) return;
+
+  infraPage.value = page;
+  // Fetch data dari store sesuai page baru
+  await store.fetchInfraToolsPaginated({ page, per_page: perPage });
+};
 
 /* =======================
    WATCH SEARCH DEBOUNCE
@@ -465,7 +475,9 @@ watch(
 );
 watch(
   infraSearch,
-  debounce(() => (infraPage.value = 1), 300)
+  debounce(() => {
+    fetchInfraToolsData(1);
+  }, 300)
 );
 </script>
 
@@ -793,23 +805,26 @@ watch(
         </table>
       </div>
 
-      <!-- Pagination -->
+      <!-- Infra Pagination -->
       <div
         class="flex flex-wrap justify-between items-center mt-4 gap-2 text-sm sm:text-base"
       >
-        <span>Page {{ infraPage }} of {{ pageCount(filteredInfra) }}</span>
+        <span>
+          Page {{ infraPage }} of {{ store.infraToolsData.meta.last_page }}
+        </span>
         <div class="flex gap-2">
           <button
             class="px-3 py-1 border rounded"
             :disabled="infraPage === 1"
-            @click="infraPage--"
+            @click="fetchInfraToolsData(infraPage - 1)"
           >
             Prev
           </button>
+
           <button
             class="px-3 py-1 border rounded"
-            :disabled="infraPage === pageCount(filteredInfra)"
-            @click="infraPage++"
+            :disabled="infraPage === store.infraToolsData.meta.last_page"
+            @click="fetchInfraToolsData(infraPage + 1)"
           >
             Next
           </button>
