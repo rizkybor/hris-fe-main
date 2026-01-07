@@ -23,217 +23,140 @@ export const useAccountPasswordStore = defineStore("accountPassword", {
     error: null,
     success: null,
   }),
-  
+
   actions: {
     /* =============================
-     * GET ALL CREDENTIAL ACCOUNTS
-     * GET /credential-accounts?search=GitHub&limit=10
+     * GET ALL
      * ============================= */
     async fetchAccounts(params = {}) {
       this.loading = true;
       this.error = null;
 
       try {
-        const response = await axiosInstance.get("/credential-accounts", {
+        const { data } = await axiosInstance.get("/credential-accounts", {
           params,
         });
 
-        // Handle different response structures
-        if (Array.isArray(response.data.data)) {
-          this.accounts = response.data.data;
-        } else if (response.data.data?.data) {
-          this.accounts = response.data.data.data;
-          this.meta = response.data.data.meta ?? this.meta;
+        if (Array.isArray(data.data)) {
+          this.accounts = data.data;
+          this.statistics.total_accounts = data.data.length;
+        } else if (data.data?.data) {
+          this.accounts = data.data.data;
+          this.meta = data.data.meta ?? this.meta;
+          this.statistics.total_accounts = data.data.meta?.total ?? 0;
         } else {
-          this.accounts = response.data.data ?? [];
+          this.accounts = [];
+          this.statistics.total_accounts = 0;
         }
-
-        this.statistics.total_accounts = response.data.data.length
-
-      } catch (error) {
-        this.error = handleError(error);
+      } catch (e) {
+        this.error = handleError(e);
       } finally {
         this.loading = false;
       }
     },
 
     /* =============================
-     * GET CREDENTIAL ACCOUNTS PAGINATED
-     * GET /credential-accounts/all/paginated?row_per_page=10&search=
-     * ============================= */
-    async fetchAccountsPaginated(params = {}) {
-      this.loading = true;
-      this.error = null;
-
-      try {
-        const response = await axiosInstance.get(
-          "/credential-accounts/all/paginated",
-          { params }
-        );
-
-        // Expected API response structure
-        if (response.data.data?.data) {
-          this.accounts = response.data.data.data;
-          this.meta = response.data.data.meta ?? this.meta;
-        } else {
-          this.accounts = response.data.data ?? [];
-        }
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    /* =============================
-     * GET CREDENTIAL ACCOUNT BY ID
-     * GET /credential-accounts/1
+     * GET BY ID
      * ============================= */
     async fetchAccount(id) {
-      this.loading = true;
-      this.error = null;
-
       try {
-        const response = await axiosInstance.get(`/credential-accounts/${id}`);
-        this.currentAccount = response.data.data;
-        return response.data.data;
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
+        const { data } = await axiosInstance.get(`/credential-accounts/${id}`);
+        this.currentAccount = data.data;
+        return data.data;
+      } catch (e) {
+        this.error = handleError(e);
+        throw e;
       }
     },
 
     /* =============================
-     * CREATE CREDENTIAL ACCOUNT
-     * POST /credential-accounts
+     * CREATE
      * ============================= */
     async createAccount(payload) {
-      this.loading = true;
       this.error = null;
-      this.success = null;
 
       try {
-        // Map form fields to API fields
         const apiPayload = {
-          label_password: payload.label_password || payload.label,
-          username_email: payload.username_email || payload.username,
+          label_password: payload.label_password,
+          username_email: payload.username_email,
           password: payload.password,
           website: payload.website || null,
           notes: payload.notes || null,
         };
 
-        const response = await axiosInstance.post(
+        const { data } = await axiosInstance.post(
           "/credential-accounts",
           apiPayload
         );
 
-        this.success = "Credential account created successfully";
-        return response.data.data;
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
+        // optional: push ke list
+        this.accounts.unshift(data.data);
+
+        return data.data;
+      } catch (e) {
+        this.error = handleError(e);
+        throw e;
       }
     },
 
     /* =============================
-     * UPDATE CREDENTIAL ACCOUNT
-     * PUT /credential-accounts/1
+     * UPDATE (🔥 FIXED)
      * ============================= */
     async updateAccount(id, payload) {
-      this.loading = true;
       this.error = null;
-      this.success = null;
 
       try {
-        // Map form fields to API fields
         const apiPayload = {
-          label_password: payload.label_password || payload.label,
-          username_email: payload.username_email || payload.username,
-          website: payload.website || null,
-          notes: payload.notes || null,
+          label_password: payload.label_password,
+          username_email: payload.username_email,
+          website: payload.website ?? null,
+          notes: payload.notes ?? null,
+          ...(payload.password ? { password: payload.password } : {}),
         };
 
-        // Only include password if provided
-        if (payload.password) {
-          apiPayload.password = payload.password;
+        await axiosInstance.put(`/credential-accounts/${id}`, apiPayload, {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        });
+
+        // 🔥 fetch ulang supaya dapat data terbaru
+        const updated = await this.fetchAccount(id);
+
+        // 🔄 sinkronkan ke list
+        const index = this.accounts.findIndex((a) => a.id === id);
+        if (index !== -1) {
+          this.accounts[index] = updated;
         }
 
-        const response = await axiosInstance.put(
-          `/credential-accounts/${id}`,
-          apiPayload
-        );
-
-        this.success = "Credential account updated successfully";
-        this.currentAccount = response.data.data;
-        return response.data.data;
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
+        return updated;
+      } catch (e) {
+        this.error = handleError(e);
+        throw e;
       }
     },
+    
 
     /* =============================
-     * DELETE CREDENTIAL ACCOUNT
-     * DELETE /credential-accounts/1
+     * DELETE
      * ============================= */
     async deleteAccount(id) {
-      this.loading = true;
-      this.error = null;
-      this.success = null;
-
       try {
         await axiosInstance.delete(`/credential-accounts/${id}`);
-        this.success = "Credential account deleted successfully";
+        this.accounts = this.accounts.filter((a) => a.id !== id);
 
-        // Remove from accounts list
-        this.accounts = this.accounts.filter((account) => account.id !== id);
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
+        if (this.currentAccount?.id === id) {
+          this.currentAccount = null;
+        }
+      } catch (e) {
+        this.error = handleError(e);
+        throw e;
       }
     },
 
     /* =============================
-     * FETCH STATISTICS (OPTIONAL)
-     * ============================= */
-    async fetchStatistics() {
-      this.loadingStatistics = true;
-
-      try {
-        const response = await axiosInstance.get(
-          "/credential-accounts/statistics"
-        );
-
-        this.statistics = response.data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loadingStatistics = false;
-      }
-    },
-
-    /* =============================
-     * COPY AUDIT (OPTIONAL / LOGGING)
-     * ============================= */
-    async logCopyAction(id) {
-      try {
-        await axiosInstance.post(`/credential-accounts/${id}/log-copy`);
-      } catch (error) {
-        // sengaja tidak blocking UI
-        console.warn("Failed to log copy action", error);
-      }
-    },
-
-    /* =============================
-     * CLEAR STATE
+     * CLEAR
      * ============================= */
     clearState() {
       this.accounts = [];
