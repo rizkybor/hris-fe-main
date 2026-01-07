@@ -55,9 +55,13 @@ onMounted(() => {
 });
 
 /* ================= FIX COST ACTION METHODS ================= */
-const fetchFixedCostData = async () => {
-  const params = { page: 1, per_page: 5 };
-  await store.fetchFixedCostPaginated(params);
+const fetchFixedCostData = async (page = 1) => {
+  await store.fetchFixedCostPaginated({
+    page,
+    per_page: perPage,
+    search: fixedSearch.value,
+  });
+  fixedPage.value = page;
 };
 
 const addFixedCost = () => {
@@ -145,9 +149,13 @@ const deleteFixedCostHandler = (item) => {
 };
 
 /* ================= SDM ACTION METHODS ================= */
-const fetchSdmResourcesData = async () => {
-  const params = { page: 1, per_page: 5 };
-  await store.fetchSdmResourcePaginated(params);
+const fetchSdmResourcesData = async (page = 1) => {
+  await store.fetchSdmResourcePaginated({
+    page,
+    per_page: perPage,
+    search: sdmSearch.value,
+  });
+  sdmPage.value = page;
 };
 
 const addSdm = () => {
@@ -428,9 +436,6 @@ const filteredFixed = computed(() => {
   }
   return [];
 });
-const fixedPaginated = computed(() =>
-  paginate(filteredFixed.value, fixedPage.value)
-);
 
 const filteredSdm = computed(() => {
   if (store.sdmResourceData && store.sdmResourceData.items) {
@@ -440,7 +445,6 @@ const filteredSdm = computed(() => {
   }
   return [];
 });
-const sdmPaginated = computed(() => paginate(filteredSdm.value, sdmPage.value));
 
 const filteredInfra = computed(() => {
   if (store.infraToolsData && store.infraToolsData.items) {
@@ -452,6 +456,13 @@ const filteredInfra = computed(() => {
   }
   return [];
 });
+
+const fixedPageCount = computed(
+  () => store.fixedCostData?.meta?.last_page || 1
+);
+const sdmPageCount = computed(
+  () => store.sdmResourceData?.meta?.last_page || 1
+);
 const infraPaginated = computed(() => store.infraToolsData.items || []);
 
 const changeInfraPage = async (page) => {
@@ -467,11 +478,15 @@ const changeInfraPage = async (page) => {
 ======================= */
 watch(
   fixedSearch,
-  debounce(() => (fixedPage.value = 1), 300)
+  debounce(() => {
+    fetchFixedCostData(1);
+  }, 300)
 );
 watch(
   sdmSearch,
-  debounce(() => (sdmPage.value = 1), 300)
+  debounce(() => {
+    fetchSdmResourcesData(1);
+  }, 300)
 );
 watch(
   infraSearch,
@@ -577,22 +592,27 @@ watch(
       <div
         class="flex flex-wrap justify-between items-center mt-4 gap-2 text-sm sm:text-base"
       >
-        <span>Page {{ fixedPage }} of {{ pageCount(filteredFixed) }}</span>
+        <span class="text-xs text-gray-500 font-medium">
+          Page {{ fixedPage }} of {{ store.fixedCostData.meta.last_page }}
+        </span>
+
         <div class="flex gap-2">
-          <button
-            class="px-3 py-1 border rounded"
-            :disabled="fixedPage === 1"
-            @click="fixedPage--"
-          >
-            Prev
-          </button>
-          <button
-            class="px-3 py-1 border rounded"
-            :disabled="fixedPage === pageCount(filteredFixed)"
-            @click="fixedPage++"
-          >
-            Next
-          </button>
+          <div class="flex gap-2">
+            <button
+              class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
+              :disabled="fixedPage === 1"
+              @click="fetchFixedCostData(fixedPage - 1)"
+            >
+              Prev
+            </button>
+            <button
+              class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
+              :disabled="fixedPage === fixedPageCount"
+              @click="fetchFixedCostData(fixedPage + 1)"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -698,19 +718,22 @@ watch(
       <div
         class="flex flex-wrap justify-between items-center mt-4 gap-2 text-sm sm:text-base"
       >
-        <span>Page {{ sdmPage }} of {{ pageCount(filteredSdm) }}</span>
+        <span class="text-xs text-gray-500 font-medium">
+          Page {{ sdmPage }} of
+          {{ store.sdmResourceData.meta.last_page }}</span
+        >
         <div class="flex gap-2">
           <button
-            class="px-3 py-1 border rounded"
+            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
             :disabled="sdmPage === 1"
-            @click="sdmPage--"
+            @click="fetchSdmResourcesData(sdmPage - 1)"
           >
             Prev
           </button>
           <button
-            class="px-3 py-1 border rounded"
-            :disabled="sdmPage === pageCount(filteredSdm)"
-            @click="sdmPage++"
+            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
+            :disabled="sdmPage === sdmPageCount"
+            @click="fetchSdmResourcesData(sdmPage + 1)"
           >
             Next
           </button>
@@ -809,12 +832,12 @@ watch(
       <div
         class="flex flex-wrap justify-between items-center mt-4 gap-2 text-sm sm:text-base"
       >
-        <span>
+        <span class="text-xs text-gray-500 font-medium">
           Page {{ infraPage }} of {{ store.infraToolsData.meta.last_page }}
         </span>
         <div class="flex gap-2">
           <button
-            class="px-3 py-1 border rounded"
+            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
             :disabled="infraPage === 1"
             @click="fetchInfraToolsData(infraPage - 1)"
           >
@@ -822,7 +845,7 @@ watch(
           </button>
 
           <button
-            class="px-3 py-1 border rounded"
+            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
             :disabled="infraPage === store.infraToolsData.meta.last_page"
             @click="fetchInfraToolsData(infraPage + 1)"
           >
