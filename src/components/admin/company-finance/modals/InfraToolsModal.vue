@@ -23,12 +23,44 @@ const statusOptions = [
   { value: "inactive", label: "Inactive" },
 ];
 
+const emit = defineEmits(["submit", "close"]);
+
+const form = reactive({
+  tech_stack_component: "",
+  vendor: "",
+  monthly_fee: "",
+  annual_fee: "",
+  expired_date: "",
+  status: "",
+  notes: "",
+});
+
+const buildPayload = () => ({
+  tech_stack_component: form.tech_stack_component,
+  vendor: form.vendor,
+  monthly_fee: Number(form.monthly_fee),
+  annual_fee: Number(form.annual_fee),
+  expired_date: form.expired_date,
+  status: form.status,
+  notes: form.notes,
+});
+
+// Error state
+const errors = reactive({
+  tech_stack_component: "",
+  vendor: "",
+  expired_date: "",
+  status: "",
+});
+
 watch(
   () => [props.show, props.mode, props.data],
   ([show]) => {
     if (show && (props.mode === "view" || props.mode === "edit")) {
       Object.assign(form, {
         ...props.data,
+        monthly_fee: props.data.monthly_fee ?? "",
+        annual_fee: props.data.annual_fee ?? "",
         expired_date: props.data.expired_date
           ? props.data.expired_date.split("T")[0]
           : "",
@@ -73,26 +105,6 @@ const annualModel = computed({
   },
 });
 
-const emit = defineEmits(["submit", "close"]);
-
-const form = reactive({
-  tech_stack_component: "",
-  vendor: "",
-  monthly_fee: "",
-  annual_fee: "",
-  expired_date: "",
-  status: "",
-  notes: "",
-});
-
-// Error state
-const errors = reactive({
-  tech_stack_component: "",
-  vendor: "",
-  expired_date: "",
-  status: "",
-});
-
 // ===== Validation =====
 const validate = () => {
   let valid = true;
@@ -116,10 +128,12 @@ const submit = () => {
   if (!validate()) return;
 
   emit("submit", {
-    ...form,
-    monthly_fee: Number(form.monthly_fee),
-    annual_fee: Number(form.annual_fee),
+    mode: props.mode,
+    id: props.data?.id,
+    payload: buildPayload(),
   });
+
+  emit("close");
 };
 </script>
 
@@ -185,7 +199,7 @@ const submit = () => {
 
         <BaseInput
           id="monthly"
-          label="Monthly Fee"
+          label="Monthly Fee (Rp.)"
           placeholder="add price monthly fee item"
           v-model="monthlyModel"
           :readonly="props.mode === 'view'"
@@ -194,7 +208,7 @@ const submit = () => {
 
         <BaseInput
           id="annual"
-          label="Annual Fee"
+          label="Annual Fee (Rp.)"
           placeholder="add price annual fee item"
           v-model="annualModel"
           :readonly="props.mode === 'view'"

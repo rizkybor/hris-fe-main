@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { debounce } from "lodash";
-import { Briefcase } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { can } from "@/helpers/permissionHelper";
 import Statistics from "@/components/admin/company-finance/list/Statistic.vue";
@@ -76,8 +75,8 @@ const submitFixedCost = async ({ mode, id, payload }) => {
       showSectionAlert(
         fixedAlert,
         "success",
-        "Fixed Cost Created",
-        "Fixed cost has been successfully added."
+        "Fixed Cost item created",
+        "Fixed Cost item has been successfully added."
       );
     }
 
@@ -86,8 +85,8 @@ const submitFixedCost = async ({ mode, id, payload }) => {
       showSectionAlert(
         fixedAlert,
         "success",
-        "Fixed Cost Updated",
-        "Fixed cost has been successfully updated."
+        "Fixed Cost item updated",
+        "Fixed Cost item has been successfully updated."
       );
     }
 
@@ -98,7 +97,7 @@ const submitFixedCost = async ({ mode, id, payload }) => {
       fixedAlert,
       "danger",
       "Failed",
-      "Failed to save fixed cost."
+      "Failed to save fixed cost item."
     );
   } finally {
     loading.value = false;
@@ -119,7 +118,7 @@ const editFixedCost = (item) => {
 
 const deleteFixedCostHandler = (item) => {
   openDeleteModal({
-    title: "Delete Fixed Cost",
+    title: "Delete Fixed Cost item",
     message: `Are you sure you want to delete "${item.financial_items}"?`,
     type: "danger",
     onConfirm: async () => {
@@ -130,7 +129,7 @@ const deleteFixedCostHandler = (item) => {
           fixedAlert,
           "success",
           "Deleted",
-          `Fixed Cost "${item.financial_items}" has been deleted.`
+          `Fixed Cost item "${item.financial_items}" has been deleted.`
         );
       } catch (error) {
         showSectionAlert(
@@ -159,21 +158,37 @@ const addSdm = () => {
 
 const submitSdm = async (payload) => {
   try {
-    console.log(payload, "<<<<< PAYLOAD");
-    // loading.value = true;
+    loading.value = true;
+    console.log(payload, "<<< cek");
+    if (mode === "add") {
+      await store.createSdmResource(payload);
+      showSectionAlert(
+        sdmAlert,
+        "success",
+        "SDM Resource item created",
+        "SDM Resource item has been successfully added."
+      );
+    }
 
-    // // OPTIONAL: casting number
-    // payload.monthly_fee = Number(payload.monthly_fee);
-    // payload.annual_fee = Number(payload.annual_fee);
+    if (mode === "edit") {
+      await store.updateSdmResource(id, payload);
+      showSectionAlert(
+        sdmAlert,
+        "success",
+        "SDM Resource item updated",
+        "SDM Resource item has been successfully updated."
+      );
+    }
 
-    // await store.createInfraTool(payload); // pastikan ada di store
-
-    // // refresh list
-    // await fetchInfraToolsData();
-
-    // showAddInfra.value = false;
+    await fetchSdmResourcesData();
+    showAddSdmResource.value = false;
   } catch (error) {
-    console.error(error);
+    showSectionAlert(
+      sdmAlert,
+      "danger",
+      "Failed",
+      "Failed to save SDM Resource item."
+    );
   } finally {
     loading.value = false;
   }
@@ -192,9 +207,31 @@ const editSdm = (item) => {
 };
 
 const deleteSdmHandler = (item) => {
-  if (confirm(`Are you sure you want to delete "${item.sdm_component}"?`)) {
-    sdmResources.value = sdmResources.value.filter((i) => i.id !== item.id);
-  }
+  openDeleteModal({
+    title: "Delete SDM Resource item",
+    message: `Are you sure you want to delete "${item.sdm_component}"?`,
+    type: "danger",
+    onConfirm: async () => {
+      try {
+        await store.deleteSdmResource(item.id);
+
+        showSectionAlert(
+          sdmAlert,
+          "success",
+          "Deleted",
+          `SDM Resource item "${item.sdm_component}" has been deleted.`
+        );
+      } catch (error) {
+        showSectionAlert(
+          sdmAlert,
+          "danger",
+          "Failed",
+          `Failed to delete "${item.sdm_component}".`
+        );
+        console.error(error);
+      }
+    },
+  });
 };
 
 /* ================= INFRA ACTION METHODS ================= */
@@ -211,21 +248,37 @@ const addInfra = () => {
 
 const submitInfra = async (payload) => {
   try {
-    console.log(payload, "<<<<< PAYLOAD");
-    // loading.value = true;
+    loading.value = true;
 
-    // // OPTIONAL: casting number
-    // payload.monthly_fee = Number(payload.monthly_fee);
-    // payload.annual_fee = Number(payload.annual_fee);
+    if (mode === "add") {
+      await store.createInfraTools(payload);
+      showSectionAlert(
+        infraAlert,
+        "success",
+        "Infrastructure Tool item created",
+        "Infrastructure Tool item has been successfully added."
+      );
+    }
 
-    // await store.createInfraTool(payload); // pastikan ada di store
+    if (mode === "edit") {
+      await store.updateInfraTools(id, payload);
+      showSectionAlert(
+        infraAlert,
+        "success",
+        "Infrastructure Tool item updated",
+        "Infrastructure Tool item has been successfully updated."
+      );
+    }
 
-    // // refresh list
-    // await fetchInfraToolsData();
-
-    // showAddInfra.value = false;
+    await fetchInfraToolsData();
+    showAddInfra.value = false;
   } catch (error) {
-    console.error(error);
+    showSectionAlert(
+      infraAlert,
+      "danger",
+      "Failed",
+      "Failed to save Infrastructure Tool item."
+    );
   } finally {
     loading.value = false;
   }
@@ -244,13 +297,31 @@ const editInfra = (item) => {
 };
 
 const deleteInfraHandler = (item) => {
-  if (
-    confirm(`Are you sure you want to delete "${item.tech_stack_component}"?`)
-  ) {
-    infrastructures.value = infrastructures.value.filter(
-      (i) => i.id !== item.id
-    );
-  }
+  openDeleteModal({
+    title: "Delete Infrastructure Tool Item",
+    message: `Are you sure you want to delete "${item.tech_stack_component}"?`,
+    type: "danger",
+    onConfirm: async () => {
+      try {
+        await store.deleteInfraTools(item.id);
+
+        showSectionAlert(
+          infraAlert,
+          "success",
+          "Deleted",
+          `Fixed Cost "${item.tech_stack_component}" has been deleted.`
+        );
+      } catch (error) {
+        showSectionAlert(
+          infraAlert,
+          "danger",
+          "Failed",
+          `Failed to delete "${item.tech_stack_component}".`
+        );
+        console.error(error);
+      }
+    },
+  });
 };
 
 /* =======================
@@ -400,13 +471,6 @@ watch(
 
 <template>
   <Statistics v-if="can('project-statistic')" />
-  <!-- <Alert
-    v-if="alert.show"
-    :type="alert.type"
-    :title="alert.title"
-    :message="alert.message"
-    :show="alert.show"
-  /> -->
 
   <br />
   <br />
@@ -603,7 +667,7 @@ watch(
                 />
                 <Trash2
                   class="w-5 h-5 text-red-500 cursor-pointer"
-                  @click="deleteSdm(item)"
+                  @click="deleteSdmHandler(item)"
                 />
               </td>
             </tr>
@@ -714,7 +778,7 @@ watch(
                 />
                 <Trash2
                   class="w-5 h-5 text-red-500 cursor-pointer"
-                  @click="deleteInfra(item)"
+                  @click="deleteInfraHandler(item)"
                 />
               </td>
             </tr>
