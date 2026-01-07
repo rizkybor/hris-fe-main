@@ -3,7 +3,6 @@ import { ref, reactive, computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useCompanyAboutStore } from "@/stores/companyAbout";
 import Alert from "@/components/common/Alert.vue";
-import { Briefcase } from "lucide-vue-next";
 
 // Pinia store
 const companyStore = useCompanyAboutStore();
@@ -18,7 +17,6 @@ const cleanedMission = computed(() => {
   if (!mission) return [];
 
   let missionArray = [];
-
   try {
     missionArray = Array.isArray(mission) ? mission : JSON.parse(mission);
   } catch {
@@ -28,21 +26,19 @@ const cleanedMission = computed(() => {
   return missionArray.map((m) => String(m).replace(/\s+/g, " ").trim());
 });
 
-// // --- Clean branches jadi array
+// --- Clean branches jadi array
 const cleanedBranches = computed(() => {
   const branches = company.value?.branches;
-  console.log(branches,'<< cek')
   if (!branches) return [];
 
   let branchesArray = [];
-
   try {
     branchesArray = Array.isArray(branches) ? branches : JSON.parse(branches);
   } catch {
-    branchesArray = [mission];
+    branchesArray = [branches];
   }
 
-  return branchesArray.map((m) => String(m).replace(/\s+/g, " ").trim());
+  return branchesArray.map((b) => String(b).replace(/\s+/g, " ").trim());
 });
 
 // Format tanggal
@@ -106,23 +102,21 @@ const openModal = (edit = false) => {
 // --- Save company
 const saveCompany = async () => {
   const payload = {
-    name: form.name,
-    description: form.description,
-    vision: form.vision,
+    name: form.name || null,
+    description: form.description || null,
+    vision: form.vision || null,
     mission: form.mission
-      .split("\n")
-      .map((m) => m.trim())
-      .filter(Boolean),
-    established_date: form.established_date,
-    address: form.address,
-    email: form.email,
-    phone: form.phone,
+      ? form.mission.split("\n").map((m) => m.trim()).filter(Boolean)
+      : [],
     branches: form.branches
-      .split("\n")
-      .map((b) => b.trim())
-      .filter(Boolean),
+      ? form.branches.split("\n").map((b) => b.trim()).filter(Boolean)
+      : [],
+    established_date: form.established_date || null,
+    address: form.address || null,
+    email: form.email || null,
+    phone: form.phone || null,
   };
-
+  
   try {
     if (isEditing.value && company.value) {
       await companyStore.updateCompany(company.value.id, payload);
@@ -136,6 +130,7 @@ const saveCompany = async () => {
   }
 };
 </script>
+
 
 <template>
   <!-- Alerts -->

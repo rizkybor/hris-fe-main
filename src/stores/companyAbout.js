@@ -3,7 +3,7 @@ import axios from "axios";
 import { ref } from "vue";
 
 export const useCompanyAboutStore = defineStore("companyAbout", () => {
-  const company = ref(null); // Hanya satu company
+  const company = ref(null);
   const loading = ref(false);
   const success = ref(null);
   const error = ref(null);
@@ -15,7 +15,7 @@ export const useCompanyAboutStore = defineStore("companyAbout", () => {
     error.value = null;
     try {
       const { data } = await axios.get("/company-about");
-      // Ambil data pertama jika ada, atau null
+
       company.value = data.data?.[0] || null;
     } catch (err) {
       console.error(err);
@@ -44,7 +44,10 @@ export const useCompanyAboutStore = defineStore("companyAbout", () => {
   const createCompany = async (payload) => {
     loading.value = true;
     try {
-      const { data } = await axios.post("/company-about", payload);
+      const { data } = await axios.post("/company-about", payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+
       company.value = data.data;
       success.value = "Company created successfully!";
     } catch (err) {
@@ -59,7 +62,10 @@ export const useCompanyAboutStore = defineStore("companyAbout", () => {
   const updateCompany = async (id, payload) => {
     loading.value = true;
     try {
-      const { data } = await axios.put(`/company-about/${id}`, payload);
+      const { data } = await axios.put(`/company-about/${id}`, payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+
       company.value = data.data;
       success.value = "Company updated successfully!";
     } catch (err) {
