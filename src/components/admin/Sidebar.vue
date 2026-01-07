@@ -542,7 +542,7 @@ const onNavigate = () => emit("navigate");
         <!-- Konten utama -->
         <div class="relative z-10">
           <!-- Ikon untuk memberikan kesan inspiratif -->
-          <div
+          <!-- <div
             class="w-12 h-12 rounded-[12px] flex items-center justify-center mb-4"
           >
             <img
@@ -550,7 +550,7 @@ const onNavigate = () => emit("navigate");
               alt="Background Image"
               class="w-full h-full object-cover"
             />
-          </div>
+          </div> -->
 
           <!-- Judul -->
           <h4 class="text-blue-800 text-base font-bold mb-2">
