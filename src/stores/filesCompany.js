@@ -20,6 +20,7 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
   }),
 
   actions: {
+    // ================= FETCH =================
     async fetchStatistics() {
       try {
         this.loading = true;
@@ -60,6 +61,7 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
       }
     },
 
+    // ================= DOWNLOAD =================
     async downloadArchive(file) {
       try {
         const response = await axios.get(`/files-companies/download/${file.id}`, {
@@ -75,6 +77,74 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
       } catch (error) {
         console.error("Error downloading file:", error);
         this.error = error.response?.data?.message || error.message;
+      }
+    },
+
+    // ================= CREATE =================
+    async createArchive(formData) {
+      try {
+        this.loading = true;
+        const response = await axios.post("/files-companies", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const newArchive = response.data.data;
+
+        // Tambahkan file baru ke depan array archives
+        this.archives.unshift(newArchive);
+
+        this.success = "File uploaded successfully";
+        return newArchive;
+      } catch (error) {
+        console.error("Error creating archive:", error);
+        this.error = error.response?.data?.message || error.message;
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // ================= UPDATE =================
+    async updateArchive(id, formData) {
+      try {
+        this.loading = true;
+        const response = await axios.post(`/files-companies/${id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const updatedArchive = response.data.data;
+
+        // Update state archives agar UI langsung berubah
+        const index = this.archives.findIndex((item) => item.id === id);
+        if (index !== -1) {
+          this.archives[index] = updatedArchive;
+        }
+
+        this.success = "File updated successfully";
+        return updatedArchive;
+      } catch (error) {
+        console.error("Error updating archive:", error);
+        this.error = error.response?.data?.message || error.message;
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // ================= DELETE =================
+    async deleteArchive(id) {
+      try {
+        this.loading = true;
+        await axios.delete(`/files-companies/${id}`);
+
+        // Hapus dari state archives
+        this.archives = this.archives.filter((archive) => archive.id !== id);
+
+        this.success = "File deleted successfully";
+      } catch (error) {
+        console.error("Error deleting archive:", error);
+        this.error = error.response?.data?.message || error.message;
+        throw error;
+      } finally {
+        this.loading = false;
       }
     },
   },

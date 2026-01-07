@@ -2,6 +2,9 @@
 import { ref } from "vue";
 import BaseInput from "@/components/common/form/Input.vue";
 import TextArea from "@/components/common/form/TextArea.vue";
+import { useFilesCompanyStore } from "@/stores/filesCompany";
+
+const archiveStore = useFilesCompanyStore();
 
 const form = ref({
   file_name: "",
@@ -31,16 +34,22 @@ const submit = async () => {
   payload.append("type_file", form.value.file?.type || "");
   payload.append("size_file", form.value.file?.size || "");
 
-  console.log(payload, "PAYLOAD UPLOAD FILE");
+  try {
+    // panggil createArchive dari store
+    const newFile = await archiveStore.createArchive(payload);
+    alert("File uploaded successfully!");
 
-  // try {
-  //   // kirim ke API
-  // } catch (err) {
-  //   console.error(err);
-  //   alert("Failed to upload file.");
-  // }
+    // reset form
+    form.value.file_name = "";
+    form.value.description = "";
+    form.value.file = null;
+  } catch (err) {
+    console.error(err);
+    alert("Failed to upload file.");
+  }
 };
 </script>
+
 
 <template>
   <div class="w-full min-h-screen flex items-center justify-center bg-gray-100 p-4">
