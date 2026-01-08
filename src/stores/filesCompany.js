@@ -95,8 +95,8 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
         // Trigger download
         const link = document.createElement("a");
         link.href = archive.document_path;
-        link.target = "_blank"; 
-        link.download = archive.document_name || "file"; 
+        link.target = "_blank";
+        link.download = archive.document_name || "file";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -106,7 +106,7 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
       }
     },
 
-     // async downloadArchive(file) {
+    // async downloadArchive(file) {
     //   try {
     //     // Ambil file detail dulu (opsional)
     //     const responseDetail = await axios.get(`/files-companies/${file.id}`);
@@ -164,29 +164,38 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
 
     // ================= UPDATE =================
     async updateArchive(id, formData) {
-      try {
-        this.loading = true;
-        const response = await axios.post(`/files-companies/${id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        const updatedArchive = response.data.data;
+  try {
+    this.loading = true;
 
-        // Update state archives agar UI langsung berubah
-        const index = this.archives.findIndex((item) => item.id === id);
-        if (index !== -1) {
-          this.archives[index] = updatedArchive;
-        }
+    // 🔹 Tambahkan _method=PUT supaya Laravel menganggap ini PUT
+    formData.append("_method", "PUT");
 
-        this.success = "File updated successfully";
-        return updatedArchive;
-      } catch (error) {
-        console.error("Error updating archive:", error);
-        this.error = error.response?.data?.message || error.message;
-        throw error;
-      } finally {
-        this.loading = false;
-      }
-    },
+    // 🔹 POST request tapi Laravel akan tetap memanggil update()
+    const response = await axios.post(`/files-companies/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    const updatedArchive = response.data.data;
+
+    // Update state archives agar UI langsung berubah
+    const index = this.archives.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      this.archives[index] = updatedArchive;
+    }
+
+    // Update currentArchive agar form langsung refleks
+    this.currentArchive = updatedArchive;
+
+    this.success = "File updated successfully";
+    return updatedArchive;
+  } catch (error) {
+    console.error("Error updating archive:", error);
+    this.error = error.response?.data?.message || error.message;
+    throw error;
+  } finally {
+    this.loading = false;
+  }
+},
 
     // ================= DELETE =================
     async deleteArchive(id) {

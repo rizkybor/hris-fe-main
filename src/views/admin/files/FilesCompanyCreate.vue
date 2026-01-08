@@ -43,6 +43,8 @@ const submit = async () => {
     form.value.file_name = "";
     form.value.description = "";
     form.value.file = null;
+
+    router.push("/admin/files-company");
   } catch (err) {
     console.error(err);
     alert("Failed to upload file.");

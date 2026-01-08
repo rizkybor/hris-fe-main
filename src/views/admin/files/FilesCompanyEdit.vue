@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import BaseInput from "@/components/common/form/Input.vue";
 import TextArea from "@/components/common/form/TextArea.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
@@ -22,15 +22,8 @@ const form = ref({
 const submitting = ref(false);
 const fileNameError = ref(false);
 
-// Format tanggal
-const formatDate = (date) => {
-  if (!date) return "-";
-  return new Date(date).toLocaleDateString("id-ID", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
+// Simpan URL object sementara untuk preview file baru
+let tempPreviewURL = null;
 
 // Cek apakah file image
 const isImage = (type) => type?.startsWith("image/");
@@ -41,14 +34,22 @@ const fetchArchive = async () => {
   try {
     await archiveStore.fetchArchiveById(archiveId);
     const archive = archiveStore.currentArchive;
+
     if (!archive) {
       error.value = "Archive not found.";
       return;
     }
+
     form.value.document_name = archive.document_name || "";
     form.value.description = archive.description || "";
     form.value.new_file = null;
     form.value.remove_file = false;
+
+    // Hapus preview lama jika ada
+    if (tempPreviewURL) {
+      URL.revokeObjectURL(tempPreviewURL);
+      tempPreviewURL = null;
+    }
   } catch (err) {
     console.error(err);
     error.value = "Failed to load archive.";
@@ -57,15 +58,22 @@ const fetchArchive = async () => {
   }
 };
 
-onMounted(() => {
-  fetchArchive();
+onMounted(fetchArchive);
+onBeforeUnmount(() => {
+  if (tempPreviewURL) URL.revokeObjectURL(tempPreviewURL);
 });
 
 // Pilih file baru
 const onFileChange = (event) => {
-  if (!event.target.files.length) return;
-  form.value.new_file = event.target.files[0];
+  const file = event.target.files[0];
+  if (!file) return;
+
+  form.value.new_file = file; // simpan file baru
   form.value.remove_file = false;
+
+  // Buat preview
+  if (tempPreviewURL) URL.revokeObjectURL(tempPreviewURL);
+  tempPreviewURL = URL.createObjectURL(file);
 };
 
 // Hapus file lama
@@ -77,12 +85,16 @@ const removeFile = () => {
   }
   form.value.remove_file = true;
   form.value.new_file = null;
-  alert(
-    "Old file marked for deletion. You need to click 'Save Changes' to confirm."
-  );
+
+  if (tempPreviewURL) {
+    URL.revokeObjectURL(tempPreviewURL);
+    tempPreviewURL = null;
+  }
+
+  alert("Old file marked for deletion. Click 'Save Changes' to confirm.");
 };
 
-// Submit update
+// Submit form
 const submit = async () => {
   fileNameError.value = false;
 
@@ -92,19 +104,13 @@ const submit = async () => {
     return;
   }
 
-  if (form.value.remove_file && !form.value.new_file) {
-    const confirmDelete = confirm(
-      "You marked the old file for deletion but did not upload a new file. Are you sure you want to proceed?"
-    );
-    if (!confirmDelete) return;
-  }
-
   submitting.value = true;
   try {
     const formData = new FormData();
     formData.append("document_name", form.value.document_name);
     formData.append("description", form.value.description);
 
+    // Append file baru hanya jika ada
     if (form.value.new_file) {
       formData.append("document_path", form.value.new_file);
     }
@@ -113,9 +119,22 @@ const submit = async () => {
       formData.append("remove_file", "1");
     }
 
-    await archiveStore.updateArchive(archiveId, formData);
+    // 🔹 API call: kirim ke backend
+    const updatedArchive = await archiveStore.updateArchive(
+      archiveId,
+      formData
+    );
+
+    // Update form dan preview langsung dari response backend
+    form.value.new_file = null;
+    form.value.remove_file = false;
+    form.value.document_name = updatedArchive.document_name;
+    form.value.description = updatedArchive.description;
+
     alert("Archive updated successfully!");
-    fetchArchive(); // refresh data
+
+    // 🔹 Redirect ke halaman list setelah berhasil
+    router.push("/admin/files-company");
   } catch (err) {
     console.error(err);
     alert("Failed to update archive.");
@@ -123,6 +142,14 @@ const submit = async () => {
     submitting.value = false;
   }
 };
+
+// Preview file (utamakan file baru jika ada)
+const previewFile = computed(() => {
+  if (form.value.new_file) return tempPreviewURL;
+  if (archiveStore.currentArchive?.document_path && !form.value.remove_file)
+    return archiveStore.currentArchive.document_path;
+  return null;
+});
 </script>
 
 <template>
@@ -192,10 +219,13 @@ const submit = async () => {
           />
         </div>
 
-        <!-- Current File -->
-        <div v-if="archiveStore.currentArchive?.document_path" class="mt-4">
-          <span class="font-semibold text-gray-800">Current File:</span>
-          <div class="flex items-center space-x-4 mt-2 mb-2">
+        <!-- Current / Preview File -->
+        <div v-if="previewFile" class="mt-4">
+          <span class="font-semibold text-gray-800">File Preview:</span>
+          <div
+            class="flex items-center space-x-4 mt-2 mb-2"
+            v-if="!form.new_file && !form.remove_file"
+          >
             <a
               :href="archiveStore.currentArchive.document_path"
               target="_blank"
@@ -211,49 +241,36 @@ const submit = async () => {
             </button>
           </div>
 
-          <!-- Preview -->
-          <div v-if="!form.remove_file">
-            <div
-              v-if="isImage(archiveStore.currentArchive.type_file)"
-              class="mt-2 w-full max-h-[400px] overflow-auto border border-gray-200 rounded-lg shadow-sm p-1"
-            >
-              <img
-                :src="archiveStore.currentArchive.document_path"
-                alt="File Preview"
-                class="w-full object-contain"
-              />
-            </div>
-
-            <div
-              v-else-if="
-                archiveStore.currentArchive.type_file === 'application/pdf'
+          <div
+            class="mt-2 w-full max-h-[400px] overflow-auto border border-gray-200 rounded-lg shadow-sm p-1"
+          >
+            <img
+              v-if="
+                isImage(
+                  form.new_file?.type || archiveStore.currentArchive?.type_file
+                )
               "
-              class="mt-2 w-full max-h-[400px] overflow-auto border border-gray-200 rounded-lg"
-            >
-              <iframe
-                :src="archiveStore.currentArchive.document_path"
-                class="w-full h-[400px]"
-              ></iframe>
-            </div>
+              :src="previewFile"
+              alt="File Preview"
+              class="w-full object-contain"
+            />
+            <iframe
+              v-else-if="
+                (form.new_file?.type ||
+                  archiveStore.currentArchive?.type_file) === 'application/pdf'
+              "
+              :src="previewFile"
+              class="w-full h-[400px]"
+            ></iframe>
           </div>
         </div>
 
         <!-- Upload New File -->
-        <div
-          v-if="!archiveStore.currentArchive?.document_path || form.remove_file"
-          class="mt-4"
-        >
+        <div class="mt-4">
           <span class="font-semibold text-gray-800"
             >Upload New File (Optional):</span
           >
-          <input
-            type="file"
-            class="mt-2"
-            @change="onFileChange"
-            :disabled="
-              form.remove_file && !archiveStore.currentArchive?.document_path
-            "
-          />
+          <input type="file" class="mt-2" @change="onFileChange" />
           <p v-if="form.new_file" class="text-gray-600 text-sm mt-1">
             Selected file: {{ form.new_file.name }}
           </p>
