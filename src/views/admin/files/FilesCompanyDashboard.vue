@@ -157,7 +157,8 @@ const deleteArchive = async (archive) => {
           </div>
 
           <div class="flex-1">
-            <p class="text-lg font-bold">{{ archive.file_name }}</p>
+            <p class="text-lg font-bold">{{ archive.document_name }}</p>
+            <p class="text-md font-bold">{{ archive.file_name }}</p>
             <p class="text-sm text-gray-600">{{ archive.description }}</p>
             <p class="text-xs text-gray-400 mt-1">
               Uploaded {{ formatDate(archive.created_at) }} by
