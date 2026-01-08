@@ -81,13 +81,22 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
     // ================= DOWNLOAD =================
     async downloadArchive(file) {
       try {
-        const response = await axios.get(`/files-companies/download/${file.id}`, {
-          responseType: "blob",
-        });
-        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const response = await axios.get(`/files-companies/${file.id}`);
+        const archive = response.data.data;
+
+        console.log(file);
+        console.log(archive.document_path, "<<< CEK");
+
+        if (!archive.document_path) {
+          alert("File not available for download.");
+          return;
+        }
+
+        // Trigger download
         const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", file.document_name || file.name || "file");
+        link.href = archive.document_path;
+        link.target = "_blank"; 
+        link.download = archive.document_name || "file"; 
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -96,6 +105,39 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
         this.error = error.response?.data?.message || error.message;
       }
     },
+
+     // async downloadArchive(file) {
+    //   try {
+    //     // Ambil file detail dulu (opsional)
+    //     const responseDetail = await axios.get(`/files-companies/${file.id}`);
+    //     const archive = responseDetail.data.data;
+
+    //     if (!archive.document_path) {
+    //       alert("File not available for download.");
+    //       return;
+    //     }
+
+    //     // Ambil file sebagai blob
+    //     const responseFile = await axios.get(archive.document_path, {
+    //       responseType: "blob", // penting supaya dapat blob
+    //     });
+
+    //     // Buat link download
+    //     const url = window.URL.createObjectURL(new Blob([responseFile.data]));
+    //     const link = document.createElement("a");
+    //     link.href = url;
+    //     link.download = archive.document_name || "file";
+    //     document.body.appendChild(link);
+    //     link.click();
+    //     document.body.removeChild(link);
+
+    //     // Bersihkan URL object setelah download
+    //     window.URL.revokeObjectURL(url);
+    //   } catch (error) {
+    //     console.error("Error downloading file:", error);
+    //     this.error = error.response?.data?.message || error.message;
+    //   }
+    // },
 
     // ================= CREATE =================
     async createArchive(formData) {
