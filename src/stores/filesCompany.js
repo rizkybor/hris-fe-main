@@ -4,6 +4,7 @@ import axios from "axios";
 export const useFilesCompanyStore = defineStore("FilesCompany", {
   state: () => ({
     archives: [],
+    currentArchive: null,
     pagination: {
       current_page: 1,
       last_page: 1,
@@ -56,6 +57,22 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
       } catch (error) {
         console.error("Error fetching archives:", error);
         this.error = error.response?.data?.message || error.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // ================= FETCH DETAIL =================
+    async fetchArchiveById(id) {
+      try {
+        this.loading = true;
+        const response = await axios.get(`/files-companies/${id}`);
+        this.currentArchive = response.data.data;
+        return this.currentArchive;
+      } catch (error) {
+        console.error("Error fetching archive detail:", error);
+        this.error = error.response?.data?.message || error.message;
+        throw error;
       } finally {
         this.loading = false;
       }
