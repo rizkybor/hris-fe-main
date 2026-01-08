@@ -478,6 +478,7 @@ const onNavigate = () => emit("navigate");
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.vendors'),
             }"
+            v-if="can('vendors.list')"
             @click="onNavigate"
           >
             <CrownIcon
