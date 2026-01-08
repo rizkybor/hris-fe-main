@@ -2,43 +2,51 @@
 import { ref } from "vue";
 import BaseInput from "@/components/common/form/Input.vue";
 import TextArea from "@/components/common/form/TextArea.vue";
+import { useFilesCompanyStore } from "@/stores/filesCompany";
 
+const archiveStore = useFilesCompanyStore();
+
+// Form state
 const form = ref({
   file_name: "",
   description: "",
   file: null,
 });
 
-// state untuk error file
+// Error state
 const fileError = ref(false);
+const nameError = ref(false);
 
+// Submit function
 const submit = async () => {
-  // reset error
+  // Reset errors
   fileError.value = false;
+  nameError.value = false;
 
-  // cek validasi
-  if (!form.value.file_name || !form.value.file) {
-    if (!form.value.file) fileError.value = true;
-    alert("File name and file are required!");
-    return;
-  }
+  // Validation
+  if (!form.value.file_name) nameError.value = true;
+  if (!form.value.file) fileError.value = true;
 
-  // Buat FormData karena ada file
+  if (nameError.value || fileError.value) return;
+
+  // Prepare FormData
   const payload = new FormData();
   payload.append("document_name", form.value.file_name);
   payload.append("description", form.value.description || "");
   payload.append("document_path", form.value.file);
-  payload.append("type_file", form.value.file?.type || "");
-  payload.append("size_file", form.value.file?.size || "");
+  payload.append("type_file", form.value.file.type);
+  payload.append("size_file", form.value.file.size);
 
-  console.log(payload, "PAYLOAD UPLOAD FILE");
-
-  // try {
-  //   // kirim ke API
-  // } catch (err) {
-  //   console.error(err);
-  //   alert("Failed to upload file.");
-  // }
+  try {
+    await archiveStore.createArchive(payload);
+    alert("File uploaded successfully!");
+    form.value.file_name = "";
+    form.value.description = "";
+    form.value.file = null;
+  } catch (err) {
+    console.error(err);
+    alert("Failed to upload file.");
+  }
 };
 </script>
 
@@ -52,16 +60,16 @@ const submit = async () => {
         <BaseInput
           id="file_name"
           label="File Name"
-                    class="mb-4"
           placeholder="Enter file name"
           v-model="form.file_name"
+          :class="{ 'border-red-600': nameError }"
           required
         />
+        <p v-if="nameError" class="text-red-600 text-[14px]">File name is required.</p>
 
         <!-- Description -->
         <TextArea
           id="description"
-          class="mb-4"
           label="Archive Description"
           placeholder="Enter a description"
           v-model="form.description"
@@ -69,7 +77,7 @@ const submit = async () => {
         />
 
         <!-- File Upload -->
-        <div           class="mb-6">
+        <div>
           <label class="block mb-2 text-gray-700 font-semibold font-jakarta text-[14px]">
             Upload File<span class="text-red-600 ml-1">*</span>
           </label>
@@ -78,7 +86,6 @@ const submit = async () => {
             @change="e => { form.file = e.target.files[0]; fileError.value = false }"
             class="w-full text-gray-700 file:border file:border-gray-300 file:rounded-lg file:px-4 file:py-2 file:bg-gray-100 file:text-gray-800 hover:file:bg-gray-200 cursor-pointer"
           />
-          <!-- Error hanya muncul saat klik submit -->
           <p v-if="fileError" class="mt-2 text-red-600 text-[14px]">File is required.</p>
         </div>
 
