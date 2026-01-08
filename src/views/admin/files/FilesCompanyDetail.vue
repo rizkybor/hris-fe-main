@@ -52,7 +52,7 @@ const isImage = (type) => type?.startsWith("image/");
       <!-- Button Back -->
       <div class="flex items-center mb-4">
         <button
-          @click="router.back()"
+          @click="$router.back()"
           type="button"
           class="flex items-center bg-gray-200 text-gray-700 hover:bg-blue-600 hover:text-white font-medium px-3 py-1.5 rounded-lg border border-gray-300 shadow-sm transition-colors duration-200 text-sm focus:outline-none"
         >
@@ -74,7 +74,7 @@ const isImage = (type) => type?.startsWith("image/");
         </button>
       </div>
 
-      <h2 class="text-xl font-bold text-gray-800 border-b pb-3 mb-6">
+      <h2 class="text-3xl font-bold text-gray-800 border-b pb-3 mb-6">
         Archive Detail
       </h2>
 
