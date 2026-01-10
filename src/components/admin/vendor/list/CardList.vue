@@ -11,57 +11,81 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4">
+  <div
+    class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-[#0C51D9]"
+  >
     <!-- Vendor Name -->
-    <h4 class="text-brand-dark text-lg font-bold mb-2">{{ data.name }}</h4>
+    <h4 class="text-brand-dark text-xl font-bold mb-3 truncate">
+      {{ data.name || "Unnamed Vendor" }}
+    </h4>
 
-    <!-- Vendor Type & Field -->
-    <p class="text-brand-light text-sm mb-2">
-      <span class="font-semibold">Type:</span> {{ data.type || "-" }}<br>
-      <span class="font-semibold">Field:</span> {{ data.field || "-" }}
-    </p>
+   <!-- Vendor Type & Field as Chips -->
+<div class="flex flex-wrap gap-2 mb-3">
+  <span
+    v-if="data.type"
+    class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-1 rounded-full"
+  >
+    {{ data.type }}
+  </span>
+  <span
+    v-if="data.field"
+    class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full"
+  >
+    {{ data.field }}
+  </span>
+
+  <!-- fallback jika tidak ada type/field -->
+  <span
+    v-if="!data.type && !data.field"
+    class="bg-gray-100 text-gray-500 text-xs font-medium px-2.5 py-1 rounded-full"
+  >
+    -
+  </span>
+</div>
+
 
     <!-- PIC -->
-    <div class="flex items-center gap-2 text-sm text-gray-600 mb-2">
-      <User class="w-4 h-4" />
+    <div class="flex items-center gap-3 text-sm text-gray-600 mb-2">
+      <User class="w-5 h-5 text-gray-400" />
       <span>{{ data.pic_name || "-" }}</span>
     </div>
-    <div class="flex items-center gap-2 text-sm text-gray-600 mb-2">
-      <Phone class="w-4 h-4" />
+    <div class="flex items-center gap-3 text-sm text-gray-600 mb-2">
+      <Phone class="w-5 h-5 text-gray-400" />
       <span>{{ data.pic_phone || "-" }}</span>
     </div>
 
     <!-- Email -->
-    <div class="flex items-center gap-2 text-sm text-gray-600 mb-2">
-      <Mail class="w-4 h-4" />
-      <span>{{ data.email || "-" }}</span>
+    <div class="flex items-center gap-3 text-sm text-gray-600 mb-2">
+      <Mail class="w-5 h-5 text-gray-400" />
+      <span class="truncate">{{ data.email || "-" }}</span>
     </div>
 
     <!-- Address -->
-    <div class="flex items-center gap-2 text-sm text-gray-600 mb-2">
-      <MapPin class="w-4 h-4" />
-      <span>{{ data.address || "-" }}</span>
+    <div class="flex items-start gap-3 text-sm text-gray-600 mb-3">
+      <MapPin class="w-5 h-5 text-gray-400 mt-0.5" />
+      <span class="truncate">{{ data.address || "-" }}</span>
     </div>
 
     <!-- Notes -->
-    <p class="text-brand-light text-sm mb-2">
+    <p class="text-gray-400 text-sm mb-4 line-clamp-3">
       {{ data.notes || "No notes" }}
     </p>
 
     <!-- Actions -->
-    <div class="flex gap-2 mt-4">
+    <div class="flex gap-3">
       <RouterLink
         :to="{ name: 'admin.vendors.detail', params: { id: data.id } }"
-        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center justify-center gap-2"
+        class="flex-1 text-center py-2 px-3 rounded-lg border border-gray-300 hover:border-[#0C51D9] hover:bg-blue-50 text-gray-700 font-semibold transition-all duration-300"
       >
-        <span class="text-brand-dark text-sm font-semibold">View</span>
+        View
       </RouterLink>
       <RouterLink
         :to="{ name: 'admin.vendors.edit', params: { id: data.id } }"
-        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center justify-center gap-2"
+        class="flex-1 text-center py-2 px-3 rounded-lg border border-gray-300 hover:border-[#0C51D9] hover:bg-blue-50 text-gray-700 font-semibold transition-all duration-300"
       >
-        <span class="text-brand-dark text-sm font-semibold">Edit</span>
+        Edit
       </RouterLink>
     </div>
   </div>
 </template>
+
