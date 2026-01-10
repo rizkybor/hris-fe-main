@@ -1,6 +1,6 @@
 <script setup>
 import CardList from "@/components/admin/vendor/list/CardList.vue";
-import Statistics from "@/components/admin/project/list/Statistics.vue";
+import Statistics from "@/components/admin/vendor/list/Statistics.vue";
 import Pagination from "@/components/admin/team/Pagination.vue";
 import Alert from "@/components/common/Alert.vue";
 import { storeToRefs } from "pinia";
