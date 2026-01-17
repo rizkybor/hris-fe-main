@@ -460,9 +460,9 @@ const filteredInfra = computed(() => {
 const fixedPageCount = computed(
   () => store.fixedCostData?.meta?.last_page || 1
 );
-const sdmPageCount = computed(
-  () => store.sdmResourceData?.meta?.last_page || 1
-);
+
+const fixedCostPaginated = computed(() => store.fixedCostData.items || []);
+const sdmResourcePaginated = computed(() => store.sdmResourceData.items || []);
 const infraPaginated = computed(() => store.infraToolsData.items || []);
 
 const changeInfraPage = async (page) => {
@@ -549,7 +549,7 @@ watch(
           </thead>
           <tbody>
             <tr
-              v-for="(item, index) in fixedPaginated"
+              v-for="(item, index) in fixedCostPaginated"
               :key="item.id"
               class="border-t"
             >
@@ -598,21 +598,22 @@ watch(
 
         <div class="flex gap-2">
           <div class="flex gap-2">
-            <button
-              class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
-              :disabled="fixedPage === 1"
-              @click="fetchFixedCostData(fixedPage - 1)"
-            >
-              Prev
-            </button>
-            <button
-              class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
-              :disabled="fixedPage === fixedPageCount"
-              @click="fetchFixedCostData(fixedPage + 1)"
-            >
-              Next
-            </button>
-          </div>
+          <button
+            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
+            :disabled="fixedPage === 1"
+            @click="fetchFixedCostData(fixedPage - 1)"
+          >
+            Prev
+          </button>
+
+          <button
+            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
+            :disabled="fixedPage === store.fixedCostData.meta.last_page"
+            @click="fetchFixedCostData(fixedPage + 1)"
+          >
+            Next
+          </button>
+        </div>
         </div>
       </div>
     </section>
@@ -659,7 +660,7 @@ watch(
           </thead>
           <tbody>
             <tr
-              v-for="(item, index) in sdmPaginated"
+              v-for="(item, index) in sdmResourcePaginated"
               :key="item.id"
               class="border-t"
             >
@@ -730,9 +731,10 @@ watch(
           >
             Prev
           </button>
+
           <button
             class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
-            :disabled="sdmPage === sdmPageCount"
+            :disabled="sdmPage === store.sdmResourceData.meta.last_page"
             @click="fetchSdmResourcesData(sdmPage + 1)"
           >
             Next
