@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { storeToRefs } from "pinia";
+import { debounce } from "lodash";
 import {
   Archive,
   Upload,
@@ -9,8 +10,11 @@ import {
   Pencil,
   Download,
   Trash2,
+  AlertTriangle,
   ChevronLeft,
   ChevronRight,
+  Search,
+  X,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
@@ -19,13 +23,12 @@ const archiveStore = useFilesCompanyStore();
 const { archives, statistics, loading, success, error, pagination } =
   storeToRefs(archiveStore);
 
-// Input search
 const searchQuery = ref("");
-
-// Rows per page (bisa diubah dari parent)
 const rowsPerPage = ref(10);
+const isDeleteModalOpen = ref(false);
+const archiveToDelete = ref(null);
+const isDeleting = ref(false);
 
-// Format tanggal
 const formatDate = (date) => {
   if (!date) return "-";
   return new Date(date).toLocaleDateString("id-ID", {
@@ -35,26 +38,31 @@ const formatDate = (date) => {
   });
 };
 
-// Fetch stats & first page on mount
 onMounted(async () => {
   await archiveStore.fetchStatistics();
   await archiveStore.fetchArchives({ page: 1, perPage: rowsPerPage.value });
 });
 
-// Watch searchQuery dan reload archives dengan debounce
+watch(
+  success,
+  (newValue) => {
+    if (newValue) {
+      setTimeout(() => archiveStore.clearMessages(), 3000);
+    }
+  }
+);
+
 watch(
   searchQuery,
-  async (newQuery) => {
+  debounce(async (newQuery) => {
     await archiveStore.fetchArchives({
       search: newQuery,
       page: 1,
       perPage: rowsPerPage.value,
     });
-  },
-  { debounce: 500 }
+  }, 400)
 );
 
-// Pagination
 const goToPage = async (page) => {
   await archiveStore.fetchArchives({
     search: searchQuery.value,
@@ -75,15 +83,23 @@ const nextPage = () => {
   }
 };
 
-// Delete Archive
-const deleteArchive = async (archive) => {
-  if (!confirm(`Are you sure you want to delete "${archive.file_name}"?`)) return;
+const confirmDelete = (archive) => {
+  archiveToDelete.value = archive;
+  isDeleteModalOpen.value = true;
+};
+
+const handleDelete = async () => {
+  if (!archiveToDelete.value) return;
+
+  isDeleting.value = true;
   try {
-    await archiveStore.deleteArchive(archive.id);
-    alert("File deleted successfully!");
+    await archiveStore.deleteArchive(archiveToDelete.value.id);
+    isDeleteModalOpen.value = false;
+    archiveToDelete.value = null;
   } catch (err) {
     console.error(err);
-    alert("Failed to delete file.");
+  } finally {
+    isDeleting.value = false;
   }
 };
 </script>
@@ -91,58 +107,120 @@ const deleteArchive = async (archive) => {
 <template>
   <div>
     <!-- ================= STATS ================= -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-      <div class="lg:row-span-2 rounded-[20px] border border-[#0B1042] relative overflow-hidden main-card p-5">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div
+        class="main-card rounded-[20px] border border-[#0B1042] relative overflow-hidden p-5"
+      >
         <div class="flex flex-col justify-center h-full relative z-10">
-          <p class="text-lg text-gray-300">Total Archived Files</p>
-          <p class="text-4xl text-brand-white font-extrabold my-4">
-            {{ loading ? "..." : statistics.total_archives }}
-          </p>
-          <div class="flex items-center gap-2 text-sm text-green-600">
-            <Archive class="w-4 h-4" /> Secure Archive
+          <div class="flex items-center gap-2 mb-3">
+            <div
+              class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm"
+            >
+              <Archive class="w-3 h-3 text-white" />
+              <span class="text-brand-white text-xs font-semibold">
+                Secure Archive
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex-1 min-w-0 pr-2">
+              <p class="text-brand-white-90 text-sm font-medium">
+                Total Archived Files
+              </p>
+              <p
+                class="text-brand-white text-4xl lg:text-5xl font-extrabold leading-none my-4"
+              >
+                {{ loading ? "..." : statistics.total_archives }}
+              </p>
+              <p class="text-brand-white-80 text-base font-normal">
+                Company document storage
+              </p>
+            </div>
+            <div
+              class="w-16 h-16 bg-white/20 rounded-[20px] flex items-center justify-center flex-shrink-0"
+            >
+              <Archive class="w-8 h-8 text-white" />
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="bg-white border rounded-[20px] p-5">
-        <p class="text-sm text-gray-500">Last Upload</p>
-        <p class="text-lg font-bold my-5">
-          {{ statistics.last_uploaded ? formatDate(statistics.last_uploaded) : "-" }}
-        </p>
-        <div class="flex items-center gap-2 text-sm text-blue-600">
-          <Calendar class="w-4 h-4" /> Latest Archive
+      <div
+        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0 pr-2">
+            <p class="text-brand-dark text-sm font-medium">Last Upload</p>
+            <p class="text-brand-dark text-2xl font-extrabold leading-tight my-2 truncate">
+              {{ statistics.last_uploaded ? formatDate(statistics.last_uploaded) : "—" }}
+            </p>
+            <p class="text-brand-light text-sm font-medium">Latest archive</p>
+          </div>
+          <div class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center flex-shrink-0">
+            <Calendar class="w-6 h-6 text-blue-600" />
+          </div>
         </div>
       </div>
 
-      <div class="bg-white border rounded-[20px] p-5 flex justify-between items-center">
-        <div class="my-5">
-          <p class="text-sm text-gray-500">New Archive</p>
-          <p class="text-xs text-gray-400">Store permanent documents</p>
+      <div
+        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5 flex items-center justify-between gap-4"
+      >
+        <div>
+          <p class="text-brand-dark text-sm font-medium">New Archive</p>
+          <p class="text-brand-light text-xs mt-1">Store a permanent document</p>
         </div>
         <router-link
           :to="{ name: 'admin.files-company.create' }"
-          class="px-4 py-2 bg-[#0C51D9] text-white rounded-xl text-sm font-semibold"
+          class="btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2 flex-shrink-0"
         >
-          <Upload class="inline w-4 h-4 mr-1" /> Upload
+          <Upload class="w-4 h-4 text-white" />
+          <span class="text-brand-white text-sm font-semibold">Upload</span>
         </router-link>
       </div>
     </div>
 
-    <!-- ================= ALERT ================= -->
-    <Alert type="success" :title="success" :show="success" />
-    <Alert type="error" :title="error" :show="error" />
+    <div class="mb-6 space-y-3">
+      <Transition name="fade">
+        <Alert
+          v-if="success"
+          type="success"
+          :title="success"
+          message=""
+          :show="!!success"
+          @close="archiveStore.clearMessages()"
+        />
+      </Transition>
+      <Transition name="fade">
+        <Alert
+          v-if="error"
+          type="danger"
+          :title="error"
+          message=""
+          :show="!!error"
+          @close="archiveStore.clearMessages()"
+        />
+      </Transition>
+    </div>
 
     <!-- ================= ARCHIVE LIST ================= -->
-    <div class="bg-white border rounded-[20px] p-5">
-      <!-- Header -->
-      <div class="mb-4 flex justify-between items-center">
-        <h3 class="text-lg font-bold">File Archives</h3>
-        <input
-          type="text"
-          v-model="searchQuery"
-          placeholder="Search archives..."
-          class="border rounded-xl p-2 w-1/3"
-        />
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+      <div
+        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
+      >
+        <h3 class="text-brand-dark text-lg font-bold">File Archives</h3>
+
+        <div class="relative w-full sm:w-64">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+            <Search class="w-4 h-4 text-blue-400" />
+          </div>
+          <input
+            type="text"
+            v-model="searchQuery"
+            placeholder="Search archives..."
+            class="relative w-full pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
+          />
+        </div>
       </div>
 
       <!-- Archive items -->
@@ -150,85 +228,194 @@ const deleteArchive = async (archive) => {
         <div
           v-for="archive in archives"
           :key="archive.id"
-          class="flex items-center gap-4 p-4 border rounded-[16px] hover:border-[#0C51D9]"
+          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
         >
-          <div class="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
-            <Archive class="w-6 h-6 text-blue-600" />
+          <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px] flex items-center justify-center flex-shrink-0">
+            <Archive class="w-6 h-6 sm:w-7 sm:h-7 text-white" />
           </div>
 
-          <div class="flex-1">
-            <p class="text-lg font-bold">{{ archive.document_name }}</p>
-            <p class="text-md font-bold">{{ archive.file_name }}</p>
-            <p class="text-sm text-gray-600">{{ archive.description }}</p>
-            <p class="text-xs text-gray-400 mt-1">
-              Uploaded {{ formatDate(archive.created_at) }} by
-              {{ archive.uploaded_by || "System" }}
+          <div class="flex-1 min-w-0">
+            <p class="text-brand-dark text-lg font-bold truncate">
+              {{ archive.document_name }}
+            </p>
+            <p v-if="archive.description" class="text-sm text-brand-light truncate">
+              {{ archive.description }}
+            </p>
+            <p class="text-brand-light text-xs mt-1">
+              Uploaded {{ formatDate(archive.created_at) }}
             </p>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="grid grid-cols-4 sm:flex items-center gap-2 w-full sm:w-auto">
             <button
               @click="archiveStore.downloadArchive(archive)"
-              class="border p-2 rounded-xl"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
+              title="Download File"
+              aria-label="Download File"
             >
-              <Download class="w-4 h-4" />
+              <Download class="w-4 h-4 text-gray-600" />
             </button>
 
             <router-link
               :to="{ name: 'admin.files-company.detail', params: { id: archive.id } }"
-              class="border p-2 rounded-xl"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
+              title="View File"
+              aria-label="View File"
             >
-              <Eye class="w-4 h-4" />
+              <Eye class="w-4 h-4 text-gray-600" />
             </router-link>
 
             <router-link
               :to="{ name: 'admin.files-company.edit', params: { id: archive.id } }"
-              class="border p-2 rounded-xl"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
+              title="Edit File"
+              aria-label="Edit File"
             >
-              <Pencil class="w-4 h-4" />
+              <Pencil class="w-4 h-4 text-gray-600" />
             </router-link>
 
             <button
-              @click="deleteArchive(archive)"
-              class="border p-2 rounded-xl hover:bg-red-50"
+              @click="confirmDelete(archive)"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-red-500 hover:ring-2 hover:ring-red-500/30 hover:bg-red-50 group transition-all"
+              title="Delete File"
+              aria-label="Delete File"
             >
-              <Trash2 class="w-4 h-4 text-red-600" />
+              <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
             </button>
           </div>
         </div>
 
-        <!-- Empty state -->
+        <!-- Empty states -->
         <div
-          v-if="!loading && archives.length === 0"
-          class="text-center py-10 text-gray-400"
+          v-if="!loading && archives.length === 0 && searchQuery"
+          class="text-center py-12 text-gray-500 bg-gray-50 rounded-[16px] border border-dashed border-[#DCDEDD]"
         >
-          No archived files available
+          <Search class="w-10 h-10 text-gray-300 mx-auto mb-3" />
+          <p class="text-lg font-semibold">No results found</p>
+          <p class="text-sm text-gray-400">
+            Try searching with a different keyword for "{{ searchQuery }}"
+          </p>
+        </div>
+
+        <div
+          v-else-if="!loading && archives.length === 0"
+          class="text-center py-12 text-gray-500 bg-gray-50 rounded-[16px] border border-dashed border-[#DCDEDD]"
+        >
+          <Archive class="w-10 h-10 text-gray-300 mx-auto mb-3" />
+          <p class="text-lg font-semibold">No archived files found</p>
+          <p class="text-sm text-gray-400">Upload your first document to get started</p>
         </div>
       </div>
 
       <!-- Pagination -->
-      <div class="flex justify-between items-center mt-6">
-        <span class="text-sm text-gray-600">
+      <div
+        v-if="archives.length > 0"
+        class="flex items-center justify-between mt-6 pt-4 border-t border-[#DCDEDD]"
+      >
+        <span class="text-sm text-brand-light">
           Page {{ pagination.current_page }} of {{ pagination.last_page }}
+          <span class="hidden sm:inline">&middot; {{ pagination.total }} total files</span>
         </span>
         <div class="flex gap-2">
           <button
             @click="prevPage"
             :disabled="pagination.current_page === 1"
-            class="px-3 py-1 border rounded-lg disabled:opacity-50"
+            class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
           >
-            <ChevronLeft class="w-4 h-4 inline" /> Prev
+            <ChevronLeft class="w-4 h-4" /> Prev
           </button>
 
           <button
             @click="nextPage"
             :disabled="pagination.current_page === pagination.last_page"
-            class="px-3 py-1 border rounded-lg disabled:opacity-50"
+            class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
           >
-            Next <ChevronRight class="w-4 h-4 inline" />
+            Next <ChevronRight class="w-4 h-4" />
           </button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Delete Confirmation Modal -->
+  <Transition name="fade">
+    <div
+      v-if="isDeleteModalOpen"
+      class="fixed inset-0 z-[99] flex items-center justify-center p-4"
+    >
+      <div
+        class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"
+        @click="isDeleteModalOpen = false"
+      ></div>
+
+      <div class="bg-white rounded-[20px] p-6 w-full max-w-sm relative z-10 shadow-2xl transform transition-all">
+        <button
+          @click="isDeleteModalOpen = false"
+          class="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+          aria-label="Close"
+        >
+          <X class="w-5 h-5" />
+        </button>
+
+        <div class="text-center">
+          <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle class="w-8 h-8 text-red-500" />
+          </div>
+
+          <h3 class="text-xl font-bold text-brand-dark mb-2">Delete File?</h3>
+          <p class="text-gray-500 text-sm mb-6">
+            Are you sure you want to delete
+            <span class="font-bold text-brand-dark">"{{ archiveToDelete?.document_name }}"</span
+            >? This action cannot be undone.
+          </p>
+
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              @click="isDeleteModalOpen = false"
+              class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50 transition"
+            >
+              Cancel
+            </button>
+            <button
+              @click="handleDelete"
+              :disabled="isDeleting"
+              class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Trash2 v-if="!isDeleting" class="w-4 h-4" />
+              {{ isDeleting ? "Deleting..." : "Yes, Delete" }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Transition>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-active .bg-white {
+  animation: modal-in 0.3s ease-out;
+}
+.fade-leave-active .bg-white {
+  animation: modal-in 0.2s ease-in reverse;
+}
+
+@keyframes modal-in {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+</style>

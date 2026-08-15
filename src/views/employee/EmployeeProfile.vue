@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useEmployeeStore } from "@/stores/employee";
+import { useTaskStore } from "@/stores/task";
+import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { getStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
 import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
@@ -30,6 +32,9 @@ import {
 
 const employeeStore = useEmployeeStore();
 const { loading, performanceStatistics } = storeToRefs(employeeStore);
+const taskStore = useTaskStore();
+const { myTasks } = storeToRefs(taskStore);
+const router = useRouter();
 
 const profile = ref<any>(null);
 
@@ -42,6 +47,36 @@ const loadProfile = async () => {
   } catch (error) {}
 };
 
+const taskStatusLabels: Record<string, string> = {
+  todo: "To Do",
+  in_progress: "In Progress",
+  review: "Waiting",
+  done: "Completed",
+};
+
+const taskStatusClasses: Record<string, string> = {
+  todo: "bg-gray-100 text-gray-600",
+  in_progress: "bg-[#FEF3C7] text-[#D97706]",
+  review: "bg-[#EBF8FF] text-[#1E40AF]",
+  done: "bg-[#F0FDF4] text-[#166534]",
+};
+
+const latestTasks = computed(() =>
+  myTasks.value.map((task: any) => ({
+    id: task.id,
+    title: task.name,
+    description: task.description,
+    status: taskStatusLabels[task.status] ?? task.status,
+    statusClass: taskStatusClasses[task.status] ?? "bg-gray-100 text-gray-600",
+    dueDate: task.due_date ? formatDate(task.due_date) : "No due date",
+    project: task.project?.name ?? "N/A",
+  }))
+);
+
+const goToAllTasks = () => {
+  router.push({ name: "admin.projects" });
+};
+
 const statusBadgeClass = computed(() => {
   return getStatusColor(profile.value?.job_information?.status);
 });
@@ -50,57 +85,9 @@ const skillLevelBadgeClass = computed(() => {
   return getLevelColor(capitalize(profile.value?.job_information?.skill_level));
 });
 
-// Dummy tasks
-const latestTasks = ref([
-  {
-    id: 1,
-    title: "API Integration for User Dashboard",
-    description: "Integrate REST APIs for the new user dashboard features...",
-    status: "In Progress",
-    statusClass: "bg-[#FEF3C7] text-[#D97706]",
-    dueDate: "Jan 30, 2024",
-    project: "Dashboard Project",
-  },
-  {
-    id: 2,
-    title: "Database Schema Optimization",
-    description: "Review and optimize database queries for improved...",
-    status: "Waiting",
-    statusClass: "bg-[#EBF8FF] text-[#1E40AF]",
-    dueDate: "Feb 5, 2024",
-    project: "Performance Project",
-  },
-  {
-    id: 3,
-    title: "Code Review for Payment Module",
-    description: "Review payment processing code and provide feedback on...",
-    status: "Completed",
-    statusClass: "bg-[#F0FDF4] text-[#166534]",
-    dueDate: "Completed: Jan 25, 2024",
-    project: "Payment Project",
-  },
-  {
-    id: 4,
-    title: "Unit Tests for Authentication",
-    description: "Write comprehensive unit tests for the new authentication...",
-    status: "In Progress",
-    statusClass: "bg-[#FEF3C7] text-[#D97706]",
-    dueDate: "Feb 1, 2024",
-    project: "Security Project",
-  },
-  {
-    id: 5,
-    title: "Documentation Update",
-    description: "Update technical documentation for the new feature...",
-    status: "Waiting",
-    statusClass: "bg-[#EBF8FF] text-[#1E40AF]",
-    dueDate: "Feb 8, 2024",
-    project: "Documentation Project",
-  },
-]);
-
 onMounted(() => {
   loadProfile();
+  taskStore.fetchMyTasks(5);
 });
 </script>
 
@@ -600,12 +587,19 @@ onMounted(() => {
                 <p class="text-brand-light text-sm">Recently assigned tasks</p>
               </div>
             </div>
-            <button class="text-[#0C51D9] text-sm font-medium hover:underline">
+            <button
+              @click="goToAllTasks"
+              class="text-[#0C51D9] text-sm font-medium hover:underline"
+            >
               View All
             </button>
           </div>
 
-          <div class="space-y-4">
+          <div v-if="latestTasks.length === 0" class="text-center py-6 text-sm text-gray-400">
+            No active tasks assigned
+          </div>
+
+          <div v-else class="space-y-4">
             <div
               v-for="task in latestTasks"
               :key="task.id"

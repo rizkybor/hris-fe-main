@@ -1,17 +1,15 @@
 <script setup>
 import {
-  BellIcon,
   ChevronDownIcon,
-  MessageCircleIcon,
   UserIcon,
   ClockIcon,
   ReceiptIcon,
   SettingsIcon,
-  HelpCircleIcon,
   LogOutIcon,
   MenuIcon,
 } from "lucide-vue-next";
 import ConfirmActionModal from "@/components/common/ConfirmationModal.vue";
+import NotificationBell from "@/components/admin/NotificationBell.vue";
 import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import { ref, computed } from "vue";
@@ -129,8 +127,60 @@ const titles = {
     subtitle: "Company Operational Cost Overview",
   },
   "admin.files-company.dashboard": {
-    title: "Document",
+    title: "Document Files",
     subtitle: "View Document Company",
+  },
+  "admin.files-company.create": {
+    title: "Upload Document File",
+    subtitle: "Store a permanent company document",
+  },
+  "admin.files-company.detail": {
+    title: "Document File Detail",
+    subtitle: "View file information and preview",
+  },
+  "admin.files-company.edit": {
+    title: "Edit Document File",
+    subtitle: "Update file metadata or replace the attached document",
+  },
+  "admin.documents.dashboard": {
+    title: "Document Letters",
+    subtitle: "Purchase Order, Invoice, Payment Receipt, and Surat-Surat",
+  },
+  "admin.purchase-orders.dashboard": {
+    title: "Purchase Order",
+    subtitle: "Manage Purchase Order (PO) documents",
+  },
+  "admin.purchase-orders.create": {
+    title: "Create Purchase Order",
+    subtitle: "Generate a new Purchase Order",
+  },
+  "admin.invoices.dashboard": {
+    title: "Invoice",
+    subtitle: "Manage client invoices",
+  },
+  "admin.invoices.create": {
+    title: "Create Invoice",
+    subtitle: "Generate a new invoice",
+  },
+  "admin.payment-receipts.dashboard": {
+    title: "Payment Receipt",
+    subtitle: "Manage payment receipts",
+  },
+  "admin.payment-receipts.create": {
+    title: "Create Payment Receipt",
+    subtitle: "Generate a new payment receipt",
+  },
+  "admin.letters.dashboard": {
+    title: "Surat-Surat",
+    subtitle: "Company letter register (internal and external)",
+  },
+  "admin.letters.create": {
+    title: "Create Letter",
+    subtitle: "Draft and issue a new company letter",
+  },
+  "admin.settings.document-codes": {
+    title: "Kode Surat & Divisi",
+    subtitle: "Manage letter code and division code references",
   },
 
   // EMPLOYEE
@@ -213,21 +263,13 @@ const getInitials = (name) => {
       <div class="flex items-center gap-4">
         <!-- Action Buttons -->
         <div class="hidden sm:flex items-center gap-3">
-          <button
-            class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
-          >
-            <BellIcon class="w-5 h-5 text-gray-600" />
-          </button>
-          <button
-            class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
-          >
-            <MessageCircleIcon class="w-5 h-5 text-gray-600" />
-          </button>
-          <button
+          <NotificationBell />
+          <RouterLink
+            :to="{ name: 'admin.settings.dashboard' }"
             class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
           >
             <SettingsIcon class="w-5 h-5 text-gray-600" />
-          </button>
+          </RouterLink>
         </div>
 
         <!-- Divider -->
@@ -293,20 +335,14 @@ const getInitials = (name) => {
                 <UserIcon class="w-4 h-4" />
                 Profil Pengguna
               </RouterLink>
-              <a
-                href="#"
+              <RouterLink
+                :to="{ name: 'admin.settings.dashboard' }"
                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                @click="isOpen = false"
               >
                 <SettingsIcon class="w-4 h-4" />
                 Pengaturan Sistem
-              </a>
-              <a
-                href="#"
-                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                <HelpCircleIcon class="w-4 h-4" />
-                Bantuan
-              </a>
+              </RouterLink>
             </div>
 
             <div class="border-t border-[#DCDEDD] py-1">

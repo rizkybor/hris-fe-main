@@ -5,12 +5,30 @@ import { handleError } from "@/helpers/errorHelper";
 export const useTaskStore = defineStore("task", {
     state: () => ({
         tasks: [],
+        myTasks: [],
         loading: false,
         error: null,
         success: null,
     }),
 
     actions: {
+        async fetchMyTasks(limit = 5) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                const response = await axiosInstance.get('my-tasks', {
+                    params: { limit }
+                });
+
+                this.myTasks = response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async fetchProjectTasks(projectId) {
             this.loading = true;
             this.error = null;
@@ -41,6 +59,7 @@ export const useTaskStore = defineStore("task", {
                 return response.data.data;
             } catch (error) {
                 this.error = handleError(error);
+                throw error;
             } finally {
                 this.loading = false;
             }
@@ -66,6 +85,7 @@ export const useTaskStore = defineStore("task", {
                 return response.data.data;
             } catch (error) {
                 this.error = handleError(error);
+                throw error;
             } finally {
                 this.loading = false;
             }
@@ -81,6 +101,7 @@ export const useTaskStore = defineStore("task", {
                 this.success = response.data.message;
             } catch (error) {
                 this.error = handleError(error);
+                throw error;
             } finally {
                 this.loading = false;
             }

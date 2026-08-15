@@ -22,6 +22,7 @@ import {
 } from "@/utils/badgeUtils";
 import _ from "lodash";
 import TaskBoard from "@/components/admin/project/detail/TaskBoard.vue";
+import ProjectDocuments from "@/components/admin/project/detail/ProjectDocuments.vue";
 
 const route = useRoute();
 const id = route.params.id;
@@ -53,7 +54,6 @@ const aboutParagraphs = computed(() => {
 
 const projectProgress = computed(() => {
   if (!project.value.tasks || project.value.tasks.length === 0) {
-    console.log("No tasks found:", project.value.tasks);
     return 0;
   }
   const totalTasks = project.value.tasks.length;
@@ -382,4 +382,7 @@ onMounted(async () => {
 
   <!-- Tasks Section -->
   <TaskBoard />
+
+  <!-- Documents Section -->
+  <ProjectDocuments :project-id="id" />
 </template>

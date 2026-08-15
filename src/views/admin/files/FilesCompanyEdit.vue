@@ -1,34 +1,35 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { Archive, Save, ArrowLeft, FileUp, X } from "lucide-vue-next";
+import Alert from "@/components/common/Alert.vue";
 import BaseInput from "@/components/common/form/Input.vue";
 import TextArea from "@/components/common/form/TextArea.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
-import { useRoute, useRouter } from "vue-router";
 
 const archiveStore = useFilesCompanyStore();
 const route = useRoute();
 const router = useRouter();
 const archiveId = route.params.id;
 
-// States
 const loading = ref(true);
-const error = ref(null);
+const submitting = ref(false);
+const loadError = ref("");
+const error = ref("");
+const success = ref("");
+
 const form = ref({
   document_name: "",
   description: "",
   new_file: null,
   remove_file: false,
 });
-const submitting = ref(false);
 const fileNameError = ref(false);
 
-// Simpan URL object sementara untuk preview file baru
 let tempPreviewURL = null;
 
-// Cek apakah file image
 const isImage = (type) => type?.startsWith("image/");
 
-// Fetch archive by ID
 const fetchArchive = async () => {
   loading.value = true;
   try {
@@ -36,7 +37,7 @@ const fetchArchive = async () => {
     const archive = archiveStore.currentArchive;
 
     if (!archive) {
-      error.value = "Archive not found.";
+      loadError.value = "Archive not found.";
       return;
     }
 
@@ -45,14 +46,13 @@ const fetchArchive = async () => {
     form.value.new_file = null;
     form.value.remove_file = false;
 
-    // Hapus preview lama jika ada
     if (tempPreviewURL) {
       URL.revokeObjectURL(tempPreviewURL);
       tempPreviewURL = null;
     }
   } catch (err) {
     console.error(err);
-    error.value = "Failed to load archive.";
+    loadError.value = "Failed to load archive.";
   } finally {
     loading.value = false;
   }
@@ -63,26 +63,21 @@ onBeforeUnmount(() => {
   if (tempPreviewURL) URL.revokeObjectURL(tempPreviewURL);
 });
 
-// Pilih file baru
 const onFileChange = (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  form.value.new_file = file; // simpan file baru
+  form.value.new_file = file;
   form.value.remove_file = false;
 
-  // Buat preview
   if (tempPreviewURL) URL.revokeObjectURL(tempPreviewURL);
   tempPreviewURL = URL.createObjectURL(file);
 };
 
-// Hapus file lama
 const removeFile = () => {
   const archive = archiveStore.currentArchive;
-  if (!archive?.document_path) {
-    alert("No file to remove.");
-    return;
-  }
+  if (!archive?.document_path) return;
+
   form.value.remove_file = true;
   form.value.new_file = null;
 
@@ -90,17 +85,16 @@ const removeFile = () => {
     URL.revokeObjectURL(tempPreviewURL);
     tempPreviewURL = null;
   }
-
-  alert("Old file marked for deletion. Click 'Save Changes' to confirm.");
 };
 
-// Submit form
 const submit = async () => {
+  error.value = "";
+  success.value = "";
   fileNameError.value = false;
 
   if (!form.value.document_name) {
     fileNameError.value = true;
-    alert("File name is required!");
+    error.value = "File name is required.";
     return;
   }
 
@@ -110,40 +104,33 @@ const submit = async () => {
     formData.append("document_name", form.value.document_name);
     formData.append("description", form.value.description);
 
-    // Append file baru hanya jika ada
     if (form.value.new_file) {
       formData.append("document_path", form.value.new_file);
     }
-
     if (form.value.remove_file) {
       formData.append("remove_file", "1");
     }
 
-    // 🔹 API call: kirim ke backend
-    const updatedArchive = await archiveStore.updateArchive(
-      archiveId,
-      formData
-    );
+    const updatedArchive = await archiveStore.updateArchive(archiveId, formData);
 
-    // Update form dan preview langsung dari response backend
     form.value.new_file = null;
     form.value.remove_file = false;
     form.value.document_name = updatedArchive.document_name;
     form.value.description = updatedArchive.description;
 
-    alert("Archive updated successfully!");
+    success.value = "File berhasil diperbarui.";
 
-    // 🔹 Redirect ke halaman list setelah berhasil
-    router.push("/admin/files-company");
+    setTimeout(() => {
+      router.push({ name: "admin.files-company.dashboard" });
+    }, 1200);
   } catch (err) {
     console.error(err);
-    alert("Failed to update archive.");
+    error.value = err?.message || "Gagal memperbarui file.";
   } finally {
     submitting.value = false;
   }
 };
 
-// Preview file (utamakan file baru jika ada)
 const previewFile = computed(() => {
   if (form.value.new_file) return tempPreviewURL;
   if (archiveStore.currentArchive?.document_path && !form.value.remove_file)
@@ -153,140 +140,170 @@ const previewFile = computed(() => {
 </script>
 
 <template>
-  <div
-    class="w-full min-h-screen flex items-center justify-center bg-gray-100 p-6"
-  >
-    <div
-      class="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-4xl shadow-lg space-y-6"
-    >
-      <!-- Button Back -->
-      <div class="flex items-center mb-4">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+      <div class="flex items-center gap-3">
         <button
           @click="router.back()"
-          type="button"
-          class="flex items-center bg-gray-200 text-gray-700 hover:bg-blue-600 hover:text-white font-medium px-3 py-1.5 rounded-lg border border-gray-300 shadow-sm transition-colors duration-200 text-sm focus:outline-none"
+          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          aria-label="Back"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 mr-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back
+          <ArrowLeft class="w-5 h-5 text-gray-600" />
         </button>
-      </div>
 
-      <h2 class="text-xl font-bold text-gray-800 border-b pb-3 mb-6">
-        Edit Archive
-      </h2>
-
-      <!-- Loading/Error -->
-      <div v-if="loading" class="text-center text-gray-500 py-20">
-        Loading archive...
-      </div>
-      <div v-else-if="error" class="text-center text-red-600 py-20">
-        {{ error }}
-      </div>
-
-      <!-- Form -->
-      <div v-else>
-        <div class="space-y-4">
-          <BaseInput
-            id="document_name"
-            label="File Name"
-            placeholder="Enter file name"
-            v-model="form.document_name"
-            required
-          />
-          <p v-if="fileNameError" class="text-red-600 text-sm">
-            File name is required.
-          </p>
-
-          <TextArea
-            id="description"
-            label="Description"
-            placeholder="Enter a description"
-            v-model="form.description"
-            rows="5"
-          />
+        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
+          <Archive class="w-6 h-6 text-blue-600" />
         </div>
 
-        <!-- Current / Preview File -->
-        <div v-if="previewFile" class="mt-4">
-          <span class="font-semibold text-gray-800">File Preview:</span>
-          <div
-            class="flex items-center space-x-4 mt-2 mb-2"
-            v-if="!form.new_file && !form.remove_file"
-          >
-            <a
-              :href="archiveStore.currentArchive.document_path"
-              target="_blank"
-              class="text-blue-600 hover:underline"
-            >
-              {{ archiveStore.currentArchive.document_name }}
-            </a>
-            <button
-              @click="removeFile"
-              class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm transition-colors"
-            >
-              Remove
-            </button>
-          </div>
-
-          <div
-            class="mt-2 w-full max-h-[400px] overflow-auto border border-gray-200 rounded-lg shadow-sm p-1"
-          >
-            <img
-              v-if="
-                isImage(
-                  form.new_file?.type || archiveStore.currentArchive?.type_file
-                )
-              "
-              :src="previewFile"
-              alt="File Preview"
-              class="w-full object-contain"
-            />
-            <iframe
-              v-else-if="
-                (form.new_file?.type ||
-                  archiveStore.currentArchive?.type_file) === 'application/pdf'
-              "
-              :src="previewFile"
-              class="w-full h-[400px]"
-            ></iframe>
-          </div>
+        <div>
+          <h1 class="text-brand-dark text-xl font-bold">Edit Document File</h1>
+          <p class="text-brand-light text-sm">Update file metadata or replace the attached document</p>
         </div>
+      </div>
+    </div>
 
-        <!-- Upload New File -->
-        <div class="mt-4">
-          <span class="font-semibold text-gray-800"
-            >Upload New File (Optional):</span
+    <div class="mb-6">
+      <Transition name="fade">
+        <Alert
+          v-if="error"
+          type="danger"
+          :title="error"
+          message=""
+          :show="!!error"
+          @close="error = ''"
+        />
+      </Transition>
+      <Transition name="fade">
+        <Alert
+          v-if="success"
+          type="success"
+          :title="success"
+          message=""
+          :show="!!success"
+        />
+      </Transition>
+    </div>
+
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center gap-3 py-20 text-gray-500">
+      <span class="w-5 h-5 border-2 border-gray-300 border-t-[#0C51D9] rounded-full animate-spin"></span>
+      Loading archive data...
+    </div>
+
+    <!-- Load error -->
+    <div v-else-if="loadError" class="text-center py-20 text-red-600">
+      {{ loadError }}
+    </div>
+
+    <!-- Form -->
+    <div v-else class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+      <BaseInput
+        id="document_name"
+        label="File Name *"
+        placeholder="Enter file name"
+        v-model="form.document_name"
+        :error="fileNameError ? 'File name is required.' : ''"
+      />
+
+      <TextArea
+        id="description"
+        label="Description (Optional)"
+        placeholder="Enter a description"
+        v-model="form.description"
+        rows="4"
+      />
+
+      <!-- Current / Preview File -->
+      <div v-if="previewFile">
+        <label class="block text-brand-dark text-base font-semibold mb-1">File Preview</label>
+
+        <div
+          v-if="!form.new_file && !form.remove_file"
+          class="flex items-center justify-between gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[16px] mb-3"
+        >
+          <a
+            :href="archiveStore.currentArchive.document_path"
+            target="_blank"
+            class="text-[#0C51D9] font-semibold hover:underline truncate"
           >
-          <input type="file" class="mt-2" @change="onFileChange" />
-          <p v-if="form.new_file" class="text-gray-600 text-sm mt-1">
-            Selected file: {{ form.new_file.name }}
-          </p>
-        </div>
-
-        <!-- Save Button -->
-        <div class="mt-6 flex space-x-4">
+            {{ archiveStore.currentArchive.document_name }}
+          </a>
           <button
-            @click="submit"
-            :disabled="submitting"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-3 rounded-xl transition-all duration-200 disabled:opacity-50 flex-1"
+            type="button"
+            @click="removeFile"
+            class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-all flex-shrink-0"
           >
-            {{ submitting ? "Saving..." : "Save Changes" }}
+            <X class="w-4 h-4" /> Remove
           </button>
         </div>
+
+        <div class="w-full max-h-[400px] overflow-auto border border-[#DCDEDD] rounded-[16px] p-1">
+          <img
+            v-if="isImage(form.new_file?.type || archiveStore.currentArchive?.type_file)"
+            :src="previewFile"
+            alt="File Preview"
+            class="w-full object-contain rounded-[12px]"
+          />
+          <iframe
+            v-else-if="(form.new_file?.type || archiveStore.currentArchive?.type_file) === 'application/pdf'"
+            :src="previewFile"
+            class="w-full h-[400px] rounded-[12px]"
+          ></iframe>
+        </div>
+      </div>
+
+      <!-- Upload New File -->
+      <div>
+        <label class="block text-brand-dark text-base font-semibold mb-1">
+          Replace File (Optional)
+        </label>
+        <label
+          class="flex flex-col items-center justify-center gap-2 w-full py-6 border-2 border-dashed border-[#DCDEDD] rounded-[16px] cursor-pointer hover:border-[#0C51D9] hover:bg-blue-50/30 transition-all"
+        >
+          <FileUp class="w-7 h-7 text-gray-400" />
+          <span class="text-sm text-brand-dark font-semibold">
+            {{ form.new_file ? form.new_file.name : "Click to choose a new file" }}
+          </span>
+          <input type="file" class="hidden" @change="onFileChange" />
+        </label>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-4">
+        <button
+          type="button"
+          @click="router.back()"
+          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          @click="submit"
+          :disabled="submitting"
+          class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
+        >
+          <Save class="w-4 h-4 text-white" />
+          <span class="text-brand-white text-sm font-semibold">
+            {{ submitting ? "Saving..." : "Save Changes" }}
+          </span>
+        </button>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>

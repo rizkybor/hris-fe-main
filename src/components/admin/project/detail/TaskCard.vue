@@ -50,13 +50,13 @@ const handleClick = () => {
             :src="task.assignee.user.profile_photo"
             :alt="task.assignee.user.name"
             class="w-7 h-7 rounded-full object-cover ring-2 ring-white"
-            :title="task.assignee.name"
+            :title="task.assignee.user.name"
             v-if="task.assignee.user.profile_photo"
           />
 
           <div
             class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
-            title="Unassigned"
+            :title="task.assignee.user.name"
             v-else
           >
             <User class="w-3.5 h-3.5 text-gray-400" />

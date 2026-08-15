@@ -8,8 +8,10 @@ import {
   AlertTriangle,
   Eye,
   Copy,
+  Check,
   Pencil,
   Search,
+  X,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
@@ -20,6 +22,7 @@ const searchQuery = ref("");
 const isDeleteModalOpen = ref(false);
 const accountToDelete = ref(null);
 const isDeleting = ref(false);
+const copiedId = ref(null);
 
 // Fungsi filter pencarian
 const filteredAccounts = computed(() => {
@@ -70,8 +73,12 @@ const handleDelete = async () => {
   }
 };
 
-const copyPassword = (password) => {
-  navigator.clipboard.writeText(password);
+const copyPassword = (account) => {
+  navigator.clipboard.writeText(account.password);
+  copiedId.value = account.id;
+  setTimeout(() => {
+    if (copiedId.value === account.id) copiedId.value = null;
+  }, 1500);
 };
 
 const formatDate = (date) => {
@@ -239,7 +246,9 @@ const formatDate = (date) => {
                 name: 'admin.account-password.detail',
                 params: { id: account.id },
               }"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:ring-2 hover:ring-[#0C51D9]"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
+              title="View Credential"
+              aria-label="View Credential"
             >
               <Eye class="w-4 h-4 text-gray-600" />
             </router-link>
@@ -249,24 +258,30 @@ const formatDate = (date) => {
                 name: 'admin.account-password.edit',
                 params: { id: account.id },
               }"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:ring-2 hover:ring-[#0C51D9]"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
+              title="Edit Credential"
+              aria-label="Edit Credential"
             >
               <Pencil class="w-4 h-4 text-gray-600" />
             </router-link>
 
             <button
-              @click="confirmDelete(account)"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group transition-all"
-              title="Delete Account"
+              @click="copyPassword(account)"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
+              title="Copy Password"
+              aria-label="Copy Password"
             >
-              <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
+              <Check v-if="copiedId === account.id" class="w-4 h-4 text-success" />
+              <Copy v-else class="w-4 h-4 text-gray-600" />
             </button>
 
             <button
-              @click="copyPassword(account.password)"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:ring-2 hover:ring-[#0C51D9]"
+              @click="confirmDelete(account)"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-red-500 hover:ring-2 hover:ring-red-500/30 hover:bg-red-50 group transition-all"
+              title="Delete Credential"
+              aria-label="Delete Credential"
             >
-              <Copy class="w-4 h-4 text-gray-600" />
+              <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
             </button>
           </div>
         </div>
@@ -305,12 +320,12 @@ const formatDate = (date) => {
       ></div>
 
       <div
-        class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl transform transition-all"
-        style="max-width: 40vw; border-radius: 10px"
+        class="bg-white rounded-[20px] p-6 w-full max-w-sm relative z-10 shadow-2xl transform transition-all"
       >
         <button
           @click="isDeleteModalOpen = false"
           class="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+          aria-label="Close"
         >
           <X class="w-5 h-5" />
         </button>

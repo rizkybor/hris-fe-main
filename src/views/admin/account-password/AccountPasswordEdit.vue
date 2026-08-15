@@ -139,6 +139,7 @@ watch(
         <button
           @click="router.back()"
           class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          aria-label="Back"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
         </button>
@@ -160,30 +161,34 @@ watch(
       </div>
     </div>
 
-    <template>
-  <div class="max-w-4xl mx-auto">
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
-      </div>
-
     <div class="mb-6">
       <Transition name="fade">
-        <Alert 
-          v-if="error" 
-          type="error" 
-          :title="error" 
-          :show="!!error" 
-          @close="error = ''" 
+        <Alert
+          v-if="error"
+          type="danger"
+          :title="error"
+          message=""
+          :show="!!error"
+          @close="error = ''"
         />
       </Transition>
     </div>
 
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
-       </div>
-  </div>
-</template>
+    <div class="mb-6">
+      <Transition name="fade">
+        <Alert
+          v-if="success"
+          type="success"
+          :title="success"
+          message=""
+          :show="!!success"
+        />
+      </Transition>
+    </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="text-center py-20 text-gray-500">
+    <div v-if="loading" class="flex items-center justify-center gap-3 py-20 text-gray-500">
+      <span class="w-5 h-5 border-2 border-gray-300 border-t-[#0C51D9] rounded-full animate-spin"></span>
       Loading credential data...
     </div>
 
@@ -320,7 +325,7 @@ watch(
           type="button"
           @click="submit"
           :disabled="submitting"
-          class="w-full sm:w-auto rounded-[12px] bg-[#0C51D9] hover:bg-[#0A45BF] text-white font-semibold px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
+          class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow text-brand-white font-semibold px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
         >
           <Save class="w-4 h-4" />
           {{ submitting ? "Updating..." : "Update Credential" }}

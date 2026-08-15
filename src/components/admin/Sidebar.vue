@@ -14,9 +14,10 @@ import {
   KeyRoundIcon,
   Building2Icon,
   CircleDollarSign,
+  FileStack,
 } from "lucide-vue-next";
 
-import { can } from "@/helpers/permissionHelper";
+import { can, canOneOf } from "@/helpers/permissionHelper";
 import { RouterLink } from "vue-router";
 
 const props = defineProps(["isOpen"]);
@@ -468,7 +469,7 @@ const onNavigate = () => emit("navigate");
                   'admin.files-company'
                 ),
               }"
-              >Document</span
+              >Document Files</span
             >
           </RouterLink>
 
@@ -495,6 +496,30 @@ const onNavigate = () => emit("navigate");
               >Vendor</span
             >
           </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.documents.dashboard' }"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
+            }"
+            v-if="canOneOf(['purchase-order-menu', 'invoice-menu', 'payment-receipt-menu', 'letter-menu'])"
+            @click="onNavigate"
+          >
+            <FileStack
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
+              }"
+              >Document Letters</span
+            >
+          </RouterLink>
         </div>
       </div>
 
@@ -502,23 +527,52 @@ const onNavigate = () => emit("navigate");
       <div>
         <h3 class="section-title">OTHERS</h3>
         <div class="space-y-3">
-          <a
-            href="#"
+          <RouterLink
+            :to="{ name: 'admin.report.dashboard' }"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.report'),
+            }"
+            v-if="can('report-menu')"
             @click="onNavigate"
           >
-            <FileTextIcon class="w-5 h-5 text-gray-600" />
-            <span class="text-brand-dark text-base font-medium">Reports</span>
-          </a>
+            <FileTextIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.report'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('admin.report'),
+              }"
+              >Reports</span
+            >
+          </RouterLink>
 
-          <a
-            href="#"
+          <RouterLink
+            :to="{ name: 'admin.settings.dashboard' }"
             class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.settings'),
+            }"
             @click="onNavigate"
           >
-            <SettingsIcon class="w-5 h-5 text-gray-600" />
-            <span class="text-brand-dark text-base font-medium">Settings</span>
-          </a>
+            <SettingsIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.settings'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('admin.settings'),
+              }"
+              >Settings</span
+            >
+          </RouterLink>
         </div>
       </div>
     </nav>

@@ -1,35 +1,47 @@
 <script setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { Archive, Upload, FileUp } from "lucide-vue-next";
+import Alert from "@/components/common/Alert.vue";
 import BaseInput from "@/components/common/form/Input.vue";
 import TextArea from "@/components/common/form/TextArea.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 
+const router = useRouter();
 const archiveStore = useFilesCompanyStore();
 
-// Form state
+const loading = ref(false);
+const error = ref("");
+const success = ref("");
+
 const form = ref({
   file_name: "",
   description: "",
   file: null,
 });
 
-// Error state
 const fileError = ref(false);
 const nameError = ref(false);
 
-// Submit function
+const onFileChange = (event) => {
+  form.value.file = event.target.files[0] || null;
+  fileError.value = false;
+};
+
 const submit = async () => {
-  // Reset errors
+  error.value = "";
+  success.value = "";
   fileError.value = false;
   nameError.value = false;
 
-  // Validation
   if (!form.value.file_name) nameError.value = true;
   if (!form.value.file) fileError.value = true;
 
-  if (nameError.value || fileError.value) return;
+  if (nameError.value || fileError.value) {
+    error.value = "File Name dan File wajib diisi.";
+    return;
+  }
 
-  // Prepare FormData
   const payload = new FormData();
   payload.append("document_name", form.value.file_name);
   payload.append("description", form.value.description || "");
@@ -37,68 +49,130 @@ const submit = async () => {
   payload.append("type_file", form.value.file.type);
   payload.append("size_file", form.value.file.size);
 
+  loading.value = true;
   try {
     await archiveStore.createArchive(payload);
-    alert("File uploaded successfully!");
-    form.value.file_name = "";
-    form.value.description = "";
-    form.value.file = null;
+    success.value = "File berhasil diunggah.";
 
-    router.push("/admin/files-company");
+    setTimeout(() => {
+      router.push({ name: "admin.files-company.dashboard" });
+    }, 1200);
   } catch (err) {
-    console.error(err);
-    alert("Failed to upload file.");
+    error.value = err?.message || "Gagal mengunggah file.";
+  } finally {
+    loading.value = false;
   }
 };
 </script>
 
 <template>
-  <div class="w-full min-h-screen flex items-center justify-center bg-gray-100 p-4">
-    <div class="bg-white border border-gray-200 rounded-[20px] p-8 w-full max-w-4xl shadow-lg">
-      <h2 class="text-2xl font-bold mb-6 text-gray-800">Upload File</h2>
-
-      <div class="space-y-5">
-        <!-- File Name -->
-        <BaseInput
-          id="file_name"
-          label="File Name"
-          placeholder="Enter file name"
-          v-model="form.file_name"
-          :class="{ 'border-red-600': nameError }"
-          required
-        />
-        <p v-if="nameError" class="text-red-600 text-[14px]">File name is required.</p>
-
-        <!-- Description -->
-        <TextArea
-          id="description"
-          label="Archive Description"
-          placeholder="Enter a description"
-          v-model="form.description"
-          rows="5"
-        />
-
-        <!-- File Upload -->
-        <div>
-          <label class="block mb-2 text-gray-700 font-semibold font-jakarta text-[14px]">
-            Upload File<span class="text-red-600 ml-1">*</span>
-          </label>
-          <input
-            type="file"
-            @change="e => { form.file = e.target.files[0]; fileError.value = false }"
-            class="w-full text-gray-700 file:border file:border-gray-300 file:rounded-lg file:px-4 file:py-2 file:bg-gray-100 file:text-gray-800 hover:file:bg-gray-200 cursor-pointer"
-          />
-          <p v-if="fileError" class="mt-2 text-red-600 text-[14px]">File is required.</p>
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
+          <Archive class="w-6 h-6 text-blue-600" />
         </div>
+        <div>
+          <h1 class="text-brand-dark text-xl font-bold">Upload Document File</h1>
+          <p class="text-brand-light text-sm">Store a permanent company document</p>
+        </div>
+      </div>
+    </div>
 
-        <!-- Submit Button -->
-        <button
-          @click="submit"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-3 rounded-xl transition-all duration-200"
+    <div class="mb-6">
+      <Transition name="fade">
+        <Alert
+          v-if="error"
+          type="danger"
+          :title="error"
+          message=""
+          :show="!!error"
+          @close="error = ''"
+        />
+      </Transition>
+      <Transition name="fade">
+        <Alert
+          v-if="success"
+          type="success"
+          :title="success"
+          message=""
+          :show="!!success"
+        />
+      </Transition>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+      <BaseInput
+        id="file_name"
+        label="File Name *"
+        placeholder="e.g. Company NDA Template, HR Policy 2026"
+        v-model="form.file_name"
+        :error="nameError ? 'File name is required.' : ''"
+      />
+
+      <TextArea
+        id="description"
+        label="Description (Optional)"
+        placeholder="Additional notes about this file..."
+        v-model="form.description"
+        rows="4"
+      />
+
+      <div>
+        <label class="block text-brand-dark text-base font-semibold mb-1">
+          Upload File *
+        </label>
+        <label
+          class="flex flex-col items-center justify-center gap-2 w-full py-8 border-2 border-dashed rounded-[16px] cursor-pointer transition-all"
+          :class="fileError ? 'border-red-400 bg-red-50' : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:bg-blue-50/30'"
         >
-          Upload Archive
+          <FileUp class="w-8 h-8 text-gray-400" />
+          <span class="text-sm text-brand-dark font-semibold">
+            {{ form.file ? form.file.name : "Click to choose a file" }}
+          </span>
+          <span v-if="!form.file" class="text-xs text-brand-light">or drag and drop</span>
+          <input type="file" class="hidden" @change="onFileChange" />
+        </label>
+        <p v-if="fileError" class="mt-2 text-red-600 text-sm">File is required.</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-4">
+        <button
+          type="button"
+          @click="$router.back()"
+          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          @click="submit"
+          :disabled="loading"
+          class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          <Upload class="w-4 h-4 text-white" />
+          <span class="text-brand-white text-sm font-semibold">
+            {{ loading ? "Uploading..." : "Upload File" }}
+          </span>
         </button>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>

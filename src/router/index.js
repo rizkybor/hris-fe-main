@@ -3,6 +3,8 @@ import { useAuthStore } from '@/stores/auth'
 import AuthLayout from '@/layouts/Auth.vue'
 import AdminLayout from '@/layouts/Admin.vue'
 import Login from '@/views/auth/Login.vue'
+import ForgotPassword from '@/views/auth/ForgotPassword.vue'
+import ResetPassword from '@/views/auth/ResetPassword.vue'
 import AdminDashboard from '@/views/admin/Dashboard.vue'
 import teamRoutes from './team';
 import employeeRoutes from './employee';
@@ -20,6 +22,9 @@ import filesCompanyRoutes from './filesCompany';
 import vendorsRoutes from './vendor';
 import companyAboutRoutes from './companyAbout';
 import companyFinanceRoutes from './companyFinance'
+import reportRoutes from './report';
+import settingsRoutes from './settings';
+import documentRoutes from './document';
 
 
 
@@ -66,6 +71,9 @@ const router = createRouter({
         ...vendorsRoutes,
         ...companyAboutRoutes,
         ...companyFinanceRoutes,
+        ...reportRoutes,
+        ...settingsRoutes,
+        ...documentRoutes,
         {
           path: 'my-profile',
           name: 'employee.profile',
@@ -133,6 +141,16 @@ const router = createRouter({
           path: 'login',
           name: 'login',
           component: Login,
+        },
+        {
+          path: 'forgot-password',
+          name: 'forgot-password',
+          component: ForgotPassword,
+        },
+        {
+          path: 'reset-password',
+          name: 'reset-password',
+          component: ResetPassword,
         },
       ],
     },

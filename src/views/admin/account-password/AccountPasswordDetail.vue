@@ -64,6 +64,7 @@ onMounted(async () => {
         <button
           @click="router.back()"
           class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          aria-label="Back"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
         </button>
@@ -152,6 +153,7 @@ onMounted(async () => {
           <button
             @click="togglePassword"
             class="w-9 h-9 rounded-[10px] hover:bg-gray-100 flex items-center justify-center"
+            :aria-label="showPassword ? 'Hide password' : 'Show password'"
           >
             <Eye v-if="!showPassword" class="w-4 h-4" />
             <EyeOff v-else class="w-4 h-4" />
@@ -160,6 +162,7 @@ onMounted(async () => {
           <button
             @click="copyPassword"
             class="w-9 h-9 rounded-[10px] hover:bg-gray-100 flex items-center justify-center"
+            aria-label="Copy password"
           >
             <Copy class="w-4 h-4" />
           </button>

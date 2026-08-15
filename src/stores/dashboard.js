@@ -20,10 +20,15 @@ export const useDashboardStore = defineStore("dashboard", {
             tasks: {
                 completed: 0,
                 change: 0,
+                total: 0,
+                completion_rate: 0,
             },
             projects: {
                 active: 0,
+                completed: 0,
+                total: 0,
                 new_projects: 0,
+                completion_rate: 0,
             },
         },
         loading: false,

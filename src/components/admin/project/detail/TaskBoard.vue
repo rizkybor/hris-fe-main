@@ -5,16 +5,29 @@ import { VueDraggableNext } from "vue-draggable-next";
 import { useTaskStore } from "@/stores/task";
 import { storeToRefs } from "pinia";
 import { useRoute } from "vue-router";
+import { can } from "@/helpers/permissionHelper";
 import TaskCard from "./TaskCard.vue";
 import TaskDetailModal from "./TaskDetailModal.vue";
 import TaskCreateModal from "./TaskCreateModal.vue";
 
 const route = useRoute();
 const taskStore = useTaskStore();
-const { tasks, loading } = storeToRefs(taskStore);
+const { tasks: allTasks, loading } = storeToRefs(taskStore);
 const { fetchProjectTasks, updateTaskStatus, createTask, deleteTask } = taskStore;
 
 const searchQuery = ref("");
+const actionError = ref("");
+
+const tasks = computed(() => {
+  if (!searchQuery.value.trim()) return allTasks.value;
+  const query = searchQuery.value.trim().toLowerCase();
+  return allTasks.value.filter(
+    (task) =>
+      task.name?.toLowerCase().includes(query) ||
+      task.description?.toLowerCase().includes(query) ||
+      task.assignee?.user?.name?.toLowerCase().includes(query)
+  );
+});
 const isModalOpen = ref(false);
 const selectedTaskId = ref(null);
 const isCreateModalOpen = ref(false);
@@ -22,7 +35,7 @@ const isCreateModalOpen = ref(false);
 // Computed property to get always fresh task data from store
 const selectedTask = computed(() => {
   if (!selectedTaskId.value) return null;
-  return tasks.value.find((task) => task.id === selectedTaskId.value) || null;
+  return allTasks.value.find((task) => task.id === selectedTaskId.value) || null;
 });
 
 const openTaskDetail = (task) => {
@@ -44,20 +57,38 @@ const closeCreateModal = () => {
 };
 
 const handleCreateTask = async (taskData) => {
+  actionError.value = "";
   try {
     await createTask(taskData);
     await fetchProjectTasks(route.params.id);
   } catch (error) {
-    console.error("Failed to create task:", error);
+    actionError.value =
+      typeof taskStore.error === "string" ? taskStore.error : "Failed to create task.";
   }
 };
 
 const handleDeleteTask = async (taskId) => {
+  actionError.value = "";
   try {
     await deleteTask(taskId);
     await fetchProjectTasks(route.params.id);
   } catch (error) {
-    console.error("Failed to delete task:", error);
+    actionError.value =
+      typeof taskStore.error === "string" ? taskStore.error : "Failed to delete task.";
+  }
+};
+
+const handleStatusChange = async (taskId, newStatus) => {
+  actionError.value = "";
+  try {
+    await updateTaskStatus(taskId, newStatus);
+  } catch (error) {
+    actionError.value =
+      typeof taskStore.error === "string"
+        ? taskStore.error
+        : "Failed to move task. Reverting.";
+    // Resync with server state so the board reflects reality after a failed move
+    await fetchProjectTasks(route.params.id);
   }
 };
 
@@ -70,7 +101,7 @@ const todoTask = computed({
       (task) => !tasks.value.filter((t) => t.status === "todo").includes(task)
     );
     if (movedTask && movedTask.status !== "todo") {
-      updateTaskStatus(movedTask.id, "todo");
+      handleStatusChange(movedTask.id, "todo");
     }
   },
 });
@@ -83,7 +114,7 @@ const inProgressTasks = computed({
         !tasks.value.filter((t) => t.status === "in_progress").includes(task)
     );
     if (movedTask && movedTask.status !== "in_progress") {
-      updateTaskStatus(movedTask.id, "in_progress");
+      handleStatusChange(movedTask.id, "in_progress");
     }
   },
 });
@@ -95,7 +126,7 @@ const reviewTasks = computed({
       (task) => !tasks.value.filter((t) => t.status === "review").includes(task)
     );
     if (movedTask && movedTask.status !== "review") {
-      updateTaskStatus(movedTask.id, "review");
+      handleStatusChange(movedTask.id, "review");
     }
   },
 });
@@ -107,7 +138,7 @@ const doneTasks = computed({
       (task) => !tasks.value.filter((t) => t.status === "done").includes(task)
     );
     if (movedTask && movedTask.status !== "done") {
-      updateTaskStatus(movedTask.id, "done");
+      handleStatusChange(movedTask.id, "done");
     }
   },
 });
@@ -138,6 +169,7 @@ onMounted(async () => {
         </div>
       </div>
       <button
+        v-if="can('task-create')"
         @click="openCreateModal"
         class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
       >
@@ -146,6 +178,14 @@ onMounted(async () => {
           >Create New Task</span
         >
       </button>
+    </div>
+
+    <div
+      v-if="actionError"
+      class="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm flex items-center justify-between"
+    >
+      <span>{{ actionError }}</span>
+      <button @click="actionError = ''" class="text-red-400 hover:text-red-600">&times;</button>
     </div>
 
     <!-- Tasks Filter -->

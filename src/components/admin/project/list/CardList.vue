@@ -29,6 +29,14 @@ const getStatusColor = (status) => {
   };
   return statusConfig[status] || "bg-gray-100 text-gray-500";
 };
+
+const getProgressColor = (progress) => {
+  const value = progress ?? 0;
+  if (value >= 100) return "bg-green-500";
+  if (value >= 50) return "bg-blue-500";
+  if (value > 0) return "bg-yellow-500";
+  return "bg-gray-300";
+};
 </script>
 
 <template>
@@ -105,10 +113,14 @@ const getStatusColor = (status) => {
     <div class="mb-4">
       <div class="flex items-center justify-between text-sm mb-2">
         <span class="text-brand-light">Progress</span>
-        <span class="text-brand-dark font-semibold">{{ data.progress }}%</span>
+        <span class="text-brand-dark font-semibold">{{ data.progress ?? 0 }}%</span>
       </div>
       <div class="w-full bg-gray-200 rounded-full h-2">
-        <div class="h-2 rounded-full ${getProgressColor(data.progress)}"></div>
+        <div
+          class="h-2 rounded-full transition-all duration-300"
+          :class="getProgressColor(data.progress)"
+          :style="{ width: `${data.progress ?? 0}%` }"
+        ></div>
       </div>
     </div>
 

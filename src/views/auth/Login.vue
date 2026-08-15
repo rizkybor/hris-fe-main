@@ -72,7 +72,7 @@ const handleSubmit = async () => {
       />
 
       <!-- Login Form -->
-      <form class="space-y-6">
+      <form class="space-y-6" @submit.prevent="handleSubmit">
         <!-- Email Field -->
         <Input
           id="email"
@@ -118,12 +118,12 @@ const handleSubmit = async () => {
               Remember me
             </label>
           </div>
-          <a
-            href="#"
+          <RouterLink
+            :to="{ name: 'forgot-password' }"
             class="hover:brightness-110 transition-all duration-300 text-primary-600"
           >
             Forgot password?
-          </a>
+          </RouterLink>
         </div>
 
         <!-- Login Button -->
@@ -131,7 +131,6 @@ const handleSubmit = async () => {
           type="submit"
           class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2 w-full justify-center bg-gradient-to-l from-[#0c51d9] via-[#6f96e3] to-[#0c51d9] shadow-[inset_-2px_2px_1px_0_#6197ff,inset_2px_2px_1px_0_rgba(97,151,255,0.55)] text-white font-plus-jakarta-sans text-[14px] font-semibold cursor-pointer"
           :disabled="loading"
-          @click="handleSubmit"
         >
           Sign In to Dashboard
         </button>
@@ -189,20 +188,6 @@ const handleSubmit = async () => {
         </button>
       </div> -->
 
-      <!-- Sign Up Link -->
-      <div class="text-center">
-        <p
-          class="text-[#6b7280] font-plus-jakarta-sans text-[14px] font-normal"
-        >
-          Don't have an account?
-          <a
-            href="#"
-            class="hover:brightness-110 transition-all duration-300 text-[#3b82f6] font-plus-jakarta-sans text-[14px] font-semibold"
-          >
-            Sign up here
-          </a>
-        </p>
-      </div>
     </div>
   </div>
 </template>

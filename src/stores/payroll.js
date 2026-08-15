@@ -75,6 +75,17 @@ export const usePayrollStore = defineStore("payroll", {
             }
         },
 
+        async fetchPayrollPositions(id) {
+            try {
+                const response = await axiosInstance.get(`/payrolls/${id}/positions`);
+
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
+
         async generatePayroll(payload) {
             this.loading = true;
 

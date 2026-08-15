@@ -10,8 +10,6 @@ import {
   Banknote,
   Plus,
   FileText,
-  Download,
-  Settings,
   TrendingUp,
   Star,
   Calendar,
@@ -19,6 +17,7 @@ import {
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
+import { can } from "@/helpers/permissionHelper";
 
 const router = useRouter();
 const payrollStore = usePayrollStore();
@@ -47,13 +46,11 @@ const formatProcessedDate = (date) => {
 
 const getStatusColor = (status) => {
   const colors = {
-    draft: "bg-gray-100 text-gray-800",
     pending: "bg-yellow-100 text-yellow-800",
-    approved: "bg-blue-100 text-blue-800",
-    finalized: "bg-green-100 text-green-800",
-    rejected: "bg-red-100 text-red-800",
+    processing: "bg-blue-100 text-blue-800",
+    paid: "bg-green-100 text-green-800",
   };
-  return colors[status] || colors.draft;
+  return colors[status] || colors.pending;
 };
 
 const viewDetails = (id) => {
@@ -72,7 +69,9 @@ const viewDetails = (id) => {
           <div class="flex items-center gap-2 mb-3">
             <div class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
               <TrendingUp class="w-3 h-3 text-white" />
-              <span class="text-brand-white text-xs font-semibold">+5.2% this month</span>
+              <span class="text-brand-white text-xs font-semibold">
+                {{ (statistics.salary_change ?? 0) >= 0 ? "+" : "" }}{{ statistics.salary_change ?? 0 }}% this month
+              </span>
             </div>
           </div>
 
@@ -147,29 +146,17 @@ const viewDetails = (id) => {
         class="lg:row-span-2 bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
         <h3 class="text-brand-dark text-lg font-bold mb-4">Payroll Actions</h3>
         <div class="space-y-3">
-          <RouterLink :to="{ name: 'admin.payroll.create' }"
+          <RouterLink v-if="can('payroll-create')" :to="{ name: 'admin.payroll.create' }"
             class="btn-secondary w-full text-left rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2">
             <Plus class="w-4 h-4 text-white" />
             <span class="text-brand-white text-sm font-semibold">Create New Payroll</span>
           </RouterLink>
 
-          <button
+          <RouterLink :to="{ name: 'admin.report.dashboard' }"
             class="btn-secondary w-full text-left border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:rounded-[12px] focus:border-[#0C51D9] focus:border-2 focus:rounded-[12px] focus:bg-white transition-all duration-300 px-4 py-3 flex items-center gap-2">
             <FileText class="w-4 h-4 text-gray-600" />
             <span class="text-brand-dark text-sm font-medium">Generate Reports</span>
-          </button>
-
-          <button
-            class="btn-secondary w-full text-left border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:rounded-[12px] focus:border-[#0C51D9] focus:border-2 focus:rounded-[12px] focus:bg-white transition-all duration-300 px-4 py-3 flex items-center gap-2">
-            <Download class="w-4 h-4 text-gray-600" />
-            <span class="text-brand-dark text-sm font-medium">Export Data</span>
-          </button>
-
-          <button
-            class="btn-secondary w-full text-left border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:rounded-[12px] focus:border-[#0C51D9] focus:border-2 focus:rounded-[12px] focus:bg-white transition-all duration-300 px-4 py-3 flex items-center gap-2">
-            <Settings class="w-4 h-4 text-gray-600" />
-            <span class="text-brand-dark text-sm font-medium">Payroll Settings</span>
-          </button>
+          </RouterLink>
         </div>
       </div>
 
@@ -183,9 +170,7 @@ const viewDetails = (id) => {
             <p class="text-brand-dark text-2xl lg:text-3xl font-extrabold leading-tight my-2">
               {{ loading ? "..." : formatRupiahCompact(statistics.average_salary) }}
             </p>
-            <p class="text-success text-sm font-medium">
-              +{{ formatRupiahCompact(1900000) }} from last month
-            </p>
+            <p class="text-success text-sm font-medium">Per employee</p>
           </div>
           <div class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center flex-shrink-0">
             <Banknote class="w-6 h-6 text-blue-600" />

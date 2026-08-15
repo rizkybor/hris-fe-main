@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import axios from "axios";
+import { axiosInstance as axios } from "@/plugins/axios";
 
 export const useFilesCompanyStore = defineStore("FilesCompany", {
   state: () => ({
@@ -84,11 +84,8 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
         const response = await axios.get(`/files-companies/${file.id}`);
         const archive = response.data.data;
 
-        console.log(file);
-        console.log(archive.document_path, "<<< CEK");
-
         if (!archive.document_path) {
-          alert("File not available for download.");
+          this.error = "File not available for download.";
           return;
         }
 
@@ -105,39 +102,6 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
         this.error = error.response?.data?.message || error.message;
       }
     },
-
-    // async downloadArchive(file) {
-    //   try {
-    //     // Ambil file detail dulu (opsional)
-    //     const responseDetail = await axios.get(`/files-companies/${file.id}`);
-    //     const archive = responseDetail.data.data;
-
-    //     if (!archive.document_path) {
-    //       alert("File not available for download.");
-    //       return;
-    //     }
-
-    //     // Ambil file sebagai blob
-    //     const responseFile = await axios.get(archive.document_path, {
-    //       responseType: "blob", // penting supaya dapat blob
-    //     });
-
-    //     // Buat link download
-    //     const url = window.URL.createObjectURL(new Blob([responseFile.data]));
-    //     const link = document.createElement("a");
-    //     link.href = url;
-    //     link.download = archive.document_name || "file";
-    //     document.body.appendChild(link);
-    //     link.click();
-    //     document.body.removeChild(link);
-
-    //     // Bersihkan URL object setelah download
-    //     window.URL.revokeObjectURL(url);
-    //   } catch (error) {
-    //     console.error("Error downloading file:", error);
-    //     this.error = error.response?.data?.message || error.message;
-    //   }
-    // },
 
     // ================= CREATE =================
     async createArchive(formData) {
@@ -164,38 +128,35 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
 
     // ================= UPDATE =================
     async updateArchive(id, formData) {
-  try {
-    this.loading = true;
+      try {
+        this.loading = true;
 
-    // 🔹 Tambahkan _method=PUT supaya Laravel menganggap ini PUT
-    formData.append("_method", "PUT");
+        // Laravel doesn't parse multipart PUT bodies, so spoof it via POST
+        formData.append("_method", "PUT");
 
-    // 🔹 POST request tapi Laravel akan tetap memanggil update()
-    const response = await axios.post(`/files-companies/${id}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+        const response = await axios.post(`/files-companies/${id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
 
-    const updatedArchive = response.data.data;
+        const updatedArchive = response.data.data;
 
-    // Update state archives agar UI langsung berubah
-    const index = this.archives.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      this.archives[index] = updatedArchive;
-    }
+        const index = this.archives.findIndex((item) => item.id === id);
+        if (index !== -1) {
+          this.archives[index] = updatedArchive;
+        }
 
-    // Update currentArchive agar form langsung refleks
-    this.currentArchive = updatedArchive;
+        this.currentArchive = updatedArchive;
 
-    this.success = "File updated successfully";
-    return updatedArchive;
-  } catch (error) {
-    console.error("Error updating archive:", error);
-    this.error = error.response?.data?.message || error.message;
-    throw error;
-  } finally {
-    this.loading = false;
-  }
-},
+        this.success = "File updated successfully";
+        return updatedArchive;
+      } catch (error) {
+        console.error("Error updating archive:", error);
+        this.error = error.response?.data?.message || error.message;
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
 
     // ================= DELETE =================
     async deleteArchive(id) {
@@ -203,7 +164,6 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
         this.loading = true;
         await axios.delete(`/files-companies/${id}`);
 
-        // Hapus dari state archives
         this.archives = this.archives.filter((archive) => archive.id !== id);
 
         this.success = "File deleted successfully";
@@ -214,6 +174,12 @@ export const useFilesCompanyStore = defineStore("FilesCompany", {
       } finally {
         this.loading = false;
       }
+    },
+
+    // ================= CLEAR MESSAGES =================
+    clearMessages() {
+      this.success = null;
+      this.error = null;
     },
   },
 });

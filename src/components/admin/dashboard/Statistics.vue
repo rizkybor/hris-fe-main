@@ -156,7 +156,7 @@ const loading = computed(() => dashboardStore.loading);
     <div
       class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
     >
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between mb-2">
         <div>
           <p class="text-brand-dark text-sm font-medium">Active Projects</p>
           <p class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
@@ -168,6 +168,20 @@ const loading = computed(() => dashboardStore.loading);
           class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-50 rounded-[16px] flex items-center justify-center"
         >
           <FolderIcon class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+        </div>
+      </div>
+      <div class="pt-2 border-t border-[#F1F1F1]">
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span class="text-brand-light">Task Completion</span>
+          <span class="text-brand-dark font-semibold">
+            {{ loading ? '...' : `${projects.completion_rate ?? 0}%` }}
+          </span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-1.5">
+          <div
+            class="h-1.5 rounded-full bg-orange-500 transition-all duration-300"
+            :style="{ width: `${loading ? 0 : (projects.completion_rate ?? 0)}%` }"
+          ></div>
         </div>
       </div>
     </div>

@@ -44,7 +44,7 @@ const goTo = (path: string) => {
       <!-- Create New Team -->
       <button
         type="button"
-        @click="goTo('/admin/employees/create')"
+        @click="goTo('/admin/teams/create')"
         class="btn-secondary w-full text-left border border-[#DCDEDD]
                rounded-[16px]
                hover:border-[#0C51D9] hover:border-2 hover:rounded-[12px]
@@ -75,7 +75,7 @@ const goTo = (path: string) => {
         </span>
       </button>
 
-      <!-- Schedule Meeting -->
+      <!-- View Attendance -->
       <button
         type="button"
         @click="goTo('/admin/attendances')"
@@ -88,7 +88,7 @@ const goTo = (path: string) => {
       >
         <CalendarPlusIcon class="w-4 h-4 text-gray-600" />
         <span class="text-brand-dark text-sm font-medium">
-          Schedule Meeting
+          View Attendance
         </span>
       </button>
     </div>

@@ -1,17 +1,26 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import {
+  Archive,
+  ArrowLeft,
+  Pencil,
+  Download,
+  Clock,
+  FileText,
+  HardDrive,
+  FileType,
+} from "lucide-vue-next";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
-import { useRoute } from "vue-router";
 
 const archiveStore = useFilesCompanyStore();
 const route = useRoute();
+const router = useRouter();
 const archiveId = route.params.id;
 
-// Loading & error state
 const loading = computed(() => archiveStore.loading);
-const error = ref(null);
+const error = ref("");
 
-// Format tanggal
 const formatDate = (date) => {
   if (!date) return "-";
   return new Date(date).toLocaleDateString("id-ID", {
@@ -21,7 +30,13 @@ const formatDate = (date) => {
   });
 };
 
-// Fetch detail archive
+const formatSize = (bytes) => {
+  if (!bytes) return "-";
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(2)} KB`;
+  return `${(kb / 1024).toFixed(2)} MB`;
+};
+
 onMounted(async () => {
   try {
     await archiveStore.fetchArchiveById(archiveId);
@@ -31,157 +46,142 @@ onMounted(async () => {
   }
 });
 
-// Download function
 const downloadFile = () => {
-  const archive = archiveStore.currentArchive;
-  if (!archive || !archive.document_path) return;
-  window.open(archive.document_path, "_blank");
+  archiveStore.downloadArchive(archiveStore.currentArchive);
 };
 
-// Check if file is image
 const isImage = (type) => type?.startsWith("image/");
 </script>
 
 <template>
-  <div
-    class="w-full min-h-screen flex items-center justify-center bg-gray-100 p-6"
-  >
-    <div
-      class="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-4xl shadow-lg space-y-6"
-    >
-      <!-- Button Back -->
-      <div class="flex items-center mb-4">
+  <div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+      <div class="flex items-center gap-3">
         <button
-          @click="$router.back()"
-          type="button"
-          class="flex items-center bg-gray-200 text-gray-700 hover:bg-blue-600 hover:text-white font-medium px-3 py-1.5 rounded-lg border border-gray-300 shadow-sm transition-colors duration-200 text-sm focus:outline-none"
+          @click="router.back()"
+          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          aria-label="Back"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 mr-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back
+          <ArrowLeft class="w-5 h-5 text-gray-600" />
         </button>
-      </div>
 
-      <h2 class="text-3xl font-bold text-gray-800 border-b pb-3 mb-6">
-        Archive Detail
-      </h2>
-
-      <!-- Loading -->
-      <div v-if="loading" class="text-center text-gray-500 py-20">
-        Loading archive detail...
-      </div>
-
-      <!-- Error -->
-      <div v-else-if="error" class="text-center text-red-600 py-20">
-        {{ error }}
-      </div>
-
-      <!-- Detail Archive -->
-      <div v-else-if="archiveStore.currentArchive" class="space-y-6">
-        <!-- Metadata -->
-        <div class="grid grid-cols-2 gap-4 text-gray-700">
-          <div class="flex flex-col">
-            <span class="font-semibold text-gray-800">File Name:</span>
-            <span class="mt-1">{{
-              archiveStore.currentArchive.document_name || "-"
-            }}</span>
-          </div>
-
-          <div class="flex flex-col">
-            <span class="font-semibold text-gray-800">Description:</span>
-            <span class="mt-1">{{
-              archiveStore.currentArchive.description || "-"
-            }}</span>
-          </div>
-
-          <div class="flex flex-col">
-            <span class="font-semibold text-gray-800">Uploaded By:</span>
-            <span class="mt-1">{{
-              archiveStore.currentArchive.uploaded_by || "-"
-            }}</span>
-          </div>
-
-          <div class="flex flex-col">
-            <span class="font-semibold text-gray-800">Upload Date:</span>
-            <span class="mt-1">{{
-              formatDate(archiveStore.currentArchive.created_at)
-            }}</span>
-          </div>
-
-          <div class="flex flex-col">
-            <span class="font-semibold text-gray-800">File Type:</span>
-            <span class="mt-1">{{
-              archiveStore.currentArchive.type_file || "-"
-            }}</span>
-          </div>
-
-          <div class="flex flex-col">
-            <span class="font-semibold text-gray-800">File Size:</span>
-            <span class="mt-1"
-              >{{
-                (archiveStore.currentArchive.size_file / 1024).toFixed(2)
-              }}
-              KB</span
-            >
-          </div>
+        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
+          <Archive class="w-6 h-6 text-blue-600" />
         </div>
 
-        <!-- File Preview -->
-        <div v-if="isImage(archiveStore.currentArchive.type_file)" class="mt-4">
-          <span class="font-semibold text-gray-800">Preview:</span>
-          <div
-            class="mt-2 w-full max-h-[400px] overflow-auto border border-gray-200 rounded-lg shadow-sm p-1"
-          >
-            <img
-              :src="archiveStore.currentArchive.document_path"
-              alt="File Preview"
-              class="w-full object-contain"
-            />
-          </div>
+        <div class="flex-1">
+          <h1 class="text-brand-dark text-xl font-bold">Document File Detail</h1>
+          <p class="text-brand-light text-sm">Informasi file (read-only)</p>
         </div>
 
-        <div
-          v-else-if="
-            archiveStore.currentArchive.type_file === 'application/pdf'
-          "
-          class="mt-4"
+        <router-link
+          :to="{ name: 'admin.files-company.edit', params: { id: archiveId } }"
+          class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all px-4 py-2 flex items-center gap-2"
         >
-          <span class="font-semibold text-gray-800">Preview PDF:</span>
-          <div
-            class="mt-2 w-full max-h-[400px] overflow-auto border border-gray-200 rounded-lg"
-          >
-            <iframe
-              :src="archiveStore.currentArchive.document_path"
-              class="w-full h-[400px]"
-            ></iframe>
-          </div>
-        </div>
-
-        <!-- Download Button -->
-        <button
-          @click="downloadFile"
-          class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-3 rounded-xl transition-all duration-200 shadow-md"
-        >
-          Download File
-        </button>
-      </div>
-
-      <!-- Fallback -->
-      <div v-else class="text-center text-gray-400 py-20">
-        Archive data not available.
+          <Pencil class="w-4 h-4 text-gray-600" />
+          <span class="text-brand-dark font-semibold text-sm">Edit</span>
+        </router-link>
       </div>
     </div>
+
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center gap-3 py-20 text-gray-500">
+      <span class="w-5 h-5 border-2 border-gray-300 border-t-[#0C51D9] rounded-full animate-spin"></span>
+      Loading archive detail...
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="text-center py-20 text-red-600">
+      {{ error }}
+    </div>
+
+    <!-- Content -->
+    <div
+      v-else-if="archiveStore.currentArchive"
+      class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6"
+    >
+      <!-- File Name -->
+      <div>
+        <label class="block text-brand-dark text-base font-semibold mb-1">File Name</label>
+        <div class="flex items-center gap-3">
+          <FileText class="w-5 h-5 text-gray-400" />
+          <p class="text-brand-dark font-semibold">
+            {{ archiveStore.currentArchive.document_name || "—" }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-brand-dark text-base font-semibold mb-1">Description</label>
+        <div class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[16px] bg-gray-50">
+          <FileText class="w-5 h-5 text-gray-400 mt-0.5" />
+          <p class="text-brand-dark whitespace-pre-line">
+            {{ archiveStore.currentArchive.description || "—" }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Meta -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <div class="flex items-center gap-3">
+          <FileType class="w-5 h-5 text-gray-400" />
+          <div>
+            <p class="text-xs text-gray-500">File Type</p>
+            <p class="text-sm font-semibold">{{ archiveStore.currentArchive.type_file || "—" }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <HardDrive class="w-5 h-5 text-gray-400" />
+          <div>
+            <p class="text-xs text-gray-500">File Size</p>
+            <p class="text-sm font-semibold">{{ formatSize(archiveStore.currentArchive.size_file) }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <Clock class="w-5 h-5 text-gray-400" />
+          <div>
+            <p class="text-xs text-gray-500">Upload Date</p>
+            <p class="text-sm font-semibold">{{ formatDate(archiveStore.currentArchive.created_at) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- File Preview -->
+      <div v-if="isImage(archiveStore.currentArchive.type_file)">
+        <label class="block text-brand-dark text-base font-semibold mb-1">Preview</label>
+        <div class="w-full max-h-[75vh] overflow-auto border border-[#DCDEDD] rounded-[16px] p-2 bg-gray-50 flex justify-center">
+          <img
+            :src="archiveStore.currentArchive.document_path"
+            alt="File Preview"
+            class="max-w-full max-h-[70vh] object-contain rounded-[12px]"
+          />
+        </div>
+      </div>
+
+      <div v-else-if="archiveStore.currentArchive.type_file === 'application/pdf'">
+        <label class="block text-brand-dark text-base font-semibold mb-1">Preview PDF</label>
+        <div class="w-full h-[80vh] min-h-[600px] border border-[#DCDEDD] rounded-[16px] overflow-hidden">
+          <iframe :src="archiveStore.currentArchive.document_path" class="w-full h-full"></iframe>
+        </div>
+      </div>
+
+      <!-- Download -->
+      <div class="pt-4 border-t border-[#DCDEDD]">
+        <button
+          @click="downloadFile"
+          class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 transition-all"
+        >
+          <Download class="w-4 h-4 text-white" />
+          <span class="text-brand-white text-sm font-semibold">Download File</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Fallback -->
+    <div v-else class="text-center py-20 text-gray-400">Archive data not available.</div>
   </div>
 </template>

@@ -7,18 +7,18 @@ import {
   ClockIcon,
   TrendingUpIcon,
   StarIcon,
-  AlertCircle,
-  CheckCircle2,
-  Clock3,
   Calendar,
-  Users,
-  MessageSquare,
+  BellIcon,
 } from "lucide-vue-next";
+import { useRouter } from "vue-router";
 import QuickActions from "./QuickActions.vue";
 import { useAuthStore } from "@/stores/auth";
 import { axiosInstance } from "@/plugins/axios";
 import { useTaskStore } from "@/stores/task";
-import { useEmployeeStore } from "@/stores/employee";
+import { useNotificationStore } from "@/stores/notification";
+import { getTimeAgo } from "@/utils/dateUtils";
+
+const router = useRouter();
 
 const authStore = useAuthStore();
 
@@ -40,53 +40,38 @@ const statistics = ref({
 });
 
 const taskStore = useTaskStore();
-const employeeStore = useEmployeeStore();
+const notificationStore = useNotificationStore();
+
 const upcomingTasks = computed(() => {
-  return taskStore.tasks.map((t: any) => ({
+  return taskStore.myTasks.map((t: any) => ({
     id: t.id,
-    title: t.title || t.name || "Task",
-    project: t.project?.name || t.project_name || "-",
+    title: t.name || "Task",
+    project: t.project?.name || "-",
     priority: t.priority || "medium",
-    dueDate: t.due_date || t.deadline || "",
+    dueDate: t.due_date || "",
     status: t.status || "todo",
   }));
 });
 
-// Dummy recent activities
-const recentActivities = ref([
-  {
-    id: 1,
-    type: "task_completed",
-    title: "Completed task: User Authentication Flow",
-    time: "2 hours ago",
-    icon: CheckCircle2,
-    color: "text-green-600",
-  },
-  {
-    id: 2,
-    type: "comment",
-    title: "Commented on PR: Add dark mode support",
-    time: "4 hours ago",
-    icon: MessageSquare,
-    color: "text-blue-600",
-  },
-  {
-    id: 3,
-    type: "check_in",
-    title: "Checked in at 08:30 AM",
-    time: "6 hours ago",
-    icon: Clock3,
-    color: "text-purple-600",
-  },
-  {
-    id: 4,
-    type: "meeting",
-    title: "Attended Sprint Planning Meeting",
-    time: "Yesterday",
-    icon: Users,
-    color: "text-orange-600",
-  },
-]);
+const recentActivities = computed(() => {
+  return notificationStore.notifications.map((n: any) => ({
+    id: n.id,
+    title: n.data?.title ?? n.data?.message ?? "Notification",
+    time: getTimeAgo(n.created_at),
+    icon: BellIcon,
+    color: n.read_at ? "text-gray-400" : "text-blue-600",
+  }));
+});
+
+const activitiesLimit = ref(4);
+const loadMoreActivities = async () => {
+  activitiesLimit.value += 10;
+  await notificationStore.fetchNotifications(activitiesLimit.value);
+};
+
+const goToAllTasks = () => {
+  router.push({ name: "admin.projects" });
+};
 
 const loading = ref(false);
 const userName = computed(() => authStore.user?.name || "Employee");
@@ -126,6 +111,7 @@ const getStatusClass = (status: string) => {
 };
 
 const formatDate = (dateString: string) => {
+  if (!dateString) return "No due date";
   const date = new Date(dateString);
   const today = new Date();
   const tomorrow = new Date(today);
@@ -169,16 +155,8 @@ const fetchMyStatistics = async () => {
 
 onMounted(() => {
   fetchMyStatistics();
-  employeeStore
-    .fetchMyTeamProjects()
-    .then((projects: any[]) => {
-      const firstProjectId =
-        Array.isArray(projects) && projects.length ? projects[0].id : null;
-      if (firstProjectId) {
-        return taskStore.fetchProjectTasks(firstProjectId);
-      }
-    })
-    .catch(() => {});
+  taskStore.fetchMyTasks(5);
+  notificationStore.fetchNotifications(activitiesLimit.value);
 });
 </script>
 
@@ -366,14 +344,19 @@ onMounted(() => {
         <h3 class="text-brand-dark text-base sm:text-lg font-bold">
           Upcoming Tasks
         </h3>
-        <a
-          href="#"
+        <button
+          @click="goToAllTasks"
           class="text-[#0C51D9] text-xs sm:text-sm font-medium hover:underline"
-          >View All</a
         >
+          View All
+        </button>
       </div>
 
-      <div class="space-y-3">
+      <div v-if="upcomingTasks.length === 0" class="text-center py-6 text-sm text-gray-400">
+        No upcoming tasks
+      </div>
+
+      <div v-else class="space-y-3">
         <div
           v-for="task in upcomingTasks"
           :key="task.id"
@@ -415,14 +398,19 @@ onMounted(() => {
         <h3 class="text-brand-dark text-base sm:text-lg font-bold">
           Recent Activities
         </h3>
-        <a
-          href="#"
+        <button
+          @click="loadMoreActivities"
           class="text-[#0C51D9] text-xs sm:text-sm font-medium hover:underline"
-          >View All</a
         >
+          View All
+        </button>
       </div>
 
-      <div class="space-y-4">
+      <div v-if="recentActivities.length === 0" class="text-center py-6 text-sm text-gray-400">
+        No recent activity
+      </div>
+
+      <div v-else class="space-y-4">
         <div
           v-for="activity in recentActivities"
           :key="activity.id"

@@ -37,6 +37,38 @@ export const useAuthStore = defineStore("auth", {
             }
         },
 
+        async forgotPassword(email) {
+            this.loading = true
+            this.error = null
+            this.success = null
+
+            try {
+                const response = await axiosInstance.post('/forgot-password', { email })
+                this.success = response.data.message
+            } catch (error) {
+                this.error = handleError(error)
+                throw error
+            } finally {
+                this.loading = false
+            }
+        },
+
+        async resetPassword(payload) {
+            this.loading = true
+            this.error = null
+            this.success = null
+
+            try {
+                const response = await axiosInstance.post('/reset-password', payload)
+                this.success = response.data.message
+            } catch (error) {
+                this.error = handleError(error)
+                throw error
+            } finally {
+                this.loading = false
+            }
+        },
+
         async checkAuth() {
             this.loading = true;
             try {

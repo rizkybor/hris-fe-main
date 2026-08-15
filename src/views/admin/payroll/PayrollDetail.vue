@@ -10,13 +10,13 @@ import {
   CalendarCheck,
   Search,
   Download,
-  Send,
   CheckCircle,
   X,
 } from "lucide-vue-next";
 import { debounce } from "lodash";
 import Pagination from "@/components/admin/payroll/Pagination.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
+import { can } from "@/helpers/permissionHelper";
 
 const route = useRoute();
 const router = useRouter();
@@ -25,6 +25,7 @@ const payrollStore = usePayrollStore();
 const payroll = ref(null);
 const payrollStatistics = ref(null);
 const employees = ref([]);
+const positions = ref([]);
 const pagination = ref({
   current_page: 1,
   per_page: 50,
@@ -64,6 +65,14 @@ const fetchPayrollStatistics = async () => {
   }
 };
 
+const fetchPositions = async () => {
+  try {
+    positions.value = await payrollStore.fetchPayrollPositions(route.params.id);
+  } catch (error) {
+    console.error("Error fetching payroll positions:", error);
+  }
+};
+
 const fetchPayrollDetails = async (page = 1) => {
   try {
     loadingDetails.value = true;
@@ -93,7 +102,7 @@ const fetchPayrollDetails = async (page = 1) => {
         position: detail.employee?.job_information?.job_title || "N/A",
         department: detail.employee?.job_information?.team?.name || "N/A",
         profile_photo: detail.employee?.user?.profile_photo || null,
-        total_work_days: 22, // Default working days
+        total_work_days: payrollStatistics.value?.working_days || 0,
         attended_days: detail.attended_days || 0,
         sick_days: detail.sick_days || 0,
         absent_days: detail.absent_days || 0,
@@ -144,6 +153,7 @@ onMounted(async () => {
   await fetchPayrollSummary();
   await fetchPayrollStatistics();
   await fetchPayrollDetails(1);
+  await fetchPositions();
 });
 
 // Server-side filtering is now handled by the API
@@ -166,6 +176,7 @@ watch(departmentFilter, () => {
 
 
 const getAttendancePercentage = (attendedDays, totalDays) => {
+  if (!totalDays) return 0;
   return Math.round((attendedDays / totalDays) * 100);
 };
 
@@ -176,10 +187,6 @@ const exportExcel = async () => {
     console.error("Error exporting Excel:", error);
     alert("Failed to export Excel file. Please try again.");
   }
-};
-
-const sendNotifications = () => {
-  alert("Notifications sent successfully!");
 };
 
 const openMarkAsPaidModal = () => {
@@ -335,11 +342,9 @@ const handleMarkAsPaid = async () => {
           <select v-model="departmentFilter"
             class="px-3 py-2 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300 text-sm">
             <option value="">All Positions</option>
-            <option value="Software Engineer">Software Engineer</option>
-            <option value="Product Manager">Product Manager</option>
-            <option value="UI/UX Designer">UI/UX Designer</option>
-            <option value="HR Manager">HR Manager</option>
-            <option value="Finance">Finance</option>
+            <option v-for="position in positions" :key="position" :value="position">
+              {{ position }}
+            </option>
           </select>
         </div>
       </div>
@@ -445,7 +450,12 @@ const handleMarkAsPaid = async () => {
                   }}</span>
               </td>
               <td class="py-4 px-4 text-center">
-                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                <span :class="[
+                  'px-2 py-1 rounded-full text-xs font-semibold',
+                  emp.status === 'paid'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-yellow-100 text-yellow-800',
+                ]">
                   {{ emp.status === "paid" ? "Paid" : "Pending" }}
                 </span>
               </td>
@@ -472,22 +482,16 @@ const handleMarkAsPaid = async () => {
         </div>
 
         <div class="flex items-center gap-3">
-          <button @click="exportExcel"
+          <button v-if="can('payroll-list')" @click="exportExcel"
             class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2">
             <Download class="w-4 h-4 text-gray-600" />
             <span class="text-brand-dark text-sm font-semibold">Export Excel</span>
           </button>
 
-          <button v-if="payroll?.status !== 'paid'" @click="openMarkAsPaidModal"
+          <button v-if="can('payroll-process') && payroll?.status !== 'paid'" @click="openMarkAsPaidModal"
             class="border border-green-600 bg-green-50 rounded-[12px] hover:bg-green-100 hover:border-green-700 transition-all duration-300 px-4 py-2 flex items-center gap-2">
             <CheckCircle class="w-4 h-4 text-green-600" />
             <span class="text-green-700 text-sm font-semibold">Mark as Paid</span>
-          </button>
-
-          <button v-else @click="sendNotifications"
-            class="btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2 flex items-center gap-2">
-            <Send class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">Send Notifications</span>
           </button>
         </div>
       </div>

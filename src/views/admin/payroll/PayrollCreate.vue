@@ -129,7 +129,7 @@ const formatMonth = (month) => {
           <!-- Form Actions -->
           <div class="space-y-3 pt-4 border-t border-gray-100">
             <button
-              type="submit"
+              type="button"
               @click="handleSubmit"
               :disabled="loading || !form.salary_month"
               class="btn-primary w-full rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"

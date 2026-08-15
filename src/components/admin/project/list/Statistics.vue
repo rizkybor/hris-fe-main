@@ -16,21 +16,21 @@ const { loadingStatistics } = storeToRefs(projectStore);
 
 const total = computed(() => projectStore.statistics.total);
 const active = computed(() => projectStore.statistics.active);
+const completionRate = computed(() => projectStore.statistics.completion_rate ?? 0);
+const completedTasks = computed(() => projectStore.statistics.completed_tasks ?? 0);
+const totalTasks = computed(() => projectStore.statistics.total_tasks ?? 0);
 
 onMounted(() => {
   projectStore.fetchStatistics();
 });
 
-// Chart configuration
-const chartOptions = ref({
+// Chart configuration: real task completion rate across all projects
+const chartOptions = computed(() => ({
   chart: {
-    type: "area",
+    type: "radialBar",
     height: 250,
     toolbar: {
       show: false,
-    },
-    sparkline: {
-      enabled: false,
     },
     animations: {
       enabled: true,
@@ -38,124 +38,47 @@ const chartOptions = ref({
       speed: 800,
     },
   },
-  stroke: {
-    curve: "smooth",
-    width: 3,
-    colors: ["#8A63F9"],
+  plotOptions: {
+    radialBar: {
+      hollow: {
+        size: "65%",
+      },
+      track: {
+        background: "#f1f1f1",
+      },
+      dataLabels: {
+        name: {
+          fontSize: "13px",
+          color: "#6B7280",
+          offsetY: -10,
+        },
+        value: {
+          fontSize: "28px",
+          fontWeight: 700,
+          color: "#1F2937",
+          offsetY: 5,
+          formatter: (value: number) => `${value}%`,
+        },
+      },
+    },
   },
   fill: {
     type: "gradient",
     gradient: {
-      shadeIntensity: 1,
-      opacityFrom: 0.4,
-      opacityTo: 0.05,
+      shade: "dark",
+      shadeIntensity: 0.3,
+      gradientToColors: ["#8A63F9"],
       stops: [0, 100],
-      colorStops: [
-        {
-          offset: 0,
-          color: "#8A63F9",
-          opacity: 0.4,
-        },
-        {
-          offset: 100,
-          color: "#8A63F9",
-          opacity: 0.05,
-        },
-      ],
     },
   },
-  colors: ["#8A63F9"],
-  grid: {
-    borderColor: "#f1f1f1",
-    strokeDashArray: 0,
-    padding: {
-      top: 20,
-      right: 20,
-      bottom: 20,
-      left: 20,
-    },
+  colors: ["#0C51D9"],
+  stroke: {
+    lineCap: "round",
   },
-  xaxis: {
-    categories: [
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ],
-    axisBorder: {
-      show: false,
-    },
-    axisTicks: {
-      show: false,
-    },
-    labels: {
-      style: {
-        colors: "#6B7280",
-        fontSize: "12px",
-      },
-    },
-  },
-  yaxis: {
-    min: 0,
-    max: 8,
-    tickAmount: 8,
-    labels: {
-      style: {
-        colors: "#6B7280",
-        fontSize: "12px",
-      },
-      formatter: (value: number) => `${value}`,
-    },
-  },
-  tooltip: {
-    enabled: true,
-    style: {
-      fontSize: "12px",
-    },
-    y: {
-      formatter: (value: number) => `${value}`,
-    },
-    theme: "light",
-    fillSeriesColor: false,
-  },
-  dataLabels: {
-    enabled: false,
-  },
-  legend: {
-    show: false,
-  },
-  markers: {
-    size: 5,
-    colors: ["#8A63F9"],
-    strokeColors: "#fff",
-    strokeWidth: 2,
-    hover: {
-      size: 7,
-    },
-  },
-  responsive: [
-    {
-      breakpoint: 768,
-      options: {
-        chart: {
-          height: 200,
-        },
-        yaxis: {
-          tickAmount: 6,
-        },
-      },
-    },
-  ],
-});
+  labels: ["Task Completion"],
+}));
 
-const chartSeries = ref([
-  {
-    name: "Project Progress",
-    data: [4, 3, 6, 2, 5, 3],
-  },
-]);
+const chartSeries = computed(() => [completionRate.value]);
 </script>
 
 <template>
@@ -229,7 +152,11 @@ const chartSeries = ref([
         <div class="flex-1">
           <h3 class="text-brand-dark text-lg font-bold">Project Progress</h3>
           <p class="text-brand-light text-sm">
-            Monthly project completion trends
+            {{
+              loadingStatistics
+                ? "Loading..."
+                : `${completedTasks} of ${totalTasks} tasks completed across all projects`
+            }}
           </p>
         </div>
       </div>
@@ -237,7 +164,7 @@ const chartSeries = ref([
       <!-- Chart Container -->
       <div class="relative w-full" style="height: 250px">
         <VueApexCharts
-          type="area"
+          type="radialBar"
           height="250"
           :options="chartOptions"
           :series="chartSeries"

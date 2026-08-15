@@ -6,8 +6,6 @@ import {
   Calendar,
   Tag,
   AlignLeft,
-  MessageSquare,
-  Paperclip,
   Search,
   SearchX,
   UserCheck,
@@ -21,6 +19,7 @@ import { formatDate } from "@/utils/dateUtils";
 import { useEmployeeStore } from "@/stores/employee";
 import { useTaskStore } from "@/stores/task";
 import { storeToRefs } from "pinia";
+import { can } from "@/helpers/permissionHelper";
 
 const props = defineProps({
   task: {
@@ -51,9 +50,54 @@ const dueDateEditing = ref(false);
 const searchAssignee = ref("");
 const selectedAssignee = ref(null);
 const editedDueDate = ref("");
+const isEditingDetails = ref(false);
+const editedName = ref("");
+const editedDescription = ref("");
+const editedPriority = ref("medium");
+const isSavingDetails = ref(false);
+const detailsError = ref("");
 
 const closeModal = () => {
+  isEditingDetails.value = false;
   emit("close");
+};
+
+const toggleEditDetails = () => {
+  isEditingDetails.value = true;
+  editedName.value = props.task?.name ?? "";
+  editedDescription.value = props.task?.description ?? "";
+  editedPriority.value = props.task?.priority ?? "medium";
+  detailsError.value = "";
+};
+
+const cancelEditDetails = () => {
+  isEditingDetails.value = false;
+  detailsError.value = "";
+};
+
+const handleSaveDetails = async () => {
+  if (!editedName.value.trim()) {
+    detailsError.value = "Task name is required.";
+    return;
+  }
+
+  isSavingDetails.value = true;
+  detailsError.value = "";
+  try {
+    await updateTask(props.task.id, {
+      name: editedName.value,
+      description: editedDescription.value,
+      priority: editedPriority.value,
+    });
+    await fetchProjectTasks(props.projectId);
+    emit("updated");
+    isEditingDetails.value = false;
+  } catch (error) {
+    detailsError.value =
+      typeof taskStore.error === "string" ? taskStore.error : "Failed to update task.";
+  } finally {
+    isSavingDetails.value = false;
+  }
 };
 
 const handleDelete = () => {
@@ -225,7 +269,13 @@ watch(
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
                 <Tag class="w-5 h-5 text-gray-400" />
-                <h2 class="text-2xl font-bold text-gray-900">
+                <input
+                  v-if="isEditingDetails"
+                  v-model="editedName"
+                  type="text"
+                  class="text-2xl font-bold text-gray-900 border-b-2 border-[#0C51D9] focus:outline-none flex-1"
+                />
+                <h2 v-else class="text-2xl font-bold text-gray-900">
                   {{ task.name }}
                 </h2>
               </div>
@@ -250,9 +300,19 @@ watch(
                 <div>
                   <div class="flex items-center gap-2 mb-3">
                     <Tag class="w-4 h-4 text-gray-500" />
-                    <h3 class="text-sm font-semibold text-gray-700">Labels</h3>
+                    <h3 class="text-sm font-semibold text-gray-700">Priority</h3>
                   </div>
-                  <div class="flex items-center gap-2">
+                  <select
+                    v-if="isEditingDetails"
+                    v-model="editedPriority"
+                    class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#0C51D9] focus:outline-none"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                  <div v-else class="flex items-center gap-2">
                     <span
                       :class="getPriorityColor(task.priority)"
                       class="px-3 py-1.5 rounded-lg text-sm font-semibold"
@@ -270,7 +330,15 @@ watch(
                       Description
                     </h3>
                   </div>
+                  <textarea
+                    v-if="isEditingDetails"
+                    v-model="editedDescription"
+                    rows="4"
+                    placeholder="Add a description..."
+                    class="w-full bg-gray-50 rounded-lg p-4 text-sm text-gray-700 leading-relaxed border border-gray-200 focus:border-[#0C51D9] focus:outline-none resize-none"
+                  ></textarea>
                   <div
+                    v-else
                     class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 leading-relaxed min-h-[100px]"
                   >
                     <p v-if="task.description">{{ task.description }}</p>
@@ -278,47 +346,30 @@ watch(
                       No description added
                     </p>
                   </div>
-                </div>
 
-                <!-- Comments -->
-                <div>
-                  <div class="flex items-center gap-2 mb-3">
-                    <MessageSquare class="w-4 h-4 text-gray-500" />
-                    <h3 class="text-sm font-semibold text-gray-700">
-                      Activity
-                    </h3>
-                  </div>
-                  <div class="space-y-3">
-                    <!-- Comment Input -->
-                    <div class="flex gap-3">
-                      <div
-                        class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
-                      >
-                        U
-                      </div>
-                      <textarea
-                        class="flex-1 border border-gray-200 rounded-lg p-3 text-sm resize-none focus:border-[#0C51D9] focus:ring-2 focus:ring-[#0C51D9] focus:ring-opacity-20 transition-all"
-                        placeholder="Write a comment..."
-                        rows="3"
-                      ></textarea>
-                    </div>
+                  <p v-if="detailsError" class="text-red-500 text-sm mt-2">
+                    {{ detailsError }}
+                  </p>
+
+                  <div v-if="isEditingDetails" class="flex gap-2 mt-3">
+                    <button
+                      type="button"
+                      @click="handleSaveDetails"
+                      :disabled="isSavingDetails"
+                      class="px-4 py-2 bg-[#0C51D9] text-white rounded-lg text-sm font-medium hover:bg-[#0a42b3] transition-colors disabled:opacity-50"
+                    >
+                      {{ isSavingDetails ? "Saving..." : "Save Changes" }}
+                    </button>
+                    <button
+                      type="button"
+                      @click="cancelEditDetails"
+                      class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
 
-                <!-- Attachments -->
-                <div>
-                  <div class="flex items-center gap-2 mb-3">
-                    <Paperclip class="w-4 h-4 text-gray-500" />
-                    <h3 class="text-sm font-semibold text-gray-700">
-                      Attachments
-                    </h3>
-                  </div>
-                  <button
-                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
-                  >
-                    Add an attachment
-                  </button>
-                </div>
               </div>
 
               <!-- Sidebar (Right Side) -->
@@ -358,6 +409,7 @@ watch(
                         </p>
                       </div>
                       <button
+                        v-if="can('task-edit')"
                         type="button"
                         @click="handleRemoveAssignee"
                         class="text-gray-400 hover:text-red-600 transition-colors"
@@ -369,6 +421,7 @@ watch(
 
                   <!-- Dropdown Toggle Button -->
                   <button
+                    v-if="can('task-edit')"
                     type="button"
                     class="w-full border border-gray-200 rounded-lg hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-3 text-left"
                     @click="toggleAssigneeDropdown"
@@ -455,7 +508,7 @@ watch(
                       Due Date
                     </h3>
                     <button
-                      v-if="!dueDateEditing"
+                      v-if="!dueDateEditing && can('task-edit')"
                       type="button"
                       @click="toggleDueDateEdit"
                       class="text-gray-400 hover:text-[#0C51D9] transition-colors"
@@ -526,16 +579,14 @@ watch(
                   </h3>
                   <div class="space-y-2">
                     <button
+                      v-if="can('task-edit') && !isEditingDetails"
+                      @click="toggleEditDetails"
                       class="w-full px-4 py-2 bg-[#0C51D9] hover:bg-[#0a42b3] text-white rounded-lg text-sm font-medium transition-colors"
                     >
                       Edit Task
                     </button>
                     <button
-                      class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      Move to...
-                    </button>
-                    <button
+                      v-if="can('task-delete')"
                       @click="handleDelete"
                       class="w-full px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-colors"
                     >

@@ -27,7 +27,7 @@ onMounted(() => {
 });
 
 const goToTeamDetail = (id: number) => {
-  router.push({ name: "team-detail", params: { id } });
+  router.push({ name: "admin.team.detail", params: { id } });
 };
 </script>
 
