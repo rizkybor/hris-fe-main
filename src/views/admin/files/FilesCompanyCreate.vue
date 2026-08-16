@@ -1,7 +1,16 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { Archive, Upload, FileUp } from "lucide-vue-next";
+import {
+  Archive,
+  Upload,
+  FileUp,
+  FileText,
+  FileImage,
+  FileSpreadsheet,
+  FileArchive,
+  File as FileIcon,
+} from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import BaseInput from "@/components/common/form/Input.vue";
 import TextArea from "@/components/common/form/TextArea.vue";
@@ -27,6 +36,23 @@ const onFileChange = (event) => {
   form.value.file = event.target.files[0] || null;
   fileError.value = false;
 };
+
+// Mirrors the archive list's file-type presentation so the chosen file is
+// recognizable at a glance before it's even uploaded.
+const fileTypeMeta = (mime) => {
+  if (!mime) return { icon: FileIcon, class: "text-gray-400" };
+  if (mime.startsWith("image/")) return { icon: FileImage, class: "text-emerald-500" };
+  if (mime === "application/pdf") return { icon: FileText, class: "text-red-500" };
+  if (mime.includes("spreadsheet") || mime.includes("excel") || mime === "text/csv")
+    return { icon: FileSpreadsheet, class: "text-green-600" };
+  if (mime.includes("zip") || mime.includes("compressed") || mime.includes("archive"))
+    return { icon: FileArchive, class: "text-amber-500" };
+  if (mime.includes("word") || mime === "application/msword")
+    return { icon: FileText, class: "text-blue-500" };
+  return { icon: FileIcon, class: "text-gray-400" };
+};
+
+const selectedFileMeta = computed(() => fileTypeMeta(form.value.file?.type));
 
 const submit = async () => {
   error.value = "";
@@ -128,7 +154,7 @@ const submit = async () => {
           class="flex flex-col items-center justify-center gap-2 w-full py-8 border-2 border-dashed rounded-[12px] cursor-pointer transition-all"
           :class="fileError ? 'border-red-400 bg-red-50' : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:bg-blue-50/30'"
         >
-          <FileUp class="w-8 h-8 text-gray-400" />
+          <component :is="form.file ? selectedFileMeta.icon : FileUp" class="w-8 h-8" :class="form.file ? selectedFileMeta.class : 'text-gray-400'" />
           <span class="text-sm text-brand-dark font-semibold">
             {{ form.file ? form.file.name : "Click to choose a file" }}
           </span>
@@ -143,7 +169,7 @@ const submit = async () => {
         <button
           type="button"
           @click="$router.back()"
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
+          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
         >
           Cancel
         </button>

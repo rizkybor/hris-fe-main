@@ -116,7 +116,7 @@ const submit = async () => {
             v-model="form.label_password"
             type="text"
             placeholder="e.g. ERP Finance Admin, VPN Office"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
           />
         </div>
       </div>
@@ -136,7 +136,7 @@ const submit = async () => {
             v-model="form.username_email"
             type="text"
             placeholder="e.g. admin@company.com / admin.erp"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
           />
         </div>
       </div>
@@ -157,7 +157,7 @@ const submit = async () => {
             v-model="form.password"
             :type="showPassword ? 'text' : 'password'"
             placeholder="Enter secure password"
-            class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-mono"
+            class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-mono"
           />
 
           <button
@@ -186,7 +186,7 @@ const submit = async () => {
             v-model="form.website"
             type="url"
             placeholder="https://example.com"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
           />
         </div>
       </div>
@@ -204,7 +204,7 @@ const submit = async () => {
             v-model="form.notes"
             rows="4"
             placeholder="Additional notes or instructions..."
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-normal resize-none"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-normal resize-none"
           ></textarea>
         </div>
       </div>
@@ -214,7 +214,7 @@ const submit = async () => {
         <button
           type="button"
           @click="$router.back()"
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
+          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:bg-violet-50/30 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
         >
           Cancel
         </button>

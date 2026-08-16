@@ -138,7 +138,7 @@ watch(
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-violet-400 transition-all"
           aria-label="Back"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
@@ -188,7 +188,7 @@ watch(
 
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center gap-3 py-20 text-gray-500">
-      <span class="w-5 h-5 border-2 border-gray-300 border-t-[#0C51D9] rounded-full animate-spin"></span>
+      <span class="w-5 h-5 border-2 border-gray-300 border-t-violet-500 rounded-full animate-spin"></span>
       Loading credential data...
     </div>
 
@@ -209,7 +209,7 @@ watch(
           <input
             v-model="form.label_password"
             type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
           />
         </div>
       </div>
@@ -227,7 +227,7 @@ watch(
             v-model="form.username_email"
             type="text"
             placeholder="e.g. admin@company.com / admin.erp"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
           />
         </div>
       </div>
@@ -262,7 +262,7 @@ watch(
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
               placeholder="New password"
-              class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-mono"
+              class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-mono"
             />
             <button
               type="button"
@@ -289,7 +289,7 @@ watch(
             v-model="form.website"
             type="url"
             placeholder="https://example.com"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
           />
         </div>
       </div>
@@ -306,7 +306,7 @@ watch(
           <textarea
             v-model="form.notes"
             rows="4"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all resize-none"
           ></textarea>
         </div>
       </div>
@@ -316,7 +316,7 @@ watch(
         <button
           type="button"
           @click="router.back()"
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all px-6 py-3 font-semibold"
+          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:bg-violet-50/30 transition-all px-6 py-3 font-semibold"
         >
           Cancel
         </button>

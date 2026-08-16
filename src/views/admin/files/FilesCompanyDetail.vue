@@ -61,7 +61,7 @@ const isImage = (type) => type?.startsWith("image/");
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-blue-400 transition-all"
           aria-label="Back"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
@@ -78,7 +78,7 @@ const isImage = (type) => type?.startsWith("image/");
 
         <router-link
           :to="{ name: 'admin.files-company.edit', params: { id: archiveId } }"
-          class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all px-4 py-2 flex items-center gap-2"
+          class="border border-[#DCDEDD] rounded-[12px] hover:border-blue-400 hover:bg-blue-50/30 transition-all px-4 py-2 flex items-center gap-2"
         >
           <Pencil class="w-4 h-4 text-gray-600" />
           <span class="text-brand-dark font-semibold text-sm">Edit</span>
