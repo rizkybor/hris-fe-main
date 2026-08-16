@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from "@/stores/auth";
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import Alert from "@/components/common/Alert.vue";
 import Input from "@/components/common/form/Input.vue";
 import { AtSign, BuildingIcon, Lock } from "lucide-vue-next";
@@ -15,6 +15,11 @@ const { login } = authStore;
 const form = ref({
   email: "",
   password: "",
+});
+
+onMounted(() => {
+  authStore.error = null;
+  authStore.success = null;
 });
 
 const handleSubmit = async () => {
