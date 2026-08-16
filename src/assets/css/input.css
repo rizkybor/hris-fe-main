@@ -12,6 +12,12 @@ html {
     background: linear-gradient(265.5deg, #0C51D9 5.45%, #6F96E3 52%, #0C51D9 100.36%);
 }
 
+/* Same dark navy identity as .main-card's hero gradient, reoriented
+   vertically for a tall side panel instead of a wide card. */
+.sidebar-gradient {
+    background: linear-gradient(180deg, #040724 0%, #0C1448 50%, #040724 100%);
+}
+
 .blue-btn-shadow {
     box-shadow: 2px 2px 1px 0px #6197FF8C inset;
     box-shadow: -2px 2px 1px 0px #6197FF inset;
@@ -69,6 +75,10 @@ html {
     background: transparent;
 }
 
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
 .nav-link-active {
     display: flex;
     padding: 8px 12px 8px 9px;
@@ -76,8 +86,8 @@ html {
     align-items: center;
     gap: 10px;
     align-self: stretch;
-    background: #EAF1FF;
-    border-left: 3px solid #0C51D9;
+    background: rgba(76, 141, 255, 0.14);
+    border-left: 3px solid #4C8DFF;
 }
 
 /* Sidebar icon-rail collapse. The .is-collapsed class can be present at
@@ -143,9 +153,9 @@ html {
     box-shadow: -2px 2px 1px 0 #1A2570 inset, 2px 2px 1px 0 rgba(26, 37, 112, 0.55) inset;
 }
 
-/* Section headers */
+/* Section headers (light text for the dark sidebar-gradient background) */
 .section-title {
-    color: #9CA3AF;
+    color: rgba(255, 255, 255, 0.35);
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 11px;
     font-style: normal;
