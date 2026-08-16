@@ -101,7 +101,7 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
 
     <!-- Search & Filter -->
     <div class="mb-6">
-      <div class="flex items-center gap-4">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
         <div class="relative flex-1">
           <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Search class="h-5 w-5 text-gray-400" />
@@ -114,7 +114,7 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
           />
         </div>
         <select
-          class="px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+          class="w-full sm:w-auto px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
           v-model="filters.status"
         >
           <option value="">All Status</option>

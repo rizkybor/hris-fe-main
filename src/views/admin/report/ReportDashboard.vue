@@ -277,7 +277,7 @@ onMounted(() => {
 
     <!-- Table -->
     <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 overflow-x-auto">
-      <table class="w-full text-sm">
+      <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
             <template v-if="activeTab === 'attendance'">

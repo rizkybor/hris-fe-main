@@ -92,7 +92,7 @@ const formatDate = (date) =>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
               <th class="py-3 pr-4 font-semibold">No Surat</th>

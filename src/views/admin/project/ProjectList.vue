@@ -100,7 +100,7 @@ const handlePerPageChange = (perPage) => {
 
     <!-- Search and Filter Section -->
     <div class="mb-6">
-      <div class="flex items-center gap-4">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
         <div class="relative flex-1">
           <div
             class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
@@ -115,7 +115,7 @@ const handlePerPageChange = (perPage) => {
           />
         </div>
         <select
-          class="px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+          class="w-full sm:w-auto px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
         >
           <option value="">All Status</option>
           <option value="active">Active</option>

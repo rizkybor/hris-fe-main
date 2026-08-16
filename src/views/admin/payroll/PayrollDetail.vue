@@ -351,7 +351,7 @@ const handleMarkAsPaid = async () => {
 
       <!-- Employee Table -->
       <div class="overflow-x-auto">
-        <table class="w-full">
+        <table class="min-w-full">
           <thead>
             <tr class="border-b border-gray-200">
               <th class="text-left py-3 px-4 font-semibold text-brand-dark text-sm">

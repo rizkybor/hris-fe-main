@@ -101,27 +101,27 @@ onMounted(() => {
 
   <div v-else-if="profile">
     <!-- Employee Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-6">
-      <div class="flex items-center gap-6">
-        <div class="relative">
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-6">
+        <div class="relative self-center sm:self-auto flex-shrink-0">
           <img
             :src="
               profile?.user?.profile_photo ||
               'https://ui-avatars.com/api/?name=' + profile?.user?.name
             "
             :alt="profile?.user?.name"
-            class="w-32 h-32 rounded-full object-cover"
+            class="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover"
           />
           <span
             :class="statusBadgeClass"
-            class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 px-3 py-1 rounded-full text-sm font-semibold whitespace-nowrap"
+            class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap"
           >
             {{ capitalize(profile?.job_information?.status) }}
           </span>
         </div>
-        <div class="flex-1">
-          <div class="flex items-center gap-4 mb-2">
-            <h1 class="text-brand-dark text-3xl font-extrabold">
+        <div class="flex-1 min-w-0 text-center sm:text-left">
+          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 mb-2">
+            <h1 class="text-brand-dark text-2xl sm:text-3xl font-extrabold">
               {{ profile?.user?.name }}
             </h1>
             <span
@@ -134,7 +134,7 @@ onMounted(() => {
           <p class="text-brand-light text-lg mb-3">
             {{ capitalize(profile?.job_information?.job_title) }}
           </p>
-          <div class="flex items-center gap-6 text-base text-gray-600">
+          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-6 gap-y-2 text-base text-gray-600">
             <div class="flex items-center gap-2">
               <Building class="w-4 h-4" />
               <span>{{
@@ -154,10 +154,10 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="flex items-center">
+        <div class="flex items-center justify-center sm:justify-end">
           <RouterLink
             :to="{ name: 'employee.profile.edit' }"
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2"
+            class="w-full sm:w-auto btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2"
           >
             <Edit class="w-4 h-4 text-white" />
             <span class="text-brand-white text-sm font-semibold">Edit Profile</span>

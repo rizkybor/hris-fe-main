@@ -507,7 +507,7 @@ watch(
       </div>
 
       <div class="overflow-x-auto rounded-[12px] border border-gray-200">
-        <table class="w-full text-sm sm:text-base">
+        <table class="min-w-full text-sm sm:text-base">
           <thead class="bg-gray-50">
             <tr>
               <th class="px-3 py-2">No</th>
@@ -627,7 +627,7 @@ watch(
       </div>
 
       <div class="overflow-x-auto rounded-[12px] border border-gray-200">
-        <table class="w-full text-sm sm:text-base">
+        <table class="min-w-full text-sm sm:text-base">
           <thead class="bg-gray-50">
             <tr>
               <th class="px-3 py-2">No</th>
@@ -763,7 +763,7 @@ watch(
       </div>
 
       <div class="overflow-x-auto rounded-[12px] border border-gray-200">
-        <table class="w-full text-sm sm:text-base">
+        <table class="min-w-full text-sm sm:text-base">
           <thead class="bg-gray-50">
             <tr>
               <th class="px-3 py-2">No</th>
