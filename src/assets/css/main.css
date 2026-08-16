@@ -562,6 +562,10 @@ video {
   visibility: visible;
 }
 
+.collapse {
+  visibility: collapse;
+}
+
 .fixed {
   position: fixed;
 }
@@ -1785,6 +1789,10 @@ video {
   border-color: rgb(185 28 28 / var(--tw-border-opacity, 1));
 }
 
+.border-transparent {
+  border-color: transparent;
+}
+
 .border-white {
   --tw-border-opacity: 1;
   border-color: rgb(255 255 255 / var(--tw-border-opacity, 1));
@@ -2570,10 +2578,6 @@ video {
   font-style: italic;
 }
 
-.leading-5 {
-  line-height: 1.25rem;
-}
-
 .leading-7 {
   line-height: 1.75rem;
 }
@@ -3165,6 +3169,43 @@ html {
   align-self: stretch;
   background: linear-gradient(266deg, #040724 5.45%, #0C1448 52%, #040724 100.36%);
   box-shadow: -2px 2px 1px 0 #1A2570 inset, 2px 2px 1px 0 rgba(26, 37, 112, 0.55) inset;
+}
+
+/* Sidebar icon-rail collapse. The .is-collapsed class can be present at
+   any viewport width, but the rail only makes sense once the sidebar is
+   a persistent panel rather than a mobile overlay, so these rules are
+   scoped to the same breakpoint as Tailwind's `lg:` (1024px). */
+
+@media (min-width: 1024px) {
+  #sidebar.is-collapsed .nav-link,
+    #sidebar.is-collapsed .nav-link-active {
+    justify-content: center;
+    padding: 14px 0;
+  }
+
+  #sidebar.is-collapsed .sidebar-brand-text,
+    #sidebar.is-collapsed .section-title,
+    #sidebar.is-collapsed .sidebar-quote,
+    #sidebar.is-collapsed .nav-label {
+    display: none;
+  }
+}
+
+/* Floating label shown for a collapsed nav-link on hover, teleported to
+   <body> so it isn't clipped by the sidebar's scrollable nav container. */
+
+.sidebar-tooltip {
+  position: fixed;
+  white-space: nowrap;
+  background: #0C1C3C;
+  color: #FFF;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 60;
 }
 
 .btn-primary {
@@ -4020,6 +4061,14 @@ html {
     width: 50%;
   }
 
+  .lg\:w-20 {
+    width: 5rem;
+  }
+
+  .lg\:w-64 {
+    width: 16rem;
+  }
+
   .lg\:w-80 {
     width: 20rem;
   }
@@ -4045,6 +4094,10 @@ html {
     flex-direction: row;
   }
 
+  .lg\:flex-col {
+    flex-direction: column;
+  }
+
   .lg\:items-center {
     align-items: center;
   }
@@ -4053,8 +4106,21 @@ html {
     justify-content: space-between;
   }
 
+  .lg\:gap-1 {
+    gap: 0.25rem;
+  }
+
+  .lg\:gap-3 {
+    gap: 0.75rem;
+  }
+
   .lg\:gap-6 {
     gap: 1.5rem;
+  }
+
+  .lg\:px-2 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
 
   .lg\:text-3xl {

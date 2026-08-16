@@ -80,6 +80,41 @@ html {
     box-shadow: -2px 2px 1px 0 #1A2570 inset, 2px 2px 1px 0 rgba(26, 37, 112, 0.55) inset;
 }
 
+/* Sidebar icon-rail collapse. The .is-collapsed class can be present at
+   any viewport width, but the rail only makes sense once the sidebar is
+   a persistent panel rather than a mobile overlay, so these rules are
+   scoped to the same breakpoint as Tailwind's `lg:` (1024px). */
+@media (min-width: 1024px) {
+    #sidebar.is-collapsed .nav-link,
+    #sidebar.is-collapsed .nav-link-active {
+        justify-content: center;
+        padding: 14px 0;
+    }
+
+    #sidebar.is-collapsed .sidebar-brand-text,
+    #sidebar.is-collapsed .section-title,
+    #sidebar.is-collapsed .sidebar-quote,
+    #sidebar.is-collapsed .nav-label {
+        display: none;
+    }
+}
+
+/* Floating label shown for a collapsed nav-link on hover, teleported to
+   <body> so it isn't clipped by the sidebar's scrollable nav container. */
+.sidebar-tooltip {
+    position: fixed;
+    white-space: nowrap;
+    background: #0C1C3C;
+    color: #FFF;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 60;
+}
+
 .btn-primary {
     display: flex;
     justify-content: center;
