@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from "vue";
 import { useEmployeeStore } from "@/stores/employee";
 import { useTaskStore } from "@/stores/task";
 import { useAssetStore } from "@/stores/asset";
+import { usePerformanceReviewStore } from "@/stores/performanceReview";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { getJobStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
@@ -31,6 +32,7 @@ import {
   User,
   Clock,
   Laptop,
+  Star,
 } from "lucide-vue-next";
 
 const employeeStore = useEmployeeStore();
@@ -39,7 +41,16 @@ const taskStore = useTaskStore();
 const { myTasks } = storeToRefs(taskStore);
 const assetStore = useAssetStore();
 const { myAssets } = storeToRefs(assetStore);
+const reviewStore = usePerformanceReviewStore();
+const { myReviews } = storeToRefs(reviewStore);
 const router = useRouter();
+
+const acknowledgeReview = async (id: number) => {
+  try {
+    await reviewStore.acknowledgeReview(id);
+    await reviewStore.fetchMyReviews();
+  } catch (error) {}
+};
 
 const profile = ref<any>(null);
 
@@ -98,6 +109,7 @@ onMounted(() => {
   loadProfile();
   taskStore.fetchMyTasks(5);
   assetStore.fetchMyAssets();
+  reviewStore.fetchMyReviews();
 });
 </script>
 
@@ -679,6 +691,38 @@ onMounted(() => {
                 <p class="text-brand-light text-xs">{{ asset.asset_code }}<span v-if="asset.brand"> • {{ asset.brand }}</span></p>
               </div>
               <span class="px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-700">{{ asset.condition }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Performance Reviews -->
+        <div v-if="myReviews.length > 0" class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-yellow-50 rounded-[12px] flex items-center justify-center">
+              <Star class="w-6 h-6 text-yellow-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-lg font-bold">My Performance Reviews</h3>
+              <p class="text-brand-light text-sm">Feedback and ratings from your reviewer</p>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div v-for="review in myReviews" :key="review.id" class="border border-[#DCDEDD] rounded-[12px] p-4">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-brand-dark text-sm font-semibold">{{ review.period }}</p>
+                <span class="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700">{{ review.overall_rating }} / 5</span>
+              </div>
+              <p v-if="review.strengths" class="text-brand-light text-xs mb-1"><strong>Strengths:</strong> {{ review.strengths }}</p>
+              <p v-if="review.areas_for_improvement" class="text-brand-light text-xs mb-1"><strong>To Improve:</strong> {{ review.areas_for_improvement }}</p>
+              <p v-if="review.goals_next_period" class="text-brand-light text-xs mb-2"><strong>Goals:</strong> {{ review.goals_next_period }}</p>
+              <button
+                v-if="review.status !== 'acknowledged'"
+                @click="acknowledgeReview(review.id)"
+                class="text-[#0C51D9] text-xs font-semibold hover:underline"
+              >
+                Mark as Read
+              </button>
+              <span v-else class="text-green-600 text-xs font-semibold">Acknowledged</span>
             </div>
           </div>
         </div>

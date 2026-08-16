@@ -198,6 +198,10 @@ const titles = {
     title: "Company Assets",
     subtitle: "Track and assign company-owned equipment",
   },
+  "admin.orgchart.dashboard": {
+    title: "Org Chart",
+    subtitle: "Company structure by department and team",
+  },
   "admin.settings.dashboard": {
     title: "Settings",
     subtitle: "Manage system configuration and preferences",

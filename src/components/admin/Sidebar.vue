@@ -19,6 +19,7 @@ import {
   History as HistoryIcon,
   Megaphone as MegaphoneIcon,
   Laptop as LaptopIcon,
+  Network as NetworkIcon,
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
@@ -648,6 +649,30 @@ const onNavigate = () => emit("navigate");
                 'text-brand-white': $route.name?.startsWith('admin.assets'),
               }"
               >Assets</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.orgchart.dashboard' }"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.orgchart'),
+            }"
+            v-if="can('team-menu')"
+            @click="onNavigate"
+          >
+            <NetworkIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.orgchart'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('admin.orgchart'),
+              }"
+              >Org Chart</span
             >
           </RouterLink>
 

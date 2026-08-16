@@ -4,10 +4,13 @@ import { useRouter, RouterLink } from "vue-router";
 import { storeToRefs } from "pinia";
 import { Mail, Settings, Plus, Trash2, Info } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
+import { useEmployeeStore } from "@/stores/employee";
 import { can } from "@/helpers/permissionHelper";
 
 const store = useLetterStore();
 const { letterCodes, divisionCodes } = storeToRefs(store);
+const employeeStore = useEmployeeStore();
+const { employees } = storeToRefs(employeeStore);
 const router = useRouter();
 
 // Reference templates for structured letter types, so the body & required
@@ -76,6 +79,30 @@ const TEMPLATES = {
     useSecondParty: false,
     itemsPriced: true,
   },
+  SP1: {
+    body:
+      "Sehubungan dengan pelanggaran yang Saudara/i lakukan berupa [uraikan pelanggaran], dengan ini Perusahaan memberikan Surat Peringatan Pertama (SP1) kepada:\n\nNama\t: [nama karyawan]\nJabatan\t: [jabatan]\n\nKami harapkan Saudara/i dapat memperbaiki kinerja dan tidak mengulangi pelanggaran serupa. Apabila pelanggaran terulang, Perusahaan akan memberikan sanksi yang lebih tegas sesuai dengan peraturan perusahaan yang berlaku.\n\nDemikian surat peringatan ini dibuat untuk dilaksanakan dan diperhatikan sebagaimana mestinya.",
+    useItems: false,
+    useSecondParty: false,
+    itemsPriced: false,
+    requiresEmployee: true,
+  },
+  SP2: {
+    body:
+      "Sehubungan dengan pelanggaran yang Saudara/i lakukan berupa [uraikan pelanggaran], yang mana sebelumnya telah diberikan Surat Peringatan Pertama, dengan ini Perusahaan memberikan Surat Peringatan Kedua (SP2) kepada:\n\nNama\t: [nama karyawan]\nJabatan\t: [jabatan]\n\nApabila pelanggaran ini terulang kembali, Perusahaan akan memberikan Surat Peringatan Ketiga (Terakhir) yang dapat berujung pada pemutusan hubungan kerja sesuai dengan peraturan perusahaan dan ketentuan perundang-undangan yang berlaku.\n\nDemikian surat peringatan ini dibuat untuk dilaksanakan dan diperhatikan sebagaimana mestinya.",
+    useItems: false,
+    useSecondParty: false,
+    itemsPriced: false,
+    requiresEmployee: true,
+  },
+  SP3: {
+    body:
+      "Sehubungan dengan pelanggaran yang Saudara/i lakukan berupa [uraikan pelanggaran], yang mana sebelumnya telah diberikan Surat Peringatan Pertama dan Kedua, dengan ini Perusahaan memberikan Surat Peringatan Ketiga (Terakhir) kepada:\n\nNama\t: [nama karyawan]\nJabatan\t: [jabatan]\n\nSurat Peringatan Ketiga ini merupakan peringatan terakhir. Apabila pelanggaran serupa terulang kembali, Perusahaan berhak melakukan pemutusan hubungan kerja sesuai dengan peraturan perusahaan dan ketentuan perundang-undangan yang berlaku.\n\nDemikian surat peringatan ini dibuat untuk dilaksanakan dan diperhatikan sebagaimana mestinya.",
+    useItems: false,
+    useSecondParty: false,
+    itemsPriced: false,
+    requiresEmployee: true,
+  },
 };
 
 const form = ref({
@@ -85,6 +112,7 @@ const form = ref({
   date: new Date().toISOString().slice(0, 10),
   subject: "",
   recipient: "",
+  employee_id: "",
   body: "",
   signatory_name: "",
   signatory_title: "",
@@ -101,13 +129,19 @@ const submitting = ref(false);
 const errorMessage = ref("");
 
 onMounted(async () => {
-  await Promise.all([store.fetchLetterCodes(), store.fetchDivisionCodes()]);
+  await Promise.all([
+    store.fetchLetterCodes(),
+    store.fetchDivisionCodes(),
+    employeeStore.fetchEmployees({ limit: 200 }),
+  ]);
 });
 
 const selectedCode = computed(() => {
   const code = letterCodes.value.find((c) => c.id === Number(form.value.letter_code_id));
   return code?.code ?? null;
 });
+
+const requiresEmployee = computed(() => !!TEMPLATES[selectedCode.value]?.requiresEmployee);
 
 const applyTemplate = () => {
   const template = TEMPLATES[selectedCode.value];
@@ -125,7 +159,7 @@ const handleSubmit = async () => {
   errorMessage.value = "";
   submitting.value = true;
   try {
-    const payload = { ...form.value };
+    const payload = { ...form.value, employee_id: form.value.employee_id || null };
     if (useItems.value) {
       payload.items = items.value.filter((i) => i.description);
     }
@@ -211,6 +245,18 @@ const handleSubmit = async () => {
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Kepada (opsional)</label>
             <textarea v-model="form.recipient" rows="2" placeholder="e.g. Seluruh Karyawan&#10;PT. Jendela Cakra Digital" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">
+              Karyawan Terkait <span v-if="!requiresEmployee">(opsional)</span>
+            </label>
+            <select v-model="form.employee_id" :required="requiresEmployee" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+              <option value="">Tidak ditujukan ke karyawan tertentu</option>
+              <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.user?.name }} ({{ emp.code }})</option>
+            </select>
+            <p v-if="requiresEmployee" class="text-xs text-orange-600 mt-1">
+              Wajib diisi untuk surat peringatan agar tercatat dalam riwayat karyawan.
+            </p>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Isi Surat</label>

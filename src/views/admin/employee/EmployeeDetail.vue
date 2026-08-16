@@ -10,6 +10,10 @@ import {
 import ConfirmationModal from "@/components/common/ConfirmationModal.vue";
 import { useRoute, useRouter } from "vue-router";
 import { useEmployeeStore } from "@/stores/employee";
+import { useLetterStore } from "@/stores/letter";
+import { usePerformanceReviewStore } from "@/stores/performanceReview";
+import { useResignationStore } from "@/stores/resignation";
+import { can } from "@/helpers/permissionHelper";
 import { storeToRefs } from "pinia";
 import {
   Edit,
@@ -31,12 +35,46 @@ import {
   User,
   Clock,
   AlertTriangle,
+  Star,
+  ShieldAlert,
+  LogOut,
+  X,
 } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
 const employeeStore = useEmployeeStore();
 const { loading, performanceStatistics, success } = storeToRefs(employeeStore);
+
+const letterStore = useLetterStore();
+const disciplinaryLetters = ref<any[]>([]);
+
+const reviewStore = usePerformanceReviewStore();
+const { reviews: performanceReviews } = storeToRefs(reviewStore);
+const showReviewModal = ref(false);
+const reviewForm = ref({
+  period: "",
+  period_start: "",
+  period_end: "",
+  overall_rating: 4,
+  strengths: "",
+  areas_for_improvement: "",
+  goals_next_period: "",
+});
+const reviewSubmitting = ref(false);
+const reviewError = ref("");
+
+const resignationStore = useResignationStore();
+const { current: resignation, assetsToReturn } = storeToRefs(resignationStore);
+const showResignModal = ref(false);
+const resignForm = ref({
+  type: "resign",
+  reason: "",
+  resignation_date: new Date().toISOString().slice(0, 10),
+  last_working_date: "",
+});
+const resignSubmitting = ref(false);
+const resignError = ref("");
 
 const employee = ref<any>(null);
 const showDeleteModal = ref(false);
@@ -48,9 +86,87 @@ const loadEmployee = async () => {
     employee.value = await employeeStore.fetchEmployee(employeeId);
     // Load performance statistics
     await employeeStore.fetchPerformanceStatistics(employeeId);
+
+    const [letters] = await Promise.all([
+      letterStore.fetchLetters({ employee_id: employeeId, row_per_page: 50 }),
+      reviewStore.fetchReviews({ employee_id: employeeId, row_per_page: 20 }),
+      resignationStore.fetchEmployeeResignation(employeeId).catch(() => {}),
+    ]);
+    disciplinaryLetters.value = (letterStore.letters ?? []).filter((l: any) =>
+      ["SP1", "SP2", "SP3"].includes(l.letter_code?.code)
+    );
   } catch (error) {
     console.error("Error loading employee:", error);
     router.push({ name: "admin.employees" });
+  }
+};
+
+const openReviewModal = () => {
+  reviewError.value = "";
+  reviewForm.value = {
+    period: "",
+    period_start: "",
+    period_end: "",
+    overall_rating: 4,
+    strengths: "",
+    areas_for_improvement: "",
+    goals_next_period: "",
+  };
+  showReviewModal.value = true;
+};
+
+const submitReview = async () => {
+  reviewError.value = "";
+  reviewSubmitting.value = true;
+  try {
+    await reviewStore.createReview({
+      ...reviewForm.value,
+      employee_id: route.params.id,
+    });
+    showReviewModal.value = false;
+    await reviewStore.fetchReviews({ employee_id: route.params.id, row_per_page: 20 });
+  } catch (error: any) {
+    const data = error?.response?.data;
+    reviewError.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal menyimpan review.");
+  } finally {
+    reviewSubmitting.value = false;
+  }
+};
+
+const openResignModal = () => {
+  resignError.value = "";
+  resignForm.value = {
+    type: "resign",
+    reason: "",
+    resignation_date: new Date().toISOString().slice(0, 10),
+    last_working_date: "",
+  };
+  showResignModal.value = true;
+};
+
+const submitResignation = async () => {
+  resignError.value = "";
+  resignSubmitting.value = true;
+  try {
+    await resignationStore.initiateResignation(route.params.id as string, resignForm.value);
+    showResignModal.value = false;
+    await Promise.all([loadEmployee(), resignationStore.fetchEmployeeResignation(route.params.id as string)]);
+  } catch (error: any) {
+    const data = error?.response?.data;
+    resignError.value = data?.message || "Gagal memproses resign/pemutusan kerja.";
+  } finally {
+    resignSubmitting.value = false;
+  }
+};
+
+const completeOffboarding = async () => {
+  if (!resignation.value) return;
+  if (!confirm("Tandai proses offboarding sebagai selesai?")) return;
+  try {
+    await resignationStore.completeOffboarding(resignation.value.id);
+    await resignationStore.fetchEmployeeResignation(route.params.id as string);
+  } catch (error) {
+    alert("Gagal menyelesaikan proses offboarding.");
   }
 };
 
@@ -656,6 +772,122 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- Performance Reviews -->
+    <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-yellow-50 rounded-[12px] flex items-center justify-center">
+            <Star class="w-6 h-6 text-yellow-600" />
+          </div>
+          <div>
+            <h3 class="text-brand-dark text-lg font-bold">Performance Reviews</h3>
+            <p class="text-brand-light text-sm">Riwayat penilaian kinerja karyawan</p>
+          </div>
+        </div>
+        <button
+          v-if="can('performance-review-create')"
+          @click="openReviewModal"
+          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2 flex items-center gap-2 shrink-0"
+        >
+          <span class="text-brand-white text-sm font-semibold">Buat Review</span>
+        </button>
+      </div>
+      <div v-if="performanceReviews.length === 0" class="text-center py-6 text-sm text-gray-400">
+        Belum ada review kinerja.
+      </div>
+      <div v-else class="space-y-3">
+        <div v-for="review in performanceReviews" :key="review.id" class="border border-[#DCDEDD] rounded-[12px] p-4">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-brand-dark text-sm font-semibold">{{ review.period }}</p>
+            <span class="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700">
+              {{ review.overall_rating }} / 5
+            </span>
+          </div>
+          <p v-if="review.strengths" class="text-brand-light text-xs mb-1"><strong>Kelebihan:</strong> {{ review.strengths }}</p>
+          <p v-if="review.areas_for_improvement" class="text-brand-light text-xs mb-1"><strong>Area Perbaikan:</strong> {{ review.areas_for_improvement }}</p>
+          <p class="text-xs text-gray-400 mt-2">Oleh {{ review.reviewer?.name }} • {{ review.status === 'acknowledged' ? 'Sudah dibaca karyawan' : 'Menunggu dibaca karyawan' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disciplinary History -->
+    <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center">
+          <ShieldAlert class="w-6 h-6 text-red-600" />
+        </div>
+        <div>
+          <h3 class="text-brand-dark text-lg font-bold">Riwayat Surat Peringatan</h3>
+          <p class="text-brand-light text-sm">SP1 / SP2 / SP3 yang pernah diterbitkan</p>
+        </div>
+      </div>
+      <div v-if="disciplinaryLetters.length === 0" class="text-center py-6 text-sm text-gray-400">
+        Tidak ada riwayat surat peringatan.
+      </div>
+      <div v-else class="space-y-3">
+        <div v-for="letter in disciplinaryLetters" :key="letter.id" class="border border-[#DCDEDD] rounded-[12px] p-4 flex items-center justify-between">
+          <div>
+            <p class="text-brand-dark text-sm font-semibold">{{ letter.letter_code?.code }} — {{ letter.subject }}</p>
+            <p class="text-brand-light text-xs">{{ letter.letter_number }} • {{ formatDate(letter.date) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resignation / Offboarding -->
+    <div v-if="can('employee-edit')" class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center">
+            <LogOut class="w-6 h-6 text-orange-600" />
+          </div>
+          <div>
+            <h3 class="text-brand-dark text-lg font-bold">Resign / Pemutusan Kerja</h3>
+            <p class="text-brand-light text-sm">Proses offboarding karyawan</p>
+          </div>
+        </div>
+        <button
+          v-if="!resignation || resignation.status === 'completed'"
+          @click="openResignModal"
+          class="px-4 py-2 rounded-lg border border-orange-300 text-orange-700 text-sm font-semibold hover:bg-orange-50 shrink-0"
+        >
+          Mulai Proses Resign/PHK
+        </button>
+      </div>
+
+      <div v-if="resignation" class="border border-[#DCDEDD] rounded-[12px] p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <p class="text-brand-dark text-sm font-semibold">
+            {{ resignation.type === 'terminated' ? 'Pemutusan Kerja (Terminasi)' : 'Pengunduran Diri' }}
+          </p>
+          <span :class="['px-2 py-1 rounded-md text-xs font-semibold', resignation.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700']">
+            {{ resignation.status === 'completed' ? 'Selesai' : 'Dalam Proses' }}
+          </span>
+        </div>
+        <p v-if="resignation.reason" class="text-brand-light text-xs">Alasan: {{ resignation.reason }}</p>
+        <p class="text-brand-light text-xs">
+          Tanggal Pengajuan: {{ formatDate(resignation.resignation_date) }}
+          <span v-if="resignation.last_working_date"> • Hari Kerja Terakhir: {{ formatDate(resignation.last_working_date) }}</span>
+        </p>
+
+        <div v-if="assetsToReturn.length > 0">
+          <p class="text-xs font-semibold text-brand-dark mb-1">Aset yang Perlu Dikembalikan:</p>
+          <ul class="list-disc list-inside text-xs text-brand-light">
+            <li v-for="asset in assetsToReturn" :key="asset.id">{{ asset.name }} ({{ asset.asset_code }})</li>
+          </ul>
+        </div>
+        <p v-else class="text-xs text-green-600">Tidak ada aset yang perlu dikembalikan.</p>
+
+        <button
+          v-if="resignation.status === 'pending'"
+          @click="completeOffboarding"
+          class="px-4 py-2 rounded-lg border border-green-300 text-green-700 text-sm font-semibold hover:bg-green-50"
+        >
+          Selesaikan Offboarding
+        </button>
+      </div>
+    </div>
+
     <!-- Danger Zone -->
     <div class="bg-white border border-[#FEE2E2] rounded-[16px] p-6">
       <div class="flex items-center gap-3 mb-6">
@@ -712,5 +944,102 @@ onMounted(() => {
       @confirm="handleDeleteEmployee"
       @cancel="showDeleteModal = false"
     />
+
+    <!-- Performance Review Modal -->
+    <div v-if="showReviewModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showReviewModal = false">
+      <div class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
+          <h3 class="text-brand-dark text-lg font-bold">Buat Performance Review</h3>
+          <button @click="showReviewModal = false" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+        <form @submit.prevent="submitReview" class="p-5 space-y-4">
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Periode</label>
+            <input v-model="reviewForm.period" type="text" required placeholder="e.g. Q1 2026" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Mulai Periode</label>
+              <input v-model="reviewForm.period_start" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Akhir Periode</label>
+              <input v-model="reviewForm.period_end" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Rating Keseluruhan (1-5)</label>
+            <input v-model.number="reviewForm.overall_rating" type="number" min="1" max="5" step="0.5" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Kelebihan</label>
+            <textarea v-model="reviewForm.strengths" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Area Perbaikan</label>
+            <textarea v-model="reviewForm.areas_for_improvement" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Target Periode Berikutnya</label>
+            <textarea v-model="reviewForm.goals_next_period" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+          </div>
+
+          <p v-if="reviewError" class="text-red-500 text-sm">{{ reviewError }}</p>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button type="submit" :disabled="reviewSubmitting" class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-6 py-2.5 flex items-center gap-2 disabled:opacity-50">
+              <span class="text-brand-white text-sm font-semibold">{{ reviewSubmitting ? "Menyimpan..." : "Simpan Review" }}</span>
+            </button>
+            <button type="button" @click="showReviewModal = false" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Batal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Resignation Modal -->
+    <div v-if="showResignModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showResignModal = false">
+      <div class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-md">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
+          <h3 class="text-brand-dark text-lg font-bold">Proses Resign / Pemutusan Kerja</h3>
+          <button @click="showResignModal = false" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+        <form @submit.prevent="submitResignation" class="p-5 space-y-4">
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Jenis</label>
+            <select v-model="resignForm.type" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+              <option value="resign">Pengunduran Diri (Resign)</option>
+              <option value="terminated">Pemutusan Kerja (Terminasi)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Alasan</label>
+            <textarea v-model="resignForm.reason" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Tanggal Pengajuan</label>
+              <input v-model="resignForm.resignation_date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Hari Kerja Terakhir</label>
+              <input v-model="resignForm.last_working_date" type="date" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            </div>
+          </div>
+
+          <p v-if="resignError" class="text-red-500 text-sm">{{ resignError }}</p>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button type="submit" :disabled="resignSubmitting" class="px-6 py-2.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold disabled:opacity-50">
+              {{ resignSubmitting ? "Memproses..." : "Proses" }}
+            </button>
+            <button type="button" @click="showResignModal = false" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Batal</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
