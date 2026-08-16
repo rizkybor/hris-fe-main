@@ -13,6 +13,48 @@ const router = useRouter();
 // Reference templates for structured letter types, so the body & required
 // sections don't have to be built from scratch every time.
 const TEMPLATES = {
+  SP: {
+    body:
+      "Dengan hormat,\n\nMelalui surat ini kami sampaikan pemberitahuan sebagai berikut:\n\n[isi pemberitahuan]\n\nDemikian pemberitahuan ini kami sampaikan untuk dapat diketahui dan dimaklumi. Atas perhatiannya kami ucapkan terima kasih.",
+    useItems: false,
+    useSecondParty: false,
+    itemsPriced: false,
+  },
+  SK: {
+    body:
+      "Menimbang:\na. bahwa [dasar pertimbangan];\nb. bahwa berdasarkan pertimbangan tersebut perlu ditetapkan Surat Keputusan.\n\nMengingat:\n1. [dasar hukum/acuan];\n\nMEMUTUSKAN\n\nMenetapkan:\nPERTAMA\t: [isi keputusan];\nKEDUA\t: Keputusan ini berlaku sejak tanggal ditetapkan dengan ketentuan apabila di kemudian hari terdapat kekeliruan akan diadakan perbaikan sebagaimana mestinya.\n\nDitetapkan di [kota], pada tanggal [tanggal].",
+    useItems: false,
+    useSecondParty: false,
+    itemsPriced: false,
+  },
+  SPK: {
+    body:
+      "Dengan hormat,\n\nBersama ini kami memberikan perintah kerja kepada [nama/pihak terkait] untuk melaksanakan pekerjaan sebagaimana rincian pada tabel di bawah ini.\n\nPekerjaan tersebut harus diselesaikan sesuai dengan ketentuan dan jangka waktu yang telah disepakati.\n\nDemikian surat perintah kerja ini dibuat untuk dilaksanakan dengan penuh tanggung jawab.",
+    useItems: true,
+    useSecondParty: true,
+    itemsPriced: true,
+  },
+  SKET: {
+    body:
+      "Yang bertanda tangan di bawah ini menerangkan bahwa:\n\nNama\t: [nama]\nJabatan\t: [jabatan]\n\nadalah benar [isi keterangan].\n\nDemikian surat keterangan ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.",
+    useItems: false,
+    useSecondParty: false,
+    itemsPriced: false,
+  },
+  ST: {
+    body:
+      "Dengan hormat,\n\nSehubungan dengan [alasan penugasan], dengan ini menugaskan:\n\nNama\t: [nama]\nJabatan\t: [jabatan]\n\nUntuk melaksanakan [uraian tugas] pada [tanggal/lokasi].\n\nDemikian surat tugas ini dibuat untuk dilaksanakan dengan sebaik-baiknya dan penuh tanggung jawab.",
+    useItems: false,
+    useSecondParty: false,
+    itemsPriced: false,
+  },
+  "SK-KTS": {
+    body:
+      'Perjanjian Kerjasama ini dibuat dan ditandatangani oleh dan antara PT. Jendela Cakra Digital ("Pihak Pertama") dan [Nama Pihak Kedua] ("Pihak Kedua"), yang secara bersama-sama disebut "Para Pihak".\n\nPasal 1 - Ruang Lingkup\nPara Pihak sepakat untuk menjalin kerjasama dalam hal [ruang lingkup kerjasama].\n\nPasal 2 - Hak dan Kewajiban\nMasing-masing pihak memiliki hak dan kewajiban sebagaimana diatur dalam perjanjian ini.\n\nPasal 3 - Jangka Waktu\nPerjanjian ini berlaku selama [__] sejak tanggal ditandatangani dan dapat diperpanjang berdasarkan kesepakatan Para Pihak.\n\nPasal 4 - Penyelesaian Perselisihan\nApabila terjadi perselisihan, Para Pihak sepakat menyelesaikannya secara musyawarah untuk mufakat.\n\nPasal 5 - Penutup\nDemikian perjanjian kerjasama ini dibuat dengan penuh kesadaran oleh Para Pihak tanpa paksaan dari pihak manapun.',
+    useItems: false,
+    useSecondParty: true,
+    itemsPriced: false,
+  },
   BAST: {
     body:
       "Pada hari ini, [hari], tanggal [tanggal] bulan [bulan] tahun [tahun], yang bertanda tangan di bawah ini menyatakan bahwa PIHAK PERTAMA telah menyerahkan dan PIHAK KEDUA telah menerima barang/pekerjaan sebagaimana rincian pada tabel di bawah ini dalam kondisi baik dan lengkap.\n\nDemikian Berita Acara Serah Terima ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.",
