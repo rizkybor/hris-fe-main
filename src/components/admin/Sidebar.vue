@@ -138,7 +138,7 @@ const showCompanyFinance = computed(() =>
         class="flex items-center gap-3"
         :class="{ 'lg:flex-col lg:gap-1': collapsed }"
       >
-        <div class="w-10 h-10 relative flex items-center justify-center shrink-0 bg-white/5 rounded-[10px]">
+        <div class="w-10 h-10 relative flex items-center justify-center shrink-0 bg-white rounded-[10px] shadow-sm">
           <img
             src="/images/jcd-only-color.png"
             alt="Company Logo"
