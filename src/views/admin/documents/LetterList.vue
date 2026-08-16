@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { Mail, Plus, Download, Ban, Trash2, Search } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
 import { can } from "@/helpers/permissionHelper";
+import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 
 const store = useLetterStore();
 const { letters, meta, loading } = storeToRefs(store);
@@ -91,7 +92,9 @@ const formatDate = (date) =>
         />
       </div>
 
-      <div class="overflow-x-auto">
+      <SkeletonTable v-if="loading" :rows="6" :cols="7" />
+
+      <div v-else class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">

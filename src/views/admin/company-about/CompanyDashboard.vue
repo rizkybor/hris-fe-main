@@ -2,6 +2,7 @@
   import { useCompanyAboutStore } from "@/stores/companyAbout";
 import { ref, reactive, computed, onMounted } from "vue";
 import Alert from "@/components/common/Alert.vue";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { can } from "@/helpers/permissionHelper";
 import { storeToRefs } from "pinia";
 
@@ -155,8 +156,17 @@ const saveCompany = async () => {
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="text-center py-12">
-      <p class="text-brand-light text-sm">Loading company info...</p>
+    <div v-if="loading" class="max-w-full md:max-w-2xl mx-auto p-6 bg-white border border-gray-200 rounded-2xl space-y-4">
+      <div class="flex items-center gap-4">
+        <Skeleton width="64px" height="64px" rounded="12px" />
+        <div class="flex-1 space-y-2">
+          <Skeleton width="60%" height="18px" />
+          <Skeleton width="40%" height="12px" />
+        </div>
+      </div>
+      <Skeleton width="100%" height="12px" />
+      <Skeleton width="90%" height="12px" />
+      <Skeleton width="70%" height="12px" />
     </div>
 
     <!-- Company Card -->

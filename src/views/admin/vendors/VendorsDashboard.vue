@@ -9,6 +9,7 @@ import { debounce } from "lodash";
 import { can } from "@/helpers/permissionHelper";
 import { Plus, Briefcase, Search, SearchX } from "lucide-vue-next";
 import { useVendorsStore } from "@/stores/vendor";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const vendorsStore = useVendorsStore();
 const { vendorsData, success, loading } = storeToRefs(vendorsStore);
@@ -126,8 +127,11 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
       </div>
     </div>
 
+    <!-- Loading -->
+    <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
+
     <!-- Vendors Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <CardList v-for="vendor in vendorsList" :key="vendor.id" :data="vendor" />
     </div>
 
@@ -140,11 +144,6 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
       <p class="text-brand-light text-sm">
         Try adjusting your search terms or filters
       </p>
-    </div>
-
-    <!-- Loading -->
-    <div v-if="loading" class="text-center py-12">
-      <p class="text-gray-500 font-semibold">Loading vendors...</p>
     </div>
   </div>
 

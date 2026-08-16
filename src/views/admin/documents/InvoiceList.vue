@@ -5,6 +5,7 @@ import { Receipt, Plus, Download, CheckCircle2, Ban, Trash2, Search } from "luci
 import { useInvoiceStore } from "@/stores/invoice";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
+import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 
 const store = useInvoiceStore();
 const { invoices, meta, loading } = storeToRefs(store);
@@ -105,7 +106,9 @@ const formatDate = (date) =>
         />
       </div>
 
-      <div class="overflow-x-auto">
+      <SkeletonTable v-if="loading" :rows="6" :cols="7" />
+
+      <div v-else class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">

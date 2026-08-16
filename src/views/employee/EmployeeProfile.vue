@@ -6,6 +6,8 @@ import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { getJobStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
 import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import {
   formatRupiah as formatCurrency,
   capitalize,
@@ -95,8 +97,26 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="flex items-center justify-center h-64">
-    <p class="text-gray-500">Loading...</p>
+  <div v-if="loading">
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-6">
+        <Skeleton width="96px" height="96px" rounded="9999px" class="self-center sm:self-auto" />
+        <div class="flex-1 space-y-3">
+          <Skeleton width="220px" height="24px" />
+          <Skeleton width="140px" height="16px" />
+          <Skeleton width="260px" height="14px" />
+        </div>
+      </div>
+    </div>
+    <SkeletonStatCards :count="4" class="mb-6" />
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 space-y-3">
+        <Skeleton v-for="i in 5" :key="i" width="100%" height="16px" />
+      </div>
+      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 space-y-3">
+        <Skeleton v-for="i in 5" :key="i" width="100%" height="16px" />
+      </div>
+    </div>
   </div>
 
   <div v-else-if="profile">
@@ -591,7 +611,11 @@ onMounted(() => {
             </button>
           </div>
 
-          <div v-if="latestTasks.length === 0" class="text-center py-6 text-sm text-gray-400">
+          <div v-if="taskStore.loading" class="space-y-4">
+            <Skeleton v-for="i in 3" :key="i" height="90px" rounded="12px" />
+          </div>
+
+          <div v-else-if="latestTasks.length === 0" class="text-center py-6 text-sm text-gray-400">
             No active tasks assigned
           </div>
 

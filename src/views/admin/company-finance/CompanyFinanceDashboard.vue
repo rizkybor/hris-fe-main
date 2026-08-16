@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { debounce } from "lodash";
 import Alert from "@/components/common/Alert.vue";
+import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import { can } from "@/helpers/permissionHelper";
 import Statistics from "@/components/admin/company-finance/list/Statistic.vue";
 import FixedCostsModal from "@/components/admin/company-finance/modals/FixedCostsModal.vue";
@@ -506,7 +507,9 @@ watch(
         />
       </div>
 
-      <div class="overflow-x-auto rounded-[12px] border border-gray-200">
+      <SkeletonTable v-if="store.loading" :rows="4" :cols="6" />
+
+      <div v-else class="overflow-x-auto rounded-[12px] border border-gray-200">
         <table class="min-w-full text-sm sm:text-base">
           <thead class="bg-gray-50">
             <tr>
@@ -626,7 +629,9 @@ watch(
         />
       </div>
 
-      <div class="overflow-x-auto rounded-[12px] border border-gray-200">
+      <SkeletonTable v-if="store.loading" :rows="4" :cols="8" />
+
+      <div v-else class="overflow-x-auto rounded-[12px] border border-gray-200">
         <table class="min-w-full text-sm sm:text-base">
           <thead class="bg-gray-50">
             <tr>
@@ -762,7 +767,9 @@ watch(
         />
       </div>
 
-      <div class="overflow-x-auto rounded-[12px] border border-gray-200">
+      <SkeletonTable v-if="store.loading" :rows="4" :cols="8" />
+
+      <div v-else class="overflow-x-auto rounded-[12px] border border-gray-200">
         <table class="min-w-full text-sm sm:text-base">
           <thead class="bg-gray-50">
             <tr>

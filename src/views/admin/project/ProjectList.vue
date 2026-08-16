@@ -11,6 +11,7 @@ import { watch } from "vue";
 import { debounce } from "lodash";
 import { can } from "@/helpers/permissionHelper";
 import Alert from "@/components/common/Alert.vue";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const projectStore = useProjectStore();
 const { projects, meta, loading, success } = storeToRefs(projectStore);
@@ -126,11 +127,13 @@ const handlePerPageChange = (perPage) => {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
+
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <CardList v-for="project in projects" :key="project.id" :data="project" />
     </div>
 
-    <div class="text-center py-12" v-if="projects.length === 0">
+    <div class="text-center py-12" v-if="!loading && projects.length === 0">
       <SearchX class="w-16 h-16 text-gray-400 mx-auto mb-4" />
       <h4 class="text-brand-dark text-lg font-semibold mb-2">
         No projects found

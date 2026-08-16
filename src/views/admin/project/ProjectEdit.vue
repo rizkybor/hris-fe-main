@@ -36,6 +36,7 @@ import { useEmployeeStore } from "@/stores/employee";
 import { storeToRefs } from "pinia";
 import router from "@/router";
 import { useRoute } from "vue-router";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
 const route = useRoute();
 const id = route.params.id;
@@ -72,6 +73,7 @@ const projectPhotoInput = ref(null);
 const leaderModal = ref(false);
 const searchLeader = ref("");
 const selectedLeader = ref(null);
+const initialLoading = ref(true);
 
 const handleFetchProject = async () => {
   const response = await fetchProject(id);
@@ -126,11 +128,15 @@ const handleRemoveLeader = () => {
 };
 
 onMounted(async () => {
-  await fetchTeams();
-  await fetchEmployees({
-    limit: 6,
-  });
-  await handleFetchProject();
+  try {
+    await fetchTeams();
+    await fetchEmployees({
+      limit: 6,
+    });
+    await handleFetchProject();
+  } finally {
+    initialLoading.value = false;
+  }
 });
 
 const formatRupiahInput = (value) => {
@@ -170,7 +176,15 @@ watch(
   <div class="flex gap-5 pl-5 items-start">
     <!-- Form Section -->
     <div class="flex-1">
-      <form class="space-y-6" @submit.prevent="handleSubmit" v-if="!loading">
+      <div v-if="initialLoading" class="space-y-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-4">
+          <Skeleton width="200px" height="20px" />
+          <Skeleton height="48px" rounded="16px" />
+          <Skeleton height="48px" rounded="16px" />
+          <Skeleton height="90px" rounded="16px" />
+        </div>
+      </div>
+      <form class="space-y-6" @submit.prevent="handleSubmit" v-else>
         <!-- Project Information Section -->
         <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
           <div class="flex items-center gap-3 mb-6">

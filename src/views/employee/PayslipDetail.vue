@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { usePayrollStore } from "@/stores/payroll";
 import { useAuthStore } from "@/stores/auth";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import {
   ArrowLeft,
   Download,
@@ -109,8 +110,17 @@ const formatPeriod = (date) => {
 
     <!-- Payslip Content -->
     <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-8 max-w-4xl mx-auto">
-      <div v-if="loading" class="text-center py-12">
-        <p class="text-gray-500">Loading payslip...</p>
+      <div v-if="loading" class="space-y-6">
+        <div class="flex items-start justify-between">
+          <Skeleton width="140px" height="28px" />
+          <Skeleton width="64px" height="64px" rounded="16px" />
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <Skeleton height="80px" rounded="12px" />
+          <Skeleton height="80px" rounded="12px" />
+        </div>
+        <Skeleton height="120px" rounded="16px" />
+        <Skeleton height="100px" rounded="16px" />
       </div>
 
       <div v-else-if="payslip">

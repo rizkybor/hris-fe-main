@@ -62,7 +62,7 @@ const onNavigate = () => emit("navigate");
         <div>
           <h1 class="text-brand-dark text-lg font-bold">
             HRIS
-            <span class="text-xs font-medium text-gray-400 ml-1"> v1.0 </span>
+            <span class="text-xs font-medium text-gray-400 ml-1"> v3.3 </span>
           </h1>
           <p class="text-brand-dark text-xs font-normal">
             Jendela Cakra Digital

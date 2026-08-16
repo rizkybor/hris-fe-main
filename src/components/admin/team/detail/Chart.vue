@@ -4,6 +4,7 @@ import { onMounted, ref, watch } from "vue";
 import { useTeamStore } from "@/stores/team";
 import { storeToRefs } from "pinia";
 import VueApexCharts from "vue3-apexcharts";
+import Spinner from "@/components/common/skeleton/Spinner.vue";
 
 const props = defineProps({
   team: {
@@ -165,7 +166,7 @@ watch(teamChartData, () => {
       <!-- Chart Container -->
       <div class="relative">
         <div v-if="loadingTeamChart" class="flex items-center justify-center" style="height: 250px">
-          <p class="text-brand-light">Loading...</p>
+          <Spinner :center="false" />
         </div>
         <VueApexCharts
           v-else
@@ -196,7 +197,7 @@ watch(teamChartData, () => {
       <!-- Chart Container -->
       <div class="relative">
         <div v-if="loadingTeamChart" class="flex items-center justify-center" style="height: 250px">
-          <p class="text-brand-light">Loading...</p>
+          <Spinner :center="false" />
         </div>
         <VueApexCharts
           v-else

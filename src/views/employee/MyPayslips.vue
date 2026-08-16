@@ -16,6 +16,7 @@ import {
   ArrowDownRight,
 } from "lucide-vue-next";
 import Pagination from "@/components/admin/team/Pagination.vue";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const router = useRouter();
 const payrollStore = usePayrollStore();
@@ -210,7 +211,15 @@ const totalDeductions = computed(() => {
         </p>
       </div>
 
+      <SkeletonCardGrid
+        v-if="loading"
+        :count="4"
+        cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        class="mb-6"
+      />
+
       <div
+        v-else
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6"
       >
         <div

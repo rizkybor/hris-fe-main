@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { useTaskStore } from "@/stores/task";
 import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
 import { Search, Calendar, Folder, ListChecks } from "lucide-vue-next";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
 const taskStore = useTaskStore();
 const { myTasks, loading } = storeToRefs(taskStore);
@@ -135,8 +136,10 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 text-center py-12 text-gray-500">
-      Loading tasks...
+    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Skeleton v-for="i in 4" :key="i" height="110px" rounded="16px" />
+      </div>
     </div>
 
     <div

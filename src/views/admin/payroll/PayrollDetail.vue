@@ -17,6 +17,8 @@ import { debounce } from "lodash";
 import Pagination from "@/components/admin/payroll/Pagination.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
+import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
+import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -231,7 +233,8 @@ const handleMarkAsPaid = async () => {
     </button>
 
     <!-- Payroll Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <SkeletonStatCards v-if="loading || loadingStatistics" :count="4" />
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Total Employees Card -->
       <div
         class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
@@ -350,7 +353,8 @@ const handleMarkAsPaid = async () => {
       </div>
 
       <!-- Employee Table -->
-      <div class="overflow-x-auto">
+      <SkeletonTable v-if="loadingDetails" :rows="6" :cols="8" />
+      <div v-else class="overflow-x-auto">
         <table class="min-w-full">
           <thead>
             <tr class="border-b border-gray-200">

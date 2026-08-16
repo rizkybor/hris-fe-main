@@ -3,6 +3,7 @@ import { CheckCircle, TrendingUp, Users, Folder } from "lucide-vue-next";
 import { onMounted, watch } from "vue";
 import { useTeamStore } from "@/stores/team";
 import { storeToRefs } from "pinia";
+import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 
 const props = defineProps({
   team: {
@@ -17,10 +18,8 @@ const { fetchTeamStatistics } = teamStore;
 
 const loadStatistics = async () => {
   if (props.team?.id) {
-    console.log('Loading statistics for team:', props.team.id);
     try {
       await fetchTeamStatistics(props.team.id);
-      console.log('Statistics loaded:', teamStatistics.value);
     } catch (error) {
       console.error('Failed to load statistics:', error);
     }
@@ -38,7 +37,8 @@ watch(() => props.team?.id, async (newId) => {
 }, { immediate: true });
 </script>
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <SkeletonStatCards v-if="loadingTeamStatistics" :count="4" class="mb-6" />
+  <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <div
       class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
     >

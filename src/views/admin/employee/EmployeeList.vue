@@ -18,6 +18,7 @@ import {
 import Pagination from "@/components/admin/team/Pagination.vue";
 import { can } from "@/helpers/permissionHelper";
 import Alert from "@/components/common/Alert.vue";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const employeeStore = useEmployeeStore();
 const { employees, meta, loading, success } = storeToRefs(employeeStore);
@@ -191,7 +192,22 @@ const handlePerPageChange = (perPage) => {
     </div>
 
     <!-- Employee Grid -->
+    <SkeletonCardGrid
+      v-if="loading"
+      :count="8"
+      cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      class="mb-6"
+    />
+
     <div
+      v-else-if="employees.length === 0"
+      class="text-center py-12 text-gray-500 bg-gray-50 rounded-[16px] border border-dashed border-[#DCDEDD] mb-6"
+    >
+      <p class="text-lg font-semibold">No employees found</p>
+    </div>
+
+    <div
+      v-else
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6"
     >
       <CardList

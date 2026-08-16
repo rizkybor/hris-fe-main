@@ -6,6 +6,7 @@ import { User } from "lucide-vue-next";
 import { getTimeAgo } from "@/utils/dateUtils";
 import { getSkillLevelBadgeClass } from "@/utils/badgeUtils";
 import { storeToRefs } from "pinia";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
 const employeeStore = useEmployeeStore();
 const { employees, loading } = storeToRefs(employeeStore);
@@ -33,17 +34,13 @@ const goToEmployeeDetail = (id: number) => {
 
     <!-- Loading State -->
     <div v-if="loading" class="space-y-4">
-      <div
-        v-for="i in 5"
-        :key="i"
-        class="flex items-center gap-3 animate-pulse"
-      >
-        <div class="w-16 h-16 bg-gray-200 rounded-full"></div>
-        <div class="flex-1">
-          <div class="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-          <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      <div v-for="i in 5" :key="i" class="flex items-center gap-3">
+        <Skeleton width="56px" height="56px" rounded="9999px" />
+        <div class="flex-1 space-y-2">
+          <Skeleton width="33%" height="16px" />
+          <Skeleton width="50%" height="12px" />
         </div>
-        <div class="w-20 h-10 bg-gray-200 rounded-xl"></div>
+        <Skeleton width="80px" height="40px" rounded="12px" class="hidden sm:block" />
       </div>
     </div>
 
