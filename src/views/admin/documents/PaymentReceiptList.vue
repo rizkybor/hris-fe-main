@@ -6,8 +6,10 @@ import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = usePaymentReceiptStore();
+const alertModal = useAlertModalStore();
 const { receipts, meta, loading } = storeToRefs(store);
 
 const search = ref("");
@@ -33,7 +35,13 @@ const handleDownload = async (receipt) => {
 };
 
 const handleCancel = async (receipt) => {
-  if (!confirm(`Batalkan Payment Receipt "${receipt.receipt_number}"?`)) return;
+  if (
+    !(await alertModal.confirm(`Batalkan Payment Receipt "${receipt.receipt_number}"?`, {
+      type: "warning",
+      confirmText: "Batalkan",
+    }))
+  )
+    return;
   await store.cancelReceipt(receipt.id);
 };
 

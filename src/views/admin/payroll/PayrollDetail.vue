@@ -18,11 +18,13 @@ import Pagination from "@/components/admin/payroll/Pagination.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
+import { useAlertModalStore } from "@/stores/alertModal";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 
 const route = useRoute();
 const router = useRouter();
 const payrollStore = usePayrollStore();
+const alertModal = useAlertModalStore();
 
 const payroll = ref(null);
 const payrollStatistics = ref(null);
@@ -203,7 +205,7 @@ const exportExcel = async () => {
     await payrollStore.exportExcel(route.params.id);
   } catch (error) {
     console.error("Error exporting Excel:", error);
-    alert("Failed to export Excel file. Please try again.");
+    await alertModal.alert("Failed to export Excel file. Please try again.", { type: "danger" });
   }
 };
 
@@ -229,10 +231,10 @@ const handleMarkAsPaid = async () => {
     await fetchPayrollDetails(pagination.value.current_page);
 
     closeMarkAsPaidModal();
-    alert("Payroll marked as paid successfully!");
+    await alertModal.alert("Payroll marked as paid successfully!", { type: "success" });
   } catch (error) {
     console.error("Error marking payroll as paid:", error);
-    alert("Failed to mark payroll as paid. Please try again.");
+    await alertModal.alert("Failed to mark payroll as paid. Please try again.", { type: "danger" });
   } finally {
     markingAsPaid.value = false;
   }

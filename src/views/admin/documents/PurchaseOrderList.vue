@@ -6,8 +6,10 @@ import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = usePurchaseOrderStore();
+const alertModal = useAlertModalStore();
 const { orders, meta, loading } = storeToRefs(store);
 
 const search = ref("");
@@ -35,7 +37,13 @@ const handleDownload = async (order) => {
 };
 
 const handleCancel = async (order) => {
-  if (!confirm(`Batalkan PO "${order.po_number}"? Nomor tetap dicatat, tidak bisa dipakai ulang.`)) return;
+  if (
+    !(await alertModal.confirm(
+      `Batalkan PO "${order.po_number}"? Nomor tetap dicatat, tidak bisa dipakai ulang.`,
+      { type: "warning", confirmText: "Batalkan" }
+    ))
+  )
+    return;
   await store.cancelOrder(order.id);
 };
 

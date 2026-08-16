@@ -14,6 +14,7 @@ import { useLetterStore } from "@/stores/letter";
 import { usePerformanceReviewStore } from "@/stores/performanceReview";
 import { useResignationStore } from "@/stores/resignation";
 import { can } from "@/helpers/permissionHelper";
+import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
 import {
   Edit,
@@ -45,6 +46,7 @@ const route = useRoute();
 const router = useRouter();
 const employeeStore = useEmployeeStore();
 const { loading, performanceStatistics, success } = storeToRefs(employeeStore);
+const alertModal = useAlertModalStore();
 
 const letterStore = useLetterStore();
 const disciplinaryLetters = ref<any[]>([]);
@@ -161,12 +163,12 @@ const submitResignation = async () => {
 
 const completeOffboarding = async () => {
   if (!resignation.value) return;
-  if (!confirm("Tandai proses offboarding sebagai selesai?")) return;
+  if (!(await alertModal.confirm("Tandai proses offboarding sebagai selesai?"))) return;
   try {
     await resignationStore.completeOffboarding(resignation.value.id);
     await resignationStore.fetchEmployeeResignation(route.params.id as string);
   } catch (error) {
-    alert("Gagal menyelesaikan proses offboarding.");
+    await alertModal.alert("Gagal menyelesaikan proses offboarding.", { type: "danger" });
   }
 };
 
@@ -187,19 +189,20 @@ const editEmployee = () => {
   });
 };
 
-const shareProfile = () => {
+const shareProfile = async () => {
   const url = window.location.href;
   navigator.clipboard.writeText(url);
-  alert("Profile link copied to clipboard!");
+  await alertModal.alert("Profile link copied to clipboard!", { type: "success" });
 };
 
-const backupEmployee = () => {
+const backupEmployee = async () => {
   if (
-    confirm(
-      `Create backup for ${employee.value?.user?.name}? This will download all employee data.`
+    await alertModal.confirm(
+      `Create backup for ${employee.value?.user?.name}? This will download all employee data.`,
+      { type: "info", confirmText: "Create Backup" }
     )
   ) {
-    alert("Backup feature will be implemented soon.");
+    await alertModal.alert("Backup feature will be implemented soon.");
   }
 };
 

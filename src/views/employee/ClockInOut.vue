@@ -16,9 +16,11 @@ import {
   UserCheck,
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
+import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
 
 const attendanceStore = useAttendanceStore();
+const alertModal = useAlertModalStore();
 const { loading, todayAttendance } = storeToRefs(attendanceStore);
 const { checkIn, checkOut, fetchTodayAttendance } = attendanceStore;
 
@@ -230,7 +232,9 @@ const startCamera = async () => {
     video.srcObject = stream;
   } catch (error) {
     console.error("Error accessing camera:", error);
-    alert("Unable to access camera. Please check permissions and try again.");
+    await alertModal.alert("Unable to access camera. Please check permissions and try again.", {
+      type: "danger",
+    });
   }
 };
 
@@ -263,7 +267,7 @@ const retakePhoto = () => {
 // Attendance actions
 const handleCheckIn = async () => {
   if (!currentLocation.value) {
-    alert("Please get your current location first!");
+    await alertModal.alert("Please get your current location first!", { type: "warning" });
     return;
   }
 
@@ -273,18 +277,18 @@ const handleCheckIn = async () => {
       check_in_long: currentLocation.value.longitude,
     });
 
-    alert("Successfully clocked in!");
+    await alertModal.alert("Successfully clocked in!", { type: "success" });
     resetForNextAction();
     await fetchTodayAttendance();
   } catch (error) {
     console.error("Check in failed:", error);
-    alert("Failed to check in. Please try again.");
+    await alertModal.alert("Failed to check in. Please try again.", { type: "danger" });
   }
 };
 
 const handleCheckOut = async () => {
   if (!currentLocation.value) {
-    alert("Please get your current location first!");
+    await alertModal.alert("Please get your current location first!", { type: "warning" });
     return;
   }
 
@@ -294,12 +298,12 @@ const handleCheckOut = async () => {
       check_out_long: currentLocation.value.longitude,
     });
 
-    alert("Successfully clocked out!");
+    await alertModal.alert("Successfully clocked out!", { type: "success" });
     resetForNextAction();
     await fetchTodayAttendance();
   } catch (error) {
     console.error("Check out failed:", error);
-    alert("Failed to check out. Please try again.");
+    await alertModal.alert("Failed to check out. Please try again.", { type: "danger" });
   }
 };
 

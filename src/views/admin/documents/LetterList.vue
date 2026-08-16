@@ -5,8 +5,10 @@ import { Mail, Plus, Download, Ban, Trash2, Search } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useLetterStore();
+const alertModal = useAlertModalStore();
 const { letters, meta, loading } = storeToRefs(store);
 
 const search = ref("");
@@ -32,7 +34,13 @@ const handleDownload = async (letter) => {
 };
 
 const handleCancel = async (letter) => {
-  if (!confirm(`Batalkan Surat "${letter.letter_number}"? Nomor tetap dicatat dan diberi label DIBATALKAN.`)) return;
+  if (
+    !(await alertModal.confirm(
+      `Batalkan Surat "${letter.letter_number}"? Nomor tetap dicatat dan diberi label DIBATALKAN.`,
+      { type: "warning", confirmText: "Batalkan" }
+    ))
+  )
+    return;
   await store.cancelLetter(letter.id);
 };
 

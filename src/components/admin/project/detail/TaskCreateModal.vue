@@ -1,6 +1,9 @@
 <script setup>
 import { ref, watch } from "vue";
 import { X } from "lucide-vue-next";
+import { useAlertModalStore } from "@/stores/alertModal";
+
+const alertModal = useAlertModalStore();
 
 const props = defineProps({
   isOpen: {
@@ -49,7 +52,7 @@ const closeModal = () => {
 
 const handleSubmit = async () => {
   if (!formData.value.name) {
-    alert("Please enter task name");
+    await alertModal.alert("Please enter task name", { type: "warning" });
     return;
   }
 

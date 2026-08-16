@@ -5,8 +5,10 @@ import { Megaphone, Plus, Pin, Pencil, Trash2, X } from "lucide-vue-next";
 import { useAnnouncementStore } from "@/stores/announcement";
 import { can } from "@/helpers/permissionHelper";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useAnnouncementStore();
+const alertModal = useAlertModalStore();
 const { announcements, meta, loading } = storeToRefs(store);
 
 const showModal = ref(false);
@@ -76,11 +78,11 @@ const handleSubmit = async () => {
 };
 
 const handleDelete = async (id) => {
-  if (!confirm("Hapus pengumuman ini?")) return;
+  if (!(await alertModal.confirm("Hapus pengumuman ini?"))) return;
   try {
     await store.deleteAnnouncement(id);
   } catch (error) {
-    alert(error?.response?.data?.message || "Gagal menghapus pengumuman.");
+    await alertModal.alert(error?.response?.data?.message || "Gagal menghapus pengumuman.", { type: "danger" });
   }
 };
 

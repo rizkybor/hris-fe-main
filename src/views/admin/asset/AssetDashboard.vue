@@ -7,8 +7,10 @@ import { useEmployeeStore } from "@/stores/employee";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useAssetStore();
+const alertModal = useAlertModalStore();
 const { assets, statistics, loading } = storeToRefs(store);
 
 const employeeStore = useEmployeeStore();
@@ -106,12 +108,12 @@ const handleSubmit = async () => {
 };
 
 const handleDelete = async (id) => {
-  if (!confirm("Hapus aset ini?")) return;
+  if (!(await alertModal.confirm("Hapus aset ini?"))) return;
   try {
     await store.deleteAsset(id);
     await store.fetchStatistics();
   } catch (error) {
-    alert(error?.response?.data?.message || "Gagal menghapus aset.");
+    await alertModal.alert(error?.response?.data?.message || "Gagal menghapus aset.", { type: "danger" });
   }
 };
 
@@ -137,19 +139,19 @@ const handleAssign = async () => {
     showAssignModal.value = false;
     await Promise.all([fetchData(), store.fetchStatistics()]);
   } catch (error) {
-    alert(error?.response?.data?.message || "Gagal menugaskan aset.");
+    await alertModal.alert(error?.response?.data?.message || "Gagal menugaskan aset.", { type: "danger" });
   } finally {
     submitting.value = false;
   }
 };
 
 const handleReturn = async (asset) => {
-  if (!confirm(`Tandai "${asset.name}" sebagai dikembalikan?`)) return;
+  if (!(await alertModal.confirm(`Tandai "${asset.name}" sebagai dikembalikan?`))) return;
   try {
     await store.returnAsset(asset.id, { condition_at_return: asset.condition });
     await Promise.all([fetchData(), store.fetchStatistics()]);
   } catch (error) {
-    alert(error?.response?.data?.message || "Gagal memproses pengembalian aset.");
+    await alertModal.alert(error?.response?.data?.message || "Gagal memproses pengembalian aset.", { type: "danger" });
   }
 };
 

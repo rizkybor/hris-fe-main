@@ -15,6 +15,7 @@ import {
 import { useAttendanceStore } from "@/stores/attendance";
 import { useLeaveRequestStore } from "@/stores/leaveRequest";
 import { useOptionStore } from "@/stores/option";
+import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
 
 // Utils
@@ -35,6 +36,7 @@ import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 
 const attendanceStore = useAttendanceStore();
+const alertModal = useAlertModalStore();
 const { loading: attendanceLoading, attendances, statistics } = storeToRefs(attendanceStore);
 const { fetchAttendances, fetchStatistics } = attendanceStore;
 
@@ -105,12 +107,12 @@ const submitLeaveRequest = async () => {
   today.setHours(0, 0, 0, 0);
 
   if (startDate <= today) {
-    alert("Start date must be at least tomorrow.");
+    await alertModal.alert("Start date must be at least tomorrow.", { type: "warning" });
     return;
   }
 
   if (endDate < startDate) {
-    alert("End date must be after start date.");
+    await alertModal.alert("End date must be after start date.", { type: "warning" });
     return;
   }
 
@@ -134,7 +136,10 @@ const submitLeaveRequest = async () => {
     await Promise.all([fetchMyLeaveRequests(), fetchMyLeaveBalance()]);
   } catch (error) {
     console.error("Failed to submit leave request:", error);
-    alert(error?.response?.data?.message || "Failed to submit leave request. Please try again.");
+    await alertModal.alert(
+      error?.response?.data?.message || "Failed to submit leave request. Please try again.",
+      { type: "danger" }
+    );
   }
 };
 

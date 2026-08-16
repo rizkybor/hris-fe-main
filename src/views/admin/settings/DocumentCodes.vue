@@ -3,8 +3,10 @@ import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { Tags, Plus, Trash2, FileText, Building2Icon } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useLetterStore();
+const alertModal = useAlertModalStore();
 const { letterCodes, divisionCodes } = storeToRefs(store);
 
 const newLetterCode = ref({ code: "", name: "" });
@@ -30,7 +32,7 @@ const handleAddLetterCode = async () => {
 };
 
 const handleDeleteLetterCode = async (id) => {
-  if (!confirm("Hapus kode surat ini?")) return;
+  if (!(await alertModal.confirm("Hapus kode surat ini?"))) return;
   await store.deleteLetterCode(id);
 };
 
@@ -49,7 +51,7 @@ const handleAddDivisionCode = async () => {
 };
 
 const handleDeleteDivisionCode = async (id) => {
-  if (!confirm("Hapus kode divisi ini?")) return;
+  if (!(await alertModal.confirm("Hapus kode divisi ini?"))) return;
   await store.deleteDivisionCode(id);
 };
 </script>
