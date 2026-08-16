@@ -368,6 +368,34 @@ watch(
             </Input>
           </div>
 
+          <div class="mb-4">
+            <Input
+              id="probation_end_date"
+              name="probation_end_date"
+              type="date"
+              v-model="form.probation_end_date"
+              label="Akhir Masa Probation (opsional)"
+            >
+              <template #icon>
+                <CalendarPlus class="h-5 w-5 text-gray-400" />
+              </template>
+            </Input>
+          </div>
+
+          <div class="mb-4">
+            <Input
+              id="contract_end_date"
+              name="contract_end_date"
+              type="date"
+              v-model="form.contract_end_date"
+              label="Akhir Masa Kontrak (opsional)"
+            >
+              <template #icon>
+                <CalendarPlus class="h-5 w-5 text-gray-400" />
+              </template>
+            </Input>
+          </div>
+
           <!-- Skill Level (Full Width) -->
           <div class="md:col-span-2 mb-4">
             <label class="block text-brand-dark text-base font-semibold mb-1"

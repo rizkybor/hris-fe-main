@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from "vue";
 import { useEmployeeStore } from "@/stores/employee";
 import { useTaskStore } from "@/stores/task";
+import { useAssetStore } from "@/stores/asset";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { getJobStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
@@ -29,12 +30,15 @@ import {
   Building,
   User,
   Clock,
+  Laptop,
 } from "lucide-vue-next";
 
 const employeeStore = useEmployeeStore();
 const { loading, performanceStatistics } = storeToRefs(employeeStore);
 const taskStore = useTaskStore();
 const { myTasks } = storeToRefs(taskStore);
+const assetStore = useAssetStore();
+const { myAssets } = storeToRefs(assetStore);
 const router = useRouter();
 
 const profile = ref<any>(null);
@@ -93,6 +97,7 @@ const skillLevelBadgeClass = computed(() => {
 onMounted(() => {
   loadProfile();
   taskStore.fetchMyTasks(5);
+  assetStore.fetchMyAssets();
 });
 </script>
 
@@ -648,6 +653,32 @@ onMounted(() => {
                   <span>{{ task.project }}</span>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Assets -->
+        <div v-if="myAssets.length > 0" class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
+              <Laptop class="w-6 h-6 text-[#0C51D9]" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-lg font-bold">My Assets</h3>
+              <p class="text-brand-light text-sm">Company equipment assigned to you</p>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div
+              v-for="asset in myAssets"
+              :key="asset.id"
+              class="border border-[#DCDEDD] rounded-[12px] p-4 flex items-center justify-between"
+            >
+              <div>
+                <p class="text-brand-dark text-sm font-semibold">{{ asset.name }}</p>
+                <p class="text-brand-light text-xs">{{ asset.asset_code }}<span v-if="asset.brand"> • {{ asset.brand }}</span></p>
+              </div>
+              <span class="px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-700">{{ asset.condition }}</span>
             </div>
           </div>
         </div>

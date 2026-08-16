@@ -194,6 +194,10 @@ const titles = {
     title: "Announcements",
     subtitle: "Broadcast information to your team",
   },
+  "admin.assets.dashboard": {
+    title: "Company Assets",
+    subtitle: "Track and assign company-owned equipment",
+  },
   "admin.settings.dashboard": {
     title: "Settings",
     subtitle: "Manage system configuration and preferences",

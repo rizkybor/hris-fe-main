@@ -28,6 +28,7 @@ import settingsRoutes from './settings';
 import documentRoutes from './document';
 import historyRoutes from './history';
 import announcementRoutes from './announcement';
+import assetRoutes from './asset';
 
 
 
@@ -79,6 +80,7 @@ const router = createRouter({
         ...documentRoutes,
         ...historyRoutes,
         ...announcementRoutes,
+        ...assetRoutes,
         {
           path: 'my-profile',
           name: 'employee.profile',
