@@ -21,7 +21,7 @@
         :disabled="readonly"
         :class="[
           readonly ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer',
-          'w-full pl-10 pr-4 py-3 border rounded-[16px] transition-all duration-300 font-semibold',
+          'w-full pl-10 pr-4 py-3 border rounded-[12px] transition-all duration-300 font-semibold',
           'hover:border-[#0C51D9] hover:border-2',
           'focus:border-[#0C51D9] focus:border-2 focus:bg-white',
           'cursor-pointer',

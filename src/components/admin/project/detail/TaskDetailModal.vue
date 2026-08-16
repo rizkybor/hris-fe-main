@@ -20,6 +20,9 @@ import { useEmployeeStore } from "@/stores/employee";
 import { useTaskStore } from "@/stores/task";
 import { storeToRefs } from "pinia";
 import { can } from "@/helpers/permissionHelper";
+import { useAlertModalStore } from "@/stores/alertModal";
+
+const alertModal = useAlertModalStore();
 
 const props = defineProps({
   task: {
@@ -100,8 +103,8 @@ const handleSaveDetails = async () => {
   }
 };
 
-const handleDelete = () => {
-  if (confirm("Are you sure you want to delete this task?")) {
+const handleDelete = async () => {
+  if (await alertModal.confirm("Are you sure you want to delete this task?")) {
     emit("deleted", props.task.id);
     closeModal();
   }

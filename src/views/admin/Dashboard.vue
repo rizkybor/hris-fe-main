@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useAuthStore } from "@/stores/auth";
+import { can } from "@/helpers/permissionHelper";
+import DashboardWelcome from "@/components/admin/dashboard/DashboardWelcome.vue";
 import Statistics from "@/components/admin/dashboard/Statistics.vue";
 import EmployeeStatistics from "@/components/admin/dashboard/EmployeeStatistics.vue";
 import SearchSection from "@/components/admin/dashboard/SearchSection.vue";
@@ -15,15 +17,16 @@ const isEmployee = computed(() => {
 });
 
 // Check if user has dashboard view permission
-const hasDashboardPermission = computed(() => {
-  return authStore.user?.permissions?.some(
-    (permission: any) => permission.name === "dashboard-view"
-  );
-});
+const hasDashboardPermission = computed(() => can("dashboard-view"));
+
+const canViewEmployees = computed(() => can("employee-list"));
+const canViewTeams = computed(() => can("team-list"));
 </script>
 
 <template>
   <div class="space-y-6">
+    <DashboardWelcome />
+
     <template v-if="isEmployee">
       <div class="space-y-6">
         <EmployeeStatistics />
@@ -35,9 +38,13 @@ const hasDashboardPermission = computed(() => {
       <div class="space-y-6">
         <Statistics />
         <SearchSection />
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <LatestEmployees />
-          <LatestTeams />
+        <div
+          v-if="canViewEmployees || canViewTeams"
+          class="grid grid-cols-1 gap-4"
+          :class="canViewEmployees && canViewTeams ? 'lg:grid-cols-2' : ''"
+        >
+          <LatestEmployees v-if="canViewEmployees" />
+          <LatestTeams v-if="canViewTeams" />
         </div>
       </div>
     </template>

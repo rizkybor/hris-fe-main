@@ -2,7 +2,8 @@
 import { formatToClientTimezone } from "@/helpers/format";
 import { can } from "@/helpers/permissionHelper";
 import _ from "lodash";
-import { Calendar, Crown, Edit, Eye, FileText, User } from "lucide-vue-next";
+import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, User, WalletIcon } from "lucide-vue-next";
+import { formatRupiah } from "@/utils/formatUtils";
 
 const props = defineProps({
   data: {
@@ -41,16 +42,20 @@ const getProgressColor = (progress) => {
 
 <template>
   <div
-    class="border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
+    class="border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
   >
     <!-- Project Image -->
     <div
       class="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 relative overflow-hidden rounded-[12px] mb-4"
     >
       <img
+        v-if="data.photo"
         class="w-full h-full object-cover rounded-[12px]"
         :src="data.photo"
       />
+      <div v-else class="w-full h-full flex items-center justify-center">
+        <FolderKanban class="w-10 h-10 text-blue-300" />
+      </div>
       <!-- Priority Badge Overlay -->
       <div
         class="absolute bottom-2 left-2 px-2 py-1 rounded-md text-xs font-semibold"
@@ -122,6 +127,17 @@ const getProgressColor = (progress) => {
           :style="{ width: `${data.progress ?? 0}%` }"
         ></div>
       </div>
+    </div>
+
+    <div
+      v-if="data.budget"
+      class="flex items-center justify-between mb-4 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-[10px]"
+    >
+      <div class="flex items-center gap-2">
+        <WalletIcon class="w-4 h-4 text-indigo-600" />
+        <span class="text-xs text-indigo-700 font-medium">Budget</span>
+      </div>
+      <span class="text-sm text-indigo-900 font-bold">{{ formatRupiah(data.budget) }}</span>
     </div>
 
     <div class="space-y-2 mb-4">

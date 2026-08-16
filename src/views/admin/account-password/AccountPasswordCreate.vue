@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import {
-  Shield,
+  ShieldCheck,
   Eye,
   EyeOff,
   Save,
@@ -68,12 +68,12 @@ const submit = async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-12 h-12 bg-violet-50 rounded-[12px] flex items-center justify-center"
         >
-          <Shield class="w-6 h-6 text-blue-600" />
+          <ShieldCheck class="w-6 h-6 text-violet-600" />
         </div>
         <div>
           <h1 class="text-brand-dark text-xl font-bold">
@@ -100,7 +100,7 @@ const submit = async () => {
     </div>
 
     <!-- Form Card -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
       <!-- Label Password -->
       <div>
         <label class="block text-brand-dark text-base font-semibold mb-1">
@@ -116,7 +116,7 @@ const submit = async () => {
             v-model="form.label_password"
             type="text"
             placeholder="e.g. ERP Finance Admin, VPN Office"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
           />
         </div>
       </div>
@@ -136,7 +136,7 @@ const submit = async () => {
             v-model="form.username_email"
             type="text"
             placeholder="e.g. admin@company.com / admin.erp"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
           />
         </div>
       </div>
@@ -157,7 +157,7 @@ const submit = async () => {
             v-model="form.password"
             :type="showPassword ? 'text' : 'password'"
             placeholder="Enter secure password"
-            class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-mono"
+            class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-mono"
           />
 
           <button
@@ -186,7 +186,7 @@ const submit = async () => {
             v-model="form.website"
             type="url"
             placeholder="https://example.com"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
           />
         </div>
       </div>
@@ -204,7 +204,7 @@ const submit = async () => {
             v-model="form.notes"
             rows="4"
             placeholder="Additional notes or instructions..."
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-normal resize-none"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-normal resize-none"
           ></textarea>
         </div>
       </div>
@@ -214,7 +214,7 @@ const submit = async () => {
         <button
           type="button"
           @click="$router.back()"
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
+          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:bg-violet-50/30 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
         >
           Cancel
         </button>
@@ -223,7 +223,7 @@ const submit = async () => {
           type="button"
           @click="submit"
           :disabled="loading"
-          class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+          class="w-full sm:w-auto btn-primary rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <Save class="w-4 h-4 text-white" />
           <span class="text-brand-white text-sm font-semibold">

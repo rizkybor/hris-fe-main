@@ -41,3 +41,23 @@ export const getProgressColor = (progress) => {
   if (progress >= 40) return "bg-yellow-500";
   return "bg-red-500";
 };
+
+export const getRoleBadgeClass = (role) => {
+  const classes = {
+    manager: "bg-indigo-500/15 text-indigo-200 border-indigo-400/30",
+    hr: "bg-blue-500/15 text-blue-200 border-blue-400/30",
+    finance: "bg-emerald-500/15 text-emerald-200 border-emerald-400/30",
+    employee: "bg-violet-500/15 text-violet-200 border-violet-400/30",
+  };
+  return classes[role?.toLowerCase()] || "bg-white/10 text-white/80 border-white/20";
+};
+
+export const getRoleLabel = (role) => {
+  const labels = {
+    manager: "Manager",
+    hr: "HR",
+    finance: "Finance",
+    employee: "Employee",
+  };
+  return labels[role?.toLowerCase()] || role;
+};

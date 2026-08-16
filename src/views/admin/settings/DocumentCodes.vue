@@ -3,8 +3,10 @@ import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { Tags, Plus, Trash2, FileText, Building2Icon } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useLetterStore();
+const alertModal = useAlertModalStore();
 const { letterCodes, divisionCodes } = storeToRefs(store);
 
 const newLetterCode = ref({ code: "", name: "" });
@@ -30,7 +32,7 @@ const handleAddLetterCode = async () => {
 };
 
 const handleDeleteLetterCode = async (id) => {
-  if (!confirm("Hapus kode surat ini?")) return;
+  if (!(await alertModal.confirm("Hapus kode surat ini?"))) return;
   await store.deleteLetterCode(id);
 };
 
@@ -49,14 +51,14 @@ const handleAddDivisionCode = async () => {
 };
 
 const handleDeleteDivisionCode = async (id) => {
-  if (!confirm("Hapus kode divisi ini?")) return;
+  if (!(await alertModal.confirm("Hapus kode divisi ini?"))) return;
   await store.deleteDivisionCode(id);
 };
 </script>
 
 <template>
   <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Tags class="w-5 h-5 text-[#0C51D9]" />
@@ -71,7 +73,7 @@ const handleDeleteDivisionCode = async (id) => {
     <p v-if="errorMessage" class="text-red-500 text-sm mb-4">{{ errorMessage }}</p>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center gap-2 mb-4">
           <FileText class="w-5 h-5 text-[#0C51D9]" />
           <h4 class="text-brand-dark font-bold">Kode Surat</h4>
@@ -107,7 +109,7 @@ const handleDeleteDivisionCode = async (id) => {
         </div>
       </div>
 
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center gap-2 mb-4">
           <Building2Icon class="w-5 h-5 text-[#0C51D9]" />
           <h4 class="text-brand-dark font-bold">Kode Divisi</h4>

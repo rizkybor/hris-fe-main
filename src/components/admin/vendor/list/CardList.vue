@@ -12,7 +12,7 @@ const props = defineProps({
 
 <template>
   <div
-    class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-[#0C51D9]"
+    class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-[#0C51D9]"
   >
     <!-- Vendor Name -->
     <h4 class="text-brand-dark text-xl font-bold mb-3 truncate">

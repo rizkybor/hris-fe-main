@@ -74,7 +74,7 @@ const handlePerPageChange = (perPage) => {
   <Statistic />
 
   <!-- Search Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4">
     <div
       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
     >
@@ -87,7 +87,7 @@ const handlePerPageChange = (perPage) => {
         </div>
         <input
           type="text"
-          class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+          class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
           placeholder="Search teams by name, lead, status..."
           v-model="filters.search"
         />
@@ -103,7 +103,7 @@ const handlePerPageChange = (perPage) => {
             <CheckCircleIcon class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none font-semibold"
+            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none font-semibold"
             v-model="filters.status"
           >
             <option value="">All Status</option>
@@ -127,7 +127,7 @@ const handlePerPageChange = (perPage) => {
             <BuildingIcon class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none font-semibold"
+            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none font-semibold"
             v-model="filters.department"
           >
             <option value="">All Departments</option>
@@ -152,7 +152,7 @@ const handlePerPageChange = (perPage) => {
   <Alert type="success" :title="success" :show="success" />
 
   <!-- Team List Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4 sm:p-5">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-5">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
       <div>
         <h3 class="text-brand-dark text-xl font-bold">All Teams</h3>

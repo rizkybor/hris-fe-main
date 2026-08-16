@@ -42,13 +42,13 @@ onMounted(() => {
 <template>
   <div class="relative">
     <button
-      class="relative w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+      class="relative w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
       @click="toggle"
     >
-      <BellIcon class="w-5 h-5 text-gray-600" />
+      <BellIcon class="w-[18px] h-[18px]" />
       <span
         v-if="unreadCount > 0"
-        class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center"
+        class="absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center"
       >
         {{ unreadCount > 9 ? "9+" : unreadCount }}
       </span>
@@ -62,7 +62,7 @@ onMounted(() => {
 
     <div
       v-if="isOpen"
-      class="absolute right-0 top-full mt-2 w-80 bg-white border border-[#DCDEDD] rounded-lg shadow-md z-[9999] max-h-[70vh] overflow-y-auto"
+      class="absolute right-0 top-full mt-2 w-80 bg-white border border-[#DCDEDD] rounded-[12px] shadow-md z-[9999] max-h-[70vh] overflow-y-auto"
     >
       <div class="px-4 py-3 border-b border-[#DCDEDD] flex items-center justify-between">
         <p class="text-sm font-semibold text-gray-900">Notifications</p>

@@ -55,6 +55,10 @@ const step2Data = ref({
   start_date: "",
   monthly_salary: "",
   skill_level: "",
+  ptkp_status: "TK/0",
+  annual_leave_quota: "12",
+  probation_end_date: "",
+  contract_end_date: "",
   bank_name: "",
   account_number: "",
   account_holder_name: "",
@@ -113,6 +117,14 @@ const loadEmployeeData = async () => {
       step2Data.value.monthly_salary =
         employee.job_information?.monthly_salary || "";
       step2Data.value.skill_level = employee.job_information?.skill_level || "";
+      step2Data.value.ptkp_status =
+        employee.job_information?.ptkp_status || "TK/0";
+      step2Data.value.annual_leave_quota =
+        employee.job_information?.annual_leave_quota ?? "12";
+      step2Data.value.probation_end_date =
+        employee.job_information?.probation_end_date || "";
+      step2Data.value.contract_end_date =
+        employee.job_information?.contract_end_date || "";
       step2Data.value.bank_name = employee.bank_information?.bank_name || "";
       step2Data.value.account_number =
         employee.bank_information?.account_number || "";
@@ -186,6 +198,14 @@ const handleSubmit = async () => {
       normalizeRupiah(step2Data.value.monthly_salary)
     );
     formData.append("skill_level", step2Data.value.skill_level);
+    formData.append("ptkp_status", step2Data.value.ptkp_status);
+    formData.append("annual_leave_quota", step2Data.value.annual_leave_quota);
+    if (step2Data.value.probation_end_date) {
+      formData.append("probation_end_date", step2Data.value.probation_end_date);
+    }
+    if (step2Data.value.contract_end_date) {
+      formData.append("contract_end_date", step2Data.value.contract_end_date);
+    }
     formData.append("bank_name", step2Data.value.bank_name);
     formData.append("account_number", step2Data.value.account_number);
     formData.append("account_holder_name", step2Data.value.account_holder_name);
@@ -271,7 +291,7 @@ onMounted(() => {
     />
 
     <!-- Form Navigation -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-brand-dark text-sm font-medium">

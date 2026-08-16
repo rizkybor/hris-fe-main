@@ -157,7 +157,7 @@ watch(
     <!-- Form Section -->
     <div class="flex-1">
       <div v-if="initialLoading" class="space-y-6">
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-4">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-4">
           <Skeleton width="200px" height="20px" />
           <Skeleton height="48px" rounded="16px" />
           <Skeleton height="48px" rounded="16px" />
@@ -166,7 +166,7 @@ watch(
       </div>
       <form class="space-y-6" @submit.prevent="handleSubmit" v-else>
         <!-- Team Information Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -332,7 +332,7 @@ watch(
         </div>
 
         <!-- Team Lead Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -355,7 +355,7 @@ watch(
               >
               <button
                 type="button"
-                class="w-full border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
+                class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
                 @click="leadModal = true"
               >
                 <UserCheck class="w-5 h-5 text-gray-400" />
@@ -404,7 +404,7 @@ watch(
         </div>
 
         <!-- Team Responsibilities Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
@@ -490,7 +490,7 @@ watch(
           <div class="mt-4">
             <button
               type="button"
-              class="w-full border-2 border-dashed border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left cursor-pointer"
+              class="w-full border-2 border-dashed border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left cursor-pointer"
               @click="addNewResponsibility()"
             >
               <PlusCircle class="w-5 h-5 text-gray-400" />
@@ -502,7 +502,7 @@ watch(
         </div>
 
         <!-- Team Settings Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -526,7 +526,7 @@ watch(
               <div class="grid grid-cols-2 gap-4">
                 <!-- Active Option -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -560,7 +560,7 @@ watch(
                 </label>
                 <!-- Forming Option -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -594,7 +594,7 @@ watch(
                 </label>
                 <!-- Planning Option -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -628,7 +628,7 @@ watch(
                 </label>
                 <!-- Dormant Option -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -696,7 +696,7 @@ watch(
     v-if="leadModal"
   >
     <div
-      class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
+      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
     >
       <!-- Modal Header -->
       <div class="p-6 border-b border-[#DCDEDD]">
@@ -719,7 +719,7 @@ watch(
           <button
             type="button"
             @click="leadModal = false"
-            class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
           >
             <X class="w-5 h-5 text-gray-600" />
           </button>
@@ -737,7 +737,7 @@ watch(
           <input
             type="text"
             id="leadSearch"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
             placeholder="Search employees..."
             v-model="searchLead"
           />
@@ -749,7 +749,7 @@ watch(
         <div id="leadList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Employee Option 1 -->
           <div
-            class="lead-card border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
+            class="lead-card border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
             v-for="employee in employees"
             :key="employee.id"
             @click="handleSelectLead(employee)"

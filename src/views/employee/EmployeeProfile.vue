@@ -2,6 +2,8 @@
 import { ref, onMounted, computed } from "vue";
 import { useEmployeeStore } from "@/stores/employee";
 import { useTaskStore } from "@/stores/task";
+import { useAssetStore } from "@/stores/asset";
+import { usePerformanceReviewStore } from "@/stores/performanceReview";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { getJobStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
@@ -29,13 +31,26 @@ import {
   Building,
   User,
   Clock,
+  Laptop,
+  Star,
 } from "lucide-vue-next";
 
 const employeeStore = useEmployeeStore();
 const { loading, performanceStatistics } = storeToRefs(employeeStore);
 const taskStore = useTaskStore();
 const { myTasks } = storeToRefs(taskStore);
+const assetStore = useAssetStore();
+const { myAssets } = storeToRefs(assetStore);
+const reviewStore = usePerformanceReviewStore();
+const { myReviews } = storeToRefs(reviewStore);
 const router = useRouter();
+
+const acknowledgeReview = async (id: number) => {
+  try {
+    await reviewStore.acknowledgeReview(id);
+    await reviewStore.fetchMyReviews();
+  } catch (error) {}
+};
 
 const profile = ref<any>(null);
 
@@ -93,12 +108,14 @@ const skillLevelBadgeClass = computed(() => {
 onMounted(() => {
   loadProfile();
   taskStore.fetchMyTasks(5);
+  assetStore.fetchMyAssets();
+  reviewStore.fetchMyReviews();
 });
 </script>
 
 <template>
   <div v-if="loading">
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4 sm:p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
       <div class="flex flex-col sm:flex-row sm:items-center gap-6">
         <Skeleton width="96px" height="96px" rounded="9999px" class="self-center sm:self-auto" />
         <div class="flex-1 space-y-3">
@@ -110,10 +127,10 @@ onMounted(() => {
     </div>
     <SkeletonStatCards :count="4" class="mb-6" />
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 space-y-3">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3">
         <Skeleton v-for="i in 5" :key="i" width="100%" height="16px" />
       </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 space-y-3">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3">
         <Skeleton v-for="i in 5" :key="i" width="100%" height="16px" />
       </div>
     </div>
@@ -121,7 +138,7 @@ onMounted(() => {
 
   <div v-else-if="profile">
     <!-- Employee Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4 sm:p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
       <div class="flex flex-col sm:flex-row sm:items-center gap-6">
         <div class="relative self-center sm:self-auto flex-shrink-0">
           <img
@@ -190,7 +207,7 @@ onMounted(() => {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <!-- Tasks Completed Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -203,7 +220,7 @@ onMounted(() => {
             <p class="text-success text-sm font-medium">This month</p>
           </div>
           <div
-            class="w-14 h-14 bg-blue-50 rounded-[16px] flex items-center justify-center"
+            class="w-14 h-14 bg-blue-50 rounded-[12px] flex items-center justify-center"
           >
             <CheckCircle class="w-6 h-6 text-blue-600" />
           </div>
@@ -212,7 +229,7 @@ onMounted(() => {
 
       <!-- Attendance Rate Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -225,7 +242,7 @@ onMounted(() => {
             <p class="text-success text-sm font-medium">Above average</p>
           </div>
           <div
-            class="w-14 h-14 bg-green-50 rounded-[16px] flex items-center justify-center"
+            class="w-14 h-14 bg-green-50 rounded-[12px] flex items-center justify-center"
           >
             <CalendarCheck class="w-6 h-6 text-green-600" />
           </div>
@@ -234,7 +251,7 @@ onMounted(() => {
 
       <!-- Active Projects Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -247,7 +264,7 @@ onMounted(() => {
             <p class="text-success text-sm font-medium">Current projects</p>
           </div>
           <div
-            class="w-14 h-14 bg-purple-50 rounded-[16px] flex items-center justify-center"
+            class="w-14 h-14 bg-purple-50 rounded-[12px] flex items-center justify-center"
           >
             <Folder class="w-6 h-6 text-purple-600" />
           </div>
@@ -256,7 +273,7 @@ onMounted(() => {
 
       <!-- Performance Rating Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -269,7 +286,7 @@ onMounted(() => {
             <p class="text-success text-sm font-medium">Excellent rating</p>
           </div>
           <div
-            class="w-14 h-14 bg-orange-50 rounded-[16px] flex items-center justify-center"
+            class="w-14 h-14 bg-orange-50 rounded-[12px] flex items-center justify-center"
           >
             <TrendingUp class="w-6 h-6 text-orange-600" />
           </div>
@@ -282,7 +299,7 @@ onMounted(() => {
       <!-- Left Column -->
       <div class="space-y-6">
         <!-- Personal Information -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
             <div
               class="w-12 h-12 bg-teal-50 rounded-[12px] flex items-center justify-center"
@@ -340,7 +357,7 @@ onMounted(() => {
         </div>
 
         <!-- Employment Details -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
             <div
               class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -399,7 +416,7 @@ onMounted(() => {
         </div>
 
         <!-- Location Details -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
             <div
               class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -457,7 +474,7 @@ onMounted(() => {
         </div>
 
         <!-- Emergency Contact -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
             <div
               class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
@@ -515,7 +532,7 @@ onMounted(() => {
       <div class="space-y-6">
         <!-- Team Information -->
         <div
-          class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 h-fit"
+          class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 h-fit"
           v-if="profile?.job_information?.team"
         >
           <div class="flex items-center justify-between mb-4">
@@ -543,7 +560,7 @@ onMounted(() => {
 
           <!-- Team Header -->
           <div
-            class="flex items-center gap-4 mb-4 p-4 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[16px]"
+            class="flex items-center gap-4 mb-4 p-4 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"
           >
             <div
               class="w-16 h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden"
@@ -590,7 +607,7 @@ onMounted(() => {
         </div>
 
         <!-- Latest 5 Tasks Assigned -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
               <div
@@ -648,6 +665,64 @@ onMounted(() => {
                   <span>{{ task.project }}</span>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Assets -->
+        <div v-if="myAssets.length > 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
+              <Laptop class="w-6 h-6 text-[#0C51D9]" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-lg font-bold">My Assets</h3>
+              <p class="text-brand-light text-sm">Company equipment assigned to you</p>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div
+              v-for="asset in myAssets"
+              :key="asset.id"
+              class="border border-[#DCDEDD] rounded-[12px] p-4 flex items-center justify-between"
+            >
+              <div>
+                <p class="text-brand-dark text-sm font-semibold">{{ asset.name }}</p>
+                <p class="text-brand-light text-xs">{{ asset.asset_code }}<span v-if="asset.brand"> • {{ asset.brand }}</span></p>
+              </div>
+              <span class="px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-700">{{ asset.condition }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Performance Reviews -->
+        <div v-if="myReviews.length > 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-yellow-50 rounded-[12px] flex items-center justify-center">
+              <Star class="w-6 h-6 text-yellow-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-lg font-bold">My Performance Reviews</h3>
+              <p class="text-brand-light text-sm">Feedback and ratings from your reviewer</p>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div v-for="review in myReviews" :key="review.id" class="border border-[#DCDEDD] rounded-[12px] p-4">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-brand-dark text-sm font-semibold">{{ review.period }}</p>
+                <span class="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700">{{ review.overall_rating }} / 5</span>
+              </div>
+              <p v-if="review.strengths" class="text-brand-light text-xs mb-1"><strong>Strengths:</strong> {{ review.strengths }}</p>
+              <p v-if="review.areas_for_improvement" class="text-brand-light text-xs mb-1"><strong>To Improve:</strong> {{ review.areas_for_improvement }}</p>
+              <p v-if="review.goals_next_period" class="text-brand-light text-xs mb-2"><strong>Goals:</strong> {{ review.goals_next_period }}</p>
+              <button
+                v-if="review.status !== 'acknowledged'"
+                @click="acknowledgeReview(review.id)"
+                class="text-[#0C51D9] text-xs font-semibold hover:underline"
+              >
+                Mark as Read
+              </button>
+              <span v-else class="text-green-600 text-xs font-semibold">Acknowledged</span>
             </div>
           </div>
         </div>

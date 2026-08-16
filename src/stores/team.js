@@ -166,6 +166,17 @@ export const useTeamStore = defineStore("team", {
             }
         },
 
+        async fetchOrgChart() {
+            try {
+                const response = await axiosInstance.get('/teams/org-chart');
+
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
+
         async fetchTeamStatistics(teamId) {
             this.loadingTeamStatistics = true;
             this.error = null;

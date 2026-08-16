@@ -227,12 +227,12 @@ const chartOptions = computed(() => ({
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 mb-6">
       <!-- Fixed Cost -->
       <div
-        class="main-card border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
+        class="main-card border rounded-[14px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
       >
         <div class="flex justify-between mb-4">
           <p class="text-white font-medium">Fixed Cost</p>
           <div
-            class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center"
+            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
           >
             <Briefcase class="w-6 h-6 text-blue-600" />
           </div>
@@ -262,12 +262,12 @@ const chartOptions = computed(() => ({
 
       <!-- SDM Resource -->
       <div
-        class="main-card border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
+        class="main-card border rounded-[14px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
       >
         <div class="flex justify-between mb-4">
           <p class="text-white font-medium">SDM Resources</p>
           <div
-            class="w-12 h-12 bg-amber-50 rounded-[16px] flex items-center justify-center"
+            class="w-12 h-12 bg-amber-50 rounded-[12px] flex items-center justify-center"
           >
             <PlayCircle class="w-6 h-6 text-amber-600" />
           </div>
@@ -318,12 +318,12 @@ const chartOptions = computed(() => ({
 
       <!-- Infrastructure -->
       <div
-        class="main-card border rounded-[20px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
+        class="main-card border rounded-[14px] p-5 flex flex-col min-h-[186px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300"
       >
         <div class="flex justify-between mb-4">
           <p class="text-white font-medium">Infrastructure</p>
           <div
-            class="w-12 h-12 bg-purple-50 rounded-[16px] flex items-center justify-center"
+            class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
           >
             <TrendingUp class="w-6 h-6 text-purple-600" />
           </div>
@@ -346,7 +346,7 @@ const chartOptions = computed(() => ({
 
     <!-- Chart (full width under cards) -->
     <div
-      class="xl:col-span-4 bg-white border rounded-[16px] p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300 mt-4"
+      class="xl:col-span-4 bg-white border rounded-[12px] p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300 mt-4"
     >
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-3 mb-2">

@@ -27,6 +27,9 @@ import reportRoutes from './report';
 import settingsRoutes from './settings';
 import documentRoutes from './document';
 import historyRoutes from './history';
+import announcementRoutes from './announcement';
+import assetRoutes from './asset';
+import orgchartRoutes from './orgchart';
 
 
 
@@ -77,6 +80,9 @@ const router = createRouter({
         ...settingsRoutes,
         ...documentRoutes,
         ...historyRoutes,
+        ...announcementRoutes,
+        ...assetRoutes,
+        ...orgchartRoutes,
         {
           path: 'my-profile',
           name: 'employee.profile',

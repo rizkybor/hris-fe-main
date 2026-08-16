@@ -7,15 +7,34 @@ import {
   CheckSquareIcon,
   FolderIcon,
   StarIcon,
+  BanknoteIcon,
 } from "lucide-vue-next";
 import QuickActions from "./QuickActions.vue";
+import ProjectBudgetChart from "@/components/admin/project/list/BudgetChart.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useDashboardStore } from "@/stores/dashboard";
+import { usePayrollStore } from "@/stores/payroll";
+import { can } from "@/helpers/permissionHelper";
+import { formatRupiah } from "@/utils/formatUtils";
 
 const dashboardStore = useDashboardStore();
+const payrollStore = usePayrollStore();
+
+// Finance-only holders (no employee-create) with payroll access get a
+// payroll highlight in place of the generic company-wide task metric.
+const showPayrollHighlight = computed(
+  () => !can("employee-create") && can("payroll-statistics")
+);
+
+// Same gate the Projects page itself uses for its stats, so only roles
+// that can already see project data get the budget overview here too.
+const showProjectBudget = computed(() => can("project-statistic"));
 
 onMounted(() => {
   dashboardStore.fetchStatistics();
+  if (showPayrollHighlight.value) {
+    payrollStore.fetchStatistics();
+  }
 });
 
 // Computed properties for statistics
@@ -25,6 +44,7 @@ const attendance = computed(() => dashboardStore.statistics.attendance);
 const tasks = computed(() => dashboardStore.statistics.tasks);
 const projects = computed(() => dashboardStore.statistics.projects);
 const loading = computed(() => dashboardStore.loading);
+const payrollStats = computed(() => payrollStore.statistics);
 </script>
 
 <template>
@@ -32,8 +52,16 @@ const loading = computed(() => dashboardStore.loading);
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
     <!-- Our Employees Card (spans 2 rows on the left) -->
     <div
-      class="main-card lg:row-span-2 rounded-[20px] border border-[#0B1042] relative overflow-hidden p-4 sm:p-5"
+      class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-4 sm:p-5"
     >
+      <!-- Decorative glow orbs -->
+      <div
+        class="pointer-events-none absolute -top-10 -right-8 w-40 h-40 rounded-full bg-blue-500/20 blur-3xl"
+      ></div>
+      <div
+        class="pointer-events-none absolute -bottom-14 -left-6 w-40 h-40 rounded-full bg-indigo-500/10 blur-3xl"
+      ></div>
+
       <div class="flex flex-col justify-center h-full relative z-10">
         <!-- Trending Badge -->
         <div class="flex items-center gap-2 mb-3">
@@ -62,7 +90,7 @@ const loading = computed(() => dashboardStore.loading);
             </p>
           </div>
           <div
-            class="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-[20px] flex items-center justify-center"
+            class="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-[14px] flex items-center justify-center"
           >
             <UsersIcon class="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
@@ -89,7 +117,7 @@ const loading = computed(() => dashboardStore.loading);
     <!-- Row 1 Stats Cards -->
     <!-- Total Teams -->
     <div
-      class="stats-card bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
+      class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -101,7 +129,7 @@ const loading = computed(() => dashboardStore.loading);
           <p class="text-success text-sm font-medium">+{{ teams.new_teams }} new teams</p>
         </div>
         <div
-          class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-[16px] flex items-center justify-center"
+          class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
           <UsersIcon class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
         </div>
@@ -110,7 +138,7 @@ const loading = computed(() => dashboardStore.loading);
 
     <!-- Attendance Rate -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -124,7 +152,7 @@ const loading = computed(() => dashboardStore.loading);
           </p>
         </div>
         <div
-          class="w-10 h-10 sm:w-12 sm:h-12 bg-green-50 rounded-[16px] flex items-center justify-center"
+          class="w-10 h-10 sm:w-12 sm:h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
         >
           <CalendarCheckIcon class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
         </div>
@@ -135,9 +163,33 @@ const loading = computed(() => dashboardStore.loading);
     <QuickActions />
 
     <!-- Row 2 Stats Cards -->
-    <!-- Tasks Completed (below Total Employees) -->
+    <!-- Payroll highlight for finance-oriented roles, Tasks Completed otherwise -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
+      v-if="showPayrollHighlight"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-brand-dark text-sm font-medium">Payroll This Month</p>
+          <Skeleton v-if="payrollStore.loadingStatistics" width="80px" height="1.75rem" rounded="6px" class="my-2" />
+          <p v-else class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
+            {{ formatRupiah(payrollStats.total_amount) }}
+          </p>
+          <p class="text-gray-500 text-sm font-medium">
+            {{ payrollStats.pending_review || 0 }} pending review
+          </p>
+        </div>
+        <div
+          class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+        >
+          <BanknoteIcon class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-else
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -151,7 +203,7 @@ const loading = computed(() => dashboardStore.loading);
           </p>
         </div>
         <div
-          class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-50 rounded-[16px] flex items-center justify-center"
+          class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
         >
           <CheckSquareIcon class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
         </div>
@@ -160,7 +212,7 @@ const loading = computed(() => dashboardStore.loading);
 
     <!-- Active Projects (below Attendance Rate) -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
     >
       <div class="flex items-center justify-between mb-2">
         <div>
@@ -172,7 +224,7 @@ const loading = computed(() => dashboardStore.loading);
           <p class="text-success text-sm font-medium">+{{ projects.new_projects }} new projects</p>
         </div>
         <div
-          class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-50 rounded-[16px] flex items-center justify-center"
+          class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
         >
           <FolderIcon class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
         </div>
@@ -194,4 +246,6 @@ const loading = computed(() => dashboardStore.loading);
       </div>
     </div>
   </div>
+
+  <ProjectBudgetChart v-if="showProjectBudget" compact class="mb-6" />
 </template>

@@ -1,7 +1,18 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Archive, Save, ArrowLeft, FileUp, X } from "lucide-vue-next";
+import {
+  Archive,
+  Save,
+  ArrowLeft,
+  FileUp,
+  X,
+  FileText,
+  FileImage,
+  FileSpreadsheet,
+  FileArchive,
+  File as FileIcon,
+} from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import BaseInput from "@/components/common/form/Input.vue";
 import TextArea from "@/components/common/form/TextArea.vue";
@@ -137,16 +148,32 @@ const previewFile = computed(() => {
     return archiveStore.currentArchive.document_path;
   return null;
 });
+
+// Mirrors the archive list's file-type presentation for the "replace file" dropzone.
+const fileTypeMeta = (mime) => {
+  if (!mime) return { icon: FileIcon, class: "text-gray-400" };
+  if (mime.startsWith("image/")) return { icon: FileImage, class: "text-emerald-500" };
+  if (mime === "application/pdf") return { icon: FileText, class: "text-red-500" };
+  if (mime.includes("spreadsheet") || mime.includes("excel") || mime === "text/csv")
+    return { icon: FileSpreadsheet, class: "text-green-600" };
+  if (mime.includes("zip") || mime.includes("compressed") || mime.includes("archive"))
+    return { icon: FileArchive, class: "text-amber-500" };
+  if (mime.includes("word") || mime === "application/msword")
+    return { icon: FileText, class: "text-blue-500" };
+  return { icon: FileIcon, class: "text-gray-400" };
+};
+
+const newFileMeta = computed(() => fileTypeMeta(form.value.new_file?.type));
 </script>
 
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-blue-400 transition-all"
           aria-label="Back"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
@@ -197,7 +224,7 @@ const previewFile = computed(() => {
     </div>
 
     <!-- Form -->
-    <div v-else class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+    <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
       <BaseInput
         id="document_name"
         label="File Name *"
@@ -220,7 +247,7 @@ const previewFile = computed(() => {
 
         <div
           v-if="!form.new_file && !form.remove_file"
-          class="flex items-center justify-between gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[16px] mb-3"
+          class="flex items-center justify-between gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] mb-3"
         >
           <a
             :href="archiveStore.currentArchive.document_path"
@@ -238,7 +265,7 @@ const previewFile = computed(() => {
           </button>
         </div>
 
-        <div class="w-full max-h-[400px] overflow-auto border border-[#DCDEDD] rounded-[16px] p-1">
+        <div class="w-full max-h-[400px] overflow-auto border border-[#DCDEDD] rounded-[12px] p-1">
           <img
             v-if="isImage(form.new_file?.type || archiveStore.currentArchive?.type_file)"
             :src="previewFile"
@@ -259,9 +286,9 @@ const previewFile = computed(() => {
           Replace File (Optional)
         </label>
         <label
-          class="flex flex-col items-center justify-center gap-2 w-full py-6 border-2 border-dashed border-[#DCDEDD] rounded-[16px] cursor-pointer hover:border-[#0C51D9] hover:bg-blue-50/30 transition-all"
+          class="flex flex-col items-center justify-center gap-2 w-full py-6 border-2 border-dashed border-[#DCDEDD] rounded-[12px] cursor-pointer hover:border-[#0C51D9] hover:bg-blue-50/30 transition-all"
         >
-          <FileUp class="w-7 h-7 text-gray-400" />
+          <component :is="form.new_file ? newFileMeta.icon : FileUp" class="w-7 h-7" :class="form.new_file ? newFileMeta.class : 'text-gray-400'" />
           <span class="text-sm text-brand-dark font-semibold">
             {{ form.new_file ? form.new_file.name : "Click to choose a new file" }}
           </span>
@@ -274,7 +301,7 @@ const previewFile = computed(() => {
         <button
           type="button"
           @click="router.back()"
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
+          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
         >
           Cancel
         </button>

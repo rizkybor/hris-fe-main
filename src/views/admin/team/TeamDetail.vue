@@ -161,7 +161,7 @@ watch(
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <!-- Team Lead Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
       <!-- Header Section -->
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
@@ -297,7 +297,7 @@ watch(
     </div>
 
     <!-- Team Settings -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -342,7 +342,7 @@ watch(
     </div>
   </div>
 
-  <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6">
     <div class="flex items-center gap-3 mb-6">
       <div
         class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
@@ -373,7 +373,7 @@ watch(
   </div>
 
   <!-- Team Members Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6">
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <div
@@ -409,7 +409,7 @@ watch(
     >
       <!-- Team Member 1 -->
       <div
-        class="relative border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
+        class="relative border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
         v-for="member in team.members"
         :key="member.id"
       >
@@ -476,7 +476,7 @@ watch(
   <!-- Team Activity Row -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <!-- Team Activity -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-gray-50 rounded-[12px] flex items-center justify-center"
@@ -534,7 +534,7 @@ watch(
     </div>
 
     <!-- Team Resources -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -598,7 +598,7 @@ watch(
   </div>
 
   <!-- Danger Zone -->
-  <div class="bg-white border border-[#FEE2E2] rounded-[16px] p-6">
+  <div class="bg-white border border-[#FEE2E2] rounded-[12px] p-6">
     <div class="flex items-center gap-3 mb-6">
       <div
         class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
@@ -665,7 +665,7 @@ watch(
     v-if="showAddMemberModal"
   >
     <div
-      class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
+      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
     >
       <!-- Modal Header -->
       <div class="p-6 border-b border-[#DCDEDD]">
@@ -686,7 +686,7 @@ watch(
           <button
             type="button"
             @click="closeAddMemberModal"
-            class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
           >
             <X class="w-5 h-5 text-gray-600" />
           </button>
@@ -703,7 +703,7 @@ watch(
           </div>
           <input
             type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
             placeholder="Search employees..."
             v-model="searchMember"
           />
@@ -715,7 +715,7 @@ watch(
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Employee Option -->
           <div
-            class="border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
+            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
             v-for="employee in availableEmployees"
             :key="employee.id"
             @click="handleAddMember(employee)"

@@ -40,7 +40,7 @@ watch(() => props.team?.id, async (newId) => {
   <SkeletonStatCards v-if="loadingTeamStatistics" :count="4" class="mb-6" />
   <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -62,14 +62,14 @@ watch(() => props.team?.id, async (newId) => {
           </p>
         </div>
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center"
+          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
           <Users class="w-6 h-6 text-blue-600" />
         </div>
       </div>
     </div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -82,14 +82,14 @@ watch(() => props.team?.id, async (newId) => {
           </p>
         </div>
         <div
-          class="w-12 h-12 bg-green-50 rounded-[16px] flex items-center justify-center"
+          class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
         >
           <Folder class="w-6 h-6 text-green-600" />
         </div>
       </div>
     </div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -105,14 +105,14 @@ watch(() => props.team?.id, async (newId) => {
           </p>
         </div>
         <div
-          class="w-12 h-12 bg-purple-50 rounded-[16px] flex items-center justify-center"
+          class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
         >
           <TrendingUp class="w-6 h-6 text-purple-600" />
         </div>
       </div>
     </div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -123,7 +123,7 @@ watch(() => props.team?.id, async (newId) => {
           <p class="text-success text-base font-medium">This month</p>
         </div>
         <div
-          class="w-12 h-12 bg-orange-50 rounded-[16px] flex items-center justify-center"
+          class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
         >
           <CheckCircle class="w-6 h-6 text-orange-600" />
         </div>

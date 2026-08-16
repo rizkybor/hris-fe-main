@@ -6,8 +6,10 @@ import { useInvoiceStore } from "@/stores/invoice";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useInvoiceStore();
+const alertModal = useAlertModalStore();
 const { invoices, meta, loading } = storeToRefs(store);
 
 const search = ref("");
@@ -37,7 +39,13 @@ const handleMarkPaid = async (invoice) => {
 };
 
 const handleCancel = async (invoice) => {
-  if (!confirm(`Batalkan Invoice "${invoice.invoice_number}"?`)) return;
+  if (
+    !(await alertModal.confirm(`Batalkan Invoice "${invoice.invoice_number}"?`, {
+      type: "warning",
+      confirmText: "Batalkan",
+    }))
+  )
+    return;
   await store.cancelInvoice(invoice.id);
 };
 
@@ -71,7 +79,7 @@ const formatDate = (date) =>
 
 <template>
   <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Receipt class="w-5 h-5 text-[#0C51D9]" />
@@ -92,7 +100,7 @@ const formatDate = (date) =>
       </router-link>
     </div>
 
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="relative mb-4 max-w-sm">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search class="w-4 h-4 text-gray-400" />

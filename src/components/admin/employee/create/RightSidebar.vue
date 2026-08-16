@@ -14,7 +14,7 @@ import {
   <!-- Right Sidebar -->
   <div class="w-80 flex-shrink-0">
     <!-- Tips Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 top-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 top-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-yellow-50 rounded-[12px] flex items-center justify-center"
@@ -100,7 +100,7 @@ import {
     </div>
 
     <!-- Quick Actions Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 mt-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 mt-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
