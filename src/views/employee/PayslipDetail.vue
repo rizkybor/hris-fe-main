@@ -236,21 +236,12 @@ const formatPeriod = (date) => {
                 </span>
               </div>
               <div
-                v-if="payslip.allowances > 0"
+                v-if="payslip.attendance_deduction > 0"
                 class="flex items-center justify-between"
               >
-                <span class="text-sm text-green-700">Allowances</span>
+                <span class="text-sm text-green-700">Attendance Deduction</span>
                 <span class="font-semibold text-green-900">
-                  {{ formatCurrency(payslip.allowances) }}
-                </span>
-              </div>
-              <div
-                v-if="payslip.bonus > 0"
-                class="flex items-center justify-between"
-              >
-                <span class="text-sm text-green-700">Bonus</span>
-                <span class="font-semibold text-green-900">
-                  {{ formatCurrency(payslip.bonus) }}
+                  - {{ formatCurrency(payslip.attendance_deduction) }}
                 </span>
               </div>
               <div
@@ -272,30 +263,39 @@ const formatPeriod = (date) => {
             </div>
             <div class="space-y-3">
               <div
-                v-if="payslip.tax > 0"
+                v-if="payslip.bpjs_kesehatan_employee > 0"
                 class="flex items-center justify-between"
               >
-                <span class="text-sm text-red-700">Tax</span>
+                <span class="text-sm text-red-700">BPJS Kesehatan</span>
                 <span class="font-semibold text-red-900">
-                  {{ formatCurrency(payslip.tax) }}
+                  {{ formatCurrency(payslip.bpjs_kesehatan_employee) }}
                 </span>
               </div>
               <div
-                v-if="payslip.insurance > 0"
+                v-if="payslip.bpjs_jht_employee > 0"
                 class="flex items-center justify-between"
               >
-                <span class="text-sm text-red-700">Insurance</span>
+                <span class="text-sm text-red-700">BPJS JHT</span>
                 <span class="font-semibold text-red-900">
-                  {{ formatCurrency(payslip.insurance) }}
+                  {{ formatCurrency(payslip.bpjs_jht_employee) }}
                 </span>
               </div>
               <div
-                v-if="payslip.other_deductions > 0"
+                v-if="payslip.bpjs_jp_employee > 0"
                 class="flex items-center justify-between"
               >
-                <span class="text-sm text-red-700">Other Deductions</span>
+                <span class="text-sm text-red-700">BPJS JP</span>
                 <span class="font-semibold text-red-900">
-                  {{ formatCurrency(payslip.other_deductions) }}
+                  {{ formatCurrency(payslip.bpjs_jp_employee) }}
+                </span>
+              </div>
+              <div
+                v-if="payslip.pph21 > 0"
+                class="flex items-center justify-between"
+              >
+                <span class="text-sm text-red-700">PPh 21</span>
+                <span class="font-semibold text-red-900">
+                  {{ formatCurrency(payslip.pph21) }}
                 </span>
               </div>
               <div

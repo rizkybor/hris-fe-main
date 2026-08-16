@@ -17,6 +17,7 @@ import {
   FileStack,
   ListChecksIcon,
   History as HistoryIcon,
+  Megaphone as MegaphoneIcon,
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
@@ -598,6 +599,30 @@ const onNavigate = () => emit("navigate");
                 'text-brand-white': $route.name?.startsWith('admin.history'),
               }"
               >History</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.announcements.dashboard' }"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.announcements'),
+            }"
+            v-if="can('announcement-menu')"
+            @click="onNavigate"
+          >
+            <MegaphoneIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.announcements'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('admin.announcements'),
+              }"
+              >Announcements</span
             >
           </RouterLink>
 

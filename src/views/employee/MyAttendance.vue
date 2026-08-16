@@ -39,8 +39,8 @@ const { loading: attendanceLoading, attendances, statistics } = storeToRefs(atte
 const { fetchAttendances, fetchStatistics } = attendanceStore;
 
 const leaveRequestStore = useLeaveRequestStore();
-const { loading: leaveLoading, myLeaveRequests } = storeToRefs(leaveRequestStore);
-const { fetchMyLeaveRequests, createLeaveRequest } = leaveRequestStore;
+const { loading: leaveLoading, myLeaveRequests, myLeaveBalance } = storeToRefs(leaveRequestStore);
+const { fetchMyLeaveRequests, createLeaveRequest, fetchMyLeaveBalance } = leaveRequestStore;
 
 const optionStore = useOptionStore();
 const { leaveTypes } = storeToRefs(optionStore);
@@ -131,10 +131,10 @@ const submitLeaveRequest = async () => {
     showSuccessModal.value = true;
 
     closeLeaveRequestModal();
-    await fetchMyLeaveRequests();
+    await Promise.all([fetchMyLeaveRequests(), fetchMyLeaveBalance()]);
   } catch (error) {
     console.error("Failed to submit leave request:", error);
-    alert("Failed to submit leave request. Please try again.");
+    alert(error?.response?.data?.message || "Failed to submit leave request. Please try again.");
   }
 };
 
@@ -169,7 +169,8 @@ onMounted(async () => {
     fetchAttendances(),
     fetchStatistics(),
     fetchMyLeaveRequests(),
-    fetchLeaveTypes()
+    fetchLeaveTypes(),
+    fetchMyLeaveBalance(),
   ]);
 });
 </script>
@@ -340,6 +341,22 @@ onMounted(async () => {
           >
             <p class="text-brand-light">No attendance records found</p>
           </div>
+        </div>
+      </div>
+
+      <!-- Leave Balance -->
+      <div
+        v-if="myLeaveBalance"
+        class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 flex items-center justify-between"
+      >
+        <div>
+          <p class="text-brand-light text-sm">Sisa Cuti Tahunan {{ myLeaveBalance.year }}</p>
+          <p class="text-brand-dark text-2xl font-bold mt-1">
+            {{ myLeaveBalance.remaining }} <span class="text-base font-medium text-brand-light">/ {{ myLeaveBalance.quota }} hari</span>
+          </p>
+        </div>
+        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
+          <CalendarDays class="w-6 h-6 text-[#0C51D9]" />
         </div>
       </div>
 

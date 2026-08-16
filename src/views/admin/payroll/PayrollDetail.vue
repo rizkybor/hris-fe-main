@@ -113,6 +113,10 @@ const fetchPayrollDetails = async (page = 1) => {
           parseFloat(detail.original_salary) -
           parseFloat(detail.final_salary) || 0,
         net_salary: parseFloat(detail.final_salary) || 0,
+        bpjs_kesehatan_employee: parseFloat(detail.bpjs_kesehatan_employee) || 0,
+        bpjs_jht_employee: parseFloat(detail.bpjs_jht_employee) || 0,
+        bpjs_jp_employee: parseFloat(detail.bpjs_jp_employee) || 0,
+        pph21: parseFloat(detail.pph21) || 0,
         status: payroll.value?.status === "paid" ? "paid" : "pending",
         notes: detail.notes,
         bank_name: detail.employee?.bank_information?.bank_name || "N/A",
@@ -180,6 +184,18 @@ watch(departmentFilter, () => {
 const getAttendancePercentage = (attendedDays, totalDays) => {
   if (!totalDays) return 0;
   return Math.round((attendedDays / totalDays) * 100);
+};
+
+const deductionBreakdown = (emp) => {
+  const attendanceDeduction =
+    emp.deductions - emp.bpjs_kesehatan_employee - emp.bpjs_jht_employee - emp.bpjs_jp_employee - emp.pph21;
+  return [
+    `Potongan Absensi: ${formatRupiah(Math.max(0, attendanceDeduction))}`,
+    `BPJS Kesehatan: ${formatRupiah(emp.bpjs_kesehatan_employee)}`,
+    `BPJS JHT: ${formatRupiah(emp.bpjs_jht_employee)}`,
+    `BPJS JP: ${formatRupiah(emp.bpjs_jp_employee)}`,
+    `PPh 21: ${formatRupiah(emp.pph21)}`,
+  ].join("\n");
 };
 
 const exportExcel = async () => {
@@ -444,7 +460,10 @@ const handleMarkAsPaid = async () => {
                   }}</span>
               </td>
               <td class="py-4 px-4 text-right">
-                <span class="text-red-600 text-sm font-semibold">{{
+                <span
+                  class="text-red-600 text-sm font-semibold cursor-help underline decoration-dotted"
+                  :title="deductionBreakdown(emp)"
+                >{{
                   formatRupiah(emp.deductions)
                   }}</span>
               </td>

@@ -55,6 +55,8 @@ const step2Data = ref({
   start_date: "",
   monthly_salary: "",
   skill_level: "",
+  ptkp_status: "TK/0",
+  annual_leave_quota: "12",
   bank_name: "",
   account_number: "",
   account_holder_name: "",
@@ -113,6 +115,10 @@ const loadEmployeeData = async () => {
       step2Data.value.monthly_salary =
         employee.job_information?.monthly_salary || "";
       step2Data.value.skill_level = employee.job_information?.skill_level || "";
+      step2Data.value.ptkp_status =
+        employee.job_information?.ptkp_status || "TK/0";
+      step2Data.value.annual_leave_quota =
+        employee.job_information?.annual_leave_quota ?? "12";
       step2Data.value.bank_name = employee.bank_information?.bank_name || "";
       step2Data.value.account_number =
         employee.bank_information?.account_number || "";
@@ -186,6 +192,8 @@ const handleSubmit = async () => {
       normalizeRupiah(step2Data.value.monthly_salary)
     );
     formData.append("skill_level", step2Data.value.skill_level);
+    formData.append("ptkp_status", step2Data.value.ptkp_status);
+    formData.append("annual_leave_quota", step2Data.value.annual_leave_quota);
     formData.append("bank_name", step2Data.value.bank_name);
     formData.append("account_number", step2Data.value.account_number);
     formData.append("account_holder_name", step2Data.value.account_holder_name);

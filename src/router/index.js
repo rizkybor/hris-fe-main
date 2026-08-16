@@ -27,6 +27,7 @@ import reportRoutes from './report';
 import settingsRoutes from './settings';
 import documentRoutes from './document';
 import historyRoutes from './history';
+import announcementRoutes from './announcement';
 
 
 
@@ -77,6 +78,7 @@ const router = createRouter({
         ...settingsRoutes,
         ...documentRoutes,
         ...historyRoutes,
+        ...announcementRoutes,
         {
           path: 'my-profile',
           name: 'employee.profile',

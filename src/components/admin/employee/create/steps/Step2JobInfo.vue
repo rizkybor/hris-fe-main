@@ -51,6 +51,17 @@ const optionStore = useOptionStore();
 const { employmentTypes, jobStatuses, workLocations, skillLevels } =
   storeToRefs(optionStore);
 
+const ptkpStatuses = [
+  { value: "TK/0", label: "TK/0 - Tidak Kawin, 0 Tanggungan" },
+  { value: "TK/1", label: "TK/1 - Tidak Kawin, 1 Tanggungan" },
+  { value: "TK/2", label: "TK/2 - Tidak Kawin, 2 Tanggungan" },
+  { value: "TK/3", label: "TK/3 - Tidak Kawin, 3 Tanggungan" },
+  { value: "K/0", label: "K/0 - Kawin, 0 Tanggungan" },
+  { value: "K/1", label: "K/1 - Kawin, 1 Tanggungan" },
+  { value: "K/2", label: "K/2 - Kawin, 2 Tanggungan" },
+  { value: "K/3", label: "K/3 - Kawin, 3 Tanggungan" },
+];
+
 // Team modal
 const teamModal = ref(false);
 const searchTeam = ref("");
@@ -323,6 +334,37 @@ watch(
               required
             >
               <template #icon> Rp </template>
+            </Input>
+          </div>
+
+          <div class="mb-4">
+            <Select
+              id="ptkp_status"
+              name="ptkp_status"
+              v-model="form.ptkp_status"
+              label="Status PTKP (untuk PPh21)"
+              placeholder="Pilih status PTKP"
+              :options="ptkpStatuses"
+              :error="errors?.ptkp_status?.join(', ')"
+            >
+              <template #icon>
+                <DollarSign class="h-5 w-5 text-gray-400" />
+              </template>
+            </Select>
+          </div>
+
+          <div class="mb-4">
+            <Input
+              id="annual_leave_quota"
+              name="annual_leave_quota"
+              type="number"
+              v-model="form.annual_leave_quota"
+              label="Kuota Cuti Tahunan (hari)"
+              placeholder="12"
+            >
+              <template #icon>
+                <Calendar class="h-5 w-5 text-gray-400" />
+              </template>
             </Input>
           </div>
 

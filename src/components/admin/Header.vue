@@ -190,6 +190,10 @@ const titles = {
     title: "History",
     subtitle: "Track and review every activity across the system",
   },
+  "admin.announcements.dashboard": {
+    title: "Announcements",
+    subtitle: "Broadcast information to your team",
+  },
   "admin.settings.dashboard": {
     title: "Settings",
     subtitle: "Manage system configuration and preferences",
