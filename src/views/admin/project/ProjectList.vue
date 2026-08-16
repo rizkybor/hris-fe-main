@@ -1,6 +1,7 @@
 <script setup>
 import CardList from "@/components/admin/project/list/CardList.vue";
 import Statistics from "@/components/admin/project/list/Statistics.vue";
+import BudgetChart from "@/components/admin/project/list/BudgetChart.vue";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
 import { Upload, Plus, Briefcase, Search, SearchX } from "lucide-vue-next";
@@ -61,6 +62,9 @@ const handlePerPageChange = (perPage) => {
 
 <template>
   <Statistics v-if="can('project-statistic')" />
+  <div v-if="can('project-statistic')" class="mb-6">
+    <BudgetChart />
+  </div>
 
   <Alert type="success" :title="success" :show="success" />
 

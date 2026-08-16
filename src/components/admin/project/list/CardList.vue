@@ -2,7 +2,8 @@
 import { formatToClientTimezone } from "@/helpers/format";
 import { can } from "@/helpers/permissionHelper";
 import _ from "lodash";
-import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, User } from "lucide-vue-next";
+import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, User, WalletIcon } from "lucide-vue-next";
+import { formatRupiah } from "@/utils/formatUtils";
 
 const props = defineProps({
   data: {
@@ -126,6 +127,17 @@ const getProgressColor = (progress) => {
           :style="{ width: `${data.progress ?? 0}%` }"
         ></div>
       </div>
+    </div>
+
+    <div
+      v-if="data.budget"
+      class="flex items-center justify-between mb-4 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-[10px]"
+    >
+      <div class="flex items-center gap-2">
+        <WalletIcon class="w-4 h-4 text-indigo-600" />
+        <span class="text-xs text-indigo-700 font-medium">Budget</span>
+      </div>
+      <span class="text-sm text-indigo-900 font-bold">{{ formatRupiah(data.budget) }}</span>
     </div>
 
     <div class="space-y-2 mb-4">

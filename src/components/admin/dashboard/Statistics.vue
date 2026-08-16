@@ -10,6 +10,7 @@ import {
   BanknoteIcon,
 } from "lucide-vue-next";
 import QuickActions from "./QuickActions.vue";
+import ProjectBudgetChart from "@/components/admin/project/list/BudgetChart.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useDashboardStore } from "@/stores/dashboard";
 import { usePayrollStore } from "@/stores/payroll";
@@ -24,6 +25,10 @@ const payrollStore = usePayrollStore();
 const showPayrollHighlight = computed(
   () => !can("employee-create") && can("payroll-statistics")
 );
+
+// Same gate the Projects page itself uses for its stats, so only roles
+// that can already see project data get the budget overview here too.
+const showProjectBudget = computed(() => can("project-statistic"));
 
 onMounted(() => {
   dashboardStore.fetchStatistics();
@@ -241,4 +246,6 @@ const payrollStats = computed(() => payrollStore.statistics);
       </div>
     </div>
   </div>
+
+  <ProjectBudgetChart v-if="showProjectBudget" compact class="mb-6" />
 </template>

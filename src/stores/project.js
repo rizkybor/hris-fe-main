@@ -17,6 +17,8 @@ export const useProjectStore = defineStore("project", {
             in_progress_tasks: 0,
             tasks_this_month: 0,
             completion_rate: 0,
+            total_budget: 0,
+            budget_by_month: [],
         },
         meta: {
             current_page: 1,
