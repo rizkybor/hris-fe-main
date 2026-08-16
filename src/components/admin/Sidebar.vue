@@ -15,6 +15,8 @@ import {
   Building2Icon,
   CircleDollarSign,
   FileStack,
+  ListChecksIcon,
+  History as HistoryIcon,
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
@@ -61,7 +63,7 @@ const onNavigate = () => emit("navigate");
         <div>
           <h1 class="text-brand-dark text-lg font-bold">
             HRIS
-            <span class="text-xs font-medium text-gray-400 ml-1"> v1.0 </span>
+            <span class="text-xs font-medium text-gray-400 ml-1"> v3.3 </span>
           </h1>
           <p class="text-brand-dark text-xs font-normal">
             Jendela Cakra Digital
@@ -249,6 +251,30 @@ const onNavigate = () => emit("navigate");
                   $route.name?.startsWith('employee.payslips'),
               }"
               >My Payslips</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'employee.tasks' }"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('employee.tasks'),
+            }"
+            v-if="can('task-list')"
+            @click="onNavigate"
+          >
+            <ListChecksIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('employee.tasks'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('employee.tasks'),
+              }"
+              >My Tasks</span
             >
           </RouterLink>
 
@@ -548,6 +574,30 @@ const onNavigate = () => emit("navigate");
                 'text-brand-white': $route.name?.startsWith('admin.report'),
               }"
               >Reports</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.history.dashboard' }"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.history'),
+            }"
+            v-if="can('history-menu')"
+            @click="onNavigate"
+          >
+            <HistoryIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.history'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('admin.history'),
+              }"
+              >History</span
             >
           </RouterLink>
 

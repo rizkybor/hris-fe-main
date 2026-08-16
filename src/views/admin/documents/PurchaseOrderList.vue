@@ -5,6 +5,7 @@ import { ShoppingCart, Plus, Download, Ban, Trash2, Search } from "lucide-vue-ne
 import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
+import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 
 const store = usePurchaseOrderStore();
 const { orders, meta, loading } = storeToRefs(store);
@@ -94,8 +95,10 @@ const formatDate = (date) =>
         />
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+      <SkeletonTable v-if="loading" :rows="6" :cols="8" />
+
+      <div v-else class="overflow-x-auto">
+        <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
               <th class="py-3 pr-4 font-semibold">No PO</th>

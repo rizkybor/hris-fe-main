@@ -18,6 +18,8 @@ import {
 import Alert from "@/components/common/Alert.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 
 const router = useRouter();
 const payrollStore = usePayrollStore();
@@ -80,8 +82,9 @@ const viewDetails = (id) => {
               <p class="text-brand-white-90 text-sm font-medium">
                 Total Payroll Amount
               </p>
-              <p class="text-brand-white text-4xl lg:text-5xl font-extrabold leading-none my-4">
-                {{ loading ? "..." : formatRupiahCompact(statistics.total_amount) }}
+              <Skeleton v-if="loading" dark width="120px" height="3rem" rounded="8px" class="my-4" />
+              <p v-else class="text-brand-white text-4xl lg:text-5xl font-extrabold leading-none my-4">
+                {{ formatRupiahCompact(statistics.total_amount) }}
               </p>
               <p class="text-brand-white-80 text-base font-normal">
                 Monthly compensation
@@ -113,8 +116,9 @@ const viewDetails = (id) => {
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-sm font-medium">Employees Paid</p>
-            <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2 truncate">
-              {{ loading ? "..." : statistics.total_payroll }}
+            <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
+            <p v-else class="text-brand-dark text-3xl font-extrabold leading-tight my-2 truncate">
+              {{ statistics.total_payroll }}
             </p>
             <p class="text-success text-sm font-medium">This month</p>
           </div>
@@ -130,8 +134,9 @@ const viewDetails = (id) => {
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-sm font-medium">Pending Payments</p>
-            <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2 truncate">
-              {{ loading ? "..." : statistics.pending_review }}
+            <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
+            <p v-else class="text-brand-dark text-3xl font-extrabold leading-tight my-2 truncate">
+              {{ statistics.pending_review }}
             </p>
             <p class="text-danger text-sm font-medium">Need approval</p>
           </div>
@@ -167,8 +172,9 @@ const viewDetails = (id) => {
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-sm font-medium">Average Salary</p>
-            <p class="text-brand-dark text-2xl lg:text-3xl font-extrabold leading-tight my-2">
-              {{ loading ? "..." : formatRupiahCompact(statistics.average_salary) }}
+            <Skeleton v-if="loading" width="80px" height="1.75rem" rounded="6px" class="my-2" />
+            <p v-else class="text-brand-dark text-2xl lg:text-3xl font-extrabold leading-tight my-2">
+              {{ formatRupiahCompact(statistics.average_salary) }}
             </p>
             <p class="text-success text-sm font-medium">Per employee</p>
           </div>
@@ -184,8 +190,9 @@ const viewDetails = (id) => {
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-sm font-medium">Finalized</p>
-            <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2 truncate">
-              {{ loading ? "..." : statistics.finalized }}
+            <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
+            <p v-else class="text-brand-dark text-3xl font-extrabold leading-tight my-2 truncate">
+              {{ statistics.finalized }}
             </p>
             <p class="text-purple-600 text-sm font-medium">This month</p>
           </div>
@@ -203,7 +210,9 @@ const viewDetails = (id) => {
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-brand-dark text-lg font-bold">Monthly Payroll Periods</h3>
       </div>
-      <div class="space-y-4">
+      <SkeletonList v-if="loading" :rows="3" />
+
+      <div v-else class="space-y-4">
         <div v-for="payroll in payrolls" :key="payroll.id"
           class="flex items-center gap-4 p-4 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300">
           <div class="w-16 h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden">

@@ -1,17 +1,19 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import Input from "@/components/common/form/Input.vue";
-import { User as UserIcon, Mail, Lock, Upload } from "lucide-vue-next";
+import Alert from "@/components/common/Alert.vue";
+import { User as UserIcon, Mail, Lock, Upload, ArrowLeft } from "lucide-vue-next";
 
+const router = useRouter();
 const authStore = useAuthStore();
 const { user, loading, error, success } = storeToRefs(authStore);
 const { updateProfile, checkAuth } = authStore;
 
 const form = ref({
   name: "",
-  email: "",
   password: "",
   password_confirmation: "",
   profile_photo: null,
@@ -19,25 +21,30 @@ const form = ref({
 });
 
 const photoInput = ref(null);
+let tempPreviewURL = null;
 
 const init = async () => {
   if (!user.value) {
     await checkAuth();
   }
   form.value.name = user.value?.name || "";
-  form.value.email = user.value?.email || "";
 
   form.value.profile_photo_url = user.value?.profile_photo || "";
   form.value.profile_photo = null;
 };
 
 onMounted(init);
+onBeforeUnmount(() => {
+  if (tempPreviewURL) URL.revokeObjectURL(tempPreviewURL);
+});
 
 const handlePhotoSelect = (e) => {
   const file = e.target.files?.[0];
   if (file) {
     form.value.profile_photo = file;
-    form.value.profile_photo_url = URL.createObjectURL(file);
+    if (tempPreviewURL) URL.revokeObjectURL(tempPreviewURL);
+    tempPreviewURL = URL.createObjectURL(file);
+    form.value.profile_photo_url = tempPreviewURL;
   }
 };
 
@@ -50,6 +57,14 @@ const handleSubmit = async () => {
   <div class="p-5">
     <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 mb-6">
       <div class="flex items-center gap-3 mb-6">
+        <button
+          type="button"
+          @click="router.back()"
+          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          aria-label="Back"
+        >
+          <ArrowLeft class="w-5 h-5 text-gray-600" />
+        </button>
         <div
           class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
@@ -61,6 +76,27 @@ const handleSubmit = async () => {
             Update your personal information
           </p>
         </div>
+      </div>
+
+      <div class="mb-6">
+        <Transition name="fade">
+          <Alert
+            v-if="typeof error === 'string' && error"
+            type="danger"
+            :title="error"
+            message=""
+            :show="!!error"
+          />
+        </Transition>
+        <Transition name="fade">
+          <Alert
+            v-if="success"
+            type="success"
+            :title="success"
+            message=""
+            :show="!!success"
+          />
+        </Transition>
       </div>
 
       <form class="space-y-6" @submit.prevent="handleSubmit">
@@ -83,20 +119,23 @@ const handleSubmit = async () => {
           </div>
 
           <div class="mb-4">
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              v-model="form.email"
-              label="Email Address"
-              placeholder="employee@company.com"
-              :error="error?.email?.join(', ')"
-              required
-            >
-              <template #icon>
+            <label class="block text-brand-dark text-base font-semibold mb-1">
+              Email Address
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Mail class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
+              </div>
+              <input
+                :value="user?.email"
+                type="email"
+                readonly
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] bg-gray-50 text-gray-500 cursor-not-allowed"
+              />
+            </div>
+            <p class="text-brand-light text-xs mt-1">
+              Email cannot be changed. Contact HR if this needs to be updated.
+            </p>
           </div>
         </div>
 
@@ -151,11 +190,11 @@ const handleSubmit = async () => {
                     <img
                       :src="form.profile_photo_url"
                       alt="Profile Photo"
-                      class="w-16 h-16 object-cover rounded-full"
+                      class="w-32 h-32 object-cover rounded-full"
                       v-if="form.profile_photo_url"
                     />
                     <div
-                      class="w-16 h-16 rounded-full bg-gray-100"
+                      class="w-32 h-32 rounded-full bg-gray-100"
                       v-else
                     ></div>
                   </div>
@@ -189,22 +228,36 @@ const handleSubmit = async () => {
 
         <div class="flex items-center gap-4">
           <button
+            type="button"
+            @click="router.back()"
+            class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
+          >
+            Cancel
+          </button>
+          <button
             type="submit"
             :disabled="loading"
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3"
+            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 disabled:opacity-50"
           >
             <span class="text-brand-white text-base font-semibold">{{
               loading ? "Saving..." : "Save Changes"
             }}</span>
           </button>
-          <span v-if="success" class="text-green-600 text-sm">{{
-            success
-          }}</span>
-          <span v-if="typeof error === 'string'" class="text-red-600 text-sm">{{
-            error
-          }}</span>
         </div>
       </form>
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>

@@ -9,6 +9,7 @@ import { debounce } from "lodash";
 import { can } from "@/helpers/permissionHelper";
 import { Plus, Briefcase, Search, SearchX } from "lucide-vue-next";
 import { useVendorsStore } from "@/stores/vendor";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const vendorsStore = useVendorsStore();
 const { vendorsData, success, loading } = storeToRefs(vendorsStore);
@@ -88,10 +89,10 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
       </div>
 
       <!-- Add Vendor Button -->
-      <div class="flex items-center gap-4" v-if="can('project-create')">
+      <div class="flex items-center gap-4" v-if="can('vendors-create')">
         <RouterLink
           class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
-          :to="{ name: 'admin.projects.create' }"
+          :to="{ name: 'admin.vendors.create' }"
         >
           <Plus class="w-4 h-4 text-white" />
           <span class="text-brand-white text-sm font-semibold">Add Vendor</span>
@@ -101,7 +102,7 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
 
     <!-- Search & Filter -->
     <div class="mb-6">
-      <div class="flex items-center gap-4">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
         <div class="relative flex-1">
           <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Search class="h-5 w-5 text-gray-400" />
@@ -114,7 +115,7 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
           />
         </div>
         <select
-          class="px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+          class="w-full sm:w-auto px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
           v-model="filters.status"
         >
           <option value="">All Status</option>
@@ -126,8 +127,11 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
       </div>
     </div>
 
+    <!-- Loading -->
+    <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
+
     <!-- Vendors Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <CardList v-for="vendor in vendorsList" :key="vendor.id" :data="vendor" />
     </div>
 
@@ -140,11 +144,6 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
       <p class="text-brand-light text-sm">
         Try adjusting your search terms or filters
       </p>
-    </div>
-
-    <!-- Loading -->
-    <div v-if="loading" class="text-center py-12">
-      <p class="text-gray-500 font-semibold">Loading vendors...</p>
     </div>
   </div>
 

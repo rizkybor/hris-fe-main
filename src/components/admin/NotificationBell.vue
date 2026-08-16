@@ -5,6 +5,7 @@ import { useRouter } from "vue-router";
 import { BellIcon, CheckCheckIcon } from "lucide-vue-next";
 import { useNotificationStore } from "@/stores/notification";
 import { getTimeAgo } from "@/utils/dateUtils";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
 const notificationStore = useNotificationStore();
 const { notifications, unreadCount, loading } = storeToRefs(notificationStore);
@@ -75,7 +76,15 @@ onMounted(() => {
         </button>
       </div>
 
-      <div v-if="loading" class="p-4 text-center text-sm text-gray-400">Loading...</div>
+      <div v-if="loading" class="p-4 space-y-3">
+        <div v-for="i in 3" :key="i" class="flex items-center gap-3">
+          <Skeleton width="36px" height="36px" rounded="10px" />
+          <div class="flex-1 space-y-2">
+            <Skeleton width="80%" height="12px" />
+            <Skeleton width="40%" height="10px" />
+          </div>
+        </div>
+      </div>
 
       <div v-else-if="notifications.length === 0" class="p-6 text-center text-sm text-gray-400">
         No notifications yet

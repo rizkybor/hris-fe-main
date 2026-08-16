@@ -9,6 +9,7 @@ import {
   StarIcon,
 } from "lucide-vue-next";
 import QuickActions from "./QuickActions.vue";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useDashboardStore } from "@/stores/dashboard";
 
 const dashboardStore = useDashboardStore();
@@ -49,10 +50,12 @@ const loading = computed(() => dashboardStore.loading);
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
           <div>
             <p class="text-brand-white-90 text-sm font-medium">Our Employees</p>
+            <Skeleton v-if="loading" dark width="100px" height="2.5rem" rounded="8px" class="my-4" />
             <p
+              v-else
               class="text-brand-white text-3xl sm:text-5xl font-extrabold leading-none my-4"
             >
-              {{ loading ? '...' : employees.total.toLocaleString() }}
+              {{ employees.total.toLocaleString() }}
             </p>
             <p class="text-brand-white-80 text-base font-normal">
               Active team members
@@ -91,8 +94,9 @@ const loading = computed(() => dashboardStore.loading);
       <div class="flex items-center justify-between">
         <div>
           <p class="text-brand-dark text-sm font-medium">Total Teams</p>
-          <p class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
-            {{ loading ? '...' : teams.total }}
+          <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
+          <p v-else class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
+            {{ teams.total }}
           </p>
           <p class="text-success text-sm font-medium">+{{ teams.new_teams }} new teams</p>
         </div>
@@ -111,8 +115,9 @@ const loading = computed(() => dashboardStore.loading);
       <div class="flex items-center justify-between">
         <div>
           <p class="text-brand-dark text-sm font-medium">Attendance Rate</p>
-          <p class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
-            {{ loading ? '...' : attendance.rate }}%
+          <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
+          <p v-else class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
+            {{ attendance.rate }}%
           </p>
           <p :class="attendance.change >= 0 ? 'text-success' : 'text-danger'" class="text-sm font-medium">
             {{ attendance.change >= 0 ? '+' : '' }}{{ attendance.change }}% from last week
@@ -137,8 +142,9 @@ const loading = computed(() => dashboardStore.loading);
       <div class="flex items-center justify-between">
         <div>
           <p class="text-brand-dark text-sm font-medium">Tasks Completed</p>
-          <p class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
-            {{ loading ? '...' : tasks.completed }}
+          <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
+          <p v-else class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
+            {{ tasks.completed }}
           </p>
           <p :class="tasks.change >= 0 ? 'text-success' : 'text-danger'" class="text-sm font-medium">
             {{ tasks.change >= 0 ? '+' : '' }}{{ tasks.change }} from yesterday
@@ -159,8 +165,9 @@ const loading = computed(() => dashboardStore.loading);
       <div class="flex items-center justify-between mb-2">
         <div>
           <p class="text-brand-dark text-sm font-medium">Active Projects</p>
-          <p class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
-            {{ loading ? '...' : projects.active }}
+          <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
+          <p v-else class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
+            {{ projects.active }}
           </p>
           <p class="text-success text-sm font-medium">+{{ projects.new_projects }} new projects</p>
         </div>
@@ -173,8 +180,9 @@ const loading = computed(() => dashboardStore.loading);
       <div class="pt-2 border-t border-[#F1F1F1]">
         <div class="flex items-center justify-between text-xs mb-1">
           <span class="text-brand-light">Task Completion</span>
-          <span class="text-brand-dark font-semibold">
-            {{ loading ? '...' : `${projects.completion_rate ?? 0}%` }}
+          <Skeleton v-if="loading" width="28px" height="12px" rounded="4px" />
+          <span v-else class="text-brand-dark font-semibold">
+            {{ `${projects.completion_rate ?? 0}%` }}
           </span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-1.5">

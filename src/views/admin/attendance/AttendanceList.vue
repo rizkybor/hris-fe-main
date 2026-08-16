@@ -27,6 +27,7 @@ import {
 } from "@/utils/dateUtils.js";
 import { capitalize } from "@/utils/formatUtils.js";
 import { can } from "@/helpers/permissionHelper";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 
 const attendanceStore = useAttendanceStore();
 const leaveRequestStore = useLeaveRequestStore();
@@ -413,9 +414,7 @@ onMounted(async () => {
           </a>
         </div>
 
-        <div v-if="loadingLeaveRequests" class="text-center py-12">
-          <p class="text-gray-500 text-lg font-medium">Loading...</p>
-        </div>
+        <SkeletonList v-if="loadingLeaveRequests" :rows="3" />
         <div v-else class="space-y-4">
           <div
             v-for="request in leaveRequests"
@@ -521,9 +520,7 @@ onMounted(async () => {
           </RouterLink>
         </div>
 
-        <div v-if="loadingAttendances" class="text-center py-12">
-          <p class="text-gray-500 text-lg font-medium">Loading...</p>
-        </div>
+        <SkeletonList v-if="loadingAttendances" :rows="3" />
         <div v-else class="space-y-4">
           <div
             v-for="attendance in todayAttendances"

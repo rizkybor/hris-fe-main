@@ -10,6 +10,7 @@ import {
 } from "lucide-vue-next";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
 const projectStore = useProjectStore();
 const { loadingStatistics } = storeToRefs(projectStore);
@@ -103,11 +104,13 @@ const chartSeries = computed(() => [completionRate.value]);
         </div>
         <!-- Value and status at bottom -->
         <div class="mt-auto">
+          <Skeleton v-if="loadingStatistics" width="50px" height="1.75rem" rounded="6px" class="mb-1" />
           <p
+            v-else
             id="totalProjects"
             class="text-brand-dark text-3xl font-extrabold leading-tight mb-1"
           >
-            {{ loadingStatistics ? "-" : total }}
+            {{ total }}
           </p>
           <p class="text-success text-base font-medium">All projects</p>
         </div>
@@ -128,11 +131,13 @@ const chartSeries = computed(() => [completionRate.value]);
         </div>
         <!-- Value and status at bottom -->
         <div class="mt-auto">
+          <Skeleton v-if="loadingStatistics" width="50px" height="1.75rem" rounded="6px" class="mb-1" />
           <p
+            v-else
             id="activeProjects"
             class="text-brand-dark text-3xl font-extrabold leading-tight mb-1"
           >
-            {{ loadingStatistics ? "-" : active }}
+            {{ active }}
           </p>
           <p class="text-success text-base font-medium">In progress</p>
         </div>

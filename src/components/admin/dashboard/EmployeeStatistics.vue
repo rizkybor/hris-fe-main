@@ -12,6 +12,7 @@ import {
 } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import QuickActions from "./QuickActions.vue";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useAuthStore } from "@/stores/auth";
 import { axiosInstance } from "@/plugins/axios";
 import { useTaskStore } from "@/stores/task";
@@ -198,10 +199,12 @@ onMounted(() => {
               <p class="text-brand-white-90 text-sm font-medium">
                 Attendance Rate
               </p>
+              <Skeleton v-if="loading" dark width="100px" height="2.5rem" rounded="8px" class="my-4" />
               <p
+                v-else
                 class="text-brand-white text-3xl sm:text-5xl font-extrabold leading-none my-4"
               >
-                {{ loading ? "..." : statistics.attendance_rate }}%
+                {{ statistics.attendance_rate }}%
               </p>
               <p class="text-brand-white-80 text-base font-normal">
                 {{ statistics.present_days }} of {{ currentDayOfMonth }} days
@@ -242,12 +245,12 @@ onMounted(() => {
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Hours Worked</p>
+            <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
             <p
+              v-else
               class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
             >
-              {{
-                loading ? "..." : (statistics.total_hours_worked ?? "-") + "h"
-              }}
+              {{ (statistics.total_hours_worked ?? "-") + "h" }}
             </p>
             <p class="text-success text-sm font-medium">This month</p>
           </div>
@@ -266,10 +269,12 @@ onMounted(() => {
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Leave Balance</p>
+            <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
             <p
+              v-else
               class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
             >
-              {{ loading ? "..." : statistics.leave_balance ?? "-" }}
+              {{ statistics.leave_balance ?? "-" }}
             </p>
             <p class="text-gray-500 text-sm font-medium">Days remaining</p>
           </div>
@@ -292,10 +297,12 @@ onMounted(() => {
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Tasks Done</p>
+            <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
             <p
+              v-else
               class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
             >
-              {{ loading ? "..." : statistics.tasks_done || 0 }}
+              {{ statistics.tasks_done || 0 }}
             </p>
             <p class="text-success text-sm font-medium">
               +{{ statistics.tasks_done_yesterday || 0 }} yesterday
@@ -316,10 +323,12 @@ onMounted(() => {
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Active Projects</p>
+            <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
             <p
+              v-else
               class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
             >
-              {{ loading ? "..." : statistics.assigned_active_projects || 0 }}
+              {{ statistics.assigned_active_projects || 0 }}
             </p>
             <p class="text-gray-500 text-sm font-medium">
               Assigned to you • Leading:
@@ -352,7 +361,11 @@ onMounted(() => {
         </button>
       </div>
 
-      <div v-if="upcomingTasks.length === 0" class="text-center py-6 text-sm text-gray-400">
+      <div v-if="taskStore.loading" class="space-y-3">
+        <Skeleton v-for="i in 3" :key="i" height="72px" rounded="12px" />
+      </div>
+
+      <div v-else-if="upcomingTasks.length === 0" class="text-center py-6 text-sm text-gray-400">
         No upcoming tasks
       </div>
 
@@ -406,7 +419,17 @@ onMounted(() => {
         </button>
       </div>
 
-      <div v-if="recentActivities.length === 0" class="text-center py-6 text-sm text-gray-400">
+      <div v-if="notificationStore.loading" class="space-y-4">
+        <div v-for="i in 4" :key="i" class="flex items-center gap-3">
+          <Skeleton width="40px" height="40px" rounded="12px" />
+          <div class="flex-1 space-y-2">
+            <Skeleton width="70%" height="12px" />
+            <Skeleton width="40%" height="10px" />
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="recentActivities.length === 0" class="text-center py-6 text-sm text-gray-400">
         No recent activity
       </div>
 

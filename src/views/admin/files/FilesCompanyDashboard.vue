@@ -17,6 +17,8 @@ import {
   X,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 
 const archiveStore = useFilesCompanyStore();
@@ -128,10 +130,12 @@ const handleDelete = async () => {
               <p class="text-brand-white-90 text-sm font-medium">
                 Total Archived Files
               </p>
+              <Skeleton v-if="loading" dark width="90px" height="3rem" rounded="8px" class="my-4" />
               <p
+                v-else
                 class="text-brand-white text-4xl lg:text-5xl font-extrabold leading-none my-4"
               >
-                {{ loading ? "..." : statistics.total_archives }}
+                {{ statistics.total_archives }}
               </p>
               <p class="text-brand-white-80 text-base font-normal">
                 Company document storage
@@ -224,7 +228,9 @@ const handleDelete = async () => {
       </div>
 
       <!-- Archive items -->
-      <div class="space-y-4">
+      <SkeletonList v-if="loading" :rows="4" />
+
+      <div v-else class="space-y-4">
         <div
           v-for="archive in archives"
           :key="archive.id"

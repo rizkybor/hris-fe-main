@@ -11,6 +11,7 @@ import { watch } from "vue";
 import { debounce } from "lodash";
 import { can } from "@/helpers/permissionHelper";
 import Alert from "@/components/common/Alert.vue";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const projectStore = useProjectStore();
 const { projects, meta, loading, success } = storeToRefs(projectStore);
@@ -100,7 +101,7 @@ const handlePerPageChange = (perPage) => {
 
     <!-- Search and Filter Section -->
     <div class="mb-6">
-      <div class="flex items-center gap-4">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
         <div class="relative flex-1">
           <div
             class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
@@ -115,7 +116,7 @@ const handlePerPageChange = (perPage) => {
           />
         </div>
         <select
-          class="px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+          class="w-full sm:w-auto px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
         >
           <option value="">All Status</option>
           <option value="active">Active</option>
@@ -126,11 +127,13 @@ const handlePerPageChange = (perPage) => {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
+
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <CardList v-for="project in projects" :key="project.id" :data="project" />
     </div>
 
-    <div class="text-center py-12" v-if="projects.length === 0">
+    <div class="text-center py-12" v-if="!loading && projects.length === 0">
       <SearchX class="w-16 h-16 text-gray-400 mx-auto mb-4" />
       <h4 class="text-brand-dark text-lg font-semibold mb-2">
         No projects found

@@ -16,6 +16,7 @@ import {
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useRoleStore } from "@/stores/role";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const SYSTEM_ROLES = ["manager", "hr", "finance", "employee"];
 const ROLE_COLORS = {
@@ -216,7 +217,9 @@ async function handleDelete() {
       <Alert v-if="success" type="success" :title="success" :show="!!success" />
     </Transition>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <SkeletonCardGrid v-if="loading" :count="4" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
+
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div
         v-for="role in roles"
         :key="role.id"
