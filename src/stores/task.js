@@ -12,13 +12,13 @@ export const useTaskStore = defineStore("task", {
     }),
 
     actions: {
-        async fetchMyTasks(limit = 5) {
+        async fetchMyTasks(limit = 5, includeCompleted = false) {
             this.loading = true;
             this.error = null;
 
             try {
                 const response = await axiosInstance.get('my-tasks', {
-                    params: { limit }
+                    params: { limit, include_completed: includeCompleted }
                 });
 
                 this.myTasks = response.data.data;

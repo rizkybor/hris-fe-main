@@ -10,6 +10,7 @@ const { myTasks, loading } = storeToRefs(taskStore);
 
 const searchQuery = ref("");
 const statusFilter = ref("");
+const projectFilter = ref("");
 
 const taskStatusLabels = {
   todo: "To Do",
@@ -34,10 +35,22 @@ const tasks = computed(() =>
     statusLabel: taskStatusLabels[task.status] ?? task.status,
     statusClass: taskStatusClasses[task.status] ?? "bg-gray-100 text-gray-600",
     dueDate: task.due_date ? formatDate(task.due_date) : "No due date",
-    project: task.project?.name ?? "N/A",
+    projectId: task.project?.id ?? null,
+    project: task.project?.name ?? "No Project",
     priority: task.priority,
   }))
 );
+
+const projects = computed(() => {
+  const map = new Map();
+  tasks.value.forEach((task) => {
+    const key = task.projectId ?? "none";
+    if (!map.has(key)) {
+      map.set(key, { id: task.projectId, name: task.project });
+    }
+  });
+  return Array.from(map.values());
+});
 
 const filteredTasks = computed(() => {
   return tasks.value.filter((task) => {
@@ -45,12 +58,27 @@ const filteredTasks = computed(() => {
       ? task.title?.toLowerCase().includes(searchQuery.value.toLowerCase())
       : true;
     const matchesStatus = statusFilter.value ? task.status === statusFilter.value : true;
-    return matchesSearch && matchesStatus;
+    const matchesProject = projectFilter.value
+      ? String(task.projectId) === projectFilter.value
+      : true;
+    return matchesSearch && matchesStatus && matchesProject;
   });
 });
 
+const groupedTasks = computed(() => {
+  const groups = new Map();
+  filteredTasks.value.forEach((task) => {
+    const key = task.projectId ?? "none";
+    if (!groups.has(key)) {
+      groups.set(key, { projectName: task.project, tasks: [] });
+    }
+    groups.get(key).tasks.push(task);
+  });
+  return Array.from(groups.values());
+});
+
 onMounted(() => {
-  taskStore.fetchMyTasks(100);
+  taskStore.fetchMyTasks(200, true);
 });
 </script>
 
@@ -66,7 +94,7 @@ onMounted(() => {
           </div>
           <div>
             <h3 class="text-brand-dark text-lg font-bold">My Tasks</h3>
-            <p class="text-brand-light text-sm">All tasks assigned to you</p>
+            <p class="text-brand-light text-sm">All tasks assigned to you, grouped by project</p>
           </div>
         </div>
 
@@ -84,8 +112,18 @@ onMounted(() => {
           </div>
 
           <select
+            v-model="projectFilter"
+            class="w-full sm:w-auto px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
+          >
+            <option value="">All Projects</option>
+            <option v-for="p in projects" :key="p.id ?? 'none'" :value="String(p.id)">
+              {{ p.name }}
+            </option>
+          </select>
+
+          <select
             v-model="statusFilter"
-            class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
+            class="w-full sm:w-auto px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
           >
             <option value="">All Status</option>
             <option value="todo">To Do</option>
@@ -97,38 +135,49 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
-      <div v-if="loading" class="text-center py-12 text-gray-500">Loading tasks...</div>
+    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 text-center py-12 text-gray-500">
+      Loading tasks...
+    </div>
 
-      <div v-else-if="filteredTasks.length === 0" class="text-center py-12 text-gray-500 bg-gray-50 rounded-[16px] border border-dashed border-[#DCDEDD]">
-        <ListChecks class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p class="text-lg font-semibold">No tasks found</p>
-        <p class="text-sm text-gray-400">You have no tasks matching this filter</p>
-      </div>
+    <div
+      v-else-if="filteredTasks.length === 0"
+      class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 text-center py-12 text-gray-500"
+    >
+      <ListChecks class="w-10 h-10 text-gray-300 mx-auto mb-3" />
+      <p class="text-lg font-semibold">No tasks found</p>
+      <p class="text-sm text-gray-400">You have no tasks matching this filter</p>
+    </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div
-          v-for="task in filteredTasks"
-          :key="task.id"
-          class="border border-[#DCDEDD] rounded-[16px] p-4 hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
-        >
-          <div class="flex items-start justify-between mb-2">
-            <h4 class="text-brand-dark text-base font-semibold">{{ task.title }}</h4>
-            <span
-              :class="task.statusClass"
-              class="px-2 py-1 rounded-md text-xs font-semibold flex-shrink-0"
-              >{{ task.statusLabel }}</span
-            >
-          </div>
-          <p class="text-brand-light text-sm mb-3 line-clamp-2">{{ task.description }}</p>
-          <div class="flex items-center gap-4 text-xs text-gray-600">
-            <div class="flex items-center gap-1">
+    <div v-else class="space-y-6">
+      <div
+        v-for="group in groupedTasks"
+        :key="group.projectName"
+        class="bg-white border border-[#DCDEDD] rounded-[20px] p-5"
+      >
+        <div class="flex items-center gap-2 mb-4">
+          <Folder class="w-5 h-5 text-[#0C51D9]" />
+          <h4 class="text-brand-dark text-base font-bold">{{ group.projectName }}</h4>
+          <span class="text-xs text-gray-400 font-medium">({{ group.tasks.length }})</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            v-for="task in group.tasks"
+            :key="task.id"
+            class="border border-[#DCDEDD] rounded-[16px] p-4 hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+          >
+            <div class="flex items-start justify-between mb-2">
+              <h4 class="text-brand-dark text-base font-semibold">{{ task.title }}</h4>
+              <span
+                :class="task.statusClass"
+                class="px-2 py-1 rounded-md text-xs font-semibold flex-shrink-0"
+                >{{ task.statusLabel }}</span
+              >
+            </div>
+            <p class="text-brand-light text-sm mb-3 line-clamp-2">{{ task.description }}</p>
+            <div class="flex items-center gap-1 text-xs text-gray-600">
               <Calendar class="w-3 h-3" />
               <span>{{ task.dueDate }}</span>
-            </div>
-            <div class="flex items-center gap-1">
-              <Folder class="w-3 h-3" />
-              <span>{{ task.project }}</span>
             </div>
           </div>
         </div>
