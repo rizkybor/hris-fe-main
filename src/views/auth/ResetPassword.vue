@@ -23,6 +23,8 @@ const form = ref({
 const errorMessage = ref<string | null>(null);
 
 onMounted(() => {
+  authStore.error = null;
+  authStore.success = null;
   form.value.email = String(route.query.email ?? "");
   form.value.token = String(route.query.token ?? "");
 });

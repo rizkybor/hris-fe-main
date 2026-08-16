@@ -50,7 +50,7 @@ const links = [
 
 <template>
   <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <div
           class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -82,7 +82,7 @@ const links = [
         <router-link
           v-if="!link.permission || can(link.permission)"
           :to="link.to"
-          class="bg-white border border-[#DCDEDD] rounded-[16px] p-5 flex items-start gap-4 hover:border-[#0C51D9] hover:shadow-sm transition-all"
+          class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 flex items-start gap-4 hover:border-[#0C51D9] hover:shadow-sm transition-all"
         >
           <div
             class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0"
@@ -102,7 +102,7 @@ const links = [
         type="button"
         @click="handleBackup"
         :disabled="backupLoading"
-        class="bg-white border border-[#DCDEDD] rounded-[16px] p-5 flex items-start gap-4 hover:border-[#0C51D9] hover:shadow-sm transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed"
+        class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 flex items-start gap-4 hover:border-[#0C51D9] hover:shadow-sm transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <div
           class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center shrink-0"

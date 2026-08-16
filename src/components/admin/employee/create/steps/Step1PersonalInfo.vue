@@ -56,7 +56,7 @@ const deletePhoto = () => {
   <div class="flex gap-6 items-start">
     <!-- Profile Photo Card -->
     <div class="w-80">
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -123,7 +123,7 @@ const deletePhoto = () => {
     <!-- Form Section -->
     <div class="flex-1">
       <!-- Account Credentials Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 mb-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -227,7 +227,7 @@ const deletePhoto = () => {
       </div>
 
       <!-- Personal Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -312,7 +312,7 @@ const deletePhoto = () => {
             <div class="flex gap-4">
               <!-- Male Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-3">
                   <div
@@ -345,7 +345,7 @@ const deletePhoto = () => {
 
               <!-- Female Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-3">
                   <div

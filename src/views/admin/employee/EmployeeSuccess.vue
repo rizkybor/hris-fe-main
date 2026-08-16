@@ -18,7 +18,7 @@ const addAnotherEmployee = () => {
   <main class="flex items-center justify-center py-12 min-h-[calc(100vh-80px)]">
       <div class="max-w-md mx-auto text-center px-4">
         <!-- Success Card -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-8 shadow-sm">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-8 shadow-sm">
           <!-- Success Icon -->
           <div class="flex justify-center mb-6">
             <div class="w-32 h-32 flex items-center justify-center">
@@ -84,7 +84,7 @@ const addAnotherEmployee = () => {
 
         <!-- Quick Stats -->
         <div class="mt-6 grid grid-cols-2 gap-4">
-          <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-4">
+          <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 bg-blue-50 rounded-[12px] flex items-center justify-center">
                 <Users class="w-5 h-5 text-blue-600" />
@@ -95,7 +95,7 @@ const addAnotherEmployee = () => {
               </div>
             </div>
           </div>
-          <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-4">
+          <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 bg-green-50 rounded-[12px] flex items-center justify-center">
                 <UserPlus class="w-5 h-5 text-green-600" />

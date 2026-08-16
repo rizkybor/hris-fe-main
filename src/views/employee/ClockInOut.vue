@@ -16,9 +16,11 @@ import {
   UserCheck,
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
+import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
 
 const attendanceStore = useAttendanceStore();
+const alertModal = useAlertModalStore();
 const { loading, todayAttendance } = storeToRefs(attendanceStore);
 const { checkIn, checkOut, fetchTodayAttendance } = attendanceStore;
 
@@ -230,7 +232,9 @@ const startCamera = async () => {
     video.srcObject = stream;
   } catch (error) {
     console.error("Error accessing camera:", error);
-    alert("Unable to access camera. Please check permissions and try again.");
+    await alertModal.alert("Unable to access camera. Please check permissions and try again.", {
+      type: "danger",
+    });
   }
 };
 
@@ -263,7 +267,7 @@ const retakePhoto = () => {
 // Attendance actions
 const handleCheckIn = async () => {
   if (!currentLocation.value) {
-    alert("Please get your current location first!");
+    await alertModal.alert("Please get your current location first!", { type: "warning" });
     return;
   }
 
@@ -273,18 +277,18 @@ const handleCheckIn = async () => {
       check_in_long: currentLocation.value.longitude,
     });
 
-    alert("Successfully clocked in!");
+    await alertModal.alert("Successfully clocked in!", { type: "success" });
     resetForNextAction();
     await fetchTodayAttendance();
   } catch (error) {
     console.error("Check in failed:", error);
-    alert("Failed to check in. Please try again.");
+    await alertModal.alert("Failed to check in. Please try again.", { type: "danger" });
   }
 };
 
 const handleCheckOut = async () => {
   if (!currentLocation.value) {
-    alert("Please get your current location first!");
+    await alertModal.alert("Please get your current location first!", { type: "warning" });
     return;
   }
 
@@ -294,12 +298,12 @@ const handleCheckOut = async () => {
       check_out_long: currentLocation.value.longitude,
     });
 
-    alert("Successfully clocked out!");
+    await alertModal.alert("Successfully clocked out!", { type: "success" });
     resetForNextAction();
     await fetchTodayAttendance();
   } catch (error) {
     console.error("Check out failed:", error);
-    alert("Failed to check out. Please try again.");
+    await alertModal.alert("Failed to check out. Please try again.", { type: "danger" });
   }
 };
 
@@ -337,12 +341,12 @@ onUnmounted(() => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Clock Section -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-8 text-center"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-8 text-center"
       >
         <div class="mb-6">
           <div class="flex items-center justify-center gap-3 mb-4">
             <div
-              class="w-16 h-16 bg-blue-50 rounded-[16px] flex items-center justify-center"
+              class="w-16 h-16 bg-blue-50 rounded-[12px] flex items-center justify-center"
             >
               <Clock class="w-8 h-8 text-blue-600" />
             </div>
@@ -354,7 +358,7 @@ onUnmounted(() => {
 
           <!-- Live Clock Display -->
           <div
-            class="bg-gradient-to-br from-primary-500 to-primary-600 rounded-[20px] p-8 text-white mb-4"
+            class="bg-gradient-to-br from-primary-500 to-primary-600 rounded-[14px] p-8 text-white mb-4"
           >
             <div class="text-6xl font-extrabold mb-2">{{ currentTime }}</div>
             <div class="text-xl font-medium opacity-90">{{ currentDate }}</div>
@@ -370,7 +374,7 @@ onUnmounted(() => {
 
       <!-- Attendance Status -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
       >
         <div class="flex items-center gap-3 mb-6">
           <div
@@ -433,7 +437,7 @@ onUnmounted(() => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Location and Camera -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
       >
         <div class="flex items-center gap-3 mb-6">
           <div
@@ -583,7 +587,7 @@ onUnmounted(() => {
 
       <!-- Clock In/Out Action -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-8 text-center"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-8 text-center"
       >
         <div class="mb-6">
           <div

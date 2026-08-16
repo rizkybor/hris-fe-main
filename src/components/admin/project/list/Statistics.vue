@@ -7,10 +7,12 @@ import {
   Clock,
   Briefcase,
   PlayCircle,
+  WalletIcon,
 } from "lucide-vue-next";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { formatRupiah } from "@/utils/formatUtils";
 
 const projectStore = useProjectStore();
 const { loadingStatistics } = storeToRefs(projectStore);
@@ -20,6 +22,7 @@ const active = computed(() => projectStore.statistics.active);
 const completionRate = computed(() => projectStore.statistics.completion_rate ?? 0);
 const completedTasks = computed(() => projectStore.statistics.completed_tasks ?? 0);
 const totalTasks = computed(() => projectStore.statistics.total_tasks ?? 0);
+const totalBudget = computed(() => projectStore.statistics.total_budget ?? 0);
 
 onMounted(() => {
   projectStore.fetchStatistics();
@@ -91,13 +94,13 @@ const chartSeries = computed(() => [completionRate.value]);
     >
       <!-- Total Projects Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-5 flex flex-col min-h-[186px] group"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-5 flex flex-col min-h-[186px] group"
       >
         <!-- Header with title and icon -->
         <div class="flex items-center justify-between mb-4">
           <p class="text-brand-dark text-base font-medium">Total Projects</p>
           <div
-            class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300"
+            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300"
           >
             <Briefcase class="w-6 h-6 text-blue-600" />
           </div>
@@ -118,13 +121,13 @@ const chartSeries = computed(() => [completionRate.value]);
 
       <!-- Active Projects Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-5 flex flex-col min-h-[186px] group"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-5 flex flex-col min-h-[186px] group"
       >
         <!-- Header with title and icon -->
         <div class="flex items-center justify-between mb-4">
           <p class="text-brand-dark text-base font-medium">Active Projects</p>
           <div
-            class="w-12 h-12 bg-green-50 rounded-[16px] flex items-center justify-center group-hover:bg-green-100 transition-colors duration-300"
+            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center group-hover:bg-green-100 transition-colors duration-300"
           >
             <PlayCircle class="w-6 h-6 text-green-600" />
           </div>
@@ -142,11 +145,38 @@ const chartSeries = computed(() => [completionRate.value]);
           <p class="text-success text-base font-medium">In progress</p>
         </div>
       </div>
+
+      <!-- Total Budget Card -->
+      <div
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-5 flex flex-col min-h-[186px] group"
+      >
+        <!-- Header with title and icon -->
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-brand-dark text-base font-medium">Total Budget</p>
+          <div
+            class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center group-hover:bg-indigo-100 transition-colors duration-300"
+          >
+            <WalletIcon class="w-6 h-6 text-indigo-600" />
+          </div>
+        </div>
+        <!-- Value and status at bottom -->
+        <div class="mt-auto">
+          <Skeleton v-if="loadingStatistics" width="90px" height="1.75rem" rounded="6px" class="mb-1" />
+          <p
+            v-else
+            id="totalBudget"
+            class="text-brand-dark text-2xl font-extrabold leading-tight mb-1 truncate"
+          >
+            {{ formatRupiah(totalBudget) }}
+          </p>
+          <p class="text-brand-light text-base font-medium">Across all projects</p>
+        </div>
+      </div>
     </div>
 
     <!-- Charts Column -->
     <div
-      class="xl:col-span-2 bg-white border border-[#DCDEDD] rounded-[16px] p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300"
+      class="xl:col-span-2 bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300"
     >
       <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
         <div

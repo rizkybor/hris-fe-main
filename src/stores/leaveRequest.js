@@ -7,6 +7,7 @@ export const useLeaveRequestStore = defineStore("leaveRequest", {
         leaveRequests: [],
         myLeaveRequests: [],
         currentLeaveRequest: null,
+        myLeaveBalance: null,
         meta: {
             current_page: 1,
             last_page: 1,
@@ -31,6 +32,29 @@ export const useLeaveRequestStore = defineStore("leaveRequest", {
                 this.error = handleError(error);
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async fetchMyLeaveBalance() {
+            try {
+                const response = await axiosInstance.get('leave-requests/balance/my');
+
+                this.myLeaveBalance = response.data.data;
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
+
+        async fetchLeaveBalance(employeeId) {
+            try {
+                const response = await axiosInstance.get(`leave-requests/balance/${employeeId}`);
+
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
             }
         },
 

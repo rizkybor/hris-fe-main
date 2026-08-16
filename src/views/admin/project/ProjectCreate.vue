@@ -148,7 +148,7 @@ watch(
     <div class="flex-1">
       <form class="space-y-6" @submit.prevent="handleSubmit">
         <!-- Project Information Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -177,16 +177,16 @@ watch(
                   <div class="relative w-64 h-40">
                     <!-- Default background -->
                     <div
-                      class="w-64 h-40 absolute bg-gray-50 rounded-[16px] border-2 border-dashed border-[#DCDEDD]"
+                      class="w-64 h-40 absolute bg-gray-50 rounded-[12px] border-2 border-dashed border-[#DCDEDD]"
                     ></div>
 
                     <div
-                      class="w-64 h-40 relative z-10 flex items-center justify-center rounded-[16px] overflow-hidden"
+                      class="w-64 h-40 relative z-10 flex items-center justify-center rounded-[12px] overflow-hidden"
                     >
                       <img
                         :src="form.photo_url"
                         alt="Project Photo"
-                        class="w-64 h-40 object-cover rounded-[16px]"
+                        class="w-64 h-40 object-cover rounded-[12px]"
                         v-if="form.photo_url"
                       />
                       <div
@@ -200,10 +200,10 @@ watch(
 
                     <!-- Upload overlay (shown on hover) - only when no photo uploaded -->
                     <div
-                      class="absolute inset-0 rounded-[16px] flex items-center justify-center transition-all duration-300 cursor-pointer z-20 group"
+                      class="absolute inset-0 rounded-[12px] flex items-center justify-center transition-all duration-300 cursor-pointer z-20 group"
                     >
                       <div
-                        class="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 rounded-[16px] transition-opacity duration-300"
+                        class="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 rounded-[12px] transition-opacity duration-300"
                       ></div>
                       <Upload
                         class="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 relative z-10"
@@ -279,7 +279,7 @@ watch(
               <div class="grid grid-cols-2 gap-4">
                 <!-- Low Priority -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -312,7 +312,7 @@ watch(
 
                 <!-- Medium Priority -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -347,7 +347,7 @@ watch(
 
                 <!-- High Priority -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -461,7 +461,7 @@ watch(
         </div>
 
         <!-- Project Leader Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -485,7 +485,7 @@ watch(
               <button
                 type="button"
                 @click="leaderModal = true"
-                class="w-full border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
+                class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
               >
                 <UserCheck class="w-5 h-5 text-gray-400" />
                 <span class="text-[#0D2929] font-normal flex-1">
@@ -540,7 +540,7 @@ watch(
         </div>
 
         <!-- Team Assignment Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -564,7 +564,7 @@ watch(
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Product Development Team -->
                 <label
-                  class="group team-card flex items-center justify-between w-full min-h-[70px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer hover:border-[#0C51D9] hover:border-2"
+                  class="group team-card flex items-center justify-between w-full min-h-[70px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer hover:border-[#0C51D9] hover:border-2"
                   v-for="(team, index) in teams"
                   :key="index"
                 >
@@ -635,7 +635,7 @@ watch(
         </div>
 
         <!-- Project Settings Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
@@ -675,7 +675,7 @@ watch(
               <div class="grid grid-cols-2 gap-4">
                 <!-- Active Option -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -710,7 +710,7 @@ watch(
 
                 <!-- Planning Option -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -745,7 +745,7 @@ watch(
 
                 <!-- On Hold Option -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -780,7 +780,7 @@ watch(
 
                 <!-- Draft Option -->
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -848,7 +848,7 @@ watch(
     v-if="leaderModal"
   >
     <div
-      class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
+      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
     >
       <!-- Modal Header -->
       <div class="p-6 border-b border-[#DCDEDD]">
@@ -871,7 +871,7 @@ watch(
           <button
             type="button"
             @click="leaderModal = false"
-            class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
           >
             <X class="w-5 h-5 text-gray-600" />
           </button>
@@ -888,7 +888,7 @@ watch(
           </div>
           <input
             type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
             placeholder="Search employees..."
             v-model="searchLeader"
           />
@@ -899,7 +899,7 @@ watch(
       <div class="p-6 overflow-y-auto max-h-96">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div
-            class="leader-card border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
+            class="leader-card border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
             v-for="employee in employees"
             :key="employee.id"
             @click="handleSelectLeader(employee)"

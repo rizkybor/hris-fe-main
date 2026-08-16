@@ -102,7 +102,7 @@ onMounted(() => {
     <!-- Team Detail Content -->
     <main class="main-content flex-1 overflow-auto p-5">
       <!-- Team Header -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-6">
         <div class="flex items-center gap-6">
           <div class="relative">
             <div
@@ -148,7 +148,7 @@ onMounted(() => {
       <!-- Team Statistics -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div
-          class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+          class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -165,14 +165,14 @@ onMounted(() => {
               </p>
             </div>
             <div
-              class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center"
+              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
             >
               <Users class="w-6 h-6 text-blue-600" />
             </div>
           </div>
         </div>
         <div
-          class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+          class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -187,14 +187,14 @@ onMounted(() => {
               <p class="text-success text-base font-medium">Active projects</p>
             </div>
             <div
-              class="w-12 h-12 bg-green-50 rounded-[16px] flex items-center justify-center"
+              class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
             >
               <Folder class="w-6 h-6 text-green-600" />
             </div>
           </div>
         </div>
         <div
-          class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+          class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -207,14 +207,14 @@ onMounted(() => {
               <p class="text-success text-base font-medium">Team capacity</p>
             </div>
             <div
-              class="w-12 h-12 bg-purple-50 rounded-[16px] flex items-center justify-center"
+              class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
             >
               <TrendingUp class="w-6 h-6 text-purple-600" />
             </div>
           </div>
         </div>
         <div
-          class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+          class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -227,7 +227,7 @@ onMounted(() => {
               <p class="text-success text-base font-medium">Leader</p>
             </div>
             <div
-              class="w-12 h-12 bg-orange-50 rounded-[16px] flex items-center justify-center"
+              class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
             >
               <User class="w-6 h-6 text-orange-600" />
             </div>
@@ -236,7 +236,7 @@ onMounted(() => {
       </div>
 
       <!-- Tab Navigation -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6">
         <div class="flex items-center gap-2">
           <button
             @click="activeTab = 'members'"
@@ -277,7 +277,7 @@ onMounted(() => {
       <!-- Team Members Section -->
       <div
         v-if="activeTab === 'members'"
-        class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6"
+        class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6"
       >
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-3">
@@ -306,7 +306,7 @@ onMounted(() => {
           <div
             v-for="member in members"
             :key="member.id"
-            class="border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
+            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
           >
             <div class="flex flex-col items-center mb-3">
               <div class="relative">
@@ -366,7 +366,7 @@ onMounted(() => {
       <!-- Projects Section -->
       <div
         v-if="activeTab === 'projects'"
-        class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6"
+        class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6"
       >
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-3">
@@ -424,7 +424,7 @@ onMounted(() => {
       <!-- Description Section -->
       <div
         v-if="activeTab === 'description'"
-        class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6"
+        class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6"
       >
         <div class="flex items-center gap-3 mb-6">
           <div

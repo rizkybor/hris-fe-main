@@ -190,6 +190,18 @@ const titles = {
     title: "History",
     subtitle: "Track and review every activity across the system",
   },
+  "admin.announcements.dashboard": {
+    title: "Announcements",
+    subtitle: "Broadcast information to your team",
+  },
+  "admin.assets.dashboard": {
+    title: "Company Assets",
+    subtitle: "Track and assign company-owned equipment",
+  },
+  "admin.orgchart.dashboard": {
+    title: "Org Chart",
+    subtitle: "Company structure by department and team",
+  },
   "admin.settings.dashboard": {
     title: "Settings",
     subtitle: "Manage system configuration and preferences",
@@ -260,68 +272,60 @@ const getInitials = (name) => {
 
 <template>
   <header
-    class="page-header bg-white border-b border-[#DCDEDD] px-3 sm:px-5 py-3 sm:py-4"
+    class="page-header bg-white border-b border-[#DCDEDD] px-3 sm:px-5 py-2.5 sm:py-3"
   >
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3 sm:gap-4">
         <button
-          class="lg:hidden w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+          class="lg:hidden w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
           @click="emit('toggle-sidebar')"
         >
-          <MenuIcon class="w-5 h-5 text-gray-600" />
+          <MenuIcon class="w-[18px] h-[18px]" />
         </button>
         <div>
-          <h2 class="text-brand-dark text-xl sm:text-2xl font-extrabold">
+          <h2 class="text-brand-dark text-base sm:text-lg font-bold leading-tight">
             {{ pageTitle }}
           </h2>
-          <p class="hidden sm:block text-brand-light text-sm font-normal mt-1">
+          <p class="hidden sm:block text-brand-light text-xs font-normal mt-0.5">
             {{ pageSubtitle }}
           </p>
         </div>
       </div>
 
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
         <!-- Action Buttons -->
-        <div class="hidden sm:flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-1">
           <NotificationBell />
           <RouterLink
             :to="{ name: 'admin.settings.dashboard' }"
-            class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
           >
-            <SettingsIcon class="w-5 h-5 text-gray-600" />
+            <SettingsIcon class="w-[18px] h-[18px]" />
           </RouterLink>
         </div>
 
         <!-- Divider -->
-        <div class="hidden sm:block w-px h-8 bg-[#DCDEDD] mx-5"></div>
+        <div class="hidden sm:block w-px h-6 bg-[#DCDEDD] mx-2"></div>
 
         <!-- User Profile -->
         <div class="relative z-[10]">
           <div
-            class="flex items-center gap-2 sm:gap-3 cursor-pointer"
+            class="flex items-center gap-2 sm:gap-2.5 cursor-pointer rounded-full hover:bg-gray-50 transition-colors duration-150 py-1 pr-1"
             @click="isOpen = !isOpen"
           >
-             <div v-if="user?.profile_photo" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full">
+             <div v-if="user?.profile_photo" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full">
               <img :src="user?.profile_photo" alt="User Avatar" class="w-full h-full rounded-full object-cover" />
             </div>
-            <div v-else class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-gray-100">
-              <span class="text-gray-400 text-lg font-semibold">
+            <div v-else class="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-gray-100">
+              <span class="text-gray-400 text-sm font-semibold">
                 {{ getInitials(user?.name) }}
               </span>
             </div>
-            <!-- <div
-              class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-gray-100"
-              v-else
-            >
-              <UserIcon class="w-5 h-5 text-gray-400" />
-            </div> -->
             <div class="hidden md:block text-left">
-              <p class="text-brand-dark text-sm sm:text-base font-semibold">
+              <p class="text-brand-dark text-sm font-semibold leading-tight">
                 {{ user?.name }}
               </p>
-              <p
-                class="text-brand-dark text-sm sm:text-base font-normal leading-7"
-              >
+              <p class="text-gray-400 text-xs font-medium leading-tight mt-0.5">
                 {{ _.join(user?.roles, ", ").toUpperCase() }}
               </p>
             </div>
@@ -333,15 +337,15 @@ const getInitials = (name) => {
 
           <!-- Dropdown Menu -->
           <div
-            class="absolute right-0 top-full mt-2 w-56 bg-white border border-[#DCDEDD] rounded-lg shadow-md py-2 z-[9999]"
+            class="absolute right-0 top-full mt-2 w-56 bg-white border border-[#DCDEDD] rounded-[12px] shadow-md py-2 z-[9999]"
             :class="{ hidden: !isOpen }"
           >
             <div class="px-4 py-3 border-b border-[#DCDEDD]">
               <p class="text-sm font-semibold text-gray-900">
                 {{ user?.name }}
               </p>
-              <p class="text-xs text-gray-600">{{ user?.email }}</p>
-              <p class="text-xs text-gray-500">
+              <p class="text-xs text-gray-500">{{ user?.email }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">
                 {{ _.join(user?.roles, ", ").toUpperCase() }}
               </p>
             </div>
@@ -352,7 +356,7 @@ const getInitials = (name) => {
                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                 @click="isOpen = false"
               >
-                <UserIcon class="w-4 h-4" />
+                <UserIcon class="w-4 h-4 text-gray-400" />
                 Profil Pengguna
               </RouterLink>
               <RouterLink
@@ -360,7 +364,7 @@ const getInitials = (name) => {
                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                 @click="isOpen = false"
               >
-                <SettingsIcon class="w-4 h-4" />
+                <SettingsIcon class="w-4 h-4 text-gray-400" />
                 Pengaturan Sistem
               </RouterLink>
             </div>

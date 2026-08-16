@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
-  Shield,
+  ShieldCheck,
   Eye,
   EyeOff,
   Copy,
@@ -60,20 +60,20 @@ onMounted(async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-violet-400 hover:border-2 transition-all"
           aria-label="Back"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
         </button>
 
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-12 h-12 bg-violet-50 rounded-[12px] flex items-center justify-center"
         >
-          <Shield class="w-6 h-6 text-blue-600" />
+          <ShieldCheck class="w-6 h-6 text-violet-600" />
         </div>
 
         <div class="flex-1">
@@ -92,7 +92,7 @@ onMounted(async () => {
               params: { id: account?.id },
             })
           "
-          class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all px-4 py-2 flex items-center gap-2"
+          class="border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:border-2 hover:bg-violet-50/30 transition-all px-4 py-2 flex items-center gap-2"
         >
           <Pencil class="w-4 h-4 text-gray-600" />
           <span class="text-brand-dark font-semibold text-sm">Edit</span>
@@ -101,7 +101,7 @@ onMounted(async () => {
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
       <Skeleton width="40%" height="18px" />
       <Skeleton width="60%" height="18px" />
       <Skeleton height="52px" rounded="16px" />
@@ -112,7 +112,7 @@ onMounted(async () => {
     <!-- Content -->
     <div
       v-if="account && !loading"
-      class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6"
     >
       <!-- Label -->
       <div>
@@ -147,9 +147,9 @@ onMounted(async () => {
         </label>
 
         <div
-          class="flex items-center gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[16px]"
+          class="flex items-center gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px]"
         >
-          <Key class="w-5 h-5 text-gray-400" />
+          <Key class="w-5 h-5 text-violet-400" />
 
           <span class="font-mono tracking-widest flex-1">
             {{ showPassword ? account.password : "••••••••••••" }}
@@ -157,7 +157,7 @@ onMounted(async () => {
 
           <button
             @click="togglePassword"
-            class="w-9 h-9 rounded-[10px] hover:bg-gray-100 flex items-center justify-center"
+            class="w-9 h-9 rounded-[10px] hover:bg-violet-50 hover:text-violet-600 flex items-center justify-center transition-colors"
             :aria-label="showPassword ? 'Hide password' : 'Show password'"
           >
             <Eye v-if="!showPassword" class="w-4 h-4" />
@@ -166,7 +166,7 @@ onMounted(async () => {
 
           <button
             @click="copyPassword"
-            class="w-9 h-9 rounded-[10px] hover:bg-gray-100 flex items-center justify-center"
+            class="w-9 h-9 rounded-[10px] hover:bg-violet-50 hover:text-violet-600 flex items-center justify-center transition-colors"
             aria-label="Copy password"
           >
             <Copy class="w-4 h-4" />
@@ -189,7 +189,7 @@ onMounted(async () => {
             v-if="account.website"
             :href="account.website"
             target="_blank"
-            class="text-[#0C51D9] font-semibold hover:underline"
+            class="text-violet-600 font-semibold hover:underline"
           >
             {{ account.website }}
           </a>
@@ -203,7 +203,7 @@ onMounted(async () => {
           Notes
         </label>
         <div
-          class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[16px] bg-gray-50"
+          class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-50"
         >
           <FileText class="w-5 h-5 text-gray-400 mt-0.5" />
           <p class="text-brand-dark whitespace-pre-line">

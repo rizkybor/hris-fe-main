@@ -35,7 +35,7 @@ const emit = defineEmits(["close"]);
           <div
             v-if="show"
             @click.stop
-            class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-md overflow-hidden"
+            class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md overflow-hidden"
           >
             <!-- Modal Content -->
             <div class="p-8 text-center">

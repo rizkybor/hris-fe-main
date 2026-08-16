@@ -34,7 +34,7 @@ const goToTeamDetail = (id: number) => {
 
 <template>
   <!-- Latest Teams -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-4 sm:p-5">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-brand-dark text-lg font-bold">Latest Teams</h3>
     </div>

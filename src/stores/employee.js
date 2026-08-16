@@ -168,6 +168,19 @@ export const useEmployeeStore = defineStore("employee", {
             }
         },
 
+        async fetchContractAlerts(daysAhead = 30) {
+            try {
+                const response = await axiosInstance.get('/employees/contract-alerts', {
+                    params: { days_ahead: daysAhead },
+                });
+
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
+
         async fetchPerformanceStatistics(employeeId) {
             this.loadingStatistics = true;
             this.error = null;

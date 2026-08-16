@@ -9,10 +9,17 @@ import FixedCostsModal from "@/components/admin/company-finance/modals/FixedCost
 import SdmResourcesModal from "@/components/admin/company-finance/modals/SdmResourcesModal.vue";
 import InfraToolsModal from "@/components/admin/company-finance/modals/InfraToolsModal.vue";
 import DeleteConfirmationModal from "@/components/common/ConfirmationModal.vue";
-import { Eye, Edit, Trash2 } from "lucide-vue-next";
+import { Eye, Edit, Trash2, Wallet, Users, Server, Search, ChevronLeft, ChevronRight, Plus } from "lucide-vue-next";
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
 
 const store = useCompanyFinanceStore();
+
+const tabs = [
+  { key: "fixed", label: "Fixed Cost", icon: Wallet },
+  { key: "sdm", label: "SDM Resource", icon: Users },
+  { key: "infra", label: "Infrastructure Tools", icon: Server },
+];
+const activeTab = ref("fixed");
 
 const showSectionAlert = (section, type, title, message) => {
   section.value = {
@@ -468,396 +475,378 @@ watch(
 </script>
 
 <template>
-  <Statistics v-if="can('company-finance-statistic')" />
+  <Statistics v-if="can('company-finance-statistic')" class="mb-6" />
 
-  <br />
-  <br />
-
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
-    <!-- ================= FIXED COST ================= -->
-    <section class="mb-12">
-      <Alert
-        v-if="fixedAlert.show"
-        :type="fixedAlert.type"
-        :title="fixedAlert.title"
-        :message="fixedAlert.message"
-        :show="fixedAlert.show"
-      />
-
-      <div class="flex justify-between items-center mb-4">
-        <h4 class="text-lg font-bold">Fixed Cost</h4>
-        <button
-          v-if="can('fixed-cost-create')"
-          @click="addFixedCost"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
-        >
-          <span class="text-brand-white text-sm font-semibold">
-            + Fixed Cost
-          </span>
-        </button>
-      </div>
-
-      <!-- SEARCH -->
-      <div class="mb-4 max-w-md">
-        <input
-          v-model="fixedSearch"
-          type="text"
-          placeholder="Search Fixed Cost..."
-          class="w-full pl-4 pr-4 py-2 border border-[#DCDEDD] rounded-[12px] focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] transition-all font-semibold text-sm sm:text-base"
-        />
-      </div>
-
-      <SkeletonTable v-if="store.loading" :rows="4" :cols="6" />
-
-      <div v-else class="overflow-x-auto rounded-[12px] border border-gray-200">
-        <table class="min-w-full text-sm sm:text-base">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-3 py-2">No</th>
-              <th class="px-3 py-2 text-left">Item</th>
-              <th class="px-3 py-2 text-right">Budget</th>
-              <th class="px-3 py-2 text-right">Actual</th>
-              <th class="px-3 py-2 text-left">Notes</th>
-              <th class="px-3 py-2 text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(item, index) in fixedCostPaginated"
-              :key="item.id"
-              class="border-t"
-            >
-              <td class="px-3 py-2">
-                {{ (fixedPage - 1) * perPage + index + 1 }}
-              </td>
-              <td class="px-3 py-2 font-medium">{{ item.financial_items }}</td>
-              <td class="px-3 py-2 text-right">
-                Rp. {{ item.budget.toLocaleString() }}
-              </td>
-              <td class="px-3 py-2 text-right text-success">
-                Rp. {{ item.actual.toLocaleString() }}
-              </td>
-              <td class="px-3 py-2 text-gray-500">{{ item.notes }}</td>
-              <td class="px-3 py-2 text-center flex justify-center gap-2">
-                <Eye
-                  class="w-5 h-5 text-blue-500 cursor-pointer"
-                  @click="viewFixedCost(item)"
-                />
-                <Edit
-                  v-if="can('fixed-cost-edit')"
-                  class="w-5 h-5 text-yellow-500 cursor-pointer"
-                  @click="editFixedCost(item)"
-                />
-                <Trash2
-                  v-if="can('fixed-cost-delete')"
-                  class="w-5 h-5 text-red-500 cursor-pointer"
-                  @click="deleteFixedCostHandler(item)"
-                />
-              </td>
-            </tr>
-
-            <tr v-if="filteredFixed.length === 0">
-              <td colspan="6" class="text-center py-4 text-gray-500">
-                No Fixed Cost data found.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div
-        class="flex flex-wrap justify-between items-center mt-4 gap-2 text-sm sm:text-base"
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] overflow-hidden">
+    <!-- Tabs -->
+    <div class="flex items-center gap-1 px-3 pt-3 border-b border-[#DCDEDD]">
+      <button
+        v-for="tab in tabs"
+        :key="tab.key"
+        @click="activeTab = tab.key"
+        class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-[10px] transition-colors duration-150 border-b-2"
+        :class="activeTab === tab.key
+          ? 'text-[#0C51D9] border-[#0C51D9] bg-blue-50/50'
+          : 'text-gray-500 border-transparent hover:bg-gray-50'"
       >
-        <span class="text-xs text-gray-500 font-medium">
-          Page {{ fixedPage }} of {{ store.fixedCostData.meta.last_page }}
-        </span>
+        <component :is="tab.icon" class="w-4 h-4" />
+        {{ tab.label }}
+      </button>
+    </div>
 
-        <div class="flex gap-2">
+    <div class="p-5">
+      <!-- ================= FIXED COST ================= -->
+      <section v-if="activeTab === 'fixed'">
+        <Alert
+          v-if="fixedAlert.show"
+          :type="fixedAlert.type"
+          :title="fixedAlert.title"
+          :message="fixedAlert.message"
+          :show="fixedAlert.show"
+        />
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div class="relative w-full sm:w-64">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search class="w-4 h-4 text-blue-400" />
+            </div>
+            <input
+              v-model="fixedSearch"
+              type="text"
+              placeholder="Search fixed cost..."
+              class="w-full pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
+            />
+          </div>
+          <button
+            v-if="can('fixed-cost-create')"
+            @click="addFixedCost"
+            class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 shrink-0"
+          >
+            <Plus class="w-4 h-4 text-white" />
+            <span class="text-brand-white text-sm font-semibold">Fixed Cost</span>
+          </button>
+        </div>
+
+        <SkeletonTable v-if="store.loading" :rows="4" :cols="6" />
+
+        <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-3 py-2.5 text-xs uppercase text-gray-500 font-semibold">No</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Item</th>
+                <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Budget</th>
+                <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Actual</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Notes</th>
+                <th class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(item, index) in fixedCostPaginated"
+                :key="item.id"
+                class="border-t border-[#DCDEDD] hover:bg-gray-50/60"
+              >
+                <td class="px-3 py-2.5 text-gray-500">
+                  {{ (fixedPage - 1) * perPage + index + 1 }}
+                </td>
+                <td class="px-3 py-2.5 font-medium text-brand-dark">{{ item.financial_items }}</td>
+                <td class="px-3 py-2.5 text-right">
+                  Rp {{ item.budget.toLocaleString() }}
+                </td>
+                <td class="px-3 py-2.5 text-right text-success">
+                  Rp {{ item.actual.toLocaleString() }}
+                </td>
+                <td class="px-3 py-2.5 text-gray-500">{{ item.notes }}</td>
+                <td class="px-3 py-2.5">
+                  <div class="flex justify-center gap-1">
+                    <button @click="viewFixedCost(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors" title="View">
+                      <Eye class="w-4 h-4" />
+                    </button>
+                    <button v-if="can('fixed-cost-edit')" @click="editFixedCost(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors" title="Edit">
+                      <Edit class="w-4 h-4" />
+                    </button>
+                    <button v-if="can('fixed-cost-delete')" @click="deleteFixedCostHandler(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete">
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr v-if="filteredFixed.length === 0">
+                <td colspan="6" class="text-center py-8 text-gray-400 text-sm">
+                  No Fixed Cost data found.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex flex-wrap justify-between items-center mt-4 gap-2">
+          <span class="text-xs text-gray-500 font-medium">
+            Page {{ fixedPage }} of {{ store.fixedCostData.meta.last_page }}
+          </span>
           <div class="flex gap-2">
-          <button
-            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
-            :disabled="fixedPage === 1"
-            @click="fetchFixedCostData(fixedPage - 1)"
-          >
-            Prev
-          </button>
-
-          <button
-            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
-            :disabled="fixedPage === store.fixedCostData.meta.last_page"
-            @click="fetchFixedCostData(fixedPage + 1)"
-          >
-            Next
-          </button>
-        </div>
-        </div>
-      </div>
-    </section>
-
-    <hr class="border-t border-gray-200 my-5" />
-
-    <!-- ================= SDM ================= -->
-    <section class="mb-12">
-      <Alert
-        v-if="sdmAlert.show"
-        :type="sdmAlert.type"
-        :title="sdmAlert.title"
-        :message="sdmAlert.message"
-        :show="sdmAlert.show"
-      />
-
-      <div class="flex justify-between items-center mb-4">
-        <h4 class="text-lg font-bold">SDM Resource</h4>
-        <button
-          v-if="can('sdm-resource-create')"
-          @click="addSdm"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
-        >
-          <span class="text-brand-white text-sm font-semibold">
-            + SDM Resource
-          </span>
-        </button>
-      </div>
-
-      <!-- SEARCH -->
-      <div class="mb-4 max-w-md">
-        <input
-          v-model="sdmSearch"
-          type="text"
-          placeholder="Search SDM Resource..."
-          class="w-full pl-4 pr-4 py-2 border border-[#DCDEDD] rounded-[12px] focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] transition-all font-semibold text-sm sm:text-base"
-        />
-      </div>
-
-      <SkeletonTable v-if="store.loading" :rows="4" :cols="8" />
-
-      <div v-else class="overflow-x-auto rounded-[12px] border border-gray-200">
-        <table class="min-w-full text-sm sm:text-base">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-3 py-2">No</th>
-              <th class="px-3 py-2">Component</th>
-              <th class="px-3 py-2">Metric</th>
-              <th class="px-3 py-2">Capacity</th>
-              <th class="px-3 py-2">RAG</th>
-              <th class="px-3 py-2 text-right">Budget</th>
-              <th class="px-3 py-2 text-right">Actual</th>
-              <th class="px-3 py-2 text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(item, index) in sdmResourcePaginated"
-              :key="item.id"
-              class="border-t"
+            <button
+              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              :disabled="fixedPage === 1"
+              @click="fetchFixedCostData(fixedPage - 1)"
             >
-              <td class="px-3 py-2">
-                {{ (sdmPage - 1) * perPage + index + 1 }}
-              </td>
-              <td class="px-3 py-2 font-medium">{{ item.sdm_component }}</td>
-              <td class="px-3 py-2">{{ item.metrik }}</td>
-              <td class="px-3 py-2">{{ item.capacity_target }}</td>
-              <td class="px-3 py-2">
-                <span
-                  class="px-2 py-1 rounded text-xs font-semibold"
-                  :class="{
-                    'bg-green-100 text-green-700': item.rag_status === 'green',
-                    'bg-yellow-100 text-yellow-700':
-                      item.rag_status === 'amber',
-                    'bg-red-100 text-red-700': item.rag_status === 'red',
-                  }"
-                >
-                  {{ item.rag_status }}
-                </span>
-              </td>
-              <td class="px-3 py-2 text-right">
-                Rp. {{ item.budget.toLocaleString() }}
-              </td>
-              <td class="px-3 py-2 text-right text-success">
-                Rp. {{ item.actual.toLocaleString() }}
-              </td>
-              <td class="px-3 py-2 text-center flex justify-center gap-2">
-                <Eye
-                  class="w-5 h-5 text-blue-500 cursor-pointer"
-                  @click="viewSdm(item)"
-                />
-                <Edit
-                  v-if="can('sdm-resource-edit')"
-                  class="w-5 h-5 text-yellow-500 cursor-pointer"
-                  @click="editSdm(item)"
-                />
-                <Trash2
-                  v-if="can('sdm-resource-delete')"
-                  class="w-5 h-5 text-red-500 cursor-pointer"
-                  @click="deleteSdmHandler(item)"
-                />
-              </td>
-            </tr>
-
-            <!-- Jika tidak ada data -->
-            <tr v-if="filteredSdm.length === 0">
-              <td colspan="7" class="text-center py-4 text-gray-500">
-                No SDM Resource data found.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <div
-        class="flex flex-wrap justify-between items-center mt-4 gap-2 text-sm sm:text-base"
-      >
-        <span class="text-xs text-gray-500 font-medium">
-          Page {{ sdmPage }} of
-          {{ store.sdmResourceData.meta.last_page }}</span
-        >
-        <div class="flex gap-2">
-          <button
-            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
-            :disabled="sdmPage === 1"
-            @click="fetchSdmResourcesData(sdmPage - 1)"
-          >
-            Prev
-          </button>
-
-          <button
-            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
-            :disabled="sdmPage === store.sdmResourceData.meta.last_page"
-            @click="fetchSdmResourcesData(sdmPage + 1)"
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <hr class="border-t border-gray-200 my-5" />
-
-    <!-- ================= INFRA ================= -->
-    <section>
-      <Alert
-        v-if="infraAlert.show"
-        :type="infraAlert.type"
-        :title="infraAlert.title"
-        :message="infraAlert.message"
-        :show="infraAlert.show"
-      />
-
-      <div class="flex justify-between items-center mb-4">
-        <h4 class="text-lg font-bold">Infrastructure Tools</h4>
-        <button
-          v-if="can('infrastructure-tool-create')"
-          @click="addInfra"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
-        >
-          <span class="text-brand-white text-sm font-semibold">
-            + Infrastructure Tools
-          </span>
-        </button>
-      </div>
-
-      <!-- SEARCH -->
-      <div class="mb-4 max-w-md">
-        <input
-          v-model="infraSearch"
-          type="text"
-          placeholder="Search Infrastructure..."
-          class="w-full pl-4 pr-4 py-2 border border-[#DCDEDD] rounded-[12px] focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] transition-all font-semibold text-sm sm:text-base"
-        />
-      </div>
-
-      <SkeletonTable v-if="store.loading" :rows="4" :cols="8" />
-
-      <div v-else class="overflow-x-auto rounded-[12px] border border-gray-200">
-        <table class="min-w-full text-sm sm:text-base">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-3 py-2">No</th>
-              <th class="px-3 py-2">Tech Stack</th>
-              <th class="px-3 py-2">Vendor</th>
-              <th class="px-3 py-2 text-right">Monthly</th>
-              <th class="px-3 py-2 text-right">Annual</th>
-              <th class="px-3 py-2">Expired</th>
-              <th class="px-3 py-2">Status</th>
-              <th class="px-3 py-2 text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(item, index) in infraPaginated"
-              :key="item.id"
-              class="border-t"
+              <ChevronLeft class="w-4 h-4" /> Prev
+            </button>
+            <button
+              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              :disabled="fixedPage === store.fixedCostData.meta.last_page"
+              @click="fetchFixedCostData(fixedPage + 1)"
             >
-              <td class="px-3 py-2">
-                {{ (infraPage - 1) * perPage + index + 1 }}
-              </td>
-              <td class="px-3 py-2 font-medium">
-                {{ item.tech_stack_component }}
-              </td>
-              <td class="px-3 py-2">{{ item.vendor }}</td>
-              <td class="px-3 py-2 text-right">
-                Rp. {{ item.monthly_fee.toLocaleString() }}
-              </td>
-              <td class="px-3 py-2 text-right">
-                Rp. {{ item.annual_fee.toLocaleString() }}
-              </td>
-              <td class="px-3 py-2">{{ formatDate(item.expired_date) }}</td>
-              <td class="px-3 py-2">{{ item.status }}</td>
-              <td class="px-3 py-2 text-center flex justify-center gap-2">
-                <Eye
-                  class="w-5 h-5 text-blue-500 cursor-pointer"
-                  @click="viewInfra(item)"
-                />
-                <Edit
-                  v-if="can('infrastructure-tool-edit')"
-                  class="w-5 h-5 text-yellow-500 cursor-pointer"
-                  @click="editInfra(item)"
-                />
-                <Trash2
-                  v-if="can('infrastructure-tool-delete')"
-                  class="w-5 h-5 text-red-500 cursor-pointer"
-                  @click="deleteInfraHandler(item)"
-                />
-              </td>
-            </tr>
+              Next <ChevronRight class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </section>
 
-            <!-- Jika tidak ada data -->
-            <tr v-if="filteredInfra.length === 0">
-              <td colspan="7" class="text-center py-4 text-gray-500">
-                No Infrastructure Tools data found.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <!-- ================= SDM ================= -->
+      <section v-if="activeTab === 'sdm'">
+        <Alert
+          v-if="sdmAlert.show"
+          :type="sdmAlert.type"
+          :title="sdmAlert.title"
+          :message="sdmAlert.message"
+          :show="sdmAlert.show"
+        />
 
-      <!-- Infra Pagination -->
-      <div
-        class="flex flex-wrap justify-between items-center mt-4 gap-2 text-sm sm:text-base"
-      >
-        <span class="text-xs text-gray-500 font-medium">
-          Page {{ infraPage }} of {{ store.infraToolsData.meta.last_page }}
-        </span>
-        <div class="flex gap-2">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div class="relative w-full sm:w-64">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search class="w-4 h-4 text-blue-400" />
+            </div>
+            <input
+              v-model="sdmSearch"
+              type="text"
+              placeholder="Search SDM resource..."
+              class="w-full pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
+            />
+          </div>
           <button
-            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
-            :disabled="infraPage === 1"
-            @click="fetchInfraToolsData(infraPage - 1)"
+            v-if="can('sdm-resource-create')"
+            @click="addSdm"
+            class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 shrink-0"
           >
-            Prev
-          </button>
-
-          <button
-            class="px-2.5 py-1 text-xs rounded-md font-medium transition-all duration-150 bg-white border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white active:bg-blue-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 cursor-pointer disabled:cursor-not-allowed"
-            :disabled="infraPage === store.infraToolsData.meta.last_page"
-            @click="fetchInfraToolsData(infraPage + 1)"
-          >
-            Next
+            <Plus class="w-4 h-4 text-white" />
+            <span class="text-brand-white text-sm font-semibold">SDM Resource</span>
           </button>
         </div>
-      </div>
-    </section>
+
+        <SkeletonTable v-if="store.loading" :rows="4" :cols="8" />
+
+        <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-3 py-2.5 text-xs uppercase text-gray-500 font-semibold">No</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Component</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Metric</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Capacity</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">RAG</th>
+                <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Budget</th>
+                <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Actual</th>
+                <th class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(item, index) in sdmResourcePaginated"
+                :key="item.id"
+                class="border-t border-[#DCDEDD] hover:bg-gray-50/60"
+              >
+                <td class="px-3 py-2.5 text-gray-500">
+                  {{ (sdmPage - 1) * perPage + index + 1 }}
+                </td>
+                <td class="px-3 py-2.5 font-medium text-brand-dark">{{ item.sdm_component }}</td>
+                <td class="px-3 py-2.5">{{ item.metrik }}</td>
+                <td class="px-3 py-2.5">{{ item.capacity_target }}</td>
+                <td class="px-3 py-2.5">
+                  <span
+                    class="px-2 py-1 rounded-md text-xs font-semibold"
+                    :class="{
+                      'bg-green-100 text-green-700': item.rag_status === 'green',
+                      'bg-yellow-100 text-yellow-700':
+                        item.rag_status === 'amber',
+                      'bg-red-100 text-red-700': item.rag_status === 'red',
+                    }"
+                  >
+                    {{ item.rag_status }}
+                  </span>
+                </td>
+                <td class="px-3 py-2.5 text-right">
+                  Rp {{ item.budget.toLocaleString() }}
+                </td>
+                <td class="px-3 py-2.5 text-right text-success">
+                  Rp {{ item.actual.toLocaleString() }}
+                </td>
+                <td class="px-3 py-2.5">
+                  <div class="flex justify-center gap-1">
+                    <button @click="viewSdm(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors" title="View">
+                      <Eye class="w-4 h-4" />
+                    </button>
+                    <button v-if="can('sdm-resource-edit')" @click="editSdm(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors" title="Edit">
+                      <Edit class="w-4 h-4" />
+                    </button>
+                    <button v-if="can('sdm-resource-delete')" @click="deleteSdmHandler(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete">
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr v-if="filteredSdm.length === 0">
+                <td colspan="8" class="text-center py-8 text-gray-400 text-sm">
+                  No SDM Resource data found.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex flex-wrap justify-between items-center mt-4 gap-2">
+          <span class="text-xs text-gray-500 font-medium">
+            Page {{ sdmPage }} of {{ store.sdmResourceData.meta.last_page }}
+          </span>
+          <div class="flex gap-2">
+            <button
+              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              :disabled="sdmPage === 1"
+              @click="fetchSdmResourcesData(sdmPage - 1)"
+            >
+              <ChevronLeft class="w-4 h-4" /> Prev
+            </button>
+            <button
+              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              :disabled="sdmPage === store.sdmResourceData.meta.last_page"
+              @click="fetchSdmResourcesData(sdmPage + 1)"
+            >
+              Next <ChevronRight class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= INFRA ================= -->
+      <section v-if="activeTab === 'infra'">
+        <Alert
+          v-if="infraAlert.show"
+          :type="infraAlert.type"
+          :title="infraAlert.title"
+          :message="infraAlert.message"
+          :show="infraAlert.show"
+        />
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div class="relative w-full sm:w-64">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search class="w-4 h-4 text-blue-400" />
+            </div>
+            <input
+              v-model="infraSearch"
+              type="text"
+              placeholder="Search infrastructure..."
+              class="w-full pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
+            />
+          </div>
+          <button
+            v-if="can('infrastructure-tool-create')"
+            @click="addInfra"
+            class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 shrink-0"
+          >
+            <Plus class="w-4 h-4 text-white" />
+            <span class="text-brand-white text-sm font-semibold">Infrastructure Tool</span>
+          </button>
+        </div>
+
+        <SkeletonTable v-if="store.loading" :rows="4" :cols="8" />
+
+        <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-3 py-2.5 text-xs uppercase text-gray-500 font-semibold">No</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Tech Stack</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Vendor</th>
+                <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Monthly</th>
+                <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Annual</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Expired</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Status</th>
+                <th class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(item, index) in infraPaginated"
+                :key="item.id"
+                class="border-t border-[#DCDEDD] hover:bg-gray-50/60"
+              >
+                <td class="px-3 py-2.5 text-gray-500">
+                  {{ (infraPage - 1) * perPage + index + 1 }}
+                </td>
+                <td class="px-3 py-2.5 font-medium text-brand-dark">
+                  {{ item.tech_stack_component }}
+                </td>
+                <td class="px-3 py-2.5">{{ item.vendor }}</td>
+                <td class="px-3 py-2.5 text-right">
+                  Rp {{ item.monthly_fee.toLocaleString() }}
+                </td>
+                <td class="px-3 py-2.5 text-right">
+                  Rp {{ item.annual_fee.toLocaleString() }}
+                </td>
+                <td class="px-3 py-2.5">{{ formatDate(item.expired_date) }}</td>
+                <td class="px-3 py-2.5">{{ item.status }}</td>
+                <td class="px-3 py-2.5">
+                  <div class="flex justify-center gap-1">
+                    <button @click="viewInfra(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors" title="View">
+                      <Eye class="w-4 h-4" />
+                    </button>
+                    <button v-if="can('infrastructure-tool-edit')" @click="editInfra(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors" title="Edit">
+                      <Edit class="w-4 h-4" />
+                    </button>
+                    <button v-if="can('infrastructure-tool-delete')" @click="deleteInfraHandler(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete">
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr v-if="filteredInfra.length === 0">
+                <td colspan="8" class="text-center py-8 text-gray-400 text-sm">
+                  No Infrastructure Tools data found.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex flex-wrap justify-between items-center mt-4 gap-2">
+          <span class="text-xs text-gray-500 font-medium">
+            Page {{ infraPage }} of {{ store.infraToolsData.meta.last_page }}
+          </span>
+          <div class="flex gap-2">
+            <button
+              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              :disabled="infraPage === 1"
+              @click="fetchInfraToolsData(infraPage - 1)"
+            >
+              <ChevronLeft class="w-4 h-4" /> Prev
+            </button>
+            <button
+              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              :disabled="infraPage === store.infraToolsData.meta.last_page"
+              @click="fetchInfraToolsData(infraPage + 1)"
+            >
+              Next <ChevronRight class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
   </div>
 
   <FixedCostsModal

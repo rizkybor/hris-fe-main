@@ -55,7 +55,7 @@ const handleSubmit = async () => {
 
 <template>
   <div class="p-5">
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 mb-6">
       <div class="flex items-center gap-3 mb-6">
         <button
           type="button"
@@ -130,7 +130,7 @@ const handleSubmit = async () => {
                 :value="user?.email"
                 type="email"
                 readonly
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] bg-gray-50 text-gray-500 cursor-not-allowed"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-50 text-gray-500 cursor-not-allowed"
               />
             </div>
             <p class="text-brand-light text-xs mt-1">

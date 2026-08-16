@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from "@/stores/auth";
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { RouterLink } from "vue-router";
 import Alert from "@/components/common/Alert.vue";
 import Input from "@/components/common/form/Input.vue";
@@ -12,6 +12,11 @@ const authStore = useAuthStore();
 const { loading, error, success } = storeToRefs(authStore);
 
 const email = ref("");
+
+onMounted(() => {
+  authStore.error = null;
+  authStore.success = null;
+});
 
 const handleSubmit = async () => {
   try {

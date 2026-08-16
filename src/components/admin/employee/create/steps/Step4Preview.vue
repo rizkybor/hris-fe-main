@@ -47,7 +47,7 @@ const formatText = (text: string) => {
   <div class="space-y-6">
     <!-- Preview Header -->
     <div
-      class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-[20px] p-6 text-white"
+      class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-[14px] p-6 text-white"
     >
       <div class="flex items-center gap-3 mb-3">
         <div
@@ -65,7 +65,7 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Personal Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -176,7 +176,7 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Job Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -268,7 +268,7 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Bank Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -324,7 +324,7 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Emergency Contact -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"

@@ -120,11 +120,11 @@ const totalDeductions = computed(() => {
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div
-        class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[20px] p-6 text-white"
+        class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[14px] p-6 text-white"
       >
         <div class="flex items-center justify-between mb-3">
           <div
-            class="w-12 h-12 bg-white/20 rounded-[16px] flex items-center justify-center backdrop-blur-sm"
+            class="w-12 h-12 bg-white/20 rounded-[12px] flex items-center justify-center backdrop-blur-sm"
           >
             <FileText class="w-6 h-6" />
           </div>
@@ -134,11 +134,11 @@ const totalDeductions = computed(() => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#10B981] hover:border-2 transition-all duration-300 p-6"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#10B981] hover:border-2 transition-all duration-300 p-6"
       >
         <div class="flex items-center justify-between mb-3">
           <div
-            class="w-12 h-12 bg-green-50 rounded-[16px] flex items-center justify-center"
+            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
           >
             <ArrowUpRight class="w-6 h-6 text-green-600" />
           </div>
@@ -151,11 +151,11 @@ const totalDeductions = computed(() => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#EF4444] hover:border-2 transition-all duration-300 p-6"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#EF4444] hover:border-2 transition-all duration-300 p-6"
       >
         <div class="flex items-center justify-between mb-3">
           <div
-            class="w-12 h-12 bg-red-50 rounded-[16px] flex items-center justify-center"
+            class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
           >
             <ArrowDownRight class="w-6 h-6 text-red-600" />
           </div>
@@ -169,7 +169,7 @@ const totalDeductions = computed(() => {
     </div>
 
     <!-- Search Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4">
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1 relative">
           <div
@@ -179,7 +179,7 @@ const totalDeductions = computed(() => {
           </div>
           <input
             type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300"
             placeholder="Search payslips by month or year..."
             v-model="filters.search"
           />
@@ -187,7 +187,7 @@ const totalDeductions = computed(() => {
 
         <select
           v-model.number="filters.year"
-          class="px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300"
+          class="px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300"
         >
           <option :value="new Date().getFullYear()">
             {{ new Date().getFullYear() }}
@@ -203,7 +203,7 @@ const totalDeductions = computed(() => {
     </div>
 
     <!-- Payslips Grid -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="mb-6">
         <h3 class="text-[#0C1C3C] font-bold text-xl">All Payslips</h3>
         <p class="text-gray-600 text-sm mt-1">
@@ -225,7 +225,7 @@ const totalDeductions = computed(() => {
         <div
           v-for="payslip in payslips"
           :key="payslip.id"
-          class="border border-[#DCDEDD] rounded-[16px] p-5 hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 cursor-pointer group"
+          class="border border-[#DCDEDD] rounded-[12px] p-5 hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 cursor-pointer group"
           @click="viewDetails(payslip.id)"
         >
           <div class="flex items-start justify-between mb-4">

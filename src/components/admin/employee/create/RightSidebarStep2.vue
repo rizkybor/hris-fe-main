@@ -49,7 +49,7 @@ onUnmounted(() => {
     <div
       ref="sidebarRef"
       :class="[
-        'bg-white border border-[#DCDEDD] rounded-[20px] p-6 transition-all duration-300 ease-in-out',
+        'bg-white border border-[#DCDEDD] rounded-[14px] p-6 transition-all duration-300 ease-in-out',
         isSticky ? 'fixed top-5 z-10' : 'relative',
       ]"
       :style="isSticky ? { width: `${sidebarWidth}px` } : {}"

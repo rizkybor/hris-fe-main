@@ -98,7 +98,7 @@ watch(
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 mb-6">
     <!-- ================= TOTAL VENDORS ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center justify-between mb-4">
         <p class="text-brand-dark text-base font-medium">Total Vendors</p>
         <Briefcase class="w-6 h-6 text-blue-600" />
@@ -111,7 +111,7 @@ watch(
     </div>
 
     <!-- ================= BY TYPE ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center gap-2 mb-4">
         <Layers class="w-5 h-5 text-purple-600" />
         <p class="text-brand-dark text-base font-medium">Vendors by Type</p>
@@ -141,7 +141,7 @@ watch(
     </div>
 
     <!-- ================= BY FIELD ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center gap-2 mb-4">
         <Code class="w-5 h-5 text-green-600" />
         <p class="text-brand-dark text-base font-medium">Vendors by Field</p>
@@ -177,7 +177,7 @@ watch(
 
     <!-- ================= CHART (BY TYPE) ================= -->
     <!-- <div
-      class="xl:col-span-3 bg-white border border-[#DCDEDD] rounded-[16px] p-4 sm:p-6"
+      class="xl:col-span-3 bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-6"
     >
       <div class="flex items-center gap-3 mb-6">
         <TrendingUp class="w-6 h-6 text-purple-600" />

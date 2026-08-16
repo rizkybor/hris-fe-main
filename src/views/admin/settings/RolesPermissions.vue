@@ -190,7 +190,7 @@ async function handleDelete() {
 <template>
   <div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
@@ -223,7 +223,7 @@ async function handleDelete() {
       <div
         v-for="role in roles"
         :key="role.id"
-        class="bg-white border border-[#DCDEDD] rounded-[16px] p-5 hover:border-[#0C51D9] hover:shadow-sm transition-all"
+        class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 hover:border-[#0C51D9] hover:shadow-sm transition-all"
       >
         <div class="flex items-start justify-between mb-4">
           <div class="flex items-center gap-3 min-w-0">
@@ -325,7 +325,7 @@ async function handleDelete() {
         <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="closeForm"></div>
 
         <div
-          class="bg-white rounded-[20px] w-full max-w-3xl relative z-10 shadow-2xl max-h-[90vh] flex flex-col"
+          class="bg-white rounded-[14px] w-full max-w-3xl relative z-10 shadow-2xl max-h-[90vh] flex flex-col"
         >
           <!-- Modal Header -->
           <div class="flex items-start justify-between p-6 border-b border-[#F1F1F1] shrink-0">

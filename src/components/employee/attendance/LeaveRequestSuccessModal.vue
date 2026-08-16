@@ -29,7 +29,7 @@ const handleClose = () => {
       @click.self="handleClose"
     >
       <div
-        class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-md mx-4 overflow-hidden animate-scale-in"
+        class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md mx-4 overflow-hidden animate-scale-in"
       >
         <!-- Success Icon Header -->
         <div class="bg-gradient-to-br from-green-50 to-green-100 p-8 text-center">
@@ -49,7 +49,7 @@ const handleClose = () => {
         <!-- Request Details -->
         <div class="p-6 space-y-4" v-if="leaveData">
           <div
-            class="bg-white border border-[#DCDEDD] rounded-[16px] p-4 space-y-3"
+            class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 space-y-3"
           >
             <!-- Leave Type -->
             <div class="flex items-center justify-between">

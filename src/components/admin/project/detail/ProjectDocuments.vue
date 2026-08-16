@@ -118,7 +118,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 mt-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 mt-6">
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <div
@@ -150,7 +150,7 @@ onMounted(() => {
 
     <div
       v-else-if="documents.length === 0"
-      class="text-center py-12 text-gray-500 bg-gray-50 rounded-[16px] border border-dashed border-[#DCDEDD]"
+      class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
     >
       <FileIcon class="w-10 h-10 text-gray-300 mx-auto mb-3" />
       <p class="text-base font-semibold">No documents uploaded yet</p>
@@ -163,7 +163,7 @@ onMounted(() => {
       <div
         v-for="document in documents"
         :key="document.id"
-        class="flex items-start gap-3 p-4 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
+        class="flex items-start gap-3 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
       >
         <div
           class="w-11 h-11 bg-teal-50 rounded-[10px] flex items-center justify-center shrink-0"
@@ -225,7 +225,7 @@ onMounted(() => {
           @click="closeUploadModal"
         ></div>
 
-        <div class="bg-white rounded-[20px] p-6 w-full max-w-md relative z-10 shadow-2xl">
+        <div class="bg-white rounded-[14px] p-6 w-full max-w-md relative z-10 shadow-2xl">
           <button
             @click="closeUploadModal"
             class="absolute right-4 top-4 text-gray-400 hover:text-gray-600"

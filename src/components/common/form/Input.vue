@@ -29,7 +29,7 @@
         :readonly="readonly"
         :value="modelValue"
         :class="[
-          'w-full pl-10 pr-4 border rounded-[16px] transition-all duration-300',
+          'w-full pl-10 pr-4 border rounded-[12px] transition-all duration-300',
           'hover:border-[#0C51D9] hover:border-2',
           'focus:border-[#0C51D9] focus:border-2 focus:bg-white',
           borderColor,

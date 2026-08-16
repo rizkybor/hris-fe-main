@@ -5,8 +5,10 @@ import { Mail, Plus, Download, Ban, Trash2, Search } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useLetterStore();
+const alertModal = useAlertModalStore();
 const { letters, meta, loading } = storeToRefs(store);
 
 const search = ref("");
@@ -32,7 +34,13 @@ const handleDownload = async (letter) => {
 };
 
 const handleCancel = async (letter) => {
-  if (!confirm(`Batalkan Surat "${letter.letter_number}"? Nomor tetap dicatat dan diberi label DIBATALKAN.`)) return;
+  if (
+    !(await alertModal.confirm(
+      `Batalkan Surat "${letter.letter_number}"? Nomor tetap dicatat dan diberi label DIBATALKAN.`,
+      { type: "warning", confirmText: "Batalkan" }
+    ))
+  )
+    return;
   await store.cancelLetter(letter.id);
 };
 
@@ -57,7 +65,7 @@ const formatDate = (date) =>
 
 <template>
   <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Mail class="w-5 h-5 text-[#0C51D9]" />
@@ -78,7 +86,7 @@ const formatDate = (date) =>
       </router-link>
     </div>
 
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="relative mb-4 max-w-sm">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search class="w-4 h-4 text-gray-400" />

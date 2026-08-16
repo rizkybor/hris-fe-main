@@ -12,7 +12,7 @@ const props = defineProps({
 });
 </script>
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-6">
     <div class="flex items-center gap-6">
       <div class="relative">
         <div
