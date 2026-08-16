@@ -186,6 +186,10 @@ const titles = {
     title: "Reports",
     subtitle: "Generate and review company-wide reports",
   },
+  "admin.history.dashboard": {
+    title: "History",
+    subtitle: "Track and review every activity across the system",
+  },
   "admin.settings.dashboard": {
     title: "Settings",
     subtitle: "Manage system configuration and preferences",

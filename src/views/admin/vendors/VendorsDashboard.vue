@@ -89,10 +89,10 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
       </div>
 
       <!-- Add Vendor Button -->
-      <div class="flex items-center gap-4" v-if="can('project-create')">
+      <div class="flex items-center gap-4" v-if="can('vendors-create')">
         <RouterLink
           class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
-          :to="{ name: 'admin.projects.create' }"
+          :to="{ name: 'admin.vendors.create' }"
         >
           <Plus class="w-4 h-4 text-white" />
           <span class="text-brand-white text-sm font-semibold">Add Vendor</span>

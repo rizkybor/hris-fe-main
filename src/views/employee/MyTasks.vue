@@ -142,23 +142,43 @@ onMounted(() => {
       </div>
     </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div
-          v-for="task in filteredTasks"
-          :key="task.id"
-          class="border border-[#DCDEDD] rounded-[16px] p-4 hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
-        >
-          <div class="flex items-start justify-between mb-2">
-            <h4 class="text-brand-dark text-base font-semibold">{{ task.title }}</h4>
-            <span
-              :class="task.statusClass"
-              class="px-2 py-1 rounded-md text-xs font-semibold flex-shrink-0"
-              >{{ task.statusLabel }}</span
-            >
-          </div>
-          <p class="text-brand-light text-sm mb-3 line-clamp-2">{{ task.description }}</p>
-          <div class="flex items-center gap-4 text-xs text-gray-600">
-            <div class="flex items-center gap-1">
+    <div
+      v-else-if="filteredTasks.length === 0"
+      class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 text-center py-12 text-gray-500"
+    >
+      <ListChecks class="w-10 h-10 text-gray-300 mx-auto mb-3" />
+      <p class="text-lg font-semibold">No tasks found</p>
+      <p class="text-sm text-gray-400">You have no tasks matching this filter</p>
+    </div>
+
+    <div v-else class="space-y-6">
+      <div
+        v-for="group in groupedTasks"
+        :key="group.projectName"
+        class="bg-white border border-[#DCDEDD] rounded-[20px] p-5"
+      >
+        <div class="flex items-center gap-2 mb-4">
+          <Folder class="w-5 h-5 text-[#0C51D9]" />
+          <h4 class="text-brand-dark text-base font-bold">{{ group.projectName }}</h4>
+          <span class="text-xs text-gray-400 font-medium">({{ group.tasks.length }})</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            v-for="task in group.tasks"
+            :key="task.id"
+            class="border border-[#DCDEDD] rounded-[16px] p-4 hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+          >
+            <div class="flex items-start justify-between mb-2">
+              <h4 class="text-brand-dark text-base font-semibold">{{ task.title }}</h4>
+              <span
+                :class="task.statusClass"
+                class="px-2 py-1 rounded-md text-xs font-semibold flex-shrink-0"
+                >{{ task.statusLabel }}</span
+              >
+            </div>
+            <p class="text-brand-light text-sm mb-3 line-clamp-2">{{ task.description }}</p>
+            <div class="flex items-center gap-1 text-xs text-gray-600">
               <Calendar class="w-3 h-3" />
               <span>{{ task.dueDate }}</span>
             </div>

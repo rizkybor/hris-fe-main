@@ -16,6 +16,7 @@ import {
   CircleDollarSign,
   FileStack,
   ListChecksIcon,
+  History as HistoryIcon,
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
@@ -573,6 +574,30 @@ const onNavigate = () => emit("navigate");
                 'text-brand-white': $route.name?.startsWith('admin.report'),
               }"
               >Reports</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.history.dashboard' }"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.history'),
+            }"
+            v-if="can('history-menu')"
+            @click="onNavigate"
+          >
+            <HistoryIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.history'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('admin.history'),
+              }"
+              >History</span
             >
           </RouterLink>
 
