@@ -182,6 +182,18 @@ const titles = {
     title: "Kode Surat & Divisi",
     subtitle: "Manage letter code and division code references",
   },
+  "admin.report.dashboard": {
+    title: "Reports",
+    subtitle: "Generate and review company-wide reports",
+  },
+  "admin.settings.dashboard": {
+    title: "Settings",
+    subtitle: "Manage system configuration and preferences",
+  },
+  "admin.settings.roles": {
+    title: "Roles & Permissions",
+    subtitle: "Control which modules and actions each role can access",
+  },
 
   // EMPLOYEE
   "employee.profile": {
@@ -193,6 +205,10 @@ const titles = {
     subtitle: "Update your personal information",
   },
   "employee.team": { title: "My Team", subtitle: "See your team members" },
+  "employee.tasks": {
+    title: "My Tasks",
+    subtitle: "All tasks assigned to you",
+  },
   "employee.attendance.my-attendances": {
     title: "My Attendances",
     subtitle: "Track your attendance records",

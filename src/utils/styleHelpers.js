@@ -21,6 +21,7 @@ export const getPriorityColor = (priority) => {
 export const getLevelColor = (level) => {
   const colors = {
     Expert: "bg-purple-100 text-purple-700",
+    Advanced: "bg-indigo-100 text-indigo-700",
     Intermediate: "bg-blue-100 text-blue-700",
     Beginner: "bg-green-100 text-green-700",
   };
@@ -33,6 +34,20 @@ export const getStatusColor = (status) => {
     forming: "bg-blue-100 text-blue-700",
     planning: "bg-purple-100 text-purple-700",
     dormant: "bg-gray-100 text-gray-700",
+  };
+  return colors[status?.toLowerCase()] || "bg-gray-100 text-gray-700";
+};
+
+/**
+ * Get Tailwind CSS classes for an employee's job status (active, on_leave, resigned)
+ * @param {string} status - JobStatus enum value
+ * @returns {string} Tailwind CSS classes
+ */
+export const getJobStatusColor = (status) => {
+  const colors = {
+    active: "bg-green-100 text-green-700",
+    on_leave: "bg-yellow-100 text-yellow-700",
+    resigned: "bg-red-100 text-red-700",
   };
   return colors[status?.toLowerCase()] || "bg-gray-100 text-gray-700";
 };

@@ -15,6 +15,7 @@ import {
   Building2Icon,
   CircleDollarSign,
   FileStack,
+  ListChecksIcon,
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
@@ -249,6 +250,30 @@ const onNavigate = () => emit("navigate");
                   $route.name?.startsWith('employee.payslips'),
               }"
               >My Payslips</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'employee.tasks' }"
+            class="nav-link border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 focus:bg-white transition-all duration-300"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('employee.tasks'),
+            }"
+            v-if="can('task-list')"
+            @click="onNavigate"
+          >
+            <ListChecksIcon
+              class="w-5 h-5 text-gray-600"
+              :class="{
+                'text-white': $route.name?.startsWith('employee.tasks'),
+              }"
+            />
+            <span
+              class="text-brand-dark text-base font-medium"
+              :class="{
+                'text-brand-white': $route.name?.startsWith('employee.tasks'),
+              }"
+              >My Tasks</span
             >
           </RouterLink>
 

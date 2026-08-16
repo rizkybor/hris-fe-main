@@ -13,13 +13,6 @@ import { useCompanyFinanceStore } from "@/stores/companyFinance";
 
 const store = useCompanyFinanceStore();
 
-// const alert = ref({
-//   show: false,
-//   type: "success", // success | danger
-//   title: "",
-//   message: "",
-// });
-
 const showSectionAlert = (section, type, title, message) => {
   section.value = {
     show: true,
@@ -32,20 +25,6 @@ const showSectionAlert = (section, type, title, message) => {
     section.value.show = false;
   }, 3000);
 };
-
-// const showAlert = (type, title, message) => {
-//   alert.value = {
-//     show: true,
-//     type,
-//     title,
-//     message,
-//   };
-
-//   // auto hide after 3s
-//   setTimeout(() => {
-//     alert.value.show = false;
-//   }, 3000);
-// };
 
 // Fetch data ketika komponen di-mount
 onMounted(() => {
@@ -167,7 +146,6 @@ const addSdm = () => {
 const submitSdm = async ({ mode, id, payload }) => {
   try {
     loading.value = true;
-    console.log(payload, "<<< cek");
     if (mode === "add") {
       await store.createSdmResource(payload);
       showSectionAlert(
@@ -465,14 +443,6 @@ const fixedCostPaginated = computed(() => store.fixedCostData.items || []);
 const sdmResourcePaginated = computed(() => store.sdmResourceData.items || []);
 const infraPaginated = computed(() => store.infraToolsData.items || []);
 
-const changeInfraPage = async (page) => {
-  if (page < 1 || page > store.infraToolsData.meta.last_page) return;
-
-  infraPage.value = page;
-  // Fetch data dari store sesuai page baru
-  await store.fetchInfraToolsPaginated({ page, per_page: perPage });
-};
-
 /* =======================
    WATCH SEARCH DEBOUNCE
 ======================= */
@@ -497,7 +467,7 @@ watch(
 </script>
 
 <template>
-  <Statistics v-if="can('project-statistic')" />
+  <Statistics v-if="can('company-finance-statistic')" />
 
   <br />
   <br />
@@ -516,6 +486,7 @@ watch(
       <div class="flex justify-between items-center mb-4">
         <h4 class="text-lg font-bold">Fixed Cost</h4>
         <button
+          v-if="can('fixed-cost-create')"
           @click="addFixedCost"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
         >
@@ -570,10 +541,12 @@ watch(
                   @click="viewFixedCost(item)"
                 />
                 <Edit
+                  v-if="can('fixed-cost-edit')"
                   class="w-5 h-5 text-yellow-500 cursor-pointer"
                   @click="editFixedCost(item)"
                 />
                 <Trash2
+                  v-if="can('fixed-cost-delete')"
                   class="w-5 h-5 text-red-500 cursor-pointer"
                   @click="deleteFixedCostHandler(item)"
                 />
@@ -622,9 +595,18 @@ watch(
 
     <!-- ================= SDM ================= -->
     <section class="mb-12">
+      <Alert
+        v-if="sdmAlert.show"
+        :type="sdmAlert.type"
+        :title="sdmAlert.title"
+        :message="sdmAlert.message"
+        :show="sdmAlert.show"
+      />
+
       <div class="flex justify-between items-center mb-4">
         <h4 class="text-lg font-bold">SDM Resource</h4>
         <button
+          v-if="can('sdm-resource-create')"
           @click="addSdm"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
         >
@@ -695,10 +677,12 @@ watch(
                   @click="viewSdm(item)"
                 />
                 <Edit
+                  v-if="can('sdm-resource-edit')"
                   class="w-5 h-5 text-yellow-500 cursor-pointer"
                   @click="editSdm(item)"
                 />
                 <Trash2
+                  v-if="can('sdm-resource-delete')"
                   class="w-5 h-5 text-red-500 cursor-pointer"
                   @click="deleteSdmHandler(item)"
                 />
@@ -747,9 +731,18 @@ watch(
 
     <!-- ================= INFRA ================= -->
     <section>
+      <Alert
+        v-if="infraAlert.show"
+        :type="infraAlert.type"
+        :title="infraAlert.title"
+        :message="infraAlert.message"
+        :show="infraAlert.show"
+      />
+
       <div class="flex justify-between items-center mb-4">
         <h4 class="text-lg font-bold">Infrastructure Tools</h4>
         <button
+          v-if="can('infrastructure-tool-create')"
           @click="addInfra"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
         >
@@ -810,10 +803,12 @@ watch(
                   @click="viewInfra(item)"
                 />
                 <Edit
+                  v-if="can('infrastructure-tool-edit')"
                   class="w-5 h-5 text-yellow-500 cursor-pointer"
                   @click="editInfra(item)"
                 />
                 <Trash2
+                  v-if="can('infrastructure-tool-delete')"
                   class="w-5 h-5 text-red-500 cursor-pointer"
                   @click="deleteInfraHandler(item)"
                 />

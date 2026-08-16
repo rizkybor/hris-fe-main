@@ -2140,10 +2140,6 @@ video {
   --tw-gradient-to: #ca8a04 var(--tw-gradient-to-position);
 }
 
-.fill-white {
-  fill: #fff;
-}
-
 .object-contain {
   -o-object-fit: contain;
      object-fit: contain;
