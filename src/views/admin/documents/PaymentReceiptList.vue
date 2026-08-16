@@ -5,6 +5,7 @@ import { FileCheck2, Plus, Download, Ban, Trash2, Search } from "lucide-vue-next
 import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
+import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 
 const store = usePaymentReceiptStore();
 const { receipts, meta, loading } = storeToRefs(store);
@@ -92,8 +93,10 @@ const formatDate = (date) =>
         />
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+      <SkeletonTable v-if="loading" :rows="6" :cols="7" />
+
+      <div v-else class="overflow-x-auto">
+        <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
               <th class="py-3 pr-4 font-semibold">No Receipt</th>

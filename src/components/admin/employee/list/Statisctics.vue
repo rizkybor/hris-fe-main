@@ -10,6 +10,7 @@ import {
   Trophy,
 } from "lucide-vue-next";
 import { useEmployeeStore } from "@/stores/employee";
+import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 
 const employeeStore = useEmployeeStore();
 
@@ -33,7 +34,13 @@ const loading = computed(() => employeeStore.loadingStatistics);
 
 <template>
   <!-- Stats Layout -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+  <SkeletonStatCards
+    v-if="loading"
+    :count="5"
+    cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+    class="mb-6"
+  />
+  <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
     <!-- Total Employees Card (spans 2 rows on the left) -->
     <div
       class="lg:row-span-2 rounded-[20px] border border-[#0B1042] relative overflow-hidden main-card p-5"

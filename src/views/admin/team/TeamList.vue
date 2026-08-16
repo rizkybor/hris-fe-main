@@ -16,6 +16,7 @@ import {
   BuildingIcon,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const teamStore = useTeamStore();
 const { teams, meta, loading, success } = storeToRefs(teamStore);
@@ -177,9 +178,11 @@ const handlePerPageChange = (perPage) => {
     </div>
 
     <!-- Teams Grid -->
+    <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
+
     <div
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6"
-      v-if="teams.length > 0"
+      v-else-if="teams.length > 0"
     >
       <CardList v-for="team in teams" :key="team.id" :data="team" />
     </div>

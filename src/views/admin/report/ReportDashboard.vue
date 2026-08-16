@@ -11,6 +11,8 @@ import {
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
 import { can } from "@/helpers/permissionHelper";
+import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
+import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 
 const reportStore = useReportStore();
 const { attendance, payroll, employee, finance, loading, exporting } =
@@ -260,7 +262,8 @@ onMounted(() => {
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <SkeletonStatCards v-if="loading" :count="4" cols="grid-cols-2 lg:grid-cols-4" class="mb-6" />
+    <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div
         v-for="card in summaryCards"
         :key="card.label"
@@ -270,14 +273,15 @@ onMounted(() => {
           {{ card.label }}
         </p>
         <p class="text-brand-dark text-xl font-bold">
-          {{ loading ? "..." : card.value }}
+          {{ card.value }}
         </p>
       </div>
     </div>
 
     <!-- Table -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 overflow-x-auto">
-      <table class="w-full text-sm">
+    <SkeletonTable v-if="loading" :rows="6" :cols="5" />
+    <div v-else class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 overflow-x-auto">
+      <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
             <template v-if="activeTab === 'attendance'">

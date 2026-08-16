@@ -16,6 +16,7 @@ import {
   User,
 } from "lucide-vue-next";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -100,8 +101,12 @@ onMounted(async () => {
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="text-center py-20 text-gray-500">
-      Loading credential detail...
+    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+      <Skeleton width="40%" height="18px" />
+      <Skeleton width="60%" height="18px" />
+      <Skeleton height="52px" rounded="16px" />
+      <Skeleton width="50%" height="18px" />
+      <Skeleton height="80px" rounded="16px" />
     </div>
 
     <!-- Content -->

@@ -31,6 +31,8 @@ import {
 import { getStatusConfig, formatLeaveType } from "@/utils/attendanceUtils";
 import AttendanceStatsCards from "@/components/employee/attendance/AttendanceStatsCards.vue";
 import LeaveRequestSuccessModal from "@/components/employee/attendance/LeaveRequestSuccessModal.vue";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
+import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 
 const attendanceStore = useAttendanceStore();
 const { loading: attendanceLoading, attendances, statistics } = storeToRefs(attendanceStore);
@@ -225,7 +227,9 @@ onMounted(async () => {
     </div>
 
     <!-- Stats Cards -->
+    <SkeletonStatCards v-if="attendanceLoading" :count="4" class="mb-6" />
     <AttendanceStatsCards
+      v-else
       :statistics="statistics"
       :pending-requests-count="pendingRequestsCount"
     />
@@ -252,9 +256,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-if="loading" class="text-center py-8">
-          <p class="text-brand-light">Loading...</p>
-        </div>
+        <SkeletonList v-if="attendanceLoading" :rows="3" />
 
         <div v-else class="space-y-3">
           <div
@@ -333,7 +335,7 @@ onMounted(async () => {
           </div>
 
           <div
-            v-if="!loading && recentAttendances.length === 0"
+            v-if="!attendanceLoading && recentAttendances.length === 0"
             class="text-center py-8"
           >
             <p class="text-brand-light">No attendance records found</p>
@@ -361,9 +363,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-if="leaveLoading" class="text-center py-8">
-          <p class="text-brand-light">Loading...</p>
-        </div>
+        <SkeletonList v-if="leaveLoading" :rows="3" />
 
         <div v-else class="space-y-4">
           <div

@@ -13,6 +13,7 @@ import EmployeeEdit from '@/views/admin/employee/EmployeeEdit.vue';
 import EmployeeDetail from '@/views/admin/employee/EmployeeDetail.vue';
 import EmployeeProfile from '@/views/employee/EmployeeProfile.vue';
 import EmployeeTeam from '@/views/employee/EmployeeTeam.vue';
+import MyTasks from '@/views/employee/MyTasks.vue';
 import EmployeeCreateLayout from '@/layouts/EmployeeCreateLayout.vue';
 import projectRoutes from './project';
 import attendanceRoutes from './attendance';
@@ -25,6 +26,7 @@ import companyFinanceRoutes from './companyFinance'
 import reportRoutes from './report';
 import settingsRoutes from './settings';
 import documentRoutes from './document';
+import historyRoutes from './history';
 
 
 
@@ -74,6 +76,7 @@ const router = createRouter({
         ...reportRoutes,
         ...settingsRoutes,
         ...documentRoutes,
+        ...historyRoutes,
         {
           path: 'my-profile',
           name: 'employee.profile',
@@ -88,6 +91,11 @@ const router = createRouter({
           path: 'my-team',
           name: 'employee.team',
           component: EmployeeTeam,
+        },
+        {
+          path: 'my-tasks',
+          name: 'employee.tasks',
+          component: MyTasks,
         }
       ],
     },

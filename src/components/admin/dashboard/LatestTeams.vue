@@ -13,6 +13,7 @@ import { useRouter } from "vue-router";
 import { getTimeAgo } from "@/utils/dateUtils";
 import { getStatusBadgeClass } from "@/utils/badgeUtils";
 import { storeToRefs } from "pinia";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
 const teamStore = useTeamStore();
 const { teams: latestTeams, loading } = storeToRefs(teamStore);
@@ -40,18 +41,14 @@ const goToTeamDetail = (id: number) => {
 
     <!-- Loading State -->
     <div v-if="loading" class="space-y-4">
-      <div
-        v-for="i in 5"
-        :key="i"
-        class="flex items-center gap-3 animate-pulse"
-      >
-        <div class="w-16 h-14 bg-gray-200 rounded-lg"></div>
-        <div class="flex-1">
-          <div class="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-          <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      <div v-for="i in 5" :key="i" class="flex items-center gap-3">
+        <Skeleton width="64px" height="56px" rounded="8px" />
+        <div class="flex-1 space-y-2">
+          <Skeleton width="33%" height="16px" />
+          <Skeleton width="50%" height="12px" />
         </div>
-        <div class="w-24 h-6 bg-gray-200 rounded"></div>
-        <div class="w-20 h-10 bg-gray-200 rounded-xl"></div>
+        <Skeleton width="96px" height="24px" rounded="6px" class="hidden sm:block" />
+        <Skeleton width="80px" height="40px" rounded="12px" class="hidden sm:block" />
       </div>
     </div>
 

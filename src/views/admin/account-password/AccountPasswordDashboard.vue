@@ -14,6 +14,8 @@ import {
   X,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
 
 const passwordStore = useAccountPasswordStore();
@@ -117,10 +119,12 @@ const formatDate = (date) => {
               <p class="text-brand-white-90 text-sm font-medium">
                 Stored Accounts
               </p>
+              <Skeleton v-if="loading" dark width="90px" height="3rem" rounded="8px" class="my-4" />
               <p
+                v-else
                 class="text-brand-white text-4xl lg:text-5xl font-extrabold leading-none my-4"
               >
-                {{ loading ? "..." : statistics.total_accounts }}
+                {{ statistics.total_accounts }}
               </p>
               <p class="text-brand-white-80 text-base font-normal">
                 Internal systems & services
@@ -186,7 +190,9 @@ const formatDate = (date) => {
         </div>
       </div>
 
-      <div class="space-y-4">
+      <SkeletonList v-if="loading" :rows="4" />
+
+      <div v-else class="space-y-4">
         <div
           v-for="account in filteredAccounts"
           :key="account.id"

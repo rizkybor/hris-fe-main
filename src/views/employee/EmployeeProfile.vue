@@ -4,8 +4,10 @@ import { useEmployeeStore } from "@/stores/employee";
 import { useTaskStore } from "@/stores/task";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { getStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
+import { getJobStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
 import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import {
   formatRupiah as formatCurrency,
   capitalize,
@@ -24,7 +26,6 @@ import {
   ListChecks,
   Calendar,
   Code,
-  Star,
   Building,
   User,
   Clock,
@@ -74,11 +75,15 @@ const latestTasks = computed(() =>
 );
 
 const goToAllTasks = () => {
-  router.push({ name: "admin.projects" });
+  router.push({ name: "employee.tasks" });
+};
+
+const goToMyTeam = () => {
+  router.push({ name: "employee.team" });
 };
 
 const statusBadgeClass = computed(() => {
-  return getStatusColor(profile.value?.job_information?.status);
+  return getJobStatusColor(profile.value?.job_information?.status);
 });
 
 const skillLevelBadgeClass = computed(() => {
@@ -92,33 +97,51 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="flex items-center justify-center h-64">
-    <p class="text-gray-500">Loading...</p>
+  <div v-if="loading">
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-6">
+        <Skeleton width="96px" height="96px" rounded="9999px" class="self-center sm:self-auto" />
+        <div class="flex-1 space-y-3">
+          <Skeleton width="220px" height="24px" />
+          <Skeleton width="140px" height="16px" />
+          <Skeleton width="260px" height="14px" />
+        </div>
+      </div>
+    </div>
+    <SkeletonStatCards :count="4" class="mb-6" />
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 space-y-3">
+        <Skeleton v-for="i in 5" :key="i" width="100%" height="16px" />
+      </div>
+      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 space-y-3">
+        <Skeleton v-for="i in 5" :key="i" width="100%" height="16px" />
+      </div>
+    </div>
   </div>
 
   <div v-else-if="profile">
     <!-- Employee Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-6">
-      <div class="flex items-center gap-6">
-        <div class="relative">
+    <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-6">
+        <div class="relative self-center sm:self-auto flex-shrink-0">
           <img
             :src="
               profile?.user?.profile_photo ||
               'https://ui-avatars.com/api/?name=' + profile?.user?.name
             "
             :alt="profile?.user?.name"
-            class="w-32 h-32 rounded-full object-cover"
+            class="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover"
           />
           <span
             :class="statusBadgeClass"
-            class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 px-3 py-1 rounded-full text-sm font-semibold whitespace-nowrap"
+            class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap"
           >
             {{ capitalize(profile?.job_information?.status) }}
           </span>
         </div>
-        <div class="flex-1">
-          <div class="flex items-center gap-4 mb-2">
-            <h1 class="text-brand-dark text-3xl font-extrabold">
+        <div class="flex-1 min-w-0 text-center sm:text-left">
+          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 mb-2">
+            <h1 class="text-brand-dark text-2xl sm:text-3xl font-extrabold">
               {{ profile?.user?.name }}
             </h1>
             <span
@@ -131,7 +154,7 @@ onMounted(() => {
           <p class="text-brand-light text-lg mb-3">
             {{ capitalize(profile?.job_information?.job_title) }}
           </p>
-          <div class="flex items-center gap-6 text-base text-gray-600">
+          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-6 gap-y-2 text-base text-gray-600">
             <div class="flex items-center gap-2">
               <Building class="w-4 h-4" />
               <span>{{
@@ -151,15 +174,14 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="flex items-center">
-          <button
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2"
+        <div class="flex items-center justify-center sm:justify-end">
+          <RouterLink
+            :to="{ name: 'employee.profile.edit' }"
+            class="w-full sm:w-auto btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2"
           >
             <Edit class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold"
-              >Request Edit to Manager</span
-            >
-          </button>
+            <span class="text-brand-white text-sm font-semibold">Edit Profile</span>
+          </RouterLink>
         </div>
       </div>
     </div>
@@ -461,7 +483,7 @@ onMounted(() => {
             <div class="flex justify-between items-center">
               <span class="text-brand-light text-base">Contact Name</span>
               <span class="text-brand-dark text-base font-medium">{{
-                profile.emergency_contacts[0]?.name || "-"
+                profile.emergency_contacts[0]?.full_name || "-"
               }}</span>
             </div>
             <div class="flex justify-between items-center">
@@ -494,7 +516,7 @@ onMounted(() => {
         <!-- Team Information -->
         <div
           class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 h-fit"
-          v-if="profile?.team"
+          v-if="profile?.job_information?.team"
         >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
@@ -509,6 +531,7 @@ onMounted(() => {
               </div>
             </div>
             <button
+              @click="goToMyTeam"
               class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
             >
               <Users class="w-4 h-4 text-gray-600" />
@@ -532,19 +555,12 @@ onMounted(() => {
             </div>
             <div class="flex-1">
               <h4 class="text-white text-xl font-bold">
-                {{ profile.team.name }}
+                {{ profile.job_information.team.name }}
               </h4>
               <p class="text-white/80 text-base font-normal">
-                {{ profile.team.team_size }} members •
-                {{ capitalize(profile.team.status) }}
+                {{ profile.job_information.team.members_count ?? 0 }} members •
+                {{ capitalize(profile.job_information.team.status) }}
               </p>
-            </div>
-            <div class="flex items-center gap-1">
-              <Star class="w-4 h-4 text-white fill-white" />
-              <Star class="w-4 h-4 text-white fill-white" />
-              <Star class="w-4 h-4 text-white fill-white" />
-              <Star class="w-4 h-4 text-white fill-white" />
-              <Star class="w-4 h-4 text-white fill-white" />
             </div>
           </div>
 
@@ -554,20 +570,20 @@ onMounted(() => {
               <span class="text-brand-light text-base">Team Lead</span>
               <div class="flex items-center gap-2">
                 <span class="text-brand-dark text-base font-medium">{{
-                  profile.team.leader_name || "-"
+                  profile.job_information.team.leader?.name || "-"
                 }}</span>
               </div>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-brand-light text-base">Department</span>
               <span class="text-brand-dark text-base font-medium">{{
-                capitalize(profile.team.department)
+                capitalize(profile.job_information.team.department)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-brand-light text-base">Team Size</span>
               <span class="text-brand-dark text-base font-medium"
-                >{{ profile.team.team_size }} members</span
+                >{{ profile.job_information.team.members_count ?? 0 }} members</span
               >
             </div>
           </div>
@@ -595,7 +611,11 @@ onMounted(() => {
             </button>
           </div>
 
-          <div v-if="latestTasks.length === 0" class="text-center py-6 text-sm text-gray-400">
+          <div v-if="taskStore.loading" class="space-y-4">
+            <Skeleton v-for="i in 3" :key="i" height="90px" rounded="12px" />
+          </div>
+
+          <div v-else-if="latestTasks.length === 0" class="text-center py-6 text-sm text-gray-400">
             No active tasks assigned
           </div>
 

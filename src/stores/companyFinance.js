@@ -205,6 +205,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -223,6 +224,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -246,6 +248,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         this.success = "Fixed Cost item deleted successfully";
       } catch (error) {
         this.error = handleError(error);
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -308,6 +311,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -326,6 +330,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -348,6 +353,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         this.success = "SDM Resource item deleted successfully";
       } catch (error) {
         this.error = handleError(error);
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -419,6 +425,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -430,7 +437,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
 
       try {
         const response = await axiosInstance.post(
-          `infrastructurre-tools/${id}`,
+          `infrastructure-tools/${id}`,
           {
             ...payload,
             _method: "PUT",
@@ -440,6 +447,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -462,6 +470,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         this.success = "Infrastructure item deleted successfully";
       } catch (error) {
         this.error = handleError(error);
+        throw error;
       } finally {
         this.loading = false;
       }

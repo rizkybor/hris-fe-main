@@ -14,6 +14,7 @@ import {
 import { useEmployeeStore } from "@/stores/employee";
 import CardList from "@/components/admin/project/list/CardList.vue";
 import { formatDate as formatDateUtil } from "@/utils/dateUtils.js";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const employeeStore = useEmployeeStore();
 const team = ref(null);
@@ -293,9 +294,11 @@ onMounted(() => {
         </div>
 
         <!-- Members Grid -->
-        <div v-if="loadingMembers" class="text-center py-12">
-          <p class="text-gray-500 text-lg font-medium">Loading members...</p>
-        </div>
+        <SkeletonCardGrid
+          v-if="loadingMembers"
+          :count="4"
+          cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        />
         <div
           v-else
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
@@ -389,9 +392,11 @@ onMounted(() => {
         </div>
 
         <!-- Projects Grid -->
-        <div v-if="loadingProjects" class="text-center py-12">
-          <p class="text-gray-500 text-lg font-medium">Loading projects...</p>
-        </div>
+        <SkeletonCardGrid
+          v-if="loadingProjects"
+          :count="4"
+          cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        />
         <div
           v-else
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"

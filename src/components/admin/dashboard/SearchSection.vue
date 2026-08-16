@@ -13,6 +13,7 @@ import {
   XIcon,
 } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
+import Spinner from "@/components/common/skeleton/Spinner.vue";
 import { useOptionStore } from "@/stores/option";
 
 const router = useRouter();
@@ -144,7 +145,7 @@ const goToProjectFromTask = (projectId) => router.push({ name: "admin.projects.d
 
     <!-- Results -->
     <div v-if="hasSearched" class="mt-4 pt-4 border-t border-[#F1F1F1]">
-      <div v-if="loading" class="text-center py-6 text-sm text-gray-400">Searching...</div>
+      <Spinner v-if="loading" label="Searching..." />
 
       <div v-else-if="!hasResults" class="text-center py-6 text-sm text-gray-400">
         No results found for "{{ query }}"

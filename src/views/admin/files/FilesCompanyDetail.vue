@@ -12,6 +12,7 @@ import {
   FileType,
 } from "lucide-vue-next";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
+import Spinner from "@/components/common/skeleton/Spinner.vue";
 
 const archiveStore = useFilesCompanyStore();
 const route = useRoute();
@@ -86,10 +87,7 @@ const isImage = (type) => type?.startsWith("image/");
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center gap-3 py-20 text-gray-500">
-      <span class="w-5 h-5 border-2 border-gray-300 border-t-[#0C51D9] rounded-full animate-spin"></span>
-      Loading archive detail...
-    </div>
+    <Spinner v-if="loading" label="Loading archive detail..." />
 
     <!-- Error -->
     <div v-else-if="error" class="text-center py-20 text-red-600">
