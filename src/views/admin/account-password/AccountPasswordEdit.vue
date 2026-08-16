@@ -2,7 +2,7 @@
 import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
-  Shield,
+  ShieldCheck,
   Save,
   Eye,
   EyeOff,
@@ -145,9 +145,9 @@ watch(
         </button>
 
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-12 h-12 bg-violet-50 rounded-[12px] flex items-center justify-center"
         >
-          <Shield class="w-6 h-6 text-blue-600" />
+          <ShieldCheck class="w-6 h-6 text-violet-600" />
         </div>
 
         <div>
@@ -325,7 +325,7 @@ watch(
           type="button"
           @click="submit"
           :disabled="submitting"
-          class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow text-brand-white font-semibold px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
+          class="w-full sm:w-auto btn-primary rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] text-brand-white font-semibold px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
         >
           <Save class="w-4 h-4" />
           {{ submitting ? "Updating..." : "Update Credential" }}

@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import {
-  Shield,
+  ShieldCheck,
   Eye,
   EyeOff,
   Save,
@@ -71,9 +71,9 @@ const submit = async () => {
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-12 h-12 bg-violet-50 rounded-[12px] flex items-center justify-center"
         >
-          <Shield class="w-6 h-6 text-blue-600" />
+          <ShieldCheck class="w-6 h-6 text-violet-600" />
         </div>
         <div>
           <h1 class="text-brand-dark text-xl font-bold">
@@ -223,7 +223,7 @@ const submit = async () => {
           type="button"
           @click="submit"
           :disabled="loading"
-          class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+          class="w-full sm:w-auto btn-primary rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <Save class="w-4 h-4 text-white" />
           <span class="text-brand-white text-sm font-semibold">

@@ -2,8 +2,9 @@
 import { onMounted, watch, ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import {
-  Shield,
+  ShieldCheck,
   Key,
+  Lock,
   Trash2,
   AlertTriangle,
   Eye,
@@ -96,17 +97,23 @@ const formatDate = (date) => {
   <div>
     <!-- ================= STATS LAYOUT ================= -->
     <div class="gap-4 mb-6">
-      <!-- Main Card -->
+      <!-- Main Card (vault identity: violet accent over the dark navy hero) -->
       <div
         class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-5"
       >
+        <!-- Faint lock lattice watermark for the vault feel -->
+        <div class="absolute inset-0 opacity-[0.06] pointer-events-none">
+          <Lock class="absolute -right-4 -top-4 w-32 h-32 text-violet-300" stroke-width="1" />
+          <Lock class="absolute right-16 bottom-0 w-16 h-16 text-violet-300" stroke-width="1" />
+        </div>
+
         <div class="flex flex-col justify-center h-full relative z-10">
           <div class="flex items-center gap-2 mb-3">
             <div
-              class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm"
+              class="flex items-center gap-1.5 px-3 py-1 bg-violet-500/20 border border-violet-400/30 rounded-full backdrop-blur-sm"
             >
-              <Shield class="w-3 h-3 text-white" />
-              <span class="text-brand-white text-xs font-semibold">
+              <ShieldCheck class="w-3 h-3 text-violet-300" />
+              <span class="text-violet-200 text-xs font-semibold">
                 Credential Vault
               </span>
             </div>
@@ -131,13 +138,14 @@ const formatDate = (date) => {
               </p>
             </div>
             <div
-              class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center"
+              class="w-16 h-16 bg-violet-500/20 border border-violet-400/20 rounded-[14px] flex items-center justify-center"
             >
-              <Key class="w-8 h-8 text-white" />
+              <Key class="w-8 h-8 text-violet-300" />
             </div>
           </div>
 
-          <div class="flex items-center gap-3 mt-auto">
+          <div class="flex items-center gap-2 mt-auto">
+            <Lock class="w-3 h-3 text-violet-300/70" />
             <span class="text-brand-white-70 text-xs"> Restricted Access </span>
           </div>
         </div>
@@ -168,20 +176,20 @@ const formatDate = (date) => {
             <div
               class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10"
             >
-              <Search class="w-4 h-4 text-blue-400" />
+              <Search class="w-4 h-4 text-violet-400" />
             </div>
 
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Search by name or email..."
-              class="relative w-full sm:w-64 pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
+              class="relative w-full sm:w-64 pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all"
             />
           </div>
 
           <router-link
             :to="{ name: 'admin.account-password.create' }"
-            class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
+            class="rounded-lg border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 px-4 py-3 flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)]"
           >
             <span class="text-brand-white text-sm font-semibold">
               Create Credential
@@ -196,16 +204,19 @@ const formatDate = (date) => {
         <div
           v-for="account in filteredAccounts"
           :key="account.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
+          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:shadow-sm transition-all"
         >
           <div
             class="w-16 h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden"
           >
             <!-- ICON -->
             <div
-              class="w-12 h-12 sm:w-16 sm:h-16 relative flex items-center justify-center rounded-lg sm:rounded-[12px] overflow-hidden bg-gradient-to-br from-primary-500 to-primary-600"
+              class="w-12 h-12 sm:w-16 sm:h-16 relative flex items-center justify-center rounded-lg sm:rounded-[12px] overflow-hidden bg-gradient-to-br from-violet-600 to-indigo-700"
             >
               <Key class="w-6 h-6 sm:w-8 sm:h-8 text-white relative z-10" />
+              <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center border border-violet-100">
+                <Lock class="w-2.5 h-2.5 text-violet-600" />
+              </div>
             </div>
           </div>
 
@@ -240,8 +251,9 @@ const formatDate = (date) => {
           </div>
 
           <div
-            class="hidden sm:block font-mono tracking-widest text-brand-dark text-xs"
+            class="hidden sm:flex items-center gap-1.5 font-mono tracking-widest text-violet-700 text-xs bg-violet-50 border border-violet-100 rounded-md px-2.5 py-1.5"
           >
+            <Lock class="w-3 h-3 text-violet-400" />
             ••••••••
           </div>
           <div
@@ -252,7 +264,7 @@ const formatDate = (date) => {
                 name: 'admin.account-password.detail',
                 params: { id: account.id },
               }"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-violet-400 hover:ring-2 hover:ring-violet-400/30 transition-all"
               title="View Credential"
               aria-label="View Credential"
             >
@@ -264,7 +276,7 @@ const formatDate = (date) => {
                 name: 'admin.account-password.edit',
                 params: { id: account.id },
               }"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-violet-400 hover:ring-2 hover:ring-violet-400/30 transition-all"
               title="Edit Credential"
               aria-label="Edit Credential"
             >
@@ -273,7 +285,7 @@ const formatDate = (date) => {
 
             <button
               @click="copyPassword(account)"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
+              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-violet-400 hover:ring-2 hover:ring-violet-400/30 transition-all"
               title="Copy Password"
               aria-label="Copy Password"
             >

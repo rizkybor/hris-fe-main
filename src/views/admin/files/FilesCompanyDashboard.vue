@@ -15,6 +15,11 @@ import {
   ChevronRight,
   Search,
   X,
+  FileText,
+  FileImage,
+  FileSpreadsheet,
+  FileArchive,
+  File as FileIcon,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -38,6 +43,21 @@ const formatDate = (date) => {
     month: "long",
     day: "numeric",
   });
+};
+
+// File-type presentation so the archive list reads at a glance instead of
+// every row wearing the same generic icon.
+const fileTypeMeta = (mime) => {
+  if (!mime) return { icon: FileIcon, class: "from-gray-400 to-gray-500" };
+  if (mime.startsWith("image/")) return { icon: FileImage, class: "from-emerald-500 to-emerald-600" };
+  if (mime === "application/pdf") return { icon: FileText, class: "from-red-500 to-red-600" };
+  if (mime.includes("spreadsheet") || mime.includes("excel") || mime === "text/csv")
+    return { icon: FileSpreadsheet, class: "from-green-600 to-green-700" };
+  if (mime.includes("zip") || mime.includes("compressed") || mime.includes("archive"))
+    return { icon: FileArchive, class: "from-amber-500 to-amber-600" };
+  if (mime.includes("word") || mime === "application/msword")
+    return { icon: FileText, class: "from-blue-500 to-blue-600" };
+  return { icon: FileIcon, class: "from-primary-500 to-primary-600" };
 };
 
 onMounted(async () => {
@@ -236,8 +256,11 @@ const handleDelete = async () => {
           :key="archive.id"
           class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
         >
-          <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px] flex items-center justify-center flex-shrink-0">
-            <Archive class="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+          <div
+            class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br rounded-[12px] flex items-center justify-center flex-shrink-0"
+            :class="fileTypeMeta(archive.type_file).class"
+          >
+            <component :is="fileTypeMeta(archive.type_file).icon" class="w-6 h-6 sm:w-7 sm:h-7 text-white" />
           </div>
 
           <div class="flex-1 min-w-0">
