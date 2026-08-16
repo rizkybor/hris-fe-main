@@ -143,7 +143,7 @@ const submit = () => {
     class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
   >
     <div
-      class="bg-white rounded-[20px] w-full max-w-md max-h-[90vh] overflow-y-auto p-6 shadow-xl"
+      class="bg-white rounded-[14px] w-full max-w-md max-h-[90vh] overflow-y-auto p-6 shadow-xl"
     >
       <h3 class="text-xl font-bold">
         {{

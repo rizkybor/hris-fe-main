@@ -181,7 +181,7 @@ onMounted(() => {
 <template>
   <div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6"
     >
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5"
@@ -267,7 +267,7 @@ onMounted(() => {
       <div
         v-for="card in summaryCards"
         :key="card.label"
-        class="bg-white border border-[#DCDEDD] rounded-[16px] p-4"
+        class="bg-white border border-[#DCDEDD] rounded-[12px] p-4"
       >
         <p class="text-brand-light text-xs font-medium mb-1">
           {{ card.label }}
@@ -280,7 +280,7 @@ onMounted(() => {
 
     <!-- Table -->
     <SkeletonTable v-if="loading" :rows="6" :cols="5" />
-    <div v-else class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 overflow-x-auto">
+    <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left text-brand-light border-b border-[#DCDEDD]">

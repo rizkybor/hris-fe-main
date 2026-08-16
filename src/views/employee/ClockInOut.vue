@@ -337,12 +337,12 @@ onUnmounted(() => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Clock Section -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-8 text-center"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-8 text-center"
       >
         <div class="mb-6">
           <div class="flex items-center justify-center gap-3 mb-4">
             <div
-              class="w-16 h-16 bg-blue-50 rounded-[16px] flex items-center justify-center"
+              class="w-16 h-16 bg-blue-50 rounded-[12px] flex items-center justify-center"
             >
               <Clock class="w-8 h-8 text-blue-600" />
             </div>
@@ -354,7 +354,7 @@ onUnmounted(() => {
 
           <!-- Live Clock Display -->
           <div
-            class="bg-gradient-to-br from-primary-500 to-primary-600 rounded-[20px] p-8 text-white mb-4"
+            class="bg-gradient-to-br from-primary-500 to-primary-600 rounded-[14px] p-8 text-white mb-4"
           >
             <div class="text-6xl font-extrabold mb-2">{{ currentTime }}</div>
             <div class="text-xl font-medium opacity-90">{{ currentDate }}</div>
@@ -370,7 +370,7 @@ onUnmounted(() => {
 
       <!-- Attendance Status -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
       >
         <div class="flex items-center gap-3 mb-6">
           <div
@@ -433,7 +433,7 @@ onUnmounted(() => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Location and Camera -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
       >
         <div class="flex items-center gap-3 mb-6">
           <div
@@ -583,7 +583,7 @@ onUnmounted(() => {
 
       <!-- Clock In/Out Action -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-8 text-center"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-8 text-center"
       >
         <div class="mb-6">
           <div

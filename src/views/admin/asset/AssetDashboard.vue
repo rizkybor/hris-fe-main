@@ -160,7 +160,7 @@ onMounted(async () => {
 
 <template>
   <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6 flex items-center justify-between">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Laptop class="w-5 h-5 text-[#0C51D9]" />
@@ -181,25 +181,25 @@ onMounted(async () => {
     </div>
 
     <div v-if="statistics" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
         <p class="text-brand-light text-xs">Total Aset</p>
         <p class="text-brand-dark text-2xl font-bold mt-1">{{ statistics.total }}</p>
       </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
         <p class="text-brand-light text-xs">Tersedia</p>
         <p class="text-green-600 text-2xl font-bold mt-1">{{ statistics.available }}</p>
       </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
         <p class="text-brand-light text-xs">Sedang Dipakai</p>
         <p class="text-blue-600 text-2xl font-bold mt-1">{{ statistics.assigned }}</p>
       </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
         <p class="text-brand-light text-xs">Total Nilai Aset</p>
         <p class="text-brand-dark text-lg font-bold mt-1">{{ formatRupiah(statistics.total_value) }}</p>
       </div>
     </div>
 
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6 flex flex-wrap gap-3">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex flex-wrap gap-3">
       <input
         v-model="filters.search"
         @input="fetchData"
@@ -222,7 +222,7 @@ onMounted(async () => {
     </div>
 
     <div v-else class="space-y-3">
-      <div v-for="asset in assets" :key="asset.id" class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+      <div v-for="asset in assets" :key="asset.id" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between gap-4">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1 flex-wrap">
@@ -276,7 +276,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div v-if="assets.length === 0" class="bg-white border border-[#DCDEDD] rounded-[20px] p-10 text-center">
+      <div v-if="assets.length === 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-10 text-center">
         <Laptop class="w-10 h-10 text-gray-300 mx-auto mb-3" />
         <p class="text-brand-light text-sm">Belum ada aset.</p>
       </div>
@@ -284,7 +284,7 @@ onMounted(async () => {
 
     <!-- Create/Edit Modal -->
     <div v-if="showFormModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeFormModal">
-      <div class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
           <h3 class="text-brand-dark text-lg font-bold">{{ editingId ? 'Edit Aset' : 'Tambah Aset' }}</h3>
           <button @click="closeFormModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
@@ -359,7 +359,7 @@ onMounted(async () => {
 
     <!-- Assign Modal -->
     <div v-if="showAssignModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeAssignModal">
-      <div class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-md">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md">
         <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
           <h3 class="text-brand-dark text-lg font-bold">Tugaskan Aset</h3>
           <button @click="closeAssignModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">

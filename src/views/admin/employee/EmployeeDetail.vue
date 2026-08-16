@@ -232,7 +232,7 @@ onMounted(() => {
 
   <div v-else-if="employee">
     <!-- Employee Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-6">
       <div class="flex items-center gap-6">
         <div class="relative">
           <img
@@ -315,7 +315,7 @@ onMounted(() => {
     <!-- Performance Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -328,14 +328,14 @@ onMounted(() => {
             <p class="text-success text-base font-medium">This month</p>
           </div>
           <div
-            class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center"
+            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
           >
             <CheckCircle class="w-6 h-6 text-blue-600" />
           </div>
         </div>
       </div>
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -356,14 +356,14 @@ onMounted(() => {
             </p>
           </div>
           <div
-            class="w-12 h-12 bg-green-50 rounded-[16px] flex items-center justify-center"
+            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
           >
             <CalendarCheck class="w-6 h-6 text-green-600" />
           </div>
         </div>
       </div>
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -376,14 +376,14 @@ onMounted(() => {
             <p class="text-success text-base font-medium">Active projects</p>
           </div>
           <div
-            class="w-12 h-12 bg-purple-50 rounded-[16px] flex items-center justify-center"
+            class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
           >
             <Folder class="w-6 h-6 text-purple-600" />
           </div>
         </div>
       </div>
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -415,7 +415,7 @@ onMounted(() => {
             </p>
           </div>
           <div
-            class="w-12 h-12 bg-orange-50 rounded-[16px] flex items-center justify-center"
+            class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
           >
             <TrendingUp class="w-6 h-6 text-orange-600" />
           </div>
@@ -426,7 +426,7 @@ onMounted(() => {
     <!-- Information Cards Row 1 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Team Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center"
@@ -463,7 +463,7 @@ onMounted(() => {
       </div>
 
       <!-- Contact Details -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-12 h-12 bg-teal-50 rounded-[12px] flex items-center justify-center"
@@ -501,7 +501,7 @@ onMounted(() => {
     <!-- Information Cards Row 2 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Personal Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -544,7 +544,7 @@ onMounted(() => {
       </div>
 
       <!-- Emergency Contact -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
@@ -601,7 +601,7 @@ onMounted(() => {
     <!-- Information Cards Row 3 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Address Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -640,7 +640,7 @@ onMounted(() => {
       </div>
 
       <!-- Employment Details -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -688,7 +688,7 @@ onMounted(() => {
     <!-- Information Cards Row 4 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Administrative Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
@@ -731,7 +731,7 @@ onMounted(() => {
       </div>
 
       <!-- Bank Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-12 h-12 bg-cyan-50 rounded-[12px] flex items-center justify-center"
@@ -773,7 +773,7 @@ onMounted(() => {
     </div>
 
     <!-- Performance Reviews -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 bg-yellow-50 rounded-[12px] flex items-center justify-center">
@@ -811,7 +811,7 @@ onMounted(() => {
     </div>
 
     <!-- Disciplinary History -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6">
       <div class="flex items-center gap-3 mb-4">
         <div class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center">
           <ShieldAlert class="w-6 h-6 text-red-600" />
@@ -835,7 +835,7 @@ onMounted(() => {
     </div>
 
     <!-- Resignation / Offboarding -->
-    <div v-if="can('employee-edit')" class="bg-white border border-[#DCDEDD] rounded-[16px] p-6 mb-6">
+    <div v-if="can('employee-edit')" class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center">
@@ -889,7 +889,7 @@ onMounted(() => {
     </div>
 
     <!-- Danger Zone -->
-    <div class="bg-white border border-[#FEE2E2] rounded-[16px] p-6">
+    <div class="bg-white border border-[#FEE2E2] rounded-[12px] p-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
@@ -947,7 +947,7 @@ onMounted(() => {
 
     <!-- Performance Review Modal -->
     <div v-if="showReviewModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showReviewModal = false">
-      <div class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
           <h3 class="text-brand-dark text-lg font-bold">Buat Performance Review</h3>
           <button @click="showReviewModal = false" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
@@ -1000,7 +1000,7 @@ onMounted(() => {
 
     <!-- Resignation Modal -->
     <div v-if="showResignModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showResignModal = false">
-      <div class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-md">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md">
         <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
           <h3 class="text-brand-dark text-lg font-bold">Proses Resign / Pemutusan Kerja</h3>
           <button @click="showResignModal = false" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">

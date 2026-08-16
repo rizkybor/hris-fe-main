@@ -51,7 +51,7 @@ const submit = async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Briefcase class="w-6 h-6 text-blue-600" />
@@ -80,7 +80,7 @@ const submit = async () => {
     </div>
 
     <!-- Form Card -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="md:col-span-2">
           <label class="block text-brand-dark text-base font-semibold mb-1">Vendor Name *</label>
@@ -92,7 +92,7 @@ const submit = async () => {
               v-model="form.name"
               type="text"
               placeholder="e.g. PT. Sumber Teknologi"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -107,7 +107,7 @@ const submit = async () => {
               v-model="form.type"
               type="text"
               placeholder="e.g. Technology, Logistics"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -122,7 +122,7 @@ const submit = async () => {
               v-model="form.field"
               type="text"
               placeholder="e.g. Software Development"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -137,7 +137,7 @@ const submit = async () => {
               v-model="form.pic_name"
               type="text"
               placeholder="Contact person name"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -152,7 +152,7 @@ const submit = async () => {
               v-model="form.pic_phone"
               type="text"
               placeholder="+62..."
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -167,7 +167,7 @@ const submit = async () => {
               v-model="form.email"
               type="email"
               placeholder="vendor@company.com"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -182,7 +182,7 @@ const submit = async () => {
               v-model="form.address"
               type="text"
               placeholder="Vendor address"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -197,7 +197,7 @@ const submit = async () => {
               v-model="form.notes"
               rows="4"
               placeholder="Additional notes about this vendor..."
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
             ></textarea>
           </div>
         </div>

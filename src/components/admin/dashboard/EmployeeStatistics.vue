@@ -177,7 +177,7 @@ onMounted(() => {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <!-- My Attendance Card (spans 2 rows on the left) -->
       <div
-        class="main-card lg:row-span-2 rounded-[20px] border border-[#0B1042] relative overflow-hidden p-4 sm:p-5"
+        class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-4 sm:p-5"
       >
         <div class="flex flex-col justify-center h-full relative z-10">
           <!-- Trending Badge -->
@@ -211,7 +211,7 @@ onMounted(() => {
               </p>
             </div>
             <div
-              class="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-[20px] flex items-center justify-center"
+              class="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-[14px] flex items-center justify-center"
             >
               <CalendarCheckIcon class="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
@@ -240,7 +240,7 @@ onMounted(() => {
       <!-- Row 1 Stats Cards -->
       <!-- Total Hours Worked -->
       <div
-        class="stats-card bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
+        class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -255,7 +255,7 @@ onMounted(() => {
             <p class="text-success text-sm font-medium">This month</p>
           </div>
           <div
-            class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-[16px] flex items-center justify-center"
+            class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
           >
             <ClockIcon class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
           </div>
@@ -264,7 +264,7 @@ onMounted(() => {
 
       <!-- Leave Balance -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -279,7 +279,7 @@ onMounted(() => {
             <p class="text-gray-500 text-sm font-medium">Days remaining</p>
           </div>
           <div
-            class="w-10 h-10 sm:w-12 sm:h-12 bg-green-50 rounded-[16px] flex items-center justify-center"
+            class="w-10 h-10 sm:w-12 sm:h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
           >
             <CalendarCheckIcon class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
           </div>
@@ -292,7 +292,7 @@ onMounted(() => {
       <!-- Row 2 Stats Cards -->
       <!-- Tasks Done -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -309,7 +309,7 @@ onMounted(() => {
             </p>
           </div>
           <div
-            class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-50 rounded-[16px] flex items-center justify-center"
+            class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
           >
             <CheckSquareIcon class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
           </div>
@@ -318,7 +318,7 @@ onMounted(() => {
 
       <!-- Active Projects -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -336,7 +336,7 @@ onMounted(() => {
             </p>
           </div>
           <div
-            class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-50 rounded-[16px] flex items-center justify-center"
+            class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
           >
             <FolderIcon class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
           </div>
@@ -348,7 +348,7 @@ onMounted(() => {
   <!-- Additional Sections -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
     <!-- Upcoming Tasks -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-4 sm:p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-brand-dark text-base sm:text-lg font-bold">
           Upcoming Tasks
@@ -406,7 +406,7 @@ onMounted(() => {
     </div>
 
     <!-- Recent Activities -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-4 sm:p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-brand-dark text-base sm:text-lg font-bold">
           Recent Activities

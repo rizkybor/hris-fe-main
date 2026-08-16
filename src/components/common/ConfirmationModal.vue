@@ -50,7 +50,7 @@ const handleCancel = () => {
     @click.self="handleCancel"
   >
     <div
-      class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-md overflow-hidden"
+      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md overflow-hidden"
     >
       <!-- Header -->
       <div class="p-6 border-b border-[#DCDEDD]">
@@ -80,7 +80,7 @@ const handleCancel = () => {
           <button
             type="button"
             @click="handleCancel"
-            class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
           >
             <X class="w-5 h-5 text-gray-600" />
           </button>

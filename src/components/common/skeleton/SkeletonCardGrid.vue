@@ -12,7 +12,7 @@ defineProps({
     <div
       v-for="i in count"
       :key="i"
-      class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 space-y-4"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-4"
     >
       <Skeleton width="100%" height="120px" rounded="16px" />
       <Skeleton width="70%" height="18px" />

@@ -122,7 +122,7 @@ watch(
   <div class="flex gap-5 items-start pr-5">
     <div class="flex-1 space-y-6">
       <!-- Job Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -190,7 +190,7 @@ watch(
               </div>
               <div
                 @click="teamModal = true"
-                class="w-full pl-12 pr-10 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 cursor-pointer bg-white"
+                class="w-full pl-12 pr-10 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 cursor-pointer bg-white"
               >
                 <span
                   :class="[selectedTeam ? 'text-brand-dark' : 'text-gray-500']"
@@ -404,7 +404,7 @@ watch(
             <div class="grid grid-cols-2 gap-4">
               <!-- Beginner Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-3">
                   <div
@@ -439,7 +439,7 @@ watch(
 
               <!-- Intermediate Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-3">
                   <div
@@ -474,7 +474,7 @@ watch(
 
               <!-- Advanced Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-3">
                   <div
@@ -509,7 +509,7 @@ watch(
 
               <!-- Expert Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[16px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-3">
                   <div
@@ -547,7 +547,7 @@ watch(
       </div>
 
       <!-- Bank Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -683,7 +683,7 @@ watch(
   >
     <div
       @click.stop
-      class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
+      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
     >
       <!-- Modal Header -->
       <div class="p-6 border-b border-[#DCDEDD]">
@@ -704,7 +704,7 @@ watch(
           <button
             type="button"
             @click="teamModal = false"
-            class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
           >
             <X class="w-5 h-5 text-gray-600" />
           </button>
@@ -721,7 +721,7 @@ watch(
           </div>
           <input
             type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
             placeholder="Search teams..."
             v-model="searchTeam"
           />
@@ -732,7 +732,7 @@ watch(
       <div class="p-6 overflow-y-auto max-h-96">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div
-            class="border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
+            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
             v-for="team in filteredTeams"
             :key="team.id"
             @click="handleSelectTeam(team)"

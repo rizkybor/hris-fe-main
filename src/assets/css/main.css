@@ -1621,12 +1621,8 @@ video {
   border-radius: 12px;
 }
 
-.rounded-\[16px\] {
-  border-radius: 16px;
-}
-
-.rounded-\[20px\] {
-  border-radius: 20px;
+.rounded-\[14px\] {
+  border-radius: 14px;
 }
 
 .rounded-\[24px\] {

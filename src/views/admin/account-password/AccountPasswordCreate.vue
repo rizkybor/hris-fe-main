@@ -68,7 +68,7 @@ const submit = async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <div
           class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -100,7 +100,7 @@ const submit = async () => {
     </div>
 
     <!-- Form Card -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
       <!-- Label Password -->
       <div>
         <label class="block text-brand-dark text-base font-semibold mb-1">
@@ -116,7 +116,7 @@ const submit = async () => {
             v-model="form.label_password"
             type="text"
             placeholder="e.g. ERP Finance Admin, VPN Office"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
           />
         </div>
       </div>
@@ -136,7 +136,7 @@ const submit = async () => {
             v-model="form.username_email"
             type="text"
             placeholder="e.g. admin@company.com / admin.erp"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
           />
         </div>
       </div>
@@ -157,7 +157,7 @@ const submit = async () => {
             v-model="form.password"
             :type="showPassword ? 'text' : 'password'"
             placeholder="Enter secure password"
-            class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-mono"
+            class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-mono"
           />
 
           <button
@@ -186,7 +186,7 @@ const submit = async () => {
             v-model="form.website"
             type="url"
             placeholder="https://example.com"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
           />
         </div>
       </div>
@@ -204,7 +204,7 @@ const submit = async () => {
             v-model="form.notes"
             rows="4"
             placeholder="Additional notes or instructions..."
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-normal resize-none"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-normal resize-none"
           ></textarea>
         </div>
       </div>

@@ -134,7 +134,7 @@ watch(
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
@@ -195,7 +195,7 @@ watch(
     <!-- Form -->
     <div
       v-if="!loading"
-      class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6"
     >
       <!-- Label -->
       <div>
@@ -209,7 +209,7 @@ watch(
           <input
             v-model="form.label_password"
             type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"
           />
         </div>
       </div>
@@ -227,7 +227,7 @@ watch(
             v-model="form.username_email"
             type="text"
             placeholder="e.g. admin@company.com / admin.erp"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"
           />
         </div>
       </div>
@@ -245,7 +245,7 @@ watch(
 
         <div v-if="rotatePassword" class="space-y-3">
           <div
-            class="flex items-start gap-3 p-4 rounded-[16px] bg-yellow-50 border border-yellow-300"
+            class="flex items-start gap-3 p-4 rounded-[12px] bg-yellow-50 border border-yellow-300"
           >
             <AlertTriangle class="w-5 h-5 text-yellow-600 mt-0.5" />
             <p class="text-sm text-yellow-800">
@@ -262,7 +262,7 @@ watch(
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
               placeholder="New password"
-              class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-mono"
+              class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-mono"
             />
             <button
               type="button"
@@ -289,7 +289,7 @@ watch(
             v-model="form.website"
             type="url"
             placeholder="https://example.com"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all font-semibold"
           />
         </div>
       </div>
@@ -306,7 +306,7 @@ watch(
           <textarea
             v-model="form.notes"
             rows="4"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"
           ></textarea>
         </div>
       </div>

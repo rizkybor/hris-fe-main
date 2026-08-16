@@ -40,7 +40,7 @@ const loading = computed(() => teamStore.loadingStatistics);
   <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
     <!-- Total Teams Card (spans 2 rows on the left) -->
     <div
-      class="lg:row-span-2 rounded-[20px] border border-[#0B1042] relative overflow-hidden main-card p-5"
+      class="lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden main-card p-5"
     >
       <div class="flex flex-col justify-center h-full relative z-10">
         <!-- Trending Badge -->
@@ -68,7 +68,7 @@ const loading = computed(() => teamStore.loadingStatistics);
             </p>
           </div>
           <div
-            class="w-16 h-16 bg-white/20 rounded-[20px] flex items-center justify-center"
+            class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center"
           >
             <Users class="w-8 h-8 text-white" />
           </div>
@@ -94,7 +94,7 @@ const loading = computed(() => teamStore.loadingStatistics);
 
     <!-- Active Teams Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -107,7 +107,7 @@ const loading = computed(() => teamStore.loadingStatistics);
           </p>
         </div>
         <div
-          class="w-14 h-14 bg-green-50 rounded-[16px] flex items-center justify-center"
+          class="w-14 h-14 bg-green-50 rounded-[12px] flex items-center justify-center"
         >
           <CheckCircle class="w-6 h-6 text-green-600" />
         </div>
@@ -116,7 +116,7 @@ const loading = computed(() => teamStore.loadingStatistics);
 
     <!-- Team Members Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -129,7 +129,7 @@ const loading = computed(() => teamStore.loadingStatistics);
           </p>
         </div>
         <div
-          class="w-14 h-14 bg-blue-50 rounded-[16px] flex items-center justify-center"
+          class="w-14 h-14 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
           <UserPlus class="w-6 h-6 text-blue-600" />
         </div>
@@ -138,7 +138,7 @@ const loading = computed(() => teamStore.loadingStatistics);
 
     <!-- Average Team Size Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -149,7 +149,7 @@ const loading = computed(() => teamStore.loadingStatistics);
           <p class="text-success text-sm font-medium">Optimal size</p>
         </div>
         <div
-          class="w-14 h-14 bg-orange-50 rounded-[16px] flex items-center justify-center"
+          class="w-14 h-14 bg-orange-50 rounded-[12px] flex items-center justify-center"
         >
           <Target class="w-6 h-6 text-orange-600" />
         </div>
@@ -158,7 +158,7 @@ const loading = computed(() => teamStore.loadingStatistics);
 
     <!-- Recent Teams Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -169,7 +169,7 @@ const loading = computed(() => teamStore.loadingStatistics);
           <p class="text-success text-sm font-medium">This month</p>
         </div>
         <div
-          class="w-14 h-14 bg-purple-50 rounded-[16px] flex items-center justify-center"
+          class="w-14 h-14 bg-purple-50 rounded-[12px] flex items-center justify-center"
         >
           <PlusCircle class="w-6 h-6 text-purple-600" />
         </div>

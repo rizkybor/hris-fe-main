@@ -77,7 +77,7 @@ const goToProjectFromTask = (projectId) => router.push({ name: "admin.projects.d
 
 <template>
   <!-- Search Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4">
     <div
       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
     >
@@ -91,7 +91,7 @@ const goToProjectFromTask = (projectId) => router.push({ name: "admin.projects.d
         <input
           v-model="query"
           type="text"
-          class="w-full pl-12 pr-10 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300"
+          class="w-full pl-12 pr-10 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300"
           placeholder="Search employees, tasks, reports, projects..."
           @keyup.enter="handleSearch"
         />
@@ -115,7 +115,7 @@ const goToProjectFromTask = (projectId) => router.push({ name: "admin.projects.d
           </div>
           <select
             v-model="departmentFilter"
-            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
+            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
           >
             <option value="">All Departments</option>
             <option v-for="dept in departments" :key="dept.value" :value="dept.value">

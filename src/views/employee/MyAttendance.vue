@@ -179,7 +179,7 @@ onMounted(async () => {
   <div class="p-5">
     <!-- Banner Section -->
     <div
-      class="relative rounded-[20px] mb-6 overflow-hidden h-[200px]"
+      class="relative rounded-[14px] mb-6 overflow-hidden h-[200px]"
       style="
         background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c');
         background-size: cover;
@@ -193,7 +193,7 @@ onMounted(async () => {
       <div class="relative z-10 p-6 h-full flex flex-col justify-center">
         <div class="flex items-center gap-4">
           <div
-            class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-[16px] flex items-center justify-center"
+            class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-[12px] flex items-center justify-center"
           >
             <CalendarCheck class="w-8 h-8 text-white" />
           </div>
@@ -239,7 +239,7 @@ onMounted(async () => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Recent Attendance -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
       >
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-3">
@@ -263,7 +263,7 @@ onMounted(async () => {
           <div
             v-for="record in recentAttendances"
             :key="record.id"
-            class="border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
+            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
           >
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-3">
@@ -347,7 +347,7 @@ onMounted(async () => {
       <!-- Leave Balance -->
       <div
         v-if="myLeaveBalance"
-        class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 flex items-center justify-between"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 flex items-center justify-between"
       >
         <div>
           <p class="text-brand-light text-sm">Sisa Cuti Tahunan {{ myLeaveBalance.year }}</p>
@@ -362,7 +362,7 @@ onMounted(async () => {
 
       <!-- Leave Requests -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
       >
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-3">
@@ -386,7 +386,7 @@ onMounted(async () => {
           <div
             v-for="request in myLeaveRequests"
             :key="request.id"
-            class="border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
+            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
           >
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-3">
@@ -470,7 +470,7 @@ onMounted(async () => {
         @click.self="closeLeaveRequestModal"
       >
         <div
-          class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden"
+          class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden"
         >
           <!-- Modal Header -->
           <div class="p-6 border-b border-[#DCDEDD]">
@@ -493,7 +493,7 @@ onMounted(async () => {
               <button
                 type="button"
                 @click="closeLeaveRequestModal"
-                class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+                class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
               >
                 <span class="text-gray-600 text-xl">×</span>
               </button>
@@ -505,7 +505,7 @@ onMounted(async () => {
             <form @submit.prevent="submitLeaveRequest" class="space-y-6">
               <!-- Leave Information Section -->
               <div
-                class="bg-white border border-[#DCDEDD] rounded-[20px] p-6"
+                class="bg-white border border-[#DCDEDD] rounded-[14px] p-6"
               >
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <!-- Leave Type -->
@@ -517,7 +517,7 @@ onMounted(async () => {
                     <select
                       v-model="leaveForm.leave_type"
                       required
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
                     >
                       <option value="">Select leave type</option>
                       <option
@@ -541,7 +541,7 @@ onMounted(async () => {
                       v-model="leaveForm.start_date"
                       @change="updateEndDateMin"
                       required
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
                     />
                   </div>
 
@@ -556,7 +556,7 @@ onMounted(async () => {
                       v-model="leaveForm.end_date"
                       :min="leaveForm.start_date"
                       required
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
                     />
                   </div>
 
@@ -592,7 +592,7 @@ onMounted(async () => {
 
               <!-- Reason Section -->
               <div
-                class="bg-white border border-[#DCDEDD] rounded-[20px] p-6"
+                class="bg-white border border-[#DCDEDD] rounded-[14px] p-6"
               >
                 <div class="space-y-4">
                   <!-- Reason -->
@@ -605,7 +605,7 @@ onMounted(async () => {
                       v-model="leaveForm.reason"
                       required
                       rows="4"
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold resize-none"
+                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold resize-none"
                       placeholder="Please provide a detailed reason for your leave request..."
                     ></textarea>
                   </div>
@@ -619,7 +619,7 @@ onMounted(async () => {
                     <input
                       type="tel"
                       v-model="leaveForm.emergency_contact"
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
                       placeholder="Phone number for emergency contact"
                     />
                   </div>
@@ -660,7 +660,7 @@ onMounted(async () => {
         @click.self="closeLeaveDetailsModal"
       >
         <div
-          class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
+          class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
         >
           <!-- Modal Header -->
           <div class="p-6 border-b border-[#DCDEDD]">
@@ -683,7 +683,7 @@ onMounted(async () => {
               <button
                 type="button"
                 @click="closeLeaveDetailsModal"
-                class="w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+                class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
               >
                 <span class="text-gray-600 text-xl">×</span>
               </button>
@@ -695,7 +695,7 @@ onMounted(async () => {
             <div class="space-y-6">
               <!-- Leave Information Section -->
               <div
-                class="bg-white border border-[#DCDEDD] rounded-[20px] p-6"
+                class="bg-white border border-[#DCDEDD] rounded-[14px] p-6"
               >
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <!-- Leave Type -->
@@ -799,7 +799,7 @@ onMounted(async () => {
 
               <!-- Reason Section -->
               <div
-                class="bg-white border border-[#DCDEDD] rounded-[20px] p-6"
+                class="bg-white border border-[#DCDEDD] rounded-[14px] p-6"
               >
                 <div class="space-y-4">
                   <!-- Reason -->

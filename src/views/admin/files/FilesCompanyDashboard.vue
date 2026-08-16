@@ -111,7 +111,7 @@ const handleDelete = async () => {
     <!-- ================= STATS ================= -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div
-        class="main-card rounded-[20px] border border-[#0B1042] relative overflow-hidden p-5"
+        class="main-card rounded-[14px] border border-[#0B1042] relative overflow-hidden p-5"
       >
         <div class="flex flex-col justify-center h-full relative z-10">
           <div class="flex items-center gap-2 mb-3">
@@ -142,7 +142,7 @@ const handleDelete = async () => {
               </p>
             </div>
             <div
-              class="w-16 h-16 bg-white/20 rounded-[20px] flex items-center justify-center flex-shrink-0"
+              class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center flex-shrink-0"
             >
               <Archive class="w-8 h-8 text-white" />
             </div>
@@ -151,7 +151,7 @@ const handleDelete = async () => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
@@ -161,14 +161,14 @@ const handleDelete = async () => {
             </p>
             <p class="text-brand-light text-sm font-medium">Latest archive</p>
           </div>
-          <div class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center flex-shrink-0">
+          <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
             <Calendar class="w-6 h-6 text-blue-600" />
           </div>
         </div>
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5 flex items-center justify-between gap-4"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5 flex items-center justify-between gap-4"
       >
         <div>
           <p class="text-brand-dark text-sm font-medium">New Archive</p>
@@ -208,7 +208,7 @@ const handleDelete = async () => {
     </div>
 
     <!-- ================= ARCHIVE LIST ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
       >
@@ -234,7 +234,7 @@ const handleDelete = async () => {
         <div
           v-for="archive in archives"
           :key="archive.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
+          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
         >
           <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px] flex items-center justify-center flex-shrink-0">
             <Archive class="w-6 h-6 sm:w-7 sm:h-7 text-white" />
@@ -294,7 +294,7 @@ const handleDelete = async () => {
         <!-- Empty states -->
         <div
           v-if="!loading && archives.length === 0 && searchQuery"
-          class="text-center py-12 text-gray-500 bg-gray-50 rounded-[16px] border border-dashed border-[#DCDEDD]"
+          class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
         >
           <Search class="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p class="text-lg font-semibold">No results found</p>
@@ -305,7 +305,7 @@ const handleDelete = async () => {
 
         <div
           v-else-if="!loading && archives.length === 0"
-          class="text-center py-12 text-gray-500 bg-gray-50 rounded-[16px] border border-dashed border-[#DCDEDD]"
+          class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
         >
           <Archive class="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p class="text-lg font-semibold">No archived files found</p>
@@ -354,7 +354,7 @@ const handleDelete = async () => {
         @click="isDeleteModalOpen = false"
       ></div>
 
-      <div class="bg-white rounded-[20px] p-6 w-full max-w-sm relative z-10 shadow-2xl transform transition-all">
+      <div class="bg-white rounded-[14px] p-6 w-full max-w-sm relative z-10 shadow-2xl transform transition-all">
         <button
           @click="isDeleteModalOpen = false"
           class="absolute right-4 top-4 text-gray-400 hover:text-gray-600"

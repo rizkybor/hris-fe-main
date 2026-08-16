@@ -142,7 +142,7 @@ const previewFile = computed(() => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
@@ -197,7 +197,7 @@ const previewFile = computed(() => {
     </div>
 
     <!-- Form -->
-    <div v-else class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+    <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
       <BaseInput
         id="document_name"
         label="File Name *"
@@ -220,7 +220,7 @@ const previewFile = computed(() => {
 
         <div
           v-if="!form.new_file && !form.remove_file"
-          class="flex items-center justify-between gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[16px] mb-3"
+          class="flex items-center justify-between gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] mb-3"
         >
           <a
             :href="archiveStore.currentArchive.document_path"
@@ -238,7 +238,7 @@ const previewFile = computed(() => {
           </button>
         </div>
 
-        <div class="w-full max-h-[400px] overflow-auto border border-[#DCDEDD] rounded-[16px] p-1">
+        <div class="w-full max-h-[400px] overflow-auto border border-[#DCDEDD] rounded-[12px] p-1">
           <img
             v-if="isImage(form.new_file?.type || archiveStore.currentArchive?.type_file)"
             :src="previewFile"
@@ -259,7 +259,7 @@ const previewFile = computed(() => {
           Replace File (Optional)
         </label>
         <label
-          class="flex flex-col items-center justify-center gap-2 w-full py-6 border-2 border-dashed border-[#DCDEDD] rounded-[16px] cursor-pointer hover:border-[#0C51D9] hover:bg-blue-50/30 transition-all"
+          class="flex flex-col items-center justify-center gap-2 w-full py-6 border-2 border-dashed border-[#DCDEDD] rounded-[12px] cursor-pointer hover:border-[#0C51D9] hover:bg-blue-50/30 transition-all"
         >
           <FileUp class="w-7 h-7 text-gray-400" />
           <span class="text-sm text-brand-dark font-semibold">

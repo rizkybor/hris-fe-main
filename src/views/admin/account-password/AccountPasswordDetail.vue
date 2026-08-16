@@ -60,7 +60,7 @@ onMounted(async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
@@ -101,7 +101,7 @@ onMounted(async () => {
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
       <Skeleton width="40%" height="18px" />
       <Skeleton width="60%" height="18px" />
       <Skeleton height="52px" rounded="16px" />
@@ -112,7 +112,7 @@ onMounted(async () => {
     <!-- Content -->
     <div
       v-if="account && !loading"
-      class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6"
     >
       <!-- Label -->
       <div>
@@ -147,7 +147,7 @@ onMounted(async () => {
         </label>
 
         <div
-          class="flex items-center gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[16px]"
+          class="flex items-center gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px]"
         >
           <Key class="w-5 h-5 text-gray-400" />
 
@@ -203,7 +203,7 @@ onMounted(async () => {
           Notes
         </label>
         <div
-          class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[16px] bg-gray-50"
+          class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-50"
         >
           <FileText class="w-5 h-5 text-gray-400 mt-0.5" />
           <p class="text-brand-dark whitespace-pre-line">

@@ -85,7 +85,7 @@ onMounted(() => {
 
 <template>
   <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
       >
@@ -136,7 +136,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Skeleton v-for="i in 4" :key="i" height="110px" rounded="16px" />
       </div>
@@ -144,7 +144,7 @@ onMounted(() => {
 
     <div
       v-else-if="filteredTasks.length === 0"
-      class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 text-center py-12 text-gray-500"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 text-center py-12 text-gray-500"
     >
       <ListChecks class="w-10 h-10 text-gray-300 mx-auto mb-3" />
       <p class="text-lg font-semibold">No tasks found</p>
@@ -155,7 +155,7 @@ onMounted(() => {
       <div
         v-for="group in groupedTasks"
         :key="group.projectName"
-        class="bg-white border border-[#DCDEDD] rounded-[20px] p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] p-5"
       >
         <div class="flex items-center gap-2 mb-4">
           <Folder class="w-5 h-5 text-[#0C51D9]" />
@@ -167,7 +167,7 @@ onMounted(() => {
           <div
             v-for="task in group.tasks"
             :key="task.id"
-            class="border border-[#DCDEDD] rounded-[16px] p-4 hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+            class="border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
           >
             <div class="flex items-start justify-between mb-2">
               <h4 class="text-brand-dark text-base font-semibold">{{ task.title }}</h4>

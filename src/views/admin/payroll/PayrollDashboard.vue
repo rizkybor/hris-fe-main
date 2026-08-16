@@ -65,7 +65,7 @@ const viewDetails = (id) => {
     <!-- Stats Layout -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <!-- Total Payroll Amount Card (spans 2 rows on the left) -->
-      <div class="main-card lg:row-span-2 rounded-[20px] border border-[#0B1042] relative overflow-hidden p-5">
+      <div class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-5">
         <div class="flex flex-col justify-center h-full relative z-10">
           <!-- Trending Badge -->
           <div class="flex items-center gap-2 mb-3">
@@ -90,7 +90,7 @@ const viewDetails = (id) => {
                 Monthly compensation
               </p>
             </div>
-            <div class="w-16 h-16 bg-white/20 rounded-[20px] flex items-center justify-center flex-shrink-0">
+            <div class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center flex-shrink-0">
               <DollarSign class="w-8 h-8 text-white" />
             </div>
           </div>
@@ -112,7 +112,7 @@ const viewDetails = (id) => {
       <!-- Row 1 Stats Cards -->
       <!-- Employees Paid -->
       <div
-        class="stats-card bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
+        class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-sm font-medium">Employees Paid</p>
@@ -122,7 +122,7 @@ const viewDetails = (id) => {
             </p>
             <p class="text-success text-sm font-medium">This month</p>
           </div>
-          <div class="w-12 h-12 bg-green-50 rounded-[16px] flex items-center justify-center flex-shrink-0">
+          <div class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
             <UserCheck class="w-6 h-6 text-green-600" />
           </div>
         </div>
@@ -130,7 +130,7 @@ const viewDetails = (id) => {
 
       <!-- Pending Payments -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-sm font-medium">Pending Payments</p>
@@ -140,7 +140,7 @@ const viewDetails = (id) => {
             </p>
             <p class="text-danger text-sm font-medium">Need approval</p>
           </div>
-          <div class="w-12 h-12 bg-red-50 rounded-[16px] flex items-center justify-center flex-shrink-0">
+          <div class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
             <Clock class="w-6 h-6 text-red-600" />
           </div>
         </div>
@@ -148,7 +148,7 @@ const viewDetails = (id) => {
 
       <!-- Quick Actions Card (spans 2 rows on the right) -->
       <div
-        class="lg:row-span-2 bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
+        class="lg:row-span-2 bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
         <h3 class="text-brand-dark text-lg font-bold mb-4">Payroll Actions</h3>
         <div class="space-y-3">
           <RouterLink v-if="can('payroll-create')" :to="{ name: 'admin.payroll.create' }"
@@ -158,7 +158,7 @@ const viewDetails = (id) => {
           </RouterLink>
 
           <RouterLink :to="{ name: 'admin.report.dashboard' }"
-            class="btn-secondary w-full text-left border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:rounded-[12px] focus:border-[#0C51D9] focus:border-2 focus:rounded-[12px] focus:bg-white transition-all duration-300 px-4 py-3 flex items-center gap-2">
+            class="btn-secondary w-full text-left border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:rounded-[12px] focus:border-[#0C51D9] focus:border-2 focus:rounded-[12px] focus:bg-white transition-all duration-300 px-4 py-3 flex items-center gap-2">
             <FileText class="w-4 h-4 text-gray-600" />
             <span class="text-brand-dark text-sm font-medium">Generate Reports</span>
           </RouterLink>
@@ -168,7 +168,7 @@ const viewDetails = (id) => {
       <!-- Row 2 Stats Cards -->
       <!-- Average Salary -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-sm font-medium">Average Salary</p>
@@ -178,7 +178,7 @@ const viewDetails = (id) => {
             </p>
             <p class="text-success text-sm font-medium">Per employee</p>
           </div>
-          <div class="w-12 h-12 bg-blue-50 rounded-[16px] flex items-center justify-center flex-shrink-0">
+          <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
             <Banknote class="w-6 h-6 text-blue-600" />
           </div>
         </div>
@@ -186,7 +186,7 @@ const viewDetails = (id) => {
 
       <!-- Overtime Hours -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-sm font-medium">Finalized</p>
@@ -196,7 +196,7 @@ const viewDetails = (id) => {
             </p>
             <p class="text-purple-600 text-sm font-medium">This month</p>
           </div>
-          <div class="w-12 h-12 bg-purple-50 rounded-[16px] flex items-center justify-center flex-shrink-0">
+          <div class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
             <Clock class="w-6 h-6 text-purple-600" />
           </div>
         </div>
@@ -206,7 +206,7 @@ const viewDetails = (id) => {
     <Alert type="success" :title="success" :show="success" />
 
     <!-- Monthly Payroll Periods -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-brand-dark text-lg font-bold">Monthly Payroll Periods</h3>
       </div>
@@ -214,7 +214,7 @@ const viewDetails = (id) => {
 
       <div v-else class="space-y-4">
         <div v-for="payroll in payrolls" :key="payroll.id"
-          class="flex items-center gap-4 p-4 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300">
+          class="flex items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300">
           <div class="w-16 h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden">
             <!-- Background -->
             <div class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"></div>

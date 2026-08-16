@@ -11,7 +11,7 @@ defineProps({
     <div
       v-for="r in rows"
       :key="r"
-      class="flex items-center gap-4 p-4 border border-[#DCDEDD] rounded-[16px]"
+      class="flex items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px]"
     >
       <Skeleton width="56px" height="56px" rounded="12px" />
       <div class="flex-1 min-w-0 space-y-2">

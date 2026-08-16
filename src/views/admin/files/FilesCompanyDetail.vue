@@ -57,7 +57,7 @@ const isImage = (type) => type?.startsWith("image/");
 <template>
   <div class="max-w-5xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
@@ -97,7 +97,7 @@ const isImage = (type) => type?.startsWith("image/");
     <!-- Content -->
     <div
       v-else-if="archiveStore.currentArchive"
-      class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6"
     >
       <!-- File Name -->
       <div>
@@ -113,7 +113,7 @@ const isImage = (type) => type?.startsWith("image/");
       <!-- Description -->
       <div>
         <label class="block text-brand-dark text-base font-semibold mb-1">Description</label>
-        <div class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[16px] bg-gray-50">
+        <div class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-50">
           <FileText class="w-5 h-5 text-gray-400 mt-0.5" />
           <p class="text-brand-dark whitespace-pre-line">
             {{ archiveStore.currentArchive.description || "—" }}
@@ -151,7 +151,7 @@ const isImage = (type) => type?.startsWith("image/");
       <!-- File Preview -->
       <div v-if="isImage(archiveStore.currentArchive.type_file)">
         <label class="block text-brand-dark text-base font-semibold mb-1">Preview</label>
-        <div class="w-full max-h-[75vh] overflow-auto border border-[#DCDEDD] rounded-[16px] p-2 bg-gray-50 flex justify-center">
+        <div class="w-full max-h-[75vh] overflow-auto border border-[#DCDEDD] rounded-[12px] p-2 bg-gray-50 flex justify-center">
           <img
             :src="archiveStore.currentArchive.document_path"
             alt="File Preview"
@@ -162,7 +162,7 @@ const isImage = (type) => type?.startsWith("image/");
 
       <div v-else-if="archiveStore.currentArchive.type_file === 'application/pdf'">
         <label class="block text-brand-dark text-base font-semibold mb-1">Preview PDF</label>
-        <div class="w-full h-[80vh] min-h-[600px] border border-[#DCDEDD] rounded-[16px] overflow-hidden">
+        <div class="w-full h-[80vh] min-h-[600px] border border-[#DCDEDD] rounded-[12px] overflow-hidden">
           <iframe :src="archiveStore.currentArchive.document_path" class="w-full h-full"></iframe>
         </div>
       </div>

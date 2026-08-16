@@ -109,7 +109,7 @@ const formatPeriod = (date) => {
     </div>
 
     <!-- Payslip Content -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-8 max-w-4xl mx-auto">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-8 max-w-4xl mx-auto">
       <div v-if="loading" class="space-y-6">
         <div class="flex items-start justify-between">
           <Skeleton width="140px" height="28px" />
@@ -136,7 +136,7 @@ const formatPeriod = (date) => {
               </p>
             </div>
             <div class="text-right">
-              <div class="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[16px] flex items-center justify-center mb-2 ml-auto">
+              <div class="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px] flex items-center justify-center mb-2 ml-auto">
                 <Building class="w-8 h-8 text-white" />
               </div>
               <p class="text-sm font-semibold text-brand-dark">
@@ -223,7 +223,7 @@ const formatPeriod = (date) => {
         <!-- Salary Breakdown -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <!-- Earnings -->
-          <div class="bg-green-50 rounded-[16px] p-6">
+          <div class="bg-green-50 rounded-[12px] p-6">
             <div class="flex items-center gap-2 mb-4">
               <TrendingUp class="w-5 h-5 text-green-600" />
               <h3 class="text-lg font-bold text-green-900">Earnings</h3>
@@ -256,7 +256,7 @@ const formatPeriod = (date) => {
           </div>
 
           <!-- Deductions -->
-          <div class="bg-red-50 rounded-[16px] p-6">
+          <div class="bg-red-50 rounded-[12px] p-6">
             <div class="flex items-center gap-2 mb-4">
               <TrendingDown class="w-5 h-5 text-red-600" />
               <h3 class="text-lg font-bold text-red-900">Deductions</h3>
@@ -312,7 +312,7 @@ const formatPeriod = (date) => {
 
         <!-- Net Salary -->
         <div
-          class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[20px] p-6 text-white"
+          class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[14px] p-6 text-white"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -324,7 +324,7 @@ const formatPeriod = (date) => {
               </p>
             </div>
             <div
-              class="w-16 h-16 bg-white/20 rounded-[20px] flex items-center justify-center backdrop-blur-sm"
+              class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center backdrop-blur-sm"
             >
               <DollarSign class="w-8 h-8 text-white" />
             </div>

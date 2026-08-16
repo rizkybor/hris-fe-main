@@ -76,7 +76,7 @@ onMounted(async () => {
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
     <!-- Project Details Card -->
     <div
-      class="lg:col-span-2 bg-white border border-[#DCDEDD] rounded-[20px] p-6"
+      class="lg:col-span-2 bg-white border border-[#DCDEDD] rounded-[14px] p-6"
     >
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
@@ -156,7 +156,7 @@ onMounted(async () => {
             <div
               v-for="team in project.teams"
               :key="team.id"
-              class="border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:shadow-lg transition-all duration-300 p-4"
+              class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-lg transition-all duration-300 p-4"
             >
               <div class="flex items-center gap-3">
                 <div
@@ -220,7 +220,7 @@ onMounted(async () => {
     <!-- Right Sidebar -->
     <div class="space-y-4">
       <!-- Project Leader Card -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 h-fit">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 h-fit">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -271,7 +271,7 @@ onMounted(async () => {
 
       <!-- Progress Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between mb-4">
           <div>
@@ -284,7 +284,7 @@ onMounted(async () => {
             </p>
           </div>
           <div
-            class="w-14 h-14 bg-purple-50 rounded-[16px] flex items-center justify-center"
+            class="w-14 h-14 bg-purple-50 rounded-[12px] flex items-center justify-center"
           >
             <Target class="w-6 h-6 text-purple-600" />
           </div>
@@ -300,7 +300,7 @@ onMounted(async () => {
 
       <!-- Budget Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -311,7 +311,7 @@ onMounted(async () => {
             <p class="text-success text-sm font-medium">Project budget</p>
           </div>
           <div
-            class="w-14 h-14 bg-green-50 rounded-[16px] flex items-center justify-center"
+            class="w-14 h-14 bg-green-50 rounded-[12px] flex items-center justify-center"
           >
             <DollarSign class="w-6 h-6 text-green-600" />
           </div>
@@ -320,7 +320,7 @@ onMounted(async () => {
 
       <!-- Start Date Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -331,7 +331,7 @@ onMounted(async () => {
             <p class="text-indigo-600 text-sm font-medium">Project kickoff</p>
           </div>
           <div
-            class="w-14 h-14 bg-indigo-50 rounded-[16px] flex items-center justify-center"
+            class="w-14 h-14 bg-indigo-50 rounded-[12px] flex items-center justify-center"
           >
             <Calendar class="w-6 h-6 text-indigo-600" />
           </div>
@@ -340,7 +340,7 @@ onMounted(async () => {
 
       <!-- End Date Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -351,7 +351,7 @@ onMounted(async () => {
             <p class="text-orange-600 text-sm font-medium">Project deadline</p>
           </div>
           <div
-            class="w-14 h-14 bg-orange-50 rounded-[16px] flex items-center justify-center"
+            class="w-14 h-14 bg-orange-50 rounded-[12px] flex items-center justify-center"
           >
             <CalendarCheck class="w-6 h-6 text-orange-600" />
           </div>
@@ -360,7 +360,7 @@ onMounted(async () => {
 
       <!-- Duration Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -371,7 +371,7 @@ onMounted(async () => {
             <p class="text-blue-600 text-sm font-medium">Project timeline</p>
           </div>
           <div
-            class="w-14 h-14 bg-blue-50 rounded-[16px] flex items-center justify-center"
+            class="w-14 h-14 bg-blue-50 rounded-[12px] flex items-center justify-center"
           >
             <Clock class="w-6 h-6 text-blue-600" />
           </div>

@@ -96,7 +96,7 @@ onMounted(() => {
 
 <template>
   <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6 flex items-center justify-between">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Megaphone class="w-5 h-5 text-[#0C51D9]" />
@@ -124,7 +124,7 @@ onMounted(() => {
       <div
         v-for="announcement in announcements"
         :key="announcement.id"
-        class="bg-white border border-[#DCDEDD] rounded-[20px] p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] p-5"
       >
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
@@ -160,7 +160,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-if="announcements.length === 0" class="bg-white border border-[#DCDEDD] rounded-[20px] p-10 text-center">
+      <div v-if="announcements.length === 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-10 text-center">
         <Megaphone class="w-10 h-10 text-gray-300 mx-auto mb-3" />
         <p class="text-brand-light text-sm">Belum ada pengumuman.</p>
       </div>
@@ -172,7 +172,7 @@ onMounted(() => {
       class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       @click.self="closeModal"
     >
-      <div class="bg-white rounded-[20px] border border-[#DCDEDD] w-full max-w-lg">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg">
         <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
           <h3 class="text-brand-dark text-lg font-bold">
             {{ editingId ? 'Edit Pengumuman' : 'Buat Pengumuman' }}

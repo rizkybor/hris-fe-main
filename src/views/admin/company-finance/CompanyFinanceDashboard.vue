@@ -473,7 +473,7 @@ watch(
   <br />
   <br />
 
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
     <!-- ================= FIXED COST ================= -->
     <section class="mb-12">
       <Alert

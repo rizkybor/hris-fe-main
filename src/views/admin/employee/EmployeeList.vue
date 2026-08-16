@@ -98,7 +98,7 @@ const handlePerPageChange = (perPage) => {
 
   <div
     v-if="showContractAlerts && contractAlerts.length > 0"
-    class="bg-orange-50 border border-orange-200 rounded-[20px] p-5 mb-6"
+    class="bg-orange-50 border border-orange-200 rounded-[14px] p-5 mb-6"
   >
     <div class="flex items-start justify-between gap-4">
       <div class="flex items-start gap-3">
@@ -131,7 +131,7 @@ const handlePerPageChange = (perPage) => {
   </div>
 
   <!-- Search Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-4">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4">
     <div
       class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
     >
@@ -144,7 +144,7 @@ const handlePerPageChange = (perPage) => {
         </div>
         <input
           type="text"
-          class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300"
+          class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300"
           placeholder="Search employees by name, department, role..."
           v-model="filters.search"
         />
@@ -160,7 +160,7 @@ const handlePerPageChange = (perPage) => {
             <Briefcase class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
+            class="pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
             v-model="filters.type"
           >
             <option value="">All Types</option>
@@ -187,7 +187,7 @@ const handlePerPageChange = (perPage) => {
             <CheckCircle class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
+            class="pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
             v-model="filters.status"
           >
             <option value="">All Status</option>
@@ -211,7 +211,7 @@ const handlePerPageChange = (perPage) => {
 
   <Alert type="success" :title="success" :show="success" />
 
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] mb-6 p-5">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-5">
     <div class="flex items-center justify-between mb-6">
       <div>
         <h3
@@ -255,7 +255,7 @@ const handlePerPageChange = (perPage) => {
 
     <div
       v-else-if="employees.length === 0"
-      class="text-center py-12 text-gray-500 bg-gray-50 rounded-[16px] border border-dashed border-[#DCDEDD] mb-6"
+      class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD] mb-6"
     >
       <p class="text-lg font-semibold">No employees found</p>
     </div>

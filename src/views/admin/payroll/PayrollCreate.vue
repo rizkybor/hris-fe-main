@@ -42,7 +42,7 @@ const formatMonth = (month) => {
     <div class="flex-1">
       <form @submit.prevent="handleSubmit" class="space-y-6">
         <!-- Payroll Period Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -71,7 +71,7 @@ const formatMonth = (month) => {
                 type="month"
                 v-model="form.salary_month"
                 required
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
               />
             </div>
           </div>
@@ -89,7 +89,7 @@ const formatMonth = (month) => {
         </div>
 
         <!-- Error Display -->
-        <div v-if="error" class="bg-red-50 border border-red-200 rounded-[16px] p-4 flex items-start gap-3">
+        <div v-if="error" class="bg-red-50 border border-red-200 rounded-[12px] p-4 flex items-start gap-3">
           <AlertCircle class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
             <h4 class="text-red-900 text-sm font-semibold mb-1">Error</h4>
@@ -101,7 +101,7 @@ const formatMonth = (month) => {
 
     <!-- Right Sidebar -->
     <div class="w-100 flex-shrink-0">
-      <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 sticky top-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 sticky top-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"

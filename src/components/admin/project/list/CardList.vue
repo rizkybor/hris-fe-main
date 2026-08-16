@@ -41,7 +41,7 @@ const getProgressColor = (progress) => {
 
 <template>
   <div
-    class="border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
+    class="border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
   >
     <!-- Project Image -->
     <div

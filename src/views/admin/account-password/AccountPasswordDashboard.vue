@@ -98,7 +98,7 @@ const formatDate = (date) => {
     <div class="gap-4 mb-6">
       <!-- Main Card -->
       <div
-        class="main-card lg:row-span-2 rounded-[20px] border border-[#0B1042] relative overflow-hidden p-5"
+        class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-5"
       >
         <div class="flex flex-col justify-center h-full relative z-10">
           <div class="flex items-center gap-2 mb-3">
@@ -131,7 +131,7 @@ const formatDate = (date) => {
               </p>
             </div>
             <div
-              class="w-16 h-16 bg-white/20 rounded-[20px] flex items-center justify-center"
+              class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center"
             >
               <Key class="w-8 h-8 text-white" />
             </div>
@@ -156,7 +156,7 @@ const formatDate = (date) => {
     </div>
 
     <!-- ================= ACCOUNT LIST ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
       >
@@ -196,7 +196,7 @@ const formatDate = (date) => {
         <div
           v-for="account in filteredAccounts"
           :key="account.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
+          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
         >
           <div
             class="w-16 h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden"
@@ -294,7 +294,7 @@ const formatDate = (date) => {
 
         <div
           v-if="!loading && filteredAccounts.length === 0"
-          class="text-center py-12 text-gray-500 bg-gray-50 rounded-[16px] border border-dashed border-[#DCDEDD]"
+          class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
         >
           <Search class="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p class="text-lg font-semibold">No results found</p>
@@ -326,7 +326,7 @@ const formatDate = (date) => {
       ></div>
 
       <div
-        class="bg-white rounded-[20px] p-6 w-full max-w-sm relative z-10 shadow-2xl transform transition-all"
+        class="bg-white rounded-[14px] p-6 w-full max-w-sm relative z-10 shadow-2xl transform transition-all"
       >
         <button
           @click="isDeleteModalOpen = false"

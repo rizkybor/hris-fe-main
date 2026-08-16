@@ -291,7 +291,7 @@ onMounted(() => {
     />
 
     <!-- Form Navigation -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-brand-dark text-sm font-medium">

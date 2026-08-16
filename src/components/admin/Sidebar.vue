@@ -165,7 +165,7 @@ const showCompanyFinance = computed(() =>
         <PanelLeftClose v-else class="w-4 h-4 text-gray-600" />
       </button>
       <button
-        class="lg:hidden w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
+        class="lg:hidden w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
         @click="onNavigate"
       >
         <XIcon class="w-5 h-5 text-gray-600" />

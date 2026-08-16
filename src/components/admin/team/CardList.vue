@@ -11,7 +11,7 @@ const props = defineProps({
 </script>
 <template>
   <div
-    class="border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
+    class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
   >
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-3">

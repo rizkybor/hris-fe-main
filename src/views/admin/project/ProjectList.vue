@@ -65,7 +65,7 @@ const handlePerPageChange = (perPage) => {
   <Alert type="success" :title="success" :show="success" />
 
   <!-- Projects Grid Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <div
@@ -110,13 +110,13 @@ const handlePerPageChange = (perPage) => {
           </div>
           <input
             type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
             placeholder="Search projects..."
             v-model="filters.search"
           />
         </div>
         <select
-          class="w-full sm:w-auto px-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+          class="w-full sm:w-auto px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
         >
           <option value="">All Status</option>
           <option value="active">Active</option>

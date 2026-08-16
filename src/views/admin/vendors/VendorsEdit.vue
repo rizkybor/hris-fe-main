@@ -81,7 +81,7 @@ const submit = async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
@@ -119,7 +119,7 @@ const submit = async () => {
     </div>
 
     <!-- Loading -->
-    <div v-if="initialLoading" class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-4">
+    <div v-if="initialLoading" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-4">
       <Skeleton width="200px" height="20px" />
       <Skeleton height="48px" rounded="16px" />
       <Skeleton height="48px" rounded="16px" />
@@ -130,7 +130,7 @@ const submit = async () => {
     <div v-else-if="loadError" class="text-center py-20 text-red-600">{{ loadError }}</div>
 
     <!-- Form -->
-    <div v-else class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+    <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="md:col-span-2">
           <label class="block text-brand-dark text-base font-semibold mb-1">Vendor Name *</label>
@@ -141,7 +141,7 @@ const submit = async () => {
             <input
               v-model="form.name"
               type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -155,7 +155,7 @@ const submit = async () => {
             <input
               v-model="form.type"
               type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -169,7 +169,7 @@ const submit = async () => {
             <input
               v-model="form.field"
               type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -183,7 +183,7 @@ const submit = async () => {
             <input
               v-model="form.pic_name"
               type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -197,7 +197,7 @@ const submit = async () => {
             <input
               v-model="form.pic_phone"
               type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -211,7 +211,7 @@ const submit = async () => {
             <input
               v-model="form.email"
               type="email"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -225,7 +225,7 @@ const submit = async () => {
             <input
               v-model="form.address"
               type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
             />
           </div>
         </div>
@@ -239,7 +239,7 @@ const submit = async () => {
             <textarea
               v-model="form.notes"
               rows="4"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[16px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
+              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
             ></textarea>
           </div>
         </div>

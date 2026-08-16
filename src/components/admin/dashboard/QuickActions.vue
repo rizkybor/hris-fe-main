@@ -17,7 +17,7 @@ const goTo = (path: string) => {
 
 <template>
   <div
-    class="lg:row-span-2 bg-white border border-[#DCDEDD] rounded-[20px]
+    class="lg:row-span-2 bg-white border border-[#DCDEDD] rounded-[14px]
            hover:border-[#0C51D9] hover:border-2
            transition-all duration-300 p-5"
   >
@@ -46,7 +46,7 @@ const goTo = (path: string) => {
         type="button"
         @click="goTo('/admin/teams/create')"
         class="btn-secondary w-full text-left border border-[#DCDEDD]
-               rounded-[16px]
+               rounded-[12px]
                hover:border-[#0C51D9] hover:border-2 hover:rounded-[12px]
                focus:border-[#0C51D9] focus:border-2 focus:rounded-[12px]
                focus:bg-white transition-all duration-300
@@ -63,7 +63,7 @@ const goTo = (path: string) => {
         type="button"
         @click="goTo('/admin/payroll')"
         class="btn-secondary w-full text-left border border-[#DCDEDD]
-               rounded-[16px]
+               rounded-[12px]
                hover:border-[#0C51D9] hover:border-2 hover:rounded-[12px]
                focus:border-[#0C51D9] focus:border-2 focus:rounded-[12px]
                focus:bg-white transition-all duration-300
@@ -80,7 +80,7 @@ const goTo = (path: string) => {
         type="button"
         @click="goTo('/admin/attendances')"
         class="btn-secondary w-full text-left border border-[#DCDEDD]
-               rounded-[16px]
+               rounded-[12px]
                hover:border-[#0C51D9] hover:border-2 hover:rounded-[12px]
                focus:border-[#0C51D9] focus:border-2 focus:rounded-[12px]
                focus:bg-white transition-all duration-300

@@ -51,7 +51,7 @@ onMounted(async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
@@ -87,7 +87,7 @@ onMounted(async () => {
     <div v-else-if="error" class="text-center py-20 text-red-600">{{ error }}</div>
 
     <!-- Content -->
-    <div v-else-if="vendor" class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+    <div v-else-if="vendor" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
       <div>
         <label class="block text-brand-dark text-base font-semibold mb-1">Vendor Name</label>
         <div class="flex items-center gap-3">
@@ -148,7 +148,7 @@ onMounted(async () => {
 
       <div>
         <label class="block text-brand-dark text-base font-semibold mb-1">Notes</label>
-        <div class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[16px] bg-gray-50">
+        <div class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-50">
           <FileText class="w-5 h-5 text-gray-400 mt-0.5" />
           <p class="text-brand-dark whitespace-pre-line">{{ vendor.notes || "-" }}</p>
         </div>

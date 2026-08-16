@@ -68,7 +68,7 @@ const submit = async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-5 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Archive class="w-6 h-6 text-blue-600" />
@@ -103,7 +103,7 @@ const submit = async () => {
     </div>
 
     <!-- Form Card -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6 space-y-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
       <BaseInput
         id="file_name"
         label="File Name *"
@@ -125,7 +125,7 @@ const submit = async () => {
           Upload File *
         </label>
         <label
-          class="flex flex-col items-center justify-center gap-2 w-full py-8 border-2 border-dashed rounded-[16px] cursor-pointer transition-all"
+          class="flex flex-col items-center justify-center gap-2 w-full py-8 border-2 border-dashed rounded-[12px] cursor-pointer transition-all"
           :class="fileError ? 'border-red-400 bg-red-50' : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:bg-blue-50/30'"
         >
           <FileUp class="w-8 h-8 text-gray-400" />

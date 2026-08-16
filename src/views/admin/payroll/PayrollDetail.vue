@@ -253,7 +253,7 @@ const handleMarkAsPaid = async () => {
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Total Employees Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Total Employees</p>
@@ -262,7 +262,7 @@ const handleMarkAsPaid = async () => {
             </p>
             <p class="text-success text-sm font-medium">All departments</p>
           </div>
-          <div class="w-14 h-14 bg-blue-50 rounded-[16px] flex items-center justify-center">
+          <div class="w-14 h-14 bg-blue-50 rounded-[12px] flex items-center justify-center">
             <Users class="w-7 h-7 text-blue-600" />
           </div>
         </div>
@@ -270,7 +270,7 @@ const handleMarkAsPaid = async () => {
 
       <!-- Total Payroll Amount Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Total Payroll</p>
@@ -279,7 +279,7 @@ const handleMarkAsPaid = async () => {
             </p>
             <p class="text-success text-sm font-medium">This period</p>
           </div>
-          <div class="w-14 h-14 bg-green-50 rounded-[16px] flex items-center justify-center">
+          <div class="w-14 h-14 bg-green-50 rounded-[12px] flex items-center justify-center">
             <DollarSign class="w-7 h-7 text-green-600" />
           </div>
         </div>
@@ -287,7 +287,7 @@ const handleMarkAsPaid = async () => {
 
       <!-- Average Salary Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Average Salary</p>
@@ -300,7 +300,7 @@ const handleMarkAsPaid = async () => {
             </p>
             <p class="text-success text-sm font-medium">Per employee</p>
           </div>
-          <div class="w-14 h-14 bg-purple-50 rounded-[16px] flex items-center justify-center">
+          <div class="w-14 h-14 bg-purple-50 rounded-[12px] flex items-center justify-center">
             <Banknote class="w-7 h-7 text-purple-600" />
           </div>
         </div>
@@ -308,7 +308,7 @@ const handleMarkAsPaid = async () => {
 
       <!-- Processing Date Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[20px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Processed On</p>
@@ -326,7 +326,7 @@ const handleMarkAsPaid = async () => {
               {{ new Date(payroll?.created_at).getFullYear() }}
             </p>
           </div>
-          <div class="w-14 h-14 bg-orange-50 rounded-[16px] flex items-center justify-center">
+          <div class="w-14 h-14 bg-orange-50 rounded-[12px] flex items-center justify-center">
             <CalendarCheck class="w-7 h-7 text-orange-600" />
           </div>
         </div>
@@ -334,7 +334,7 @@ const handleMarkAsPaid = async () => {
     </div>
 
     <!-- Employee Details Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
@@ -495,7 +495,7 @@ const handleMarkAsPaid = async () => {
     </div>
 
     <!-- Action Buttons -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[20px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Export & Actions</h3>
@@ -525,7 +525,7 @@ const handleMarkAsPaid = async () => {
       <div v-if="showMarkAsPaidModal"
         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
         @click.self="closeMarkAsPaidModal" style="margin: 0; padding: 0">
-        <div class="bg-white rounded-[20px] p-6 max-w-md w-full mx-4">
+        <div class="bg-white rounded-[14px] p-6 max-w-md w-full mx-4">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-brand-dark text-xl font-bold">
               Mark Payroll as Paid
