@@ -113,7 +113,7 @@ const applyTemplate = () => {
   const template = TEMPLATES[selectedCode.value];
   if (!template) return;
 
-  if (!form.value.body) form.value.body = template.body;
+  form.value.body = template.body;
   useItems.value = template.useItems;
   useSecondParty.value = template.useSecondParty;
 };
