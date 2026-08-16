@@ -28,6 +28,7 @@ import {
   Network as NetworkIcon,
   PanelLeftClose,
   PanelLeftOpen,
+  Sparkles,
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
@@ -130,26 +131,26 @@ const showCompanyFinance = computed(() =>
   >
     <!-- Logo Section -->
     <div
-      class="px-6 py-4 border-b border-[#DCDEDD] flex items-center"
+      class="px-4 py-3 border-b border-[#DCDEDD] flex items-center"
       :class="collapsed ? 'lg:flex-col lg:gap-3 lg:px-2' : 'justify-between'"
     >
       <div
-        class="flex items-center gap-4"
+        class="flex items-center gap-3"
         :class="{ 'lg:flex-col lg:gap-1': collapsed }"
       >
-        <div class="w-14 h-14 relative flex items-center justify-center shrink-0">
+        <div class="w-10 h-10 relative flex items-center justify-center shrink-0">
           <img
             src="/images/jcd-only-color.png"
             alt="Company Logo"
-            class="w-12 h-12 relative z-10 object-contain"
+            class="w-9 h-9 relative z-10 object-contain"
           />
         </div>
         <div class="sidebar-brand-text">
-          <h1 class="text-brand-dark text-lg font-bold whitespace-nowrap">
+          <h1 class="text-brand-dark text-sm font-bold whitespace-nowrap leading-tight">
             HRIS
-            <span class="text-xs font-medium text-gray-400 ml-1"> v3.3 </span>
+            <span class="text-[10px] font-medium text-gray-400 ml-0.5"> v3.3 </span>
           </h1>
-          <p class="text-brand-dark text-xs font-normal whitespace-nowrap">
+          <p class="text-gray-400 text-xs font-normal whitespace-nowrap leading-tight">
             Jendela Cakra Digital
           </p>
         </div>
@@ -166,8 +167,6 @@ const showCompanyFinance = computed(() =>
       <button
         class="lg:hidden w-10 h-10 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-200"
         @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
       >
         <XIcon class="w-5 h-5 text-gray-600" />
       </button>
@@ -175,32 +174,32 @@ const showCompanyFinance = computed(() =>
 
     <!-- Navigation Menu -->
     <nav
-      class="px-6 py-4 space-y-6 flex-1 overflow-y-auto pb-10 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+      class="px-4 py-3 space-y-4 flex-1 overflow-y-auto pb-8 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
     >
       <!-- Overview -->
       <div>
         <h3 class="section-title">Overview</h3>
-        <div class="space-y-3">
+        <div class="space-y-0.5">
           <RouterLink
             :to="{ name: 'admin.dashboard' }"
             :class="{
               'nav-link-active': $route.name === 'admin.dashboard',
             }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             @click="onNavigate"
             @mouseenter="showTooltip"
             @mouseleave="hideTooltip"
           >
             <LayoutDashboard
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name === 'admin.dashboard',
+                'text-[#0C51D9]': $route.name === 'admin.dashboard',
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name === 'admin.dashboard',
+                'text-[#0C51D9] font-semibold': $route.name === 'admin.dashboard',
               }"
               >Dashboard</span
             >
@@ -211,10 +210,10 @@ const showCompanyFinance = computed(() =>
       <!-- My Workspace: self-service items scoped to the logged-in employee -->
       <div v-if="showMyWorkspace">
         <h3 class="section-title">My Workspace</h3>
-        <div class="space-y-3">
+        <div class="space-y-0.5">
           <RouterLink
             :to="{ name: 'employee.profile' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name === 'employee.profile',
             }"
@@ -224,15 +223,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <CircleUserRound
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name === 'employee.profile',
+                'text-[#0C51D9]': $route.name === 'employee.profile',
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name === 'employee.profile',
+                'text-[#0C51D9] font-semibold': $route.name === 'employee.profile',
               }"
               >My Profile</span
             >
@@ -240,7 +239,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'employee.team' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name === 'employee.team',
             }"
@@ -250,15 +249,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <Contact
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name === 'employee.team',
+                'text-[#0C51D9]': $route.name === 'employee.team',
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name === 'employee.team',
+                'text-[#0C51D9] font-semibold': $route.name === 'employee.team',
               }"
               >My Team</span
             >
@@ -266,7 +265,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'employee.attendance.my-attendances' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active':
                 $route.name === 'employee.attendance.my-attendances',
@@ -277,16 +276,16 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <CalendarCheck
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white':
+                'text-[#0C51D9]':
                   $route.name === 'employee.attendance.my-attendances',
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white':
+                'text-[#0C51D9] font-semibold':
                   $route.name === 'employee.attendance.my-attendances',
               }"
               >My Attendance</span
@@ -295,7 +294,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'employee.attendance.clock' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name === 'employee.attendance.clock',
             }"
@@ -305,15 +304,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <ClockIcon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name === 'employee.attendance.clock',
+                'text-[#0C51D9]': $route.name === 'employee.attendance.clock',
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name === 'employee.attendance.clock',
+                'text-[#0C51D9] font-semibold': $route.name === 'employee.attendance.clock',
               }"
               >Clock In/Out</span
             >
@@ -321,7 +320,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'employee.tasks' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('employee.tasks'),
             }"
@@ -331,15 +330,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <ListChecksIcon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('employee.tasks'),
+                'text-[#0C51D9]': $route.name?.startsWith('employee.tasks'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('employee.tasks'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('employee.tasks'),
               }"
               >My Tasks</span
             >
@@ -347,7 +346,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'employee.payslips' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('employee.payslips'),
             }"
@@ -357,15 +356,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <Wallet
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('employee.payslips'),
+                'text-[#0C51D9]': $route.name?.startsWith('employee.payslips'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white':
+                'text-[#0C51D9] font-semibold':
                   $route.name?.startsWith('employee.payslips'),
               }"
               >My Payslips</span
@@ -377,10 +376,10 @@ const showCompanyFinance = computed(() =>
       <!-- People & Work: managing employees, teams, attendance, and payroll company-wide -->
       <div v-if="showPeopleAndWork">
         <h3 class="section-title">People &amp; Work</h3>
-        <div class="space-y-3">
+        <div class="space-y-0.5">
           <RouterLink
             :to="{ name: 'admin.employees' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.employee'),
             }"
@@ -390,15 +389,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <UsersIcon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.employee'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.employee'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.employee'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.employee'),
               }"
               >Employees</span
             >
@@ -406,7 +405,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.teams' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.team'),
             }"
@@ -416,15 +415,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <UsersRound
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.team'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.team'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.team'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.team'),
               }"
               >Our Teams</span
             >
@@ -432,7 +431,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.orgchart.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.orgchart'),
             }"
@@ -442,15 +441,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <NetworkIcon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.orgchart'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.orgchart'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.orgchart'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.orgchart'),
               }"
               >Org Chart</span
             >
@@ -458,7 +457,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.attendances' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name === 'admin.attendances',
             }"
@@ -468,15 +467,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <CalendarDays
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name === 'admin.attendances',
+                'text-[#0C51D9]': $route.name === 'admin.attendances',
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name === 'admin.attendances',
+                'text-[#0C51D9] font-semibold': $route.name === 'admin.attendances',
               }"
               >Attendance</span
             >
@@ -484,7 +483,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.projects' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.project'),
             }"
@@ -494,15 +493,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <FolderKanban
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.project'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.project'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.project'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.project'),
               }"
               >Projects</span
             >
@@ -510,7 +509,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.payroll.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.payroll'),
             }"
@@ -520,15 +519,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <Banknote
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.payroll'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.payroll'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.payroll'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.payroll'),
               }"
               >Payroll</span
             >
@@ -539,10 +538,10 @@ const showCompanyFinance = computed(() =>
       <!-- Company & Finance: company profile, spending, vendors, and paperwork -->
       <div v-if="showCompanyFinance">
         <h3 class="section-title">Company &amp; Finance</h3>
-        <div class="space-y-3">
+        <div class="space-y-0.5">
           <RouterLink
             :to="{ name: 'admin.company-about.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.company-about'),
             }"
@@ -552,15 +551,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <Building2Icon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.company-about'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.company-about'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith(
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith(
                   'admin.company-about'
                 ),
               }"
@@ -570,7 +569,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.company-finance.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith(
                 'admin.company-finance'
@@ -582,15 +581,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <CircleDollarSign
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.company-finance'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.company-finance'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith(
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith(
                   'admin.company-finance'
                 ),
               }"
@@ -600,7 +599,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.vendors.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.vendors'),
             }"
@@ -610,15 +609,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <Handshake
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.vendors'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.vendors'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.vendors'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.vendors'),
               }"
               >Vendor</span
             >
@@ -626,7 +625,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.documents.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
             }"
@@ -636,15 +635,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <FileStack
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
               }"
               >Document Letters</span
             >
@@ -652,7 +651,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.files-company.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.files-company'),
             }"
@@ -662,15 +661,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <FolderClosedIcon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.files-company'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.files-company'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith(
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith(
                   'admin.files-company'
                 ),
               }"
@@ -680,7 +679,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.account-password.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith(
                 'admin.account-password'
@@ -692,15 +691,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <KeyRoundIcon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.account-password'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.account-password'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith(
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith(
                   'admin.account-password'
                 ),
               }"
@@ -713,10 +712,10 @@ const showCompanyFinance = computed(() =>
       <!-- Insights & Admin: reporting, audit trail, comms, assets, and system settings -->
       <div>
         <h3 class="section-title">Insights &amp; Admin</h3>
-        <div class="space-y-3">
+        <div class="space-y-0.5">
           <RouterLink
             :to="{ name: 'admin.report.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.report'),
             }"
@@ -726,15 +725,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <BarChart3
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.report'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.report'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.report'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.report'),
               }"
               >Reports</span
             >
@@ -742,7 +741,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.history.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.history'),
             }"
@@ -752,15 +751,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <HistoryIcon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.history'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.history'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.history'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.history'),
               }"
               >History</span
             >
@@ -768,7 +767,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.announcements.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.announcements'),
             }"
@@ -778,15 +777,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <MegaphoneIcon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.announcements'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.announcements'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.announcements'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.announcements'),
               }"
               >Announcements</span
             >
@@ -794,7 +793,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.assets.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.assets'),
             }"
@@ -804,15 +803,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <LaptopIcon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.assets'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.assets'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.assets'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.assets'),
               }"
               >Assets</span
             >
@@ -820,7 +819,7 @@ const showCompanyFinance = computed(() =>
 
           <RouterLink
             :to="{ name: 'admin.settings.dashboard' }"
-            class="nav-link group relative border-2 border-transparent rounded-[20px] hover:border-[#0C51D9] transition-all duration-300"
+            class="nav-link group relative rounded-[10px] hover:bg-gray-100 transition-colors duration-150"
             :class="{
               'nav-link-active': $route.name?.startsWith('admin.settings'),
             }"
@@ -829,15 +828,15 @@ const showCompanyFinance = computed(() =>
             @mouseleave="hideTooltip"
           >
             <SettingsIcon
-              class="w-5 h-5 text-gray-600"
+              class="w-[18px] h-[18px] text-gray-500 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.settings'),
+                'text-[#0C51D9]': $route.name?.startsWith('admin.settings'),
               }"
             />
             <span
-              class="nav-label text-brand-dark text-base font-medium"
+              class="nav-label text-brand-dark text-sm font-medium"
               :class="{
-                'text-brand-white': $route.name?.startsWith('admin.settings'),
+                'text-[#0C51D9] font-semibold': $route.name?.startsWith('admin.settings'),
               }"
               >Settings</span
             >
@@ -846,31 +845,16 @@ const showCompanyFinance = computed(() =>
       </div>
     </nav>
 
-    <div class="sidebar-quote px-6 pb-6 mt-auto">
+    <div class="sidebar-quote px-4 pb-4 mt-auto">
       <div
-        class="upgrade-card bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-[16px] relative overflow-hidden p-5"
+        class="bg-blue-50 border border-blue-100 rounded-[12px] p-3 flex items-start gap-2.5"
       >
-        <!-- Dekorasi latar belakang -->
-        <div class="absolute inset-0 opacity-5">
-          <div
-            class="absolute top-2 right-4 w-8 h-8 bg-blue-500 rounded-full"
-          ></div>
-          <div
-            class="absolute bottom-4 left-2 w-6 h-6 bg-blue-400 rounded-full"
-          ></div>
-          <div
-            class="absolute top-1/2 left-1/2 w-4 h-4 bg-blue-600 rounded-full"
-          ></div>
-        </div>
-
-        <!-- Konten utama -->
-        <div class="relative z-10">
-          <!-- Judul -->
-          <h4 class="text-blue-800 text-base font-bold mb-2">
-            "Success doesn’t come from what you do occasionally, it comes from
-            what you do consistently."
-          </h4>
-          <p class="text-blue-700 text-sm italic">– Marie Forleo</p>
+        <Sparkles class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+        <div class="min-w-0">
+          <p class="text-blue-900 text-xs font-semibold leading-snug">
+            "Success comes from what you do consistently."
+          </p>
+          <p class="text-blue-400 text-[11px] mt-0.5">– Marie Forleo</p>
         </div>
       </div>
     </div>

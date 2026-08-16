@@ -667,10 +667,6 @@ video {
   top: 50%;
 }
 
-.top-2 {
-  top: 0.5rem;
-}
-
 .top-3 {
   top: 0.75rem;
 }
@@ -801,6 +797,10 @@ video {
 
 .mb-\[10px\] {
   margin-bottom: 10px;
+}
+
+.ml-0\.5 {
+  margin-left: 0.125rem;
 }
 
 .ml-1 {
@@ -1219,6 +1219,10 @@ video {
   width: 100px;
 }
 
+.w-\[18px\] {
+  width: 18px;
+}
+
 .w-fit {
   width: -moz-fit-content;
   width: fit-content;
@@ -1468,6 +1472,10 @@ video {
   gap: 0.5rem;
 }
 
+.gap-2\.5 {
+  gap: 0.625rem;
+}
+
 .gap-3 {
   gap: 0.75rem;
 }
@@ -1500,6 +1508,12 @@ video {
 
 .gap-y-2 {
   row-gap: 0.5rem;
+}
+
+.space-y-0\.5 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.125rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.125rem * var(--tw-space-y-reverse));
 }
 
 .space-y-1 > :not([hidden]) ~ :not([hidden]) {
@@ -1715,6 +1729,11 @@ video {
   border-color: rgb(254 226 226 / var(--tw-border-opacity, 1));
 }
 
+.border-blue-100 {
+  --tw-border-opacity: 1;
+  border-color: rgb(219 234 254 / var(--tw-border-opacity, 1));
+}
+
 .border-blue-200 {
   --tw-border-opacity: 1;
   border-color: rgb(191 219 254 / var(--tw-border-opacity, 1));
@@ -1787,10 +1806,6 @@ video {
 .border-red-700 {
   --tw-border-opacity: 1;
   border-color: rgb(185 28 28 / var(--tw-border-opacity, 1));
-}
-
-.border-transparent {
-  border-color: transparent;
 }
 
 .border-white {
@@ -1886,11 +1901,6 @@ video {
 .bg-blue-200 {
   --tw-bg-opacity: 1;
   background-color: rgb(191 219 254 / var(--tw-bg-opacity, 1));
-}
-
-.bg-blue-400 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(96 165 250 / var(--tw-bg-opacity, 1));
 }
 
 .bg-blue-50 {
@@ -2127,12 +2137,6 @@ video {
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
-.from-blue-50 {
-  --tw-gradient-from: #eff6ff var(--tw-gradient-from-position);
-  --tw-gradient-to: rgb(239 246 255 / 0) var(--tw-gradient-to-position);
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
-
 .from-blue-500 {
   --tw-gradient-from: #3b82f6 var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(59 130 246 / 0) var(--tw-gradient-to-position);
@@ -2188,10 +2192,6 @@ video {
 
 .to-\[\#0c51d9\] {
   --tw-gradient-to: #0c51d9 var(--tw-gradient-to-position);
-}
-
-.to-blue-100 {
-  --tw-gradient-to: #dbeafe var(--tw-gradient-to-position);
 }
 
 .to-blue-600 {
@@ -2368,16 +2368,16 @@ video {
   padding-bottom: 14px;
 }
 
-.pb-10 {
-  padding-bottom: 2.5rem;
-}
-
 .pb-4 {
   padding-bottom: 1rem;
 }
 
 .pb-6 {
   padding-bottom: 1.5rem;
+}
+
+.pb-8 {
+  padding-bottom: 2rem;
 }
 
 .pl-10 {
@@ -2939,10 +2939,6 @@ video {
   opacity: 0.4;
 }
 
-.opacity-5 {
-  opacity: 0.05;
-}
-
 .opacity-70 {
   opacity: 0.7;
 }
@@ -3152,23 +3148,23 @@ html {
 
 .nav-link {
   display: flex;
-  padding: 14px 20px;
+  padding: 8px 12px;
   justify-content: flex-start;
   align-items: center;
   gap: 10px;
   align-self: stretch;
-  background: #FFF;
+  background: transparent;
 }
 
 .nav-link-active {
   display: flex;
-  padding: 14px 20px;
+  padding: 8px 12px 8px 9px;
   justify-content: flex-start;
   align-items: center;
   gap: 10px;
   align-self: stretch;
-  background: linear-gradient(266deg, #040724 5.45%, #0C1448 52%, #040724 100.36%);
-  box-shadow: -2px 2px 1px 0 #1A2570 inset, 2px 2px 1px 0 rgba(26, 37, 112, 0.55) inset;
+  background: #EAF1FF;
+  border-left: 3px solid #0C51D9;
 }
 
 /* Sidebar icon-rail collapse. The .is-collapsed class can be present at
@@ -3180,7 +3176,8 @@ html {
   #sidebar.is-collapsed .nav-link,
     #sidebar.is-collapsed .nav-link-active {
     justify-content: center;
-    padding: 14px 0;
+    padding: 10px 0;
+    border-left: none;
   }
 
   #sidebar.is-collapsed .sidebar-brand-text,
@@ -3239,15 +3236,15 @@ html {
 /* Section headers */
 
 .section-title {
-  color: #0C1C3C;
+  color: #9CA3AF;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-style: normal;
   font-weight: 600;
   line-height: normal;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   padding-left: 12px;
 }
 

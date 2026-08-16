@@ -61,23 +61,23 @@ html {
 /* Button and link styles */
 .nav-link {
     display: flex;
-    padding: 14px 20px;
+    padding: 8px 12px;
     justify-content: flex-start;
     align-items: center;
     gap: 10px;
     align-self: stretch;
-    background: #FFF;
+    background: transparent;
 }
 
 .nav-link-active {
     display: flex;
-    padding: 14px 20px;
+    padding: 8px 12px 8px 9px;
     justify-content: flex-start;
     align-items: center;
     gap: 10px;
     align-self: stretch;
-    background: linear-gradient(266deg, #040724 5.45%, #0C1448 52%, #040724 100.36%);
-    box-shadow: -2px 2px 1px 0 #1A2570 inset, 2px 2px 1px 0 rgba(26, 37, 112, 0.55) inset;
+    background: #EAF1FF;
+    border-left: 3px solid #0C51D9;
 }
 
 /* Sidebar icon-rail collapse. The .is-collapsed class can be present at
@@ -88,7 +88,8 @@ html {
     #sidebar.is-collapsed .nav-link,
     #sidebar.is-collapsed .nav-link-active {
         justify-content: center;
-        padding: 14px 0;
+        padding: 10px 0;
+        border-left: none;
     }
 
     #sidebar.is-collapsed .sidebar-brand-text,
@@ -144,15 +145,15 @@ html {
 
 /* Section headers */
 .section-title {
-    color: #0C1C3C;
+    color: #9CA3AF;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     font-style: normal;
     font-weight: 600;
     line-height: normal;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     padding-left: 12px;
 }
 
