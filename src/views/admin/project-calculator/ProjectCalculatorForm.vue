@@ -213,9 +213,9 @@ const submit = async () => {
         </div>
         <div>
           <h1 class="text-brand-dark text-xl font-bold">
-            {{ isEditing ? "Edit Estimasi" : "Buat Estimasi Baru" }}
+            {{ isEditing ? "Edit Estimate" : "Create New Estimate" }}
           </h1>
-          <p class="text-brand-light text-sm">Isi detail di bawah, total akan terhitung otomatis</p>
+          <p class="text-brand-light text-sm">Fill in the details below, the total will be calculated automatically</p>
         </div>
       </div>
     </div>
@@ -234,20 +234,20 @@ const submit = async () => {
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-semibold text-brand-dark mb-1">Nama Estimasi *</label>
+              <label class="block text-sm font-semibold text-brand-dark mb-1">Project Name Example *</label>
               <input
                 v-model="form.name"
                 type="text"
-                placeholder="cth. Penambahan Fitur WA Monitoring"
+                placeholder="example: Added WA Monitoring Featured"
                 class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
               />
             </div>
             <div>
-              <label class="block text-sm font-semibold text-brand-dark mb-1">Nama Klien (Opsional)</label>
+              <label class="block text-sm font-semibold text-brand-dark mb-1">Client Name (Optional)</label>
               <input
                 v-model="form.client_name"
                 type="text"
-                placeholder="cth. PT. Contoh Klien"
+                placeholder="example: PT. Client Name"
                 class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
               />
             </div>
@@ -255,7 +255,7 @@ const submit = async () => {
 
           <!-- Scenario toggle -->
           <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-2">Skenario</label>
+            <label class="block text-sm font-semibold text-brand-dark mb-2">Scenario</label>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
@@ -271,8 +271,8 @@ const submit = async () => {
                   <PuzzleIcon class="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p class="text-brand-dark text-sm font-bold">Fitur Baru</p>
-                  <p class="text-brand-light text-xs">Menambah fitur di sistem existing</p>
+                  <p class="text-brand-dark text-sm font-bold">New Feature</p>
+                  <p class="text-brand-light text-xs">Adding features to the existing system</p>
                 </div>
               </button>
               <button
@@ -289,8 +289,8 @@ const submit = async () => {
                   <Layers3Icon class="w-5 h-5 text-violet-600" />
                 </div>
                 <div>
-                  <p class="text-brand-dark text-sm font-bold">Bangun dari 0</p>
-                  <p class="text-brand-light text-xs">Membangun aplikasi baru, per modul</p>
+                  <p class="text-brand-dark text-sm font-bold">Build from Scratch</p>
+                  <p class="text-brand-light text-xs">Building a new application, per module</p>
                 </div>
               </button>
             </div>
@@ -301,7 +301,7 @@ const submit = async () => {
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-brand-dark text-base font-bold">
-              {{ form.scenario === "feature" ? "Daftar Fitur" : "Daftar Modul" }}
+              {{ form.scenario === "feature" ? "Feature List" : "Module List" }}
             </h3>
             <button
               type="button"
@@ -309,12 +309,12 @@ const submit = async () => {
               class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
             >
               <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
-              <span class="text-brand-dark text-xs font-semibold">Tambah {{ form.scenario === "feature" ? "Fitur" : "Modul" }}</span>
+              <span class="text-brand-dark text-xs font-semibold">{{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}</span>
             </button>
           </div>
           <p class="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
             <InfoIcon class="w-3.5 h-3.5" />
-            Faktor Kompleksitas: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Buffer risiko lazim 15&ndash;20%.
+            Complexity Factor: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Typical risk buffer 15&ndash;20%.
           </p>
 
           <div class="space-y-4">
@@ -342,43 +342,43 @@ const submit = async () => {
 
               <div v-if="form.scenario === 'feature'" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label class="block text-xs text-gray-500 mb-1">Jam Analisis</label>
+                  <label class="block text-xs text-gray-500 mb-1">Analysis Hours</label>
                   <input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <div>
-                  <label class="block text-xs text-gray-500 mb-1">Jam Dev</label>
+                  <label class="block text-xs text-gray-500 mb-1">Development Hours</label>
                   <input v-model.number="item.dev_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <div>
-                  <label class="block text-xs text-gray-500 mb-1">Jam Testing</label>
+                  <label class="block text-xs text-gray-500 mb-1">Testing Hours</label>
                   <input v-model.number="item.testing_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <div>
-                  <label class="block text-xs text-gray-500 mb-1">Jam Deploy</label>
+                  <label class="block text-xs text-gray-500 mb-1">Deployment Hours</label>
                   <input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
               </div>
               <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-xs text-gray-500 mb-1">Estimasi Jam</label>
+                  <label class="block text-xs text-gray-500 mb-1">Estimated Hours</label>
                   <input v-model.number="item.estimated_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-xs text-gray-500 mb-1">Faktor Kompleksitas</label>
+                  <label class="block text-xs text-gray-500 mb-1">Complexity Factor</label>
                   <input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <div>
-                  <label class="block text-xs text-gray-500 mb-1">Buffer Risiko %</label>
+                  <label class="block text-xs text-gray-500 mb-1">Buffer Risk %</label>
                   <input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
               </div>
 
               <div class="flex items-center justify-between pt-3 border-t border-[#F1F1F1] text-sm">
                 <span class="text-gray-500">
-                  {{ computedItems[index]?.totalHoursUsed.toFixed(1) }} jam terpakai
+                  {{ computedItems[index]?.totalHoursUsed.toFixed(1) }} usage history
                 </span>
                 <span class="text-brand-dark font-bold">{{ formatRupiah(computedItems[index]?.finalPrice ?? 0) }}</span>
               </div>
@@ -393,7 +393,7 @@ const submit = async () => {
             <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
           </div>
           <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Biaya Setup Infrastruktur (Rp)</label>
+            <label class="block text-sm font-semibold text-brand-dark mb-1">Infrastructure Setup Cost (Rp)</label>
             <input v-model.number="form.infra_setup_cost" type="number" min="0" class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
           </div>
         </div>
@@ -402,7 +402,7 @@ const submit = async () => {
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-4">
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" v-model="form.include_ppn" class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]" />
-            <span class="text-sm font-semibold text-brand-dark">Sertakan PPN</span>
+            <span class="text-sm font-semibold text-brand-dark">Include PPN</span>
             <input
               v-if="form.include_ppn"
               v-model.number="form.ppn_percent"
@@ -417,11 +417,11 @@ const submit = async () => {
           </label>
 
           <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Catatan (Opsional)</label>
+            <label class="block text-sm font-semibold text-brand-dark mb-1">Notes (Optional)</label>
             <textarea
               v-model="form.notes"
               rows="3"
-              placeholder="Catatan tambahan untuk estimasi ini..."
+              placeholder="Additional notes for this estimate..."
               class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none resize-none"
             ></textarea>
           </div>
@@ -431,10 +431,10 @@ const submit = async () => {
       <!-- Summary sidebar -->
       <div class="xl:col-span-1">
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 sticky top-6 space-y-4">
-          <h3 class="text-brand-dark text-base font-bold">Ringkasan</h3>
+          <h3 class="text-brand-dark text-base font-bold">Summary</h3>
 
           <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1] flex items-center justify-between text-sm">
-            <span class="text-gray-500">Rate Jual / Jam</span>
+            <span class="text-gray-500">Rate Sell / Hour</span>
             <span class="font-semibold text-brand-dark">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</span>
           </div>
 
@@ -444,7 +444,7 @@ const submit = async () => {
               <span class="text-brand-dark font-medium">{{ formatRupiah(subtotalSum) }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-gray-500">Buffer Risiko</span>
+              <span class="text-gray-500">Buffer Risk</span>
               <span class="text-brand-dark font-medium">{{ formatRupiah(bufferSum) }}</span>
             </div>
             <div v-if="form.scenario === 'build'" class="flex items-center justify-between">
@@ -452,14 +452,14 @@ const submit = async () => {
               <span class="text-brand-dark font-medium">{{ formatRupiah(pmOverheadTotal) }}</span>
             </div>
             <div v-if="form.scenario === 'build'" class="flex items-center justify-between">
-              <span class="text-gray-500">Setup Infrastruktur</span>
+              <span class="text-gray-500">Infrastructure Setup Cost</span>
               <span class="text-brand-dark font-medium">{{ formatRupiah(form.infra_setup_cost) }}</span>
             </div>
           </div>
 
           <div class="pt-3 border-t border-[#F1F1F1]">
             <div class="flex items-center justify-between">
-              <span class="text-brand-dark text-sm font-bold">Total Estimasi</span>
+              <span class="text-brand-dark text-sm font-bold">Estimate Total</span>
               <span class="text-brand-dark text-xl font-extrabold">{{ formatRupiah(grandTotal) }}</span>
             </div>
             <div v-if="form.include_ppn" class="flex items-center justify-between mt-2">
@@ -475,8 +475,8 @@ const submit = async () => {
           <div class="flex items-center gap-2 p-3 rounded-[12px] bg-blue-50 border border-blue-100 text-sm">
             <ClockIcon class="w-4 h-4 text-blue-600 flex-shrink-0" />
             <span class="text-blue-800">
-              Estimasi durasi: <strong>{{ estimatedDurationWeeks ?? "-" }} minggu</strong>
-              ({{ totalHoursSum.toFixed(1) }} jam &middot; kapasitas tim {{ rateSetting.total_productive_hours_per_month }} jam/bulan)
+              Estimate Duration: <strong>{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
+              ({{ totalHoursSum.toFixed(1) }} hours &middot; team capacity {{ rateSetting.total_productive_hours_per_month }} hours/month)
             </span>
           </div>
 
@@ -489,7 +489,7 @@ const submit = async () => {
             <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
             <SaveIcon v-else class="w-4 h-4 text-white" />
             <span class="text-brand-white text-sm font-semibold">
-              {{ saving ? "Menyimpan..." : isEditing ? "Simpan Perubahan" : "Simpan Estimasi" }}
+              {{ saving ? "Saving..." : isEditing ? "Save Changes" : "Save Estimate" }}
             </span>
           </button>
         </div>

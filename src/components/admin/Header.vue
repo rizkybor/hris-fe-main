@@ -131,16 +131,16 @@ const titles = {
     subtitle: "Estimate development cost by feature or from scratch",
   },
   "admin.project-calculator.create": {
-    title: "Buat Estimasi Baru",
-    subtitle: "Isi detail project untuk menghitung estimasi biaya",
+    title: "Create New Estimate",
+    subtitle: "Enter the project details to calculate the cost estimate.",
   },
   "admin.project-calculator.edit": {
-    title: "Edit Estimasi",
-    subtitle: "Perbarui detail estimasi project",
+    title: "Edit Estimate",
+    subtitle: "Update the project estimate details and recalculate the cost.",
   },
   "admin.project-calculator.detail": {
-    title: "Detail Estimasi",
-    subtitle: "Ringkasan estimasi biaya project",
+    title: "Detail Estimate",
+    subtitle: "Summary of the project cost estimate and breakdown of features or modules.",
   },
   "admin.files-company.dashboard": {
     title: "Document Files",
