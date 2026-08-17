@@ -160,7 +160,7 @@ const titles = {
   },
   "admin.documents.dashboard": {
     title: "Document Letters",
-    subtitle: "Purchase Order, Invoice, Payment Receipt, and Surat-Surat",
+    subtitle: "Purchase Order, Invoice, Payment Receipt, Surat-Surat, and Sertifikat",
   },
   "admin.purchase-orders.dashboard": {
     title: "Purchase Order",
@@ -201,6 +201,22 @@ const titles = {
   "admin.settings.sdm-fields": {
     title: "Bidang SDM",
     subtitle: "Manage the role/field list used by SDM Resource",
+  },
+  "admin.certificates.dashboard": {
+    title: "Certificate",
+    subtitle: "Riwayat sertifikat yang telah diterbitkan",
+  },
+  "admin.certificates.create": {
+    title: "Generate Certificate",
+    subtitle: "Buat sertifikat baru, tunggal maupun massal",
+  },
+  "admin.settings.certificate-settings": {
+    title: "Pengaturan Certificate",
+    subtitle: "Format penomoran dan template background sertifikat",
+  },
+  "admin.settings.backup": {
+    title: "Backup Database",
+    subtitle: "Generate and manage full SQL backups of the database",
   },
   "admin.report.dashboard": {
     title: "Reports",
