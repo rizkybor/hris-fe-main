@@ -1,5 +1,5 @@
 <script setup>
-import { FileStack, ShoppingCart, Receipt, FileCheck2, Mail, ChevronRight } from "lucide-vue-next";
+import { FileStack, ShoppingCart, Receipt, FileCheck2, Mail, Award, ChevronRight } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
 const links = [
@@ -31,6 +31,15 @@ const links = [
     description: "Buat dan kelola surat internal maupun eksternal",
     permission: "letter-menu",
   },
+  {
+    to: { name: "admin.certificates.dashboard" },
+    icon: Award,
+    title: "Sertifikat",
+    description: "Generate sertifikat dinamis, tunggal maupun massal",
+    permission: "certificate-menu",
+    iconBg: "bg-amber-50",
+    iconColor: "text-amber-600",
+  },
 ];
 </script>
 
@@ -46,7 +55,7 @@ const links = [
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Document Letters</h3>
           <p class="text-brand-light text-sm">
-            Purchase Order, Invoice, Payment Receipt, dan Surat-Surat resmi perusahaan
+            Purchase Order, Invoice, Payment Receipt, Surat-Surat, dan Sertifikat resmi perusahaan
           </p>
         </div>
       </div>
@@ -60,9 +69,10 @@ const links = [
           class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 flex flex-col gap-3 hover:border-[#0C51D9] hover:shadow-sm transition-all"
         >
           <div
-            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+            class="w-12 h-12 rounded-[12px] flex items-center justify-center"
+            :class="link.iconBg || 'bg-blue-50'"
           >
-            <component :is="link.icon" class="w-6 h-6 text-[#0C51D9]" />
+            <component :is="link.icon" class="w-6 h-6" :class="link.iconColor || 'text-[#0C51D9]'" />
           </div>
           <div class="flex-1">
             <p class="text-brand-dark text-base font-bold flex items-center justify-between">
