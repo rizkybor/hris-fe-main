@@ -126,6 +126,22 @@ const titles = {
     title: "Operational Cost",
     subtitle: "Company Operational Cost Overview",
   },
+  "admin.project-calculator.dashboard": {
+    title: "Project Calculator",
+    subtitle: "Estimate development cost by feature or from scratch",
+  },
+  "admin.project-calculator.create": {
+    title: "Buat Estimasi Baru",
+    subtitle: "Isi detail project untuk menghitung estimasi biaya",
+  },
+  "admin.project-calculator.edit": {
+    title: "Edit Estimasi",
+    subtitle: "Perbarui detail estimasi project",
+  },
+  "admin.project-calculator.detail": {
+    title: "Detail Estimasi",
+    subtitle: "Ringkasan estimasi biaya project",
+  },
   "admin.files-company.dashboard": {
     title: "Document Files",
     subtitle: "View Document Company",
@@ -144,7 +160,7 @@ const titles = {
   },
   "admin.documents.dashboard": {
     title: "Document Letters",
-    subtitle: "Purchase Order, Invoice, Payment Receipt, and Surat-Surat",
+    subtitle: "Purchase Order, Invoice, Payment Receipt, Surat-Surat, and Sertifikat",
   },
   "admin.purchase-orders.dashboard": {
     title: "Purchase Order",
@@ -181,6 +197,26 @@ const titles = {
   "admin.settings.document-codes": {
     title: "Kode Surat & Divisi",
     subtitle: "Manage letter code and division code references",
+  },
+  "admin.settings.sdm-fields": {
+    title: "Bidang SDM",
+    subtitle: "Manage the role/field list used by SDM Resource",
+  },
+  "admin.certificates.dashboard": {
+    title: "Certificate",
+    subtitle: "Riwayat sertifikat yang telah diterbitkan",
+  },
+  "admin.certificates.create": {
+    title: "Generate Certificate",
+    subtitle: "Buat sertifikat baru, tunggal maupun massal",
+  },
+  "admin.settings.certificate-settings": {
+    title: "Pengaturan Certificate",
+    subtitle: "Format penomoran dan template background sertifikat",
+  },
+  "admin.settings.backup": {
+    title: "Backup Database",
+    subtitle: "Generate and manage full SQL backups of the database",
   },
   "admin.report.dashboard": {
     title: "Reports",
@@ -308,7 +344,7 @@ const getInitials = (name) => {
         <div class="hidden sm:block w-px h-6 bg-[#DCDEDD] mx-2"></div>
 
         <!-- User Profile -->
-        <div class="relative z-[10]">
+        <div class="relative z-[9999]">
           <div
             class="flex items-center gap-2 sm:gap-2.5 cursor-pointer rounded-full hover:bg-gray-50 transition-colors duration-150 py-1 pr-1"
             @click="isOpen = !isOpen"

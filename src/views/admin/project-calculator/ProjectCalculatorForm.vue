@@ -1,0 +1,499 @@
+<script setup>
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import {
+  CalculatorIcon,
+  ArrowLeft,
+  PlusIcon,
+  Trash2,
+  Layers3Icon,
+  PuzzleIcon,
+  InfoIcon,
+  Loader2,
+  SaveIcon,
+  ClockIcon,
+} from "lucide-vue-next";
+import { useProjectCalculatorStore } from "@/stores/projectCalculator";
+import { useAlertModalStore } from "@/stores/alertModal";
+import { storeToRefs } from "pinia";
+import { formatRupiah } from "@/utils/formatUtils";
+import Alert from "@/components/common/Alert.vue";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+
+const route = useRoute();
+const router = useRouter();
+const store = useProjectCalculatorStore();
+const alertModal = useAlertModalStore();
+const { rateSetting, loadingRateSetting, saving } = storeToRefs(store);
+
+const isEditing = computed(() => !!route.params.id);
+const loadingCalculation = ref(false);
+
+const newFeatureItem = () => ({
+  name: "",
+  analysis_hours: 0,
+  dev_hours: 0,
+  testing_hours: 0,
+  deploy_hours: 0,
+  complexity_factor: 1,
+  buffer_percent: 15,
+});
+
+const newModuleItem = () => ({
+  name: "",
+  estimated_hours: 0,
+  complexity_factor: 1,
+  buffer_percent: 15,
+});
+
+const form = ref({
+  name: "",
+  client_name: "",
+  scenario: "feature",
+  pm_overhead_percent: 12,
+  infra_setup_cost: 0,
+  include_ppn: false,
+  ppn_percent: 11,
+  notes: "",
+  items: [newFeatureItem()],
+});
+
+const errorMessage = ref("");
+
+onMounted(async () => {
+  await store.fetchRateSetting();
+  form.value.pm_overhead_percent = rateSetting.value.pm_overhead_percent;
+  form.value.infra_setup_cost = rateSetting.value.default_infra_setup_cost;
+
+  if (isEditing.value) {
+    loadingCalculation.value = true;
+    try {
+      const calc = await store.fetchCalculation(route.params.id);
+      form.value = {
+        name: calc.name,
+        client_name: calc.client_name ?? "",
+        scenario: calc.scenario,
+        pm_overhead_percent: calc.pm_overhead_percent ?? rateSetting.value.pm_overhead_percent,
+        infra_setup_cost: calc.infra_setup_cost ?? rateSetting.value.default_infra_setup_cost,
+        include_ppn: calc.include_ppn,
+        ppn_percent: calc.ppn_percent,
+        notes: calc.notes ?? "",
+        items: calc.items.map((item) =>
+          calc.scenario === "feature"
+            ? {
+                name: item.name,
+                analysis_hours: item.analysis_hours,
+                dev_hours: item.dev_hours,
+                testing_hours: item.testing_hours,
+                deploy_hours: item.deploy_hours,
+                complexity_factor: item.complexity_factor,
+                buffer_percent: item.buffer_percent,
+              }
+            : {
+                name: item.name,
+                estimated_hours: item.estimated_hours,
+                complexity_factor: item.complexity_factor,
+                buffer_percent: item.buffer_percent,
+              }
+        ),
+      };
+    } catch (error) {
+      errorMessage.value = "Estimasi tidak ditemukan.";
+    } finally {
+      loadingCalculation.value = false;
+    }
+  }
+});
+
+const switchScenario = (scenario) => {
+  if (form.value.scenario === scenario) return;
+  form.value.scenario = scenario;
+  form.value.items = [scenario === "feature" ? newFeatureItem() : newModuleItem()];
+};
+
+const addItem = () => {
+  form.value.items.push(form.value.scenario === "feature" ? newFeatureItem() : newModuleItem());
+};
+
+const removeItem = (index) => {
+  if (form.value.items.length === 1) return;
+  form.value.items.splice(index, 1);
+};
+
+// Live client-side calculation mirroring the backend service exactly, so
+// the totals update as the user types instead of waiting on a round trip.
+const computedItems = computed(() => {
+  const rate = rateSetting.value.rate_sell_per_hour;
+  return form.value.items.map((item) => {
+    const baseHours =
+      form.value.scenario === "feature"
+        ? Number(item.analysis_hours || 0) +
+          Number(item.dev_hours || 0) +
+          Number(item.testing_hours || 0) +
+          Number(item.deploy_hours || 0)
+        : Number(item.estimated_hours || 0);
+
+    const complexityFactor = Number(item.complexity_factor || 1);
+    const totalHoursUsed = baseHours * complexityFactor;
+    const subtotal = totalHoursUsed * rate;
+    const bufferPercent = Number(item.buffer_percent || 0);
+    const bufferAmount = subtotal * (bufferPercent / 100);
+    const finalPrice = subtotal + bufferAmount;
+
+    return { baseHours, totalHoursUsed, subtotal, bufferAmount, finalPrice };
+  });
+});
+
+const itemsTotal = computed(() => computedItems.value.reduce((sum, i) => sum + i.finalPrice, 0));
+const subtotalSum = computed(() => computedItems.value.reduce((sum, i) => sum + i.subtotal, 0));
+const bufferSum = computed(() => computedItems.value.reduce((sum, i) => sum + i.bufferAmount, 0));
+const totalHoursSum = computed(() => computedItems.value.reduce((sum, i) => sum + i.totalHoursUsed, 0));
+
+const pmOverheadTotal = computed(() =>
+  form.value.scenario === "build" ? itemsTotal.value * (Number(form.value.pm_overhead_percent || 0) / 100) : 0
+);
+
+const grandTotal = computed(() => {
+  if (form.value.scenario === "build") {
+    return itemsTotal.value + pmOverheadTotal.value + Number(form.value.infra_setup_cost || 0);
+  }
+  return itemsTotal.value;
+});
+
+const ppnAmount = computed(() =>
+  form.value.include_ppn ? grandTotal.value * (Number(form.value.ppn_percent || 0) / 100) : 0
+);
+const totalWithPpn = computed(() => grandTotal.value + ppnAmount.value);
+
+const estimatedDurationWeeks = computed(() => {
+  const capacityPerWeek =
+    (rateSetting.value.total_productive_hours_per_month || 0) / 4.33;
+  return capacityPerWeek > 0 ? Math.ceil(totalHoursSum.value / capacityPerWeek) : null;
+});
+
+const canSave = computed(() => {
+  if (!form.value.name || form.value.items.length === 0) return false;
+  return form.value.items.every((item) => item.name && item.name.trim().length > 0);
+});
+
+const submit = async () => {
+  errorMessage.value = "";
+  if (!canSave.value) {
+    errorMessage.value = "Nama estimasi dan nama setiap item wajib diisi.";
+    return;
+  }
+
+  try {
+    const saved = isEditing.value
+      ? await store.updateCalculation(route.params.id, form.value)
+      : await store.createCalculation(form.value);
+
+    router.push({ name: "admin.project-calculator.detail", params: { id: saved.id } });
+  } catch (error) {
+    const data = error?.response?.data;
+    errorMessage.value =
+      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal menyimpan estimasi.");
+  }
+};
+</script>
+
+<template>
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
+      <div class="flex items-center gap-3">
+        <button
+          @click="router.back()"
+          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-blue-400 transition-all flex-shrink-0"
+        >
+          <ArrowLeft class="w-5 h-5 text-gray-600" />
+        </button>
+        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
+          <CalculatorIcon class="w-6 h-6 text-blue-600" />
+        </div>
+        <div>
+          <h1 class="text-brand-dark text-xl font-bold">
+            {{ isEditing ? "Edit Estimasi" : "Buat Estimasi Baru" }}
+          </h1>
+          <p class="text-brand-light text-sm">Isi detail di bawah, total akan terhitung otomatis</p>
+        </div>
+      </div>
+    </div>
+
+    <Alert type="danger" :title="errorMessage" message="" :show="!!errorMessage" @close="errorMessage = ''" />
+
+    <div v-if="loadingCalculation || loadingRateSetting" class="space-y-4 mt-4">
+      <Skeleton height="120px" rounded="14px" />
+      <Skeleton height="300px" rounded="14px" />
+    </div>
+
+    <div v-else class="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+      <!-- Main form -->
+      <div class="xl:col-span-2 space-y-6">
+        <!-- Basic info -->
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-brand-dark mb-1">Nama Estimasi *</label>
+              <input
+                v-model="form.name"
+                type="text"
+                placeholder="cth. Penambahan Fitur WA Monitoring"
+                class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-brand-dark mb-1">Nama Klien (Opsional)</label>
+              <input
+                v-model="form.client_name"
+                type="text"
+                placeholder="cth. PT. Contoh Klien"
+                class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+              />
+            </div>
+          </div>
+
+          <!-- Scenario toggle -->
+          <div>
+            <label class="block text-sm font-semibold text-brand-dark mb-2">Skenario</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                @click="switchScenario('feature')"
+                class="flex items-center gap-3 p-4 rounded-[12px] border-2 text-left transition-all"
+                :class="
+                  form.scenario === 'feature'
+                    ? 'border-[#0C51D9] bg-blue-50'
+                    : 'border-[#DCDEDD] hover:border-blue-200'
+                "
+              >
+                <div class="w-10 h-10 bg-blue-100 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                  <PuzzleIcon class="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p class="text-brand-dark text-sm font-bold">Fitur Baru</p>
+                  <p class="text-brand-light text-xs">Menambah fitur di sistem existing</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                @click="switchScenario('build')"
+                class="flex items-center gap-3 p-4 rounded-[12px] border-2 text-left transition-all"
+                :class="
+                  form.scenario === 'build'
+                    ? 'border-violet-500 bg-violet-50'
+                    : 'border-[#DCDEDD] hover:border-violet-200'
+                "
+              >
+                <div class="w-10 h-10 bg-violet-100 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                  <Layers3Icon class="w-5 h-5 text-violet-600" />
+                </div>
+                <div>
+                  <p class="text-brand-dark text-sm font-bold">Bangun dari 0</p>
+                  <p class="text-brand-light text-xs">Membangun aplikasi baru, per modul</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items -->
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-brand-dark text-base font-bold">
+              {{ form.scenario === "feature" ? "Daftar Fitur" : "Daftar Modul" }}
+            </h3>
+            <button
+              type="button"
+              @click="addItem"
+              class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
+            >
+              <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
+              <span class="text-brand-dark text-xs font-semibold">Tambah {{ form.scenario === "feature" ? "Fitur" : "Modul" }}</span>
+            </button>
+          </div>
+          <p class="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
+            <InfoIcon class="w-3.5 h-3.5" />
+            Faktor Kompleksitas: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Buffer risiko lazim 15&ndash;20%.
+          </p>
+
+          <div class="space-y-4">
+            <div
+              v-for="(item, index) in form.items"
+              :key="index"
+              class="p-4 border border-[#DCDEDD] rounded-[12px] space-y-3"
+            >
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="item.name"
+                  type="text"
+                  :placeholder="form.scenario === 'feature' ? 'Nama fitur' : 'Nama modul'"
+                  class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm font-semibold focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+                />
+                <button
+                  type="button"
+                  @click="removeItem(index)"
+                  :disabled="form.items.length === 1"
+                  class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl border border-[#DCDEDD] hover:border-red-400 hover:bg-red-50 group transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <Trash2 class="w-4 h-4 text-gray-500 group-hover:text-red-600" />
+                </button>
+              </div>
+
+              <div v-if="form.scenario === 'feature'" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Jam Analisis</label>
+                  <input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Jam Dev</label>
+                  <input v-model.number="item.dev_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Jam Testing</label>
+                  <input v-model.number="item.testing_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Jam Deploy</label>
+                  <input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+              </div>
+              <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Estimasi Jam</label>
+                  <input v-model.number="item.estimated_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Faktor Kompleksitas</label>
+                  <input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Buffer Risiko %</label>
+                  <input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-3 border-t border-[#F1F1F1] text-sm">
+                <span class="text-gray-500">
+                  {{ computedItems[index]?.totalHoursUsed.toFixed(1) }} jam terpakai
+                </span>
+                <span class="text-brand-dark font-bold">{{ formatRupiah(computedItems[index]?.finalPrice ?? 0) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Build-only extra fields -->
+        <div v-if="form.scenario === 'build'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-brand-dark mb-1">PM Overhead (%)</label>
+            <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-brand-dark mb-1">Biaya Setup Infrastruktur (Rp)</label>
+            <input v-model.number="form.infra_setup_cost" type="number" min="0" class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+          </div>
+        </div>
+
+        <!-- PPN + Notes -->
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" v-model="form.include_ppn" class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]" />
+            <span class="text-sm font-semibold text-brand-dark">Sertakan PPN</span>
+            <input
+              v-if="form.include_ppn"
+              v-model.number="form.ppn_percent"
+              type="number"
+              min="0"
+              max="100"
+              step="0.5"
+              class="w-16 px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm ml-1"
+              @click.stop
+            />
+            <span v-if="form.include_ppn" class="text-sm text-gray-500">%</span>
+          </label>
+
+          <div>
+            <label class="block text-sm font-semibold text-brand-dark mb-1">Catatan (Opsional)</label>
+            <textarea
+              v-model="form.notes"
+              rows="3"
+              placeholder="Catatan tambahan untuk estimasi ini..."
+              class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none resize-none"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary sidebar -->
+      <div class="xl:col-span-1">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 sticky top-6 space-y-4">
+          <h3 class="text-brand-dark text-base font-bold">Ringkasan</h3>
+
+          <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1] flex items-center justify-between text-sm">
+            <span class="text-gray-500">Rate Jual / Jam</span>
+            <span class="font-semibold text-brand-dark">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</span>
+          </div>
+
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-gray-500">Subtotal</span>
+              <span class="text-brand-dark font-medium">{{ formatRupiah(subtotalSum) }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-gray-500">Buffer Risiko</span>
+              <span class="text-brand-dark font-medium">{{ formatRupiah(bufferSum) }}</span>
+            </div>
+            <div v-if="form.scenario === 'build'" class="flex items-center justify-between">
+              <span class="text-gray-500">PM Overhead</span>
+              <span class="text-brand-dark font-medium">{{ formatRupiah(pmOverheadTotal) }}</span>
+            </div>
+            <div v-if="form.scenario === 'build'" class="flex items-center justify-between">
+              <span class="text-gray-500">Setup Infrastruktur</span>
+              <span class="text-brand-dark font-medium">{{ formatRupiah(form.infra_setup_cost) }}</span>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-[#F1F1F1]">
+            <div class="flex items-center justify-between">
+              <span class="text-brand-dark text-sm font-bold">Total Estimasi</span>
+              <span class="text-brand-dark text-xl font-extrabold">{{ formatRupiah(grandTotal) }}</span>
+            </div>
+            <div v-if="form.include_ppn" class="flex items-center justify-between mt-2">
+              <span class="text-gray-500 text-xs">+ PPN {{ form.ppn_percent }}%</span>
+              <span class="text-gray-500 text-xs">{{ formatRupiah(ppnAmount) }}</span>
+            </div>
+            <div v-if="form.include_ppn" class="flex items-center justify-between mt-1">
+              <span class="text-indigo-700 text-sm font-bold">Total + PPN</span>
+              <span class="text-indigo-700 text-xl font-extrabold">{{ formatRupiah(totalWithPpn) }}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 p-3 rounded-[12px] bg-blue-50 border border-blue-100 text-sm">
+            <ClockIcon class="w-4 h-4 text-blue-600 flex-shrink-0" />
+            <span class="text-blue-800">
+              Estimasi durasi: <strong>{{ estimatedDurationWeeks ?? "-" }} minggu</strong>
+              ({{ totalHoursSum.toFixed(1) }} jam &middot; kapasitas tim {{ rateSetting.total_productive_hours_per_month }} jam/bulan)
+            </span>
+          </div>
+
+          <button
+            type="button"
+            @click="submit"
+            :disabled="saving || !canSave"
+            class="w-full rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
+            <SaveIcon v-else class="w-4 h-4 text-white" />
+            <span class="text-brand-white text-sm font-semibold">
+              {{ saving ? "Menyimpan..." : isEditing ? "Simpan Perubahan" : "Simpan Estimasi" }}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
