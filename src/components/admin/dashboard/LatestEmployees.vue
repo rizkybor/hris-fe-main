@@ -2,11 +2,11 @@
 import { onMounted, computed } from "vue";
 import { useEmployeeStore } from "@/stores/employee";
 import { useRouter } from "vue-router";
-import { User } from "lucide-vue-next";
 import { getTimeAgo } from "@/utils/dateUtils";
 import { getSkillLevelBadgeClass } from "@/utils/badgeUtils";
 import { storeToRefs } from "pinia";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import Avatar from "@/components/common/Avatar.vue";
 
 const employeeStore = useEmployeeStore();
 const { employees, loading } = storeToRefs(employeeStore);
@@ -59,18 +59,12 @@ const goToEmployeeDetail = (id: number) => {
         :key="employee.id"
         class="flex flex-col sm:flex-row sm:items-center gap-3"
       >
-        <img
+        <Avatar
           :src="employee.user?.profile_photo"
           :alt="employee.user?.name"
-          class="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover"
-          v-if="employee?.user?.profile_photo"
+          size="w-12 h-12 sm:w-16 sm:h-16"
+          icon-size="w-5 h-5"
         />
-        <div
-          class="w-12 h-12 sm:w-20 sm:h-20 rounded-full flex items-center justify-center bg-gray-100"
-          v-else
-        >
-          <User class="w-5 h-5 text-gray-400" />
-        </div>
         <div class="flex-1">
           <div class="flex items-center gap-2 flex-wrap">
             <p class="text-brand-dark text-base sm:text-lg font-bold">

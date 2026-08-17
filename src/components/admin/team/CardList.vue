@@ -1,6 +1,7 @@
 <script setup>
-import { CheckCircle, Eye, Edit, User } from "lucide-vue-next";
+import { CheckCircle, Eye, Edit } from "lucide-vue-next";
 import { getStatusColor } from "@/utils/styleHelpers";
+import Avatar from "@/components/common/Avatar.vue";
 
 const props = defineProps({
   data: {
@@ -50,19 +51,12 @@ const props = defineProps({
     <!-- Team Leader Section -->
     <div class="mb-4" v-if="data.leader">
       <div class="flex items-center gap-3">
-        <img
+        <Avatar
           :src="data.leader.profile_photo"
-          alt="Team Lead"
-          class="w-12 h-12 rounded-full object-cover"
-          v-if="data.leader.profile_photo"
+          :alt="data.leader.name"
+          size="w-12 h-12"
+          icon-size="w-5 h-5"
         />
-
-        <div
-          class="w-12 h-12 rounded-[12px] flex items-center justify-center bg-gray-100"
-          v-else
-        >
-          <User class="w-5 h-5 text-gray-400" />
-        </div>
         <div class="flex-1">
           <h5 class="text-brand-dark text-sm font-semibold">
             {{ data.leader.name }}

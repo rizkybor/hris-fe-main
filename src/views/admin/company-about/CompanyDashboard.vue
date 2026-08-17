@@ -173,15 +173,12 @@ const saveCompany = async () => {
       </div>
     </div>
     <button
-      v-if="can('company-about-edit')"
-      @click="openModal(!!company)"
+      v-if="can('company-about-edit') && company"
+      @click="openModal(true)"
       class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 shrink-0"
     >
-      <Pencil v-if="company" class="w-4 h-4 text-white" />
-      <Plus v-else class="w-4 h-4 text-white" />
-      <span class="text-brand-white text-sm font-semibold">
-        {{ company ? "Edit" : "Add Company Info" }}
-      </span>
+      <Pencil class="w-4 h-4 text-white" />
+      <span class="text-brand-white text-sm font-semibold">Edit</span>
     </button>
   </div>
 
@@ -306,7 +303,7 @@ const saveCompany = async () => {
     <button
       v-if="can('company-about-edit')"
       @click="openModal(false)"
-      class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-5 py-2.5 inline-flex items-center gap-2"
+      class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-5 py-2.5 w-fit mx-auto"
     >
       <Plus class="w-4 h-4 text-white" />
       <span class="text-brand-white text-sm font-semibold">Add Company Information</span>

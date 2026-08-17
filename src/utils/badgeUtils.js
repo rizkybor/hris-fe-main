@@ -44,7 +44,9 @@ export const getProgressColor = (progress) => {
 
 export const getRoleBadgeClass = (role) => {
   const classes = {
+    superadmin: "bg-red-50 text-red-600 border-red-100",
     manager: "bg-indigo-50 text-indigo-600 border-indigo-100",
+    operational_director: "bg-amber-50 text-amber-600 border-amber-100",
     hr: "bg-blue-50 text-blue-600 border-blue-100",
     finance: "bg-emerald-50 text-emerald-600 border-emerald-100",
     staff: "bg-violet-50 text-violet-600 border-violet-100",
@@ -54,9 +56,11 @@ export const getRoleBadgeClass = (role) => {
 
 export const getRoleLabel = (role) => {
   const labels = {
+    superadmin: "Super Admin",
     manager: "Manager",
-    hr: "HR",
-    finance: "Finance",
+    operational_director: "Operational Director",
+    hr: "Hr",
+    finance: "Finance Manager",
     staff: "Staff",
   };
   return labels[role?.toLowerCase()] || role;

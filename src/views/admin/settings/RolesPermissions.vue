@@ -16,12 +16,14 @@ import {
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useRoleStore } from "@/stores/role";
+import { getRoleLabel } from "@/utils/badgeUtils";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
-const SYSTEM_ROLES = ["superadmin", "manager", "hr", "finance", "staff"];
+const SYSTEM_ROLES = ["superadmin", "manager", "operational_director", "hr", "finance", "staff"];
 const ROLE_COLORS = {
   superadmin: { bg: "bg-red-100", text: "text-red-700" },
   manager: { bg: "bg-indigo-100", text: "text-indigo-700" },
+  operational_director: { bg: "bg-amber-100", text: "text-amber-700" },
   hr: { bg: "bg-purple-100", text: "text-purple-700" },
   finance: { bg: "bg-green-100", text: "text-green-700" },
   staff: { bg: "bg-blue-100", text: "text-blue-700" },
@@ -65,9 +67,14 @@ const totalPermissionCount = computed(() =>
   permissionGroups.value.reduce((sum, g) => sum + g.permissions.length, 0)
 );
 
+// Super Admin is a protected system account, not a regular assignable
+// role, so it's hidden from this management list entirely.
+const visibleRoles = computed(() => roles.value.filter((role) => role.name !== "superadmin"));
+
 const isSystemRole = (role) => SYSTEM_ROLES.includes(role.name);
 const roleColor = (role) => ROLE_COLORS[role.name] ?? DEFAULT_COLOR;
-const roleInitials = (role) => role.name.slice(0, 2).toUpperCase();
+const roleLabel = (role) => getRoleLabel(role.name);
+const roleInitials = (role) => roleLabel(role).slice(0, 2).toUpperCase();
 
 const roleModuleSummary = (role) => {
   const modules = new Set();
@@ -222,7 +229,7 @@ async function handleDelete() {
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div
-        v-for="role in roles"
+        v-for="role in visibleRoles"
         :key="role.id"
         class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 hover:border-[#0C51D9] hover:shadow-sm transition-all"
       >
@@ -236,8 +243,8 @@ async function handleDelete() {
             </div>
             <div class="min-w-0">
               <div class="flex items-center gap-1.5">
-                <p class="text-brand-dark text-base font-bold capitalize truncate">
-                  {{ role.name }}
+                <p class="text-brand-dark text-base font-bold truncate">
+                  {{ roleLabel(role) }}
                 </p>
                 <Lock v-if="isSystemRole(role)" class="w-3 h-3 text-gray-400 shrink-0" />
               </div>
@@ -313,7 +320,7 @@ async function handleDelete() {
       </div>
 
       <div
-        v-if="!loading && roles.length === 0"
+        v-if="!loading && visibleRoles.length === 0"
         class="col-span-full text-center py-12 text-gray-500"
       >
         <p class="text-lg font-semibold">No roles found</p>

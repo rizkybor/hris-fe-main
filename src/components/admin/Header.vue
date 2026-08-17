@@ -10,6 +10,7 @@ import {
 } from "lucide-vue-next";
 import ConfirmActionModal from "@/components/common/ConfirmationModal.vue";
 import NotificationBell from "@/components/admin/NotificationBell.vue";
+import Avatar from "@/components/common/Avatar.vue";
 import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import { ref, computed } from "vue";
@@ -298,12 +299,7 @@ const confirmLogout = async () => {
   showLogoutModal.value = false;
 };
 
-const getInitials = (name) => {
-  if (!name) return '';
-  const nameParts = name.split(' ');
-  const initials = nameParts.map(part => part.charAt(0).toUpperCase());
-  return initials.slice(0, 2).join('');
-};
+
 </script>
 
 <template>
@@ -349,14 +345,7 @@ const getInitials = (name) => {
             class="flex items-center gap-2 sm:gap-2.5 cursor-pointer rounded-full hover:bg-gray-50 transition-colors duration-150 py-1 pr-1"
             @click="isOpen = !isOpen"
           >
-             <div v-if="user?.profile_photo" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full">
-              <img :src="user?.profile_photo" alt="User Avatar" class="w-full h-full rounded-full object-cover" />
-            </div>
-            <div v-else class="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-gray-100">
-              <span class="text-gray-400 text-sm font-semibold">
-                {{ getInitials(user?.name) }}
-              </span>
-            </div>
+            <Avatar :src="user?.profile_photo" :alt="user?.name" size="w-8 h-8 sm:w-9 sm:h-9" />
             <div class="hidden md:block text-left">
               <p class="text-brand-dark text-sm font-semibold leading-tight">
                 {{ user?.name }}
