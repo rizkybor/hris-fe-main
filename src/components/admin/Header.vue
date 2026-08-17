@@ -126,6 +126,22 @@ const titles = {
     title: "Operational Cost",
     subtitle: "Company Operational Cost Overview",
   },
+  "admin.project-calculator.dashboard": {
+    title: "Project Calculator",
+    subtitle: "Estimate development cost by feature or from scratch",
+  },
+  "admin.project-calculator.create": {
+    title: "Buat Estimasi Baru",
+    subtitle: "Isi detail project untuk menghitung estimasi biaya",
+  },
+  "admin.project-calculator.edit": {
+    title: "Edit Estimasi",
+    subtitle: "Perbarui detail estimasi project",
+  },
+  "admin.project-calculator.detail": {
+    title: "Detail Estimasi",
+    subtitle: "Ringkasan estimasi biaya project",
+  },
   "admin.files-company.dashboard": {
     title: "Document Files",
     subtitle: "View Document Company",

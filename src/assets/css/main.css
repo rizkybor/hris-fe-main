@@ -755,6 +755,10 @@ video {
   z-index: 10;
 }
 
+.z-\[90\] {
+  z-index: 90;
+}
+
 .z-\[9998\] {
   z-index: 9998;
 }
@@ -769,6 +773,10 @@ video {
 
 .z-\[99\] {
   z-index: 99;
+}
+
+.col-span-2 {
+  grid-column: span 2 / span 2;
 }
 
 .col-span-full {
@@ -1352,6 +1360,10 @@ video {
   max-width: 64rem;
 }
 
+.max-w-6xl {
+  max-width: 72rem;
+}
+
 .max-w-\[60\%\] {
   max-width: 60%;
 }
@@ -1370,6 +1382,10 @@ video {
 
 .max-w-sm {
   max-width: 24rem;
+}
+
+.max-w-xl {
+  max-width: 36rem;
 }
 
 .flex-1 {
@@ -1634,6 +1650,10 @@ video {
   margin-bottom: calc(2rem * var(--tw-space-y-reverse));
 }
 
+.self-start {
+  align-self: flex-start;
+}
+
 .self-center {
   align-self: center;
 }
@@ -1810,6 +1830,11 @@ video {
   border-color: rgb(241 241 241 / var(--tw-border-opacity, 1));
 }
 
+.border-\[\#F8F8F8\] {
+  --tw-border-opacity: 1;
+  border-color: rgb(248 248 248 / var(--tw-border-opacity, 1));
+}
+
 .border-\[\#FEE2E2\] {
   --tw-border-opacity: 1;
   border-color: rgb(254 226 226 / var(--tw-border-opacity, 1));
@@ -1880,6 +1905,11 @@ video {
   border-color: rgb(253 186 116 / var(--tw-border-opacity, 1));
 }
 
+.border-red-100 {
+  --tw-border-opacity: 1;
+  border-color: rgb(254 226 226 / var(--tw-border-opacity, 1));
+}
+
 .border-red-200 {
   --tw-border-opacity: 1;
   border-color: rgb(254 202 202 / var(--tw-border-opacity, 1));
@@ -1910,6 +1940,11 @@ video {
 
 .border-violet-400\/30 {
   border-color: rgb(167 139 250 / 0.3);
+}
+
+.border-violet-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(139 92 246 / var(--tw-border-opacity, 1));
 }
 
 .border-violet-800 {
@@ -2218,6 +2253,11 @@ video {
   background-color: transparent;
 }
 
+.bg-violet-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(237 233 254 / var(--tw-bg-opacity, 1));
+}
+
 .bg-violet-50 {
   --tw-bg-opacity: 1;
   background-color: rgb(245 243 255 / var(--tw-bg-opacity, 1));
@@ -2230,6 +2270,10 @@ video {
 .bg-white {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+
+.bg-white\/10 {
+  background-color: rgb(255 255 255 / 0.1);
 }
 
 .bg-white\/20 {
@@ -3675,6 +3719,11 @@ html {
   border-color: rgb(239 68 68 / var(--tw-border-opacity, 1));
 }
 
+.hover\:border-blue-200:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(191 219 254 / var(--tw-border-opacity, 1));
+}
+
 .hover\:border-blue-400:hover {
   --tw-border-opacity: 1;
   border-color: rgb(96 165 250 / var(--tw-border-opacity, 1));
@@ -3698,6 +3747,11 @@ html {
 .hover\:border-red-500:hover {
   --tw-border-opacity: 1;
   border-color: rgb(239 68 68 / var(--tw-border-opacity, 1));
+}
+
+.hover\:border-violet-200:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(221 214 254 / var(--tw-border-opacity, 1));
 }
 
 .hover\:border-violet-400:hover {
@@ -4018,6 +4072,10 @@ html {
   color: rgb(156 163 175 / var(--tw-text-opacity, 1));
 }
 
+.disabled\:opacity-30:disabled {
+  opacity: 0.3;
+}
+
 .disabled\:opacity-40:disabled {
   opacity: 0.4;
 }
@@ -4209,6 +4267,10 @@ html {
     width: 2rem;
   }
 
+  .sm\:w-80 {
+    width: 20rem;
+  }
+
   .sm\:w-9 {
     width: 2.25rem;
   }
@@ -4223,6 +4285,10 @@ html {
 
   .sm\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sm\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .sm\:flex-row {
@@ -4273,6 +4339,10 @@ html {
     align-self: auto;
   }
 
+  .sm\:self-center {
+    align-self: center;
+  }
+
   .sm\:rounded-\[12px\] {
     border-radius: 12px;
   }
@@ -4283,6 +4353,10 @@ html {
 
   .sm\:p-6 {
     padding: 1.5rem;
+  }
+
+  .sm\:p-8 {
+    padding: 2rem;
   }
 
   .sm\:px-4 {
@@ -4317,6 +4391,10 @@ html {
 
   .sm\:text-left {
     text-align: left;
+  }
+
+  .sm\:text-right {
+    text-align: right;
   }
 
   .sm\:text-3xl {
@@ -4465,6 +4543,10 @@ html {
     gap: 1.5rem;
   }
 
+  .lg\:self-center {
+    align-self: center;
+  }
+
   .lg\:px-2 {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
@@ -4514,5 +4596,13 @@ html {
 @media print {
   .print\:hidden {
     display: none;
+  }
+
+  .print\:rounded-none {
+    border-radius: 0px;
+  }
+
+  .print\:border-0 {
+    border-width: 0px;
   }
 }

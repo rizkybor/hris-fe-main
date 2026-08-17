@@ -29,6 +29,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
+  CalculatorIcon,
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
@@ -104,6 +105,7 @@ const showCompanyFinance = computed(() =>
   canOneOf([
     "company-about-menu",
     "company-finance-menu",
+    "project-calculator-menu",
     "vendors-menu",
     "files-company-menu",
     "credential-account-list",
@@ -594,6 +596,38 @@ const showCompanyFinance = computed(() =>
                 ),
               }"
               >Operational Cost</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.project-calculator.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith(
+                'admin.project-calculator'
+              ),
+            }"
+            v-if="can('project-calculator-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <CalculatorIcon
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith(
+                  'admin.project-calculator'
+                ),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith(
+                  'admin.project-calculator'
+                ),
+              }"
+              >Project Calculator</span
             >
           </RouterLink>
 

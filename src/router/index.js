@@ -30,6 +30,7 @@ import historyRoutes from './history';
 import announcementRoutes from './announcement';
 import assetRoutes from './asset';
 import orgchartRoutes from './orgchart';
+import projectCalculatorRoutes from './projectCalculator';
 
 
 
@@ -83,6 +84,7 @@ const router = createRouter({
         ...announcementRoutes,
         ...assetRoutes,
         ...orgchartRoutes,
+        ...projectCalculatorRoutes,
         {
           path: 'my-profile',
           name: 'employee.profile',
