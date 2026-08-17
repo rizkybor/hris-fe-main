@@ -1,7 +1,9 @@
 <script setup>
 import BaseInput from "@/components/common/form/Input.vue";
 import BaseSelect from "@/components/common/form/Select.vue";
-import { reactive, watch, computed } from "vue";
+import { reactive, watch, computed, onMounted } from "vue";
+import { storeToRefs } from "pinia";
+import { useSdmFieldStore } from "@/stores/sdmField";
 
 const props = defineProps({
   show: Boolean,
@@ -16,6 +18,15 @@ const props = defineProps({
   },
 });
 
+const sdmFieldStore = useSdmFieldStore();
+const { fields } = storeToRefs(sdmFieldStore);
+
+onMounted(() => {
+  if (fields.value.length === 0) sdmFieldStore.fetchFields();
+});
+
+const fieldOptions = computed(() => fields.value.map((f) => ({ value: f.id, label: f.name })));
+
 const ragOptions = [
   { value: "red", label: "🔴 Red (Critical)" },
   { value: "amber", label: "🟡 Amber (At Risk)" },
@@ -25,7 +36,8 @@ const ragOptions = [
 const emit = defineEmits(["submit", "close"]);
 
 const form = reactive({
-  sdm_component: "",
+  sdm_field_id: "",
+  productive_hours_per_month: "",
   metrik: "",
   capacity_target: "",
   budget: "",
@@ -35,9 +47,10 @@ const form = reactive({
 });
 
 const buildPayload = () => ({
-  sdm_component: form.sdm_component,
-  metrik: form.metrik,
-  capacity_target: form.capacity_target,
+  sdm_field_id: Number(form.sdm_field_id),
+  productive_hours_per_month: Number(form.productive_hours_per_month),
+  metrik: form.metrik || null,
+  capacity_target: form.capacity_target || null,
   budget: Number(form.budget),
   actual: Number(form.actual),
   rag_status: form.rag_status,
@@ -46,9 +59,8 @@ const buildPayload = () => ({
 
 // Error state
 const errors = reactive({
-  sdm_component: "",
-  metrik: "",
-  capacity_target: "",
+  sdm_field_id: "",
+  productive_hours_per_month: "",
   budget: "",
   rag_status: "",
 });
@@ -59,6 +71,8 @@ watch(
     if (show && (props.mode === "view" || props.mode === "edit")) {
       Object.assign(form, {
         ...props.data,
+        sdm_field_id: props.data.sdm_field_id ?? "",
+        productive_hours_per_month: props.data.productive_hours_per_month ?? "",
         budget: props.data.budget ?? "",
         actual: props.data.actual ?? "",
       });
@@ -106,11 +120,9 @@ const actualModel = computed({
 const validate = () => {
   let valid = true;
 
-  errors.sdm_component = form.sdm_component ? "" : "Item is required";
-  errors.metrik = form.metrik ? "" : "Metrik is required";
-  errors.capacity_target = form.capacity_target
-    ? ""
-    : "Capacity of Target is required";
+  errors.sdm_field_id = form.sdm_field_id ? "" : "Bidang is required";
+  errors.productive_hours_per_month =
+    form.productive_hours_per_month !== "" ? "" : "Jam Produktif / Bulan is required";
   errors.budget = form.budget !== "" ? "" : "Budget is required";
   errors.rag_status = form.rag_status ? "" : "Status is required";
 
@@ -122,8 +134,7 @@ const validate = () => {
 };
 
 // Submit
- const submit = () => {
-    console.log(props, 'cek')
+const submit = () => {
   if (!validate()) return;
 
   emit("submit", {
@@ -157,7 +168,7 @@ const validate = () => {
       <h6 class="text-sm text-gray-400 italic mb-4">
         {{
           props.mode === "add"
-            ? "create a new sdm resource record."
+            ? "add a team member as an SDM resource record."
             : props.mode === "edit"
             ? "modify the sdm resource details."
             : "details of the selected sdm resource."
@@ -166,44 +177,32 @@ const validate = () => {
 
       <div class="space-y-4">
         <div>
-          <BaseInput
-            id="sdm_component"
-            label="Component"
-            placeholder="add your component sdm item"
-            v-model="form.sdm_component"
-            :readonly="props.mode === 'view'"
+          <BaseSelect
+            id="sdm_field_id"
+            label="Bidang"
+            placeholder="Select bidang / role"
+            v-model="form.sdm_field_id"
+            :options="fieldOptions"
             :required="props.mode !== 'view'"
+            :readonly="props.mode === 'view'"
           />
-          <p v-if="errors.sdm_component" class="text-red-500 text-sm mt-1">
-            {{ errors.sdm_component }}
+          <p v-if="errors.sdm_field_id" class="text-red-500 text-sm mt-1">
+            {{ errors.sdm_field_id }}
           </p>
         </div>
 
         <div>
           <BaseInput
-            id="metrik"
-            label="Metric"
-            placeholder="add metric item"
-            v-model="form.metrik"
+            id="productive_hours_per_month"
+            label="Jam Produktif / Bulan"
+            placeholder="cth. 120"
+            v-model="form.productive_hours_per_month"
             :readonly="props.mode === 'view'"
             :required="props.mode !== 'view'"
+            type="number"
           />
-          <p v-if="errors.metrik" class="text-red-500 text-sm mt-1">
-            {{ errors.metrik }}
-          </p>
-        </div>
-
-        <div>
-          <BaseInput
-            id="capacity_target"
-            label="Capacity Target"
-            placeholder="add capacity of target"
-            v-model="form.capacity_target"
-            :readonly="props.mode === 'view'"
-            :required="props.mode !== 'view'"
-          />
-          <p v-if="errors.capacity_target" class="text-red-500 text-sm mt-1">
-            {{ errors.capacity_target }}
+          <p v-if="errors.productive_hours_per_month" class="text-red-500 text-sm mt-1">
+            {{ errors.productive_hours_per_month }}
           </p>
         </div>
 
@@ -245,6 +244,22 @@ const validate = () => {
             {{ errors.rag_status }}
           </p>
         </div>
+
+        <BaseInput
+          id="metrik"
+          label="Metrik (Opsional)"
+          placeholder="add metric item"
+          v-model="form.metrik"
+          :readonly="props.mode === 'view'"
+        />
+
+        <BaseInput
+          id="capacity_target"
+          label="Capacity Target (Opsional)"
+          placeholder="add capacity of target"
+          v-model="form.capacity_target"
+          :readonly="props.mode === 'view'"
+        />
 
         <BaseInput
           id="notes"

@@ -637,14 +637,15 @@ watch(
           </button>
         </div>
 
-        <SkeletonTable v-if="store.loading" :rows="4" :cols="8" />
+        <SkeletonTable v-if="store.loading" :rows="4" :cols="9" />
 
         <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
           <table class="min-w-full text-sm">
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-3 py-2.5 text-xs uppercase text-gray-500 font-semibold">No</th>
-                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Component</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Bidang</th>
+                <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Jam/Bulan</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Metric</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Capacity</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">RAG</th>
@@ -662,7 +663,8 @@ watch(
                 <td class="px-3 py-2.5 text-gray-500">
                   {{ (sdmPage - 1) * perPage + index + 1 }}
                 </td>
-                <td class="px-3 py-2.5 font-medium text-brand-dark">{{ item.sdm_component }}</td>
+                <td class="px-3 py-2.5 font-medium text-brand-dark">{{ item.sdm_field_name ?? item.sdm_component }}</td>
+                <td class="px-3 py-2.5 text-right">{{ item.productive_hours_per_month ?? "-" }}</td>
                 <td class="px-3 py-2.5">{{ item.metrik }}</td>
                 <td class="px-3 py-2.5">{{ item.capacity_target }}</td>
                 <td class="px-3 py-2.5">
@@ -700,7 +702,7 @@ watch(
               </tr>
 
               <tr v-if="filteredSdm.length === 0">
-                <td colspan="8" class="text-center py-8 text-gray-400 text-sm">
+                <td colspan="9" class="text-center py-8 text-gray-400 text-sm">
                   No SDM Resource data found.
                 </td>
               </tr>

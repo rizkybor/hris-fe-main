@@ -233,7 +233,7 @@ const onRateSettingSaved = async () => {
         <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
           <p class="text-xs text-gray-500 font-medium">Tim &amp; Jam Produktif</p>
           <p class="text-brand-dark text-base font-bold mt-1">
-            {{ rateSetting.team_size }} orang &middot; {{ rateSetting.productive_hours_per_person }} jam
+            {{ rateSetting.team_size }} orang &middot; {{ rateSetting.total_productive_hours_per_month }} jam/bulan
           </p>
         </div>
         <div class="p-3 rounded-[12px] bg-blue-50 border border-blue-100">

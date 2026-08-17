@@ -1,6 +1,7 @@
 import SettingsDashboard from '@/views/admin/settings/SettingsDashboard.vue';
 import RolesPermissions from '@/views/admin/settings/RolesPermissions.vue';
 import DocumentCodes from '@/views/admin/settings/DocumentCodes.vue';
+import SdmFields from '@/views/admin/settings/SdmFields.vue';
 
 export default [
   {
@@ -17,5 +18,10 @@ export default [
     path: 'settings/document-codes',
     name: 'admin.settings.document-codes',
     component: DocumentCodes,
+  },
+  {
+    path: 'settings/sdm-fields',
+    name: 'admin.settings.sdm-fields',
+    component: SdmFields,
   },
 ];

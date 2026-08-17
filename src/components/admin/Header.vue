@@ -198,6 +198,10 @@ const titles = {
     title: "Kode Surat & Divisi",
     subtitle: "Manage letter code and division code references",
   },
+  "admin.settings.sdm-fields": {
+    title: "Bidang SDM",
+    subtitle: "Manage the role/field list used by SDM Resource",
+  },
   "admin.report.dashboard": {
     title: "Reports",
     subtitle: "Generate and review company-wide reports",

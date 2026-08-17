@@ -1,5 +1,5 @@
 <script setup>
-import { SettingsIcon, ShieldCheck, KeyRound, UserCog, ChevronRight, Tags, DatabaseBackup } from "lucide-vue-next";
+import { SettingsIcon, ShieldCheck, KeyRound, UserCog, ChevronRight, Tags, DatabaseBackup, Users2Icon } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 import { useBackupStore } from "@/stores/backup";
 import { storeToRefs } from "pinia";
@@ -37,6 +37,13 @@ const links = [
     title: "Account & Credentials",
     description: "Manage stored company account credentials",
     permission: "credential-account-menu",
+  },
+  {
+    to: { name: "admin.settings.sdm-fields" },
+    icon: Users2Icon,
+    title: "Bidang SDM",
+    description: "Manage the role/field list used by SDM Resource in Operational Cost",
+    permission: "sdm-field-menu",
   },
   {
     to: { name: "employee.profile" },
