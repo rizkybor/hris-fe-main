@@ -18,12 +18,13 @@ import Alert from "@/components/common/Alert.vue";
 import { useRoleStore } from "@/stores/role";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
-const SYSTEM_ROLES = ["manager", "hr", "finance", "staff"];
+const SYSTEM_ROLES = ["superadmin", "manager", "hr", "finance", "staff"];
 const ROLE_COLORS = {
+  superadmin: { bg: "bg-red-100", text: "text-red-700" },
   manager: { bg: "bg-indigo-100", text: "text-indigo-700" },
   hr: { bg: "bg-purple-100", text: "text-purple-700" },
   finance: { bg: "bg-green-100", text: "text-green-700" },
-  employee: { bg: "bg-blue-100", text: "text-blue-700" },
+  staff: { bg: "bg-blue-100", text: "text-blue-700" },
 };
 const DEFAULT_COLOR = { bg: "bg-gray-100", text: "text-gray-700" };
 
@@ -351,7 +352,7 @@ async function handleDelete() {
                 type="text"
                 required
                 placeholder="e.g. supervisor"
-                :disabled="form.id && ['manager', 'hr', 'finance', 'staff'].includes(form.name)"
+                :disabled="form.id && SYSTEM_ROLES.includes(form.name)"
                 class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none disabled:bg-gray-50 disabled:text-gray-400"
               />
             </div>
