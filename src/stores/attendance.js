@@ -59,12 +59,7 @@ export const useAttendanceStore = defineStore("attendance", {
                 });
 
                 this.attendances = response.data.data.data;
-                this.meta = {
-                    current_page: response.data.data.current_page,
-                    last_page: response.data.data.last_page,
-                    per_page: response.data.data.per_page,
-                    total: response.data.data.total,
-                };
+                this.meta = response.data.data.meta;
             } catch (error) {
                 this.error = handleError(error);
             } finally {

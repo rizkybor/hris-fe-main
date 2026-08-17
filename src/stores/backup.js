@@ -21,12 +21,7 @@ export const useBackupStore = defineStore("backup", {
           params: { row_per_page: 10, ...params },
         });
         this.backups = data.data.data;
-        this.meta = {
-          current_page: data.data.current_page,
-          last_page: data.data.last_page,
-          per_page: data.data.per_page,
-          total: data.data.total,
-        };
+        this.meta = data.data.meta;
       } catch (error) {
         this.error = handleError(error);
       } finally {

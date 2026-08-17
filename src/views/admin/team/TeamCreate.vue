@@ -1,6 +1,7 @@
 <script setup>
 import { Input, Select, TextArea } from "@/components/common/form";
 import RightSidebarForm from "@/components/admin/team/RightSidebarForm.vue";
+import Alert from "@/components/common/Alert.vue";
 import {
   Tag,
   User,
@@ -23,6 +24,7 @@ import {
   Search,
   SearchX,
   ChevronDown,
+  Users2,
 } from "lucide-vue-next";
 import { onMounted, ref, watch } from "vue";
 import { debounce } from "lodash";
@@ -118,7 +120,27 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-4 sm:gap-5 items-start">
+  <div>
+    <!-- Header -->
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
+          <Users2 class="w-6 h-6 text-blue-600" />
+        </div>
+        <div>
+          <h1 class="text-brand-dark text-xl font-bold">Create New Team</h1>
+          <p class="text-brand-light text-sm">Set up a new team and assign a leader</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-6" v-if="typeof error === 'string'">
+      <Transition name="fade">
+        <Alert type="danger" :title="error" message="" :show="true" />
+      </Transition>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-4 sm:gap-5 items-start">
     <!-- Form Section -->
     <div class="flex-1">
       <form class="space-y-6" @submit.prevent="handleSubmit">
@@ -155,7 +177,7 @@ watch(
                       class="w-24 h-24 sm:w-32 sm:h-32 absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full"
                     ></div>
 
-                    <!-- Icon Display (uploaded only) -->
+                    <!-- Icon Display (uploaded or default) -->
                     <div
                       id="teamIconDisplay"
                       class="w-24 h-24 sm:w-32 sm:h-32 relative z-10 flex items-center justify-center"
@@ -166,6 +188,10 @@ watch(
                         alt="Team Icon"
                         class="w-12 h-12 sm:w-16 sm:h-16 object-contain"
                         v-if="form.icon_url"
+                      />
+                      <Users2
+                        v-else
+                        class="w-10 h-10 sm:w-14 sm:h-14 text-white/90"
                       />
                     </div>
 
@@ -644,7 +670,8 @@ watch(
       </form>
     </div>
 
-    <RightSidebarForm />
+    <RightSidebarForm @browse-employees="leadModal = true" />
+    </div>
   </div>
 
   <div

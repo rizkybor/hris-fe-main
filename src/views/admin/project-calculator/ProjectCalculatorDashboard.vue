@@ -23,6 +23,7 @@ import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import RateSettingModal from "@/components/admin/project-calculator/RateSettingModal.vue";
+import Pagination from "@/components/common/Pagination.vue";
 
 const store = useProjectCalculatorStore();
 const alertModal = useAlertModalStore();
@@ -106,11 +107,10 @@ const onRateSettingSaved = async () => {
             <span class="text-brand-white-80 text-xs font-medium">Professional Estimation Tool</span>
           </div>
           <h1 class="text-brand-white text-2xl sm:text-3xl font-extrabold leading-tight">
-            Kalkulator Project
+            Project Calculator
           </h1>
           <p class="text-brand-white-70 text-sm sm:text-base mt-1 max-w-xl">
-            Estimasi biaya development secara konsisten &mdash; dari penambahan fitur hingga membangun
-            aplikasi dari nol, berbasis rate tim dan faktor kompleksitas.
+            Consistent development cost estimates &mdash; from adding features to building an app from scratch—based on timeframes and complexity factors.
           </p>
         </div>
 
@@ -120,7 +120,7 @@ const onRateSettingSaved = async () => {
           class="btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-5 py-3 inline-flex items-center gap-2 flex-shrink-0 self-start lg:self-center"
         >
           <PlusIcon class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Buat Estimasi Baru</span>
+          <span class="text-brand-white text-sm font-semibold">Create New Estimate</span>
         </RouterLink>
       </div>
     </div>
@@ -132,12 +132,12 @@ const onRateSettingSaved = async () => {
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-sm font-medium">Total Estimasi</p>
+            <p class="text-brand-dark text-sm font-medium">Estimates Total</p>
             <Skeleton v-if="loadingStatistics" width="50px" height="1.75rem" rounded="6px" class="my-2" />
             <p v-else class="text-brand-dark text-2xl font-extrabold leading-tight my-2">
               {{ statistics.total_calculations }}
             </p>
-            <p class="text-gray-500 text-sm font-medium">{{ statistics.this_month }} bulan ini</p>
+            <p class="text-gray-500 text-sm font-medium">{{ statistics.this_month }} this month</p>
           </div>
           <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
             <CalculatorIcon class="w-5 h-5 text-blue-600" />
@@ -150,12 +150,12 @@ const onRateSettingSaved = async () => {
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-sm font-medium">Total Nilai Estimasi</p>
+            <p class="text-brand-dark text-sm font-medium">Estimates Total Value</p>
             <Skeleton v-if="loadingStatistics" width="90px" height="1.75rem" rounded="6px" class="my-2" />
             <p v-else class="text-brand-dark text-2xl font-extrabold leading-tight my-2 truncate">
               {{ formatRupiahCompact(statistics.total_value) }}
             </p>
-            <p class="text-gray-500 text-sm font-medium">Seluruh riwayat</p>
+            <p class="text-gray-500 text-sm font-medium">all history</p>
           </div>
           <div class="w-11 h-11 bg-indigo-50 rounded-[12px] flex items-center justify-center">
             <WalletIcon class="w-5 h-5 text-indigo-600" />
@@ -168,12 +168,12 @@ const onRateSettingSaved = async () => {
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-sm font-medium">Rata-rata Nilai</p>
+            <p class="text-brand-dark text-sm font-medium">Average Value</p>
             <Skeleton v-if="loadingStatistics" width="90px" height="1.75rem" rounded="6px" class="my-2" />
             <p v-else class="text-brand-dark text-2xl font-extrabold leading-tight my-2 truncate">
               {{ formatRupiahCompact(statistics.average_value) }}
             </p>
-            <p class="text-gray-500 text-sm font-medium">Per estimasi</p>
+            <p class="text-gray-500 text-sm font-medium">/ estimate</p>
           </div>
           <div class="w-11 h-11 bg-purple-50 rounded-[12px] flex items-center justify-center">
             <TrendingUpIcon class="w-5 h-5 text-purple-600" />
@@ -186,12 +186,12 @@ const onRateSettingSaved = async () => {
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-sm font-medium">Skenario</p>
+            <p class="text-brand-dark text-sm font-medium">Scenario</p>
             <Skeleton v-if="loadingStatistics" width="90px" height="1.75rem" rounded="6px" class="my-2" />
             <p v-else class="text-brand-dark text-lg font-bold leading-tight my-2">
-              {{ statistics.total_feature }} Fitur &middot; {{ statistics.total_build }} Bangun
+              {{ statistics.total_feature }} Features &middot; {{ statistics.total_build }} Builds
             </p>
-            <p class="text-gray-500 text-sm font-medium">Fitur Baru vs Bangun dari 0</p>
+            <p class="text-gray-500 text-sm font-medium">new features vs new build from scratch</p>
           </div>
           <div class="w-11 h-11 bg-orange-50 rounded-[12px] flex items-center justify-center">
             <LayersIcon class="w-5 h-5 text-orange-600" />
@@ -208,8 +208,8 @@ const onRateSettingSaved = async () => {
             <Users2Icon class="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">Rate Setup Tim</h3>
-            <p class="text-brand-light text-sm">Baseline biaya &amp; rate/jam yang dipakai di seluruh estimasi</p>
+            <h3 class="text-brand-dark text-lg font-bold">Team Rate Setup</h3>
+            <p class="text-brand-light text-sm">Baseline fee &amp; rate/hour used throughout the estimation</p>
           </div>
         </div>
         <button
@@ -218,7 +218,7 @@ const onRateSettingSaved = async () => {
           class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 px-4 py-2 inline-flex items-center gap-2 self-start sm:self-center"
         >
           <SettingsIcon class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark text-sm font-semibold">Atur Rate</span>
+          <span class="text-brand-dark text-sm font-semibold">Rate Config</span>
         </button>
       </div>
 
@@ -227,21 +227,21 @@ const onRateSettingSaved = async () => {
       </div>
       <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-          <p class="text-xs text-gray-500 font-medium">Biaya Tim / Bulan</p>
+          <p class="text-xs text-gray-500 font-medium">Team Fee / Month</p>
           <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiahCompact(rateSetting.team_monthly_cost) }}</p>
         </div>
         <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-          <p class="text-xs text-gray-500 font-medium">Tim &amp; Jam Produktif</p>
+          <p class="text-xs text-gray-500 font-medium">Team &amp; Productive Hours</p>
           <p class="text-brand-dark text-base font-bold mt-1">
             {{ rateSetting.team_size }} orang &middot; {{ rateSetting.total_productive_hours_per_month }} jam/bulan
           </p>
         </div>
         <div class="p-3 rounded-[12px] bg-blue-50 border border-blue-100">
-          <p class="text-xs text-blue-600 font-medium">Rate Cost / Jam</p>
+          <p class="text-xs text-blue-600 font-medium">Rate Cost / Hour</p>
           <p class="text-blue-900 text-base font-bold mt-1">{{ formatRupiah(rateSetting.rate_cost_per_hour) }}</p>
         </div>
         <div class="p-3 rounded-[12px] bg-indigo-50 border border-indigo-100">
-          <p class="text-xs text-indigo-600 font-medium">Rate Jual / Jam ({{ rateSetting.margin_multiplier }}x)</p>
+          <p class="text-xs text-indigo-600 font-medium">Rate Sell / Hour ({{ rateSetting.margin_multiplier }}x)</p>
           <p class="text-indigo-900 text-base font-bold mt-1">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</p>
         </div>
       </div>
@@ -250,7 +250,7 @@ const onRateSettingSaved = async () => {
     <!-- List -->
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h3 class="text-brand-dark text-lg font-bold">Riwayat Estimasi</h3>
+        <h3 class="text-brand-dark text-lg font-bold">Estimate History</h3>
         <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <div class="relative flex-1 sm:w-64">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -260,7 +260,7 @@ const onRateSettingSaved = async () => {
               v-model="search"
               @input="onSearchInput"
               type="text"
-              placeholder="Cari nama estimasi atau klien..."
+              placeholder="Search estimate or client name..."
               class="w-full pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
             />
           </div>
@@ -269,9 +269,9 @@ const onRateSettingSaved = async () => {
             @change="fetchAll"
             class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm font-semibold hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all"
           >
-            <option value="">Semua Skenario</option>
-            <option value="feature">Fitur Baru</option>
-            <option value="build">Bangun dari 0</option>
+            <option value="">All Scenarios</option>
+            <option value="feature">New Feature</option>
+            <option value="build">Build from Scratch</option>
           </select>
         </div>
       </div>
@@ -280,8 +280,8 @@ const onRateSettingSaved = async () => {
 
       <div v-else-if="calculations.length === 0" class="text-center py-12">
         <CalculatorIcon class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p class="text-brand-dark text-base font-semibold">Belum ada estimasi</p>
-        <p class="text-brand-light text-sm mt-1">Buat estimasi project pertama Anda untuk mulai membangun riwayat penawaran.</p>
+        <p class="text-brand-dark text-base font-semibold">No estimates found</p>
+        <p class="text-brand-light text-sm mt-1">Create your first project estimate to start building your quotation history.</p>
       </div>
 
       <div v-else class="space-y-3">
@@ -314,7 +314,7 @@ const onRateSettingSaved = async () => {
               <span v-if="calc.client_name">{{ calc.client_name }} &middot; </span>
               <span class="inline-flex items-center gap-1">
                 <ClockIcon class="w-3.5 h-3.5" />
-                {{ calc.estimated_duration_weeks ?? "-" }} minggu estimasi
+                {{ calc.estimated_duration_weeks ?? "-" }} weeks estimated
               </span>
             </p>
           </div>
@@ -323,7 +323,7 @@ const onRateSettingSaved = async () => {
             <p class="text-brand-dark text-lg font-extrabold">
               {{ formatRupiah(calc.include_ppn ? calc.total_with_ppn : calc.grand_total) }}
             </p>
-            <p class="text-gray-400 text-xs">{{ calc.include_ppn ? "termasuk PPN" : "belum termasuk PPN" }}</p>
+            <p class="text-gray-400 text-xs">{{ calc.include_ppn ? "including VAT" : "excluding VAT" }}</p>
           </div>
 
           <div class="grid grid-cols-3 sm:flex items-center gap-2 flex-shrink-0">
@@ -355,30 +355,8 @@ const onRateSettingSaved = async () => {
       </div>
 
       <!-- Pagination -->
-      <div
-        v-if="!loading && calculations.length > 0"
-        class="flex items-center justify-between mt-6 pt-4 border-t border-[#DCDEDD]"
-      >
-        <span class="text-sm text-brand-light">
-          Halaman {{ meta.current_page }} dari {{ meta.last_page }}
-          <span class="hidden sm:inline">&middot; {{ meta.total }} total estimasi</span>
-        </span>
-        <div class="flex gap-2">
-          <button
-            @click="goToPage(meta.current_page - 1)"
-            :disabled="meta.current_page === 1"
-            class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Prev
-          </button>
-          <button
-            @click="goToPage(meta.current_page + 1)"
-            :disabled="meta.current_page === meta.last_page"
-            class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </div>
+      <div v-if="!loading && calculations.length > 0" class="pt-4 border-t border-[#DCDEDD] mt-6">
+        <Pagination :meta="meta" :loading="loading" item-label="estimasi" @page-change="goToPage" />
       </div>
     </div>
 

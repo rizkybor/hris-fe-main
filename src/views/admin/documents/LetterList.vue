@@ -5,6 +5,7 @@ import { Mail, Plus, Download, Ban, Trash2, Search } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import Pagination from "@/components/common/Pagination.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useLetterStore();
@@ -12,17 +13,23 @@ const alertModal = useAlertModalStore();
 const { letters, meta, loading } = storeToRefs(store);
 
 const search = ref("");
+const statusFilter = ref("");
 const isDeleteModalOpen = ref(false);
 const letterToDelete = ref(null);
 const downloadingId = ref(null);
 
 const load = (page = 1) => {
-  store.fetchLetters({ search: search.value || undefined, page });
+  store.fetchLetters({
+    search: search.value || undefined,
+    status: statusFilter.value || undefined,
+    page,
+  });
 };
 
 onMounted(() => load());
 
 const handleSearch = () => load(1);
+const handleFilterChange = () => load(1);
 
 const handleDownload = async (letter) => {
   downloadingId.value = letter.id;
@@ -87,25 +94,37 @@ const formatDate = (date) =>
     </div>
 
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="relative mb-4 max-w-sm">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search class="w-4 h-4 text-gray-400" />
+      <div class="flex flex-col sm:flex-row gap-3 mb-4">
+        <div class="relative max-w-sm w-full">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search class="w-4 h-4 text-gray-400" />
+          </div>
+          <input
+            v-model="search"
+            @keyup.enter="handleSearch"
+            type="text"
+            placeholder="Cari nomor surat, perihal..."
+            class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+          />
         </div>
-        <input
-          v-model="search"
-          @keyup.enter="handleSearch"
-          type="text"
-          placeholder="Cari nomor surat, perihal..."
-          class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        />
+        <select
+          v-model="statusFilter"
+          @change="handleFilterChange"
+          class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+        >
+          <option value="">Semua Status</option>
+          <option value="issued">Aktif</option>
+          <option value="cancelled">Dibatalkan</option>
+        </select>
       </div>
 
-      <SkeletonTable v-if="loading" :rows="6" :cols="7" />
+      <SkeletonTable v-if="loading" :rows="6" :cols="8" />
 
       <div v-else class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
+              <th class="py-3 pr-4 font-semibold">No</th>
               <th class="py-3 pr-4 font-semibold">No Surat</th>
               <th class="py-3 pr-4 font-semibold">Perihal</th>
               <th class="py-3 pr-4 font-semibold">Divisi</th>
@@ -116,10 +135,11 @@ const formatDate = (date) =>
           </thead>
           <tbody>
             <tr
-              v-for="letter in letters"
+              v-for="(letter, index) in letters"
               :key="letter.id"
               class="border-b border-[#F1F1F1] hover:bg-gray-50"
             >
+              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4 font-mono text-xs">{{ letter.letter_number }}</td>
               <td class="py-3 pr-4">{{ letter.subject }}</td>
               <td class="py-3 pr-4">{{ letter.division_code?.code }}</td>
@@ -166,17 +186,7 @@ const formatDate = (date) =>
         </div>
       </div>
 
-      <div v-if="meta.last_page > 1" class="flex items-center justify-center gap-2 mt-4">
-        <button
-          v-for="page in meta.last_page"
-          :key="page"
-          @click="load(page)"
-          class="w-8 h-8 rounded-lg text-sm font-medium"
-          :class="page === meta.current_page ? 'bg-[#0C51D9] text-white' : 'border border-[#DCDEDD] text-brand-dark'"
-        >
-          {{ page }}
-        </button>
-      </div>
+      <Pagination :meta="meta" :loading="loading" item-label="surat" @page-change="load" />
     </div>
 
     <Transition name="fade">

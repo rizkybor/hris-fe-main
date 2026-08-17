@@ -13,6 +13,7 @@ import { useReportStore } from "@/stores/report";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import Pagination from "@/components/common/Pagination.vue";
 
 const reportStore = useReportStore();
 const { attendance, payroll, employee, finance, loading, exporting } =
@@ -144,13 +145,19 @@ const filterParams = computed(() => {
   return params;
 });
 
-async function loadReport() {
+const reportMeta = computed(() => {
+  if (activeTab.value === "attendance") return attendance.value.meta;
+  if (activeTab.value === "payroll") return payroll.value.meta;
+  return null;
+});
+
+async function loadReport(page = 1) {
   switch (activeTab.value) {
     case "attendance":
-      await reportStore.fetchAttendanceReport(filterParams.value);
+      await reportStore.fetchAttendanceReport({ ...filterParams.value, page });
       break;
     case "payroll":
-      await reportStore.fetchPayrollReport(filterParams.value);
+      await reportStore.fetchPayrollReport({ ...filterParams.value, page });
       break;
     case "employee":
       await reportStore.fetchEmployeeReport();
@@ -243,7 +250,7 @@ onMounted(() => {
           <input
             v-model="startDate"
             type="date"
-            @change="loadReport"
+            @change="loadReport(1)"
             class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
@@ -254,7 +261,7 @@ onMounted(() => {
           <input
             v-model="endDate"
             type="date"
-            @change="loadReport"
+            @change="loadReport(1)"
             class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
@@ -279,11 +286,12 @@ onMounted(() => {
     </div>
 
     <!-- Table -->
-    <SkeletonTable v-if="loading" :rows="6" :cols="5" />
+    <SkeletonTable v-if="loading" :rows="6" :cols="6" />
     <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
+            <th class="py-3 pr-4 font-semibold">No</th>
             <template v-if="activeTab === 'attendance'">
               <th class="py-3 pr-4 font-semibold">Date</th>
               <th class="py-3 pr-4 font-semibold">Employee</th>
@@ -316,10 +324,11 @@ onMounted(() => {
         <tbody>
           <template v-if="activeTab === 'attendance'">
             <tr
-              v-for="row in tableRows"
+              v-for="(row, index) in tableRows"
               :key="row.id"
               class="border-b border-[#F1F1F1] hover:bg-gray-50"
             >
+              <td class="py-3 pr-4 text-brand-light">{{ (attendance.meta.current_page - 1) * attendance.meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4">{{ formatDate(row.date) }}</td>
               <td class="py-3 pr-4">{{ row.employee?.user?.name ?? "N/A" }}</td>
               <td class="py-3 pr-4">
@@ -335,10 +344,11 @@ onMounted(() => {
           </template>
           <template v-else-if="activeTab === 'payroll'">
             <tr
-              v-for="row in tableRows"
+              v-for="(row, index) in tableRows"
               :key="row.id"
               class="border-b border-[#F1F1F1] hover:bg-gray-50"
             >
+              <td class="py-3 pr-4 text-brand-light">{{ (payroll.meta.current_page - 1) * payroll.meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4">{{ formatDate(row.salary_month) }}</td>
               <td class="py-3 pr-4">{{ row.employee?.user?.name ?? "N/A" }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.original_salary) }}</td>
@@ -350,10 +360,11 @@ onMounted(() => {
           </template>
           <template v-else-if="activeTab === 'employee'">
             <tr
-              v-for="row in tableRows"
+              v-for="(row, index) in tableRows"
               :key="row.id"
               class="border-b border-[#F1F1F1] hover:bg-gray-50"
             >
+              <td class="py-3 pr-4 text-brand-light">{{ index + 1 }}</td>
               <td class="py-3 pr-4">{{ row.code }}</td>
               <td class="py-3 pr-4">{{ row.user?.name ?? "N/A" }}</td>
               <td class="py-3 pr-4">{{ row.jobInformation?.job_title ?? "N/A" }}</td>
@@ -369,6 +380,7 @@ onMounted(() => {
               :key="idx"
               class="border-b border-[#F1F1F1] hover:bg-gray-50"
             >
+              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
               <td class="py-3 pr-4">{{ row.category }}</td>
               <td class="py-3 pr-4">{{ row.name }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.budget) }}</td>
@@ -385,6 +397,14 @@ onMounted(() => {
         <p class="text-lg font-semibold">No data found</p>
         <p class="text-sm">Try adjusting the date range or filters</p>
       </div>
+
+      <Pagination
+        v-if="reportMeta"
+        :meta="reportMeta"
+        :loading="loading"
+        item-label="records"
+        @page-change="loadReport"
+      />
     </div>
   </div>
 </template>
