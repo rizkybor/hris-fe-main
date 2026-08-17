@@ -204,15 +204,15 @@ const titles = {
   },
   "admin.certificates.dashboard": {
     title: "Certificate",
-    subtitle: "Riwayat sertifikat yang telah diterbitkan",
+    subtitle: "History of issued certificates",
   },
   "admin.certificates.create": {
     title: "Generate Certificate",
-    subtitle: "Buat sertifikat baru, tunggal maupun massal",
+    subtitle: "Create new certificate, single or mass",
   },
   "admin.settings.certificate-settings": {
-    title: "Pengaturan Certificate",
-    subtitle: "Format penomoran dan template background sertifikat",
+    title: "Certificate Configuration",
+    subtitle: "Certificate numbering format and background template settings",
   },
   "admin.settings.backup": {
     title: "Backup Database",

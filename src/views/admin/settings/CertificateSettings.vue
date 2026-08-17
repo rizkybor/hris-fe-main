@@ -95,23 +95,23 @@ const handleDeleteTemplate = async (template) => {
           <Award class="w-5 h-5 text-amber-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Pengaturan Certificate</h3>
-          <p class="text-brand-light text-sm">Format penomoran otomatis dan template background sertifikat</p>
+          <h3 class="text-brand-dark text-lg font-bold">Certificate Configuration</h3>
+          <p class="text-brand-light text-sm">Automatic numbering format and certificate background template settings</p>
         </div>
       </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Format Penomoran</h4>
+        <h4 class="text-brand-dark font-bold mb-4"> Certificate Numbering</h4>
 
         <form @submit.prevent="handleSaveSettings" class="space-y-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Kode Perusahaan</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Company Code</label>
             <input v-model="form.company_code" type="text" required maxlength="20" placeholder="e.g. JCD" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Format Nomor</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Number Format</label>
             <input v-model="form.number_format" type="text" required placeholder="{company}/{category}/{program}/{year}/{month_roman}/{sequence}" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm font-mono" />
             <div class="flex flex-wrap gap-1.5 mt-2">
               <button
@@ -129,7 +129,7 @@ const handleDeleteTemplate = async (template) => {
           <div class="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 flex items-start gap-2">
             <Info class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div class="text-sm text-amber-800">
-              Contoh hasil: <span class="font-mono font-bold">{{ previewFormat }}</span>
+              Example result: <span class="font-mono font-bold">{{ previewFormat }}</span>
             </div>
           </div>
 
@@ -142,7 +142,7 @@ const handleDeleteTemplate = async (template) => {
             class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-5 py-2.5 flex items-center gap-2 disabled:opacity-50"
           >
             <Save class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">{{ savingSettings ? "Menyimpan..." : "Simpan Pengaturan" }}</span>
+            <span class="text-brand-white text-sm font-semibold">{{ savingSettings ? "Saving..." : "Save Settings" }}</span>
           </button>
         </form>
       </div>
@@ -150,17 +150,17 @@ const handleDeleteTemplate = async (template) => {
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <h4 class="text-brand-dark font-bold mb-4">Template Background</h4>
         <p class="text-xs text-gray-400 mb-4">
-          Tanpa template khusus, sertifikat memakai template Default Premium bawaan sistem.
-          Unggah gambar untuk memakai background sendiri.
+          Without a specific template, certificates use the default premium template provided by the system.
+          Upload an image to use your own background. (size guide : 297 X 210 mm)
         </p>
 
         <div class="border border-dashed border-[#DCDEDD] rounded-xl p-4 mb-4">
           <div class="mb-3">
-            <label class="text-xs text-gray-500 mb-1 block">Nama Template</label>
-            <input v-model="newTemplate.name" type="text" placeholder="e.g. Template Emas Premium" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+            <label class="text-xs text-gray-500 mb-1 block">Template Name</label>
+            <input v-model="newTemplate.name" type="text" placeholder="e.g. Premium Gold Template" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
           </div>
           <div class="mb-3">
-            <label class="text-xs text-gray-500 mb-1 block">Gambar Background (JPEG/PNG/WEBP, maks 5MB)</label>
+            <label class="text-xs text-gray-500 mb-1 block">Background Image (JPEG/PNG/WEBP, max 5MB)</label>
             <input id="template-file-input" @change="onFileChange" type="file" accept="image/jpeg,image/png,image/jpg,image/webp" class="w-full text-sm" />
           </div>
           <p v-if="templateError" class="text-red-500 text-xs mb-2">{{ templateError }}</p>
@@ -170,7 +170,7 @@ const handleDeleteTemplate = async (template) => {
             :disabled="uploadingTemplate"
             class="px-4 py-2 rounded-lg bg-[#0C51D9] text-white text-sm font-semibold flex items-center gap-2 disabled:opacity-50"
           >
-            <Upload class="w-4 h-4" /> {{ uploadingTemplate ? "Mengunggah..." : "Unggah Template" }}
+            <Upload class="w-4 h-4" /> {{ uploadingTemplate ? "Uploading..." : "Upload Template" }}
           </button>
         </div>
 
@@ -192,7 +192,7 @@ const handleDeleteTemplate = async (template) => {
             </button>
           </div>
           <div v-if="templates.length === 0" class="text-center py-6 text-sm text-gray-400">
-            Belum ada template khusus
+            No custom templates available. Certificates will use the default template.
           </div>
         </div>
       </div>
