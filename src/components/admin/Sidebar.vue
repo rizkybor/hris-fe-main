@@ -487,7 +487,7 @@ const showCompanyFinance = computed(() =>
             :to="{ name: 'admin.projects' }"
             class="nav-link group relative rounded-[10px] transition-colors duration-150"
             :class="{
-              'nav-link-active': $route.name?.startsWith('admin.project'),
+              'nav-link-active': $route.name?.startsWith('admin.projects'),
             }"
             v-if="can('project-menu')"
             @click="onNavigate"
@@ -497,13 +497,13 @@ const showCompanyFinance = computed(() =>
             <FolderKanban
               class="w-[18px] h-[18px] text-white/45 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.project'),
+                'text-white': $route.name?.startsWith('admin.projects'),
               }"
             />
             <span
               class="nav-label text-white/70 text-sm font-medium"
               :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.project'),
+                'text-white font-semibold': $route.name?.startsWith('admin.projects'),
               }"
               >Projects</span
             >
