@@ -18,7 +18,6 @@ import {
   ListCheck,
   Check,
   Eye,
-  User,
   Clock,
   Activity,
   FileText,
@@ -31,6 +30,7 @@ import _ from "lodash";
 import { debounce } from "lodash";
 import { formatToClientTimezone } from "@/helpers/format";
 import Alert from "@/components/common/Alert.vue";
+import Avatar from "@/components/common/Avatar.vue";
 import ConfirmationModal from "@/components/common/ConfirmationModal.vue";
 import Header from "@/components/admin/team/detail/Header.vue";
 import Statistic from "@/components/admin/team/detail/Statistic.vue";
@@ -189,18 +189,12 @@ watch(
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
               <div class="relative">
-                <img
+                <Avatar
                   :src="team.leader.profile_photo"
-                  alt="Team Lead"
-                  class="w-16 h-16 rounded-full object-cover"
-                  v-if="team.leader.profile_photo"
+                  :alt="team.leader.name"
+                  size="w-16 h-16"
+                  icon-size="w-6 h-6"
                 />
-                <div
-                  class="w-12 h-12 rounded-[12px] flex items-center justify-center bg-gray-100"
-                  v-else
-                >
-                  <User class="w-5 h-5 text-gray-400" />
-                </div>
                 <div
                   class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"
                 ></div>
@@ -422,18 +416,12 @@ watch(
         </button>
         <div class="flex flex-col items-center mb-3">
           <div class="relative">
-            <img
+            <Avatar
               :src="member.employee.user?.profile_photo"
-              alt="Team Member"
-              class="w-[100px] h-[100px] rounded-full object-cover mb-3"
-              v-if="member.employee.user?.profile_photo"
+              :alt="member.employee.user?.name"
+              size="w-[100px] h-[100px] mb-3"
+              icon-size="w-8 h-8"
             />
-            <div
-              class="w-12 h-12 rounded-[12px] flex items-center justify-center bg-gray-100"
-              v-else
-            >
-              <User class="w-5 h-5 text-gray-400" />
-            </div>
           </div>
         </div>
         <div class="text-center mb-3">
@@ -721,23 +709,13 @@ watch(
             @click="handleAddMember(employee)"
           >
             <div class="flex items-center gap-4">
-              <div
-                class="w-14 h-14 relative flex items-center justify-center rounded-[12px] overflow-hidden"
-              >
-                <img
-                  :src="employee.user?.profile_photo"
-                  :alt="employee.user?.name"
-                  class="w-14 h-14 rounded-[12px] object-cover"
-                  v-if="employee.user?.profile_photo"
-                />
-
-                <div
-                  class="w-14 h-14 rounded-[12px] flex items-center justify-center bg-gray-100"
-                  v-else
-                >
-                  <User class="w-5 h-5 text-gray-400" />
-                </div>
-              </div>
+              <Avatar
+                :src="employee.user?.profile_photo"
+                :alt="employee.user?.name"
+                size="w-14 h-14"
+                icon-size="w-5 h-5"
+                rounded="rounded-[12px]"
+              />
               <div class="flex-1">
                 <h4 class="text-brand-dark text-base font-bold">
                   {{ employee.user?.name }}

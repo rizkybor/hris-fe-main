@@ -27,14 +27,21 @@ const PALETTE = [
 ];
 
 const initials = computed(() => {
-  const name = props.alt?.trim();
-  if (!name) return "";
+  const raw = props.alt?.trim();
+  if (!raw) return "";
 
-  const parts = name.split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  // Degrees/titles are conventionally appended after a comma in this app's
+  // data (e.g. "Rizky AK, S.Kom." -> only "Rizky AK" counts).
+  const namePart = raw.split(",")[0].trim();
+  if (!namePart) return "";
 
-  return (first + last).toUpperCase();
+  const words = namePart.split(/\s+/).filter(Boolean);
+
+  return words
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 4);
 });
 
 const colors = computed(() => {

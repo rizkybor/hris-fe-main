@@ -9,6 +9,7 @@ import {
 } from "@/utils/formatUtils.js";
 import ConfirmationModal from "@/components/common/ConfirmationModal.vue";
 import EmployeeFiles from "@/components/admin/employee/EmployeeFiles.vue";
+import Avatar from "@/components/common/Avatar.vue";
 import { useRoute, useRouter } from "vue-router";
 import { useEmployeeStore } from "@/stores/employee";
 import { useLetterStore } from "@/stores/letter";
@@ -262,18 +263,12 @@ onMounted(() => {
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
       <div class="flex flex-col sm:flex-row items-center sm:items-center gap-6">
         <div class="relative shrink-0">
-          <img
+          <Avatar
             :src="employee.user?.profile_photo"
-            v-if="employee.user?.profile_photo"
-            alt="Employee"
-            class="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover"
+            :alt="employee.user?.name"
+            size="w-24 h-24 sm:w-32 sm:h-32"
+            icon-size="w-12 h-12 sm:w-16 sm:h-16"
           />
-          <div
-            v-else
-            class="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gray-100 flex items-center justify-center"
-          >
-            <User class="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" />
-          </div>
           <span
             :class="statusBadgeClass"
             class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap"
