@@ -2,7 +2,6 @@
 import { ref, onMounted, watch } from "vue";
 import {
   X,
-  User,
   Calendar,
   Tag,
   AlignLeft,
@@ -12,7 +11,14 @@ import {
   ChevronDown,
   Pencil,
   Check,
+  ClipboardList,
+  Trash2,
+  Upload,
+  Eye,
+  Image as ImageIcon,
 } from "lucide-vue-next";
+import Avatar from "@/components/common/Avatar.vue";
+import TaskComments from "./TaskComments.vue";
 import { debounce } from "lodash";
 import { getPriorityColor } from "@/utils/styleHelpers";
 import { formatDate } from "@/utils/dateUtils";
@@ -23,6 +29,8 @@ import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
 
 const alertModal = useAlertModalStore();
+
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB, matches backend "standard size" limit
 
 const props = defineProps({
   task: {
@@ -60,6 +68,15 @@ const editedPriority = ref("medium");
 const isSavingDetails = ref(false);
 const detailsError = ref("");
 
+// Image upload/delete/view
+const editedImage = ref(null);
+const removeImageFlag = ref(false);
+const imagePreviewUrl = ref("");
+const imageError = ref("");
+const imageInput = ref(null);
+const lightboxOpen = ref(false);
+const isDeletingImage = ref(false);
+
 const closeModal = () => {
   isEditingDetails.value = false;
   emit("close");
@@ -70,12 +87,43 @@ const toggleEditDetails = () => {
   editedName.value = props.task?.name ?? "";
   editedDescription.value = props.task?.description ?? "";
   editedPriority.value = props.task?.priority ?? "medium";
+  editedImage.value = null;
+  removeImageFlag.value = false;
+  imagePreviewUrl.value = props.task?.image ?? "";
+  imageError.value = "";
   detailsError.value = "";
 };
 
 const cancelEditDetails = () => {
   isEditingDetails.value = false;
   detailsError.value = "";
+};
+
+const handleImageSelect = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    imageError.value = "File must be an image.";
+    return;
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    imageError.value = "Image must be 2MB or smaller.";
+    return;
+  }
+
+  imageError.value = "";
+  editedImage.value = file;
+  removeImageFlag.value = false;
+  imagePreviewUrl.value = URL.createObjectURL(file);
+};
+
+const removeImageInEditor = () => {
+  editedImage.value = null;
+  removeImageFlag.value = true;
+  imagePreviewUrl.value = "";
+  imageError.value = "";
+  if (imageInput.value) imageInput.value.value = "";
 };
 
 const handleSaveDetails = async () => {
@@ -87,11 +135,18 @@ const handleSaveDetails = async () => {
   isSavingDetails.value = true;
   detailsError.value = "";
   try {
-    await updateTask(props.task.id, {
+    const payload = {
       name: editedName.value,
       description: editedDescription.value,
       priority: editedPriority.value,
-    });
+    };
+    if (editedImage.value) {
+      payload.image = editedImage.value;
+    } else if (removeImageFlag.value) {
+      payload.remove_image = true;
+    }
+
+    await updateTask(props.task.id, payload);
     await fetchProjectTasks(props.projectId);
     emit("updated");
     isEditingDetails.value = false;
@@ -100,6 +155,22 @@ const handleSaveDetails = async () => {
       typeof taskStore.error === "string" ? taskStore.error : "Failed to update task.";
   } finally {
     isSavingDetails.value = false;
+  }
+};
+
+// Quick delete for the current image, without entering full edit mode.
+const handleDeleteImage = async () => {
+  if (!(await alertModal.confirm("Delete this task's image?"))) return;
+
+  isDeletingImage.value = true;
+  try {
+    await updateTask(props.task.id, { remove_image: true });
+    await fetchProjectTasks(props.projectId);
+    emit("updated");
+  } catch (error) {
+    console.error("Failed to delete image:", error);
+  } finally {
+    isDeletingImage.value = false;
   }
 };
 
@@ -248,88 +319,180 @@ watch(
 </script>
 
 <template>
-  <Transition name="modal">
+  <Transition name="fade">
     <div
       v-if="isOpen && task"
-      class="fixed inset-0 z-50 overflow-y-auto"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4"
       @click.self="closeModal"
     >
       <!-- Backdrop -->
-      <div
-        class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-      ></div>
+      <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"></div>
 
       <!-- Modal Container -->
-      <div class="flex min-h-screen items-center justify-center p-4">
-        <div
-          class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
-          @click.stop
-        >
-          <!-- Modal Header -->
-          <div
-            class="flex items-start justify-between p-6 border-b border-gray-200"
-          >
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <Tag class="w-5 h-5 text-gray-400" />
-                <input
-                  v-if="isEditingDetails"
-                  v-model="editedName"
-                  type="text"
-                  class="text-2xl font-bold text-gray-900 border-b-2 border-[#0C51D9] focus:outline-none flex-1"
-                />
-                <h2 v-else class="text-2xl font-bold text-gray-900">
-                  {{ task.name }}
-                </h2>
-              </div>
-              <p class="text-sm text-gray-500">
-                in list <span class="font-semibold">{{ task.status }}</span>
+      <div
+        class="relative bg-white rounded-[18px] sm:rounded-[24px] border border-[#DCDEDD] shadow-2xl w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] overflow-hidden flex flex-col"
+        @click.stop
+      >
+        <!-- Modal Header -->
+        <div class="flex items-start justify-between gap-3 sm:gap-4 p-4 sm:p-6 border-b border-[#DCDEDD]">
+          <div class="flex items-start gap-3 flex-1 min-w-0">
+            <div class="w-10 h-10 sm:w-11 sm:h-11 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0 mt-0.5">
+              <ClipboardList class="w-5 h-5 text-blue-600" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <input
+                v-if="isEditingDetails"
+                v-model="editedName"
+                type="text"
+                class="text-lg sm:text-xl font-bold text-brand-dark border-b-2 border-[#0C51D9] focus:outline-none w-full pb-1"
+              />
+              <h2 v-else class="text-brand-dark text-lg sm:text-xl font-bold truncate">
+                {{ task.name }}
+              </h2>
+              <p class="text-brand-light text-xs sm:text-sm mt-1">
+                in list <span class="font-semibold capitalize">{{ task.status.replace("_", " ") }}</span>
               </p>
             </div>
-            <button
-              @click="closeModal"
-              class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X class="w-5 h-5 text-gray-500" />
-            </button>
           </div>
+          <button
+            @click="closeModal"
+            class="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150 shrink-0"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
 
-          <!-- Modal Body -->
-          <div class="flex-1 overflow-y-auto p-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Modal Body -->
+        <div class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <!-- Main Content (Left Side) -->
               <div class="lg:col-span-2 space-y-6">
                 <!-- Labels/Priority -->
                 <div>
                   <div class="flex items-center gap-2 mb-3">
-                    <Tag class="w-4 h-4 text-gray-500" />
-                    <h3 class="text-sm font-semibold text-gray-700">Priority</h3>
+                    <Tag class="w-4 h-4 text-brand-light" />
+                    <h3 class="text-brand-dark text-sm font-semibold">Priority</h3>
                   </div>
-                  <select
-                    v-if="isEditingDetails"
-                    v-model="editedPriority"
-                    class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#0C51D9] focus:outline-none"
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
+                  <div class="relative" v-if="isEditingDetails">
+                    <select
+                      v-model="editedPriority"
+                      class="px-4 py-2.5 border border-[#DCDEDD] rounded-[10px] text-sm font-semibold hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 appearance-none pr-9"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
                   <div v-else class="flex items-center gap-2">
                     <span
                       :class="getPriorityColor(task.priority)"
-                      class="px-3 py-1.5 rounded-lg text-sm font-semibold"
+                      class="px-3 py-1.5 rounded-[10px] text-sm font-semibold capitalize"
                     >
                       {{ task.priority }}
                     </span>
                   </div>
                 </div>
 
+                <!-- Image (Optional) -->
+                <div>
+                  <div class="flex items-center gap-2 mb-3">
+                    <ImageIcon class="w-4 h-4 text-brand-light" />
+                    <h3 class="text-brand-dark text-sm font-semibold">
+                      Image <span class="text-brand-light font-normal">(optional)</span>
+                    </h3>
+                  </div>
+
+                  <input
+                    ref="imageInput"
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    class="hidden"
+                    @change="handleImageSelect"
+                  />
+
+                  <!-- Edit mode -->
+                  <template v-if="isEditingDetails">
+                    <div v-if="imagePreviewUrl" class="relative w-full sm:w-56">
+                      <img
+                        :src="imagePreviewUrl"
+                        alt="Task image"
+                        class="w-full h-36 object-cover rounded-[12px] border border-[#DCDEDD] cursor-pointer"
+                        @click="lightboxOpen = true"
+                      />
+                      <div class="absolute top-2 right-2 flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          @click="lightboxOpen = true"
+                          class="w-7 h-7 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-sm transition-colors"
+                          title="View image"
+                        >
+                          <Eye class="w-3.5 h-3.5 text-gray-600" />
+                        </button>
+                        <button
+                          type="button"
+                          @click="removeImageInEditor"
+                          class="w-7 h-7 rounded-full bg-white/90 hover:bg-red-50 flex items-center justify-center shadow-sm transition-colors"
+                          title="Remove image"
+                        >
+                          <X class="w-3.5 h-3.5 text-red-500" />
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      v-else
+                      type="button"
+                      @click="imageInput.click()"
+                      class="w-full sm:w-56 h-36 border-2 border-dashed border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 flex flex-col items-center justify-center gap-1.5"
+                    >
+                      <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center">
+                        <Upload class="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span class="text-brand-dark text-xs font-semibold">Upload Image</span>
+                      <span class="text-brand-light text-[11px]">PNG, JPG, WEBP up to 2MB</span>
+                    </button>
+                    <p v-if="imageError" class="text-red-500 text-xs mt-1.5">{{ imageError }}</p>
+                  </template>
+
+                  <!-- View mode -->
+                  <template v-else>
+                    <div v-if="task.image" class="relative w-full sm:w-56">
+                      <img
+                        :src="task.image"
+                        alt="Task image"
+                        class="w-full h-36 object-cover rounded-[12px] border border-[#DCDEDD] cursor-pointer"
+                        @click="lightboxOpen = true"
+                      />
+                      <div class="absolute top-2 right-2 flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          @click="lightboxOpen = true"
+                          class="w-7 h-7 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-sm transition-colors"
+                          title="View image"
+                        >
+                          <Eye class="w-3.5 h-3.5 text-gray-600" />
+                        </button>
+                        <button
+                          v-if="can('task-edit')"
+                          type="button"
+                          @click="handleDeleteImage"
+                          :disabled="isDeletingImage"
+                          class="w-7 h-7 rounded-full bg-white/90 hover:bg-red-50 flex items-center justify-center shadow-sm transition-colors disabled:opacity-50"
+                          title="Delete image"
+                        >
+                          <Trash2 class="w-3.5 h-3.5 text-red-500" />
+                        </button>
+                      </div>
+                    </div>
+                    <p v-else class="text-brand-light text-sm italic">No image attached</p>
+                  </template>
+                </div>
+
                 <!-- Description -->
                 <div>
                   <div class="flex items-center gap-2 mb-3">
-                    <AlignLeft class="w-4 h-4 text-gray-500" />
-                    <h3 class="text-sm font-semibold text-gray-700">
+                    <AlignLeft class="w-4 h-4 text-brand-light" />
+                    <h3 class="text-brand-dark text-sm font-semibold">
                       Description
                     </h3>
                   </div>
@@ -338,11 +501,11 @@ watch(
                     v-model="editedDescription"
                     rows="4"
                     placeholder="Add a description..."
-                    class="w-full bg-gray-50 rounded-lg p-4 text-sm text-gray-700 leading-relaxed border border-gray-200 focus:border-[#0C51D9] focus:outline-none resize-none"
+                    class="w-full bg-gray-50 rounded-[12px] p-4 text-sm text-brand-dark leading-relaxed border border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
                   ></textarea>
                   <div
                     v-else
-                    class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 leading-relaxed min-h-[100px]"
+                    class="bg-gray-50 rounded-[12px] p-4 text-sm text-brand-light leading-relaxed min-h-[100px]"
                   >
                     <p v-if="task.description">{{ task.description }}</p>
                     <p v-else class="text-gray-400 italic">
@@ -359,55 +522,57 @@ watch(
                       type="button"
                       @click="handleSaveDetails"
                       :disabled="isSavingDetails"
-                      class="px-4 py-2 bg-[#0C51D9] text-white rounded-lg text-sm font-medium hover:bg-[#0a42b3] transition-colors disabled:opacity-50"
+                      class="btn-primary rounded-[10px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 disabled:opacity-50"
                     >
-                      {{ isSavingDetails ? "Saving..." : "Save Changes" }}
+                      <span class="text-brand-white text-sm font-semibold">
+                        {{ isSavingDetails ? "Saving..." : "Save Changes" }}
+                      </span>
                     </button>
                     <button
                       type="button"
                       @click="cancelEditDetails"
-                      class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                      class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 flex items-center gap-2"
                     >
-                      Cancel
+                      <span class="text-brand-dark text-sm font-semibold">Cancel</span>
                     </button>
                   </div>
                 </div>
 
+                <!-- Comments -->
+                <TaskComments
+                  v-if="!isEditingDetails"
+                  :task-id="task.id"
+                  :project-id="projectId"
+                  :can-comment="task.can_comment !== false"
+                />
               </div>
 
               <!-- Sidebar (Right Side) -->
               <div class="space-y-6">
                 <!-- Assignee -->
-                <div class="relative">
+                <div v-if="!isEditingDetails" class="relative">
                   <h3
-                    class="text-xs font-semibold text-gray-500 uppercase mb-3"
+                    class="text-brand-light text-xs font-semibold uppercase mb-3"
                   >
                     Assignee
                   </h3>
 
                   <!-- Selected Assignee Display -->
                   <div
-                    class="p-3 bg-gray-50 rounded-lg border border-gray-200 mb-2"
+                    class="p-3 bg-gray-50 rounded-[12px] border border-[#DCDEDD] mb-2"
                     v-if="selectedAssignee"
                   >
                     <div class="flex items-center gap-3">
-                      <img
+                      <Avatar
                         :src="selectedAssignee?.user?.profile_photo"
                         :alt="selectedAssignee?.user?.name"
-                        class="w-10 h-10 rounded-full object-cover"
-                        v-if="selectedAssignee?.user?.profile_photo"
+                        size="w-10 h-10"
                       />
-                      <div
-                        class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100"
-                        v-else
-                      >
-                        <User class="w-4 h-4 text-gray-400" />
-                      </div>
                       <div class="flex-1">
-                        <h4 class="text-sm font-semibold text-gray-900">
+                        <h4 class="text-brand-dark text-sm font-semibold">
                           {{ selectedAssignee?.user?.name }}
                         </h4>
-                        <p class="text-xs text-gray-500">
+                        <p class="text-brand-light text-xs">
                           {{ selectedAssignee?.job_information?.job_title }}
                         </p>
                       </div>
@@ -426,11 +591,11 @@ watch(
                   <button
                     v-if="can('task-edit')"
                     type="button"
-                    class="w-full border border-gray-200 rounded-lg hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-3 text-left"
+                    class="w-full border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2.5 flex items-center gap-3 text-left"
                     @click="toggleAssigneeDropdown"
                   >
                     <UserCheck class="w-4 h-4 text-gray-400" />
-                    <span class="text-sm font-medium text-gray-700 flex-1">
+                    <span class="text-brand-dark text-sm font-medium flex-1">
                       {{
                         selectedAssignee ? "Change assignee" : "Select assignee"
                       }}
@@ -444,10 +609,10 @@ watch(
                   <!-- Dropdown Menu -->
                   <div
                     v-if="assigneeDropdown"
-                    class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-80 overflow-hidden flex flex-col"
+                    class="absolute top-full left-0 right-0 mt-2 bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg z-10 max-h-80 overflow-hidden flex flex-col"
                   >
                     <!-- Search -->
-                    <div class="p-3 border-b border-gray-200">
+                    <div class="p-3 border-b border-[#DCDEDD]">
                       <div class="relative flex items-center">
                         <div class="absolute left-3 pointer-events-none">
                           <Search class="w-4 h-4 text-gray-400" />
@@ -456,7 +621,7 @@ watch(
                           type="text"
                           v-model="searchAssignee"
                           placeholder="Search employees..."
-                          class="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0C51D9] focus:outline-none"
+                          class="w-full pl-10 pr-3 py-2 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all duration-300 outline-none"
                         />
                       </div>
                     </div>
@@ -470,23 +635,17 @@ watch(
                         @click="handleSelectAssignee(employee)"
                         class="w-full p-3 hover:bg-gray-50 transition-colors flex items-center gap-3 text-left"
                       >
-                        <img
+                        <Avatar
                           :src="employee.user?.profile_photo"
                           :alt="employee.user?.name"
-                          class="w-8 h-8 rounded-full object-cover"
-                          v-if="employee.user?.profile_photo"
+                          size="w-8 h-8"
+                          icon-size="w-3.5 h-3.5"
                         />
-                        <div
-                          class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100"
-                          v-else
-                        >
-                          <User class="w-3 h-3 text-gray-400" />
-                        </div>
                         <div class="flex-1 min-w-0">
-                          <p class="text-sm font-medium text-gray-900 truncate">
+                          <p class="text-brand-dark text-sm font-medium truncate">
                             {{ employee.user?.name }}
                           </p>
-                          <p class="text-xs text-gray-500 truncate">
+                          <p class="text-brand-light text-xs truncate">
                             {{ employee.job_information?.job_title }}
                           </p>
                         </div>
@@ -507,7 +666,7 @@ watch(
                 <!-- Due Date -->
                 <div>
                   <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-xs font-semibold text-gray-500 uppercase">
+                    <h3 class="text-brand-light text-xs font-semibold uppercase">
                       Due Date
                     </h3>
                     <button
@@ -526,7 +685,7 @@ watch(
                       <Calendar class="w-4 h-4 text-gray-600" />
                     </div>
                     <div>
-                      <p class="text-sm font-medium text-gray-900">
+                      <p class="text-brand-dark text-sm font-medium">
                         {{ formatDate(task.due_date) }}
                       </p>
                     </div>
@@ -537,21 +696,21 @@ watch(
                     <input
                       type="date"
                       v-model="editedDueDate"
-                      class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0C51D9] focus:outline-none"
+                      class="w-full px-3 py-2 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all duration-300 outline-none"
                     />
                     <div class="flex gap-2">
                       <button
                         type="button"
                         @click="handleUpdateDueDate"
-                        class="flex-1 px-3 py-1.5 bg-[#0C51D9] text-white rounded-lg text-xs font-medium hover:bg-[#0a42b3] transition-colors flex items-center justify-center gap-1"
+                        class="btn-primary flex-1 rounded-[8px] border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-3 py-2 text-xs font-semibold flex items-center justify-center gap-1"
                       >
-                        <Check class="w-3 h-3" />
-                        Save
+                        <Check class="w-3 h-3 text-white" />
+                        <span class="text-brand-white">Save</span>
                       </button>
                       <button
                         type="button"
                         @click="cancelDueDateEdit"
-                        class="flex-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
+                        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 text-xs font-semibold text-brand-dark"
                       >
                         Cancel
                       </button>
@@ -560,14 +719,14 @@ watch(
                 </div>
 
                 <!-- Status -->
-                <div>
+                <div v-if="!isEditingDetails">
                   <h3
-                    class="text-xs font-semibold text-gray-500 uppercase mb-3"
+                    class="text-brand-light text-xs font-semibold uppercase mb-3"
                   >
                     Status
                   </h3>
                   <div
-                    class="px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 capitalize"
+                    class="px-3 py-2 bg-gray-100 rounded-[10px] text-sm font-medium text-brand-dark capitalize"
                   >
                     {{ task.status.replace("_", " ") }}
                   </div>
@@ -576,7 +735,7 @@ watch(
                 <!-- Actions -->
                 <div>
                   <h3
-                    class="text-xs font-semibold text-gray-500 uppercase mb-3"
+                    class="text-brand-light text-xs font-semibold uppercase mb-3"
                   >
                     Actions
                   </h3>
@@ -584,16 +743,18 @@ watch(
                     <button
                       v-if="can('task-edit') && !isEditingDetails"
                       @click="toggleEditDetails"
-                      class="w-full px-4 py-2 bg-[#0C51D9] hover:bg-[#0a42b3] text-white rounded-lg text-sm font-medium transition-colors"
+                      class="btn-primary w-full rounded-[10px] border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center justify-center gap-2"
                     >
-                      Edit Task
+                      <Pencil class="w-4 h-4 text-white" />
+                      <span class="text-brand-white text-sm font-semibold">Edit Task</span>
                     </button>
                     <button
                       v-if="can('task-delete')"
                       @click="handleDelete"
-                      class="w-full px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-colors"
+                      class="w-full border border-red-200 rounded-[10px] hover:border-red-300 hover:bg-red-50 bg-red-50/60 transition-all duration-300 px-4 py-2.5 flex items-center justify-center gap-2"
                     >
-                      Delete Task
+                      <Trash2 class="w-4 h-4 text-red-600" />
+                      <span class="text-red-600 text-sm font-semibold">Delete Task</span>
                     </button>
                   </div>
                 </div>
@@ -602,28 +763,52 @@ watch(
           </div>
         </div>
       </div>
+  </Transition>
+
+  <!-- Image Lightbox -->
+  <Transition name="fade">
+    <div
+      v-if="lightboxOpen && (imagePreviewUrl || task?.image)"
+      class="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      @click="lightboxOpen = false"
+    >
+      <div class="absolute inset-0 bg-brand-dark/70 backdrop-blur-sm"></div>
+      <button
+        type="button"
+        @click="lightboxOpen = false"
+        class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-10"
+      >
+        <X class="w-5 h-5" />
+      </button>
+      <img
+        :src="isEditingDetails ? imagePreviewUrl : task?.image"
+        alt="Task image"
+        class="relative max-w-full max-h-[85vh] rounded-[12px] object-contain"
+      />
     </div>
   </Transition>
 </template>
 
+
+
 <style scoped>
-.modal-enter-active,
-.modal-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.3s ease;
 }
 
-.modal-enter-from,
-.modal-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 
-.modal-enter-active .relative,
-.modal-leave-active .relative {
+.fade-enter-active .relative,
+.fade-leave-active .relative {
   transition: transform 0.3s ease;
 }
 
-.modal-enter-from .relative,
-.modal-leave-to .relative {
+.fade-enter-from .relative,
+.fade-leave-to .relative {
   transform: scale(0.95);
 }
 </style>

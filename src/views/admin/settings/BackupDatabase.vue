@@ -1,23 +1,27 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { DatabaseBackup, Plus, Download, Trash2, Loader2, HardDrive } from "lucide-vue-next";
+import { DatabaseBackup, Plus, Download, Trash2, Loader2, HardDrive, Search } from "lucide-vue-next";
 import { useBackupStore } from "@/stores/backup";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import Pagination from "@/components/common/Pagination.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useBackupStore();
 const alertModal = useAlertModalStore();
 const { backups, meta, loading, creating, error } = storeToRefs(store);
 
+const search = ref("");
 const isDeleteModalOpen = ref(false);
 const backupToDelete = ref(null);
 const downloadingId = ref(null);
 
-const load = (page = 1) => store.fetchBackups({ page });
+const load = (page = 1) => store.fetchBackups({ search: search.value || undefined, page });
 
 onMounted(() => load());
+
+const handleSearch = () => load(1);
 
 const handleCreate = async () => {
   try {
@@ -90,12 +94,26 @@ const formatDate = (date) =>
     <p v-if="error" class="text-red-500 text-sm mb-4">{{ typeof error === "string" ? error : "Gagal membuat backup." }}</p>
 
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <SkeletonTable v-if="loading" :rows="6" :cols="4" />
+      <div class="relative mb-4 max-w-sm">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search class="w-4 h-4 text-gray-400" />
+        </div>
+        <input
+          v-model="search"
+          @keyup.enter="handleSearch"
+          type="text"
+          placeholder="Cari nama file backup..."
+          class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+        />
+      </div>
+
+      <SkeletonTable v-if="loading" :rows="6" :cols="5" />
 
       <div v-else class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
+              <th class="py-3 pr-4 font-semibold">No</th>
               <th class="py-3 pr-4 font-semibold">File Backup</th>
               <th class="py-3 pr-4 font-semibold">Ukuran</th>
               <th class="py-3 pr-4 font-semibold">Dibuat Oleh</th>
@@ -104,7 +122,8 @@ const formatDate = (date) =>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="backup in backups" :key="backup.id" class="border-b border-[#F1F1F1] hover:bg-gray-50">
+            <tr v-for="(backup, index) in backups" :key="backup.id" class="border-b border-[#F1F1F1] hover:bg-gray-50">
+              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4">
                 <div class="flex items-center gap-2">
                   <HardDrive class="w-4 h-4 text-gray-400 shrink-0" />
@@ -144,17 +163,7 @@ const formatDate = (date) =>
         </div>
       </div>
 
-      <div v-if="meta.last_page > 1" class="flex items-center justify-center gap-2 mt-4">
-        <button
-          v-for="page in meta.last_page"
-          :key="page"
-          @click="load(page)"
-          class="w-8 h-8 rounded-lg text-sm font-medium"
-          :class="page === meta.current_page ? 'bg-[#0C51D9] text-white' : 'border border-[#DCDEDD] text-brand-dark'"
-        >
-          {{ page }}
-        </button>
-      </div>
+      <Pagination :meta="meta" :loading="loading" item-label="backup" @page-change="load" />
     </div>
 
     <Transition name="fade">

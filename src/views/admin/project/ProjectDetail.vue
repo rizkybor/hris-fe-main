@@ -1,5 +1,7 @@
 <script setup>
 import { useProjectStore } from "@/stores/project";
+import { useTaskStore } from "@/stores/task";
+import { storeToRefs } from "pinia";
 import {
   Briefcase,
   Crown,
@@ -9,6 +11,10 @@ import {
   Clock,
   Calendar,
   User,
+  AlertTriangle,
+  AlertOctagon,
+  TriangleAlert,
+  CheckCircle2,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import router from "@/router";
@@ -20,6 +26,7 @@ import {
   getProjectStatusColor,
   getProgressColor,
 } from "@/utils/badgeUtils";
+import { getProjectHealth } from "@/utils/projectHealth";
 import _ from "lodash";
 import TaskBoard from "@/components/admin/project/detail/TaskBoard.vue";
 import ProjectDocuments from "@/components/admin/project/detail/ProjectDocuments.vue";
@@ -29,6 +36,13 @@ const id = route.params.id;
 
 const projectStore = useProjectStore();
 const { fetchProject } = projectStore;
+
+// TaskBoard shares this same Pinia store instance and fetches/mutates
+// `tasks` as cards are dragged between columns, so deriving progress from
+// it here keeps the progress card and deadline-risk banner live without a
+// page refresh.
+const taskStore = useTaskStore();
+const { tasks: projectTasks } = storeToRefs(taskStore);
 
 const project = ref({});
 
@@ -52,19 +66,69 @@ const aboutParagraphs = computed(() => {
   return project.value.description.split("\n\n").map((p) => p.trim());
 });
 
+// ProjectResource only returns a precomputed `progress` percentage, not the
+// raw `tasks` array, so once the Task Board has loaded this project's tasks
+// into the shared task store, progress is recomputed live from there -
+// updating instantly as cards move between To Do/In Progress/Review/Done.
+// Until then (or if there are no tasks), fall back to the API's `progress`.
+const currentProjectTasks = computed(() =>
+  projectTasks.value.filter((task) => String(task.project_id) === String(id))
+);
+
 const projectProgress = computed(() => {
-  if (!project.value.tasks || project.value.tasks.length === 0) {
-    return 0;
-  }
-  const totalTasks = project.value.tasks.length;
-  const completedTasks = project.value.tasks.filter(
-    (task) => task.status === "done"
-  ).length;
+  const tasks = currentProjectTasks.value;
+  if (tasks.length === 0) return project.value.progress ?? 0;
 
-  const progress = Math.round((completedTasks / totalTasks) * 100);
-
-  return progress;
+  const completed = tasks.filter((task) => task.status === "done").length;
+  return Math.round((completed / tasks.length) * 100);
 });
+
+const projectHealth = computed(() =>
+  getProjectHealth({
+    start_date: project.value.start_date,
+    end_date: project.value.end_date,
+    status: project.value.status,
+    progress: projectProgress.value,
+  })
+);
+
+const healthBannerStyles = {
+  overdue: {
+    icon: AlertOctagon,
+    wrapper: "bg-red-50 border-red-200",
+    iconBox: "bg-red-100 text-red-600",
+    title: "text-red-800",
+    message: "text-red-700",
+  },
+  critical: {
+    icon: AlertOctagon,
+    wrapper: "bg-red-50 border-red-200",
+    iconBox: "bg-red-100 text-red-600",
+    title: "text-red-800",
+    message: "text-red-700",
+  },
+  "at-risk": {
+    icon: AlertTriangle,
+    wrapper: "bg-orange-50 border-orange-200",
+    iconBox: "bg-orange-100 text-orange-600",
+    title: "text-orange-800",
+    message: "text-orange-700",
+  },
+  behind: {
+    icon: TriangleAlert,
+    wrapper: "bg-yellow-50 border-yellow-200",
+    iconBox: "bg-yellow-100 text-yellow-600",
+    title: "text-yellow-800",
+    message: "text-yellow-700",
+  },
+  "on-track": {
+    icon: CheckCircle2,
+    wrapper: "bg-green-50 border-green-200",
+    iconBox: "bg-green-100 text-green-600",
+    title: "text-green-800",
+    message: "text-green-700",
+  },
+};
 
 onMounted(async () => {
   await handleFetchProject();
@@ -72,6 +136,42 @@ onMounted(async () => {
 </script>
 
 <template>
+  <!-- Deadline Risk Banner -->
+  <div
+    v-if="projectHealth && projectHealth.level !== 'on-track'"
+    class="rounded-[14px] border p-4 sm:p-5 mb-6 flex items-start gap-3 sm:gap-4"
+    :class="healthBannerStyles[projectHealth.level].wrapper"
+  >
+    <div
+      class="w-10 h-10 sm:w-11 sm:h-11 rounded-[12px] flex items-center justify-center shrink-0"
+      :class="healthBannerStyles[projectHealth.level].iconBox"
+    >
+      <component :is="healthBannerStyles[projectHealth.level].icon" class="w-5 h-5 sm:w-6 sm:h-6" />
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex flex-wrap items-center gap-2">
+        <h4 class="text-base font-bold" :class="healthBannerStyles[projectHealth.level].title">
+          {{ projectHealth.label }}
+        </h4>
+        <span
+          class="px-2 py-0.5 rounded-md text-xs font-semibold bg-white/70"
+          :class="healthBannerStyles[projectHealth.level].title"
+        >
+          {{ projectHealth.daysRemaining >= 0 ? `${projectHealth.daysRemaining}d left` : `${Math.abs(projectHealth.daysRemaining)}d overdue` }}
+        </span>
+        <span
+          class="px-2 py-0.5 rounded-md text-xs font-semibold bg-white/70"
+          :class="healthBannerStyles[projectHealth.level].title"
+        >
+          {{ projectHealth.actualProgress }}% done &middot; expected {{ projectHealth.expectedProgress }}%
+        </span>
+      </div>
+      <p class="text-sm mt-1" :class="healthBannerStyles[projectHealth.level].message">
+        {{ projectHealth.message }}
+      </p>
+    </div>
+  </div>
+
   <!-- Project Information Section -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
     <!-- Project Details Card -->
@@ -280,7 +380,7 @@ onMounted(async () => {
               {{ projectProgress }}%
             </p>
             <p class="text-purple-600 text-sm font-medium">
-              Project completion
+              {{ projectHealth ? `Expected ${projectHealth.expectedProgress}% by now` : "Project completion" }}
             </p>
           </div>
           <div

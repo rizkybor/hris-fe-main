@@ -71,18 +71,18 @@ const handleSubmit = async () => {
     await store.fetchAnnouncements();
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal menyimpan pengumuman.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to save announcement.");
   } finally {
     submitting.value = false;
   }
 };
 
 const handleDelete = async (id) => {
-  if (!(await alertModal.confirm("Hapus pengumuman ini?"))) return;
+  if (!(await alertModal.confirm("Delete this announcement?"))) return;
   try {
     await store.deleteAnnouncement(id);
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Gagal menghapus pengumuman.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || "Failed to delete announcement.", { type: "danger" });
   }
 };
 
@@ -104,8 +104,8 @@ onMounted(() => {
           <Megaphone class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Pengumuman</h3>
-          <p class="text-brand-light text-sm">Broadcast informasi ke seluruh atau sebagian tim</p>
+          <h3 class="text-brand-dark text-lg font-bold">Announcements</h3>
+          <p class="text-brand-light text-sm">Broadcast information to the entire or selected teams</p>
         </div>
       </div>
       <button
@@ -114,7 +114,7 @@ onMounted(() => {
         class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 shrink-0"
       >
         <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Buat Pengumuman</span>
+        <span class="text-brand-white text-sm font-semibold">Create Announcement</span>
       </button>
     </div>
 
@@ -164,7 +164,7 @@ onMounted(() => {
 
       <div v-if="announcements.length === 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-10 text-center">
         <Megaphone class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p class="text-brand-light text-sm">Belum ada pengumuman.</p>
+        <p class="text-brand-light text-sm">No announcements found.</p>
       </div>
     </div>
 
@@ -177,7 +177,7 @@ onMounted(() => {
       <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg">
         <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
           <h3 class="text-brand-dark text-lg font-bold">
-            {{ editingId ? 'Edit Pengumuman' : 'Buat Pengumuman' }}
+            {{ editingId ? 'Edit Announcement' : 'Create Announcement' }}
           </h3>
           <button @click="closeModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
             <X class="w-4 h-4 text-gray-600" />
@@ -186,28 +186,28 @@ onMounted(() => {
 
         <form @submit.prevent="handleSubmit" class="p-5 space-y-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Judul</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Title</label>
             <input v-model="form.title" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Isi Pengumuman</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Content</label>
             <textarea v-model="form.body" rows="5" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Ditujukan Untuk</label>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Audience</label>
               <select v-model="form.audience" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
                 <option v-for="opt in audienceOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
               </select>
             </div>
             <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Berlaku Sampai (opsional)</label>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Valid Until (Optional)</label>
               <input v-model="form.expires_at" type="date" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
             </div>
           </div>
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" v-model="form.is_pinned" class="w-4 h-4" />
-            <span class="text-sm text-brand-dark">Sematkan di atas (pinned)</span>
+            <span class="text-sm text-brand-dark">Pin to Top</span>
           </label>
 
           <p v-if="errorMessage" class="text-red-500 text-sm">{{ errorMessage }}</p>
@@ -218,10 +218,10 @@ onMounted(() => {
               :disabled="submitting"
               class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-2.5 flex items-center gap-2 disabled:opacity-50"
             >
-              <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Menyimpan..." : "Simpan" }}</span>
+              <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : "Save" }}</span>
             </button>
             <button type="button" @click="closeModal" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">
-              Batal
+              Cancel
             </button>
           </div>
         </form>

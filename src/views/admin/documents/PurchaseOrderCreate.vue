@@ -59,8 +59,8 @@ const handleSubmit = async () => {
           <ShoppingCart class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Buat Purchase Order</h3>
-          <p class="text-brand-light text-sm">Nomor PO akan dibuat otomatis saat disimpan</p>
+          <h3 class="text-brand-dark text-lg font-bold">Create New Purchase Order</h3>
+          <p class="text-brand-light text-sm">PO number will be generated automatically when saved</p>
         </div>
       </div>
     </div>
@@ -71,34 +71,34 @@ const handleSubmit = async () => {
           <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
             <Info class="w-4 h-4 text-blue-600" />
           </div>
-          <h4 class="text-brand-dark font-bold">Informasi Umum</h4>
+          <h4 class="text-brand-dark font-bold">General Information</h4>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Jenis</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
             <select v-model="form.type" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
               <option value="E">Eksternal (E)</option>
               <option value="I">Internal (I)</option>
             </select>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Tanggal</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
             <input v-model="form.date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Judul / Perihal Order</label>
-            <input v-model="form.title" type="text" required placeholder="e.g. Pengadaan Smart Locker" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Title / Subject</label>
+            <input v-model="form.title" type="text" required placeholder="e.g. Purchase of Smart Locker" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Nama Vendor / Klien</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Vendor Name / Client</label>
             <input v-model="form.client_name" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Alamat</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Address</label>
             <textarea v-model="form.client_address" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Telepon</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Phone</label>
             <input v-model="form.client_phone" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
@@ -114,28 +114,28 @@ const handleSubmit = async () => {
             <div class="w-8 h-8 bg-indigo-50 rounded-[9px] flex items-center justify-center shrink-0">
               <Package class="w-4 h-4 text-indigo-600" />
             </div>
-            <h4 class="text-brand-dark font-bold">Detail Order (Item)</h4>
+            <h4 class="text-brand-dark font-bold">Order Details (Items)</h4>
           </div>
           <button type="button" @click="addItem" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
-            <Plus class="w-4 h-4" /> Tambah Item
+            <Plus class="w-4 h-4" /> Add Item
           </button>
         </div>
         <div v-for="(item, i) in form.items" :key="i" class="border border-[#DCDEDD] rounded-xl p-4 mb-3">
           <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div class="md:col-span-2">
-              <label class="text-xs text-gray-500 mb-1 block">Deskripsi</label>
+              <label class="text-xs text-gray-500 mb-1 block">Description</label>
               <input v-model="item.description" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
             </div>
             <div>
-              <label class="text-xs text-gray-500 mb-1 block">Qty</label>
+              <label class="text-xs text-gray-500 mb-1 block">Quantity</label>
               <input v-model="item.qty" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
             </div>
             <div>
-              <label class="text-xs text-gray-500 mb-1 block">Harga (Rp)</label>
+              <label class="text-xs text-gray-500 mb-1 block">Price (Rp)</label>
               <input v-model.number="item.price" type="number" min="0" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
             </div>
             <div class="md:col-span-4">
-              <label class="text-xs text-gray-500 mb-1 block">Spesifikasi (satu baris per poin)</label>
+              <label class="text-xs text-gray-500 mb-1 block">Specification (one line per point)</label>
               <textarea v-model="item.specification" rows="3" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm resize-none"></textarea>
             </div>
           </div>
@@ -145,7 +145,7 @@ const handleSubmit = async () => {
             @click="removeItem(i)"
             class="mt-2 text-red-500 text-xs font-semibold flex items-center gap-1"
           >
-            <Trash2 class="w-3.5 h-3.5" /> Hapus item
+            <Trash2 class="w-3.5 h-3.5" /> Remove Item
           </button>
         </div>
         <div class="text-right font-bold text-brand-dark">
@@ -159,20 +159,20 @@ const handleSubmit = async () => {
             <div class="w-8 h-8 bg-emerald-50 rounded-[9px] flex items-center justify-center shrink-0">
               <Wallet class="w-4 h-4 text-emerald-600" />
             </div>
-            <h4 class="text-brand-dark font-bold">Skema Pembayaran (opsional)</h4>
+            <h4 class="text-brand-dark font-bold">Payment Schema (optional)</h4>
           </div>
           <button type="button" @click="addTerm" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
-            <Plus class="w-4 h-4" /> Tambah Termin
+            <Plus class="w-4 h-4" /> Add Term
           </button>
         </div>
         <div v-for="(term, i) in form.payment_terms" :key="i" class="border border-[#DCDEDD] rounded-xl p-4 mb-3">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <input v-model="term.termin" type="text" placeholder="e.g. DP (50%)" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            <input v-model.number="term.amount" type="number" min="0" placeholder="Jumlah (Rp)" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            <input v-model="term.description" type="text" placeholder="Keterangan" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+            <input v-model.number="term.amount" type="number" min="0" placeholder="Amount (Rp)" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+            <input v-model="term.description" type="text" placeholder="Description" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
           </div>
           <button type="button" @click="removeTerm(i)" class="mt-2 text-red-500 text-xs font-semibold flex items-center gap-1">
-            <Trash2 class="w-3.5 h-3.5" /> Hapus termin
+            <Trash2 class="w-3.5 h-3.5" /> Remove Term
           </button>
         </div>
       </div>
@@ -182,31 +182,31 @@ const handleSubmit = async () => {
           <div class="w-8 h-8 bg-orange-50 rounded-[9px] flex items-center justify-center shrink-0">
             <FileSignature class="w-4 h-4 text-orange-600" />
           </div>
-          <h4 class="text-brand-dark font-bold">Ketentuan & Tanda Tangan</h4>
+          <h4 class="text-brand-dark font-bold">Terms & Signatures</h4>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Garansi (bulan)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Warranty (months)</label>
             <input v-model.number="form.warranty_months" type="number" min="0" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Waktu Penggantian (hari kerja)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Replacement Time (working days)</label>
             <input v-model.number="form.replacement_days" type="number" min="0" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Penandatangan Pembeli (Nama)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Buyer Signatory (Name)</label>
             <input v-model="form.buyer_signatory_name" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Jabatan</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Position</label>
             <input v-model="form.buyer_signatory_title" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Penandatangan Vendor (Nama)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Vendor Signatory (Name)</label>
             <input v-model="form.vendor_signatory_name" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Jabatan</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Position</label>
             <input v-model="form.vendor_signatory_title" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
         </div>
@@ -220,13 +220,13 @@ const handleSubmit = async () => {
           :disabled="submitting"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
         >
-          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Menyimpan..." : "Simpan Purchase Order" }}</span>
+          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : "Save Purchase Order" }}</span>
         </button>
         <router-link
           :to="{ name: 'admin.purchase-orders.dashboard' }"
           class="px-6 py-3 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50"
         >
-          Batal
+          Cancel
         </router-link>
       </div>
     </form>
