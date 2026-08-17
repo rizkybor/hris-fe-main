@@ -7,6 +7,8 @@ import PaymentReceiptList from '@/views/admin/documents/PaymentReceiptList.vue';
 import PaymentReceiptCreate from '@/views/admin/documents/PaymentReceiptCreate.vue';
 import LetterList from '@/views/admin/documents/LetterList.vue';
 import LetterCreate from '@/views/admin/documents/LetterCreate.vue';
+import CertificateList from '@/views/admin/documents/CertificateList.vue';
+import CertificateGenerate from '@/views/admin/documents/CertificateGenerate.vue';
 
 export default [
   {
@@ -53,5 +55,15 @@ export default [
     path: 'documents/letters/create',
     name: 'admin.letters.create',
     component: LetterCreate,
+  },
+  {
+    path: 'documents/certificates',
+    name: 'admin.certificates.dashboard',
+    component: CertificateList,
+  },
+  {
+    path: 'documents/certificates/create',
+    name: 'admin.certificates.create',
+    component: CertificateGenerate,
   },
 ];

@@ -47,24 +47,24 @@ const todayLabel = computed(() =>
 
 <template>
   <div
-    class="relative overflow-hidden rounded-[14px] border border-[#0B1042] main-card px-5 sm:px-7 py-6 sm:py-7 mb-6"
+    class="relative overflow-hidden rounded-[14px] border border-[#DCDEDD] bg-gradient-to-br from-blue-50/70 via-white to-indigo-50/50 px-5 sm:px-7 py-6 sm:py-7 mb-6"
   >
-    <!-- Decorative glow orbs -->
+    <!-- Decorative soft glow orbs -->
     <div
-      class="pointer-events-none absolute -top-16 -right-10 w-56 h-56 rounded-full bg-blue-500/20 blur-3xl"
+      class="pointer-events-none absolute -top-16 -right-10 w-56 h-56 rounded-full bg-blue-200/25 blur-3xl"
     ></div>
     <div
-      class="pointer-events-none absolute -bottom-20 left-1/3 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl"
+      class="pointer-events-none absolute -bottom-20 left-1/3 w-64 h-64 rounded-full bg-indigo-200/20 blur-3xl"
     ></div>
 
     <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 mb-2">
           <div
-            class="flex items-center gap-1 px-3 py-1 bg-white/10 border border-white/10 rounded-full backdrop-blur-sm"
+            class="flex items-center gap-1 px-3 py-1 bg-white border border-[#DCDEDD] rounded-full"
           >
-            <SparklesIcon class="w-3 h-3 text-blue-300" />
-            <span class="text-brand-white-80 text-xs font-medium">{{ todayLabel }}</span>
+            <SparklesIcon class="w-3 h-3 text-blue-400" />
+            <span class="text-brand-light text-xs font-medium">{{ todayLabel }}</span>
           </div>
           <span
             v-if="primaryRole"
@@ -75,10 +75,10 @@ const todayLabel = computed(() =>
           </span>
         </div>
 
-        <h1 class="text-brand-white text-2xl sm:text-3xl font-extrabold leading-tight">
+        <h1 class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight">
           {{ greeting }}, {{ userName }} 👋
         </h1>
-        <p class="text-brand-white-70 text-sm sm:text-base mt-1">
+        <p class="text-brand-light text-sm sm:text-base mt-1">
           {{ roleSubtitle }}
         </p>
       </div>

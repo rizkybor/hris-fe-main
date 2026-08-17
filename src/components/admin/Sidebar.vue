@@ -29,6 +29,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
+  CalculatorIcon,
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
@@ -104,6 +105,7 @@ const showCompanyFinance = computed(() =>
   canOneOf([
     "company-about-menu",
     "company-finance-menu",
+    "project-calculator-menu",
     "vendors-menu",
     "files-company-menu",
     "credential-account-list",
@@ -111,6 +113,7 @@ const showCompanyFinance = computed(() =>
     "invoice-menu",
     "payment-receipt-menu",
     "letter-menu",
+    "certificate-menu",
   ])
 );
 </script>
@@ -485,7 +488,7 @@ const showCompanyFinance = computed(() =>
             :to="{ name: 'admin.projects' }"
             class="nav-link group relative rounded-[10px] transition-colors duration-150"
             :class="{
-              'nav-link-active': $route.name?.startsWith('admin.project'),
+              'nav-link-active': $route.name?.startsWith('admin.projects'),
             }"
             v-if="can('project-menu')"
             @click="onNavigate"
@@ -495,13 +498,13 @@ const showCompanyFinance = computed(() =>
             <FolderKanban
               class="w-[18px] h-[18px] text-white/45 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.project'),
+                'text-white': $route.name?.startsWith('admin.projects'),
               }"
             />
             <span
               class="nav-label text-white/70 text-sm font-medium"
               :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.project'),
+                'text-white font-semibold': $route.name?.startsWith('admin.projects'),
               }"
               >Projects</span
             >
@@ -598,6 +601,38 @@ const showCompanyFinance = computed(() =>
           </RouterLink>
 
           <RouterLink
+            :to="{ name: 'admin.project-calculator.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith(
+                'admin.project-calculator'
+              ),
+            }"
+            v-if="can('project-calculator-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <CalculatorIcon
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith(
+                  'admin.project-calculator'
+                ),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith(
+                  'admin.project-calculator'
+                ),
+              }"
+              >Project Calculator</span
+            >
+          </RouterLink>
+
+          <RouterLink
             :to="{ name: 'admin.vendors.dashboard' }"
             class="nav-link group relative rounded-[10px] transition-colors duration-150"
             :class="{
@@ -627,9 +662,9 @@ const showCompanyFinance = computed(() =>
             :to="{ name: 'admin.documents.dashboard' }"
             class="nav-link group relative rounded-[10px] transition-colors duration-150"
             :class="{
-              'nav-link-active': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
+              'nav-link-active': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates'),
             }"
-            v-if="canOneOf(['purchase-order-menu', 'invoice-menu', 'payment-receipt-menu', 'letter-menu'])"
+            v-if="canOneOf(['purchase-order-menu', 'invoice-menu', 'payment-receipt-menu', 'letter-menu', 'certificate-menu'])"
             @click="onNavigate"
             @mouseenter="showTooltip"
             @mouseleave="hideTooltip"
@@ -637,13 +672,13 @@ const showCompanyFinance = computed(() =>
             <FileStack
               class="w-[18px] h-[18px] text-white/45 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
+                'text-white': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates'),
               }"
             />
             <span
               class="nav-label text-white/70 text-sm font-medium"
               :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters'),
+                'text-white font-semibold': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates'),
               }"
               >Document Letters</span
             >

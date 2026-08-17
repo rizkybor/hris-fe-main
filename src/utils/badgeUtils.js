@@ -44,12 +44,12 @@ export const getProgressColor = (progress) => {
 
 export const getRoleBadgeClass = (role) => {
   const classes = {
-    manager: "bg-indigo-500/15 text-indigo-200 border-indigo-400/30",
-    hr: "bg-blue-500/15 text-blue-200 border-blue-400/30",
-    finance: "bg-emerald-500/15 text-emerald-200 border-emerald-400/30",
-    employee: "bg-violet-500/15 text-violet-200 border-violet-400/30",
+    manager: "bg-indigo-50 text-indigo-600 border-indigo-100",
+    hr: "bg-blue-50 text-blue-600 border-blue-100",
+    finance: "bg-emerald-50 text-emerald-600 border-emerald-100",
+    employee: "bg-violet-50 text-violet-600 border-violet-100",
   };
-  return classes[role?.toLowerCase()] || "bg-white/10 text-white/80 border-white/20";
+  return classes[role?.toLowerCase()] || "bg-gray-50 text-gray-600 border-gray-100";
 };
 
 export const getRoleLabel = (role) => {

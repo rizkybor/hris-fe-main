@@ -7,12 +7,21 @@ import router from "@/router";
 export const useAuthStore = defineStore("auth", {
     state: () => ({
         user: null,
+        // Kept in reactive state (not derived via a getter) and synced
+        // explicitly wherever the cookie changes. A getter like
+        // `token: () => Cookies.get('token')` gets treated by Pinia as a
+        // computed(): since document.cookie isn't a reactive dependency,
+        // Vue caches the first read forever and never re-evaluates it, so
+        // a token set after that first (empty) read is invisible to
+        // anything reading authStore.token -- e.g. the very first login of
+        // a fresh session, where the router guard reads an empty token
+        // before login, then never sees the freshly-set one after.
+        token: Cookies.get('token') || null,
         loading: false,
         error: null,
         success: null,
     }),
     getters: {
-        token: () => Cookies.get('token'),
         isAuthenticated: (state) => !!state.user,
     },
     actions: {
@@ -26,6 +35,7 @@ export const useAuthStore = defineStore("auth", {
                 const token = response.data.data.token
 
                 Cookies.set('token', token)
+                this.token = token
 
                 this.success = response.data.message
 
@@ -78,6 +88,7 @@ export const useAuthStore = defineStore("auth", {
             } catch (error) {
                 if (error.response && error.response.status === 401) {
                     Cookies.remove('token');
+                    this.token = null;
                     throw new Error("Unauthorized");
                 }
                 this.error = handleError(error);
@@ -93,6 +104,7 @@ export const useAuthStore = defineStore("auth", {
                 await axiosInstance.post('/logout')
 
                 Cookies.remove('token')
+                this.token = null
 
                 this.user = null
                 this.error = null
