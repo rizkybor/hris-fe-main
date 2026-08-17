@@ -9,8 +9,16 @@ import SearchSection from "@/components/admin/dashboard/SearchSection.vue";
 import LatestEmployees from "@/components/admin/dashboard/LatestEmployees.vue";
 import LatestTeams from "@/components/admin/dashboard/LatestTeams.vue";
 import ProjectsAtRisk from "@/components/admin/dashboard/ProjectsAtRisk.vue";
+import SuperAdminOverview from "@/components/admin/dashboard/SuperAdminOverview.vue";
 
 const authStore = useAuthStore();
+
+// Super Admin no longer shares People & Work / My Workspace access with
+// the other roles, so it gets its own system-focused overview instead of
+// either the company-wide or the self-service dashboard.
+const isSuperAdmin = computed(() => {
+  return authStore.user?.roles?.some((role: any) => role === "superadmin");
+});
 
 // Check if user is employee role
 const isEmployee = computed(() => {
@@ -29,7 +37,11 @@ const canViewProjects = computed(() => can("project-list"));
   <div class="space-y-6">
     <DashboardWelcome />
 
-    <template v-if="isEmployee">
+    <template v-if="isSuperAdmin">
+      <SuperAdminOverview />
+    </template>
+
+    <template v-else-if="isEmployee">
       <div class="space-y-6">
         <EmployeeStatistics />
         <SearchSection v-if="hasDashboardPermission" />
