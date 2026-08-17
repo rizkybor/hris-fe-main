@@ -190,7 +190,7 @@ router.beforeEach(async (to, from, next) => {
       next({ name: 'login' })
     }
   } else if (to.meta.requiresUnauth && authStore.token) {
-    next({ name: 'dashboard' })
+    next({ name: 'admin.dashboard' })
   } else {
     next()
   }
