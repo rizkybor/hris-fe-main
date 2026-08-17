@@ -20,6 +20,29 @@ export const useLeaveRequestStore = defineStore("leaveRequest", {
     }),
 
     actions: {
+        async fetchAllPaginated(params = {}) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                const response = await axiosInstance.get('leave-requests/all/paginated', {
+                    params: { row_per_page: 10, ...params },
+                });
+
+                this.leaveRequests = response.data.data.data;
+                this.meta = {
+                    current_page: response.data.data.current_page,
+                    last_page: response.data.data.last_page,
+                    per_page: response.data.data.per_page,
+                    total: response.data.data.total,
+                };
+            } catch (error) {
+                this.error = handleError(error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async fetchMyLeaveRequests() {
             this.loading = true;
             this.error = null;
