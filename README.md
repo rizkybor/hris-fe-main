@@ -2,6 +2,13 @@
 
 This template should help get you started developing with Vue 3 in Vite.
 
+## License
+
+Proprietary — © JC Digital. All rights reserved. This software is
+licensed for internal use only; it may not be used for personal purposes,
+copied, modified, or resold without prior written permission from JC
+Digital. See [LICENSE](./LICENSE) for full terms.
+
 ## Recommended IDE Setup
 
 [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
