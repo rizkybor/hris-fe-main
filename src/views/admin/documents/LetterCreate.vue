@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter, RouterLink } from "vue-router";
 import { storeToRefs } from "pinia";
-import { Mail, Settings, Plus, Trash2, Info } from "lucide-vue-next";
+import { Mail, Settings, Plus, Trash2, Info, Tag, FileText } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
 import { useEmployeeStore } from "@/stores/employee";
 import { can } from "@/helpers/permissionHelper";
@@ -202,7 +202,12 @@ const handleSubmit = async () => {
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Klasifikasi Surat</h4>
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
+            <Tag class="w-4 h-4 text-blue-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Klasifikasi Surat</h4>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Kode Surat</label>
@@ -236,7 +241,12 @@ const handleSubmit = async () => {
       </div>
 
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Isi Surat</h4>
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
+            <FileText class="w-4 h-4 text-blue-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Isi Surat</h4>
+        </div>
         <div class="space-y-4">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Perihal</label>

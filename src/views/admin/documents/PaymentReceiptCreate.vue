@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { FileCheck2 } from "lucide-vue-next";
+import { FileCheck2, Wallet } from "lucide-vue-next";
 import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
 import { useInvoiceStore } from "@/stores/invoice";
 
@@ -69,7 +69,12 @@ const handleSubmit = async () => {
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Detail Pembayaran</h4>
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 bg-emerald-50 rounded-[9px] flex items-center justify-center shrink-0">
+            <Wallet class="w-4 h-4 text-emerald-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Detail Pembayaran</h4>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="md:col-span-2">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Invoice Terkait (opsional)</label>

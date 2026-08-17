@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Briefcase, Save, ArrowLeft, User, Phone, Mail, MapPin, Tag, Layers, FileText } from "lucide-vue-next";
+import { Briefcase, Save, ArrowLeft, User, Phone, Mail, MapPin, Tag, Layers, FileText, Building2 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useVendorsStore } from "@/stores/vendor";
@@ -130,123 +130,157 @@ const submit = async () => {
     <div v-else-if="loadError" class="text-center py-20 text-red-600">{{ loadError }}</div>
 
     <!-- Form -->
-    <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="md:col-span-2">
-          <label class="block text-brand-dark text-base font-semibold mb-1">Vendor Name *</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Briefcase class="w-5 h-5 text-gray-400" />
-            </div>
-            <input
-              v-model="form.name"
-              type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-            />
+    <form v-else @submit.prevent="submit" class="space-y-6">
+      <!-- Company Information -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <Building2 class="w-4.5 h-4.5 text-blue-600" />
           </div>
+          <h4 class="text-brand-dark font-bold">Informasi Perusahaan</h4>
         </div>
 
-        <div>
-          <label class="block text-brand-dark text-base font-semibold mb-1">Vendor Type</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Tag class="w-5 h-5 text-gray-400" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="md:col-span-2">
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Vendor Name *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Briefcase class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.name"
+                type="text"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              />
             </div>
-            <input
-              v-model="form.type"
-              type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-            />
+          </div>
+
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Vendor Type</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Tag class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.type"
+                type="text"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Vendor Field</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Layers class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.field"
+                type="text"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              />
+            </div>
           </div>
         </div>
+      </div>
 
-        <div>
-          <label class="block text-brand-dark text-base font-semibold mb-1">Vendor Field</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Layers class="w-5 h-5 text-gray-400" />
-            </div>
-            <input
-              v-model="form.field"
-              type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-            />
+      <!-- PIC / Contact -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <User class="w-4.5 h-4.5 text-emerald-600" />
           </div>
+          <h4 class="text-brand-dark font-bold">Kontak PIC (Person in Charge)</h4>
         </div>
 
-        <div>
-          <label class="block text-brand-dark text-base font-semibold mb-1">PIC Name *</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <User class="w-5 h-5 text-gray-400" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">PIC Name *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <User class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.pic_name"
+                type="text"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              />
             </div>
-            <input
-              v-model="form.pic_name"
-              type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-            />
+          </div>
+
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">PIC Phone *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Phone class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.pic_phone"
+                type="text"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              />
+            </div>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Email</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Mail class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.email"
+                type="email"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              />
+            </div>
           </div>
         </div>
+      </div>
 
-        <div>
-          <label class="block text-brand-dark text-base font-semibold mb-1">PIC Phone *</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Phone class="w-5 h-5 text-gray-400" />
-            </div>
-            <input
-              v-model="form.pic_phone"
-              type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-            />
+      <!-- Additional Details -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-orange-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <MapPin class="w-4.5 h-4.5 text-orange-600" />
           </div>
+          <h4 class="text-brand-dark font-bold">Detail Tambahan</h4>
         </div>
 
-        <div>
-          <label class="block text-brand-dark text-base font-semibold mb-1">Email</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Mail class="w-5 h-5 text-gray-400" />
+        <div class="grid grid-cols-1 gap-5">
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Address</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <MapPin class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.address"
+                type="text"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              />
             </div>
-            <input
-              v-model="form.email"
-              type="email"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-            />
           </div>
-        </div>
 
-        <div class="md:col-span-2">
-          <label class="block text-brand-dark text-base font-semibold mb-1">Address</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <MapPin class="w-5 h-5 text-gray-400" />
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Notes</label>
+            <div class="relative">
+              <div class="absolute top-3 left-4 pointer-events-none">
+                <FileText class="w-5 h-5 text-gray-400" />
+              </div>
+              <textarea
+                v-model="form.notes"
+                rows="4"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
+              ></textarea>
             </div>
-            <input
-              v-model="form.address"
-              type="text"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-            />
-          </div>
-        </div>
-
-        <div class="md:col-span-2">
-          <label class="block text-brand-dark text-base font-semibold mb-1">Notes</label>
-          <div class="relative">
-            <div class="absolute top-3 left-4 pointer-events-none">
-              <FileText class="w-5 h-5 text-gray-400" />
-            </div>
-            <textarea
-              v-model="form.notes"
-              rows="4"
-              class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
-            ></textarea>
           </div>
         </div>
       </div>
 
       <!-- Actions -->
-      <div class="flex flex-col sm:flex-row gap-3 pt-4">
+      <div class="flex flex-col sm:flex-row gap-3">
         <button
           type="button"
           @click="router.back()"
@@ -256,8 +290,7 @@ const submit = async () => {
         </button>
 
         <button
-          type="button"
-          @click="submit"
+          type="submit"
           :disabled="submitting"
           class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
         >
@@ -267,7 +300,7 @@ const submit = async () => {
           </span>
         </button>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 
