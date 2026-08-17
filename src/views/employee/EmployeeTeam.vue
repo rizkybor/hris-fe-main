@@ -25,6 +25,7 @@ const members = ref([]);
 const projects = ref([]);
 const activeTab = ref("members");
 const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
+const loadingTeam = ref(true);
 const loadingMembers = ref(false);
 const loadingProjects = ref(false);
 
@@ -42,10 +43,14 @@ const activeMembersStatus = computed(() => {
 });
 
 const loadTeam = async () => {
+  loadingTeam.value = true;
   try {
     team.value = await employeeStore.fetchMyTeam();
   } catch (error) {
     console.error("Error loading team:", error);
+    team.value = null;
+  } finally {
+    loadingTeam.value = false;
   }
 };
 
@@ -105,6 +110,26 @@ onMounted(() => {
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Team Detail Content -->
     <main class="main-content flex-1 overflow-auto p-3 sm:p-5">
+      <!-- Loading State -->
+      <div v-if="loadingTeam" class="flex items-center justify-center py-24">
+        <div class="text-center">
+          <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-brand-light text-base">Loading your team...</p>
+        </div>
+      </div>
+
+      <!-- No Team Assigned -->
+      <div v-else-if="!team" class="bg-white border border-[#DCDEDD] rounded-[14px] p-12 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Users class="w-8 h-8 text-gray-400" />
+        </div>
+        <p class="text-brand-dark text-lg font-bold mb-1">No team assigned yet</p>
+        <p class="text-brand-light text-sm">
+          You're not currently a member of any team. Reach out to your manager or HR if you think this is a mistake.
+        </p>
+      </div>
+
+      <template v-else>
       <!-- Team Header -->
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
         <div class="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 text-center sm:text-left">
@@ -121,7 +146,7 @@ onMounted(() => {
           <div class="flex-1 min-w-0 w-full">
             <div class="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-4 mb-3">
               <h1 class="text-brand-dark text-xl sm:text-3xl font-extrabold truncate max-w-full">
-                {{ team?.name || "Loading..." }}
+                {{ team.name }}
               </h1>
               <span
                 v-if="team?.status"
@@ -489,6 +514,7 @@ onMounted(() => {
           </div>
         </div>
       </div>
+      </template>
     </main>
   </div>
 </template>
