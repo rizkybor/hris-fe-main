@@ -10,6 +10,7 @@ import { getJobStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
 import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
+import Avatar from "@/components/common/Avatar.vue";
 import {
   formatRupiah as formatCurrency,
   capitalize,
@@ -141,13 +142,11 @@ onMounted(() => {
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
       <div class="flex flex-col sm:flex-row sm:items-center gap-6">
         <div class="relative self-center sm:self-auto flex-shrink-0">
-          <img
-            :src="
-              profile?.user?.profile_photo ||
-              'https://ui-avatars.com/api/?name=' + profile?.user?.name
-            "
+          <Avatar
+            :src="profile?.user?.profile_photo"
             :alt="profile?.user?.name"
-            class="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover"
+            size="w-24 h-24 sm:w-32 sm:h-32"
+            icon-size="w-10 h-10 sm:w-14 sm:h-14"
           />
           <span
             :class="statusBadgeClass"

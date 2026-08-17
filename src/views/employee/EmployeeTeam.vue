@@ -15,6 +15,7 @@ import { useEmployeeStore } from "@/stores/employee";
 import CardList from "@/components/admin/project/list/CardList.vue";
 import { formatDate as formatDateUtil } from "@/utils/dateUtils.js";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import Avatar from "@/components/common/Avatar.vue";
 
 const employeeStore = useEmployeeStore();
 const team = ref(null);
@@ -310,13 +311,11 @@ onMounted(() => {
           >
             <div class="flex flex-col items-center mb-3">
               <div class="relative">
-                <img
-                  :src="
-                    member.employee?.user?.profile_photo ||
-                    'https://via.placeholder.com/100'
-                  "
+                <Avatar
+                  :src="member.employee?.user?.profile_photo"
                   :alt="member.employee?.user?.name"
-                  class="w-[100px] h-[100px] rounded-full object-cover mb-3"
+                  size="w-[100px] h-[100px] mb-3"
+                  icon-size="w-8 h-8"
                 />
                 <span
                   class="absolute bottom-2 left-1/2 transform -translate-x-1/2 px-2 py-1 rounded-md text-xs font-semibold whitespace-nowrap"

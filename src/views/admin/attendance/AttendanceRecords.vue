@@ -8,6 +8,7 @@ import { formatDateShort, formatTime as formatTimeUtil } from "@/utils/dateUtils
 import { capitalize } from "@/utils/formatUtils.js";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
+import Avatar from "@/components/common/Avatar.vue";
 
 const router = useRouter();
 const store = useAttendanceStore();
@@ -119,10 +120,11 @@ const statusBadgeClass = (status) => {
               <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4">
                 <div class="flex items-center gap-3">
-                  <img
-                    :src="attendance.employee?.user?.profile_photo || 'https://via.placeholder.com/100'"
+                  <Avatar
+                    :src="attendance.employee?.user?.profile_photo"
                     :alt="attendance.employee?.user?.name"
-                    class="w-8 h-8 rounded-full object-cover shrink-0"
+                    size="w-8 h-8"
+                    icon-size="w-4 h-4"
                   />
                   <span class="font-semibold text-brand-dark">{{ attendance.employee?.user?.name || "-" }}</span>
                 </div>

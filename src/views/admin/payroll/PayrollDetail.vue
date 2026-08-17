@@ -20,6 +20,7 @@ import { can } from "@/helpers/permissionHelper";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import Avatar from "@/components/common/Avatar.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -411,8 +412,7 @@ const handleMarkAsPaid = async () => {
               <td class="py-4 px-4 text-brand-light text-sm">{{ (pagination.current_page - 1) * pagination.per_page + index + 1 }}</td>
               <td class="py-4 px-4">
                 <div class="flex items-center gap-3">
-                  <img :src="emp.profile_photo || 'https://via.placeholder.com/150'
-                    " :alt="emp.name" class="w-10 h-10 rounded-full object-cover" />
+                  <Avatar :src="emp.profile_photo" :alt="emp.name" size="w-10 h-10" />
                   <div>
                     <p class="text-brand-dark text-sm font-semibold">
                       {{ emp.name }}
