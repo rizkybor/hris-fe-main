@@ -57,10 +57,14 @@ const roleStore = useRoleStore();
 const { roles: systemRoles } = storeToRefs(roleStore);
 const KNOWN_ROLE_LABELS: Record<string, string> = { hr: "HR" };
 const roleOptions = computed(() =>
-  systemRoles.value.map((role) => ({
-    value: role.name,
-    label: KNOWN_ROLE_LABELS[role.name] || role.name.charAt(0).toUpperCase() + role.name.slice(1),
-  }))
+  systemRoles.value
+    // Super Admin is a single, fixed system account (seeded directly) --
+    // it's never something assignable to a regular employee from here.
+    .filter((role) => role.name !== "superadmin")
+    .map((role) => ({
+      value: role.name,
+      label: KNOWN_ROLE_LABELS[role.name] || role.name.charAt(0).toUpperCase() + role.name.slice(1),
+    }))
 );
 
 // Team modal
