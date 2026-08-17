@@ -1,7 +1,7 @@
 <template>
   <div>
     <label :for="id" class="block mb-2" :style="labelStyle">
-      {{ label }}
+      {{ label }}<span v-if="required" class="text-red-600 ml-1">*</span>
     </label>
 
     <div class="relative">

@@ -1,8 +1,18 @@
 <script setup lang="ts">
-import { Users, UserPlus, Plus, Mail } from "lucide-vue-next";
+import { onMounted } from "vue";
+import { storeToRefs } from "pinia";
+import { Users, UserPlus, Plus } from "lucide-vue-next";
 import { useRouter } from "vue-router";
+import { useEmployeeStore } from "@/stores/employee";
 
 const router = useRouter();
+
+const employeeStore = useEmployeeStore();
+const { statistics, loadingStatistics } = storeToRefs(employeeStore);
+
+onMounted(() => {
+  employeeStore.fetchStatistics();
+});
 
 const goToEmployees = () => {
   router.push({ name: "admin.employees" });
@@ -48,7 +58,7 @@ const addAnotherEmployee = () => {
               Added Successfully!
             </h1>
             <p class="text-brand-light text-base font-normal leading-relaxed">
-              The new employee has been successfully added to your system, let's help them onboarding.
+              The new employee has been successfully added to your system.
             </p>
           </div>
 
@@ -72,14 +82,6 @@ const addAnotherEmployee = () => {
               <Plus class="w-4 h-4 text-gray-600" />
             </button>
           </div>
-
-          <!-- Additional Info -->
-          <div class="mt-6 pt-6 border-t border-[#DCDEDD]">
-            <div class="flex items-center justify-center gap-2 text-brand-light text-sm">
-              <Mail class="w-4 h-4" />
-              <span>Onboarding email sent automatically</span>
-            </div>
-          </div>
         </div>
 
         <!-- Quick Stats -->
@@ -90,7 +92,9 @@ const addAnotherEmployee = () => {
                 <Users class="w-5 h-5 text-blue-600" />
               </div>
               <div class="text-left">
-                <p class="text-brand-dark text-lg font-bold">51,224</p>
+                <p class="text-brand-dark text-lg font-bold">
+                  {{ loadingStatistics ? "..." : statistics.total }}
+                </p>
                 <p class="text-brand-light text-xs font-normal">Total Employees</p>
               </div>
             </div>
@@ -101,7 +105,9 @@ const addAnotherEmployee = () => {
                 <UserPlus class="w-5 h-5 text-green-600" />
               </div>
               <div class="text-left">
-                <p class="text-brand-dark text-lg font-bold">7,183</p>
+                <p class="text-brand-dark text-lg font-bold">
+                  {{ loadingStatistics ? "..." : statistics.added_this_month }}
+                </p>
                 <p class="text-brand-light text-xs font-normal">Added This Month</p>
               </div>
             </div>

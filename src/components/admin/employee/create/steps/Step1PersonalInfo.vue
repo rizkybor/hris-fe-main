@@ -19,9 +19,12 @@ import { ref, computed } from "vue";
 interface Props {
   modelValue: any;
   errors?: any;
+  isEditing?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  isEditing: false,
+});
 const emit = defineEmits(["update:modelValue"]);
 
 const form = computed({
@@ -145,7 +148,7 @@ const deletePhoto = () => {
               name="name"
               type="text"
               v-model="form.name"
-              label="Full Name *"
+              label="Full Name"
               placeholder="Enter full name"
               :error="errors?.name?.join(', ')"
               required
@@ -162,7 +165,7 @@ const deletePhoto = () => {
               name="email"
               type="email"
               v-model="form.email"
-              label="Email Address *"
+              label="Email Address"
               placeholder="employee@company.com"
               :error="errors?.email?.join(', ')"
               required
@@ -179,17 +182,17 @@ const deletePhoto = () => {
               name="password"
               type="password"
               v-model="form.password"
-              label="Password *"
-              placeholder="Enter password"
+              :label="isEditing ? 'New Password (optional)' : 'Password *'"
+              :placeholder="isEditing ? 'Leave blank to keep current password' : 'Enter password'"
               :error="errors?.password?.join(', ')"
-              required
+              :required="!isEditing"
             >
               <template #icon>
                 <Lock class="h-5 w-5 text-gray-400" />
               </template>
             </Input>
             <p class="text-xs text-gray-400 mt-1">
-              Min. 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol. Tidak boleh password yang pernah bocor di data breach.
+              Min. 8 characters, a mix of upper/lowercase letters, numbers, and symbols. Must not be a password exposed in a known data breach.
             </p>
           </div>
 
@@ -199,10 +202,10 @@ const deletePhoto = () => {
               name="password_confirmation"
               type="password"
               v-model="form.password_confirmation"
-              label="Confirm Password *"
+              :label="isEditing ? 'Confirm New Password' : 'Confirm Password *'"
               placeholder="Confirm password"
               :error="errors?.password_confirmation?.join(', ')"
-              required
+              :required="!isEditing"
             >
               <template #icon>
                 <Lock class="h-5 w-5 text-gray-400" />
@@ -216,7 +219,7 @@ const deletePhoto = () => {
               name="identity_number"
               type="text"
               v-model="form.identity_number"
-              label="Identity Number (NIK/KTP) *"
+              label="Identity Number (NIK/KTP)"
               placeholder="Enter identity number"
               :error="errors?.identity_number?.join(', ')"
               required
@@ -252,9 +255,10 @@ const deletePhoto = () => {
               name="phone"
               type="tel"
               v-model="form.phone"
-              label="Phone Number *"
-              placeholder="+1 (555) 123-4567"
+              label="Phone Number"
+              placeholder="+62 812-3456-7890"
               :error="errors?.phone?.join(', ')"
+              required
             >
               <template #icon>
                 <Phone class="h-5 w-5 text-gray-400" />
@@ -268,8 +272,9 @@ const deletePhoto = () => {
               name="date_of_birth"
               type="date"
               v-model="form.date_of_birth"
-              label="Date of Birth *"
+              label="Date of Birth"
               :error="errors?.date_of_birth?.join(', ')"
+              required
             >
               <template #icon>
                 <Calendar class="h-5 w-5 text-gray-400" />
@@ -299,9 +304,10 @@ const deletePhoto = () => {
               name="place_of_birth"
               type="text"
               v-model="form.place_of_birth"
-              label="Place of Birth *"
+              label="Place of Birth"
               placeholder="e.g. Jakarta, Indonesia"
               :error="errors?.place_of_birth?.join(', ')"
+              required
             >
               <template #icon>
                 <MapPin class="h-5 w-5 text-gray-400" />
@@ -311,7 +317,7 @@ const deletePhoto = () => {
 
           <!-- Gender (Full Width) -->
           <div class="md:col-span-2 mb-4">
-            <label class="block text-brand-dark text-base font-semibold mb-1">Gender *</label>
+            <label class="block text-brand-dark text-base font-semibold mb-1">Gender<span class="text-red-600 ml-1">*</span></label>
             <div class="flex gap-4">
               <!-- Male Option -->
               <label
@@ -387,10 +393,11 @@ const deletePhoto = () => {
               id="address"
               name="address"
               v-model="form.address"
-              label="Address *"
+              label="Address"
               placeholder="Enter full address"
               :error="errors?.address?.join(', ')"
               rows="5"
+              required
             >
               <template #icon>
                 <MapPin class="h-5 w-5 text-gray-400" />
@@ -407,7 +414,7 @@ const deletePhoto = () => {
                 name="city"
                 type="text"
                 v-model="form.city"
-                label="City *"
+                label="City"
                 placeholder="e.g. Jakarta"
                 :error="errors?.city?.join(', ')"
                 required
@@ -425,7 +432,7 @@ const deletePhoto = () => {
                 name="postal_code"
                 type="text"
                 v-model="form.postal_code"
-                label="Postal Code *"
+                label="Postal Code"
                 placeholder="e.g. 12345"
                 :error="errors?.postal_code?.join(', ')"
                 required

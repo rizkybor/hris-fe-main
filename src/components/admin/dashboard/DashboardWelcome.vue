@@ -13,7 +13,7 @@ const primaryRole = computed(() => {
   if (roles.includes("manager")) return "manager";
   if (roles.includes("hr")) return "hr";
   if (roles.includes("finance")) return "finance";
-  if (roles.includes("employee")) return "employee";
+  if (roles.includes("staff")) return "staff";
   return roles[0];
 });
 
