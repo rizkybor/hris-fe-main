@@ -58,6 +58,7 @@ const acknowledgeReview = async (id: number) => {
 };
 
 const profile = ref<any>(null);
+const profileNotFound = ref(false);
 
 const activeTab = ref("overview");
 const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
@@ -70,12 +71,17 @@ const tabs = [
 ];
 
 const loadProfile = async () => {
+  profileNotFound.value = false;
   try {
     profile.value = await employeeStore.fetchMyProfile();
     if (profile.value?.id) {
       await employeeStore.fetchPerformanceStatistics(profile.value.id);
     }
-  } catch (error) {}
+  } catch (error) {
+    // System accounts (e.g. Super Admin) have no employee profile -- that's
+    // expected, not a failure, so show an explanation instead of a blank page.
+    profileNotFound.value = true;
+  }
 };
 
 const taskStatusLabels: Record<string, string> = {
@@ -798,6 +804,17 @@ onMounted(() => {
           </p>
         </div>
     </div>
+  </div>
+
+  <!-- No Employee Profile (e.g. Super Admin / other system accounts) -->
+  <div v-else-if="profileNotFound" class="bg-white border border-[#DCDEDD] rounded-[14px] p-12 text-center">
+    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <User class="w-8 h-8 text-gray-400" />
+    </div>
+    <p class="text-brand-dark text-lg font-bold mb-1">No profile to show</p>
+    <p class="text-brand-light text-sm">
+      This account doesn't have an employee profile -- that's expected for system accounts like Super Admin.
+    </p>
   </div>
 </template>
 
