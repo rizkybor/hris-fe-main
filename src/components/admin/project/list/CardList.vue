@@ -3,9 +3,10 @@ import { computed } from "vue";
 import { formatToClientTimezone } from "@/helpers/format";
 import { can } from "@/helpers/permissionHelper";
 import _ from "lodash";
-import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, User, WalletIcon, AlertTriangle } from "lucide-vue-next";
+import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, WalletIcon, AlertTriangle } from "lucide-vue-next";
 import { formatRupiah } from "@/utils/formatUtils";
 import { getProjectHealth, PROJECT_HEALTH_BADGE_CLASS } from "@/utils/projectHealth";
+import Avatar from "@/components/common/Avatar.vue";
 
 const props = defineProps({
   data: {
@@ -88,18 +89,12 @@ const getProgressColor = (progress) => {
 
     <div class="border-t border-[#DCDEDD] pt-4 mb-4" v-if="data.leader">
       <div class="flex items-center gap-3">
-        <img
+        <Avatar
           :src="data.leader?.user?.profile_photo"
-          class="w-10 h-10 rounded-full object-cover"
-          v-if="data.leader?.user?.profile_photo"
+          :alt="data.leader?.user?.name"
+          size="w-10 h-10"
+          icon-size="w-5 h-5"
         />
-
-        <div
-          class="w-10 h-10 rounded-[12px] flex items-center justify-center bg-gray-100"
-          v-else
-        >
-          <User class="w-5 h-5 text-gray-400" />
-        </div>
 
         <div class="flex-1">
           <h5 class="text-brand-dark text-sm font-semibold">

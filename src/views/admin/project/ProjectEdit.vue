@@ -1,6 +1,7 @@
 <script setup>
 import { Input, Select, TextArea } from "@/components/common/form";
 import RightSidebar from "@/components/admin/employee/create/RightSidebar.vue";
+import Avatar from "@/components/common/Avatar.vue";
 import {
   Briefcase,
   Image,
@@ -549,18 +550,12 @@ watch(
                 v-if="selectedLeader"
               >
                 <div class="flex items-center gap-3">
-                  <img
+                  <Avatar
                     :src="selectedLeader?.user?.profile_photo"
-                    alt="Leader Photo"
-                    class="w-12 h-12 rounded-full object-cover"
-                    v-if="selectedLeader?.user?.profile_photo"
+                    :alt="selectedLeader?.user?.name"
+                    size="w-12 h-12"
+                    icon-size="w-5 h-5"
                   />
-                  <div
-                    class="w-12 h-12 rounded-[12px] flex items-center justify-center bg-gray-100"
-                    v-else
-                  >
-                    <UserCheck class="w-5 h-5 text-gray-400" />
-                  </div>
                   <div class="flex-1">
                     <h4 class="text-brand-dark text-base font-semibold">
                       {{ selectedLeader?.user?.name }}
@@ -950,22 +945,13 @@ watch(
             @click="handleSelectLeader(employee)"
           >
             <div class="flex items-center gap-4">
-              <div
-                class="w-14 h-14 relative flex items-center justify-center rounded-[12px] overflow-hidden"
-              >
-                <img
-                  :src="employee.user?.profile_photo"
-                  alt="Employee Photo"
-                  class="w-14 h-14 rounded-[12px] object-cover"
-                  v-if="employee.user?.profile_photo"
-                />
-                <div
-                  class="w-14 h-14 rounded-[12px] flex items-center justify-center bg-gray-100"
-                  v-else
-                >
-                  <UserCheck class="w-5 h-5 text-gray-400" />
-                </div>
-              </div>
+              <Avatar
+                :src="employee.user?.profile_photo"
+                :alt="employee.user?.name"
+                size="w-14 h-14"
+                icon-size="w-5 h-5"
+                rounded="rounded-[12px]"
+              />
               <div class="flex-1">
                 <h4 class="text-brand-dark text-base font-bold">
                   {{ employee.user?.name }}

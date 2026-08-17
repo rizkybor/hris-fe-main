@@ -27,6 +27,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useTeamStore } from "@/stores/team";
 import { useOptionStore } from "@/stores/option";
 import { useRoleStore } from "@/stores/role";
+import { getRoleLabel } from "@/utils/badgeUtils";
 import { storeToRefs } from "pinia";
 import RightSidebarStep2 from "@/components/admin/employee/create/RightSidebarStep2.vue";
 
@@ -55,7 +56,6 @@ const { employmentTypes, jobStatuses, workLocations, skillLevels, ptkpStatuses, 
 // Role store -- system roles are manager-configurable via Settings > Roles & Permissions
 const roleStore = useRoleStore();
 const { roles: systemRoles } = storeToRefs(roleStore);
-const KNOWN_ROLE_LABELS: Record<string, string> = { hr: "HR" };
 const roleOptions = computed(() =>
   systemRoles.value
     // Super Admin is a single, fixed system account (seeded directly) --
@@ -63,7 +63,7 @@ const roleOptions = computed(() =>
     .filter((role) => role.name !== "superadmin")
     .map((role) => ({
       value: role.name,
-      label: KNOWN_ROLE_LABELS[role.name] || role.name.charAt(0).toUpperCase() + role.name.slice(1),
+      label: getRoleLabel(role.name),
     }))
 );
 
