@@ -26,6 +26,7 @@ import {
 import { ref, computed, onMounted, watch } from "vue";
 import { useTeamStore } from "@/stores/team";
 import { useOptionStore } from "@/stores/option";
+import { useRoleStore } from "@/stores/role";
 import { storeToRefs } from "pinia";
 import RightSidebarStep2 from "@/components/admin/employee/create/RightSidebarStep2.vue";
 
@@ -48,19 +49,19 @@ const { teams } = storeToRefs(teamStore);
 
 // Option store
 const optionStore = useOptionStore();
-const { employmentTypes, jobStatuses, workLocations, skillLevels } =
+const { employmentTypes, jobStatuses, workLocations, skillLevels, ptkpStatuses, bankNames } =
   storeToRefs(optionStore);
 
-const ptkpStatuses = [
-  { value: "TK/0", label: "TK/0 - Tidak Kawin, 0 Tanggungan" },
-  { value: "TK/1", label: "TK/1 - Tidak Kawin, 1 Tanggungan" },
-  { value: "TK/2", label: "TK/2 - Tidak Kawin, 2 Tanggungan" },
-  { value: "TK/3", label: "TK/3 - Tidak Kawin, 3 Tanggungan" },
-  { value: "K/0", label: "K/0 - Kawin, 0 Tanggungan" },
-  { value: "K/1", label: "K/1 - Kawin, 1 Tanggungan" },
-  { value: "K/2", label: "K/2 - Kawin, 2 Tanggungan" },
-  { value: "K/3", label: "K/3 - Kawin, 3 Tanggungan" },
-];
+// Role store -- system roles are manager-configurable via Settings > Roles & Permissions
+const roleStore = useRoleStore();
+const { roles: systemRoles } = storeToRefs(roleStore);
+const KNOWN_ROLE_LABELS: Record<string, string> = { hr: "HR" };
+const roleOptions = computed(() =>
+  systemRoles.value.map((role) => ({
+    value: role.name,
+    label: KNOWN_ROLE_LABELS[role.name] || role.name.charAt(0).toUpperCase() + role.name.slice(1),
+  }))
+);
 
 // Team modal
 const teamModal = ref(false);
@@ -91,6 +92,9 @@ onMounted(async () => {
   await optionStore.fetchJobStatuses();
   await optionStore.fetchWorkLocations();
   await optionStore.fetchSkillLevels();
+  await optionStore.fetchPtkpStatuses();
+  await optionStore.fetchBankNames();
+  await roleStore.fetchRoles();
   if (form.value.monthly_salary) {
     form.value.monthly_salary = formatRupiah(form.value.monthly_salary);
   }
@@ -144,7 +148,7 @@ watch(
               name="job_title"
               type="text"
               v-model="form.job_title"
-              label="Job Title *"
+              label="Job Title"
               placeholder="e.g. Senior Developer"
               :error="errors?.job_title?.join(', ')"
               required
@@ -161,13 +165,9 @@ watch(
               id="role"
               name="role"
               v-model="form.role"
-              label="Role *"
+              label="Role"
               placeholder="Select role"
-              :options="[
-                { value: 'hr', label: 'HR' },
-                { value: 'finance', label: 'Finance' },
-                { value: 'employee', label: 'Employee' },
-              ]"
+              :options="roleOptions"
               :error="errors?.role?.join(', ')"
               required
             >
@@ -244,7 +244,7 @@ watch(
               name="years_experience"
               type="number"
               v-model="form.years_experience"
-              label="Years of Experience *"
+              label="Years of Experience"
               placeholder="e.g. 3"
               :error="errors?.years_experience?.join(', ')"
               required
@@ -260,7 +260,7 @@ watch(
               id="status"
               name="status"
               v-model="form.status"
-              label="Status *"
+              label="Status"
               placeholder="Select status"
               :options="jobStatuses"
               :error="errors?.status?.join(', ')"
@@ -277,7 +277,7 @@ watch(
               id="employment_type"
               name="employment_type"
               v-model="form.employment_type"
-              label="Employment Type *"
+              label="Employment Type"
               placeholder="Select employment type"
               :options="employmentTypes"
               :error="errors?.employment_type?.join(', ')"
@@ -294,7 +294,7 @@ watch(
               id="work_location"
               name="work_location"
               v-model="form.work_location"
-              label="Work Location *"
+              label="Work Location"
               placeholder="Select work location"
               :options="workLocations"
               :error="errors?.work_location?.join(', ')"
@@ -312,7 +312,7 @@ watch(
               name="start_date"
               type="date"
               v-model="form.start_date"
-              label="Start Date *"
+              label="Start Date"
               :error="errors?.start_date?.join(', ')"
               required
             >
@@ -328,10 +328,9 @@ watch(
               name="monthly_salary"
               type="text"
               v-model="form.monthly_salary"
-              label="Monthly Salary *"
-              placeholder="Rp 50.000"
+              label="Monthly Salary (optional)"
+              placeholder="Rp 5.000.000"
               :error="errors?.monthly_salary?.join(', ')"
-              required
             >
               <template #icon> Rp </template>
             </Input>
@@ -342,8 +341,8 @@ watch(
               id="ptkp_status"
               name="ptkp_status"
               v-model="form.ptkp_status"
-              label="Status PTKP (untuk PPh21)"
-              placeholder="Pilih status PTKP"
+              label="PTKP Status (for PPh21 Tax)"
+              placeholder="Select PTKP status"
               :options="ptkpStatuses"
               :error="errors?.ptkp_status?.join(', ')"
             >
@@ -359,7 +358,7 @@ watch(
               name="annual_leave_quota"
               type="number"
               v-model="form.annual_leave_quota"
-              label="Kuota Cuti Tahunan (hari)"
+              label="Annual Leave Quota (days)"
               placeholder="12"
             >
               <template #icon>
@@ -374,7 +373,7 @@ watch(
               name="probation_end_date"
               type="date"
               v-model="form.probation_end_date"
-              label="Akhir Masa Probation (opsional)"
+              label="Probation End Date (optional)"
             >
               <template #icon>
                 <CalendarPlus class="h-5 w-5 text-gray-400" />
@@ -388,7 +387,7 @@ watch(
               name="contract_end_date"
               type="date"
               v-model="form.contract_end_date"
-              label="Akhir Masa Kontrak (opsional)"
+              label="Contract End Date (optional)"
             >
               <template #icon>
                 <CalendarPlus class="h-5 w-5 text-gray-400" />
@@ -399,7 +398,7 @@ watch(
           <!-- Skill Level (Full Width) -->
           <div class="md:col-span-2 mb-4">
             <label class="block text-brand-dark text-base font-semibold mb-1"
-              >Skill Level *</label
+              >Skill Level<span class="text-red-600 ml-1">*</span></label
             >
             <div class="grid grid-cols-2 gap-4">
               <!-- Beginner Option -->
@@ -557,7 +556,7 @@ watch(
           <div>
             <h3 class="text-brand-dark text-xl font-bold">Bank Information</h3>
             <p class="text-brand-light text-sm font-normal">
-              Employee banking details for payroll processing
+              Optional -- employee banking details for payroll processing. Can be left blank for interns/students without a payroll account yet.
             </p>
           </div>
         </div>
@@ -568,22 +567,10 @@ watch(
               id="bank_name"
               name="bank_name"
               v-model="form.bank_name"
-              label="Bank Name *"
+              label="Bank Name (optional)"
               placeholder="Select bank"
-              :options="[
-                { value: 'bca', label: 'Bank Central Asia (BCA)' },
-                { value: 'mandiri', label: 'Bank Mandiri' },
-                { value: 'bni', label: 'Bank Negara Indonesia (BNI)' },
-                { value: 'bri', label: 'Bank Rakyat Indonesia (BRI)' },
-                { value: 'cimb', label: 'CIMB Niaga' },
-                { value: 'danamon', label: 'Bank Danamon' },
-                { value: 'permata', label: 'Bank Permata' },
-                { value: 'maybank', label: 'Maybank Indonesia' },
-                { value: 'ocbc', label: 'OCBC NISP' },
-                { value: 'panin', label: 'Panin Bank' },
-              ]"
+              :options="bankNames"
               :error="errors?.bank_name?.join(', ')"
-              required
             >
               <template #icon>
                 <Building2 class="h-5 w-5 text-gray-400" />
@@ -597,10 +584,9 @@ watch(
               name="account_number"
               type="text"
               v-model="form.account_number"
-              label="Account Number *"
+              label="Account Number (optional)"
               placeholder="e.g. 1234567890"
               :error="errors?.account_number?.join(', ')"
-              required
             >
               <template #icon>
                 <Hash class="h-5 w-5 text-gray-400" />
@@ -617,10 +603,9 @@ watch(
               name="account_holder_name"
               type="text"
               v-model="form.account_holder_name"
-              label="Account Holder Name *"
+              label="Account Holder Name (optional)"
               placeholder="e.g. John Doe Smith"
               :error="errors?.account_holder_name?.join(', ')"
-              required
             >
               <template #icon>
                 <User class="h-5 w-5 text-gray-400" />
@@ -637,7 +622,7 @@ watch(
               name="bank_branch"
               type="text"
               v-model="form.bank_branch"
-              label="Bank Branch (Optional)"
+              label="Bank Branch (optional)"
               placeholder="e.g. Jakarta Pusat"
               :error="errors?.bank_branch?.join(', ')"
             >
@@ -652,7 +637,7 @@ watch(
               id="account_type"
               name="account_type"
               v-model="form.account_type"
-              label="Account Type *"
+              label="Account Type (optional)"
               placeholder="Select account type"
               :options="[
                 { value: 'savings', label: 'Savings Account' },
@@ -660,7 +645,6 @@ watch(
                 { value: 'current', label: 'Current Account' },
               ]"
               :error="errors?.account_type?.join(', ')"
-              required
             >
               <template #icon>
                 <Wallet class="h-5 w-5 text-gray-400" />

@@ -47,7 +47,7 @@ export const getRoleBadgeClass = (role) => {
     manager: "bg-indigo-50 text-indigo-600 border-indigo-100",
     hr: "bg-blue-50 text-blue-600 border-blue-100",
     finance: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    employee: "bg-violet-50 text-violet-600 border-violet-100",
+    staff: "bg-violet-50 text-violet-600 border-violet-100",
   };
   return classes[role?.toLowerCase()] || "bg-gray-50 text-gray-600 border-gray-100";
 };
@@ -57,7 +57,7 @@ export const getRoleLabel = (role) => {
     manager: "Manager",
     hr: "HR",
     finance: "Finance",
-    employee: "Employee",
+    staff: "Staff",
   };
   return labels[role?.toLowerCase()] || role;
 };

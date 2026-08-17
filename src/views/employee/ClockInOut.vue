@@ -14,6 +14,9 @@ import {
   Loader2,
   AlertCircle,
   UserCheck,
+  CheckCircle2,
+  Circle,
+  Timer,
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
 import { useAlertModalStore } from "@/stores/alertModal";
@@ -336,97 +339,57 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="p-5">
-    <!-- Current Time and Status Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-      <!-- Clock Section -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-8 text-center"
-      >
-        <div class="mb-6">
-          <div class="flex items-center justify-center gap-3 mb-4">
-            <div
-              class="w-16 h-16 bg-blue-50 rounded-[12px] flex items-center justify-center"
+  <div class="p-3 sm:p-5">
+    <!-- Hero: Live Clock + Today's Status -->
+    <div class="main-card rounded-[14px] mb-4 sm:mb-6 p-5 sm:p-8 relative overflow-hidden">
+      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center gap-6 sm:gap-8">
+        <!-- Live Clock -->
+        <div class="flex-1 text-center lg:text-left">
+          <div class="flex items-center justify-center lg:justify-start gap-2 mb-3">
+            <div class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-[10px] flex items-center justify-center shrink-0">
+              <Clock class="w-4 h-4 text-white" />
+            </div>
+            <p class="text-brand-white-70 text-xs sm:text-sm font-semibold uppercase tracking-wide">
+              Live Clock &middot; Jakarta
+            </p>
+          </div>
+          <div class="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tabular-nums leading-none mb-2 break-all">
+            {{ currentTime }}
+          </div>
+          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-x-2 gap-y-1 text-brand-white-80">
+            <span class="text-sm sm:text-lg font-medium">{{ currentDate }}</span>
+            <span class="text-brand-white-70 text-sm hidden sm:inline">&bull;</span>
+            <span class="flex items-center gap-1 text-xs sm:text-sm">
+              <Globe class="w-3.5 h-3.5" /> GMT+7
+            </span>
+          </div>
+        </div>
+
+        <!-- Today's Status -->
+        <div class="w-full lg:w-auto lg:min-w-[320px]">
+          <div class="flex items-center justify-between mb-3 sm:mb-4">
+            <p class="text-brand-white-70 text-xs sm:text-sm font-semibold uppercase tracking-wide">
+              Today's Status
+            </p>
+            <span
+              :class="attendanceStatus.class"
+              class="px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold whitespace-nowrap"
             >
-              <Clock class="w-8 h-8 text-blue-600" />
+              {{ attendanceStatus.text }}
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 sm:gap-3">
+            <div class="bg-white/10 backdrop-blur-sm rounded-[12px] p-2.5 sm:p-3 text-center">
+              <p class="text-brand-white-70 text-[10px] sm:text-xs font-medium mb-1">Clock In</p>
+              <p class="text-white text-sm sm:text-lg font-bold tabular-nums">{{ checkInTime }}</p>
             </div>
-            <div>
-              <h3 class="text-brand-dark text-2xl font-bold">Current Time</h3>
-              <p class="text-brand-light text-base">Jakarta, Indonesia</p>
+            <div class="bg-white/10 backdrop-blur-sm rounded-[12px] p-2.5 sm:p-3 text-center">
+              <p class="text-brand-white-70 text-[10px] sm:text-xs font-medium mb-1">Clock Out</p>
+              <p class="text-white text-sm sm:text-lg font-bold tabular-nums">{{ checkOutTime }}</p>
             </div>
-          </div>
-
-          <!-- Live Clock Display -->
-          <div
-            class="bg-gradient-to-br from-primary-500 to-primary-600 rounded-[14px] p-8 text-white mb-4"
-          >
-            <div class="text-6xl font-extrabold mb-2">{{ currentTime }}</div>
-            <div class="text-xl font-medium opacity-90">{{ currentDate }}</div>
-          </div>
-
-          <!-- Time Zone Info -->
-          <p class="text-brand-light text-sm">
-            <Globe class="w-4 h-4 inline mr-1" />
-            GMT+7 (Western Indonesia Time)
-          </p>
-        </div>
-      </div>
-
-      <!-- Attendance Status -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
-      >
-        <div class="flex items-center gap-3 mb-6">
-          <div
-            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
-          >
-            <UserCheck class="w-6 h-6 text-green-600" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-xl font-bold">Today's Status</h3>
-            <p class="text-brand-light text-sm">Your attendance for today</p>
-          </div>
-        </div>
-
-        <div class="space-y-4">
-          <!-- Current Status -->
-          <div class="p-4 bg-gray-50 rounded-[12px] border border-[#DCDEDD]">
-            <div class="flex items-center justify-between">
-              <span class="text-brand-dark text-base font-medium">Status</span>
-              <span
-                :class="attendanceStatus.class"
-                class="px-3 py-1 rounded-md text-sm font-semibold"
-              >
-                {{ attendanceStatus.text }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Clock In Time -->
-          <div class="p-4 bg-gray-50 rounded-[12px] border border-[#DCDEDD]">
-            <div class="flex items-center justify-between">
-              <span class="text-brand-dark text-base font-medium">Clock In</span>
-              <span class="text-brand-light text-base">{{ checkInTime }}</span>
-            </div>
-          </div>
-
-          <!-- Clock Out Time -->
-          <div class="p-4 bg-gray-50 rounded-[12px] border border-[#DCDEDD]">
-            <div class="flex items-center justify-between">
-              <span class="text-brand-dark text-base font-medium">Clock Out</span>
-              <span class="text-brand-light text-base">{{ checkOutTime }}</span>
-            </div>
-          </div>
-
-          <!-- Working Hours -->
-          <div class="p-4 bg-blue-50 rounded-[12px] border border-[#DCDEDD]">
-            <div class="flex items-center justify-between">
-              <span class="text-brand-dark text-base font-medium"
-                >Working Hours</span
-              >
-              <span class="text-blue-600 text-base font-semibold">{{
-                workingHours
-              }}</span>
+            <div class="bg-white/10 backdrop-blur-sm rounded-[12px] p-2.5 sm:p-3 text-center">
+              <p class="text-brand-white-70 text-[10px] sm:text-xs font-medium mb-1">Worked</p>
+              <p class="text-white text-sm sm:text-lg font-bold tabular-nums">{{ workingHours }}</p>
             </div>
           </div>
         </div>
@@ -434,20 +397,25 @@ onUnmounted(() => {
     </div>
 
     <!-- Location and Actions Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 items-start">
       <!-- Location and Camera -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-6"
       >
-        <div class="flex items-center gap-3 mb-6">
+        <div class="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-6">
           <div
-            class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
+            class="w-7 h-7 sm:w-9 sm:h-9 bg-blue-600 rounded-full flex items-center justify-center shrink-0 text-white text-xs sm:text-sm font-bold"
           >
-            <MapPin class="w-6 h-6 text-orange-600" />
+            1
           </div>
-          <div>
-            <h3 class="text-brand-dark text-xl font-bold">Location & Photo</h3>
-            <p class="text-brand-light text-sm">Capture your work location</p>
+          <div
+            class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-50 rounded-[12px] flex items-center justify-center shrink-0"
+          >
+            <MapPin class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+          </div>
+          <div class="min-w-0">
+            <h3 class="text-brand-dark text-base sm:text-xl font-bold truncate">Location & Photo</h3>
+            <p class="text-brand-light text-xs sm:text-sm truncate">Verify where you're working from</p>
           </div>
         </div>
 
@@ -461,29 +429,29 @@ onUnmounted(() => {
               'bg-red-50': locationStatus === 'error',
               'bg-gray-50': locationStatus === 'default',
             }"
-            class="p-4 rounded-[12px] border border-[#DCDEDD] mb-3"
+            class="p-3 sm:p-4 rounded-[12px] border border-[#DCDEDD] mb-3"
           >
-            <div class="flex items-center gap-3">
+            <div class="flex items-start sm:items-center gap-3">
               <Loader2
                 v-if="locationStatus === 'loading'"
-                class="w-5 h-5 text-yellow-600 animate-spin"
+                class="w-5 h-5 text-yellow-600 animate-spin shrink-0 mt-0.5 sm:mt-0"
               />
               <MapPin
                 v-else-if="locationStatus === 'success'"
-                class="w-5 h-5 text-green-600"
+                class="w-5 h-5 text-green-600 shrink-0 mt-0.5 sm:mt-0"
               />
               <AlertCircle
                 v-else-if="locationStatus === 'error'"
-                class="w-5 h-5 text-red-600"
+                class="w-5 h-5 text-red-600 shrink-0 mt-0.5 sm:mt-0"
               />
-              <MapPin v-else class="w-5 h-5 text-gray-600" />
+              <MapPin v-else class="w-5 h-5 text-gray-600 shrink-0 mt-0.5 sm:mt-0" />
 
-              <div class="flex-1">
-                <p class="text-brand-dark text-base font-semibold">
+              <div class="flex-1 min-w-0">
+                <p class="text-brand-dark text-sm sm:text-base font-semibold break-words">
                   {{ locationName }}
                 </p>
-                <p class="text-brand-light text-sm">{{ locationAddress }}</p>
-                <p v-if="locationCoords" class="text-brand-light text-xs mt-1">
+                <p class="text-brand-light text-xs sm:text-sm break-words">{{ locationAddress }}</p>
+                <p v-if="locationCoords" class="text-brand-light text-[11px] sm:text-xs mt-1 break-words">
                   {{ locationCoords }}
                 </p>
               </div>
@@ -494,23 +462,23 @@ onUnmounted(() => {
           <button
             @click="getCurrentLocation"
             :disabled="isGettingLocation"
-            class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center justify-center gap-2 mb-3 disabled:opacity-50"
+            class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:py-2 flex items-center justify-center gap-2 mb-3 disabled:opacity-50"
           >
-            <MapPin class="w-4 h-4 text-gray-600" />
-            <span class="text-brand-dark text-sm font-semibold">
+            <MapPin class="w-4 h-4 text-gray-600 shrink-0" />
+            <span class="text-brand-dark text-sm font-semibold text-center">
               {{ isGettingLocation ? "Getting Location..." : currentLocation ? "Refresh Location" : "Get Current Location" }}
             </span>
           </button>
 
           <!-- Office Location Reference -->
-          <div class="p-4 bg-blue-50 rounded-[12px] border border-[#DCDEDD]">
-            <div class="flex items-center gap-3">
-              <Building class="w-5 h-5 text-blue-600" />
-              <div>
-                <p class="text-brand-dark text-base font-semibold">
+          <div class="p-3 sm:p-4 bg-blue-50 rounded-[12px] border border-[#DCDEDD]">
+            <div class="flex items-start sm:items-center gap-3">
+              <Building class="w-5 h-5 text-blue-600 shrink-0 mt-0.5 sm:mt-0" />
+              <div class="min-w-0">
+                <p class="text-brand-dark text-sm sm:text-base font-semibold">
                   Jakarta Office
                 </p>
-                <p class="text-brand-light text-sm">
+                <p class="text-brand-light text-xs sm:text-sm break-words">
                   Jl. Sudirman No. 123, Jakarta
                 </p>
               </div>
@@ -519,12 +487,12 @@ onUnmounted(() => {
         </div>
 
         <!-- Webcam Section -->
-        <div class="space-y-4">
+        <div class="space-y-3 sm:space-y-4">
           <div class="relative">
             <video
               id="webcamPreview"
               :class="{ hidden: !currentStream || capturedPhotoData }"
-              class="w-full h-48 bg-gray-100 rounded-[12px] object-cover"
+              class="w-full h-40 sm:h-48 bg-gray-100 rounded-[12px] object-cover"
               autoplay
               muted
             ></video>
@@ -532,11 +500,11 @@ onUnmounted(() => {
 
             <div
               v-if="!currentStream && !capturedPhotoData"
-              class="w-full h-48 bg-gray-100 rounded-[12px] flex items-center justify-center border-2 border-dashed border-gray-300"
+              class="w-full h-40 sm:h-48 bg-gray-100 rounded-[12px] flex items-center justify-center border-2 border-dashed border-gray-300"
             >
-              <div class="text-center">
-                <Camera class="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p class="text-gray-500 text-sm">
+              <div class="text-center px-4">
+                <Camera class="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
+                <p class="text-gray-500 text-xs sm:text-sm">
                   Camera preview will appear here
                 </p>
               </div>
@@ -545,17 +513,17 @@ onUnmounted(() => {
             <img
               v-if="capturedPhotoData"
               :src="capturedPhotoData"
-              class="w-full h-48 rounded-[12px] object-cover"
+              class="w-full h-40 sm:h-48 rounded-[12px] object-cover"
               alt="Captured photo"
             />
           </div>
 
           <!-- Camera Controls -->
-          <div v-if="!capturedPhotoData" class="flex gap-3">
+          <div v-if="!capturedPhotoData" class="flex flex-col sm:flex-row gap-3">
             <button
               v-if="!currentStream"
               @click="startCamera"
-              class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center justify-center gap-2"
+              class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:py-2 flex items-center justify-center gap-2"
             >
               <Video class="w-4 h-4 text-gray-600" />
               <span class="text-brand-dark text-sm font-semibold"
@@ -565,7 +533,7 @@ onUnmounted(() => {
             <button
               v-if="currentStream"
               @click="capturePhoto"
-              class="flex-1 btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2 flex items-center justify-center gap-2"
+              class="flex-1 btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:py-2 flex items-center justify-center gap-2"
             >
               <Camera class="w-4 h-4 text-white" />
               <span class="text-white text-sm font-semibold">Take Photo</span>
@@ -575,7 +543,7 @@ onUnmounted(() => {
           <button
             v-if="capturedPhotoData"
             @click="retakePhoto"
-            class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center justify-center gap-2"
+            class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:py-2 flex items-center justify-center gap-2"
           >
             <RotateCcw class="w-4 h-4 text-gray-600" />
             <span class="text-brand-dark text-sm font-semibold"
@@ -587,19 +555,63 @@ onUnmounted(() => {
 
       <!-- Clock In/Out Action -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-8 text-center"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-8"
       >
-        <div class="mb-6">
+        <div class="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-6">
           <div
-            class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4"
+            class="w-7 h-7 sm:w-9 sm:h-9 bg-blue-600 rounded-full flex items-center justify-center shrink-0 text-white text-xs sm:text-sm font-bold"
           >
-            <LogIn v-if="!isCheckedIn" class="w-10 h-10 text-blue-600" />
-            <LogOut v-else class="w-10 h-10 text-blue-600" />
+            2
           </div>
-          <h3 class="text-brand-dark text-2xl font-bold mb-2">
+          <div class="min-w-0">
+            <h3 class="text-brand-dark text-base sm:text-xl font-bold truncate">Confirm & Submit</h3>
+            <p class="text-brand-light text-xs sm:text-sm truncate">Review readiness, then clock in or out</p>
+          </div>
+        </div>
+
+        <!-- Readiness Checklist -->
+        <div class="space-y-2 mb-6">
+          <div
+            class="flex items-center gap-2.5 px-4 py-2.5 rounded-[10px] border"
+            :class="currentLocation ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-[#DCDEDD]'"
+          >
+            <CheckCircle2 v-if="currentLocation" class="w-5 h-5 text-green-600 shrink-0" />
+            <Circle v-else class="w-5 h-5 text-gray-300 shrink-0" />
+            <span
+              class="text-sm font-semibold"
+              :class="currentLocation ? 'text-green-700' : 'text-brand-light'"
+            >
+              Location detected
+            </span>
+          </div>
+          <div
+            class="flex items-center gap-2.5 px-4 py-2.5 rounded-[10px] border"
+            :class="capturedPhotoData ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-[#DCDEDD]'"
+          >
+            <CheckCircle2 v-if="capturedPhotoData" class="w-5 h-5 text-green-600 shrink-0" />
+            <Circle v-else class="w-5 h-5 text-gray-300 shrink-0" />
+            <span
+              class="text-sm font-semibold"
+              :class="capturedPhotoData ? 'text-green-700' : 'text-brand-light'"
+            >
+              Photo captured
+              <span class="font-normal text-gray-400">(optional)</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Icon + Prompt -->
+        <div class="text-center mb-6">
+          <div
+            class="w-16 h-16 sm:w-20 sm:h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
+          >
+            <LogIn v-if="!isCheckedIn" class="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" />
+            <LogOut v-else class="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" />
+          </div>
+          <h4 class="text-brand-dark text-lg sm:text-2xl font-bold mb-1.5 sm:mb-2">
             {{ isCheckedIn ? "Ready to Clock Out?" : "Ready to Clock In?" }}
-          </h3>
-          <p class="text-brand-light text-base">
+          </h4>
+          <p class="text-brand-light text-sm sm:text-base px-2">
             {{
               isCheckedIn
                 ? "Mark your departure with location"
@@ -612,10 +624,10 @@ onUnmounted(() => {
           v-if="!isCheckedIn"
           @click="handleCheckIn"
           :disabled="!canCheckIn || loading"
-          class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-8 py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <LogIn class="w-6 h-6 text-white" />
-          <span class="text-white text-lg font-bold">
+          <LogIn class="w-5 h-5 sm:w-6 sm:h-6 text-white shrink-0" />
+          <span class="text-white text-base sm:text-lg font-bold">
             {{ loading ? "Processing..." : "Clock In" }}
           </span>
         </button>
@@ -624,16 +636,16 @@ onUnmounted(() => {
           v-else
           @click="handleCheckOut"
           :disabled="!canCheckOut || loading"
-          class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-8 py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <LogOut class="w-6 h-6 text-white" />
-          <span class="text-white text-lg font-bold">
+          <LogOut class="w-5 h-5 sm:w-6 sm:h-6 text-white shrink-0" />
+          <span class="text-white text-base sm:text-lg font-bold">
             {{ loading ? "Processing..." : "Clock Out" }}
           </span>
         </button>
 
-        <p class="text-brand-light text-sm mt-4">
-          <Info class="w-4 h-4 inline mr-1" />
+        <p class="text-brand-light text-xs sm:text-sm mt-4 text-center px-2">
+          <Info class="w-4 h-4 inline mr-1 -mt-0.5" />
           Please get your location before clocking in/out
         </p>
       </div>

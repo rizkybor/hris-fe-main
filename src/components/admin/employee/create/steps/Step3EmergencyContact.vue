@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { storeToRefs } from "pinia";
+import { useOptionStore } from "@/stores/option";
 import {
   User,
   Phone,
@@ -8,9 +10,13 @@ import {
   ChevronRight,
   Globe,
   Mail,
+  Upload,
+  X,
+  Image as ImageIcon,
 } from "lucide-vue-next";
 import { Input, TextArea, Select } from "@/components/common/form";
 import RightSidebarStep3 from "@/components/admin/employee/create/RightSidebarStep3.vue";
+import EmployeeFiles from "@/components/admin/employee/EmployeeFiles.vue";
 
 interface Props {
   modelValue: {
@@ -20,16 +26,79 @@ interface Props {
     emergency_contact_email: string;
     additional_notes: string;
     preferred_language: string;
+    documents?: File[];
+    document_names?: string[];
   };
   errors?: any;
+  isEditing?: boolean;
+  employeeId?: string | number;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  isEditing: false,
+});
 const emit = defineEmits(["update:modelValue"]);
 
 const form = computed({
   get: () => props.modelValue,
   set: (value) => emit("update:modelValue", value),
+});
+
+// Create mode only: queue files client-side, uploaded right after the
+// employee record is created (there's no employee id to attach them to yet).
+const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+const ALLOWED_TYPES = ["application/pdf", "image/png", "image/jpeg"];
+const pickerError = ref("");
+const fileInputRef = ref<HTMLInputElement | null>(null);
+
+const queuedDocuments = computed(() => form.value.documents || []);
+const queuedDocumentNames = computed(() => form.value.document_names || []);
+
+const stripExtension = (filename: string) => filename.replace(/\.[^/.]+$/, "");
+
+const handlePickFiles = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const selected = Array.from(target.files || []);
+  pickerError.value = "";
+
+  const invalid = selected.find(
+    (file) => !ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE
+  );
+  if (invalid) {
+    pickerError.value = `"${invalid.name}" is not allowed. Only PDF, PNG, or JPEG files up to 2MB are supported.`;
+    if (fileInputRef.value) fileInputRef.value.value = "";
+    return;
+  }
+
+  form.value = {
+    ...form.value,
+    documents: [...queuedDocuments.value, ...selected],
+    document_names: [...queuedDocumentNames.value, ...selected.map((f) => stripExtension(f.name))],
+  };
+  if (fileInputRef.value) fileInputRef.value.value = "";
+};
+
+const updateQueuedDocumentName = (index: number, name: string) => {
+  const next = [...queuedDocumentNames.value];
+  next[index] = name;
+  form.value = { ...form.value, document_names: next };
+};
+
+const removeQueuedDocument = (index: number) => {
+  const nextFiles = [...queuedDocuments.value];
+  nextFiles.splice(index, 1);
+  const nextNames = [...queuedDocumentNames.value];
+  nextNames.splice(index, 1);
+  form.value = { ...form.value, documents: nextFiles, document_names: nextNames };
+};
+
+const isImage = (file: File) => file.type.startsWith("image/");
+
+const optionStore = useOptionStore();
+const { preferredLanguages } = storeToRefs(optionStore);
+
+onMounted(() => {
+  optionStore.fetchPreferredLanguages();
 });
 </script>
 
@@ -57,7 +126,7 @@ const form = computed({
           <div class="mb-4">
             <Input
               v-model="form.emergency_contact_name"
-              label="Full Name *"
+              label="Full Name"
               placeholder="Emergency contact name"
               :error="
                 props.errors?.['emergency_contacts.0.full_name']?.join(', ')
@@ -74,7 +143,7 @@ const form = computed({
           <div class="mb-4">
             <Input
               v-model="form.emergency_contact_relationship"
-              label="Relationship *"
+              label="Relationship"
               placeholder="e.g., Spouse, Parent, Sibling"
               :error="
                 props.errors?.['emergency_contacts.0.relationship']?.join(', ')
@@ -91,8 +160,8 @@ const form = computed({
           <div class="mb-4">
             <Input
               v-model="form.emergency_contact_phone"
-              label="Phone Number *"
-              placeholder="+1 (555) 123-4567"
+              label="Phone Number"
+              placeholder="+62 812-3456-7890"
               :error="props.errors?.['emergency_contacts.0.phone']?.join(', ')"
               required
             >
@@ -145,12 +214,7 @@ const form = computed({
               label="Preferred Language"
               placeholder="Select language"
               :error="props.errors?.preferred_language?.join(', ')"
-              :options="[
-                { value: 'en', label: 'English' },
-                { value: 'id', label: 'Indonesian' },
-                { value: 'es', label: 'Spanish' },
-                { value: 'fr', label: 'French' },
-              ]"
+              :options="preferredLanguages"
             >
               <template #icon>
                 <Globe class="w-5 h-5 text-gray-400" />
@@ -171,6 +235,79 @@ const form = computed({
                 <FileText class="w-5 h-5 text-gray-400" />
               </template>
             </TextArea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents Section -->
+      <EmployeeFiles v-if="isEditing && employeeId" :employee-id="employeeId" />
+
+      <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-3 mb-6">
+          <div
+            class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center"
+          >
+            <FileText class="w-6 h-6 text-indigo-600" />
+          </div>
+          <div>
+            <h3 class="text-brand-dark text-xl font-bold">Documents</h3>
+            <p class="text-brand-light text-sm font-normal">
+              Optional -- PDF, PNG, or JPEG, up to 2MB each. Uploaded once the employee is created.
+            </p>
+          </div>
+        </div>
+
+        <input
+          ref="fileInputRef"
+          type="file"
+          multiple
+          accept="application/pdf,image/png,image/jpeg"
+          class="hidden"
+          @change="handlePickFiles"
+        />
+
+        <button
+          type="button"
+          @click="fileInputRef?.click()"
+          class="w-full border-2 border-dashed border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-4 py-6 flex flex-col items-center justify-center gap-1.5"
+        >
+          <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center">
+            <Upload class="w-4 h-4 text-blue-600" />
+          </div>
+          <span class="text-brand-dark text-sm font-semibold">Choose Files</span>
+          <span class="text-brand-light text-xs">PDF, PNG, or JPEG up to 2MB each</span>
+        </button>
+
+        <p v-if="pickerError" class="text-red-500 text-xs mt-2">{{ pickerError }}</p>
+
+        <div v-if="queuedDocuments.length" class="space-y-2 mt-4">
+          <div
+            v-for="(file, index) in queuedDocuments"
+            :key="`${file.name}-${index}`"
+            class="flex items-center gap-3 p-3 border border-[#DCDEDD] rounded-[10px]"
+          >
+            <div class="w-9 h-9 bg-indigo-50 rounded-[8px] flex items-center justify-center shrink-0">
+              <ImageIcon v-if="isImage(file)" class="w-4 h-4 text-indigo-600" />
+              <FileText v-else class="w-4 h-4 text-indigo-600" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-brand-light text-xs truncate mb-1">{{ file.name }} &middot; {{ (file.size / 1024).toFixed(0) }} KB</p>
+              <input
+                :value="queuedDocumentNames[index]"
+                @input="updateQueuedDocumentName(index, ($event.target as HTMLInputElement).value)"
+                type="text"
+                required
+                placeholder="Document name (required)"
+                class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:border-2 outline-none"
+              />
+            </div>
+            <button
+              type="button"
+              @click="removeQueuedDocument(index)"
+              class="text-gray-400 hover:text-red-600 transition-colors shrink-0"
+            >
+              <X class="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>

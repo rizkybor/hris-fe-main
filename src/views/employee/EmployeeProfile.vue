@@ -34,7 +34,11 @@ import {
   Clock,
   Laptop,
   Star,
+  LayoutGrid,
+  Wallet,
+  ChevronRight,
 } from "lucide-vue-next";
+import { useScrollFade } from "@/composables/useScrollFade";
 
 const employeeStore = useEmployeeStore();
 const { loading, performanceStatistics } = storeToRefs(employeeStore);
@@ -54,6 +58,16 @@ const acknowledgeReview = async (id: number) => {
 };
 
 const profile = ref<any>(null);
+
+const activeTab = ref("overview");
+const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
+const tabs = [
+  { id: "overview", label: "Overview", icon: LayoutGrid },
+  { id: "employment", label: "Employment & Team", icon: Wallet },
+  { id: "emergency", label: "Emergency Contact", icon: Phone },
+  { id: "tasks", label: "Tasks", icon: ListChecks },
+  { id: "more", label: "Assets & Reviews", icon: Star },
+];
 
 const loadProfile = async () => {
   try {
@@ -212,7 +226,7 @@ onMounted(() => {
           <div>
             <p class="text-brand-dark text-sm font-medium">Tasks Completed</p>
             <p
-              class="text-brand-dark text-3xl font-extrabold leading-none my-2"
+              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-none my-2"
             >
               {{ performanceStatistics?.tasks_completed || 0 }}
             </p>
@@ -234,7 +248,7 @@ onMounted(() => {
           <div>
             <p class="text-brand-dark text-sm font-medium">Attendance Rate</p>
             <p
-              class="text-brand-dark text-3xl font-extrabold leading-none my-2"
+              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-none my-2"
             >
               {{ performanceStatistics?.attendance_rate || 0 }}%
             </p>
@@ -256,7 +270,7 @@ onMounted(() => {
           <div>
             <p class="text-brand-dark text-sm font-medium">Active Projects</p>
             <p
-              class="text-brand-dark text-3xl font-extrabold leading-none my-2"
+              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-none my-2"
             >
               {{ performanceStatistics?.projects_count || 0 }}
             </p>
@@ -278,7 +292,7 @@ onMounted(() => {
           <div>
             <p class="text-brand-dark text-sm font-medium">Performance</p>
             <p
-              class="text-brand-dark text-3xl font-extrabold leading-none my-2"
+              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-none my-2"
             >
               {{ performanceStatistics?.performance_score || 0 }}%
             </p>
@@ -293,10 +307,48 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
-      <!-- Left Column -->
-      <div class="space-y-6">
+    <!-- Tab Bar -->
+    <div class="relative mb-6">
+      <div
+        ref="tabScrollRef"
+        @scroll="updateTabFade"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] p-2 overflow-x-auto"
+      >
+        <div class="flex items-center gap-1 min-w-max">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            @click="activeTab = tab.id"
+            :class="[
+              'flex items-center gap-2 px-4 py-2.5 rounded-[10px] text-sm font-semibold transition-all duration-200 whitespace-nowrap',
+              activeTab === tab.id
+                ? 'blue-gradient blue-btn-shadow text-white'
+                : 'text-brand-light hover:bg-gray-50 hover:text-brand-dark',
+            ]"
+          >
+            <component :is="tab.icon" class="w-4 h-4" />
+            {{ tab.label }}
+          </button>
+        </div>
+      </div>
+      <Transition name="fade">
+        <div
+          v-if="showTabRightFade"
+          class="sm:hidden pointer-events-none absolute inset-y-0 right-0 w-10 rounded-r-[14px] bg-gradient-to-l from-white via-white/80 to-transparent flex items-center justify-end pr-1"
+        >
+          <ChevronRight class="w-4 h-4 text-[#0C51D9] scroll-hint-nudge" />
+        </div>
+      </Transition>
+      <Transition name="fade">
+        <div
+          v-if="showTabLeftFade"
+          class="sm:hidden pointer-events-none absolute inset-y-0 left-0 w-8 rounded-l-[14px] bg-gradient-to-r from-white via-white/80 to-transparent"
+        ></div>
+      </Transition>
+    </div>
+
+    <!-- Overview Tab -->
+    <div v-show="activeTab === 'overview'" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
         <!-- Personal Information -->
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
@@ -351,65 +403,6 @@ onMounted(() => {
                 class="text-brand-dark text-base font-medium text-right max-w-[60%]"
                 >{{ profile?.hobby || "-" }}</span
               >
-            </div>
-          </div>
-        </div>
-
-        <!-- Employment Details -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div
-              class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Briefcase class="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">
-                Employment Details
-              </h3>
-              <p class="text-brand-light text-base">
-                Work and compensation information
-              </p>
-            </div>
-          </div>
-          <div class="space-y-4">
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Job Title</span>
-              <span class="text-brand-dark text-base font-medium">{{
-                capitalize(profile?.job_information?.job_title)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Start Date</span>
-              <span class="text-brand-dark text-base font-medium">{{
-                formatDate(profile?.job_information?.start_date)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Employment Type</span>
-              <span class="text-brand-dark text-base font-medium">{{
-                capitalize(profile?.job_information?.employment_type)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Monthly Salary</span>
-              <span class="text-brand-dark text-base font-medium">{{
-                formatCurrency(profile?.job_information?.monthly_salary)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Skill Level</span>
-              <span
-                :class="skillLevelBadgeClass"
-                class="px-2 py-1 rounded-md text-sm font-semibold"
-                >{{ capitalize(profile?.job_information?.skill_level) }}</span
-              >
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Work Location</span>
-              <span class="text-brand-dark text-base font-medium">{{
-                capitalize(profile?.job_information?.work_location)
-              }}</span>
             </div>
           </div>
         </div>
@@ -472,72 +465,78 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Emergency Contact -->
+    </div>
+
+    <!-- Employment & Team Tab -->
+    <div v-show="activeTab === 'employment'" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
+        <!-- Employment Details -->
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
             <div
-              class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
+              class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
             >
-              <Phone class="w-6 h-6 text-red-600" />
+              <Briefcase class="w-6 h-6 text-green-600" />
             </div>
             <div>
               <h3 class="text-brand-dark text-lg font-bold">
-                Emergency Contact
+                Employment Details
               </h3>
               <p class="text-brand-light text-base">
-                Person to contact in case of emergency
+                Work and compensation information
               </p>
             </div>
           </div>
-          <div
-            class="space-y-4"
-            v-if="
-              profile?.emergency_contacts &&
-              profile.emergency_contacts.length > 0
-            "
-          >
+          <div class="space-y-4">
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Contact Name</span>
+              <span class="text-brand-light text-base">Job Title</span>
               <span class="text-brand-dark text-base font-medium">{{
-                profile.emergency_contacts[0]?.full_name || "-"
+                capitalize(profile?.job_information?.job_title)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Relationship</span>
+              <span class="text-brand-light text-base">Start Date</span>
               <span class="text-brand-dark text-base font-medium">{{
-                capitalize(profile.emergency_contacts[0]?.relationship)
+                formatDate(profile?.job_information?.start_date)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Phone Number</span>
+              <span class="text-brand-light text-base">Employment Type</span>
               <span class="text-brand-dark text-base font-medium">{{
-                profile.emergency_contacts[0]?.phone || "-"
+                capitalize(profile?.job_information?.employment_type)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Email</span>
+              <span class="text-brand-light text-base">Monthly Salary</span>
               <span class="text-brand-dark text-base font-medium">{{
-                profile.emergency_contacts[0]?.email || "-"
+                formatCurrency(profile?.job_information?.monthly_salary)
               }}</span>
             </div>
-          </div>
-          <div v-else class="text-center text-gray-500 py-4">
-            No emergency contact added
+            <div class="flex justify-between items-center">
+              <span class="text-brand-light text-base">Skill Level</span>
+              <span
+                :class="skillLevelBadgeClass"
+                class="px-2 py-1 rounded-md text-sm font-semibold"
+                >{{ capitalize(profile?.job_information?.skill_level) }}</span
+              >
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-brand-light text-base">Work Location</span>
+              <span class="text-brand-dark text-base font-medium">{{
+                capitalize(profile?.job_information?.work_location)
+              }}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Right Column -->
-      <div class="space-y-6">
         <!-- Team Information -->
         <div
           class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 h-fit"
           v-if="profile?.job_information?.team"
         >
-          <div class="flex items-center justify-between mb-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div class="flex items-center gap-3">
               <div
-                class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center"
+                class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0"
               >
                 <Users class="w-6 h-6 text-indigo-600" />
               </div>
@@ -548,7 +547,7 @@ onMounted(() => {
             </div>
             <button
               @click="goToMyTeam"
-              class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
+              class="w-full sm:w-auto border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center justify-center gap-2"
             >
               <Users class="w-4 h-4 text-gray-600" />
               <span class="text-brand-dark text-sm font-semibold"
@@ -559,21 +558,21 @@ onMounted(() => {
 
           <!-- Team Header -->
           <div
-            class="flex items-center gap-4 mb-4 p-4 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"
+            class="flex items-center gap-3 sm:gap-4 mb-4 p-3 sm:p-4 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"
           >
             <div
-              class="w-16 h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden"
+              class="w-12 h-12 sm:w-16 sm:h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden shrink-0"
             >
               <div
                 class="w-full h-full absolute bg-white/20 rounded-[12px]"
               ></div>
-              <Code class="w-8 h-8 text-white relative z-10" />
+              <Code class="w-6 h-6 sm:w-8 sm:h-8 text-white relative z-10" />
             </div>
-            <div class="flex-1">
-              <h4 class="text-white text-xl font-bold">
+            <div class="flex-1 min-w-0">
+              <h4 class="text-white text-base sm:text-xl font-bold truncate">
                 {{ profile.job_information.team.name }}
               </h4>
-              <p class="text-white/80 text-base font-normal">
+              <p class="text-white/80 text-sm sm:text-base font-normal">
                 {{ profile.job_information.team.members_count ?? 0 }} members •
                 {{ capitalize(profile.job_information.team.status) }}
               </p>
@@ -604,7 +603,66 @@ onMounted(() => {
             </div>
           </div>
         </div>
+    </div>
 
+    <!-- Emergency Contact Tab -->
+    <div v-show="activeTab === 'emergency'" class="mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 max-w-2xl">
+        <div class="flex items-center gap-3 mb-4">
+          <div
+            class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
+          >
+            <Phone class="w-6 h-6 text-red-600" />
+          </div>
+          <div>
+            <h3 class="text-brand-dark text-lg font-bold">
+              Emergency Contact
+            </h3>
+            <p class="text-brand-light text-base">
+              Person to contact in case of emergency
+            </p>
+          </div>
+        </div>
+        <div
+          class="space-y-4"
+          v-if="
+            profile?.emergency_contacts &&
+            profile.emergency_contacts.length > 0
+          "
+        >
+          <div class="flex justify-between items-center">
+            <span class="text-brand-light text-base">Contact Name</span>
+            <span class="text-brand-dark text-base font-medium">{{
+              profile.emergency_contacts[0]?.full_name || "-"
+            }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-brand-light text-base">Relationship</span>
+            <span class="text-brand-dark text-base font-medium">{{
+              capitalize(profile.emergency_contacts[0]?.relationship)
+            }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-brand-light text-base">Phone Number</span>
+            <span class="text-brand-dark text-base font-medium">{{
+              profile.emergency_contacts[0]?.phone || "-"
+            }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-brand-light text-base">Email</span>
+            <span class="text-brand-dark text-base font-medium">{{
+              profile.emergency_contacts[0]?.email || "-"
+            }}</span>
+          </div>
+        </div>
+        <div v-else class="text-center text-gray-500 py-4">
+          No emergency contact added
+        </div>
+      </div>
+    </div>
+
+    <!-- Tasks Tab -->
+    <div v-show="activeTab === 'tasks'" class="mb-6">
         <!-- Latest 5 Tasks Assigned -->
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center justify-between mb-4">
@@ -667,7 +725,10 @@ onMounted(() => {
             </div>
           </div>
         </div>
+    </div>
 
+    <!-- Assets & Reviews Tab -->
+    <div v-show="activeTab === 'more'" class="mb-6 space-y-6">
         <!-- My Assets -->
         <div v-if="myAssets.length > 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
@@ -725,7 +786,28 @@ onMounted(() => {
             </div>
           </div>
         </div>
-      </div>
+
+        <!-- Empty State -->
+        <div
+          v-if="myAssets.length === 0 && myReviews.length === 0"
+          class="bg-white border border-[#DCDEDD] rounded-[14px] p-12 text-center"
+        >
+          <Star class="w-10 h-10 text-gray-300 mx-auto mb-3" />
+          <p class="text-brand-light text-base font-medium">
+            No asset & reviews assigned
+          </p>
+        </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

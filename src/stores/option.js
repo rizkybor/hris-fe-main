@@ -10,6 +10,9 @@ export const useOptionStore = defineStore("option", {
         leaveTypes: [],
         workLocations: [],
         skillLevels: [],
+        ptkpStatuses: [],
+        bankNames: [],
+        preferredLanguages: [],
         loading: false,
         error: null,
     }),
@@ -100,6 +103,51 @@ export const useOptionStore = defineStore("option", {
             } catch (error) {
                 this.error = handleError(error);
                 console.error('Failed to fetch skill levels:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // options/ptkp-statuses
+        async fetchPtkpStatuses() {
+            this.loading = true;
+
+            try {
+                const response = await axiosInstance.get('/options/ptkp-statuses');
+                this.ptkpStatuses = response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                console.error('Failed to fetch PTKP statuses:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // options/bank-names
+        async fetchBankNames() {
+            this.loading = true;
+
+            try {
+                const response = await axiosInstance.get('/options/bank-names');
+                this.bankNames = response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                console.error('Failed to fetch bank names:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // options/preferred-languages
+        async fetchPreferredLanguages() {
+            this.loading = true;
+
+            try {
+                const response = await axiosInstance.get('/options/preferred-languages');
+                this.preferredLanguages = response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                console.error('Failed to fetch preferred languages:', error);
             } finally {
                 this.loading = false;
             }
