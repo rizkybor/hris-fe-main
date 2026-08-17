@@ -324,7 +324,7 @@ const getInitials = (name) => {
         <div class="hidden sm:block w-px h-6 bg-[#DCDEDD] mx-2"></div>
 
         <!-- User Profile -->
-        <div class="relative z-[10]">
+        <div class="relative z-[9999]">
           <div
             class="flex items-center gap-2 sm:gap-2.5 cursor-pointer rounded-full hover:bg-gray-50 transition-colors duration-150 py-1 pr-1"
             @click="isOpen = !isOpen"
