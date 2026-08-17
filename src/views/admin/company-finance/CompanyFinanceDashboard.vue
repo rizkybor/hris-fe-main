@@ -9,8 +9,9 @@ import FixedCostsModal from "@/components/admin/company-finance/modals/FixedCost
 import SdmResourcesModal from "@/components/admin/company-finance/modals/SdmResourcesModal.vue";
 import InfraToolsModal from "@/components/admin/company-finance/modals/InfraToolsModal.vue";
 import DeleteConfirmationModal from "@/components/common/ConfirmationModal.vue";
-import { Eye, Edit, Trash2, Wallet, Users, Server, Search, ChevronLeft, ChevronRight, Plus } from "lucide-vue-next";
+import { Eye, Edit, Trash2, Wallet, Users, Server, Search, Plus } from "lucide-vue-next";
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
+import Pagination from "@/components/common/Pagination.vue";
 
 const store = useCompanyFinanceStore();
 
@@ -582,27 +583,7 @@ watch(
           </table>
         </div>
 
-        <div class="flex flex-wrap justify-between items-center mt-4 gap-2">
-          <span class="text-xs text-gray-500 font-medium">
-            Page {{ fixedPage }} of {{ store.fixedCostData.meta.last_page }}
-          </span>
-          <div class="flex gap-2">
-            <button
-              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-              :disabled="fixedPage === 1"
-              @click="fetchFixedCostData(fixedPage - 1)"
-            >
-              <ChevronLeft class="w-4 h-4" /> Prev
-            </button>
-            <button
-              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-              :disabled="fixedPage === store.fixedCostData.meta.last_page"
-              @click="fetchFixedCostData(fixedPage + 1)"
-            >
-              Next <ChevronRight class="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <Pagination :meta="store.fixedCostData.meta" :loading="store.loading" item-label="item" @page-change="fetchFixedCostData" />
       </section>
 
       <!-- ================= SDM ================= -->
@@ -710,27 +691,7 @@ watch(
           </table>
         </div>
 
-        <div class="flex flex-wrap justify-between items-center mt-4 gap-2">
-          <span class="text-xs text-gray-500 font-medium">
-            Page {{ sdmPage }} of {{ store.sdmResourceData.meta.last_page }}
-          </span>
-          <div class="flex gap-2">
-            <button
-              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-              :disabled="sdmPage === 1"
-              @click="fetchSdmResourcesData(sdmPage - 1)"
-            >
-              <ChevronLeft class="w-4 h-4" /> Prev
-            </button>
-            <button
-              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-              :disabled="sdmPage === store.sdmResourceData.meta.last_page"
-              @click="fetchSdmResourcesData(sdmPage + 1)"
-            >
-              Next <ChevronRight class="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <Pagination :meta="store.sdmResourceData.meta" :loading="store.loading" item-label="item" @page-change="fetchSdmResourcesData" />
       </section>
 
       <!-- ================= INFRA ================= -->
@@ -826,27 +787,7 @@ watch(
           </table>
         </div>
 
-        <div class="flex flex-wrap justify-between items-center mt-4 gap-2">
-          <span class="text-xs text-gray-500 font-medium">
-            Page {{ infraPage }} of {{ store.infraToolsData.meta.last_page }}
-          </span>
-          <div class="flex gap-2">
-            <button
-              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-              :disabled="infraPage === 1"
-              @click="fetchInfraToolsData(infraPage - 1)"
-            >
-              <ChevronLeft class="w-4 h-4" /> Prev
-            </button>
-            <button
-              class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-              :disabled="infraPage === store.infraToolsData.meta.last_page"
-              @click="fetchInfraToolsData(infraPage + 1)"
-            >
-              Next <ChevronRight class="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <Pagination :meta="store.infraToolsData.meta" :loading="store.loading" item-label="item" @page-change="fetchInfraToolsData" />
       </section>
     </div>
   </div>

@@ -94,12 +94,7 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
             try {
                 const { data } = await axiosInstance.get("/project-calculations", { params });
                 this.calculations = data.data.data;
-                this.meta = {
-                    current_page: data.data.meta.current_page,
-                    last_page: data.data.meta.last_page,
-                    per_page: data.data.meta.per_page,
-                    total: data.data.meta.total,
-                };
+                this.meta = data.data.meta;
             } catch (error) {
                 this.error = handleError(error);
             } finally {

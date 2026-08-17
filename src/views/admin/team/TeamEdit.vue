@@ -1,6 +1,7 @@
 <script setup>
 import { Input, Select, TextArea } from "@/components/common/form";
 import RightSidebarForm from "@/components/admin/team/RightSidebarForm.vue";
+import Alert from "@/components/common/Alert.vue";
 import {
   Tag,
   User,
@@ -23,6 +24,7 @@ import {
   Search,
   SearchX,
   ChevronDown,
+  Users2,
 } from "lucide-vue-next";
 import { onMounted, ref, watch } from "vue";
 import { debounce } from "lodash";
@@ -153,7 +155,27 @@ watch(
 </script>
 
 <template>
-  <div class="flex gap-5 pl-5 items-start">
+  <div>
+    <!-- Header -->
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
+          <Users2 class="w-6 h-6 text-blue-600" />
+        </div>
+        <div>
+          <h1 class="text-brand-dark text-xl font-bold">Edit Team</h1>
+          <p class="text-brand-light text-sm">Update team details and leadership</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-6" v-if="typeof error === 'string'">
+      <Transition name="fade">
+        <Alert type="danger" :title="error" message="" :show="true" />
+      </Transition>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-4 sm:gap-5 items-start">
     <!-- Form Section -->
     <div class="flex-1">
       <div v-if="initialLoading" class="space-y-6">
@@ -189,26 +211,30 @@ watch(
               <label class="block text-brand-dark text-base font-semibold mb-1"
                 >Team Icon</label
               >
-              <div class="flex items-center gap-4">
-                <div class="w-32 h-32">
+              <div class="flex flex-col sm:flex-row items-center gap-4">
+                <div class="w-24 h-24 sm:w-32 sm:h-32">
                   <!-- Icon Container with Blue Gradient Background -->
-                  <div class="relative w-32 h-32">
+                  <div class="relative w-24 h-24 sm:w-32 sm:h-32">
                     <!-- Blue gradient background -->
                     <div
-                      class="w-32 h-32 absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full"
+                      class="w-24 h-24 sm:w-32 sm:h-32 absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full"
                     ></div>
 
-                    <!-- Icon Display (uploaded only) -->
+                    <!-- Icon Display (uploaded or default) -->
                     <div
                       id="teamIconDisplay"
-                      class="w-32 h-32 relative z-10 flex items-center justify-center"
+                      class="w-24 h-24 sm:w-32 sm:h-32 relative z-10 flex items-center justify-center"
                     >
                       <img
                         id="uploadedTeamIcon"
                         :src="form.icon_url"
                         alt="Team Icon"
-                        class="w-16 h-16 object-contain"
+                        class="w-12 h-12 sm:w-16 sm:h-16 object-contain"
                         v-if="form.icon_url"
+                      />
+                      <Users2
+                        v-else
+                        class="w-10 h-10 sm:w-14 sm:h-14 text-white/90"
                       />
                     </div>
 
@@ -237,7 +263,7 @@ watch(
                   />
                   <button
                     type="button"
-                    class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2 cursor-pointer"
+                    class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2 cursor-pointer w-full sm:w-auto"
                     @click="teamIconInput.click()"
                   >
                     <Upload class="w-4 h-4 text-gray-600" />
@@ -247,7 +273,7 @@ watch(
                   </button>
                   <button
                     type="button"
-                    class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2 cursor-pointer"
+                    class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2 cursor-pointer w-full sm:w-auto"
                   >
                     <X class="w-4 h-4 text-gray-600" />
                     <span class="text-brand-dark text-base font-semibold"
@@ -271,7 +297,6 @@ watch(
                 label="Name *"
                 placeholder="Enter team name "
                 :error="error?.name?.join(', ')"
-                v-if="form.name"
               >
                 <template #icon>
                   <Users class="h-5 w-5 text-gray-400" />
@@ -666,11 +691,11 @@ watch(
         </div>
 
         <!-- Form Actions -->
-        <div class="flex items-center gap-4 pb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pb-6">
           <button
             type="submit"
             :disabled="loading"
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2"
+            class="btn-primary w-full sm:w-auto rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2"
           >
             <span class="text-brand-white text-base font-semibold"
               >Update Team</span
@@ -680,7 +705,7 @@ watch(
           <button
             type="button"
             onclick="window.history.back()"
-            class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center gap-2"
+            class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center gap-2 w-full sm:w-auto"
           >
             <span class="text-brand-dark text-base font-semibold">Cancel</span>
           </button>
@@ -688,7 +713,8 @@ watch(
       </form>
     </div>
 
-    <RightSidebarForm />
+    <RightSidebarForm @browse-employees="leadModal = true" />
+    </div>
   </div>
 
   <div

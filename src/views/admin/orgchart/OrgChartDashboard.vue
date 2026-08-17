@@ -35,8 +35,8 @@ onMounted(async () => {
         <Network class="w-5 h-5 text-[#0C51D9]" />
       </div>
       <div>
-        <h3 class="text-brand-dark text-lg font-bold">Struktur Organisasi</h3>
-        <p class="text-brand-light text-sm">Departemen, tim, dan anggotanya</p>
+        <h3 class="text-brand-dark text-lg font-bold">Organization Chart</h3>
+        <p class="text-brand-light text-sm">Departments, teams, and their members</p>
       </div>
     </div>
 
@@ -76,7 +76,7 @@ onMounted(async () => {
 
       <div v-if="departments.length === 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-10 text-center">
         <Network class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p class="text-brand-light text-sm">Belum ada tim aktif.</p>
+        <p class="text-brand-light text-sm">No active teams available.</p>
       </div>
     </div>
   </div>

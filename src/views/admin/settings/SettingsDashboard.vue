@@ -34,7 +34,7 @@ const links = [
   {
     to: { name: "admin.settings.certificate-settings" },
     icon: Award,
-    title: "Pengaturan Certificate",
+    title: "Certificate Configuration",
     description: "Manage the certificate numbering format and background templates",
     permission: "certificate-menu",
   },

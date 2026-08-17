@@ -1,12 +1,14 @@
 <script setup>
-import { BookOpen, Check, Lightbulb, Users, Zap, Copy } from "lucide-vue-next";
+import { Check, Lightbulb, Users, Zap } from "lucide-vue-next";
+
+defineEmits(["browse-employees"]);
 </script>
 
 <template>
   <!-- Right Sidebar -->
-  <div class="w-full lg:w-80 flex-shrink-0">
+  <div class="w-full lg:w-80 flex-shrink-0 sticky top-6">
     <!-- Tips Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 top-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
       <div class="flex items-center gap-3 mb-6">
         <div
           class="w-12 h-12 bg-yellow-50 rounded-[12px] flex items-center justify-center"
@@ -107,6 +109,8 @@ import { BookOpen, Check, Lightbulb, Users, Zap, Copy } from "lucide-vue-next";
 
       <div class="space-y-3">
         <button
+          type="button"
+          @click="$emit('browse-employees')"
           class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
         >
           <Users class="w-5 h-5 text-gray-600" />
@@ -115,30 +119,6 @@ import { BookOpen, Check, Lightbulb, Users, Zap, Copy } from "lucide-vue-next";
               Browse Employees
             </h4>
             <p class="text-brand-light text-xs">Find potential team members</p>
-          </div>
-        </button>
-
-        <button
-          class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
-        >
-          <Copy class="w-5 h-5 text-gray-600" />
-          <div class="flex-1">
-            <h4 class="text-brand-dark text-sm font-semibold">
-              Copy Existing Team
-            </h4>
-            <p class="text-brand-light text-xs">Use another team as template</p>
-          </div>
-        </button>
-
-        <button
-          class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
-        >
-          <BookOpen class="w-5 h-5 text-gray-600" />
-          <div class="flex-1">
-            <h4 class="text-brand-dark text-sm font-semibold">
-              Team Setup Guide
-            </h4>
-            <p class="text-brand-light text-xs">Step-by-step instructions</p>
           </div>
         </button>
       </div>

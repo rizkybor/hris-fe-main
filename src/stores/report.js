@@ -4,8 +4,8 @@ import { handleError } from "@/helpers/errorHelper";
 
 export const useReportStore = defineStore("report", {
   state: () => ({
-    attendance: { period: null, summary: {}, rows: [] },
-    payroll: { period: null, summary: {}, rows: [] },
+    attendance: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
+    payroll: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     employee: { summary: {}, rows: [] },
     finance: { period: null, summary: {}, rows: {} },
     loading: false,

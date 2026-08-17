@@ -5,6 +5,7 @@ import { Award, Plus, Download, Trash2, Search, Layers, CalendarDays, Settings }
 import { useCertificateStore } from "@/stores/certificate";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import Pagination from "@/components/common/Pagination.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useCertificateStore();
@@ -12,12 +13,17 @@ const alertModal = useAlertModalStore();
 const { certificates, meta, statistics, loading } = storeToRefs(store);
 
 const search = ref("");
+const typeFilter = ref("");
 const isDeleteModalOpen = ref(false);
 const certificateToDelete = ref(null);
 const downloadingId = ref(null);
 
 const load = (page = 1) => {
-  store.fetchCertificates({ search: search.value || undefined, page });
+  store.fetchCertificates({
+    search: search.value || undefined,
+    type: typeFilter.value || undefined,
+    page,
+  });
 };
 
 onMounted(() => {
@@ -26,6 +32,7 @@ onMounted(() => {
 });
 
 const handleSearch = () => load(1);
+const handleFilterChange = () => load(1);
 
 const handleDownload = async (certificate) => {
   downloadingId.value = certificate.id;
@@ -106,7 +113,7 @@ const formatDate = (date) =>
       </div>
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 flex items-center justify-between">
         <div>
-          <p class="text-brand-dark text-sm font-medium">Bulan Ini</p>
+          <p class="text-brand-dark text-sm font-medium">This Month</p>
           <p class="text-brand-dark text-2xl font-extrabold leading-tight my-1">{{ statistics.this_month }}</p>
         </div>
         <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
@@ -116,25 +123,37 @@ const formatDate = (date) =>
     </div>
 
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="relative mb-4 max-w-sm">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search class="w-4 h-4 text-gray-400" />
+      <div class="flex flex-col sm:flex-row gap-3 mb-4">
+        <div class="relative max-w-sm w-full">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search class="w-4 h-4 text-gray-400" />
+          </div>
+          <input
+            v-model="search"
+            @keyup.enter="handleSearch"
+            type="text"
+            placeholder="Cari nomor sertifikat, judul, penerima..."
+            class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+          />
         </div>
-        <input
-          v-model="search"
-          @keyup.enter="handleSearch"
-          type="text"
-          placeholder="Cari nomor sertifikat, judul, penerima..."
-          class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        />
+        <select
+          v-model="typeFilter"
+          @change="handleFilterChange"
+          class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+        >
+          <option value="">Semua Tipe</option>
+          <option value="individual">Individual</option>
+          <option value="batch">Batch</option>
+        </select>
       </div>
 
-      <SkeletonTable v-if="loading" :rows="6" :cols="6" />
+      <SkeletonTable v-if="loading" :rows="6" :cols="7" />
 
       <div v-else class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
+              <th class="py-3 pr-4 font-semibold">No</th>
               <th class="py-3 pr-4 font-semibold">No Sertifikat</th>
               <th class="py-3 pr-4 font-semibold">Judul</th>
               <th class="py-3 pr-4 font-semibold">Penerima</th>
@@ -145,10 +164,11 @@ const formatDate = (date) =>
           </thead>
           <tbody>
             <tr
-              v-for="certificate in certificates"
+              v-for="(certificate, index) in certificates"
               :key="certificate.id"
               class="border-b border-[#F1F1F1] hover:bg-gray-50"
             >
+              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4 font-mono text-xs">
                 {{ certificate.certificate_number }}
                 <span v-if="certificate.batch_id" class="ml-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 text-[10px] font-semibold align-middle">
@@ -188,17 +208,7 @@ const formatDate = (date) =>
         </div>
       </div>
 
-      <div v-if="meta.last_page > 1" class="flex items-center justify-center gap-2 mt-4">
-        <button
-          v-for="page in meta.last_page"
-          :key="page"
-          @click="load(page)"
-          class="w-8 h-8 rounded-lg text-sm font-medium"
-          :class="page === meta.current_page ? 'bg-[#0C51D9] text-white' : 'border border-[#DCDEDD] text-brand-dark'"
-        >
-          {{ page }}
-        </button>
-      </div>
+      <Pagination :meta="meta" :loading="loading" item-label="sertifikat" @page-change="load" />
     </div>
 
     <Transition name="fade">

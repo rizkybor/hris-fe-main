@@ -1,9 +1,11 @@
 <script setup>
+import { computed } from "vue";
 import { formatToClientTimezone } from "@/helpers/format";
 import { can } from "@/helpers/permissionHelper";
 import _ from "lodash";
-import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, User, WalletIcon } from "lucide-vue-next";
+import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, User, WalletIcon, AlertTriangle } from "lucide-vue-next";
 import { formatRupiah } from "@/utils/formatUtils";
+import { getProjectHealth, PROJECT_HEALTH_BADGE_CLASS } from "@/utils/projectHealth";
 
 const props = defineProps({
   data: {
@@ -11,6 +13,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const health = computed(() => getProjectHealth(props.data));
 
 const getPriorityColor = (priority) => {
   const priorityConfig = {
@@ -126,6 +130,17 @@ const getProgressColor = (progress) => {
           :class="getProgressColor(data.progress)"
           :style="{ width: `${data.progress ?? 0}%` }"
         ></div>
+      </div>
+      <div
+        v-if="health && health.level !== 'on-track'"
+        class="flex items-center gap-1.5 mt-2 px-2 py-1 rounded-md text-xs font-semibold w-fit"
+        :class="PROJECT_HEALTH_BADGE_CLASS[health.level]"
+      >
+        <AlertTriangle class="w-3.5 h-3.5" />
+        <span>
+          {{ health.label }} &middot;
+          {{ health.daysRemaining >= 0 ? `${health.daysRemaining}d left` : `${Math.abs(health.daysRemaining)}d overdue` }}
+        </span>
       </div>
     </div>
 

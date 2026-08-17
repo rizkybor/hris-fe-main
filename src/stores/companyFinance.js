@@ -161,6 +161,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       try {
         const response = await axiosInstance.get("/fixed-costs/all/paginated", {
           params: {
+            page: params.page || 1,
             row_per_page: params.per_page || 10,
             search: params.search || "",
           },
@@ -262,6 +263,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
           "/sdm-resources/all/paginated",
           {
             params: {
+              page: params.page || 1,
               row_per_page: params.per_page || 10,
               search: params.search || "",
             },

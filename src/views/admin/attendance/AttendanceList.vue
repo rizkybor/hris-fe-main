@@ -28,6 +28,7 @@ import {
 import { capitalize } from "@/utils/formatUtils.js";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
+import Avatar from "@/components/common/Avatar.vue";
 
 const attendanceStore = useAttendanceStore();
 const leaveRequestStore = useLeaveRequestStore();
@@ -422,13 +423,10 @@ onMounted(async () => {
             :key="request.id"
             class="flex items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
           >
-            <img
-              :src="
-                request.employee?.user?.profile_photo ||
-                'https://via.placeholder.com/100'
-              "
+            <Avatar
+              :src="request.employee?.user?.profile_photo"
               :alt="request.employee?.user?.name"
-              class="w-12 h-12 rounded-full object-cover"
+              size="w-12 h-12"
             />
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2">
@@ -528,13 +526,10 @@ onMounted(async () => {
             :key="attendance.id"
             class="flex items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
           >
-            <img
-              :src="
-                attendance.employee?.user?.profile_photo ||
-                'https://via.placeholder.com/100'
-              "
+            <Avatar
+              :src="attendance.employee?.user?.profile_photo"
               :alt="attendance.employee?.user?.name"
-              class="w-12 h-12 rounded-full object-cover"
+              size="w-12 h-12"
             />
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">

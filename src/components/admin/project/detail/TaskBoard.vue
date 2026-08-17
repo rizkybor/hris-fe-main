@@ -153,25 +153,25 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-    <div class="flex items-center justify-between mb-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
       <div class="flex items-center gap-3">
         <div
-          class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+          class="w-11 h-11 sm:w-12 sm:h-12 bg-purple-50 rounded-[12px] flex items-center justify-center shrink-0"
         >
-          <ListChecks class="w-6 h-6 text-purple-600" />
+          <ListChecks class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
         </div>
-        <div>
-          <h3 class="text-brand-dark text-xl font-bold">Project Tasks</h3>
+        <div class="min-w-0">
+          <h3 class="text-brand-dark text-lg sm:text-xl font-bold">Project Tasks</h3>
           <p class="text-brand-light text-sm font-normal">
-            Manage and track all project tasks
+            Manage and track all project tasks with Kanban system.
           </p>
         </div>
       </div>
       <button
         v-if="can('task-create')"
         @click="openCreateModal"
-        class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
+        class="btn-primary w-full sm:w-auto rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center justify-center gap-2"
       >
         <Plus class="w-4 h-4 text-white" />
         <span class="text-brand-white text-sm font-semibold"
@@ -182,10 +182,10 @@ onMounted(async () => {
 
     <div
       v-if="actionError"
-      class="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm flex items-center justify-between"
+      class="mb-4 px-4 py-3 rounded-[12px] bg-red-50 border border-red-200 text-red-600 text-sm font-medium flex items-center justify-between"
     >
       <span>{{ actionError }}</span>
-      <button @click="actionError = ''" class="text-red-400 hover:text-red-600">&times;</button>
+      <button @click="actionError = ''" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button>
     </div>
 
     <!-- Tasks Filter -->
@@ -207,17 +207,18 @@ onMounted(async () => {
 
     <!-- Task Management Columns -->
     <div
-      class="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+      class="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
     >
       <!-- To Do Column -->
-      <div class="bg-gray-50 rounded-[12px] p-4 flex-shrink-0 w-72">
-        <div class="flex items-center justify-between mb-4">
+      <div class="bg-gray-50/70 border border-gray-200 rounded-[14px] flex-shrink-0 w-[80vw] sm:w-72 overflow-hidden snap-start">
+        <div class="h-1 bg-gray-400"></div>
+        <div class="flex items-center justify-between px-4 pt-3 pb-3">
           <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
-            <h4 class="text-brand-dark text-base font-semibold">To Do</h4>
+            <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+            <h4 class="text-brand-dark text-sm font-bold">To Do</h4>
           </div>
           <span
-            class="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs font-medium"
+            class="bg-gray-200 text-gray-700 min-w-[22px] px-2 py-0.5 rounded-full text-xs font-semibold text-center"
           >
             {{ todoTask.length }}
           </span>
@@ -225,7 +226,7 @@ onMounted(async () => {
         <VueDraggableNext
           v-model="todoTask"
           group="tasks"
-          class="space-y-3 min-h-[500px] max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2"
+          class="space-y-3 min-h-[480px] max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent px-4 pb-4"
           :animation="200"
         >
           <TaskCard
@@ -234,18 +235,22 @@ onMounted(async () => {
             :task="task"
             @click="openTaskDetail(task)"
           />
+          <div v-if="todoTask.length === 0" class="py-10 text-center">
+            <p class="text-gray-400 text-xs font-medium">No tasks here</p>
+          </div>
         </VueDraggableNext>
       </div>
 
       <!-- In Progress Column -->
-      <div class="bg-blue-50 rounded-[12px] p-4 flex-shrink-0 w-72">
-        <div class="flex items-center justify-between mb-4">
+      <div class="bg-blue-50/60 border border-blue-100 rounded-[14px] flex-shrink-0 w-[80vw] sm:w-72 overflow-hidden snap-start">
+        <div class="h-1 bg-blue-500"></div>
+        <div class="flex items-center justify-between px-4 pt-3 pb-3">
           <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-            <h4 class="text-brand-dark text-base font-semibold">In Progress</h4>
+            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <h4 class="text-brand-dark text-sm font-bold">In Progress</h4>
           </div>
           <span
-            class="bg-blue-200 text-blue-700 px-2 py-1 rounded-full text-xs font-medium"
+            class="bg-blue-200 text-blue-700 min-w-[22px] px-2 py-0.5 rounded-full text-xs font-semibold text-center"
           >
             {{ inProgressTasks.length }}
           </span>
@@ -253,7 +258,7 @@ onMounted(async () => {
         <VueDraggableNext
           v-model="inProgressTasks"
           group="tasks"
-          class="space-y-3 min-h-[500px] max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2"
+          class="space-y-3 min-h-[480px] max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent px-4 pb-4"
           :animation="200"
         >
           <TaskCard
@@ -262,18 +267,22 @@ onMounted(async () => {
             :task="task"
             @click="openTaskDetail(task)"
           />
+          <div v-if="inProgressTasks.length === 0" class="py-10 text-center">
+            <p class="text-blue-300 text-xs font-medium">No tasks here</p>
+          </div>
         </VueDraggableNext>
       </div>
 
       <!-- Review Column -->
-      <div class="bg-yellow-50 rounded-[12px] p-4 flex-shrink-0 w-72">
-        <div class="flex items-center justify-between mb-4">
+      <div class="bg-amber-50/60 border border-amber-100 rounded-[14px] flex-shrink-0 w-[80vw] sm:w-72 overflow-hidden snap-start">
+        <div class="h-1 bg-amber-500"></div>
+        <div class="flex items-center justify-between px-4 pt-3 pb-3">
           <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-            <h4 class="text-brand-dark text-base font-semibold">Review</h4>
+            <div class="w-2 h-2 bg-amber-500 rounded-full"></div>
+            <h4 class="text-brand-dark text-sm font-bold">Review</h4>
           </div>
           <span
-            class="bg-yellow-200 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium"
+            class="bg-amber-200 text-amber-700 min-w-[22px] px-2 py-0.5 rounded-full text-xs font-semibold text-center"
           >
             {{ reviewTasks.length }}
           </span>
@@ -281,7 +290,7 @@ onMounted(async () => {
         <VueDraggableNext
           v-model="reviewTasks"
           group="tasks"
-          class="space-y-3 min-h-[500px] max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2"
+          class="space-y-3 min-h-[480px] max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent px-4 pb-4"
           :animation="200"
         >
           <TaskCard
@@ -290,18 +299,22 @@ onMounted(async () => {
             :task="task"
             @click="openTaskDetail(task)"
           />
+          <div v-if="reviewTasks.length === 0" class="py-10 text-center">
+            <p class="text-amber-300 text-xs font-medium">No tasks here</p>
+          </div>
         </VueDraggableNext>
       </div>
 
       <!-- Done Column -->
-      <div class="bg-green-50 rounded-[12px] p-4 flex-shrink-0 w-72">
-        <div class="flex items-center justify-between mb-4">
+      <div class="bg-green-50/60 border border-green-100 rounded-[14px] flex-shrink-0 w-[80vw] sm:w-72 overflow-hidden snap-start">
+        <div class="h-1 bg-green-500"></div>
+        <div class="flex items-center justify-between px-4 pt-3 pb-3">
           <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-            <h4 class="text-brand-dark text-base font-semibold">Done</h4>
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            <h4 class="text-brand-dark text-sm font-bold">Done</h4>
           </div>
           <span
-            class="bg-green-200 text-green-700 px-2 py-1 rounded-full text-xs font-medium"
+            class="bg-green-200 text-green-700 min-w-[22px] px-2 py-0.5 rounded-full text-xs font-semibold text-center"
           >
             {{ doneTasks.length }}
           </span>
@@ -309,7 +322,7 @@ onMounted(async () => {
         <VueDraggableNext
           v-model="doneTasks"
           group="tasks"
-          class="space-y-3 min-h-[500px] max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2"
+          class="space-y-3 min-h-[480px] max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent px-4 pb-4"
           :animation="200"
         >
           <TaskCard
@@ -318,6 +331,9 @@ onMounted(async () => {
             :task="task"
             @click="openTaskDetail(task)"
           />
+          <div v-if="doneTasks.length === 0" class="py-10 text-center">
+            <p class="text-green-300 text-xs font-medium">No tasks here</p>
+          </div>
         </VueDraggableNext>
       </div>
     </div>

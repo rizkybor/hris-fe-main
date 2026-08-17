@@ -6,6 +6,7 @@ import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import Pagination from "@/components/common/Pagination.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = usePurchaseOrderStore();
@@ -13,17 +14,23 @@ const alertModal = useAlertModalStore();
 const { orders, meta, loading } = storeToRefs(store);
 
 const search = ref("");
+const statusFilter = ref("");
 const isDeleteModalOpen = ref(false);
 const orderToDelete = ref(null);
 const downloadingId = ref(null);
 
 const load = (page = 1) => {
-  store.fetchOrders({ search: search.value || undefined, page });
+  store.fetchOrders({
+    search: search.value || undefined,
+    status: statusFilter.value || undefined,
+    page,
+  });
 };
 
 onMounted(() => load());
 
 const handleSearch = () => load(1);
+const handleFilterChange = () => load(1);
 
 const handleDownload = async (order) => {
   downloadingId.value = order.id;
@@ -75,7 +82,7 @@ const formatDate = (date) =>
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Purchase Order</h3>
-          <p class="text-brand-light text-sm">Kelola dokumen Purchase Order (PO)</p>
+          <p class="text-brand-light text-sm">Manage Purchase Order (PO) Documents</p>
         </div>
       </div>
 
@@ -85,22 +92,33 @@ const formatDate = (date) =>
         class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
       >
         <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Buat PO</span>
+        <span class="text-brand-white text-sm font-semibold">Create New PO</span>
       </router-link>
     </div>
 
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="relative mb-4 max-w-sm">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search class="w-4 h-4 text-gray-400" />
+      <div class="flex flex-col sm:flex-row gap-3 mb-4">
+        <div class="relative max-w-sm w-full">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search class="w-4 h-4 text-gray-400" />
+          </div>
+          <input
+            v-model="search"
+            @keyup.enter="handleSearch"
+            type="text"
+            placeholder="Search PO number, client, title..."
+            class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+          />
         </div>
-        <input
-          v-model="search"
-          @keyup.enter="handleSearch"
-          type="text"
-          placeholder="Cari nomor PO, klien, judul..."
-          class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        />
+        <select
+          v-model="statusFilter"
+          @change="handleFilterChange"
+          class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+        >
+          <option value="">Semua Status</option>
+          <option value="active">Aktif</option>
+          <option value="cancelled">Dibatalkan</option>
+        </select>
       </div>
 
       <SkeletonTable v-if="loading" :rows="6" :cols="8" />
@@ -109,6 +127,7 @@ const formatDate = (date) =>
         <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
+              <th class="py-3 pr-4 font-semibold">No</th>
               <th class="py-3 pr-4 font-semibold">No PO</th>
               <th class="py-3 pr-4 font-semibold">Klien</th>
               <th class="py-3 pr-4 font-semibold">Judul</th>
@@ -120,10 +139,11 @@ const formatDate = (date) =>
           </thead>
           <tbody>
             <tr
-              v-for="order in orders"
+              v-for="(order, index) in orders"
               :key="order.id"
               class="border-b border-[#F1F1F1] hover:bg-gray-50"
             >
+              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4 font-mono text-xs">{{ order.po_number }}</td>
               <td class="py-3 pr-4">{{ order.client_name }}</td>
               <td class="py-3 pr-4">{{ order.title }}</td>
@@ -167,30 +187,20 @@ const formatDate = (date) =>
         </table>
 
         <div v-if="!loading && orders.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">Belum ada Purchase Order</p>
+          <p class="text-lg font-semibold">No purchase orders found.</p>
         </div>
       </div>
 
-      <div v-if="meta.last_page > 1" class="flex items-center justify-center gap-2 mt-4">
-        <button
-          v-for="page in meta.last_page"
-          :key="page"
-          @click="load(page)"
-          class="w-8 h-8 rounded-lg text-sm font-medium"
-          :class="page === meta.current_page ? 'bg-[#0C51D9] text-white' : 'border border-[#DCDEDD] text-brand-dark'"
-        >
-          {{ page }}
-        </button>
-      </div>
+      <Pagination :meta="meta" :loading="loading" item-label="PO" @page-change="load" />
     </div>
 
     <Transition name="fade">
       <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
         <div class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <h3 class="text-xl font-bold text-brand-dark mb-2">Hapus Purchase Order?</h3>
+          <h3 class="text-xl font-bold text-brand-dark mb-2">Delete Purchase Order?</h3>
           <p class="text-gray-500 text-sm mb-6">
-            "{{ orderToDelete?.po_number }}" akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
+            "{{ orderToDelete?.po_number }}" will be permanently deleted. This action cannot be undone.
           </p>
           <div class="grid grid-cols-2 gap-3">
             <button @click="isDeleteModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
