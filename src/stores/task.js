@@ -115,9 +115,12 @@ export const useTaskStore = defineStore("task", {
                 const task = this.tasks.find(t => t.id === taskId);
                 if (!task) return;
 
-                // Use existing updateTask endpoint
+                // Only send the field that actually changed -- spreading the
+                // full task object here would forward its resolved `image`
+                // URL string (and other nested objects like `assignee`) back
+                // as if they were raw form fields, which the image upload
+                // validation would then reject.
                 const response = await axiosInstance.post(`project-tasks/${taskId}`, {
-                    ...task,
                     status: newStatus,
                     _method: 'PUT',
                 });

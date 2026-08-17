@@ -15,10 +15,12 @@ defineProps({
     v-if="src"
     :src="src"
     :alt="alt"
+    :title="alt"
     :class="[size, rounded, 'object-cover shrink-0']"
   />
   <div
     v-else
+    :title="alt"
     :class="[size, rounded, 'bg-gray-100 flex items-center justify-center shrink-0']"
   >
     <User :class="[iconSize, 'text-gray-400']" />

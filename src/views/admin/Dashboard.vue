@@ -8,6 +8,7 @@ import EmployeeStatistics from "@/components/admin/dashboard/EmployeeStatistics.
 import SearchSection from "@/components/admin/dashboard/SearchSection.vue";
 import LatestEmployees from "@/components/admin/dashboard/LatestEmployees.vue";
 import LatestTeams from "@/components/admin/dashboard/LatestTeams.vue";
+import ProjectsAtRisk from "@/components/admin/dashboard/ProjectsAtRisk.vue";
 
 const authStore = useAuthStore();
 
@@ -21,6 +22,7 @@ const hasDashboardPermission = computed(() => can("dashboard-view"));
 
 const canViewEmployees = computed(() => can("employee-list"));
 const canViewTeams = computed(() => can("team-list"));
+const canViewProjects = computed(() => can("project-list"));
 </script>
 
 <template>
@@ -38,6 +40,7 @@ const canViewTeams = computed(() => can("team-list"));
       <div class="space-y-6">
         <Statistics />
         <SearchSection />
+        <ProjectsAtRisk v-if="canViewProjects" />
         <div
           v-if="canViewEmployees || canViewTeams"
           class="grid grid-cols-1 gap-4"
