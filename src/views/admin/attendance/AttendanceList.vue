@@ -407,11 +407,12 @@ onMounted(async () => {
               </p>
             </div>
           </div>
-          <a
+          <RouterLink
+            :to="{ name: 'admin.leave-requests.dashboard' }"
             class="btn-secondary text-brand-dark text-sm font-semibold border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2"
           >
             View All
-          </a>
+          </RouterLink>
         </div>
 
         <SkeletonList v-if="loadingLeaveRequests" :rows="3" />
@@ -513,7 +514,7 @@ onMounted(async () => {
             </div>
           </div>
           <RouterLink
-            :to="{ name: 'admin.attendances' }"
+            :to="{ name: 'admin.attendances.records' }"
             class="btn-secondary text-brand-dark text-sm font-semibold border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2"
           >
             View All
@@ -542,11 +543,11 @@ onMounted(async () => {
                 </h4>
               </div>
               <p class="text-brand-light text-sm">
-                {{ attendance.employee?.jobInformation?.job_title }}
+                {{ attendance.employee?.job_information?.job_title }}
               </p>
               <p class="text-brand-light text-sm">
                 Team
-                {{ attendance.employee?.jobInformation?.team?.name || "N/A" }}
+                {{ attendance.employee?.job_information?.team?.name || "N/A" }}
               </p>
             </div>
             <div class="flex items-center gap-3">

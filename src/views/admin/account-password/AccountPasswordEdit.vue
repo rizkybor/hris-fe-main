@@ -13,6 +13,8 @@ import {
   FileText,
   Tag,
   User,
+  IdCard,
+  RotateCw,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
@@ -193,57 +195,82 @@ watch(
     </div>
 
     <!-- Form -->
-    <div
-      v-if="!loading"
-      class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6"
-    >
-      <!-- Label -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Label Password *
-        </label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
-            <Tag class="w-5 h-5 text-gray-400" />
+    <form v-if="!loading" @submit.prevent="submit" class="space-y-6">
+      <!-- Account Detail -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <IdCard class="w-4.5 h-4.5 text-violet-600" />
           </div>
-          <input
-            v-model="form.label_password"
-            type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
-          />
+          <h4 class="text-brand-dark font-bold">Detail Akun</h4>
         </div>
-      </div>
 
-      <!-- Username / Email -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Username / Email *
-        </label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
-            <User class="w-5 h-5 text-gray-400" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Label Password *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
+                <Tag class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.label_password"
+                type="text"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
+              />
+            </div>
           </div>
-          <input
-            v-model="form.username_email"
-            type="text"
-            placeholder="e.g. admin@company.com / admin.erp"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
-          />
+
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Username / Email *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
+                <User class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.username_email"
+                type="text"
+                placeholder="e.g. admin@company.com / admin.erp"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
+              />
+            </div>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Website (Optional)</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
+                <Globe class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.website"
+                type="url"
+                placeholder="https://example.com"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Rotate Password -->
-      <div class="border-t pt-4 space-y-4">
-        <label class="flex items-center gap-2 font-semibold">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <RotateCw class="w-4.5 h-4.5 text-violet-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Rotasi Password</h4>
+        </div>
+
+        <label class="flex items-center gap-2 font-semibold cursor-pointer">
           <input
             type="checkbox"
             v-model="rotatePassword"
-            class="rounded border-gray-300"
+            class="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
           />
           Rotate Password
         </label>
 
-        <div v-if="rotatePassword" class="space-y-3">
+        <div v-if="rotatePassword" class="space-y-3 mt-4">
           <div
             class="flex items-start gap-3 p-4 rounded-[12px] bg-yellow-50 border border-yellow-300"
           >
@@ -276,29 +303,16 @@ watch(
         </div>
       </div>
 
-      <!-- Website -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Website (Optional)
-        </label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
-            <Globe class="w-5 h-5 text-gray-400" />
-          </div>
-          <input
-            v-model="form.website"
-            type="url"
-            placeholder="https://example.com"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
-          />
-        </div>
-      </div>
-
       <!-- Notes -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Notes (Optional)
-        </label>
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-gray-100 rounded-[10px] flex items-center justify-center shrink-0">
+            <FileText class="w-4.5 h-4.5 text-gray-500" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Catatan</h4>
+        </div>
+
+        <label class="block text-brand-dark text-sm font-semibold mb-1.5">Notes (Optional)</label>
         <div class="relative">
           <div class="absolute top-3 left-4">
             <FileText class="w-5 h-5 text-gray-400" />
@@ -312,7 +326,7 @@ watch(
       </div>
 
       <!-- Actions -->
-      <div class="flex flex-col sm:flex-row gap-3 pt-4">
+      <div class="flex flex-col sm:flex-row gap-3">
         <button
           type="button"
           @click="router.back()"
@@ -322,8 +336,7 @@ watch(
         </button>
 
         <button
-          type="button"
-          @click="submit"
+          type="submit"
           :disabled="submitting"
           class="w-full sm:w-auto btn-primary rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] text-brand-white font-semibold px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
         >
@@ -331,7 +344,7 @@ watch(
           {{ submitting ? "Updating..." : "Update Credential" }}
         </button>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 

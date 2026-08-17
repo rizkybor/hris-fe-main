@@ -10,6 +10,7 @@ import {
   FileText,
   HardDrive,
   FileType,
+  Eye,
 } from "lucide-vue-next";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 import Spinner from "@/components/common/skeleton/Spinner.vue";
@@ -78,10 +79,10 @@ const isImage = (type) => type?.startsWith("image/");
 
         <router-link
           :to="{ name: 'admin.files-company.edit', params: { id: archiveId } }"
-          class="border border-[#DCDEDD] rounded-[12px] hover:border-blue-400 hover:bg-blue-50/30 transition-all px-4 py-2 flex items-center gap-2"
+          class="btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2"
         >
-          <Pencil class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark font-semibold text-sm">Edit</span>
+          <Pencil class="w-4 h-4 text-white" />
+          <span class="text-brand-white font-semibold text-sm">Edit</span>
         </router-link>
       </div>
     </div>
@@ -95,88 +96,85 @@ const isImage = (type) => type?.startsWith("image/");
     </div>
 
     <!-- Content -->
-    <div
-      v-else-if="archiveStore.currentArchive"
-      class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6"
-    >
-      <!-- File Name -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">File Name</label>
-        <div class="flex items-center gap-3">
-          <FileText class="w-5 h-5 text-gray-400" />
-          <p class="text-brand-dark font-semibold">
-            {{ archiveStore.currentArchive.document_name || "—" }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Description -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">Description</label>
-        <div class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-50">
-          <FileText class="w-5 h-5 text-gray-400 mt-0.5" />
-          <p class="text-brand-dark whitespace-pre-line">
-            {{ archiveStore.currentArchive.description || "—" }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Meta -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-        <div class="flex items-center gap-3">
-          <FileType class="w-5 h-5 text-gray-400" />
-          <div>
-            <p class="text-xs text-gray-500">File Type</p>
-            <p class="text-sm font-semibold">{{ archiveStore.currentArchive.type_file || "—" }}</p>
+    <div v-else-if="archiveStore.currentArchive" class="space-y-6">
+      <!-- Hero -->
+      <div class="main-card rounded-[14px] p-6 relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/20 rounded-full blur-2xl"></div>
+        <div class="relative z-10 flex items-start gap-4">
+          <div class="w-14 h-14 bg-white/10 border border-white/10 rounded-[14px] flex items-center justify-center shrink-0">
+            <FileType class="w-7 h-7 text-blue-300" />
+          </div>
+          <div class="min-w-0">
+            <h2 class="text-white text-xl font-extrabold truncate">
+              {{ archiveStore.currentArchive.document_name || "—" }}
+            </h2>
+            <p class="text-brand-white-70 text-sm mt-1 whitespace-pre-line">
+              {{ archiveStore.currentArchive.description || "Tidak ada deskripsi" }}
+            </p>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
-          <HardDrive class="w-5 h-5 text-gray-400" />
-          <div>
-            <p class="text-xs text-gray-500">File Size</p>
-            <p class="text-sm font-semibold">{{ formatSize(archiveStore.currentArchive.size_file) }}</p>
+        <div class="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
+              <FileType class="w-4 h-4 text-blue-300" />
+            </div>
+            <div class="min-w-0">
+              <p class="text-brand-white-70 text-xs">File Type</p>
+              <p class="text-white text-sm font-semibold truncate">{{ archiveStore.currentArchive.type_file || "—" }}</p>
+            </div>
           </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <Clock class="w-5 h-5 text-gray-400" />
-          <div>
-            <p class="text-xs text-gray-500">Upload Date</p>
-            <p class="text-sm font-semibold">{{ formatDate(archiveStore.currentArchive.created_at) }}</p>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
+              <HardDrive class="w-4 h-4 text-blue-300" />
+            </div>
+            <div class="min-w-0">
+              <p class="text-brand-white-70 text-xs">File Size</p>
+              <p class="text-white text-sm font-semibold truncate">{{ formatSize(archiveStore.currentArchive.size_file) }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
+              <Clock class="w-4 h-4 text-blue-300" />
+            </div>
+            <div class="min-w-0">
+              <p class="text-brand-white-70 text-xs">Upload Date</p>
+              <p class="text-white text-sm font-semibold truncate">{{ formatDate(archiveStore.currentArchive.created_at) }}</p>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- File Preview -->
-      <div v-if="isImage(archiveStore.currentArchive.type_file)">
-        <label class="block text-brand-dark text-base font-semibold mb-1">Preview</label>
-        <div class="w-full max-h-[75vh] overflow-auto border border-[#DCDEDD] rounded-[12px] p-2 bg-gray-50 flex justify-center">
+      <div v-if="isImage(archiveStore.currentArchive.type_file) || archiveStore.currentArchive.type_file === 'application/pdf'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <Eye class="w-4.5 h-4.5 text-indigo-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Preview</h4>
+        </div>
+
+        <div v-if="isImage(archiveStore.currentArchive.type_file)" class="w-full max-h-[75vh] overflow-auto border border-[#DCDEDD] rounded-[12px] p-2 bg-gray-50 flex justify-center">
           <img
             :src="archiveStore.currentArchive.document_path"
             alt="File Preview"
             class="max-w-full max-h-[70vh] object-contain rounded-[12px]"
           />
         </div>
-      </div>
 
-      <div v-else-if="archiveStore.currentArchive.type_file === 'application/pdf'">
-        <label class="block text-brand-dark text-base font-semibold mb-1">Preview PDF</label>
-        <div class="w-full h-[80vh] min-h-[600px] border border-[#DCDEDD] rounded-[12px] overflow-hidden">
+        <div v-else class="w-full h-[80vh] min-h-[600px] border border-[#DCDEDD] rounded-[12px] overflow-hidden">
           <iframe :src="archiveStore.currentArchive.document_path" class="w-full h-full"></iframe>
         </div>
       </div>
 
       <!-- Download -->
-      <div class="pt-4 border-t border-[#DCDEDD]">
-        <button
-          @click="downloadFile"
-          class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 transition-all"
-        >
-          <Download class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Download File</span>
-        </button>
-      </div>
+      <button
+        @click="downloadFile"
+        class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 transition-all"
+      >
+        <Download class="w-4 h-4 text-white" />
+        <span class="text-brand-white text-sm font-semibold">Download File</span>
+      </button>
     </div>
 
     <!-- Fallback -->

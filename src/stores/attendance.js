@@ -49,6 +49,29 @@ export const useAttendanceStore = defineStore("attendance", {
             }
         },
 
+        async fetchAllPaginated(params = {}) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                const response = await axiosInstance.get('attendances/all/paginated', {
+                    params: { row_per_page: 10, ...params },
+                });
+
+                this.attendances = response.data.data.data;
+                this.meta = {
+                    current_page: response.data.data.current_page,
+                    last_page: response.data.data.last_page,
+                    per_page: response.data.data.per_page,
+                    total: response.data.data.total,
+                };
+            } catch (error) {
+                this.error = handleError(error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async fetchTodayAttendance() {
             this.loading = true;
             this.error = null;

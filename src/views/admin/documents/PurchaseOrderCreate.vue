@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { Plus, Trash2, ShoppingCart } from "lucide-vue-next";
+import { Plus, Trash2, ShoppingCart, Info, Package, Wallet, FileSignature } from "lucide-vue-next";
 import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
 
 const store = usePurchaseOrderStore();
@@ -67,7 +67,12 @@ const handleSubmit = async () => {
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Informasi Umum</h4>
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
+            <Info class="w-4 h-4 text-blue-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Informasi Umum</h4>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Jenis</label>
@@ -105,7 +110,12 @@ const handleSubmit = async () => {
 
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between mb-4">
-          <h4 class="text-brand-dark font-bold">Detail Order (Item)</h4>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-indigo-50 rounded-[9px] flex items-center justify-center shrink-0">
+              <Package class="w-4 h-4 text-indigo-600" />
+            </div>
+            <h4 class="text-brand-dark font-bold">Detail Order (Item)</h4>
+          </div>
           <button type="button" @click="addItem" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
             <Plus class="w-4 h-4" /> Tambah Item
           </button>
@@ -145,7 +155,12 @@ const handleSubmit = async () => {
 
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between mb-4">
-          <h4 class="text-brand-dark font-bold">Skema Pembayaran (opsional)</h4>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-emerald-50 rounded-[9px] flex items-center justify-center shrink-0">
+              <Wallet class="w-4 h-4 text-emerald-600" />
+            </div>
+            <h4 class="text-brand-dark font-bold">Skema Pembayaran (opsional)</h4>
+          </div>
           <button type="button" @click="addTerm" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
             <Plus class="w-4 h-4" /> Tambah Termin
           </button>
@@ -163,7 +178,12 @@ const handleSubmit = async () => {
       </div>
 
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Ketentuan & Tanda Tangan</h4>
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 bg-orange-50 rounded-[9px] flex items-center justify-center shrink-0">
+            <FileSignature class="w-4 h-4 text-orange-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Ketentuan & Tanda Tangan</h4>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Garansi (bulan)</label>

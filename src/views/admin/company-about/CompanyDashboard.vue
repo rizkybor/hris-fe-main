@@ -17,6 +17,9 @@ import {
   Phone,
   CalendarDays,
   Network,
+  Type,
+  FileText,
+  Save,
 } from "lucide-vue-next";
 
 // Pinia store
@@ -198,54 +201,55 @@ const saveCompany = async () => {
   </div>
 
   <!-- Company Content -->
-  <div v-else-if="company" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  <div v-else-if="company" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <!-- Overview -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 lg:col-span-2">
-      <div class="flex items-center gap-4 mb-5">
-        <div class="w-14 h-14 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
+    <div class="main-card rounded-[14px] p-5 lg:col-span-2 relative overflow-hidden">
+      <div class="absolute -top-12 -right-12 w-48 h-48 bg-blue-500/20 rounded-full blur-2xl"></div>
+      <div class="relative z-10 flex items-center gap-4 mb-5">
+        <div class="w-14 h-14 bg-white border border-white/10 rounded-[12px] flex items-center justify-center shrink-0">
           <img src="/images/jcd-only-color.png" alt="Company Logo" class="w-9 h-9 object-contain" />
         </div>
         <div class="min-w-0">
-          <h2 class="text-brand-dark text-lg font-bold truncate">{{ company.name || "-" }}</h2>
-          <p v-if="company.description" class="text-brand-light text-sm truncate">{{ company.description }}</p>
+          <h2 class="text-white text-lg font-bold truncate">{{ company.name || "-" }}</h2>
+          <p v-if="company.description" class="text-brand-white-70 text-sm truncate">{{ company.description }}</p>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <CalendarDays class="w-4 h-4 text-gray-500" />
+          <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
+            <CalendarDays class="w-4 h-4 text-blue-300" />
           </div>
           <div class="min-w-0">
-            <p class="text-brand-light text-xs">Established</p>
-            <p class="text-brand-dark text-sm font-semibold truncate">{{ formattedDate }}</p>
+            <p class="text-brand-white-70 text-xs">Established</p>
+            <p class="text-white text-sm font-semibold truncate">{{ formattedDate }}</p>
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <MapPin class="w-4 h-4 text-gray-500" />
+          <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
+            <MapPin class="w-4 h-4 text-blue-300" />
           </div>
           <div class="min-w-0">
-            <p class="text-brand-light text-xs">Address</p>
-            <p class="text-brand-dark text-sm font-semibold truncate">{{ company.address || "-" }}</p>
+            <p class="text-brand-white-70 text-xs">Address</p>
+            <p class="text-white text-sm font-semibold truncate">{{ company.address || "-" }}</p>
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <Mail class="w-4 h-4 text-gray-500" />
+          <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
+            <Mail class="w-4 h-4 text-blue-300" />
           </div>
           <div class="min-w-0">
-            <p class="text-brand-light text-xs">Email</p>
-            <p class="text-brand-dark text-sm font-semibold truncate">{{ company.email || "-" }}</p>
+            <p class="text-brand-white-70 text-xs">Email</p>
+            <p class="text-white text-sm font-semibold truncate">{{ company.email || "-" }}</p>
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <Phone class="w-4 h-4 text-gray-500" />
+          <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
+            <Phone class="w-4 h-4 text-blue-300" />
           </div>
           <div class="min-w-0">
-            <p class="text-brand-light text-xs">Phone</p>
-            <p class="text-brand-dark text-sm font-semibold truncate">{{ company.phone || "-" }}</p>
+            <p class="text-brand-white-70 text-xs">Phone</p>
+            <p class="text-white text-sm font-semibold truncate">{{ company.phone || "-" }}</p>
           </div>
         </div>
       </div>
@@ -263,7 +267,7 @@ const saveCompany = async () => {
     </div>
 
     <!-- Mission -->
-    <div v-if="cleanedMission.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 lg:col-span-2">
+    <div v-if="cleanedMission.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center gap-3 mb-3">
         <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
           <Flag class="w-4 h-4 text-blue-600" />
@@ -279,7 +283,7 @@ const saveCompany = async () => {
     </div>
 
     <!-- Branches -->
-    <div v-if="cleanedBranches.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div v-if="cleanedBranches.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 lg:col-span-2">
       <div class="flex items-center gap-3 mb-3">
         <div class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center shrink-0">
           <Network class="w-4 h-4 text-gray-500" />
@@ -310,74 +314,158 @@ const saveCompany = async () => {
   </div>
 
   <!-- Create/Edit Modal -->
-  <div
-    v-if="showModal"
-    class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-    @click.self="showModal = false"
-  >
-    <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
-      <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between shrink-0">
-        <h3 class="text-brand-dark text-lg font-bold">
-          {{ isEditing ? "Edit Company Information" : "Add Company Information" }}
-        </h3>
-        <button @click="showModal = false" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150">
-          <X class="w-4 h-4" />
-        </button>
-      </div>
-
-      <form @submit.prevent="saveCompany" class="flex-1 overflow-y-auto p-5 space-y-4">
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1 block">Name</label>
-          <input v-model="form.name" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-        </div>
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1 block">Description</label>
-          <textarea v-model="form.description" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
-        </div>
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1 block">Vision</label>
-          <textarea v-model="form.vision" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
-        </div>
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1 block">Mission (one per line)</label>
-          <textarea v-model="form.mission" rows="3" placeholder="Enter one mission per line" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Established Date</label>
-            <input v-model="form.established_date" type="date" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+  <Transition name="fade">
+    <div
+      v-if="showModal"
+      class="fixed inset-0 bg-brand-dark/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="showModal = false"
+    >
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
+              <Building2 class="w-5 h-5 text-[#0C51D9]" />
+            </div>
+            <h3 class="text-brand-dark text-lg font-bold">
+              {{ isEditing ? "Edit Company Information" : "Add Company Information" }}
+            </h3>
           </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Phone</label>
-            <input v-model="form.phone" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
+          <button @click="showModal = false" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150">
+            <X class="w-4 h-4" />
+          </button>
         </div>
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1 block">Address</label>
-          <input v-model="form.address" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-        </div>
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1 block">Email</label>
-          <input v-model="form.email" type="email" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-        </div>
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1 block">Branches (one per line)</label>
-          <textarea v-model="form.branches" rows="3" placeholder="Enter one branch per line" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
-        </div>
-      </form>
 
-      <div class="flex items-center gap-3 p-5 border-t border-[#DCDEDD] shrink-0">
-        <button
-          @click="saveCompany"
-          :disabled="saving"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-6 py-2.5 flex items-center gap-2 disabled:opacity-50"
-        >
-          <span class="text-brand-white text-sm font-semibold">{{ saving ? "Saving..." : "Save" }}</span>
-        </button>
-        <button @click="showModal = false" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">
-          Cancel
-        </button>
+        <form @submit.prevent="saveCompany" class="flex-1 overflow-y-auto p-5 space-y-6">
+          <!-- Identity -->
+          <div>
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
+                <Type class="w-4 h-4 text-blue-600" />
+              </div>
+              <h4 class="text-brand-dark text-sm font-bold">Identitas Perusahaan</h4>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Name</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Building2 class="w-4 h-4 text-gray-400" />
+                  </div>
+                  <input v-model="form.name" type="text" class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
+                </div>
+              </div>
+              <div>
+                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Description</label>
+                <textarea v-model="form.description" rows="2" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vision & Mission -->
+          <div>
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
+                <Target class="w-4 h-4 text-blue-600" />
+              </div>
+              <h4 class="text-brand-dark text-sm font-bold">Visi &amp; Misi</h4>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Vision</label>
+                <textarea v-model="form.vision" rows="2" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"></textarea>
+              </div>
+              <div>
+                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Mission (one per line)</label>
+                <textarea v-model="form.mission" rows="3" placeholder="Enter one mission per line" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact -->
+          <div>
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 bg-emerald-50 rounded-[9px] flex items-center justify-center shrink-0">
+                <Phone class="w-4 h-4 text-emerald-600" />
+              </div>
+              <h4 class="text-brand-dark text-sm font-bold">Kontak &amp; Lokasi</h4>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Established Date</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <CalendarDays class="w-4 h-4 text-gray-400" />
+                  </div>
+                  <input v-model="form.established_date" type="date" class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
+                </div>
+              </div>
+              <div>
+                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Phone</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Phone class="w-4 h-4 text-gray-400" />
+                  </div>
+                  <input v-model="form.phone" type="text" class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
+                </div>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Address</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <MapPin class="w-4 h-4 text-gray-400" />
+                  </div>
+                  <input v-model="form.address" type="text" class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
+                </div>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Email</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Mail class="w-4 h-4 text-gray-400" />
+                  </div>
+                  <input v-model="form.email" type="email" class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Branches -->
+          <div>
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 bg-gray-100 rounded-[9px] flex items-center justify-center shrink-0">
+                <Network class="w-4 h-4 text-gray-500" />
+              </div>
+              <h4 class="text-brand-dark text-sm font-bold">Sub-companies / Branches</h4>
+            </div>
+            <textarea v-model="form.branches" rows="3" placeholder="Enter one branch per line" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"></textarea>
+          </div>
+        </form>
+
+        <div class="flex items-center gap-3 p-5 border-t border-[#DCDEDD] shrink-0">
+          <button
+            @click="saveCompany"
+            :disabled="saving"
+            class="btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-2.5 flex items-center gap-2 disabled:opacity-50"
+          >
+            <Save class="w-4 h-4 text-white" />
+            <span class="text-brand-white text-sm font-semibold">{{ saving ? "Saving..." : "Save" }}</span>
+          </button>
+          <button @click="showModal = false" class="px-6 py-2.5 rounded-[12px] border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50 transition-all">
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
-  </div>
+  </Transition>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

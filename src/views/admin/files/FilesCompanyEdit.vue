@@ -12,6 +12,8 @@ import {
   FileSpreadsheet,
   FileArchive,
   File as FileIcon,
+  Info,
+  Paperclip,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import BaseInput from "@/components/common/form/Input.vue";
@@ -224,80 +226,102 @@ const newFileMeta = computed(() => fileTypeMeta(form.value.new_file?.type));
     </div>
 
     <!-- Form -->
-    <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
-      <BaseInput
-        id="document_name"
-        label="File Name *"
-        placeholder="Enter file name"
-        v-model="form.document_name"
-        :error="fileNameError ? 'File name is required.' : ''"
-      />
-
-      <TextArea
-        id="description"
-        label="Description (Optional)"
-        placeholder="Enter a description"
-        v-model="form.description"
-        rows="4"
-      />
-
-      <!-- Current / Preview File -->
-      <div v-if="previewFile">
-        <label class="block text-brand-dark text-base font-semibold mb-1">File Preview</label>
-
-        <div
-          v-if="!form.new_file && !form.remove_file"
-          class="flex items-center justify-between gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] mb-3"
-        >
-          <a
-            :href="archiveStore.currentArchive.document_path"
-            target="_blank"
-            class="text-[#0C51D9] font-semibold hover:underline truncate"
-          >
-            {{ archiveStore.currentArchive.document_name }}
-          </a>
-          <button
-            type="button"
-            @click="removeFile"
-            class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-all flex-shrink-0"
-          >
-            <X class="w-4 h-4" /> Remove
-          </button>
+    <form v-else @submit.prevent="submit" class="space-y-6">
+      <!-- File Info -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <Info class="w-4.5 h-4.5 text-blue-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Informasi File</h4>
         </div>
 
-        <div class="w-full max-h-[400px] overflow-auto border border-[#DCDEDD] rounded-[12px] p-1">
-          <img
-            v-if="isImage(form.new_file?.type || archiveStore.currentArchive?.type_file)"
-            :src="previewFile"
-            alt="File Preview"
-            class="w-full object-contain rounded-[12px]"
+        <div class="space-y-5">
+          <BaseInput
+            id="document_name"
+            label="File Name *"
+            placeholder="Enter file name"
+            v-model="form.document_name"
+            :error="fileNameError ? 'File name is required.' : ''"
           />
-          <iframe
-            v-else-if="(form.new_file?.type || archiveStore.currentArchive?.type_file) === 'application/pdf'"
-            :src="previewFile"
-            class="w-full h-[400px] rounded-[12px]"
-          ></iframe>
+
+          <TextArea
+            id="description"
+            label="Description (Optional)"
+            placeholder="Enter a description"
+            v-model="form.description"
+            rows="4"
+          />
         </div>
       </div>
 
-      <!-- Upload New File -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Replace File (Optional)
-        </label>
-        <label
-          class="flex flex-col items-center justify-center gap-2 w-full py-6 border-2 border-dashed border-[#DCDEDD] rounded-[12px] cursor-pointer hover:border-[#0C51D9] hover:bg-blue-50/30 transition-all"
-        >
-          <component :is="form.new_file ? newFileMeta.icon : FileUp" class="w-7 h-7" :class="form.new_file ? newFileMeta.class : 'text-gray-400'" />
-          <span class="text-sm text-brand-dark font-semibold">
-            {{ form.new_file ? form.new_file.name : "Click to choose a new file" }}
-          </span>
-          <input type="file" class="hidden" @change="onFileChange" />
-        </label>
+      <!-- File -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <Paperclip class="w-4.5 h-4.5 text-indigo-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Berkas</h4>
+        </div>
+
+        <!-- Current / Preview File -->
+        <div v-if="previewFile" class="mb-5">
+          <label class="block text-brand-dark text-sm font-semibold mb-1.5">File Preview</label>
+
+          <div
+            v-if="!form.new_file && !form.remove_file"
+            class="flex items-center justify-between gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] mb-3"
+          >
+            <a
+              :href="archiveStore.currentArchive.document_path"
+              target="_blank"
+              class="text-[#0C51D9] font-semibold hover:underline truncate"
+            >
+              {{ archiveStore.currentArchive.document_name }}
+            </a>
+            <button
+              type="button"
+              @click="removeFile"
+              class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-all flex-shrink-0"
+            >
+              <X class="w-4 h-4" /> Remove
+            </button>
+          </div>
+
+          <div class="w-full max-h-[400px] overflow-auto border border-[#DCDEDD] rounded-[12px] p-1">
+            <img
+              v-if="isImage(form.new_file?.type || archiveStore.currentArchive?.type_file)"
+              :src="previewFile"
+              alt="File Preview"
+              class="w-full object-contain rounded-[12px]"
+            />
+            <iframe
+              v-else-if="(form.new_file?.type || archiveStore.currentArchive?.type_file) === 'application/pdf'"
+              :src="previewFile"
+              class="w-full h-[400px] rounded-[12px]"
+            ></iframe>
+          </div>
+        </div>
+
+        <!-- Upload New File -->
+        <div>
+          <label class="block text-brand-dark text-sm font-semibold mb-1.5">
+            Replace File (Optional)
+          </label>
+          <label
+            class="flex flex-col items-center justify-center gap-2 w-full py-6 border-2 border-dashed border-[#DCDEDD] rounded-[12px] cursor-pointer hover:border-[#0C51D9] hover:bg-blue-50/30 transition-all"
+          >
+            <component :is="form.new_file ? newFileMeta.icon : FileUp" class="w-7 h-7" :class="form.new_file ? newFileMeta.class : 'text-gray-400'" />
+            <span class="text-sm text-brand-dark font-semibold">
+              {{ form.new_file ? form.new_file.name : "Click to choose a new file" }}
+            </span>
+            <input type="file" class="hidden" @change="onFileChange" />
+          </label>
+        </div>
       </div>
 
       <!-- Actions -->
-      <div class="flex flex-col sm:flex-row gap-3 pt-4">
+      <div class="flex flex-col sm:flex-row gap-3">
         <button
           type="button"
           @click="router.back()"
@@ -307,8 +331,7 @@ const newFileMeta = computed(() => fileTypeMeta(form.value.new_file?.type));
         </button>
 
         <button
-          type="button"
-          @click="submit"
+          type="submit"
           :disabled="submitting"
           class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
         >
@@ -318,7 +341,7 @@ const newFileMeta = computed(() => fileTypeMeta(form.value.new_file?.type));
           </span>
         </button>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 
