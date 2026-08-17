@@ -540,7 +540,7 @@ watch(
         </div>
 
         <!-- Team Assignment Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div id="team-assignment-section" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"

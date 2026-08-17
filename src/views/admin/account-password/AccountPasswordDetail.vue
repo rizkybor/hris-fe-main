@@ -12,8 +12,8 @@ import {
   Key,
   Globe,
   FileText,
-  Tag,
   User,
+  Lock,
 } from "lucide-vue-next";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -92,10 +92,10 @@ onMounted(async () => {
               params: { id: account?.id },
             })
           "
-          class="border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:border-2 hover:bg-violet-50/30 transition-all px-4 py-2 flex items-center gap-2"
+          class="btn-primary rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] px-4 py-2.5 flex items-center gap-2"
         >
-          <Pencil class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark font-semibold text-sm">Edit</span>
+          <Pencil class="w-4 h-4 text-white" />
+          <span class="text-brand-white font-semibold text-sm">Edit</span>
         </button>
       </div>
     </div>
@@ -110,45 +110,36 @@ onMounted(async () => {
     </div>
 
     <!-- Content -->
-    <div
-      v-if="account && !loading"
-      class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6"
-    >
-      <!-- Label -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Label Password
-        </label>
-        <div class="flex items-center gap-3">
-          <Tag class="w-5 h-5 text-gray-400" />
-          <p class="text-brand-dark font-semibold">
-            {{ account.label_password || account.label }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Username / Email -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Username / Email
-        </label>
-        <div class="flex items-center gap-3">
-          <User class="w-5 h-5 text-gray-400" />
-          <p class="text-brand-dark font-mono font-semibold">
-            {{ account.username_email || account.username || "—" }}
-          </p>
+    <div v-if="account && !loading" class="space-y-6">
+      <!-- Vault hero -->
+      <div class="bg-gradient-to-br from-[#1e1147] via-[#150c33] to-[#0f0a24] rounded-[14px] p-6 relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-violet-500/20 rounded-full blur-2xl"></div>
+        <div class="relative z-10 flex items-start gap-4">
+          <div class="w-14 h-14 bg-white/10 border border-white/10 rounded-[14px] flex items-center justify-center shrink-0">
+            <ShieldCheck class="w-7 h-7 text-violet-300" />
+          </div>
+          <div class="min-w-0">
+            <h2 class="text-white text-2xl font-extrabold truncate">
+              {{ account.label_password || account.label }}
+            </h2>
+            <div class="flex items-center gap-2 mt-2 text-violet-200">
+              <User class="w-4 h-4 shrink-0" />
+              <p class="font-mono text-sm truncate">{{ account.username_email || account.username || "—" }}</p>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Password -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Password
-        </label>
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <Lock class="w-4.5 h-4.5 text-violet-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Password</h4>
+        </div>
 
-        <div
-          class="flex items-center gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px]"
-        >
+        <div class="flex items-center gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px]">
           <Key class="w-5 h-5 text-violet-400" />
 
           <span class="font-mono tracking-widest flex-1">
@@ -173,66 +164,67 @@ onMounted(async () => {
           </button>
         </div>
 
-        <p v-if="copied" class="text-xs text-success mt-1">
+        <p v-if="copied" class="text-xs text-success mt-2">
           Password copied to clipboard
         </p>
       </div>
 
-      <!-- Website -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Website
-        </label>
-        <div class="flex items-center gap-3">
-          <Globe class="w-5 h-5 text-gray-400" />
-          <a
-            v-if="account.website"
-            :href="account.website"
-            target="_blank"
-            class="text-violet-600 font-semibold hover:underline"
-          >
-            {{ account.website }}
-          </a>
-          <span v-else class="text-gray-400">—</span>
+      <!-- Website & Notes -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-gray-100 rounded-[10px] flex items-center justify-center shrink-0">
+            <FileText class="w-4.5 h-4.5 text-gray-500" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Detail Tambahan</h4>
         </div>
-      </div>
 
-      <!-- Notes -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Notes
-        </label>
-        <div
-          class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-50"
-        >
-          <FileText class="w-5 h-5 text-gray-400 mt-0.5" />
-          <p class="text-brand-dark whitespace-pre-line">
-            {{ account.notes || "—" }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Meta -->
-      <div
-        class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-[#DCDEDD]"
-      >
-        <div class="flex items-center gap-3">
-          <Clock class="w-5 h-5 text-gray-400" />
+        <div class="space-y-5">
           <div>
-            <p class="text-xs text-gray-500">Created At</p>
-            <p class="text-sm font-semibold">
-              {{ formatDate(account.created_at) }}
-            </p>
+            <p class="text-xs text-gray-500 mb-1">Website</p>
+            <div class="flex items-center gap-3">
+              <Globe class="w-5 h-5 text-gray-400 shrink-0" />
+              <a
+                v-if="account.website"
+                :href="account.website"
+                target="_blank"
+                class="text-violet-600 font-semibold hover:underline truncate"
+              >
+                {{ account.website }}
+              </a>
+              <span v-else class="text-gray-400">—</span>
+            </div>
+          </div>
+
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Notes</p>
+            <div class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-50">
+              <FileText class="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+              <p class="text-brand-dark whitespace-pre-line">
+                {{ account.notes || "—" }}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
-          <Clock class="w-5 h-5 text-gray-400" />
-          <div>
-            <p class="text-xs text-gray-500">Last Updated</p>
-            <p class="text-sm font-semibold">
-              {{ formatDate(account.updated_at) }}
-            </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-5 mt-5 border-t border-[#DCDEDD]">
+          <div class="flex items-center gap-3">
+            <Clock class="w-5 h-5 text-gray-400" />
+            <div>
+              <p class="text-xs text-gray-500">Created At</p>
+              <p class="text-sm font-semibold">
+                {{ formatDate(account.created_at) }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <Clock class="w-5 h-5 text-gray-400" />
+            <div>
+              <p class="text-xs text-gray-500">Last Updated</p>
+              <p class="text-sm font-semibold">
+                {{ formatDate(account.updated_at) }}
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import {
   ShieldCheck,
@@ -11,6 +11,8 @@ import {
   Key,
   Tag,
   User,
+  IdCard,
+  Lock,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
@@ -34,6 +36,24 @@ const form = ref({
 const togglePassword = () => {
   showPassword.value = !showPassword.value;
 };
+
+// Purely visual guidance -- the vault stores arbitrary third-party
+// passwords, so strength isn't enforced here, just hinted at.
+const passwordStrength = computed(() => {
+  const value = form.value.password || "";
+  if (!value) return { score: 0, label: "", color: "" };
+
+  let score = 0;
+  if (value.length >= 8) score++;
+  if (value.length >= 12) score++;
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++;
+  if (/[0-9]/.test(value)) score++;
+  if (/[^A-Za-z0-9]/.test(value)) score++;
+
+  if (score <= 1) return { score: 1, label: "Lemah", color: "bg-red-500" };
+  if (score <= 3) return { score: 2, label: "Cukup", color: "bg-amber-500" };
+  return { score: 3, label: "Kuat", color: "bg-emerald-500" };
+});
 
 const submit = async () => {
   error.value = "";
@@ -97,59 +117,81 @@ const submit = async () => {
           @close="error = ''"
         />
       </Transition>
+      <Transition name="fade">
+        <Alert v-if="success" type="success" :title="success" message="" :show="!!success" />
+      </Transition>
     </div>
 
-    <!-- Form Card -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
-      <!-- Label Password -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Label Password *
-        </label>
-        <div class="relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
-          >
-            <Tag class="w-5 h-5 text-gray-400" />
+    <form @submit.prevent="submit" class="space-y-6">
+      <!-- Account Detail -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <IdCard class="w-4.5 h-4.5 text-violet-600" />
           </div>
-          <input
-            v-model="form.label_password"
-            type="text"
-            placeholder="e.g. ERP Finance Admin, VPN Office"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
-          />
+          <h4 class="text-brand-dark font-bold">Detail Akun</h4>
         </div>
-      </div>
 
-      <!-- Username / Email -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Username / Email *
-        </label>
-        <div class="relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
-          >
-            <User class="w-5 h-5 text-gray-400" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="md:col-span-2">
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Label Password *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Tag class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.label_password"
+                type="text"
+                placeholder="e.g. ERP Finance Admin, VPN Office"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
+              />
+            </div>
           </div>
-          <input
-            v-model="form.username_email"
-            type="text"
-            placeholder="e.g. admin@company.com / admin.erp"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
-          />
+
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Username / Email *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <User class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.username_email"
+                type="text"
+                placeholder="e.g. admin@company.com / admin.erp"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Website (Optional)</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Globe class="w-5 h-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.website"
+                type="url"
+                placeholder="https://example.com"
+                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Password -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Password *
-        </label>
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <Lock class="w-4.5 h-4.5 text-violet-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Password</h4>
+        </div>
+
+        <label class="block text-brand-dark text-sm font-semibold mb-1.5">Password *</label>
         <div class="relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
-          >
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Key class="w-5 h-5 text-gray-400" />
           </div>
 
@@ -169,33 +211,34 @@ const submit = async () => {
             <EyeOff v-else class="w-5 h-5" />
           </button>
         </div>
-      </div>
 
-      <!-- Website -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Website (Optional)
-        </label>
-        <div class="relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
-          >
-            <Globe class="w-5 h-5 text-gray-400" />
+        <div v-if="form.password" class="flex items-center gap-2 mt-2.5">
+          <div class="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden flex gap-0.5">
+            <div
+              v-for="i in 3"
+              :key="i"
+              class="flex-1 h-full rounded-full transition-colors"
+              :class="i <= passwordStrength.score ? passwordStrength.color : 'bg-gray-100'"
+            ></div>
           </div>
-          <input
-            v-model="form.website"
-            type="url"
-            placeholder="https://example.com"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
-          />
+          <span class="text-xs font-semibold shrink-0" :class="{
+            'text-red-600': passwordStrength.score === 1,
+            'text-amber-600': passwordStrength.score === 2,
+            'text-emerald-600': passwordStrength.score === 3,
+          }">{{ passwordStrength.label }}</span>
         </div>
       </div>
 
       <!-- Notes -->
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
-          Notes (Optional)
-        </label>
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-gray-100 rounded-[10px] flex items-center justify-center shrink-0">
+            <FileText class="w-4.5 h-4.5 text-gray-500" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Catatan</h4>
+        </div>
+
+        <label class="block text-brand-dark text-sm font-semibold mb-1.5">Notes (Optional)</label>
         <div class="relative">
           <div class="absolute top-3 left-4 pointer-events-none">
             <FileText class="w-5 h-5 text-gray-400" />
@@ -210,7 +253,7 @@ const submit = async () => {
       </div>
 
       <!-- Actions -->
-      <div class="flex flex-col sm:flex-row gap-3 pt-4">
+      <div class="flex flex-col sm:flex-row gap-3">
         <button
           type="button"
           @click="$router.back()"
@@ -220,8 +263,7 @@ const submit = async () => {
         </button>
 
         <button
-          type="button"
-          @click="submit"
+          type="submit"
           :disabled="loading"
           class="w-full sm:w-auto btn-primary rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
         >
@@ -231,7 +273,7 @@ const submit = async () => {
           </span>
         </button>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 

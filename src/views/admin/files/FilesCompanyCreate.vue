@@ -10,6 +10,8 @@ import {
   FileSpreadsheet,
   FileArchive,
   File as FileIcon,
+  Info,
+  Paperclip,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import BaseInput from "@/components/common/form/Input.vue";
@@ -128,26 +130,45 @@ const submit = async () => {
       </Transition>
     </div>
 
-    <!-- Form Card -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
-      <BaseInput
-        id="file_name"
-        label="File Name *"
-        placeholder="e.g. Company NDA Template, HR Policy 2026"
-        v-model="form.file_name"
-        :error="nameError ? 'File name is required.' : ''"
-      />
+    <form @submit.prevent="submit" class="space-y-6">
+      <!-- File Info -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <Info class="w-4.5 h-4.5 text-blue-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Informasi File</h4>
+        </div>
 
-      <TextArea
-        id="description"
-        label="Description (Optional)"
-        placeholder="Additional notes about this file..."
-        v-model="form.description"
-        rows="4"
-      />
+        <div class="space-y-5">
+          <BaseInput
+            id="file_name"
+            label="File Name *"
+            placeholder="e.g. Company NDA Template, HR Policy 2026"
+            v-model="form.file_name"
+            :error="nameError ? 'File name is required.' : ''"
+          />
 
-      <div>
-        <label class="block text-brand-dark text-base font-semibold mb-1">
+          <TextArea
+            id="description"
+            label="Description (Optional)"
+            placeholder="Additional notes about this file..."
+            v-model="form.description"
+            rows="4"
+          />
+        </div>
+      </div>
+
+      <!-- Upload -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <Paperclip class="w-4.5 h-4.5 text-indigo-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Berkas</h4>
+        </div>
+
+        <label class="block text-brand-dark text-sm font-semibold mb-1.5">
           Upload File *
         </label>
         <label
@@ -165,7 +186,7 @@ const submit = async () => {
       </div>
 
       <!-- Actions -->
-      <div class="flex flex-col sm:flex-row gap-3 pt-4">
+      <div class="flex flex-col sm:flex-row gap-3">
         <button
           type="button"
           @click="$router.back()"
@@ -175,8 +196,7 @@ const submit = async () => {
         </button>
 
         <button
-          type="button"
-          @click="submit"
+          type="submit"
           :disabled="loading"
           class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
         >
@@ -186,7 +206,7 @@ const submit = async () => {
           </span>
         </button>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 

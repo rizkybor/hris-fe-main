@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { Plus, Trash2, Receipt } from "lucide-vue-next";
+import { Plus, Trash2, Receipt, User, Package, Wallet } from "lucide-vue-next";
 import { useInvoiceStore } from "@/stores/invoice";
 
 const store = useInvoiceStore();
@@ -63,7 +63,12 @@ const handleSubmit = async () => {
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Informasi Klien</h4>
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
+            <User class="w-4 h-4 text-blue-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Informasi Klien</h4>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Kode Klien</label>
@@ -95,7 +100,12 @@ const handleSubmit = async () => {
 
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between mb-4">
-          <h4 class="text-brand-dark font-bold">Item Tagihan</h4>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-indigo-50 rounded-[9px] flex items-center justify-center shrink-0">
+              <Package class="w-4 h-4 text-indigo-600" />
+            </div>
+            <h4 class="text-brand-dark font-bold">Item Tagihan</h4>
+          </div>
           <button type="button" @click="addItem" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
             <Plus class="w-4 h-4" /> Tambah Item
           </button>
@@ -114,7 +124,12 @@ const handleSubmit = async () => {
       </div>
 
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Pembayaran & Pajak</h4>
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 bg-emerald-50 rounded-[9px] flex items-center justify-center shrink-0">
+            <Wallet class="w-4 h-4 text-emerald-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Pembayaran & Pajak</h4>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">PPN (%)</label>
