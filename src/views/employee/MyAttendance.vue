@@ -5,7 +5,6 @@ import {
   CalendarDays,
   Clock,
   Clock3,
-  Download,
   Plus,
   User,
   CalendarPlus,
@@ -16,6 +15,7 @@ import { useAttendanceStore } from "@/stores/attendance";
 import { useLeaveRequestStore } from "@/stores/leaveRequest";
 import { useOptionStore } from "@/stores/option";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 
 // Utils
@@ -47,6 +47,16 @@ const { fetchMyLeaveRequests, createLeaveRequest, fetchMyLeaveBalance } = leaveR
 const optionStore = useOptionStore();
 const { leaveTypes } = storeToRefs(optionStore);
 const { fetchLeaveTypes } = optionStore;
+
+const authStore = useAuthStore();
+const { user } = storeToRefs(authStore);
+
+// Interns don't accrue an Annual Leave quota, so it isn't offered to them
+// (backend rejects it too -- this just keeps the UI from showing a dead end).
+const isIntern = computed(() => user.value?.employee_profile?.job_information?.employment_type === "intern");
+const availableLeaveTypes = computed(() =>
+  isIntern.value ? leaveTypes.value.filter((type) => type.value !== "annual_leave") : leaveTypes.value
+);
 
 // State
 const showLeaveRequestModal = ref(false);
@@ -184,7 +194,7 @@ onMounted(async () => {
   <div class="p-5">
     <!-- Banner Section -->
     <div
-      class="relative rounded-[14px] mb-6 overflow-hidden h-[200px]"
+      class="relative rounded-[14px] mb-6 overflow-hidden"
       style="
         background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c');
         background-size: cover;
@@ -195,40 +205,31 @@ onMounted(async () => {
       <div class="absolute inset-0 bg-black/40"></div>
 
       <!-- Banner Content -->
-      <div class="relative z-10 p-6 h-full flex flex-col justify-center">
-        <div class="flex items-center gap-4">
+      <div class="relative z-10 p-5 sm:p-6 flex flex-col gap-5 sm:gap-0 sm:flex-row sm:items-center sm:justify-between sm:min-h-[200px]">
+        <div class="flex items-center gap-3 sm:gap-4">
           <div
-            class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-[12px] flex items-center justify-center"
+            class="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-[12px] flex items-center justify-center shrink-0"
           >
-            <CalendarCheck class="w-8 h-8 text-white" />
+            <CalendarCheck class="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <div>
-            <h3 class="text-white text-2xl font-bold">Attendance Overview</h3>
-            <p class="text-white/90 text-base font-normal">
+          <div class="min-w-0">
+            <h3 class="text-white text-lg sm:text-2xl font-bold">Attendance Overview</h3>
+            <p class="text-white/90 text-sm sm:text-base font-normal">
               Track your daily presence and manage leave requests efficiently
             </p>
           </div>
         </div>
-      </div>
 
-      <!-- Overlapped Action Buttons -->
-      <div class="absolute bottom-4 right-6 flex items-center gap-[10px] z-20">
-        <button
-          class="border border-[#DCDEDD] bg-white rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-2 shadow-lg"
-        >
-          <Download class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark text-sm font-semibold"
-            >Export Report</span
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-[10px]">
+          <button
+            @click="openLeaveRequestModal"
+            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:py-3 flex items-center justify-center gap-2 shadow-lg"
           >
-        </button>
-
-        <button
-          @click="openLeaveRequestModal"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2 shadow-lg"
-        >
-          <Plus class="w-4 h-4 text-white" />
-          <span class="text-white text-sm font-semibold">Request Leave</span>
-        </button>
+            <Plus class="w-4 h-4 text-white" />
+            <span class="text-white text-sm font-semibold">Request Leave</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -238,6 +239,7 @@ onMounted(async () => {
       v-else
       :statistics="statistics"
       :pending-requests-count="pendingRequestsCount"
+      :leave-balance="myLeaveBalance"
     />
 
     <!-- Content Grid -->
@@ -356,7 +358,7 @@ onMounted(async () => {
       >
         <div>
           <p class="text-brand-light text-sm">Sisa Cuti Tahunan {{ myLeaveBalance.year }}</p>
-          <p class="text-brand-dark text-2xl font-bold mt-1">
+          <p class="text-brand-dark text-xl sm:text-2xl font-bold mt-1">
             {{ myLeaveBalance.remaining }} <span class="text-base font-medium text-brand-light">/ {{ myLeaveBalance.quota }} hari</span>
           </p>
         </div>
@@ -478,19 +480,19 @@ onMounted(async () => {
           class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden"
         >
           <!-- Modal Header -->
-          <div class="p-6 border-b border-[#DCDEDD]">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
+          <div class="p-4 sm:p-6 border-b border-[#DCDEDD]">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 <div
-                  class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+                  class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0"
                 >
-                  <CalendarPlus class="w-6 h-6 text-blue-600" />
+                  <CalendarPlus class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                 </div>
-                <div>
-                  <h3 class="text-brand-dark text-xl font-bold">
+                <div class="min-w-0">
+                  <h3 class="text-brand-dark text-base sm:text-xl font-bold truncate">
                     Request New Leave
                   </h3>
-                  <p class="text-brand-light text-sm font-normal">
+                  <p class="text-brand-light text-xs sm:text-sm font-normal truncate">
                     Submit a leave request for approval
                   </p>
                 </div>
@@ -498,19 +500,19 @@ onMounted(async () => {
               <button
                 type="button"
                 @click="closeLeaveRequestModal"
-                class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
+                class="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150 shrink-0"
               >
-                <span class="text-gray-600 text-xl">×</span>
+                <span class="text-gray-600 text-lg sm:text-xl">×</span>
               </button>
             </div>
           </div>
 
           <!-- Modal Content -->
-          <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div class="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
             <form @submit.prevent="submitLeaveRequest" class="space-y-6">
               <!-- Leave Information Section -->
               <div
-                class="bg-white border border-[#DCDEDD] rounded-[14px] p-6"
+                class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6"
               >
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <!-- Leave Type -->
@@ -526,7 +528,7 @@ onMounted(async () => {
                     >
                       <option value="">Select leave type</option>
                       <option
-                        v-for="type in leaveTypes"
+                        v-for="type in availableLeaveTypes"
                         :key="type.value"
                         :value="type.value"
                       >
@@ -597,7 +599,7 @@ onMounted(async () => {
 
               <!-- Reason Section -->
               <div
-                class="bg-white border border-[#DCDEDD] rounded-[14px] p-6"
+                class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6"
               >
                 <div class="space-y-4">
                   <!-- Reason -->
@@ -632,11 +634,11 @@ onMounted(async () => {
               </div>
 
               <!-- Form Actions -->
-              <div class="flex items-center gap-4">
+              <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                 <button
                   type="button"
                   @click="closeLeaveRequestModal"
-                  class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center gap-2"
+                  class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2"
                 >
                   <span class="text-brand-dark text-base font-semibold"
                     >Cancel</span
@@ -644,7 +646,7 @@ onMounted(async () => {
                 </button>
                 <button
                   type="submit"
-                  class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2"
+                  class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2"
                 >
                   <span class="text-brand-white text-base font-semibold"
                     >Submit Request</span
@@ -668,19 +670,19 @@ onMounted(async () => {
           class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
         >
           <!-- Modal Header -->
-          <div class="p-6 border-b border-[#DCDEDD]">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
+          <div class="p-4 sm:p-6 border-b border-[#DCDEDD]">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 <div
-                  class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+                  class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0"
                 >
-                  <CalendarCheck class="w-6 h-6 text-blue-600" />
+                  <CalendarCheck class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                 </div>
-                <div>
-                  <h3 class="text-brand-dark text-xl font-bold">
+                <div class="min-w-0">
+                  <h3 class="text-brand-dark text-base sm:text-xl font-bold truncate">
                     Leave Request Details
                   </h3>
-                  <p class="text-brand-light text-sm font-normal">
+                  <p class="text-brand-light text-xs sm:text-sm font-normal truncate">
                     Complete information about this leave request
                   </p>
                 </div>
@@ -688,19 +690,19 @@ onMounted(async () => {
               <button
                 type="button"
                 @click="closeLeaveDetailsModal"
-                class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
+                class="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150 shrink-0"
               >
-                <span class="text-gray-600 text-xl">×</span>
+                <span class="text-gray-600 text-lg sm:text-xl">×</span>
               </button>
             </div>
           </div>
 
           <!-- Modal Content -->
-          <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div class="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
             <div class="space-y-6">
               <!-- Leave Information Section -->
               <div
-                class="bg-white border border-[#DCDEDD] rounded-[14px] p-6"
+                class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6"
               >
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <!-- Leave Type -->
@@ -804,7 +806,7 @@ onMounted(async () => {
 
               <!-- Reason Section -->
               <div
-                class="bg-white border border-[#DCDEDD] rounded-[14px] p-6"
+                class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6"
               >
                 <div class="space-y-4">
                   <!-- Reason -->
@@ -844,7 +846,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   @click="closeLeaveDetailsModal"
-                  class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center gap-2"
+                  class="w-full sm:w-auto border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2"
                 >
                   <span class="text-brand-dark text-base font-semibold"
                     >Close</span

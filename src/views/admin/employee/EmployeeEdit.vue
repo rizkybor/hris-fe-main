@@ -266,6 +266,7 @@ onMounted(() => {
       v-if="currentStep === 1"
       v-model="step1Data"
       :errors="error"
+      :is-editing="true"
     />
 
     <!-- Step 2: Job Information -->
@@ -280,6 +281,8 @@ onMounted(() => {
       v-if="currentStep === 3"
       v-model="step3Data"
       :errors="error"
+      :is-editing="true"
+      :employee-id="route.params.id"
     />
 
     <!-- Step 4: Preview -->

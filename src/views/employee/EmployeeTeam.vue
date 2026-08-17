@@ -10,18 +10,21 @@ import {
   FileText,
   Clock,
   CheckCircle,
+  ChevronRight,
 } from "lucide-vue-next";
 import { useEmployeeStore } from "@/stores/employee";
 import CardList from "@/components/admin/project/list/CardList.vue";
 import { formatDate as formatDateUtil } from "@/utils/dateUtils.js";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 import Avatar from "@/components/common/Avatar.vue";
+import { useScrollFade } from "@/composables/useScrollFade";
 
 const employeeStore = useEmployeeStore();
 const team = ref(null);
 const members = ref([]);
 const projects = ref([]);
 const activeTab = ref("members");
+const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
 const loadingMembers = ref(false);
 const loadingProjects = ref(false);
 
@@ -101,44 +104,44 @@ onMounted(() => {
 <template>
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Team Detail Content -->
-    <main class="main-content flex-1 overflow-auto p-5">
+    <main class="main-content flex-1 overflow-auto p-3 sm:p-5">
       <!-- Team Header -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-6">
-        <div class="flex items-center gap-6">
-          <div class="relative">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 text-center sm:text-left">
+          <div class="relative shrink-0">
             <div
-              class="w-32 h-32 relative flex items-center justify-center rounded-full overflow-hidden"
+              class="w-20 h-20 sm:w-32 sm:h-32 relative flex items-center justify-center rounded-full overflow-hidden"
             >
               <div
                 class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full"
               ></div>
-              <Users class="w-16 h-16 text-white relative z-10" />
+              <Users class="w-10 h-10 sm:w-16 sm:h-16 text-white relative z-10" />
             </div>
           </div>
-          <div class="flex-1">
-            <div class="flex items-center gap-4 mb-3">
-              <h1 class="text-brand-dark text-3xl font-extrabold">
+          <div class="flex-1 min-w-0 w-full">
+            <div class="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-4 mb-3">
+              <h1 class="text-brand-dark text-xl sm:text-3xl font-extrabold truncate max-w-full">
                 {{ team?.name || "Loading..." }}
               </h1>
               <span
                 v-if="team?.status"
-                class="px-3 py-1 rounded-md text-sm font-semibold"
+                class="px-3 py-1 rounded-md text-sm font-semibold shrink-0"
                 :class="getStatusClass(team.status)"
               >
                 {{ team.status }}
               </span>
             </div>
-            <div class="flex items-center gap-6 text-base text-gray-600">
+            <div class="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-6 text-sm sm:text-base text-gray-600">
               <div class="flex items-center gap-2">
-                <Users class="w-4 h-4" />
+                <Users class="w-4 h-4 shrink-0" />
                 <span>{{ members?.length || 0 }} members</span>
               </div>
               <div class="flex items-center gap-2">
-                <Building class="w-4 h-4" />
+                <Building class="w-4 h-4 shrink-0" />
                 <span>{{ team?.department || "N/A" }}</span>
               </div>
               <div class="flex items-center gap-2">
-                <Calendar class="w-4 h-4" />
+                <Calendar class="w-4 h-4 shrink-0" />
                 <span>{{ team?.created_at ? formatDateUtil(team.created_at) : "N/A" }}</span>
               </div>
             </div>
@@ -157,7 +160,7 @@ onMounted(() => {
                 Active Members
               </p>
               <p
-                class="text-brand-dark text-3xl font-extrabold leading-tight my-2"
+                class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
               >
                 {{ activeMembers }}
               </p>
@@ -181,7 +184,7 @@ onMounted(() => {
                 Projects Assigned
               </p>
               <p
-                class="text-brand-dark text-3xl font-extrabold leading-tight my-2"
+                class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
               >
                 {{ projects?.length || 0 }}
               </p>
@@ -201,7 +204,7 @@ onMounted(() => {
             <div>
               <p class="text-brand-dark text-base font-medium">Expected Size</p>
               <p
-                class="text-brand-dark text-3xl font-extrabold leading-tight my-2"
+                class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
               >
                 {{ team?.expected_size || 0 }}
               </p>
@@ -221,7 +224,7 @@ onMounted(() => {
             <div>
               <p class="text-brand-dark text-base font-medium">Team Lead</p>
               <p
-                class="text-brand-dark text-xl font-extrabold leading-tight my-2"
+                class="text-brand-dark text-lg sm:text-xl font-extrabold leading-tight my-2"
               >
                 {{ team?.leader?.name || "N/A" }}
               </p>
@@ -237,48 +240,68 @@ onMounted(() => {
       </div>
 
       <!-- Tab Navigation -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6">
-        <div class="flex items-center gap-2">
+      <div class="relative mb-6">
+      <div
+        ref="tabScrollRef"
+        @scroll="updateTabFade"
+        class="bg-white border border-[#DCDEDD] rounded-[12px] p-2 sm:p-6 overflow-x-auto"
+      >
+        <div class="flex items-center gap-2 min-w-max sm:min-w-0">
           <button
             @click="activeTab = 'members'"
             :class="
               activeTab === 'members'
-                ? 'px-6 py-3 rounded-[12px] bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-base transition-all duration-300'
-                : 'px-6 py-3 rounded-[12px] border border-[#DCDEDD] bg-white text-brand-dark font-medium text-base hover:border-[#0C51D9] hover:border-2 transition-all duration-300'
+                ? 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-sm sm:text-base transition-all duration-300 whitespace-nowrap'
+                : 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] border border-[#DCDEDD] bg-white text-brand-dark font-medium text-sm sm:text-base hover:border-[#0C51D9] hover:border-2 transition-all duration-300 whitespace-nowrap'
             "
           >
-            <Users class="w-5 h-5 inline mr-2" />
+            <Users class="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" />
             Members
           </button>
           <button
             @click="activeTab = 'projects'"
             :class="
               activeTab === 'projects'
-                ? 'px-6 py-3 rounded-[12px] bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-base transition-all duration-300'
-                : 'px-6 py-3 rounded-[12px] border border-[#DCDEDD] bg-white text-brand-dark font-medium text-base hover:border-[#0C51D9] hover:border-2 transition-all duration-300'
+                ? 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-sm sm:text-base transition-all duration-300 whitespace-nowrap'
+                : 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] border border-[#DCDEDD] bg-white text-brand-dark font-medium text-sm sm:text-base hover:border-[#0C51D9] hover:border-2 transition-all duration-300 whitespace-nowrap'
             "
           >
-            <Folder class="w-5 h-5 inline mr-2" />
+            <Folder class="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" />
             Projects
           </button>
           <button
             @click="activeTab = 'description'"
             :class="
               activeTab === 'description'
-                ? 'px-6 py-3 rounded-[12px] bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-base transition-all duration-300'
-                : 'px-6 py-3 rounded-[12px] border border-[#DCDEDD] bg-white text-brand-dark font-medium text-base hover:border-[#0C51D9] hover:border-2 transition-all duration-300'
+                ? 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-sm sm:text-base transition-all duration-300 whitespace-nowrap'
+                : 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] border border-[#DCDEDD] bg-white text-brand-dark font-medium text-sm sm:text-base hover:border-[#0C51D9] hover:border-2 transition-all duration-300 whitespace-nowrap'
             "
           >
-            <FileText class="w-5 h-5 inline mr-2" />
+            <FileText class="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" />
             Description
           </button>
         </div>
+      </div>
+      <Transition name="fade">
+        <div
+          v-if="showTabRightFade"
+          class="sm:hidden pointer-events-none absolute inset-y-0 right-0 w-10 rounded-r-[12px] bg-gradient-to-l from-white via-white/80 to-transparent flex items-center justify-end pr-1"
+        >
+          <ChevronRight class="w-4 h-4 text-[#0C51D9] scroll-hint-nudge" />
+        </div>
+      </Transition>
+      <Transition name="fade">
+        <div
+          v-if="showTabLeftFade"
+          class="sm:hidden pointer-events-none absolute inset-y-0 left-0 w-8 rounded-l-[12px] bg-gradient-to-r from-white via-white/80 to-transparent"
+        ></div>
+      </Transition>
       </div>
 
       <!-- Team Members Section -->
       <div
         v-if="activeTab === 'members'"
-        class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6"
+        class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-6 mb-6"
       >
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-3">
@@ -365,7 +388,7 @@ onMounted(() => {
       <!-- Projects Section -->
       <div
         v-if="activeTab === 'projects'"
-        class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6"
+        class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-6 mb-6"
       >
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-3">
@@ -423,7 +446,7 @@ onMounted(() => {
       <!-- Description Section -->
       <div
         v-if="activeTab === 'description'"
-        class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6"
+        class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-6 mb-6"
       >
         <div class="flex items-center gap-3 mb-6">
           <div
@@ -469,3 +492,14 @@ onMounted(() => {
     </main>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

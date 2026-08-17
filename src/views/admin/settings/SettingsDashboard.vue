@@ -1,5 +1,5 @@
 <script setup>
-import { SettingsIcon, ShieldCheck, KeyRound, UserCog, ChevronRight, Tags, DatabaseBackup, Users2Icon, Award } from "lucide-vue-next";
+import { SettingsIcon, ShieldCheck, KeyRound, UserCog, ChevronRight, Tags, DatabaseBackup, Users2Icon, Award, ListChecks } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
 const links = [
@@ -23,6 +23,13 @@ const links = [
     title: "Account & Credentials",
     description: "Manage stored company account credentials",
     permission: "credential-account-menu",
+  },
+  {
+    to: { name: "admin.settings.dropdown-options" },
+    icon: ListChecks,
+    title: "Dropdown Options",
+    description: "Manage Employment Type, PTKP Status, Bank Name, and Preferred Language choices",
+    permission: "option-menu",
   },
   {
     to: { name: "admin.settings.sdm-fields" },

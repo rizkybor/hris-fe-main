@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import Input from "@/components/common/form/Input.vue";
 import Alert from "@/components/common/Alert.vue";
-import { User as UserIcon, Mail, Lock, Upload, ArrowLeft } from "lucide-vue-next";
+import { User as UserIcon, Mail, Lock, Camera, ArrowLeft } from "lucide-vue-next";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -71,7 +71,7 @@ const handleSubmit = async () => {
           <UserIcon class="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">Edit Profile</h3>
+          <h3 class="text-brand-dark text-lg sm:text-xl font-bold">Edit Profile</h3>
           <p class="text-brand-light text-sm">
             Update your personal information
           </p>
@@ -182,49 +182,51 @@ const handleSubmit = async () => {
               >Profile Photo</label
             >
             <div class="flex items-center gap-4">
-              <div class="w-32 h-32">
-                <div class="relative w-32 h-32">
-                  <div
-                    class="w-32 h-32 absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full"
-                  ></div>
-                  <div
-                    class="w-32 h-32 relative z-10 flex items-center justify-center"
-                  >
-                    <img
-                      :src="form.profile_photo_url"
-                      alt="Profile Photo"
-                      class="w-32 h-32 object-cover rounded-full"
-                      v-if="form.profile_photo_url"
-                    />
-                    <div
-                      class="w-32 h-32 rounded-full bg-gray-100"
-                      v-else
-                    ></div>
-                  </div>
-                </div>
-              </div>
-              <div class="flex flex-col gap-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  class="hidden"
-                  ref="photoInput"
-                  @change="handlePhotoSelect"
-                />
-                <button
-                  type="button"
-                  class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2 cursor-pointer"
-                  @click="photoInput?.click()"
+              <input
+                type="file"
+                accept="image/*"
+                class="hidden"
+                ref="photoInput"
+                @change="handlePhotoSelect"
+              />
+              <button
+                type="button"
+                class="relative w-32 h-32 rounded-full shrink-0 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0C51D9] focus:ring-offset-2"
+                @click="photoInput?.click()"
+                aria-label="Change profile photo"
+              >
+                <div
+                  class="w-32 h-32 absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full"
+                ></div>
+                <div
+                  class="w-32 h-32 relative z-10 flex items-center justify-center"
                 >
-                  <Upload class="w-4 h-4 text-gray-600" />
-                  <span class="text-brand-dark text-base font-semibold"
-                    >Upload Photo</span
-                  >
-                </button>
-                <p class="text-brand-light text-xs">
-                  JPG, PNG up to 2MB • Recommended: 400x400px
-                </p>
-              </div>
+                  <img
+                    :src="form.profile_photo_url"
+                    alt="Profile Photo"
+                    class="w-32 h-32 object-cover rounded-full"
+                    v-if="form.profile_photo_url"
+                  />
+                  <div class="w-32 h-32 rounded-full bg-gray-100" v-else></div>
+                </div>
+                <!-- Hover overlay -->
+                <div
+                  class="absolute inset-0 z-20 rounded-full bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center"
+                >
+                  <Camera
+                    class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  />
+                </div>
+                <!-- Camera badge -->
+                <div
+                  class="absolute bottom-1 right-1 z-30 w-9 h-9 bg-[#0C51D9] border-4 border-white rounded-full flex items-center justify-center group-hover:brightness-110 transition-all duration-300"
+                >
+                  <Camera class="w-4 h-4 text-white" />
+                </div>
+              </button>
+              <p class="text-brand-light text-xs">
+                JPG, PNG up to 2MB<br />Recommended: 400x400px
+              </p>
             </div>
           </div>
         </div>

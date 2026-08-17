@@ -64,6 +64,17 @@ html {
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
+/* Nudges a chevron left-right to hint that a tab bar can be swiped
+   horizontally on mobile. Paired with .scroll-fade-hint's edge gradient. */
+@keyframes scroll-hint-nudge {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(3px); }
+}
+
+.scroll-hint-nudge {
+    animation: scroll-hint-nudge 1.2s ease-in-out infinite;
+}
+
 /* Button and link styles */
 .nav-link {
     display: flex;

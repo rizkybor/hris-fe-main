@@ -2,6 +2,7 @@
 import { ref, inject } from "vue";
 import { useRouter } from "vue-router";
 import { useEmployeeStore } from "@/stores/employee";
+import { useEmployeeFileStore } from "@/stores/employeeFile";
 import { storeToRefs } from "pinia";
 import { ArrowRight, ArrowLeft, UserPlus } from "lucide-vue-next";
 
@@ -14,6 +15,7 @@ import ErrorModal from "@/components/admin/employee/create/ErrorModal.vue";
 const router = useRouter();
 const employeeStore = useEmployeeStore();
 const { loading, error } = storeToRefs(employeeStore);
+const employeeFileStore = useEmployeeFileStore();
 
 // Modal state
 const showErrorModal = ref(false);
@@ -74,6 +76,8 @@ const step3Data = ref({
   emergency_contact_email: "",
   additional_notes: "",
   preferred_language: "",
+  documents: [] as File[],
+  document_names: [] as string[],
 });
 
 const normalizeRupiah = (value: any) => {
@@ -153,7 +157,22 @@ const handleSubmit = async () => {
     formData.append("preferred_language", step3Data.value.preferred_language);
     formData.append("additional_notes", step3Data.value.additional_notes);
 
-    await employeeStore.createEmployee(formData);
+    const createdEmployee = await employeeStore.createEmployee(formData);
+
+    // Documents are attached after creation since they belong to the new
+    // employee record, which doesn't exist until this point. A failure here
+    // shouldn't block the (already successful) employee creation.
+    if (createdEmployee?.id && step3Data.value.documents.length > 0) {
+      try {
+        await employeeFileStore.uploadFiles(
+          createdEmployee.id,
+          step3Data.value.documents,
+          step3Data.value.document_names
+        );
+      } catch (uploadErr) {
+        console.error("Error uploading employee documents:", uploadErr);
+      }
+    }
 
     // Redirect to success page on success
     router.push({ name: "admin.employees.success" });

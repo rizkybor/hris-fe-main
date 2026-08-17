@@ -10,6 +10,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  leaveBalance: {
+    type: Object,
+    default: null,
+  },
 });
 </script>
 
@@ -22,7 +26,7 @@ const props = defineProps({
       <div class="flex items-center justify-between">
         <div>
           <p class="text-brand-dark text-sm font-medium">This Month</p>
-          <p class="text-brand-dark text-2xl font-extrabold leading-tight my-1">
+          <p class="text-brand-dark text-xl sm:text-2xl font-extrabold leading-tight my-1">
             {{ statistics.present_days }}/{{ statistics.total_days }}
           </p>
           <p class="text-success text-xs font-medium">Days present</p>
@@ -42,10 +46,12 @@ const props = defineProps({
       <div class="flex items-center justify-between">
         <div>
           <p class="text-brand-dark text-sm font-medium">Leave Balance</p>
-          <p class="text-brand-dark text-2xl font-extrabold leading-tight my-1">
-            18
+          <p class="text-brand-dark text-xl sm:text-2xl font-extrabold leading-tight my-1">
+            {{ leaveBalance ? leaveBalance.remaining : "-" }}
           </p>
-          <p class="text-brand-light text-xs font-medium">Days remaining</p>
+          <p class="text-brand-light text-xs font-medium">
+            {{ leaveBalance ? `of ${leaveBalance.quota} days` : "Days remaining" }}
+          </p>
         </div>
         <div
           class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -62,7 +68,7 @@ const props = defineProps({
       <div class="flex items-center justify-between">
         <div>
           <p class="text-brand-dark text-sm font-medium">Pending Requests</p>
-          <p class="text-brand-dark text-2xl font-extrabold leading-tight my-1">
+          <p class="text-brand-dark text-xl sm:text-2xl font-extrabold leading-tight my-1">
             {{ pendingRequestsCount }}
           </p>
           <p class="text-warning text-xs font-medium">Awaiting approval</p>
@@ -82,8 +88,8 @@ const props = defineProps({
       <div class="flex items-center justify-between">
         <div>
           <p class="text-brand-dark text-sm font-medium">Average Hours</p>
-          <p class="text-brand-dark text-2xl font-extrabold leading-tight my-1">
-            8.5h
+          <p class="text-brand-dark text-xl sm:text-2xl font-extrabold leading-tight my-1">
+            {{ statistics.average_hours || 0 }}h
           </p>
           <p class="text-success text-xs font-medium">Daily average</p>
         </div>
