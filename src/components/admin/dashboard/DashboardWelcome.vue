@@ -12,6 +12,7 @@ const primaryRole = computed(() => {
   const roles = authStore.user?.roles || [];
   if (roles.includes("superadmin")) return "superadmin";
   if (roles.includes("manager")) return "manager";
+  if (roles.includes("operational_director")) return "operational_director";
   if (roles.includes("hr")) return "hr";
   if (roles.includes("finance")) return "finance";
   if (roles.includes("staff")) return "staff";
@@ -30,6 +31,7 @@ const roleSubtitle = computed(() => {
   const subtitles = {
     superadmin: "Here's your system configuration overview.",
     manager: "Here's how the company is doing today.",
+    operational_director: "Here's your operations & workforce snapshot.",
     hr: "Here's your people & workforce snapshot.",
     finance: "Here's your payroll & finance snapshot.",
     staff: "Here's your personal work overview.",

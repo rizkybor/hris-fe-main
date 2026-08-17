@@ -26,8 +26,9 @@ const errorMessage = ref("");
 const audienceOptions = [
   { value: "all", label: "Semua Role" },
   { value: "manager", label: "Manager" },
-  { value: "hr", label: "HR" },
-  { value: "finance", label: "Finance" },
+  { value: "operational_director", label: "Operational Director" },
+  { value: "hr", label: "Hr" },
+  { value: "finance", label: "Finance Manager" },
   { value: "staff", label: "Staff" },
 ];
 

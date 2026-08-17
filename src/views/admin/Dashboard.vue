@@ -1,67 +1,40 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useAuthStore } from "@/stores/auth";
-import { can } from "@/helpers/permissionHelper";
 import DashboardWelcome from "@/components/admin/dashboard/DashboardWelcome.vue";
-import Statistics from "@/components/admin/dashboard/Statistics.vue";
-import EmployeeStatistics from "@/components/admin/dashboard/EmployeeStatistics.vue";
-import SearchSection from "@/components/admin/dashboard/SearchSection.vue";
-import LatestEmployees from "@/components/admin/dashboard/LatestEmployees.vue";
-import LatestTeams from "@/components/admin/dashboard/LatestTeams.vue";
-import ProjectsAtRisk from "@/components/admin/dashboard/ProjectsAtRisk.vue";
 import SuperAdminOverview from "@/components/admin/dashboard/SuperAdminOverview.vue";
+import ManagerOverview from "@/components/admin/dashboard/ManagerOverview.vue";
+import OperationalDirectorOverview from "@/components/admin/dashboard/OperationalDirectorOverview.vue";
+import HrOverview from "@/components/admin/dashboard/HrOverview.vue";
+import FinanceManagerOverview from "@/components/admin/dashboard/FinanceManagerOverview.vue";
+import StaffOverview from "@/components/admin/dashboard/StaffOverview.vue";
 
 const authStore = useAuthStore();
 
-// Super Admin no longer shares People & Work / My Workspace access with
-// the other roles, so it gets its own system-focused overview instead of
-// either the company-wide or the self-service dashboard.
-const isSuperAdmin = computed(() => {
-  return authStore.user?.roles?.some((role: any) => role === "superadmin");
+// Each role now gets a purpose-built overview instead of sharing one
+// generic layout -- priority order matters for accounts holding more
+// than one role.
+const primaryRole = computed(() => {
+  const roles = authStore.user?.roles || [];
+  if (roles.some((role: any) => role === "superadmin")) return "superadmin";
+  if (roles.some((role: any) => role === "manager")) return "manager";
+  if (roles.some((role: any) => role === "operational_director")) return "operational_director";
+  if (roles.some((role: any) => role === "finance")) return "finance";
+  if (roles.some((role: any) => role === "hr")) return "hr";
+  if (roles.some((role: any) => role === "staff")) return "staff";
+  return roles[0];
 });
-
-// Check if user is employee role
-const isEmployee = computed(() => {
-  return authStore.user?.roles?.some((role: any) => role === "staff");
-});
-
-// Check if user has dashboard view permission
-const hasDashboardPermission = computed(() => can("dashboard-view"));
-
-const canViewEmployees = computed(() => can("employee-list"));
-const canViewTeams = computed(() => can("team-list"));
-const canViewProjects = computed(() => can("project-list"));
 </script>
 
 <template>
   <div class="space-y-6">
     <DashboardWelcome />
 
-    <template v-if="isSuperAdmin">
-      <SuperAdminOverview />
-    </template>
-
-    <template v-else-if="isEmployee">
-      <div class="space-y-6">
-        <EmployeeStatistics />
-        <SearchSection v-if="hasDashboardPermission" />
-      </div>
-    </template>
-
-    <template v-else>
-      <div class="space-y-6">
-        <Statistics />
-        <SearchSection />
-        <ProjectsAtRisk v-if="canViewProjects" />
-        <div
-          v-if="canViewEmployees || canViewTeams"
-          class="grid grid-cols-1 gap-4"
-          :class="canViewEmployees && canViewTeams ? 'lg:grid-cols-2' : ''"
-        >
-          <LatestEmployees v-if="canViewEmployees" />
-          <LatestTeams v-if="canViewTeams" />
-        </div>
-      </div>
-    </template>
+    <SuperAdminOverview v-if="primaryRole === 'superadmin'" />
+    <ManagerOverview v-else-if="primaryRole === 'manager'" />
+    <OperationalDirectorOverview v-else-if="primaryRole === 'operational_director'" />
+    <FinanceManagerOverview v-else-if="primaryRole === 'finance'" />
+    <HrOverview v-else-if="primaryRole === 'hr'" />
+    <StaffOverview v-else-if="primaryRole === 'staff'" />
   </div>
 </template>
