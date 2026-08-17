@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { debounce } from "lodash";
 import { MessageSquare, Send, Trash2, AtSign, Smile, CornerUpLeft, X } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
@@ -45,17 +45,80 @@ const textareaRef = ref(null);
 const mentionedIds = ref([]);
 const replyingTo = ref(null);
 const showEmojiPicker = ref(false);
+const emojiButtonRef = ref(null);
+const emojiPickerStyle = ref({});
 
 const mentionQuery = ref("");
 const mentionStartIndex = ref(null);
 const mentionResults = ref([]);
 const showMentionDropdown = ref(false);
+const mentionDropdownStyle = ref({});
 
 const loadComments = () => {
   if (props.taskId) commentStore.fetchComments(props.taskId);
 };
 
-onMounted(loadComments);
+// The dropdown is teleported to <body> so it always renders on top of the
+// modal (and isn't clipped by the modal's scrollable body), positioned
+// above the textarea and nudged sideways from it.
+const updateMentionDropdownPosition = () => {
+  const el = textareaRef.value;
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  mentionDropdownStyle.value = {
+    position: "fixed",
+    top: `${rect.top - 8}px`,
+    left: `${rect.left + 28}px`,
+    transform: "translateY(-100%)",
+    zIndex: 9999,
+  };
+};
+
+// Same treatment as the mention dropdown: teleported to <body>, anchored to
+// the emoji button's own position so it stays put above the comment box
+// regardless of the modal's scroll/overflow.
+const updateEmojiPickerPosition = () => {
+  const el = emojiButtonRef.value;
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  emojiPickerStyle.value = {
+    position: "fixed",
+    top: `${rect.top - 8}px`,
+    right: `${window.innerWidth - rect.right}px`,
+    transform: "translateY(-100%)",
+    zIndex: 9999,
+  };
+};
+
+const toggleEmojiPicker = () => {
+  showEmojiPicker.value = !showEmojiPicker.value;
+  if (showEmojiPicker.value) {
+    showMentionDropdown.value = false;
+    updateEmojiPickerPosition();
+  }
+};
+
+const closePickersOnOutsideClick = (event) => {
+  if (showEmojiPicker.value && !event.target.closest(".task-comment-emoji-picker") && !event.target.closest(".task-comment-emoji-toggle")) {
+    showEmojiPicker.value = false;
+  }
+};
+
+onMounted(() => {
+  loadComments();
+  window.addEventListener("scroll", updateMentionDropdownPosition, true);
+  window.addEventListener("resize", updateMentionDropdownPosition);
+  window.addEventListener("scroll", updateEmojiPickerPosition, true);
+  window.addEventListener("resize", updateEmojiPickerPosition);
+  document.addEventListener("click", closePickersOnOutsideClick);
+});
+onUnmounted(() => {
+  window.removeEventListener("scroll", updateMentionDropdownPosition, true);
+  window.removeEventListener("resize", updateMentionDropdownPosition);
+  window.removeEventListener("scroll", updateEmojiPickerPosition, true);
+  window.removeEventListener("resize", updateEmojiPickerPosition);
+  document.removeEventListener("click", closePickersOnOutsideClick);
+});
 watch(() => props.taskId, loadComments);
 
 const searchMentions = debounce(async () => {
@@ -81,6 +144,7 @@ const handleInput = (event) => {
     mentionQuery.value = match[1];
     mentionStartIndex.value = caret - match[1].length - 1;
     showMentionDropdown.value = true;
+    updateMentionDropdownPosition();
     searchMentions();
   } else {
     showMentionDropdown.value = false;
@@ -398,68 +462,75 @@ const threads = computed(() => {
           @keydown.enter.exact.prevent="submitComment"
           rows="2"
           placeholder="Write a comment... use @ to mention someone"
-          class="w-full bg-gray-50 rounded-[12px] px-3.5 py-2.5 text-sm text-brand-dark border border-[#DCDEDD] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:bg-white transition-all duration-300 resize-none outline-none"
+          class="w-full bg-gray-50 rounded-[12px] pl-3.5 pr-3.5 pt-2.5 pb-11 text-sm text-brand-dark border border-[#DCDEDD] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:bg-white transition-all duration-300 resize-none outline-none"
         ></textarea>
 
-        <!-- Mention Dropdown -->
-        <div
-          v-if="showMentionDropdown && mentionResults.length > 0"
-          class="absolute left-0 right-0 top-full mt-1 bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg z-10 overflow-hidden max-h-56 overflow-y-auto"
-        >
+        <!-- Emoji + Send -->
+        <div class="absolute bottom-2.5 right-2.5 flex items-center gap-1.5">
           <button
-            v-for="employee in mentionResults"
-            :key="employee.id"
+            ref="emojiButtonRef"
             type="button"
-            @mousedown.prevent="selectMention(employee)"
-            class="w-full p-2.5 hover:bg-gray-50 transition-colors flex items-center gap-2.5 text-left"
-          >
-            <Avatar :src="employee.user?.profile_photo" :alt="employee.user?.name" size="w-7 h-7" icon-size="w-3.5 h-3.5" />
-            <div class="flex-1 min-w-0">
-              <p class="text-brand-dark text-sm font-medium truncate">{{ employee.user?.name }}</p>
-              <p class="text-brand-light text-xs truncate">{{ employee.job_information?.job_title }}</p>
-            </div>
-            <AtSign class="w-3.5 h-3.5 text-gray-300 shrink-0" />
-          </button>
-        </div>
-
-        <!-- Emoji Picker -->
-        <div
-          v-if="showEmojiPicker"
-          class="absolute left-0 top-full mt-1 bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg z-10 p-2 grid grid-cols-8 gap-1 w-64"
-        >
-          <button
-            v-for="emoji in EMOJIS"
-            :key="emoji"
-            type="button"
-            @mousedown.prevent="insertEmoji(emoji)"
-            class="w-7 h-7 flex items-center justify-center text-lg rounded hover:bg-gray-100 transition-colors"
-          >
-            {{ emoji }}
-          </button>
-        </div>
-
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
-          <button
-            type="button"
-            @click="showEmojiPicker = !showEmojiPicker"
-            class="text-gray-400 hover:text-[#0C51D9] transition-colors flex items-center gap-1.5 w-fit"
+            @click="toggleEmojiPicker"
+            class="task-comment-emoji-toggle w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+            :class="showEmojiPicker ? 'text-[#0C51D9] bg-blue-50' : 'text-gray-400 hover:text-[#0C51D9] hover:bg-gray-100'"
             title="Insert emoji"
           >
             <Smile class="w-4 h-4" />
-            <span class="text-xs font-medium">Emoji</span>
           </button>
           <button
             type="button"
             @click="submitComment"
             :disabled="submitting || !newComment.trim()"
-            class="btn-primary w-full sm:w-auto rounded-[8px] border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-8 h-8 rounded-full flex items-center justify-center bg-[#0C51D9] hover:brightness-110 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            :title="replyingTo ? 'Reply' : 'Comment'"
           >
-            <Send class="w-3.5 h-3.5 text-white" />
-            <span class="text-brand-white text-xs font-semibold">
-              {{ submitting ? "Posting..." : replyingTo ? "Reply" : "Comment" }}
-            </span>
+            <Send class="w-4 h-4 text-white" />
           </button>
         </div>
+
+        <!-- Mention Dropdown (teleported so it always sits above the modal, unclipped) -->
+        <Teleport to="body">
+          <div
+            v-if="showMentionDropdown && mentionResults.length > 0"
+            :style="mentionDropdownStyle"
+            class="bg-white border border-[#DCDEDD] rounded-[12px] shadow-2xl overflow-hidden max-h-56 overflow-y-auto w-72"
+          >
+            <button
+              v-for="employee in mentionResults"
+              :key="employee.id"
+              type="button"
+              @mousedown.prevent="selectMention(employee)"
+              class="w-full p-2.5 hover:bg-gray-50 transition-colors flex items-center gap-2.5 text-left"
+            >
+              <Avatar :src="employee.user?.profile_photo" :alt="employee.user?.name" size="w-7 h-7" icon-size="w-3.5 h-3.5" />
+              <div class="flex-1 min-w-0">
+                <p class="text-brand-dark text-sm font-medium truncate">{{ employee.user?.name }}</p>
+                <p class="text-brand-light text-xs truncate">{{ employee.job_information?.job_title }}</p>
+              </div>
+              <AtSign class="w-3.5 h-3.5 text-gray-300 shrink-0" />
+            </button>
+          </div>
+        </Teleport>
+
+        <!-- Emoji Picker (teleported so it always sits above the modal, unclipped) -->
+        <Teleport to="body">
+          <div
+            v-if="showEmojiPicker"
+            :style="emojiPickerStyle"
+            class="task-comment-emoji-picker bg-white border border-[#DCDEDD] rounded-[12px] shadow-2xl p-2 grid grid-cols-8 gap-1 w-64"
+          >
+            <button
+              v-for="emoji in EMOJIS"
+              :key="emoji"
+              type="button"
+              @mousedown.prevent="insertEmoji(emoji)"
+              class="w-7 h-7 flex items-center justify-center text-lg rounded hover:bg-gray-100 transition-colors"
+            >
+              {{ emoji }}
+            </button>
+          </div>
+        </Teleport>
+
       </div>
     </div>
   </div>
