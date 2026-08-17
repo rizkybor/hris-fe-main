@@ -154,6 +154,9 @@ const handleSubmit = async () => {
                 <Lock class="h-5 w-5 text-gray-400" />
               </template>
             </Input>
+            <p class="text-xs text-gray-400 mt-1">
+              Min. 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol. Tidak boleh password yang pernah bocor di data breach.
+            </p>
           </div>
 
           <div class="mb-4">

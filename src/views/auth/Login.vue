@@ -76,6 +76,13 @@ const handleSubmit = async () => {
         :show="error === 'Unauthorized'"
       />
 
+      <Alert
+        type="danger"
+        title="Too Many Attempts"
+        :message="error"
+        :show="typeof error === 'string' && error !== 'Unauthorized'"
+      />
+
       <!-- Login Form -->
       <form class="space-y-6" @submit.prevent="handleSubmit">
         <!-- Email Field -->
