@@ -786,7 +786,7 @@ watch(
               >
                 <img
                   :src="employee.user?.profile_photo"
-                  alt="Sarah Johnson"
+                  :alt="employee.user?.name"
                   class="w-14 h-14 rounded-[12px] object-cover"
                   v-if="employee.user?.profile_photo"
                 />

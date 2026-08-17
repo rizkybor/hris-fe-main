@@ -34,7 +34,7 @@ const goToDetail = () => {
       <div class="relative">
         <img
           :src="data?.user?.profile_photo"
-          alt="Sarah Johnson"
+          :alt="data?.user?.name"
           class="w-20 h-20 rounded-full object-cover mb-3"
           v-if="data?.user?.profile_photo"
         />

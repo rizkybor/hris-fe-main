@@ -608,7 +608,7 @@ watch(
               type="text"
               v-model="form.account_holder_name"
               label="Account Holder Name (optional)"
-              placeholder="e.g. John Doe Smith"
+              placeholder="e.g. Andy Saputra"
               :error="errors?.account_holder_name?.join(', ')"
             >
               <template #icon>
