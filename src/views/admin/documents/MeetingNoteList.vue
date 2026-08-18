@@ -55,7 +55,7 @@ const togglePin = async (note) => {
 
 const TYPE_LABEL = { internal: "Internal", external: "External" };
 const formatDateTime = (date) =>
-  date ? new Date(date).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "-";
+  date ? new Date(date).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
 </script>
 
 <template>

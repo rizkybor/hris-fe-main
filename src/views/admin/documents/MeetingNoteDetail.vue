@@ -37,7 +37,7 @@ onUnmounted(() => {
 
 const TYPE_LABEL = { internal: "Internal", external: "External" };
 const formatDateTime = (date) =>
-  date ? new Date(date).toLocaleString("en-US", { dateStyle: "full", timeStyle: "short" }) : "-";
+  date ? new Date(date).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" }) : "-";
 
 const togglePin = async () => {
   pinBusy.value = true;

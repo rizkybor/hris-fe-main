@@ -22,16 +22,16 @@ const handleAdd = async () => {
     newField.value = "";
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || "Gagal menambah bidang.";
+    errorMessage.value = data?.message || "Failed to add field.";
   }
 };
 
 const handleDelete = async (field) => {
-  if (!(await alertModal.confirm(`Hapus bidang "${field.name}"?`))) return;
+  if (!(await alertModal.confirm(`Delete field "${field.name}"?`))) return;
   try {
     await store.deleteField(field.id);
   } catch (error) {
-    await alertModal.alert("Gagal menghapus bidang. Mungkin masih dipakai oleh SDM Resource.", { type: "danger" });
+    await alertModal.alert("Failed to delete field. It may still be in use by SDM Resource.", { type: "danger" });
   }
 };
 </script>
@@ -44,9 +44,9 @@ const handleDelete = async (field) => {
           <Users2Icon class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Bidang SDM</h3>
+          <h3 class="text-brand-dark text-lg font-bold">SDM Field</h3>
           <p class="text-brand-light text-sm">
-            Daftar bidang/role yang bisa dipilih saat menambah SDM Resource di Operational Cost
+            List of fields/roles selectable when adding an SDM Resource in Operational Cost
           </p>
         </div>
       </div>
@@ -57,11 +57,11 @@ const handleDelete = async (field) => {
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 max-w-lg">
       <form @submit.prevent="handleAdd" class="flex items-end gap-2 mb-4">
         <div class="flex-1">
-          <label class="text-xs text-gray-500 mb-1 block">Nama Bidang</label>
+          <label class="text-xs text-gray-500 mb-1 block">Field Name</label>
           <input
             v-model="newField"
             type="text"
-            placeholder="cth. Backend Developer"
+            placeholder="e.g. Backend Developer"
             class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
@@ -70,7 +70,7 @@ const handleDelete = async (field) => {
         </button>
       </form>
 
-      <div v-if="loading" class="text-center py-6 text-sm text-gray-400">Memuat...</div>
+      <div v-if="loading" class="text-center py-6 text-sm text-gray-400">Loading...</div>
       <div v-else class="space-y-2">
         <div
           v-for="field in fields"
@@ -83,7 +83,7 @@ const handleDelete = async (field) => {
           </button>
         </div>
         <div v-if="fields.length === 0" class="text-center py-6 text-sm text-gray-400">
-          Belum ada bidang SDM
+          No SDM fields yet
         </div>
       </div>
     </div>

@@ -51,9 +51,9 @@ const STATUS_CLASS = {
 };
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" }) : "-";
 const formatDateTime = (date) =>
-  date ? new Date(date).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "-";
+  date ? new Date(date).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
 
 const handleSubmit = async () => {
   if (!(await alertModal.confirm("Submit this Official Memo for Finance Manager approval?", { type: "info", confirmText: "Submit" })))

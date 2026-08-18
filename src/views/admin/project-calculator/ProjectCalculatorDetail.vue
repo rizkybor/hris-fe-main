@@ -33,8 +33,8 @@ onMounted(async () => {
 });
 
 const scenarioMeta = {
-  feature: { label: "Estimasi Fitur Baru", class: "bg-blue-50 text-blue-700 border-blue-100" },
-  build: { label: "Estimasi Bangun dari 0", class: "bg-violet-50 text-violet-700 border-violet-100" },
+  feature: { label: "New Feature Estimate", class: "bg-blue-50 text-blue-700 border-blue-100" },
+  build: { label: "Build from Scratch Estimate", class: "bg-violet-50 text-violet-700 border-violet-100" },
 };
 
 const displayTotal = computed(() => (calc.value?.include_ppn ? calc.value.total_with_ppn : calc.value?.grand_total));
@@ -58,8 +58,8 @@ const printQuote = () => window.print();
             <CalculatorIcon class="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h1 class="text-brand-dark text-xl font-bold">Detail Estimasi</h1>
-            <p class="text-brand-light text-sm">Ringkasan estimasi biaya project</p>
+            <h1 class="text-brand-dark text-xl font-bold">Estimate Detail</h1>
+            <p class="text-brand-light text-sm">Project cost estimate summary</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -113,13 +113,13 @@ const printQuote = () => window.print();
         <table class="w-full text-sm">
           <thead>
             <tr class="text-left text-gray-400 text-xs uppercase tracking-wide border-b border-[#F1F1F1]">
-              <th class="py-2 pr-4">{{ calc.scenario === "feature" ? "Fitur" : "Modul" }}</th>
+              <th class="py-2 pr-4">{{ calc.scenario === "feature" ? "Feature" : "Module" }}</th>
               <th class="py-2 pr-4 text-right">Jam Dasar</th>
               <th class="py-2 pr-4 text-right">Faktor</th>
               <th class="py-2 pr-4 text-right">Jam Terpakai</th>
               <th class="py-2 pr-4 text-right">Subtotal</th>
               <th class="py-2 pr-4 text-right">Buffer</th>
-              <th class="py-2 text-right">Harga Akhir</th>
+              <th class="py-2 text-right">Final Price</th>
             </tr>
           </thead>
           <tbody>
@@ -154,11 +154,11 @@ const printQuote = () => window.print();
             <span class="text-brand-dark font-medium">{{ formatRupiah(calc.pm_overhead_total) }}</span>
           </div>
           <div v-if="calc.scenario === 'build'" class="flex items-center justify-between">
-            <span class="text-gray-500">Setup Infrastruktur</span>
+            <span class="text-gray-500">Infrastructure Setup</span>
             <span class="text-brand-dark font-medium">{{ formatRupiah(calc.infra_setup_cost) }}</span>
           </div>
           <div class="flex items-center justify-between pt-2 border-t border-[#F1F1F1]">
-            <span class="text-brand-dark font-bold">Total Estimasi</span>
+            <span class="text-brand-dark font-bold">Total Estimate</span>
             <span class="text-brand-dark font-bold">{{ formatRupiah(calc.grand_total) }}</span>
           </div>
           <div v-if="calc.include_ppn" class="flex items-center justify-between">
@@ -178,7 +178,7 @@ const printQuote = () => window.print();
 
       <div class="mt-6 flex items-center gap-2 p-3 rounded-[12px] bg-blue-50 border border-blue-100 text-sm w-fit">
         <ClockIcon class="w-4 h-4 text-blue-600 flex-shrink-0" />
-        <span class="text-blue-800">Estimasi durasi pengerjaan: <strong>{{ calc.estimated_duration_weeks ?? "-" }} minggu</strong></span>
+        <span class="text-blue-800">Estimated duration: <strong>{{ calc.estimated_duration_weeks ?? "-" }} weeks</strong></span>
       </div>
 
       <div v-if="calc.notes" class="mt-6 pt-6 border-t border-[#F1F1F1]">

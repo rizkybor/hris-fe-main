@@ -46,9 +46,9 @@ const handleSaveSettings = async () => {
   savingSettings.value = true;
   try {
     await store.updateSettings(form.value);
-    settingsSuccess.value = "Pengaturan sertifikat berhasil disimpan.";
+    settingsSuccess.value = "Certificate settings saved successfully.";
   } catch (error) {
-    settingsError.value = error?.response?.data?.message || "Gagal menyimpan pengaturan.";
+    settingsError.value = error?.response?.data?.message || "Failed to save settings.";
   } finally {
     savingSettings.value = false;
   }
@@ -61,7 +61,7 @@ const onFileChange = (event) => {
 const handleUploadTemplate = async () => {
   templateError.value = "";
   if (!newTemplate.value.name || !newTemplate.value.file) {
-    templateError.value = "Nama template dan file background wajib diisi.";
+    templateError.value = "Template name and background file are required.";
     return;
   }
   const formData = new FormData();
@@ -75,14 +75,14 @@ const handleUploadTemplate = async () => {
     const input = document.getElementById("template-file-input");
     if (input) input.value = "";
   } catch (error) {
-    templateError.value = error?.response?.data?.message || "Gagal mengunggah template.";
+    templateError.value = error?.response?.data?.message || "Failed to upload template.";
   } finally {
     uploadingTemplate.value = false;
   }
 };
 
 const handleDeleteTemplate = async (template) => {
-  if (!(await alertModal.confirm(`Hapus template "${template.name}"?`))) return;
+  if (!(await alertModal.confirm(`Delete template "${template.name}"?`))) return;
   await store.deleteTemplate(template.id);
 };
 </script>

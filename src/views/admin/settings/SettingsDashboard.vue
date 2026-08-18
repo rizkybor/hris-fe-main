@@ -63,14 +63,14 @@ const categories = [
       {
         to: { name: "admin.settings.document-codes" },
         icon: Tags,
-        title: "Kode Surat & Divisi",
+        title: "Letter & Division Codes",
         description: "Manage the letter code and division code reference lists",
         permission: "letter-menu",
       },
       {
         to: { name: "admin.settings.sdm-fields" },
         icon: Users2Icon,
-        title: "Bidang SDM",
+        title: "SDM Field",
         description: "Manage the role/field list used by SDM Resource in Operational Cost",
         permission: "sdm-field-menu",
       },

@@ -94,8 +94,8 @@ const submit = async () => {
             <Users2Icon class="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Rate Setup Tim</h3>
-            <p class="text-brand-light text-sm">Pilih item dari Operational Cost untuk membentuk biaya tim</p>
+            <h3 class="text-brand-dark text-xl font-bold">Team Rate Setup</h3>
+            <p class="text-brand-light text-sm">Select items from Operational Cost to build the team cost</p>
           </div>
         </div>
         <button @click="emit('close')" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors">
@@ -134,7 +134,7 @@ const submit = async () => {
                 </span>
                 <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.actual) }}</span>
               </label>
-              <p v-if="fixedCostItems.length === 0" class="text-center py-4 text-xs text-gray-400">Belum ada item Fixed Cost</p>
+              <p v-if="fixedCostItems.length === 0" class="text-center py-4 text-xs text-gray-400">No Fixed Cost items yet</p>
             </div>
           </div>
 
@@ -162,7 +162,7 @@ const submit = async () => {
                 </span>
                 <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.actual) }}</span>
               </label>
-              <p v-if="sdmResourceItems.length === 0" class="text-center py-4 text-xs text-gray-400">Belum ada SDM Resource</p>
+              <p v-if="sdmResourceItems.length === 0" class="text-center py-4 text-xs text-gray-400">No SDM Resource yet</p>
             </div>
           </div>
 
@@ -189,7 +189,7 @@ const submit = async () => {
                 </span>
                 <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.monthly_fee) }}/bln</span>
               </label>
-              <p v-if="infrastructureItems.length === 0" class="text-center py-4 text-xs text-gray-400">Belum ada Infrastructure Tool</p>
+              <p v-if="infrastructureItems.length === 0" class="text-center py-4 text-xs text-gray-400">No Infrastructure Tool yet</p>
             </div>
           </div>
         </template>
@@ -204,7 +204,7 @@ const submit = async () => {
             <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
           </div>
           <div class="col-span-2">
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Biaya Setup Infrastruktur Default (Rp)</label>
+            <label class="block text-sm font-semibold text-brand-dark mb-1">Default Infrastructure Setup Cost (Rp)</label>
             <input v-model.number="form.default_infra_setup_cost" type="number" min="0" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
           </div>
         </div>
@@ -212,7 +212,7 @@ const submit = async () => {
         <!-- Live preview -->
         <div class="grid grid-cols-2 gap-4 pt-2 border-t border-[#F1F1F1]">
           <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-            <p class="text-xs text-gray-500 font-medium">Total Biaya Operasional Tim / Bulan</p>
+            <p class="text-xs text-gray-500 font-medium">Total Team Operational Cost / Month</p>
             <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(previewTeamMonthlyCost) }}</p>
           </div>
           <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
@@ -234,7 +234,7 @@ const submit = async () => {
 
       <div class="p-6 border-t border-[#DCDEDD] flex gap-3 justify-end flex-shrink-0">
         <button @click="emit('close')" :disabled="saving" class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 transition-all px-6 py-3">
-          <span class="text-brand-dark text-sm font-semibold">Batal</span>
+          <span class="text-brand-dark text-sm font-semibold">Cancel</span>
         </button>
         <button
           @click="submit"
@@ -242,7 +242,7 @@ const submit = async () => {
           class="rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
         >
           <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
-          <span class="text-brand-white text-sm font-semibold">{{ saving ? "Menyimpan..." : "Simpan Rate Setup" }}</span>
+          <span class="text-brand-white text-sm font-semibold">{{ saving ? "Saving..." : "Save Rate Setup" }}</span>
         </button>
       </div>
     </div>

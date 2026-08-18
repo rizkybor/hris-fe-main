@@ -228,11 +228,11 @@ const titles = {
     subtitle: "Update meeting notes and action items",
   },
   "admin.settings.document-codes": {
-    title: "Kode Surat & Divisi",
+    title: "Letter & Division Codes",
     subtitle: "Manage letter code and division code references",
   },
   "admin.settings.sdm-fields": {
-    title: "Bidang SDM",
+    title: "SDM Field",
     subtitle: "Manage the role/field list used by SDM Resource",
   },
   "admin.certificates.dashboard": {

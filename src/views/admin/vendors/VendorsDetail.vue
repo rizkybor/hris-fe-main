@@ -38,10 +38,10 @@ onMounted(async () => {
   try {
     vendor.value = await vendorsStore.fetchVendorById(route.params.id);
     if (!vendor.value) {
-      error.value = "Vendor tidak ditemukan.";
+      error.value = "Vendor not found.";
     }
   } catch (err) {
-    error.value = "Gagal memuat detail vendor.";
+    error.value = "Failed to load vendor detail.";
   } finally {
     loading.value = false;
   }
@@ -67,7 +67,7 @@ onMounted(async () => {
 
         <div class="flex-1">
           <h1 class="text-brand-dark text-xl font-bold">Vendor Detail</h1>
-          <p class="text-brand-light text-sm">Informasi vendor (read-only)</p>
+          <p class="text-brand-light text-sm">Vendor information (read-only)</p>
         </div>
 
         <router-link

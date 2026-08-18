@@ -112,7 +112,7 @@ const confirmReject = async () => {
             v-model="search"
             @keyup.enter="handleSearch"
             type="text"
-            placeholder="Cari nama karyawan..."
+            placeholder="Search employee name..."
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
@@ -121,7 +121,7 @@ const confirmReject = async () => {
           @change="handleFilterChange"
           class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         >
-          <option value="">Semua Status</option>
+          <option value="">All Statuses</option>
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
@@ -140,7 +140,7 @@ const confirmReject = async () => {
               <th class="py-3 pr-4 font-semibold">Period</th>
               <th class="py-3 pr-4 font-semibold">Reason</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold text-right">Aksi</th>
+              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -199,7 +199,7 @@ const confirmReject = async () => {
         </table>
 
         <div v-if="!loading && leaveRequests.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">Belum ada Leave Request</p>
+          <p class="text-lg font-semibold">No Leave Requests yet</p>
         </div>
       </div>
 

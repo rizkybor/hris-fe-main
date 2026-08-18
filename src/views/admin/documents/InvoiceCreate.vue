@@ -19,7 +19,7 @@ const form = ref({
   admin_fee: 0,
   bank_name: "",
   bank_account: "",
-  terms: "Pembayaran dilakukan maksimal 14 hari sejak invoice diterbitkan.\nLayanan dapat ditunda apabila pembayaran belum diterima.\nPembayaran yang sudah dilakukan tidak dapat dikembalikan.",
+  terms: "Payment is due within 14 days of the invoice date.\nServices may be suspended if payment is not received.\nPayments already made are non-refundable.",
 });
 
 const submitting = ref(false);
@@ -40,7 +40,7 @@ const handleSubmit = async () => {
     router.push({ name: "admin.invoices.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal membuat Invoice.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to create Invoice.");
   } finally {
     submitting.value = false;
   }
@@ -55,7 +55,7 @@ const handleSubmit = async () => {
           <Receipt class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Buat Invoice</h3>
+          <h3 class="text-brand-dark text-lg font-bold">Create Invoice</h3>
           <p class="text-brand-light text-sm">Invoice number will be generated automatically when saved</p>
         </div>
       </div>
@@ -67,20 +67,20 @@ const handleSubmit = async () => {
           <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
             <User class="w-4 h-4 text-blue-600" />
           </div>
-          <h4 class="text-brand-dark font-bold">Informasi Klien</h4>
+          <h4 class="text-brand-dark font-bold">Client Information</h4>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Kode Klien</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
             <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
-            <p class="text-xs text-gray-400 mt-1">Dipakai dalam nomor invoice, cth: INV/JCD-ZACO/...</p>
+            <p class="text-xs text-gray-400 mt-1">Used in the invoice number, e.g. INV/JCD-ZACO/...</p>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Tanggal</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
             <input v-model="form.date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Nama Klien</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Name</label>
             <input v-model="form.client_name" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
@@ -92,7 +92,7 @@ const handleSubmit = async () => {
             <input v-model="form.client_email" type="email" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Telepon</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Phone</label>
             <input v-model="form.client_phone" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
         </div>
@@ -104,14 +104,14 @@ const handleSubmit = async () => {
             <div class="w-8 h-8 bg-indigo-50 rounded-[9px] flex items-center justify-center shrink-0">
               <Package class="w-4 h-4 text-indigo-600" />
             </div>
-            <h4 class="text-brand-dark font-bold">Item Tagihan</h4>
+            <h4 class="text-brand-dark font-bold">Billing Items</h4>
           </div>
           <button type="button" @click="addItem" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
-            <Plus class="w-4 h-4" /> Tambah Item
+            <Plus class="w-4 h-4" /> Add Item
           </button>
         </div>
         <div v-for="(item, i) in form.items" :key="i" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3 items-start">
-          <input v-model="item.description" type="text" placeholder="Deskripsi" required class="md:col-span-2 w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+          <input v-model="item.description" type="text" placeholder="Description" required class="md:col-span-2 w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
           <input v-model="item.quantity" type="text" placeholder="Qty (e.g. 1 tahun)" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
           <input v-model="item.rate" type="text" placeholder="Rate" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
           <div class="flex items-center gap-2">
@@ -128,11 +128,11 @@ const handleSubmit = async () => {
           <div class="w-8 h-8 bg-emerald-50 rounded-[9px] flex items-center justify-center shrink-0">
             <Wallet class="w-4 h-4 text-emerald-600" />
           </div>
-          <h4 class="text-brand-dark font-bold">Pembayaran & Pajak</h4>
+          <h4 class="text-brand-dark font-bold">Payment & Tax</h4>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">PPN (%)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">VAT (%)</label>
             <input v-model.number="form.ppn_percentage" type="number" min="0" max="100" step="0.01" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
@@ -140,22 +140,22 @@ const handleSubmit = async () => {
             <input v-model.number="form.admin_fee" type="number" min="0" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Nama Bank</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Bank Name</label>
             <input v-model="form.bank_name" type="text" placeholder="e.g. BCA - Jendela Cakra Digital" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">No. Rekening</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Account Number</label>
             <input v-model="form.bank_account" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Syarat & Ketentuan</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Terms & Conditions</label>
             <textarea v-model="form.terms" rows="3" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
         </div>
 
         <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
           <div class="flex justify-between"><span>Subtotal</span><span>Rp {{ subtotal.toLocaleString("id-ID") }}</span></div>
-          <div class="flex justify-between"><span>PPN ({{ form.ppn_percentage || 0 }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
+          <div class="flex justify-between"><span>VAT ({{ form.ppn_percentage || 0 }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
           <div class="flex justify-between"><span>Admin Fee</span><span>Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</span></div>
           <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total</span><span>Rp {{ total.toLocaleString("id-ID") }}</span></div>
         </div>
@@ -169,13 +169,13 @@ const handleSubmit = async () => {
           :disabled="submitting"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
         >
-          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Menyimpan..." : "Simpan Invoice" }}</span>
+          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : "Save Invoice" }}</span>
         </button>
         <router-link
           :to="{ name: 'admin.invoices.dashboard' }"
           class="px-6 py-3 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50"
         >
-          Batal
+          Cancel
         </router-link>
       </div>
     </form>

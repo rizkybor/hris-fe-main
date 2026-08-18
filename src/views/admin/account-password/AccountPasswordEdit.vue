@@ -54,12 +54,12 @@ const submit = async () => {
   success.value = "";
 
   if (!form.value.label_password || !form.value.username_email) {
-    error.value = "Label Password dan Username / Email wajib diisi.";
+    error.value = "Password Label and Username / Email are required.";
     return;
   }
 
   if (rotatePassword.value && !form.value.password) {
-    error.value = "Password baru wajib diisi jika rotasi diaktifkan.";
+    error.value = "New password is required when rotation is enabled.";
     return;
   }
 
@@ -77,7 +77,7 @@ const submit = async () => {
     // 🔥 updateAccount SUDAH fetch ulang di store
     await store.updateAccount(route.params.id, payload);
 
-    success.value = "Credential berhasil diperbarui.";
+    success.value = "Credential updated successfully.";
 
     // reset field sensitif
     form.value.password = "";
@@ -90,7 +90,7 @@ const submit = async () => {
       });
     }, 1200);
   } catch (e) {
-    error.value = e?.message || "Gagal memperbarui credential.";
+    error.value = e?.message || "Failed to update credential.";
   } finally {
     submitting.value = false;
   }
@@ -106,7 +106,7 @@ const loadData = async () => {
   try {
     await store.fetchAccount(route.params.id);
   } catch {
-    error.value = "Data credential tidak ditemukan.";
+    error.value = "Credential data not found.";
   } finally {
     loading.value = false;
   }
@@ -207,7 +207,7 @@ watch(
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Label Password *</label>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Password Label *</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
                 <Tag class="w-5 h-5 text-gray-400" />
@@ -258,7 +258,7 @@ watch(
           <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
             <RotateCw class="w-4.5 h-4.5 text-violet-600" />
           </div>
-          <h4 class="text-brand-dark font-bold">Rotasi Password</h4>
+          <h4 class="text-brand-dark font-bold">Password Rotation</h4>
         </div>
 
         <label class="flex items-center gap-2 font-semibold cursor-pointer">
