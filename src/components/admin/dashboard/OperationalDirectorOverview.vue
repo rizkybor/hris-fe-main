@@ -28,8 +28,10 @@ const canViewProjects = computed(() => can("project-list"));
 
 <template>
   <div class="space-y-6">
-    <ProjectsAtRisk v-if="canViewProjects" />
-    <StickyNotesWidget />
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <ProjectsAtRisk v-if="canViewProjects" />
+      <StickyNotesWidget />
+    </div>
     <Statistics />
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div
