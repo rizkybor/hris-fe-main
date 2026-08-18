@@ -149,7 +149,7 @@ const handleSubmit = async () => {
           <NotebookPen class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">{{ isEditing ? "Edit Meeting Note" : "Buat Meeting Note" }}</h3>
+          <h3 class="text-brand-dark text-lg font-bold">{{ isEditing ? "Edit Meeting Note" : "Create Meeting Note" }}</h3>
           <p class="text-brand-light text-sm">Meeting notes can be managed together by Manager, Operational Director, HR, and Finance Manager.</p>
         </div>
       </div>
@@ -159,16 +159,16 @@ const handleSubmit = async () => {
     <form @submit.prevent="handleSubmit" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-5">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Nomor Dokumen</label>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Document Number</label>
           <input
             v-model="form.document_number"
             type="text"
-            placeholder="Kosongkan untuk auto-generate"
+            placeholder="Leave blank to auto-generate"
             class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Tipe Meeting</label>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Meeting Type</label>
           <select
             v-model="form.meeting_type"
             class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
@@ -178,7 +178,7 @@ const handleSubmit = async () => {
           </select>
         </div>
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Tanggal & Waktu Rapat</label>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Meeting Date & Time</label>
           <input
             v-model="form.meeting_date"
             type="datetime-local"
@@ -189,19 +189,19 @@ const handleSubmit = async () => {
       </div>
 
       <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Judul / Perihal Meeting</label>
+        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Meeting Title / Subject</label>
         <input
           v-model="form.title"
           type="text"
           required
-          placeholder="e.g. Weekly Sync Operasional"
+          placeholder="e.g. Weekly Operations Sync"
           class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         />
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Peserta Internal</label>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Internal Attendees</label>
           <div class="border border-[#DCDEDD] rounded-xl p-3 max-h-40 overflow-y-auto space-y-1.5">
             <label
               v-for="employee in employees"
@@ -216,12 +216,12 @@ const handleSubmit = async () => {
               />
               {{ employee.user?.name || employee.name }}
             </label>
-            <p v-if="employees.length === 0" class="text-sm text-gray-400 italic py-2">Belum ada data staff.</p>
+            <p v-if="employees.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
           </div>
         </div>
 
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Peserta Eksternal</label>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">External Attendees</label>
           <div class="border border-[#DCDEDD] rounded-xl p-3 space-y-2">
             <div v-for="(att, index) in externalAttendees" :key="index" class="flex items-center justify-between gap-2 text-sm px-2 py-1.5 rounded-lg bg-gray-50">
               <span class="truncate">{{ att.name }}<span v-if="att.organization" class="text-gray-400"> &middot; {{ att.organization }}</span></span>
@@ -230,8 +230,8 @@ const handleSubmit = async () => {
               </button>
             </div>
             <div class="flex gap-1.5">
-              <input v-model="newExternalName" type="text" placeholder="Nama" class="flex-1 min-w-0 px-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs" />
-              <input v-model="newExternalOrg" type="text" placeholder="Instansi" class="flex-1 min-w-0 px-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs" />
+              <input v-model="newExternalName" type="text" placeholder="Name" class="flex-1 min-w-0 px-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs" />
+              <input v-model="newExternalOrg" type="text" placeholder="Organization" class="flex-1 min-w-0 px-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs" />
               <button type="button" @click="addExternalAttendee" class="shrink-0 px-2.5 py-1.5 rounded-lg border border-[#DCDEDD] hover:border-[#0C51D9] hover:text-[#0C51D9]">
                 <UserPlus class="w-3.5 h-3.5" />
               </button>
@@ -241,32 +241,32 @@ const handleSubmit = async () => {
       </div>
 
       <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Isi Catatan / Notula</label>
-        <RichTextEditor v-model="form.body" placeholder="Ringkasan pembahasan rapat..." />
+        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Notes Content</label>
+        <RichTextEditor v-model="form.body" placeholder="Meeting discussion summary..." />
       </div>
 
       <div>
         <div class="flex items-center justify-between mb-1.5">
           <label class="text-sm font-semibold text-brand-dark block">Action Items</label>
           <button type="button" @click="addActionItem" class="text-xs text-[#0C51D9] font-semibold hover:underline flex items-center gap-1">
-            <Plus class="w-3.5 h-3.5" /> Tambah Item
+            <Plus class="w-3.5 h-3.5" /> Add Item
           </button>
         </div>
         <div class="space-y-2">
           <div v-for="(item, index) in actionItems" :key="index" class="flex items-center gap-2">
             <input type="checkbox" v-model="item.done" class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] shrink-0" />
-            <input v-model="item.text" type="text" placeholder="Deskripsi action item" class="flex-1 min-w-0 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            <input v-model="item.assignee" type="text" placeholder="PIC" class="w-32 shrink-0 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+            <input v-model="item.text" type="text" placeholder="Action item description" class="flex-1 min-w-0 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+            <input v-model="item.assignee" type="text" placeholder="Assignee" class="w-32 shrink-0 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
             <button type="button" @click="removeActionItem(index)" class="text-gray-400 hover:text-red-500 shrink-0">
               <X class="w-4 h-4" />
             </button>
           </div>
-          <p v-if="actionItems.length === 0" class="text-sm text-gray-400 italic">Belum ada action item.</p>
+          <p v-if="actionItems.length === 0" class="text-sm text-gray-400 italic">No action items yet.</p>
         </div>
       </div>
 
       <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Lampiran</label>
+        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Attachments</label>
         <div class="space-y-2">
           <div
             v-for="attachment in existingAttachments"
@@ -297,14 +297,14 @@ const handleSubmit = async () => {
 
           <label class="flex items-center gap-2 justify-center border border-dashed border-[#DCDEDD] rounded-lg py-3 text-sm text-brand-light cursor-pointer hover:border-[#0C51D9] hover:text-[#0C51D9] transition-colors">
             <Paperclip class="w-4 h-4" />
-            Tambah Lampiran (PDF, DOC, PNG, JPG — max 5MB)
+            Add Attachment (PDF, DOC, PNG, JPG — max 5MB)
             <input type="file" multiple class="hidden" @change="onFileChange" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
           </label>
         </div>
       </div>
 
       <p v-if="error" class="text-red-500 text-sm">
-        {{ typeof error === "string" ? error : "Periksa kembali data yang diisi." }}
+        {{ typeof error === "string" ? error : "Please review the fields you've filled in." }}
       </p>
 
       <div class="flex items-center gap-3 pt-2 border-t border-[#F1F1F1]">
@@ -313,14 +313,14 @@ const handleSubmit = async () => {
           :disabled="saving"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-5 py-2.5 disabled:opacity-50"
         >
-          <span class="text-brand-white text-sm font-semibold">{{ saving ? "Menyimpan..." : "Simpan" }}</span>
+          <span class="text-brand-white text-sm font-semibold">{{ saving ? "Saving..." : "Save" }}</span>
         </button>
         <button
           type="button"
           @click="router.back()"
           class="px-5 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50"
         >
-          Batal
+          Cancel
         </button>
       </div>
     </form>

@@ -27,7 +27,7 @@ const others = computed(() => props.viewers.filter((v) => !v.is_self));
     <span class="text-xs text-brand-light flex items-center gap-1">
       <component :is="others.some((v) => v.is_editing) ? Pencil : Eye" class="w-3.5 h-3.5" />
       {{ others.map((v) => v.name).join(", ") }}
-      {{ others.some((v) => v.is_editing) ? "sedang mengedit" : "sedang melihat" }}
+      {{ others.some((v) => v.is_editing) ? "editing" : "viewing" }}
     </span>
   </div>
 </template>

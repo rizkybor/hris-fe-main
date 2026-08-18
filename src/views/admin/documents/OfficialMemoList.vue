@@ -34,9 +34,9 @@ const goToDetail = (id) => router.push({ name: "admin.official-memos.detail", pa
 
 const handleDelete = async (memo) => {
   if (
-    !(await alertModal.confirm(`Hapus Official Memo "${memo.document_number}"? Tindakan ini tidak dapat dibatalkan.`, {
+    !(await alertModal.confirm(`Delete Official Memo "${memo.document_number}"? This action cannot be undone.`, {
       type: "danger",
-      confirmText: "Hapus",
+      confirmText: "Delete",
     }))
   )
     return;
@@ -52,7 +52,7 @@ const STATUS_CLASS = {
 };
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "-";
 </script>
 
 <template>
@@ -74,7 +74,7 @@ const formatDate = (date) =>
         class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
       >
         <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Buat Official Memo</span>
+        <span class="text-brand-white text-sm font-semibold">Create Official Memo</span>
       </router-link>
     </div>
 
@@ -88,7 +88,7 @@ const formatDate = (date) =>
             v-model="search"
             @keyup.enter="handleSearch"
             type="text"
-            placeholder="Cari nomor, perihal..."
+            placeholder="Search number, subject..."
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
@@ -97,7 +97,7 @@ const formatDate = (date) =>
           @change="handleFilterChange"
           class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         >
-          <option value="">Semua Status</option>
+          <option value="">All Statuses</option>
           <option value="draft">Draft</option>
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
@@ -112,11 +112,11 @@ const formatDate = (date) =>
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
               <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">Nomor</th>
-              <th class="py-3 pr-4 font-semibold">Perihal</th>
-              <th class="py-3 pr-4 font-semibold">Tanggal</th>
+              <th class="py-3 pr-4 font-semibold">Number</th>
+              <th class="py-3 pr-4 font-semibold">Subject</th>
+              <th class="py-3 pr-4 font-semibold">Date</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold text-right">Aksi</th>
+              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -140,7 +140,7 @@ const formatDate = (date) =>
                   <button
                     @click="goToDetail(memo.id)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
-                    title="Lihat Detail"
+                    title="View Detail"
                   >
                     <Eye class="w-4 h-4 text-gray-600" />
                   </button>
@@ -148,7 +148,7 @@ const formatDate = (date) =>
                     v-if="can('document-letter-delete') && memo.status === 'draft'"
                     @click="handleDelete(memo)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Hapus"
+                    title="Delete"
                   >
                     <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
                   </button>
@@ -159,7 +159,7 @@ const formatDate = (date) =>
         </table>
 
         <div v-if="!loading && documentLetters.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">Belum ada Official Memo</p>
+          <p class="text-lg font-semibold">No Official Memo yet</p>
         </div>
       </div>
 

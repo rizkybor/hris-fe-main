@@ -37,7 +37,7 @@ onUnmounted(() => {
 
 const TYPE_LABEL = { internal: "Internal", external: "External" };
 const formatDateTime = (date) =>
-  date ? new Date(date).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" }) : "-";
+  date ? new Date(date).toLocaleString("en-US", { dateStyle: "full", timeStyle: "short" }) : "-";
 
 const togglePin = async () => {
   pinBusy.value = true;
@@ -50,9 +50,9 @@ const togglePin = async () => {
 
 const handleDelete = async () => {
   if (
-    !(await alertModal.confirm(`Hapus Meeting Note "${note.value.document_number}"? Tindakan ini tidak dapat dibatalkan.`, {
+    !(await alertModal.confirm(`Delete Meeting Note "${note.value.document_number}"? This action cannot be undone.`, {
       type: "danger",
-      confirmText: "Hapus",
+      confirmText: "Delete",
     }))
   )
     return;
@@ -111,7 +111,7 @@ const handleDelete = async () => {
             class="px-4 py-2.5 rounded-lg border border-[#DCDEDD] text-red-600 text-sm font-semibold hover:bg-red-50 hover:border-red-300 flex items-center gap-2"
           >
             <Trash2 class="w-4 h-4" />
-            Hapus
+            Delete
           </button>
         </div>
       </div>
@@ -119,9 +119,9 @@ const handleDelete = async () => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="lg:col-span-2 space-y-4">
           <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-            <h4 class="text-brand-dark text-sm font-bold mb-3">Isi Catatan / Notula</h4>
+            <h4 class="text-brand-dark text-sm font-bold mb-3">Notes Content</h4>
             <div v-if="note.body" class="memo-body text-sm text-brand-dark leading-relaxed" v-html="note.body"></div>
-            <p v-else class="text-sm text-gray-400 italic">Belum ada catatan.</p>
+            <p v-else class="text-sm text-gray-400 italic">No notes yet.</p>
           </div>
 
           <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
@@ -131,14 +131,14 @@ const handleDelete = async () => {
                 <CheckSquare v-if="item.done" class="w-4 h-4 text-green-600 shrink-0" />
                 <Square v-else class="w-4 h-4 text-gray-300 shrink-0" />
                 <span :class="item.done ? 'line-through text-gray-400' : 'text-brand-dark'">{{ item.text }}</span>
-                <span v-if="item.assignee" class="text-xs text-brand-light ml-auto shrink-0">PIC: {{ item.assignee }}</span>
+                <span v-if="item.assignee" class="text-xs text-brand-light ml-auto shrink-0">Assignee: {{ item.assignee }}</span>
               </div>
             </div>
-            <p v-else class="text-sm text-gray-400 italic">Belum ada action item.</p>
+            <p v-else class="text-sm text-gray-400 italic">No action items yet.</p>
           </div>
 
           <div v-if="note.attachments?.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-            <h4 class="text-brand-dark text-sm font-bold mb-3">Lampiran</h4>
+            <h4 class="text-brand-dark text-sm font-bold mb-3">Attachments</h4>
             <div class="space-y-2">
               <a
                 v-for="attachment in note.attachments"
@@ -164,7 +164,7 @@ const handleDelete = async () => {
             <div v-if="note.attendees?.length" class="flex items-start gap-2 text-sm">
               <Users class="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
               <div>
-                <span class="text-brand-light">Peserta Internal:</span>
+                <span class="text-brand-light">Internal Attendees:</span>
                 <div class="flex flex-wrap gap-1 mt-1">
                   <span
                     v-for="attendee in note.attendees"
@@ -180,7 +180,7 @@ const handleDelete = async () => {
             <div v-if="note.external_attendees?.length" class="flex items-start gap-2 text-sm">
               <Building2 class="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
               <div>
-                <span class="text-brand-light">Peserta Eksternal:</span>
+                <span class="text-brand-light">External Attendees:</span>
                 <div class="flex flex-wrap gap-1 mt-1">
                   <span
                     v-for="(att, index) in note.external_attendees"
@@ -195,8 +195,8 @@ const handleDelete = async () => {
           </div>
 
           <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-1.5 text-xs text-brand-light">
-            <p>Dibuat oleh: <span class="text-brand-dark font-medium">{{ note.creator?.name || "-" }}</span></p>
-            <p>Terakhir diedit oleh: <span class="text-brand-dark font-medium">{{ note.updater?.name || "-" }}</span></p>
+            <p>Created by: <span class="text-brand-dark font-medium">{{ note.creator?.name || "-" }}</span></p>
+            <p>Last edited by: <span class="text-brand-dark font-medium">{{ note.updater?.name || "-" }}</span></p>
           </div>
         </div>
       </div>

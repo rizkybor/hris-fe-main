@@ -87,7 +87,7 @@ const handleSubmit = async () => {
         <FileSignature class="w-5 h-5 text-[#0C51D9]" />
       </div>
       <div>
-        <h3 class="text-brand-dark text-lg font-bold">{{ isEditing ? "Edit Official Memo" : "Buat Official Memo" }}</h3>
+        <h3 class="text-brand-dark text-lg font-bold">{{ isEditing ? "Edit Official Memo" : "Create Official Memo" }}</h3>
         <p class="text-brand-light text-sm">The Official Memo will be saved as Draft until you submit it for approval.</p>
       </div>
     </div>
@@ -95,16 +95,16 @@ const handleSubmit = async () => {
     <form @submit.prevent="handleSubmit" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-5">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Nomor Surat/Nota</label>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Memo Number</label>
           <input
             v-model="form.document_number"
             type="text"
-            placeholder="Kosongkan untuk auto-generate"
+            placeholder="Leave blank to auto-generate"
             class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Tanggal Dokumen</label>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Document Date</label>
           <input
             v-model="form.document_date"
             type="date"
@@ -115,26 +115,26 @@ const handleSubmit = async () => {
       </div>
 
       <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Perihal / Judul</label>
+        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Subject / Title</label>
         <input
           v-model="form.subject"
           type="text"
           required
-          placeholder="e.g. Pengajuan Anggaran Operasional Q3"
+          placeholder="e.g. Q3 Operational Budget Request"
           class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         />
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Pengirim</label>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Sender</label>
           <div class="flex items-center gap-2 px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm bg-gray-50 text-brand-light">
             <User class="w-4 h-4" />
             {{ authStore.user?.name }}
           </div>
         </div>
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Penerima</label>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Recipient</label>
           <div class="flex items-center gap-2 px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm bg-gray-50 text-brand-light">
             <ShieldCheck class="w-4 h-4" />
             Finance Manager
@@ -143,12 +143,12 @@ const handleSubmit = async () => {
       </div>
 
       <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Isi Nota Dinas</label>
-        <RichTextEditor v-model="form.body" placeholder="Dengan hormat, ..." />
+        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Memo Content</label>
+        <RichTextEditor v-model="form.body" placeholder="Dear ..." />
       </div>
 
       <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Lampiran</label>
+        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Attachments</label>
         <div class="space-y-2">
           <div
             v-for="attachment in existingAttachments"
@@ -179,14 +179,14 @@ const handleSubmit = async () => {
 
           <label class="flex items-center gap-2 justify-center border border-dashed border-[#DCDEDD] rounded-lg py-3 text-sm text-brand-light cursor-pointer hover:border-[#0C51D9] hover:text-[#0C51D9] transition-colors">
             <Paperclip class="w-4 h-4" />
-            Tambah Lampiran (PDF, DOC, PNG, JPG — max 5MB)
+            Add Attachment (PDF, DOC, PNG, JPG — max 5MB)
             <input type="file" multiple class="hidden" @change="onFileChange" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
           </label>
         </div>
       </div>
 
       <p v-if="error" class="text-red-500 text-sm">
-        {{ typeof error === "string" ? error : "Periksa kembali data yang diisi." }}
+        {{ typeof error === "string" ? error : "Please review the fields you've filled in." }}
       </p>
 
       <div class="flex items-center gap-3 pt-2 border-t border-[#F1F1F1]">
@@ -195,14 +195,14 @@ const handleSubmit = async () => {
           :disabled="saving"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-5 py-2.5 disabled:opacity-50"
         >
-          <span class="text-brand-white text-sm font-semibold">{{ saving ? "Menyimpan..." : "Simpan sebagai Draft" }}</span>
+          <span class="text-brand-white text-sm font-semibold">{{ saving ? "Saving..." : "Save as Draft" }}</span>
         </button>
         <button
           type="button"
           @click="router.back()"
           class="px-5 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50"
         >
-          Batal
+          Cancel
         </button>
       </div>
     </form>

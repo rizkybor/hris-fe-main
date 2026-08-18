@@ -35,9 +35,9 @@ const goToDetail = (id) => router.push({ name: "admin.meeting-notes.detail", par
 
 const handleDelete = async (note) => {
   if (
-    !(await alertModal.confirm(`Hapus Meeting Note "${note.document_number}"? Tindakan ini tidak dapat dibatalkan.`, {
+    !(await alertModal.confirm(`Delete Meeting Note "${note.document_number}"? This action cannot be undone.`, {
       type: "danger",
-      confirmText: "Hapus",
+      confirmText: "Delete",
     }))
   )
     return;
@@ -55,7 +55,7 @@ const togglePin = async (note) => {
 
 const TYPE_LABEL = { internal: "Internal", external: "External" };
 const formatDateTime = (date) =>
-  date ? new Date(date).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
+  date ? new Date(date).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "-";
 </script>
 
 <template>
@@ -77,7 +77,7 @@ const formatDateTime = (date) =>
         class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
       >
         <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Buat Meeting Note</span>
+        <span class="text-brand-white text-sm font-semibold">Create Meeting Note</span>
       </router-link>
     </div>
 
@@ -91,7 +91,7 @@ const formatDateTime = (date) =>
             v-model="search"
             @keyup.enter="handleSearch"
             type="text"
-            placeholder="Cari nomor, judul..."
+            placeholder="Search number, title..."
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
@@ -100,7 +100,7 @@ const formatDateTime = (date) =>
           @change="handleFilterChange"
           class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         >
-          <option value="">Semua Tipe</option>
+          <option value="">All Types</option>
           <option value="internal">Internal</option>
           <option value="external">External</option>
         </select>
@@ -113,11 +113,11 @@ const formatDateTime = (date) =>
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
               <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">Nomor</th>
-              <th class="py-3 pr-4 font-semibold">Judul</th>
-              <th class="py-3 pr-4 font-semibold">Tipe</th>
-              <th class="py-3 pr-4 font-semibold">Waktu Rapat</th>
-              <th class="py-3 pr-4 font-semibold text-right">Aksi</th>
+              <th class="py-3 pr-4 font-semibold">Number</th>
+              <th class="py-3 pr-4 font-semibold">Title</th>
+              <th class="py-3 pr-4 font-semibold">Type</th>
+              <th class="py-3 pr-4 font-semibold">Meeting Time</th>
+              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -143,7 +143,7 @@ const formatDateTime = (date) =>
                     @click="togglePin(note)"
                     :disabled="pinBusyId === note.id"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-amber-400 hover:bg-amber-50 group disabled:opacity-50"
-                    :title="note.is_pinned ? 'Unpin dari Dashboard' : 'Pin ke Dashboard'"
+                    :title="note.is_pinned ? 'Unpin from Dashboard' : 'Pin to Dashboard'"
                   >
                     <PinOff v-if="note.is_pinned" class="w-4 h-4 text-amber-600" />
                     <Pin v-else class="w-4 h-4 text-gray-600 group-hover:text-amber-600" />
@@ -151,7 +151,7 @@ const formatDateTime = (date) =>
                   <button
                     @click="goToDetail(note.id)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
-                    title="Lihat Detail"
+                    title="View Detail"
                   >
                     <Eye class="w-4 h-4 text-gray-600" />
                   </button>
@@ -159,7 +159,7 @@ const formatDateTime = (date) =>
                     v-if="can('meeting-note-delete')"
                     @click="handleDelete(note)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Hapus"
+                    title="Delete"
                   >
                     <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
                   </button>
@@ -170,7 +170,7 @@ const formatDateTime = (date) =>
         </table>
 
         <div v-if="!loading && meetingNotes.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">Belum ada Meeting Note</p>
+          <p class="text-lg font-semibold">No Meeting Note yet</p>
         </div>
       </div>
 

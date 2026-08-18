@@ -51,12 +51,12 @@ const STATUS_CLASS = {
 };
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "-";
 const formatDateTime = (date) =>
-  date ? new Date(date).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
+  date ? new Date(date).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "-";
 
 const handleSubmit = async () => {
-  if (!(await alertModal.confirm("Submit Official Memo ini untuk persetujuan Finance Manager?", { type: "info", confirmText: "Submit" })))
+  if (!(await alertModal.confirm("Submit this Official Memo for Finance Manager approval?", { type: "info", confirmText: "Submit" })))
     return;
   busy.value = true;
   try {
@@ -68,7 +68,7 @@ const handleSubmit = async () => {
 };
 
 const handleApprove = async () => {
-  if (!(await alertModal.confirm("Setujui Official Memo ini?", { type: "success", confirmText: "Setujui" }))) return;
+  if (!(await alertModal.confirm("Approve this Official Memo?", { type: "success", confirmText: "Approve" }))) return;
   busy.value = true;
   try {
     await store.approveDocumentLetter(memo.value.id);
@@ -160,19 +160,19 @@ const handleReject = async () => {
       </div>
 
       <div v-if="memo.status === 'rejected' && memo.rejection_reason" class="bg-red-50 border border-red-100 rounded-[14px] p-4 mb-6">
-        <p class="text-red-700 text-sm font-semibold mb-1">Alasan Penolakan</p>
+        <p class="text-red-700 text-sm font-semibold mb-1">Rejection Reason</p>
         <p class="text-red-600 text-sm">{{ memo.rejection_reason }}</p>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="lg:col-span-2 space-y-4">
           <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-            <h4 class="text-brand-dark text-sm font-bold mb-3">Isi Nota Dinas</h4>
+            <h4 class="text-brand-dark text-sm font-bold mb-3">Memo Content</h4>
             <div class="memo-body text-sm text-brand-dark leading-relaxed" v-html="memo.body"></div>
           </div>
 
           <div v-if="memo.attachments?.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-            <h4 class="text-brand-dark text-sm font-bold mb-3">Lampiran</h4>
+            <h4 class="text-brand-dark text-sm font-bold mb-3">Attachments</h4>
             <div class="space-y-2">
               <a
                 v-for="attachment in memo.attachments"
@@ -192,25 +192,25 @@ const handleReject = async () => {
           <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3">
             <div class="flex items-center gap-2 text-sm">
               <Calendar class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-brand-light">Tanggal:</span>
+              <span class="text-brand-light">Date:</span>
               <span class="text-brand-dark font-medium">{{ formatDate(memo.document_date) }}</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
               <User class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-brand-light">Pengirim:</span>
+              <span class="text-brand-light">Sender:</span>
               <span class="text-brand-dark font-medium">{{ memo.sender?.name || memo.creator?.name || "-" }}</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
               <ShieldCheck class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-brand-light">Penerima:</span>
+              <span class="text-brand-light">Recipient:</span>
               <span class="text-brand-dark font-medium">Finance Manager</span>
             </div>
           </div>
 
           <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-2 text-xs text-brand-light">
-            <p v-if="memo.submitted_at">Diajukan: {{ formatDateTime(memo.submitted_at) }}</p>
+            <p v-if="memo.submitted_at">Submitted: {{ formatDateTime(memo.submitted_at) }}</p>
             <p v-if="memo.approved_at && memo.approver">
-              {{ memo.status === "rejected" ? "Ditolak" : "Disetujui" }} oleh {{ memo.approver.name }} &middot;
+              {{ memo.status === "rejected" ? "Rejected" : "Approved" }} by {{ memo.approver.name }} &middot;
               {{ formatDateTime(memo.approved_at) }}
             </p>
           </div>
@@ -225,25 +225,25 @@ const handleReject = async () => {
           <button @click="isRejectModalOpen = false" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
             <X class="w-5 h-5" />
           </button>
-          <h3 class="text-xl font-bold text-brand-dark mb-2">Tolak Official Memo?</h3>
-          <p class="text-gray-500 text-sm mb-4">Berikan alasan penolakan agar pembuat dokumen tahu apa yang perlu diperbaiki.</p>
+          <h3 class="text-xl font-bold text-brand-dark mb-2">Reject Official Memo?</h3>
+          <p class="text-gray-500 text-sm mb-4">Provide a rejection reason so the author knows what needs to be fixed.</p>
           <textarea
             v-model="rejectionReason"
             rows="4"
             required
-            placeholder="Contoh: Anggaran belum sesuai dengan alokasi Q3..."
+            placeholder="Example: Budget doesn't match the Q3 allocation..."
             class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm resize-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none mb-4"
           ></textarea>
           <div class="grid grid-cols-2 gap-3">
             <button @click="isRejectModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
-              Batal
+              Cancel
             </button>
             <button
               @click="handleReject"
               :disabled="busy || !rejectionReason.trim()"
               class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 disabled:opacity-50"
             >
-              {{ busy ? "Menolak..." : "Tolak" }}
+              {{ busy ? "Rejecting..." : "Reject" }}
             </button>
           </div>
         </div>
