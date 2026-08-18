@@ -47,9 +47,7 @@ const filteredEmployees = computed(() => {
 let heartbeatTimer = null;
 
 onMounted(async () => {
-  // Only actively-employed staff are selectable as attendees -- someone on
-  // leave/resigned/terminated shouldn't show up in a meeting attendee list.
-  await employeeStore.fetchEmployees({ status: "active" });
+  await employeeStore.fetchEmployees({});
 
   if (isEditing.value) {
     const note = await store.fetchMeetingNote(route.params.id);
