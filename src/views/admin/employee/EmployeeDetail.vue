@@ -1028,7 +1028,7 @@ onMounted(() => {
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Periode</label>
             <input v-model="reviewForm.period" type="text" required placeholder="e.g. Q1 2026" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Mulai Periode</label>
               <input v-model="reviewForm.period_start" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
@@ -1088,7 +1088,7 @@ onMounted(() => {
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Reason</label>
             <textarea v-model="resignForm.reason" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Submission Date</label>
               <input v-model="resignForm.resignation_date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
