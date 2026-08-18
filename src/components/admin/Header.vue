@@ -161,7 +161,7 @@ const titles = {
   },
   "admin.documents.dashboard": {
     title: "Document Letters",
-    subtitle: "Purchase Order, Invoice, Payment Receipt, Surat-Surat, and Sertifikat",
+    subtitle: "Letters, Invoice, Payment Receipt, Purchase Order, Official Memo, Meeting Note, and Certificate",
   },
   "admin.purchase-orders.dashboard": {
     title: "Purchase Order",
@@ -188,7 +188,7 @@ const titles = {
     subtitle: "Generate a new payment receipt",
   },
   "admin.letters.dashboard": {
-    title: "Surat-Surat",
+    title: "Letters",
     subtitle: "Company letter register (internal and external)",
   },
   "admin.letters.create": {

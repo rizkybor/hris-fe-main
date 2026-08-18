@@ -6,7 +6,7 @@ const links = [
   {
     to: { name: "admin.letters.dashboard" },
     icon: Mail,
-    title: "Surat-Surat",
+    title: "Letters",
     description: "Buat dan kelola surat internal maupun eksternal",
     permission: "letter-menu",
   },
@@ -52,7 +52,7 @@ const links = [
   {
     to: { name: "admin.certificates.dashboard" },
     icon: Award,
-    title: "Sertifikat",
+    title: "Certificate",
     description: "Generate sertifikat dinamis, tunggal maupun massal",
     permission: "certificate-menu",
     iconBg: "bg-amber-50",
@@ -73,7 +73,7 @@ const links = [
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Document Letters</h3>
           <p class="text-brand-light text-sm">
-            Surat-Surat, Invoice, Payment Receipt, Purchase Order, Official Memo, Meeting Note, dan Sertifikat resmi perusahaan
+            Letters, Invoice, Payment Receipt, Purchase Order, Official Memo, Meeting Note, dan Certificate resmi perusahaan
           </p>
         </div>
       </div>

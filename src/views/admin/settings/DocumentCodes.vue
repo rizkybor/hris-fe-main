@@ -101,7 +101,7 @@ const handleDeleteDivisionCode = async (id) => {
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Kode Surat & Divisi</h3>
-          <p class="text-brand-light text-sm">Referensi kode yang dipakai pada penomoran Surat-Surat</p>
+          <p class="text-brand-light text-sm">Referensi kode yang dipakai pada penomoran Letters</p>
         </div>
       </div>
     </div>
