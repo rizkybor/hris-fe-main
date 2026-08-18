@@ -35,10 +35,10 @@ const goToProjectDetail = (id) => {
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
+  <div class="bg-gradient-to-br from-orange-50 to-white border-2 border-orange-200 rounded-[14px] p-4 sm:p-5 shadow-sm">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-orange-50 rounded-[10px] flex items-center justify-center">
+        <div class="w-10 h-10 bg-orange-100 rounded-[10px] flex items-center justify-center">
           <AlertTriangle class="w-5 h-5 text-orange-600" />
         </div>
         <div>

@@ -28,6 +28,10 @@ const canViewProjects = computed(() => can("project-list"));
 
 <template>
   <div class="space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <ProjectsAtRisk v-if="canViewProjects" />
+      <StickyNotesWidget />
+    </div>
     <Statistics />
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div
@@ -40,7 +44,5 @@ const canViewProjects = computed(() => can("project-list"));
       </div>
       <DashboardQuickLinks title="Operations" :links="quickLinks" class="lg:col-span-1" />
     </div>
-    <ProjectsAtRisk v-if="canViewProjects" />
-    <StickyNotesWidget />
   </div>
 </template>
