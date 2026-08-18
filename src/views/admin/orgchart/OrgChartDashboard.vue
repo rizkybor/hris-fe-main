@@ -68,7 +68,7 @@ onMounted(async () => {
                   <p class="text-gray-400 text-xs">{{ member.job_title }}</p>
                 </div>
               </div>
-              <p v-if="team.members.length === 0" class="text-xs text-gray-400 pl-2">Belum ada anggota</p>
+              <p v-if="team.members.length === 0" class="text-xs text-gray-400 pl-2">No members yet</p>
             </div>
           </div>
         </div>

@@ -60,14 +60,14 @@ const handleSubmit = async () => {
 
       <Alert
         type="success"
-        title="Berhasil"
+        title="Success"
         :message="success"
         :show="!!success"
       />
 
       <Alert
         type="danger"
-        title="Gagal Reset Password"
+        title="Failed to Reset Password"
         :message="errorMessage ?? ''"
         :show="!!errorMessage"
       />

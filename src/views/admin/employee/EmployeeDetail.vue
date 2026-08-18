@@ -858,7 +858,7 @@ onMounted(() => {
           </button>
         </div>
         <div v-if="performanceReviews.length === 0" class="text-center py-6 text-sm text-gray-400">
-          Belum ada review kinerja.
+          No performance reviews yet.
         </div>
         <div v-else class="space-y-3">
           <div v-for="review in performanceReviews" :key="review.id" class="border border-[#DCDEDD] rounded-[12px] p-4">
