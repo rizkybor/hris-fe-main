@@ -9,6 +9,7 @@ import { getStatusBadgeClass } from "@/utils/badgeUtils";
 import Statistics from "./Statistics.vue";
 import LatestEmployees from "./LatestEmployees.vue";
 import DashboardQuickLinks from "./DashboardQuickLinks.vue";
+import StickyNotesWidget from "./StickyNotesWidget.vue";
 
 const quickLinks = [
   { to: { name: "admin.employees" }, icon: Users, title: "Employees", permission: "employee-menu" },
@@ -92,5 +93,6 @@ onMounted(() => {
     </div>
 
     <LatestEmployees v-if="canViewEmployees" />
+    <StickyNotesWidget />
   </div>
 </template>

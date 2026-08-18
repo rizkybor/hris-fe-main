@@ -68,7 +68,7 @@ const formatDate = (date) =>
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Certificate</h3>
-          <p class="text-brand-light text-sm">Riwayat sertifikat yang telah diterbitkan</p>
+          <p class="text-brand-light text-sm">History of issued certificates</p>
         </div>
       </div>
 

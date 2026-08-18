@@ -1,41 +1,59 @@
 <script setup>
-import { FileStack, ShoppingCart, Receipt, FileCheck2, Mail, Award, ChevronRight } from "lucide-vue-next";
+import { FileStack, ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, NotebookPen, ChevronRight } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
 const links = [
   {
-    to: { name: "admin.purchase-orders.dashboard" },
-    icon: ShoppingCart,
-    title: "Purchase Order",
-    description: "Buat dan kelola Purchase Order (PO) untuk vendor",
-    permission: "purchase-order-menu",
+    to: { name: "admin.letters.dashboard" },
+    icon: Mail,
+    title: "Letters",
+    description: "Create and manage internal and external company letters",
+    permission: "letter-menu",
   },
   {
     to: { name: "admin.invoices.dashboard" },
     icon: Receipt,
     title: "Invoice",
-    description: "Buat dan kelola tagihan (invoice) untuk klien",
+    description: "Create and manage client invoices",
     permission: "invoice-menu",
   },
   {
     to: { name: "admin.payment-receipts.dashboard" },
     icon: FileCheck2,
     title: "Payment Receipt",
-    description: "Buat dan kelola bukti terima pembayaran",
+    description: "Create and manage payment receipts",
     permission: "payment-receipt-menu",
   },
   {
-    to: { name: "admin.letters.dashboard" },
-    icon: Mail,
-    title: "Surat-Surat",
-    description: "Buat dan kelola surat internal maupun eksternal",
-    permission: "letter-menu",
+    to: { name: "admin.purchase-orders.dashboard" },
+    icon: ShoppingCart,
+    title: "Purchase Order",
+    description: "Create and manage Purchase Orders (PO) for vendors",
+    permission: "purchase-order-menu",
+  },
+  {
+    to: { name: "admin.official-memos.dashboard" },
+    icon: FileSignature,
+    title: "Official Memo",
+    description: "Internal memos with a Finance Manager approval workflow",
+    permission: "document-letter-menu",
+    iconBg: "bg-indigo-50",
+    iconColor: "text-indigo-600",
+  },
+  {
+    to: { name: "admin.meeting-notes.dashboard" },
+    icon: NotebookPen,
+    title: "Meeting Note",
+    description: "Internal & external meeting recaps, managed together by the management team",
+    permission: "meeting-note-menu",
+    iconBg: "bg-teal-50",
+    iconColor: "text-teal-600",
   },
   {
     to: { name: "admin.certificates.dashboard" },
     icon: Award,
-    title: "Sertifikat",
-    description: "Generate sertifikat dinamis, tunggal maupun massal",
+    title: "Certificate",
+    description: "Generate dynamic certificates, single or in bulk",
     permission: "certificate-menu",
     iconBg: "bg-amber-50",
     iconColor: "text-amber-600",
@@ -55,7 +73,7 @@ const links = [
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Document Letters</h3>
           <p class="text-brand-light text-sm">
-            Purchase Order, Invoice, Payment Receipt, Surat-Surat, dan Sertifikat resmi perusahaan
+            Letters, Invoice, Payment Receipt, Purchase Order, Official Memo, Meeting Note, and Certificate for the company
           </p>
         </div>
       </div>
