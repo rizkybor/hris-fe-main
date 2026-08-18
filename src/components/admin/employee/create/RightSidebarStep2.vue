@@ -52,7 +52,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-full lg:w-100 flex-shrink-0">
+  <div class="w-full lg:w-80 flex-shrink-0">
     <div
       ref="sidebarRef"
       :class="[

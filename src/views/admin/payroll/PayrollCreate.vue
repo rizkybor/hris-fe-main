@@ -100,7 +100,7 @@ const formatMonth = (month) => {
     </div>
 
     <!-- Right Sidebar -->
-    <div class="w-full lg:w-100 flex-shrink-0">
+    <div class="w-full lg:w-80 flex-shrink-0">
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6 lg:sticky lg:top-6">
         <div class="flex items-center gap-3 mb-6">
           <div
