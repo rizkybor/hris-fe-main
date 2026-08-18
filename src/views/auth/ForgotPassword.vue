@@ -49,8 +49,8 @@ const handleSubmit = async () => {
 
       <Alert
         type="danger"
-        title="Gagal Mengirim"
-        :message="typeof error === 'string' ? error : 'Terjadi kesalahan, silakan coba lagi.'"
+        title="Failed to Send"
+        :message="typeof error === 'string' ? error : 'An error occurred, please try again.'"
         :show="!!error"
       />
 

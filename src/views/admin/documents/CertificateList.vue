@@ -77,7 +77,7 @@ const formatDate = (date) =>
           v-if="can('certificate-menu')"
           :to="{ name: 'admin.settings.certificate-settings' }"
           class="p-3 rounded-lg border border-[#DCDEDD] text-brand-dark hover:bg-gray-50"
-          title="Pengaturan & Template"
+          title="Settings & Templates"
         >
           <Settings class="w-4 h-4" />
         </router-link>
@@ -95,7 +95,7 @@ const formatDate = (date) =>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 flex items-center justify-between">
         <div>
-          <p class="text-brand-dark text-sm font-medium">Total Sertifikat</p>
+          <p class="text-brand-dark text-sm font-medium">Total Certificates</p>
           <p class="text-brand-dark text-2xl font-extrabold leading-tight my-1">{{ statistics.total_certificates }}</p>
         </div>
         <div class="w-11 h-11 bg-amber-50 rounded-[12px] flex items-center justify-center">
@@ -104,7 +104,7 @@ const formatDate = (date) =>
       </div>
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 flex items-center justify-between">
         <div>
-          <p class="text-brand-dark text-sm font-medium">Total Batch Massal</p>
+          <p class="text-brand-dark text-sm font-medium">Total Bulk Batches</p>
           <p class="text-brand-dark text-2xl font-extrabold leading-tight my-1">{{ statistics.total_batches }}</p>
         </div>
         <div class="w-11 h-11 bg-indigo-50 rounded-[12px] flex items-center justify-center">
@@ -132,7 +132,7 @@ const formatDate = (date) =>
             v-model="search"
             @keyup.enter="handleSearch"
             type="text"
-            placeholder="Cari nomor sertifikat, judul, penerima..."
+            placeholder="Search certificate number, title, recipient..."
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
@@ -141,7 +141,7 @@ const formatDate = (date) =>
           @change="handleFilterChange"
           class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         >
-          <option value="">Semua Tipe</option>
+          <option value="">All Types</option>
           <option value="individual">Individual</option>
           <option value="batch">Batch</option>
         </select>
@@ -154,12 +154,12 @@ const formatDate = (date) =>
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
               <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">No Sertifikat</th>
-              <th class="py-3 pr-4 font-semibold">Judul</th>
-              <th class="py-3 pr-4 font-semibold">Penerima</th>
-              <th class="py-3 pr-4 font-semibold">Tanggal</th>
-              <th class="py-3 pr-4 font-semibold">Dibuat Oleh</th>
-              <th class="py-3 pr-4 font-semibold text-right">Aksi</th>
+              <th class="py-3 pr-4 font-semibold">Certificate No.</th>
+              <th class="py-3 pr-4 font-semibold">Title</th>
+              <th class="py-3 pr-4 font-semibold">Recipient</th>
+              <th class="py-3 pr-4 font-semibold">Date</th>
+              <th class="py-3 pr-4 font-semibold">Created By</th>
+              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -193,7 +193,7 @@ const formatDate = (date) =>
                     v-if="can('certificate-delete')"
                     @click="confirmDelete(certificate)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Hapus"
+                    title="Delete"
                   >
                     <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
                   </button>
@@ -204,27 +204,27 @@ const formatDate = (date) =>
         </table>
 
         <div v-if="!loading && certificates.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">Belum ada Sertifikat</p>
+          <p class="text-lg font-semibold">No Certificates yet</p>
         </div>
       </div>
 
-      <Pagination :meta="meta" :loading="loading" item-label="sertifikat" @page-change="load" />
+      <Pagination :meta="meta" :loading="loading" item-label="certificates" @page-change="load" />
     </div>
 
     <Transition name="fade">
       <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
         <div class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <h3 class="text-xl font-bold text-brand-dark mb-2">Hapus Sertifikat?</h3>
+          <h3 class="text-xl font-bold text-brand-dark mb-2">Delete Certificate?</h3>
           <p class="text-gray-500 text-sm mb-6">
-            "{{ certificateToDelete?.certificate_number }}" akan dihapus permanen beserta file PDF-nya.
+            "{{ certificateToDelete?.certificate_number }}" will be permanently deleted along with its PDF file.
           </p>
           <div class="grid grid-cols-2 gap-3">
             <button @click="isDeleteModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
-              Batal
+              Cancel
             </button>
             <button @click="handleDelete" class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600">
-              Ya, Hapus
+              Yes, Delete
             </button>
           </div>
         </div>

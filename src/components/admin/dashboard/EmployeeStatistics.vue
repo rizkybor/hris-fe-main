@@ -117,7 +117,7 @@ const formatDate = (dateString: string) => {
   if (date.toDateString() === today.toDateString()) return "Today";
   if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
 
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return date.toLocaleDateString("id-ID", { month: "short", day: "numeric" });
 };
 
 const fetchMyStatistics = async () => {

@@ -18,7 +18,7 @@ const props = defineProps<Props>();
 // Format date to readable format
 const formatDate = (date: string) => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("en-US", {
+  return new Date(date).toLocaleDateString("id-ID", {
     year: "numeric",
     month: "long",
     day: "numeric",

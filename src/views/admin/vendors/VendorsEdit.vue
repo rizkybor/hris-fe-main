@@ -31,7 +31,7 @@ const loadVendor = async () => {
   try {
     const vendor = await vendorsStore.fetchVendorById(route.params.id);
     if (!vendor) {
-      loadError.value = "Vendor tidak ditemukan.";
+      loadError.value = "Vendor not found.";
       return;
     }
     form.value = {
@@ -45,7 +45,7 @@ const loadVendor = async () => {
       notes: vendor.notes || "",
     };
   } catch (err) {
-    loadError.value = "Gagal memuat data vendor.";
+    loadError.value = "Failed to load vendor data.";
   } finally {
     initialLoading.value = false;
   }
@@ -58,20 +58,20 @@ const submit = async () => {
   success.value = "";
 
   if (!form.value.name || !form.value.pic_name || !form.value.pic_phone) {
-    error.value = "Vendor Name, PIC Name, dan PIC Phone wajib diisi.";
+    error.value = "Vendor Name, PIC Name, and PIC Phone are required.";
     return;
   }
 
   submitting.value = true;
   try {
     await vendorsStore.updateVendor(route.params.id, form.value);
-    success.value = "Vendor berhasil diperbarui.";
+    success.value = "Vendor updated successfully.";
 
     setTimeout(() => {
       router.push({ name: "admin.vendors.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = err?.message || "Gagal memperbarui vendor.";
+    error.value = err?.message || "Failed to update vendor.";
   } finally {
     submitting.value = false;
   }

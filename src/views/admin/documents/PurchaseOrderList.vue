@@ -46,8 +46,8 @@ const handleDownload = async (order) => {
 const handleCancel = async (order) => {
   if (
     !(await alertModal.confirm(
-      `Batalkan PO "${order.po_number}"? Nomor tetap dicatat, tidak bisa dipakai ulang.`,
-      { type: "warning", confirmText: "Batalkan" }
+      `Cancel PO "${order.po_number}"? The number stays recorded and cannot be reused.`,
+      { type: "warning", confirmText: "Cancel" }
     ))
   )
     return;
@@ -115,9 +115,9 @@ const formatDate = (date) =>
           @change="handleFilterChange"
           class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         >
-          <option value="">Semua Status</option>
-          <option value="active">Aktif</option>
-          <option value="cancelled">Dibatalkan</option>
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
@@ -128,13 +128,13 @@ const formatDate = (date) =>
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
               <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">No PO</th>
-              <th class="py-3 pr-4 font-semibold">Klien</th>
-              <th class="py-3 pr-4 font-semibold">Judul</th>
-              <th class="py-3 pr-4 font-semibold">Tanggal</th>
+              <th class="py-3 pr-4 font-semibold">PO No.</th>
+              <th class="py-3 pr-4 font-semibold">Client</th>
+              <th class="py-3 pr-4 font-semibold">Title</th>
+              <th class="py-3 pr-4 font-semibold">Date</th>
               <th class="py-3 pr-4 font-semibold">Total</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold text-right">Aksi</th>
+              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -151,7 +151,7 @@ const formatDate = (date) =>
               <td class="py-3 pr-4">{{ formatRupiah(order.total) }}</td>
               <td class="py-3 pr-4">
                 <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="statusClass(order.status)">
-                  {{ order.status === "cancelled" ? "Dibatalkan" : "Aktif" }}
+                  {{ order.status === "cancelled" ? "Cancelled" : "Active" }}
                 </span>
               </td>
               <td class="py-3 pr-4">
@@ -168,7 +168,7 @@ const formatDate = (date) =>
                     v-if="can('purchase-order-edit') && order.status !== 'cancelled'"
                     @click="handleCancel(order)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-orange-500 hover:bg-orange-50 group"
-                    title="Batalkan"
+                    title="Cancel"
                   >
                     <Ban class="w-4 h-4 text-gray-600 group-hover:text-orange-600" />
                   </button>
@@ -176,7 +176,7 @@ const formatDate = (date) =>
                     v-if="can('purchase-order-delete')"
                     @click="confirmDelete(order)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Hapus"
+                    title="Delete"
                   >
                     <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
                   </button>
@@ -204,10 +204,10 @@ const formatDate = (date) =>
           </p>
           <div class="grid grid-cols-2 gap-3">
             <button @click="isDeleteModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
-              Batal
+              Cancel
             </button>
             <button @click="handleDelete" class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600">
-              Ya, Hapus
+              Yes, Delete
             </button>
           </div>
         </div>

@@ -40,7 +40,7 @@ const roleSubtitle = computed(() => {
 });
 
 const todayLabel = computed(() =>
-  new Date().toLocaleDateString("en-US", {
+  new Date().toLocaleDateString("id-ID", {
     weekday: "long",
     day: "numeric",
     month: "long",

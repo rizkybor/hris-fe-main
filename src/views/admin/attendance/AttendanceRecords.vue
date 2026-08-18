@@ -78,7 +78,7 @@ const statusBadgeClass = (status) => {
             v-model="search"
             @keyup.enter="handleSearch"
             type="text"
-            placeholder="Cari nama karyawan..."
+            placeholder="Search employee name..."
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
@@ -87,7 +87,7 @@ const statusBadgeClass = (status) => {
           @change="handleFilterChange"
           class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         >
-          <option value="">Semua Status</option>
+          <option value="">All Statuses</option>
           <option value="present">Present</option>
           <option value="late">Late</option>
           <option value="absent">Absent</option>
@@ -154,11 +154,11 @@ const statusBadgeClass = (status) => {
         </table>
 
         <div v-if="!loading && attendances.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">Belum ada catatan Attendance</p>
+          <p class="text-lg font-semibold">No Attendance records yet</p>
         </div>
       </div>
 
-      <Pagination :meta="meta" :loading="loading" item-label="catatan" @page-change="load" />
+      <Pagination :meta="meta" :loading="loading" item-label="records" @page-change="load" />
     </div>
   </div>
 </template>

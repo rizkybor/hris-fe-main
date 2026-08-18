@@ -109,7 +109,7 @@ const isImage = (type) => type?.startsWith("image/");
               {{ archiveStore.currentArchive.document_name || "—" }}
             </h2>
             <p class="text-brand-white-70 text-sm mt-1 whitespace-pre-line">
-              {{ archiveStore.currentArchive.description || "Tidak ada deskripsi" }}
+              {{ archiveStore.currentArchive.description || "No description" }}
             </p>
           </div>
         </div>

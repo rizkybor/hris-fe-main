@@ -128,7 +128,7 @@ export const useAuthStore = defineStore("auth", {
                     _method: 'PUT',
                 })
 
-                this.success = response.data.message || 'Profil berhasil diperbarui'
+                this.success = response.data.message || 'Profile updated successfully'
                 // refresh user
                 await this.checkAuth()
                 return response.data.data
