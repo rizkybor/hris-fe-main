@@ -180,7 +180,7 @@ const submitResignation = async () => {
     await Promise.all([loadEmployee(), resignationStore.fetchEmployeeResignation(route.params.id as string)]);
   } catch (error: any) {
     const data = error?.response?.data;
-    resignError.value = data?.message || "Gagal memproses resign/pemutusan kerja.";
+    resignError.value = data?.message || "Failed to process resignation/termination.";
   } finally {
     resignSubmitting.value = false;
   }
@@ -188,12 +188,12 @@ const submitResignation = async () => {
 
 const completeOffboarding = async () => {
   if (!resignation.value) return;
-  if (!(await alertModal.confirm("Tandai proses offboarding sebagai selesai?"))) return;
+  if (!(await alertModal.confirm("Mark offboarding process as complete?"))) return;
   try {
     await resignationStore.completeOffboarding(resignation.value.id);
     await resignationStore.fetchEmployeeResignation(route.params.id as string);
   } catch (error) {
-    await alertModal.alert("Gagal menyelesaikan proses offboarding.", { type: "danger" });
+    await alertModal.alert("Failed to complete offboarding process.", { type: "danger" });
   }
 };
 
@@ -846,7 +846,7 @@ onMounted(() => {
             </div>
             <div>
               <h3 class="text-brand-dark text-lg font-bold">Performance Reviews</h3>
-              <p class="text-brand-light text-sm">Riwayat penilaian kinerja karyawan</p>
+              <p class="text-brand-light text-sm">Employee performance review history</p>
             </div>
           </div>
           <button
@@ -854,7 +854,7 @@ onMounted(() => {
             @click="openReviewModal"
             class="btn-primary w-full sm:w-auto rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2 flex items-center justify-center gap-2 shrink-0"
           >
-            <span class="text-brand-white text-sm font-semibold">Buat Review</span>
+            <span class="text-brand-white text-sm font-semibold">Create Review</span>
           </button>
         </div>
         <div v-if="performanceReviews.length === 0" class="text-center py-6 text-sm text-gray-400">
@@ -870,7 +870,7 @@ onMounted(() => {
             </div>
             <p v-if="review.strengths" class="text-brand-light text-xs mb-1"><strong>Kelebihan:</strong> {{ review.strengths }}</p>
             <p v-if="review.areas_for_improvement" class="text-brand-light text-xs mb-1"><strong>Area Perbaikan:</strong> {{ review.areas_for_improvement }}</p>
-            <p class="text-xs text-gray-400 mt-2">Oleh {{ review.reviewer?.name }} • {{ review.status === 'acknowledged' ? 'Sudah dibaca karyawan' : 'Menunggu dibaca karyawan' }}</p>
+            <p class="text-xs text-gray-400 mt-2">By {{ review.reviewer?.name }} • {{ review.status === 'acknowledged' ? 'Read by employee' : 'Awaiting employee read' }}</p>
           </div>
         </div>
       </div>
@@ -883,7 +883,7 @@ onMounted(() => {
           </div>
           <div>
             <h3 class="text-brand-dark text-lg font-bold">Riwayat Surat Peringatan</h3>
-            <p class="text-brand-light text-sm">SP1 / SP2 / SP3 yang pernah diterbitkan</p>
+            <p class="text-brand-light text-sm">SP1 / SP2 / SP3 previously issued</p>
           </div>
         </div>
         <div v-if="disciplinaryLetters.length === 0" class="text-center py-6 text-sm text-gray-400">
@@ -910,8 +910,8 @@ onMounted(() => {
               <LogOut class="w-6 h-6 text-orange-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">Resign / Pemutusan Kerja</h3>
-              <p class="text-brand-light text-sm">Proses offboarding karyawan</p>
+              <h3 class="text-brand-dark text-lg font-bold">Resignation / Termination</h3>
+              <p class="text-brand-light text-sm">Process employee offboarding</p>
             </div>
           </div>
           <button
@@ -919,32 +919,32 @@ onMounted(() => {
             @click="openResignModal"
             class="w-full sm:w-auto px-4 py-2 rounded-lg border border-orange-300 text-orange-700 text-sm font-semibold hover:bg-orange-50 shrink-0"
           >
-            Mulai Proses Resign/PHK
+            Start Resignation/Termination Process
           </button>
         </div>
 
         <div v-if="resignation" class="border border-[#DCDEDD] rounded-[12px] p-4 space-y-3">
           <div class="flex items-center justify-between">
             <p class="text-brand-dark text-sm font-semibold">
-              {{ resignation.type === 'terminated' ? 'Pemutusan Kerja (Terminasi)' : 'Pengunduran Diri' }}
+              {{ resignation.type === 'terminated' ? 'Termination' : 'Resignation' }}
             </p>
             <span :class="['px-2 py-1 rounded-md text-xs font-semibold', resignation.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700']">
               {{ resignation.status === 'completed' ? 'Selesai' : 'Dalam Proses' }}
             </span>
           </div>
-          <p v-if="resignation.reason" class="text-brand-light text-xs">Alasan: {{ resignation.reason }}</p>
+          <p v-if="resignation.reason" class="text-brand-light text-xs">Reason: {{ resignation.reason }}</p>
           <p class="text-brand-light text-xs">
             Tanggal Pengajuan: {{ formatDate(resignation.resignation_date) }}
-            <span v-if="resignation.last_working_date"> • Hari Kerja Terakhir: {{ formatDate(resignation.last_working_date) }}</span>
+            <span v-if="resignation.last_working_date"> • Last Working Day: {{ formatDate(resignation.last_working_date) }}</span>
           </p>
 
           <div v-if="assetsToReturn.length > 0">
-            <p class="text-xs font-semibold text-brand-dark mb-1">Aset yang Perlu Dikembalikan:</p>
+            <p class="text-xs font-semibold text-brand-dark mb-1">Assets to be Returned:</p>
             <ul class="list-disc list-inside text-xs text-brand-light">
               <li v-for="asset in assetsToReturn" :key="asset.id">{{ asset.name }} ({{ asset.asset_code }})</li>
             </ul>
           </div>
-          <p v-else class="text-xs text-green-600">Tidak ada aset yang perlu dikembalikan.</p>
+          <p v-else class="text-xs text-green-600">No assets need to be returned.</p>
 
           <button
             v-if="resignation.status === 'pending'"
@@ -1018,7 +1018,7 @@ onMounted(() => {
     <div v-if="showReviewModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showReviewModal = false">
       <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-brand-dark text-lg font-bold">Buat Performance Review</h3>
+          <h3 class="text-brand-dark text-lg font-bold">Create Performance Review</h3>
           <button @click="showReviewModal = false" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
             <X class="w-4 h-4 text-gray-600" />
           </button>
@@ -1039,7 +1039,7 @@ onMounted(() => {
             </div>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Rating Keseluruhan (1-5)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Overall Rating (1-5)</label>
             <input v-model.number="reviewForm.overall_rating" type="number" min="1" max="5" step="0.5" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
@@ -1059,9 +1059,9 @@ onMounted(() => {
 
           <div class="flex items-center gap-3 pt-2">
             <button type="submit" :disabled="reviewSubmitting" class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-6 py-2.5 flex items-center gap-2 disabled:opacity-50">
-              <span class="text-brand-white text-sm font-semibold">{{ reviewSubmitting ? "Menyimpan..." : "Simpan Review" }}</span>
+              <span class="text-brand-white text-sm font-semibold">{{ reviewSubmitting ? "Saving..." : "Save Review" }}</span>
             </button>
-            <button type="button" @click="showReviewModal = false" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Batal</button>
+            <button type="button" @click="showReviewModal = false" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Cancel</button>
           </div>
         </form>
       </div>
@@ -1071,30 +1071,30 @@ onMounted(() => {
     <div v-if="showResignModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showResignModal = false">
       <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md">
         <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-brand-dark text-lg font-bold">Proses Resign / Pemutusan Kerja</h3>
+          <h3 class="text-brand-dark text-lg font-bold">Resignation / Termination Process</h3>
           <button @click="showResignModal = false" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
             <X class="w-4 h-4 text-gray-600" />
           </button>
         </div>
         <form @submit.prevent="submitResignation" class="p-5 space-y-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Jenis</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
             <select v-model="resignForm.type" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="resign">Pengunduran Diri (Resign)</option>
-              <option value="terminated">Pemutusan Kerja (Terminasi)</option>
+              <option value="resign">Resignation</option>
+              <option value="terminated">Termination</option>
             </select>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Alasan</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Reason</label>
             <textarea v-model="resignForm.reason" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Tanggal Pengajuan</label>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Submission Date</label>
               <input v-model="resignForm.resignation_date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
             </div>
             <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Hari Kerja Terakhir</label>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Last Working Day</label>
               <input v-model="resignForm.last_working_date" type="date" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
             </div>
           </div>
@@ -1103,9 +1103,9 @@ onMounted(() => {
 
           <div class="flex items-center gap-3 pt-2">
             <button type="submit" :disabled="resignSubmitting" class="px-6 py-2.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold disabled:opacity-50">
-              {{ resignSubmitting ? "Memproses..." : "Proses" }}
+              {{ resignSubmitting ? "Processing..." : "Process" }}
             </button>
-            <button type="button" @click="showResignModal = false" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Batal</button>
+            <button type="button" @click="showResignModal = false" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Cancel</button>
           </div>
         </form>
       </div>
