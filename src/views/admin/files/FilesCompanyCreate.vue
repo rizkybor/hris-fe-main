@@ -66,7 +66,7 @@ const submit = async () => {
   if (!form.value.file) fileError.value = true;
 
   if (nameError.value || fileError.value) {
-    error.value = "File Name dan File wajib diisi.";
+    error.value = "File Name and File are required.";
     return;
   }
 
@@ -80,13 +80,13 @@ const submit = async () => {
   loading.value = true;
   try {
     await archiveStore.createArchive(payload);
-    success.value = "File berhasil diunggah.";
+    success.value = "File uploaded successfully.";
 
     setTimeout(() => {
       router.push({ name: "admin.files-company.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = err?.message || "Gagal mengunggah file.";
+    error.value = err?.message || "Failed to upload file.";
   } finally {
     loading.value = false;
   }
@@ -165,7 +165,7 @@ const submit = async () => {
           <div class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center shrink-0">
             <Paperclip class="w-4.5 h-4.5 text-indigo-600" />
           </div>
-          <h4 class="text-brand-dark font-bold">Berkas</h4>
+          <h4 class="text-brand-dark font-bold">File</h4>
         </div>
 
         <label class="block text-brand-dark text-sm font-semibold mb-1.5">

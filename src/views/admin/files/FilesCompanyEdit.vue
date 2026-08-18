@@ -131,14 +131,14 @@ const submit = async () => {
     form.value.document_name = updatedArchive.document_name;
     form.value.description = updatedArchive.description;
 
-    success.value = "File berhasil diperbarui.";
+    success.value = "File updated successfully.";
 
     setTimeout(() => {
       router.push({ name: "admin.files-company.dashboard" });
     }, 1200);
   } catch (err) {
     console.error(err);
-    error.value = err?.message || "Gagal memperbarui file.";
+    error.value = err?.message || "Failed to update file.";
   } finally {
     submitting.value = false;
   }
@@ -261,7 +261,7 @@ const newFileMeta = computed(() => fileTypeMeta(form.value.new_file?.type));
           <div class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center shrink-0">
             <Paperclip class="w-4.5 h-4.5 text-indigo-600" />
           </div>
-          <h4 class="text-brand-dark font-bold">Berkas</h4>
+          <h4 class="text-brand-dark font-bold">File</h4>
         </div>
 
         <!-- Current / Preview File -->
