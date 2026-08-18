@@ -2,6 +2,7 @@
 import { Banknote, Landmark, ReceiptText, FileText, BarChart3 } from "lucide-vue-next";
 import Statistics from "./Statistics.vue";
 import DashboardQuickLinks from "./DashboardQuickLinks.vue";
+import StickyNotesWidget from "./StickyNotesWidget.vue";
 
 const quickLinks = [
   { to: { name: "admin.payroll.dashboard" }, icon: Banknote, title: "Payroll", permission: "payroll-menu" },
@@ -28,5 +29,6 @@ const quickLinks = [
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <DashboardQuickLinks title="Finance & Operations" :links="quickLinks" class="lg:col-span-3" />
     </div>
+    <StickyNotesWidget />
   </div>
 </template>

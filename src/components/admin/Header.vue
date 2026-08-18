@@ -161,7 +161,7 @@ const titles = {
   },
   "admin.documents.dashboard": {
     title: "Document Letters",
-    subtitle: "Purchase Order, Invoice, Payment Receipt, Surat-Surat, and Sertifikat",
+    subtitle: "Letters, Invoice, Payment Receipt, Purchase Order, Official Memo, Meeting Note, and Certificate",
   },
   "admin.purchase-orders.dashboard": {
     title: "Purchase Order",
@@ -188,12 +188,44 @@ const titles = {
     subtitle: "Generate a new payment receipt",
   },
   "admin.letters.dashboard": {
-    title: "Surat-Surat",
+    title: "Letters",
     subtitle: "Company letter register (internal and external)",
   },
   "admin.letters.create": {
     title: "Create Letter",
     subtitle: "Draft and issue a new company letter",
+  },
+  "admin.official-memos.dashboard": {
+    title: "Official Memo",
+    subtitle: "Internal memos with a Finance Manager approval workflow",
+  },
+  "admin.official-memos.create": {
+    title: "Create Official Memo",
+    subtitle: "Draft a new internal memo",
+  },
+  "admin.official-memos.detail": {
+    title: "Official Memo Detail",
+    subtitle: "View memo content and approval status",
+  },
+  "admin.official-memos.edit": {
+    title: "Edit Official Memo",
+    subtitle: "Update a memo that is still in Draft",
+  },
+  "admin.meeting-notes.dashboard": {
+    title: "Meeting Note",
+    subtitle: "Internal & external meeting recaps, managed together by the management team",
+  },
+  "admin.meeting-notes.create": {
+    title: "Create Meeting Note",
+    subtitle: "Record a new meeting recap",
+  },
+  "admin.meeting-notes.detail": {
+    title: "Meeting Note Detail",
+    subtitle: "View notes, action items, and attendees",
+  },
+  "admin.meeting-notes.edit": {
+    title: "Edit Meeting Note",
+    subtitle: "Update meeting notes and action items",
   },
   "admin.settings.document-codes": {
     title: "Kode Surat & Divisi",

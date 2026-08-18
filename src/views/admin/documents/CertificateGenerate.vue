@@ -121,7 +121,7 @@ const handleSubmit = async () => {
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Generate Certificate</h3>
-          <p class="text-brand-light text-sm">Nomor sertifikat dibuat otomatis, mendukung generate massal</p>
+          <p class="text-brand-light text-sm">Certificate number is generated automatically, supports bulk generation</p>
         </div>
       </div>
       <router-link

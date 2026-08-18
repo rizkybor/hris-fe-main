@@ -78,8 +78,8 @@ const formatDate = (date) =>
           <Mail class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Surat-Surat</h3>
-          <p class="text-brand-light text-sm">Register surat internal dan eksternal perusahaan</p>
+          <h3 class="text-brand-dark text-lg font-bold">Letters</h3>
+          <p class="text-brand-light text-sm">Register of internal and external company letters</p>
         </div>
       </div>
 

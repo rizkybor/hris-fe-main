@@ -6,6 +6,7 @@ import { Mail, Settings, Plus, Trash2, Info, Tag, FileText } from "lucide-vue-ne
 import { useLetterStore } from "@/stores/letter";
 import { useEmployeeStore } from "@/stores/employee";
 import { can } from "@/helpers/permissionHelper";
+import RichTextEditor from "@/components/common/RichTextEditor.vue";
 
 const store = useLetterStore();
 const { letterCodes, divisionCodes } = storeToRefs(store);
@@ -14,22 +15,11 @@ const { employees } = storeToRefs(employeeStore);
 const router = useRouter();
 
 // Reference templates for structured letter types, so the body & required
-// sections don't have to be built from scratch every time.
+// sections don't have to be built from scratch every time. Deliberately
+// limited to the letter types actually used often -- the rest of the
+// (much longer) Kode Surat list still works fine, it just starts from a
+// blank body instead of a pre-filled one.
 const TEMPLATES = {
-  SP: {
-    body:
-      "Dengan hormat,\n\nMelalui surat ini kami sampaikan pemberitahuan sebagai berikut:\n\n[isi pemberitahuan]\n\nDemikian pemberitahuan ini kami sampaikan untuk dapat diketahui dan dimaklumi. Atas perhatiannya kami ucapkan terima kasih.",
-    useItems: false,
-    useSecondParty: false,
-    itemsPriced: false,
-  },
-  SK: {
-    body:
-      "Menimbang:\na. bahwa [dasar pertimbangan];\nb. bahwa berdasarkan pertimbangan tersebut perlu ditetapkan Surat Keputusan.\n\nMengingat:\n1. [dasar hukum/acuan];\n\nMEMUTUSKAN\n\nMenetapkan:\nPERTAMA\t: [isi keputusan];\nKEDUA\t: Keputusan ini berlaku sejak tanggal ditetapkan dengan ketentuan apabila di kemudian hari terdapat kekeliruan akan diadakan perbaikan sebagaimana mestinya.\n\nDitetapkan di [kota], pada tanggal [tanggal].",
-    useItems: false,
-    useSecondParty: false,
-    itemsPriced: false,
-  },
   SPK: {
     body:
       "Dengan hormat,\n\nBersama ini kami memberikan perintah kerja kepada [nama/pihak terkait] untuk melaksanakan pekerjaan sebagaimana rincian pada tabel di bawah ini.\n\nPekerjaan tersebut harus diselesaikan sesuai dengan ketentuan dan jangka waktu yang telah disepakati.\n\nDemikian surat perintah kerja ini dibuat untuk dilaksanakan dengan penuh tanggung jawab.",
@@ -37,9 +27,16 @@ const TEMPLATES = {
     useSecondParty: true,
     itemsPriced: true,
   },
-  SKET: {
+  BAST: {
     body:
-      "Yang bertanda tangan di bawah ini menerangkan bahwa:\n\nNama\t: [nama]\nJabatan\t: [jabatan]\n\nadalah benar [isi keterangan].\n\nDemikian surat keterangan ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.",
+      "Pada hari ini, [hari], tanggal [tanggal] bulan [bulan] tahun [tahun], yang bertanda tangan di bawah ini menyatakan bahwa PIHAK PERTAMA telah menyerahkan dan PIHAK KEDUA telah menerima barang/pekerjaan sebagaimana rincian pada tabel di bawah ini dalam kondisi baik dan lengkap.\n\nDemikian Berita Acara Serah Terima ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.",
+    useItems: true,
+    useSecondParty: true,
+    itemsPriced: false,
+  },
+  SK: {
+    body:
+      "Menimbang:\na. bahwa [dasar pertimbangan];\nb. bahwa berdasarkan pertimbangan tersebut perlu ditetapkan Surat Keputusan.\n\nMengingat:\n1. [dasar hukum/acuan];\n\nMEMUTUSKAN\n\nMenetapkan:\nPERTAMA\t: [isi keputusan];\nKEDUA\t: Keputusan ini berlaku sejak tanggal ditetapkan dengan ketentuan apabila di kemudian hari terdapat kekeliruan akan diadakan perbaikan sebagaimana mestinya.\n\nDitetapkan di [kota], pada tanggal [tanggal].",
     useItems: false,
     useSecondParty: false,
     itemsPriced: false,
@@ -50,58 +47,49 @@ const TEMPLATES = {
     useItems: false,
     useSecondParty: false,
     itemsPriced: false,
+    requiresEmployee: true,
   },
-  "SK-KTS": {
+  SP: {
     body:
-      'Perjanjian Kerjasama ini dibuat dan ditandatangani oleh dan antara PT. Jendela Cakra Digital ("Pihak Pertama") dan [Nama Pihak Kedua] ("Pihak Kedua"), yang secara bersama-sama disebut "Para Pihak".\n\nPasal 1 - Ruang Lingkup\nPara Pihak sepakat untuk menjalin kerjasama dalam hal [ruang lingkup kerjasama].\n\nPasal 2 - Hak dan Kewajiban\nMasing-masing pihak memiliki hak dan kewajiban sebagaimana diatur dalam perjanjian ini.\n\nPasal 3 - Jangka Waktu\nPerjanjian ini berlaku selama [__] sejak tanggal ditandatangani dan dapat diperpanjang berdasarkan kesepakatan Para Pihak.\n\nPasal 4 - Penyelesaian Perselisihan\nApabila terjadi perselisihan, Para Pihak sepakat menyelesaikannya secara musyawarah untuk mufakat.\n\nPasal 5 - Penutup\nDemikian perjanjian kerjasama ini dibuat dengan penuh kesadaran oleh Para Pihak tanpa paksaan dari pihak manapun.',
+      "Yang bertanda tangan di bawah ini menyatakan bahwa:\n\nNama\t: [nama]\nJabatan\t: [jabatan]\n\ndengan ini menyatakan [isi pernyataan] dengan sebenar-benarnya dan penuh rasa tanggung jawab.\n\nDemikian surat pernyataan ini dibuat untuk dapat dipergunakan sebagaimana mestinya.",
     useItems: false,
-    useSecondParty: true,
+    useSecondParty: false,
     itemsPriced: false,
   },
-  BAST: {
-    body:
-      "Pada hari ini, [hari], tanggal [tanggal] bulan [bulan] tahun [tahun], yang bertanda tangan di bawah ini menyatakan bahwa PIHAK PERTAMA telah menyerahkan dan PIHAK KEDUA telah menerima barang/pekerjaan sebagaimana rincian pada tabel di bawah ini dalam kondisi baik dan lengkap.\n\nDemikian Berita Acara Serah Terima ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.",
-    useItems: true,
-    useSecondParty: true,
-    itemsPriced: false,
-  },
-  NDA: {
-    body:
-      'Perjanjian ini dibuat dan ditandatangani oleh dan antara PT. Jendela Cakra Digital ("Pihak Pertama") dan [Nama Pihak Kedua] ("Pihak Kedua"), yang secara bersama-sama disebut "Para Pihak".\n\nPasal 1 - Definisi\nInformasi Rahasia adalah seluruh informasi teknis, bisnis, finansial, maupun data lain yang diungkapkan oleh salah satu pihak kepada pihak lainnya, baik secara lisan maupun tertulis.\n\nPasal 2 - Kewajiban Para Pihak\nPara Pihak sepakat untuk menjaga kerahasiaan Informasi Rahasia dan tidak mengungkapkannya kepada pihak ketiga tanpa persetujuan tertulis dari pihak pemilik informasi.\n\nPasal 3 - Jangka Waktu\nPerjanjian ini berlaku selama [__] tahun sejak tanggal ditandatangani.\n\nPasal 4 - Sanksi\nPelanggaran terhadap perjanjian ini dapat dikenakan sanksi sesuai peraturan perundang-undangan yang berlaku.\n\nPasal 5 - Penutup\nDemikian perjanjian ini dibuat dengan penuh kesadaran oleh Para Pihak tanpa paksaan dari pihak manapun.',
-    useItems: false,
-    useSecondParty: true,
-    itemsPriced: false,
-  },
-  PEN: {
+  SW: {
     body:
       "Dengan hormat,\n\nSehubungan dengan kebutuhan Bapak/Ibu, dengan ini kami PT. Jendela Cakra Digital mengajukan penawaran sebagaimana rincian pada tabel di bawah ini.\n\nBesar harapan kami penawaran ini dapat menjadi pertimbangan Bapak/Ibu. Kami siap melakukan presentasi maupun diskusi lebih lanjut apabila diperlukan.\n\nDemikian penawaran ini kami sampaikan, atas perhatian dan kerja samanya kami ucapkan terima kasih.",
     useItems: true,
     useSecondParty: false,
     itemsPriced: true,
   },
-  SP1: {
+  SPH: {
     body:
-      "Sehubungan dengan pelanggaran yang Saudara/i lakukan berupa [uraikan pelanggaran], dengan ini Perusahaan memberikan Surat Peringatan Pertama (SP1) kepada:\n\nNama\t: [nama karyawan]\nJabatan\t: [jabatan]\n\nKami harapkan Saudara/i dapat memperbaiki kinerja dan tidak mengulangi pelanggaran serupa. Apabila pelanggaran terulang, Perusahaan akan memberikan sanksi yang lebih tegas sesuai dengan peraturan perusahaan yang berlaku.\n\nDemikian surat peringatan ini dibuat untuk dilaksanakan dan diperhatikan sebagaimana mestinya.",
-    useItems: false,
+      "Dengan hormat,\n\nMenindaklanjuti permintaan penawaran dari Bapak/Ibu, dengan ini kami sampaikan penawaran harga sebagaimana rincian pada tabel di bawah ini.\n\nHarga yang tercantum berlaku selama [__] hari sejak tanggal surat ini diterbitkan. Kami siap menyesuaikan penawaran apabila terdapat perubahan spesifikasi kebutuhan.\n\nDemikian penawaran harga ini kami sampaikan, atas perhatian dan kerja samanya kami ucapkan terima kasih.",
+    useItems: true,
     useSecondParty: false,
-    itemsPriced: false,
-    requiresEmployee: true,
+    itemsPriced: true,
   },
-  SP2: {
+  SU: {
     body:
-      "Sehubungan dengan pelanggaran yang Saudara/i lakukan berupa [uraikan pelanggaran], yang mana sebelumnya telah diberikan Surat Peringatan Pertama, dengan ini Perusahaan memberikan Surat Peringatan Kedua (SP2) kepada:\n\nNama\t: [nama karyawan]\nJabatan\t: [jabatan]\n\nApabila pelanggaran ini terulang kembali, Perusahaan akan memberikan Surat Peringatan Ketiga (Terakhir) yang dapat berujung pada pemutusan hubungan kerja sesuai dengan peraturan perusahaan dan ketentuan perundang-undangan yang berlaku.\n\nDemikian surat peringatan ini dibuat untuk dilaksanakan dan diperhatikan sebagaimana mestinya.",
+      "Dengan hormat,\n\nSehubungan dengan [maksud acara], dengan ini kami mengundang Bapak/Ibu untuk hadir pada:\n\nHari/Tanggal\t: [hari, tanggal]\nWaktu\t: [waktu]\nTempat\t: [lokasi/tautan]\nAgenda\t: [agenda]\n\nMengingat pentingnya acara ini, kami mohon kehadiran Bapak/Ibu tepat pada waktunya.\n\nDemikian undangan ini kami sampaikan, atas perhatian dan kehadirannya kami ucapkan terima kasih.",
     useItems: false,
     useSecondParty: false,
     itemsPriced: false,
-    requiresEmployee: true,
   },
-  SP3: {
+  MOU: {
     body:
-      "Sehubungan dengan pelanggaran yang Saudara/i lakukan berupa [uraikan pelanggaran], yang mana sebelumnya telah diberikan Surat Peringatan Pertama dan Kedua, dengan ini Perusahaan memberikan Surat Peringatan Ketiga (Terakhir) kepada:\n\nNama\t: [nama karyawan]\nJabatan\t: [jabatan]\n\nSurat Peringatan Ketiga ini merupakan peringatan terakhir. Apabila pelanggaran serupa terulang kembali, Perusahaan berhak melakukan pemutusan hubungan kerja sesuai dengan peraturan perusahaan dan ketentuan perundang-undangan yang berlaku.\n\nDemikian surat peringatan ini dibuat untuk dilaksanakan dan diperhatikan sebagaimana mestinya.",
+      'Memorandum of Understanding ini dibuat dan ditandatangani oleh dan antara PT. Jendela Cakra Digital ("Pihak Pertama") dan [Nama Pihak Kedua] ("Pihak Kedua"), yang secara bersama-sama disebut "Para Pihak".\n\nPasal 1 - Ruang Lingkup\nPara Pihak sepakat untuk menjalin kerjasama dalam hal [ruang lingkup kerjasama].\n\nPasal 2 - Hak dan Kewajiban\nMasing-masing pihak memiliki hak dan kewajiban sebagaimana diatur dalam memorandum ini.\n\nPasal 3 - Jangka Waktu\nMemorandum ini berlaku selama [__] sejak tanggal ditandatangani dan dapat diperpanjang berdasarkan kesepakatan Para Pihak.\n\nPasal 4 - Penyelesaian Perselisihan\nApabila terjadi perselisihan, Para Pihak sepakat menyelesaikannya secara musyawarah untuk mufakat.\n\nPasal 5 - Penutup\nDemikian memorandum ini dibuat dengan penuh kesadaran oleh Para Pihak tanpa paksaan dari pihak manapun.',
+    useItems: false,
+    useSecondParty: true,
+    itemsPriced: false,
+  },
+  MOM: {
+    body:
+      "Hari/Tanggal\t: [hari, tanggal]\nWaktu\t: [waktu]\nTempat\t: [lokasi/tautan]\nPeserta\t: [daftar peserta]\n\nRingkasan Pembahasan:\n1. [poin pembahasan];\n\nKeputusan/Tindak Lanjut:\n1. [action item] - PIC: [nama] - Tenggat: [tanggal];\n\nDemikian catatan rapat ini dibuat sebagai dokumentasi dan acuan tindak lanjut.",
     useItems: false,
     useSecondParty: false,
     itemsPriced: false,
-    requiresEmployee: true,
   },
 };
 
@@ -147,7 +135,10 @@ const applyTemplate = () => {
   const template = TEMPLATES[selectedCode.value];
   if (!template) return;
 
-  form.value.body = template.body;
+  // Templates are authored as plain text with \n line breaks; the editor
+  // is HTML-based (contenteditable), so those need to become real <br>
+  // tags or they'd render collapsed onto one line.
+  form.value.body = template.body.replace(/\n/g, "<br>");
   useItems.value = template.useItems;
   useSecondParty.value = template.useSecondParty;
 };
@@ -155,8 +146,20 @@ const applyTemplate = () => {
 const addItem = () => items.value.push({ description: "", specification: "", qty: "", price: 0 });
 const removeItem = (i) => items.value.splice(i, 1);
 
+// The editor is a contenteditable div, not a real <textarea>, so the
+// native `required` attribute doesn't apply to it -- checked manually
+// here instead. An empty contenteditable can still hold stray tags
+// (e.g. "<br>"), so strip markup before checking for real content.
+const isBodyEmpty = () => !form.value.body.replace(/<[^>]*>/g, "").trim();
+
 const handleSubmit = async () => {
   errorMessage.value = "";
+
+  if (isBodyEmpty()) {
+    errorMessage.value = "Isi Surat wajib diisi.";
+    return;
+  }
+
   submitting.value = true;
   try {
     const payload = { ...form.value, employee_id: form.value.employee_id || null };
@@ -188,7 +191,7 @@ const handleSubmit = async () => {
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Buat Surat</h3>
-          <p class="text-brand-light text-sm">Nomor surat akan dibuat otomatis saat disimpan</p>
+          <p class="text-brand-light text-sm">Letter number will be generated automatically when saved</p>
         </div>
       </div>
       <router-link
@@ -270,7 +273,7 @@ const handleSubmit = async () => {
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Isi Surat</label>
-            <textarea v-model="form.body" rows="10" required placeholder="Dengan hormat,&#10;&#10;..." class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none font-mono"></textarea>
+            <RichTextEditor v-model="form.body" placeholder="Dengan hormat, ..." />
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
