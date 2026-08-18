@@ -222,6 +222,37 @@ const handleDelete = async (comment) => {
   }
 };
 
+// A fixed palette of vivid, readable text/background pairs (never plain
+// black or white) -- picked per mentioned name via a stable hash, so the
+// same person always gets the same color across every comment instead of
+// re-randomizing on every render.
+const MENTION_COLORS = [
+  "text-red-600 bg-red-50",
+  "text-orange-600 bg-orange-50",
+  "text-amber-600 bg-amber-50",
+  "text-lime-600 bg-lime-50",
+  "text-green-600 bg-green-50",
+  "text-emerald-600 bg-emerald-50",
+  "text-teal-600 bg-teal-50",
+  "text-cyan-600 bg-cyan-50",
+  "text-sky-600 bg-sky-50",
+  "text-blue-600 bg-blue-50",
+  "text-indigo-600 bg-indigo-50",
+  "text-violet-600 bg-violet-50",
+  "text-purple-600 bg-purple-50",
+  "text-fuchsia-600 bg-fuchsia-50",
+  "text-pink-600 bg-pink-50",
+  "text-rose-600 bg-rose-50",
+];
+
+const mentionColorClass = (name) => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return MENTION_COLORS[hash % MENTION_COLORS.length];
+};
+
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // Splits a comment body into text/mention/url/email segments so mentions,
@@ -340,7 +371,7 @@ const threads = computed(() => {
               </div>
               <p class="text-sm text-brand-dark leading-relaxed whitespace-pre-wrap break-words mt-0.5">
                 <template v-for="(segment, idx) in renderSegments(thread.root)" :key="idx">
-                  <span v-if="segment.type === 'mention'" class="text-[#0C51D9] font-semibold bg-blue-50 rounded px-1">{{ segment.text }}</span>
+                  <span v-if="segment.type === 'mention'" :class="mentionColorClass(segment.text)" class="font-semibold rounded px-1">{{ segment.text }}</span>
                   <a
                     v-else-if="segment.type === 'url'"
                     :href="segment.text"
@@ -395,7 +426,7 @@ const threads = computed(() => {
                 </p>
                 <p class="text-sm text-brand-dark leading-relaxed whitespace-pre-wrap break-words mt-0.5">
                   <template v-for="(segment, idx) in renderSegments(reply)" :key="idx">
-                    <span v-if="segment.type === 'mention'" class="text-[#0C51D9] font-semibold bg-blue-50 rounded px-1">{{ segment.text }}</span>
+                    <span v-if="segment.type === 'mention'" :class="mentionColorClass(segment.text)" class="font-semibold rounded px-1">{{ segment.text }}</span>
                     <a
                       v-else-if="segment.type === 'url'"
                       :href="segment.text"
