@@ -662,9 +662,9 @@ const showCompanyFinance = computed(() =>
             :to="{ name: 'admin.documents.dashboard' }"
             class="nav-link group relative rounded-[10px] transition-colors duration-150"
             :class="{
-              'nav-link-active': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates'),
+              'nav-link-active': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates') || $route.name?.startsWith('admin.official-memos'),
             }"
-            v-if="canOneOf(['purchase-order-menu', 'invoice-menu', 'payment-receipt-menu', 'letter-menu', 'certificate-menu'])"
+            v-if="canOneOf(['purchase-order-menu', 'invoice-menu', 'payment-receipt-menu', 'letter-menu', 'certificate-menu', 'document-letter-menu'])"
             @click="onNavigate"
             @mouseenter="showTooltip"
             @mouseleave="hideTooltip"
@@ -672,13 +672,13 @@ const showCompanyFinance = computed(() =>
             <FileStack
               class="w-[18px] h-[18px] text-white/45 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates'),
+                'text-white': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates') || $route.name?.startsWith('admin.official-memos'),
               }"
             />
             <span
               class="nav-label text-white/70 text-sm font-medium"
               :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates'),
+                'text-white font-semibold': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates') || $route.name?.startsWith('admin.official-memos'),
               }"
               >Document Letters</span
             >

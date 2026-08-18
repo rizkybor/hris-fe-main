@@ -9,6 +9,9 @@ import LetterList from '@/views/admin/documents/LetterList.vue';
 import LetterCreate from '@/views/admin/documents/LetterCreate.vue';
 import CertificateList from '@/views/admin/documents/CertificateList.vue';
 import CertificateGenerate from '@/views/admin/documents/CertificateGenerate.vue';
+import OfficialMemoList from '@/views/admin/documents/OfficialMemoList.vue';
+import OfficialMemoForm from '@/views/admin/documents/OfficialMemoForm.vue';
+import OfficialMemoDetail from '@/views/admin/documents/OfficialMemoDetail.vue';
 
 export default [
   {
@@ -65,5 +68,25 @@ export default [
     path: 'documents/certificates/create',
     name: 'admin.certificates.create',
     component: CertificateGenerate,
+  },
+  {
+    path: 'documents/official-memos',
+    name: 'admin.official-memos.dashboard',
+    component: OfficialMemoList,
+  },
+  {
+    path: 'documents/official-memos/create',
+    name: 'admin.official-memos.create',
+    component: OfficialMemoForm,
+  },
+  {
+    path: 'documents/official-memos/:id',
+    name: 'admin.official-memos.detail',
+    component: OfficialMemoDetail,
+  },
+  {
+    path: 'documents/official-memos/:id/edit',
+    name: 'admin.official-memos.edit',
+    component: OfficialMemoForm,
   },
 ];

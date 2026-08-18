@@ -1,5 +1,5 @@
 <script setup>
-import { FileStack, ShoppingCart, Receipt, FileCheck2, Mail, Award, ChevronRight } from "lucide-vue-next";
+import { FileStack, ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, ChevronRight } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
 const links = [
@@ -39,6 +39,15 @@ const links = [
     permission: "certificate-menu",
     iconBg: "bg-amber-50",
     iconColor: "text-amber-600",
+  },
+  {
+    to: { name: "admin.official-memos.dashboard" },
+    icon: FileSignature,
+    title: "Official Memo",
+    description: "Nota Dinas internal dengan alur persetujuan Finance Manager",
+    permission: "document-letter-menu",
+    iconBg: "bg-indigo-50",
+    iconColor: "text-indigo-600",
   },
 ];
 </script>
