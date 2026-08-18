@@ -4,11 +4,11 @@ import { can } from "@/helpers/permissionHelper";
 
 const links = [
   {
-    to: { name: "admin.purchase-orders.dashboard" },
-    icon: ShoppingCart,
-    title: "Purchase Order",
-    description: "Buat dan kelola Purchase Order (PO) untuk vendor",
-    permission: "purchase-order-menu",
+    to: { name: "admin.letters.dashboard" },
+    icon: Mail,
+    title: "Surat-Surat",
+    description: "Buat dan kelola surat internal maupun eksternal",
+    permission: "letter-menu",
   },
   {
     to: { name: "admin.invoices.dashboard" },
@@ -25,20 +25,11 @@ const links = [
     permission: "payment-receipt-menu",
   },
   {
-    to: { name: "admin.letters.dashboard" },
-    icon: Mail,
-    title: "Surat-Surat",
-    description: "Buat dan kelola surat internal maupun eksternal",
-    permission: "letter-menu",
-  },
-  {
-    to: { name: "admin.certificates.dashboard" },
-    icon: Award,
-    title: "Sertifikat",
-    description: "Generate sertifikat dinamis, tunggal maupun massal",
-    permission: "certificate-menu",
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
+    to: { name: "admin.purchase-orders.dashboard" },
+    icon: ShoppingCart,
+    title: "Purchase Order",
+    description: "Buat dan kelola Purchase Order (PO) untuk vendor",
+    permission: "purchase-order-menu",
   },
   {
     to: { name: "admin.official-memos.dashboard" },
@@ -58,6 +49,15 @@ const links = [
     iconBg: "bg-teal-50",
     iconColor: "text-teal-600",
   },
+  {
+    to: { name: "admin.certificates.dashboard" },
+    icon: Award,
+    title: "Sertifikat",
+    description: "Generate sertifikat dinamis, tunggal maupun massal",
+    permission: "certificate-menu",
+    iconBg: "bg-amber-50",
+    iconColor: "text-amber-600",
+  },
 ];
 </script>
 
@@ -73,7 +73,7 @@ const links = [
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Document Letters</h3>
           <p class="text-brand-light text-sm">
-            Purchase Order, Invoice, Payment Receipt, Surat-Surat, dan Sertifikat resmi perusahaan
+            Surat-Surat, Invoice, Payment Receipt, Purchase Order, Official Memo, Meeting Note, dan Sertifikat resmi perusahaan
           </p>
         </div>
       </div>
