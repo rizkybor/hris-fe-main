@@ -29,8 +29,11 @@ const canViewProjects = computed(() => can("project-list"));
       <ProjectsAtRisk v-if="canViewProjects" />
       <StickyNotesWidget />
     </div>
-    <SearchSection />
-    <Statistics />
+    <Statistics>
+      <template #besideBudget>
+        <SearchSection />
+      </template>
+    </Statistics>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div
         v-if="canViewEmployees || canViewTeams"
