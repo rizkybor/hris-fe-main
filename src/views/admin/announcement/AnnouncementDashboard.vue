@@ -24,7 +24,7 @@ const submitting = ref(false);
 const errorMessage = ref("");
 
 const audienceOptions = [
-  { value: "all", label: "Semua Role" },
+  { value: "all", label: "All Roles" },
   { value: "manager", label: "Manager" },
   { value: "operational_director", label: "Operational Director" },
   { value: "hr", label: "Hr" },
@@ -140,8 +140,8 @@ onMounted(() => {
             </div>
             <p class="text-brand-light text-sm whitespace-pre-line">{{ announcement.body }}</p>
             <p class="text-xs text-gray-400 mt-2">
-              Oleh {{ announcement.created_by?.name ?? '-' }} • {{ formatDate(announcement.created_at) }}
-              <span v-if="announcement.expires_at"> • Berlaku sampai {{ formatDate(announcement.expires_at) }}</span>
+              By {{ announcement.created_by?.name ?? '-' }} • {{ formatDate(announcement.created_at) }}
+              <span v-if="announcement.expires_at"> • Valid until {{ formatDate(announcement.expires_at) }}</span>
             </p>
           </div>
           <div v-if="can('announcement-edit') || can('announcement-delete')" class="flex items-center gap-2 shrink-0">

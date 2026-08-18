@@ -50,7 +50,7 @@ onMounted(async () => {
     await store.fetchAccount(route.params.id);
     account.value = store.currentAccount;
   } catch (err) {
-    error.value = "Data credential tidak ditemukan.";
+    error.value = "Credential data not found.";
   } finally {
     loading.value = false;
   }

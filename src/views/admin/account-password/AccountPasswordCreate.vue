@@ -64,7 +64,7 @@ const submit = async () => {
     !form.value.username_email ||
     !form.value.password
   ) {
-    error.value = "Label Password, Username/Email, dan Password wajib diisi.";
+    error.value = "Password Label, Username/Email, and Password are required.";
     return;
   }
 
@@ -72,13 +72,13 @@ const submit = async () => {
   try {
     await passwordStore.createAccount(form.value);
 
-    success.value = "Credential berhasil disimpan.";
+    success.value = "Credential saved successfully.";
 
     setTimeout(() => {
       router.push({ name: "admin.account-password.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = err?.message || "Gagal menyimpan credential.";
+    error.value = err?.message || "Failed to save credential.";
   } finally {
     loading.value = false;
   }
@@ -134,7 +134,7 @@ const submit = async () => {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div class="md:col-span-2">
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Label Password *</label>
+            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Password Label *</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Tag class="w-5 h-5 text-gray-400" />
