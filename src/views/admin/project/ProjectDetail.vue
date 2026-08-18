@@ -15,6 +15,7 @@ import {
   AlertOctagon,
   TriangleAlert,
   CheckCircle2,
+  Download,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import router from "@/router";
@@ -27,6 +28,7 @@ import {
   getProgressColor,
 } from "@/utils/badgeUtils";
 import { getProjectHealth } from "@/utils/projectHealth";
+import { can } from "@/helpers/permissionHelper";
 import _ from "lodash";
 import TaskBoard from "@/components/admin/project/detail/TaskBoard.vue";
 import ProjectDocuments from "@/components/admin/project/detail/ProjectDocuments.vue";
@@ -36,7 +38,19 @@ const route = useRoute();
 const id = route.params.id;
 
 const projectStore = useProjectStore();
-const { fetchProject } = projectStore;
+const { fetchProject, downloadProgressReport } = projectStore;
+
+const exporting = ref(false);
+const handleExportProgress = async () => {
+  exporting.value = true;
+  try {
+    await downloadProgressReport(id, project.value.name);
+  } catch (error) {
+    console.error("Error exporting project progress:", error);
+  } finally {
+    exporting.value = false;
+  }
+};
 
 // TaskBoard shares this same Pinia store instance and fetches/mutates
 // `tasks` as cards are dragged between columns, so deriving progress from
@@ -208,6 +222,15 @@ onMounted(async () => {
           >
             {{ _.capitalize(project.priority) }}
           </div>
+          <button
+            v-if="can('project-export')"
+            @click="handleExportProgress"
+            :disabled="exporting"
+            class="border border-[#DCDEDD] text-brand-dark py-2 px-4 rounded-[8px] font-medium hover:bg-gray-50 hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download class="w-4 h-4" />
+            <span class="text-sm font-semibold">{{ exporting ? "Exporting..." : "Export Progress" }}</span>
+          </button>
         </div>
       </div>
 
