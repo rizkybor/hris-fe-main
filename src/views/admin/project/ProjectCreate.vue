@@ -144,12 +144,12 @@ watch(
 </script>
 
 <template>
-  <div class="flex gap-5 items-start">
+  <div class="flex flex-col lg:flex-row gap-5 items-start">
     <!-- Form Section -->
-    <div class="flex-1">
+    <div class="flex-1 w-full">
       <form class="space-y-6" @submit.prevent="handleSubmit">
         <!-- Project Information Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -172,22 +172,22 @@ watch(
               <label class="block text-brand-dark text-base font-semibold mb-1"
                 >Project Photo</label
               >
-              <div class="flex items-start gap-4">
-                <div class="w-64 h-40">
+              <div class="flex flex-col sm:flex-row items-start gap-4">
+                <div class="w-full sm:w-64 h-40">
                   <!-- Photo Container with Default Background -->
-                  <div class="relative w-64 h-40">
+                  <div class="relative w-full sm:w-64 h-40">
                     <!-- Default background -->
                     <div
-                      class="w-64 h-40 absolute bg-gray-50 rounded-[12px] border-2 border-dashed border-[#DCDEDD]"
+                      class="w-full sm:w-64 h-40 absolute bg-gray-50 rounded-[12px] border-2 border-dashed border-[#DCDEDD]"
                     ></div>
 
                     <div
-                      class="w-64 h-40 relative z-10 flex items-center justify-center rounded-[12px] overflow-hidden"
+                      class="w-full sm:w-64 h-40 relative z-10 flex items-center justify-center rounded-[12px] overflow-hidden"
                     >
                       <img
                         :src="form.photo_url"
                         alt="Project Photo"
-                        class="w-64 h-40 object-cover rounded-[12px]"
+                        class="w-full sm:w-64 h-40 object-cover rounded-[12px]"
                         v-if="form.photo_url"
                       />
                       <div
@@ -277,7 +277,7 @@ watch(
               <label class="block text-brand-dark text-base font-semibold mb-1"
                 >Priority *</label
               >
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <!-- Low Priority -->
                 <label
                   class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
@@ -462,7 +462,7 @@ watch(
         </div>
 
         <!-- Project Leader Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -535,7 +535,7 @@ watch(
         </div>
 
         <!-- Team Assignment Section -->
-        <div id="team-assignment-section" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div id="team-assignment-section" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -630,7 +630,7 @@ watch(
         </div>
 
         <!-- Project Settings Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
@@ -667,7 +667,7 @@ watch(
               <label class="block text-brand-dark text-base font-semibold mb-1"
                 >Initial Project Status</label
               >
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <!-- Active Option -->
                 <label
                   class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
@@ -813,12 +813,12 @@ watch(
         </div>
 
         <!-- Form Actions -->
-        <div class="flex items-center gap-4 pb-6">
+        <div class="flex items-center gap-3 sm:gap-4 pb-6">
           <button
             type="submit"
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2"
+            class="flex-1 sm:flex-none btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2"
           >
-            <span class="text-brand-white text-base font-semibold"
+            <span class="text-brand-white text-sm sm:text-base font-semibold"
               >Create Project</span
             >
             <Plus class="w-4 h-4 text-white" />
@@ -826,9 +826,9 @@ watch(
           <button
             type="button"
             onclick="window.history.back()"
-            class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center gap-2"
+            class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2"
           >
-            <span class="text-brand-dark text-base font-semibold">Cancel</span>
+            <span class="text-brand-dark text-sm sm:text-base font-semibold">Cancel</span>
           </button>
         </div>
       </form>

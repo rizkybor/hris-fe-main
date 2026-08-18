@@ -10,6 +10,14 @@ const sidebarWidth = ref(0);
 const handleScroll = () => {
   if (!sidebarRef.value) return;
 
+  // Below lg the sidebar stacks under the form full-width, so the
+  // scroll-based fixed positioning (designed for a narrow side column)
+  // would otherwise misalign/overlap the form.
+  if (window.innerWidth < 1024) {
+    isSticky.value = false;
+    return;
+  }
+
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
   const offset = 20; // 20px from top when sticky
 
@@ -24,6 +32,7 @@ const handleResize = () => {
   if (sidebarRef.value) {
     sidebarWidth.value = sidebarRef.value.offsetWidth;
   }
+  handleScroll();
 };
 
 onMounted(() => {
@@ -43,7 +52,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-100 flex-shrink-0">
+  <div class="w-full lg:w-80 flex-shrink-0">
     <div
       ref="sidebarRef"
       :class="[

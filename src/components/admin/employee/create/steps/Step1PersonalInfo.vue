@@ -56,10 +56,10 @@ const deletePhoto = () => {
 </script>
 
 <template>
-  <div class="flex gap-6 items-start">
+  <div class="flex flex-col md:flex-row gap-6 items-start">
     <!-- Profile Photo Card -->
-    <div class="w-80">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+    <div class="w-full md:w-80">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -110,10 +110,10 @@ const deletePhoto = () => {
             <button
               type="button"
               @click="profilePhotoInput?.click()"
-              class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center gap-2"
+              class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:px-6 sm:py-3 flex items-center gap-2"
             >
               <FolderOpen class="w-4 h-4 text-gray-600" />
-              <span class="text-brand-dark text-base font-semibold">Browse Photo</span>
+              <span class="text-brand-dark text-sm sm:text-base font-semibold">Browse Photo</span>
             </button>
             <p class="text-brand-light text-xs text-center">
               JPG, PNG up to 2MB<br />Recommended: 400x400px
@@ -126,7 +126,7 @@ const deletePhoto = () => {
     <!-- Form Section -->
     <div class="flex-1">
       <!-- Account Credentials Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6 mb-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -233,7 +233,7 @@ const deletePhoto = () => {
       </div>
 
       <!-- Personal Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"

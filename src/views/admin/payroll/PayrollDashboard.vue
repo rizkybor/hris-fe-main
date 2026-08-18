@@ -214,49 +214,54 @@ const viewDetails = (id) => {
 
       <div v-else class="space-y-4">
         <div v-for="payroll in payrolls" :key="payroll.id"
-          class="flex items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300">
-          <div class="w-16 h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden">
-            <!-- Background -->
-            <div class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"></div>
-            <!-- Icon -->
-            <Calendar class="w-8 h-8 text-white relative z-10" />
-          </div>
-          <div class="flex-1">
-            <div class="flex items-center gap-2 mb-1">
-              <p class="text-brand-dark text-lg font-bold">
-                {{ formatDate(payroll.period) }}
+          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 shrink-0 relative flex items-center justify-center rounded-[12px] overflow-hidden">
+              <!-- Background -->
+              <div class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"></div>
+              <!-- Icon -->
+              <Calendar class="w-8 h-8 text-white relative z-10" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <p class="text-brand-dark text-lg font-bold">
+                  {{ formatDate(payroll.period) }}
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <Users class="w-4 h-4 text-gray-600 shrink-0" />
+                <p class="text-brand-dark text-sm font-normal">
+                  {{ payroll.employee_count || 0 }} employees • All departments
+                </p>
+              </div>
+              <p class="text-brand-light text-xs font-normal mt-1">
+                Processed on {{ formatProcessedDate(payroll.created_at) }}
               </p>
             </div>
-            <div class="flex items-center gap-2">
-              <Users class="w-4 h-4 text-gray-600" />
-              <p class="text-brand-dark text-sm font-normal">
-                {{ payroll.employee_count || 0 }} employees • All departments
-              </p>
+          </div>
+
+          <div class="flex items-center justify-between gap-4 sm:flex-1">
+            <div class="flex flex-col justify-center items-center shrink-0">
+              <span :class="[
+                'px-2 py-1 rounded-md text-xs font-semibold',
+                getStatusColor(payroll.status),
+              ]">
+                {{ payroll.status }}
+              </span>
             </div>
-            <p class="text-brand-light text-xs font-normal mt-1">
-              Processed on {{ formatProcessedDate(payroll.created_at) }}
-            </p>
-          </div>
-          <div class="flex flex-col justify-center items-center">
-            <span :class="[
-              'px-2 py-1 rounded-md text-xs font-semibold',
-              getStatusColor(payroll.status),
-            ]">
-              {{ payroll.status }}
-            </span>
-          </div>
-          <div class="flex-1 flex flex-col justify-center items-center">
-            <div class="text-left">
-              <p class="text-brand-dark text-lg font-bold">
-                {{ formatRupiahCompact(payroll.total_amount) }}
-              </p>
-              <p class="text-brand-light text-sm font-normal">Total payroll</p>
+            <div class="flex-1 flex flex-col justify-center items-center">
+              <div class="text-left">
+                <p class="text-brand-dark text-lg font-bold">
+                  {{ formatRupiahCompact(payroll.total_amount) }}
+                </p>
+                <p class="text-brand-light text-sm font-normal">Total payroll</p>
+              </div>
             </div>
+            <button @click="viewDetails(payroll.id)"
+              class="btn-details shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-[#0C51D9] hover:text-[#0C51D9] transition-all duration-300 py-[14px] px-5 flex items-center justify-center">
+              <span class="text-brand-dark text-base font-medium">Details</span>
+            </button>
           </div>
-          <button @click="viewDetails(payroll.id)"
-            class="btn-details border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-[#0C51D9] hover:text-[#0C51D9] transition-all duration-300 py-[14px] px-5 flex items-center justify-center">
-            <span class="text-brand-dark text-base font-medium">Details</span>
-          </button>
         </div>
 
         <div v-if="!loading && payrolls.length === 0" class="text-center py-12 text-gray-500">

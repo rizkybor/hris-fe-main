@@ -151,16 +151,16 @@ const handlePerPageChange = (perPage) => {
       </div>
 
       <!-- Filter and Action Buttons -->
-      <div class="flex items-center gap-3">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <!-- Type Filter -->
-        <div class="relative">
+        <div class="relative w-full sm:w-auto">
           <div
             class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
           >
             <Briefcase class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
+            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
             v-model="filters.type"
           >
             <option value="">All Types</option>
@@ -180,14 +180,14 @@ const handlePerPageChange = (perPage) => {
         </div>
 
         <!-- Status Filter -->
-        <div class="relative">
+        <div class="relative w-full sm:w-auto">
           <div
             class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
           >
             <CheckCircle class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
+            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
             v-model="filters.status"
           >
             <option value="">All Status</option>
@@ -212,7 +212,7 @@ const handlePerPageChange = (perPage) => {
   <Alert type="success" :title="success" :show="success" />
 
   <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-5">
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>
         <h3
           class="text-[#0C1C3C] font-['Plus_Jakarta_Sans'] text-[20px] font-bold"
@@ -227,14 +227,14 @@ const handlePerPageChange = (perPage) => {
       </div>
       <div class="flex items-center gap-[10px]">
         <button
-          class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-2"
+          class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center justify-center gap-2"
         >
           <Upload class="w-4 h-4 text-gray-600" />
           <span class="text-brand-dark text-sm font-semibold">Import CSV</span>
         </button>
         <RouterLink
           :to="{ name: 'admin.employees.create' }"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3"
+          class="flex-1 sm:flex-none justify-center btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3"
           v-if="can('employee-create')"
         >
           <UserPlus class="w-4 h-4 text-white" />

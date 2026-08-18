@@ -191,12 +191,12 @@ onMounted(async () => {
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
     <!-- Project Details Card -->
     <div
-      class="lg:col-span-2 bg-white border border-[#DCDEDD] rounded-[14px] p-6"
+      class="lg:col-span-2 bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6"
     >
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div class="flex items-center gap-3">
           <div
-            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0"
           >
             <Briefcase class="w-6 h-6 text-blue-600" />
           </div>
@@ -209,7 +209,7 @@ onMounted(async () => {
             </p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <div
             class="px-3 py-1 rounded-full text-base font-semibold"
             :class="getProjectStatusColor(project.status)"

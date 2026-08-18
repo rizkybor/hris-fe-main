@@ -338,7 +338,7 @@ const handleMarkAsPaid = async () => {
 
     <!-- Employee Details Section -->
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
             <Users class="w-6 h-6 text-blue-600" />
@@ -352,17 +352,17 @@ const handleMarkAsPaid = async () => {
         </div>
 
         <!-- Search and Filter -->
-        <div class="flex items-center gap-3">
-          <div class="relative">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div class="relative w-full sm:w-auto">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search class="h-4 w-4 text-gray-400" />
             </div>
             <input type="text" v-model="searchQuery" placeholder="Search employees..."
-              class="pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300 text-sm" />
+              class="w-full sm:w-auto pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300 text-sm" />
           </div>
 
           <select v-model="departmentFilter"
-            class="px-3 py-2 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300 text-sm">
+            class="w-full sm:w-auto px-3 py-2 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300 text-sm">
             <option value="">All Positions</option>
             <option v-for="position in positions" :key="position" :value="position">
               {{ position }}
@@ -501,8 +501,8 @@ const handleMarkAsPaid = async () => {
     </div>
 
     <!-- Action Buttons -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-      <div class="flex items-center justify-between">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Export & Actions</h3>
           <p class="text-brand-light text-sm font-normal mt-1">

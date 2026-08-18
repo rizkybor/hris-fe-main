@@ -100,9 +100,9 @@ const getInitials = (name) => {
     <!-- Main Content -->
     <div class="flex-1 flex flex-col">
       <!-- Top Navbar -->
-      <header class="page-header bg-white border-b border-[#DCDEDD] px-5 py-4">
+      <header class="page-header bg-white border-b border-[#DCDEDD] px-3 sm:px-5 py-3 sm:py-4">
         <div class="flex items-center justify-between gap-4">
-          <div class="flex items-center gap-4 min-w-0">
+          <div class="flex items-center gap-3 sm:gap-4 min-w-0">
             <button
               @click="previousStep"
               class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-2 shrink-0"
@@ -111,10 +111,10 @@ const getInitials = (name) => {
               <span class="text-brand-dark text-base font-semibold hidden sm:inline">Back</span>
             </button>
             <div class="min-w-0">
-              <h2 class="text-brand-dark text-xl sm:text-2xl font-extrabold truncate">
+              <h2 class="text-brand-dark text-lg sm:text-2xl font-extrabold truncate">
                 {{ isEditing ? "Edit Employee" : "Add New Employee" }}
               </h2>
-              <p class="text-brand-light text-sm font-normal mt-1">
+              <p class="text-brand-light text-xs sm:text-sm font-normal mt-1 truncate">
                 Step {{ currentStep }} of {{ totalSteps }} &middot; {{ getStepTitle() }}
               </p>
             </div>
@@ -125,12 +125,12 @@ const getInitials = (name) => {
             <img
               :src="user?.profile_photo"
               alt="User Avatar"
-              class="w-11 h-11 rounded-full object-cover"
+              class="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover"
               v-if="user?.profile_photo"
             />
             <div
               v-else
-              class="w-11 h-11 rounded-full flex items-center justify-center bg-gray-100"
+              class="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center bg-gray-100"
             >
               <span class="text-gray-400 text-sm font-semibold">
                 {{ getInitials(user?.name) }}
@@ -157,9 +157,14 @@ const getInitials = (name) => {
             :class="step <= currentStep ? 'bg-[#0C51D9]' : 'bg-[#EDEFF3]'"
           ></div>
         </div>
+
+        <!-- Mobile step label (Stepper sidebar is hidden below lg) -->
+        <p class="lg:hidden text-brand-light text-xs font-medium mt-2">
+          Step {{ currentStep }} of {{ totalSteps }}: {{ getStepTitle() }}
+        </p>
       </header>
       <!-- Dashboard Content -->
-      <main ref="mainContentRef" class="main-content flex-1 overflow-auto p-5">
+      <main ref="mainContentRef" class="main-content flex-1 overflow-auto p-3 sm:p-5">
         <RouterView />
       </main>
     </div>
