@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
-import { NotebookPen, Paperclip, X, FileText, Plus, UserPlus } from "lucide-vue-next";
+import { NotebookPen, Paperclip, X, FileText, Plus, UserPlus, Search, Users } from "lucide-vue-next";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
 import { useEmployeeStore } from "@/stores/employee";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
@@ -37,10 +37,19 @@ const newAttachments = ref([]);
 const existingAttachments = ref([]);
 const removeAttachmentIds = ref([]);
 
+const attendeeSearch = ref("");
+const filteredEmployees = computed(() => {
+  if (!attendeeSearch.value.trim()) return employees.value;
+  const q = attendeeSearch.value.trim().toLowerCase();
+  return employees.value.filter((employee) => (employee.user?.name || employee.name || "").toLowerCase().includes(q));
+});
+
 let heartbeatTimer = null;
 
 onMounted(async () => {
-  await employeeStore.fetchEmployees({});
+  // Only actively-employed staff are selectable as attendees -- someone on
+  // leave/resigned/terminated shouldn't show up in a meeting attendee list.
+  await employeeStore.fetchEmployees({ status: "active" });
 
   if (isEditing.value) {
     const note = await store.fetchMeetingNote(route.params.id);
@@ -201,22 +210,40 @@ const handleSubmit = async () => {
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Internal Attendees</label>
-          <div class="border border-[#DCDEDD] rounded-xl p-3 max-h-40 overflow-y-auto space-y-1.5">
-            <label
-              v-for="employee in employees"
-              :key="employee.id"
-              class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50"
-            >
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-sm font-semibold text-brand-dark block">Internal Attendees</label>
+            <span v-if="form.attendee_employee_ids.length" class="text-xs text-[#0C51D9] font-semibold flex items-center gap-1">
+              <Users class="w-3.5 h-3.5" />
+              {{ form.attendee_employee_ids.length }} selected
+            </span>
+          </div>
+          <div class="border border-[#DCDEDD] rounded-xl overflow-hidden">
+            <div v-if="employees.length > 8" class="relative border-b border-[#DCDEDD] bg-gray-50 p-2">
+              <Search class="w-3.5 h-3.5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
               <input
-                type="checkbox"
-                :checked="form.attendee_employee_ids.includes(employee.id)"
-                @change="toggleAttendee(employee.id)"
-                class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]"
+                v-model="attendeeSearch"
+                type="text"
+                placeholder="Search attendees..."
+                class="w-full pl-7 pr-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs bg-white focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
               />
-              {{ employee.user?.name || employee.name }}
-            </label>
-            <p v-if="employees.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
+            </div>
+            <div class="p-3 max-h-64 overflow-y-auto space-y-1">
+              <label
+                v-for="employee in filteredEmployees"
+                :key="employee.id"
+                class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  :checked="form.attendee_employee_ids.includes(employee.id)"
+                  @change="toggleAttendee(employee.id)"
+                  class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] shrink-0"
+                />
+                <span class="truncate">{{ employee.user?.name || employee.name }}</span>
+              </label>
+              <p v-if="employees.length === 0" class="text-sm text-gray-400 italic py-2">No active staff data yet.</p>
+              <p v-else-if="filteredEmployees.length === 0" class="text-sm text-gray-400 italic py-2">No attendees match "{{ attendeeSearch }}".</p>
+            </div>
           </div>
         </div>
 
