@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { NotebookPen, Pencil, Trash2, Pin, PinOff, FileText, Users, Calendar, Building2, CheckSquare, Square } from "lucide-vue-next";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
+import { useAuthStore } from "@/stores/auth";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -14,8 +15,26 @@ const route = useRoute();
 const router = useRouter();
 const store = useMeetingNoteStore();
 const alertModal = useAlertModalStore();
+const authStore = useAuthStore();
 
 const { currentMeetingNote: note, loading, activeViewers } = storeToRefs(store);
+
+// Pin/unpin is a shared toggle (pinning surfaces the note on every Internal
+// Attendee's dashboard, not just the clicker's own), so only the note's
+// creator may control it -- matches MeetingNoteController::togglePin().
+const isCreator = computed(() => note.value?.creator?.id === authStore.user?.id);
+
+// @mention targets for the comment composer: Internal Attendees plus the
+// note's own creator (who can comment/be mentioned even if they didn't
+// check themselves in as an attendee -- see MeetingNoteCommentController).
+const mentionableEmployees = computed(() => {
+  const attendees = note.value?.attendees || [];
+  const creatorEmployeeId = note.value?.creator?.employee_id;
+  if (!creatorEmployeeId || attendees.some((a) => a.id === creatorEmployeeId)) {
+    return attendees;
+  }
+  return [...attendees, { id: creatorEmployeeId, name: note.value.creator.name }];
+});
 
 const pinBusy = ref(false);
 let heartbeatTimer = null;
@@ -89,9 +108,10 @@ const handleDelete = async () => {
 
         <div class="flex items-center gap-2 shrink-0">
           <button
-            v-if="can('meeting-note-pin')"
+            v-if="can('meeting-note-pin') && isCreator"
             @click="togglePin"
             :disabled="pinBusy"
+            title="Pinning also adds this note to every Internal Attendee's dashboard"
             class="px-3 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-amber-50 hover:border-amber-300 flex items-center gap-2 disabled:opacity-50"
           >
             <PinOff v-if="note.is_pinned" class="w-4 h-4 text-amber-600" />
@@ -156,7 +176,7 @@ const handleDelete = async () => {
 
           <MeetingNoteComments
             :meeting-note-id="note.id"
-            :attendees="note.attendees || []"
+            :attendees="mentionableEmployees"
             :can-comment="!!note.can_comment"
           />
         </div>
