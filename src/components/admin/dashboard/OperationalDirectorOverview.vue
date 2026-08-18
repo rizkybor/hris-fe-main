@@ -7,6 +7,7 @@ import ProjectsAtRisk from "./ProjectsAtRisk.vue";
 import LatestEmployees from "./LatestEmployees.vue";
 import LatestTeams from "./LatestTeams.vue";
 import DashboardQuickLinks from "./DashboardQuickLinks.vue";
+import StickyNotesWidget from "./StickyNotesWidget.vue";
 
 const quickLinks = [
   { to: { name: "admin.employees" }, icon: Users, title: "Employees", permission: "employee-menu" },
@@ -40,5 +41,6 @@ const canViewProjects = computed(() => can("project-list"));
       <DashboardQuickLinks title="Operations" :links="quickLinks" class="lg:col-span-1" />
     </div>
     <ProjectsAtRisk v-if="canViewProjects" />
+    <StickyNotesWidget />
   </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { FileStack, ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, ChevronRight } from "lucide-vue-next";
+import { FileStack, ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, NotebookPen, ChevronRight } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
 const links = [
@@ -48,6 +48,15 @@ const links = [
     permission: "document-letter-menu",
     iconBg: "bg-indigo-50",
     iconColor: "text-indigo-600",
+  },
+  {
+    to: { name: "admin.meeting-notes.dashboard" },
+    icon: NotebookPen,
+    title: "Meeting Note",
+    description: "Recap rapat internal & eksternal, dikelola bersama tim manajemen",
+    permission: "meeting-note-menu",
+    iconBg: "bg-teal-50",
+    iconColor: "text-teal-600",
   },
 ];
 </script>

@@ -12,6 +12,9 @@ import CertificateGenerate from '@/views/admin/documents/CertificateGenerate.vue
 import OfficialMemoList from '@/views/admin/documents/OfficialMemoList.vue';
 import OfficialMemoForm from '@/views/admin/documents/OfficialMemoForm.vue';
 import OfficialMemoDetail from '@/views/admin/documents/OfficialMemoDetail.vue';
+import MeetingNoteList from '@/views/admin/documents/MeetingNoteList.vue';
+import MeetingNoteForm from '@/views/admin/documents/MeetingNoteForm.vue';
+import MeetingNoteDetail from '@/views/admin/documents/MeetingNoteDetail.vue';
 
 export default [
   {
@@ -88,5 +91,25 @@ export default [
     path: 'documents/official-memos/:id/edit',
     name: 'admin.official-memos.edit',
     component: OfficialMemoForm,
+  },
+  {
+    path: 'documents/meeting-notes',
+    name: 'admin.meeting-notes.dashboard',
+    component: MeetingNoteList,
+  },
+  {
+    path: 'documents/meeting-notes/create',
+    name: 'admin.meeting-notes.create',
+    component: MeetingNoteForm,
+  },
+  {
+    path: 'documents/meeting-notes/:id',
+    name: 'admin.meeting-notes.detail',
+    component: MeetingNoteDetail,
+  },
+  {
+    path: 'documents/meeting-notes/:id/edit',
+    name: 'admin.meeting-notes.edit',
+    component: MeetingNoteForm,
   },
 ];
