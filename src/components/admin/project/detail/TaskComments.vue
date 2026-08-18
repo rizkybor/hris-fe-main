@@ -128,7 +128,10 @@ const searchMentions = debounce(async () => {
     const { data } = await axiosInstance.get("employees", {
       params: { search: mentionQuery.value, project_id: props.projectId, limit: 5 },
     });
-    mentionResults.value = data.data;
+    // The backend rejects mentioning yourself, so don't suggest yourself
+    // in the dropdown in the first place.
+    const selfId = user.value?.employee_profile?.id;
+    mentionResults.value = data.data.filter((employee) => employee.id !== selfId);
   } catch {
     mentionResults.value = [];
   }
