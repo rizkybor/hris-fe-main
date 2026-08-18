@@ -44,6 +44,7 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
+    <StickyNotesWidget />
     <Statistics />
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- Pending Leave Requests -->
@@ -93,6 +94,5 @@ onMounted(() => {
     </div>
 
     <LatestEmployees v-if="canViewEmployees" />
-    <StickyNotesWidget />
   </div>
 </template>

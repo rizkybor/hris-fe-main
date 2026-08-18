@@ -25,6 +25,7 @@ const canViewProjects = computed(() => can("project-list"));
 
 <template>
   <div class="space-y-6">
+    <StickyNotesWidget />
     <Statistics />
     <SearchSection />
     <ProjectsAtRisk v-if="canViewProjects" />
@@ -39,6 +40,5 @@ const canViewProjects = computed(() => can("project-list"));
       </div>
       <DashboardQuickLinks title="Company Overview" :links="quickLinks" class="lg:col-span-1" />
     </div>
-    <StickyNotesWidget />
   </div>
 </template>
