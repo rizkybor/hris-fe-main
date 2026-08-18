@@ -239,7 +239,7 @@ const handleSubmit = async () => {
                 />
                 <span class="truncate">{{ employee.user?.name || employee.name }}</span>
               </label>
-              <p v-if="employees.length === 0" class="text-sm text-gray-400 italic py-2">No active staff data yet.</p>
+              <p v-if="employees.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
               <p v-else-if="filteredEmployees.length === 0" class="text-sm text-gray-400 italic py-2">No attendees match "{{ attendeeSearch }}".</p>
             </div>
           </div>
