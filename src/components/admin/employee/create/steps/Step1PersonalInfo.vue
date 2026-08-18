@@ -318,7 +318,7 @@ const deletePhoto = () => {
           <!-- Gender (Full Width) -->
           <div class="md:col-span-2 mb-4">
             <label class="block text-brand-dark text-base font-semibold mb-1">Gender<span class="text-red-600 ml-1">*</span></label>
-            <div class="flex gap-4">
+            <div class="flex flex-col sm:flex-row gap-4">
               <!-- Male Option -->
               <label
                 class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
