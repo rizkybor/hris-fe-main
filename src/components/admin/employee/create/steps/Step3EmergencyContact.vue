@@ -103,10 +103,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex gap-5 items-start pr-5">
-    <div class="flex-1 space-y-6">
+  <div class="flex flex-col lg:flex-row gap-5 items-start lg:pr-5">
+    <div class="flex-1 w-full space-y-6">
       <!-- Emergency Contact Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
@@ -189,7 +189,7 @@ onMounted(() => {
       </div>
 
       <!-- Additional Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
@@ -242,7 +242,7 @@ onMounted(() => {
       <!-- Documents Section -->
       <EmployeeFiles v-if="isEditing && employeeId" :employee-id="employeeId" />
 
-      <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center"

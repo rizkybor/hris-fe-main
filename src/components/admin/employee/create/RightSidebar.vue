@@ -10,7 +10,7 @@ const browseTeams = () => {
 
 <template>
   <!-- Right Sidebar -->
-  <div class="w-80 flex-shrink-0 sticky top-6">
+  <div class="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-6">
     <!-- Tips Section -->
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
       <div class="flex items-center gap-3 mb-6">

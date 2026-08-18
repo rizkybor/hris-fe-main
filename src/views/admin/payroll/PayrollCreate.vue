@@ -37,12 +37,12 @@ const formatMonth = (month) => {
 </script>
 
 <template>
-  <div class="flex gap-5 items-start">
+  <div class="flex flex-col lg:flex-row gap-5 items-start">
     <!-- Form Section -->
-    <div class="flex-1">
+    <div class="flex-1 w-full">
       <form @submit.prevent="handleSubmit" class="space-y-6">
         <!-- Payroll Period Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -100,8 +100,8 @@ const formatMonth = (month) => {
     </div>
 
     <!-- Right Sidebar -->
-    <div class="w-100 flex-shrink-0">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 sticky top-6">
+    <div class="w-full lg:w-100 flex-shrink-0">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6 lg:sticky lg:top-6">
         <div class="flex items-center gap-3 mb-6">
           <div
             class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -132,9 +132,9 @@ const formatMonth = (month) => {
               type="button"
               @click="handleSubmit"
               :disabled="loading || !form.salary_month"
-              class="btn-primary w-full rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="btn-primary w-full rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span class="text-brand-white text-base font-semibold">{{
+              <span class="text-brand-white text-sm sm:text-base font-semibold">{{
                 loading ? "Generating..." : "Generate Payroll"
               }}</span>
               <Plus class="w-4 h-4 text-white" />
@@ -143,10 +143,10 @@ const formatMonth = (month) => {
               type="button"
               @click="router.back()"
               :disabled="loading"
-              class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ArrowLeft class="w-4 h-4 text-gray-600" />
-              <span class="text-brand-dark text-base font-semibold">Cancel</span>
+              <span class="text-brand-dark text-sm sm:text-base font-semibold">Cancel</span>
             </button>
           </div>
         </div>
