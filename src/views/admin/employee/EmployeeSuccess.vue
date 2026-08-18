@@ -85,7 +85,7 @@ const addAnotherEmployee = () => {
         </div>
 
         <!-- Quick Stats -->
-        <div class="mt-6 grid grid-cols-2 gap-4">
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 bg-blue-50 rounded-[12px] flex items-center justify-center">

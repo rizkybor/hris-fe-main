@@ -69,11 +69,11 @@ const handlePerPageChange = (perPage) => {
   <Alert type="success" :title="success" :show="success" />
 
   <!-- Projects Grid Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-    <div class="flex items-center justify-between mb-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div class="flex items-center gap-3">
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0"
         >
           <Briefcase class="w-6 h-6 text-blue-600" />
         </div>
