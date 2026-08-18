@@ -43,8 +43,8 @@ const handleDownload = async (letter) => {
 const handleCancel = async (letter) => {
   if (
     !(await alertModal.confirm(
-      `Batalkan Surat "${letter.letter_number}"? Nomor tetap dicatat dan diberi label DIBATALKAN.`,
-      { type: "warning", confirmText: "Batalkan" }
+      `Cancel Letter "${letter.letter_number}"? The number stays recorded and is labeled CANCELLED.`,
+      { type: "warning", confirmText: "Cancel" }
     ))
   )
     return;
@@ -67,7 +67,7 @@ const statusClass = (status) =>
   status === "cancelled" ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700";
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "-";
 </script>
 
 <template>
@@ -89,7 +89,7 @@ const formatDate = (date) =>
         class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
       >
         <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Buat Surat</span>
+        <span class="text-brand-white text-sm font-semibold">Create Letter</span>
       </router-link>
     </div>
 
@@ -103,7 +103,7 @@ const formatDate = (date) =>
             v-model="search"
             @keyup.enter="handleSearch"
             type="text"
-            placeholder="Cari nomor surat, perihal..."
+            placeholder="Search letter number, subject..."
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
@@ -112,9 +112,9 @@ const formatDate = (date) =>
           @change="handleFilterChange"
           class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         >
-          <option value="">Semua Status</option>
-          <option value="issued">Aktif</option>
-          <option value="cancelled">Dibatalkan</option>
+          <option value="">All Statuses</option>
+          <option value="issued">Active</option>
+          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
@@ -125,12 +125,12 @@ const formatDate = (date) =>
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
               <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">No Surat</th>
-              <th class="py-3 pr-4 font-semibold">Perihal</th>
-              <th class="py-3 pr-4 font-semibold">Divisi</th>
-              <th class="py-3 pr-4 font-semibold">Tanggal</th>
+              <th class="py-3 pr-4 font-semibold">Letter No.</th>
+              <th class="py-3 pr-4 font-semibold">Subject</th>
+              <th class="py-3 pr-4 font-semibold">Division</th>
+              <th class="py-3 pr-4 font-semibold">Date</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold text-right">Aksi</th>
+              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -146,7 +146,7 @@ const formatDate = (date) =>
               <td class="py-3 pr-4">{{ formatDate(letter.date) }}</td>
               <td class="py-3 pr-4">
                 <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="statusClass(letter.status)">
-                  {{ letter.status === "cancelled" ? "Dibatalkan" : "Aktif" }}
+                  {{ letter.status === "cancelled" ? "Cancelled" : "Active" }}
                 </span>
               </td>
               <td class="py-3 pr-4">
@@ -163,7 +163,7 @@ const formatDate = (date) =>
                     v-if="can('letter-edit') && letter.status !== 'cancelled'"
                     @click="handleCancel(letter)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-orange-500 hover:bg-orange-50 group"
-                    title="Batalkan"
+                    title="Cancel"
                   >
                     <Ban class="w-4 h-4 text-gray-600 group-hover:text-orange-600" />
                   </button>
@@ -171,7 +171,7 @@ const formatDate = (date) =>
                     v-if="can('letter-delete')"
                     @click="confirmDelete(letter)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Hapus"
+                    title="Delete"
                   >
                     <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
                   </button>
@@ -182,28 +182,28 @@ const formatDate = (date) =>
         </table>
 
         <div v-if="!loading && letters.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">Belum ada Surat</p>
+          <p class="text-lg font-semibold">No Letters yet</p>
         </div>
       </div>
 
-      <Pagination :meta="meta" :loading="loading" item-label="surat" @page-change="load" />
+      <Pagination :meta="meta" :loading="loading" item-label="letters" @page-change="load" />
     </div>
 
     <Transition name="fade">
       <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
         <div class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <h3 class="text-xl font-bold text-brand-dark mb-2">Hapus Surat?</h3>
+          <h3 class="text-xl font-bold text-brand-dark mb-2">Delete Letter?</h3>
           <p class="text-gray-500 text-sm mb-6">
-            "{{ letterToDelete?.letter_number }}" akan dihapus permanen dari sistem. Untuk surat yang sudah terbit,
-            sebaiknya gunakan "Batalkan" agar nomor tetap tercatat di register.
+            "{{ letterToDelete?.letter_number }}" will be permanently deleted from the system. For an already-issued
+            letter, it's better to use "Cancel" so the number stays recorded in the register.
           </p>
           <div class="grid grid-cols-2 gap-3">
             <button @click="isDeleteModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
-              Batal
+              Cancel
             </button>
             <button @click="handleDelete" class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600">
-              Ya, Hapus
+              Yes, Delete
             </button>
           </div>
         </div>

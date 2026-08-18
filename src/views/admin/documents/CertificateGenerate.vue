@@ -83,7 +83,7 @@ const handleSubmit = async () => {
 
   const cleanRecipients = recipients.value.filter((r) => r.name.trim());
   if (cleanRecipients.length === 0) {
-    errorMessage.value = "Minimal 1 penerima wajib diisi.";
+    errorMessage.value = "At least 1 recipient is required.";
     return;
   }
 
@@ -98,14 +98,14 @@ const handleSubmit = async () => {
     };
     const result = await store.generate(payload);
     successMessage.value = result.isZip
-      ? `Berhasil membuat ${cleanRecipients.length} sertifikat, terunduh sebagai ${result.filename}.`
-      : `Sertifikat berhasil dibuat dan terunduh sebagai ${result.filename}.`;
+      ? `Successfully generated ${cleanRecipients.length} certificates, downloaded as ${result.filename}.`
+      : `Certificate successfully generated and downloaded as ${result.filename}.`;
     recipients.value = [{ name: "" }];
     preview.value = null;
     setTimeout(() => router.push({ name: "admin.certificates.dashboard" }), 1500);
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal membuat sertifikat.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to generate certificate.");
   } finally {
     submitting.value = false;
   }
@@ -129,56 +129,56 @@ const handleSubmit = async () => {
         :to="{ name: 'admin.settings.certificate-settings' }"
         class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1 hover:underline shrink-0"
       >
-        <Settings class="w-4 h-4" /> Pengaturan & Template
+        <Settings class="w-4 h-4" /> Settings & Templates
       </router-link>
     </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Informasi Sertifikat</h4>
+        <h4 class="text-brand-dark font-bold mb-4">Certificate Information</h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Judul Sertifikat</label>
-            <input v-model="form.title" type="text" required placeholder="e.g. Sertifikat Pelatihan React Lanjutan" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Certificate Title</label>
+            <input v-model="form.title" type="text" required placeholder="e.g. Advanced React Training Certificate" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Deskripsi (opsional)</label>
-            <textarea v-model="form.description" rows="3" placeholder="Deskripsi pencapaian / program" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Description (optional)</label>
+            <textarea v-model="form.description" rows="3" placeholder="Description of achievement / program" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Tanggal Mulai (opsional)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Start Date (optional)</label>
             <input v-model="form.start_date" type="date" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Tanggal Selesai (opsional)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">End Date (optional)</label>
             <input v-model="form.end_date" type="date" :min="form.start_date || undefined" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Nama Penandatangan</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Signatory Name</label>
             <input v-model="form.signatory_name" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Jabatan Penandatangan</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Signatory Position</label>
             <input v-model="form.signatory_title" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
         </div>
       </div>
 
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Penomoran & Template</h4>
+        <h4 class="text-brand-dark font-bold mb-4">Numbering & Template</h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Kode Kategori</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Category Code</label>
             <input v-model="form.category_code" type="text" required placeholder="e.g. TRAINING" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Kode Program</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Program Code</label>
             <input v-model="form.program_code" type="text" required placeholder="e.g. REACT101" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Template Background</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Background Template</label>
             <select v-model="form.certificate_template_id" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="">Default Premium (bawaan sistem)</option>
+              <option value="">Default Premium (system default)</option>
               <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">{{ tpl.name }}</option>
             </select>
           </div>
@@ -188,47 +188,47 @@ const handleSubmit = async () => {
           <Info class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div class="text-sm text-amber-800">
             <span v-if="previewLoading" class="flex items-center gap-1">
-              <Loader2 class="w-3.5 h-3.5 animate-spin" /> Menghitung nomor...
+              <Loader2 class="w-3.5 h-3.5 animate-spin" /> Calculating number...
             </span>
             <span v-else-if="preview">
-              Nomor sertifikat berikutnya: <span class="font-mono font-bold">{{ preview.number }}</span>
+              Next certificate number: <span class="font-mono font-bold">{{ preview.number }}</span>
             </span>
-            <span v-else>Isi Kode Kategori dan Kode Program untuk melihat preview nomor sertifikat.</span>
+            <span v-else>Fill in Category Code and Program Code to preview the certificate number.</span>
           </div>
         </div>
       </div>
 
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between mb-1">
-          <h4 class="text-brand-dark font-bold">Penerima</h4>
+          <h4 class="text-brand-dark font-bold">Recipients</h4>
           <button type="button" @click="showBulkPaste = !showBulkPaste" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
-            <ClipboardPaste class="w-4 h-4" /> Tempel Massal
+            <ClipboardPaste class="w-4 h-4" /> Bulk Paste
           </button>
         </div>
         <p class="text-xs text-gray-400 mb-4">
-          Tambahkan lebih dari 1 penerima untuk generate massal &mdash; hasil otomatis dibungkus dalam file .zip berisi PDF per penerima, nomor tidak akan kembar.
-          <span v-if="isBulk" class="text-amber-600 font-semibold"> Mode massal aktif ({{ recipients.filter(r => r.name).length }} penerima).</span>
+          Add more than 1 recipient for bulk generation &mdash; the result is automatically bundled into a .zip file containing a PDF per recipient, no duplicate numbers.
+          <span v-if="isBulk" class="text-amber-600 font-semibold"> Bulk mode active ({{ recipients.filter(r => r.name).length }} recipients).</span>
         </p>
 
         <div v-if="showBulkPaste" class="mb-4 rounded-xl border border-[#DCDEDD] p-4">
-          <label class="text-sm font-semibold text-brand-dark mb-1 block">Tempel daftar nama (satu nama per baris)</label>
-          <textarea v-model="bulkText" rows="5" placeholder="Budi Santoso&#10;Siti Aminah&#10;..." class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none font-mono"></textarea>
+          <label class="text-sm font-semibold text-brand-dark mb-1 block">Paste name list (one name per line)</label>
+          <textarea v-model="bulkText" rows="5" placeholder="John Doe&#10;Jane Smith&#10;..." class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none font-mono"></textarea>
           <button type="button" @click="applyBulkPaste" class="mt-2 px-4 py-2 rounded-lg bg-[#0C51D9] text-white text-sm font-semibold">
-            Terapkan ke Daftar Penerima
+            Apply to Recipient List
           </button>
         </div>
 
         <div class="space-y-2">
           <div v-for="(recipient, i) in recipients" :key="i" class="flex items-center gap-2">
             <span class="text-xs text-gray-400 w-6 shrink-0">{{ i + 1 }}.</span>
-            <input v-model="recipient.name" type="text" placeholder="Nama penerima" class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+            <input v-model="recipient.name" type="text" placeholder="Recipient name" class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
             <button v-if="recipients.length > 1" type="button" @click="removeRecipient(i)" class="text-gray-400 hover:text-red-600 shrink-0">
               <Trash2 class="w-4 h-4" />
             </button>
           </div>
         </div>
         <button type="button" @click="addRecipient" class="mt-3 text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
-          <Plus class="w-4 h-4" /> Tambah Penerima
+          <Plus class="w-4 h-4" /> Add Recipient
         </button>
       </div>
 
@@ -243,14 +243,14 @@ const handleSubmit = async () => {
         >
           <Loader2 v-if="submitting" class="w-4 h-4 animate-spin text-white" />
           <span class="text-brand-white text-sm font-semibold">
-            {{ submitting ? "Membuat Sertifikat..." : isBulk ? "Generate Massal (.zip)" : "Generate Sertifikat" }}
+            {{ submitting ? "Generating Certificate..." : isBulk ? "Bulk Generate (.zip)" : "Generate Certificate" }}
           </span>
         </button>
         <router-link
           :to="{ name: 'admin.certificates.dashboard' }"
           class="px-6 py-3 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50"
         >
-          Batal
+          Cancel
         </router-link>
       </div>
     </form>

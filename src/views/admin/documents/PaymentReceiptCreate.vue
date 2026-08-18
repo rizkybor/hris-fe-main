@@ -46,7 +46,7 @@ const handleSubmit = async () => {
     router.push({ name: "admin.payment-receipts.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal membuat Payment Receipt.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to create Payment Receipt.");
   } finally {
     submitting.value = false;
   }
@@ -61,7 +61,7 @@ const handleSubmit = async () => {
           <FileCheck2 class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Buat Payment Receipt</h3>
+          <h3 class="text-brand-dark text-lg font-bold">Create Payment Receipt</h3>
           <p class="text-brand-light text-sm">Receipt number will be generated automatically when saved</p>
         </div>
       </div>
@@ -73,47 +73,47 @@ const handleSubmit = async () => {
           <div class="w-8 h-8 bg-emerald-50 rounded-[9px] flex items-center justify-center shrink-0">
             <Wallet class="w-4 h-4 text-emerald-600" />
           </div>
-          <h4 class="text-brand-dark font-bold">Detail Pembayaran</h4>
+          <h4 class="text-brand-dark font-bold">Payment Details</h4>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Invoice Terkait (opsional)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Related Invoice (optional)</label>
             <select v-model="form.invoice_id" @change="handleInvoiceSelect" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="">- Tidak terkait invoice -</option>
+              <option value="">- Not related to an invoice -</option>
               <option v-for="invoice in invoices" :key="invoice.id" :value="invoice.id">
                 {{ invoice.invoice_number }} - {{ invoice.client_name }}
               </option>
             </select>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Kode Klien</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
             <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Tanggal</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
             <input v-model="form.date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Diterima Dari</label>
-            <input v-model="form.received_from" type="text" required placeholder="e.g. Bpk. Zakaria - Zaco Law Firm" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Received From</label>
+            <input v-model="form.received_from" type="text" required placeholder="e.g. Mr. Zakaria - Zaco Law Firm" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Jumlah (Rp)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Amount (Rp)</label>
             <input v-model.number="form.amount" type="number" min="0" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Status Pembayaran</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Payment Status</label>
             <select v-model="form.payment_status" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="paid">Lunas (Paid)</option>
-              <option value="partial">Sebagian (Partial)</option>
+              <option value="paid">Paid</option>
+              <option value="partial">Partial</option>
             </select>
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Untuk Pembayaran</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">For Payment Of</label>
             <textarea v-model="form.for_payment_of" rows="2" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Nama Penerima (Penandatangan)</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Recipient Name (Signatory)</label>
             <input v-model="form.recipient_name" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
         </div>
@@ -127,13 +127,13 @@ const handleSubmit = async () => {
           :disabled="submitting"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
         >
-          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Menyimpan..." : "Simpan Payment Receipt" }}</span>
+          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : "Save Payment Receipt" }}</span>
         </button>
         <router-link
           :to="{ name: 'admin.payment-receipts.dashboard' }"
           class="px-6 py-3 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50"
         >
-          Batal
+          Cancel
         </router-link>
       </div>
     </form>

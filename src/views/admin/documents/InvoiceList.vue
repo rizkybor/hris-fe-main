@@ -47,9 +47,9 @@ const handleMarkPaid = async (invoice) => {
 
 const handleCancel = async (invoice) => {
   if (
-    !(await alertModal.confirm(`Batalkan Invoice "${invoice.invoice_number}"?`, {
+    !(await alertModal.confirm(`Cancel Invoice "${invoice.invoice_number}"?`, {
       type: "warning",
-      confirmText: "Batalkan",
+      confirmText: "Cancel",
     }))
   )
     return;
@@ -75,13 +75,13 @@ const statusClass = (status) => {
 };
 
 const statusLabel = (status) => {
-  if (status === "paid") return "Lunas";
-  if (status === "cancelled") return "Dibatalkan";
-  return "Belum Lunas";
+  if (status === "paid") return "Paid";
+  if (status === "cancelled") return "Cancelled";
+  return "Unpaid";
 };
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "-";
 </script>
 
 <template>
@@ -103,7 +103,7 @@ const formatDate = (date) =>
         class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
       >
         <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Buat Invoice</span>
+        <span class="text-brand-white text-sm font-semibold">Create Invoice</span>
       </router-link>
     </div>
 
@@ -117,7 +117,7 @@ const formatDate = (date) =>
             v-model="search"
             @keyup.enter="handleSearch"
             type="text"
-            placeholder="Cari nomor invoice, klien..."
+            placeholder="Search invoice number, client..."
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
@@ -126,10 +126,10 @@ const formatDate = (date) =>
           @change="handleFilterChange"
           class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         >
-          <option value="">Semua Status</option>
-          <option value="unpaid">Belum Lunas</option>
-          <option value="paid">Lunas</option>
-          <option value="cancelled">Dibatalkan</option>
+          <option value="">All Statuses</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="paid">Paid</option>
+          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
@@ -140,12 +140,12 @@ const formatDate = (date) =>
           <thead>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
               <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">No Invoice</th>
-              <th class="py-3 pr-4 font-semibold">Klien</th>
-              <th class="py-3 pr-4 font-semibold">Tanggal</th>
+              <th class="py-3 pr-4 font-semibold">Invoice No.</th>
+              <th class="py-3 pr-4 font-semibold">Client</th>
+              <th class="py-3 pr-4 font-semibold">Date</th>
               <th class="py-3 pr-4 font-semibold">Total</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold text-right">Aksi</th>
+              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -178,7 +178,7 @@ const formatDate = (date) =>
                     v-if="can('invoice-edit') && invoice.status === 'unpaid'"
                     @click="handleMarkPaid(invoice)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-green-500 hover:bg-green-50 group"
-                    title="Tandai Lunas"
+                    title="Mark as Paid"
                   >
                     <CheckCircle2 class="w-4 h-4 text-gray-600 group-hover:text-green-600" />
                   </button>
@@ -186,7 +186,7 @@ const formatDate = (date) =>
                     v-if="can('invoice-edit') && invoice.status !== 'cancelled'"
                     @click="handleCancel(invoice)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-orange-500 hover:bg-orange-50 group"
-                    title="Batalkan"
+                    title="Cancel"
                   >
                     <Ban class="w-4 h-4 text-gray-600 group-hover:text-orange-600" />
                   </button>
@@ -194,7 +194,7 @@ const formatDate = (date) =>
                     v-if="can('invoice-delete')"
                     @click="confirmDelete(invoice)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Hapus"
+                    title="Delete"
                   >
                     <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
                   </button>
@@ -205,7 +205,7 @@ const formatDate = (date) =>
         </table>
 
         <div v-if="!loading && invoices.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">Belum ada Invoice</p>
+          <p class="text-lg font-semibold">No Invoices yet</p>
         </div>
       </div>
 
@@ -216,16 +216,16 @@ const formatDate = (date) =>
       <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
         <div class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <h3 class="text-xl font-bold text-brand-dark mb-2">Hapus Invoice?</h3>
+          <h3 class="text-xl font-bold text-brand-dark mb-2">Delete Invoice?</h3>
           <p class="text-gray-500 text-sm mb-6">
-            "{{ invoiceToDelete?.invoice_number }}" akan dihapus permanen.
+            "{{ invoiceToDelete?.invoice_number }}" will be permanently deleted.
           </p>
           <div class="grid grid-cols-2 gap-3">
             <button @click="isDeleteModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
-              Batal
+              Cancel
             </button>
             <button @click="handleDelete" class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600">
-              Ya, Hapus
+              Yes, Delete
             </button>
           </div>
         </div>

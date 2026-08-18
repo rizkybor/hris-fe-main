@@ -44,7 +44,7 @@ const handleSubmit = async () => {
     router.push({ name: "admin.purchase-orders.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal membuat Purchase Order.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to create Purchase Order.");
   } finally {
     submitting.value = false;
   }
@@ -77,7 +77,7 @@ const handleSubmit = async () => {
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
             <select v-model="form.type" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="E">Eksternal (E)</option>
+              <option value="E">External (E)</option>
               <option value="I">Internal (I)</option>
             </select>
           </div>

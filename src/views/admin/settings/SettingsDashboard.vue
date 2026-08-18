@@ -63,7 +63,7 @@ const categories = [
       {
         to: { name: "admin.settings.document-codes" },
         icon: Tags,
-        title: "Kode Surat & Divisi",
+        title: "Letter & Division Codes",
         description: "Manage the letter code and division code reference lists",
         permission: "letter-menu",
       },
