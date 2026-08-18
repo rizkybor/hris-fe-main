@@ -277,7 +277,7 @@ watch(
               <label class="block text-brand-dark text-base font-semibold mb-1"
                 >Priority *</label
               >
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <!-- Low Priority -->
                 <label
                   class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
@@ -667,7 +667,7 @@ watch(
               <label class="block text-brand-dark text-base font-semibold mb-1"
                 >Initial Project Status</label
               >
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <!-- Active Option -->
                 <label
                   class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
