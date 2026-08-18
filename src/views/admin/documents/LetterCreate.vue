@@ -6,6 +6,7 @@ import { Mail, Settings, Plus, Trash2, Info, Tag, FileText } from "lucide-vue-ne
 import { useLetterStore } from "@/stores/letter";
 import { useEmployeeStore } from "@/stores/employee";
 import { can } from "@/helpers/permissionHelper";
+import RichTextEditor from "@/components/common/RichTextEditor.vue";
 
 const store = useLetterStore();
 const { letterCodes, divisionCodes } = storeToRefs(store);
@@ -134,7 +135,10 @@ const applyTemplate = () => {
   const template = TEMPLATES[selectedCode.value];
   if (!template) return;
 
-  form.value.body = template.body;
+  // Templates are authored as plain text with \n line breaks; the editor
+  // is HTML-based (contenteditable), so those need to become real <br>
+  // tags or they'd render collapsed onto one line.
+  form.value.body = template.body.replace(/\n/g, "<br>");
   useItems.value = template.useItems;
   useSecondParty.value = template.useSecondParty;
 };
@@ -142,8 +146,20 @@ const applyTemplate = () => {
 const addItem = () => items.value.push({ description: "", specification: "", qty: "", price: 0 });
 const removeItem = (i) => items.value.splice(i, 1);
 
+// The editor is a contenteditable div, not a real <textarea>, so the
+// native `required` attribute doesn't apply to it -- checked manually
+// here instead. An empty contenteditable can still hold stray tags
+// (e.g. "<br>"), so strip markup before checking for real content.
+const isBodyEmpty = () => !form.value.body.replace(/<[^>]*>/g, "").trim();
+
 const handleSubmit = async () => {
   errorMessage.value = "";
+
+  if (isBodyEmpty()) {
+    errorMessage.value = "Isi Surat wajib diisi.";
+    return;
+  }
+
   submitting.value = true;
   try {
     const payload = { ...form.value, employee_id: form.value.employee_id || null };
@@ -257,7 +273,7 @@ const handleSubmit = async () => {
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Isi Surat</label>
-            <textarea v-model="form.body" rows="10" required placeholder="Dengan hormat,&#10;&#10;..." class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none font-mono"></textarea>
+            <RichTextEditor v-model="form.body" placeholder="Dengan hormat, ..." />
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

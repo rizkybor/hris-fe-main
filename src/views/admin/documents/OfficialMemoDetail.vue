@@ -259,4 +259,10 @@ const handleReject = async () => {
 .memo-body :deep(p) { margin-bottom: 0.75rem; }
 .memo-body :deep(ul) { list-style: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
 .memo-body :deep(ol) { list-style: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+.memo-body :deep(h1) { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0; }
+.memo-body :deep(h2) { font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0; }
+.memo-body :deep(h3) { font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; }
+.memo-body :deep(blockquote) { border-left: 3px solid #0c51d9; padding-left: 0.75rem; color: #6b7280; margin: 0.5rem 0; }
+.memo-body :deep(a) { color: #0c51d9; text-decoration: underline; }
+.memo-body :deep(hr) { border: none; border-top: 1px solid #dcdedd; margin: 0.75rem 0; }
 </style>
