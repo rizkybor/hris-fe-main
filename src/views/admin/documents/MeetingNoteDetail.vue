@@ -17,6 +17,18 @@ const alertModal = useAlertModalStore();
 
 const { currentMeetingNote: note, loading, activeViewers } = storeToRefs(store);
 
+// @mention targets for the comment composer: Internal Attendees plus the
+// note's own creator (who can comment/be mentioned even if they didn't
+// check themselves in as an attendee -- see MeetingNoteCommentController).
+const mentionableEmployees = computed(() => {
+  const attendees = note.value?.attendees || [];
+  const creatorEmployeeId = note.value?.creator?.employee_id;
+  if (!creatorEmployeeId || attendees.some((a) => a.id === creatorEmployeeId)) {
+    return attendees;
+  }
+  return [...attendees, { id: creatorEmployeeId, name: note.value.creator.name }];
+});
+
 const pinBusy = ref(false);
 let heartbeatTimer = null;
 
@@ -156,7 +168,7 @@ const handleDelete = async () => {
 
           <MeetingNoteComments
             :meeting-note-id="note.id"
-            :attendees="note.attendees || []"
+            :attendees="mentionableEmployees"
             :can-comment="!!note.can_comment"
           />
         </div>
