@@ -28,20 +28,20 @@ const submit = async () => {
   success.value = "";
 
   if (!form.value.name || !form.value.pic_name || !form.value.pic_phone) {
-    error.value = "Vendor Name, PIC Name, dan PIC Phone wajib diisi.";
+    error.value = "Vendor Name, PIC Name, and PIC Phone are required.";
     return;
   }
 
   loading.value = true;
   try {
     await vendorsStore.createVendor(form.value);
-    success.value = "Vendor berhasil disimpan.";
+    success.value = "Vendor saved successfully.";
 
     setTimeout(() => {
       router.push({ name: "admin.vendors.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = err?.message || "Gagal menyimpan vendor.";
+    error.value = err?.message || "Failed to save vendor.";
   } finally {
     loading.value = false;
   }
