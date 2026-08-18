@@ -72,7 +72,7 @@ const canCheckOut = computed(() => {
 
 const checkInTime = computed(() => {
   if (!todayAttendance.value?.check_in) return "--:--";
-  return new Date(todayAttendance.value.check_in).toLocaleTimeString("en-US", {
+  return new Date(todayAttendance.value.check_in).toLocaleTimeString("id-ID", {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
@@ -81,7 +81,7 @@ const checkInTime = computed(() => {
 
 const checkOutTime = computed(() => {
   if (!todayAttendance.value?.check_out) return "--:--";
-  return new Date(todayAttendance.value.check_out).toLocaleTimeString("en-US", {
+  return new Date(todayAttendance.value.check_out).toLocaleTimeString("id-ID", {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
@@ -119,8 +119,8 @@ const updateClock = () => {
     day: "numeric",
   };
 
-  currentTime.value = now.toLocaleTimeString("en-US", timeOptions);
-  currentDate.value = now.toLocaleDateString("en-US", dateOptions);
+  currentTime.value = now.toLocaleTimeString("id-ID", timeOptions);
+  currentDate.value = now.toLocaleDateString("id-ID", dateOptions);
 };
 
 // Location functions

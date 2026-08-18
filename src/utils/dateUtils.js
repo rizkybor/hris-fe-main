@@ -14,7 +14,7 @@ export const getTimeAgo = (dateString) => {
 export const formatDate = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString("id-ID", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -46,7 +46,7 @@ export const calculateDuration = (startDate, endDate) => {
 
 export const formatDateShort = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString("id-ID", {
     month: "short",
     day: "numeric",
   });
@@ -54,7 +54,7 @@ export const formatDateShort = (dateString) => {
 
 export const formatDateLong = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString("id-ID", {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -64,7 +64,7 @@ export const formatDateLong = (dateString) => {
 
 export const formatRequestDate = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString("id-ID", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -73,7 +73,7 @@ export const formatRequestDate = (dateString) => {
 
 export const formatRequestDateLong = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString("id-ID", {
     weekday: "short",
     month: "long",
     day: "numeric",
@@ -93,13 +93,13 @@ export const getDayName = (dateString) => {
     return "Today";
   }
 
-  return date.toLocaleDateString("en-US", { weekday: "long" });
+  return date.toLocaleDateString("id-ID", { weekday: "long" });
 };
 
 export const formatTime = (dateString) => {
   if (!dateString) return "--:--";
   const date = new Date(dateString);
-  return date.toLocaleTimeString("en-US", {
+  return date.toLocaleTimeString("id-ID", {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
