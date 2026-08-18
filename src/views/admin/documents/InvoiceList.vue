@@ -81,7 +81,7 @@ const statusLabel = (status) => {
 };
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
 </script>
 
 <template>

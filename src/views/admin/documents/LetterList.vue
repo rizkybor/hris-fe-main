@@ -67,7 +67,7 @@ const statusClass = (status) =>
   status === "cancelled" ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700";
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
 </script>
 
 <template>
