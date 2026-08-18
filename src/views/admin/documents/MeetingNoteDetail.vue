@@ -8,6 +8,7 @@ import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import PresenceIndicator from "@/components/common/PresenceIndicator.vue";
+import MeetingNoteComments from "@/components/admin/documents/MeetingNoteComments.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -152,6 +153,12 @@ const handleDelete = async () => {
               </a>
             </div>
           </div>
+
+          <MeetingNoteComments
+            :meeting-note-id="note.id"
+            :attendees="note.attendees || []"
+            :can-comment="!!note.can_comment"
+          />
         </div>
 
         <div class="space-y-4">
