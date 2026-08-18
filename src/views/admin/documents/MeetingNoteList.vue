@@ -67,7 +67,7 @@ const formatDateTime = (date) =>
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Meeting Note</h3>
-          <p class="text-brand-light text-sm">Recap rapat internal & eksternal, dikelola bersama Manager/Operational Director/HR/Finance Manager</p>
+          <p class="text-brand-light text-sm">Internal & external meeting recaps, managed together by Manager/Operational Director/HR/Finance Manager</p>
         </div>
       </div>
 

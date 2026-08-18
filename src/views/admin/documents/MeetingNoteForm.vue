@@ -150,7 +150,7 @@ const handleSubmit = async () => {
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">{{ isEditing ? "Edit Meeting Note" : "Buat Meeting Note" }}</h3>
-          <p class="text-brand-light text-sm">Catatan rapat dapat dikelola bersama oleh Manager, Operational Director, HR, dan Finance Manager.</p>
+          <p class="text-brand-light text-sm">Meeting notes can be managed together by Manager, Operational Director, HR, and Finance Manager.</p>
         </div>
       </div>
       <PresenceIndicator :viewers="activeViewers" />

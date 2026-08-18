@@ -62,7 +62,7 @@ const handleSubmit = async () => {
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Buat Payment Receipt</h3>
-          <p class="text-brand-light text-sm">Nomor receipt akan dibuat otomatis saat disimpan</p>
+          <p class="text-brand-light text-sm">Receipt number will be generated automatically when saved</p>
         </div>
       </div>
     </div>

@@ -64,7 +64,7 @@ const formatDate = (date) =>
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Official Memo</h3>
-          <p class="text-brand-light text-sm">Nota Dinas internal dengan alur persetujuan Finance Manager</p>
+          <p class="text-brand-light text-sm">Internal memos with a Finance Manager approval workflow</p>
         </div>
       </div>
 

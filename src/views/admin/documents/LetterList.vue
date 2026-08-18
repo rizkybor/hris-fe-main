@@ -79,7 +79,7 @@ const formatDate = (date) =>
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Letters</h3>
-          <p class="text-brand-light text-sm">Register surat internal dan eksternal perusahaan</p>
+          <p class="text-brand-light text-sm">Register of internal and external company letters</p>
         </div>
       </div>
 

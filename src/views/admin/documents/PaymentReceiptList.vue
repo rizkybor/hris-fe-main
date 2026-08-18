@@ -80,7 +80,7 @@ const formatDate = (date) =>
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Payment Receipt</h3>
-          <p class="text-brand-light text-sm">Kelola bukti terima pembayaran</p>
+          <p class="text-brand-light text-sm">Manage payment receipts</p>
         </div>
       </div>
 

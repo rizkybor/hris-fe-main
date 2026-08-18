@@ -191,7 +191,7 @@ const handleSubmit = async () => {
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Buat Surat</h3>
-          <p class="text-brand-light text-sm">Nomor surat akan dibuat otomatis saat disimpan</p>
+          <p class="text-brand-light text-sm">Letter number will be generated automatically when saved</p>
         </div>
       </div>
       <router-link

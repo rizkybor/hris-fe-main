@@ -88,7 +88,7 @@ const handleSubmit = async () => {
       </div>
       <div>
         <h3 class="text-brand-dark text-lg font-bold">{{ isEditing ? "Edit Official Memo" : "Buat Official Memo" }}</h3>
-        <p class="text-brand-light text-sm">Nota Dinas akan tersimpan sebagai Draft hingga Anda submit untuk persetujuan.</p>
+        <p class="text-brand-light text-sm">The Official Memo will be saved as Draft until you submit it for approval.</p>
       </div>
     </div>
 
