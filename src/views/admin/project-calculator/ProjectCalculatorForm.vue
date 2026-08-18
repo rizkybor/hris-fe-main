@@ -98,7 +98,7 @@ onMounted(async () => {
         ),
       };
     } catch (error) {
-      errorMessage.value = "Estimasi tidak ditemukan.";
+      errorMessage.value = "Estimate not found.";
     } finally {
       loadingCalculation.value = false;
     }
@@ -179,7 +179,7 @@ const canSave = computed(() => {
 const submit = async () => {
   errorMessage.value = "";
   if (!canSave.value) {
-    errorMessage.value = "Nama estimasi dan nama setiap item wajib diisi.";
+    errorMessage.value = "Estimate name and each item name are required.";
     return;
   }
 
@@ -192,7 +192,7 @@ const submit = async () => {
   } catch (error) {
     const data = error?.response?.data;
     errorMessage.value =
-      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal menyimpan estimasi.");
+      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to save estimate.");
   }
 };
 </script>
@@ -327,7 +327,7 @@ const submit = async () => {
                 <input
                   v-model="item.name"
                   type="text"
-                  :placeholder="form.scenario === 'feature' ? 'Nama fitur' : 'Nama modul'"
+                  :placeholder="form.scenario === 'feature' ? 'Feature name' : 'Module name'"
                   class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm font-semibold focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
                 />
                 <button

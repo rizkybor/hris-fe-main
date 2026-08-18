@@ -61,21 +61,21 @@ const goToPage = (page) => {
 };
 
 const scenarioMeta = {
-  feature: { label: "Fitur Baru", class: "bg-blue-50 text-blue-700 border-blue-100" },
-  build: { label: "Bangun dari 0", class: "bg-violet-50 text-violet-700 border-violet-100" },
+  feature: { label: "New Feature", class: "bg-blue-50 text-blue-700 border-blue-100" },
+  build: { label: "Build from Scratch", class: "bg-violet-50 text-violet-700 border-violet-100" },
 };
 
 const handleDelete = async (calc) => {
-  const ok = await alertModal.confirm(`Hapus estimasi "${calc.name}"? Tindakan ini tidak bisa dibatalkan.`, {
+  const ok = await alertModal.confirm(`Delete estimate "${calc.name}"? This action cannot be undone.`, {
     type: "danger",
-    confirmText: "Hapus",
+    confirmText: "Delete",
   });
   if (!ok) return;
   try {
     await store.deleteCalculation(calc.id);
     await store.fetchStatistics();
   } catch (error) {
-    await alertModal.alert("Gagal menghapus estimasi.", { type: "danger" });
+    await alertModal.alert("Failed to delete estimate.", { type: "danger" });
   }
 };
 
@@ -346,7 +346,7 @@ const onRateSettingSaved = async () => {
               v-if="can('project-calculator-delete')"
               @click="handleDelete(calc)"
               class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-red-500 hover:ring-2 hover:ring-red-500/30 hover:bg-red-50 group transition-all"
-              title="Hapus"
+              title="Delete"
             >
               <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
             </button>
@@ -356,7 +356,7 @@ const onRateSettingSaved = async () => {
 
       <!-- Pagination -->
       <div v-if="!loading && calculations.length > 0" class="pt-4 border-t border-[#DCDEDD] mt-6">
-        <Pagination :meta="meta" :loading="loading" item-label="estimasi" @page-change="goToPage" />
+        <Pagination :meta="meta" :loading="loading" item-label="estimates" @page-change="goToPage" />
       </div>
     </div>
 
