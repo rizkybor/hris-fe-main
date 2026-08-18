@@ -1,9 +1,12 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { Tags, Plus, Trash2, FileText, Building2Icon } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
 import { useAlertModalStore } from "@/stores/alertModal";
+import Pagination from "@/components/common/Pagination.vue";
+
+const PER_PAGE = 10;
 
 const store = useLetterStore();
 const alertModal = useAlertModalStore();
@@ -12,6 +15,27 @@ const { letterCodes, divisionCodes } = storeToRefs(store);
 const newLetterCode = ref({ code: "", name: "" });
 const newDivisionCode = ref({ code: "", name: "" });
 const errorMessage = ref("");
+
+// Both lists are short enough (fetched in full already for the Letter
+// Create dropdowns) that paginating them client-side, rather than adding
+// a second paginated endpoint, keeps this simple.
+const letterCodePage = ref(1);
+const divisionCodePage = ref(1);
+
+const paginate = (items, page) => ({
+  items: items.slice((page - 1) * PER_PAGE, page * PER_PAGE),
+  meta: {
+    current_page: page,
+    last_page: Math.max(1, Math.ceil(items.length / PER_PAGE)),
+    per_page: PER_PAGE,
+    total: items.length,
+    from: items.length === 0 ? 0 : (page - 1) * PER_PAGE + 1,
+    to: Math.min(page * PER_PAGE, items.length),
+  },
+});
+
+const paginatedLetterCodes = computed(() => paginate(letterCodes.value, letterCodePage.value));
+const paginatedDivisionCodes = computed(() => paginate(divisionCodes.value, divisionCodePage.value));
 
 onMounted(async () => {
   await Promise.all([store.fetchLetterCodes(), store.fetchDivisionCodes()]);
@@ -26,6 +50,9 @@ const handleAddLetterCode = async () => {
       name: newLetterCode.value.name,
     });
     newLetterCode.value = { code: "", name: "" };
+    // New codes are appended at the end of the list, so jump forward to
+    // wherever it actually landed instead of back to page 1.
+    letterCodePage.value = paginatedLetterCodes.value.meta.last_page;
   } catch (error) {
     errorMessage.value = error?.response?.data?.message || "Gagal menambah kode surat.";
   }
@@ -34,6 +61,9 @@ const handleAddLetterCode = async () => {
 const handleDeleteLetterCode = async (id) => {
   if (!(await alertModal.confirm("Hapus kode surat ini?"))) return;
   await store.deleteLetterCode(id);
+  if (letterCodePage.value > paginatedLetterCodes.value.meta.last_page) {
+    letterCodePage.value = paginatedLetterCodes.value.meta.last_page;
+  }
 };
 
 const handleAddDivisionCode = async () => {
@@ -45,6 +75,9 @@ const handleAddDivisionCode = async () => {
       name: newDivisionCode.value.name,
     });
     newDivisionCode.value = { code: "", name: "" };
+    // New codes are appended at the end of the list, so jump forward to
+    // wherever it actually landed instead of back to page 1.
+    divisionCodePage.value = paginatedDivisionCodes.value.meta.last_page;
   } catch (error) {
     errorMessage.value = error?.response?.data?.message || "Gagal menambah kode divisi.";
   }
@@ -53,6 +86,9 @@ const handleAddDivisionCode = async () => {
 const handleDeleteDivisionCode = async (id) => {
   if (!(await alertModal.confirm("Hapus kode divisi ini?"))) return;
   await store.deleteDivisionCode(id);
+  if (divisionCodePage.value > paginatedDivisionCodes.value.meta.last_page) {
+    divisionCodePage.value = paginatedDivisionCodes.value.meta.last_page;
+  }
 };
 </script>
 
@@ -94,7 +130,7 @@ const handleDeleteDivisionCode = async (id) => {
         </form>
 
         <div class="space-y-2">
-          <div v-for="code in letterCodes" :key="code.id" class="flex items-center justify-between p-3 border border-[#DCDEDD] rounded-lg">
+          <div v-for="code in paginatedLetterCodes.items" :key="code.id" class="flex items-center justify-between p-3 border border-[#DCDEDD] rounded-lg">
             <div>
               <span class="font-mono font-bold text-brand-dark text-sm">{{ code.code }}</span>
               <span class="text-brand-light text-sm ml-2">{{ code.name }}</span>
@@ -107,6 +143,12 @@ const handleDeleteDivisionCode = async (id) => {
             Belum ada kode surat
           </div>
         </div>
+
+        <Pagination
+          :meta="paginatedLetterCodes.meta"
+          item-label="kode surat"
+          @page-change="(page) => (letterCodePage = page)"
+        />
       </div>
 
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
@@ -130,7 +172,7 @@ const handleDeleteDivisionCode = async (id) => {
         </form>
 
         <div class="space-y-2">
-          <div v-for="code in divisionCodes" :key="code.id" class="flex items-center justify-between p-3 border border-[#DCDEDD] rounded-lg">
+          <div v-for="code in paginatedDivisionCodes.items" :key="code.id" class="flex items-center justify-between p-3 border border-[#DCDEDD] rounded-lg">
             <div>
               <span class="font-mono font-bold text-brand-dark text-sm">{{ code.code }}</span>
               <span class="text-brand-light text-sm ml-2">{{ code.name }}</span>
@@ -143,6 +185,12 @@ const handleDeleteDivisionCode = async (id) => {
             Belum ada kode divisi
           </div>
         </div>
+
+        <Pagination
+          :meta="paginatedDivisionCodes.meta"
+          item-label="kode divisi"
+          @page-change="(page) => (divisionCodePage = page)"
+        />
       </div>
     </div>
   </div>
