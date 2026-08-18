@@ -55,11 +55,17 @@ const mentionDropdownStyle = ref({});
 
 // Mentions are scoped to this note's own Internal Attendees list (already
 // loaded with the note), so no network round-trip is needed -- just a
-// local name filter.
+// local name filter. The current user is excluded -- mentioning yourself
+// isn't meaningful and the backend rejects it anyway.
+const mentionableEmployees = computed(() => {
+  const selfId = user.value?.employee_profile?.id;
+  return props.attendees.filter((a) => a.id !== selfId);
+});
+
 const mentionResults = computed(() => {
-  if (!mentionQuery.value) return props.attendees.slice(0, 5);
+  if (!mentionQuery.value) return mentionableEmployees.value.slice(0, 5);
   const q = mentionQuery.value.toLowerCase();
-  return props.attendees.filter((a) => a.name?.toLowerCase().includes(q)).slice(0, 5);
+  return mentionableEmployees.value.filter((a) => a.name?.toLowerCase().includes(q)).slice(0, 5);
 });
 
 const loadComments = () => {
