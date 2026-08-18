@@ -22,6 +22,7 @@ import {
   Rows3,
   Columns3,
   Trash2,
+  Palette,
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -38,7 +39,18 @@ const tablePopoverOpen = ref(false);
 const tableRows = ref(3);
 const tableCols = ref(3);
 const inTable = ref(false);
+const colorPopoverOpen = ref(false);
 let savedSelection = null;
+
+const COLUMN_COLORS = [
+  { label: "Tanpa Warna", value: "" },
+  { label: "Abu-abu", value: "#f3f4f6" },
+  { label: "Merah", value: "#fee2e2" },
+  { label: "Kuning", value: "#fef9c3" },
+  { label: "Hijau", value: "#dcfce7" },
+  { label: "Biru", value: "#dbeafe" },
+  { label: "Ungu", value: "#ede9fe" },
+];
 
 onMounted(() => {
   if (editorRef.value) {
@@ -207,6 +219,22 @@ const deleteTable = () => {
   if (!ctx) return;
   ctx.table.remove();
   inTable.value = false;
+  onInput();
+};
+
+const openColorPopover = () => {
+  trackSelection();
+  colorPopoverOpen.value = true;
+};
+
+const applyColumnColor = (color) => {
+  const ctx = getTableContext();
+  colorPopoverOpen.value = false;
+  if (!ctx) return;
+  ctx.table.querySelectorAll("tr").forEach((row) => {
+    const cell = row.children[ctx.cellIndex];
+    if (cell) cell.style.backgroundColor = color;
+  });
   onInput();
 };
 
@@ -397,6 +425,33 @@ const FORMAT_OPTIONS = [
         >
           <Trash2 class="w-4 h-4" />
         </button>
+
+        <div class="relative">
+          <button
+            type="button"
+            title="Column Color"
+            @mousedown.prevent="openColorPopover"
+            class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          >
+            <Palette class="w-4 h-4" />
+          </button>
+
+          <div
+            v-if="colorPopoverOpen"
+            class="absolute z-10 top-full left-0 mt-1 bg-white border border-[#DCDEDD] rounded-lg shadow-lg p-2 flex items-center gap-1.5"
+          >
+            <button
+              v-for="color in COLUMN_COLORS"
+              :key="color.value || 'none'"
+              type="button"
+              :title="color.label"
+              @mousedown.prevent="applyColumnColor(color.value)"
+              class="w-6 h-6 rounded-md border border-[#DCDEDD] transition-transform hover:scale-110"
+              :class="{ 'bg-white bg-[linear-gradient(135deg,transparent_45%,#ef4444_45%,#ef4444_55%,transparent_55%)]': !color.value }"
+              :style="color.value ? { backgroundColor: color.value } : {}"
+            ></button>
+          </div>
+        </div>
       </template>
     </div>
 
