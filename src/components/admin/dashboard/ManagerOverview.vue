@@ -25,9 +25,15 @@ const canViewProjects = computed(() => can("project-list"));
 
 <template>
   <div class="space-y-6">
-    <Statistics />
-    <SearchSection />
-    <ProjectsAtRisk v-if="canViewProjects" />
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <ProjectsAtRisk v-if="canViewProjects" />
+      <StickyNotesWidget />
+    </div>
+    <Statistics>
+      <template #besideBudget>
+        <SearchSection />
+      </template>
+    </Statistics>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div
         v-if="canViewEmployees || canViewTeams"
@@ -39,6 +45,5 @@ const canViewProjects = computed(() => can("project-list"));
       </div>
       <DashboardQuickLinks title="Company Overview" :links="quickLinks" class="lg:col-span-1" />
     </div>
-    <StickyNotesWidget />
   </div>
 </template>

@@ -44,14 +44,21 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <Statistics />
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <!-- Pending Leave Requests -->
-      <div v-if="canViewLeaveRequests" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 lg:col-span-2">
+      <div
+        v-if="canViewLeaveRequests"
+        class="bg-gradient-to-br from-indigo-50 to-white border-2 border-indigo-200 rounded-[14px] p-5 shadow-sm"
+      >
         <div class="flex items-center justify-between mb-4">
-          <div>
-            <h3 class="text-brand-dark text-lg font-bold">Pending Leave Requests</h3>
-            <p class="text-brand-light text-sm">{{ leaveMeta.total }} awaiting your review</p>
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-indigo-100 rounded-[10px] flex items-center justify-center shrink-0">
+              <ClipboardList class="w-4 h-4 text-indigo-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-lg font-bold">Pending Leave Requests</h3>
+              <p class="text-brand-light text-sm">{{ leaveMeta.total }} awaiting your review</p>
+            </div>
           </div>
           <RouterLink
             :to="{ name: 'admin.leave-requests.dashboard' }"
@@ -69,7 +76,7 @@ onMounted(() => {
           <div
             v-for="request in pendingLeaveRequests"
             :key="request.id"
-            class="flex items-center justify-between gap-3 border border-[#DCDEDD] rounded-[12px] p-3"
+            class="flex items-center justify-between gap-3 border border-[#DCDEDD] rounded-[12px] p-3 bg-white"
           >
             <div class="min-w-0">
               <p class="text-brand-dark text-sm font-medium truncate">
@@ -89,10 +96,14 @@ onMounted(() => {
         </div>
       </div>
 
-      <DashboardQuickLinks title="People & Work" :links="quickLinks" class="lg:col-span-1" />
+      <StickyNotesWidget />
+    </div>
+
+    <Statistics />
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <DashboardQuickLinks title="People & Work" :links="quickLinks" class="lg:col-span-3" />
     </div>
 
     <LatestEmployees v-if="canViewEmployees" />
-    <StickyNotesWidget />
   </div>
 </template>

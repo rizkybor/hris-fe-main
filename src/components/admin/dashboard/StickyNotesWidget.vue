@@ -28,9 +28,14 @@ const colorFor = (index) => NOTE_COLORS[index % NOTE_COLORS.length];
 </script>
 
 <template>
-  <div v-if="can('meeting-note-pin')" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+  <div
+    v-if="can('meeting-note-pin')"
+    class="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 rounded-[14px] p-5 shadow-sm"
+  >
     <div class="flex items-center gap-2 mb-4">
-      <Pin class="w-4 h-4 text-amber-500" />
+      <div class="w-8 h-8 bg-amber-100 rounded-[10px] flex items-center justify-center shrink-0">
+        <Pin class="w-4 h-4 text-amber-600" />
+      </div>
       <h3 class="text-brand-dark text-lg font-bold">Sticky Notes</h3>
     </div>
 

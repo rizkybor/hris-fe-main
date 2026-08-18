@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed } from "vue";
+import { onMounted, computed, useSlots } from "vue";
 import {
   TrendingUpIcon,
   UsersIcon,
@@ -29,6 +29,12 @@ const showPayrollHighlight = computed(
 // Same gate the Projects page itself uses for its stats, so only roles
 // that can already see project data get the budget overview here too.
 const showProjectBudget = computed(() => can("project-statistic"));
+
+// Lets a parent dashboard (e.g. Manager's Search section) sit beside the
+// budget chart on desktop, without forcing the chart to half-width on
+// dashboards that don't pass anything into this slot.
+const slots = useSlots();
+const hasBesideBudgetSlot = computed(() => !!slots.besideBudget);
 
 onMounted(() => {
   dashboardStore.fetchStatistics();
@@ -247,5 +253,12 @@ const payrollStats = computed(() => payrollStore.statistics);
     </div>
   </div>
 
-  <ProjectBudgetChart v-if="showProjectBudget" compact class="mb-6" />
+  <div
+    v-if="showProjectBudget || hasBesideBudgetSlot"
+    class="mb-6"
+    :class="hasBesideBudgetSlot ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 items-start' : ''"
+  >
+    <ProjectBudgetChart v-if="showProjectBudget" compact />
+    <slot name="besideBudget" />
+  </div>
 </template>
