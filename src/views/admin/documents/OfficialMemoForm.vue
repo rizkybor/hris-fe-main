@@ -2,19 +2,16 @@
 import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
-import { FileSignature, User, Paperclip, X, FileText } from "lucide-vue-next";
+import { FileSignature, User, ShieldCheck, Paperclip, X, FileText } from "lucide-vue-next";
 import { useDocumentLetterStore } from "@/stores/documentLetter";
-import { useTeamStore } from "@/stores/team";
 import { useAuthStore } from "@/stores/auth";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 
 const route = useRoute();
 const router = useRouter();
 const store = useDocumentLetterStore();
-const teamStore = useTeamStore();
 const authStore = useAuthStore();
 
-const { teams } = storeToRefs(teamStore);
 const { error } = storeToRefs(store);
 
 const isEditing = computed(() => !!route.params.id);
@@ -25,7 +22,6 @@ const form = ref({
   subject: "",
   document_date: new Date().toISOString().slice(0, 10),
   body: "",
-  recipient_team_ids: [],
 });
 
 const newAttachments = ref([]);
@@ -33,8 +29,6 @@ const existingAttachments = ref([]);
 const removeAttachmentIds = ref([]);
 
 onMounted(async () => {
-  await teamStore.fetchTeams();
-
   if (isEditing.value) {
     const memo = await store.fetchDocumentLetter(route.params.id);
     form.value = {
@@ -42,20 +36,10 @@ onMounted(async () => {
       subject: memo.subject,
       document_date: memo.document_date?.slice(0, 10),
       body: memo.body,
-      recipient_team_ids: memo.recipients?.map((r) => r.id) || [],
     };
     existingAttachments.value = memo.attachments || [];
   }
 });
-
-const toggleTeam = (teamId) => {
-  const idx = form.value.recipient_team_ids.indexOf(teamId);
-  if (idx === -1) {
-    form.value.recipient_team_ids.push(teamId);
-  } else {
-    form.value.recipient_team_ids.splice(idx, 1);
-  }
-};
 
 const onFileChange = (e) => {
   newAttachments.value.push(...Array.from(e.target.files || []));
@@ -75,7 +59,6 @@ const buildFormData = () => {
   formData.append("subject", form.value.subject);
   formData.append("document_date", form.value.document_date);
   formData.append("body", form.value.body);
-  form.value.recipient_team_ids.forEach((id) => formData.append("recipient_team_ids[]", id));
   newAttachments.value.forEach((file) => formData.append("attachments[]", file));
   removeAttachmentIds.value.forEach((id) => formData.append("remove_attachment_ids[]", id));
   return formData;
@@ -142,35 +125,21 @@ const handleSubmit = async () => {
         />
       </div>
 
-      <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Pengirim</label>
-        <div class="flex items-center gap-2 px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm bg-gray-50 text-brand-light">
-          <User class="w-4 h-4" />
-          {{ authStore.user?.name }}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Pengirim</label>
+          <div class="flex items-center gap-2 px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm bg-gray-50 text-brand-light">
+            <User class="w-4 h-4" />
+            {{ authStore.user?.name }}
+          </div>
         </div>
-      </div>
-
-      <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Penerima / Unit Tujuan</label>
-        <div class="border border-[#DCDEDD] rounded-xl p-3 max-h-48 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          <label
-            v-for="team in teams"
-            :key="team.id"
-            class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50"
-          >
-            <input
-              type="checkbox"
-              :checked="form.recipient_team_ids.includes(team.id)"
-              @change="toggleTeam(team.id)"
-              class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]"
-            />
-            {{ team.name }}
-          </label>
-          <p v-if="teams.length === 0" class="text-sm text-gray-400 italic py-2">Belum ada unit/tim.</p>
+        <div>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Penerima</label>
+          <div class="flex items-center gap-2 px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm bg-gray-50 text-brand-light">
+            <ShieldCheck class="w-4 h-4" />
+            Finance Manager
+          </div>
         </div>
-        <p v-if="form.recipient_team_ids.length === 0" class="text-xs text-red-500 mt-1">
-          Pilih minimal satu unit tujuan.
-        </p>
       </div>
 
       <div>
@@ -223,7 +192,7 @@ const handleSubmit = async () => {
       <div class="flex items-center gap-3 pt-2 border-t border-[#F1F1F1]">
         <button
           type="submit"
-          :disabled="saving || form.recipient_team_ids.length === 0"
+          :disabled="saving"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-5 py-2.5 disabled:opacity-50"
         >
           <span class="text-brand-white text-sm font-semibold">{{ saving ? "Menyimpan..." : "Simpan sebagai Draft" }}</span>

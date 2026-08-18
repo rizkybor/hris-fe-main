@@ -9,7 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   FileText,
-  Users,
+  ShieldCheck,
   Calendar,
   User,
   X,
@@ -200,20 +200,10 @@ const handleReject = async () => {
               <span class="text-brand-light">Pengirim:</span>
               <span class="text-brand-dark font-medium">{{ memo.sender?.name || memo.creator?.name || "-" }}</span>
             </div>
-            <div class="flex items-start gap-2 text-sm">
-              <Users class="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-              <div>
-                <span class="text-brand-light">Unit Tujuan:</span>
-                <div class="flex flex-wrap gap-1 mt-1">
-                  <span
-                    v-for="team in memo.recipients"
-                    :key="team.id"
-                    class="px-2 py-0.5 rounded-md bg-blue-50 text-[#0C51D9] text-xs font-medium"
-                  >
-                    {{ team.name }}
-                  </span>
-                </div>
-              </div>
+            <div class="flex items-center gap-2 text-sm">
+              <ShieldCheck class="w-4 h-4 text-gray-400 shrink-0" />
+              <span class="text-brand-light">Penerima:</span>
+              <span class="text-brand-dark font-medium">Finance Manager</span>
             </div>
           </div>
 
