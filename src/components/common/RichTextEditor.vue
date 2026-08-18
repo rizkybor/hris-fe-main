@@ -63,6 +63,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener("selectionchange", trackSelection);
+  document.removeEventListener("mousemove", onResizeMouseMove);
+  document.removeEventListener("mouseup", onResizeMouseUp);
 });
 
 // Only re-sync from outside when the value actually diverges (e.g. loading
@@ -252,6 +254,92 @@ const applyRowColor = (color) => {
   Array.from(ctx.row.children).forEach((cell) => {
     cell.style.backgroundColor = color;
   });
+  onInput();
+};
+
+// --- Column width / row height resizing -----------------------------
+// Plain <td>/<th> widths are driven by the browser's table auto-layout
+// (widest content wins), so there's no single element to resize. A
+// <colgroup> gives each column its own resizable element; it's built
+// lazily off the current rendered widths the first time a column is
+// dragged, then the table is pinned to table-layout: fixed so those
+// widths actually stick.
+const RESIZE_EDGE_PX = 6;
+let resizeState = null;
+
+const ensureColgroup = (table) => {
+  const firstRow = table.querySelector("tr");
+  if (!firstRow) return null;
+  const colCount = firstRow.children.length;
+  let colgroup = table.querySelector(":scope > colgroup");
+  if (colgroup && colgroup.children.length === colCount) return colgroup;
+
+  colgroup = document.createElement("colgroup");
+  Array.from(firstRow.children).forEach((cell) => {
+    const col = document.createElement("col");
+    col.style.width = `${Math.round(cell.getBoundingClientRect().width)}px`;
+    colgroup.appendChild(col);
+  });
+  table.insertBefore(colgroup, table.firstChild);
+  table.style.tableLayout = "fixed";
+  return colgroup;
+};
+
+const resizeEdgeAt = (cell, clientX, clientY) => {
+  const rect = cell.getBoundingClientRect();
+  if (rect.right - clientX <= RESIZE_EDGE_PX) return "col";
+  if (rect.bottom - clientY <= RESIZE_EDGE_PX) return "row";
+  return null;
+};
+
+const onEditorMouseMove = (e) => {
+  if (resizeState || props.disabled) return;
+  const cell = closestCell(e.target);
+  const edge = cell ? resizeEdgeAt(cell, e.clientX, e.clientY) : null;
+  editorRef.value.style.cursor = edge === "col" ? "col-resize" : edge === "row" ? "row-resize" : "";
+};
+
+const onEditorMouseDown = (e) => {
+  if (props.disabled) return;
+  const cell = closestCell(e.target);
+  if (!cell) return;
+  const edge = resizeEdgeAt(cell, e.clientX, e.clientY);
+  if (!edge) return;
+
+  e.preventDefault();
+  const table = cell.closest("table");
+  const row = cell.closest("tr");
+
+  if (edge === "col") {
+    const colgroup = ensureColgroup(table);
+    const cellIndex = Array.from(row.children).indexOf(cell);
+    const col = colgroup?.children[cellIndex];
+    if (!col) return;
+    resizeState = { type: "col", col, startX: e.clientX, startWidth: parseFloat(col.style.width) };
+  } else {
+    resizeState = { type: "row", row, startY: e.clientY, startHeight: row.getBoundingClientRect().height };
+  }
+
+  document.addEventListener("mousemove", onResizeMouseMove);
+  document.addEventListener("mouseup", onResizeMouseUp);
+};
+
+const onResizeMouseMove = (e) => {
+  if (!resizeState) return;
+  if (resizeState.type === "col") {
+    const width = Math.max(30, resizeState.startWidth + (e.clientX - resizeState.startX));
+    resizeState.col.style.width = `${width}px`;
+  } else {
+    const height = Math.max(20, resizeState.startHeight + (e.clientY - resizeState.startY));
+    resizeState.row.style.height = `${height}px`;
+  }
+};
+
+const onResizeMouseUp = () => {
+  if (!resizeState) return;
+  resizeState = null;
+  document.removeEventListener("mousemove", onResizeMouseMove);
+  document.removeEventListener("mouseup", onResizeMouseUp);
   onInput();
 };
 
@@ -503,6 +591,9 @@ const FORMAT_OPTIONS = [
       ref="editorRef"
       :contenteditable="!disabled"
       @input="onInput"
+      @mousemove="onEditorMouseMove"
+      @mousedown="onEditorMouseDown"
+      @mouseleave="editorRef.style.cursor = ''"
       class="rich-text-editor px-3 py-2.5 text-sm min-h-[180px] max-h-[400px] overflow-y-auto focus:outline-none"
       :data-placeholder="placeholder"
     ></div>
