@@ -232,7 +232,7 @@ const titles = {
     subtitle: "Manage letter code and division code references",
   },
   "admin.settings.sdm-fields": {
-    title: "Bidang SDM",
+    title: "SDM Field",
     subtitle: "Manage the role/field list used by SDM Resource",
   },
   "admin.certificates.dashboard": {

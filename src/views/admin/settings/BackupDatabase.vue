@@ -74,7 +74,7 @@ const formatDate = (date) =>
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Backup Database</h3>
-          <p class="text-brand-light text-sm">Riwayat backup SQL penuh dari seluruh tabel database</p>
+          <p class="text-brand-light text-sm">Full SQL backup history of all database tables</p>
         </div>
       </div>
 
@@ -87,11 +87,11 @@ const formatDate = (date) =>
       >
         <Loader2 v-if="creating" class="w-4 h-4 animate-spin text-white" />
         <Plus v-else class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">{{ creating ? "Membuat Backup..." : "Buat Backup Baru" }}</span>
+        <span class="text-brand-white text-sm font-semibold">{{ creating ? "Creating Backup..." : "Create New Backup" }}</span>
       </button>
     </div>
 
-    <p v-if="error" class="text-red-500 text-sm mb-4">{{ typeof error === "string" ? error : "Gagal membuat backup." }}</p>
+    <p v-if="error" class="text-red-500 text-sm mb-4">{{ typeof error === "string" ? error : "Failed to create backup." }}</p>
 
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="relative mb-4 max-w-sm">
@@ -102,7 +102,7 @@ const formatDate = (date) =>
           v-model="search"
           @keyup.enter="handleSearch"
           type="text"
-          placeholder="Cari nama file backup..."
+          placeholder="Search backup file name..."
           class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
         />
       </div>
@@ -117,7 +117,7 @@ const formatDate = (date) =>
               <th class="py-3 pr-4 font-semibold">File Backup</th>
               <th class="py-3 pr-4 font-semibold">Ukuran</th>
               <th class="py-3 pr-4 font-semibold">Dibuat Oleh</th>
-              <th class="py-3 pr-4 font-semibold">Tanggal</th>
+              <th class="py-3 pr-4 font-semibold">Date</th>
               <th class="py-3 pr-4 font-semibold text-right">Aksi</th>
             </tr>
           </thead>
@@ -147,7 +147,7 @@ const formatDate = (date) =>
                     v-if="can('backup-delete')"
                     @click="confirmDelete(backup)"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Hapus"
+                    title="Delete"
                   >
                     <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
                   </button>
@@ -158,8 +158,8 @@ const formatDate = (date) =>
         </table>
 
         <div v-if="!loading && backups.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">Belum ada Backup</p>
-          <p class="text-sm text-gray-400 mt-1">Klik "Buat Backup Baru" untuk membuat backup database pertama.</p>
+          <p class="text-lg font-semibold">No Backups yet</p>
+          <p class="text-sm text-gray-400 mt-1">Click "Create New Backup" to create the first database backup.</p>
         </div>
       </div>
 
@@ -170,16 +170,16 @@ const formatDate = (date) =>
       <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
         <div class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <h3 class="text-xl font-bold text-brand-dark mb-2">Hapus Backup?</h3>
+          <h3 class="text-xl font-bold text-brand-dark mb-2">Delete Backup?</h3>
           <p class="text-gray-500 text-sm mb-6">
-            "{{ backupToDelete?.filename }}" akan dihapus permanen dari server dan tidak dapat dikembalikan.
+            "{{ backupToDelete?.filename }}" will be permanently deleted from the server and cannot be recovered.
           </p>
           <div class="grid grid-cols-2 gap-3">
             <button @click="isDeleteModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
-              Batal
+              Cancel
             </button>
             <button @click="handleDelete" class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600">
-              Ya, Hapus
+              Yes, Delete
             </button>
           </div>
         </div>
