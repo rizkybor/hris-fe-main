@@ -208,7 +208,7 @@ const saveCompany = async () => {
         </div>
         <div class="min-w-0">
           <h2 class="text-white text-lg font-bold truncate">{{ company.name || "-" }}</h2>
-          <p v-if="company.description" class="text-brand-white-70 text-sm truncate">{{ company.description }}</p>
+          <p v-if="company.description" :title="company.description" class="text-brand-white-70 text-sm truncate cursor-help">{{ company.description }}</p>
         </div>
       </div>
 
