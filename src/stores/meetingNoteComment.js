@@ -44,7 +44,24 @@ export const useMeetingNoteCommentStore = defineStore("meetingNoteComment", {
         async deleteComment(id) {
             try {
                 await axiosInstance.delete(`meeting-note-comments/${id}`);
-                this.comments = this.comments.filter((comment) => comment.id !== id);
+
+                // The backend cascades the delete to every descendant reply
+                // (any depth), so local state needs the same sweep -- just
+                // filtering out `id` would leave its replies orphaned in the
+                // thread view until the next full fetchComments().
+                const toRemove = new Set([id]);
+                let changed = true;
+                while (changed) {
+                    changed = false;
+                    for (const comment of this.comments) {
+                        if (comment.parent_id && toRemove.has(comment.parent_id) && !toRemove.has(comment.id)) {
+                            toRemove.add(comment.id);
+                            changed = true;
+                        }
+                    }
+                }
+
+                this.comments = this.comments.filter((comment) => !toRemove.has(comment.id));
             } catch (error) {
                 this.error = handleError(error);
                 throw error;
