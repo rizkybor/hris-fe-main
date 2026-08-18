@@ -13,6 +13,7 @@ import {
   Calendar,
   User,
   X,
+  Download,
 } from "lucide-vue-next";
 import { useDocumentLetterStore } from "@/stores/documentLetter";
 import { useAuthStore } from "@/stores/auth";
@@ -94,6 +95,16 @@ const handleReject = async () => {
     busy.value = false;
   }
 };
+
+const downloading = ref(false);
+const handleDownload = async () => {
+  downloading.value = true;
+  try {
+    await store.downloadPdf(memo.value.id, memo.value.document_number);
+  } finally {
+    downloading.value = false;
+  }
+};
 </script>
 
 <template>
@@ -121,6 +132,14 @@ const handleReject = async () => {
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
+          <button
+            @click="handleDownload"
+            :disabled="downloading"
+            class="px-4 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+          >
+            <Download class="w-4 h-4" />
+            {{ downloading ? "Downloading..." : "Download PDF" }}
+          </button>
           <router-link
             v-if="canEdit"
             :to="{ name: 'admin.official-memos.edit', params: { id: memo.id } }"
