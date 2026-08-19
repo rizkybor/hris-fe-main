@@ -291,7 +291,7 @@ const onLandingPageRateSettingSaved = async () => {
         </div>
 
         <div v-if="loadingLandingPageRateSetting" class="grid grid-cols-2 gap-4">
-          <Skeleton v-for="i in 6" :key="i" height="60px" rounded="12px" />
+          <Skeleton v-for="i in 4" :key="i" height="60px" rounded="12px" />
         </div>
         <div v-else class="grid grid-cols-2 gap-4">
           <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
@@ -309,14 +309,6 @@ const onLandingPageRateSettingSaved = async () => {
           <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
             <p class="text-xs text-gray-500 font-medium">Design Template</p>
             <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.design_template_price) }}</p>
-          </div>
-          <div class="p-3 rounded-[12px] bg-emerald-50 border border-emerald-100">
-            <p class="text-xs text-emerald-600 font-medium">Default Rate Developer</p>
-            <p class="text-emerald-900 text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.default_rate_developer) }}/jam</p>
-          </div>
-          <div class="p-3 rounded-[12px] bg-emerald-50 border border-emerald-100">
-            <p class="text-xs text-emerald-600 font-medium">Margin Jual Default</p>
-            <p class="text-emerald-900 text-base font-bold mt-1">{{ landingPageRateSetting.margin_percent }}%</p>
           </div>
         </div>
       </div>

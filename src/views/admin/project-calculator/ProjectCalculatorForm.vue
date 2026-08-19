@@ -34,6 +34,13 @@ const { rateSetting, landingPageRateSetting, loadingRateSetting, loadingLandingP
 const isEditing = computed(() => !!route.params.id);
 const loadingCalculation = ref(false);
 
+// Landing Page's Development rate and Margin Jual aren't company-wide
+// configurable (only Server/Design pricing is) -- these are just the
+// pre-filled defaults for a new calculation, matching
+// ProjectCalculatorService::DEFAULT_RATE_DEVELOPER/DEFAULT_MARGIN_PERCENT.
+const DEFAULT_RATE_DEVELOPER = 100000;
+const DEFAULT_MARGIN_PERCENT = 30;
+
 const newFeatureItem = () => ({
   name: "",
   analysis_hours: 0,
@@ -179,14 +186,14 @@ const applyReference = async (reference) => {
       form.value.server_type = lp.server_type ?? "shared";
       form.value.design_type = lp.design_type ?? "template";
       form.value.estimated_hours = lp.estimated_hours ?? 0;
-      form.value.rate_developer = lp.rate_developer ?? landingPageRateSetting.value.default_rate_developer;
+      form.value.rate_developer = lp.rate_developer ?? DEFAULT_RATE_DEVELOPER;
       form.value.developer_count = lp.developer_count ?? 1;
       form.value.additional_items = (lp.additional_items ?? []).map((i) => ({
         description: i.description,
         amount: i.amount,
         price: i.price,
       }));
-      form.value.margin_percent = full.margin_percent ?? landingPageRateSetting.value.margin_percent;
+      form.value.margin_percent = full.margin_percent ?? DEFAULT_MARGIN_PERCENT;
       form.value.items = [];
     } else {
       form.value.items = full.items.map((item) =>
@@ -218,8 +225,8 @@ onMounted(async () => {
   await Promise.all([store.fetchRateSetting(), store.fetchLandingPageRateSetting(), store.fetchPphTypes()]);
   form.value.pm_overhead_percent = rateSetting.value.pm_overhead_percent;
   form.value.infra_setup_cost = rateSetting.value.default_infra_setup_cost;
-  form.value.rate_developer = landingPageRateSetting.value.default_rate_developer;
-  form.value.margin_percent = landingPageRateSetting.value.margin_percent;
+  form.value.rate_developer = DEFAULT_RATE_DEVELOPER;
+  form.value.margin_percent = DEFAULT_MARGIN_PERCENT;
 
   if (isEditing.value) {
     loadingCalculation.value = true;
@@ -236,14 +243,14 @@ onMounted(async () => {
         server_type: lp?.server_type ?? "shared",
         design_type: lp?.design_type ?? "template",
         estimated_hours: lp?.estimated_hours ?? 0,
-        rate_developer: lp?.rate_developer ?? landingPageRateSetting.value.default_rate_developer,
+        rate_developer: lp?.rate_developer ?? DEFAULT_RATE_DEVELOPER,
         developer_count: lp?.developer_count ?? 1,
         additional_items: (lp?.additional_items ?? []).map((i) => ({
           description: i.description,
           amount: i.amount,
           price: i.price,
         })),
-        margin_percent: calc.margin_percent ?? landingPageRateSetting.value.margin_percent,
+        margin_percent: calc.margin_percent ?? DEFAULT_MARGIN_PERCENT,
         include_ppn: calc.include_ppn,
         ppn_percent: calc.ppn_percent,
         include_pph: calc.include_pph,
@@ -288,10 +295,10 @@ const switchScenario = (scenario) => {
     form.value.server_type = "shared";
     form.value.design_type = "template";
     form.value.estimated_hours = 0;
-    form.value.rate_developer = landingPageRateSetting.value.default_rate_developer;
+    form.value.rate_developer = DEFAULT_RATE_DEVELOPER;
     form.value.developer_count = 1;
     form.value.additional_items = [];
-    form.value.margin_percent = landingPageRateSetting.value.margin_percent;
+    form.value.margin_percent = DEFAULT_MARGIN_PERCENT;
     form.value.items = [];
   } else {
     form.value.items = [scenario === "feature" ? newFeatureItem() : newModuleItem()];

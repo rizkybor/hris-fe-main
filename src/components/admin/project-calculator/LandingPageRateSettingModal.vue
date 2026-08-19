@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { X, Globe, Loader2, ServerIcon, PaletteIcon, CodeIcon, TrendingUpIcon } from "lucide-vue-next";
+import { X, Globe, Loader2, ServerIcon, PaletteIcon } from "lucide-vue-next";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { storeToRefs } from "pinia";
 
@@ -13,8 +13,6 @@ const form = ref({
   server_shared_price: 0,
   design_dedicated_price: 0,
   design_template_price: 0,
-  default_rate_developer: 0,
-  margin_percent: 0,
 });
 const errorMessage = ref("");
 
@@ -24,8 +22,6 @@ onMounted(() => {
     server_shared_price: landingPageRateSetting.value.server_shared_price,
     design_dedicated_price: landingPageRateSetting.value.design_dedicated_price,
     design_template_price: landingPageRateSetting.value.design_template_price,
-    default_rate_developer: landingPageRateSetting.value.default_rate_developer,
-    margin_percent: landingPageRateSetting.value.margin_percent,
   };
 });
 
@@ -96,28 +92,6 @@ const submit = async () => {
               <label class="block text-xs text-gray-500 mb-1">Template (Rp)</label>
               <input v-model.number="form.design_template_price" type="number" min="0" step="10000" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
             </div>
-          </div>
-        </div>
-
-        <div>
-          <div class="flex items-center gap-2 mb-2">
-            <CodeIcon class="w-4 h-4 text-emerald-600" />
-            <h4 class="text-brand-dark text-sm font-bold">Development</h4>
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Default Rate Developer (Rp/jam)</label>
-            <input v-model.number="form.default_rate_developer" type="number" min="0" step="1000" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
-          </div>
-        </div>
-
-        <div class="pt-2 border-t border-[#F1F1F1]">
-          <div class="flex items-center gap-2 mb-2">
-            <TrendingUpIcon class="w-4 h-4 text-emerald-600" />
-            <h4 class="text-brand-dark text-sm font-bold">Margin Jual</h4>
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Margin Jual Default (%)</label>
-            <input v-model.number="form.margin_percent" type="number" min="0" step="1" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
           </div>
         </div>
       </div>

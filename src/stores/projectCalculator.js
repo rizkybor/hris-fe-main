@@ -22,8 +22,6 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
             server_shared_price: 0,
             design_dedicated_price: 0,
             design_template_price: 0,
-            default_rate_developer: 0,
-            margin_percent: 0,
         },
         calculations: [],
         currentCalculation: null,

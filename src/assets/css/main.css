@@ -3503,11 +3503,6 @@ video {
   color: rgb(4 120 87 / var(--tw-text-opacity, 1));
 }
 
-.text-emerald-900 {
-  --tw-text-opacity: 1;
-  color: rgb(6 78 59 / var(--tw-text-opacity, 1));
-}
-
 .text-fuchsia-600 {
   --tw-text-opacity: 1;
   color: rgb(192 38 211 / var(--tw-text-opacity, 1));
