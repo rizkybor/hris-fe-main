@@ -105,10 +105,16 @@ watch(
 // member picker doesn't fight it over the same shared state.
 const memberCandidates = ref([]);
 const memberSearch = ref("");
+// The Project Leader shouldn't also be pickable as a Member -- they're
+// already the project's owner, so offering them again here would just be
+// a confusing duplicate pick.
+const selectableMemberCandidates = computed(() =>
+  memberCandidates.value.filter((employee) => employee.id !== form.value.project_leader_id)
+);
 const filteredMemberCandidates = computed(() => {
-  if (!memberSearch.value.trim()) return memberCandidates.value;
+  if (!memberSearch.value.trim()) return selectableMemberCandidates.value;
   const q = memberSearch.value.trim().toLowerCase();
-  return memberCandidates.value.filter((employee) => (employee.user?.name || "").toLowerCase().includes(q));
+  return selectableMemberCandidates.value.filter((employee) => (employee.user?.name || "").toLowerCase().includes(q));
 });
 
 const toggleMember = (employeeId) => {
@@ -150,6 +156,12 @@ const handleProjectPhotoSelect = (e) => {
 const handleSelectLeader = (employee) => {
   selectedLeader.value = employee;
   form.value.project_leader_id = employee.id;
+
+  // Already the project's owner -- drop any prior explicit member pick so
+  // the same person isn't submitted twice.
+  const idx = form.value.member_employee_ids.indexOf(employee.id);
+  if (idx !== -1) form.value.member_employee_ids.splice(idx, 1);
+
   leaderModal.value = false;
 };
 
@@ -643,7 +655,7 @@ watch(
                 </span>
               </div>
               <div class="border border-[#DCDEDD] rounded-xl overflow-hidden">
-                <div v-if="memberCandidates.length > 8" class="relative border-b border-[#DCDEDD] bg-gray-50 p-2">
+                <div v-if="selectableMemberCandidates.length > 8" class="relative border-b border-[#DCDEDD] bg-gray-50 p-2">
                   <Search class="w-3.5 h-3.5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     v-model="memberSearch"
@@ -666,7 +678,7 @@ watch(
                     />
                     <span class="truncate">{{ employee.user?.name }}</span>
                   </label>
-                  <p v-if="memberCandidates.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
+                  <p v-if="selectableMemberCandidates.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
                   <p v-else-if="filteredMemberCandidates.length === 0" class="text-sm text-gray-400 italic py-2">No employees match "{{ memberSearch }}".</p>
                 </div>
               </div>
