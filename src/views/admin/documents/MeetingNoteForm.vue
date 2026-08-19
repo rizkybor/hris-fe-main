@@ -5,6 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import { NotebookPen, Paperclip, X, FileText, Plus, UserPlus, Search, Users } from "lucide-vue-next";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
 import { useEmployeeStore } from "@/stores/employee";
+import { useAuthStore } from "@/stores/auth";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import PresenceIndicator from "@/components/common/PresenceIndicator.vue";
 
@@ -12,9 +13,19 @@ const route = useRoute();
 const router = useRouter();
 const store = useMeetingNoteStore();
 const employeeStore = useEmployeeStore();
+const authStore = useAuthStore();
 
 const { employees } = storeToRefs(employeeStore);
 const { error, activeViewers } = storeToRefs(store);
+
+// The creator doesn't check themselves in as an Internal Attendee -- they
+// can already comment/be mentioned on their own note regardless (see
+// MeetingNoteCommentController) -- so don't offer them as a pickable
+// attendee at all.
+const selectableEmployees = computed(() => {
+  const selfId = authStore.user?.employee_profile?.id;
+  return employees.value.filter((employee) => employee.id !== selfId);
+});
 
 const isEditing = computed(() => !!route.params.id);
 const saving = ref(false);
@@ -39,9 +50,9 @@ const removeAttachmentIds = ref([]);
 
 const attendeeSearch = ref("");
 const filteredEmployees = computed(() => {
-  if (!attendeeSearch.value.trim()) return employees.value;
+  if (!attendeeSearch.value.trim()) return selectableEmployees.value;
   const q = attendeeSearch.value.trim().toLowerCase();
-  return employees.value.filter((employee) => (employee.user?.name || employee.name || "").toLowerCase().includes(q));
+  return selectableEmployees.value.filter((employee) => (employee.user?.name || employee.name || "").toLowerCase().includes(q));
 });
 
 let heartbeatTimer = null;
@@ -57,7 +68,9 @@ onMounted(async () => {
       meeting_type: note.meeting_type,
       meeting_date: note.meeting_date?.slice(0, 16),
       body: note.body || "",
-      attendee_employee_ids: note.attendees?.map((a) => a.id) || [],
+      attendee_employee_ids: (note.attendees || [])
+        .map((a) => a.id)
+        .filter((id) => id !== authStore.user?.employee_profile?.id),
     };
     actionItems.value = note.action_items || [];
     externalAttendees.value = note.external_attendees || [];
@@ -216,7 +229,7 @@ const handleSubmit = async () => {
             </span>
           </div>
           <div class="border border-[#DCDEDD] rounded-xl overflow-hidden">
-            <div v-if="employees.length > 8" class="relative border-b border-[#DCDEDD] bg-gray-50 p-2">
+            <div v-if="selectableEmployees.length > 8" class="relative border-b border-[#DCDEDD] bg-gray-50 p-2">
               <Search class="w-3.5 h-3.5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
               <input
                 v-model="attendeeSearch"
@@ -239,7 +252,7 @@ const handleSubmit = async () => {
                 />
                 <span class="truncate">{{ employee.user?.name || employee.name }}</span>
               </label>
-              <p v-if="employees.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
+              <p v-if="selectableEmployees.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
               <p v-else-if="filteredEmployees.length === 0" class="text-sm text-gray-400 italic py-2">No attendees match "{{ attendeeSearch }}".</p>
             </div>
           </div>
