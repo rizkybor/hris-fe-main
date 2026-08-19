@@ -371,36 +371,44 @@ const submit = async () => {
 
         <!-- Items -->
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-brand-dark text-base font-bold">
-              {{ form.scenario === "feature" ? "Feature List" : "Module List" }}
-            </h3>
-            <div class="flex items-center gap-2">
-              <button
-                v-if="!isEditing"
-                type="button"
-                @click="openReferenceModal"
-                class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
-              >
-                <History class="w-3.5 h-3.5 text-gray-600" />
-                <span class="text-brand-dark text-xs font-semibold">Load from Previous Estimate</span>
-              </button>
-              <button
-                type="button"
-                @click="addItem"
-                class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
-              >
-                <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
-                <span class="text-brand-dark text-xs font-semibold">{{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}</span>
-              </button>
+          <!-- Sticky so "Add Feature/Module" stays reachable while scrolling
+               through a long item list, instead of having to scroll back up
+               every time. Same top-6 offset as the Summary sidebar's own
+               sticky positioning further down this page, so both line up
+               against whatever the actual scroll container/fixed header
+               setup is. -->
+          <div class="sticky top-6 z-10 bg-white pb-2 -mx-6 px-6 pt-6 -mt-6 border-b border-[#F1F1F1]">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-brand-dark text-base font-bold">
+                {{ form.scenario === "feature" ? "Feature List" : "Module List" }}
+              </h3>
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="!isEditing"
+                  type="button"
+                  @click="openReferenceModal"
+                  class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
+                >
+                  <History class="w-3.5 h-3.5 text-gray-600" />
+                  <span class="text-brand-dark text-xs font-semibold">Load from Previous Estimate</span>
+                </button>
+                <button
+                  type="button"
+                  @click="addItem"
+                  class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
+                >
+                  <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
+                  <span class="text-brand-dark text-xs font-semibold">{{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}</span>
+                </button>
+              </div>
             </div>
+            <p class="flex items-center gap-1.5 text-xs text-gray-400 pb-2">
+              <InfoIcon class="w-3.5 h-3.5" />
+              Complexity Factor: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Typical risk buffer 15&ndash;20%.
+            </p>
           </div>
-          <p class="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
-            <InfoIcon class="w-3.5 h-3.5" />
-            Complexity Factor: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Typical risk buffer 15&ndash;20%.
-          </p>
 
-          <div class="space-y-4">
+          <div class="space-y-4 mt-4">
             <div
               v-for="(item, index) in form.items"
               :key="index"
