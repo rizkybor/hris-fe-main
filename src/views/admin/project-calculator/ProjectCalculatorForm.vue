@@ -12,10 +12,14 @@ import {
   Loader2,
   SaveIcon,
   ClockIcon,
+  History,
+  X,
+  Search,
 } from "lucide-vue-next";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
+import { axiosInstance } from "@/plugins/axios";
 import { formatRupiah } from "@/utils/formatUtils";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -59,6 +63,74 @@ const form = ref({
 });
 
 const errorMessage = ref("");
+
+// "Load from Previous Estimate" -- lets a new estimate reuse the Module
+// List / New Feature line items already saved on an earlier one, instead
+// of retyping them. Create mode only; kept as a self-contained picker
+// (own list/search state) rather than reusing `store.calculations`, which
+// belongs to the dashboard list view.
+const referenceModal = ref(false);
+const referenceCalculations = ref([]);
+const referenceSearch = ref("");
+const loadingReferences = ref(false);
+const applyingReference = ref(false);
+
+const openReferenceModal = async () => {
+  referenceModal.value = true;
+  loadingReferences.value = true;
+  try {
+    const { data } = await axiosInstance.get("/project-calculations", {
+      params: { row_per_page: 50 },
+    });
+    referenceCalculations.value = data.data.data;
+  } catch {
+    referenceCalculations.value = [];
+  } finally {
+    loadingReferences.value = false;
+  }
+};
+
+const filteredReferences = computed(() => {
+  if (!referenceSearch.value.trim()) return referenceCalculations.value;
+  const q = referenceSearch.value.trim().toLowerCase();
+  return referenceCalculations.value.filter(
+    (c) => c.name?.toLowerCase().includes(q) || c.client_name?.toLowerCase().includes(q)
+  );
+});
+
+const applyReference = async (reference) => {
+  const hasExistingWork = form.value.items.some((item) => item.name?.trim());
+  if (hasExistingWork && !(await alertModal.confirm(`Replace the current items with those from "${reference.name}"? This can't be undone.`))) {
+    return;
+  }
+
+  applyingReference.value = true;
+  try {
+    const full = await store.fetchCalculation(reference.id);
+    form.value.scenario = full.scenario;
+    form.value.items = full.items.map((item) =>
+      full.scenario === "feature"
+        ? {
+            name: item.name,
+            analysis_hours: item.analysis_hours,
+            dev_hours: item.dev_hours,
+            testing_hours: item.testing_hours,
+            deploy_hours: item.deploy_hours,
+            complexity_factor: item.complexity_factor,
+            buffer_percent: item.buffer_percent,
+          }
+        : {
+            name: item.name,
+            estimated_hours: item.estimated_hours,
+            complexity_factor: item.complexity_factor,
+            buffer_percent: item.buffer_percent,
+          }
+    );
+    referenceModal.value = false;
+  } finally {
+    applyingReference.value = false;
+  }
+};
 
 onMounted(async () => {
   await store.fetchRateSetting();
@@ -299,25 +371,44 @@ const submit = async () => {
 
         <!-- Items -->
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-brand-dark text-base font-bold">
-              {{ form.scenario === "feature" ? "Feature List" : "Module List" }}
-            </h3>
-            <button
-              type="button"
-              @click="addItem"
-              class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
-            >
-              <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
-              <span class="text-brand-dark text-xs font-semibold">{{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}</span>
-            </button>
+          <!-- Sticky so "Add Feature/Module" stays reachable while scrolling
+               through a long item list, instead of having to scroll back up
+               every time. Same top-6 offset as the Summary sidebar's own
+               sticky positioning further down this page, so both line up
+               against whatever the actual scroll container/fixed header
+               setup is. -->
+          <div class="sticky top-6 z-10 bg-white pb-2 -mx-6 px-6 pt-6 -mt-6 border-b border-[#F1F1F1]">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-brand-dark text-base font-bold">
+                {{ form.scenario === "feature" ? "Feature List" : "Module List" }}
+              </h3>
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="!isEditing"
+                  type="button"
+                  @click="openReferenceModal"
+                  class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
+                >
+                  <History class="w-3.5 h-3.5 text-gray-600" />
+                  <span class="text-brand-dark text-xs font-semibold">Load from Previous Estimate</span>
+                </button>
+                <button
+                  type="button"
+                  @click="addItem"
+                  class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
+                >
+                  <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
+                  <span class="text-brand-dark text-xs font-semibold">{{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}</span>
+                </button>
+              </div>
+            </div>
+            <p class="flex items-center gap-1.5 text-xs text-gray-400 pb-2">
+              <InfoIcon class="w-3.5 h-3.5" />
+              Complexity Factor: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Typical risk buffer 15&ndash;20%.
+            </p>
           </div>
-          <p class="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
-            <InfoIcon class="w-3.5 h-3.5" />
-            Complexity Factor: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Typical risk buffer 15&ndash;20%.
-          </p>
 
-          <div class="space-y-4">
+          <div class="space-y-4 mt-4">
             <div
               v-for="(item, index) in form.items"
               :key="index"
@@ -491,6 +582,67 @@ const submit = async () => {
             <span class="text-brand-white text-sm font-semibold">
               {{ saving ? "Saving..." : isEditing ? "Save Changes" : "Save Estimate" }}
             </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load from Previous Estimate modal -->
+    <div v-if="referenceModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center">
+              <History class="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-base font-bold">Load from Previous Estimate</h3>
+              <p class="text-brand-light text-xs">Reuse a saved estimate's item list as a starting point</p>
+            </div>
+          </div>
+          <button type="button" @click="referenceModal = false" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <div class="p-4 border-b border-[#DCDEDD]">
+          <div class="relative">
+            <Search class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              v-model="referenceSearch"
+              type="text"
+              placeholder="Search by estimate or client name..."
+              class="w-full pl-9 pr-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="p-4 overflow-y-auto space-y-2">
+          <div v-if="loadingReferences" class="space-y-2">
+            <Skeleton height="64px" rounded="12px" />
+            <Skeleton height="64px" rounded="12px" />
+            <Skeleton height="64px" rounded="12px" />
+          </div>
+          <p v-else-if="filteredReferences.length === 0" class="text-center text-sm text-gray-400 py-8">
+            No saved estimates found.
+          </p>
+          <button
+            v-for="reference in filteredReferences"
+            :key="reference.id"
+            type="button"
+            :disabled="applyingReference"
+            @click="applyReference(reference)"
+            class="w-full text-left border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all p-4 flex items-center justify-between gap-3 disabled:opacity-50"
+          >
+            <div class="min-w-0">
+              <p class="text-brand-dark text-sm font-bold truncate">{{ reference.name }}</p>
+              <p class="text-brand-light text-xs truncate">
+                {{ reference.client_name || "No client" }} &middot;
+                {{ reference.scenario === "feature" ? "New Feature" : "Build from Scratch" }} &middot;
+                {{ reference.items?.length ?? 0 }} items
+              </p>
+            </div>
+            <span class="text-brand-dark text-sm font-semibold whitespace-nowrap">{{ formatRupiah(reference.grand_total) }}</span>
           </button>
         </div>
       </div>
