@@ -19,6 +19,7 @@ import Alert from "@/components/common/Alert.vue";
 import BaseInput from "@/components/common/form/Input.vue";
 import TextArea from "@/components/common/form/TextArea.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
+import { errorMessage } from "@/helpers/errorHelper";
 
 const archiveStore = useFilesCompanyStore();
 const route = useRoute();
@@ -138,7 +139,7 @@ const submit = async () => {
     }, 1200);
   } catch (err) {
     console.error(err);
-    error.value = err?.message || "Failed to update file.";
+    error.value = errorMessage(err, "Failed to update file.");
   } finally {
     submitting.value = false;
   }

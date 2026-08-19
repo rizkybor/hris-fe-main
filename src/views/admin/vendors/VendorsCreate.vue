@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { Briefcase, Save, User, Phone, Mail, MapPin, Tag, Layers, FileText, Building2 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useVendorsStore } from "@/stores/vendor";
+import { errorMessage } from "@/helpers/errorHelper";
 
 const router = useRouter();
 const vendorsStore = useVendorsStore();
@@ -41,7 +42,7 @@ const submit = async () => {
       router.push({ name: "admin.vendors.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = err?.message || "Failed to save vendor.";
+    error.value = errorMessage(err, "Failed to save vendor.");
   } finally {
     loading.value = false;
   }
