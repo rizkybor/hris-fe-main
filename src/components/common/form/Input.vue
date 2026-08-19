@@ -21,7 +21,7 @@
       <input
         :id="id"
         :name="name"
-        :type="type"
+        :type="inputType"
         :placeholder="placeholder"
         :required="required"
         :min="min"
@@ -29,7 +29,7 @@
         :readonly="readonly"
         :value="modelValue"
         :class="[
-          'w-full pl-10 pr-4 border rounded-[12px] transition-all duration-300',
+          'w-full border rounded-[12px] transition-all duration-300',
           'hover:border-[#0C51D9] hover:border-2',
           'focus:border-[#0C51D9] focus:border-2 focus:bg-white',
           borderColor,
@@ -37,6 +37,18 @@
         :style="inputStyle"
         @input="onInput"
       />
+
+      <button
+        v-if="isPassword"
+        type="button"
+        tabindex="-1"
+        @click="showPassword = !showPassword"
+        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+        :aria-label="showPassword ? 'Hide password' : 'Show password'"
+      >
+        <EyeOff v-if="showPassword" class="h-5 w-5" />
+        <Eye v-else class="h-5 w-5" />
+      </button>
     </div>
 
     <p v-if="error" class="mt-2" :style="errorStyle">
@@ -46,7 +58,8 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { Eye, EyeOff } from "lucide-vue-next";
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -73,15 +86,27 @@ const borderColor = computed(() =>
   props.error ? "border-[#DC2626] border-2" : "border-[#DCDEDD]"
 );
 
-const inputStyle = {
+const isPassword = computed(() => props.type === "password");
+const showPassword = ref(false);
+const inputType = computed(() => (isPassword.value && showPassword.value ? "text" : props.type));
+
+// A plain `padding` shorthand here would set padding-right too, and an
+// inline style always beats the pr-4/pr-11 Tailwind classes on the input
+// (inline wins regardless of the class's own specificity) -- so the
+// password toggle button would end up unclickable, sitting under a
+// paddingless slice of the input. Set every side explicitly instead so
+// paddingRight can vary with isPassword.
+const inputStyle = computed(() => ({
   display: "flex",
-  padding: "12px",
+  paddingTop: "12px",
+  paddingBottom: "12px",
   paddingLeft: "40px",
+  paddingRight: isPassword.value ? "44px" : "12px",
   justifyContent: "flex-start",
   alignItems: "center",
   gap: "10px",
   background: "#ffffff",
-};
+}));
 
 const onInput = (event) => {
   let value = event.target.value;
