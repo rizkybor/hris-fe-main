@@ -265,8 +265,30 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Assigned Teams Section -->
-        <div>
+        <!-- Assigned Members Section (By Employee mode) -->
+        <div v-if="project.team_assignment_mode === 'employee'">
+          <h5 class="text-brand-dark text-base font-semibold mb-3">
+            Project Members
+          </h5>
+          <div
+            v-if="!project.members || project.members.length === 0"
+            class="text-center py-8 text-gray-500 text-sm"
+          >
+            No members assigned
+          </div>
+          <div v-else class="flex flex-wrap gap-2">
+            <span
+              v-for="member in project.members"
+              :key="member.id"
+              class="px-3 py-1.5 rounded-full bg-blue-50 text-[#0C51D9] text-sm font-medium"
+            >
+              {{ member.name }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Assigned Teams Section (By Team mode) -->
+        <div v-else>
           <h5 class="text-brand-dark text-base font-semibold mb-3">
             Assigned Teams
           </h5>

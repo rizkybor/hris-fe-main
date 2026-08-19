@@ -27,12 +27,13 @@ import {
   ChevronDown,
   Users2,
 } from "lucide-vue-next";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash";
 import { useTeamStore } from "@/stores/team";
 import { useOptionStore } from "@/stores/option";
 import { useEmployeeStore } from "@/stores/employee";
 import { storeToRefs } from "pinia";
+import { axiosInstance } from "@/plugins/axios";
 import router from "@/router";
 
 const teamStore = useTeamStore();
@@ -57,12 +58,40 @@ const form = ref({
   status: "",
   team_lead_id: "",
   responsibilities: ["", "", ""],
+  member_employee_ids: [],
 });
 
 const teamIconInput = ref(null);
 const leadModal = ref(false);
 const searchLead = ref("");
 const selectedLead = ref(null);
+
+// Kept separate from employeeStore.employees (used by the Team Lead
+// search modal, which fetches a limited/filtered slice) so this
+// full-roster member picker doesn't fight it over the same shared state.
+const memberCandidates = ref([]);
+const memberSearch = ref("");
+// The Team Lead is already implicitly a member (the backend auto-adds
+// them as one on create), so offering them again in this picker would
+// just be a confusing duplicate pick.
+const selectableMemberCandidates = computed(() => {
+  const leadEmployeeId = selectedLead.value?.id;
+  return memberCandidates.value.filter((employee) => employee.id !== leadEmployeeId);
+});
+const filteredMemberCandidates = computed(() => {
+  if (!memberSearch.value.trim()) return selectableMemberCandidates.value;
+  const q = memberSearch.value.trim().toLowerCase();
+  return selectableMemberCandidates.value.filter((employee) => (employee.user?.name || "").toLowerCase().includes(q));
+});
+
+const toggleMember = (employeeId) => {
+  const idx = form.value.member_employee_ids.indexOf(employeeId);
+  if (idx === -1) {
+    form.value.member_employee_ids.push(employeeId);
+  } else {
+    form.value.member_employee_ids.splice(idx, 1);
+  }
+};
 
 const handleSubmit = async () => {
   await createTeam(form.value);
@@ -81,9 +110,20 @@ const handleTeamIconSelect = (e) => {
   }
 };
 
+const handleRemoveIcon = () => {
+  form.value.icon = "";
+  form.value.icon_url = "";
+  if (teamIconInput.value) teamIconInput.value.value = "";
+};
+
 const handleSelectLead = (employee) => {
   selectedLead.value = employee;
   form.value.team_lead_id = employee.user.id;
+
+  // Already implicitly a member -- drop any prior explicit pick so the
+  // same person isn't submitted twice.
+  const idx = form.value.member_employee_ids.indexOf(employee.id);
+  if (idx !== -1) form.value.member_employee_ids.splice(idx, 1);
 
   leadModal.value = false;
 };
@@ -106,6 +146,9 @@ onMounted(async () => {
   await fetchEmployees({
     limit: 6,
   });
+
+  const { data } = await axiosInstance.get("employees");
+  memberCandidates.value = data.data;
 });
 
 watch(
@@ -231,6 +274,8 @@ watch(
                   </button>
                   <button
                     type="button"
+                    v-if="form.icon_url"
+                    @click="handleRemoveIcon"
                     class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2 cursor-pointer w-full sm:w-auto"
                   >
                     <X class="w-4 h-4 text-gray-600" />
@@ -376,6 +421,59 @@ watch(
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team Members Section -->
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+          <div class="flex items-center gap-3 mb-6">
+            <div
+              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+            >
+              <Users class="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-xl font-bold">Team Members</h3>
+              <p class="text-brand-light text-sm font-normal">
+                Pick employees who will be part of this team
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-sm font-semibold text-brand-dark block">Members</label>
+            <span v-if="form.member_employee_ids.length" class="text-xs text-[#0C51D9] font-semibold flex items-center gap-1">
+              <Users class="w-3.5 h-3.5" />
+              {{ form.member_employee_ids.length }} selected
+            </span>
+          </div>
+          <div class="border border-[#DCDEDD] rounded-xl overflow-hidden">
+            <div v-if="selectableMemberCandidates.length > 8" class="relative border-b border-[#DCDEDD] bg-gray-50 p-2">
+              <Search class="w-3.5 h-3.5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
+                v-model="memberSearch"
+                type="text"
+                placeholder="Search employees..."
+                class="w-full pl-7 pr-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs bg-white focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+              />
+            </div>
+            <div class="p-3 max-h-64 overflow-y-auto space-y-1">
+              <label
+                v-for="employee in filteredMemberCandidates"
+                :key="employee.id"
+                class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  :checked="form.member_employee_ids.includes(employee.id)"
+                  @change="toggleMember(employee.id)"
+                  class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] shrink-0"
+                />
+                <span class="truncate">{{ employee.user?.name }}</span>
+              </label>
+              <p v-if="selectableMemberCandidates.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
+              <p v-else-if="filteredMemberCandidates.length === 0" class="text-sm text-gray-400 italic py-2">No employees match "{{ memberSearch }}".</p>
             </div>
           </div>
         </div>

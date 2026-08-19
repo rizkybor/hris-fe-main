@@ -156,6 +156,9 @@ const getProgressColor = (progress) => {
         <span v-if="data.teams.length > 0">{{
           data.teams.map((team) => team.name).join(", ")
         }}</span>
+        <span v-else-if="data.members?.length > 0">{{
+          data.members.map((member) => member.name).join(", ")
+        }}</span>
         <span v-else>No teams assigned</span>
       </div>
       <div class="flex items-center gap-2 text-sm text-gray-600">
