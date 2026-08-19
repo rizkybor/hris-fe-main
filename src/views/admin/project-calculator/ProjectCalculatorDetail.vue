@@ -42,7 +42,10 @@ const pphTypeLabel = computed(
 const scenarioMeta = {
   feature: { label: "New Feature Estimate", class: "bg-blue-50 text-blue-700 border-blue-100" },
   build: { label: "Build from Scratch Estimate", class: "bg-violet-50 text-violet-700 border-violet-100" },
+  landing_page: { label: "Landing Page Estimate", class: "bg-emerald-50 text-emerald-700 border-emerald-100" },
 };
+
+const landingPageItem = computed(() => (calc.value?.scenario === "landing_page" ? calc.value.items?.[0] : null));
 
 const displayTotal = computed(() => (calc.value?.include_ppn ? calc.value.total_with_ppn : calc.value?.grand_total));
 
@@ -116,7 +119,7 @@ const printQuote = () => window.print();
       </div>
 
       <!-- Items table -->
-      <div class="overflow-x-auto mt-6">
+      <div v-if="calc.scenario !== 'landing_page'" class="overflow-x-auto mt-6">
         <table class="w-full text-sm">
           <thead>
             <tr class="text-left text-gray-400 text-xs uppercase tracking-wide border-b border-[#F1F1F1]">
@@ -145,6 +148,43 @@ const printQuote = () => window.print();
         </table>
       </div>
 
+      <!-- Landing Page breakdown table -->
+      <div v-else-if="landingPageItem" class="overflow-x-auto mt-6">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-gray-400 text-xs uppercase tracking-wide border-b border-[#F1F1F1]">
+              <th class="py-2 pr-4">Component</th>
+              <th class="py-2 pr-4">Choice</th>
+              <th class="py-2 text-right">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-[#F8F8F8]">
+              <td class="py-3 pr-4 font-semibold text-brand-dark">Server</td>
+              <td class="py-3 pr-4 text-gray-600 capitalize">{{ landingPageItem.server_type }}</td>
+              <td class="py-3 text-right font-bold text-brand-dark">{{ formatRupiah(landingPageItem.server_cost) }}</td>
+            </tr>
+            <tr class="border-b border-[#F8F8F8]">
+              <td class="py-3 pr-4 font-semibold text-brand-dark">Design</td>
+              <td class="py-3 pr-4 text-gray-600 capitalize">{{ landingPageItem.design_type }}</td>
+              <td class="py-3 text-right font-bold text-brand-dark">{{ formatRupiah(landingPageItem.design_cost) }}</td>
+            </tr>
+            <tr class="border-b border-[#F8F8F8]">
+              <td class="py-3 pr-4 font-semibold text-brand-dark">Development</td>
+              <td class="py-3 pr-4 text-gray-600">
+                {{ landingPageItem.estimated_hours }}h &times; {{ formatRupiah(landingPageItem.rate_developer) }} &times; {{ landingPageItem.developer_count }} dev
+              </td>
+              <td class="py-3 text-right font-bold text-brand-dark">{{ formatRupiah(landingPageItem.development_cost) }}</td>
+            </tr>
+            <tr v-for="(item, idx) in landingPageItem.additional_items" :key="idx" class="border-b border-[#F8F8F8]">
+              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ item.description }}</td>
+              <td class="py-3 pr-4 text-gray-600">{{ item.amount }} &times; {{ formatRupiah(item.price) }}</td>
+              <td class="py-3 text-right font-bold text-brand-dark">{{ formatRupiah(item.subtotal) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <!-- Totals -->
       <div class="flex justify-end mt-6">
         <div class="w-full sm:w-80 space-y-2 text-sm">
@@ -152,7 +192,7 @@ const printQuote = () => window.print();
             <span class="text-gray-500">Subtotal</span>
             <span class="text-brand-dark font-medium">{{ formatRupiah(calc.subtotal) }}</span>
           </div>
-          <div class="flex items-center justify-between">
+          <div v-if="calc.scenario !== 'landing_page'" class="flex items-center justify-between">
             <span class="text-gray-500">Buffer Risiko</span>
             <span class="text-brand-dark font-medium">{{ formatRupiah(calc.buffer_total) }}</span>
           </div>
@@ -163,6 +203,10 @@ const printQuote = () => window.print();
           <div v-if="calc.scenario === 'build'" class="flex items-center justify-between">
             <span class="text-gray-500">Infrastructure Setup</span>
             <span class="text-brand-dark font-medium">{{ formatRupiah(calc.infra_setup_cost) }}</span>
+          </div>
+          <div v-if="calc.scenario === 'landing_page'" class="flex items-center justify-between">
+            <span class="text-gray-500">Margin Jual ({{ calc.margin_percent }}%)</span>
+            <span class="text-brand-dark font-medium">{{ formatRupiah(calc.margin_total) }}</span>
           </div>
           <div class="flex items-center justify-between pt-2 border-t border-[#F1F1F1]">
             <span class="text-brand-dark font-bold">Total Estimate</span>
@@ -209,7 +253,7 @@ const printQuote = () => window.print();
            was saved, not the live/shared setting (which may have changed
            since). Older estimates saved before this existed simply won't
            have one. -->
-      <div v-if="calc.rate_setting_snapshot" class="mt-6 pt-6 border-t border-[#F1F1F1]">
+      <div v-if="calc.rate_setting_snapshot && calc.scenario !== 'landing_page'" class="mt-6 pt-6 border-t border-[#F1F1F1]">
         <p class="text-xs font-semibold text-gray-400 uppercase mb-3">Team Rate Setup</p>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-sm">
