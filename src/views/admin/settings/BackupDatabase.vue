@@ -117,6 +117,7 @@ const formatDate = (date) =>
               <th class="py-3 pr-4 font-semibold">File Backup</th>
               <th class="py-3 pr-4 font-semibold">Ukuran</th>
               <th class="py-3 pr-4 font-semibold">Dibuat Oleh</th>
+              <th class="py-3 pr-4 font-semibold">Type</th>
               <th class="py-3 pr-4 font-semibold">Date</th>
               <th class="py-3 pr-4 font-semibold text-right">Aksi</th>
             </tr>
@@ -132,10 +133,19 @@ const formatDate = (date) =>
               </td>
               <td class="py-3 pr-4">{{ formatSize(backup.size_bytes) }}</td>
               <td class="py-3 pr-4">{{ backup.creator || "-" }}</td>
+              <td class="py-3 pr-4">
+                <span
+                  class="text-xs font-semibold px-2 py-1 rounded-full"
+                  :class="backup.is_automatic ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-600'"
+                >
+                  {{ backup.is_automatic ? "Automatic" : "Manual" }}
+                </span>
+              </td>
               <td class="py-3 pr-4">{{ formatDate(backup.created_at) }}</td>
               <td class="py-3 pr-4">
                 <div class="flex items-center justify-end gap-1">
                   <button
+                    v-if="can('backup-list')"
                     @click="handleDownload(backup)"
                     :disabled="downloadingId === backup.id"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
