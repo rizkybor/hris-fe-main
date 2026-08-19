@@ -221,101 +221,103 @@ const onLandingPageRateSettingSaved = async () => {
     </div>
 
     <!-- Rate Setup Summary -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-            <Users2Icon class="w-5 h-5 text-blue-600" />
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6 items-start">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
+              <Users2Icon class="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-lg font-bold">Team Rate Setup</h3>
+              <p class="text-brand-light text-sm">Baseline fee &amp; rate/hour used throughout the estimation</p>
+            </div>
           </div>
-          <div>
-            <h3 class="text-brand-dark text-lg font-bold">Team Rate Setup</h3>
-            <p class="text-brand-light text-sm">Baseline fee &amp; rate/hour used throughout the estimation</p>
+          <button
+            v-if="can('project-calculator-settings')"
+            @click="showRateModal = true"
+            class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 px-4 py-2 inline-flex items-center gap-2 self-start sm:self-center"
+          >
+            <SettingsIcon class="w-4 h-4 text-gray-600" />
+            <span class="text-brand-dark text-sm font-semibold">Rate Config</span>
+          </button>
+        </div>
+
+        <div v-if="loadingRateSetting" class="grid grid-cols-2 gap-4">
+          <Skeleton v-for="i in 4" :key="i" height="60px" rounded="12px" />
+        </div>
+        <div v-else class="grid grid-cols-2 gap-4">
+          <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+            <p class="text-xs text-gray-500 font-medium">Team Fee / Month</p>
+            <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiahCompact(rateSetting.team_monthly_cost) }}</p>
+          </div>
+          <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+            <p class="text-xs text-gray-500 font-medium">Team &amp; Productive Hours</p>
+            <p class="text-brand-dark text-base font-bold mt-1">
+              {{ rateSetting.team_size }} orang &middot; {{ rateSetting.total_productive_hours_per_month }} jam/bulan
+            </p>
+          </div>
+          <div class="p-3 rounded-[12px] bg-blue-50 border border-blue-100">
+            <p class="text-xs text-blue-600 font-medium">Rate Cost / Hour</p>
+            <p class="text-blue-900 text-base font-bold mt-1">{{ formatRupiah(rateSetting.rate_cost_per_hour) }}</p>
+          </div>
+          <div class="p-3 rounded-[12px] bg-indigo-50 border border-indigo-100">
+            <p class="text-xs text-indigo-600 font-medium">Rate Sell / Hour ({{ rateSetting.margin_multiplier }}x)</p>
+            <p class="text-indigo-900 text-base font-bold mt-1">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</p>
           </div>
         </div>
-        <button
-          v-if="can('project-calculator-settings')"
-          @click="showRateModal = true"
-          class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 px-4 py-2 inline-flex items-center gap-2 self-start sm:self-center"
-        >
-          <SettingsIcon class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark text-sm font-semibold">Rate Config</span>
-        </button>
       </div>
 
-      <div v-if="loadingRateSetting" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Skeleton v-for="i in 4" :key="i" height="60px" rounded="12px" />
-      </div>
-      <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-          <p class="text-xs text-gray-500 font-medium">Team Fee / Month</p>
-          <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiahCompact(rateSetting.team_monthly_cost) }}</p>
-        </div>
-        <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-          <p class="text-xs text-gray-500 font-medium">Team &amp; Productive Hours</p>
-          <p class="text-brand-dark text-base font-bold mt-1">
-            {{ rateSetting.team_size }} orang &middot; {{ rateSetting.total_productive_hours_per_month }} jam/bulan
-          </p>
-        </div>
-        <div class="p-3 rounded-[12px] bg-blue-50 border border-blue-100">
-          <p class="text-xs text-blue-600 font-medium">Rate Cost / Hour</p>
-          <p class="text-blue-900 text-base font-bold mt-1">{{ formatRupiah(rateSetting.rate_cost_per_hour) }}</p>
-        </div>
-        <div class="p-3 rounded-[12px] bg-indigo-50 border border-indigo-100">
-          <p class="text-xs text-indigo-600 font-medium">Rate Sell / Hour ({{ rateSetting.margin_multiplier }}x)</p>
-          <p class="text-indigo-900 text-base font-bold mt-1">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Landing Page Rate Setup -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 bg-emerald-50 rounded-[12px] flex items-center justify-center">
-            <Globe class="w-5 h-5 text-emerald-600" />
+      <!-- Landing Page Rate Setup -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 bg-emerald-50 rounded-[12px] flex items-center justify-center">
+              <Globe class="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-lg font-bold">Landing Page Rate Setup</h3>
+              <p class="text-brand-light text-sm">Server, Design, Developer rate &amp; margin used for the Landing Page scenario</p>
+            </div>
           </div>
-          <div>
-            <h3 class="text-brand-dark text-lg font-bold">Landing Page Rate Setup</h3>
-            <p class="text-brand-light text-sm">Server, Design, Developer rate &amp; margin used for the Landing Page scenario</p>
-          </div>
+          <button
+            v-if="can('project-calculator-menu')"
+            @click="showLandingPageRateModal = true"
+            class="border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all duration-300 px-4 py-2 inline-flex items-center gap-2 self-start sm:self-center"
+          >
+            <SettingsIcon class="w-4 h-4 text-gray-600" />
+            <span class="text-brand-dark text-sm font-semibold">Landing Page Config</span>
+          </button>
         </div>
-        <button
-          v-if="can('project-calculator-menu')"
-          @click="showLandingPageRateModal = true"
-          class="border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all duration-300 px-4 py-2 inline-flex items-center gap-2 self-start sm:self-center"
-        >
-          <SettingsIcon class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark text-sm font-semibold">Landing Page Config</span>
-        </button>
-      </div>
 
-      <div v-if="loadingLandingPageRateSetting" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <Skeleton v-for="i in 6" :key="i" height="60px" rounded="12px" />
-      </div>
-      <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-          <p class="text-xs text-gray-500 font-medium">Server Dedicated</p>
-          <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.server_dedicated_price) }}</p>
+        <div v-if="loadingLandingPageRateSetting" class="grid grid-cols-2 gap-4">
+          <Skeleton v-for="i in 6" :key="i" height="60px" rounded="12px" />
         </div>
-        <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-          <p class="text-xs text-gray-500 font-medium">Server Shared</p>
-          <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.server_shared_price) }}</p>
-        </div>
-        <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-          <p class="text-xs text-gray-500 font-medium">Design Dedicated</p>
-          <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.design_dedicated_price) }}</p>
-        </div>
-        <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-          <p class="text-xs text-gray-500 font-medium">Design Template</p>
-          <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.design_template_price) }}</p>
-        </div>
-        <div class="p-3 rounded-[12px] bg-emerald-50 border border-emerald-100">
-          <p class="text-xs text-emerald-600 font-medium">Default Rate Developer</p>
-          <p class="text-emerald-900 text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.default_rate_developer) }}/jam</p>
-        </div>
-        <div class="p-3 rounded-[12px] bg-emerald-50 border border-emerald-100">
-          <p class="text-xs text-emerald-600 font-medium">Margin Jual Default</p>
-          <p class="text-emerald-900 text-base font-bold mt-1">{{ landingPageRateSetting.margin_percent }}%</p>
+        <div v-else class="grid grid-cols-2 gap-4">
+          <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+            <p class="text-xs text-gray-500 font-medium">Server Dedicated</p>
+            <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.server_dedicated_price) }}</p>
+          </div>
+          <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+            <p class="text-xs text-gray-500 font-medium">Server Shared</p>
+            <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.server_shared_price) }}</p>
+          </div>
+          <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+            <p class="text-xs text-gray-500 font-medium">Design Dedicated</p>
+            <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.design_dedicated_price) }}</p>
+          </div>
+          <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+            <p class="text-xs text-gray-500 font-medium">Design Template</p>
+            <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.design_template_price) }}</p>
+          </div>
+          <div class="p-3 rounded-[12px] bg-emerald-50 border border-emerald-100">
+            <p class="text-xs text-emerald-600 font-medium">Default Rate Developer</p>
+            <p class="text-emerald-900 text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.default_rate_developer) }}/jam</p>
+          </div>
+          <div class="p-3 rounded-[12px] bg-emerald-50 border border-emerald-100">
+            <p class="text-xs text-emerald-600 font-medium">Margin Jual Default</p>
+            <p class="text-emerald-900 text-base font-bold mt-1">{{ landingPageRateSetting.margin_percent }}%</p>
+          </div>
         </div>
       </div>
     </div>
