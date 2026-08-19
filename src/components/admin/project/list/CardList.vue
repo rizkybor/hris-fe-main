@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { formatToClientTimezone } from "@/helpers/format";
 import { can } from "@/helpers/permissionHelper";
 import _ from "lodash";
-import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, WalletIcon, AlertTriangle } from "lucide-vue-next";
+import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, WalletIcon, AlertTriangle, Trash2 } from "lucide-vue-next";
 import { formatRupiah } from "@/utils/formatUtils";
 import { getProjectHealth, PROJECT_HEALTH_BADGE_CLASS } from "@/utils/projectHealth";
 import Avatar from "@/components/common/Avatar.vue";
@@ -14,6 +14,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const emit = defineEmits(["delete"]);
 
 const health = computed(() => getProjectHealth(props.data));
 
@@ -186,6 +188,15 @@ const getProgressColor = (progress) => {
         <Edit class="w-4 h-4 text-gray-600" />
         <span class="text-brand-dark text-sm font-semibold">Edit</span>
       </RouterLink>
+      <button
+        type="button"
+        v-if="can('project-delete')"
+        @click="emit('delete', data)"
+        class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-red-400 hover:bg-red-50 group transition-all duration-300"
+        title="Delete"
+      >
+        <Trash2 class="w-4 h-4 text-gray-500 group-hover:text-red-600" />
+      </button>
     </div>
   </div>
 </template>
