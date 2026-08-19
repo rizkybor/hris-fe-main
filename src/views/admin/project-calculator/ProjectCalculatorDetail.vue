@@ -176,6 +176,11 @@ const printQuote = () => window.print();
               </td>
               <td class="py-3 text-right font-bold text-brand-dark">{{ formatRupiah(landingPageItem.development_cost) }}</td>
             </tr>
+            <tr v-for="(item, idx) in landingPageItem.additional_items" :key="idx" class="border-b border-[#F8F8F8]">
+              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ item.description }}</td>
+              <td class="py-3 pr-4 text-gray-600">{{ item.amount }} &times; {{ formatRupiah(item.price) }}</td>
+              <td class="py-3 text-right font-bold text-brand-dark">{{ formatRupiah(item.subtotal) }}</td>
+            </tr>
           </tbody>
         </table>
       </div>

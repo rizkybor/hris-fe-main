@@ -4941,8 +4941,16 @@ html {
     width: 5rem;
   }
 
+  .sm\:w-24 {
+    width: 6rem;
+  }
+
   .sm\:w-32 {
     width: 8rem;
+  }
+
+  .sm\:w-36 {
+    width: 9rem;
   }
 
   .sm\:w-5 {
@@ -5011,6 +5019,10 @@ html {
 
   .sm\:grid-cols-\[1fr_1fr_auto\] {
     grid-template-columns: 1fr 1fr auto;
+  }
+
+  .sm\:grid-cols-\[1fr_auto_auto_auto\] {
+    grid-template-columns: 1fr auto auto auto;
   }
 
   .sm\:flex-row {

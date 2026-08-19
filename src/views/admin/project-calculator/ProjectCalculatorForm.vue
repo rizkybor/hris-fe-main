@@ -51,6 +51,12 @@ const newModuleItem = () => ({
   buffer_percent: 15,
 });
 
+const newAdditionalItem = () => ({
+  description: "",
+  amount: 1,
+  price: 0,
+});
+
 const form = ref({
   name: "",
   client_name: "",
@@ -63,6 +69,7 @@ const form = ref({
   estimated_hours: 0,
   rate_developer: 0,
   developer_count: 1,
+  additional_items: [],
   margin_percent: 0,
   include_ppn: false,
   ppn_percent: 11,
@@ -174,6 +181,11 @@ const applyReference = async (reference) => {
       form.value.estimated_hours = lp.estimated_hours ?? 0;
       form.value.rate_developer = lp.rate_developer ?? landingPageRateSetting.value.default_rate_developer;
       form.value.developer_count = lp.developer_count ?? 1;
+      form.value.additional_items = (lp.additional_items ?? []).map((i) => ({
+        description: i.description,
+        amount: i.amount,
+        price: i.price,
+      }));
       form.value.margin_percent = full.margin_percent ?? landingPageRateSetting.value.margin_percent;
       form.value.items = [];
     } else {
@@ -226,6 +238,11 @@ onMounted(async () => {
         estimated_hours: lp?.estimated_hours ?? 0,
         rate_developer: lp?.rate_developer ?? landingPageRateSetting.value.default_rate_developer,
         developer_count: lp?.developer_count ?? 1,
+        additional_items: (lp?.additional_items ?? []).map((i) => ({
+          description: i.description,
+          amount: i.amount,
+          price: i.price,
+        })),
         margin_percent: calc.margin_percent ?? landingPageRateSetting.value.margin_percent,
         include_ppn: calc.include_ppn,
         ppn_percent: calc.ppn_percent,
@@ -273,6 +290,7 @@ const switchScenario = (scenario) => {
     form.value.estimated_hours = 0;
     form.value.rate_developer = landingPageRateSetting.value.default_rate_developer;
     form.value.developer_count = 1;
+    form.value.additional_items = [];
     form.value.margin_percent = landingPageRateSetting.value.margin_percent;
     form.value.items = [];
   } else {
@@ -287,6 +305,14 @@ const addItem = () => {
 const removeItem = (index) => {
   if (form.value.items.length === 1) return;
   form.value.items.splice(index, 1);
+};
+
+const addAdditionalItem = () => {
+  form.value.additional_items.push(newAdditionalItem());
+};
+
+const removeAdditionalItem = (index) => {
+  form.value.additional_items.splice(index, 1);
 };
 
 // Live client-side calculation mirroring the backend service exactly, so
@@ -332,8 +358,15 @@ const landingPageDevelopmentCost = computed(
     Number(form.value.rate_developer || 0) *
     Math.max(1, Number(form.value.developer_count || 1))
 );
+const landingPageAdditionalItemsTotal = computed(() =>
+  form.value.additional_items.reduce((sum, i) => sum + Number(i.amount || 0) * Number(i.price || 0), 0)
+);
 const landingPageSubtotal = computed(
-  () => landingPageServerCost.value + landingPageDesignCost.value + landingPageDevelopmentCost.value
+  () =>
+    landingPageServerCost.value +
+    landingPageDesignCost.value +
+    landingPageDevelopmentCost.value +
+    landingPageAdditionalItemsTotal.value
 );
 const landingPageMarginTotal = computed(() => landingPageSubtotal.value * (Number(form.value.margin_percent || 0) / 100));
 
@@ -764,6 +797,57 @@ const submit = async () => {
             </div>
           </div>
 
+          <!-- Additional Items (optional) -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-sm font-semibold text-brand-dark">Additional Items (Optional)</label>
+              <button
+                type="button"
+                @click="addAdditionalItem"
+                class="border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
+              >
+                <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
+                <span class="text-brand-dark text-xs font-semibold">Add Item</span>
+              </button>
+            </div>
+
+            <div v-if="form.additional_items.length === 0" class="text-xs text-gray-400 border border-dashed border-[#DCDEDD] rounded-[10px] py-4 text-center">
+              No additional items -- optional extras like domain, third-party integration, or extra revisions.
+            </div>
+
+            <div v-else class="space-y-3">
+              <div
+                v-for="(item, index) in form.additional_items"
+                :key="index"
+                class="p-3 border border-[#DCDEDD] rounded-[10px] grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-end"
+              >
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Description</label>
+                  <input v-model="item.description" type="text" placeholder="e.g. Domain .com (1 year)" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+                <div class="w-full sm:w-24">
+                  <label class="block text-xs text-gray-500 mb-1">Amount</label>
+                  <input v-model.number="item.amount" type="number" min="0" step="1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+                <div class="w-full sm:w-36">
+                  <label class="block text-xs text-gray-500 mb-1">Price (Rp)</label>
+                  <input v-model.number="item.price" type="number" min="0" step="1000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+                <button
+                  type="button"
+                  @click="removeAdditionalItem(index)"
+                  class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl border border-[#DCDEDD] hover:border-red-400 hover:bg-red-50 group transition-all"
+                >
+                  <Trash2 class="w-4 h-4 text-gray-500 group-hover:text-red-600" />
+                </button>
+              </div>
+              <div class="flex items-center justify-between pt-1 text-sm">
+                <span class="text-gray-500">Additional Items Total</span>
+                <span class="text-brand-dark font-bold">{{ formatRupiah(landingPageAdditionalItemsTotal) }}</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Margin -->
           <div>
             <label class="block text-sm font-semibold text-brand-dark mb-2">Margin Jual</label>
@@ -881,6 +965,10 @@ const submit = async () => {
               <div class="flex items-center justify-between">
                 <span class="text-gray-500">Development</span>
                 <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageDevelopmentCost) }}</span>
+              </div>
+              <div v-if="form.additional_items.length > 0" class="flex items-center justify-between">
+                <span class="text-gray-500">Additional Items ({{ form.additional_items.length }})</span>
+                <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageAdditionalItemsTotal) }}</span>
               </div>
             </template>
             <div class="flex items-center justify-between">
