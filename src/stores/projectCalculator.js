@@ -18,6 +18,7 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
         },
         calculations: [],
         currentCalculation: null,
+        pphTypes: [],
         statistics: {
             total_calculations: 0,
             total_value: 0,
@@ -74,6 +75,15 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
                 throw error;
             } finally {
                 this.saving = false;
+            }
+        },
+
+        async fetchPphTypes() {
+            try {
+                const { data } = await axiosInstance.get("/options/pph-types");
+                this.pphTypes = data.data;
+            } catch (error) {
+                this.error = handleError(error);
             }
         },
 

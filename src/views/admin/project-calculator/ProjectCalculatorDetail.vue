@@ -11,6 +11,7 @@ import {
   CalendarIcon,
 } from "lucide-vue-next";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
+import { storeToRefs } from "pinia";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
 import { formatToClientTimezone } from "@/helpers/format";
@@ -19,6 +20,7 @@ import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 const route = useRoute();
 const router = useRouter();
 const store = useProjectCalculatorStore();
+const { pphTypes } = storeToRefs(store);
 
 const calc = ref(null);
 const loading = ref(true);
@@ -26,11 +28,16 @@ const loading = ref(true);
 onMounted(async () => {
   loading.value = true;
   try {
-    calc.value = await store.fetchCalculation(route.params.id);
+    const [calculation] = await Promise.all([store.fetchCalculation(route.params.id), store.fetchPphTypes()]);
+    calc.value = calculation;
   } finally {
     loading.value = false;
   }
 });
+
+const pphTypeLabel = computed(
+  () => pphTypes.value.find((t) => t.value === calc.value?.pph_type)?.label ?? "PPh"
+);
 
 const scenarioMeta = {
   feature: { label: "New Feature Estimate", class: "bg-blue-50 text-blue-700 border-blue-100" },
@@ -173,6 +180,18 @@ const printQuote = () => window.print();
             <span class="text-brand-dark text-base font-extrabold">Grand Total</span>
             <span class="text-brand-dark text-xl font-extrabold">{{ formatRupiah(displayTotal) }}</span>
           </div>
+
+          <template v-if="calc.include_pph">
+            <div class="flex items-center justify-between pt-2 border-t border-[#F1F1F1]">
+              <span class="text-red-500">{{ pphTypeLabel }} ({{ calc.pph_percent }}%)</span>
+              <span class="text-red-500">-{{ formatRupiah(calc.pph_amount) }}</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-green-700 text-base font-extrabold">Diterima Bersih</span>
+              <span class="text-green-700 text-xl font-extrabold">{{ formatRupiah(calc.net_received) }}</span>
+            </div>
+            <p class="text-gray-400 text-xs">Dipotong PPh oleh klien sesuai peraturan perpajakan yang berlaku</p>
+          </template>
         </div>
       </div>
 

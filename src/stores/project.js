@@ -122,6 +122,22 @@ export const useProjectStore = defineStore("project", {
             }
         },
 
+        async deleteProject(id) {
+            this.loading = true;
+
+            try {
+                const response = await axiosInstance.delete(`projects/${id}`);
+
+                this.success = response.data.message;
+                this.projects = this.projects.filter((p) => p.id !== id);
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async fetchStatistics() {
             this.loadingStatistics = true;
             this.error = null;
