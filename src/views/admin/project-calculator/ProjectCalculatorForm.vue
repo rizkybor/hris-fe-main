@@ -8,6 +8,7 @@ import {
   Trash2,
   Layers3Icon,
   PuzzleIcon,
+  Globe,
   InfoIcon,
   Loader2,
   SaveIcon,
@@ -28,10 +29,17 @@ const route = useRoute();
 const router = useRouter();
 const store = useProjectCalculatorStore();
 const alertModal = useAlertModalStore();
-const { rateSetting, loadingRateSetting, saving, pphTypes } = storeToRefs(store);
+const { rateSetting, landingPageRateSetting, loadingRateSetting, loadingLandingPageRateSetting, saving, pphTypes } = storeToRefs(store);
 
 const isEditing = computed(() => !!route.params.id);
 const loadingCalculation = ref(false);
+
+// Landing Page's Development rate and Margin Jual aren't company-wide
+// configurable (only Server/Design pricing is) -- these are just the
+// pre-filled defaults for a new calculation, matching
+// ProjectCalculatorService::DEFAULT_RATE_DEVELOPER/DEFAULT_MARGIN_PERCENT.
+const DEFAULT_RATE_DEVELOPER = 100000;
+const DEFAULT_MARGIN_PERCENT = 30;
 
 const newFeatureItem = () => ({
   name: "",
@@ -50,12 +58,26 @@ const newModuleItem = () => ({
   buffer_percent: 15,
 });
 
+const newAdditionalItem = () => ({
+  description: "",
+  amount: 1,
+  price: 0,
+});
+
 const form = ref({
   name: "",
   client_name: "",
   scenario: "feature",
   pm_overhead_percent: 12,
   infra_setup_cost: 0,
+  // Landing Page fields -- unused (harmless) unless scenario === 'landing_page'.
+  server_type: "shared",
+  design_type: "template",
+  estimated_hours: 0,
+  rate_developer: 0,
+  developer_count: 1,
+  additional_items: [],
+  margin_percent: 0,
   include_ppn: false,
   ppn_percent: 11,
   include_pph: false,
@@ -146,7 +168,10 @@ const filteredReferences = computed(() => {
 });
 
 const applyReference = async (reference) => {
-  const hasExistingWork = form.value.items.some((item) => item.name?.trim());
+  const hasExistingWork =
+    form.value.scenario === "landing_page"
+      ? !!Number(form.value.estimated_hours)
+      : form.value.items.some((item) => item.name?.trim());
   if (hasExistingWork && !(await alertModal.confirm(`Replace the current items with those from "${reference.name}"? This can't be undone.`))) {
     return;
   }
@@ -155,24 +180,41 @@ const applyReference = async (reference) => {
   try {
     const full = await store.fetchCalculation(reference.id);
     form.value.scenario = full.scenario;
-    form.value.items = full.items.map((item) =>
-      full.scenario === "feature"
-        ? {
-            name: item.name,
-            analysis_hours: item.analysis_hours,
-            dev_hours: item.dev_hours,
-            testing_hours: item.testing_hours,
-            deploy_hours: item.deploy_hours,
-            complexity_factor: item.complexity_factor,
-            buffer_percent: item.buffer_percent,
-          }
-        : {
-            name: item.name,
-            estimated_hours: item.estimated_hours,
-            complexity_factor: item.complexity_factor,
-            buffer_percent: item.buffer_percent,
-          }
-    );
+
+    if (full.scenario === "landing_page") {
+      const lp = full.items?.[0] ?? {};
+      form.value.server_type = lp.server_type ?? "shared";
+      form.value.design_type = lp.design_type ?? "template";
+      form.value.estimated_hours = lp.estimated_hours ?? 0;
+      form.value.rate_developer = lp.rate_developer ?? DEFAULT_RATE_DEVELOPER;
+      form.value.developer_count = lp.developer_count ?? 1;
+      form.value.additional_items = (lp.additional_items ?? []).map((i) => ({
+        description: i.description,
+        amount: i.amount,
+        price: i.price,
+      }));
+      form.value.margin_percent = full.margin_percent ?? DEFAULT_MARGIN_PERCENT;
+      form.value.items = [];
+    } else {
+      form.value.items = full.items.map((item) =>
+        full.scenario === "feature"
+          ? {
+              name: item.name,
+              analysis_hours: item.analysis_hours,
+              dev_hours: item.dev_hours,
+              testing_hours: item.testing_hours,
+              deploy_hours: item.deploy_hours,
+              complexity_factor: item.complexity_factor,
+              buffer_percent: item.buffer_percent,
+            }
+          : {
+              name: item.name,
+              estimated_hours: item.estimated_hours,
+              complexity_factor: item.complexity_factor,
+              buffer_percent: item.buffer_percent,
+            }
+      );
+    }
     referenceModal.value = false;
   } finally {
     applyingReference.value = false;
@@ -180,44 +222,62 @@ const applyReference = async (reference) => {
 };
 
 onMounted(async () => {
-  await Promise.all([store.fetchRateSetting(), store.fetchPphTypes()]);
+  await Promise.all([store.fetchRateSetting(), store.fetchLandingPageRateSetting(), store.fetchPphTypes()]);
   form.value.pm_overhead_percent = rateSetting.value.pm_overhead_percent;
   form.value.infra_setup_cost = rateSetting.value.default_infra_setup_cost;
+  form.value.rate_developer = DEFAULT_RATE_DEVELOPER;
+  form.value.margin_percent = DEFAULT_MARGIN_PERCENT;
 
   if (isEditing.value) {
     loadingCalculation.value = true;
     try {
       const calc = await store.fetchCalculation(route.params.id);
+      const lp = calc.scenario === "landing_page" ? (calc.items?.[0] ?? {}) : null;
+
       form.value = {
         name: calc.name,
         client_name: calc.client_name ?? "",
         scenario: calc.scenario,
         pm_overhead_percent: calc.pm_overhead_percent ?? rateSetting.value.pm_overhead_percent,
         infra_setup_cost: calc.infra_setup_cost ?? rateSetting.value.default_infra_setup_cost,
+        server_type: lp?.server_type ?? "shared",
+        design_type: lp?.design_type ?? "template",
+        estimated_hours: lp?.estimated_hours ?? 0,
+        rate_developer: lp?.rate_developer ?? DEFAULT_RATE_DEVELOPER,
+        developer_count: lp?.developer_count ?? 1,
+        additional_items: (lp?.additional_items ?? []).map((i) => ({
+          description: i.description,
+          amount: i.amount,
+          price: i.price,
+        })),
+        margin_percent: calc.margin_percent ?? DEFAULT_MARGIN_PERCENT,
         include_ppn: calc.include_ppn,
         ppn_percent: calc.ppn_percent,
         include_pph: calc.include_pph,
         pph_type: calc.pph_type ?? "",
         pph_percent: calc.pph_percent ?? 0,
         notes: calc.notes ?? "",
-        items: calc.items.map((item) =>
-          calc.scenario === "feature"
-            ? {
-                name: item.name,
-                analysis_hours: item.analysis_hours,
-                dev_hours: item.dev_hours,
-                testing_hours: item.testing_hours,
-                deploy_hours: item.deploy_hours,
-                complexity_factor: item.complexity_factor,
-                buffer_percent: item.buffer_percent,
-              }
-            : {
-                name: item.name,
-                estimated_hours: item.estimated_hours,
-                complexity_factor: item.complexity_factor,
-                buffer_percent: item.buffer_percent,
-              }
-        ),
+        items:
+          calc.scenario === "landing_page"
+            ? []
+            : calc.items.map((item) =>
+                calc.scenario === "feature"
+                  ? {
+                      name: item.name,
+                      analysis_hours: item.analysis_hours,
+                      dev_hours: item.dev_hours,
+                      testing_hours: item.testing_hours,
+                      deploy_hours: item.deploy_hours,
+                      complexity_factor: item.complexity_factor,
+                      buffer_percent: item.buffer_percent,
+                    }
+                  : {
+                      name: item.name,
+                      estimated_hours: item.estimated_hours,
+                      complexity_factor: item.complexity_factor,
+                      buffer_percent: item.buffer_percent,
+                    }
+              ),
       };
     } catch (error) {
       errorMessage.value = "Estimate not found.";
@@ -230,7 +290,19 @@ onMounted(async () => {
 const switchScenario = (scenario) => {
   if (form.value.scenario === scenario) return;
   form.value.scenario = scenario;
-  form.value.items = [scenario === "feature" ? newFeatureItem() : newModuleItem()];
+
+  if (scenario === "landing_page") {
+    form.value.server_type = "shared";
+    form.value.design_type = "template";
+    form.value.estimated_hours = 0;
+    form.value.rate_developer = DEFAULT_RATE_DEVELOPER;
+    form.value.developer_count = 1;
+    form.value.additional_items = [];
+    form.value.margin_percent = DEFAULT_MARGIN_PERCENT;
+    form.value.items = [];
+  } else {
+    form.value.items = [scenario === "feature" ? newFeatureItem() : newModuleItem()];
+  }
 };
 
 const addItem = () => {
@@ -240,6 +312,14 @@ const addItem = () => {
 const removeItem = (index) => {
   if (form.value.items.length === 1) return;
   form.value.items.splice(index, 1);
+};
+
+const addAdditionalItem = () => {
+  form.value.additional_items.push(newAdditionalItem());
+};
+
+const removeAdditionalItem = (index) => {
+  form.value.additional_items.splice(index, 1);
 };
 
 // Live client-side calculation mirroring the backend service exactly, so
@@ -266,10 +346,55 @@ const computedItems = computed(() => {
   });
 });
 
-const itemsTotal = computed(() => computedItems.value.reduce((sum, i) => sum + i.finalPrice, 0));
-const subtotalSum = computed(() => computedItems.value.reduce((sum, i) => sum + i.subtotal, 0));
-const bufferSum = computed(() => computedItems.value.reduce((sum, i) => sum + i.bufferAmount, 0));
-const totalHoursSum = computed(() => computedItems.value.reduce((sum, i) => sum + i.totalHoursUsed, 0));
+// Landing Page's own math -- mirrors ProjectCalculatorService::calculateLandingPage()
+// exactly (server cost + design cost + development cost, marked up by its
+// own margin), since it isn't an hourly-items scenario like Feature/Build.
+const landingPageServerCost = computed(() =>
+  form.value.server_type === "dedicated"
+    ? Number(landingPageRateSetting.value.server_dedicated_price || 0)
+    : Number(landingPageRateSetting.value.server_shared_price || 0)
+);
+const landingPageDesignCost = computed(() =>
+  form.value.design_type === "dedicated"
+    ? Number(landingPageRateSetting.value.design_dedicated_price || 0)
+    : Number(landingPageRateSetting.value.design_template_price || 0)
+);
+const landingPageDevelopmentCost = computed(
+  () =>
+    Number(form.value.estimated_hours || 0) *
+    Number(form.value.rate_developer || 0) *
+    Math.max(1, Number(form.value.developer_count || 1))
+);
+const landingPageAdditionalItemsTotal = computed(() =>
+  form.value.additional_items.reduce((sum, i) => sum + Number(i.amount || 0) * Number(i.price || 0), 0)
+);
+const landingPageSubtotal = computed(
+  () =>
+    landingPageServerCost.value +
+    landingPageDesignCost.value +
+    landingPageDevelopmentCost.value +
+    landingPageAdditionalItemsTotal.value
+);
+const landingPageMarginTotal = computed(() => landingPageSubtotal.value * (Number(form.value.margin_percent || 0) / 100));
+
+const itemsTotal = computed(() =>
+  form.value.scenario === "landing_page"
+    ? landingPageSubtotal.value
+    : computedItems.value.reduce((sum, i) => sum + i.finalPrice, 0)
+);
+const subtotalSum = computed(() =>
+  form.value.scenario === "landing_page"
+    ? landingPageSubtotal.value
+    : computedItems.value.reduce((sum, i) => sum + i.subtotal, 0)
+);
+const bufferSum = computed(() =>
+  form.value.scenario === "landing_page" ? 0 : computedItems.value.reduce((sum, i) => sum + i.bufferAmount, 0)
+);
+const totalHoursSum = computed(() =>
+  form.value.scenario === "landing_page"
+    ? Number(form.value.estimated_hours || 0)
+    : computedItems.value.reduce((sum, i) => sum + i.totalHoursUsed, 0)
+);
 
 const pmOverheadTotal = computed(() =>
   form.value.scenario === "build" ? itemsTotal.value * (Number(form.value.pm_overhead_percent || 0) / 100) : 0
@@ -278,6 +403,9 @@ const pmOverheadTotal = computed(() =>
 const grandTotal = computed(() => {
   if (form.value.scenario === "build") {
     return itemsTotal.value + pmOverheadTotal.value + Number(form.value.infra_setup_cost || 0);
+  }
+  if (form.value.scenario === "landing_page") {
+    return landingPageSubtotal.value + landingPageMarginTotal.value;
   }
   return itemsTotal.value;
 });
@@ -304,14 +432,23 @@ const pphAmount = computed(() =>
 const netReceived = computed(() => (form.value.include_ppn ? totalWithPpn.value : grandTotal.value) - pphAmount.value);
 
 const estimatedDurationWeeks = computed(() => {
+  if (form.value.scenario === "landing_page") {
+    const devCount = Math.max(1, Number(form.value.developer_count || 1));
+    const hours = Number(form.value.estimated_hours || 0);
+    return hours > 0 ? Math.ceil(hours / devCount / 40) : null;
+  }
   const capacityPerWeek =
     (rateSetting.value.total_productive_hours_per_month || 0) / 4.33;
   return capacityPerWeek > 0 ? Math.ceil(totalHoursSum.value / capacityPerWeek) : null;
 });
 
 const canSave = computed(() => {
-  if (!form.value.name || form.value.items.length === 0) return false;
+  if (!form.value.name) return false;
   if (form.value.include_pph && !form.value.pph_type) return false;
+  if (form.value.scenario === "landing_page") {
+    return !!form.value.server_type && !!form.value.design_type && Number(form.value.estimated_hours) > 0;
+  }
+  if (form.value.items.length === 0) return false;
   return form.value.items.every((item) => item.name && item.name.trim().length > 0);
 });
 
@@ -361,7 +498,7 @@ const submit = async () => {
 
     <Alert type="danger" :title="errorMessage" message="" :show="!!errorMessage" @close="errorMessage = ''" />
 
-    <div v-if="loadingCalculation || loadingRateSetting" class="space-y-4 mt-4">
+    <div v-if="loadingCalculation || loadingRateSetting || loadingLandingPageRateSetting" class="space-y-4 mt-4">
       <Skeleton height="120px" rounded="14px" />
       <Skeleton height="300px" rounded="14px" />
     </div>
@@ -395,7 +532,7 @@ const submit = async () => {
           <!-- Scenario toggle -->
           <div>
             <label class="block text-sm font-semibold text-brand-dark mb-2">Scenario</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
                 type="button"
                 @click="switchScenario('feature')"
@@ -432,12 +569,30 @@ const submit = async () => {
                   <p class="text-brand-light text-xs">Building a new application, per module</p>
                 </div>
               </button>
+              <button
+                type="button"
+                @click="switchScenario('landing_page')"
+                class="flex items-center gap-3 p-4 rounded-[12px] border-2 text-left transition-all"
+                :class="
+                  form.scenario === 'landing_page'
+                    ? 'border-emerald-500 bg-emerald-50'
+                    : 'border-[#DCDEDD] hover:border-emerald-200'
+                "
+              >
+                <div class="w-10 h-10 bg-emerald-100 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                  <Globe class="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p class="text-brand-dark text-sm font-bold">Landing Page</p>
+                  <p class="text-brand-light text-xs">Server, Design, and Development package</p>
+                </div>
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Items -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div v-if="form.scenario !== 'landing_page'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
           <!-- Sentinel: a 1px marker just above the sticky header. The
                IntersectionObserver watching it flips isHeaderStuck the
                instant it scrolls out of view, i.e. exactly when the header
@@ -567,6 +722,152 @@ const submit = async () => {
           </div>
         </div>
 
+        <!-- Landing Page Configuration -->
+        <div v-if="form.scenario === 'landing_page'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center shrink-0">
+              <Globe class="w-4.5 h-4.5 text-emerald-600" />
+            </div>
+            <h3 class="text-brand-dark text-base font-bold">Landing Page Configuration</h3>
+          </div>
+
+          <!-- Server -->
+          <div>
+            <label class="block text-sm font-semibold text-brand-dark mb-2">Server</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                @click="form.server_type = 'dedicated'"
+                class="flex items-center justify-between p-3.5 rounded-[10px] border-2 text-left transition-all"
+                :class="form.server_type === 'dedicated' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
+              >
+                <span class="text-sm font-semibold text-brand-dark">Dedicated</span>
+                <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.server_dedicated_price) }}</span>
+              </button>
+              <button
+                type="button"
+                @click="form.server_type = 'shared'"
+                class="flex items-center justify-between p-3.5 rounded-[10px] border-2 text-left transition-all"
+                :class="form.server_type === 'shared' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
+              >
+                <span class="text-sm font-semibold text-brand-dark">Shared</span>
+                <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.server_shared_price) }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Design -->
+          <div>
+            <label class="block text-sm font-semibold text-brand-dark mb-2">Design</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                @click="form.design_type = 'dedicated'"
+                class="flex items-center justify-between p-3.5 rounded-[10px] border-2 text-left transition-all"
+                :class="form.design_type === 'dedicated' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
+              >
+                <span class="text-sm font-semibold text-brand-dark">Dedicated</span>
+                <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.design_dedicated_price) }}</span>
+              </button>
+              <button
+                type="button"
+                @click="form.design_type = 'template'"
+                class="flex items-center justify-between p-3.5 rounded-[10px] border-2 text-left transition-all"
+                :class="form.design_type === 'template' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
+              >
+                <span class="text-sm font-semibold text-brand-dark">Template</span>
+                <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.design_template_price) }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Development -->
+          <div>
+            <label class="block text-sm font-semibold text-brand-dark mb-2">Development</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Estimate Final Time (hours)</label>
+                <input v-model.number="form.estimated_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Rate Developer (Rp/jam)</label>
+                <input v-model.number="form.rate_developer" type="number" min="0" step="1000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Jumlah Developer</label>
+                <input v-model.number="form.developer_count" type="number" min="1" step="1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-3 mt-3 border-t border-[#F1F1F1] text-sm">
+              <span class="text-gray-500">Development Cost</span>
+              <span class="text-brand-dark font-bold">{{ formatRupiah(landingPageDevelopmentCost) }}</span>
+            </div>
+          </div>
+
+          <!-- Additional Items (optional) -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-sm font-semibold text-brand-dark">Additional Items (Optional)</label>
+              <button
+                type="button"
+                @click="addAdditionalItem"
+                class="border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
+              >
+                <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
+                <span class="text-brand-dark text-xs font-semibold">Add Item</span>
+              </button>
+            </div>
+
+            <div v-if="form.additional_items.length === 0" class="text-xs text-gray-400 border border-dashed border-[#DCDEDD] rounded-[10px] py-4 text-center">
+              No additional items -- optional extras like domain, third-party integration, or extra revisions.
+            </div>
+
+            <div v-else class="space-y-3">
+              <div
+                v-for="(item, index) in form.additional_items"
+                :key="index"
+                class="p-3 border border-[#DCDEDD] rounded-[10px] grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-end"
+              >
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Description</label>
+                  <input v-model="item.description" type="text" placeholder="e.g. Domain .com (1 year)" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+                <div class="w-full sm:w-24">
+                  <label class="block text-xs text-gray-500 mb-1">Amount</label>
+                  <input v-model.number="item.amount" type="number" min="0" step="1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+                <div class="w-full sm:w-36">
+                  <label class="block text-xs text-gray-500 mb-1">Price (Rp)</label>
+                  <input v-model.number="item.price" type="number" min="0" step="1000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                </div>
+                <button
+                  type="button"
+                  @click="removeAdditionalItem(index)"
+                  class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl border border-[#DCDEDD] hover:border-red-400 hover:bg-red-50 group transition-all"
+                >
+                  <Trash2 class="w-4 h-4 text-gray-500 group-hover:text-red-600" />
+                </button>
+              </div>
+              <div class="flex items-center justify-between pt-1 text-sm">
+                <span class="text-gray-500">Additional Items Total</span>
+                <span class="text-brand-dark font-bold">{{ formatRupiah(landingPageAdditionalItemsTotal) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Margin -->
+          <div>
+            <label class="block text-sm font-semibold text-brand-dark mb-2">Margin Jual</label>
+            <div class="flex items-center gap-3">
+              <input v-model.number="form.margin_percent" type="number" min="0" step="1" class="w-32 px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+              <span class="text-sm text-gray-500">%</span>
+              <span class="ml-auto text-sm text-gray-500">
+                Margin Amount: <strong class="text-brand-dark">{{ formatRupiah(landingPageMarginTotal) }}</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
         <!-- Build-only extra fields -->
         <div v-if="form.scenario === 'build'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -653,17 +954,35 @@ const submit = async () => {
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 sticky top-6 space-y-4">
           <h3 class="text-brand-dark text-base font-bold">Summary</h3>
 
-          <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1] flex items-center justify-between text-sm">
+          <div v-if="form.scenario !== 'landing_page'" class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1] flex items-center justify-between text-sm">
             <span class="text-gray-500">Rate Sell / Hour</span>
             <span class="font-semibold text-brand-dark">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</span>
           </div>
 
           <div class="space-y-2 text-sm">
+            <template v-if="form.scenario === 'landing_page'">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-500">Server ({{ form.server_type === "dedicated" ? "Dedicated" : "Shared" }})</span>
+                <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageServerCost) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-500">Design ({{ form.design_type === "dedicated" ? "Dedicated" : "Template" }})</span>
+                <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageDesignCost) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-500">Development</span>
+                <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageDevelopmentCost) }}</span>
+              </div>
+              <div v-if="form.additional_items.length > 0" class="flex items-center justify-between">
+                <span class="text-gray-500">Additional Items ({{ form.additional_items.length }})</span>
+                <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageAdditionalItemsTotal) }}</span>
+              </div>
+            </template>
             <div class="flex items-center justify-between">
               <span class="text-gray-500">Subtotal</span>
               <span class="text-brand-dark font-medium">{{ formatRupiah(subtotalSum) }}</span>
             </div>
-            <div class="flex items-center justify-between">
+            <div v-if="form.scenario !== 'landing_page'" class="flex items-center justify-between">
               <span class="text-gray-500">Buffer Risk</span>
               <span class="text-brand-dark font-medium">{{ formatRupiah(bufferSum) }}</span>
             </div>
@@ -674,6 +993,10 @@ const submit = async () => {
             <div v-if="form.scenario === 'build'" class="flex items-center justify-between">
               <span class="text-gray-500">Infrastructure Setup Cost</span>
               <span class="text-brand-dark font-medium">{{ formatRupiah(form.infra_setup_cost) }}</span>
+            </div>
+            <div v-if="form.scenario === 'landing_page'" class="flex items-center justify-between">
+              <span class="text-gray-500">Margin Jual ({{ form.margin_percent }}%)</span>
+              <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageMarginTotal) }}</span>
             </div>
           </div>
 
@@ -706,7 +1029,11 @@ const submit = async () => {
 
           <div class="flex items-center gap-2 p-3 rounded-[12px] bg-blue-50 border border-blue-100 text-sm">
             <ClockIcon class="w-4 h-4 text-blue-600 flex-shrink-0" />
-            <span class="text-blue-800">
+            <span v-if="form.scenario === 'landing_page'" class="text-blue-800">
+              Estimate Duration: <strong>{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
+              ({{ totalHoursSum.toFixed(1) }} hours &middot; {{ form.developer_count }} developer{{ form.developer_count > 1 ? "s" : "" }})
+            </span>
+            <span v-else class="text-blue-800">
               Estimate Duration: <strong>{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
               ({{ totalHoursSum.toFixed(1) }} hours &middot; team capacity {{ rateSetting.total_productive_hours_per_month }} hours/month)
             </span>
@@ -779,8 +1106,14 @@ const submit = async () => {
               <p class="text-brand-dark text-sm font-bold truncate">{{ reference.name }}</p>
               <p class="text-brand-light text-xs truncate">
                 {{ reference.client_name || "No client" }} &middot;
-                {{ reference.scenario === "feature" ? "New Feature" : "Build from Scratch" }} &middot;
-                {{ reference.items?.length ?? 0 }} items
+                {{
+                  reference.scenario === "feature"
+                    ? "New Feature"
+                    : reference.scenario === "build"
+                      ? "Build from Scratch"
+                      : "Landing Page"
+                }} &middot;
+                {{ reference.scenario === "landing_page" ? "Package" : `${reference.items?.length ?? 0} items` }}
               </p>
             </div>
             <span class="text-brand-dark text-sm font-semibold whitespace-nowrap">{{ formatRupiah(reference.grand_total) }}</span>
