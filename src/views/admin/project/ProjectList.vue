@@ -11,12 +11,14 @@ import Pagination from "@/components/admin/team/Pagination.vue";
 import { watch } from "vue";
 import { debounce } from "lodash";
 import { can } from "@/helpers/permissionHelper";
+import { useAlertModalStore } from "@/stores/alertModal";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const projectStore = useProjectStore();
 const { projects, meta, loading, success } = storeToRefs(projectStore);
-const { fetchProjectsPaginated } = projectStore;
+const { fetchProjectsPaginated, deleteProject } = projectStore;
+const alertModal = useAlertModalStore();
 
 const serverOptions = ref({
   page: 1,
@@ -57,6 +59,21 @@ const handlePerPageChange = (perPage) => {
   serverOptions.value.row_per_page = perPage;
   serverOptions.value.page = 1;
   fetchData();
+};
+
+const handleDelete = async (project) => {
+  const ok = await alertModal.confirm(`Delete project "${project.name}"? This action cannot be undone.`, {
+    type: "danger",
+    confirmText: "Delete",
+  });
+  if (!ok) return;
+
+  try {
+    await deleteProject(project.id);
+    await fetchData();
+  } catch (error) {
+    await alertModal.alert("Failed to delete project.", { type: "danger" });
+  }
 };
 </script>
 
@@ -134,7 +151,7 @@ const handlePerPageChange = (perPage) => {
     <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <CardList v-for="project in projects" :key="project.id" :data="project" />
+      <CardList v-for="project in projects" :key="project.id" :data="project" @delete="handleDelete" />
     </div>
 
     <div class="text-center py-12" v-if="!loading && projects.length === 0">

@@ -28,7 +28,7 @@ const route = useRoute();
 const router = useRouter();
 const store = useProjectCalculatorStore();
 const alertModal = useAlertModalStore();
-const { rateSetting, loadingRateSetting, saving } = storeToRefs(store);
+const { rateSetting, loadingRateSetting, saving, pphTypes } = storeToRefs(store);
 
 const isEditing = computed(() => !!route.params.id);
 const loadingCalculation = ref(false);
@@ -58,6 +58,9 @@ const form = ref({
   infra_setup_cost: 0,
   include_ppn: false,
   ppn_percent: 11,
+  include_pph: false,
+  pph_type: "",
+  pph_percent: 0,
   notes: "",
   items: [newFeatureItem()],
 });
@@ -177,7 +180,7 @@ const applyReference = async (reference) => {
 };
 
 onMounted(async () => {
-  await store.fetchRateSetting();
+  await Promise.all([store.fetchRateSetting(), store.fetchPphTypes()]);
   form.value.pm_overhead_percent = rateSetting.value.pm_overhead_percent;
   form.value.infra_setup_cost = rateSetting.value.default_infra_setup_cost;
 
@@ -193,6 +196,9 @@ onMounted(async () => {
         infra_setup_cost: calc.infra_setup_cost ?? rateSetting.value.default_infra_setup_cost,
         include_ppn: calc.include_ppn,
         ppn_percent: calc.ppn_percent,
+        include_pph: calc.include_pph,
+        pph_type: calc.pph_type ?? "",
+        pph_percent: calc.pph_percent ?? 0,
         notes: calc.notes ?? "",
         items: calc.items.map((item) =>
           calc.scenario === "feature"
@@ -281,6 +287,22 @@ const ppnAmount = computed(() =>
 );
 const totalWithPpn = computed(() => grandTotal.value + ppnAmount.value);
 
+// PPh is withheld by the client, not added -- it reduces what the vendor
+// actually receives in cash (netReceived), it never changes what the
+// client is invoiced (totalWithPpn/grandTotal). Its base (DPP) is the
+// service fee only, never the PPN portion, since PPN isn't the vendor's
+// income.
+const handlePphTypeChange = () => {
+  const selected = pphTypes.value.find((t) => t.value === form.value.pph_type);
+  if (selected?.default_rate !== null && selected?.default_rate !== undefined) {
+    form.value.pph_percent = selected.default_rate;
+  }
+};
+const pphAmount = computed(() =>
+  form.value.include_pph ? grandTotal.value * (Number(form.value.pph_percent || 0) / 100) : 0
+);
+const netReceived = computed(() => (form.value.include_ppn ? totalWithPpn.value : grandTotal.value) - pphAmount.value);
+
 const estimatedDurationWeeks = computed(() => {
   const capacityPerWeek =
     (rateSetting.value.total_productive_hours_per_month || 0) / 4.33;
@@ -289,6 +311,7 @@ const estimatedDurationWeeks = computed(() => {
 
 const canSave = computed(() => {
   if (!form.value.name || form.value.items.length === 0) return false;
+  if (form.value.include_pph && !form.value.pph_type) return false;
   return form.value.items.every((item) => item.name && item.name.trim().length > 0);
 });
 
@@ -556,7 +579,7 @@ const submit = async () => {
           </div>
         </div>
 
-        <!-- PPN + Notes -->
+        <!-- Tax + Notes -->
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-4">
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" v-model="form.include_ppn" class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]" />
@@ -573,6 +596,45 @@ const submit = async () => {
             />
             <span v-if="form.include_ppn" class="text-sm text-gray-500">%</span>
           </label>
+
+          <div class="pt-1 border-t border-[#F1F1F1]">
+            <label class="flex items-center gap-2 cursor-pointer pt-3">
+              <input type="checkbox" v-model="form.include_pph" class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]" />
+              <span class="text-sm font-semibold text-brand-dark">Include PPh (dipotong klien)</span>
+            </label>
+            <p class="flex items-center gap-1.5 text-xs text-gray-400 mt-1 ml-6">
+              <InfoIcon class="w-3.5 h-3.5 shrink-0" />
+              PPh dipotong oleh klien dari pembayaran -- mengurangi yang diterima, bukan menambah tagihan.
+            </p>
+
+            <div v-if="form.include_pph" class="mt-3 ml-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Jenis PPh</label>
+                <select
+                  v-model="form.pph_type"
+                  @change="handlePphTypeChange"
+                  class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+                >
+                  <option value="" disabled>Pilih jenis PPh...</option>
+                  <option v-for="type in pphTypes" :key="type.value" :value="type.value">
+                    {{ type.label }}{{ type.default_rate !== null ? ` (${type.default_rate}%)` : "" }}
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Tarif PPh (%)</label>
+                <input
+                  v-model.number="form.pph_percent"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  :disabled="form.pph_type !== 'custom' && form.pph_type !== ''"
+                  class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none disabled:bg-gray-50 disabled:text-gray-500"
+                />
+              </div>
+            </div>
+          </div>
 
           <div>
             <label class="block text-sm font-semibold text-brand-dark mb-1">Notes (Optional)</label>
@@ -628,6 +690,18 @@ const submit = async () => {
               <span class="text-indigo-700 text-sm font-bold">Total + PPN</span>
               <span class="text-indigo-700 text-xl font-extrabold">{{ formatRupiah(totalWithPpn) }}</span>
             </div>
+          </div>
+
+          <div v-if="form.include_pph" class="pt-3 border-t border-[#F1F1F1]">
+            <div class="flex items-center justify-between">
+              <span class="text-red-500 text-xs">- PPh {{ form.pph_percent }}%</span>
+              <span class="text-red-500 text-xs">{{ formatRupiah(pphAmount) }}</span>
+            </div>
+            <div class="flex items-center justify-between mt-1">
+              <span class="text-green-700 text-sm font-bold">Diterima Bersih</span>
+              <span class="text-green-700 text-xl font-extrabold">{{ formatRupiah(netReceived) }}</span>
+            </div>
+            <p class="text-gray-400 text-xs mt-1">Setelah dipotong PPh oleh klien</p>
           </div>
 
           <div class="flex items-center gap-2 p-3 rounded-[12px] bg-blue-50 border border-blue-100 text-sm">
