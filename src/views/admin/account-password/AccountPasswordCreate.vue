@@ -16,6 +16,7 @@ import {
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
+import { errorMessage } from "@/helpers/errorHelper";
 
 const router = useRouter();
 const passwordStore = useAccountPasswordStore();
@@ -78,7 +79,7 @@ const submit = async () => {
       router.push({ name: "admin.account-password.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = err?.message || "Failed to save credential.";
+    error.value = errorMessage(err, "Failed to save credential.");
   } finally {
     loading.value = false;
   }
