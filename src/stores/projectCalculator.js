@@ -16,6 +16,15 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
             rate_sell_per_hour: 0,
             total_productive_hours_per_month: 0,
         },
+        landingPageRateSetting: {
+            id: null,
+            server_dedicated_price: 0,
+            server_shared_price: 0,
+            design_dedicated_price: 0,
+            design_template_price: 0,
+            default_rate_developer: 0,
+            margin_percent: 0,
+        },
         calculations: [],
         currentCalculation: null,
         pphTypes: [],
@@ -25,6 +34,7 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
             average_value: 0,
             total_feature: 0,
             total_build: 0,
+            total_landing_page: 0,
             this_month: 0,
         },
         meta: {
@@ -35,6 +45,7 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
         },
         loading: false,
         loadingRateSetting: false,
+        loadingLandingPageRateSetting: false,
         loadingStatistics: false,
         saving: false,
         error: null,
@@ -68,6 +79,37 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
                     _method: "PUT",
                 });
                 this.rateSetting = data.data;
+                this.success = data.message;
+                return data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async fetchLandingPageRateSetting() {
+            this.loadingLandingPageRateSetting = true;
+            try {
+                const { data } = await axiosInstance.get("/project-calculator/landing-page-setting");
+                this.landingPageRateSetting = data.data;
+            } catch (error) {
+                this.error = handleError(error);
+            } finally {
+                this.loadingLandingPageRateSetting = false;
+            }
+        },
+
+        async updateLandingPageRateSetting(payload) {
+            this.saving = true;
+            this.error = null;
+            try {
+                const { data } = await axiosInstance.post("/project-calculator/landing-page-setting", {
+                    ...payload,
+                    _method: "PUT",
+                });
+                this.landingPageRateSetting = data.data;
                 this.success = data.message;
                 return data.data;
             } catch (error) {

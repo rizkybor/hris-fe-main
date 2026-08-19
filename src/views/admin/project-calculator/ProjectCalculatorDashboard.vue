@@ -9,6 +9,7 @@ import {
   LayersIcon,
   WalletIcon,
   SettingsIcon,
+  Globe,
   Eye,
   Pencil,
   Trash2,
@@ -23,16 +24,27 @@ import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import RateSettingModal from "@/components/admin/project-calculator/RateSettingModal.vue";
+import LandingPageRateSettingModal from "@/components/admin/project-calculator/LandingPageRateSettingModal.vue";
 import Pagination from "@/components/common/Pagination.vue";
 
 const store = useProjectCalculatorStore();
 const alertModal = useAlertModalStore();
-const { rateSetting, calculations, statistics, meta, loading, loadingRateSetting, loadingStatistics } =
-  storeToRefs(store);
+const {
+  rateSetting,
+  landingPageRateSetting,
+  calculations,
+  statistics,
+  meta,
+  loading,
+  loadingRateSetting,
+  loadingLandingPageRateSetting,
+  loadingStatistics,
+} = storeToRefs(store);
 
 const search = ref("");
 const scenarioFilter = ref("");
 const showRateModal = ref(false);
+const showLandingPageRateModal = ref(false);
 
 const fetchAll = () => {
   store.fetchCalculations({
@@ -43,7 +55,7 @@ const fetchAll = () => {
 };
 
 onMounted(async () => {
-  await Promise.all([store.fetchRateSetting(), store.fetchStatistics(), fetchAll()]);
+  await Promise.all([store.fetchRateSetting(), store.fetchLandingPageRateSetting(), store.fetchStatistics(), fetchAll()]);
 });
 
 let searchTimeout;
@@ -61,8 +73,9 @@ const goToPage = (page) => {
 };
 
 const scenarioMeta = {
-  feature: { label: "New Feature", class: "bg-blue-50 text-blue-700 border-blue-100" },
-  build: { label: "Build from Scratch", class: "bg-violet-50 text-violet-700 border-violet-100" },
+  feature: { label: "New Feature", class: "bg-blue-50 text-blue-700 border-blue-100", iconBg: "bg-blue-50", iconColor: "text-blue-600" },
+  build: { label: "Build from Scratch", class: "bg-violet-50 text-violet-700 border-violet-100", iconBg: "bg-violet-50", iconColor: "text-violet-600" },
+  landing_page: { label: "Landing Page", class: "bg-emerald-50 text-emerald-700 border-emerald-100", iconBg: "bg-emerald-50", iconColor: "text-emerald-600" },
 };
 
 const handleDelete = async (calc) => {
@@ -82,6 +95,11 @@ const handleDelete = async (calc) => {
 const onRateSettingSaved = async () => {
   showRateModal.value = false;
   await Promise.all([store.fetchRateSetting(), fetchAll()]);
+};
+
+const onLandingPageRateSettingSaved = async () => {
+  showLandingPageRateModal.value = false;
+  await Promise.all([store.fetchLandingPageRateSetting(), fetchAll()]);
 };
 </script>
 
@@ -188,10 +206,12 @@ const onRateSettingSaved = async () => {
           <div>
             <p class="text-brand-dark text-sm font-medium">Scenario</p>
             <Skeleton v-if="loadingStatistics" width="90px" height="1.75rem" rounded="6px" class="my-2" />
-            <p v-else class="text-brand-dark text-lg font-bold leading-tight my-2">
-              {{ statistics.total_feature }} Features &middot; {{ statistics.total_build }} Builds
+            <p v-else class="text-brand-dark text-sm font-bold leading-relaxed my-2">
+              {{ statistics.total_feature }} Features<br />
+              {{ statistics.total_build }} Builds<br />
+              {{ statistics.total_landing_page }} Landing Pages
             </p>
-            <p class="text-gray-500 text-sm font-medium">new features vs new build from scratch</p>
+            <p class="text-gray-500 text-sm font-medium">breakdown by scenario</p>
           </div>
           <div class="w-11 h-11 bg-orange-50 rounded-[12px] flex items-center justify-center">
             <LayersIcon class="w-5 h-5 text-orange-600" />
@@ -247,6 +267,59 @@ const onRateSettingSaved = async () => {
       </div>
     </div>
 
+    <!-- Landing Page Rate Setup -->
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 bg-emerald-50 rounded-[12px] flex items-center justify-center">
+            <Globe class="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <h3 class="text-brand-dark text-lg font-bold">Landing Page Rate Setup</h3>
+            <p class="text-brand-light text-sm">Server, Design, Developer rate &amp; margin used for the Landing Page scenario</p>
+          </div>
+        </div>
+        <button
+          v-if="can('project-calculator-landing-settings')"
+          @click="showLandingPageRateModal = true"
+          class="border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all duration-300 px-4 py-2 inline-flex items-center gap-2 self-start sm:self-center"
+        >
+          <SettingsIcon class="w-4 h-4 text-gray-600" />
+          <span class="text-brand-dark text-sm font-semibold">Landing Page Config</span>
+        </button>
+      </div>
+
+      <div v-if="loadingLandingPageRateSetting" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <Skeleton v-for="i in 6" :key="i" height="60px" rounded="12px" />
+      </div>
+      <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <p class="text-xs text-gray-500 font-medium">Server Dedicated</p>
+          <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.server_dedicated_price) }}</p>
+        </div>
+        <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <p class="text-xs text-gray-500 font-medium">Server Shared</p>
+          <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.server_shared_price) }}</p>
+        </div>
+        <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <p class="text-xs text-gray-500 font-medium">Design Dedicated</p>
+          <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.design_dedicated_price) }}</p>
+        </div>
+        <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <p class="text-xs text-gray-500 font-medium">Design Template</p>
+          <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.design_template_price) }}</p>
+        </div>
+        <div class="p-3 rounded-[12px] bg-emerald-50 border border-emerald-100">
+          <p class="text-xs text-emerald-600 font-medium">Default Rate Developer</p>
+          <p class="text-emerald-900 text-base font-bold mt-1">{{ formatRupiah(landingPageRateSetting.default_rate_developer) }}/jam</p>
+        </div>
+        <div class="p-3 rounded-[12px] bg-emerald-50 border border-emerald-100">
+          <p class="text-xs text-emerald-600 font-medium">Margin Jual Default</p>
+          <p class="text-emerald-900 text-base font-bold mt-1">{{ landingPageRateSetting.margin_percent }}%</p>
+        </div>
+      </div>
+    </div>
+
     <!-- List -->
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -272,6 +345,7 @@ const onRateSettingSaved = async () => {
             <option value="">All Scenarios</option>
             <option value="feature">New Feature</option>
             <option value="build">Build from Scratch</option>
+            <option value="landing_page">Landing Page</option>
           </select>
         </div>
       </div>
@@ -292,12 +366,9 @@ const onRateSettingSaved = async () => {
         >
           <div
             class="w-12 h-12 rounded-[12px] flex items-center justify-center flex-shrink-0"
-            :class="calc.scenario === 'feature' ? 'bg-blue-50' : 'bg-violet-50'"
+            :class="scenarioMeta[calc.scenario].iconBg"
           >
-            <CalculatorIcon
-              class="w-6 h-6"
-              :class="calc.scenario === 'feature' ? 'text-blue-600' : 'text-violet-600'"
-            />
+            <CalculatorIcon class="w-6 h-6" :class="scenarioMeta[calc.scenario].iconColor" />
           </div>
 
           <div class="flex-1 min-w-0">
@@ -361,5 +432,10 @@ const onRateSettingSaved = async () => {
     </div>
 
     <RateSettingModal v-if="showRateModal" @close="showRateModal = false" @saved="onRateSettingSaved" />
+    <LandingPageRateSettingModal
+      v-if="showLandingPageRateModal"
+      @close="showLandingPageRateModal = false"
+      @saved="onLandingPageRateSettingSaved"
+    />
   </div>
 </template>
