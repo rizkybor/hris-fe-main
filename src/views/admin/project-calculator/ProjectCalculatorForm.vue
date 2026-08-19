@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   CalculatorIcon,
@@ -63,6 +63,24 @@ const form = ref({
 });
 
 const errorMessage = ref("");
+
+// Elevates the sticky list header (shadow + blur) only once it's actually
+// pinned to the top of the viewport, rather than looking "stuck" all the
+// time -- a tiny sentinel just above it flips isHeaderStuck the instant it
+// scrolls out of view.
+const stickySentinel = ref(null);
+const isHeaderStuck = ref(false);
+let stickyObserver = null;
+
+onMounted(() => {
+  if (stickySentinel.value) {
+    stickyObserver = new IntersectionObserver(([entry]) => (isHeaderStuck.value = !entry.isIntersecting), {
+      threshold: 1,
+    });
+    stickyObserver.observe(stickySentinel.value);
+  }
+});
+onUnmounted(() => stickyObserver?.disconnect());
 
 // "Load from Previous Estimate" -- lets a new estimate reuse the Module
 // List / New Feature line items already saved on an earlier one, instead
@@ -371,17 +389,41 @@ const submit = async () => {
 
         <!-- Items -->
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+          <!-- Sentinel: a 1px marker just above the sticky header. The
+               IntersectionObserver watching it flips isHeaderStuck the
+               instant it scrolls out of view, i.e. exactly when the header
+               below actually becomes pinned. -->
+          <div ref="stickySentinel" class="h-px -mb-px"></div>
+
           <!-- Sticky so "Add Feature/Module" stays reachable while scrolling
                through a long item list, instead of having to scroll back up
                every time. Same top-6 offset as the Summary sidebar's own
                sticky positioning further down this page, so both line up
                against whatever the actual scroll container/fixed header
-               setup is. -->
-          <div class="sticky top-6 z-10 bg-white pb-2 -mx-6 px-6 pt-6 -mt-6 border-b border-[#F1F1F1]">
+               setup is. Gains a soft shadow/blur/accent bar only once
+               actually pinned (isHeaderStuck), so it doesn't look "elevated"
+               while still sitting flush in its normal spot. -->
+          <div
+            class="sticky top-6 z-10 -mx-6 px-6 pt-6 -mt-6 pb-2 border-b transition-all duration-300 ease-out"
+            :class="
+              isHeaderStuck
+                ? 'bg-white/90 backdrop-blur-md border-[#0C51D9]/15 shadow-[0_12px_28px_-16px_rgba(12,81,217,0.35)]'
+                : 'bg-white border-[#F1F1F1]'
+            "
+          >
+            <div
+              class="absolute inset-x-0 top-0 h-[3px] rounded-t-[14px] bg-gradient-to-r from-[#0C51D9] to-[#6366F1] transition-opacity duration-300"
+              :class="isHeaderStuck ? 'opacity-100' : 'opacity-0'"
+            ></div>
             <div class="flex items-center justify-between mb-2">
-              <h3 class="text-brand-dark text-base font-bold">
-                {{ form.scenario === "feature" ? "Feature List" : "Module List" }}
-              </h3>
+              <div class="flex items-center gap-2">
+                <h3 class="text-brand-dark text-base font-bold">
+                  {{ form.scenario === "feature" ? "Feature List" : "Module List" }}
+                </h3>
+                <span class="px-2 py-0.5 rounded-full bg-blue-50 text-[#0C51D9] text-xs font-bold tabular-nums">
+                  {{ form.items.length }}
+                </span>
+              </div>
               <div class="flex items-center gap-2">
                 <button
                   v-if="!isEditing"
