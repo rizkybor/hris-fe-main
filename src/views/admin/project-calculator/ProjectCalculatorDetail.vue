@@ -185,6 +185,63 @@ const printQuote = () => window.print();
         <p class="text-xs font-semibold text-gray-400 uppercase mb-1">Catatan</p>
         <p class="text-brand-dark text-sm whitespace-pre-line">{{ calc.notes }}</p>
       </div>
+
+      <!-- Team Rate Setup snapshot -- frozen as it stood when this estimate
+           was saved, not the live/shared setting (which may have changed
+           since). Older estimates saved before this existed simply won't
+           have one. -->
+      <div v-if="calc.rate_setting_snapshot" class="mt-6 pt-6 border-t border-[#F1F1F1]">
+        <p class="text-xs font-semibold text-gray-400 uppercase mb-3">Team Rate Setup</p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-sm">
+          <div class="p-3 rounded-[10px] bg-gray-50 border border-[#F1F1F1]">
+            <p class="text-gray-400 text-xs">Team Size</p>
+            <p class="text-brand-dark font-bold">{{ calc.rate_setting_snapshot.team_size }} orang</p>
+          </div>
+          <div class="p-3 rounded-[10px] bg-gray-50 border border-[#F1F1F1]">
+            <p class="text-gray-400 text-xs">Biaya Tim / Bulan</p>
+            <p class="text-brand-dark font-bold">{{ formatRupiah(calc.rate_setting_snapshot.team_monthly_cost) }}</p>
+          </div>
+          <div class="p-3 rounded-[10px] bg-gray-50 border border-[#F1F1F1]">
+            <p class="text-gray-400 text-xs">Jam Produktif / Bulan</p>
+            <p class="text-brand-dark font-bold">{{ calc.rate_setting_snapshot.total_productive_hours_per_month }}h</p>
+          </div>
+          <div class="p-3 rounded-[10px] bg-gray-50 border border-[#F1F1F1]">
+            <p class="text-gray-400 text-xs">Margin</p>
+            <p class="text-brand-dark font-bold">{{ calc.rate_setting_snapshot.margin_multiplier }}x</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+          <div v-if="calc.rate_setting_snapshot.sdm_resources?.length">
+            <p class="text-brand-dark font-semibold mb-1.5">SDM Resources</p>
+            <ul class="space-y-1">
+              <li v-for="r in calc.rate_setting_snapshot.sdm_resources" :key="r.id" class="flex items-center justify-between text-gray-600">
+                <span>{{ r.name }}<span v-if="r.field" class="text-gray-400"> ({{ r.field }})</span></span>
+                <span class="text-brand-dark font-medium">{{ formatRupiah(r.actual) }}</span>
+              </li>
+            </ul>
+          </div>
+          <div v-if="calc.rate_setting_snapshot.fixed_costs?.length">
+            <p class="text-brand-dark font-semibold mb-1.5">Fixed Costs</p>
+            <ul class="space-y-1">
+              <li v-for="f in calc.rate_setting_snapshot.fixed_costs" :key="f.id" class="flex items-center justify-between text-gray-600">
+                <span>{{ f.name }}</span>
+                <span class="text-brand-dark font-medium">{{ formatRupiah(f.actual) }}</span>
+              </li>
+            </ul>
+          </div>
+          <div v-if="calc.rate_setting_snapshot.infrastructure_tools?.length">
+            <p class="text-brand-dark font-semibold mb-1.5">Infrastructure Tools</p>
+            <ul class="space-y-1">
+              <li v-for="t in calc.rate_setting_snapshot.infrastructure_tools" :key="t.id" class="flex items-center justify-between text-gray-600">
+                <span>{{ t.name }}<span v-if="t.vendor" class="text-gray-400"> ({{ t.vendor }})</span></span>
+                <span class="text-brand-dark font-medium">{{ formatRupiah(t.monthly_fee) }}/bln</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
