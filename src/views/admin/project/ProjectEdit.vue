@@ -29,12 +29,13 @@ import {
   Search,
   SearchX,
 } from "lucide-vue-next";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash";
 import { useProjectStore } from "@/stores/project";
 import { useTeamStore } from "@/stores/team";
 import { useEmployeeStore } from "@/stores/employee";
 import { storeToRefs } from "pinia";
+import { axiosInstance } from "@/plugins/axios";
 import router from "@/router";
 import { useRoute } from "vue-router";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -67,7 +68,9 @@ const form = ref({
   photo_url: "",
   budget: "",
   project_leader_id: "",
-  teams: [],
+  team_assignment_mode: "employee",
+  team_id: "",
+  member_employee_ids: [],
 });
 
 const projectPhotoInput = ref(null);
@@ -75,6 +78,54 @@ const leaderModal = ref(false);
 const searchLeader = ref("");
 const selectedLeader = ref(null);
 const initialLoading = ref(true);
+
+// "By Team" locks the leader/members to a single Team's own data (see
+// ProjectRepository::applyTeamAssignment on the backend); "By Employee"
+// picks both individually. Switching modes clears whichever fields the
+// other mode owns so a stale pick from before the switch never gets
+// submitted silently.
+const setAssignmentMode = (mode) => {
+  form.value.team_assignment_mode = mode;
+  if (mode === "team") {
+    form.value.project_leader_id = "";
+    form.value.member_employee_ids = [];
+    selectedLeader.value = null;
+  } else {
+    form.value.team_id = "";
+    selectedTeamDetail.value = null;
+  }
+};
+
+// The Team list (fetchTeams) only carries members_count, not the actual
+// member roster -- fetch the full detail whenever the picked team changes
+// so the preview can show real names.
+const selectedTeamDetail = ref(null);
+watch(
+  () => form.value.team_id,
+  async (teamId) => {
+    selectedTeamDetail.value = teamId ? await teamStore.fetchTeam(teamId) : null;
+  }
+);
+
+// Kept separate from employeeStore.employees (driven by the Project Leader
+// search modal's own limited/search-scoped fetches) so this full-roster
+// member picker doesn't fight it over the same shared state.
+const memberCandidates = ref([]);
+const memberSearch = ref("");
+const filteredMemberCandidates = computed(() => {
+  if (!memberSearch.value.trim()) return memberCandidates.value;
+  const q = memberSearch.value.trim().toLowerCase();
+  return memberCandidates.value.filter((employee) => (employee.user?.name || "").toLowerCase().includes(q));
+});
+
+const toggleMember = (employeeId) => {
+  const idx = form.value.member_employee_ids.indexOf(employeeId);
+  if (idx === -1) {
+    form.value.member_employee_ids.push(employeeId);
+  } else {
+    form.value.member_employee_ids.splice(idx, 1);
+  }
+};
 
 const handleFetchProject = async () => {
   const response = await fetchProject(id);
@@ -84,15 +135,20 @@ const handleFetchProject = async () => {
   form.value.photo_url = response.photo;
   form.value.photo = null;
 
-  form.value.project_leader_id = response.leader.id;
+  form.value.project_leader_id = response.leader?.id ?? "";
 
-  selectedLeader.value = {
-    user: response.leader.user,
-    job_information: response.leader?.employee_profile?.job_information,
-    employee_profile: response.leader?.employee_profile,
-  };
+  selectedLeader.value = response.leader
+    ? {
+        user: response.leader.user,
+        job_information: response.leader?.employee_profile?.job_information,
+        employee_profile: response.leader?.employee_profile,
+      }
+    : null;
 
-  form.value.teams = response.teams.map((team) => team.id);
+  form.value.team_assignment_mode = response.team_assignment_mode || "employee";
+  form.value.team_id = response.teams?.[0]?.id ?? "";
+  form.value.member_employee_ids = response.members?.map((member) => member.id) || [];
+
   if (form.value.budget) {
     form.value.budget = formatRupiahInput(form.value.budget);
   }
@@ -134,6 +190,10 @@ onMounted(async () => {
     await fetchEmployees({
       limit: 6,
     });
+
+    const { data } = await axiosInstance.get("employees");
+    memberCandidates.value = data.data;
+
     await handleFetchProject();
   } finally {
     initialLoading.value = false;
@@ -504,79 +564,6 @@ watch(
           </div>
         </div>
 
-        <!-- Project Leader Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-          <div class="flex items-center gap-3 mb-6">
-            <div
-              class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Crown class="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-xl font-bold">Project Leader</h3>
-              <p class="text-brand-light text-sm font-normal">
-                Assign a project leader to manage this project
-              </p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <!-- Project Leader Selection -->
-            <div class="md:col-span-2">
-              <label class="block text-brand-dark text-base font-semibold mb-1"
-                >Select Project Leader</label
-              >
-              <button
-                type="button"
-                @click="leaderModal = true"
-                class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
-              >
-                <UserCheck class="w-5 h-5 text-gray-400" />
-                <span class="text-[#0D2929] font-normal flex-1">
-                  {{ selectedLeader?.user?.name || "Select project leader" }}
-                </span>
-                <ChevronDown class="w-4 h-4 text-gray-400" />
-              </button>
-              <input
-                type="hidden"
-                id="selectedLeaderValue"
-                name="project_leader"
-                v-model="form.project_leader_id"
-              />
-
-              <!-- Selected Leader Info -->
-              <div
-                class="mt-3 p-4 bg-gray-50 rounded-[12px] border border-[#DCDEDD]"
-                v-if="selectedLeader"
-              >
-                <div class="flex items-center gap-3">
-                  <Avatar
-                    :src="selectedLeader?.user?.profile_photo"
-                    :alt="selectedLeader?.user?.name"
-                    size="w-12 h-12"
-                    icon-size="w-5 h-5"
-                  />
-                  <div class="flex-1">
-                    <h4 class="text-brand-dark text-base font-semibold">
-                      {{ selectedLeader?.user?.name }}
-                    </h4>
-                    <p class="text-brand-light text-sm">
-                      {{ selectedLeader?.job_information?.job_title }}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    @click="handleRemoveLeader"
-                    class="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <X class="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Team Assignment Section -->
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
@@ -588,85 +575,149 @@ watch(
             <div>
               <h3 class="text-brand-dark text-xl font-bold">Team Assignment</h3>
               <p class="text-brand-light text-sm font-normal">
-                Select teams that will work on this project
+                Assign a whole Team, or pick a leader and members individually
               </p>
             </div>
           </div>
 
-          <div class="space-y-4">
-            <!-- Available Teams -->
+          <!-- Mode Toggle -->
+          <div class="grid grid-cols-2 gap-3 mb-6">
+            <button
+              type="button"
+              @click="setAssignmentMode('employee')"
+              class="rounded-[12px] border p-4 text-left transition-all duration-300"
+              :class="form.team_assignment_mode === 'employee' ? 'border-[#0C51D9] border-2 bg-blue-50/50' : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2'"
+            >
+              <p class="text-brand-dark text-sm font-bold">By Employee</p>
+              <p class="text-brand-light text-xs mt-0.5">Pick a leader and members one by one</p>
+            </button>
+            <button
+              type="button"
+              @click="setAssignmentMode('team')"
+              class="rounded-[12px] border p-4 text-left transition-all duration-300"
+              :class="form.team_assignment_mode === 'team' ? 'border-[#0C51D9] border-2 bg-blue-50/50' : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2'"
+            >
+              <p class="text-brand-dark text-sm font-bold">By Team</p>
+              <p class="text-brand-light text-xs mt-0.5">Leader and members come from a Team</p>
+            </button>
+          </div>
+
+          <!-- By Team -->
+          <div v-if="form.team_assignment_mode === 'team'" class="space-y-4">
             <div>
-              <label class="block text-brand-dark text-base font-semibold mb-3"
-                >Available Teams</label
-              >
+              <label class="block text-brand-dark text-base font-semibold mb-3">Select a Team</label>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Product Development Team -->
                 <label
                   class="group team-card flex items-center justify-between w-full min-h-[70px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer hover:border-[#0C51D9] hover:border-2"
-                  v-for="(team, index) in teams"
-                  :key="index"
+                  v-for="team in teams"
+                  :key="team.id"
                 >
                   <div class="flex items-center gap-3">
-                    <div
-                      class="w-12 h-12 relative flex items-center justify-center rounded-[12px] overflow-hidden"
-                    >
-                      <!-- Main blue background -->
-                      <div
-                        class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"
-                      ></div>
-                      <!-- Lucide icon -->
+                    <div class="w-12 h-12 relative flex items-center justify-center rounded-[12px] overflow-hidden">
+                      <div class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"></div>
                       <Code class="w-5 h-5 text-white relative z-10" />
                     </div>
                     <div class="flex flex-col">
-                      <p class="text-brand-dark text-base font-semibold">
-                        {{ team.name }}
-                      </p>
-                      <p class="text-brand-light text-sm">
-                        {{ team.members_count }} members • Active
-                      </p>
+                      <p class="text-brand-dark text-base font-semibold">{{ team.name }}</p>
+                      <p class="text-brand-light text-sm">{{ team.members_count }} members • {{ team.leader?.name || "No lead" }}</p>
                     </div>
                   </div>
-                  <div
-                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
-                  >
-                    <input
-                      type="checkbox"
-                      name="assigned_teams[]"
-                      :value="team.id"
-                      class="hidden"
-                      v-model="form.teams"
-                    />
-                    <div
-                      class="flex size-[18px] rounded border border-[#DCDEDD] group-has-[:checked]:bg-[#0C51D9] group-has-[:checked]:border-[#0C51D9] transition-all duration-300 items-center justify-center"
-                    >
-                      <Check
-                        class="w-3 h-3 text-white opacity-0 group-has-[:checked]:opacity-100 transition-opacity duration-300"
-                      />
-                    </div>
-                    <p
-                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                    ></p>
-                  </div>
+                  <input type="radio" name="team_id" :value="team.id" class="w-4 h-4 accent-[#0C51D9]" v-model="form.team_id" />
                 </label>
+              </div>
+              <p v-if="teams.length === 0" class="text-sm text-gray-400 italic py-2">No teams yet.</p>
+            </div>
+
+            <!-- Preview of the selected Team's leader + members -->
+            <div v-if="selectedTeamDetail" class="border-t border-[#DCDEDD] pt-4">
+              <p class="text-brand-dark text-sm font-semibold mb-2">
+                Project Leader will be <span class="text-[#0C51D9]">{{ selectedTeamDetail.leader?.name || "unset (Team has no lead)" }}</span>
+              </p>
+              <p class="text-brand-light text-xs mb-2">Members ({{ selectedTeamDetail.members?.length || 0 }}) come directly from this Team:</p>
+              <div class="flex flex-wrap gap-1.5">
+                <span
+                  v-for="member in selectedTeamDetail.members"
+                  :key="member.id"
+                  class="px-2 py-1 rounded-md bg-blue-50 text-[#0C51D9] text-xs font-medium"
+                >
+                  {{ member.employee?.user?.name }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- By Employee -->
+          <div v-else class="space-y-6">
+            <!-- Project Leader -->
+            <div>
+              <label class="block text-brand-dark text-base font-semibold mb-1">Select Project Leader</label>
+              <button
+                type="button"
+                @click="leaderModal = true"
+                class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
+              >
+                <UserCheck class="w-5 h-5 text-gray-400" />
+                <span class="text-[#0D2929] font-normal flex-1">
+                  {{ selectedLeader?.user?.name || "Select project leader" }}
+                </span>
+                <ChevronDown class="w-4 h-4 text-gray-400" />
+              </button>
+
+              <div class="mt-3 p-4 bg-gray-50 rounded-[12px] border border-[#DCDEDD]" v-if="selectedLeader">
+                <div class="flex items-center gap-3">
+                  <Avatar
+                    :src="selectedLeader?.user?.profile_photo"
+                    :alt="selectedLeader?.user?.name"
+                    size="w-12 h-12"
+                    icon-size="w-5 h-5"
+                  />
+                  <div class="flex-1">
+                    <h4 class="text-brand-dark text-base font-semibold">{{ selectedLeader?.user?.name }}</h4>
+                    <p class="text-brand-light text-sm">{{ selectedLeader?.job_information?.job_title }}</p>
+                  </div>
+                  <button type="button" @click="handleRemoveLeader" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <X class="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            <!-- Selected Teams Summary -->
-            <div id="selectedTeamsSummary" class="hidden">
-              <div class="border-t border-[#DCDEDD] pt-4">
-                <div class="flex items-center justify-between mb-3">
-                  <label class="block text-brand-dark text-base font-semibold"
-                    >Selected Teams</label
-                  >
-                  <button
-                    type="button"
-                    onclick="clearAllTeams()"
-                    class="text-brand-light text-sm hover:text-brand-dark transition-colors"
-                  >
-                    Clear All
-                  </button>
+            <!-- Members -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-base font-semibold text-brand-dark block">Members</label>
+                <span v-if="form.member_employee_ids.length" class="text-xs text-[#0C51D9] font-semibold flex items-center gap-1">
+                  <Users class="w-3.5 h-3.5" />
+                  {{ form.member_employee_ids.length }} selected
+                </span>
+              </div>
+              <div class="border border-[#DCDEDD] rounded-xl overflow-hidden">
+                <div v-if="memberCandidates.length > 8" class="relative border-b border-[#DCDEDD] bg-gray-50 p-2">
+                  <Search class="w-3.5 h-3.5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                  <input
+                    v-model="memberSearch"
+                    type="text"
+                    placeholder="Search employees..."
+                    class="w-full pl-7 pr-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs bg-white focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+                  />
                 </div>
-                <div id="selectedTeamsList" class="flex flex-wrap gap-2"></div>
+                <div class="p-3 max-h-64 overflow-y-auto space-y-1">
+                  <label
+                    v-for="employee in filteredMemberCandidates"
+                    :key="employee.id"
+                    class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50"
+                  >
+                    <input
+                      type="checkbox"
+                      :checked="form.member_employee_ids.includes(employee.id)"
+                      @change="toggleMember(employee.id)"
+                      class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] shrink-0"
+                    />
+                    <span class="truncate">{{ employee.user?.name }}</span>
+                  </label>
+                  <p v-if="memberCandidates.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
+                  <p v-else-if="filteredMemberCandidates.length === 0" class="text-sm text-gray-400 italic py-2">No employees match "{{ memberSearch }}".</p>
+                </div>
               </div>
             </div>
           </div>
