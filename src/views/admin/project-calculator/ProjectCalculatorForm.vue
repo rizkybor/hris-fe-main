@@ -469,7 +469,7 @@ const submit = async () => {
                 </button>
               </div>
             </div>
-            <p class="flex items-center gap-1.5 text-xs text-gray-400 pb-2">
+            <p class="flex items-center gap-1.5 text-xs mb-3 text-gray-400 pb-2">
               <InfoIcon class="w-3.5 h-3.5" />
               Complexity Factor: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Typical risk buffer 15&ndash;20%.
             </p>
