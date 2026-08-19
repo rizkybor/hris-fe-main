@@ -17,6 +17,7 @@ import Alert from "@/components/common/Alert.vue";
 import BaseInput from "@/components/common/form/Input.vue";
 import TextArea from "@/components/common/form/TextArea.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
+import { errorMessage } from "@/helpers/errorHelper";
 
 const router = useRouter();
 const archiveStore = useFilesCompanyStore();
@@ -86,7 +87,7 @@ const submit = async () => {
       router.push({ name: "admin.files-company.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = err?.message || "Failed to upload file.";
+    error.value = errorMessage(err, "Failed to upload file.");
   } finally {
     loading.value = false;
   }

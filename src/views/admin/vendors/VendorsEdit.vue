@@ -5,6 +5,7 @@ import { Briefcase, Save, ArrowLeft, User, Phone, Mail, MapPin, Tag, Layers, Fil
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useVendorsStore } from "@/stores/vendor";
+import { errorMessage } from "@/helpers/errorHelper";
 
 const route = useRoute();
 const router = useRouter();
@@ -71,7 +72,7 @@ const submit = async () => {
       router.push({ name: "admin.vendors.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = err?.message || "Failed to update vendor.";
+    error.value = errorMessage(err, "Failed to update vendor.");
   } finally {
     submitting.value = false;
   }
