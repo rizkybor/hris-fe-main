@@ -11,6 +11,11 @@ import {
   Clock,
   Calendar,
   User,
+  Users,
+  UsersRound,
+  UserX,
+  Eye,
+  EyeOff,
   AlertTriangle,
   AlertOctagon,
   TriangleAlert,
@@ -60,6 +65,12 @@ const taskStore = useTaskStore();
 const { tasks: projectTasks } = storeToRefs(taskStore);
 
 const project = ref({});
+
+// Hidden by default -- budget is sensitive, revealed only on demand.
+const isBudgetVisible = ref(false);
+const toggleBudgetVisibility = () => {
+  isBudgetVisible.value = !isBudgetVisible.value;
+};
 
 const handleFetchProject = async () => {
   try {
@@ -154,18 +165,18 @@ onMounted(async () => {
   <!-- Deadline Risk Banner -->
   <div
     v-if="projectHealth && projectHealth.level !== 'on-track'"
-    class="rounded-[14px] border p-4 sm:p-5 mb-6 flex items-start gap-3 sm:gap-4"
+    class="rounded-[12px] border p-3.5 sm:p-5 mb-6 flex items-start gap-3 sm:gap-3.5"
     :class="healthBannerStyles[projectHealth.level].wrapper"
   >
     <div
-      class="w-10 h-10 sm:w-11 sm:h-11 rounded-[12px] flex items-center justify-center shrink-0"
+      class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] flex items-center justify-center shrink-0"
       :class="healthBannerStyles[projectHealth.level].iconBox"
     >
-      <component :is="healthBannerStyles[projectHealth.level].icon" class="w-5 h-5 sm:w-6 sm:h-6" />
+      <component :is="healthBannerStyles[projectHealth.level].icon" class="w-4 h-4 sm:w-5 sm:h-5" />
     </div>
     <div class="flex-1 min-w-0">
       <div class="flex flex-wrap items-center gap-2">
-        <h4 class="text-base font-bold" :class="healthBannerStyles[projectHealth.level].title">
+        <h4 class="text-sm font-bold" :class="healthBannerStyles[projectHealth.level].title">
           {{ projectHealth.label }}
         </h4>
         <span
@@ -181,43 +192,43 @@ onMounted(async () => {
           {{ projectHealth.actualProgress }}% done &middot; expected {{ projectHealth.expectedProgress }}%
         </span>
       </div>
-      <p class="text-sm mt-1" :class="healthBannerStyles[projectHealth.level].message">
+      <p class="text-xs mt-1.5" :class="healthBannerStyles[projectHealth.level].message">
         {{ projectHealth.message }}
       </p>
     </div>
   </div>
 
   <!-- Project Information Section -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <!-- Project Details Card -->
     <div
-      class="lg:col-span-2 bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6"
     >
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-6">
         <div class="flex items-center gap-3">
           <div
-            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0"
+            class="w-9 h-9 sm:w-10 sm:h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0"
           >
-            <Briefcase class="w-6 h-6 text-blue-600" />
+            <Briefcase class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">
+            <h3 class="text-brand-dark text-base sm:text-lg font-bold">
               Project Information
             </h3>
-            <p class="text-brand-light text-sm font-normal">
+            <p class="text-brand-light text-xs font-normal">
               Complete project overview
             </p>
           </div>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <div
-            class="px-3 py-1 rounded-full text-base font-semibold"
+            class="px-3 py-1.5 rounded-full text-xs font-semibold"
             :class="getProjectStatusColor(project.status)"
           >
             {{ _.capitalize(project.status) }}
           </div>
           <div
-            class="px-3 py-1 rounded-full text-base font-semibold"
+            class="px-3 py-1.5 rounded-full text-xs font-semibold"
             :class="getPriorityColor(project.priority)"
           >
             {{ _.capitalize(project.priority) }}
@@ -226,17 +237,17 @@ onMounted(async () => {
             v-if="can('project-export')"
             @click="handleExportProgress"
             :disabled="exporting"
-            class="border border-[#DCDEDD] text-brand-dark py-2 px-4 rounded-[8px] font-medium hover:bg-gray-50 hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="border border-[#DCDEDD] text-brand-dark py-2 px-3.5 rounded-[8px] font-medium hover:bg-gray-50 hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download class="w-4 h-4" />
-            <span class="text-sm font-semibold">{{ exporting ? "Exporting..." : "Export Progress" }}</span>
+            <Download class="w-3.5 h-3.5" />
+            <span class="text-xs font-semibold">{{ exporting ? "Exporting..." : "Export Progress" }}</span>
           </button>
         </div>
       </div>
 
       <!-- Project Image -->
       <div
-        class="w-full bg-gradient-to-br from-blue-100 to-purple-100 relative overflow-hidden rounded-[12px] mb-6"
+        class="w-full h-40 sm:h-52 md:h-56 bg-gradient-to-br from-blue-100 to-purple-100 relative overflow-hidden rounded-[12px] mb-6"
       >
         <img
           :src="project.photo"
@@ -248,17 +259,17 @@ onMounted(async () => {
       <!-- Project Basic Info -->
       <div class="space-y-4">
         <div>
-          <h4 class="text-brand-dark text-2xl font-bold mb-2">
+          <h4 class="text-brand-dark text-lg sm:text-xl font-bold mb-2">
             {{ project.name }}
           </h4>
         </div>
 
         <!-- About Project Section -->
         <div>
-          <h5 class="text-brand-dark text-base font-semibold mb-3">
+          <h5 class="text-brand-dark text-sm font-semibold mb-2.5">
             About Project
           </h5>
-          <div class="text-brand-light text-base leading-relaxed space-y-3">
+          <div class="text-brand-light text-sm leading-relaxed space-y-3">
             <p v-for="(paragraph, index) in aboutParagraphs" :key="index">
               {{ paragraph }}
             </p>
@@ -267,20 +278,21 @@ onMounted(async () => {
 
         <!-- Assigned Members Section (By Employee mode) -->
         <div v-if="project.team_assignment_mode === 'employee'">
-          <h5 class="text-brand-dark text-base font-semibold mb-3">
+          <h5 class="text-brand-dark text-sm font-semibold mb-2.5">
             Project Members
           </h5>
           <div
             v-if="!project.members || project.members.length === 0"
-            class="text-center py-8 text-gray-500 text-sm"
+            class="flex flex-col items-center justify-center py-8 text-center rounded-[12px] border border-dashed border-[#DCDEDD] bg-gray-50/60"
           >
-            No members assigned
+            <Users class="w-7 h-7 text-gray-300 mb-2.5" />
+            <p class="text-gray-500 text-xs font-medium">No members assigned</p>
           </div>
-          <div v-else class="flex flex-wrap gap-2">
+          <div v-else class="flex flex-wrap gap-2.5">
             <span
               v-for="member in project.members"
               :key="member.id"
-              class="px-3 py-1.5 rounded-full bg-blue-50 text-[#0C51D9] text-sm font-medium"
+              class="px-3 py-1.5 rounded-full bg-blue-50 text-[#0C51D9] text-xs font-medium"
             >
               {{ member.name }}
             </span>
@@ -289,56 +301,57 @@ onMounted(async () => {
 
         <!-- Assigned Teams Section (By Team mode) -->
         <div v-else>
-          <h5 class="text-brand-dark text-base font-semibold mb-3">
+          <h5 class="text-brand-dark text-sm font-semibold mb-2.5">
             Assigned Teams
           </h5>
           <div
             v-if="!project.teams || project.teams.length === 0"
-            class="text-center py-8 text-gray-500 text-sm"
+            class="flex flex-col items-center justify-center py-8 text-center rounded-[12px] border border-dashed border-[#DCDEDD] bg-gray-50/60"
           >
-            No teams assigned
+            <UsersRound class="w-7 h-7 text-gray-300 mb-2.5" />
+            <p class="text-gray-500 text-xs font-medium">No teams assigned</p>
           </div>
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div
               v-for="team in project.teams"
               :key="team.id"
-              class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-lg transition-all duration-300 p-4"
+              class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-md transition-all duration-300 p-4"
             >
               <div class="flex items-center gap-3">
                 <div
-                  class="w-12 h-12 relative flex items-center justify-center rounded-[12px] overflow-hidden flex-shrink-0"
+                  class="w-10 h-10 relative flex items-center justify-center rounded-[10px] overflow-hidden flex-shrink-0"
                 >
                   <div
-                    class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"
+                    class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[10px]"
                   ></div>
                   <component
                     :is="Briefcase"
-                    class="w-5 h-5 text-white relative z-10"
+                    class="w-4 h-4 text-white relative z-10"
                   />
                 </div>
-                <div class="flex-1">
-                  <h4 class="text-brand-dark text-base font-bold mb-1">
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-brand-dark text-sm font-bold mb-0.5 truncate">
                     {{ team.name }}
                   </h4>
                   <div class="flex items-center gap-2">
-                    <User class="w-3.5 h-3.5 text-brand-light" />
-                    <p class="text-brand-light text-sm">
+                    <User class="w-3 h-3 text-brand-light" />
+                    <p class="text-brand-light text-xs">
                       {{ team.members_count }} Members
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div class="mt-4 pt-4 border-t border-[#DCDEDD]">
+              <div class="mt-3.5 pt-3.5 border-t border-[#DCDEDD]">
                 <div v-if="team.leader" class="flex items-center gap-3">
                   <Avatar
                     :src="team.leader.profile_photo"
                     :alt="team.leader.name"
-                    size="w-9 h-9"
-                    icon-size="w-4 h-4"
+                    size="w-8 h-8"
+                    icon-size="w-3.5 h-3.5"
                   />
-                  <div class="flex-1">
-                    <p class="text-brand-dark text-sm font-semibold">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-brand-dark text-xs font-semibold truncate">
                       {{ team.leader.name }}
                     </p>
                     <p class="text-brand-light text-xs">Team Leader</p>
@@ -346,8 +359,9 @@ onMounted(async () => {
                 </div>
                 <div
                   v-else
-                  class="w-full h-10 rounded-md bg-gray-200 flex items-center justify-center text-gray-400 text-xs"
+                  class="w-full h-9 rounded-md bg-gray-100 flex items-center justify-center gap-2 text-gray-400 text-xs"
                 >
+                  <UserX class="w-3.5 h-3.5" />
                   No Leader
                 </div>
               </div>
@@ -360,33 +374,33 @@ onMounted(async () => {
     <!-- Right Sidebar -->
     <div class="space-y-4">
       <!-- Project Leader Card -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 h-fit">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 h-fit">
         <div class="flex items-center gap-3 mb-4">
           <div
-            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-green-50 rounded-[10px] flex items-center justify-center shrink-0"
           >
-            <Crown class="w-6 h-6 text-green-600" />
+            <Crown class="w-4 h-4 text-green-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Project Leader</h3>
-            <p class="text-brand-light text-sm font-normal">
+            <h3 class="text-brand-dark text-sm font-bold">Project Leader</h3>
+            <p class="text-brand-light text-xs font-normal">
               Team leader information
             </p>
           </div>
         </div>
 
-        <div v-if="project.leader" class="flex items-center gap-4">
+        <div v-if="project.leader" class="flex items-center gap-3">
           <Avatar
             :src="project.leader.user.profile_photo"
             :alt="project.leader.user.name"
-            size="w-16 h-16"
-            icon-size="w-6 h-6"
+            size="w-12 h-12"
+            icon-size="w-5 h-5"
           />
-          <div class="flex-1">
-            <h4 class="text-brand-dark text-md font-bold mb-1">
+          <div class="flex-1 min-w-0">
+            <h4 class="text-brand-dark text-sm font-bold mb-0.5 truncate">
               {{ project.leader?.user?.name }}
             </h4>
-            <p class="text-brand-light text-sm">
+            <p class="text-brand-light text-xs truncate">
               {{ project.leader?.job_information?.job_title }}
             </p>
           </div>
@@ -395,119 +409,127 @@ onMounted(async () => {
               name: 'admin.employees.detail',
               params: { id: project.leader.id },
             }"
-            class="border border-[#DCDEDD] text-brand-dark py-2 px-4 rounded-[8px] font-medium hover:bg-gray-50 hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center gap-2"
+            class="border border-[#DCDEDD] text-brand-dark py-2 px-3 rounded-[8px] font-medium hover:bg-gray-50 hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center gap-1.5 shrink-0"
           >
-            <User class="w-4 h-4" />
-            <span class="text-sm font-semibold">Profile</span>
+            <User class="w-3.5 h-3.5" />
+            <span class="text-xs font-semibold">Profile</span>
           </RouterLink>
         </div>
-      </div>
-
-      <!-- Progress Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Progress</p>
-            <p class="text-brand-dark text-xl font-extrabold leading-none my-2">
-              {{ projectProgress }}%
-            </p>
-            <p class="text-purple-600 text-sm font-medium">
-              {{ projectHealth ? `Expected ${projectHealth.expectedProgress}% by now` : "Project completion" }}
-            </p>
-          </div>
-          <div
-            class="w-14 h-14 bg-purple-50 rounded-[12px] flex items-center justify-center"
-          >
-            <Target class="w-6 h-6 text-purple-600" />
-          </div>
-        </div>
-        <div class="w-full bg-gray-200 rounded-full h-3">
-          <div
-            class="h-3 rounded-full transition-all duration-300"
-            :class="getProgressColor(projectProgress)"
-            :style="{ width: `${projectProgress}%` }"
-          ></div>
+        <div v-else class="flex items-center gap-2 py-2 text-gray-400 text-xs">
+          <UserX class="w-4 h-4" />
+          No leader assigned
         </div>
       </div>
 
-      <!-- Budget Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Budget</p>
-            <p class="text-brand-dark text-xl font-extrabold leading-none my-2">
-              {{ formatRupiah(project.budget) }}
-            </p>
-            <p class="text-success text-sm font-medium">Project budget</p>
-          </div>
+      <!-- Progress + Budget (headline metrics, highlighted) -->
+      <div class="grid grid-cols-2 gap-4">
+        <div
+          class="bg-gradient-to-br from-purple-50/70 to-white border border-purple-100 rounded-[14px] hover:shadow-sm transition-all duration-300 p-4 border-l-4 border-l-purple-400"
+        >
           <div
-            class="w-14 h-14 bg-green-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-purple-100 rounded-[10px] flex items-center justify-center mb-3"
           >
-            <DollarSign class="w-6 h-6 text-green-600" />
+            <Target class="w-4 h-4 text-purple-600" />
           </div>
+          <p class="text-brand-dark text-xs font-medium">Progress</p>
+          <p class="text-brand-dark text-lg font-extrabold leading-none my-1.5">
+            {{ projectProgress }}%
+          </p>
+          <p class="text-purple-600 text-xs font-medium mb-3 leading-snug">
+            {{ projectHealth ? `Expected ${projectHealth.expectedProgress}% by now` : "Project completion" }}
+          </p>
+          <div class="w-full bg-purple-100/70 rounded-full h-2">
+            <div
+              class="h-2 rounded-full transition-all duration-300"
+              :class="getProgressColor(projectProgress)"
+              :style="{ width: `${projectProgress}%` }"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          class="bg-gradient-to-br from-emerald-50/70 to-white border border-emerald-100 rounded-[14px] hover:shadow-sm transition-all duration-300 p-4 border-l-4 border-l-emerald-400"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <div
+              class="w-9 h-9 bg-emerald-100 rounded-[10px] flex items-center justify-center"
+            >
+              <DollarSign class="w-4 h-4 text-green-600" />
+            </div>
+            <button
+              type="button"
+              @click="toggleBudgetVisibility"
+              class="w-7 h-7 rounded-full flex items-center justify-center text-emerald-600 hover:bg-emerald-100 transition-colors"
+              :title="isBudgetVisible ? 'Hide budget' : 'Show budget'"
+            >
+              <Eye v-if="!isBudgetVisible" class="w-3.5 h-3.5" />
+              <EyeOff v-else class="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <p class="text-brand-dark text-xs font-medium">Budget</p>
+          <p
+            v-if="isBudgetVisible"
+            class="text-brand-dark font-extrabold leading-snug my-1.5 break-words"
+            :class="formatRupiah(project.budget).length > 14 ? 'text-sm' : 'text-lg'"
+          >
+            {{ formatRupiah(project.budget) }}
+          </p>
+          <p v-else class="text-brand-dark text-lg font-extrabold leading-none my-1.5 tracking-widest">
+            Rp ••••••••
+          </p>
+          <p class="text-success text-xs font-medium">Project budget</p>
         </div>
       </div>
 
-      <!-- Start Date Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Start Date</p>
-            <p class="text-brand-dark text-xl font-extrabold leading-none my-2">
-              {{ formatDate(project.start_date) || "N/A" }}
-            </p>
-            <p class="text-indigo-600 text-sm font-medium">Project kickoff</p>
-          </div>
+      <!-- Start Date + End Date -->
+      <div class="grid grid-cols-2 gap-4">
+        <div
+          class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+        >
           <div
-            class="w-14 h-14 bg-indigo-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center mb-3"
           >
-            <Calendar class="w-6 h-6 text-indigo-600" />
+            <Calendar class="w-4 h-4 text-indigo-600" />
           </div>
+          <p class="text-brand-dark text-xs font-medium">Start Date</p>
+          <p class="text-brand-dark text-base font-extrabold leading-snug my-1.5">
+            {{ formatDate(project.start_date) || "N/A" }}
+          </p>
+          <p class="text-indigo-600 text-xs font-medium">Project kickoff</p>
         </div>
-      </div>
 
-      <!-- End Date Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">End Date</p>
-            <p class="text-brand-dark text-xl font-extrabold leading-none my-2">
-              {{ formatDate(project.end_date) || "N/A" }}
-            </p>
-            <p class="text-orange-600 text-sm font-medium">Project deadline</p>
-          </div>
+        <div
+          class="bg-gradient-to-br from-orange-50/70 to-white border border-orange-100 rounded-[14px] hover:shadow-sm transition-all duration-300 p-4 border-l-4 border-l-orange-400"
+        >
           <div
-            class="w-14 h-14 bg-orange-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-orange-100 rounded-[10px] flex items-center justify-center mb-3"
           >
-            <CalendarCheck class="w-6 h-6 text-orange-600" />
+            <CalendarCheck class="w-4 h-4 text-orange-600" />
           </div>
+          <p class="text-brand-dark text-xs font-medium">End Date</p>
+          <p class="text-brand-dark text-base font-extrabold leading-snug my-1.5">
+            {{ formatDate(project.end_date) || "N/A" }}
+          </p>
+          <p class="text-orange-600 text-xs font-medium">Project deadline</p>
         </div>
       </div>
 
       <!-- Duration Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-sm font-medium">Duration</p>
-            <p class="text-brand-dark text-xl font-extrabold leading-none my-2">
+            <p class="text-brand-dark text-xs font-medium">Duration</p>
+            <p class="text-brand-dark text-lg font-extrabold leading-none my-1.5">
               {{ calculateDuration(project.start_date, project.end_date) }}
             </p>
-            <p class="text-blue-600 text-sm font-medium">Project timeline</p>
+            <p class="text-blue-600 text-xs font-medium">Project timeline</p>
           </div>
           <div
-            class="w-14 h-14 bg-blue-50 rounded-[12px] flex items-center justify-center"
+            class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0"
           >
-            <Clock class="w-6 h-6 text-blue-600" />
+            <Clock class="w-4 h-4 text-blue-600" />
           </div>
         </div>
       </div>

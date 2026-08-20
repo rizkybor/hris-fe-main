@@ -118,17 +118,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 mt-6">
-    <div class="flex items-center justify-between mb-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 mt-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
       <div class="flex items-center gap-3">
         <div
-          class="w-12 h-12 bg-teal-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 sm:w-10 sm:h-10 bg-teal-50 rounded-[10px] flex items-center justify-center shrink-0"
         >
-          <FileText class="w-6 h-6 text-teal-600" />
+          <FileText class="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">Project Documents</h3>
-          <p class="text-brand-light text-sm font-normal">
+          <h3 class="text-brand-dark text-base sm:text-lg font-bold">Project Documents</h3>
+          <p class="text-brand-light text-xs font-normal">
             Optional supporting documents (proposals, client files, etc.)
           </p>
         </div>
@@ -137,24 +137,24 @@ onMounted(() => {
       <button
         v-if="can('project-edit')"
         @click="openUploadModal"
-        class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
+        class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center justify-center gap-2 w-full sm:w-auto"
       >
         <Upload class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Upload Document</span>
+        <span class="text-brand-white text-xs font-semibold">Upload Document</span>
       </button>
     </div>
 
-    <div v-if="loading" class="text-center py-8 text-sm text-gray-400">
+    <div v-if="loading" class="text-center py-8 text-xs text-gray-400">
       Loading documents...
     </div>
 
     <div
       v-else-if="documents.length === 0"
-      class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
+      class="text-center py-10 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
     >
-      <FileIcon class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-      <p class="text-base font-semibold">No documents uploaded yet</p>
-      <p class="text-sm text-gray-400">
+      <FileIcon class="w-9 h-9 text-gray-300 mx-auto mb-3" />
+      <p class="text-sm font-semibold">No documents uploaded yet</p>
+      <p class="text-xs text-gray-400">
         Documents are optional — upload proposals, client files, or other supporting files.
       </p>
     </div>
@@ -163,15 +163,15 @@ onMounted(() => {
       <div
         v-for="document in documents"
         :key="document.id"
-        class="flex items-start gap-3 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
+        class="flex items-start gap-3 p-4 border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
       >
         <div
-          class="w-11 h-11 bg-teal-50 rounded-[10px] flex items-center justify-center shrink-0"
+          class="w-10 h-10 bg-teal-50 rounded-[10px] flex items-center justify-center shrink-0"
         >
-          <FileText class="w-5 h-5 text-teal-600" />
+          <FileText class="w-4 h-4 text-teal-600" />
         </div>
         <div class="flex-1 min-w-0">
-          <p class="text-brand-dark text-sm font-bold truncate">
+          <p class="text-brand-dark text-xs font-bold truncate">
             {{ document.document_name }}
           </p>
           <p v-if="document.description" class="text-brand-light text-xs mt-0.5 line-clamp-2">
@@ -180,19 +180,19 @@ onMounted(() => {
           <div class="flex items-center gap-2 mt-2 flex-wrap">
             <span
               v-if="document.type_file"
-              class="text-[11px] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium uppercase"
+              class="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium uppercase"
             >
               {{ document.type_file }}
             </span>
-            <span v-if="document.size_file" class="text-[11px] text-gray-400">
+            <span v-if="document.size_file" class="text-xs text-gray-400">
               {{ document.size_file }}
             </span>
-            <span class="text-[11px] text-gray-400">
+            <span class="text-xs text-gray-400">
               {{ formatDate(document.created_at) }}
             </span>
           </div>
         </div>
-        <div class="flex items-center gap-1 shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
           <a
             :href="document.document_path"
             target="_blank"
@@ -200,7 +200,7 @@ onMounted(() => {
             class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
             title="Download / View"
           >
-            <Download class="w-4 h-4 text-gray-600" />
+            <Download class="w-3.5 h-3.5 text-gray-600" />
           </a>
           <button
             v-if="can('project-delete')"
@@ -208,7 +208,7 @@ onMounted(() => {
             class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
             title="Delete"
           >
-            <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
+            <Trash2 class="w-3.5 h-3.5 text-gray-600 group-hover:text-red-600" />
           </button>
         </div>
       </div>
@@ -218,7 +218,7 @@ onMounted(() => {
     <Transition name="fade">
       <div
         v-if="isUploadModalOpen"
-        class="fixed inset-0 z-[99] flex items-center justify-center p-4"
+        class="fixed inset-0 z-[99] flex items-center justify-center p-5"
       >
         <div
           class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"
@@ -228,40 +228,40 @@ onMounted(() => {
         <div class="bg-white rounded-[14px] p-6 w-full max-w-md relative z-10 shadow-2xl">
           <button
             @click="closeUploadModal"
-            class="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+            class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600"
           >
-            <X class="w-5 h-5" />
+            <X class="w-4 h-4" />
           </button>
 
-          <h3 class="text-xl font-bold text-brand-dark mb-4">Upload Document</h3>
+          <h3 class="text-base font-bold text-brand-dark mb-4">Upload Document</h3>
 
           <form @submit.prevent="handleUpload" class="space-y-4">
             <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">
+              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
                 Document Name <span class="text-red-500">*</span>
               </label>
               <input
                 v-model="form.document_name"
                 type="text"
                 placeholder="e.g. Proposal Penawaran"
-                class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+                class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
               />
             </div>
 
             <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">
+              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
                 Description
               </label>
               <textarea
                 v-model="form.description"
                 rows="3"
                 placeholder="Optional notes about this document"
-                class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none resize-none"
+                class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none resize-none"
               ></textarea>
             </div>
 
             <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">
+              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
                 File <span class="text-red-500">*</span>
               </label>
               <input
@@ -269,27 +269,27 @@ onMounted(() => {
                 type="file"
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                 @change="handleFileChange"
-                class="w-full text-sm text-gray-700 file:border file:border-gray-300 file:rounded-lg file:px-3 file:py-1.5 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
+                class="w-full text-xs text-gray-700 file:border file:border-gray-300 file:rounded-lg file:px-3 file:py-2 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
               />
-              <p class="text-xs text-gray-400 mt-1">
+              <p class="text-xs text-gray-400 mt-1.5">
                 PDF, Word, Excel, or image. Max 10MB.
               </p>
             </div>
 
-            <p v-if="formError" class="text-red-500 text-sm">{{ formError }}</p>
+            <p v-if="formError" class="text-red-500 text-xs">{{ formError }}</p>
 
             <div class="grid grid-cols-2 gap-3 pt-2">
               <button
                 type="button"
                 @click="closeUploadModal"
-                class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50 transition"
+                class="px-4 py-3 rounded-lg border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:bg-gray-50 transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 :disabled="uploading"
-                class="px-4 py-3 rounded-xl bg-[#0C51D9] text-white font-semibold hover:brightness-110 transition disabled:opacity-50"
+                class="px-4 py-3 rounded-lg bg-[#0C51D9] text-white text-sm font-semibold hover:brightness-110 transition disabled:opacity-50"
               >
                 {{ uploading ? "Uploading..." : "Upload" }}
               </button>
@@ -303,29 +303,29 @@ onMounted(() => {
     <Transition name="fade">
       <div
         v-if="isDeleteModalOpen"
-        class="fixed inset-0 z-[99] flex items-center justify-center p-4"
+        class="fixed inset-0 z-[99] flex items-center justify-center p-5"
       >
         <div
           class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"
           @click="isDeleteModalOpen = false"
         ></div>
 
-        <div class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
+        <div class="bg-white rounded-[18px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
           <button
             @click="isDeleteModalOpen = false"
-            class="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+            class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600"
           >
-            <X class="w-5 h-5" />
+            <X class="w-4 h-4" />
           </button>
 
           <div class="text-center">
             <div
-              class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4"
+              class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4"
             >
-              <AlertTriangle class="w-8 h-8 text-red-500" />
+              <AlertTriangle class="w-7 h-7 text-red-500" />
             </div>
 
-            <h3 class="text-xl font-bold text-brand-dark mb-2">Delete Document?</h3>
+            <h3 class="text-base font-bold text-brand-dark mb-2">Delete Document?</h3>
             <p class="text-gray-500 text-sm mb-6">
               Are you sure you want to delete
               <span class="font-bold text-brand-dark">
@@ -336,16 +336,16 @@ onMounted(() => {
             <div class="grid grid-cols-2 gap-3">
               <button
                 @click="isDeleteModalOpen = false"
-                class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50 transition"
+                class="px-4 py-3 rounded-lg border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:bg-gray-50 transition"
               >
                 Cancel
               </button>
               <button
                 @click="handleDelete"
                 :disabled="isDeleting"
-                class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                class="px-4 py-3 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2.5 disabled:opacity-50"
               >
-                <Trash2 v-if="!isDeleting" class="w-4 h-4" />
+                <Trash2 v-if="!isDeleting" class="w-3.5 h-3.5" />
                 {{ isDeleting ? "Deleting..." : "Yes, Delete" }}
               </button>
             </div>
