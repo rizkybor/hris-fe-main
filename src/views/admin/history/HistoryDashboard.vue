@@ -120,10 +120,10 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
             <div class="flex-1 min-w-0 pr-2">
               <p class="text-brand-white-90 text-sm font-medium">Total Activities</p>
               <Skeleton v-if="loadingStatistics" dark width="90px" height="3rem" rounded="8px" class="my-4" />
-              <p v-else class="text-brand-white text-4xl lg:text-5xl font-extrabold leading-none my-4">
+              <p v-else class="text-brand-white text-3xl lg:text-3xl font-extrabold leading-none my-4">
                 {{ statistics.total }}
               </p>
-              <p class="text-brand-white-80 text-base font-normal">All-time system events</p>
+              <p class="text-brand-white-80 text-sm font-normal">All-time system events</p>
             </div>
             <div class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center flex-shrink-0">
               <Activity class="w-8 h-8 text-white" />

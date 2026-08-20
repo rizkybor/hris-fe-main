@@ -141,7 +141,7 @@ const handleDelete = async () => {
         <div class="lg:col-span-2 space-y-4">
           <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
             <h4 class="text-brand-dark text-sm font-bold mb-3">Notes Content</h4>
-            <div v-if="note.body" class="memo-body text-sm text-brand-dark leading-relaxed" v-html="note.body"></div>
+            <div v-if="note.body" class="rich-text-content text-sm text-brand-dark leading-relaxed" v-html="note.body"></div>
             <p v-else class="text-sm text-gray-400 italic">No notes yet.</p>
           </div>
 
@@ -232,15 +232,16 @@ const handleDelete = async () => {
 </template>
 
 <style scoped>
-.memo-body :deep(p) { margin-bottom: 0.75rem; }
-.memo-body :deep(ul) { list-style: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
-.memo-body :deep(ol) { list-style: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
-.memo-body :deep(h1) { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0; }
-.memo-body :deep(h2) { font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0; }
-.memo-body :deep(h3) { font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; }
-.memo-body :deep(blockquote) { border-left: 3px solid #0c51d9; padding-left: 0.75rem; color: #6b7280; margin: 0.5rem 0; }
-.memo-body :deep(a) { color: #0c51d9; text-decoration: underline; }
-.memo-body :deep(hr) { border: none; border-top: 1px solid #dcdedd; margin: 0.75rem 0; }
-.memo-body :deep(table) { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
-.memo-body :deep(table td), .memo-body :deep(table th) { border: 1px solid #dcdedd; padding: 0.375rem 0.5rem; }
+/* Table containment (overflow-x-auto, border, padding) lives in the
+   shared global .rich-text-content class in src/assets/css/input.css --
+   only the non-table typography rules stay local here. */
+.rich-text-content :deep(p) { margin-bottom: 0.75rem; }
+.rich-text-content :deep(ul) { list-style: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+.rich-text-content :deep(ol) { list-style: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+.rich-text-content :deep(h1) { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0; }
+.rich-text-content :deep(h2) { font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0; }
+.rich-text-content :deep(h3) { font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; }
+.rich-text-content :deep(blockquote) { border-left: 3px solid #0c51d9; padding-left: 0.75rem; color: #6b7280; margin: 0.5rem 0; }
+.rich-text-content :deep(a) { color: #0c51d9; text-decoration: underline; }
+.rich-text-content :deep(hr) { border: none; border-top: 1px solid #dcdedd; margin: 0.75rem 0; }
 </style>

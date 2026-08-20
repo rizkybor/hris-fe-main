@@ -153,7 +153,7 @@ const handleDelete = async () => {
               <Skeleton v-if="loading" dark width="90px" height="3rem" rounded="8px" class="my-4" />
               <p
                 v-else
-                class="text-brand-white text-4xl lg:text-5xl font-extrabold leading-none my-4"
+                class="text-brand-white text-3xl lg:text-3xl font-extrabold leading-none my-4"
               >
                 {{ statistics.total_archives }}
               </p>
@@ -176,7 +176,7 @@ const handleDelete = async () => {
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-sm font-medium">Last Upload</p>
-            <p class="text-brand-dark text-2xl font-extrabold leading-tight my-2 truncate">
+            <p class="text-brand-dark text-xl font-extrabold leading-tight my-2 truncate">
               {{ statistics.last_uploaded ? formatDate(statistics.last_uploaded) : "—" }}
             </p>
             <p class="text-brand-light text-sm font-medium">Latest archive</p>
@@ -264,7 +264,7 @@ const handleDelete = async () => {
           </div>
 
           <div class="flex-1 min-w-0">
-            <p class="text-brand-dark text-lg font-bold truncate">
+            <p class="text-brand-dark text-sm font-bold truncate">
               {{ archive.document_name }}
             </p>
             <p v-if="archive.description" class="text-sm text-brand-light truncate">

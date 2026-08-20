@@ -21,7 +21,7 @@ const emit = defineEmits(["close"]);
     >
       <div
         v-if="show"
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3.5"
         @click="emit('close')"
       >
         <Transition
@@ -38,28 +38,28 @@ const emit = defineEmits(["close"]);
             class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md overflow-hidden"
           >
             <!-- Modal Content -->
-            <div class="p-6 sm:p-8 text-center">
-              <div class="flex justify-center mb-4">
+            <div class="p-5 sm:p-6 text-center">
+              <div class="flex justify-center mb-3.5">
                 <div
-                  class="w-14 h-14 sm:w-16 sm:h-16 bg-red-50 rounded-full flex items-center justify-center"
+                  class="w-10 h-10 sm:w-16 sm:h-16 bg-red-50 rounded-full flex items-center justify-center"
                 >
                   <AlertCircle class="w-7 h-7 sm:w-8 sm:h-8 text-red-600" />
                 </div>
               </div>
 
-              <h3 class="text-brand-dark text-lg sm:text-xl font-bold mb-2">
+              <h3 class="text-brand-dark text-sm sm:text-base font-bold mb-1.5">
                 Oops! Something's Not Right
               </h3>
-              <p class="text-brand-light text-sm sm:text-base font-normal mb-6">
+              <p class="text-brand-light text-sm sm:text-sm font-normal mb-5">
                 Please check your data again and make sure all required fields are filled correctly.
               </p>
 
               <button
                 type="button"
                 @click="emit('close')"
-                class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-red-600 transition-all duration-300 bg-gradient-to-r from-red-500 to-red-600 shadow-lg px-4 py-2.5 sm:px-6 sm:py-3"
+                class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-red-600 transition-all duration-300 bg-gradient-to-r from-red-500 to-red-600 shadow-lg px-3.5 py-2 sm:px-5 sm:py-2.5"
               >
-                <span class="text-white text-sm sm:text-base font-semibold">
+                <span class="text-white text-sm sm:text-sm font-semibold">
                   OK, I'll Fix It
                 </span>
               </button>

@@ -14,11 +14,11 @@ const props = withDefaults(defineProps<Props>(), {
   <!-- Vertical Step Progress -->
   <aside class="hidden lg:flex w-80 bg-white border-r border-[#DCDEDD] flex-col">
     <!-- Logo Section -->
-    <div class="px-6 py-4 border-b border-[#DCDEDD]">
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 relative flex items-center justify-center">
+    <div class="px-5 py-3.5 border-b border-[#DCDEDD]">
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 relative flex items-center justify-center">
           <!-- <div
-            class="w-14 h-14 absolute bg-gradient-to-br from-primary-100 to-primary-200 rounded-full"
+            class="w-10 h-10 absolute bg-gradient-to-br from-primary-100 to-primary-200 rounded-full"
           ></div>
           <div
             class="w-10 h-10 absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full opacity-90"
@@ -27,11 +27,11 @@ const props = withDefaults(defineProps<Props>(), {
           <img
             src="/images/jcd-only-color.png"
             alt="Company Logo"
-            class="w-12 h-12 relative z-10 object-contain"
+            class="w-9 h-9 relative z-10 object-contain"
           />
         </div>
         <div>
-          <h1 class="text-brand-dark text-lg font-bold">HRIS
+          <h1 class="text-brand-dark text-sm font-bold">HRIS
             <span class="text-xs font-medium text-gray-400 ml-1"> v3.3 </span></h1>
           <p class="text-brand-dark text-xs font-normal">Jendela Cakra Digital</p>
         </div>
@@ -39,12 +39,12 @@ const props = withDefaults(defineProps<Props>(), {
     </div>
 
     <!-- Step Progress -->
-    <div class="space-y-8 flex-1 mt-10 px-6">
+    <div class="space-y-6 flex-1 mt-8 px-5">
       <!-- Step 1 -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3.5">
         <div
           :class="[
-            'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0',
+            'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0',
             currentStep > 1
               ? 'bg-green-600 text-white'
               : currentStep === 1
@@ -58,7 +58,7 @@ const props = withDefaults(defineProps<Props>(), {
         <div class="flex-1">
           <h3
             :class="[
-              'text-lg font-bold',
+              'text-sm font-bold',
               currentStep > 1
                 ? 'text-green-600'
                 : currentStep === 1
@@ -86,7 +86,7 @@ const props = withDefaults(defineProps<Props>(), {
       <!-- Connector Line 1 -->
       <div
         :class="[
-          'ml-6 w-0.5 h-8',
+          'ml-5 w-0.5 h-8',
           currentStep > 1
             ? 'bg-green-600'
             : currentStep === 1
@@ -96,10 +96,10 @@ const props = withDefaults(defineProps<Props>(), {
       ></div>
 
       <!-- Step 2 -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3.5">
         <div
           :class="[
-            'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0',
+            'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0',
             currentStep > 2
               ? 'bg-green-600 text-white'
               : currentStep === 2
@@ -113,7 +113,7 @@ const props = withDefaults(defineProps<Props>(), {
         <div class="flex-1">
           <h3
             :class="[
-              'text-lg font-bold',
+              'text-sm font-bold',
               currentStep > 2
                 ? 'text-green-600'
                 : currentStep === 2
@@ -141,7 +141,7 @@ const props = withDefaults(defineProps<Props>(), {
       <!-- Connector Line 2 -->
       <div
         :class="[
-          'ml-6 w-0.5 h-8',
+          'ml-5 w-0.5 h-8',
           currentStep > 2
             ? 'bg-green-600'
             : currentStep === 2
@@ -151,10 +151,10 @@ const props = withDefaults(defineProps<Props>(), {
       ></div>
 
       <!-- Step 3 -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3.5">
         <div
           :class="[
-            'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0',
+            'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0',
             currentStep > 3
               ? 'bg-green-600 text-white'
               : currentStep === 3
@@ -168,7 +168,7 @@ const props = withDefaults(defineProps<Props>(), {
         <div class="flex-1">
           <h3
             :class="[
-              'text-lg font-bold',
+              'text-sm font-bold',
               currentStep > 3
                 ? 'text-green-600'
                 : currentStep === 3
@@ -196,7 +196,7 @@ const props = withDefaults(defineProps<Props>(), {
       <!-- Connector Line 3 -->
       <div
         :class="[
-          'ml-6 w-0.5 h-8',
+          'ml-5 w-0.5 h-8',
           currentStep > 3
             ? 'bg-green-600'
             : currentStep === 3
@@ -206,10 +206,10 @@ const props = withDefaults(defineProps<Props>(), {
       ></div>
 
       <!-- Step 4 -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3.5">
         <div
           :class="[
-            'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0',
+            'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0',
             currentStep === 4
               ? 'bg-blue-600 text-white'
               : 'bg-gray-200 text-gray-500',
@@ -220,7 +220,7 @@ const props = withDefaults(defineProps<Props>(), {
         <div class="flex-1">
           <h3
             :class="[
-              'text-lg font-bold',
+              'text-sm font-bold',
               currentStep === 4 ? 'text-blue-600' : 'text-gray-500',
             ]"
           >
