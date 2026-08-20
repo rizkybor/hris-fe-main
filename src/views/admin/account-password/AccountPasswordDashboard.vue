@@ -129,7 +129,7 @@ const formatDate = (date) => {
               <Skeleton v-if="loading" dark width="90px" height="3rem" rounded="8px" class="my-4" />
               <p
                 v-else
-                class="text-brand-white text-4xl lg:text-5xl font-extrabold leading-none my-4"
+                class="text-brand-white text-3xl lg:text-3xl font-extrabold leading-none my-4"
               >
                 {{ statistics.total_accounts }}
               </p>
@@ -221,7 +221,7 @@ const formatDate = (date) => {
           </div>
 
           <div class="flex-1">
-            <p class="text-brand-dark text-lg font-bold">
+            <p class="text-brand-dark text-sm font-bold">
               {{ account.label_password || account.label }}
             </p>
 

@@ -103,27 +103,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-5 items-start lg:pr-5">
-    <div class="flex-1 w-full space-y-6">
+  <div class="flex flex-col lg:flex-row gap-4 items-start lg:pr-4">
+    <div class="flex-1 w-full space-y-5">
       <!-- Emergency Contact Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-        <div class="flex items-center gap-3 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+        <div class="flex items-center gap-2.5 mb-5">
           <div
-            class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"
           >
             <Phone class="w-6 h-6 text-red-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Emergency Contact</h3>
+            <h3 class="text-brand-dark text-base font-bold">Emergency Contact</h3>
             <p class="text-brand-light text-sm font-normal">
               Person to contact in case of emergency
             </p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Emergency Contact Name -->
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               v-model="form.emergency_contact_name"
               label="Full Name"
@@ -140,7 +140,7 @@ onMounted(() => {
           </div>
 
           <!-- Emergency Contact Relationship -->
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               v-model="form.emergency_contact_relationship"
               label="Relationship"
@@ -157,7 +157,7 @@ onMounted(() => {
           </div>
 
           <!-- Emergency Contact Phone -->
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               v-model="form.emergency_contact_phone"
               label="Phone Number"
@@ -172,7 +172,7 @@ onMounted(() => {
           </div>
 
           <!-- Emergency Contact Email -->
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               v-model="form.emergency_contact_email"
               label="Email Address"
@@ -189,15 +189,15 @@ onMounted(() => {
       </div>
 
       <!-- Additional Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-        <div class="flex items-center gap-3 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+        <div class="flex items-center gap-2.5 mb-5">
           <div
-            class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
           >
             <FileText class="w-6 h-6 text-orange-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">
+            <h3 class="text-brand-dark text-base font-bold">
               Additional Information
             </h3>
             <p class="text-brand-light text-sm font-normal">
@@ -206,9 +206,9 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Preferred Language -->
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Select
               v-model="form.preferred_language"
               label="Preferred Language"
@@ -223,7 +223,7 @@ onMounted(() => {
           </div>
 
           <!-- Additional Notes -->
-          <div class="md:col-span-2 mb-4">
+          <div class="md:col-span-2 mb-3.5">
             <TextArea
               v-model="form.additional_notes"
               label="Additional Notes"
@@ -242,15 +242,15 @@ onMounted(() => {
       <!-- Documents Section -->
       <EmployeeFiles v-if="isEditing && employeeId" :employee-id="employeeId" />
 
-      <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-        <div class="flex items-center gap-3 mb-6">
+      <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+        <div class="flex items-center gap-2.5 mb-5">
           <div
-            class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-indigo-50 rounded-[12px] flex items-center justify-center"
           >
             <FileText class="w-6 h-6 text-indigo-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Documents</h3>
+            <h3 class="text-brand-dark text-base font-bold">Documents</h3>
             <p class="text-brand-light text-sm font-normal">
               Optional -- PDF, PNG, or JPEG, up to 2MB each. Uploaded once the employee is created.
             </p>
@@ -269,7 +269,7 @@ onMounted(() => {
         <button
           type="button"
           @click="fileInputRef?.click()"
-          class="w-full border-2 border-dashed border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-4 py-6 flex flex-col items-center justify-center gap-1.5"
+          class="w-full border-2 border-dashed border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-3.5 py-5 flex flex-col items-center justify-center gap-1"
         >
           <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center">
             <Upload class="w-4 h-4 text-blue-600" />
@@ -278,13 +278,13 @@ onMounted(() => {
           <span class="text-brand-light text-xs">PDF, PNG, or JPEG up to 2MB each</span>
         </button>
 
-        <p v-if="pickerError" class="text-red-500 text-xs mt-2">{{ pickerError }}</p>
+        <p v-if="pickerError" class="text-red-500 text-xs mt-1.5">{{ pickerError }}</p>
 
-        <div v-if="queuedDocuments.length" class="space-y-2 mt-4">
+        <div v-if="queuedDocuments.length" class="space-y-1.5 mt-3.5">
           <div
             v-for="(file, index) in queuedDocuments"
             :key="`${file.name}-${index}`"
-            class="flex items-center gap-3 p-3 border border-[#DCDEDD] rounded-[10px]"
+            class="flex items-center gap-2.5 p-2.5 border border-[#DCDEDD] rounded-[10px]"
           >
             <div class="w-9 h-9 bg-indigo-50 rounded-[8px] flex items-center justify-center shrink-0">
               <ImageIcon v-if="isImage(file)" class="w-4 h-4 text-indigo-600" />
@@ -298,7 +298,7 @@ onMounted(() => {
                 type="text"
                 required
                 placeholder="Document name (required)"
-                class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:border-2 outline-none"
+                class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:border-2 outline-none"
               />
             </div>
             <button

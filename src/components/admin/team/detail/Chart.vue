@@ -146,17 +146,17 @@ watch(teamChartData, () => {
 </script>
 
 <template>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
     <!-- Team Growth Chart (Employee Joining) -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
         >
           <UserPlus class="w-6 h-6 text-green-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Team Growth</h3>
+          <h3 class="text-brand-dark text-sm font-bold">Team Growth</h3>
           <p class="text-brand-light text-sm">
             New members joining over past 4 months
           </p>
@@ -179,15 +179,15 @@ watch(teamChartData, () => {
     </div>
 
     <!-- Tasks Growth Chart -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
           <TrendingUp class="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Tasks Growth</h3>
+          <h3 class="text-brand-dark text-sm font-bold">Tasks Growth</h3>
           <p class="text-brand-light text-sm">
             Tasks assigned to team over past 4 months
           </p>

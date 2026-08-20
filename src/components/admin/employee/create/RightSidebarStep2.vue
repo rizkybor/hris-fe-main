@@ -56,34 +56,34 @@ onUnmounted(() => {
     <div
       ref="sidebarRef"
       :class="[
-        'bg-white border border-[#DCDEDD] rounded-[14px] p-6 transition-all duration-300 ease-in-out',
+        'bg-white border border-[#DCDEDD] rounded-[14px] p-5 transition-all duration-300 ease-in-out',
         isSticky ? 'fixed top-5 z-10' : 'relative',
       ]"
       :style="isSticky ? { width: `${sidebarWidth}px` } : {}"
     >
-      <div class="flex items-center gap-3 mb-6">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
         >
           <Lightbulb class="w-6 h-6 text-green-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">Form Tips</h3>
+          <h3 class="text-brand-dark text-base font-bold">Form Tips</h3>
           <p class="text-brand-light text-sm font-normal">
             Job Information Guidelines
           </p>
         </div>
       </div>
 
-      <div class="space-y-4">
-        <div class="flex items-start gap-3">
+      <div class="space-y-3.5">
+        <div class="flex items-start gap-2.5">
           <div
             class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
           >
             <Check class="w-3 h-3 text-green-600" />
           </div>
           <div>
-            <p class="text-brand-dark text-base font-semibold">
+            <p class="text-brand-dark text-sm font-semibold">
               Choose clear job title
             </p>
             <p class="text-brand-light text-xs font-normal">
@@ -92,14 +92,14 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-2.5">
           <div
             class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
           >
             <Check class="w-3 h-3 text-green-600" />
           </div>
           <div>
-            <p class="text-brand-dark text-base font-semibold">
+            <p class="text-brand-dark text-sm font-semibold">
               Verify department assignment
             </p>
             <p class="text-brand-light text-xs font-normal">
@@ -108,14 +108,14 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-2.5">
           <div
             class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
           >
             <Check class="w-3 h-3 text-green-600" />
           </div>
           <div>
-            <p class="text-brand-dark text-base font-semibold">
+            <p class="text-brand-dark text-sm font-semibold">
               Set realistic start date
             </p>
             <p class="text-brand-light text-xs font-normal">
@@ -124,14 +124,14 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-2.5">
           <div
             class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
           >
             <Check class="w-3 h-3 text-green-600" />
           </div>
           <div>
-            <p class="text-brand-dark text-base font-semibold">
+            <p class="text-brand-dark text-sm font-semibold">
               Review employment type
             </p>
             <p class="text-brand-light text-xs font-normal">
@@ -140,14 +140,14 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-2.5">
           <div
             class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
           >
             <Check class="w-3 h-3 text-green-600" />
           </div>
           <div>
-            <p class="text-brand-dark text-base font-semibold">
+            <p class="text-brand-dark text-sm font-semibold">
               Select appropriate skill level
             </p>
             <p class="text-brand-light text-xs font-normal">

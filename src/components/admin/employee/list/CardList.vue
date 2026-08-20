@@ -29,25 +29,25 @@ const goToDetail = () => {
 <template>
   <!-- Employee Card 1 -->
   <div
-    class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
+    class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
   >
-    <div class="flex flex-col items-center mb-3">
+    <div class="flex flex-col items-center mb-2.5">
       <div class="relative">
         <Avatar
           :src="data?.user?.profile_photo"
           :alt="data?.user?.name"
-          size="w-20 h-20 mb-3"
+          size="w-9 h-9 mb-2.5"
           icon-size="w-5 h-5"
         />
         <!-- Active Badge Overlapped at Bottom -->
         <span
-          class="absolute bottom-2 left-1/2 transform -translate-x-1/2 px-2 py-1 rounded-md text-xs font-semibold bg-[#F0FDF4] text-[#166534]"
+          class="absolute bottom-2 left-1/2 transform -translate-x-1/2 px-1.5 py-1 rounded-md text-xs font-semibold bg-[#F0FDF4] text-[#166534]"
         >
           {{ _.capitalize(data?.job_information?.status) }}
         </span>
       </div>
     </div>
-    <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center justify-between mb-2.5">
       <div class="text-left">
         <h4
           class="text-[#0C1C3C] font-['Plus_Jakarta_Sans'] text-[16px] font-bold"
@@ -61,36 +61,36 @@ const goToDetail = () => {
         </p>
       </div>
       <span
-        class="px-2 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF]"
+        class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF]"
       >
         {{ _.capitalize(data?.job_information?.skill_level) }}
       </span>
     </div>
 
     <!-- Divider -->
-    <div class="border-b border-[#DCDEDD] mb-3"></div>
+    <div class="border-b border-[#DCDEDD] mb-2.5"></div>
 
     <!-- Employee Details -->
-    <div class="space-y-2 mb-4">
-      <div class="flex items-center gap-2 text-sm text-gray-500">
+    <div class="space-y-1.5 mb-3.5">
+      <div class="flex items-center gap-1.5 text-sm text-gray-500">
         <Building class="w-3.5 h-3.5" />
         <span>{{ _.capitalize(data?.job_information?.work_location) }}</span>
       </div>
-      <div class="flex items-center gap-2 text-sm text-gray-500">
+      <div class="flex items-center gap-1.5 text-sm text-gray-500">
         <User class="w-3.5 h-3.5" />
         <span>{{ _.capitalize(data?.gender) }}</span>
       </div>
-      <div class="flex items-center gap-2 text-sm text-gray-500">
+      <div class="flex items-center gap-1.5 text-sm text-gray-500">
         <Calendar class="w-3.5 h-3.5" />
         <span
           >{{ data?.job_information?.years_experience }} years experience</span
         >
       </div>
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-1.5">
       <button
         @click="goToEdit"
-        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center justify-center gap-2"
+        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5"
         v-if="can('employee-edit')"
       >
         <Edit class="w-4 h-4 text-gray-600" />
@@ -98,7 +98,7 @@ const goToDetail = () => {
       </button>
       <button
         @click="goToDetail"
-        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center justify-center gap-2"
+        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5"
       >
         <Eye class="w-4 h-4 text-gray-600" />
         <span class="text-brand-dark text-sm font-semibold">View</span>

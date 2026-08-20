@@ -100,18 +100,18 @@ const getInitials = (name) => {
     <!-- Main Content -->
     <div class="flex-1 flex flex-col">
       <!-- Top Navbar -->
-      <header class="page-header bg-white border-b border-[#DCDEDD] px-3 sm:px-5 py-3 sm:py-4">
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+      <header class="page-header bg-white border-b border-[#DCDEDD] px-2.5 sm:px-4 py-2.5 sm:py-3.5">
+        <div class="flex items-center justify-between gap-3.5">
+          <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
             <button
               @click="previousStep"
-              class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-2 shrink-0"
+              class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5 flex items-center gap-1.5 shrink-0"
             >
               <ArrowLeft class="w-4 h-4 text-gray-600" />
-              <span class="text-brand-dark text-base font-semibold hidden sm:inline">Back</span>
+              <span class="text-brand-dark text-sm font-semibold hidden sm:inline">Back</span>
             </button>
             <div class="min-w-0">
-              <h2 class="text-brand-dark text-lg sm:text-2xl font-extrabold truncate">
+              <h2 class="text-brand-dark text-sm sm:text-lg font-extrabold truncate">
                 {{ isEditing ? "Edit Employee" : "Add New Employee" }}
               </h2>
               <p class="text-brand-light text-xs sm:text-sm font-normal mt-1 truncate">
@@ -121,7 +121,7 @@ const getInitials = (name) => {
           </div>
 
           <!-- User Profile -->
-          <div class="flex items-center gap-3 shrink-0">
+          <div class="flex items-center gap-2.5 shrink-0">
             <img
               :src="user?.profile_photo"
               alt="User Avatar"
@@ -149,7 +149,7 @@ const getInitials = (name) => {
         </div>
 
         <!-- Step Progress Bar -->
-        <div class="mt-4 flex items-center gap-2">
+        <div class="mt-3.5 flex items-center gap-1.5">
           <div
             v-for="step in totalSteps"
             :key="step"
@@ -159,12 +159,12 @@ const getInitials = (name) => {
         </div>
 
         <!-- Mobile step label (Stepper sidebar is hidden below lg) -->
-        <p class="lg:hidden text-brand-light text-xs font-medium mt-2">
+        <p class="lg:hidden text-brand-light text-xs font-medium mt-1.5">
           Step {{ currentStep }} of {{ totalSteps }}: {{ getStepTitle() }}
         </p>
       </header>
       <!-- Dashboard Content -->
-      <main ref="mainContentRef" class="main-content flex-1 overflow-auto p-3 sm:p-5">
+      <main ref="mainContentRef" class="main-content flex-1 overflow-auto p-2.5 sm:p-4">
         <RouterView />
       </main>
     </div>

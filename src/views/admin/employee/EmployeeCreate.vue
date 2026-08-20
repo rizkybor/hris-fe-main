@@ -191,7 +191,7 @@ const closeErrorModal = () => {
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-6">
+  <form @submit.prevent="handleSubmit" class="space-y-5">
     <!-- Step 1: Personal Information -->
     <Step1PersonalInfo
       v-if="currentStep === 1"
@@ -222,8 +222,8 @@ const closeErrorModal = () => {
     />
 
     <!-- Form Navigation -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5">
         <div>
           <p class="text-brand-dark text-sm font-medium">
             {{
@@ -244,15 +244,15 @@ const closeErrorModal = () => {
             }}
           </p>
         </div>
-        <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-1.5 sm:gap-2.5">
           <button
             v-if="currentStep > 1"
             type="button"
             @click="previousStep"
-            class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2"
+            class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center justify-center gap-1.5"
           >
             <ArrowLeft class="w-4 h-4 text-gray-600" />
-            <span class="text-brand-dark text-sm sm:text-base font-semibold"
+            <span class="text-brand-dark text-sm sm:text-sm font-semibold"
               >Previous</span
             >
           </button>
@@ -260,18 +260,18 @@ const closeErrorModal = () => {
             v-else
             type="button"
             @click="previousStep"
-            class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2"
+            class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center justify-center gap-1.5"
           >
-            <span class="text-brand-dark text-sm sm:text-base font-semibold">Cancel</span>
+            <span class="text-brand-dark text-sm sm:text-sm font-semibold">Cancel</span>
           </button>
 
           <button
             v-if="currentStep < totalSteps"
             type="button"
             @click="nextStep"
-            class="flex-1 sm:flex-none btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2"
+            class="flex-1 sm:flex-none btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center justify-center gap-1.5"
           >
-            <span class="text-brand-white text-sm sm:text-base font-semibold">
+            <span class="text-brand-white text-sm sm:text-sm font-semibold">
               Next:
               {{
                 currentStep === 1
@@ -287,10 +287,10 @@ const closeErrorModal = () => {
             v-else
             type="submit"
             :disabled="loading"
-            class="flex-1 sm:flex-none btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex-1 sm:flex-none btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UserPlus class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm sm:text-base font-semibold">
+            <span class="text-brand-white text-sm sm:text-sm font-semibold">
               {{ loading ? "Adding..." : "Add Employee" }}
             </span>
           </button>

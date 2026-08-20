@@ -12,15 +12,15 @@ const browseTeams = () => {
   <!-- Right Sidebar -->
   <div class="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-6">
     <!-- Tips Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-yellow-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-yellow-50 rounded-[12px] flex items-center justify-center"
         >
           <Lightbulb class="w-6 h-6 text-yellow-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">
+          <h3 class="text-brand-dark text-base font-bold">
             Project Creation Tips
           </h3>
           <p class="text-brand-light text-sm font-normal">
@@ -29,15 +29,15 @@ const browseTeams = () => {
         </div>
       </div>
 
-      <div class="space-y-4">
-        <div class="flex items-start gap-3">
+      <div class="space-y-3.5">
+        <div class="flex items-start gap-2.5">
           <div
             class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
           >
             <Check class="w-3 h-3 text-green-600" />
           </div>
           <div>
-            <p class="text-brand-dark text-base font-semibold">
+            <p class="text-brand-dark text-sm font-semibold">
               Define Clear Goals
             </p>
             <p class="text-brand-light text-xs font-normal">
@@ -46,14 +46,14 @@ const browseTeams = () => {
           </div>
         </div>
 
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-2.5">
           <div
             class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
           >
             <Check class="w-3 h-3 text-green-600" />
           </div>
           <div>
-            <p class="text-brand-dark text-base font-semibold">
+            <p class="text-brand-dark text-sm font-semibold">
               Choose Right Leader
             </p>
             <p class="text-brand-light text-xs font-normal">
@@ -63,14 +63,14 @@ const browseTeams = () => {
           </div>
         </div>
 
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-2.5">
           <div
             class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
           >
             <Check class="w-3 h-3 text-green-600" />
           </div>
           <div>
-            <p class="text-brand-dark text-base font-semibold">
+            <p class="text-brand-dark text-sm font-semibold">
               Set Realistic Timeline
             </p>
             <p class="text-brand-light text-xs font-normal">
@@ -79,14 +79,14 @@ const browseTeams = () => {
           </div>
         </div>
 
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-2.5">
           <div
             class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
           >
             <Check class="w-3 h-3 text-green-600" />
           </div>
           <div>
-            <p class="text-brand-dark text-base font-semibold">
+            <p class="text-brand-dark text-sm font-semibold">
               Assign Right Teams
             </p>
             <p class="text-brand-light text-xs font-normal">
@@ -98,26 +98,26 @@ const browseTeams = () => {
     </div>
 
     <!-- Quick Actions Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 mt-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mt-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
           <Zap class="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">Quick Actions</h3>
+          <h3 class="text-brand-dark text-base font-bold">Quick Actions</h3>
           <p class="text-brand-light text-sm font-normal">
             Common project setup tasks
           </p>
         </div>
       </div>
 
-      <div class="space-y-3">
+      <div class="space-y-2.5">
         <button
           type="button"
           @click="browseTeams"
-          class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
+          class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2.5 text-left"
         >
           <Users class="w-5 h-5 text-gray-600" />
           <div class="flex-1">

@@ -14,23 +14,23 @@ const visibleLinks = computed(() =>
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-    <h3 class="text-brand-dark text-lg font-bold mb-4">{{ title }}</h3>
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
+    <h3 class="text-brand-dark text-base font-bold mb-3.5">{{ title }}</h3>
     <div class="space-y-2">
       <RouterLink
         v-for="link in visibleLinks"
         :key="link.title"
         :to="link.to"
-        class="flex items-center gap-3 p-3 rounded-[12px] border border-[#DCDEDD] hover:border-[#0C51D9] hover:shadow-sm transition-all"
+        class="flex items-center gap-2.5 p-2.5 rounded-[10px] border border-[#DCDEDD] hover:border-[#0C51D9] hover:shadow-sm transition-all"
       >
-        <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <component :is="link.icon" class="w-5 h-5 text-[#0C51D9]" />
+        <div class="w-8 h-8 bg-blue-50 rounded-[8px] flex items-center justify-center shrink-0">
+          <component :is="link.icon" class="w-4 h-4 text-[#0C51D9]" />
         </div>
-        <span class="text-brand-dark text-sm font-semibold flex-1">{{ link.title }}</span>
-        <ChevronRight class="w-4 h-4 text-gray-400 shrink-0" />
+        <span class="text-brand-dark text-xs font-semibold flex-1">{{ link.title }}</span>
+        <ChevronRight class="w-3.5 h-3.5 text-gray-400 shrink-0" />
       </RouterLink>
 
-      <p v-if="visibleLinks.length === 0" class="text-sm text-gray-400 text-center py-4">
+      <p v-if="visibleLinks.length === 0" class="text-xs text-gray-400 text-center py-4">
         No quick links available.
       </p>
     </div>

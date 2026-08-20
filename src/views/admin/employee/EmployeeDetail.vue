@@ -250,9 +250,9 @@ onMounted(() => {
   <div v-if="loading" class="flex items-center justify-center min-h-screen">
     <div class="text-center">
       <div
-        class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"
+        class="w-9 h-9 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3.5"
       ></div>
-      <p class="text-brand-dark text-lg font-medium">
+      <p class="text-brand-dark text-sm font-medium">
         Loading employee data...
       </p>
     </div>
@@ -260,51 +260,51 @@ onMounted(() => {
 
   <div v-else-if="employee">
     <!-- Employee Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
-      <div class="flex flex-col sm:flex-row items-center sm:items-center gap-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5 sm:p-5">
+      <div class="flex flex-col sm:flex-row items-center sm:items-center gap-5">
         <div class="relative shrink-0">
           <Avatar
             :src="employee.user?.profile_photo"
             :alt="employee.user?.name"
-            size="w-24 h-24 sm:w-32 sm:h-32"
-            icon-size="w-12 h-12 sm:w-16 sm:h-16"
+            size="w-16 h-16 sm:w-20 sm:h-20"
+            icon-size="w-7 h-7 sm:w-9 sm:h-9"
           />
           <span
             :class="statusBadgeClass"
-            class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap"
+            class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 px-2.5 py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap"
           >
             {{ capitalize(statusText) }}
           </span>
         </div>
         <div class="flex-1 text-center sm:text-left min-w-0 w-full">
-          <div class="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-4 mb-2">
-            <h1 class="text-brand-dark text-2xl sm:text-3xl font-extrabold truncate max-w-full">
+          <div class="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3.5 mb-1.5">
+            <h1 class="text-brand-dark text-lg sm:text-xl font-extrabold truncate max-w-full">
               {{ employee.user?.name }}
             </h1>
             <span
               :class="
                 getLevelColor(capitalize(employee.job_information?.skill_level))
               "
-              class="px-3 py-1 rounded-md text-sm font-semibold shrink-0"
+              class="px-2.5 py-1 rounded-md text-sm font-semibold shrink-0"
             >
               {{ capitalize(employee.job_information?.skill_level) }}
             </span>
           </div>
-          <p class="text-brand-light text-base sm:text-lg mb-3">
+          <p class="text-brand-light text-sm sm:text-sm mb-2.5">
             {{ employee.job_information?.job_title }}
           </p>
-          <div class="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-6 text-sm sm:text-base text-gray-600">
-            <div class="flex items-center gap-2">
+          <div class="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-5 text-sm sm:text-sm text-gray-600">
+            <div class="flex items-center gap-1.5">
               <Building class="w-4 h-4 shrink-0" />
               <span>{{
                 capitalize(employee.job_information?.work_location)
               }}</span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <User class="w-4 h-4 shrink-0" />
               <span>{{ employee.code }}</span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <Calendar class="w-4 h-4 shrink-0" />
               <span
                 >Joined
@@ -313,10 +313,10 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto shrink-0">
+        <div class="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto shrink-0">
           <button
             @click="editEmployee"
-            class="btn-primary w-full sm:w-auto rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2"
+            class="btn-primary w-full sm:w-auto rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-5 py-2.5 flex items-center justify-center gap-1.5"
           >
             <Edit class="w-4 h-4 text-white" />
             <span class="text-brand-white text-sm font-semibold"
@@ -325,7 +325,7 @@ onMounted(() => {
           </button>
           <button
             @click="shareProfile"
-            class="bg-white border border-[#DCDEDD] text-brand-dark w-full sm:w-auto py-3 px-6 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            class="bg-white border border-[#DCDEDD] text-brand-dark w-full sm:w-auto py-2.5 px-5 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
           >
             <Share2 class="w-4 h-4" />
             Share Profile
@@ -335,41 +335,41 @@ onMounted(() => {
     </div>
 
     <!-- Performance Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-base font-medium">Tasks Completed</p>
+            <p class="text-brand-dark text-sm font-medium">Tasks Completed</p>
             <p
-              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
+              class="text-brand-dark text-lg sm:text-xl font-extrabold leading-tight my-1.5"
             >
               {{ loading ? "..." : performanceStatistics.tasks_completed }}
             </p>
-            <p class="text-success text-base font-medium">This month</p>
+            <p class="text-success text-sm font-medium">This month</p>
           </div>
           <div
-            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
           >
             <CheckCircle class="w-6 h-6 text-blue-600" />
           </div>
         </div>
       </div>
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-base font-medium">Attendance Rate</p>
+            <p class="text-brand-dark text-sm font-medium">Attendance Rate</p>
             <p
-              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
+              class="text-brand-dark text-lg sm:text-xl font-extrabold leading-tight my-1.5"
             >
               {{
                 loading ? "..." : `${performanceStatistics.attendance_rate}%`
               }}
             </p>
-            <p class="text-success text-base font-medium">
+            <p class="text-success text-sm font-medium">
               {{
                 performanceStatistics.attendance_rate >= 80
                   ? "Above average"
@@ -378,40 +378,40 @@ onMounted(() => {
             </p>
           </div>
           <div
-            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
           >
             <CalendarCheck class="w-6 h-6 text-green-600" />
           </div>
         </div>
       </div>
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-base font-medium">Projects</p>
+            <p class="text-brand-dark text-sm font-medium">Projects</p>
             <p
-              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
+              class="text-brand-dark text-lg sm:text-xl font-extrabold leading-tight my-1.5"
             >
               {{ loading ? "..." : performanceStatistics.projects_count }}
             </p>
-            <p class="text-success text-base font-medium">Active projects</p>
+            <p class="text-success text-sm font-medium">Active projects</p>
           </div>
           <div
-            class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
           >
             <Folder class="w-6 h-6 text-purple-600" />
           </div>
         </div>
       </div>
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-brand-dark text-base font-medium">Performance</p>
+            <p class="text-brand-dark text-sm font-medium">Performance</p>
             <p
-              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
+              class="text-brand-dark text-lg sm:text-xl font-extrabold leading-tight my-1.5"
             >
               {{
                 loading ? "..." : `${performanceStatistics.performance_score}%`
@@ -425,7 +425,7 @@ onMounted(() => {
                   ? 'text-warning'
                   : 'text-danger'
               "
-              class="text-base font-medium"
+              class="text-sm font-medium"
             >
               {{
                 performanceStatistics.performance_score >= 80
@@ -437,7 +437,7 @@ onMounted(() => {
             </p>
           </div>
           <div
-            class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
           >
             <TrendingUp class="w-6 h-6 text-orange-600" />
           </div>
@@ -446,11 +446,11 @@ onMounted(() => {
     </div>
 
     <!-- Tab Bar -->
-    <div class="relative mb-6">
+    <div class="relative mb-5">
       <div
         ref="tabScrollRef"
         @scroll="updateTabFade"
-        class="bg-white border border-[#DCDEDD] rounded-[14px] p-2 overflow-x-auto"
+        class="bg-white border border-[#DCDEDD] rounded-[14px] p-1.5 overflow-x-auto"
       >
         <div class="flex items-center gap-1 min-w-max">
           <button
@@ -458,7 +458,7 @@ onMounted(() => {
             :key="tab.id"
             @click="activeTab = tab.id"
             :class="[
-              'flex items-center gap-2 px-4 py-2.5 rounded-[10px] text-sm font-semibold transition-all duration-200 whitespace-nowrap',
+              'flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-sm font-semibold transition-all duration-200 whitespace-nowrap',
               activeTab === tab.id
                 ? 'blue-gradient blue-btn-shadow text-white'
                 : 'text-brand-light hover:bg-gray-50 hover:text-brand-dark',
@@ -486,38 +486,38 @@ onMounted(() => {
     </div>
 
     <!-- Overview Tab -->
-    <div v-show="activeTab === 'overview'" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div v-show="activeTab === 'overview'" class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
       <!-- Team Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-        <div class="flex items-center gap-3 mb-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+        <div class="flex items-center gap-2.5 mb-3.5">
           <div
-            class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-indigo-50 rounded-[12px] flex items-center justify-center"
           >
             <Users class="w-6 h-6 text-indigo-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">Team Information</h3>
+            <h3 class="text-brand-dark text-sm font-bold">Team Information</h3>
             <p class="text-brand-light text-sm">
               Current team and reporting structure
             </p>
           </div>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3.5">
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Team</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Team</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.team?.name || "-" }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Team Members</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Team Members</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.team?.members_count || 0 }} members
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Team Status</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Team Status</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ capitalize(employee.team?.status) }}
             </span>
           </div>
@@ -525,34 +525,34 @@ onMounted(() => {
       </div>
 
       <!-- Contact Details -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-        <div class="flex items-center gap-3 mb-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+        <div class="flex items-center gap-2.5 mb-3.5">
           <div
-            class="w-12 h-12 bg-teal-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-teal-50 rounded-[12px] flex items-center justify-center"
           >
             <Contact class="w-6 h-6 text-teal-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">Contact Details</h3>
+            <h3 class="text-brand-dark text-sm font-bold">Contact Details</h3>
             <p class="text-brand-light text-sm">How to reach this employee</p>
           </div>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3.5">
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Email</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Email</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.user?.email }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Phone</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Phone</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.phone }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Identity Number</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Identity Number</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.identity_number }}
             </span>
           </div>
@@ -560,42 +560,42 @@ onMounted(() => {
       </div>
 
       <!-- Personal Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-        <div class="flex items-center gap-3 mb-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+        <div class="flex items-center gap-2.5 mb-3.5">
           <div
-            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
           >
             <Calendar class="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">
+            <h3 class="text-brand-dark text-sm font-bold">
               Personal Information
             </h3>
             <p class="text-brand-light text-sm">Birth and personal details</p>
           </div>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3.5">
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Date of Birth</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Date of Birth</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ formatDate(employee.date_of_birth) }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Place of Birth</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Place of Birth</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.place_of_birth }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Gender</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Gender</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ capitalize(employee.gender) }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Hobby</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Hobby</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.hobby || "-" }}
             </span>
           </div>
@@ -603,38 +603,38 @@ onMounted(() => {
       </div>
 
       <!-- Address Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-        <div class="flex items-center gap-3 mb-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+        <div class="flex items-center gap-2.5 mb-3.5">
           <div
-            class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
           >
             <MapPin class="w-6 h-6 text-purple-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">
+            <h3 class="text-brand-dark text-sm font-bold">
               Address Information
             </h3>
             <p class="text-brand-light text-sm">Location and postal details</p>
           </div>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3.5">
           <div class="flex justify-between items-start">
-            <span class="text-brand-light text-base">Address</span>
+            <span class="text-brand-light text-sm">Address</span>
             <span
-              class="text-brand-dark text-base font-medium text-right max-w-[60%]"
+              class="text-brand-dark text-sm font-medium text-right max-w-[60%]"
             >
               {{ employee.address }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">City</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">City</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.city }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Post Code</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Post Code</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.postal_code }}
             </span>
           </div>
@@ -643,17 +643,17 @@ onMounted(() => {
     </div>
 
     <!-- Employment & Bank Tab -->
-    <div v-show="activeTab === 'employment'" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div v-show="activeTab === 'employment'" class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
       <!-- Employment Details -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-        <div class="flex items-center gap-3 mb-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+        <div class="flex items-center gap-2.5 mb-3.5">
           <div
-            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
           >
             <Briefcase class="w-6 h-6 text-green-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">
+            <h3 class="text-brand-dark text-sm font-bold">
               Employment Details
             </h3>
             <p class="text-brand-light text-sm">
@@ -661,28 +661,28 @@ onMounted(() => {
             </p>
           </div>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3.5">
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Years of Experience</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Years of Experience</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.job_information?.years_experience }} years
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Employment Type</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Employment Type</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ capitalize(employee.job_information?.employment_type) }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Start Date</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Start Date</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ formatDate(employee.job_information?.start_date) }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Monthly Salary</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Monthly Salary</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ formatCurrency(employee.job_information?.monthly_salary) }}
             </span>
           </div>
@@ -690,40 +690,40 @@ onMounted(() => {
       </div>
 
       <!-- Bank Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-        <div class="flex items-center gap-3 mb-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+        <div class="flex items-center gap-2.5 mb-3.5">
           <div
-            class="w-12 h-12 bg-cyan-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-cyan-50 rounded-[12px] flex items-center justify-center"
           >
             <Briefcase class="w-6 h-6 text-cyan-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">Bank Information</h3>
+            <h3 class="text-brand-dark text-sm font-bold">Bank Information</h3>
             <p class="text-brand-light text-sm">Banking details for payroll</p>
           </div>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3.5">
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Bank Name</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Bank Name</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ capitalize(employee.bank_information?.bank_name) || "-" }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Account Number</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Account Number</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.bank_information?.account_number || "-" }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Account Holder</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Account Holder</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.bank_information?.account_holder_name || "-" }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Account Type</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Account Type</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ capitalize(employee.bank_information?.account_type) || "-" }}
             </span>
           </div>
@@ -731,15 +731,15 @@ onMounted(() => {
       </div>
 
       <!-- Administrative Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 lg:col-span-2">
-        <div class="flex items-center gap-3 mb-4">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 lg:col-span-2">
+        <div class="flex items-center gap-2.5 mb-3.5">
           <div
-            class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
           >
             <FileText class="w-6 h-6 text-orange-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">
+            <h3 class="text-brand-dark text-sm font-bold">
               Administrative Information
             </h3>
             <p class="text-brand-light text-sm">
@@ -747,25 +747,25 @@ onMounted(() => {
             </p>
           </div>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3.5">
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Employee ID</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Employee ID</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.code }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Preferred Language</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Preferred Language</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ capitalize(employee.preferred_language) || "-" }}
             </span>
           </div>
-          <div class="space-y-2" v-if="employee.additional_notes">
-            <span class="text-brand-light text-base mb-[10px] block"
+          <div class="space-y-1.5" v-if="employee.additional_notes">
+            <span class="text-brand-light text-sm mb-[10px] block"
               >Additional Notes</span
             >
-            <div class="bg-gray-50 rounded-[12px] p-4 border border-gray-200">
-              <p class="text-brand-dark text-base font-medium leading-relaxed">
+            <div class="bg-gray-50 rounded-[12px] p-3.5 border border-gray-200">
+              <p class="text-brand-dark text-sm font-medium leading-relaxed">
                 {{ employee.additional_notes }}
               </p>
             </div>
@@ -775,54 +775,54 @@ onMounted(() => {
     </div>
 
     <!-- Emergency Contact Tab -->
-    <div v-show="activeTab === 'emergency'" class="mb-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 max-w-2xl">
-        <div class="flex items-center gap-3 mb-4">
+    <div v-show="activeTab === 'emergency'" class="mb-5">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 max-w-2xl">
+        <div class="flex items-center gap-2.5 mb-3.5">
           <div
-            class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"
           >
             <Phone class="w-6 h-6 text-red-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">Emergency Contact</h3>
+            <h3 class="text-brand-dark text-sm font-bold">Emergency Contact</h3>
             <p class="text-brand-light text-sm">
               Person to contact in emergency
             </p>
           </div>
         </div>
         <div
-          class="space-y-4"
+          class="space-y-3.5"
           v-if="
             employee.emergency_contacts &&
             employee.emergency_contacts.length > 0
           "
         >
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Contact Name</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Contact Name</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.emergency_contacts[0].full_name }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Relationship</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Relationship</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ capitalize(employee.emergency_contacts[0].relationship) }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Phone</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Phone</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.emergency_contacts[0].phone }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Email</span>
-            <span class="text-brand-dark text-base font-medium">
+            <span class="text-brand-light text-sm">Email</span>
+            <span class="text-brand-dark text-sm font-medium">
               {{ employee.emergency_contacts[0].email || "-" }}
             </span>
           </div>
         </div>
-        <div v-else class="text-center py-4">
+        <div v-else class="text-center py-3.5">
           <p class="text-brand-light text-sm">
             No emergency contact information
           </p>
@@ -831,66 +831,66 @@ onMounted(() => {
     </div>
 
     <!-- Documents Tab -->
-    <div v-show="activeTab === 'documents'" class="mb-6">
+    <div v-show="activeTab === 'documents'" class="mb-5">
       <EmployeeFiles :employee-id="route.params.id" />
     </div>
 
     <!-- Performance Tab -->
-    <div v-show="activeTab === 'performance'" class="mb-6 space-y-6">
+    <div v-show="activeTab === 'performance'" class="mb-5 space-y-5">
       <!-- Performance Reviews -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-yellow-50 rounded-[12px] flex items-center justify-center shrink-0">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-3.5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-yellow-50 rounded-[12px] flex items-center justify-center shrink-0">
               <Star class="w-6 h-6 text-yellow-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">Performance Reviews</h3>
+              <h3 class="text-brand-dark text-sm font-bold">Performance Reviews</h3>
               <p class="text-brand-light text-sm">Employee performance review history</p>
             </div>
           </div>
           <button
             v-if="can('performance-review-create')"
             @click="openReviewModal"
-            class="btn-primary w-full sm:w-auto rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2 flex items-center justify-center gap-2 shrink-0"
+            class="btn-primary w-full sm:w-auto rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-3.5 py-1.5 flex items-center justify-center gap-1.5 shrink-0"
           >
             <span class="text-brand-white text-sm font-semibold">Create Review</span>
           </button>
         </div>
-        <div v-if="performanceReviews.length === 0" class="text-center py-6 text-sm text-gray-400">
+        <div v-if="performanceReviews.length === 0" class="text-center py-5 text-sm text-gray-400">
           No performance reviews yet.
         </div>
-        <div v-else class="space-y-3">
-          <div v-for="review in performanceReviews" :key="review.id" class="border border-[#DCDEDD] rounded-[12px] p-4">
-            <div class="flex items-center justify-between mb-2">
+        <div v-else class="space-y-2.5">
+          <div v-for="review in performanceReviews" :key="review.id" class="border border-[#DCDEDD] rounded-[12px] p-3.5">
+            <div class="flex items-center justify-between mb-1.5">
               <p class="text-brand-dark text-sm font-semibold">{{ review.period }}</p>
-              <span class="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700">
+              <span class="px-1.5 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700">
                 {{ review.overall_rating }} / 5
               </span>
             </div>
             <p v-if="review.strengths" class="text-brand-light text-xs mb-1"><strong>Kelebihan:</strong> {{ review.strengths }}</p>
             <p v-if="review.areas_for_improvement" class="text-brand-light text-xs mb-1"><strong>Area Perbaikan:</strong> {{ review.areas_for_improvement }}</p>
-            <p class="text-xs text-gray-400 mt-2">By {{ review.reviewer?.name }} • {{ review.status === 'acknowledged' ? 'Read by employee' : 'Awaiting employee read' }}</p>
+            <p class="text-xs text-gray-400 mt-1.5">By {{ review.reviewer?.name }} • {{ review.status === 'acknowledged' ? 'Read by employee' : 'Awaiting employee read' }}</p>
           </div>
         </div>
       </div>
 
       <!-- Disciplinary History -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+        <div class="flex items-center gap-2.5 mb-3.5">
+          <div class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center">
             <ShieldAlert class="w-6 h-6 text-red-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">Riwayat Surat Peringatan</h3>
+            <h3 class="text-brand-dark text-sm font-bold">Riwayat Surat Peringatan</h3>
             <p class="text-brand-light text-sm">SP1 / SP2 / SP3 previously issued</p>
           </div>
         </div>
-        <div v-if="disciplinaryLetters.length === 0" class="text-center py-6 text-sm text-gray-400">
+        <div v-if="disciplinaryLetters.length === 0" class="text-center py-5 text-sm text-gray-400">
           Tidak ada riwayat surat peringatan.
         </div>
-        <div v-else class="space-y-3">
-          <div v-for="letter in disciplinaryLetters" :key="letter.id" class="border border-[#DCDEDD] rounded-[12px] p-4 flex items-center justify-between">
+        <div v-else class="space-y-2.5">
+          <div v-for="letter in disciplinaryLetters" :key="letter.id" class="border border-[#DCDEDD] rounded-[12px] p-3.5 flex items-center justify-between">
             <div>
               <p class="text-brand-dark text-sm font-semibold">{{ letter.letter_code?.code }} — {{ letter.subject }}</p>
               <p class="text-brand-light text-xs">{{ letter.letter_number }} • {{ formatDate(letter.date) }}</p>
@@ -901,34 +901,34 @@ onMounted(() => {
     </div>
 
     <!-- Offboarding Tab -->
-    <div v-if="can('employee-edit')" v-show="activeTab === 'offboarding'" class="mb-6 space-y-6">
+    <div v-if="can('employee-edit')" v-show="activeTab === 'offboarding'" class="mb-5 space-y-5">
       <!-- Resignation / Offboarding -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center shrink-0">
+      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-3.5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center shrink-0">
               <LogOut class="w-6 h-6 text-orange-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">Resignation / Termination</h3>
+              <h3 class="text-brand-dark text-sm font-bold">Resignation / Termination</h3>
               <p class="text-brand-light text-sm">Process employee offboarding</p>
             </div>
           </div>
           <button
             v-if="!resignation || resignation.status === 'completed'"
             @click="openResignModal"
-            class="w-full sm:w-auto px-4 py-2 rounded-lg border border-orange-300 text-orange-700 text-sm font-semibold hover:bg-orange-50 shrink-0"
+            class="w-full sm:w-auto px-3.5 py-1.5 rounded-lg border border-orange-300 text-orange-700 text-sm font-semibold hover:bg-orange-50 shrink-0"
           >
             Start Resignation/Termination Process
           </button>
         </div>
 
-        <div v-if="resignation" class="border border-[#DCDEDD] rounded-[12px] p-4 space-y-3">
+        <div v-if="resignation" class="border border-[#DCDEDD] rounded-[12px] p-3.5 space-y-2.5">
           <div class="flex items-center justify-between">
             <p class="text-brand-dark text-sm font-semibold">
               {{ resignation.type === 'terminated' ? 'Termination' : 'Resignation' }}
             </p>
-            <span :class="['px-2 py-1 rounded-md text-xs font-semibold', resignation.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700']">
+            <span :class="['px-1.5 py-1 rounded-md text-xs font-semibold', resignation.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700']">
               {{ resignation.status === 'completed' ? 'Selesai' : 'Dalam Proses' }}
             </span>
           </div>
@@ -949,7 +949,7 @@ onMounted(() => {
           <button
             v-if="resignation.status === 'pending'"
             @click="completeOffboarding"
-            class="px-4 py-2 rounded-lg border border-green-300 text-green-700 text-sm font-semibold hover:bg-green-50"
+            class="px-3.5 py-1.5 rounded-lg border border-green-300 text-green-700 text-sm font-semibold hover:bg-green-50"
           >
             Selesaikan Offboarding
           </button>
@@ -957,25 +957,25 @@ onMounted(() => {
       </div>
 
       <!-- Danger Zone -->
-      <div class="bg-white border border-[#FEE2E2] rounded-[12px] p-6">
-        <div class="flex items-center gap-3 mb-6">
+      <div class="bg-white border border-[#FEE2E2] rounded-[12px] p-5">
+        <div class="flex items-center gap-2.5 mb-5">
           <div
-            class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"
           >
             <AlertTriangle class="w-6 h-6 text-red-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">Danger Zone</h3>
+            <h3 class="text-brand-dark text-sm font-bold">Danger Zone</h3>
             <p class="text-brand-light text-sm">
               Irreversible and destructive actions
             </p>
           </div>
         </div>
         <div
-          class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center p-4 bg-red-50 rounded-[12px]"
+          class="flex flex-col sm:flex-row gap-3.5 justify-between items-start sm:items-center p-3.5 bg-red-50 rounded-[12px]"
         >
           <div class="flex-1">
-            <h4 class="text-brand-dark text-base font-bold mb-1">
+            <h4 class="text-brand-dark text-sm font-bold mb-1">
               Delete Employee Profile
             </h4>
             <p class="text-brand-light text-sm">
@@ -983,17 +983,17 @@ onMounted(() => {
               action cannot be undone.
             </p>
           </div>
-          <div class="flex gap-3">
+          <div class="flex gap-2.5">
             <button
               @click="backupEmployee"
-              class="bg-white border border-[#DCDEDD] text-brand-dark py-3 px-6 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+              class="bg-white border border-[#DCDEDD] text-brand-dark py-2.5 px-5 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
             >
               <Download class="w-4 h-4" />
               Backup Data
             </button>
             <button
               @click="showDeleteModal = true"
-              class="bg-red-600 border border-red-700 text-white py-3 px-6 rounded-[8px] font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+              class="bg-red-600 border border-red-700 text-white py-2.5 px-5 rounded-[8px] font-semibold hover:bg-red-700 transition-colors flex items-center gap-1.5"
             >
               <Trash2 class="w-4 h-4" />
               Delete Employee
@@ -1015,97 +1015,97 @@ onMounted(() => {
     />
 
     <!-- Performance Review Modal -->
-    <div v-if="showReviewModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showReviewModal = false">
+    <div v-if="showReviewModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-3.5" @click.self="showReviewModal = false">
       <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-brand-dark text-lg font-bold">Create Performance Review</h3>
+        <div class="p-4 border-b border-[#DCDEDD] flex items-center justify-between">
+          <h3 class="text-brand-dark text-sm font-bold">Create Performance Review</h3>
           <button @click="showReviewModal = false" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
             <X class="w-4 h-4 text-gray-600" />
           </button>
         </div>
-        <form @submit.prevent="submitReview" class="p-5 space-y-4">
+        <form @submit.prevent="submitReview" class="p-4 space-y-3.5">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Periode</label>
-            <input v-model="reviewForm.period" type="text" required placeholder="e.g. Q1 2026" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <input v-model="reviewForm.period" type="text" required placeholder="e.g. Q1 2026" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Mulai Periode</label>
-              <input v-model="reviewForm.period_start" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+              <input v-model="reviewForm.period_start" type="date" required class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm" />
             </div>
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Akhir Periode</label>
-              <input v-model="reviewForm.period_end" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+              <input v-model="reviewForm.period_end" type="date" required class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm" />
             </div>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Overall Rating (1-5)</label>
-            <input v-model.number="reviewForm.overall_rating" type="number" min="1" max="5" step="0.5" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <input v-model.number="reviewForm.overall_rating" type="number" min="1" max="5" step="0.5" required class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Kelebihan</label>
-            <textarea v-model="reviewForm.strengths" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+            <textarea v-model="reviewForm.strengths" rows="2" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Area Perbaikan</label>
-            <textarea v-model="reviewForm.areas_for_improvement" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+            <textarea v-model="reviewForm.areas_for_improvement" rows="2" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Target Periode Berikutnya</label>
-            <textarea v-model="reviewForm.goals_next_period" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+            <textarea v-model="reviewForm.goals_next_period" rows="2" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
 
           <p v-if="reviewError" class="text-red-500 text-sm">{{ reviewError }}</p>
 
-          <div class="flex items-center gap-3 pt-2">
-            <button type="submit" :disabled="reviewSubmitting" class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-6 py-2.5 flex items-center gap-2 disabled:opacity-50">
+          <div class="flex items-center gap-2.5 pt-1.5">
+            <button type="submit" :disabled="reviewSubmitting" class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-5 py-2 flex items-center gap-1.5 disabled:opacity-50">
               <span class="text-brand-white text-sm font-semibold">{{ reviewSubmitting ? "Saving..." : "Save Review" }}</span>
             </button>
-            <button type="button" @click="showReviewModal = false" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Cancel</button>
+            <button type="button" @click="showReviewModal = false" class="px-5 py-2 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Cancel</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- Resignation Modal -->
-    <div v-if="showResignModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showResignModal = false">
+    <div v-if="showResignModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-3.5" @click.self="showResignModal = false">
       <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-brand-dark text-lg font-bold">Resignation / Termination Process</h3>
+        <div class="p-4 border-b border-[#DCDEDD] flex items-center justify-between">
+          <h3 class="text-brand-dark text-sm font-bold">Resignation / Termination Process</h3>
           <button @click="showResignModal = false" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
             <X class="w-4 h-4 text-gray-600" />
           </button>
         </div>
-        <form @submit.prevent="submitResignation" class="p-5 space-y-4">
+        <form @submit.prevent="submitResignation" class="p-4 space-y-3.5">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
-            <select v-model="resignForm.type" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+            <select v-model="resignForm.type" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm">
               <option value="resign">Resignation</option>
               <option value="terminated">Termination</option>
             </select>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Reason</label>
-            <textarea v-model="resignForm.reason" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+            <textarea v-model="resignForm.reason" rows="2" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Submission Date</label>
-              <input v-model="resignForm.resignation_date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+              <input v-model="resignForm.resignation_date" type="date" required class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm" />
             </div>
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Last Working Day</label>
-              <input v-model="resignForm.last_working_date" type="date" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+              <input v-model="resignForm.last_working_date" type="date" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm" />
             </div>
           </div>
 
           <p v-if="resignError" class="text-red-500 text-sm">{{ resignError }}</p>
 
-          <div class="flex items-center gap-3 pt-2">
-            <button type="submit" :disabled="resignSubmitting" class="px-6 py-2.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold disabled:opacity-50">
+          <div class="flex items-center gap-2.5 pt-1.5">
+            <button type="submit" :disabled="resignSubmitting" class="px-5 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold disabled:opacity-50">
               {{ resignSubmitting ? "Processing..." : "Process" }}
             </button>
-            <button type="button" @click="showResignModal = false" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Cancel</button>
+            <button type="button" @click="showResignModal = false" class="px-5 py-2 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Cancel</button>
           </div>
         </form>
       </div>

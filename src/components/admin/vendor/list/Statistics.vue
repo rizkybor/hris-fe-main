@@ -96,35 +96,35 @@ watch(
 </script>
 
 <template>
-  <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 mb-6">
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-3.5 lg:gap-5 mb-5">
     <!-- ================= TOTAL VENDORS ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex items-center justify-between mb-4">
-        <p class="text-brand-dark text-base font-medium">Total Vendors</p>
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+      <div class="flex items-center justify-between mb-3.5">
+        <p class="text-brand-dark text-sm font-medium">Total Vendors</p>
         <Briefcase class="w-6 h-6 text-blue-600" />
       </div>
 
-      <p class="text-brand-dark text-3xl font-extrabold">
+      <p class="text-brand-dark text-xl font-extrabold">
         {{ loading ? "-" : totalVendors }}
       </p>
-      <p class="text-success text-base font-medium">Registered vendors</p>
+      <p class="text-success text-sm font-medium">Registered vendors</p>
     </div>
 
     <!-- ================= BY TYPE ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex items-center gap-2 mb-4">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+      <div class="flex items-center gap-1.5 mb-3.5">
         <Layers class="w-5 h-5 text-purple-600" />
-        <p class="text-brand-dark text-base font-medium">Vendors by Type</p>
+        <p class="text-brand-dark text-sm font-medium">Vendors by Type</p>
       </div>
 
       <!-- LIST CONTAINER -->
       <ul
-        class="space-y-2 max-h-[180px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+        class="space-y-1.5 max-h-[180px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
       >
         <li
           v-for="item in vendorsByType"
           :key="item.type"
-          class="flex justify-between items-center text-sm bg-gray-50 rounded-md px-3 py-2 hover:bg-gray-100 transition"
+          class="flex justify-between items-center text-sm bg-gray-50 rounded-md px-2.5 py-1.5 hover:bg-gray-100 transition"
         >
           <span class="text-brand-dark truncate">
             {{ item.type }}
@@ -135,26 +135,26 @@ watch(
         </li>
       </ul>
 
-      <p v-if="!vendorsByType.length" class="text-brand-light text-sm mt-2">
+      <p v-if="!vendorsByType.length" class="text-brand-light text-sm mt-1.5">
         No data
       </p>
     </div>
 
     <!-- ================= BY FIELD ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex items-center gap-2 mb-4">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+      <div class="flex items-center gap-1.5 mb-3.5">
         <Code class="w-5 h-5 text-green-600" />
-        <p class="text-brand-dark text-base font-medium">Vendors by Field</p>
+        <p class="text-brand-dark text-sm font-medium">Vendors by Field</p>
       </div>
 
       <!-- LIST CONTAINER -->
       <ul
-        class="space-y-2 max-h-[180px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+        class="space-y-1.5 max-h-[180px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
       >
         <li
           v-for="item in vendorsByField"
           :key="item.field"
-          class="flex justify-between items-center text-sm bg-gray-50 rounded-md px-3 py-2 hover:bg-gray-100 transition"
+          class="flex justify-between items-center text-sm bg-gray-50 rounded-md px-2.5 py-1.5 hover:bg-gray-100 transition"
         >
           <span class="text-brand-dark truncate">
             {{ item.field }}
@@ -165,24 +165,24 @@ watch(
         </li>
       </ul>
 
-      <p v-if="!vendorsByField.length" class="text-brand-light text-sm mt-2">
+      <p v-if="!vendorsByField.length" class="text-brand-light text-sm mt-1.5">
         No data
       </p>
 
       <!-- OPTIONAL: Scroll hint -->
-      <p v-if="vendorsByField.length > 5" class="text-xs text-gray-400 mt-2">
+      <p v-if="vendorsByField.length > 5" class="text-xs text-gray-400 mt-1.5">
         Scroll to see more
       </p>
     </div>
 
     <!-- ================= CHART (BY TYPE) ================= -->
     <!-- <div
-      class="xl:col-span-3 bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-6"
+      class="xl:col-span-3 bg-white border border-[#DCDEDD] rounded-[12px] p-3.5 sm:p-5"
     >
-      <div class="flex items-center gap-3 mb-6">
+      <div class="flex items-center gap-2.5 mb-5">
         <TrendingUp class="w-6 h-6 text-purple-600" />
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">
+          <h3 class="text-brand-dark text-sm font-bold">
             Vendor Statistics Chart
           </h3>
           <p class="text-brand-light text-sm">

@@ -454,7 +454,7 @@ const showCompanyFinance = computed(() =>
               :class="{
                 'text-white font-semibold': $route.name?.startsWith('admin.orgchart'),
               }"
-              >Org Chart</span
+              >Organization Chart</span
             >
           </RouterLink>
 
@@ -882,7 +882,7 @@ const showCompanyFinance = computed(() =>
 
     <div class="sidebar-quote px-4 pb-4 mt-auto">
       <div
-        class="bg-white/5 border border-white/10 rounded-[12px] p-3 flex items-start gap-2.5"
+        class="bg-white/15 border border-white/10 rounded-[12px] p-3 flex items-start gap-2.5"
       >
         <Sparkles class="w-4 h-4 text-[#4C8DFF] shrink-0 mt-0.5" />
         <div class="min-w-0">
