@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch } from "vue";
-import { X, ListPlus, ClipboardList, AlignLeft, Flag, Layers, Calendar, Upload, Eye } from "lucide-vue-next";
+import { ref, computed, watch } from "vue";
+import { X, ListPlus, ClipboardList, AlignLeft, Flag, Layers, Calendar, Upload, Eye, Tag } from "lucide-vue-next";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { TASK_TYPE_COLORS, getTaskTypeColorClasses } from "@/utils/styleHelpers";
 
 const alertModal = useAlertModalStore();
 
@@ -16,6 +17,12 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  // { type, color }[] -- every task type already used in this project, so
+  // naming stays consistent without a separate "manage task types" screen.
+  typeSuggestions: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(["close", "created"]);
@@ -28,6 +35,8 @@ const defaultFormData = () => ({
   due_date: "",
   project_id: props.projectId,
   image: null,
+  type: "",
+  color: null,
 });
 
 const formData = ref(defaultFormData());
@@ -50,6 +59,19 @@ watch(
     }
   }
 );
+
+// Typing a type name that matches one already used in this project
+// auto-fills its last-used color -- still freely overridable via the
+// swatch picker below.
+watch(
+  () => formData.value.type,
+  (value) => {
+    const match = props.typeSuggestions.find((s) => s.type === value);
+    if (match?.color) formData.value.color = match.color;
+  }
+);
+
+const selectedTypeColor = computed(() => getTaskTypeColorClasses(formData.value.color));
 
 const closeModal = () => {
   emit("close");
@@ -103,7 +125,7 @@ const handleSubmit = async () => {
   <Transition name="fade">
     <div
       v-if="isOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 flex items-center justify-center p-5"
       @click.self="closeModal"
     >
       <!-- Backdrop -->
@@ -115,22 +137,22 @@ const handleSubmit = async () => {
         @click.stop
       >
         <!-- Modal Header -->
-        <div class="flex items-center justify-between gap-3 sm:gap-4 p-4 sm:p-6 border-b border-[#DCDEDD]">
+        <div class="flex items-center justify-between gap-3 sm:gap-3.5 p-4 sm:p-6 border-b border-[#DCDEDD]">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
-              <ListPlus class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            <div class="w-9 h-9 sm:w-10 sm:h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
+              <ListPlus class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             </div>
             <div>
-              <h2 class="text-brand-dark text-lg sm:text-xl font-bold">Create New Task</h2>
-              <p class="text-brand-light text-xs sm:text-sm">Add a task to this project's board</p>
+              <h2 class="text-brand-dark text-base sm:text-lg font-bold">Create New Task</h2>
+              <p class="text-brand-light text-xs">Add a task to this project's board</p>
             </div>
           </div>
           <button
             type="button"
             @click="closeModal"
-            class="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150 shrink-0"
+            class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150 shrink-0"
           >
-            <X class="w-5 h-5" />
+            <X class="w-4 h-4" />
           </button>
         </div>
 
@@ -138,17 +160,17 @@ const handleSubmit = async () => {
         <form @submit.prevent="handleSubmit" class="p-4 sm:p-6 space-y-5">
           <!-- Task Name -->
           <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">
+            <label class="block text-brand-dark text-xs font-semibold mb-2">
               Task Name <span class="text-red-500">*</span>
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <ClipboardList class="w-5 h-5 text-gray-400" />
+                <ClipboardList class="w-4 h-4 text-gray-400" />
               </div>
               <input
                 v-model="formData.name"
                 type="text"
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+                class="w-full pl-10 pr-4 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
                 placeholder="Enter task name"
                 required
               />
@@ -157,17 +179,17 @@ const handleSubmit = async () => {
 
           <!-- Description -->
           <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">
+            <label class="block text-brand-dark text-xs font-semibold mb-2">
               Description
             </label>
             <div class="relative">
-              <div class="absolute top-3 left-0 pl-4 flex items-start pointer-events-none">
-                <AlignLeft class="w-5 h-5 text-gray-400" />
+              <div class="absolute top-2.5 left-0 pl-4 flex items-start pointer-events-none">
+                <AlignLeft class="w-4 h-4 text-gray-400" />
               </div>
               <textarea
                 v-model="formData.description"
-                rows="4"
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
+                rows="3"
+                class="w-full pl-10 pr-4 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
                 placeholder="Enter task description"
               ></textarea>
             </div>
@@ -177,16 +199,16 @@ const handleSubmit = async () => {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Priority -->
             <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-1.5">
+              <label class="block text-brand-dark text-xs font-semibold mb-2">
                 Priority
               </label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Flag class="w-5 h-5 text-gray-400" />
+                  <Flag class="w-4 h-4 text-gray-400" />
                 </div>
                 <select
                   v-model="formData.priority"
-                  class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold appearance-none"
+                  class="w-full pl-10 pr-4 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold appearance-none"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -198,46 +220,82 @@ const handleSubmit = async () => {
 
             <!-- Status -->
             <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-1.5">
+              <label class="block text-brand-dark text-xs font-semibold mb-2">
                 Status
               </label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Layers class="w-5 h-5 text-gray-400" />
+                  <Layers class="w-4 h-4 text-gray-400" />
                 </div>
                 <select
                   v-model="formData.status"
-                  class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold appearance-none"
+                  class="w-full pl-10 pr-4 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold appearance-none"
                 >
                   <option value="todo">To Do</option>
                   <option value="in_progress">In Progress</option>
                   <option value="review">Review</option>
                   <option value="done">Done</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
             </div>
           </div>
 
+          <!-- Task Type & Color -->
+          <div>
+            <label class="block text-brand-dark text-xs font-semibold mb-2">
+              Task Type <span class="text-brand-light font-normal">(optional)</span>
+            </label>
+            <div class="relative mb-3">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Tag class="w-4 h-4 text-gray-400" />
+              </div>
+              <input
+                v-model="formData.type"
+                type="text"
+                list="task-type-suggestions-create"
+                maxlength="100"
+                class="w-full pl-10 pr-4 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+                placeholder="e.g. Bug, Feature, Design, Copywriting..."
+              />
+              <datalist id="task-type-suggestions-create">
+                <option v-for="s in typeSuggestions" :key="s.type" :value="s.type" />
+              </datalist>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button
+                v-for="swatch in TASK_TYPE_COLORS"
+                :key="swatch.key"
+                type="button"
+                :title="swatch.label"
+                @click="formData.color = formData.color === swatch.key ? null : swatch.key"
+                class="w-6 h-6 rounded-full transition-all duration-150"
+                :class="[swatch.dot, formData.color === swatch.key ? `ring-2 ring-offset-2 ${swatch.ring}` : 'opacity-70 hover:opacity-100']"
+              ></button>
+              <span v-if="formData.color" class="text-xs font-semibold ml-1.5" :class="selectedTypeColor.text">{{ selectedTypeColor.label }}</span>
+            </div>
+          </div>
+
           <!-- Due Date -->
           <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">
+            <label class="block text-brand-dark text-xs font-semibold mb-2">
               Due Date
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Calendar class="w-5 h-5 text-gray-400" />
+                <Calendar class="w-4 h-4 text-gray-400" />
               </div>
               <input
                 v-model="formData.due_date"
                 type="date"
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+                class="w-full pl-10 pr-4 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
               />
             </div>
           </div>
 
           <!-- Image (Optional) -->
           <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">
+            <label class="block text-brand-dark text-xs font-semibold mb-2">
               Image <span class="text-brand-light font-normal">(optional, max 2MB)</span>
             </label>
 
@@ -249,29 +307,29 @@ const handleSubmit = async () => {
               @change="handleImageSelect"
             />
 
-            <div v-if="imagePreviewUrl" class="relative w-full sm:w-56">
+            <div v-if="imagePreviewUrl" class="relative w-full sm:w-48">
               <img
                 :src="imagePreviewUrl"
                 alt="Task image preview"
-                class="w-full h-36 object-cover rounded-[12px] border border-[#DCDEDD] cursor-pointer"
+                class="w-full h-32 object-cover rounded-[10px] border border-[#DCDEDD] cursor-pointer"
                 @click="lightboxOpen = true"
               />
-              <div class="absolute top-2 right-2 flex items-center gap-1.5">
+              <div class="absolute top-1.5 right-1.5 flex items-center gap-1.5">
                 <button
                   type="button"
                   @click="lightboxOpen = true"
-                  class="w-7 h-7 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-sm transition-colors"
+                  class="w-6 h-6 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-sm transition-colors"
                   title="View image"
                 >
-                  <Eye class="w-3.5 h-3.5 text-gray-600" />
+                  <Eye class="w-3 h-3 text-gray-600" />
                 </button>
                 <button
                   type="button"
                   @click="removeImage"
-                  class="w-7 h-7 rounded-full bg-white/90 hover:bg-red-50 flex items-center justify-center shadow-sm transition-colors"
+                  class="w-6 h-6 rounded-full bg-white/90 hover:bg-red-50 flex items-center justify-center shadow-sm transition-colors"
                   title="Remove image"
                 >
-                  <X class="w-3.5 h-3.5 text-red-500" />
+                  <X class="w-3 h-3 text-red-500" />
                 </button>
               </div>
             </div>
@@ -279,34 +337,34 @@ const handleSubmit = async () => {
               v-else
               type="button"
               @click="imageInput.click()"
-              class="w-full sm:w-56 h-36 border-2 border-dashed border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 flex flex-col items-center justify-center gap-1.5"
+              class="w-full sm:w-48 h-32 border-2 border-dashed border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 flex flex-col items-center justify-center gap-2"
             >
-              <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center">
-                <Upload class="w-4 h-4 text-blue-600" />
+              <div class="w-8 h-8 bg-blue-50 rounded-[8px] flex items-center justify-center">
+                <Upload class="w-3.5 h-3.5 text-blue-600" />
               </div>
               <span class="text-brand-dark text-xs font-semibold">Upload Image</span>
-              <span class="text-brand-light text-[11px]">PNG, JPG, WEBP up to 2MB</span>
+              <span class="text-brand-light text-xs">PNG, JPG, WEBP up to 2MB</span>
             </button>
 
-            <p v-if="imageError" class="text-red-500 text-xs mt-1.5">{{ imageError }}</p>
+            <p v-if="imageError" class="text-red-500 text-xs mt-2">{{ imageError }}</p>
           </div>
 
           <!-- Action Buttons -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-end gap-3 pt-2">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-end gap-3 pt-1.5">
             <button
               type="button"
               @click="closeModal"
-              class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2 w-full sm:w-auto"
+              class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2.5 w-full sm:w-auto"
             >
-              <span class="text-brand-dark text-sm font-semibold">Cancel</span>
+              <span class="text-brand-dark text-xs font-semibold">Cancel</span>
             </button>
             <button
               type="submit"
               :disabled="isSubmitting"
-              class="btn-primary w-full sm:w-auto rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="btn-primary w-full sm:w-auto rounded-[10px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ListPlus class="w-4 h-4 text-white" />
-              <span class="text-brand-white text-sm font-semibold">
+              <span class="text-brand-white text-xs font-semibold">
                 {{ isSubmitting ? "Creating..." : "Create Task" }}
               </span>
             </button>
@@ -320,7 +378,7 @@ const handleSubmit = async () => {
   <Transition name="fade">
     <div
       v-if="lightboxOpen && imagePreviewUrl"
-      class="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      class="fixed inset-0 z-[60] flex items-center justify-center p-5"
       @click="lightboxOpen = false"
     >
       <div class="absolute inset-0 bg-brand-dark/70 backdrop-blur-sm"></div>

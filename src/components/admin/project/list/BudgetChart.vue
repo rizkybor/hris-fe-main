@@ -109,16 +109,16 @@ const chartSeries = computed(() => [{ name: "Budget", data: chartSeriesData.valu
 
 <template>
   <div
-    class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300"
+    class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5 hover:shadow-md transition-shadow duration-300"
   >
     <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-      <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
-        <WalletIcon class="w-6 h-6 text-blue-600" />
+      <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
+        <WalletIcon class="w-4 h-4 text-blue-600" />
       </div>
       <div class="flex-1">
-        <h3 class="text-brand-dark text-lg font-bold">Project Budget</h3>
+        <h3 class="text-brand-dark text-base font-bold">Project Budget</h3>
         <Skeleton v-if="loadingStatistics" width="140px" height="14px" rounded="4px" class="mt-1" />
-        <p v-else class="text-brand-light text-sm">
+        <p v-else class="text-brand-light text-xs">
           Total budget across all projects:
           <span class="text-brand-dark font-semibold">{{ formatRupiah(totalBudget) }}</span>
         </p>

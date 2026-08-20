@@ -107,29 +107,31 @@ export const useTaskStore = defineStore("task", {
             }
         },
 
-        async updateTaskStatus(taskId, newStatus) {
+        // Kanban drag-and-drop persistence -- status change and/or a new
+        // fractional `position` within the target (project_id, status)
+        // column, computed by the caller from the task's new neighbors.
+        async moveTask(taskId, { status, position } = {}) {
             this.error = null;
 
             try {
-                // Find the task to get current data
                 const task = this.tasks.find(t => t.id === taskId);
                 if (!task) return;
 
-                // Only send the field that actually changed -- spreading the
+                // Only send the fields that actually changed -- spreading the
                 // full task object here would forward its resolved `image`
                 // URL string (and other nested objects like `assignee`) back
                 // as if they were raw form fields, which the image upload
                 // validation would then reject.
-                const response = await axiosInstance.post(`project-tasks/${taskId}`, {
-                    status: newStatus,
-                    _method: 'PUT',
-                });
+                const payload = { _method: 'PUT' };
+                if (status !== undefined) payload.status = status;
+                if (position !== undefined) payload.position = position;
 
-                // Update task status in local state
-                const taskIndex = this.tasks.findIndex(t => t.id === taskId);
-                if (taskIndex !== -1) {
-                    this.tasks[taskIndex].status = newStatus;
-                }
+                // Optimistic local update so the board feels instant instead
+                // of waiting on the round trip.
+                if (status !== undefined) task.status = status;
+                if (position !== undefined) task.position = position;
+
+                const response = await axiosInstance.post(`project-tasks/${taskId}`, payload);
 
                 return response.data;
             } catch (error) {

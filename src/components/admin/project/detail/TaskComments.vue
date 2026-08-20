@@ -330,37 +330,37 @@ const threads = computed(() => {
 <template>
   <div>
     <div class="flex items-center gap-2 mb-3">
-      <MessageSquare class="w-4 h-4 text-brand-light" />
-      <h3 class="text-brand-dark text-sm font-semibold">
+      <MessageSquare class="w-3.5 h-3.5 text-brand-light" />
+      <h3 class="text-brand-dark text-xs font-semibold">
         Comments
         <span v-if="comments.length" class="text-brand-light font-normal">({{ comments.length }})</span>
       </h3>
     </div>
 
     <!-- Comment List -->
-    <div v-if="loading" class="space-y-3 mb-4">
-      <div v-for="i in 2" :key="i" class="flex gap-3 animate-pulse">
+    <div v-if="loading" class="space-y-3.5 mb-5">
+      <div v-for="i in 2" :key="i" class="flex gap-3.5 animate-pulse">
         <div class="w-8 h-8 rounded-full bg-gray-200 shrink-0"></div>
-        <div class="flex-1 space-y-2">
+        <div class="flex-1 space-y-2.5">
           <div class="h-3 w-1/3 bg-gray-200 rounded"></div>
           <div class="h-10 bg-gray-100 rounded-[10px]"></div>
         </div>
       </div>
     </div>
 
-    <div v-else-if="threads.length === 0" class="text-center py-6 mb-4 bg-gray-50 rounded-[12px]">
-      <MessageSquare class="w-6 h-6 text-gray-300 mx-auto mb-1.5" />
+    <div v-else-if="threads.length === 0" class="text-center py-8 mb-5 bg-gray-50 rounded-[12px]">
+      <MessageSquare class="w-6 h-6 text-gray-300 mx-auto mb-2" />
       <p class="text-brand-light text-sm">No comments yet. Start the conversation.</p>
     </div>
 
-    <div v-else class="space-y-5 mb-4 max-h-80 overflow-y-auto pr-1">
-      <div v-for="thread in threads" :key="thread.root.id" class="space-y-3">
+    <div v-else class="space-y-6 mb-5 max-h-80 overflow-y-auto pr-1.5">
+      <div v-for="thread in threads" :key="thread.root.id" class="space-y-3.5">
         <!-- Root comment -->
-        <div class="flex gap-3 group">
+        <div class="flex gap-3.5 group">
           <Avatar :src="thread.root.user?.profile_photo" :alt="thread.root.user?.name" size="w-8 h-8" icon-size="w-4 h-4" />
           <div class="flex-1 min-w-0">
-            <div class="bg-gray-50 rounded-[12px] px-3.5 py-2.5">
-              <div class="flex items-center justify-between gap-2">
+            <div class="bg-gray-50 rounded-[12px] px-4 py-3">
+              <div class="flex items-center justify-between gap-2.5">
                 <p class="text-brand-dark text-sm font-semibold" :title="thread.root.user?.name">{{ thread.root.user?.name }}</p>
                 <button
                   v-if="thread.root.can_delete"
@@ -374,7 +374,7 @@ const threads = computed(() => {
               </div>
               <p class="text-sm text-brand-dark leading-relaxed whitespace-pre-wrap break-words mt-0.5">
                 <template v-for="(segment, idx) in renderSegments(thread.root)" :key="idx">
-                  <span v-if="segment.type === 'mention'" :class="mentionColorClass(segment.text)" class="font-semibold rounded px-1">{{ segment.text }}</span>
+                  <span v-if="segment.type === 'mention'" :class="mentionColorClass(segment.text)" class="font-semibold rounded px-1.5">{{ segment.text }}</span>
                   <a
                     v-else-if="segment.type === 'url'"
                     :href="segment.text"
@@ -388,13 +388,13 @@ const threads = computed(() => {
                 </template>
               </p>
             </div>
-            <div class="flex items-center gap-3 mt-1 ml-0.5">
+            <div class="flex items-center gap-3.5 mt-1.5 ml-0.5">
               <p class="text-gray-400 text-xs">{{ getTimeAgo(thread.root.created_at) }}</p>
               <button
                 v-if="canComment"
                 type="button"
                 @click="startReply(thread.root)"
-                class="text-gray-400 hover:text-[#0C51D9] transition-colors text-xs font-semibold flex items-center gap-1"
+                class="text-gray-400 hover:text-[#0C51D9] transition-colors text-xs font-semibold flex items-center gap-1.5"
               >
                 <CornerUpLeft class="w-3 h-3" />
                 Reply
@@ -404,12 +404,12 @@ const threads = computed(() => {
         </div>
 
         <!-- Replies -->
-        <div v-if="thread.replies.length" class="pl-6 sm:pl-11 space-y-3 border-l-2 border-gray-100 ml-4">
-          <div v-for="reply in thread.replies" :key="reply.id" class="flex gap-3 group">
+        <div v-if="thread.replies.length" class="pl-6 sm:pl-8 md:pl-11 space-y-3.5 border-l-2 border-gray-100 ml-5">
+          <div v-for="reply in thread.replies" :key="reply.id" class="flex gap-3.5 group">
             <Avatar :src="reply.user?.profile_photo" :alt="reply.user?.name" size="w-7 h-7" icon-size="w-3.5 h-3.5" />
             <div class="flex-1 min-w-0">
-              <div class="bg-gray-50 rounded-[12px] px-3.5 py-2.5">
-                <div class="flex items-center justify-between gap-2">
+              <div class="bg-gray-50 rounded-[12px] px-4 py-3">
+                <div class="flex items-center justify-between gap-2.5">
                   <p class="text-brand-dark text-sm font-semibold" :title="reply.user?.name">{{ reply.user?.name }}</p>
                   <button
                     v-if="reply.can_delete"
@@ -423,13 +423,13 @@ const threads = computed(() => {
                 </div>
                 <p
                   v-if="reply.reply_to && reply.reply_to.id !== thread.root.id"
-                  class="text-xs text-brand-light border-l-2 border-[#0C51D9]/30 pl-2 mt-1 mb-1 italic truncate"
+                  class="text-xs text-brand-light border-l-2 border-[#0C51D9]/30 pl-2.5 mt-1.5 mb-1.5 italic truncate"
                 >
                   Replying to <span class="font-semibold">{{ reply.reply_to.user_name }}</span>: {{ reply.reply_to.snippet }}
                 </p>
                 <p class="text-sm text-brand-dark leading-relaxed whitespace-pre-wrap break-words mt-0.5">
                   <template v-for="(segment, idx) in renderSegments(reply)" :key="idx">
-                    <span v-if="segment.type === 'mention'" :class="mentionColorClass(segment.text)" class="font-semibold rounded px-1">{{ segment.text }}</span>
+                    <span v-if="segment.type === 'mention'" :class="mentionColorClass(segment.text)" class="font-semibold rounded px-1.5">{{ segment.text }}</span>
                     <a
                       v-else-if="segment.type === 'url'"
                       :href="segment.text"
@@ -443,13 +443,13 @@ const threads = computed(() => {
                   </template>
                 </p>
               </div>
-              <div class="flex items-center gap-3 mt-1 ml-0.5">
+              <div class="flex items-center gap-3.5 mt-1.5 ml-0.5">
                 <p class="text-gray-400 text-xs">{{ getTimeAgo(reply.created_at) }}</p>
                 <button
                   v-if="canComment"
                   type="button"
                   @click="startReply(reply)"
-                  class="text-gray-400 hover:text-[#0C51D9] transition-colors text-xs font-semibold flex items-center gap-1"
+                  class="text-gray-400 hover:text-[#0C51D9] transition-colors text-xs font-semibold flex items-center gap-1.5"
                 >
                   <CornerUpLeft class="w-3 h-3" />
                   Reply
@@ -464,7 +464,7 @@ const threads = computed(() => {
     <!-- Not eligible to comment -->
     <div
       v-if="!canComment"
-      class="flex items-center gap-2.5 bg-gray-50 border border-[#DCDEDD] rounded-[12px] px-3.5 py-3"
+      class="flex items-center gap-3 bg-gray-50 border border-[#DCDEDD] rounded-[12px] px-4 py-3.5"
     >
       <MessageSquare class="w-4 h-4 text-gray-400 shrink-0" />
       <p class="text-brand-light text-xs">
@@ -473,13 +473,13 @@ const threads = computed(() => {
     </div>
 
     <!-- Composer -->
-    <div v-else class="flex gap-3">
+    <div v-else class="flex gap-3.5">
       <Avatar :src="user?.profile_photo" :alt="user?.name" size="w-8 h-8" icon-size="w-4 h-4" />
       <div class="flex-1 relative">
         <!-- Replying-to banner -->
         <div
           v-if="replyingTo"
-          class="flex items-center justify-between gap-2 bg-blue-50 border border-blue-100 rounded-[10px] px-3 py-1.5 mb-2"
+          class="flex items-center justify-between gap-2.5 bg-blue-50 border border-blue-100 rounded-[10px] px-3.5 py-2 mb-2.5"
         >
           <p class="text-xs text-[#0C51D9]">
             Replying to <span class="font-semibold">{{ replyingTo.userName }}</span>
@@ -496,11 +496,11 @@ const threads = computed(() => {
           @keydown.enter.exact.prevent="submitComment"
           rows="2"
           placeholder="Write a comment... use @ to mention someone"
-          class="w-full bg-gray-50 rounded-[12px] pl-3.5 pr-3.5 pt-2.5 pb-11 text-sm text-brand-dark border border-[#DCDEDD] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:bg-white transition-all duration-300 resize-none outline-none"
+          class="w-full bg-gray-50 rounded-[12px] pl-4 pr-4 pt-3 pb-11 text-sm text-brand-dark border border-[#DCDEDD] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:bg-white transition-all duration-300 resize-none outline-none"
         ></textarea>
 
         <!-- Emoji + Send -->
-        <div class="absolute bottom-2.5 right-2.5 flex items-center gap-1.5">
+        <div class="absolute bottom-2.5 right-2.5 flex items-center gap-2">
           <button
             ref="emojiButtonRef"
             type="button"
@@ -534,7 +534,7 @@ const threads = computed(() => {
               :key="employee.id"
               type="button"
               @mousedown.prevent="selectMention(employee)"
-              class="w-full p-2.5 hover:bg-gray-50 transition-colors flex items-center gap-2.5 text-left"
+              class="w-full p-3 hover:bg-gray-50 transition-colors flex items-center gap-3 text-left"
             >
               <Avatar :src="employee.user?.profile_photo" :alt="employee.user?.name" size="w-7 h-7" icon-size="w-3.5 h-3.5" />
               <div class="flex-1 min-w-0">
@@ -551,7 +551,7 @@ const threads = computed(() => {
           <div
             v-if="showEmojiPicker"
             :style="emojiPickerStyle"
-            class="task-comment-emoji-picker bg-white border border-[#DCDEDD] rounded-[12px] shadow-2xl p-2 grid grid-cols-8 gap-1 w-64"
+            class="task-comment-emoji-picker bg-white border border-[#DCDEDD] rounded-[12px] shadow-2xl p-2.5 grid grid-cols-8 gap-1.5 w-64"
           >
             <button
               v-for="emoji in EMOJIS"
