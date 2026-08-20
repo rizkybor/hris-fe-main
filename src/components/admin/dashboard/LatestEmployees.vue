@@ -9,8 +9,13 @@ import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import Avatar from "@/components/common/Avatar.vue";
 
 const employeeStore = useEmployeeStore();
-const { employees, loading } = storeToRefs(employeeStore);
+const { loading } = storeToRefs(employeeStore);
 const { fetchEmployees } = employeeStore;
+
+// employeeStore is a plain (untyped) JS store, so its `employees` state
+// infers as `never[]` when consumed from this <script setup lang="ts">
+// block -- cast to `any[]` here rather than typing the store itself.
+const employees = computed(() => employeeStore.employees as any[]);
 
 const router = useRouter();
 
