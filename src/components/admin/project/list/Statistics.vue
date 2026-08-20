@@ -1,14 +1,6 @@
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from "vue";
-import VueApexCharts from "vue3-apexcharts";
-import {
-  TrendingUp,
-  Target,
-  Clock,
-  Briefcase,
-  PlayCircle,
-  WalletIcon,
-} from "lucide-vue-next";
+import { Briefcase, PlayCircle, WalletIcon, Eye, EyeOff } from "lucide-vue-next";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -19,192 +11,102 @@ const { loadingStatistics } = storeToRefs(projectStore);
 
 const total = computed(() => projectStore.statistics.total);
 const active = computed(() => projectStore.statistics.active);
-const completionRate = computed(() => projectStore.statistics.completion_rate ?? 0);
-const completedTasks = computed(() => projectStore.statistics.completed_tasks ?? 0);
-const totalTasks = computed(() => projectStore.statistics.total_tasks ?? 0);
 const totalBudget = computed(() => projectStore.statistics.total_budget ?? 0);
+
+// Hidden by default -- budget is sensitive, revealed only on demand.
+const isBudgetVisible = ref(false);
+const toggleBudgetVisibility = () => {
+  isBudgetVisible.value = !isBudgetVisible.value;
+};
 
 onMounted(() => {
   projectStore.fetchStatistics();
 });
-
-// Chart configuration: real task completion rate across all projects
-const chartOptions = computed(() => ({
-  chart: {
-    type: "radialBar",
-    height: 250,
-    toolbar: {
-      show: false,
-    },
-    animations: {
-      enabled: true,
-      easing: "easeinout",
-      speed: 800,
-    },
-  },
-  plotOptions: {
-    radialBar: {
-      hollow: {
-        size: "65%",
-      },
-      track: {
-        background: "#f1f1f1",
-      },
-      dataLabels: {
-        name: {
-          fontSize: "13px",
-          color: "#6B7280",
-          offsetY: -10,
-        },
-        value: {
-          fontSize: "28px",
-          fontWeight: 700,
-          color: "#1F2937",
-          offsetY: 5,
-          formatter: (value: number) => `${value}%`,
-        },
-      },
-    },
-  },
-  fill: {
-    type: "gradient",
-    gradient: {
-      shade: "dark",
-      shadeIntensity: 0.3,
-      gradientToColors: ["#8A63F9"],
-      stops: [0, 100],
-    },
-  },
-  colors: ["#0C51D9"],
-  stroke: {
-    lineCap: "round",
-  },
-  labels: ["Task Completion"],
-}));
-
-const chartSeries = computed(() => [completionRate.value]);
 </script>
 
 <template>
-  <!-- Statistics Cards -->
-  <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 mb-6">
-    <!-- Projects Stats Column -->
+  <!-- Statistics Cards: one horizontal row of KPIs -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+    <!-- Total Projects Card -->
     <div
-      class="xl:col-span-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-md transition-all duration-300 p-4 flex flex-col min-h-[144px] group"
     >
-      <!-- Total Projects Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-5 flex flex-col min-h-[186px] group"
-      >
-        <!-- Header with title and icon -->
-        <div class="flex items-center justify-between mb-4">
-          <p class="text-brand-dark text-base font-medium">Total Projects</p>
-          <div
-            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300"
-          >
-            <Briefcase class="w-6 h-6 text-blue-600" />
-          </div>
-        </div>
-        <!-- Value and status at bottom -->
-        <div class="mt-auto">
-          <Skeleton v-if="loadingStatistics" width="50px" height="1.75rem" rounded="6px" class="mb-1" />
-          <p
-            v-else
-            id="totalProjects"
-            class="text-brand-dark text-3xl font-extrabold leading-tight mb-1"
-          >
-            {{ total }}
-          </p>
-          <p class="text-success text-base font-medium">All projects</p>
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-brand-dark text-sm font-medium">Total Projects</p>
+        <div
+          class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300 shrink-0"
+        >
+          <Briefcase class="w-4 h-4 text-blue-600" />
         </div>
       </div>
-
-      <!-- Active Projects Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-5 flex flex-col min-h-[186px] group"
-      >
-        <!-- Header with title and icon -->
-        <div class="flex items-center justify-between mb-4">
-          <p class="text-brand-dark text-base font-medium">Active Projects</p>
-          <div
-            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center group-hover:bg-green-100 transition-colors duration-300"
-          >
-            <PlayCircle class="w-6 h-6 text-green-600" />
-          </div>
-        </div>
-        <!-- Value and status at bottom -->
-        <div class="mt-auto">
-          <Skeleton v-if="loadingStatistics" width="50px" height="1.75rem" rounded="6px" class="mb-1" />
-          <p
-            v-else
-            id="activeProjects"
-            class="text-brand-dark text-3xl font-extrabold leading-tight mb-1"
-          >
-            {{ active }}
-          </p>
-          <p class="text-success text-base font-medium">In progress</p>
-        </div>
-      </div>
-
-      <!-- Total Budget Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-5 flex flex-col min-h-[186px] group"
-      >
-        <!-- Header with title and icon -->
-        <div class="flex items-center justify-between mb-4">
-          <p class="text-brand-dark text-base font-medium">Total Budget</p>
-          <div
-            class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center group-hover:bg-indigo-100 transition-colors duration-300"
-          >
-            <WalletIcon class="w-6 h-6 text-indigo-600" />
-          </div>
-        </div>
-        <!-- Value and status at bottom -->
-        <div class="mt-auto">
-          <Skeleton v-if="loadingStatistics" width="90px" height="1.75rem" rounded="6px" class="mb-1" />
-          <p
-            v-else
-            id="totalBudget"
-            class="text-brand-dark text-2xl font-extrabold leading-tight mb-1 truncate"
-          >
-            {{ formatRupiah(totalBudget) }}
-          </p>
-          <p class="text-brand-light text-base font-medium">Across all projects</p>
-        </div>
+      <div class="mt-auto">
+        <Skeleton v-if="loadingStatistics" width="50px" height="1.5rem" rounded="6px" class="mb-1" />
+        <p v-else id="totalProjects" class="text-brand-dark text-2xl font-extrabold leading-tight mb-1">
+          {{ total }}
+        </p>
+        <p class="text-success text-xs font-medium">All projects</p>
       </div>
     </div>
 
-    <!-- Charts Column -->
+    <!-- Active Projects Card -->
     <div
-      class="xl:col-span-2 bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-md transition-all duration-300 p-4 flex flex-col min-h-[144px] group"
     >
-      <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-brand-dark text-sm font-medium">Active Projects</p>
         <div
-          class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center flex-shrink-0"
+          class="w-10 h-10 bg-green-50 rounded-[10px] flex items-center justify-center group-hover:bg-green-100 transition-colors duration-300 shrink-0"
         >
-          <TrendingUp class="w-6 h-6 text-purple-600" />
-        </div>
-        <div class="flex-1">
-          <h3 class="text-brand-dark text-lg font-bold">Project Progress</h3>
-          <p class="text-brand-light text-sm">
-            {{
-              loadingStatistics
-                ? "Loading..."
-                : `${completedTasks} of ${totalTasks} tasks completed across all projects`
-            }}
-          </p>
+          <PlayCircle class="w-4 h-4 text-green-600" />
         </div>
       </div>
+      <div class="mt-auto">
+        <Skeleton v-if="loadingStatistics" width="50px" height="1.5rem" rounded="6px" class="mb-1" />
+        <p v-else id="activeProjects" class="text-brand-dark text-2xl font-extrabold leading-tight mb-1">
+          {{ active }}
+        </p>
+        <p class="text-success text-xs font-medium">In progress</p>
+      </div>
+    </div>
 
-      <!-- Chart Container -->
-      <div class="relative w-full" style="height: 250px">
-        <VueApexCharts
-          type="radialBar"
-          height="250"
-          :options="chartOptions"
-          :series="chartSeries"
-          class="w-full"
-        />
+    <!-- Total Budget Card -->
+    <div
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-md transition-all duration-300 p-4 flex flex-col min-h-[144px] group"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-brand-dark text-sm font-medium">Total Budget</p>
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            @click="toggleBudgetVisibility"
+            class="w-7 h-7 rounded-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 transition-colors shrink-0"
+            :title="isBudgetVisible ? 'Hide budget' : 'Show budget'"
+          >
+            <Eye v-if="!isBudgetVisible" class="w-3.5 h-3.5" />
+            <EyeOff v-else class="w-3.5 h-3.5" />
+          </button>
+          <div
+            class="w-10 h-10 bg-indigo-50 rounded-[10px] flex items-center justify-center group-hover:bg-indigo-100 transition-colors duration-300 shrink-0"
+          >
+            <WalletIcon class="w-4 h-4 text-indigo-600" />
+          </div>
+        </div>
+      </div>
+      <div class="mt-auto">
+        <Skeleton v-if="loadingStatistics" width="90px" height="1.5rem" rounded="6px" class="mb-1" />
+        <p
+          v-else-if="isBudgetVisible"
+          id="totalBudget"
+          class="text-brand-dark font-extrabold leading-tight mb-1 truncate"
+          :class="formatRupiah(totalBudget).length > 14 ? 'text-sm' : 'text-lg'"
+          :title="formatRupiah(totalBudget)"
+        >
+          {{ formatRupiah(totalBudget) }}
+        </p>
+        <p v-else class="text-brand-dark text-lg font-extrabold leading-tight mb-1 tracking-widest">
+          Rp ••••••••
+        </p>
+        <p class="text-brand-light text-xs font-medium">Across all projects</p>
       </div>
     </div>
   </div>
