@@ -86,15 +86,15 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[90] flex items-center justify-center p-4" @click.self="emit('close')">
+  <div class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[90] flex items-center justify-center p-3.5" @click.self="emit('close')">
     <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-      <div class="p-6 border-b border-[#DCDEDD] flex items-center justify-between flex-shrink-0">
-        <div class="flex items-center gap-3">
+      <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center gap-2.5">
           <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
             <Users2Icon class="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Team Rate Setup</h3>
+            <h3 class="text-brand-dark text-base font-bold">Team Rate Setup</h3>
             <p class="text-brand-light text-sm">Select items from Operational Cost to build the team cost</p>
           </div>
         </div>
@@ -103,17 +103,17 @@ const submit = async () => {
         </button>
       </div>
 
-      <div class="p-6 space-y-6 overflow-y-auto">
-        <p v-if="errorMessage" class="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+      <div class="p-5 space-y-5 overflow-y-auto">
+        <p v-if="errorMessage" class="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5">
           {{ errorMessage }}
         </p>
 
-        <div v-if="loadingStatistics" class="text-center py-8 text-sm text-gray-400">Memuat data Operational Cost...</div>
+        <div v-if="loadingStatistics" class="text-center py-6 text-sm text-gray-400">Memuat data Operational Cost...</div>
 
         <template v-else>
           <!-- Fixed Cost picker -->
           <div>
-            <div class="flex items-center gap-2 mb-2">
+            <div class="flex items-center gap-1.5 mb-1.5">
               <WalletIcon class="w-4 h-4 text-blue-600" />
               <h4 class="text-brand-dark text-sm font-bold">Fixed Cost</h4>
             </div>
@@ -121,9 +121,9 @@ const submit = async () => {
               <label
                 v-for="item in fixedCostItems"
                 :key="item.id"
-                class="flex items-center justify-between gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50"
+                class="flex items-center justify-between gap-2.5 px-2.5 py-2 cursor-pointer hover:bg-gray-50"
               >
-                <span class="flex items-center gap-2 min-w-0">
+                <span class="flex items-center gap-1.5 min-w-0">
                   <input
                     type="checkbox"
                     :checked="form.selected_fixed_cost_ids.includes(item.id)"
@@ -134,13 +134,13 @@ const submit = async () => {
                 </span>
                 <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.actual) }}</span>
               </label>
-              <p v-if="fixedCostItems.length === 0" class="text-center py-4 text-xs text-gray-400">No Fixed Cost items yet</p>
+              <p v-if="fixedCostItems.length === 0" class="text-center py-3.5 text-xs text-gray-400">No Fixed Cost items yet</p>
             </div>
           </div>
 
           <!-- SDM Resource picker -->
           <div>
-            <div class="flex items-center gap-2 mb-2">
+            <div class="flex items-center gap-1.5 mb-1.5">
               <LayersIcon class="w-4 h-4 text-violet-600" />
               <h4 class="text-brand-dark text-sm font-bold">SDM Resource</h4>
             </div>
@@ -148,9 +148,9 @@ const submit = async () => {
               <label
                 v-for="item in sdmResourceItems"
                 :key="item.id"
-                class="flex items-center justify-between gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50"
+                class="flex items-center justify-between gap-2.5 px-2.5 py-2 cursor-pointer hover:bg-gray-50"
               >
-                <span class="flex items-center gap-2 min-w-0">
+                <span class="flex items-center gap-1.5 min-w-0">
                   <input
                     type="checkbox"
                     :checked="form.selected_sdm_resource_ids.includes(item.id)"
@@ -162,13 +162,13 @@ const submit = async () => {
                 </span>
                 <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.actual) }}</span>
               </label>
-              <p v-if="sdmResourceItems.length === 0" class="text-center py-4 text-xs text-gray-400">No SDM Resource yet</p>
+              <p v-if="sdmResourceItems.length === 0" class="text-center py-3.5 text-xs text-gray-400">No SDM Resource yet</p>
             </div>
           </div>
 
           <!-- Infrastructure Tools picker -->
           <div>
-            <div class="flex items-center gap-2 mb-2">
+            <div class="flex items-center gap-1.5 mb-1.5">
               <ServerIcon class="w-4 h-4 text-orange-600" />
               <h4 class="text-brand-dark text-sm font-bold">Infrastructure Tools</h4>
             </div>
@@ -176,9 +176,9 @@ const submit = async () => {
               <label
                 v-for="item in infrastructureItems"
                 :key="item.id"
-                class="flex items-center justify-between gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50"
+                class="flex items-center justify-between gap-2.5 px-2.5 py-2 cursor-pointer hover:bg-gray-50"
               >
-                <span class="flex items-center gap-2 min-w-0">
+                <span class="flex items-center gap-1.5 min-w-0">
                   <input
                     type="checkbox"
                     :checked="form.selected_infrastructure_tool_ids.includes(item.id)"
@@ -189,57 +189,57 @@ const submit = async () => {
                 </span>
                 <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.monthly_fee) }}/bln</span>
               </label>
-              <p v-if="infrastructureItems.length === 0" class="text-center py-4 text-xs text-gray-400">No Infrastructure Tool yet</p>
+              <p v-if="infrastructureItems.length === 0" class="text-center py-3.5 text-xs text-gray-400">No Infrastructure Tool yet</p>
             </div>
           </div>
         </template>
 
-        <div class="grid grid-cols-2 gap-4 pt-2 border-t border-[#F1F1F1]">
+        <div class="grid grid-cols-2 gap-3.5 pt-1.5 border-t border-[#F1F1F1]">
           <div>
             <label class="block text-sm font-semibold text-brand-dark mb-1">Multiplier Margin Jual</label>
-            <input v-model.number="form.margin_multiplier" type="number" min="1" step="0.1" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+            <input v-model.number="form.margin_multiplier" type="number" min="1" step="0.1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
           </div>
           <div>
             <label class="block text-sm font-semibold text-brand-dark mb-1">PM Overhead Default (%)</label>
-            <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+            <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
           </div>
           <div class="col-span-2">
             <label class="block text-sm font-semibold text-brand-dark mb-1">Default Infrastructure Setup Cost (Rp)</label>
-            <input v-model.number="form.default_infra_setup_cost" type="number" min="0" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+            <input v-model.number="form.default_infra_setup_cost" type="number" min="0" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
           </div>
         </div>
 
         <!-- Live preview -->
-        <div class="grid grid-cols-2 gap-4 pt-2 border-t border-[#F1F1F1]">
-          <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+        <div class="grid grid-cols-2 gap-3.5 pt-1.5 border-t border-[#F1F1F1]">
+          <div class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
             <p class="text-xs text-gray-500 font-medium">Total Team Operational Cost / Month</p>
-            <p class="text-brand-dark text-base font-bold mt-1">{{ formatRupiah(previewTeamMonthlyCost) }}</p>
+            <p class="text-brand-dark text-sm font-bold mt-1">{{ formatRupiah(previewTeamMonthlyCost) }}</p>
           </div>
-          <div class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <div class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
             <p class="text-xs text-gray-500 font-medium flex items-center gap-1">
               <ClockIcon class="w-3 h-3" /> Total Jam Produktif Tim / Bulan
             </p>
-            <p class="text-brand-dark text-base font-bold mt-1">{{ previewProductiveHours }} jam &middot; {{ previewTeamSize }} orang</p>
+            <p class="text-brand-dark text-sm font-bold mt-1">{{ previewProductiveHours }} jam &middot; {{ previewTeamSize }} orang</p>
           </div>
-          <div class="p-3 rounded-[12px] bg-blue-50 border border-blue-100">
+          <div class="p-2.5 rounded-[12px] bg-blue-50 border border-blue-100">
             <p class="text-xs text-blue-600 font-medium">Rate Cost / Jam (preview)</p>
-            <p class="text-blue-900 text-base font-bold mt-1">{{ formatRupiah(previewRateCost) }}</p>
+            <p class="text-blue-900 text-sm font-bold mt-1">{{ formatRupiah(previewRateCost) }}</p>
           </div>
-          <div class="p-3 rounded-[12px] bg-indigo-50 border border-indigo-100">
+          <div class="p-2.5 rounded-[12px] bg-indigo-50 border border-indigo-100">
             <p class="text-xs text-indigo-600 font-medium">Rate Jual / Jam (preview)</p>
-            <p class="text-indigo-900 text-base font-bold mt-1">{{ formatRupiah(previewRateSell) }}</p>
+            <p class="text-indigo-900 text-sm font-bold mt-1">{{ formatRupiah(previewRateSell) }}</p>
           </div>
         </div>
       </div>
 
-      <div class="p-6 border-t border-[#DCDEDD] flex gap-3 justify-end flex-shrink-0">
-        <button @click="emit('close')" :disabled="saving" class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 transition-all px-6 py-3">
+      <div class="p-5 border-t border-[#DCDEDD] flex gap-2.5 justify-end flex-shrink-0">
+        <button @click="emit('close')" :disabled="saving" class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 transition-all px-5 py-2.5">
           <span class="text-brand-dark text-sm font-semibold">Cancel</span>
         </button>
         <button
           @click="submit"
           :disabled="saving"
-          class="rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
+          class="rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all blue-gradient blue-btn-shadow px-5 py-2.5 flex items-center gap-1.5 disabled:opacity-50"
         >
           <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
           <span class="text-brand-white text-sm font-semibold">{{ saving ? "Saving..." : "Save Rate Setup" }}</span>

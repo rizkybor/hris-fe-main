@@ -37,93 +37,93 @@ watch(() => props.team?.id, async (newId) => {
 }, { immediate: true });
 </script>
 <template>
-  <SkeletonStatCards v-if="loadingTeamStatistics" :count="4" class="mb-6" />
-  <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <SkeletonStatCards v-if="loadingTeamStatistics" :count="4" class="mb-5" />
+  <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-brand-dark text-base font-medium">Active Members</p>
-          <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2">
+          <p class="text-brand-dark text-sm font-medium">Active Members</p>
+          <p class="text-brand-dark text-xl font-extrabold leading-tight my-1.5">
             {{ loadingTeamStatistics ? "..." : (teamStatistics.active_members || 0) }}
           </p>
           <p
-            class="text-success text-base font-medium"
+            class="text-success text-sm font-medium"
             v-if="!loadingTeamStatistics && teamStatistics.active_members >= team.expected_size"
           >
             Full capacity
           </p>
           <p
-            class="text-danger text-base font-medium"
+            class="text-danger text-sm font-medium"
             v-if="!loadingTeamStatistics && teamStatistics.active_members < team.expected_size"
           >
             {{ team.expected_size - teamStatistics.active_members }} members needed
           </p>
         </div>
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
           <Users class="w-6 h-6 text-blue-600" />
         </div>
       </div>
     </div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-brand-dark text-base font-medium">Projects Assigned</p>
-          <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2">
+          <p class="text-brand-dark text-sm font-medium">Projects Assigned</p>
+          <p class="text-brand-dark text-xl font-extrabold leading-tight my-1.5">
             {{ loadingTeamStatistics ? "..." : (teamStatistics.projects_assigned || 0) }}
           </p>
-          <p class="text-success text-base font-medium">
+          <p class="text-success text-sm font-medium">
             {{ loadingTeamStatistics ? "..." : (teamStatistics.projects_in_progress || 0) }} in progress
           </p>
         </div>
         <div
-          class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
         >
           <Folder class="w-6 h-6 text-green-600" />
         </div>
       </div>
     </div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-brand-dark text-base font-medium">Team Performance</p>
-          <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2">
+          <p class="text-brand-dark text-sm font-medium">Team Performance</p>
+          <p class="text-brand-dark text-xl font-extrabold leading-tight my-1.5">
             {{ loadingTeamStatistics ? "..." : (teamStatistics.team_performance || 0) }}%
           </p>
           <p
-            class="text-base font-medium"
+            class="text-sm font-medium"
             :class="(teamStatistics.team_performance || 0) >= 80 ? 'text-success' : 'text-warning'"
           >
             {{ (teamStatistics.team_performance || 0) >= 80 ? 'Above target' : 'Below target' }}
           </p>
         </div>
         <div
-          class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
         >
           <TrendingUp class="w-6 h-6 text-purple-600" />
         </div>
       </div>
     </div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-brand-dark text-base font-medium">Completion Rate</p>
-          <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2">
+          <p class="text-brand-dark text-sm font-medium">Completion Rate</p>
+          <p class="text-brand-dark text-xl font-extrabold leading-tight my-1.5">
             {{ loadingTeamStatistics ? "..." : (teamStatistics.completion_rate || 0) }}%
           </p>
-          <p class="text-success text-base font-medium">This month</p>
+          <p class="text-success text-sm font-medium">This month</p>
         </div>
         <div
-          class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
         >
           <CheckCircle class="w-6 h-6 text-orange-600" />
         </div>

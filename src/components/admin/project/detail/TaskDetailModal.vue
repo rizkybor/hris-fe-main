@@ -859,7 +859,7 @@ watch(
       <img
         :src="isEditingDetails ? imagePreviewUrl : task?.image"
         alt="Task image"
-        class="relative max-w-full max-h-[85vh] rounded-[12px] object-contain"
+        class="relative w-[min(90vw,900px)] max-h-[85vh] rounded-[12px] object-contain"
       />
     </div>
   </Transition>

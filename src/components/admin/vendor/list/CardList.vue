@@ -12,24 +12,24 @@ const props = defineProps({
 
 <template>
   <div
-    class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-[#0C51D9]"
+    class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-[#0C51D9]"
   >
     <!-- Vendor Name -->
-    <h4 class="text-brand-dark text-xl font-bold mb-3 truncate">
+    <h4 class="text-brand-dark text-base font-bold mb-2.5 truncate">
       {{ data.name || "Unnamed Vendor" }}
     </h4>
 
    <!-- Vendor Type & Field as Chips -->
-<div class="flex flex-wrap gap-2 mb-3">
+<div class="flex flex-wrap gap-1.5 mb-2.5">
   <span
     v-if="data.type"
-    class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-1 rounded-full"
+    class="bg-purple-100 text-purple-800 text-xs font-medium px-2 py-1 rounded-full"
   >
     {{ data.type }}
   </span>
   <span
     v-if="data.field"
-    class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full"
+    class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full"
   >
     {{ data.field }}
   </span>
@@ -37,7 +37,7 @@ const props = defineProps({
   <!-- fallback jika tidak ada type/field -->
   <span
     v-if="!data.type && !data.field"
-    class="bg-gray-100 text-gray-500 text-xs font-medium px-2.5 py-1 rounded-full"
+    class="bg-gray-100 text-gray-500 text-xs font-medium px-2 py-1 rounded-full"
   >
     -
   </span>
@@ -45,43 +45,43 @@ const props = defineProps({
 
 
     <!-- PIC -->
-    <div class="flex items-center gap-3 text-sm text-gray-600 mb-2">
+    <div class="flex items-center gap-2.5 text-sm text-gray-600 mb-1.5">
       <User class="w-5 h-5 text-gray-400" />
       <span>{{ data.pic_name || "-" }}</span>
     </div>
-    <div class="flex items-center gap-3 text-sm text-gray-600 mb-2">
+    <div class="flex items-center gap-2.5 text-sm text-gray-600 mb-1.5">
       <Phone class="w-5 h-5 text-gray-400" />
       <span>{{ data.pic_phone || "-" }}</span>
     </div>
 
     <!-- Email -->
-    <div class="flex items-center gap-3 text-sm text-gray-600 mb-2">
+    <div class="flex items-center gap-2.5 text-sm text-gray-600 mb-1.5">
       <Mail class="w-5 h-5 text-gray-400" />
       <span class="truncate">{{ data.email || "-" }}</span>
     </div>
 
     <!-- Address -->
-    <div class="flex items-start gap-3 text-sm text-gray-600 mb-3">
+    <div class="flex items-start gap-2.5 text-sm text-gray-600 mb-2.5">
       <MapPin class="w-5 h-5 text-gray-400 mt-0.5" />
       <span class="truncate">{{ data.address || "-" }}</span>
     </div>
 
     <!-- Notes -->
-    <p class="text-gray-400 text-sm mb-4 line-clamp-3">
+    <p class="text-gray-400 text-sm mb-3.5 line-clamp-3">
       {{ data.notes || "No notes" }}
     </p>
 
     <!-- Actions -->
-    <div class="flex gap-3">
+    <div class="flex gap-2.5">
       <RouterLink
         :to="{ name: 'admin.vendors.detail', params: { id: data.id } }"
-        class="flex-1 text-center py-2 px-3 rounded-lg border border-gray-300 hover:border-[#0C51D9] hover:bg-blue-50 text-gray-700 font-semibold transition-all duration-300"
+        class="flex-1 text-center py-1.5 px-2.5 rounded-lg border border-gray-300 hover:border-[#0C51D9] hover:bg-blue-50 text-gray-700 font-semibold transition-all duration-300"
       >
         View
       </RouterLink>
       <RouterLink
         :to="{ name: 'admin.vendors.edit', params: { id: data.id } }"
-        class="flex-1 text-center py-2 px-3 rounded-lg border border-gray-300 hover:border-[#0C51D9] hover:bg-blue-50 text-gray-700 font-semibold transition-all duration-300"
+        class="flex-1 text-center py-1.5 px-2.5 rounded-lg border border-gray-300 hover:border-[#0C51D9] hover:bg-blue-50 text-gray-700 font-semibold transition-all duration-300"
       >
         Edit
       </RouterLink>

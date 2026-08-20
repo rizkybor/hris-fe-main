@@ -39,15 +39,15 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[90] flex items-center justify-center p-4" @click.self="emit('close')">
+  <div class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[90] flex items-center justify-center p-3.5" @click.self="emit('close')">
     <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
-      <div class="p-6 border-b border-[#DCDEDD] flex items-center justify-between flex-shrink-0">
-        <div class="flex items-center gap-3">
+      <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center gap-2.5">
           <div class="w-11 h-11 bg-emerald-50 rounded-[12px] flex items-center justify-center">
             <Globe class="w-5 h-5 text-emerald-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Landing Page Rate Setup</h3>
+            <h3 class="text-brand-dark text-base font-bold">Landing Page Rate Setup</h3>
             <p class="text-brand-light text-sm">Configure the package pricing used by the Landing Page scenario</p>
           </div>
         </div>
@@ -56,54 +56,54 @@ const submit = async () => {
         </button>
       </div>
 
-      <div class="p-6 space-y-6 overflow-y-auto">
-        <p v-if="errorMessage" class="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+      <div class="p-5 space-y-5 overflow-y-auto">
+        <p v-if="errorMessage" class="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5">
           {{ errorMessage }}
         </p>
 
         <div>
-          <div class="flex items-center gap-2 mb-2">
+          <div class="flex items-center gap-1.5 mb-1.5">
             <ServerIcon class="w-4 h-4 text-emerald-600" />
             <h4 class="text-brand-dark text-sm font-bold">Server</h4>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-3.5">
             <div>
               <label class="block text-xs text-gray-500 mb-1">Dedicated (Rp)</label>
-              <input v-model.number="form.server_dedicated_price" type="number" min="0" step="10000" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+              <input v-model.number="form.server_dedicated_price" type="number" min="0" step="10000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
             </div>
             <div>
               <label class="block text-xs text-gray-500 mb-1">Shared (Rp)</label>
-              <input v-model.number="form.server_shared_price" type="number" min="0" step="10000" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+              <input v-model.number="form.server_shared_price" type="number" min="0" step="10000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
             </div>
           </div>
         </div>
 
         <div>
-          <div class="flex items-center gap-2 mb-2">
+          <div class="flex items-center gap-1.5 mb-1.5">
             <PaletteIcon class="w-4 h-4 text-emerald-600" />
             <h4 class="text-brand-dark text-sm font-bold">Design</h4>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-3.5">
             <div>
               <label class="block text-xs text-gray-500 mb-1">Dedicated (Rp)</label>
-              <input v-model.number="form.design_dedicated_price" type="number" min="0" step="10000" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+              <input v-model.number="form.design_dedicated_price" type="number" min="0" step="10000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
             </div>
             <div>
               <label class="block text-xs text-gray-500 mb-1">Template (Rp)</label>
-              <input v-model.number="form.design_template_price" type="number" min="0" step="10000" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+              <input v-model.number="form.design_template_price" type="number" min="0" step="10000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
             </div>
           </div>
         </div>
       </div>
 
-      <div class="p-6 border-t border-[#DCDEDD] flex gap-3 justify-end flex-shrink-0">
-        <button @click="emit('close')" :disabled="saving" class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 transition-all px-6 py-3">
+      <div class="p-5 border-t border-[#DCDEDD] flex gap-2.5 justify-end flex-shrink-0">
+        <button @click="emit('close')" :disabled="saving" class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 transition-all px-5 py-2.5">
           <span class="text-brand-dark text-sm font-semibold">Cancel</span>
         </button>
         <button
           @click="submit"
           :disabled="saving"
-          class="rounded-[8px] hover:brightness-110 focus:ring-2 transition-all px-6 py-3 flex items-center gap-2 disabled:opacity-50"
+          class="rounded-[8px] hover:brightness-110 focus:ring-2 transition-all px-5 py-2.5 flex items-center gap-1.5 disabled:opacity-50"
           style="background-color: #059669; border: 1px solid #047857; color: #fff"
         >
           <Loader2 v-if="saving" class="w-4 h-4 animate-spin" style="color: #fff" />

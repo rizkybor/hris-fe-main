@@ -56,18 +56,18 @@ const deletePhoto = () => {
 </script>
 
 <template>
-  <div class="flex flex-col md:flex-row gap-6 items-start">
+  <div class="flex flex-col md:flex-row gap-5 items-start">
     <!-- Profile Photo Card -->
     <div class="w-full md:w-80">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-        <div class="flex items-center gap-3 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+        <div class="flex items-center gap-2.5 mb-5">
           <div
-            class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
           >
             <Camera class="w-6 h-6 text-purple-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Profile Photo</h3>
+            <h3 class="text-brand-dark text-base font-bold">Profile Photo</h3>
             <p class="text-brand-light text-sm font-normal">Upload employee photo</p>
           </div>
         </div>
@@ -76,18 +76,18 @@ const deletePhoto = () => {
           <!-- Photo Placeholder -->
           <div
             v-if="!form.profile_photo_url"
-            class="w-48 h-48 bg-gray-100 border-2 border-dashed border-[#DCDEDD] rounded-full flex items-center justify-center mb-4"
+            class="w-32 h-32 bg-gray-100 border-2 border-dashed border-[#DCDEDD] rounded-full flex items-center justify-center mb-3.5"
           >
-            <Camera class="w-16 h-16 text-gray-400" />
+            <Camera class="w-7 h-7 text-gray-400" />
           </div>
 
           <!-- Selected Photo Container -->
-          <div v-else class="mb-4">
-            <div class="relative w-48 h-48">
+          <div v-else class="mb-3.5">
+            <div class="relative w-32 h-32">
               <img
                 :src="form.profile_photo_url"
                 alt="Profile"
-                class="w-48 h-48 rounded-full object-cover border-2 border-[#DCDEDD]"
+                class="w-32 h-32 rounded-full object-cover border-2 border-[#DCDEDD]"
               />
               <button
                 type="button"
@@ -99,7 +99,7 @@ const deletePhoto = () => {
             </div>
           </div>
 
-          <div class="flex flex-col gap-3 items-center">
+          <div class="flex flex-col gap-2.5 items-center">
             <input
               type="file"
               accept="image/*"
@@ -110,10 +110,10 @@ const deletePhoto = () => {
             <button
               type="button"
               @click="profilePhotoInput?.click()"
-              class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:px-6 sm:py-3 flex items-center gap-2"
+              class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center gap-1.5"
             >
               <FolderOpen class="w-4 h-4 text-gray-600" />
-              <span class="text-brand-dark text-sm sm:text-base font-semibold">Browse Photo</span>
+              <span class="text-brand-dark text-sm sm:text-sm font-semibold">Browse Photo</span>
             </button>
             <p class="text-brand-light text-xs text-center">
               JPG, PNG up to 2MB<br />Recommended: 400x400px
@@ -126,23 +126,23 @@ const deletePhoto = () => {
     <!-- Form Section -->
     <div class="flex-1">
       <!-- Account Credentials Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6 mb-6">
-        <div class="flex items-center gap-3 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-5">
+        <div class="flex items-center gap-2.5 mb-5">
           <div
-            class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
           >
             <Lock class="w-6 h-6 text-purple-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Account Credentials</h3>
+            <h3 class="text-brand-dark text-base font-bold">Account Credentials</h3>
             <p class="text-brand-light text-sm font-normal">
               Login information and account details
             </p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div class="mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="mb-3.5">
             <Input
               id="name"
               name="name"
@@ -159,7 +159,7 @@ const deletePhoto = () => {
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="email"
               name="email"
@@ -176,7 +176,7 @@ const deletePhoto = () => {
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="password"
               name="password"
@@ -196,7 +196,7 @@ const deletePhoto = () => {
             </p>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="password_confirmation"
               name="password_confirmation"
@@ -213,7 +213,7 @@ const deletePhoto = () => {
             </Input>
           </div>
 
-          <div class="mb-4 md:col-span-2">
+          <div class="mb-3.5 md:col-span-2">
             <Input
               id="identity_number"
               name="identity_number"
@@ -233,23 +233,23 @@ const deletePhoto = () => {
       </div>
 
       <!-- Personal Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-        <div class="flex items-center gap-3 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+        <div class="flex items-center gap-2.5 mb-5">
           <div
-            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
           >
             <User class="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Personal Information</h3>
+            <h3 class="text-brand-dark text-base font-bold">Personal Information</h3>
             <p class="text-brand-light text-sm font-normal">
               Basic employee details and contact information
             </p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div class="mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="mb-3.5">
             <Input
               id="phone"
               name="phone"
@@ -266,7 +266,7 @@ const deletePhoto = () => {
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="date_of_birth"
               name="date_of_birth"
@@ -282,7 +282,7 @@ const deletePhoto = () => {
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="hobby"
               name="hobby"
@@ -298,7 +298,7 @@ const deletePhoto = () => {
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="place_of_birth"
               name="place_of_birth"
@@ -316,25 +316,25 @@ const deletePhoto = () => {
           </div>
 
           <!-- Gender (Full Width) -->
-          <div class="md:col-span-2 mb-4">
-            <label class="block text-brand-dark text-base font-semibold mb-1">Gender<span class="text-red-600 ml-1">*</span></label>
-            <div class="flex flex-col sm:flex-row gap-4">
+          <div class="md:col-span-2 mb-3.5">
+            <label class="block text-brand-dark text-sm font-semibold mb-1">Gender<span class="text-red-600 ml-1">*</span></label>
+            <div class="flex flex-col sm:flex-row gap-3.5">
               <!-- Male Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2.5">
                   <div
                     class="w-10 h-10 bg-blue-50 rounded-[12px] flex items-center justify-center"
                   >
                     <User class="w-5 h-5 text-blue-600" />
                   </div>
                   <div class="flex flex-col">
-                    <p class="text-brand-dark text-base font-semibold">Male</p>
+                    <p class="text-brand-dark text-sm font-semibold">Male</p>
                   </div>
                 </div>
                 <div
-                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
+                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-1.5 px-2.5 gap-1.5"
                 >
                   <input
                     type="radio"
@@ -354,20 +354,20 @@ const deletePhoto = () => {
 
               <!-- Female Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2.5">
                   <div
                     class="w-10 h-10 bg-pink-50 rounded-[12px] flex items-center justify-center"
                   >
                     <User class="w-5 h-5 text-pink-600" />
                   </div>
                   <div class="flex flex-col">
-                    <p class="text-brand-dark text-base font-semibold">Female</p>
+                    <p class="text-brand-dark text-sm font-semibold">Female</p>
                   </div>
                 </div>
                 <div
-                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
+                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-1.5 px-2.5 gap-1.5"
                 >
                   <input
                     type="radio"
@@ -388,7 +388,7 @@ const deletePhoto = () => {
           </div>
 
           <!-- Address -->
-          <div class="mb-4">
+          <div class="mb-3.5">
             <TextArea
               id="address"
               name="address"
@@ -406,9 +406,9 @@ const deletePhoto = () => {
           </div>
 
           <!-- City and Post Code -->
-          <div class="mb-4">
+          <div class="mb-3.5">
             <!-- City -->
-            <div class="mb-4">
+            <div class="mb-3.5">
               <Input
                 id="city"
                 name="city"
@@ -426,7 +426,7 @@ const deletePhoto = () => {
             </div>
 
             <!-- Postal Code -->
-            <div class="mb-4">
+            <div class="mb-3.5">
               <Input
                 id="postal_code"
                 name="postal_code"

@@ -44,19 +44,19 @@ const formatText = (text: string) => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-5">
     <!-- Preview Header -->
     <div
-      class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-[14px] p-6 text-white"
+      class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-[14px] p-5 text-white"
     >
-      <div class="flex items-center gap-3 mb-3">
+      <div class="flex items-center gap-2.5 mb-2.5">
         <div
-          class="w-12 h-12 bg-white/20 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-white/20 rounded-[12px] flex items-center justify-center"
         >
           <CheckCircle class="w-6 h-6 text-white" />
         </div>
         <div>
-          <h3 class="text-xl font-bold">Review Employee Information</h3>
+          <h3 class="text-base font-bold">Review Employee Information</h3>
           <p class="text-blue-100 text-sm">
             Please review all information before submitting
           </p>
@@ -65,15 +65,15 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Personal Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
           <User class="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">
+          <h3 class="text-brand-dark text-base font-bold">
             Personal Information
           </h3>
           <p class="text-brand-light text-sm font-normal">
@@ -82,7 +82,7 @@ const formatText = (text: string) => {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">
             Profile Photo
@@ -91,14 +91,14 @@ const formatText = (text: string) => {
             <img
               :src="step1Data.profile_photo_url"
               alt="Profile Photo"
-              class="w-20 h-20 rounded-full object-cover border-2 border-[#DCDEDD]"
+              class="w-9 h-9 rounded-full object-cover border-2 border-[#DCDEDD]"
             />
           </div>
-          <p v-else class="text-brand-dark text-base font-semibold">-</p>
+          <p v-else class="text-brand-dark text-sm font-semibold">-</p>
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Full Name</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step1Data.name || "-" }}
           </p>
         </div>
@@ -106,7 +106,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Email Address
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step1Data.email || "-" }}
           </p>
         </div>
@@ -114,7 +114,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Identity Number
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step1Data.identity_number || "-" }}
           </p>
         </div>
@@ -122,13 +122,13 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Phone Number
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step1Data.phone || "-" }}
           </p>
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Gender</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ formatText(step1Data.gender) }}
           </p>
         </div>
@@ -136,7 +136,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Date of Birth
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ formatDate(step1Data.date_of_birth) }}
           </p>
         </div>
@@ -144,31 +144,31 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Place of Birth
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step1Data.place_of_birth || "-" }}
           </p>
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Hobby</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step1Data.hobby || "-" }}
           </p>
         </div>
         <div class="md:col-span-2">
           <p class="text-brand-light text-xs font-semibold mb-1">Address</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step1Data.address || "-" }}
           </p>
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">City</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step1Data.city || "-" }}
           </p>
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Postal Code</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step1Data.postal_code || "-" }}
           </p>
         </div>
@@ -176,37 +176,37 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Job Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
         >
           <Briefcase class="w-6 h-6 text-green-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">Job Information</h3>
+          <h3 class="text-brand-dark text-base font-bold">Job Information</h3>
           <p class="text-brand-light text-sm font-normal">
             Position and employment details
           </p>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Job Title</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step2Data.job_title || "-" }}
           </p>
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Role</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step2Data.role || "-" }}
           </p>
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Team</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step2Data.team_id || "-" }}
           </p>
         </div>
@@ -214,7 +214,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Years of Experience
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{
               step2Data.years_experience
                 ? `${step2Data.years_experience} years`
@@ -224,7 +224,7 @@ const formatText = (text: string) => {
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Status</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ formatText(step2Data.status) }}
           </p>
         </div>
@@ -232,7 +232,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Employment Type
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ formatText(step2Data.employment_type) }}
           </p>
         </div>
@@ -240,13 +240,13 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Work Location
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ formatText(step2Data.work_location) }}
           </p>
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Start Date</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ formatDate(step2Data.start_date) }}
           </p>
         </div>
@@ -254,13 +254,13 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Monthly Salary
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ formatCurrency(step2Data.monthly_salary) }}
           </p>
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Skill Level</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ formatText(step2Data.skill_level) }}
           </p>
         </div>
@@ -268,25 +268,25 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Bank Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
         >
           <CreditCard class="w-6 h-6 text-purple-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">Bank Information</h3>
+          <h3 class="text-brand-dark text-base font-bold">Bank Information</h3>
           <p class="text-brand-light text-sm font-normal">
             Banking details for payroll
           </p>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Bank Name</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ formatText(step2Data.bank_name) }}
           </p>
         </div>
@@ -294,7 +294,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Account Number
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step2Data.account_number || "-" }}
           </p>
         </div>
@@ -302,13 +302,13 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Account Holder Name
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step2Data.account_holder_name || "-" }}
           </p>
         </div>
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Bank Branch</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step2Data.bank_branch || "-" }}
           </p>
         </div>
@@ -316,7 +316,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Account Type
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ formatText(step2Data.account_type) }}
           </p>
         </div>
@@ -324,25 +324,25 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Emergency Contact -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"
         >
           <Phone class="w-6 h-6 text-red-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">Emergency Contact</h3>
+          <h3 class="text-brand-dark text-base font-bold">Emergency Contact</h3>
           <p class="text-brand-light text-sm font-normal">
             Person to contact in emergency
           </p>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
           <p class="text-brand-light text-xs font-semibold mb-1">Full Name</p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step3Data.emergency_contact_name || "-" }}
           </p>
         </div>
@@ -350,7 +350,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Relationship
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step3Data.emergency_contact_relationship || "-" }}
           </p>
         </div>
@@ -358,7 +358,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Phone Number
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step3Data.emergency_contact_phone || "-" }}
           </p>
         </div>
@@ -366,7 +366,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Email Address
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step3Data.emergency_contact_email || "-" }}
           </p>
         </div>
@@ -374,7 +374,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Preferred Language
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{
               step3Data.preferred_language
                 ? formatText(step3Data.preferred_language)
@@ -386,7 +386,7 @@ const formatText = (text: string) => {
           <p class="text-brand-light text-xs font-semibold mb-1">
             Additional Notes
           </p>
-          <p class="text-brand-dark text-base font-semibold">
+          <p class="text-brand-dark text-sm font-semibold">
             {{ step3Data.additional_notes }}
           </p>
         </div>

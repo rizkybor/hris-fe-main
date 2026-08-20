@@ -476,19 +476,19 @@ const submit = async () => {
 <template>
   <div class="max-w-6xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex items-center gap-3">
+    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 mb-5">
+      <div class="flex items-center gap-2.5">
         <button
           @click="router.back()"
           class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-blue-400 transition-all flex-shrink-0"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
         </button>
-        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
+        <div class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
           <CalculatorIcon class="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h1 class="text-brand-dark text-xl font-bold">
+          <h1 class="text-brand-dark text-base font-bold">
             {{ isEditing ? "Edit Estimate" : "Create New Estimate" }}
           </h1>
           <p class="text-brand-light text-sm">Fill in the details below, the total will be calculated automatically</p>
@@ -498,24 +498,24 @@ const submit = async () => {
 
     <Alert type="danger" :title="errorMessage" message="" :show="!!errorMessage" @close="errorMessage = ''" />
 
-    <div v-if="loadingCalculation || loadingRateSetting || loadingLandingPageRateSetting" class="space-y-4 mt-4">
+    <div v-if="loadingCalculation || loadingRateSetting || loadingLandingPageRateSetting" class="space-y-3.5 mt-3.5">
       <Skeleton height="120px" rounded="14px" />
       <Skeleton height="300px" rounded="14px" />
     </div>
 
-    <div v-else class="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+    <div v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5 mt-5">
       <!-- Main form -->
-      <div class="xl:col-span-2 space-y-6">
+      <div class="xl:col-span-2 space-y-5">
         <!-- Basic info -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="block text-sm font-semibold text-brand-dark mb-1">Project Name Example *</label>
               <input
                 v-model="form.name"
                 type="text"
                 placeholder="example: Added WA Monitoring Featured"
-                class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+                class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
               />
             </div>
             <div>
@@ -524,19 +524,19 @@ const submit = async () => {
                 v-model="form.client_name"
                 type="text"
                 placeholder="example: PT. Client Name"
-                class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+                class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
               />
             </div>
           </div>
 
           <!-- Scenario toggle -->
           <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-2">Scenario</label>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label class="block text-sm font-semibold text-brand-dark mb-1.5">Scenario</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <button
                 type="button"
                 @click="switchScenario('feature')"
-                class="flex items-center gap-3 p-4 rounded-[12px] border-2 text-left transition-all"
+                class="flex items-center gap-2.5 p-3.5 rounded-[12px] border-2 text-left transition-all"
                 :class="
                   form.scenario === 'feature'
                     ? 'border-[#0C51D9] bg-blue-50'
@@ -554,7 +554,7 @@ const submit = async () => {
               <button
                 type="button"
                 @click="switchScenario('build')"
-                class="flex items-center gap-3 p-4 rounded-[12px] border-2 text-left transition-all"
+                class="flex items-center gap-2.5 p-3.5 rounded-[12px] border-2 text-left transition-all"
                 :class="
                   form.scenario === 'build'
                     ? 'border-violet-500 bg-violet-50'
@@ -572,7 +572,7 @@ const submit = async () => {
               <button
                 type="button"
                 @click="switchScenario('landing_page')"
-                class="flex items-center gap-3 p-4 rounded-[12px] border-2 text-left transition-all"
+                class="flex items-center gap-2.5 p-3.5 rounded-[12px] border-2 text-left transition-all"
                 :class="
                   form.scenario === 'landing_page'
                     ? 'border-emerald-500 bg-emerald-50'
@@ -592,7 +592,7 @@ const submit = async () => {
         </div>
 
         <!-- Items -->
-        <div v-if="form.scenario !== 'landing_page'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+        <div v-if="form.scenario !== 'landing_page'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
           <!-- Sentinel: a 1px marker just above the sticky header. The
                IntersectionObserver watching it flips isHeaderStuck the
                instant it scrolls out of view, i.e. exactly when the header
@@ -607,32 +607,32 @@ const submit = async () => {
                were silently not being generated by this project's Tailwind
                build for reasons that didn't reproduce anywhere else in the
                codebase, so inline style sidesteps that entirely. The -12px
-               top offset cancels out <main>'s own p-3 page padding (see
+               top offset cancels out <main>'s own p-2.5 page padding (see
                Admin.vue layout) so this specific header sits flush against
                the navbar with zero gap once pinned, rather than floating
                below it. Gains a soft shadow/blur/accent bar only once
                actually pinned (isHeaderStuck), so it doesn't look
                "elevated" while still sitting flush in its normal spot. -->
-          <div class="sticky z-10 px-6 pt-6 pb-2 border-b transition-all duration-300 ease-out" :style="stickyHeaderStyle">
+          <div class="sticky z-10 px-5 pt-5 pb-1.5 border-b transition-all duration-300 ease-out" :style="stickyHeaderStyle">
             <div
               class="absolute inset-x-0 top-0 h-[3px] transition-opacity duration-300"
               :style="{ background: 'linear-gradient(to right, #0C51D9, #6366F1)', opacity: isHeaderStuck ? 1 : 0 }"
             ></div>
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-2">
-                <h3 class="text-brand-dark text-base font-bold">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-1.5">
+                <h3 class="text-brand-dark text-sm font-bold">
                   {{ form.scenario === "feature" ? "Feature List" : "Module List" }}
                 </h3>
-                <span class="px-2 py-0.5 rounded-full bg-blue-50 text-[#0C51D9] text-xs font-bold tabular-nums">
+                <span class="px-1.5 py-0.5 rounded-full bg-blue-50 text-[#0C51D9] text-xs font-bold tabular-nums">
                   {{ form.items.length }}
                 </span>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1.5">
                 <button
                   v-if="!isEditing"
                   type="button"
                   @click="openReferenceModal"
-                  class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
+                  class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-2.5 py-1 inline-flex items-center gap-1"
                 >
                   <History class="w-3.5 h-3.5 text-gray-600" />
                   <span class="text-brand-dark text-xs font-semibold">Load from Previous Estimate</span>
@@ -640,31 +640,31 @@ const submit = async () => {
                 <button
                   type="button"
                   @click="addItem"
-                  class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
+                  class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-2.5 py-1 inline-flex items-center gap-1"
                 >
                   <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
                   <span class="text-brand-dark text-xs font-semibold">{{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}</span>
                 </button>
               </div>
             </div>
-            <p class="flex items-center gap-1.5 text-xs mb-3 text-gray-400 pb-2">
+            <p class="flex items-center gap-1 text-xs mb-2.5 text-gray-400 pb-1.5">
               <InfoIcon class="w-3.5 h-3.5" />
               Complexity Factor: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Typical risk buffer 15&ndash;20%.
             </p>
           </div>
 
-          <div class="space-y-4 mt-4">
+          <div class="space-y-3.5 mt-3.5">
             <div
               v-for="(item, index) in form.items"
               :key="index"
-              class="p-4 border border-[#DCDEDD] rounded-[12px] space-y-3"
+              class="p-3.5 border border-[#DCDEDD] rounded-[12px] space-y-2.5"
             >
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1.5">
                 <input
                   v-model="item.name"
                   type="text"
                   :placeholder="form.scenario === 'feature' ? 'Feature name' : 'Module name'"
-                  class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm font-semibold focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+                  class="flex-1 px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm font-semibold focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
                 />
                 <button
                   type="button"
@@ -676,43 +676,43 @@ const submit = async () => {
                 </button>
               </div>
 
-              <div v-if="form.scenario === 'feature'" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div v-if="form.scenario === 'feature'" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Analysis Hours</label>
-                  <input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                  <input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Development Hours</label>
-                  <input v-model.number="item.dev_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                  <input v-model.number="item.dev_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Testing Hours</label>
-                  <input v-model.number="item.testing_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                  <input v-model.number="item.testing_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Deployment Hours</label>
-                  <input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                  <input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
               </div>
-              <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Estimated Hours</label>
-                  <input v-model.number="item.estimated_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                  <input v-model.number="item.estimated_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-2 gap-2.5">
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Complexity Factor</label>
-                  <input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                  <input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Buffer Risk %</label>
-                  <input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                  <input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
               </div>
 
-              <div class="flex items-center justify-between pt-3 border-t border-[#F1F1F1] text-sm">
+              <div class="flex items-center justify-between pt-2.5 border-t border-[#F1F1F1] text-sm">
                 <span class="text-gray-500">
                   {{ computedItems[index]?.totalHoursUsed.toFixed(1) }} usage history
                 </span>
@@ -723,22 +723,22 @@ const submit = async () => {
         </div>
 
         <!-- Landing Page Configuration -->
-        <div v-if="form.scenario === 'landing_page'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-6">
-          <div class="flex items-center gap-2">
+        <div v-if="form.scenario === 'landing_page'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-5">
+          <div class="flex items-center gap-1.5">
             <div class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center shrink-0">
               <Globe class="w-4.5 h-4.5 text-emerald-600" />
             </div>
-            <h3 class="text-brand-dark text-base font-bold">Landing Page Configuration</h3>
+            <h3 class="text-brand-dark text-sm font-bold">Landing Page Configuration</h3>
           </div>
 
           <!-- Server -->
           <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-2">Server</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="block text-sm font-semibold text-brand-dark mb-1.5">Server</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button
                 type="button"
                 @click="form.server_type = 'dedicated'"
-                class="flex items-center justify-between p-3.5 rounded-[10px] border-2 text-left transition-all"
+                class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
                 :class="form.server_type === 'dedicated' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
               >
                 <span class="text-sm font-semibold text-brand-dark">Dedicated</span>
@@ -747,7 +747,7 @@ const submit = async () => {
               <button
                 type="button"
                 @click="form.server_type = 'shared'"
-                class="flex items-center justify-between p-3.5 rounded-[10px] border-2 text-left transition-all"
+                class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
                 :class="form.server_type === 'shared' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
               >
                 <span class="text-sm font-semibold text-brand-dark">Shared</span>
@@ -758,12 +758,12 @@ const submit = async () => {
 
           <!-- Design -->
           <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-2">Design</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="block text-sm font-semibold text-brand-dark mb-1.5">Design</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button
                 type="button"
                 @click="form.design_type = 'dedicated'"
-                class="flex items-center justify-between p-3.5 rounded-[10px] border-2 text-left transition-all"
+                class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
                 :class="form.design_type === 'dedicated' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
               >
                 <span class="text-sm font-semibold text-brand-dark">Dedicated</span>
@@ -772,7 +772,7 @@ const submit = async () => {
               <button
                 type="button"
                 @click="form.design_type = 'template'"
-                class="flex items-center justify-between p-3.5 rounded-[10px] border-2 text-left transition-all"
+                class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
                 :class="form.design_type === 'template' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
               >
                 <span class="text-sm font-semibold text-brand-dark">Template</span>
@@ -783,22 +783,22 @@ const submit = async () => {
 
           <!-- Development -->
           <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-2">Development</label>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label class="block text-sm font-semibold text-brand-dark mb-1.5">Development</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Estimate Final Time (hours)</label>
-                <input v-model.number="form.estimated_hours" type="number" min="0" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                <input v-model.number="form.estimated_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
               </div>
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Rate Developer (Rp/jam)</label>
-                <input v-model.number="form.rate_developer" type="number" min="0" step="1000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                <input v-model.number="form.rate_developer" type="number" min="0" step="1000" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
               </div>
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Jumlah Developer</label>
-                <input v-model.number="form.developer_count" type="number" min="1" step="1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                <input v-model.number="form.developer_count" type="number" min="1" step="1" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
               </div>
             </div>
-            <div class="flex items-center justify-between pt-3 mt-3 border-t border-[#F1F1F1] text-sm">
+            <div class="flex items-center justify-between pt-2.5 mt-2.5 border-t border-[#F1F1F1] text-sm">
               <span class="text-gray-500">Development Cost</span>
               <span class="text-brand-dark font-bold">{{ formatRupiah(landingPageDevelopmentCost) }}</span>
             </div>
@@ -806,39 +806,39 @@ const submit = async () => {
 
           <!-- Additional Items (optional) -->
           <div>
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between mb-1.5">
               <label class="block text-sm font-semibold text-brand-dark">Additional Items (Optional)</label>
               <button
                 type="button"
                 @click="addAdditionalItem"
-                class="border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all px-3 py-1.5 inline-flex items-center gap-1.5"
+                class="border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all px-2.5 py-1 inline-flex items-center gap-1"
               >
                 <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
                 <span class="text-brand-dark text-xs font-semibold">Add Item</span>
               </button>
             </div>
 
-            <div v-if="form.additional_items.length === 0" class="text-xs text-gray-400 border border-dashed border-[#DCDEDD] rounded-[10px] py-4 text-center">
+            <div v-if="form.additional_items.length === 0" class="text-xs text-gray-400 border border-dashed border-[#DCDEDD] rounded-[10px] py-3.5 text-center">
               No additional items -- optional extras like domain, third-party integration, or extra revisions.
             </div>
 
-            <div v-else class="space-y-3">
+            <div v-else class="space-y-2.5">
               <div
                 v-for="(item, index) in form.additional_items"
                 :key="index"
-                class="p-3 border border-[#DCDEDD] rounded-[10px] grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-end"
+                class="p-2.5 border border-[#DCDEDD] rounded-[10px] grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2.5 items-end"
               >
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Description</label>
-                  <input v-model="item.description" type="text" placeholder="e.g. Domain .com (1 year)" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                  <input v-model="item.description" type="text" placeholder="e.g. Domain .com (1 year)" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <div class="w-full sm:w-24">
                   <label class="block text-xs text-gray-500 mb-1">Amount</label>
-                  <input v-model.number="item.amount" type="number" min="0" step="1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                  <input v-model.number="item.amount" type="number" min="0" step="1" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <div class="w-full sm:w-36">
                   <label class="block text-xs text-gray-500 mb-1">Price (Rp)</label>
-                  <input v-model.number="item.price" type="number" min="0" step="1000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                  <input v-model.number="item.price" type="number" min="0" step="1000" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
                 </div>
                 <button
                   type="button"
@@ -857,9 +857,9 @@ const submit = async () => {
 
           <!-- Margin -->
           <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-2">Margin Jual</label>
-            <div class="flex items-center gap-3">
-              <input v-model.number="form.margin_percent" type="number" min="0" step="1" class="w-32 px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+            <label class="block text-sm font-semibold text-brand-dark mb-1.5">Margin Jual</label>
+            <div class="flex items-center gap-2.5">
+              <input v-model.number="form.margin_percent" type="number" min="0" step="1" class="w-32 px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
               <span class="text-sm text-gray-500">%</span>
               <span class="ml-auto text-sm text-gray-500">
                 Margin Amount: <strong class="text-brand-dark">{{ formatRupiah(landingPageMarginTotal) }}</strong>
@@ -869,20 +869,20 @@ const submit = async () => {
         </div>
 
         <!-- Build-only extra fields -->
-        <div v-if="form.scenario === 'build'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div v-if="form.scenario === 'build'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
             <label class="block text-sm font-semibold text-brand-dark mb-1">PM Overhead (%)</label>
-            <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+            <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
           </div>
           <div>
             <label class="block text-sm font-semibold text-brand-dark mb-1">Infrastructure Setup Cost (Rp)</label>
-            <input v-model.number="form.infra_setup_cost" type="number" min="0" class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+            <input v-model.number="form.infra_setup_cost" type="number" min="0" class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
           </div>
         </div>
 
         <!-- Tax + Notes -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 space-y-4">
-          <label class="flex items-center gap-2 cursor-pointer">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3.5">
+          <label class="flex items-center gap-1.5 cursor-pointer">
             <input type="checkbox" v-model="form.include_ppn" class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]" />
             <span class="text-sm font-semibold text-brand-dark">Include PPN</span>
             <input
@@ -892,29 +892,29 @@ const submit = async () => {
               min="0"
               max="100"
               step="0.5"
-              class="w-16 px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm ml-1"
+              class="w-16 px-1.5 py-1 border border-[#DCDEDD] rounded-lg text-sm ml-1"
               @click.stop
             />
             <span v-if="form.include_ppn" class="text-sm text-gray-500">%</span>
           </label>
 
           <div class="pt-1 border-t border-[#F1F1F1]">
-            <label class="flex items-center gap-2 cursor-pointer pt-3">
+            <label class="flex items-center gap-1.5 cursor-pointer pt-2.5">
               <input type="checkbox" v-model="form.include_pph" class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]" />
               <span class="text-sm font-semibold text-brand-dark">Include PPh (dipotong klien)</span>
             </label>
-            <p class="flex items-center gap-1.5 text-xs text-gray-400 mt-1 ml-6">
+            <p class="flex items-center gap-1 text-xs text-gray-400 mt-1 ml-5">
               <InfoIcon class="w-3.5 h-3.5 shrink-0" />
               PPh dipotong oleh klien dari pembayaran -- mengurangi yang diterima, bukan menambah tagihan.
             </p>
 
-            <div v-if="form.include_pph" class="mt-3 ml-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div v-if="form.include_pph" class="mt-2.5 ml-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Jenis PPh</label>
                 <select
                   v-model="form.pph_type"
                   @change="handlePphTypeChange"
-                  class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+                  class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
                 >
                   <option value="" disabled>Pilih jenis PPh...</option>
                   <option v-for="type in pphTypes" :key="type.value" :value="type.value">
@@ -931,7 +931,7 @@ const submit = async () => {
                   max="100"
                   step="0.5"
                   :disabled="form.pph_type !== 'custom' && form.pph_type !== ''"
-                  class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none disabled:bg-gray-50 disabled:text-gray-500"
+                  class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none disabled:bg-gray-50 disabled:text-gray-500"
                 />
               </div>
             </div>
@@ -943,7 +943,7 @@ const submit = async () => {
               v-model="form.notes"
               rows="3"
               placeholder="Additional notes for this estimate..."
-              class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none resize-none"
+              class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none resize-none"
             ></textarea>
           </div>
         </div>
@@ -951,15 +951,15 @@ const submit = async () => {
 
       <!-- Summary sidebar -->
       <div class="xl:col-span-1">
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 sticky top-6 space-y-4">
-          <h3 class="text-brand-dark text-base font-bold">Summary</h3>
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sticky top-6 space-y-3.5">
+          <h3 class="text-brand-dark text-sm font-bold">Summary</h3>
 
-          <div v-if="form.scenario !== 'landing_page'" class="p-3 rounded-[12px] bg-gray-50 border border-[#F1F1F1] flex items-center justify-between text-sm">
+          <div v-if="form.scenario !== 'landing_page'" class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1] flex items-center justify-between text-sm">
             <span class="text-gray-500">Rate Sell / Hour</span>
             <span class="font-semibold text-brand-dark">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</span>
           </div>
 
-          <div class="space-y-2 text-sm">
+          <div class="space-y-1.5 text-sm">
             <template v-if="form.scenario === 'landing_page'">
               <div class="flex items-center justify-between">
                 <span class="text-gray-500">Server ({{ form.server_type === "dedicated" ? "Dedicated" : "Shared" }})</span>
@@ -1000,34 +1000,34 @@ const submit = async () => {
             </div>
           </div>
 
-          <div class="pt-3 border-t border-[#F1F1F1]">
+          <div class="pt-2.5 border-t border-[#F1F1F1]">
             <div class="flex items-center justify-between">
               <span class="text-brand-dark text-sm font-bold">Estimate Total</span>
-              <span class="text-brand-dark text-xl font-extrabold">{{ formatRupiah(grandTotal) }}</span>
+              <span class="text-brand-dark text-base font-extrabold">{{ formatRupiah(grandTotal) }}</span>
             </div>
-            <div v-if="form.include_ppn" class="flex items-center justify-between mt-2">
+            <div v-if="form.include_ppn" class="flex items-center justify-between mt-1.5">
               <span class="text-gray-500 text-xs">+ PPN {{ form.ppn_percent }}%</span>
               <span class="text-gray-500 text-xs">{{ formatRupiah(ppnAmount) }}</span>
             </div>
             <div v-if="form.include_ppn" class="flex items-center justify-between mt-1">
               <span class="text-indigo-700 text-sm font-bold">Total + PPN</span>
-              <span class="text-indigo-700 text-xl font-extrabold">{{ formatRupiah(totalWithPpn) }}</span>
+              <span class="text-indigo-700 text-base font-extrabold">{{ formatRupiah(totalWithPpn) }}</span>
             </div>
           </div>
 
-          <div v-if="form.include_pph" class="pt-3 border-t border-[#F1F1F1]">
+          <div v-if="form.include_pph" class="pt-2.5 border-t border-[#F1F1F1]">
             <div class="flex items-center justify-between">
               <span class="text-red-500 text-xs">- PPh {{ form.pph_percent }}%</span>
               <span class="text-red-500 text-xs">{{ formatRupiah(pphAmount) }}</span>
             </div>
             <div class="flex items-center justify-between mt-1">
               <span class="text-green-700 text-sm font-bold">Diterima Bersih</span>
-              <span class="text-green-700 text-xl font-extrabold">{{ formatRupiah(netReceived) }}</span>
+              <span class="text-green-700 text-base font-extrabold">{{ formatRupiah(netReceived) }}</span>
             </div>
             <p class="text-gray-400 text-xs mt-1">Setelah dipotong PPh oleh klien</p>
           </div>
 
-          <div class="flex items-center gap-2 p-3 rounded-[12px] bg-blue-50 border border-blue-100 text-sm">
+          <div class="flex items-center gap-1.5 p-2.5 rounded-[12px] bg-blue-50 border border-blue-100 text-sm">
             <ClockIcon class="w-4 h-4 text-blue-600 flex-shrink-0" />
             <span v-if="form.scenario === 'landing_page'" class="text-blue-800">
               Estimate Duration: <strong>{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
@@ -1043,7 +1043,7 @@ const submit = async () => {
             type="button"
             @click="submit"
             :disabled="saving || !canSave"
-            class="w-full rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+            class="w-full rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all blue-gradient blue-btn-shadow px-5 py-2.5 flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
             <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
             <SaveIcon v-else class="w-4 h-4 text-white" />
@@ -1056,15 +1056,15 @@ const submit = async () => {
     </div>
 
     <!-- Load from Previous Estimate modal -->
-    <div v-if="referenceModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div v-if="referenceModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-3.5">
       <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <div class="flex items-center gap-3">
+        <div class="p-4 border-b border-[#DCDEDD] flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
             <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center">
               <History class="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-base font-bold">Load from Previous Estimate</h3>
+              <h3 class="text-brand-dark text-sm font-bold">Load from Previous Estimate</h3>
               <p class="text-brand-light text-xs">Reuse a saved estimate's item list as a starting point</p>
             </div>
           </div>
@@ -1073,25 +1073,25 @@ const submit = async () => {
           </button>
         </div>
 
-        <div class="p-4 border-b border-[#DCDEDD]">
+        <div class="p-3.5 border-b border-[#DCDEDD]">
           <div class="relative">
             <Search class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               v-model="referenceSearch"
               type="text"
               placeholder="Search by estimate or client name..."
-              class="w-full pl-9 pr-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+              class="w-full pl-7 pr-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
             />
           </div>
         </div>
 
-        <div class="p-4 overflow-y-auto space-y-2">
-          <div v-if="loadingReferences" class="space-y-2">
+        <div class="p-3.5 overflow-y-auto space-y-1.5">
+          <div v-if="loadingReferences" class="space-y-1.5">
             <Skeleton height="64px" rounded="12px" />
             <Skeleton height="64px" rounded="12px" />
             <Skeleton height="64px" rounded="12px" />
           </div>
-          <p v-else-if="filteredReferences.length === 0" class="text-center text-sm text-gray-400 py-8">
+          <p v-else-if="filteredReferences.length === 0" class="text-center text-sm text-gray-400 py-6">
             No saved estimates found.
           </p>
           <button
@@ -1100,7 +1100,7 @@ const submit = async () => {
             type="button"
             :disabled="applyingReference"
             @click="applyReference(reference)"
-            class="w-full text-left border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all p-4 flex items-center justify-between gap-3 disabled:opacity-50"
+            class="w-full text-left border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all p-3.5 flex items-center justify-between gap-2.5 disabled:opacity-50"
           >
             <div class="min-w-0">
               <p class="text-brand-dark text-sm font-bold truncate">{{ reference.name }}</p>

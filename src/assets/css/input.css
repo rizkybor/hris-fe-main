@@ -39,6 +39,33 @@ html {
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
+/* Shared read-only rendering for RichTextEditor output (v-html'd `body`
+   fields -- official memos, meeting notes, and any future document type).
+   A table saved from the editor can carry inline pixel column widths
+   (from manual column-resize) that add up past the card's width, so the
+   container itself needs to scroll horizontally rather than letting the
+   table blow out the page layout on both desktop and mobile. */
+.rich-text-content {
+    overflow-x: auto;
+}
+
+.rich-text-content table {
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    max-width: 100%;
+}
+
+.rich-text-content table td,
+.rich-text-content table th {
+    border: 1px solid #DCDEDD;
+    padding: 0.375rem 0.5rem;
+}
+
+.rich-text-content img {
+    max-width: 100%;
+    height: auto;
+}
+
 .text-brand-white-90 {
     color: rgba(255, 255, 255, 0.9);
     font-family: 'Plus Jakarta Sans', sans-serif;

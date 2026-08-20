@@ -127,26 +127,26 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-5 items-start lg:pr-5">
-    <div class="flex-1 w-full space-y-6">
+  <div class="flex flex-col lg:flex-row gap-4 items-start lg:pr-4">
+    <div class="flex-1 w-full space-y-5">
       <!-- Job Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-        <div class="flex items-center gap-3 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+        <div class="flex items-center gap-2.5 mb-5">
           <div
-            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
           >
             <Briefcase class="w-6 h-6 text-green-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Job Information</h3>
+            <h3 class="text-brand-dark text-base font-bold">Job Information</h3>
             <p class="text-brand-light text-sm font-normal">
               Role, department, and employment details
             </p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div class="mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="mb-3.5">
             <Input
               id="job_title"
               name="job_title"
@@ -164,7 +164,7 @@ watch(
           </div>
 
           <!-- Role -->
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Select
               id="role"
               name="role"
@@ -182,19 +182,19 @@ watch(
           </div>
 
           <!-- Team -->
-          <div class="mb-4">
-            <label class="block text-brand-dark text-base font-semibold mb-1"
+          <div class="mb-3.5">
+            <label class="block text-brand-dark text-sm font-semibold mb-1"
               >Team</label
             >
             <div class="relative">
               <div
-                class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+                class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
               >
                 <Building2 class="h-5 w-5 text-gray-400" />
               </div>
               <div
                 @click="teamModal = true"
-                class="w-full pl-12 pr-10 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 cursor-pointer bg-white"
+                class="w-full pl-12 pr-8 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 cursor-pointer bg-white"
               >
                 <span
                   :class="[selectedTeam ? 'text-brand-dark' : 'text-gray-500']"
@@ -203,7 +203,7 @@ watch(
                 </span>
               </div>
               <div
-                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
+                class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none"
               >
                 <ChevronDown class="h-4 w-4 text-gray-400" />
               </div>
@@ -212,9 +212,9 @@ watch(
             <!-- Selected Team Display -->
             <div
               v-if="selectedTeam"
-              class="mt-3 p-3 bg-gray-50 rounded-[12px] border border-gray-200"
+              class="mt-2.5 p-2.5 bg-gray-50 rounded-[12px] border border-gray-200"
             >
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2.5">
                 <div
                   class="w-10 h-10 relative flex items-center justify-center rounded-[8px] overflow-hidden"
                 >
@@ -224,7 +224,7 @@ watch(
                   <Building2 class="w-5 h-5 text-white relative z-10" />
                 </div>
                 <div class="flex-1">
-                  <p class="text-brand-dark text-base font-semibold">
+                  <p class="text-brand-dark text-sm font-semibold">
                     {{ selectedTeam.name }}
                   </p>
                   <p class="text-brand-light text-xs font-normal">
@@ -242,7 +242,7 @@ watch(
             </div>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="years_experience"
               name="years_experience"
@@ -259,7 +259,7 @@ watch(
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Select
               id="status"
               name="status"
@@ -276,7 +276,7 @@ watch(
             </Select>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Select
               id="employment_type"
               name="employment_type"
@@ -293,7 +293,7 @@ watch(
             </Select>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Select
               id="work_location"
               name="work_location"
@@ -310,7 +310,7 @@ watch(
             </Select>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="start_date"
               name="start_date"
@@ -326,7 +326,7 @@ watch(
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="monthly_salary"
               name="monthly_salary"
@@ -340,7 +340,7 @@ watch(
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Select
               id="ptkp_status"
               name="ptkp_status"
@@ -356,7 +356,7 @@ watch(
             </Select>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="annual_leave_quota"
               name="annual_leave_quota"
@@ -371,7 +371,7 @@ watch(
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="probation_end_date"
               name="probation_end_date"
@@ -385,7 +385,7 @@ watch(
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="contract_end_date"
               name="contract_end_date"
@@ -400,29 +400,29 @@ watch(
           </div>
 
           <!-- Skill Level (Full Width) -->
-          <div class="md:col-span-2 mb-4">
-            <label class="block text-brand-dark text-base font-semibold mb-1"
+          <div class="md:col-span-2 mb-3.5">
+            <label class="block text-brand-dark text-sm font-semibold mb-1"
               >Skill Level<span class="text-red-600 ml-1">*</span></label
             >
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <!-- Beginner Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2.5">
                   <div
                     class="w-10 h-10 bg-green-50 rounded-[12px] flex items-center justify-center"
                   >
                     <PlayCircle class="w-5 h-5 text-green-600" />
                   </div>
                   <div class="flex flex-col">
-                    <p class="text-brand-dark text-base font-semibold">
+                    <p class="text-brand-dark text-sm font-semibold">
                       Beginner
                     </p>
                   </div>
                 </div>
                 <div
-                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
+                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-1.5 px-2.5 gap-1.5"
                 >
                   <input
                     type="radio"
@@ -442,22 +442,22 @@ watch(
 
               <!-- Intermediate Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2.5">
                   <div
                     class="w-10 h-10 bg-yellow-50 rounded-[12px] flex items-center justify-center"
                   >
                     <Zap class="w-5 h-5 text-yellow-600" />
                   </div>
                   <div class="flex flex-col">
-                    <p class="text-brand-dark text-base font-semibold">
+                    <p class="text-brand-dark text-sm font-semibold">
                       Intermediate
                     </p>
                   </div>
                 </div>
                 <div
-                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
+                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-1.5 px-2.5 gap-1.5"
                 >
                   <input
                     type="radio"
@@ -477,22 +477,22 @@ watch(
 
               <!-- Advanced Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2.5">
                   <div
                     class="w-10 h-10 bg-purple-50 rounded-[12px] flex items-center justify-center"
                   >
                     <Award class="w-5 h-5 text-purple-600" />
                   </div>
                   <div class="flex flex-col">
-                    <p class="text-brand-dark text-base font-semibold">
+                    <p class="text-brand-dark text-sm font-semibold">
                       Advanced
                     </p>
                   </div>
                 </div>
                 <div
-                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
+                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-1.5 px-2.5 gap-1.5"
                 >
                   <input
                     type="radio"
@@ -512,22 +512,22 @@ watch(
 
               <!-- Expert Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2.5">
                   <div
                     class="w-10 h-10 bg-red-50 rounded-[12px] flex items-center justify-center"
                   >
                     <Crown class="w-5 h-5 text-red-600" />
                   </div>
                   <div class="flex flex-col">
-                    <p class="text-brand-dark text-base font-semibold">
+                    <p class="text-brand-dark text-sm font-semibold">
                       Expert
                     </p>
                   </div>
                 </div>
                 <div
-                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
+                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-1.5 px-2.5 gap-1.5"
                 >
                   <input
                     type="radio"
@@ -550,23 +550,23 @@ watch(
       </div>
 
       <!-- Bank Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-        <div class="flex items-center gap-3 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+        <div class="flex items-center gap-2.5 mb-5">
           <div
-            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
           >
             <CreditCard class="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Bank Information</h3>
+            <h3 class="text-brand-dark text-base font-bold">Bank Information</h3>
             <p class="text-brand-light text-sm font-normal">
               Optional -- employee banking details for payroll processing. Can be left blank for interns/students without a payroll account yet.
             </p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div class="mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="mb-3.5">
             <Select
               id="bank_name"
               name="bank_name"
@@ -582,7 +582,7 @@ watch(
             </Select>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="account_number"
               name="account_number"
@@ -601,7 +601,7 @@ watch(
             </p>
           </div>
 
-          <div class="mb-4 md:col-span-2">
+          <div class="mb-3.5 md:col-span-2">
             <Input
               id="account_holder_name"
               name="account_holder_name"
@@ -620,7 +620,7 @@ watch(
             </p>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Input
               id="bank_branch"
               name="bank_branch"
@@ -636,7 +636,7 @@ watch(
             </Input>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-3.5">
             <Select
               id="account_type"
               name="account_type"
@@ -671,19 +671,19 @@ watch(
   >
     <div
       @click.stop
-      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
+      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-3.5 max-h-[80vh] overflow-hidden"
     >
       <!-- Modal Header -->
-      <div class="p-6 border-b border-[#DCDEDD]">
+      <div class="p-5 border-b border-[#DCDEDD]">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2.5">
             <div
-              class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+              class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
             >
               <Users class="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-xl font-bold">Select Team</h3>
+              <h3 class="text-brand-dark text-base font-bold">Select Team</h3>
               <p class="text-brand-light text-sm font-normal">
                 Choose the team for this employee
               </p>
@@ -700,16 +700,16 @@ watch(
       </div>
 
       <!-- Search Bar -->
-      <div class="p-6 border-b border-[#DCDEDD]">
+      <div class="p-5 border-b border-[#DCDEDD]">
         <div class="relative">
           <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
           >
             <Search class="h-5 w-5 text-gray-400" />
           </div>
           <input
             type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
             placeholder="Search teams..."
             v-model="searchTeam"
           />
@@ -717,17 +717,17 @@ watch(
       </div>
 
       <!-- Teams List -->
-      <div class="p-6 overflow-y-auto max-h-96">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="p-5 overflow-y-auto max-h-96">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           <div
-            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
+            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5 cursor-pointer"
             v-for="team in filteredTeams"
             :key="team.id"
             @click="handleSelectTeam(team)"
           >
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3.5">
               <div
-                class="w-14 h-14 relative flex items-center justify-center rounded-[12px] overflow-hidden"
+                class="w-10 h-10 relative flex items-center justify-center rounded-[12px] overflow-hidden"
               >
                 <div
                   class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"
@@ -735,7 +735,7 @@ watch(
                 <Building2 class="w-6 h-6 text-white relative z-10" />
               </div>
               <div class="flex-1">
-                <h4 class="text-brand-dark text-base font-bold">
+                <h4 class="text-brand-dark text-sm font-bold">
                   {{ team.name }}
                 </h4>
                 <p class="text-brand-light text-sm font-normal">
@@ -747,9 +747,9 @@ watch(
         </div>
 
         <!-- No Results Message -->
-        <div class="text-center py-8" v-if="filteredTeams.length === 0">
-          <SearchX class="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <h4 class="text-brand-dark text-base font-semibold mb-1">
+        <div class="text-center py-6" v-if="filteredTeams.length === 0">
+          <SearchX class="w-9 h-9 text-gray-400 mx-auto mb-2.5" />
+          <h4 class="text-brand-dark text-sm font-semibold mb-1">
             No teams found
           </h4>
           <p class="text-brand-light text-sm">

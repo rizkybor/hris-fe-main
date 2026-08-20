@@ -73,15 +73,15 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
   <Alert type="error" :title="error" :show="!!error" />
 
   <!-- Vendors Grid Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Briefcase class="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-xl font-bold">All Vendors</h3>
+          <h3 class="text-brand-dark text-base font-bold">All Vendors</h3>
           <p class="text-brand-light text-sm font-normal">
             View and manage all vendor information
           </p>
@@ -89,9 +89,9 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
       </div>
 
       <!-- Add Vendor Button -->
-      <div class="flex items-center gap-4" v-if="can('vendors-create')">
+      <div class="flex items-center gap-3.5" v-if="can('vendors-create')">
         <RouterLink
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
+          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-1.5"
           :to="{ name: 'admin.vendors.create' }"
         >
           <Plus class="w-4 h-4 text-white" />
@@ -101,21 +101,21 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
     </div>
 
     <!-- Search & Filter -->
-    <div class="mb-6">
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+    <div class="mb-5">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
         <div class="relative flex-1">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
             <Search class="h-5 w-5 text-gray-400" />
           </div>
           <input
             type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
             placeholder="Search vendors..."
             v-model="filters.search"
           />
         </div>
         <select
-          class="w-full sm:w-auto px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+          class="w-full sm:w-auto px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
           v-model="filters.status"
         >
           <option value="">All Status</option>
@@ -131,14 +131,14 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
     <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
 
     <!-- Vendors Grid -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       <CardList v-for="vendor in vendorsList" :key="vendor.id" :data="vendor" />
     </div>
 
     <!-- No Data Message -->
     <div class="text-center py-12" v-if="vendorsList.length === 0 && !loading">
-      <SearchX class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-      <h4 class="text-brand-dark text-lg font-semibold mb-2">
+      <SearchX class="w-9 h-9 text-gray-400 mx-auto mb-3.5" />
+      <h4 class="text-brand-dark text-sm font-semibold mb-1.5">
         No vendors found
       </h4>
       <p class="text-brand-light text-sm">

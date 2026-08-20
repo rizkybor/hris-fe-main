@@ -113,7 +113,7 @@ const totalDeductions = computed(() => {
   <div>
     <!-- Header Section -->
     <div class="mb-6">
-      <h2 class="text-[#0C1C3C] font-bold text-2xl mb-2">My Payslips</h2>
+      <h2 class="text-[#0C1C3C] font-bold text-xl mb-2">My Payslips</h2>
       <p class="text-gray-600">View and download your salary payslips</p>
     </div>
 

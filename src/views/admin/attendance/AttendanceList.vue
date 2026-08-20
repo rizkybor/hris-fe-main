@@ -175,16 +175,16 @@ onMounted(async () => {
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Main Content Area -->
     <!-- Stats Cards Layout -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
       <!-- Total Present Today - Highlighted Card -->
       <div
-        class="main-card rounded-[14px] border border-[#0B1042] relative overflow-hidden p-5"
+        class="main-card rounded-[14px] border border-[#0B1042] relative overflow-hidden p-4"
       >
         <div class="flex flex-col justify-center h-full relative z-10">
           <!-- Trending Badge -->
-          <div class="flex items-center gap-2 mb-3">
+          <div class="flex items-center gap-1.5 mb-2.5">
             <div
-              class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm"
+              class="flex items-center gap-1 px-2.5 py-1 bg-white/20 rounded-full backdrop-blur-sm"
             >
               <TrendingUp class="w-3 h-3 text-white" />
               <span class="text-brand-white text-xs font-semibold"
@@ -193,29 +193,29 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center justify-between mb-3.5">
             <div>
               <p class="text-brand-white-90 text-sm font-medium">
                 Present Today
               </p>
               <p
-                class="text-brand-white text-5xl font-extrabold leading-none my-4"
+                class="text-brand-white text-3xl font-extrabold leading-none my-3.5"
               >
                 {{ statistics.present_today || 0 }}
               </p>
-              <p class="text-brand-white-80 text-base font-normal">
+              <p class="text-brand-white-80 text-sm font-normal">
                 Active employees
               </p>
             </div>
             <div
-              class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center"
+              class="w-9 h-9 bg-white/20 rounded-[14px] flex items-center justify-center"
             >
               <CheckCircle class="w-8 h-8 text-white" />
             </div>
           </div>
 
           <!-- Additional Info -->
-          <div class="flex items-center gap-3 mt-auto">
+          <div class="flex items-center gap-2.5 mt-auto">
             <div class="flex items-center gap-1">
               <div
                 class="w-2 h-2 bg-green-400 rounded-full animate-pulse"
@@ -235,16 +235,16 @@ onMounted(async () => {
       </div>
 
       <!-- Stacked Cards Column -->
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3.5">
         <!-- Absent Today -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
               <p class="text-brand-dark text-sm font-medium">Absent Today</p>
               <p
-                class="text-brand-dark text-2xl font-extrabold leading-tight my-1"
+                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
               >
                 {{ statistics.absent_today || 0 }}
               </p>
@@ -263,13 +263,13 @@ onMounted(async () => {
 
         <!-- Late Arrivals -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
               <p class="text-brand-dark text-sm font-medium">Late Arrivals</p>
               <p
-                class="text-brand-dark text-2xl font-extrabold leading-tight my-1"
+                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
               >
                 {{ statistics.late_today || 0 }}
               </p>
@@ -285,16 +285,16 @@ onMounted(async () => {
       </div>
 
       <!-- Stacked Cards Column 2 -->
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3.5">
         <!-- On Leave -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
               <p class="text-brand-dark text-sm font-medium">On Leave</p>
               <p
-                class="text-brand-dark text-2xl font-extrabold leading-tight my-1"
+                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
               >
                 {{ statistics.on_leave_today || 0 }}
               </p>
@@ -312,13 +312,13 @@ onMounted(async () => {
 
         <!-- Remote Workers -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
               <p class="text-brand-dark text-sm font-medium">Remote Workers</p>
               <p
-                class="text-brand-dark text-2xl font-extrabold leading-tight my-1"
+                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
               >
                 {{ statistics.remote_today || 0 }}
               </p>
@@ -336,16 +336,16 @@ onMounted(async () => {
       </div>
 
       <!-- Stacked Cards Column 3 -->
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3.5">
         <!-- Attendance Rate -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
               <p class="text-brand-dark text-sm font-medium">Attendance Rate</p>
               <p
-                class="text-brand-dark text-2xl font-extrabold leading-tight my-1"
+                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
               >
                 {{ statistics.attendance_rate || 0 }}%
               </p>
@@ -364,7 +364,7 @@ onMounted(async () => {
 
         <!-- Pending Requests -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -372,7 +372,7 @@ onMounted(async () => {
                 Pending Requests
               </p>
               <p
-                class="text-brand-dark text-2xl font-extrabold leading-tight my-1"
+                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
               >
                 {{ statistics.pending_requests || 0 }}
               </p>
@@ -389,18 +389,18 @@ onMounted(async () => {
     </div>
 
     <!-- Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <!-- Latest Leave Requests -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2.5">
             <div
-              class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
+              class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
             >
               <CalendarClock class="w-6 h-6 text-orange-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">
+              <h3 class="text-brand-dark text-sm font-bold">
                 Latest Leave Requests
               </h3>
               <p class="text-brand-light text-sm">
@@ -410,33 +410,33 @@ onMounted(async () => {
           </div>
           <RouterLink
             :to="{ name: 'admin.leave-requests.dashboard' }"
-            class="btn-secondary text-brand-dark text-sm font-semibold border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2"
+            class="btn-secondary text-brand-dark text-sm font-semibold border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5"
           >
             View All
           </RouterLink>
         </div>
 
         <SkeletonList v-if="loadingLeaveRequests" :rows="3" />
-        <div v-else class="space-y-4">
+        <div v-else class="space-y-3.5">
           <div
             v-for="request in leaveRequests"
             :key="request.id"
-            class="flex items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+            class="flex items-center gap-3.5 p-3.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
           >
             <Avatar
               :src="request.employee?.user?.profile_photo"
               :alt="request.employee?.user?.name"
-              size="w-12 h-12"
+              size="w-9 h-9"
             />
             <div class="flex-1">
-              <div class="flex items-center gap-2 mb-2">
+              <div class="flex items-center gap-1.5 mb-1.5">
                 <h4 class="text-brand-dark text-sm font-semibold">
                   {{ request.employee?.user?.name }}
                 </h4>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1.5">
                 <span
-                  class="px-2 py-1 rounded-md text-xs font-semibold"
+                  class="px-1.5 py-1 rounded-md text-xs font-semibold"
                   :class="getLeaveTypeBadgeClass(request.type)"
                 >
                   {{ capitalize(request.type) }}
@@ -451,11 +451,11 @@ onMounted(async () => {
               v-if="
                 request.status === 'pending' && can('leave-request-approve')
               "
-              class="flex flex-col gap-2"
+              class="flex flex-col gap-1.5"
             >
               <button
                 @click="showApproveModal(request)"
-                class="btn-secondary flex items-center justify-center gap-2 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2"
+                class="btn-secondary flex items-center justify-center gap-1.5 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5"
               >
                 <Check class="w-4 h-4 text-green-600" />
                 <span class="text-brand-dark text-xs font-semibold"
@@ -464,7 +464,7 @@ onMounted(async () => {
               </button>
               <button
                 @click="showRejectModal(request)"
-                class="btn-secondary flex items-center justify-center gap-2 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2"
+                class="btn-secondary flex items-center justify-center gap-1.5 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5"
               >
                 <X class="w-4 h-4 text-red-600" />
                 <span class="text-brand-dark text-xs font-semibold"
@@ -474,7 +474,7 @@ onMounted(async () => {
             </div>
             <div v-else>
               <span
-                class="px-2 py-1 rounded-md text-xs font-semibold"
+                class="px-1.5 py-1 rounded-md text-xs font-semibold"
                 :class="getLeaveRequestStatusBadgeClass(request.status)"
               >
                 {{ capitalize(request.status) }}
@@ -487,8 +487,8 @@ onMounted(async () => {
             v-if="!loadingLeaveRequests && leaveRequests.length === 0"
             class="text-center py-12"
           >
-            <CalendarClock class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p class="text-gray-500 text-lg font-medium">
+            <CalendarClock class="w-9 h-9 text-gray-400 mx-auto mb-3.5" />
+            <p class="text-gray-500 text-sm font-medium">
               No leave requests found
             </p>
           </div>
@@ -496,16 +496,16 @@ onMounted(async () => {
       </div>
 
       <!-- Today's Attendance -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2.5">
             <div
-              class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+              class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
             >
               <Users class="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">
+              <h3 class="text-brand-dark text-sm font-bold">
                 Today's Attendance
               </h3>
               <p class="text-brand-light text-sm">Who's in the office today</p>
@@ -513,26 +513,26 @@ onMounted(async () => {
           </div>
           <RouterLink
             :to="{ name: 'admin.attendances.records' }"
-            class="btn-secondary text-brand-dark text-sm font-semibold border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2"
+            class="btn-secondary text-brand-dark text-sm font-semibold border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5"
           >
             View All
           </RouterLink>
         </div>
 
         <SkeletonList v-if="loadingAttendances" :rows="3" />
-        <div v-else class="space-y-4">
+        <div v-else class="space-y-3.5">
           <div
             v-for="attendance in todayAttendances"
             :key="attendance.id"
-            class="flex items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+            class="flex items-center gap-3.5 p-3.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
           >
             <Avatar
               :src="attendance.employee?.user?.profile_photo"
               :alt="attendance.employee?.user?.name"
-              size="w-12 h-12"
+              size="w-9 h-9"
             />
             <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1">
+              <div class="flex items-center gap-1.5 mb-1">
                 <h4 class="text-brand-dark text-sm font-semibold">
                   {{ attendance.employee?.user?.name }}
                 </h4>
@@ -545,9 +545,9 @@ onMounted(async () => {
                 {{ attendance.employee?.job_information?.team?.name || "N/A" }}
               </p>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5">
               <span
-                class="px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold"
+                class="px-1.5 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold"
               >
                 Present
               </span>
@@ -568,8 +568,8 @@ onMounted(async () => {
             v-if="!loadingAttendances && todayAttendances.length === 0"
             class="text-center py-12"
           >
-            <Users class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p class="text-gray-500 text-lg font-medium">
+            <Users class="w-9 h-9 text-gray-400 mx-auto mb-3.5" />
+            <p class="text-gray-500 text-sm font-medium">
               No attendance records yet
             </p>
           </div>
@@ -583,15 +583,15 @@ onMounted(async () => {
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       @click.self="closeApproveModal"
     >
-      <div class="bg-white rounded-[14px] p-8 max-w-md w-full mx-4">
-        <div class="flex items-center gap-4 mb-6">
+      <div class="bg-white rounded-[14px] p-6 max-w-md w-full mx-3.5">
+        <div class="flex items-center gap-3.5 mb-5">
           <div
-            class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"
+            class="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center"
           >
             <Check class="w-6 h-6 text-green-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">
+            <h3 class="text-brand-dark text-base font-bold">
               Approve Leave Request
             </h3>
             <p class="text-brand-light text-sm">
@@ -600,14 +600,14 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-if="selectedLeaveRequest" class="mb-6 space-y-3">
-          <div class="border border-[#DCDEDD] rounded-[12px] p-4">
-            <p class="text-brand-dark text-sm font-semibold mb-2">
+        <div v-if="selectedLeaveRequest" class="mb-5 space-y-2.5">
+          <div class="border border-[#DCDEDD] rounded-[12px] p-3.5">
+            <p class="text-brand-dark text-sm font-semibold mb-1.5">
               {{ selectedLeaveRequest.employee?.user?.name }}
             </p>
-            <div class="flex items-center gap-2 mb-2">
+            <div class="flex items-center gap-1.5 mb-1.5">
               <span
-                class="px-2 py-1 rounded-md text-xs font-semibold"
+                class="px-1.5 py-1 rounded-md text-xs font-semibold"
                 :class="getLeaveTypeBadgeClass(selectedLeaveRequest.type)"
               >
                 {{ capitalize(selectedLeaveRequest.type) }}
@@ -620,24 +620,24 @@ onMounted(async () => {
               }}
               days)
             </p>
-            <p class="text-brand-light text-sm mt-2">
+            <p class="text-brand-light text-sm mt-1.5">
               {{ selectedLeaveRequest.reason }}
             </p>
           </div>
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex gap-2.5">
           <button
             @click="closeApproveModal"
             :disabled="processingAction"
-            class="flex-1 px-4 py-3 border border-[#DCDEDD] rounded-[12px] text-brand-dark text-sm font-semibold hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+            class="flex-1 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-brand-dark text-sm font-semibold hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
           >
             Cancel
           </button>
           <button
             @click="confirmApprove"
             :disabled="processingAction"
-            class="flex-1 px-4 py-3 bg-green-600 text-white rounded-[12px] text-sm font-semibold hover:bg-green-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex-1 px-3.5 py-2.5 bg-green-600 text-white rounded-[12px] text-sm font-semibold hover:bg-green-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ processingAction ? "Approving..." : "Approve" }}
           </button>
@@ -651,15 +651,15 @@ onMounted(async () => {
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       @click.self="closeRejectModal"
     >
-      <div class="bg-white rounded-[14px] p-8 max-w-md w-full mx-4">
-        <div class="flex items-center gap-4 mb-6">
+      <div class="bg-white rounded-[14px] p-6 max-w-md w-full mx-3.5">
+        <div class="flex items-center gap-3.5 mb-5">
           <div
-            class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"
+            class="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center"
           >
             <X class="w-6 h-6 text-red-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">
+            <h3 class="text-brand-dark text-base font-bold">
               Reject Leave Request
             </h3>
             <p class="text-brand-light text-sm">
@@ -668,14 +668,14 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-if="selectedLeaveRequest" class="mb-6 space-y-3">
-          <div class="border border-[#DCDEDD] rounded-[12px] p-4">
-            <p class="text-brand-dark text-sm font-semibold mb-2">
+        <div v-if="selectedLeaveRequest" class="mb-5 space-y-2.5">
+          <div class="border border-[#DCDEDD] rounded-[12px] p-3.5">
+            <p class="text-brand-dark text-sm font-semibold mb-1.5">
               {{ selectedLeaveRequest.employee?.user?.name }}
             </p>
-            <div class="flex items-center gap-2 mb-2">
+            <div class="flex items-center gap-1.5 mb-1.5">
               <span
-                class="px-2 py-1 rounded-md text-xs font-semibold"
+                class="px-1.5 py-1 rounded-md text-xs font-semibold"
                 :class="getLeaveTypeBadgeClass(selectedLeaveRequest.type)"
               >
                 {{ selectedLeaveRequest.type }}
@@ -688,24 +688,24 @@ onMounted(async () => {
               }}
               days)
             </p>
-            <p class="text-brand-light text-sm mt-2">
+            <p class="text-brand-light text-sm mt-1.5">
               {{ selectedLeaveRequest.reason }}
             </p>
           </div>
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex gap-2.5">
           <button
             @click="closeRejectModal"
             :disabled="processingAction"
-            class="flex-1 px-4 py-3 border border-[#DCDEDD] rounded-[12px] text-brand-dark text-sm font-semibold hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+            class="flex-1 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-brand-dark text-sm font-semibold hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
           >
             Cancel
           </button>
           <button
             @click="confirmReject"
             :disabled="processingAction"
-            class="flex-1 px-4 py-3 bg-red-600 text-white rounded-[12px] text-sm font-semibold hover:bg-red-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex-1 px-3.5 py-2.5 bg-red-600 text-white rounded-[12px] text-sm font-semibold hover:bg-red-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ processingAction ? "Rejecting..." : "Reject" }}
           </button>

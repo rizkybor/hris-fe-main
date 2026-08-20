@@ -98,10 +98,10 @@ const handlePerPageChange = (perPage) => {
 
   <div
     v-if="showContractAlerts && contractAlerts.length > 0"
-    class="bg-orange-50 border border-orange-200 rounded-[14px] p-5 mb-6"
+    class="bg-orange-50 border border-orange-200 rounded-[14px] p-4 mb-5"
   >
-    <div class="flex items-start justify-between gap-4">
-      <div class="flex items-start gap-3">
+    <div class="flex items-start justify-between gap-3.5">
+      <div class="flex items-start gap-2.5">
         <div class="w-10 h-10 bg-orange-100 rounded-[12px] flex items-center justify-center shrink-0">
           <AlertTriangle class="w-5 h-5 text-orange-600" />
         </div>
@@ -131,36 +131,36 @@ const handlePerPageChange = (perPage) => {
   </div>
 
   <!-- Search Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5">
     <div
-      class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+      class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5"
     >
       <!-- Search Bar -->
       <div class="flex-1 relative">
         <div
-          class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+          class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
         >
           <Search class="h-5 w-5 text-gray-400" />
         </div>
         <input
           type="text"
-          class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300"
+          class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300"
           placeholder="Search employees by name, department, role..."
           v-model="filters.search"
         />
       </div>
 
       <!-- Filter and Action Buttons -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
         <!-- Type Filter -->
         <div class="relative w-full sm:w-auto">
           <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
           >
             <Briefcase class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
+            class="w-full sm:w-auto pl-8 pr-6 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
             v-model="filters.type"
           >
             <option value="">All Types</option>
@@ -173,7 +173,7 @@ const handlePerPageChange = (perPage) => {
             </option>
           </select>
           <div
-            class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
+            class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none"
           >
             <ChevronDown class="h-4 w-4 text-gray-400" />
           </div>
@@ -182,12 +182,12 @@ const handlePerPageChange = (perPage) => {
         <!-- Status Filter -->
         <div class="relative w-full sm:w-auto">
           <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
           >
             <CheckCircle class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
+            class="w-full sm:w-auto pl-8 pr-6 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
             v-model="filters.status"
           >
             <option value="">All Status</option>
@@ -200,7 +200,7 @@ const handlePerPageChange = (perPage) => {
             </option>
           </select>
           <div
-            class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
+            class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none"
           >
             <ChevronDown class="h-4 w-4 text-gray-400" />
           </div>
@@ -211,8 +211,8 @@ const handlePerPageChange = (perPage) => {
 
   <Alert type="success" :title="success" :show="success" />
 
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-5">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-5 p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
       <div>
         <h3
           class="text-[#0C1C3C] font-['Plus_Jakarta_Sans'] text-[20px] font-bold"
@@ -227,14 +227,14 @@ const handlePerPageChange = (perPage) => {
       </div>
       <div class="flex items-center gap-[10px]">
         <button
-          class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center justify-center gap-2"
+          class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5"
         >
           <Upload class="w-4 h-4 text-gray-600" />
           <span class="text-brand-dark text-sm font-semibold">Import CSV</span>
         </button>
         <RouterLink
           :to="{ name: 'admin.employees.create' }"
-          class="flex-1 sm:flex-none justify-center btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3"
+          class="flex-1 sm:flex-none justify-center btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5"
           v-if="can('employee-create')"
         >
           <UserPlus class="w-4 h-4 text-white" />
@@ -250,19 +250,19 @@ const handlePerPageChange = (perPage) => {
       v-if="loading"
       :count="8"
       cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      class="mb-6"
+      class="mb-5"
     />
 
     <div
       v-else-if="employees.length === 0"
-      class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD] mb-6"
+      class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD] mb-5"
     >
-      <p class="text-lg font-semibold">No employees found</p>
+      <p class="text-sm font-semibold">No employees found</p>
     </div>
 
     <div
       v-else
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 mb-5"
     >
       <CardList
         v-for="employee in employees"

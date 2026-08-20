@@ -29,18 +29,18 @@ const goToEmployeeDetail = (id: number) => {
   <!-- Latest Employees -->
   <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-brand-dark text-lg font-bold">Latest Employees</h3>
+      <h3 class="text-brand-dark text-base font-bold">Latest Employees</h3>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="space-y-4">
       <div v-for="i in 5" :key="i" class="flex items-center gap-3">
-        <Skeleton width="56px" height="56px" rounded="9999px" />
+        <Skeleton width="48px" height="48px" rounded="9999px" />
         <div class="flex-1 space-y-2">
-          <Skeleton width="33%" height="16px" />
-          <Skeleton width="50%" height="12px" />
+          <Skeleton width="33%" height="14px" />
+          <Skeleton width="50%" height="10px" />
         </div>
-        <Skeleton width="80px" height="40px" rounded="12px" class="hidden sm:block" />
+        <Skeleton width="70px" height="34px" rounded="10px" class="hidden sm:block" />
       </div>
     </div>
 
@@ -49,7 +49,7 @@ const goToEmployeeDetail = (id: number) => {
       v-else-if="!employees || employees.length === 0"
       class="text-center py-8"
     >
-      <p class="text-gray-500 text-sm">No employees found</p>
+      <p class="text-gray-500 text-xs">No employees found</p>
     </div>
 
     <!-- Employee List -->
@@ -62,12 +62,12 @@ const goToEmployeeDetail = (id: number) => {
         <Avatar
           :src="employee.user?.profile_photo"
           :alt="employee.user?.name"
-          size="w-12 h-12 sm:w-16 sm:h-16"
-          icon-size="w-5 h-5"
+          size="w-10 h-10 sm:w-12 sm:h-12"
+          icon-size="w-4 h-4"
         />
         <div class="flex-1">
           <div class="flex items-center gap-2 flex-wrap">
-            <p class="text-brand-dark text-base sm:text-lg font-bold">
+            <p class="text-brand-dark text-sm sm:text-base font-bold">
               {{ employee.user?.name || "Unknown" }}
             </p>
             <span
@@ -75,21 +75,21 @@ const goToEmployeeDetail = (id: number) => {
               :class="
                 getSkillLevelBadgeClass(employee.job_information.skill_level)
               "
-              class="px-2 py-1 rounded-md text-xs font-semibold capitalize"
+              class="px-1.5 py-0.5 rounded-md text-[11px] font-semibold capitalize"
             >
               {{ employee.job_information.skill_level }}
             </span>
           </div>
-          <p class="text-brand-dark text-xs sm:text-sm font-normal mt-1">
+          <p class="text-brand-dark text-xs font-normal mt-1">
             {{ employee.job_information?.job_title || "N/A" }} •
             {{ getTimeAgo(employee.created_at) }}
           </p>
         </div>
         <button
           @click="goToEmployeeDetail(employee.id)"
-          class="btn-details w-full sm:w-auto border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-[#0C51D9] hover:text-[#0C51D9] transition-all duration-300 py-2 sm:py-[14px] px-3 sm:px-5 flex items-center justify-center"
+          class="btn-details w-full sm:w-auto border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-[#0C51D9] hover:text-[#0C51D9] transition-all duration-300 py-2 sm:py-2.5 px-3 sm:px-4 flex items-center justify-center"
         >
-          <span class="text-brand-dark text-sm sm:text-base font-medium">Details</span>
+          <span class="text-brand-dark text-xs sm:text-sm font-medium">Details</span>
         </button>
       </div>
     </div>

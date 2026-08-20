@@ -98,9 +98,9 @@ const goToNext = () => {
 </script>
 
 <template>
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
     <!-- Per Page Selector -->
-    <div class="flex items-center gap-2 flex-wrap">
+    <div class="flex items-center gap-1.5 flex-wrap">
       <p
         class="text-[#6B7280] font-['Plus_Jakarta_Sans'] text-xs sm:text-[14px] font-normal"
       >
@@ -110,7 +110,7 @@ const goToNext = () => {
         :value="perPage"
         @change="handlePerPageChange(parseInt($event.target.value))"
         :disabled="loading"
-        class="w-full sm:w-auto px-3 py-2 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all duration-300 bg-white appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+        class="w-full sm:w-auto px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all duration-300 bg-white appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <option v-for="option in perPageOptions" :key="option" :value="option">
           {{ option }}
@@ -124,12 +124,12 @@ const goToNext = () => {
     </div>
 
     <!-- Pagination Controls -->
-    <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+    <div class="flex flex-wrap items-center gap-1.5 justify-center sm:justify-start">
       <!-- Previous Button -->
       <button
         @click="goToPrevious"
         :disabled="currentPage <= 1 || loading"
-        class="px-3 sm:px-4 py-2 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="px-2.5 sm:px-3.5 py-1.5 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ChevronLeft class="w-4 h-4" />
       </button>
@@ -141,7 +141,7 @@ const goToNext = () => {
           @click="handlePageChange(page)"
           :disabled="loading"
           :class="[
-            'px-3 sm:px-4 py-2 border rounded-lg font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed',
+            'px-2.5 sm:px-3.5 py-1.5 border rounded-lg font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed',
             page === currentPage
               ? 'border-[#2151A0] blue-gradient blue-btn-shadow text-white'
               : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50',
@@ -149,14 +149,14 @@ const goToNext = () => {
         >
           {{ page }}
         </button>
-        <span v-else class="px-2 text-gray-500">...</span>
+        <span v-else class="px-1.5 text-gray-500">...</span>
       </template>
 
       <!-- Next Button -->
       <button
         @click="goToNext"
         :disabled="currentPage >= lastPage || loading"
-        class="px-3 sm:px-4 py-2 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="px-2.5 sm:px-3.5 py-1.5 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ChevronRight class="w-4 h-4" />
       </button>

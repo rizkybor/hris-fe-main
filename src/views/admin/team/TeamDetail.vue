@@ -159,40 +159,40 @@ watch(
 
   <Chart :team="team" />
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
     <!-- Team Lead Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
       <!-- Header Section -->
-      <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-3">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2.5">
           <div
-            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+            class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
           >
             <Crown class="w-6 h-6 text-green-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">Team Lead</h3>
+            <h3 class="text-brand-dark text-sm font-bold">Team Lead</h3>
             <p class="text-brand-light text-sm">
               Team leadership and management
             </p>
           </div>
         </div>
         <span
-          class="px-2 py-1 rounded-md text-xs font-semibold bg-[#F0FDF4] text-[#166534]"
+          class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#F0FDF4] text-[#166534]"
           >Active</span
         >
       </div>
 
-      <div class="flex flex-col gap-4" v-if="team.leader">
+      <div class="flex flex-col gap-3.5" v-if="team.leader">
         <!-- Team Lead Profile -->
-        <div class="border border-[#DCDEDD] rounded-[12px] p-4 mb-4">
+        <div class="border border-[#DCDEDD] rounded-[12px] p-3.5 mb-3.5">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3.5">
               <div class="relative">
                 <Avatar
                   :src="team.leader.profile_photo"
                   :alt="team.leader.name"
-                  size="w-16 h-16"
+                  size="w-9 h-9"
                   icon-size="w-6 h-6"
                 />
                 <div
@@ -200,7 +200,7 @@ watch(
                 ></div>
               </div>
               <div class="flex-1 min-w-0">
-                <h4 class="text-brand-dark text-base font-bold truncate">
+                <h4 class="text-brand-dark text-sm font-bold truncate">
                   {{ team.leader?.name }}
                 </h4>
                 <p class="text-brand-light text-sm">
@@ -211,20 +211,20 @@ watch(
               </div>
             </div>
             <span
-              class="px-2 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF]"
+              class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF]"
               >Team Lead</span
             >
           </div>
         </div>
 
         <!-- Contact Information -->
-        <div class="space-y-3">
-          <h5 class="text-brand-dark text-sm font-semibold mb-3">
+        <div class="space-y-2.5">
+          <h5 class="text-brand-dark text-sm font-semibold mb-2.5">
             Contact Information
           </h5>
-          <div class="space-y-2">
+          <div class="space-y-1.5">
             <div
-              class="flex items-center gap-3 p-2 rounded-[8px] hover:bg-gray-50 transition-all duration-300"
+              class="flex items-center gap-2.5 p-1.5 rounded-[8px] hover:bg-gray-50 transition-all duration-300"
             >
               <div
                 class="w-8 h-8 bg-blue-50 rounded-[8px] flex items-center justify-center"
@@ -241,7 +241,7 @@ watch(
               </div>
             </div>
             <div
-              class="flex items-center gap-3 p-2 rounded-[8px] hover:bg-gray-50 transition-all duration-300"
+              class="flex items-center gap-2.5 p-1.5 rounded-[8px] hover:bg-gray-50 transition-all duration-300"
             >
               <div
                 class="w-8 h-8 bg-green-50 rounded-[8px] flex items-center justify-center"
@@ -259,18 +259,18 @@ watch(
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex gap-2 mt-4 pt-4 border-t border-[#DCDEDD]">
+        <div class="flex gap-1.5 mt-3.5 pt-3.5 border-t border-[#DCDEDD]">
           <button
-            class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center justify-center gap-2"
+            class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5 flex items-center justify-center gap-1.5"
           >
             <MessageCircle class="w-5 h-5 text-brand-light" />
-            <span class="text-brand-dark text-base font-semibold">Message</span>
+            <span class="text-brand-dark text-sm font-semibold">Message</span>
           </button>
           <button
-            class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center justify-center gap-2"
+            class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5 flex items-center justify-center gap-1.5"
           >
             <UserCheck class="w-5 h-5 text-brand-light" />
-            <span class="text-brand-dark text-base font-semibold"
+            <span class="text-brand-dark text-sm font-semibold"
               >View Profile</span
             >
           </button>
@@ -279,11 +279,11 @@ watch(
 
       <div class="flex flex-1 items-center justify-center min-h-[250px]" v-else>
         <div class="flex flex-col items-center justify-center">
-          <Crown class="w-12 h-12 text-gray-300 mb-4" />
-          <h3 class="text-brand-dark text-lg font-bold mb-2">
+          <Crown class="w-9 h-9 text-gray-300 mb-3.5" />
+          <h3 class="text-brand-dark text-sm font-bold mb-1.5">
             No Team Lead Assigned
           </h3>
-          <p class="text-brand-light text-sm mb-4 text-center">
+          <p class="text-brand-light text-sm mb-3.5 text-center">
             This team does not currently have a leader assigned.
           </p>
         </div>
@@ -291,42 +291,42 @@ watch(
     </div>
 
     <!-- Team Settings -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
         >
           <Settings class="w-6 h-6 text-purple-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Team Settings</h3>
+          <h3 class="text-brand-dark text-sm font-bold">Team Settings</h3>
           <p class="text-brand-light text-sm">Configuration and status</p>
         </div>
       </div>
-      <div class="space-y-3">
+      <div class="space-y-2.5">
         <div class="flex justify-between items-center">
-          <span class="text-brand-light text-base">Department</span>
-          <span class="text-brand-dark text-base font-medium">
+          <span class="text-brand-light text-sm">Department</span>
+          <span class="text-brand-dark text-sm font-medium">
             {{ _.capitalize(team.department) }}
           </span>
         </div>
 
         <div class="flex justify-between items-center">
-          <span class="text-brand-light text-base">Expected Size</span>
-          <span class="text-brand-dark text-base font-medium">
+          <span class="text-brand-light text-sm">Expected Size</span>
+          <span class="text-brand-dark text-sm font-medium">
             {{ team.expected_size }} members
           </span>
         </div>
         <div class="flex justify-between items-center">
-          <span class="text-brand-light text-base">Created Date</span>
-          <span class="text-brand-dark text-base font-medium">
+          <span class="text-brand-light text-sm">Created Date</span>
+          <span class="text-brand-dark text-sm font-medium">
             {{ formatToClientTimezone(team.created_at) }}
           </span>
         </div>
       </div>
 
       <!-- Banner Image -->
-      <div class="mt-4">
+      <div class="mt-3.5">
         <img
           src="https://images.unsplash.com/photo-1557804506-669a67965ba0"
           alt="Team Banner"
@@ -336,21 +336,21 @@ watch(
     </div>
   </div>
 
-  <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6">
-    <div class="flex items-center gap-3 mb-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 mb-5">
+    <div class="flex items-center gap-2.5 mb-5">
       <div
-        class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
+        class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
       >
         <ListCheck class="w-6 h-6 text-orange-600" />
       </div>
       <div>
-        <h3 class="text-brand-dark text-lg font-bold">Team Responsibilities</h3>
+        <h3 class="text-brand-dark text-sm font-bold">Team Responsibilities</h3>
         <p class="text-brand-light text-sm">Key duties and objectives</p>
       </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
       <div
-        class="flex items-start gap-3 p-4 bg-gray-50 rounded-[12px]"
+        class="flex items-start gap-2.5 p-3.5 bg-gray-50 rounded-[12px]"
         v-for="responsibility in team.responsibilities"
         :key="responsibility.id"
       >
@@ -367,29 +367,29 @@ watch(
   </div>
 
   <!-- Team Members Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6 mb-6">
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
+  <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 mb-5">
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-2.5">
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
           <Users class="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Team Members</h3>
+          <h3 class="text-brand-dark text-sm font-bold">Team Members</h3>
           <p class="text-brand-light text-sm">Current team composition</p>
         </div>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3.5">
         <button
-          class="bg-white border border-[#DCDEDD] text-brand-dark py-3 px-4 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+          class="bg-white border border-[#DCDEDD] text-brand-dark py-2.5 px-3.5 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
         >
           <Eye class="w-4 h-4" />
           <span class="text-sm font-semibold">View More</span>
         </button>
         <button
           @click="openAddMemberModal"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
+          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-1.5"
         >
           <UserPlus class="w-4 h-4 text-white" />
           <span class="text-brand-white text-sm font-semibold">Add Member</span>
@@ -399,11 +399,11 @@ watch(
 
     <!-- Members Grid -->
     <div
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5"
     >
       <!-- Team Member 1 -->
       <div
-        class="relative border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
+        class="relative border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
         v-for="member in team.members"
         :key="member.id"
       >
@@ -414,30 +414,30 @@ watch(
         >
           <Trash2 class="w-4 h-4 text-red-600" />
         </button>
-        <div class="flex flex-col items-center mb-3">
+        <div class="flex flex-col items-center mb-2.5">
           <div class="relative">
             <Avatar
               :src="member.employee.user?.profile_photo"
               :alt="member.employee.user?.name"
-              size="w-[100px] h-[100px] mb-3"
+              size="w-[100px] h-[100px] mb-2.5"
               icon-size="w-8 h-8"
             />
           </div>
         </div>
-        <div class="text-center mb-3">
-          <h4 class="text-brand-dark text-lg font-bold">
+        <div class="text-center mb-2.5">
+          <h4 class="text-brand-dark text-sm font-bold">
             {{ member.employee.user.name }}
           </h4>
-          <p class="text-brand-light text-base">
+          <p class="text-brand-light text-sm">
             {{ member.employee.job_information.job_title }}
           </p>
         </div>
-        <div class="space-y-1 mb-3">
-          <div class="flex items-center gap-2 text-sm text-gray-500">
+        <div class="space-y-1 mb-2.5">
+          <div class="flex items-center gap-1.5 text-sm text-gray-500">
             <Calendar class="w-4 h-4" />
             <span>Joined {{ formatToClientTimezone(member.joined_at) }}</span>
           </div>
-          <div class="flex items-center gap-2 text-sm text-gray-500">
+          <div class="flex items-center gap-1.5 text-sm text-gray-500">
             <Clock class="w-4 h-4" />
             <span
               >{{ member.employee.job_information.experience }} years
@@ -450,10 +450,10 @@ watch(
             name: 'admin.employees.detail',
             params: { id: member.employee.id },
           }"
-          class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center justify-center gap-2"
+          class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5 flex items-center justify-center gap-1.5"
         >
           <Eye class="w-5 h-5 text-gray-600" />
-          <span class="text-brand-dark text-base font-semibold"
+          <span class="text-brand-dark text-sm font-semibold"
             >View Profile</span
           >
         </RouterLink>
@@ -462,24 +462,24 @@ watch(
   </div>
 
   <!-- Team Activity Row -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
     <!-- Team Activity -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-gray-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-gray-50 rounded-[12px] flex items-center justify-center"
         >
           <Activity class="w-6 h-6 text-gray-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Recent Activity</h3>
+          <h3 class="text-brand-dark text-sm font-bold">Recent Activity</h3>
           <p class="text-brand-light text-sm">
             Latest team updates and milestones
           </p>
         </div>
       </div>
-      <div class="space-y-4">
-        <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-[12px]">
+      <div class="space-y-3.5">
+        <div class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px]">
           <div class="w-3 h-3 bg-green-500 rounded-full"></div>
           <div class="flex-1">
             <p class="text-brand-dark text-sm font-medium">
@@ -492,7 +492,7 @@ watch(
             <span class="text-sm font-medium">Completed</span>
           </div>
         </div>
-        <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-[12px]">
+        <div class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px]">
           <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
           <div class="flex-1">
             <p class="text-brand-dark text-sm font-medium">
@@ -505,7 +505,7 @@ watch(
             <span class="text-sm font-medium">Member Added</span>
           </div>
         </div>
-        <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-[12px]">
+        <div class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px]">
           <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
           <div class="flex-1">
             <p class="text-brand-dark text-sm font-medium">
@@ -522,21 +522,21 @@ watch(
     </div>
 
     <!-- Team Resources -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-6">
-      <div class="flex items-center gap-3 mb-6">
+    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
           <Folder class="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Team Resources</h3>
+          <h3 class="text-brand-dark text-sm font-bold">Team Resources</h3>
           <p class="text-brand-light text-sm">Essential tools and documents</p>
         </div>
       </div>
-      <div class="space-y-4">
+      <div class="space-y-3.5">
         <div
-          class="flex items-center gap-4 p-4 bg-gray-50 rounded-[12px] hover:bg-gray-100 transition-colors cursor-pointer"
+          class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px] hover:bg-gray-100 transition-colors cursor-pointer"
         >
           <div
             class="w-10 h-10 bg-green-100 rounded-[8px] flex items-center justify-center"
@@ -554,7 +554,7 @@ watch(
           <ExternalLink class="w-4 h-4 text-gray-400" />
         </div>
         <div
-          class="flex items-center gap-4 p-4 bg-gray-50 rounded-[12px] hover:bg-gray-100 transition-colors cursor-pointer"
+          class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px] hover:bg-gray-100 transition-colors cursor-pointer"
         >
           <div
             class="w-10 h-10 bg-purple-100 rounded-[8px] flex items-center justify-center"
@@ -568,7 +568,7 @@ watch(
           <ExternalLink class="w-4 h-4 text-gray-400" />
         </div>
         <div
-          class="flex items-center gap-4 p-4 bg-gray-50 rounded-[12px] hover:bg-gray-100 transition-colors cursor-pointer"
+          class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px] hover:bg-gray-100 transition-colors cursor-pointer"
         >
           <div
             class="w-10 h-10 bg-orange-100 rounded-[8px] flex items-center justify-center"
@@ -586,25 +586,25 @@ watch(
   </div>
 
   <!-- Danger Zone -->
-  <div class="bg-white border border-[#FEE2E2] rounded-[12px] p-6">
-    <div class="flex items-center gap-3 mb-6">
+  <div class="bg-white border border-[#FEE2E2] rounded-[12px] p-5">
+    <div class="flex items-center gap-2.5 mb-5">
       <div
-        class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
+        class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"
       >
         <AlertTriangle class="w-6 h-6 text-red-600" />
       </div>
       <div>
-        <h3 class="text-brand-dark text-lg font-bold">Danger Zone</h3>
+        <h3 class="text-brand-dark text-sm font-bold">Danger Zone</h3>
         <p class="text-brand-light text-sm">
           Irreversible and destructive actions
         </p>
       </div>
     </div>
     <div
-      class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center p-4 bg-red-50 rounded-[12px]"
+      class="flex flex-col sm:flex-row gap-3.5 justify-between items-start sm:items-center p-3.5 bg-red-50 rounded-[12px]"
     >
       <div class="flex-1">
-        <h4 class="text-brand-dark text-base font-bold mb-1">Disband Team</h4>
+        <h4 class="text-brand-dark text-sm font-bold mb-1">Disband Team</h4>
         <p class="text-brand-light text-sm">
           Permanently remove this team and reassign all members. This action
           cannot be undone.
@@ -612,7 +612,7 @@ watch(
       </div>
       <button
         @click="showDeleteModal = true"
-        class="btn-primary rounded-[8px] border border-[#A02121] hover:brightness-110 focus:ring-2 focus:ring-[#D90C0C] transition-all duration-300 bg-gradient-to-r from-red-500 to-red-600 shadow-lg px-6 py-3 flex items-center gap-2"
+        class="btn-primary rounded-[8px] border border-[#A02121] hover:brightness-110 focus:ring-2 focus:ring-[#D90C0C] transition-all duration-300 bg-gradient-to-r from-red-500 to-red-600 shadow-lg px-5 py-2.5 flex items-center gap-1.5"
       >
         <Trash2 class="w-4 h-4 text-white" />
         <span class="text-brand-white text-sm font-semibold">Disband Team</span>
@@ -653,19 +653,19 @@ watch(
     v-if="showAddMemberModal"
   >
     <div
-      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
+      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-3.5 max-h-[80vh] overflow-hidden"
     >
       <!-- Modal Header -->
-      <div class="p-6 border-b border-[#DCDEDD]">
+      <div class="p-5 border-b border-[#DCDEDD]">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2.5">
             <div
-              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+              class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
             >
               <UserPlus class="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-xl font-bold">Add Team Member</h3>
+              <h3 class="text-brand-dark text-base font-bold">Add Team Member</h3>
               <p class="text-brand-light text-sm font-normal">
                 Choose an employee to add to this team
               </p>
@@ -682,16 +682,16 @@ watch(
       </div>
 
       <!-- Search Bar -->
-      <div class="p-6 border-b border-[#DCDEDD]">
+      <div class="p-5 border-b border-[#DCDEDD]">
         <div class="relative">
           <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
           >
             <Search class="h-5 w-5 text-gray-400" />
           </div>
           <input
             type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+            class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
             placeholder="Search employees..."
             v-model="searchMember"
           />
@@ -699,25 +699,25 @@ watch(
       </div>
 
       <!-- Employees List -->
-      <div class="p-6 overflow-y-auto max-h-96">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="p-5 overflow-y-auto max-h-96">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           <!-- Employee Option -->
           <div
-            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
+            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5 cursor-pointer"
             v-for="employee in availableEmployees"
             :key="employee.id"
             @click="handleAddMember(employee)"
           >
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3.5">
               <Avatar
                 :src="employee.user?.profile_photo"
                 :alt="employee.user?.name"
-                size="w-14 h-14"
+                size="w-10 h-10"
                 icon-size="w-5 h-5"
                 rounded="rounded-[12px]"
               />
               <div class="flex-1">
-                <h4 class="text-brand-dark text-base font-bold">
+                <h4 class="text-brand-dark text-sm font-bold">
                   {{ employee.user?.name }}
                 </h4>
                 <p class="text-brand-light text-sm font-normal">
@@ -729,9 +729,9 @@ watch(
         </div>
 
         <!-- No Results Message -->
-        <div class="text-center py-8" v-if="availableEmployees.length === 0">
-          <SearchX class="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <h4 class="text-brand-dark text-base font-semibold mb-1">
+        <div class="text-center py-6" v-if="availableEmployees.length === 0">
+          <SearchX class="w-9 h-9 text-gray-400 mx-auto mb-2.5" />
+          <h4 class="text-brand-dark text-sm font-semibold mb-1">
             No employees available
           </h4>
           <p class="text-brand-light text-sm">

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import VueApexCharts from "vue3-apexcharts";
-import { TrendingUp, Briefcase, PlayCircle } from "lucide-vue-next";
+import { TrendingUp, Briefcase, PlayCircle, Eye, EyeOff } from "lucide-vue-next";
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
 import { storeToRefs } from "pinia";
 
@@ -99,6 +99,11 @@ const formatRp = (value: number) =>
 onMounted(() => {
   store.fetchStatistics();
 });
+
+// Hidden by default -- these figures are sensitive, revealed only on demand.
+const isFixedCostVisible = ref(false);
+const isSdmResourceVisible = ref(false);
+const isInfrastructureVisible = ref(false);
 
 const chartSeries = computed(() => [
   {
@@ -231,31 +236,47 @@ const chartOptions = computed(() => ({
       >
         <div class="flex justify-between mb-4">
           <p class="text-white font-medium">Fixed Cost</p>
-          <div
-            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
-          >
-            <Briefcase class="w-6 h-6 text-blue-600" />
+          <div class="flex items-center gap-1.5">
+            <button
+              type="button"
+              @click="isFixedCostVisible = !isFixedCostVisible"
+              class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+              :title="isFixedCostVisible ? 'Hide amounts' : 'Show amounts'"
+            >
+              <Eye v-if="!isFixedCostVisible" class="w-4 h-4" />
+              <EyeOff v-else class="w-4 h-4" />
+            </button>
+            <div
+              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+            >
+              <Briefcase class="w-6 h-6 text-blue-600" />
+            </div>
           </div>
         </div>
         <div class="mt-auto">
-          <p class="text-lg font-extrabold text-success">
-            {{ loadingStatistics ? "-" : formatRp(fixedActual) }} /
-            <span class="text-gray-300">{{
-              loadingStatistics ? "-" : formatRp(fixedBudget)
-            }}</span>
-          </p>
-          <p class="text-success text-base font-medium">
-            Actual /
-            <span class="text-gray-300">Budget </span>
-          </p>
-          <p
-            class="mt-2 text-sm font-semibold px-2 py-1 rounded-lg inline-block"
-            :class="{
-              'bg-gray-100 text-gray-800': fixedVariance >= 0,
-              'bg-red-100 text-red-800': fixedVariance < 0,
-            }"
-          >
-            Variance: {{ loadingStatistics ? "-" : formatRp(fixedVariance) }}
+          <template v-if="isFixedCostVisible">
+            <p class="text-lg font-extrabold text-success">
+              {{ loadingStatistics ? "-" : formatRp(fixedActual) }} /
+              <span class="text-gray-300">{{
+                loadingStatistics ? "-" : formatRp(fixedBudget)
+              }}</span>
+            </p>
+            <p class="text-success text-base font-medium">
+              Actual /
+              <span class="text-gray-300">Budget </span>
+            </p>
+            <p
+              class="mt-2 text-sm font-semibold px-2 py-1 rounded-lg inline-block"
+              :class="{
+                'bg-gray-100 text-gray-800': fixedVariance >= 0,
+                'bg-red-100 text-red-800': fixedVariance < 0,
+              }"
+            >
+              Variance: {{ loadingStatistics ? "-" : formatRp(fixedVariance) }}
+            </p>
+          </template>
+          <p v-else class="text-lg font-extrabold text-success tracking-widest">
+            Rp •••••• / <span class="text-gray-300">Rp ••••••</span>
           </p>
         </div>
       </div>
@@ -266,22 +287,38 @@ const chartOptions = computed(() => ({
       >
         <div class="flex justify-between mb-4">
           <p class="text-white font-medium">SDM Resources</p>
-          <div
-            class="w-12 h-12 bg-amber-50 rounded-[12px] flex items-center justify-center"
-          >
-            <PlayCircle class="w-6 h-6 text-amber-600" />
+          <div class="flex items-center gap-1.5">
+            <button
+              type="button"
+              @click="isSdmResourceVisible = !isSdmResourceVisible"
+              class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+              :title="isSdmResourceVisible ? 'Hide amounts' : 'Show amounts'"
+            >
+              <Eye v-if="!isSdmResourceVisible" class="w-4 h-4" />
+              <EyeOff v-else class="w-4 h-4" />
+            </button>
+            <div
+              class="w-12 h-12 bg-amber-50 rounded-[12px] flex items-center justify-center"
+            >
+              <PlayCircle class="w-6 h-6 text-amber-600" />
+            </div>
           </div>
         </div>
         <div class="mt-auto">
-          <p class="text-lg font-extrabold text-success">
-            {{ loadingStatistics ? "-" : formatRp(sdmActual) }} /
-            <span class="text-gray-300">{{
-              loadingStatistics ? "-" : formatRp(sdmBudget)
-            }}</span>
-          </p>
-          <p class="text-success text-base font-medium">
-            Actual /
-            <span class="text-gray-300">Budget </span>
+          <template v-if="isSdmResourceVisible">
+            <p class="text-lg font-extrabold text-success">
+              {{ loadingStatistics ? "-" : formatRp(sdmActual) }} /
+              <span class="text-gray-300">{{
+                loadingStatistics ? "-" : formatRp(sdmBudget)
+              }}</span>
+            </p>
+            <p class="text-success text-base font-medium">
+              Actual /
+              <span class="text-gray-300">Budget </span>
+            </p>
+          </template>
+          <p v-else class="text-lg font-extrabold text-success tracking-widest">
+            Rp •••••• / <span class="text-gray-300">Rp ••••••</span>
           </p>
           <!-- Divider tipis -->
           <div class="my-2 border-t border-gray-200"></div>
@@ -305,6 +342,7 @@ const chartOptions = computed(() => ({
           </div>
 
           <p
+            v-if="isSdmResourceVisible"
             class="mt-2 text-sm font-semibold px-2 py-1 rounded-lg inline-block"
             :class="{
               'bg-gray-100 text-gray-800': sdmVariance >= 0,
@@ -322,19 +360,36 @@ const chartOptions = computed(() => ({
       >
         <div class="flex justify-between mb-4">
           <p class="text-white font-medium">Infrastructure</p>
-          <div
-            class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
-          >
-            <TrendingUp class="w-6 h-6 text-purple-600" />
+          <div class="flex items-center gap-1.5">
+            <button
+              type="button"
+              @click="isInfrastructureVisible = !isInfrastructureVisible"
+              class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+              :title="isInfrastructureVisible ? 'Hide amounts' : 'Show amounts'"
+            >
+              <Eye v-if="!isInfrastructureVisible" class="w-4 h-4" />
+              <EyeOff v-else class="w-4 h-4" />
+            </button>
+            <div
+              class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+            >
+              <TrendingUp class="w-6 h-6 text-purple-600" />
+            </div>
           </div>
         </div>
         <div class="mt-auto space-y-1">
-          <p class="text-base font-medium text-gray-300">
-            Monthly: {{ loadingStatistics ? "-" : formatRp(infraMonthly) }}
-          </p>
-          <p class="text-base font-medium text-gray-300">
-            Annual: {{ loadingStatistics ? "-" : formatRp(infraAnnual) }}
-          </p>
+          <template v-if="isInfrastructureVisible">
+            <p class="text-base font-medium text-gray-300">
+              Monthly: {{ loadingStatistics ? "-" : formatRp(infraMonthly) }}
+            </p>
+            <p class="text-base font-medium text-gray-300">
+              Annual: {{ loadingStatistics ? "-" : formatRp(infraAnnual) }}
+            </p>
+          </template>
+          <template v-else>
+            <p class="text-base font-medium text-gray-300 tracking-widest">Monthly: Rp ••••••</p>
+            <p class="text-base font-medium text-gray-300 tracking-widest">Annual: Rp ••••••</p>
+          </template>
           <p
             class="text-sm font-medium inline-block px-2 py-1 rounded bg-gray-100 text-gray-800"
           >
