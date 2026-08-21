@@ -45,9 +45,13 @@ const { loading, performanceStatistics } = storeToRefs(employeeStore);
 const taskStore = useTaskStore();
 const { myTasks } = storeToRefs(taskStore);
 const assetStore = useAssetStore();
-const { myAssets } = storeToRefs(assetStore);
 const reviewStore = usePerformanceReviewStore();
-const { myReviews } = storeToRefs(reviewStore);
+
+// assetStore/reviewStore are plain (untyped) JS Pinia stores, so their
+// state infers as never[] when consumed from this <script setup lang="ts">
+// block -- cast to any[] here rather than typing the stores themselves.
+const myAssets = computed(() => assetStore.myAssets as any[]);
+const myReviews = computed(() => reviewStore.myReviews as any[]);
 const router = useRouter();
 
 const acknowledgeReview = async (id: number) => {
