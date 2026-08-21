@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from "@/stores/auth";
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import Alert from "@/components/common/Alert.vue";
 import Input from "@/components/common/form/Input.vue";
 import { AtSign, BuildingIcon, Lock } from "lucide-vue-next";
@@ -9,8 +9,16 @@ import LoadingOverlay from "@/components/common/LoadingOverlay.vue"
 
 
 const authStore = useAuthStore();
-const { loading, error } = storeToRefs(authStore);
+const { loading } = storeToRefs(authStore);
 const { login } = authStore;
+
+// authStore is a plain (untyped) JS Pinia store initialized with
+// `error: null`, so TypeScript infers `error` as `never` inside this
+// <script setup lang="ts"> block once it's narrowed -- cast to `any` here
+// rather than typing the store itself. At runtime `error` is either a
+// plain string message or a Laravel validation-errors object
+// (`{ email: string[], password: string[] }`), both handled below.
+const error = computed(() => authStore.error as any);
 
 const form = ref({
   email: "",
@@ -26,7 +34,7 @@ const handleSubmit = async () => {
   await login(form.value);
 
   if (error.value === "Unauthorized") {
-    form.value.password = null;
+    form.value.password = "";
   }
 };
 </script>
@@ -126,13 +134,13 @@ const handleSubmit = async () => {
               name="remember"
               class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
             />
-            <label for="remember" class="ml-2 text-gray-400">
+            <p for="remember" class="ml-2 text-xs text-gray-400">
               Remember me
-            </label>
+            </p>
           </div>
           <RouterLink
             :to="{ name: 'forgot-password' }"
-            class="hover:brightness-110 transition-all duration-300 text-primary-600"
+            class="hover:brightness-110 transition-all duration-300 text-primary-600 text-xs"
           >
             Forgot password?
           </RouterLink>
@@ -144,7 +152,7 @@ const handleSubmit = async () => {
           class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2 w-full justify-center bg-gradient-to-l from-[#0c51d9] via-[#6f96e3] to-[#0c51d9] shadow-[inset_-2px_2px_1px_0_#6197ff,inset_2px_2px_1px_0_rgba(97,151,255,0.55)] text-white font-plus-jakarta-sans text-[14px] font-semibold cursor-pointer"
           :disabled="loading"
         >
-          Sign In to Dashboard
+          Login
         </button>
       </form>
 
