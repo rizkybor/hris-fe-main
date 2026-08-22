@@ -37,6 +37,8 @@ import {
   LayoutGrid,
   Wallet,
   ChevronRight,
+  CreditCardIcon,
+  Download,
 } from "lucide-vue-next";
 import { useScrollFade } from "@/composables/useScrollFade";
 
@@ -72,7 +74,20 @@ const tabs = [
   { id: "emergency", label: "Emergency Contact", icon: Phone },
   { id: "tasks", label: "Tasks", icon: ListChecks },
   { id: "more", label: "Assets & Reviews", icon: Star },
+  { id: "idcard", label: "ID Card", icon: CreditCardIcon },
 ];
+
+const downloadingIdCard = ref(false);
+const downloadIdCard = async () => {
+  downloadingIdCard.value = true;
+  try {
+    await employeeStore.downloadIdCard(profile.value?.code);
+  } catch (error) {
+    console.error("Error downloading ID card:", error);
+  } finally {
+    downloadingIdCard.value = false;
+  }
+};
 
 const loadProfile = async () => {
   profileNotFound.value = false;
@@ -807,6 +822,84 @@ onMounted(() => {
             No asset & reviews assigned
           </p>
         </div>
+    </div>
+
+    <!-- ID Card Tab -->
+    <div v-show="activeTab === 'idcard'" class="mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center">
+              <CreditCardIcon class="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-lg font-bold">Digital ID Card</h3>
+              <p class="text-brand-light text-base">Preview and download your employee ID card</p>
+            </div>
+          </div>
+          <button
+            @click="downloadIdCard"
+            :disabled="downloadingIdCard"
+            class="w-full sm:w-auto btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <Download class="w-4 h-4 text-white" />
+            <span class="text-brand-white text-sm font-semibold">
+              {{ downloadingIdCard ? "Preparing..." : "Download PDF" }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Card Preview -->
+        <div class="flex justify-center">
+          <div
+            class="relative w-full max-w-[420px] aspect-[85.6/53.98] rounded-[16px] p-5 sm:p-6 overflow-hidden shadow-lg"
+            style="background: linear-gradient(135deg, #0b1d51 0%, #142a6b 100%);"
+          >
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl"></div>
+
+            <div class="relative z-10 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <img src="/images/jcd-only-color.png" alt="Logo" class="w-5 h-5 sm:w-6 sm:h-6 object-contain" />
+                <p class="text-white text-[10px] sm:text-xs font-bold leading-tight tracking-wide">
+                  JENDELA CAKRA<br />DIGITAL
+                </p>
+              </div>
+              <span class="bg-white text-[#0b1d51] text-[9px] sm:text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full">
+                ID CARD
+              </span>
+            </div>
+
+            <div class="relative z-10 flex items-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+              <Avatar
+                :src="profile?.user?.profile_photo"
+                :alt="profile?.user?.name"
+                size="w-14 h-14 sm:w-16 sm:h-16"
+                icon-size="w-6 h-6 sm:w-7 sm:h-7"
+              />
+              <div class="min-w-0">
+                <p class="text-white text-sm sm:text-lg font-bold truncate">{{ profile?.user?.name }}</p>
+                <p class="text-blue-300 text-xs sm:text-sm truncate">{{ capitalize(profile?.job_information?.job_title) }}</p>
+                <div class="mt-1.5 sm:mt-2 space-y-0.5 text-[9px] sm:text-xs">
+                  <p class="text-blue-200/60">
+                    Team <span class="text-white font-semibold ml-1">{{ profile?.job_information?.team?.name || "-" }}</span>
+                  </p>
+                  <p class="text-blue-200/60">
+                    Joined <span class="text-white font-semibold ml-1">{{ formatDate(profile?.job_information?.start_date) }}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="absolute left-5 right-5 sm:left-6 sm:right-6 bottom-4 sm:bottom-5 flex items-center justify-between border-t border-white/10 pt-2 sm:pt-3">
+              <span class="text-white text-[10px] sm:text-xs font-bold tracking-wide">{{ profile?.code }}</span>
+              <span class="text-blue-200/50 text-[8px] sm:text-[9px]">Company Property</span>
+            </div>
+          </div>
+        </div>
+        <p class="text-brand-light text-xs text-center mt-4">
+          This is a preview. The downloaded PDF is sized for physical printing (CR80 card format).
+        </p>
+      </div>
     </div>
   </div>
 
