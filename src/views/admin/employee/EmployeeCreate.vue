@@ -33,6 +33,7 @@ const step1Data = ref({
   password: "",
   password_confirmation: "",
   identity_number: "",
+  npwp: "",
   phone: "",
   date_of_birth: "",
   hobby: "",
@@ -95,6 +96,7 @@ const handleSubmit = async () => {
     formData.append("email", step1Data.value.email);
     formData.append("password", step1Data.value.password);
     formData.append("identity_number", step1Data.value.identity_number);
+    formData.append("npwp", step1Data.value.npwp);
     formData.append("phone", step1Data.value.phone);
     formData.append("date_of_birth", step1Data.value.date_of_birth);
     formData.append("hobby", step1Data.value.hobby);
