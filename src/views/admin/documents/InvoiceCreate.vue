@@ -8,11 +8,13 @@ const store = useInvoiceStore();
 const router = useRouter();
 
 const form = ref({
+  faktur_pajak_number: "",
   client_code: "",
   client_name: "",
   client_pic: "",
   client_email: "",
   client_phone: "",
+  client_npwp: "",
   date: new Date().toISOString().slice(0, 10),
   items: [{ description: "", quantity: "", rate: "", total: 0 }],
   ppn_percentage: 0,
@@ -94,6 +96,14 @@ const handleSubmit = async () => {
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Phone</label>
             <input v-model="form.client_phone" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client NPWP (optional)</label>
+            <input v-model="form.client_npwp" type="text" placeholder="00.000.000.0-000.000" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Faktur Pajak Number (optional)</label>
+            <input v-model="form.faktur_pajak_number" type="text" placeholder="010.000-26.00000001" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
         </div>
       </div>

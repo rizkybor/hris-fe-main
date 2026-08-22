@@ -213,7 +213,7 @@ const deletePhoto = () => {
             </Input>
           </div>
 
-          <div class="mb-3.5 md:col-span-2">
+          <div class="mb-3.5">
             <Input
               id="identity_number"
               name="identity_number"
@@ -223,6 +223,22 @@ const deletePhoto = () => {
               placeholder="Enter identity number"
               :error="errors?.identity_number?.join(', ')"
               required
+            >
+              <template #icon>
+                <Hash class="h-5 w-5 text-gray-400" />
+              </template>
+            </Input>
+          </div>
+
+          <div class="mb-3.5">
+            <Input
+              id="npwp"
+              name="npwp"
+              type="text"
+              v-model="form.npwp"
+              label="NPWP (optional)"
+              placeholder="00.000.000.0-000.000"
+              :error="errors?.npwp?.join(', ')"
             >
               <template #icon>
                 <Hash class="h-5 w-5 text-gray-400" />
