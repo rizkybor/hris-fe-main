@@ -8,6 +8,8 @@ import {
   Wallet,
   ClockIcon,
   Building2Icon,
+  ReceiptIcon,
+  PercentIcon,
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
 import { can } from "@/helpers/permissionHelper";
@@ -16,7 +18,7 @@ import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 
 const reportStore = useReportStore();
-const { attendance, payroll, employee, finance, loading, exporting } =
+const { attendance, payroll, employee, finance, pph21, ppn, loading, exporting } =
   storeToRefs(reportStore);
 
 const tabs = [
@@ -24,6 +26,8 @@ const tabs = [
   { key: "payroll", label: "Payroll", icon: Wallet },
   { key: "employee", label: "Employee", icon: Users },
   { key: "finance", label: "Finance", icon: Building2Icon },
+  { key: "pph21", label: "PPh 21", icon: ReceiptIcon },
+  { key: "ppn", label: "PPN", icon: PercentIcon },
 ];
 
 const activeTab = ref("attendance");
@@ -38,6 +42,8 @@ const currentReport = computed(() => {
     payroll: payroll.value,
     employee: employee.value,
     finance: finance.value,
+    pph21: pph21.value,
+    ppn: ppn.value,
   }[activeTab.value];
 });
 
@@ -86,6 +92,21 @@ const summaryCards = computed(() => {
           value: formatCurrency(summary.infrastructure_monthly_fee),
         },
         { label: "SDM Actual", value: formatCurrency(summary.sdm_actual) },
+      ];
+    case "pph21":
+      return [
+        { label: "Employees Taxed", value: summary.total_employees_taxed ?? 0 },
+        {
+          label: "Total Gross Salary",
+          value: formatCurrency(summary.total_gross_salary),
+        },
+        { label: "Total PPh 21", value: formatCurrency(summary.total_pph21) },
+      ];
+    case "ppn":
+      return [
+        { label: "Invoices", value: summary.total_invoices ?? 0 },
+        { label: "Total DPP", value: formatCurrency(summary.total_dpp) },
+        { label: "Total PPN", value: formatCurrency(summary.total_ppn) },
       ];
     default:
       return [];
@@ -165,6 +186,12 @@ async function loadReport(page = 1) {
     case "finance":
       await reportStore.fetchFinanceReport(filterParams.value);
       break;
+    case "pph21":
+      await reportStore.fetchPph21Report(filterParams.value);
+      break;
+    case "ppn":
+      await reportStore.fetchPpnReport(filterParams.value);
+      break;
   }
 }
 
@@ -236,6 +263,20 @@ onMounted(() => {
           <component :is="tab.icon" class="w-4 h-4" />
           <span class="text-sm font-semibold">{{ tab.label }}</span>
         </button>
+      </div>
+
+      <!-- Disclaimer -->
+      <div
+        v-if="activeTab === 'pph21'"
+        class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-3"
+      >
+        PPh 21 dihitung dengan metode tahunan (Pasal 17), belum menggunakan metode TER bulanan DJP. Gunakan sebagai draft rekap, verifikasi ulang sebelum diinput ke Coretax.
+      </div>
+      <div
+        v-if="activeTab === 'ppn' || activeTab === 'pph21'"
+        class="text-xs text-brand-light bg-gray-50 border border-[#DCDEDD] rounded-xl px-3 py-2 mb-3"
+      >
+        Laporan ini adalah rekap siap ekspor untuk membantu pengisian Coretax secara manual, bukan integrasi otomatis ke sistem DJP.
       </div>
 
       <!-- Filters -->
@@ -313,11 +354,27 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Team</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
             </template>
-            <template v-else>
+            <template v-else-if="activeTab === 'finance'">
               <th class="py-3 pr-4 font-semibold">Category</th>
               <th class="py-3 pr-4 font-semibold">Item</th>
               <th class="py-3 pr-4 font-semibold">Budget</th>
               <th class="py-3 pr-4 font-semibold">Actual</th>
+            </template>
+            <template v-else-if="activeTab === 'pph21'">
+              <th class="py-3 pr-4 font-semibold">Period</th>
+              <th class="py-3 pr-4 font-semibold">Employee</th>
+              <th class="py-3 pr-4 font-semibold">NPWP</th>
+              <th class="py-3 pr-4 font-semibold">PTKP Status</th>
+              <th class="py-3 pr-4 font-semibold">Gross Salary</th>
+              <th class="py-3 pr-4 font-semibold">PPh 21</th>
+            </template>
+            <template v-else-if="activeTab === 'ppn'">
+              <th class="py-3 pr-4 font-semibold">Date</th>
+              <th class="py-3 pr-4 font-semibold">Faktur Pajak No.</th>
+              <th class="py-3 pr-4 font-semibold">Invoice No.</th>
+              <th class="py-3 pr-4 font-semibold">Client</th>
+              <th class="py-3 pr-4 font-semibold">DPP</th>
+              <th class="py-3 pr-4 font-semibold">PPN</th>
             </template>
           </tr>
         </thead>
@@ -367,14 +424,14 @@ onMounted(() => {
               <td class="py-3 pr-4 text-brand-light">{{ index + 1 }}</td>
               <td class="py-3 pr-4">{{ row.code }}</td>
               <td class="py-3 pr-4">{{ row.user?.name ?? "N/A" }}</td>
-              <td class="py-3 pr-4">{{ row.jobInformation?.job_title ?? "N/A" }}</td>
-              <td class="py-3 pr-4">{{ row.jobInformation?.team?.name ?? "N/A" }}</td>
+              <td class="py-3 pr-4">{{ row.job_information?.job_title ?? "N/A" }}</td>
+              <td class="py-3 pr-4">{{ row.job_information?.team?.name ?? "N/A" }}</td>
               <td class="py-3 pr-4 capitalize">
-                {{ row.jobInformation?.status ?? "N/A" }}
+                {{ row.job_information?.status ?? "N/A" }}
               </td>
             </tr>
           </template>
-          <template v-else>
+          <template v-else-if="activeTab === 'finance'">
             <tr
               v-for="(row, idx) in tableRows"
               :key="idx"
@@ -385,6 +442,36 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ row.name }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.budget) }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.actual) }}</td>
+            </tr>
+          </template>
+          <template v-else-if="activeTab === 'pph21'">
+            <tr
+              v-for="(row, idx) in tableRows"
+              :key="row.id ?? idx"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+            >
+              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
+              <td class="py-3 pr-4">{{ formatDate(row.salary_month) }}</td>
+              <td class="py-3 pr-4">{{ row.employee?.user?.name ?? "N/A" }}</td>
+              <td class="py-3 pr-4">{{ row.employee?.npwp ?? "-" }}</td>
+              <td class="py-3 pr-4">{{ row.employee?.job_information?.ptkp_status ?? "TK/0" }}</td>
+              <td class="py-3 pr-4">{{ formatCurrency(row.gross_salary) }}</td>
+              <td class="py-3 pr-4">{{ formatCurrency(row.pph21) }}</td>
+            </tr>
+          </template>
+          <template v-else-if="activeTab === 'ppn'">
+            <tr
+              v-for="(row, idx) in tableRows"
+              :key="row.id ?? idx"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+            >
+              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
+              <td class="py-3 pr-4">{{ formatDate(row.date) }}</td>
+              <td class="py-3 pr-4">{{ row.faktur_pajak_number ?? "-" }}</td>
+              <td class="py-3 pr-4">{{ row.invoice_number }}</td>
+              <td class="py-3 pr-4">{{ row.client_name }}</td>
+              <td class="py-3 pr-4">{{ formatCurrency(row.subtotal) }}</td>
+              <td class="py-3 pr-4">{{ formatCurrency(row.ppn_amount) }}</td>
             </tr>
           </template>
         </tbody>

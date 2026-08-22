@@ -8,6 +8,8 @@ export const useReportStore = defineStore("report", {
     payroll: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     employee: { summary: {}, rows: [] },
     finance: { period: null, summary: {}, rows: {} },
+    pph21: { period: null, summary: {}, rows: [] },
+    ppn: { period: null, summary: {}, rows: [] },
     loading: false,
     exporting: false,
     error: null,
@@ -59,6 +61,32 @@ export const useReportStore = defineStore("report", {
       try {
         const { data } = await axiosInstance.get("/reports/finance", { params });
         this.finance = data.data;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchPph21Report(params = {}) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await axiosInstance.get("/reports/pph21", { params });
+        this.pph21 = data.data;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchPpnReport(params = {}) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await axiosInstance.get("/reports/ppn", { params });
+        this.ppn = data.data;
       } catch (error) {
         this.error = handleError(error);
       } finally {

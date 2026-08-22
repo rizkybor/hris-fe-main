@@ -78,6 +78,8 @@ const saving = ref(false);
 // Form reactive
 const form = reactive({
   name: "",
+  legal_name: "",
+  npwp: "",
   description: "",
   vision: "",
   mission: "",
@@ -94,6 +96,8 @@ const openModal = (edit = false) => {
 
   if (edit && company.value) {
     form.name = company.value.name || "";
+    form.legal_name = company.value.legal_name || "";
+    form.npwp = company.value.npwp || "";
     form.description = company.value.description || "";
     form.vision = company.value.vision || "";
     form.mission = Array.isArray(company.value.mission)
@@ -108,6 +112,8 @@ const openModal = (edit = false) => {
       : company.value.branches || "";
   } else {
     form.name = "";
+    form.legal_name = "";
+    form.npwp = "";
     form.description = "";
     form.vision = "";
     form.mission = "";
@@ -125,6 +131,8 @@ const openModal = (edit = false) => {
 const saveCompany = async () => {
   const payload = {
     name: form.name || null,
+    legal_name: form.legal_name || null,
+    npwp: form.npwp || null,
     description: form.description || null,
     vision: form.vision || null,
     mission: form.mission
@@ -208,6 +216,7 @@ const saveCompany = async () => {
         </div>
         <div class="min-w-0">
           <h2 class="text-white text-lg font-bold truncate">{{ company.name || "-" }}</h2>
+          <p v-if="company.legal_name" class="text-brand-white-70 text-sm truncate">{{ company.legal_name }}</p>
           <p v-if="company.description" :title="company.description" class="text-brand-white-70 text-sm truncate cursor-help">{{ company.description }}</p>
         </div>
       </div>
@@ -247,6 +256,15 @@ const saveCompany = async () => {
           <div class="min-w-0">
             <p class="text-brand-white-70 text-xs">Phone</p>
             <p class="text-white text-sm font-semibold truncate">{{ company.phone || "-" }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
+            <FileText class="w-4 h-4 text-blue-300" />
+          </div>
+          <div class="min-w-0">
+            <p class="text-brand-white-70 text-xs">NPWP</p>
+            <p class="text-white text-sm font-semibold truncate">{{ company.npwp || "-" }}</p>
           </div>
         </div>
       </div>
@@ -354,6 +372,16 @@ const saveCompany = async () => {
               <div>
                 <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Description</label>
                 <textarea v-model="form.description" rows="2" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"></textarea>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Legal Name (optional)</label>
+                  <input v-model="form.legal_name" type="text" placeholder="PT ..." class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
+                </div>
+                <div>
+                  <label class="text-sm font-semibold text-brand-dark mb-1.5 block">NPWP (optional)</label>
+                  <input v-model="form.npwp" type="text" placeholder="00.000.000.0-000.000" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
+                </div>
               </div>
             </div>
           </div>
