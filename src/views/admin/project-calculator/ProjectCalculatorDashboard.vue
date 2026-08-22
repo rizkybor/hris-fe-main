@@ -283,7 +283,7 @@ const onLandingPageRateSettingSaved = async () => {
           <button
             v-if="can('project-calculator-menu')"
             @click="showLandingPageRateModal = true"
-            class="border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all duration-300 px-3.5 py-1.5 inline-flex items-center gap-1.5 self-start sm:self-center"
+            class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 px-3.5 py-1.5 inline-flex items-center gap-1.5 self-start sm:self-center"
           >
             <SettingsIcon class="w-4 h-4 text-gray-600" />
             <span class="text-brand-dark text-sm font-semibold">Landing Page Config</span>

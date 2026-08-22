@@ -116,7 +116,7 @@ onMounted(() => {
           <div>
             <h3 class="text-brand-dark text-base font-bold">Emergency Contact</h3>
             <p class="text-brand-light text-sm font-normal">
-              Person to contact in case of emergency
+              Optional -- person to contact in case of emergency. Leave blank if not available yet.
             </p>
           </div>
         </div>
@@ -126,12 +126,11 @@ onMounted(() => {
           <div class="mb-3.5">
             <Input
               v-model="form.emergency_contact_name"
-              label="Full Name"
+              label="Full Name (optional)"
               placeholder="Emergency contact name"
               :error="
                 props.errors?.['emergency_contacts.0.full_name']?.join(', ')
               "
-              required
             >
               <template #icon>
                 <User class="w-5 h-5 text-gray-400" />
@@ -143,12 +142,11 @@ onMounted(() => {
           <div class="mb-3.5">
             <Input
               v-model="form.emergency_contact_relationship"
-              label="Relationship"
+              label="Relationship (optional)"
               placeholder="e.g., Spouse, Parent, Sibling"
               :error="
                 props.errors?.['emergency_contacts.0.relationship']?.join(', ')
               "
-              required
             >
               <template #icon>
                 <User class="w-5 h-5 text-gray-400" />
@@ -160,10 +158,9 @@ onMounted(() => {
           <div class="mb-3.5">
             <Input
               v-model="form.emergency_contact_phone"
-              label="Phone Number"
+              label="Phone Number (optional)"
               placeholder="+62 812-3456-7890"
               :error="props.errors?.['emergency_contacts.0.phone']?.join(', ')"
-              required
             >
               <template #icon>
                 <Phone class="w-5 h-5 text-gray-400" />
