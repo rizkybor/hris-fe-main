@@ -215,6 +215,21 @@ export const useEmployeeStore = defineStore("employee", {
             }
         },
 
+        async downloadIdCard(employeeCode) {
+            const response = await axiosInstance.get('/my-profile/id-card', {
+                responseType: 'blob',
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `ID-Card-${employeeCode || 'employee'}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        },
+
         async fetchMyTeam() {
             this.loading = true;
             this.error = null;
