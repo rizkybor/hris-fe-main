@@ -14,6 +14,7 @@ import {
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
+  Wallet,
 } from "lucide-vue-next";
 import Pagination from "@/components/admin/team/Pagination.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
@@ -110,22 +111,12 @@ const totalDeductions = computed(() => {
 </script>
 
 <template>
-  <div>
-    <!-- Header Section -->
-    <div class="mb-6">
-      <h2 class="text-[#0C1C3C] font-bold text-xl mb-2">My Payslips</h2>
-      <p class="text-gray-600">View and download your salary payslips</p>
-    </div>
-
+  <div class="px-4 py-4">
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div
-        class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[14px] p-6 text-white"
-      >
+      <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[14px] p-6 text-white">
         <div class="flex items-center justify-between mb-3">
-          <div
-            class="w-12 h-12 bg-white/20 rounded-[12px] flex items-center justify-center backdrop-blur-sm"
-          >
+          <div class="w-12 h-12 bg-white/20 rounded-[12px] flex items-center justify-center backdrop-blur-sm">
             <FileText class="w-6 h-6" />
           </div>
         </div>
@@ -134,12 +125,9 @@ const totalDeductions = computed(() => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#10B981] hover:border-2 transition-all duration-300 p-6"
-      >
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#10B981] hover:border-2 transition-all duration-300 p-6">
         <div class="flex items-center justify-between mb-3">
-          <div
-            class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
-          >
+          <div class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center">
             <ArrowUpRight class="w-6 h-6 text-green-600" />
           </div>
         </div>
@@ -151,12 +139,9 @@ const totalDeductions = computed(() => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#EF4444] hover:border-2 transition-all duration-300 p-6"
-      >
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#EF4444] hover:border-2 transition-all duration-300 p-6">
         <div class="flex items-center justify-between mb-3">
-          <div
-            class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
-          >
+          <div class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center">
             <ArrowDownRight class="w-6 h-6 text-red-600" />
           </div>
         </div>
@@ -172,23 +157,16 @@ const totalDeductions = computed(() => {
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4">
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1 relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
-          >
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Search class="h-5 w-5 text-gray-400" />
           </div>
-          <input
-            type="text"
+          <input type="text"
             class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300"
-            placeholder="Search payslips by month or year..."
-            v-model="filters.search"
-          />
+            placeholder="Search payslips by month or year..." v-model="filters.search" />
         </div>
 
-        <select
-          v-model.number="filters.year"
-          class="px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300"
-        >
+        <select v-model.number="filters.year"
+          class="px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300">
           <option :value="new Date().getFullYear()">
             {{ new Date().getFullYear() }}
           </option>
@@ -211,32 +189,19 @@ const totalDeductions = computed(() => {
         </p>
       </div>
 
-      <SkeletonCardGrid
-        v-if="loading"
-        :count="4"
-        cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-        class="mb-6"
-      />
+      <SkeletonCardGrid v-if="loading" :count="4" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        class="mb-6" />
 
-      <div
-        v-else
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6"
-      >
-        <div
-          v-for="payslip in payslips"
-          :key="payslip.id"
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+        <div v-for="payslip in payslips" :key="payslip.id"
           class="border border-[#DCDEDD] rounded-[12px] p-5 hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 cursor-pointer group"
-          @click="viewDetails(payslip.id)"
-        >
+          @click="viewDetails(payslip.id)">
           <div class="flex items-start justify-between mb-4">
             <div
-              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center group-hover:bg-blue-100 transition-all duration-300"
-            >
+              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center group-hover:bg-blue-100 transition-all duration-300">
               <FileText class="w-6 h-6 text-blue-600" />
             </div>
-            <span
-              class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full"
-            >
+            <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
               Paid
             </span>
           </div>
@@ -255,17 +220,13 @@ const totalDeductions = computed(() => {
           </div>
 
           <div class="pt-4 border-t border-gray-200 flex items-center gap-2">
-            <button
-              @click.stop="viewDetails(payslip.id)"
-              class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold"
-            >
+            <button @click.stop="viewDetails(payslip.id)"
+              class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold">
               <Eye class="w-4 h-4" />
               View
             </button>
-            <button
-              @click.stop="handleDownload(payslip.id)"
-              class="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-[8px] hover:brightness-110 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold"
-            >
+            <button @click.stop="handleDownload(payslip.id)"
+              class="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-[8px] hover:brightness-110 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold">
               <Download class="w-4 h-4" />
               PDF
             </button>
@@ -273,22 +234,15 @@ const totalDeductions = computed(() => {
         </div>
       </div>
 
-      <div
-        v-if="!loading && payslips.length === 0"
-        class="text-center py-12 text-gray-500"
-      >
+      <div v-if="!loading && payslips.length === 0" class="text-center py-12 text-gray-500">
         <FileText class="w-16 h-16 mx-auto mb-4 text-gray-300" />
         <p class="text-lg font-semibold">No payslips found</p>
         <p class="text-sm">Your payslips will appear here once they are processed</p>
       </div>
 
       <!-- Pagination -->
-      <Pagination
-        :meta="meta"
-        :loading="loading"
-        @page-change="handlePageChange"
-        @per-page-change="handlePerPageChange"
-      />
+      <Pagination :meta="meta" :loading="loading" @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange" />
     </div>
   </div>
 </template>

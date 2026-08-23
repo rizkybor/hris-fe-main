@@ -133,23 +133,7 @@ const visibleCategories = computed(() =>
 </script>
 
 <template>
-  <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex items-center gap-3">
-        <div
-          class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center"
-        >
-          <SettingsIcon class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Settings</h3>
-          <p class="text-brand-light text-sm">
-            Manage roles, permissions, and account preferences
-          </p>
-        </div>
-      </div>
-    </div>
-
+  <div class="px-4 py-4">
     <div v-for="category in visibleCategories" :key="category.title" class="mb-8 last:mb-0">
       <div class="flex items-center gap-2 mb-3 px-1">
         <component :is="category.icon" class="w-4 h-4 text-gray-400" />

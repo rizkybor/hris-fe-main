@@ -67,7 +67,7 @@ const viewDetails = (id) => {
 </script>
 
 <template>
-  <div>
+  <div class="px-4 py-4">
     <!-- Stats Layout -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <!-- Total Payroll Amount Card (spans 2 rows on the left) -->

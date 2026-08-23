@@ -63,6 +63,7 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
 </script>
 
 <template>
+  <div class="px-4 py-4">
   <!-- Statistics -->
   <Statistics v-if="can('project-statistic')" />
 
@@ -135,6 +136,15 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
       <CardList v-for="vendor in vendorsList" :key="vendor.id" :data="vendor" />
     </div>
 
+     <!-- Pagination -->
+    <Pagination
+      :meta="vendorsMeta"
+      :loading="loading"
+      @page-change="handlePageChange"
+      @per-page-change="handlePerPageChange"
+    />
+    </div>
+
     <!-- No Data Message -->
     <div class="text-center py-12" v-if="vendorsList.length === 0 && !loading">
       <SearchX class="w-9 h-9 text-gray-400 mx-auto mb-3.5" />
@@ -147,11 +157,4 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
     </div>
   </div>
 
-  <!-- Pagination -->
-  <Pagination
-    :meta="vendorsMeta"
-    :loading="loading"
-    @page-change="handlePageChange"
-    @per-page-change="handlePerPageChange"
-  />
 </template>

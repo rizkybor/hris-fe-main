@@ -142,7 +142,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="px-4 py-4">
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5 mb-5">
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"

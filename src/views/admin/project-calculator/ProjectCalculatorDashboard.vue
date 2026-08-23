@@ -104,7 +104,7 @@ const onLandingPageRateSettingSaved = async () => {
 </script>
 
 <template>
-  <div>
+  <div class="px-4 py-4">
     <!-- Hero -->
     <div
       class="relative overflow-hidden rounded-[14px] border border-[#0B1042] main-card px-4 sm:px-6 py-5 sm:py-6 mb-5"

@@ -247,6 +247,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <div class="px-4 py-4">
   <div v-if="loading" class="flex items-center justify-center min-h-screen">
     <div class="text-center">
       <div
@@ -1110,6 +1111,7 @@ onMounted(() => {
         </form>
       </div>
     </div>
+  </div>
   </div>
 </template>
 
