@@ -213,9 +213,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="px-4 py-4">
     <div
-      class="bg-white p-5"
+      class="bg-white"
     >
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5"

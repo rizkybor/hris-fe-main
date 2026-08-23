@@ -172,7 +172,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col overflow-hidden">
+  <div class="flex-1 flex flex-col overflow-hidden px-4 py-4">
     <!-- Main Content Area -->
     <!-- Stats Cards Layout -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">

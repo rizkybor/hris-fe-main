@@ -66,8 +66,8 @@ const formatDate = (date) =>
 </script>
 
 <template>
-  <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div class="px-4 py-4">
+    <div class="bg-white mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 bg-red-50 rounded-[12px] flex items-center justify-center">
           <DatabaseBackup class="w-5 h-5 text-red-600" />
