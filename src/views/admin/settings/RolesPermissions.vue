@@ -196,7 +196,7 @@ async function handleDelete() {
 </script>
 
 <template>
-  <div>
+  <div class="px-4 py-4">
     <div
       class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >

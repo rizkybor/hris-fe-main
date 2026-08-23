@@ -94,7 +94,7 @@ const formatDate = (date) => {
 </script>
 
 <template>
-  <div>
+  <div class="px-4 py-4">
     <!-- ================= STATS LAYOUT ================= -->
     <div class="gap-4 mb-6">
       <!-- Main Card (vault identity: violet accent over the dark navy hero) -->

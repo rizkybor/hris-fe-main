@@ -62,23 +62,7 @@ const links = [
 </script>
 
 <template>
-  <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex items-center gap-3">
-        <div
-          class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center"
-        >
-          <FileStack class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Document Letters</h3>
-          <p class="text-brand-light text-sm">
-            Letters, Invoice, Payment Receipt, Purchase Order, Official Memo, Meeting Note, and Certificate for the company
-          </p>
-        </div>
-      </div>
-    </div>
-
+  <div class="px-4 py-4">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <template v-for="link in links" :key="link.title">
         <router-link

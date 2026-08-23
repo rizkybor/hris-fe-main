@@ -86,6 +86,7 @@ const handleDelete = async (project) => {
 </script>
 
 <template>
+  <div class="px-4 py-4">
   <Statistics v-if="can('project-statistic')" />
   <div v-if="can('project-statistic')" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
     <ProjectProgressChart />
@@ -174,7 +175,7 @@ const handleDelete = async (project) => {
     </div>
 
     <!-- Empty state: distinguishes "nothing matches the current filter" (with a way out) from "no projects exist yet" (with a way in) -->
-    <div v-else class="flex flex-col items-center justify-center text-center py-14 rounded-[12px] border border-dashed border-[#DCDEDD] bg-gray-50/60">
+    <div v-else class="flex flex-col items-center justify-center text-center py-14 rounded-[12px] border border-dashed border-[#DCDEDD] bg-gray-50/60 mb-4">
       <template v-if="hasActiveFilters">
         <SearchX class="w-10 h-10 text-gray-300 mb-3" />
         <h4 class="text-brand-dark text-sm font-semibold mb-1">
@@ -210,12 +211,13 @@ const handleDelete = async (project) => {
         </RouterLink>
       </template>
     </div>
+    <Pagination
+      :meta="meta"
+      :loading="loading"
+      @page-change="handlePageChange"
+      @per-page-change="handlePerPageChange"
+    />
+  </div>
   </div>
 
-  <Pagination
-    :meta="meta"
-    :loading="loading"
-    @page-change="handlePageChange"
-    @per-page-change="handlePerPageChange"
-  />
 </template>

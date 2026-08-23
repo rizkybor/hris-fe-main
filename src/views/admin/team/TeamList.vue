@@ -71,6 +71,7 @@ const handlePerPageChange = (perPage) => {
 </script>
 
 <template>
+  <div class="px-4 py-4">
   <Statistic />
 
   <!-- Search Section -->
@@ -200,4 +201,5 @@ const handlePerPageChange = (perPage) => {
       @per-page-change="handlePerPageChange"
     />
   </div>
+    </div>
 </template>

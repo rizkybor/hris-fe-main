@@ -154,6 +154,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <div class="px-4 py-4">
   <div v-if="loading">
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
       <div class="flex flex-col sm:flex-row sm:items-center gap-6">
@@ -206,10 +207,10 @@ onMounted(() => {
               {{ capitalize(profile?.job_information?.skill_level) }}
             </span>
           </div>
-          <p class="text-brand-light text-lg mb-3">
+          <p class="text-brand-light text-sm mb-3">
             {{ capitalize(profile?.job_information?.job_title) }}
           </p>
-          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-6 gap-y-2 text-base text-gray-600">
+          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-6 gap-y-2 text-sm text-gray-600">
             <div class="flex items-center gap-2">
               <Building class="w-4 h-4" />
               <span>{{
@@ -383,49 +384,49 @@ onMounted(() => {
               <Contact class="w-6 h-6 text-teal-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">
+              <h3 class="text-brand-dark text-md font-bold">
                 Personal Information
               </h3>
-              <p class="text-brand-light text-base">
+              <p class="text-brand-light text-sm">
                 Your contact and profile details
               </p>
             </div>
           </div>
           <div class="space-y-4">
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Email</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Email</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 profile?.user?.email
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Phone</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Phone</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 profile?.phone || "-"
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Date of Birth</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Date of Birth</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 formatDate(profile?.date_of_birth)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Employee ID</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Employee ID</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 profile?.code
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Office Location</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Office Location</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 capitalize(profile?.job_information?.work_location)
               }}</span>
             </div>
             <div class="flex justify-between items-start">
-              <span class="text-brand-light text-base">Hobbies</span>
+              <span class="text-brand-light text-sm">Hobbies</span>
               <span
-                class="text-brand-dark text-base font-medium text-right max-w-[60%]"
+                class="text-brand-dark text-sm font-medium text-right max-w-[60%]"
                 >{{ profile?.hobby || "-" }}</span
               >
             </div>
@@ -441,49 +442,49 @@ onMounted(() => {
               <MapPin class="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">
+              <h3 class="text-brand-dark text-md font-bold">
                 Location Details
               </h3>
-              <p class="text-brand-light text-base">
+              <p class="text-brand-light text-sm">
                 Address and location information
               </p>
             </div>
           </div>
           <div class="space-y-4">
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Gender</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Gender</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 capitalize(profile?.gender)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Place of Birth</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Place of Birth</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 profile?.place_of_birth || "-"
               }}</span>
             </div>
             <div class="flex justify-between items-start">
-              <span class="text-brand-light text-base">Address</span>
+              <span class="text-brand-light text-sm">Address</span>
               <span
-                class="text-brand-dark text-base font-medium text-right max-w-[60%]"
+                class="text-brand-dark text-sm font-medium text-right max-w-[60%]"
                 >{{ profile?.address || "-" }}</span
               >
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">City</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">City</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 profile?.city || "-"
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Post Code</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Post Code</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 profile?.postal_code || "-"
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Country</span>
-              <span class="text-brand-dark text-base font-medium"
+              <span class="text-brand-light text-sm">Country</span>
+              <span class="text-brand-dark text-sm font-medium"
                 >Indonesia</span
               >
             </div>
@@ -503,41 +504,41 @@ onMounted(() => {
               <Briefcase class="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">
+              <h3 class="text-brand-dark text-md font-bold">
                 Employment Details
               </h3>
-              <p class="text-brand-light text-base">
+              <p class="text-brand-light text-sm">
                 Work and compensation information
               </p>
             </div>
           </div>
           <div class="space-y-4">
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Job Title</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Job Title</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 capitalize(profile?.job_information?.job_title)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Start Date</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Start Date</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 formatDate(profile?.job_information?.start_date)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Employment Type</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Employment Type</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 capitalize(profile?.job_information?.employment_type)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Monthly Salary</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Monthly Salary</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 formatCurrency(profile?.job_information?.monthly_salary)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Skill Level</span>
+              <span class="text-brand-light text-sm">Skill Level</span>
               <span
                 :class="skillLevelBadgeClass"
                 class="px-2 py-1 rounded-md text-sm font-semibold"
@@ -545,8 +546,8 @@ onMounted(() => {
               >
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Work Location</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Work Location</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 capitalize(profile?.job_information?.work_location)
               }}</span>
             </div>
@@ -566,8 +567,8 @@ onMounted(() => {
                 <Users class="w-6 h-6 text-indigo-600" />
               </div>
               <div>
-                <h3 class="text-brand-dark text-lg font-bold">My Team</h3>
-                <p class="text-brand-light text-base">Team information</p>
+                <h3 class="text-brand-dark text-sm font-bold">My Team</h3>
+                <p class="text-brand-light text-sm">Team information</p>
               </div>
             </div>
             <button
@@ -594,10 +595,10 @@ onMounted(() => {
               <Code class="w-6 h-6 sm:w-8 sm:h-8 text-white relative z-10" />
             </div>
             <div class="flex-1 min-w-0">
-              <h4 class="text-white text-base sm:text-xl font-bold truncate">
+              <h4 class="text-white text-sm sm:text-xl font-bold truncate">
                 {{ profile.job_information.team.name }}
               </h4>
-              <p class="text-white/80 text-sm sm:text-base font-normal">
+              <p class="text-white/80 text-sm sm:text-sm font-normal">
                 {{ profile.job_information.team.members_count ?? 0 }} members •
                 {{ capitalize(profile.job_information.team.status) }}
               </p>
@@ -607,22 +608,22 @@ onMounted(() => {
           <!-- Team Details -->
           <div class="space-y-3">
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Team Lead</span>
+              <span class="text-brand-light text-sm">Team Lead</span>
               <div class="flex items-center gap-2">
-                <span class="text-brand-dark text-base font-medium">{{
+                <span class="text-brand-dark text-sm font-medium">{{
                   profile.job_information.team.leader?.name || "-"
                 }}</span>
               </div>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Department</span>
-              <span class="text-brand-dark text-base font-medium">{{
+              <span class="text-brand-light text-sm">Department</span>
+              <span class="text-brand-dark text-sm font-medium">{{
                 capitalize(profile.job_information.team.department)
               }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-brand-light text-base">Team Size</span>
-              <span class="text-brand-dark text-base font-medium"
+              <span class="text-brand-light text-sm">Team Size</span>
+              <span class="text-brand-dark text-sm font-medium"
                 >{{ profile.job_information.team.members_count ?? 0 }} members</span
               >
             </div>
@@ -640,10 +641,10 @@ onMounted(() => {
             <Phone class="w-6 h-6 text-red-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">
+            <h3 class="text-brand-dark text-md font-bold">
               Emergency Contact
             </h3>
-            <p class="text-brand-light text-base">
+            <p class="text-brand-light text-sm">
               Person to contact in case of emergency
             </p>
           </div>
@@ -656,26 +657,26 @@ onMounted(() => {
           "
         >
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Contact Name</span>
-            <span class="text-brand-dark text-base font-medium">{{
+            <span class="text-brand-light text-sm">Contact Name</span>
+            <span class="text-brand-dark text-sm font-medium">{{
               profile.emergency_contacts[0]?.full_name || "-"
             }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Relationship</span>
-            <span class="text-brand-dark text-base font-medium">{{
+            <span class="text-brand-light text-sm">Relationship</span>
+            <span class="text-brand-dark text-sm font-medium">{{
               capitalize(profile.emergency_contacts[0]?.relationship)
             }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Phone Number</span>
-            <span class="text-brand-dark text-base font-medium">{{
+            <span class="text-brand-light text-sm">Phone Number</span>
+            <span class="text-brand-dark text-sm font-medium">{{
               profile.emergency_contacts[0]?.phone || "-"
             }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-brand-light text-base">Email</span>
-            <span class="text-brand-dark text-base font-medium">{{
+            <span class="text-brand-light text-sm">Email</span>
+            <span class="text-brand-dark text-sm font-medium">{{
               profile.emergency_contacts[0]?.email || "-"
             }}</span>
           </div>
@@ -698,7 +699,7 @@ onMounted(() => {
                 <ListChecks class="w-6 h-6 text-orange-600" />
               </div>
               <div>
-                <h3 class="text-brand-dark text-lg font-bold">Latest Tasks</h3>
+                <h3 class="text-brand-dark text-md font-bold">Latest Tasks</h3>
                 <p class="text-brand-light text-sm">Recently assigned tasks</p>
               </div>
             </div>
@@ -725,7 +726,7 @@ onMounted(() => {
               class="border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
             >
               <div class="flex items-start justify-between mb-2">
-                <h4 class="text-brand-dark text-base font-semibold">
+                <h4 class="text-brand-dark text-sm font-semibold">
                   {{ task.title }}
                 </h4>
                 <span
@@ -761,7 +762,7 @@ onMounted(() => {
               <Laptop class="w-6 h-6 text-[#0C51D9]" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">My Assets</h3>
+              <h3 class="text-brand-dark text-md font-bold">My Assets</h3>
               <p class="text-brand-light text-sm">Company equipment assigned to you</p>
             </div>
           </div>
@@ -787,7 +788,7 @@ onMounted(() => {
               <Star class="w-6 h-6 text-yellow-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">My Performance Reviews</h3>
+              <h3 class="text-brand-dark text-sm font-bold">My Performance Reviews</h3>
               <p class="text-brand-light text-sm">Feedback and ratings from your reviewer</p>
             </div>
           </div>
@@ -818,7 +819,7 @@ onMounted(() => {
           class="bg-white border border-[#DCDEDD] rounded-[14px] p-12 text-center"
         >
           <Star class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p class="text-brand-light text-base font-medium">
+          <p class="text-brand-light text-sm font-medium">
             No asset & reviews assigned
           </p>
         </div>
@@ -833,8 +834,8 @@ onMounted(() => {
               <CreditCardIcon class="w-6 h-6 text-indigo-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-lg font-bold">Digital ID Card</h3>
-              <p class="text-brand-light text-base">Preview and download your employee ID card</p>
+              <h3 class="text-brand-dark text-md font-bold">Digital ID Card</h3>
+              <p class="text-brand-light text-sm">Preview and download your employee ID card</p>
             </div>
           </div>
           <button
@@ -877,7 +878,7 @@ onMounted(() => {
                 icon-size="w-6 h-6 sm:w-7 sm:h-7"
               />
               <div class="min-w-0">
-                <p class="text-white text-sm sm:text-lg font-bold truncate">{{ profile?.user?.name }}</p>
+                <p class="text-white text-sm sm:text-sm font-bold truncate">{{ profile?.user?.name }}</p>
                 <p class="text-blue-300 text-xs sm:text-sm truncate">{{ capitalize(profile?.job_information?.job_title) }}</p>
                 <div class="mt-1.5 sm:mt-2 space-y-0.5 text-[9px] sm:text-xs">
                   <p class="text-blue-200/60">
@@ -908,10 +909,11 @@ onMounted(() => {
     <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
       <User class="w-8 h-8 text-gray-400" />
     </div>
-    <p class="text-brand-dark text-lg font-bold mb-1">No profile to show</p>
+    <p class="text-brand-dark text-sm font-bold mb-1">No profile to show</p>
     <p class="text-brand-light text-sm">
       This account doesn't have an employee profile -- that's expected for system accounts like Super Admin.
     </p>
+  </div>
   </div>
 </template>
 

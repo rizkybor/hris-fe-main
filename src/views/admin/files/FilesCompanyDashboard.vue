@@ -127,7 +127,7 @@ const handleDelete = async () => {
 </script>
 
 <template>
-  <div>
+  <div class="px-4 py-4">
     <!-- ================= STATS ================= -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div

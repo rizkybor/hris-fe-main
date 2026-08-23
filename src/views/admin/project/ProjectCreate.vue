@@ -210,6 +210,7 @@ watch(
 </script>
 
 <template>
+  <div class="px-4 py-4">
   <div class="flex flex-col lg:flex-row gap-5 items-start">
     <!-- Form Section -->
     <div class="flex-1 w-full">
@@ -988,5 +989,6 @@ watch(
         </div>
       </div>
     </div>
+  </div>
   </div>
 </template>

@@ -103,7 +103,7 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
 </script>
 
 <template>
-  <div>
+  <div class="px-4 py-4">
     <!-- Hero + Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div
