@@ -170,8 +170,15 @@ const handleDelete = async (project) => {
 
     <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
 
-    <div v-else-if="projects.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div v-else-if="projects.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-4">
       <CardList v-for="project in projects" :key="project.id" :data="project" @delete="handleDelete" />
+
+      <Pagination
+      :meta="meta"
+      :loading="loading"
+      @page-change="handlePageChange"
+      @per-page-change="handlePerPageChange"
+    />
     </div>
 
     <!-- Empty state: distinguishes "nothing matches the current filter" (with a way out) from "no projects exist yet" (with a way in) -->
@@ -211,12 +218,6 @@ const handleDelete = async (project) => {
         </RouterLink>
       </template>
     </div>
-    <Pagination
-      :meta="meta"
-      :loading="loading"
-      @page-change="handlePageChange"
-      @per-page-change="handlePerPageChange"
-    />
   </div>
   </div>
 
