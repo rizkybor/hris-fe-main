@@ -29,17 +29,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex items-center gap-3">
-      <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-        <Network class="w-5 h-5 text-[#0C51D9]" />
-      </div>
-      <div>
-        <h3 class="text-brand-dark text-lg font-bold">Organization Chart</h3>
-        <p class="text-brand-light text-sm">Departments, teams, and their members</p>
-      </div>
-    </div>
-
+  <div class="px-4 py-4">
     <div v-if="loading" class="space-y-4">
       <Skeleton v-for="i in 3" :key="i" height="140px" rounded="20px" />
     </div>
