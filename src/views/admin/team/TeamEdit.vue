@@ -156,9 +156,9 @@ watch(
 </script>
 
 <template>
-  <div>
+  <div class="px-4 py-4">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 mb-5">
+    <div class="bg-white mb-5">
       <div class="flex items-center gap-2.5">
         <div class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Users2 class="w-6 h-6 text-blue-600" />

@@ -27,7 +27,7 @@ const primaryRole = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="px-4 py-4 space-y-6">
     <DashboardWelcome />
 
     <SuperAdminOverview v-if="primaryRole === 'superadmin'" />

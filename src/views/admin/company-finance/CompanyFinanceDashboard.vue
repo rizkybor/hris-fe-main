@@ -476,6 +476,7 @@ watch(
 </script>
 
 <template>
+  <div class="px-4 py-4">
   <Statistics v-if="can('company-finance-statistic')" class="mb-6" />
 
   <div class="bg-white border border-[#DCDEDD] rounded-[14px] overflow-hidden">
@@ -831,4 +832,5 @@ watch(
     @cancel="showDeleteModal = false"
   >
   </DeleteConfirmationModal>
+</div>
 </template>

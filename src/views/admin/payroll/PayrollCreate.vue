@@ -37,7 +37,7 @@ const formatMonth = (month) => {
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-5 items-start">
+  <div class="flex flex-col lg:flex-row gap-5 px-4 py-4 items-start">
     <!-- Form Section -->
     <div class="flex-1 w-full">
       <form @submit.prevent="handleSubmit" class="space-y-6">
