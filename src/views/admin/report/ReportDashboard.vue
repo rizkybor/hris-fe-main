@@ -10,6 +10,7 @@ import {
   Building2Icon,
   ReceiptIcon,
   PercentIcon,
+  FolderKanban,
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
 import { can } from "@/helpers/permissionHelper";
@@ -18,7 +19,7 @@ import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 
 const reportStore = useReportStore();
-const { attendance, payroll, employee, finance, pph21, ppn, loading, exporting } =
+const { attendance, payroll, employee, finance, pph21, ppn, project, loading, exporting } =
   storeToRefs(reportStore);
 
 const tabs = [
@@ -28,11 +29,13 @@ const tabs = [
   { key: "finance", label: "Finance", icon: Building2Icon },
   { key: "pph21", label: "PPh 21", icon: ReceiptIcon },
   { key: "ppn", label: "PPN", icon: PercentIcon },
+  { key: "project", label: "Project", icon: FolderKanban },
 ];
 
 const activeTab = ref("attendance");
 const startDate = ref("");
 const endDate = ref("");
+const projectStatus = ref("");
 
 const canExport = computed(() => can("report-export"));
 
@@ -44,6 +47,7 @@ const currentReport = computed(() => {
     finance: finance.value,
     pph21: pph21.value,
     ppn: ppn.value,
+    project: project.value,
   }[activeTab.value];
 });
 
@@ -108,6 +112,13 @@ const summaryCards = computed(() => {
         { label: "Total DPP", value: formatCurrency(summary.total_dpp) },
         { label: "Total PPN", value: formatCurrency(summary.total_ppn) },
       ];
+    case "project":
+      return [
+        { label: "Total Projects", value: summary.total_projects ?? 0 },
+        { label: "Active", value: summary.active_projects ?? 0 },
+        { label: "Completed", value: summary.completed_projects ?? 0 },
+        { label: "Total Budget", value: formatCurrency(summary.total_budget) },
+      ];
     default:
       return [];
   }
@@ -163,12 +174,14 @@ const filterParams = computed(() => {
   const params = {};
   if (startDate.value) params.start_date = startDate.value;
   if (endDate.value) params.end_date = endDate.value;
+  if (activeTab.value === "project" && projectStatus.value) params.status = projectStatus.value;
   return params;
 });
 
 const reportMeta = computed(() => {
   if (activeTab.value === "attendance") return attendance.value.meta;
   if (activeTab.value === "payroll") return payroll.value.meta;
+  if (activeTab.value === "project") return project.value.meta;
   return null;
 });
 
@@ -191,6 +204,9 @@ async function loadReport(page = 1) {
       break;
     case "ppn":
       await reportStore.fetchPpnReport(filterParams.value);
+      break;
+    case "project":
+      await reportStore.fetchProjectReport({ ...filterParams.value, page });
       break;
   }
 }
@@ -306,7 +322,26 @@ onMounted(() => {
             class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
+        <div v-if="activeTab === 'project'" class="flex-1">
+          <label class="text-xs text-brand-light font-medium mb-1 block">Status</label>
+          <select
+            v-model="projectStatus"
+            @change="loadReport(1)"
+            class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+          >
+            <option value="">All Statuses</option>
+            <option value="draft">Draft</option>
+            <option value="planning">Planning</option>
+            <option value="active">Active</option>
+            <option value="on_hold">On Hold</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
       </div>
+      <p v-if="activeTab === 'project'" class="text-xs text-gray-400 -mt-1 mb-2">
+        Filtered by each project's Start Date falling within this range.
+      </p>
     </div>
 
     <!-- Summary Cards -->
@@ -375,6 +410,16 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Client</th>
               <th class="py-3 pr-4 font-semibold">DPP</th>
               <th class="py-3 pr-4 font-semibold">PPN</th>
+            </template>
+            <template v-else-if="activeTab === 'project'">
+              <th class="py-3 pr-4 font-semibold">Project Name</th>
+              <th class="py-3 pr-4 font-semibold">Leader</th>
+              <th class="py-3 pr-4 font-semibold">Status</th>
+              <th class="py-3 pr-4 font-semibold">Priority</th>
+              <th class="py-3 pr-4 font-semibold">Start Date</th>
+              <th class="py-3 pr-4 font-semibold">End Date</th>
+              <th class="py-3 pr-4 font-semibold">Budget</th>
+              <th class="py-3 pr-4 font-semibold">Tasks Done</th>
             </template>
           </tr>
         </thead>
@@ -472,6 +517,23 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ row.client_name }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.subtotal) }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.ppn_amount) }}</td>
+            </tr>
+          </template>
+          <template v-else-if="activeTab === 'project'">
+            <tr
+              v-for="(row, index) in tableRows"
+              :key="row.id"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+            >
+              <td class="py-3 pr-4 text-brand-light">{{ (project.meta.current_page - 1) * project.meta.per_page + index + 1 }}</td>
+              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name }}</td>
+              <td class="py-3 pr-4">{{ row.project_leader?.user?.name ?? "N/A" }}</td>
+              <td class="py-3 pr-4 capitalize">{{ (row.status || "").replace("_", " ") }}</td>
+              <td class="py-3 pr-4 capitalize">{{ row.priority }}</td>
+              <td class="py-3 pr-4">{{ formatDate(row.start_date) }}</td>
+              <td class="py-3 pr-4">{{ row.end_date ? formatDate(row.end_date) : "-" }}</td>
+              <td class="py-3 pr-4">{{ formatCurrency(row.budget) }}</td>
+              <td class="py-3 pr-4">{{ row.tasks_done_count }}/{{ row.tasks_total_count }}</td>
             </tr>
           </template>
         </tbody>
