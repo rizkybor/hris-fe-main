@@ -19,7 +19,7 @@ import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 
 const reportStore = useReportStore();
-const { attendance, payroll, employee, finance, pph21, ppn, project, loading, exporting } =
+const { attendance, payroll, employee, finance, pph21, ppn, project, pph23, loading, exporting } =
   storeToRefs(reportStore);
 
 const tabs = [
@@ -28,6 +28,7 @@ const tabs = [
   { key: "employee", label: "Employee", icon: Users },
   { key: "finance", label: "Finance", icon: Building2Icon },
   { key: "pph21", label: "PPh 21", icon: ReceiptIcon },
+  { key: "pph23", label: "PPh 23", icon: ReceiptIcon },
   { key: "ppn", label: "PPN", icon: PercentIcon },
   { key: "project", label: "Project", icon: FolderKanban },
 ];
@@ -48,6 +49,7 @@ const currentReport = computed(() => {
     pph21: pph21.value,
     ppn: ppn.value,
     project: project.value,
+    pph23: pph23.value,
   }[activeTab.value];
 });
 
@@ -118,6 +120,13 @@ const summaryCards = computed(() => {
         { label: "Active", value: summary.active_projects ?? 0 },
         { label: "Completed", value: summary.completed_projects ?? 0 },
         { label: "Total Budget", value: formatCurrency(summary.total_budget) },
+      ];
+    case "pph23":
+      return [
+        { label: "Receipts", value: summary.total_receipts ?? 0 },
+        { label: "Total Gross", value: formatCurrency(summary.total_gross) },
+        { label: "Total PPh 23 Withheld", value: formatCurrency(summary.total_pph23) },
+        { label: "Total Net Received", value: formatCurrency(summary.total_net_received) },
       ];
     default:
       return [];
@@ -208,6 +217,9 @@ async function loadReport(page = 1) {
     case "project":
       await reportStore.fetchProjectReport({ ...filterParams.value, page });
       break;
+    case "pph23":
+      await reportStore.fetchPph23Report(filterParams.value);
+      break;
   }
 }
 
@@ -294,6 +306,12 @@ onMounted(() => {
       >
         Data muncul setelah ada Invoice yang dibuat pada periode terkait dengan PPN (%) diisi lebih dari 0 saat pembuatan Invoice. Invoice tanpa PPN tidak akan muncul di sini.
       </div>
+      <div
+        v-if="activeTab === 'pph23'"
+        class="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-3"
+      >
+        Data muncul setelah ada Payment Receipt yang dibuat pada periode terkait dengan PPh 23 diisi (checkbox "Dipotong PPh 23?" saat membuat Payment Receipt). Payment Receipt tanpa PPh 23 tidak akan muncul di sini.
+      </div>
 
       <!-- Disclaimer -->
       <div
@@ -303,7 +321,7 @@ onMounted(() => {
         PPh 21 dihitung dengan metode tahunan (Pasal 17), belum menggunakan metode TER bulanan DJP. Gunakan sebagai draft rekap, verifikasi ulang sebelum diinput ke Coretax.
       </div>
       <div
-        v-if="activeTab === 'ppn' || activeTab === 'pph21'"
+        v-if="activeTab === 'ppn' || activeTab === 'pph21' || activeTab === 'pph23'"
         class="text-xs text-brand-light bg-gray-50 border border-[#DCDEDD] rounded-xl px-3 py-2 mb-3"
       >
         Laporan ini adalah rekap siap ekspor untuk membantu pengisian Coretax secara manual, bukan integrasi otomatis ke sistem DJP.
@@ -435,6 +453,16 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Budget</th>
               <th class="py-3 pr-4 font-semibold">Tasks Done</th>
             </template>
+            <template v-else-if="activeTab === 'pph23'">
+              <th class="py-3 pr-4 font-semibold">Date</th>
+              <th class="py-3 pr-4 font-semibold">Receipt No.</th>
+              <th class="py-3 pr-4 font-semibold">Invoice No.</th>
+              <th class="py-3 pr-4 font-semibold">Client</th>
+              <th class="py-3 pr-4 font-semibold">% PPh 23</th>
+              <th class="py-3 pr-4 font-semibold">Gross Amount</th>
+              <th class="py-3 pr-4 font-semibold">PPh 23 Withheld</th>
+              <th class="py-3 pr-4 font-semibold">Net Received</th>
+            </template>
           </tr>
         </thead>
         <tbody>
@@ -548,6 +576,23 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ row.end_date ? formatDate(row.end_date) : "-" }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.budget) }}</td>
               <td class="py-3 pr-4">{{ row.tasks_done_count }}/{{ row.tasks_total_count }}</td>
+            </tr>
+          </template>
+          <template v-else-if="activeTab === 'pph23'">
+            <tr
+              v-for="(row, idx) in tableRows"
+              :key="row.id ?? idx"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+            >
+              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
+              <td class="py-3 pr-4">{{ formatDate(row.date) }}</td>
+              <td class="py-3 pr-4">{{ row.receipt_number }}</td>
+              <td class="py-3 pr-4">{{ row.invoice?.invoice_number ?? "-" }}</td>
+              <td class="py-3 pr-4">{{ row.invoice?.client_name ?? row.received_from }}</td>
+              <td class="py-3 pr-4">{{ Number(row.pph23_percent) }}%</td>
+              <td class="py-3 pr-4">{{ formatCurrency(Number(row.amount) + Number(row.pph23_amount)) }}</td>
+              <td class="py-3 pr-4">{{ formatCurrency(row.pph23_amount) }}</td>
+              <td class="py-3 pr-4">{{ formatCurrency(row.amount) }}</td>
             </tr>
           </template>
         </tbody>
