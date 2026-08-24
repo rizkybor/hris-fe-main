@@ -109,7 +109,7 @@ const handleSubmit = async () => {
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
             <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
-            <p class="text-xs text-gray-400 mt-1">Used in the invoice number, e.g. INV/JCD-ZACO/...</p>
+            <p class="text-xs text-gray-400 mt-1">A short code only (no "/") — used in the invoice number, e.g. INV/JCD-ZACO/...</p>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
