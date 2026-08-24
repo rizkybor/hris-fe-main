@@ -594,17 +594,19 @@ onMounted(async () => {
   <!-- Tasks Section -->
   <TaskBoard />
 
-  <!-- Documents Section -->
-  <ProjectDocuments :project-id="id" />
+  <!-- Documents, Invoices, and Project Inspect Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+    <ProjectDocuments :project-id="id" />
 
-  <!-- Invoices Section (optional, only meaningful if any invoice links back to this project) -->
-  <ProjectInvoices :invoices="project.invoices || []" />
+    <!-- Invoices (optional, only meaningful if any invoice links back to this project) -->
+    <ProjectInvoices :invoices="project.invoices || []" />
 
-  <!-- Project Inspect (optional, Project Leader-only note) -->
-  <ProjectInspect
-    :project-id="id"
-    :note="project.inspect_note || ''"
-    :is-leader="isProjectLeader"
-    @updated="handleInspectNoteUpdated"
-  />
+    <!-- Project Inspect (optional, Project Leader-only note) -->
+    <ProjectInspect
+      :project-id="id"
+      :note="project.inspect_note || ''"
+      :is-leader="isProjectLeader"
+      @updated="handleInspectNoteUpdated"
+    />
+  </div>
 </template>

@@ -69,7 +69,7 @@ const handleSave = async () => {
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 mt-6">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 sm:w-10 sm:h-10 bg-purple-50 rounded-[10px] flex items-center justify-center shrink-0">
