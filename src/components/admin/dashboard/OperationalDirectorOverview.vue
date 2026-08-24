@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { Users, UsersRound, CalendarCheck, ClipboardList } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 import Statistics from "./Statistics.vue";
+import RealizedChart from "@/components/admin/project/list/RealizedChart.vue";
 import ProjectsAtRisk from "./ProjectsAtRisk.vue";
 import LatestEmployees from "./LatestEmployees.vue";
 import LatestTeams from "./LatestTeams.vue";
@@ -32,7 +33,11 @@ const canViewProjects = computed(() => can("project-list"));
       <ProjectsAtRisk v-if="canViewProjects" />
       <StickyNotesWidget />
     </div>
-    <Statistics />
+    <Statistics>
+      <template #besideBudget>
+        <RealizedChart compact />
+      </template>
+    </Statistics>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div
         v-if="canViewEmployees || canViewTeams"
