@@ -12,7 +12,9 @@ const { invoices } = storeToRefs(invoiceStore);
 const router = useRouter();
 
 const form = ref({
+  numbering_mode: "automatic",
   client_code: "",
+  receipt_number: "",
   date: new Date().toISOString().slice(0, 10),
   received_from: "",
   amount: 0,
@@ -32,8 +34,9 @@ onMounted(() => {
 const handleInvoiceSelect = () => {
   const invoice = invoices.value.find((i) => i.id === Number(form.value.invoice_id));
   if (invoice) {
-    form.value.client_code = invoice.client_code;
+    form.value.client_code = invoice.client_code || "";
     form.value.amount = Number(invoice.total);
+    form.value.for_payment_of = `berdasarkan Invoice No. ${invoice.invoice_number}`;
   }
 };
 
@@ -42,6 +45,11 @@ const handleSubmit = async () => {
   submitting.value = true;
   try {
     const payload = { ...form.value, invoice_id: form.value.invoice_id || null };
+    if (payload.numbering_mode === "manual") {
+      delete payload.client_code;
+    } else {
+      delete payload.receipt_number;
+    }
     await store.createReceipt(payload);
     router.push({ name: "admin.payment-receipts.dashboard" });
   } catch (error) {
@@ -62,7 +70,9 @@ const handleSubmit = async () => {
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Create Payment Receipt</h3>
-          <p class="text-brand-light text-sm">Receipt number will be generated automatically when saved</p>
+          <p class="text-brand-light text-sm">
+            {{ form.numbering_mode === "manual" ? "Receipt number will be used exactly as entered" : "Receipt number will be generated automatically when saved" }}
+          </p>
         </div>
       </div>
     </div>
@@ -85,10 +95,28 @@ const handleSubmit = async () => {
               </option>
             </select>
           </div>
-          <div>
+          <div class="md:col-span-2">
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Receipt Numbering</label>
+            <div class="flex items-center gap-4">
+              <label class="flex items-center gap-2 text-sm text-brand-dark">
+                <input type="radio" value="automatic" v-model="form.numbering_mode" />
+                Automatic
+              </label>
+              <label class="flex items-center gap-2 text-sm text-brand-dark">
+                <input type="radio" value="manual" v-model="form.numbering_mode" />
+                Manual
+              </label>
+            </div>
+          </div>
+          <div v-if="form.numbering_mode === 'automatic'">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
             <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
             <p class="text-xs text-gray-400 mt-1">A short code only (no "/") — used in the receipt number, e.g. RCP/JCD-ZACO/...</p>
+          </div>
+          <div v-else>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Receipt Number</label>
+            <input v-model="form.receipt_number" type="text" required placeholder="e.g. RCP/JCD-FASTTRACK/1805/26.001" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <p class="text-xs text-gray-400 mt-1">Used exactly as entered — must be unique.</p>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
