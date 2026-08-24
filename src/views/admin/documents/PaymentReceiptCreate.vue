@@ -5,10 +5,13 @@ import { storeToRefs } from "pinia";
 import { FileCheck2, Wallet } from "lucide-vue-next";
 import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
 import { useInvoiceStore } from "@/stores/invoice";
+import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 
 const store = usePaymentReceiptStore();
 const invoiceStore = useInvoiceStore();
 const { invoices } = storeToRefs(invoiceStore);
+const calculatorStore = useProjectCalculatorStore();
+const { pphTypes } = storeToRefs(calculatorStore);
 const router = useRouter();
 
 const form = ref({
@@ -16,27 +19,69 @@ const form = ref({
   client_code: "",
   receipt_number: "",
   date: new Date().toISOString().slice(0, 10),
-  received_from: "",
   amount: 0,
+  pph23_type: null,
+  pph23_percent: null,
+  pph23_amount: null,
+  received_from: "",
   for_payment_of: "",
   invoice_id: "",
   payment_status: "paid",
   recipient_name: "",
 });
 
+// The amount before any PPh 23 withholding -- `form.amount` (what the DB
+// stores) always means "amount actually received", so when PPh 23 applies
+// this is the base the withholding is computed from, kept separately so
+// toggling PPh 23 on/off doesn't lose the original figure.
+const grossAmount = ref(0);
+const applyPph23 = ref(false);
+
 const submitting = ref(false);
 const errorMessage = ref("");
 
 onMounted(() => {
   invoiceStore.fetchInvoices({ row_per_page: 100 });
+  calculatorStore.fetchPphTypes();
 });
+
+const recomputePph23 = () => {
+  if (!applyPph23.value) {
+    form.value.pph23_type = null;
+    form.value.pph23_percent = null;
+    form.value.pph23_amount = null;
+    form.value.amount = grossAmount.value;
+    return;
+  }
+  const percent = Number(form.value.pph23_percent) || 0;
+  const pphAmount = Math.round((grossAmount.value * percent) / 100);
+  form.value.pph23_amount = pphAmount;
+  form.value.amount = grossAmount.value - pphAmount;
+};
+
+const toggleApplyPph23 = () => {
+  if (applyPph23.value && !form.value.pph23_type) {
+    form.value.pph23_type = "pph23_npwp";
+    form.value.pph23_percent = 2;
+  }
+  recomputePph23();
+};
+
+const handlePph23TypeChange = () => {
+  const type = pphTypes.value.find((t) => t.value === form.value.pph23_type);
+  if (type?.default_rate != null) {
+    form.value.pph23_percent = type.default_rate;
+  }
+  recomputePph23();
+};
 
 const handleInvoiceSelect = () => {
   const invoice = invoices.value.find((i) => i.id === Number(form.value.invoice_id));
   if (invoice) {
     form.value.client_code = invoice.client_code || "";
-    form.value.amount = Number(invoice.total);
+    grossAmount.value = Number(invoice.total);
     form.value.for_payment_of = `berdasarkan Invoice No. ${invoice.invoice_number}`;
+    recomputePph23();
   }
 };
 
@@ -127,8 +172,8 @@ const handleSubmit = async () => {
             <input v-model="form.received_from" type="text" required placeholder="e.g. Mr. Zakaria - Zaco Law Firm" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Amount (Rp)</label>
-            <input v-model.number="form.amount" type="number" min="0" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">{{ applyPph23 ? "Gross Amount (Rp)" : "Amount (Rp)" }}</label>
+            <input v-model.number="grossAmount" @input="recomputePph23" type="number" min="0" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Payment Status</label>
@@ -137,6 +182,35 @@ const handleSubmit = async () => {
               <option value="partial">Partial</option>
             </select>
           </div>
+          <div class="md:col-span-2">
+            <label class="flex items-center gap-2 text-sm font-semibold text-brand-dark">
+              <input type="checkbox" v-model="applyPph23" @change="toggleApplyPph23" />
+              Dipotong PPh 23?
+            </label>
+            <p class="text-xs text-gray-400 mt-1">
+              Centang jika klien memotong PPh 23 saat membayar (mis. jasa teknik/IT). Amount di atas akan otomatis dihitung ulang sebagai jumlah bersih yang diterima.
+            </p>
+          </div>
+          <template v-if="applyPph23">
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 Type</label>
+              <select v-model="form.pph23_type" @change="handlePph23TypeChange" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+                <option v-for="type in pphTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 (%)</label>
+              <input v-model.number="form.pph23_percent" @input="recomputePph23" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 Amount</label>
+              <input :value="form.pph23_amount" type="text" readonly class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm bg-gray-50 text-gray-500" />
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Net Amount Received</label>
+              <input :value="form.amount" type="text" readonly class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm bg-gray-50 text-gray-500 font-semibold" />
+            </div>
+          </template>
           <div class="md:col-span-2">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">For Payment Of</label>
             <textarea v-model="form.for_payment_of" rows="2" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>

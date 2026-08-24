@@ -6,6 +6,7 @@ import { Plus, Trash2, Receipt, User, Package, Wallet, Briefcase } from "lucide-
 import { useInvoiceStore } from "@/stores/invoice";
 import { useBankAccountStore } from "@/stores/bankAccount";
 import { useProjectStore } from "@/stores/project";
+import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 
 const store = useInvoiceStore();
 const router = useRouter();
@@ -13,10 +14,19 @@ const bankAccountStore = useBankAccountStore();
 const { bankAccounts } = storeToRefs(bankAccountStore);
 const projectStore = useProjectStore();
 const { projects } = storeToRefs(projectStore);
+const calculatorStore = useProjectCalculatorStore();
+const { pphTypes } = storeToRefs(calculatorStore);
 onMounted(() => {
   bankAccountStore.fetchBankAccounts();
   projectStore.fetchProjects();
+  calculatorStore.fetchPphTypes();
 });
+
+// Purely informational heads-up that the client is expected to withhold
+// PPh 23 on payment -- never touches subtotal/total, which stay the
+// actual invoiced amount. The real withholding is recorded later on the
+// Payment Receipt once payment actually happens.
+const applyPph23 = ref(false);
 
 const form = ref({
   project_id: "",
@@ -36,6 +46,8 @@ const form = ref({
   bank_name: "",
   bank_account: "",
   terms: "Payment is due within 14 days of the invoice date.\nServices may be suspended if payment is not received.\nPayments already made are non-refundable.",
+  pph23_type: null,
+  pph23_percent: null,
 });
 
 const submitting = ref(false);
@@ -52,6 +64,24 @@ const handleBankNameChange = () => {
 const subtotal = computed(() => form.value.items.reduce((sum, item) => sum + (Number(item.total) || 0), 0));
 const ppnAmount = computed(() => Math.round(subtotal.value * ((Number(form.value.ppn_percentage) || 0) / 100)));
 const total = computed(() => subtotal.value + ppnAmount.value + (Number(form.value.admin_fee) || 0));
+const pph23EstimatedAmount = computed(() => Math.round((total.value * (Number(form.value.pph23_percent) || 0)) / 100));
+
+const toggleApplyPph23 = () => {
+  if (applyPph23.value && !form.value.pph23_type) {
+    form.value.pph23_type = "pph23_npwp";
+    form.value.pph23_percent = 2;
+  } else if (!applyPph23.value) {
+    form.value.pph23_type = null;
+    form.value.pph23_percent = null;
+  }
+};
+
+const handlePph23TypeChange = () => {
+  const type = pphTypes.value.find((t) => t.value === form.value.pph23_type);
+  if (type?.default_rate != null) {
+    form.value.pph23_percent = type.default_rate;
+  }
+};
 
 const handleSubmit = async () => {
   errorMessage.value = "";
@@ -235,6 +265,28 @@ const handleSubmit = async () => {
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Terms & Conditions</label>
             <textarea v-model="form.terms" rows="3" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
+          <div class="md:col-span-2">
+            <label class="flex items-center gap-2 text-sm font-semibold text-brand-dark">
+              <input type="checkbox" v-model="applyPph23" @change="toggleApplyPph23" />
+              Subject to PPh 23 withholding?
+            </label>
+            <p class="text-xs text-gray-400 mt-1">
+              Informational only — adds a note to the PDF that the client is expected to withhold PPh 23 on payment. Does not change Total Amount Due; the actual withholding is recorded later on the Payment Receipt.
+            </p>
+          </div>
+          <template v-if="applyPph23">
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 Type</label>
+              <select v-model="form.pph23_type" @change="handlePph23TypeChange" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+                <option v-for="type in pphTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 (%)</label>
+              <input v-model.number="form.pph23_percent" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+              <p class="text-xs text-gray-400 mt-1">Estimated withholding: Rp {{ pph23EstimatedAmount.toLocaleString("id-ID") }}</p>
+            </div>
+          </template>
         </div>
 
         <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
