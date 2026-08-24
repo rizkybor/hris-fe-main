@@ -13,7 +13,7 @@ import NotificationBell from "@/components/admin/NotificationBell.vue";
 import Avatar from "@/components/common/Avatar.vue";
 import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, RouterLink } from "vue-router";
 import _ from "lodash";
 
@@ -22,7 +22,29 @@ const { user } = storeToRefs(authStore);
 const { logout } = authStore;
 
 const isOpen = ref(false);
+const profileMenuRef = ref(null);
 const emit = defineEmits(["toggle-sidebar"]);
+
+// Closes the dropdown on an outside click or Escape -- without this it
+// only ever closes via an explicit menu action, so it's left open (and
+// intercepting clicks behind it) the moment the user clicks anywhere else
+// on the page.
+const handleOutsideClick = (event) => {
+  if (isOpen.value && profileMenuRef.value && !profileMenuRef.value.contains(event.target)) {
+    isOpen.value = false;
+  }
+};
+const handleEscape = (event) => {
+  if (event.key === "Escape") isOpen.value = false;
+};
+onMounted(() => {
+  document.addEventListener("click", handleOutsideClick);
+  document.addEventListener("keydown", handleEscape);
+});
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleOutsideClick);
+  document.removeEventListener("keydown", handleEscape);
+});
 
 const route = useRoute();
 
@@ -372,9 +394,12 @@ const confirmLogout = async () => {
         <div class="hidden sm:block w-px h-6 bg-[#DCDEDD] mx-2"></div>
 
         <!-- User Profile -->
-        <div class="relative z-[9999]">
-          <div
-            class="flex items-center gap-2 sm:gap-2.5 cursor-pointer rounded-full hover:bg-gray-50 transition-colors duration-150 py-1 pr-1"
+        <div ref="profileMenuRef" class="relative z-50">
+          <button
+            type="button"
+            class="flex items-center gap-2 sm:gap-2.5 rounded-full hover:bg-gray-50 transition-colors duration-150 py-1 pr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0C51D9] focus-visible:ring-offset-1"
+            aria-haspopup="true"
+            :aria-expanded="isOpen"
             @click="isOpen = !isOpen"
           >
             <Avatar :src="user?.profile_photo" :alt="user?.name" size="w-8 h-8 sm:w-9 sm:h-9" />
@@ -387,55 +412,62 @@ const confirmLogout = async () => {
               </p>
             </div>
             <ChevronDownIcon
-              class="w-4 h-4 text-gray-400 hidden sm:block"
+              class="w-4 h-4 text-gray-400 shrink-0 transition-transform duration-150"
               :class="{ 'rotate-180': isOpen }"
             />
-          </div>
+          </button>
 
           <!-- Dropdown Menu -->
-          <div
-            class="absolute right-0 top-full mt-2 w-56 bg-white border border-[#DCDEDD] rounded-[12px] shadow-md py-2 z-[9999]"
-            :class="{ hidden: !isOpen }"
-          >
-            <div class="px-4 py-3 border-b border-[#DCDEDD]">
-              <p class="text-sm font-semibold text-gray-900">
-                {{ user?.name }}
-              </p>
-              <p class="text-xs text-gray-500">{{ user?.email }}</p>
-              <p class="text-xs text-gray-400 mt-0.5">
-                {{ _.join(user?.roles, ", ").toUpperCase() }}
-              </p>
-            </div>
+          <Transition name="menu-pop">
+            <div
+              v-if="isOpen"
+              role="menu"
+              class="absolute right-0 top-full mt-2 w-56 bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg py-2 origin-top-right"
+            >
+              <div class="px-4 py-3 border-b border-[#DCDEDD]">
+                <p class="text-sm font-semibold text-gray-900 truncate">
+                  {{ user?.name }}
+                </p>
+                <p class="text-xs text-gray-500 truncate">{{ user?.email }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">
+                  {{ _.join(user?.roles, ", ").toUpperCase() }}
+                </p>
+              </div>
 
-            <div class="py-1">
-              <RouterLink
-                :to="{ name: 'employee.profile.edit' }"
-                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                @click="isOpen = false"
-              >
-                <UserIcon class="w-4 h-4 text-gray-400" />
-                Profil Pengguna
-              </RouterLink>
-              <RouterLink
-                :to="{ name: 'admin.settings.dashboard' }"
-                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                @click="isOpen = false"
-              >
-                <SettingsIcon class="w-4 h-4 text-gray-400" />
-                Pengaturan Sistem
-              </RouterLink>
-            </div>
+              <div class="py-1">
+                <RouterLink
+                  :to="{ name: 'employee.profile.edit' }"
+                  role="menuitem"
+                  class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  @click="isOpen = false"
+                >
+                  <UserIcon class="w-4 h-4 text-gray-400" />
+                  Profil Pengguna
+                </RouterLink>
+                <RouterLink
+                  :to="{ name: 'admin.settings.dashboard' }"
+                  role="menuitem"
+                  class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  @click="isOpen = false"
+                >
+                  <SettingsIcon class="w-4 h-4 text-gray-400" />
+                  Pengaturan Sistem
+                </RouterLink>
+              </div>
 
-            <div class="border-t border-[#DCDEDD] py-1">
-              <button
-                @click="handleLogout"
-                class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer text-left"
-              >
-                <LogOutIcon class="w-4 h-4" />
-                Keluar
-              </button>
+              <div class="border-t border-[#DCDEDD] py-1">
+                <button
+                  type="button"
+                  role="menuitem"
+                  @click="isOpen = false; handleLogout()"
+                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer text-left"
+                >
+                  <LogOutIcon class="w-4 h-4" />
+                  Keluar
+                </button>
+              </div>
             </div>
-          </div>
+          </Transition>
         </div>
       </div>
     </div>
@@ -453,3 +485,15 @@ const confirmLogout = async () => {
     />
   </header>
 </template>
+
+<style scoped>
+.menu-pop-enter-active,
+.menu-pop-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.menu-pop-enter-from,
+.menu-pop-leave-to {
+  opacity: 0;
+  transform: scale(0.96) translateY(-4px);
+}
+</style>

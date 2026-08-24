@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed, useSlots } from "vue";
+import { onMounted, computed } from "vue";
 import {
   TrendingUpIcon,
   UsersIcon,
@@ -10,7 +10,6 @@ import {
   BanknoteIcon,
 } from "lucide-vue-next";
 import QuickActions from "./QuickActions.vue";
-import ProjectBudgetChart from "@/components/admin/project/list/BudgetChart.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useDashboardStore } from "@/stores/dashboard";
 import { usePayrollStore } from "@/stores/payroll";
@@ -25,16 +24,6 @@ const payrollStore = usePayrollStore();
 const showPayrollHighlight = computed(
   () => !can("employee-create") && can("payroll-statistics")
 );
-
-// Same gate the Projects page itself uses for its stats, so only roles
-// that can already see project data get the budget overview here too.
-const showProjectBudget = computed(() => can("project-statistic"));
-
-// Lets a parent dashboard (e.g. Manager's Search section) sit beside the
-// budget chart on desktop, without forcing the chart to half-width on
-// dashboards that don't pass anything into this slot.
-const slots = useSlots();
-const hasBesideBudgetSlot = computed(() => !!slots.besideBudget);
 
 onMounted(() => {
   dashboardStore.fetchStatistics();
@@ -55,7 +44,7 @@ const payrollStats = computed(() => payrollStore.statistics);
 
 <template>
   <!-- Stats Layout -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
     <!-- Our Employees Card (spans 2 rows on the left) -->
     <div
       class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-4 sm:p-5"
@@ -251,14 +240,5 @@ const payrollStats = computed(() => payrollStore.statistics);
         </div>
       </div>
     </div>
-  </div>
-
-  <div
-    v-if="showProjectBudget || hasBesideBudgetSlot"
-    class="mb-6"
-    :class="hasBesideBudgetSlot ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 items-start' : ''"
-  >
-    <ProjectBudgetChart v-if="showProjectBudget" compact />
-    <slot name="besideBudget" />
   </div>
 </template>

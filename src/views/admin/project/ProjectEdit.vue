@@ -30,6 +30,8 @@ import {
   SearchX,
   Building2,
   ClipboardCheck,
+  Link2,
+  Trash2,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash";
@@ -91,7 +93,17 @@ const form = ref({
   team_id: "",
   member_employee_ids: [],
   vendor_id: "",
+  access_project_name: "",
+  access_project_url: "",
+  access_github_name: "",
+  access_github_url: "",
+  access_figma_name: "",
+  access_figma_url: "",
+  additional_access: [],
 });
+
+const addAdditionalAccess = () => form.value.additional_access.push({ name: "", url: "" });
+const removeAdditionalAccess = (i) => form.value.additional_access.splice(i, 1);
 
 const projectPhotoInput = ref(null);
 const leaderModal = ref(false);
@@ -178,6 +190,7 @@ const handleFetchProject = async () => {
     .filter((memberId) => memberId !== form.value.project_leader_id);
 
   form.value.vendor_id = response.vendor_id ?? "";
+  form.value.additional_access = response.additional_access || [];
 
   // ProjectResource includes inspect_note, but it's tracked separately
   // (see isLeader/inspectNoteDraft above) so it's never accidentally
@@ -199,6 +212,7 @@ const handleSubmit = async () => {
   }
   payload.budget =
     parseInt(String(form.value.budget).replace(/[^0-9]/g, "")) || 0;
+  payload.additional_access = form.value.additional_access.filter((item) => item.name && item.url);
   await updateProject(id, payload);
 
   if (success.value) {
@@ -299,15 +313,15 @@ watch(
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
-              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
+              class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center"
             >
-              <Briefcase class="w-6 h-6 text-blue-600" />
+              <Briefcase class="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-xl font-bold">
+              <h3 class="text-brand-dark text-lg font-bold">
                 Project Information
               </h3>
-              <p class="text-brand-light text-sm font-normal">
+              <p class="text-brand-light text-xs font-normal">
                 Basic project details and description
               </p>
             </div>
@@ -316,8 +330,8 @@ watch(
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <!-- Project Photo -->
             <div class="md:col-span-2 mb-4">
-              <label class="block text-brand-dark text-base font-semibold mb-1"
-                >Project Photo</label
+              <label class="block text-brand-dark text-sm font-semibold mb-1"
+                >Project Photo (optional)</label
               >
               <div class="flex flex-col sm:flex-row items-start gap-4">
                 <div class="w-full sm:w-64 h-40">
@@ -373,7 +387,7 @@ watch(
                     class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
                   >
                     <ImagePlus class="w-4 h-4 text-gray-600" />
-                    <span class="text-brand-dark text-base font-semibold"
+                    <span class="text-brand-dark text-sm font-semibold"
                       >Select Photo</span
                     >
                   </button>
@@ -382,7 +396,7 @@ watch(
                     class="hidden border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
                   >
                     <Eye class="w-4 h-4 text-gray-600" />
-                    <span class="text-brand-dark text-base font-semibold"
+                    <span class="text-brand-dark text-sm font-semibold"
                       >Preview Photo</span
                     >
                   </button>
@@ -391,7 +405,7 @@ watch(
                     class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
                   >
                     <X class="w-4 h-4 text-gray-600" />
-                    <span class="text-brand-dark text-base font-semibold"
+                    <span class="text-brand-dark text-sm font-semibold"
                       >Remove Photo</span
                     >
                   </button>
@@ -409,7 +423,7 @@ watch(
                 name="name"
                 type="text"
                 v-model="form.name"
-                label="Project Name *"
+                label="Project Name"
                 placeholder="Enter project name"
                 :required="true"
                 :error="error?.name?.join(', ')"
@@ -422,7 +436,7 @@ watch(
 
             <!-- Priority -->
             <div class="md:col-span-2 mb-4">
-              <label class="block text-brand-dark text-base font-semibold mb-1"
+              <label class="block text-brand-dark text-sm font-semibold mb-1"
                 >Priority *</label
               >
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -432,12 +446,12 @@ watch(
                 >
                   <div class="flex items-center gap-3">
                     <div
-                      class="w-10 h-10 bg-gray-50 rounded-[12px] flex items-center justify-center"
+                      class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center"
                     >
                       <Minus class="w-5 h-5 text-gray-600" />
                     </div>
                     <div class="flex flex-col">
-                      <p class="text-brand-dark text-base font-semibold">Low</p>
+                      <p class="text-brand-dark text-sm font-semibold">Low</p>
                     </div>
                   </div>
                   <div
@@ -465,12 +479,12 @@ watch(
                 >
                   <div class="flex items-center gap-3">
                     <div
-                      class="w-10 h-10 bg-yellow-50 rounded-[12px] flex items-center justify-center"
+                      class="w-9 h-9 bg-yellow-50 rounded-[10px] flex items-center justify-center"
                     >
                       <Flag class="w-5 h-5 text-yellow-600" />
                     </div>
                     <div class="flex flex-col">
-                      <p class="text-brand-dark text-base font-semibold">
+                      <p class="text-brand-dark text-sm font-semibold">
                         Medium
                       </p>
                     </div>
@@ -500,12 +514,12 @@ watch(
                 >
                   <div class="flex items-center gap-3">
                     <div
-                      class="w-10 h-10 bg-red-50 rounded-[12px] flex items-center justify-center"
+                      class="w-9 h-9 bg-red-50 rounded-[10px] flex items-center justify-center"
                     >
                       <Zap class="w-5 h-5 text-red-600" />
                     </div>
                     <div class="flex flex-col">
-                      <p class="text-brand-dark text-base font-semibold">
+                      <p class="text-brand-dark text-sm font-semibold">
                         High
                       </p>
                     </div>
@@ -540,7 +554,7 @@ watch(
                   id="type"
                   name="type"
                   v-model="form.type"
-                  label="Project Type *"
+                  label="Project Type"
                   placeholder="Select project type"
                   :options="[
                     { value: 'web_development', label: 'Web Development' },
@@ -566,7 +580,7 @@ watch(
                   name="start_date"
                   type="date"
                   v-model="form.start_date"
-                  label="Start Date *"
+                  label="Start Date"
                   :required="true"
                   :error="error?.start_date?.join(', ')"
                 >
@@ -583,8 +597,7 @@ watch(
                   name="end_date"
                   type="date"
                   v-model="form.end_date"
-                  label="End Date *"
-                  :required="true"
+                  label="End Date (optional)"
                   :error="error?.end_date?.join(', ')"
                 >
                   <template #icon>
@@ -617,7 +630,7 @@ watch(
                 id="description"
                 name="description"
                 v-model="form.description"
-                label="Project Description"
+                label="Project Description (optional)"
                 placeholder="Describe the project's objectives and scope..."
                 :rows="4"
                 :error="error?.description?.join(', ')"
@@ -630,17 +643,121 @@ watch(
           </div>
         </div>
 
+        <!-- Project Access Section (optional quick links) -->
+        <div id="project-access-section" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-violet-50 rounded-[10px] flex items-center justify-center">
+              <Link2 class="w-5 h-5 text-violet-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-lg font-bold">Project Access</h3>
+              <p class="text-brand-light text-xs font-normal">Optional — quick links for this project (opens in a new tab)</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Input
+              id="access_project_name"
+              name="access_project_name"
+              v-model="form.access_project_name"
+              label="Access Project Name (optional)"
+              placeholder="e.g. Staging Site"
+            />
+            <Input
+              id="access_project_url"
+              name="access_project_url"
+              type="url"
+              v-model="form.access_project_url"
+              label="Access Project Link (optional)"
+              placeholder="https://..."
+            />
+
+            <Input
+              id="access_github_name"
+              name="access_github_name"
+              v-model="form.access_github_name"
+              label="Access Github Name (optional)"
+              placeholder="e.g. Repository"
+            />
+            <Input
+              id="access_github_url"
+              name="access_github_url"
+              type="url"
+              v-model="form.access_github_url"
+              label="Access Github Link (optional)"
+              placeholder="https://github.com/..."
+            />
+
+            <Input
+              id="access_figma_name"
+              name="access_figma_name"
+              v-model="form.access_figma_name"
+              label="Access Figma Name (optional)"
+              placeholder="e.g. Design File"
+            />
+            <Input
+              id="access_figma_url"
+              name="access_figma_url"
+              type="url"
+              v-model="form.access_figma_url"
+              label="Access Figma Link (optional)"
+              placeholder="https://figma.com/..."
+            />
+          </div>
+
+          <div class="mt-6">
+            <div class="flex items-center justify-between mb-3">
+              <label class="text-sm font-semibold text-brand-dark">Additional Access (optional)</label>
+              <button
+                type="button"
+                @click="addAdditionalAccess"
+                class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1"
+              >
+                <Plus class="w-4 h-4" /> Add Link
+              </button>
+            </div>
+            <div
+              v-for="(item, i) in form.additional_access"
+              :key="i"
+              class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 mb-3 items-start"
+            >
+              <input
+                v-model="item.name"
+                type="text"
+                placeholder="Name (e.g. Postman Collection)"
+                class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm"
+              />
+              <input
+                v-model="item.url"
+                type="url"
+                placeholder="https://..."
+                class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm"
+              />
+              <button
+                type="button"
+                @click="removeAdditionalAccess(i)"
+                class="text-red-500 shrink-0 p-2 justify-self-start"
+              >
+                <Trash2 class="w-4 h-4" />
+              </button>
+            </div>
+            <p v-if="form.additional_access.length === 0" class="text-xs text-gray-400">
+              No additional links added yet.
+            </p>
+          </div>
+        </div>
+
         <!-- Team Assignment Section -->
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
-              class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+              class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center"
             >
-              <Users class="w-6 h-6 text-purple-600" />
+              <Users class="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-xl font-bold">Team Assignment</h3>
-              <p class="text-brand-light text-sm font-normal">
+              <h3 class="text-brand-dark text-lg font-bold">Team Assignment</h3>
+              <p class="text-brand-light text-xs font-normal">
                 Assign a whole Team, or pick a leader and members individually
               </p>
             </div>
@@ -671,7 +788,7 @@ watch(
           <!-- By Team -->
           <div v-if="form.team_assignment_mode === 'team'" class="space-y-4">
             <div>
-              <label class="block text-brand-dark text-base font-semibold mb-3">Select a Team</label>
+              <label class="block text-brand-dark text-sm font-semibold mb-3">Select a Team <span class="text-red-600">*</span></label>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label
                   class="group team-card flex items-center justify-between w-full min-h-[70px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer hover:border-[#0C51D9] hover:border-2"
@@ -684,7 +801,7 @@ watch(
                       <Code class="w-5 h-5 text-white relative z-10" />
                     </div>
                     <div class="flex flex-col">
-                      <p class="text-brand-dark text-base font-semibold">{{ team.name }}</p>
+                      <p class="text-brand-dark text-sm font-semibold">{{ team.name }}</p>
                       <p class="text-brand-light text-sm">{{ team.members_count }} members • {{ team.leader?.name || "No lead" }}</p>
                     </div>
                   </div>
@@ -716,7 +833,7 @@ watch(
           <div v-else class="space-y-6">
             <!-- Project Leader -->
             <div>
-              <label class="block text-brand-dark text-base font-semibold mb-1">Select Project Leader</label>
+              <label class="block text-brand-dark text-sm font-semibold mb-1">Select Project Leader (optional)</label>
               <button
                 type="button"
                 @click="leaderModal = true"
@@ -738,7 +855,7 @@ watch(
                     icon-size="w-5 h-5"
                   />
                   <div class="flex-1">
-                    <h4 class="text-brand-dark text-base font-semibold">{{ selectedLeader?.user?.name }}</h4>
+                    <h4 class="text-brand-dark text-sm font-semibold">{{ selectedLeader?.user?.name }}</h4>
                     <p class="text-brand-light text-sm">{{ selectedLeader?.job_information?.job_title }}</p>
                   </div>
                   <button type="button" @click="handleRemoveLeader" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -751,7 +868,7 @@ watch(
             <!-- Members -->
             <div>
               <div class="flex items-center justify-between mb-1.5">
-                <label class="text-base font-semibold text-brand-dark block">Members</label>
+                <label class="text-sm font-semibold text-brand-dark block">Members (optional)</label>
                 <span v-if="form.member_employee_ids.length" class="text-xs text-[#0C51D9] font-semibold flex items-center gap-1">
                   <Users class="w-3.5 h-3.5" />
                   {{ form.member_employee_ids.length }} selected
@@ -793,15 +910,15 @@ watch(
         <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
-              class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
+              class="w-10 h-10 bg-orange-50 rounded-[10px] flex items-center justify-center"
             >
-              <Settings class="w-6 h-6 text-orange-600" />
+              <Settings class="w-5 h-5 text-orange-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-xl font-bold">
+              <h3 class="text-brand-dark text-lg font-bold">
                 Project Settings
               </h3>
-              <p class="text-brand-light text-sm font-normal">
+              <p class="text-brand-light text-xs font-normal">
                 Configure project status, budget
               </p>
             </div>
@@ -815,7 +932,7 @@ watch(
                 name="budget"
                 type="text"
                 v-model="form.budget"
-                label="Budget"
+                label="Budget (optional)"
                 placeholder="100.000.000"
                 :error="error?.budget?.join(', ')"
               >
@@ -825,8 +942,8 @@ watch(
 
             <!-- Initial Project Status (Full Width) -->
             <div class="md:col-span-2 mb-4">
-              <label class="block text-brand-dark text-base font-semibold mb-1"
-                >Initial Project Status</label
+              <label class="block text-brand-dark text-sm font-semibold mb-1"
+                >Initial Project Status <span class="text-red-600">*</span></label
               >
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <!-- Active Option -->
@@ -835,12 +952,12 @@ watch(
                 >
                   <div class="flex items-center gap-3">
                     <div
-                      class="w-10 h-10 bg-green-50 rounded-[12px] flex items-center justify-center"
+                      class="w-9 h-9 bg-green-50 rounded-[10px] flex items-center justify-center"
                     >
                       <PlayCircle class="w-5 h-5 text-green-600" />
                     </div>
                     <div class="flex flex-col">
-                      <p class="text-brand-dark text-base font-semibold">
+                      <p class="text-brand-dark text-sm font-semibold">
                         Active
                       </p>
                     </div>
@@ -870,12 +987,12 @@ watch(
                 >
                   <div class="flex items-center gap-3">
                     <div
-                      class="w-10 h-10 bg-blue-50 rounded-[12px] flex items-center justify-center"
+                      class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center"
                     >
                       <ClipboardList class="w-5 h-5 text-blue-600" />
                     </div>
                     <div class="flex flex-col">
-                      <p class="text-brand-dark text-base font-semibold">
+                      <p class="text-brand-dark text-sm font-semibold">
                         Planning
                       </p>
                     </div>
@@ -905,12 +1022,12 @@ watch(
                 >
                   <div class="flex items-center gap-3">
                     <div
-                      class="w-10 h-10 bg-yellow-50 rounded-[12px] flex items-center justify-center"
+                      class="w-9 h-9 bg-yellow-50 rounded-[10px] flex items-center justify-center"
                     >
                       <PauseCircle class="w-5 h-5 text-yellow-600" />
                     </div>
                     <div class="flex flex-col">
-                      <p class="text-brand-dark text-base font-semibold">
+                      <p class="text-brand-dark text-sm font-semibold">
                         On Hold
                       </p>
                     </div>
@@ -940,12 +1057,12 @@ watch(
                 >
                   <div class="flex items-center gap-3">
                     <div
-                      class="w-10 h-10 bg-gray-50 rounded-[12px] flex items-center justify-center"
+                      class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center"
                     >
                       <FileText class="w-5 h-5 text-gray-600" />
                     </div>
                     <div class="flex flex-col">
-                      <p class="text-brand-dark text-base font-semibold">
+                      <p class="text-brand-dark text-sm font-semibold">
                         Draft
                       </p>
                     </div>
@@ -976,12 +1093,12 @@ watch(
         <!-- Project Inspect (optional, Project Leader-only) -->
         <div v-if="isLeader" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
-            <div class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center">
-              <ClipboardCheck class="w-6 h-6 text-purple-600" />
+            <div class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center">
+              <ClipboardCheck class="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-xl font-bold">Project Inspect</h3>
-              <p class="text-brand-light text-sm font-normal">
+              <h3 class="text-brand-dark text-lg font-bold">Project Inspect</h3>
+              <p class="text-brand-light text-xs font-normal">
                 Optional — visible only to you as the Project Leader on this form
               </p>
             </div>
@@ -997,7 +1114,7 @@ watch(
             :disabled="loading"
             class="flex-1 sm:flex-none btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2"
           >
-            <span class="text-brand-white text-sm sm:text-base font-semibold"
+            <span class="text-brand-white text-sm font-semibold"
               >Update Project</span
             >
             <Plus class="w-4 h-4 text-white" />
@@ -1007,7 +1124,7 @@ watch(
             onclick="window.history.back()"
             class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2"
           >
-            <span class="text-brand-dark text-sm sm:text-base font-semibold">Cancel</span>
+            <span class="text-brand-dark text-sm font-semibold">Cancel</span>
           </button>
         </div>
       </form>
@@ -1029,15 +1146,15 @@ watch(
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div
-              class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
+              class="w-10 h-10 bg-green-50 rounded-[10px] flex items-center justify-center"
             >
-              <Crown class="w-6 h-6 text-green-600" />
+              <Crown class="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-xl font-bold">
+              <h3 class="text-brand-dark text-lg font-bold">
                 Select Project Leader
               </h3>
-              <p class="text-brand-light text-sm font-normal">
+              <p class="text-brand-light text-xs font-normal">
                 Choose an employee to lead this project
               </p>
             </div>
@@ -1087,10 +1204,10 @@ watch(
                 rounded="rounded-[12px]"
               />
               <div class="flex-1">
-                <h4 class="text-brand-dark text-base font-bold">
+                <h4 class="text-brand-dark text-sm font-bold">
                   {{ employee.user?.name }}
                 </h4>
-                <p class="text-brand-light text-sm font-normal">
+                <p class="text-brand-light text-xs font-normal">
                   {{ employee.job_information?.job_title }}
                 </p>
               </div>
@@ -1101,7 +1218,7 @@ watch(
         <!-- No Results Message -->
         <div class="text-center py-8" v-if="employees.length === 0">
           <SearchX class="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <h4 class="text-brand-dark text-base font-semibold mb-1">
+          <h4 class="text-brand-dark text-sm font-semibold mb-1">
             No employees found
           </h4>
           <p class="text-brand-light text-sm">
