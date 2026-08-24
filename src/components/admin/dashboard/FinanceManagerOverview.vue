@@ -1,6 +1,7 @@
 <script setup>
 import { Banknote, Landmark, ReceiptText, FileText, BarChart3 } from "lucide-vue-next";
 import Statistics from "./Statistics.vue";
+import RealizedChart from "@/components/admin/project/list/RealizedChart.vue";
 import DashboardQuickLinks from "./DashboardQuickLinks.vue";
 import StickyNotesWidget from "./StickyNotesWidget.vue";
 
@@ -26,7 +27,11 @@ const quickLinks = [
 <template>
   <div class="space-y-6">
     <StickyNotesWidget />
-    <Statistics />
+    <Statistics>
+      <template #besideBudget>
+        <RealizedChart compact />
+      </template>
+    </Statistics>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <DashboardQuickLinks title="Finance & Operations" :links="quickLinks" class="lg:col-span-3" />
     </div>
