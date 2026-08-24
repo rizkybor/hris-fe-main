@@ -281,6 +281,20 @@ onMounted(() => {
         </button>
       </div>
 
+      <!-- When this data appears -->
+      <div
+        v-if="activeTab === 'pph21'"
+        class="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-3"
+      >
+        Data muncul setelah ada Payroll yang sudah di-Run untuk periode terkait, dan hasil perhitungannya menghasilkan PPh 21 terutang (gaji karyawan melebihi PTKP). Belum ada Payroll berjalan pada periode ini = tabel akan kosong.
+      </div>
+      <div
+        v-if="activeTab === 'ppn'"
+        class="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-3"
+      >
+        Data muncul setelah ada Invoice yang dibuat pada periode terkait dengan PPN (%) diisi lebih dari 0 saat pembuatan Invoice. Invoice tanpa PPN tidak akan muncul di sini.
+      </div>
+
       <!-- Disclaimer -->
       <div
         v-if="activeTab === 'pph21'"
