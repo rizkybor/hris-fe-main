@@ -21,7 +21,9 @@ onMounted(() => {
 const form = ref({
   project_id: "",
   faktur_pajak_number: "",
+  numbering_mode: "automatic",
   client_code: "",
+  invoice_number: "",
   client_name: "",
   client_pic: "",
   client_email: "",
@@ -55,7 +57,13 @@ const handleSubmit = async () => {
   errorMessage.value = "";
   submitting.value = true;
   try {
-    await store.createInvoice(form.value);
+    const payload = { ...form.value };
+    if (payload.numbering_mode === "manual") {
+      delete payload.client_code;
+    } else {
+      delete payload.invoice_number;
+    }
+    await store.createInvoice(payload);
     router.push({ name: "admin.invoices.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
@@ -75,7 +83,9 @@ const handleSubmit = async () => {
         </div>
         <div>
           <h3 class="text-brand-dark text-lg font-bold">Create Invoice</h3>
-          <p class="text-brand-light text-sm">Invoice number will be generated automatically when saved</p>
+          <p class="text-brand-light text-sm">
+            {{ form.numbering_mode === "manual" ? "Invoice number will be used exactly as entered" : "Invoice number will be generated automatically when saved" }}
+          </p>
         </div>
       </div>
     </div>
@@ -105,11 +115,29 @@ const handleSubmit = async () => {
           </div>
           <h4 class="text-brand-dark font-bold">Client Information</h4>
         </div>
+        <div class="mb-4">
+          <label class="text-sm font-semibold text-brand-dark mb-1 block">Invoice Numbering</label>
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-2 text-sm text-brand-dark">
+              <input type="radio" value="automatic" v-model="form.numbering_mode" />
+              Automatic
+            </label>
+            <label class="flex items-center gap-2 text-sm text-brand-dark">
+              <input type="radio" value="manual" v-model="form.numbering_mode" />
+              Manual
+            </label>
+          </div>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          <div v-if="form.numbering_mode === 'automatic'">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
             <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
-            <p class="text-xs text-gray-400 mt-1">A short code only (no "/") — used in the invoice number, e.g. INV/JCD-ZACO/...</p>
+            <p class="text-xs text-gray-400 mt-1">A short code only (no "/") — combined with the date and sequence, e.g. INV/JCD-ZACO/1805/26.001</p>
+          </div>
+          <div v-else class="md:col-span-2">
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Invoice Number</label>
+            <input v-model="form.invoice_number" type="text" required placeholder="e.g. INV/JCD-FASTTRACK/1805/26.001" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <p class="text-xs text-gray-400 mt-1">Used exactly as entered — must be unique.</p>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
