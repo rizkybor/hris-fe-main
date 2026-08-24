@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import Input from "@/components/common/form/Input.vue";
 import Alert from "@/components/common/Alert.vue";
+import Avatar from "@/components/common/Avatar.vue";
 import { User as UserIcon, Mail, Lock, Camera, ArrowLeft } from "lucide-vue-next";
 
 const router = useRouter();
@@ -49,7 +50,12 @@ const handlePhotoSelect = (e) => {
 };
 
 const handleSubmit = async () => {
-  await updateProfile(form.value);
+  const payload = { ...form.value };
+  if (!payload.password) {
+    delete payload.password;
+    delete payload.password_confirmation;
+  }
+  await updateProfile(payload);
 };
 </script>
 
@@ -145,6 +151,7 @@ const handleSubmit = async () => {
               id="password"
               name="password"
               type="password"
+              autocomplete="new-password"
               v-model="form.password"
               label="New Password"
               placeholder="Enter new password (optional)"
@@ -164,6 +171,7 @@ const handleSubmit = async () => {
               id="password_confirmation"
               name="password_confirmation"
               type="password"
+              autocomplete="new-password"
               v-model="form.password_confirmation"
               label="Confirm Password"
               placeholder="Confirm new password"
@@ -201,13 +209,7 @@ const handleSubmit = async () => {
                 <div
                   class="w-32 h-32 relative z-10 flex items-center justify-center"
                 >
-                  <img
-                    :src="form.profile_photo_url"
-                    alt="Profile Photo"
-                    class="w-32 h-32 object-cover rounded-full"
-                    v-if="form.profile_photo_url"
-                  />
-                  <div class="w-32 h-32 rounded-full bg-gray-100" v-else></div>
+                  <Avatar :src="form.profile_photo_url" :alt="form.name" size="w-32 h-32" />
                 </div>
                 <!-- Hover overlay -->
                 <div

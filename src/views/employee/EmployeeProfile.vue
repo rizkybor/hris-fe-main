@@ -78,31 +78,37 @@ const idCardJobTitle = computed(() => idCardStrLimit(idCardUcwords(profile.value
 const idCardPhone = computed(() => idCardStrLimit(profile.value?.phone || "-", 24));
 const idCardEmail = computed(() => idCardStrLimit(profile.value?.user?.email || "-", 26));
 
-// Mirrors the PHP line-splitting in id-card.blade.php exactly (same
-// $maxChars=11 budget, same greedy word-fill + truncation fallback), so the
-// ID card preview breaks the name onto the same two lines, at the same
+// Mirrors the PHP line-splitting in id-card.blade.php exactly, so the ID
+// card preview breaks the name onto the same two lines, at the same
 // position, as the downloaded PDF -- rather than leaving it to the
 // browser's own text wrapping, which could pick different break points.
-const ID_CARD_NAME_MAX_CHARS = 11;
+//
+// The degree/title suffix (e.g. ", S.Kom.") is treated as part of the word
+// it's attached to, never split from it. Line 1 always takes the first two
+// name words; everything after that -- including the trailing degree --
+// goes to line 2. A name of two words or fewer (with or without a degree)
+// fits entirely on line 1.
+const ID_CARD_NAME_MAX_CHARS = 25;
 const idCardNameLines = computed(() => {
   const name = (profile.value?.user?.name ?? "-").trim();
-  const words = name.split(/\s+/);
-  let line1 = "";
-  let consumed = 0;
-  for (let i = 0; i < words.length; i++) {
-    const candidate = line1 === "" ? words[i] : `${line1} ${words[i]}`;
-    if (candidate.length <= ID_CARD_NAME_MAX_CHARS) {
-      line1 = candidate;
-      consumed = i + 1;
-    } else {
-      break;
-    }
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return { line1: "-", line2: "" };
+
+  const commaIdx = words.findIndex((word) => word.includes(","));
+  const nameWordCount = commaIdx === -1 ? words.length : commaIdx + 1;
+
+  let line1, line2;
+  if (nameWordCount > 2) {
+    line1 = words.slice(0, 2).join(" ");
+    line2 = words.slice(2).join(" ");
+  } else {
+    line1 = words.join(" ");
+    line2 = "";
   }
-  if (line1 === "") {
-    line1 = words[0].slice(0, ID_CARD_NAME_MAX_CHARS - 1) + "…";
-    consumed = 1;
+
+  if (line1.length > ID_CARD_NAME_MAX_CHARS) {
+    line1 = line1.slice(0, ID_CARD_NAME_MAX_CHARS - 1) + "…";
   }
-  let line2 = words.slice(consumed).join(" ");
   if (line2.length > ID_CARD_NAME_MAX_CHARS) {
     line2 = line2.slice(0, ID_CARD_NAME_MAX_CHARS - 1) + "…";
   }
@@ -904,14 +910,14 @@ onMounted(() => {
 
               <div
                 class="absolute text-white font-bold text-left whitespace-nowrap overflow-hidden"
-                style="top: 31.75mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 5.65mm; line-height: 1;"
+                style="top: 31.75mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 4.55mm; line-height: 1;"
               >
                 {{ idCardNameLines.line1 }}
               </div>
               <div
                 v-if="idCardNameLines.line2 !== ''"
                 class="absolute text-white font-bold text-left whitespace-nowrap overflow-hidden"
-                style="top: 38.1mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 5.65mm; line-height: 1;"
+                style="top: 38.1mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 4.55mm; line-height: 1;"
               >
                 {{ idCardNameLines.line2 }}
               </div>

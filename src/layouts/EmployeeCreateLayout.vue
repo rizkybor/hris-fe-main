@@ -1,5 +1,6 @@
 <script setup>
 import Stepper from "@/components/admin/employee/create/Stepper.vue";
+import Avatar from "@/components/common/Avatar.vue";
 import { ChevronDownIcon, ArrowLeft } from "lucide-vue-next";
 import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
@@ -85,12 +86,6 @@ watch(
   }
 );
 
-const getInitials = (name) => {
-  if (!name) return "";
-  const nameParts = name.split(" ");
-  const initials = nameParts.map((part) => part.charAt(0).toUpperCase());
-  return initials.slice(0, 2).join("");
-};
 </script>
 
 <template>
@@ -122,20 +117,11 @@ const getInitials = (name) => {
 
           <!-- User Profile -->
           <div class="flex items-center gap-2.5 shrink-0">
-            <img
+            <Avatar
               :src="user?.profile_photo"
-              alt="User Avatar"
-              class="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover"
-              v-if="user?.profile_photo"
+              :alt="user?.name"
+              size="w-9 h-9 sm:w-11 sm:h-11"
             />
-            <div
-              v-else
-              class="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center bg-gray-100"
-            >
-              <span class="text-gray-400 text-sm font-semibold">
-                {{ getInitials(user?.name) }}
-              </span>
-            </div>
             <div class="text-left hidden md:block">
               <p class="text-brand-dark text-sm font-semibold">
                 {{ user?.name }}

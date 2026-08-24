@@ -27,6 +27,7 @@
         :min="min"
         :step="step"
         :readonly="readonly"
+        :autocomplete="autocomplete"
         :value="modelValue"
         :class="[
           'w-full border rounded-[12px] transition-all duration-300',
@@ -74,6 +75,7 @@ const props = defineProps({
   step: { type: [String, Number], default: undefined },
   readonly: { type: Boolean, default: false },
   onlyNumber: { type: Boolean, default: false },
+  autocomplete: { type: String, default: undefined },
 });
 const emit = defineEmits(["update:modelValue"]);
 
