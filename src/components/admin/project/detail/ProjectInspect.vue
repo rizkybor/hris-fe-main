@@ -69,8 +69,8 @@ const handleSave = async () => {
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full flex flex-col">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5 shrink-0">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 sm:w-10 sm:h-10 bg-purple-50 rounded-[10px] flex items-center justify-center shrink-0">
           <ClipboardCheck class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
@@ -93,7 +93,9 @@ const handleSave = async () => {
       </button>
     </div>
 
-    <!-- Editing (Project Leader only) -->
+    <!-- Editing (Project Leader only) -- left unconstrained (not capped
+         like the read-only view below) so actively writing a long note
+         isn't cramped into a tiny scroll box. -->
     <div v-if="editing">
       <RichTextEditor v-model="draft" placeholder="Write your inspection notes here..." />
       <p v-if="errorMessage" class="text-red-500 text-xs mt-2">{{ errorMessage }}</p>
@@ -116,8 +118,10 @@ const handleSave = async () => {
       </div>
     </div>
 
-    <!-- Read-only content -->
-    <div v-else-if="note">
+    <!-- Read-only content -- capped + scrollable so a long note doesn't
+         grow this card taller than its Documents/Invoices siblings in the
+         same row -- keeps the row's height fixed regardless of content. -->
+    <div v-else-if="note" class="overflow-y-auto max-h-[320px] sm:max-h-[420px] pr-1 -mr-1">
       <RichTextEditor :model-value="note" disabled />
     </div>
 

@@ -118,8 +118,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full flex flex-col">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5 shrink-0">
       <div class="flex items-center gap-3">
         <div
           class="w-9 h-9 sm:w-10 sm:h-10 bg-teal-50 rounded-[10px] flex items-center justify-center shrink-0"
@@ -144,22 +144,26 @@ onMounted(() => {
       </button>
     </div>
 
-    <div v-if="loading" class="text-center py-8 text-xs text-gray-400">
-      Loading documents...
-    </div>
+    <!-- Capped + scrollable so a project with lots of documents doesn't
+         grow this card taller than its Invoices/Inspect siblings in the
+         same row -- keeps the row's height fixed regardless of content. -->
+    <div class="overflow-y-auto max-h-[320px] sm:max-h-[420px] pr-1 -mr-1">
+      <div v-if="loading" class="text-center py-8 text-xs text-gray-400">
+        Loading documents...
+      </div>
 
-    <div
-      v-else-if="documents.length === 0"
-      class="text-center py-10 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
-    >
-      <FileIcon class="w-9 h-9 text-gray-300 mx-auto mb-3" />
-      <p class="text-sm font-semibold">No documents uploaded yet</p>
-      <p class="text-xs text-gray-400">
-        Documents are optional — upload proposals, client files, or other supporting files.
-      </p>
-    </div>
+      <div
+        v-else-if="documents.length === 0"
+        class="text-center py-10 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
+      >
+        <FileIcon class="w-9 h-9 text-gray-300 mx-auto mb-3" />
+        <p class="text-sm font-semibold">No documents uploaded yet</p>
+        <p class="text-xs text-gray-400">
+          Documents are optional — upload proposals, client files, or other supporting files.
+        </p>
+      </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div
         v-for="document in documents"
         :key="document.id"
@@ -211,6 +215,7 @@ onMounted(() => {
             <Trash2 class="w-3.5 h-3.5 text-gray-600 group-hover:text-red-600" />
           </button>
         </div>
+      </div>
       </div>
     </div>
 

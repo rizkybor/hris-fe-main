@@ -41,6 +41,7 @@ import TaskBoard from "@/components/admin/project/detail/TaskBoard.vue";
 import ProjectDocuments from "@/components/admin/project/detail/ProjectDocuments.vue";
 import ProjectInvoices from "@/components/admin/project/detail/ProjectInvoices.vue";
 import ProjectInspect from "@/components/admin/project/detail/ProjectInspect.vue";
+import ProjectAccess from "@/components/admin/project/detail/ProjectAccess.vue";
 import Avatar from "@/components/common/Avatar.vue";
 
 const route = useRoute();
@@ -609,4 +610,16 @@ onMounted(async () => {
       @updated="handleInspectNoteUpdated"
     />
   </div>
+
+  <!-- Project Access (optional quick links) -->
+  <ProjectAccess
+    :access-project-name="project.access_project_name || ''"
+    :access-project-url="project.access_project_url || ''"
+    :access-github-name="project.access_github_name || ''"
+    :access-github-url="project.access_github_url || ''"
+    :access-figma-name="project.access_figma_name || ''"
+    :access-figma-url="project.access_figma_url || ''"
+    :additional-access="project.additional_access || []"
+    class="mt-6"
+  />
 </template>
