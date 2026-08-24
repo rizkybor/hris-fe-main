@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, watch } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref, watch, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
 import { VueDraggableNext } from "vue-draggable-next";
 import { GripVertical, RotateCcw, CheckCircle2, AlertCircle, Loader2, RefreshCw } from "lucide-vue-next";
@@ -16,28 +16,76 @@ onMounted(() => {
   store.fetchWidgets();
 });
 
-// macOS/iOS-style widget sizes: "small" = 1 of 3 grid columns, "medium" =
-// 2 of 3, "large" = the full row. Bar width previews the fraction so the
-// picker reads at a glance without needing labels.
+// macOS/iOS-style widget sizes, on a 6-column base grid so every size
+// tiles cleanly with itself: "small" = 2 of 6 columns (three per row),
+// "medium" = 3 of 6 (exactly two per row -- a 3-column base would leave a
+// stray leftover column and make that impossible), "large" = all 6 (full
+// row). Bar width previews the fraction so the picker reads at a glance
+// without needing labels.
 const SIZE_OPTIONS = [
   { value: "small", label: "Small (1/3 width)", bar: "6px" },
-  { value: "medium", label: "Medium (2/3 width)", bar: "11px" },
+  { value: "medium", label: "Medium (1/2 width)", bar: "11px" },
   { value: "large", label: "Large (full width)", bar: "16px" },
 ];
-const SIZE_COL_SPAN = {
-  small: "lg:col-span-1",
-  medium: "lg:col-span-2",
-  large: "lg:col-span-3",
-};
+const SIZE_UNITS = { small: 2, medium: 3, large: 6 };
+const GRID_COLUMNS = 6;
 
 // VueDraggableNext mutates this array directly (splice) on drag; the
 // computed setter is what turns that mutation into a persisted order.
+// Its v-for must iterate this exact array (not a derived copy) for
+// SortableJS's index tracking to work, which is why placement is computed
+// as a side effect onto these same objects below rather than as a
+// separate mapped array.
 const orderedWidgets = computed({
   get: () => widgets.value,
   set: (newOrder) => {
     widgets.value = newOrder;
     store.queueSaveOrder(newOrder.map((w) => w.key));
   },
+});
+
+// Left to the browser, CSS Grid auto-placement recomputes from scratch on
+// every change -- resizing one widget can visually ripple through ones
+// that come after it in ways that are hard to predict/reason about.
+// Packing it explicitly here instead means a widget's row/column only
+// ever depends on itself and whatever precedes it in `orderedWidgets`:
+// resizing widget N can only shift widgets *after* N in the list, and
+// widgets before N are provably untouched -- never a surprise jump
+// elsewhere. Writes gridRow/gridColumn directly onto the existing widget
+// objects (Vue 3's reactivity tracks new properties on an already-reactive
+// object) so the values are available to the same elements VueDraggableNext
+// is managing above.
+watchEffect(() => {
+  let cursor = 0;
+  let row = 1;
+
+  for (const widget of orderedWidgets.value) {
+    const units = SIZE_UNITS[widget.size] || SIZE_UNITS.small;
+    if (cursor + units > GRID_COLUMNS) {
+      row += 1;
+      cursor = 0;
+    }
+    widget.gridRow = row;
+    widget.gridColumn = `${cursor + 1} / span ${units}`;
+    cursor += units;
+  }
+});
+
+// The explicit placement above only makes sense once the grid is actually
+// multi-column (lg: and up) -- below that everything stacks in a single
+// column, so the inline placement styles are simply not applied there.
+const isDesktopGrid = ref(false);
+let mediaQuery;
+const handleMediaChange = (event) => {
+  isDesktopGrid.value = event.matches;
+};
+onMounted(() => {
+  mediaQuery = window.matchMedia("(min-width: 1024px)");
+  isDesktopGrid.value = mediaQuery.matches;
+  mediaQuery.addEventListener("change", handleMediaChange);
+});
+onBeforeUnmount(() => {
+  mediaQuery?.removeEventListener("change", handleMediaChange);
 });
 
 // "saved" is a transient confirmation, not a permanent state -- fades back
@@ -64,8 +112,8 @@ const handleResetLayout = async () => {
 </script>
 
 <template>
-  <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-    <Skeleton v-for="i in 6" :key="i" width="100%" height="220px" rounded="14px" />
+  <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-6 gap-4">
+    <Skeleton v-for="i in 6" :key="i" class="lg:col-span-3" width="100%" height="220px" rounded="14px" />
   </div>
 
   <div v-else-if="error && orderedWidgets.length === 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-8 text-center">
@@ -97,21 +145,29 @@ const handleResetLayout = async () => {
       :animation="200"
       handle=".widget-drag-handle"
       ghost-class="widget-drag-ghost"
-      class="grid grid-cols-1 lg:grid-cols-3 gap-4"
+      class="grid grid-cols-1 lg:grid-cols-6 gap-4"
     >
       <div
         v-for="widget in orderedWidgets"
         :key="widget.key"
         class="relative group"
-        :class="SIZE_COL_SPAN[widget.size] || 'lg:col-span-1'"
+        :style="isDesktopGrid ? { gridColumn: widget.gridColumn, gridRow: widget.gridRow } : {}"
       >
-        <!-- Controls row: always visible on touch devices (no hover
-             state), fades in on desktop hover so it doesn't clutter the
-             widget's own content. -->
+        <!-- Overlay controls -- float just above the card's own top edge
+             (outside its content box) rather than on top of it, so they
+             never sit over a widget's own top-right UI (e.g. Project
+             Budget's Monthly/Yearly toggle lives in that exact corner).
+             `pointer-events-none` while invisible is required, not just
+             cosmetic: CSS opacity alone doesn't stop an element from
+             capturing clicks, so without it this row would silently
+             swallow clicks meant for whatever sits underneath even while
+             faded out. Always visible + interactive on touch devices
+             (no hover state to fade in from), overlay-styled with a
+             shadow so it reads as floating chrome, not embedded content. -->
         <div
-          class="absolute top-3 right-3 z-10 flex items-center gap-1.5 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+          class="absolute -top-3 right-3 z-20 flex items-center gap-1.5 opacity-70 pointer-events-auto sm:opacity-0 sm:pointer-events-none transition-opacity sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto"
         >
-          <div class="hidden lg:flex items-center gap-0.5 bg-white/90 border border-[#DCDEDD] rounded-md p-1">
+          <div class="hidden lg:flex items-center gap-0.5 bg-white/70 backdrop-blur-sm border border-[#DCDEDD]/70 rounded-md shadow-sm hover:bg-white/90 transition-colors p-1">
             <button
               v-for="opt in SIZE_OPTIONS"
               :key="opt.value"
@@ -127,7 +183,7 @@ const handleResetLayout = async () => {
               ></span>
             </button>
           </div>
-          <div class="widget-drag-handle cursor-grab active:cursor-grabbing bg-white/90 border border-[#DCDEDD] rounded-md p-1.5" :title="`Drag to reorder: ${DASHBOARD_WIDGET_REGISTRY[widget.key]?.title ?? widget.key}`">
+          <div class="widget-drag-handle cursor-grab active:cursor-grabbing bg-white/70 backdrop-blur-sm border border-[#DCDEDD]/70 rounded-md shadow-sm hover:bg-white/90 transition-colors p-1.5" :title="`Drag to reorder: ${DASHBOARD_WIDGET_REGISTRY[widget.key]?.title ?? widget.key}`">
             <GripVertical class="w-4 h-4 text-gray-500" />
           </div>
         </div>
