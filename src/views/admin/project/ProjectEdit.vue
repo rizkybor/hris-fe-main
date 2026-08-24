@@ -29,6 +29,7 @@ import {
   Search,
   SearchX,
   Building2,
+  ClipboardCheck,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash";
@@ -36,11 +37,13 @@ import { useProjectStore } from "@/stores/project";
 import { useTeamStore } from "@/stores/team";
 import { useEmployeeStore } from "@/stores/employee";
 import { useVendorsStore } from "@/stores/vendor";
+import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import router from "@/router";
 import { useRoute } from "vue-router";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import RichTextEditor from "@/components/common/RichTextEditor.vue";
 
 const route = useRoute();
 const id = route.params.id;
@@ -48,6 +51,16 @@ const id = route.params.id;
 const projectStore = useProjectStore();
 const { loading, error, success } = storeToRefs(projectStore);
 const { updateProject, fetchProject } = projectStore;
+
+const authStore = useAuthStore();
+
+// Project Inspect is a Project Leader-only field (enforced server-side
+// too, see ProjectController::update()) -- kept out of `form` entirely so
+// a non-leader's submit never sends the `inspect_note` key at all, rather
+// than sending a stale/empty value that would otherwise trip the
+// backend's leader check on every edit.
+const isLeader = ref(false);
+const inspectNoteDraft = ref("");
 
 const teamStore = useTeamStore();
 const { teams } = storeToRefs(teamStore);
@@ -166,6 +179,14 @@ const handleFetchProject = async () => {
 
   form.value.vendor_id = response.vendor_id ?? "";
 
+  // ProjectResource includes inspect_note, but it's tracked separately
+  // (see isLeader/inspectNoteDraft above) so it's never accidentally
+  // present in `form` -- strip it back out of this bulk-assigned copy.
+  delete form.value.inspect_note;
+  const myEmployeeId = authStore.user?.employee_profile?.id;
+  isLeader.value = !!myEmployeeId && myEmployeeId === response.leader?.id;
+  inspectNoteDraft.value = response.inspect_note || "";
+
   if (form.value.budget) {
     form.value.budget = formatRupiahInput(form.value.budget);
   }
@@ -173,6 +194,9 @@ const handleFetchProject = async () => {
 
 const handleSubmit = async () => {
   const payload = { ...form.value };
+  if (isLeader.value) {
+    payload.inspect_note = inspectNoteDraft.value;
+  }
   payload.budget =
     parseInt(String(form.value.budget).replace(/[^0-9]/g, "")) || 0;
   await updateProject(id, payload);
@@ -947,6 +971,23 @@ watch(
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Project Inspect (optional, Project Leader-only) -->
+        <div v-if="isLeader" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center">
+              <ClipboardCheck class="w-6 h-6 text-purple-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-xl font-bold">Project Inspect</h3>
+              <p class="text-brand-light text-sm font-normal">
+                Optional — visible only to you as the Project Leader on this form
+              </p>
+            </div>
+          </div>
+
+          <RichTextEditor v-model="inspectNoteDraft" placeholder="Write your inspection notes here..." />
         </div>
 
         <!-- Form Actions -->

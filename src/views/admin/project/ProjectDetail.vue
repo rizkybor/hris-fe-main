@@ -1,6 +1,7 @@
 <script setup>
 import { useProjectStore } from "@/stores/project";
 import { useTaskStore } from "@/stores/task";
+import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import {
   Briefcase,
@@ -39,6 +40,7 @@ import _ from "lodash";
 import TaskBoard from "@/components/admin/project/detail/TaskBoard.vue";
 import ProjectDocuments from "@/components/admin/project/detail/ProjectDocuments.vue";
 import ProjectInvoices from "@/components/admin/project/detail/ProjectInvoices.vue";
+import ProjectInspect from "@/components/admin/project/detail/ProjectInspect.vue";
 import Avatar from "@/components/common/Avatar.vue";
 
 const route = useRoute();
@@ -46,6 +48,15 @@ const id = route.params.id;
 
 const projectStore = useProjectStore();
 const { fetchProject, downloadProgressReport } = projectStore;
+
+const authStore = useAuthStore();
+const isProjectLeader = computed(() => {
+  const myEmployeeId = authStore.user?.employee_profile?.id;
+  return !!myEmployeeId && myEmployeeId === project.value.leader?.id;
+});
+const handleInspectNoteUpdated = (note) => {
+  project.value.inspect_note = note;
+};
 
 const exporting = ref(false);
 const handleExportProgress = async () => {
@@ -588,4 +599,12 @@ onMounted(async () => {
 
   <!-- Invoices Section (optional, only meaningful if any invoice links back to this project) -->
   <ProjectInvoices :invoices="project.invoices || []" />
+
+  <!-- Project Inspect (optional, Project Leader-only note) -->
+  <ProjectInspect
+    :project-id="id"
+    :note="project.inspect_note || ''"
+    :is-leader="isProjectLeader"
+    @updated="handleInspectNoteUpdated"
+  />
 </template>

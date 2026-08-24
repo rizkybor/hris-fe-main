@@ -122,6 +122,24 @@ export const useProjectStore = defineStore("project", {
             }
         },
 
+        // Project Inspect: a rich-text note only the Project Leader may
+        // write (enforced server-side in ProjectController::update()) --
+        // a dedicated, single-field action rather than routing it through
+        // updateProject() so the Detail page's inline editor doesn't need
+        // to resend the whole form (photo included) just to save a note.
+        async updateInspectNote(id, note) {
+            this.error = null;
+
+            try {
+                const response = await axiosInstance.put(`projects/${id}`, { inspect_note: note });
+
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
+
         async deleteProject(id) {
             this.loading = true;
 
