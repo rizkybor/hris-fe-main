@@ -8,6 +8,28 @@ html {
     color: #0C1C3C;
 }
 
+/* Condensed display face for the ID Card's name -- self-hosted (not a
+   Google Fonts CDN link) so it renders identically to the DomPDF-generated
+   card, which embeds this same local file. */
+@font-face {
+    font-family: "Anton";
+    font-weight: 400;
+    font-style: normal;
+    src: url("/fonts/Anton-Regular.ttf") format("truetype");
+    font-display: swap;
+}
+/* Anton ships as a single (already very bold/black) weight -- this
+   duplicate registration under font-weight:bold mirrors the one in the
+   DomPDF card (see id-card.blade.php) so `font-weight:bold` resolves to
+   this same file instead of a fallback face. */
+@font-face {
+    font-family: "Anton";
+    font-weight: 700;
+    font-style: normal;
+    src: url("/fonts/Anton-Regular.ttf") format("truetype");
+    font-display: swap;
+}
+
 .blue-gradient {
     background: linear-gradient(265.5deg, #0C51D9 5.45%, #6F96E3 52%, #0C51D9 100.36%);
 }

@@ -7,6 +7,7 @@ import {
   UserCog,
   ChevronRight,
   Tags,
+  Landmark,
   DatabaseBackup,
   Users2Icon,
   Award,
@@ -66,6 +67,13 @@ const categories = [
         title: "Letter & Division Codes",
         description: "Manage the letter code and division code reference lists",
         permission: "letter-menu",
+      },
+      {
+        to: { name: "admin.settings.bank-accounts" },
+        icon: Landmark,
+        title: "Bank Accounts",
+        description: "Manage the Bank Name and Account Number choices used in Invoice's Payment & Tax section",
+        permission: "invoice-menu",
       },
       {
         to: { name: "admin.settings.sdm-fields" },
