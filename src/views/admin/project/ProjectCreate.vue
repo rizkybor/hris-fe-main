@@ -29,12 +29,14 @@ import {
   Zap,
   Search,
   SearchX,
+  Building2,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash";
 import { useProjectStore } from "@/stores/project";
 import { useTeamStore } from "@/stores/team";
 import { useEmployeeStore } from "@/stores/employee";
+import { useVendorsStore } from "@/stores/vendor";
 import { storeToRefs } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import router from "@/router";
@@ -51,6 +53,10 @@ const employeeStore = useEmployeeStore();
 const { employees } = storeToRefs(employeeStore);
 const { fetchEmployees } = employeeStore;
 
+const vendorsStore = useVendorsStore();
+const { vendors } = storeToRefs(vendorsStore);
+const vendorOptions = computed(() => vendors.value.map((vendor) => ({ value: vendor.id, label: vendor.name })));
+
 const form = ref({
   name: "",
   type: "",
@@ -66,6 +72,7 @@ const form = ref({
   team_assignment_mode: "employee",
   team_id: "",
   member_employee_ids: [],
+  vendor_id: "",
 });
 
 const projectPhotoInput = ref(null);
@@ -175,6 +182,7 @@ onMounted(async () => {
   await fetchEmployees({
     limit: 6,
   });
+  await vendorsStore.fetchAllVendors();
 
   const { data } = await axiosInstance.get("employees");
   memberCandidates.value = data.data;
@@ -508,6 +516,23 @@ watch(
                   </template>
                 </Input>
               </div>
+            </div>
+
+            <!-- Vendor (optional) -->
+            <div class="md:col-span-2 mb-4">
+              <Select
+                id="vendor_id"
+                name="vendor_id"
+                v-model="form.vendor_id"
+                label="Vendor (optional)"
+                placeholder="No vendor"
+                :options="vendorOptions"
+              >
+                <template #icon>
+                  <Building2 class="h-5 w-5 text-gray-400" />
+                </template>
+              </Select>
+              <p class="text-brand-light text-xs mt-1">Link this project to the vendor it's contracted through, if any.</p>
             </div>
 
             <!-- Project Description -->
