@@ -911,13 +911,13 @@ onMounted(() => {
               <div
                 v-if="idCardNameLines.line2 !== ''"
                 class="absolute text-white font-bold text-left whitespace-nowrap overflow-hidden"
-                style="top: 40.92mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 5.65mm; line-height: 1;"
+                style="top: 38.1mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 5.65mm; line-height: 1;"
               >
                 {{ idCardNameLines.line2 }}
               </div>
 
-              <div class="absolute bg-white" style="top: 55.75mm; left: 4.94mm; width: 8.47mm; height: 0.71mm;"></div>
-              <p class="absolute text-white text-left whitespace-nowrap overflow-hidden" style="top: 57.86mm; left: 4.94mm; right: 4.94mm; font-size: 3.18mm; font-family: 'Helvetica', 'Arial', sans-serif;">
+              <div class="absolute bg-white" style="top: 52.92mm; left: 4.94mm; width: 8.47mm; height: 0.71mm;"></div>
+              <p class="absolute text-white text-left whitespace-nowrap overflow-hidden" style="top: 55.04mm; left: 4.94mm; right: 4.94mm; font-size: 3.18mm; font-family: 'Helvetica', 'Arial', sans-serif;">
                 {{ idCardJobTitle }}
               </p>
 

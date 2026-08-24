@@ -9,6 +9,9 @@ export const useVendorsStore = defineStore("vendors", {
       items: [],
       meta: { current_page: 1, per_page: 10, total: 0, last_page: 1 },
     },
+    // Full (non-paginated) vendor list -- for pickers like the Project
+    // Create/Edit form's optional "Vendor" dropdown.
+    vendors: [],
     vendorsAttachmentData: {
       items: [],
       meta: { current_page: 1, per_page: 10, total: 0, last_page: 1 },
@@ -37,6 +40,18 @@ export const useVendorsStore = defineStore("vendors", {
 
   actions: {
     /* ======================= VENDORS ======================= */
+    async fetchAllVendors(params = {}) {
+      this.loading = true;
+      try {
+        const response = await axiosInstance.get("/vendors", { params });
+        this.vendors = response.data.data;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async fetchVendorsPaginated(params) {
       this.loading = true;
       try {

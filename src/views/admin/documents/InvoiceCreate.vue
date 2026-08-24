@@ -2,17 +2,24 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { Plus, Trash2, Receipt, User, Package, Wallet } from "lucide-vue-next";
+import { Plus, Trash2, Receipt, User, Package, Wallet, Briefcase } from "lucide-vue-next";
 import { useInvoiceStore } from "@/stores/invoice";
 import { useBankAccountStore } from "@/stores/bankAccount";
+import { useProjectStore } from "@/stores/project";
 
 const store = useInvoiceStore();
 const router = useRouter();
 const bankAccountStore = useBankAccountStore();
 const { bankAccounts } = storeToRefs(bankAccountStore);
-onMounted(() => bankAccountStore.fetchBankAccounts());
+const projectStore = useProjectStore();
+const { projects } = storeToRefs(projectStore);
+onMounted(() => {
+  bankAccountStore.fetchBankAccounts();
+  projectStore.fetchProjects();
+});
 
 const form = ref({
+  project_id: "",
   faktur_pajak_number: "",
   client_code: "",
   client_name: "",
@@ -74,6 +81,23 @@ const handleSubmit = async () => {
     </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 bg-orange-50 rounded-[9px] flex items-center justify-center shrink-0">
+            <Briefcase class="w-4 h-4 text-orange-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Project Link (Optional)</h4>
+        </div>
+        <div>
+          <label class="text-sm font-semibold text-brand-dark mb-1 block">Project</label>
+          <select v-model="form.project_id" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+            <option value="">No project</option>
+            <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Link this invoice to a project so it shows up on that project's page.</p>
+        </div>
+      </div>
+
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center gap-2 mb-4">
           <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
