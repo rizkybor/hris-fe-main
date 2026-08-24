@@ -66,6 +66,49 @@ const acknowledgeReview = async (id: number) => {
 const profile = ref<any>(null);
 const profileNotFound = ref(false);
 
+// These three mirror PHP behavior exactly (ucwords() and Str::limit()'s
+// defaults) so the ID card preview's job title/phone/email match the
+// downloaded PDF's content character-for-character, rather than relying on
+// this app's own capitalize() helper (which only capitalizes the first
+// letter of the whole string, not each word) or CSS ellipsis (which
+// truncates by pixel width, not by the same character count as the PDF).
+const idCardUcwords = (str) => (str || "").replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+const idCardStrLimit = (str, limit, end = "...") => (str.length > limit ? str.slice(0, limit) + end : str);
+const idCardJobTitle = computed(() => idCardStrLimit(idCardUcwords(profile.value?.job_information?.job_title || "-"), 28));
+const idCardPhone = computed(() => idCardStrLimit(profile.value?.phone || "-", 24));
+const idCardEmail = computed(() => idCardStrLimit(profile.value?.user?.email || "-", 26));
+
+// Mirrors the PHP line-splitting in id-card.blade.php exactly (same
+// $maxChars=11 budget, same greedy word-fill + truncation fallback), so the
+// ID card preview breaks the name onto the same two lines, at the same
+// position, as the downloaded PDF -- rather than leaving it to the
+// browser's own text wrapping, which could pick different break points.
+const ID_CARD_NAME_MAX_CHARS = 11;
+const idCardNameLines = computed(() => {
+  const name = (profile.value?.user?.name ?? "-").trim();
+  const words = name.split(/\s+/);
+  let line1 = "";
+  let consumed = 0;
+  for (let i = 0; i < words.length; i++) {
+    const candidate = line1 === "" ? words[i] : `${line1} ${words[i]}`;
+    if (candidate.length <= ID_CARD_NAME_MAX_CHARS) {
+      line1 = candidate;
+      consumed = i + 1;
+    } else {
+      break;
+    }
+  }
+  if (line1 === "") {
+    line1 = words[0].slice(0, ID_CARD_NAME_MAX_CHARS - 1) + "…";
+    consumed = 1;
+  }
+  let line2 = words.slice(consumed).join(" ");
+  if (line2.length > ID_CARD_NAME_MAX_CHARS) {
+    line2 = line2.slice(0, ID_CARD_NAME_MAX_CHARS - 1) + "…";
+  }
+  return { line1, line2 };
+});
+
 const activeTab = ref("overview");
 const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
 const tabs = [
@@ -851,54 +894,58 @@ onMounted(() => {
         </div>
 
         <!-- Card Preview -->
-        <div class="flex justify-center">
-          <div
-            class="relative w-full max-w-[420px] aspect-[85.6/53.98] rounded-[16px] p-5 sm:p-6 overflow-hidden shadow-lg"
-            style="background: linear-gradient(135deg, #0b1d51 0%, #142a6b 100%);"
-          >
-            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl"></div>
+        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-center" style="gap: 3rem;">
+          <div class="text-center">
+            <p class="text-brand-light text-xs font-semibold uppercase tracking-wide mb-2">Front</p>
+            <!-- Card, front: the design team's own background artwork,
+                 with the employee's name/title/id/contact overlaid. -->
+            <div class="relative rounded-[3px] overflow-hidden shadow-xl" style="width: 54mm; height: 85.6mm;">
+              <img src="/images/idcard-front-bg.png" class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
 
-            <div class="relative z-10 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <img src="/images/jcd-only-color.png" alt="Logo" class="w-5 h-5 sm:w-6 sm:h-6 object-contain" />
-                <p class="text-white text-[10px] sm:text-xs font-bold leading-tight tracking-wide">
-                  JENDELA CAKRA<br />DIGITAL
-                </p>
+              <div
+                class="absolute text-white font-bold text-left whitespace-nowrap overflow-hidden"
+                style="top: 31.75mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 5.65mm; line-height: 1;"
+              >
+                {{ idCardNameLines.line1 }}
               </div>
-              <span class="bg-white text-[#0b1d51] text-[9px] sm:text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full">
-                ID CARD
-              </span>
-            </div>
-
-            <div class="relative z-10 flex items-center gap-3 sm:gap-4 mt-4 sm:mt-6">
-              <Avatar
-                :src="profile?.user?.profile_photo"
-                :alt="profile?.user?.name"
-                size="w-14 h-14 sm:w-16 sm:h-16"
-                icon-size="w-6 h-6 sm:w-7 sm:h-7"
-              />
-              <div class="min-w-0">
-                <p class="text-white text-sm sm:text-sm font-bold truncate">{{ profile?.user?.name }}</p>
-                <p class="text-blue-300 text-xs sm:text-sm truncate">{{ capitalize(profile?.job_information?.job_title) }}</p>
-                <div class="mt-1.5 sm:mt-2 space-y-0.5 text-[9px] sm:text-xs">
-                  <p class="text-blue-200/60">
-                    Team <span class="text-white font-semibold ml-1">{{ profile?.job_information?.team?.name || "-" }}</span>
-                  </p>
-                  <p class="text-blue-200/60">
-                    Joined <span class="text-white font-semibold ml-1">{{ formatDate(profile?.job_information?.start_date) }}</span>
-                  </p>
-                </div>
+              <div
+                v-if="idCardNameLines.line2 !== ''"
+                class="absolute text-white font-bold text-left whitespace-nowrap overflow-hidden"
+                style="top: 40.92mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 5.65mm; line-height: 1;"
+              >
+                {{ idCardNameLines.line2 }}
               </div>
-            </div>
 
-            <div class="absolute left-5 right-5 sm:left-6 sm:right-6 bottom-4 sm:bottom-5 flex items-center justify-between border-t border-white/10 pt-2 sm:pt-3">
-              <span class="text-white text-[10px] sm:text-xs font-bold tracking-wide">{{ profile?.code }}</span>
-              <span class="text-blue-200/50 text-[8px] sm:text-[9px]">Company Property</span>
+              <div class="absolute bg-white" style="top: 55.75mm; left: 4.94mm; width: 8.47mm; height: 0.71mm;"></div>
+              <p class="absolute text-white text-left whitespace-nowrap overflow-hidden" style="top: 57.86mm; left: 4.94mm; right: 4.94mm; font-size: 3.18mm; font-family: 'Helvetica', 'Arial', sans-serif;">
+                {{ idCardJobTitle }}
+              </p>
+
+              <!-- Contact panel (background already part of the artwork) -->
+              <span class="absolute text-left font-bold text-[#1a1a2e]" style="top: 73.31mm; left: 4.94mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">Employee Id</span>
+              <span class="absolute text-left text-[#1a1a2e]" style="top: 73.31mm; left: 18.35mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">:</span>
+              <span class="absolute text-left text-[#1a1a2e] whitespace-nowrap overflow-hidden" style="top: 73.31mm; left: 20.46mm; right: 2.12mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">{{ profile?.code }}</span>
+
+              <span class="absolute text-left font-bold text-[#1a1a2e]" style="top: 76.49mm; left: 4.94mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">Phone</span>
+              <span class="absolute text-left text-[#1a1a2e]" style="top: 76.49mm; left: 18.35mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">:</span>
+              <span class="absolute text-left text-[#1a1a2e] whitespace-nowrap overflow-hidden" style="top: 76.49mm; left: 20.46mm; right: 2.12mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">{{ idCardPhone }}</span>
+
+              <span class="absolute text-left font-bold text-[#1a1a2e]" style="top: 79.66mm; left: 4.94mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">Email</span>
+              <span class="absolute text-left text-[#1a1a2e]" style="top: 79.66mm; left: 18.35mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">:</span>
+              <span class="absolute text-left text-[#1a1a2e] whitespace-nowrap overflow-hidden" style="top: 79.66mm; left: 20.46mm; right: 2.12mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">{{ idCardEmail }}</span>
+            </div>
+          </div>
+
+          <div class="text-center">
+            <p class="text-brand-light text-xs font-semibold uppercase tracking-wide mb-2">Back</p>
+            <!-- Card, back: the design team's own artwork, unchanged. -->
+            <div class="relative rounded-[3px] overflow-hidden shadow-xl" style="width: 54mm; height: 85.6mm;">
+              <img src="/images/idcard-back-bg.png" class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
             </div>
           </div>
         </div>
-        <p class="text-brand-light text-xs text-center mt-4">
-          This is a preview. The downloaded PDF is sized for physical printing (CR80 card format).
+        <p class="text-brand-light text-xs text-center mt-6">
+          Shown at true size &mdash; 54mm &times; 85.6mm each side, the same portrait badge size used for physical printing.
         </p>
       </div>
     </div>

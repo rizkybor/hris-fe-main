@@ -1,11 +1,16 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 import { Plus, Trash2, Receipt, User, Package, Wallet } from "lucide-vue-next";
 import { useInvoiceStore } from "@/stores/invoice";
+import { useBankAccountStore } from "@/stores/bankAccount";
 
 const store = useInvoiceStore();
 const router = useRouter();
+const bankAccountStore = useBankAccountStore();
+const { bankAccounts } = storeToRefs(bankAccountStore);
+onMounted(() => bankAccountStore.fetchBankAccounts());
 
 const form = ref({
   faktur_pajak_number: "",
@@ -29,6 +34,11 @@ const errorMessage = ref("");
 
 const addItem = () => form.value.items.push({ description: "", quantity: "", rate: "", total: 0 });
 const removeItem = (i) => form.value.items.splice(i, 1);
+
+const handleBankNameChange = () => {
+  const selected = bankAccounts.value.find((a) => a.bank_name === form.value.bank_name);
+  form.value.bank_account = selected?.account_number || "";
+};
 
 const subtotal = computed(() => form.value.items.reduce((sum, item) => sum + (Number(item.total) || 0), 0));
 const ppnAmount = computed(() => Math.round(subtotal.value * ((Number(form.value.ppn_percentage) || 0) / 100)));
@@ -90,7 +100,7 @@ const handleSubmit = async () => {
             <input v-model="form.client_pic" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Email</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Email (optional)</label>
             <input v-model="form.client_email" type="email" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
@@ -121,7 +131,13 @@ const handleSubmit = async () => {
           </button>
         </div>
         <div v-for="(item, i) in form.items" :key="i" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3 items-start">
-          <input v-model="item.description" type="text" placeholder="Description" required class="md:col-span-2 w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+          <textarea
+            v-model="item.description"
+            placeholder="Description"
+            required
+            rows="1"
+            class="md:col-span-2 w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm resize-y"
+          ></textarea>
           <input v-model="item.quantity" type="text" placeholder="Qty (e.g. 1 tahun)" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
           <input v-model="item.rate" type="text" placeholder="Rate" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
           <div class="flex items-center gap-2">
@@ -151,11 +167,17 @@ const handleSubmit = async () => {
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Bank Name</label>
-            <input v-model="form.bank_name" type="text" placeholder="e.g. BCA - Jendela Cakra Digital" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <select v-model="form.bank_name" @change="handleBankNameChange" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+              <option value="" disabled>Select a bank</option>
+              <option v-for="account in bankAccounts" :key="account.id" :value="account.bank_name">{{ account.bank_name }}</option>
+            </select>
+            <p v-if="bankAccounts.length === 0" class="text-xs text-gray-400 mt-1">
+              No bank accounts configured yet. Add one in Settings &rarr; Bank Accounts.
+            </p>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Account Number</label>
-            <input v-model="form.bank_account" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <input v-model="form.bank_account" type="text" readonly class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm bg-gray-50" />
           </div>
           <div class="md:col-span-2">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Terms & Conditions</label>

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { debounce } from "lodash";
+import { useRoute } from "vue-router";
 import { MessageSquare, Send, Trash2, AtSign, Smile, CornerUpLeft, X } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
 import { useTaskCommentStore } from "@/stores/taskComment";
@@ -27,6 +28,8 @@ const props = defineProps({
 
 const commentStore = useTaskCommentStore();
 const { comments, loading, submitting } = storeToRefs(commentStore);
+
+const route = useRoute();
 
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
@@ -325,6 +328,29 @@ const threads = computed(() => {
     replies: all.filter((c) => c.parent_id && rootIdOf(c) === root.id),
   }));
 });
+
+// Deep-link support: clicking a mention notification lands here with
+// ?comment=<id> on the task's ?task=<id> query. Scroll that comment into
+// view and briefly highlight it, once, the first time it appears.
+const highlightCommentId = computed(() => (route.query.comment ? Number(route.query.comment) : null));
+const scrolledToComment = ref(false);
+watch(highlightCommentId, () => {
+  scrolledToComment.value = false;
+});
+
+watch(
+  [threads, highlightCommentId],
+  async ([val, targetId]) => {
+    if (scrolledToComment.value || !targetId || !val.length) return;
+    await nextTick();
+    const el = document.getElementById(`task-comment-${targetId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      scrolledToComment.value = true;
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -359,7 +385,11 @@ const threads = computed(() => {
         <div class="flex gap-3.5 group">
           <Avatar :src="thread.root.user?.profile_photo" :alt="thread.root.user?.name" size="w-8 h-8" icon-size="w-4 h-4" />
           <div class="flex-1 min-w-0">
-            <div class="bg-gray-50 rounded-[12px] px-4 py-3">
+            <div
+              :id="`task-comment-${thread.root.id}`"
+              class="bg-gray-50 rounded-[12px] px-4 py-3 transition-colors duration-300"
+              :class="{ 'ring-2 ring-[#0C51D9] ring-offset-2': highlightCommentId === thread.root.id }"
+            >
               <div class="flex items-center justify-between gap-2.5">
                 <p class="text-brand-dark text-sm font-semibold" :title="thread.root.user?.name">{{ thread.root.user?.name }}</p>
                 <button
@@ -408,7 +438,11 @@ const threads = computed(() => {
           <div v-for="reply in thread.replies" :key="reply.id" class="flex gap-3.5 group">
             <Avatar :src="reply.user?.profile_photo" :alt="reply.user?.name" size="w-7 h-7" icon-size="w-3.5 h-3.5" />
             <div class="flex-1 min-w-0">
-              <div class="bg-gray-50 rounded-[12px] px-4 py-3">
+              <div
+                :id="`task-comment-${reply.id}`"
+                class="bg-gray-50 rounded-[12px] px-4 py-3 transition-colors duration-300"
+                :class="{ 'ring-2 ring-[#0C51D9] ring-offset-2': highlightCommentId === reply.id }"
+              >
                 <div class="flex items-center justify-between gap-2.5">
                   <p class="text-brand-dark text-sm font-semibold" :title="reply.user?.name">{{ reply.user?.name }}</p>
                   <button
