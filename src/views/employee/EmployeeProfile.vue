@@ -72,8 +72,8 @@ const profileNotFound = ref(false);
 // this app's own capitalize() helper (which only capitalizes the first
 // letter of the whole string, not each word) or CSS ellipsis (which
 // truncates by pixel width, not by the same character count as the PDF).
-const idCardUcwords = (str) => (str || "").replace(/(^|\s)\S/g, (c) => c.toUpperCase());
-const idCardStrLimit = (str, limit, end = "...") => (str.length > limit ? str.slice(0, limit) + end : str);
+const idCardUcwords = (str: string) => (str || "").replace(/(^|\s)\S/g, (c: string) => c.toUpperCase());
+const idCardStrLimit = (str: string, limit: number, end = "...") => (str.length > limit ? str.slice(0, limit) + end : str);
 const idCardJobTitle = computed(() => idCardStrLimit(idCardUcwords(profile.value?.job_information?.job_title || "-"), 28));
 const idCardPhone = computed(() => idCardStrLimit(profile.value?.phone || "-", 24));
 const idCardEmail = computed(() => idCardStrLimit(profile.value?.user?.email || "-", 26));
@@ -94,7 +94,7 @@ const idCardNameLines = computed(() => {
   const words = name.split(/\s+/).filter(Boolean);
   if (words.length === 0) return { line1: "-", line2: "" };
 
-  const commaIdx = words.findIndex((word) => word.includes(","));
+  const commaIdx = words.findIndex((word: string) => word.includes(","));
   const nameWordCount = commaIdx === -1 ? words.length : commaIdx + 1;
 
   let line1, line2;
@@ -910,14 +910,14 @@ onMounted(() => {
 
               <div
                 class="absolute text-white font-bold text-left whitespace-nowrap overflow-hidden"
-                style="top: 31.75mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 4.55mm; line-height: 1;"
+                style="top: 31.75mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 4mm; line-height: 1;"
               >
                 {{ idCardNameLines.line1 }}
               </div>
               <div
                 v-if="idCardNameLines.line2 !== ''"
                 class="absolute text-white font-bold text-left whitespace-nowrap overflow-hidden"
-                style="top: 38.1mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 4.55mm; line-height: 1;"
+                style="top: 38.1mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 4mm; line-height: 1;"
               >
                 {{ idCardNameLines.line2 }}
               </div>
