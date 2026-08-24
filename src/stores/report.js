@@ -10,6 +10,7 @@ export const useReportStore = defineStore("report", {
     finance: { period: null, summary: {}, rows: {} },
     pph21: { period: null, summary: {}, rows: [] },
     ppn: { period: null, summary: {}, rows: [] },
+    project: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     loading: false,
     exporting: false,
     error: null,
@@ -87,6 +88,19 @@ export const useReportStore = defineStore("report", {
       try {
         const { data } = await axiosInstance.get("/reports/ppn", { params });
         this.ppn = data.data;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchProjectReport(params = {}) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await axiosInstance.get("/reports/project", { params });
+        this.project = data.data;
       } catch (error) {
         this.error = handleError(error);
       } finally {
