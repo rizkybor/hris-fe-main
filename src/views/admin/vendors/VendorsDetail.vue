@@ -13,9 +13,11 @@ import {
   Layers,
   FileText,
   Clock,
+  FolderKanban,
 } from "lucide-vue-next";
 import { useVendorsStore } from "@/stores/vendor";
 import Spinner from "@/components/common/skeleton/Spinner.vue";
+import { getProjectStatusColor } from "@/utils/badgeUtils";
 
 const route = useRoute();
 const router = useRouter();
@@ -185,6 +187,43 @@ onMounted(async () => {
               <p class="text-sm font-semibold">{{ formatDate(vendor.updated_at) }}</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Projects (optional) -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="flex items-center gap-1.5 mb-4">
+          <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <FolderKanban class="w-4.5 h-4.5 text-blue-600" />
+          </div>
+          <div>
+            <h4 class="text-brand-dark font-bold">Projects</h4>
+            <p class="text-brand-light text-xs">Optional — projects contracted through this vendor</p>
+          </div>
+        </div>
+
+        <div
+          v-if="!vendor.projects || vendor.projects.length === 0"
+          class="text-center py-8 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
+        >
+          <FolderKanban class="w-8 h-8 text-gray-300 mx-auto mb-2.5" />
+          <p class="text-sm font-semibold">No projects linked yet</p>
+        </div>
+
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          <router-link
+            v-for="project in vendor.projects"
+            :key="project.id"
+            :to="{ name: 'admin.projects.detail', params: { id: project.id } }"
+            class="border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] hover:shadow-sm transition-all"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-brand-dark text-sm font-bold truncate">{{ project.name }}</p>
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0" :class="getProjectStatusColor(project.status)">
+                {{ project.status }}
+              </span>
+            </div>
+          </router-link>
         </div>
       </div>
     </div>
