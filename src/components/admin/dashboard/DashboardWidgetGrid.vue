@@ -16,6 +16,20 @@ onMounted(() => {
   store.fetchWidgets();
 });
 
+// macOS/iOS-style widget sizes: "small" = 1 of 3 grid columns, "medium" =
+// 2 of 3, "large" = the full row. Bar width previews the fraction so the
+// picker reads at a glance without needing labels.
+const SIZE_OPTIONS = [
+  { value: "small", label: "Small (1/3 width)", bar: "6px" },
+  { value: "medium", label: "Medium (2/3 width)", bar: "11px" },
+  { value: "large", label: "Large (full width)", bar: "16px" },
+];
+const SIZE_COL_SPAN = {
+  small: "lg:col-span-1",
+  medium: "lg:col-span-2",
+  large: "lg:col-span-3",
+};
+
 // VueDraggableNext mutates this array directly (splice) on drag; the
 // computed setter is what turns that mutation into a persisted order.
 const orderedWidgets = computed({
@@ -38,7 +52,7 @@ watch(saveStatus, (status) => {
 
 const handleResetLayout = async () => {
   if (
-    !(await alertModal.confirm("Reset your dashboard back to the default widget order?", {
+    !(await alertModal.confirm("Reset your dashboard back to the default widget order and sizes?", {
       title: "Reset Layout",
       confirmText: "Reset",
       type: "warning",
@@ -50,8 +64,8 @@ const handleResetLayout = async () => {
 </script>
 
 <template>
-  <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <Skeleton v-for="i in 4" :key="i" width="100%" height="220px" rounded="14px" />
+  <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <Skeleton v-for="i in 6" :key="i" width="100%" height="220px" rounded="14px" />
   </div>
 
   <div v-else-if="error && orderedWidgets.length === 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-8 text-center">
@@ -72,7 +86,7 @@ const handleResetLayout = async () => {
         type="button"
         @click="handleResetLayout"
         class="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-[#0C51D9] transition-colors"
-        title="Reset dashboard to default widget order"
+        title="Reset dashboard to default widget order and sizes"
       >
         <RotateCcw class="w-3.5 h-3.5" /> Reset Layout
       </button>
@@ -83,21 +97,39 @@ const handleResetLayout = async () => {
       :animation="200"
       handle=".widget-drag-handle"
       ghost-class="widget-drag-ghost"
-      class="grid grid-cols-1 lg:grid-cols-2 gap-4"
+      class="grid grid-cols-1 lg:grid-cols-3 gap-4"
     >
       <div
         v-for="widget in orderedWidgets"
         :key="widget.key"
         class="relative group"
-        :class="DASHBOARD_WIDGET_REGISTRY[widget.key]?.colSpan"
+        :class="SIZE_COL_SPAN[widget.size] || 'lg:col-span-1'"
       >
-        <!-- Always-visible on touch devices (no hover state), fades in on
-             desktop hover so it doesn't clutter the widget's own content. -->
+        <!-- Controls row: always visible on touch devices (no hover
+             state), fades in on desktop hover so it doesn't clutter the
+             widget's own content. -->
         <div
-          class="widget-drag-handle absolute top-3 right-3 z-10 cursor-grab active:cursor-grabbing bg-white/90 border border-[#DCDEDD] rounded-md p-1.5 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-          :title="`Drag to reorder: ${DASHBOARD_WIDGET_REGISTRY[widget.key]?.title ?? widget.key}`"
+          class="absolute top-3 right-3 z-10 flex items-center gap-1.5 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
         >
-          <GripVertical class="w-4 h-4 text-gray-500" />
+          <div class="hidden lg:flex items-center gap-0.5 bg-white/90 border border-[#DCDEDD] rounded-md p-1">
+            <button
+              v-for="opt in SIZE_OPTIONS"
+              :key="opt.value"
+              type="button"
+              @click="store.resizeWidget(widget.key, opt.value)"
+              :class="['flex items-center justify-center w-5 h-5 rounded transition-colors', widget.size === opt.value ? 'bg-[#0C51D9]' : 'hover:bg-gray-100']"
+              :title="opt.label"
+            >
+              <span
+                class="block h-1.5 rounded-sm transition-colors"
+                :class="widget.size === opt.value ? 'bg-white' : 'bg-gray-400'"
+                :style="{ width: opt.bar }"
+              ></span>
+            </button>
+          </div>
+          <div class="widget-drag-handle cursor-grab active:cursor-grabbing bg-white/90 border border-[#DCDEDD] rounded-md p-1.5" :title="`Drag to reorder: ${DASHBOARD_WIDGET_REGISTRY[widget.key]?.title ?? widget.key}`">
+            <GripVertical class="w-4 h-4 text-gray-500" />
+          </div>
         </div>
         <component
           :is="DASHBOARD_WIDGET_REGISTRY[widget.key]?.component"

@@ -55,6 +55,22 @@ export const useDashboardWidgetsStore = defineStore("dashboardWidgets", {
       }
     },
 
+    // macOS/iOS-style widget resize -- applied optimistically (the grid
+    // reflows immediately) with the request fired in the background; a
+    // failed resize just gets corrected on the next reload rather than
+    // needing rollback state for what's a low-stakes, easily-repeated action.
+    async resizeWidget(key, size) {
+      const widget = this.widgets.find((w) => w.key === key);
+      if (widget) widget.size = size;
+
+      this.error = null;
+      try {
+        await axiosInstance.put("/dashboard/widgets/size", { widget_key: key, size });
+      } catch (error) {
+        this.error = handleError(error);
+      }
+    },
+
     async resetOrder() {
       this.saving = true;
       this.error = null;
