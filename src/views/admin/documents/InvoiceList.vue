@@ -133,7 +133,7 @@ const formatDate = (date) =>
         </select>
       </div>
 
-      <SkeletonTable v-if="loading" :rows="6" :cols="9" />
+      <SkeletonTable v-if="loading" :rows="6" :cols="10" />
 
       <div v-else class="overflow-x-auto">
         <table class="min-w-full text-sm">
@@ -141,6 +141,7 @@ const formatDate = (date) =>
             <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
               <th class="py-3 pr-4 font-semibold">No</th>
               <th class="py-3 pr-4 font-semibold">Invoice No.</th>
+              <th class="py-3 pr-4 font-semibold">Payment Receipt No.</th>
               <th class="py-3 pr-4 font-semibold">Client</th>
               <th class="py-3 pr-4 font-semibold">Project</th>
               <th class="py-3 pr-4 font-semibold">Date</th>
@@ -157,6 +158,12 @@ const formatDate = (date) =>
             >
               <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4 font-mono text-xs">{{ invoice.invoice_number }}</td>
+              <td class="py-3 pr-4 font-mono text-xs">
+                <template v-if="invoice.receipts?.length">
+                  <div v-for="receipt in invoice.receipts" :key="receipt.id">{{ receipt.receipt_number }}</div>
+                </template>
+                <span v-else class="text-gray-400 font-sans">&mdash;</span>
+              </td>
               <td class="py-3 pr-4">{{ invoice.client_name }}</td>
               <td class="py-3 pr-4">
                 <span v-if="invoice.project" class="text-brand-dark">{{ invoice.project.name }}</span>
