@@ -30,7 +30,7 @@
         :autocomplete="autocomplete"
         :value="modelValue"
         :class="[
-          'w-full border rounded-[12px] transition-all duration-300',
+          'w-full border rounded-[12px] transition-all duration-300 appearance-none',
           'hover:border-[#0C51D9] hover:border-2',
           'focus:border-[#0C51D9] focus:border-2 focus:bg-white',
           borderColor,
@@ -100,6 +100,7 @@ const inputType = computed(() => (isPassword.value && showPassword.value ? "text
 // paddingRight can vary with isPassword.
 const inputStyle = computed(() => ({
   display: "flex",
+  height: "46px",
   paddingTop: "12px",
   paddingBottom: "12px",
   paddingLeft: "40px",
@@ -108,6 +109,11 @@ const inputStyle = computed(() => ({
   alignItems: "center",
   gap: "10px",
   background: "#ffffff",
+  // 16px avoids iOS Safari's auto-zoom-on-focus, which triggers on any
+  // focused input with a computed font-size below 16px.
+  fontSize: "16px",
+  lineHeight: "20px",
+  WebkitAppearance: "none",
 }));
 
 const onInput = (event) => {
@@ -130,3 +136,15 @@ const errorStyle = {
   fontWeight: 400,
 };
 </script>
+
+<style scoped>
+/* type="date" already has a custom left-side icon, so the native
+   webkit calendar icon is redundant and was inflating the field's
+   footprint on mobile -- shrink it to fit inside the same padding
+   the other input types use instead of hiding it, since tapping it
+   is still how mobile users open the native date picker. */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-left: 4px;
+  padding: 0;
+}
+</style>
