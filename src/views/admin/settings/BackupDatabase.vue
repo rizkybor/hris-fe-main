@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { DatabaseBackup, Plus, Download, Trash2, RotateCcw, Loader2, HardDrive, Search } from "lucide-vue-next";
+import { DatabaseBackup, Plus, Download, Trash2, RotateCcw, Loader2, HardDrive, Search, ArrowLeft } from "lucide-vue-next";
 import { useBackupStore } from "@/stores/backup";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
@@ -85,6 +85,14 @@ const formatDate = (date) =>
   <div class="px-4 py-4">
     <div class="bg-white mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-3">
+        <router-link
+          :to="{ name: 'admin.settings.dashboard' }"
+          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
+          aria-label="Back to Settings"
+          title="Back to Settings"
+        >
+          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+        </router-link>
         <div class="w-11 h-11 bg-red-50 rounded-[12px] flex items-center justify-center">
           <DatabaseBackup class="w-5 h-5 text-red-600" />
         </div>

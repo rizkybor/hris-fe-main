@@ -27,12 +27,13 @@ import {
   ChevronDown,
   Users2,
 } from "lucide-vue-next";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash";
 import { useTeamStore } from "@/stores/team";
 import { useOptionStore } from "@/stores/option";
 import { useEmployeeStore } from "@/stores/employee";
 import { storeToRefs } from "pinia";
+import { axiosInstance } from "@/plugins/axios";
 import router from "@/router";
 import { useRoute } from "vue-router";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -42,7 +43,7 @@ const id = route.params.id;
 
 const teamStore = useTeamStore();
 const { loading, error, success } = storeToRefs(teamStore);
-const { updateTeam, fetchTeam } = teamStore;
+const { updateTeam, fetchTeam, addMember, removeMember } = teamStore;
 
 const employeeStore = useEmployeeStore();
 const { employees } = storeToRefs(employeeStore);
@@ -63,6 +64,7 @@ const form = ref({
   status: "",
   team_lead_id: "",
   responsibilities: ["", "", ""],
+  member_employee_ids: [],
 });
 
 const teamIconInput = ref(null);
@@ -70,6 +72,48 @@ const leadModal = ref(false);
 const searchLead = ref("");
 const selectedLead = ref(null);
 const initialLoading = ref(true);
+
+// Full roster for the member picker, kept separate from employeeStore.employees
+// (used by the Team Lead search modal, which fetches a limited/filtered slice)
+// so this picker doesn't fight it over the same shared state.
+const memberCandidates = ref([]);
+const memberSearch = ref("");
+// Set while a checkbox's add-member/remove-member request is in flight, so
+// that row can be disabled and the click can't be double-fired.
+const togglingMemberId = ref(null);
+
+// The Team Lead is already implicitly a member, so offering them again in
+// this picker would just be a confusing duplicate pick.
+const selectableMemberCandidates = computed(() => {
+  const leadEmployeeId = selectedLead.value?.id;
+  return memberCandidates.value.filter((employee) => employee.id !== leadEmployeeId);
+});
+const filteredMemberCandidates = computed(() => {
+  if (!memberSearch.value.trim()) return selectableMemberCandidates.value;
+  const q = memberSearch.value.trim().toLowerCase();
+  return selectableMemberCandidates.value.filter((employee) => (employee.user?.name || "").toLowerCase().includes(q));
+});
+
+const toggleMember = async (employeeId) => {
+  if (togglingMemberId.value) return;
+
+  const idx = form.value.member_employee_ids.indexOf(employeeId);
+  togglingMemberId.value = employeeId;
+
+  try {
+    if (idx === -1) {
+      await addMember(id, employeeId);
+      form.value.member_employee_ids.push(employeeId);
+    } else {
+      await removeMember(id, employeeId);
+      form.value.member_employee_ids.splice(idx, 1);
+    }
+  } catch (err) {
+    console.error("Failed to update team member:", err);
+  } finally {
+    togglingMemberId.value = null;
+  }
+};
 
 const handleFetchTeam = async () => {
   const response = await fetchTeam(id);
@@ -80,6 +124,9 @@ const handleFetchTeam = async () => {
   form.value.icon = null;
 
   form.value.team_lead_id = response.team_lead_id;
+  form.value.member_employee_ids = (response.members || []).map(
+    (member) => member.employee.id
+  );
 
   selectedLead.value = {
     user: response.leader,
@@ -102,6 +149,12 @@ const handleTeamIconSelect = (e) => {
     form.value.icon = file;
     form.value.icon_url = URL.createObjectURL(file);
   }
+};
+
+const handleRemoveIcon = () => {
+  form.value.icon = "";
+  form.value.icon_url = "";
+  if (teamIconInput.value) teamIconInput.value.value = "";
 };
 
 const handleSelectLead = (employee) => {
@@ -137,6 +190,10 @@ onMounted(async () => {
     await fetchEmployees({
       limit: 6,
     });
+
+    const { data } = await axiosInstance.get("employees");
+    memberCandidates.value = data.data;
+
     await handleFetchTeam();
   } finally {
     initialLoading.value = false;
@@ -180,7 +237,7 @@ watch(
     <!-- Form Section -->
     <div class="flex-1">
       <div v-if="initialLoading" class="space-y-5">
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3.5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 space-y-3.5">
           <Skeleton width="200px" height="20px" />
           <Skeleton height="48px" rounded="16px" />
           <Skeleton height="48px" rounded="16px" />
@@ -189,7 +246,7 @@ watch(
       </div>
       <form class="space-y-5" @submit.prevent="handleSubmit" v-else>
         <!-- Team Information Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
           <div class="flex items-center gap-2.5 mb-5">
             <div
               class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -206,7 +263,7 @@ watch(
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
             <!-- Team Icon -->
             <div class="md:col-span-2">
               <label class="block text-brand-dark text-sm font-semibold mb-1"
@@ -274,6 +331,8 @@ watch(
                   </button>
                   <button
                     type="button"
+                    v-if="form.icon_url"
+                    @click="handleRemoveIcon"
                     class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-1.5 flex items-center gap-1.5 cursor-pointer w-full sm:w-auto"
                   >
                     <X class="w-4 h-4 text-gray-600" />
@@ -358,7 +417,7 @@ watch(
         </div>
 
         <!-- Team Lead Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
           <div class="flex items-center gap-2.5 mb-5">
             <div
               class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -373,7 +432,7 @@ watch(
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
             <!-- Team Lead Selection -->
             <div class="md:col-span-2">
               <label class="block text-brand-dark text-sm font-semibold mb-1"
@@ -423,8 +482,62 @@ watch(
           </div>
         </div>
 
+        <!-- Team Members Section -->
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+          <div class="flex items-center gap-2.5 mb-5">
+            <div
+              class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
+            >
+              <Users class="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-base font-bold">Team Members</h3>
+              <p class="text-brand-light text-sm font-normal">
+                Add or remove employees from this team
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-sm font-semibold text-brand-dark block">Members</label>
+            <span v-if="form.member_employee_ids.length" class="text-xs text-[#0C51D9] font-semibold flex items-center gap-1">
+              <Users class="w-3.5 h-3.5" />
+              {{ form.member_employee_ids.length }} selected
+            </span>
+          </div>
+          <div class="border border-[#DCDEDD] rounded-xl overflow-hidden">
+            <div v-if="selectableMemberCandidates.length > 8" class="relative border-b border-[#DCDEDD] bg-gray-50 p-1.5">
+              <Search class="w-3.5 h-3.5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
+                v-model="memberSearch"
+                type="text"
+                placeholder="Search employees..."
+                class="w-full pl-6 pr-1.5 py-1 border border-[#DCDEDD] rounded-lg text-xs bg-white focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+              />
+            </div>
+            <div class="p-2.5 max-h-64 overflow-y-auto space-y-1">
+              <label
+                v-for="employee in filteredMemberCandidates"
+                :key="employee.id"
+                class="flex items-center gap-1.5 text-sm px-1.5 py-1 rounded-lg cursor-pointer hover:bg-gray-50"
+                :class="{ 'opacity-60 pointer-events-none': togglingMemberId === employee.id }"
+              >
+                <input
+                  type="checkbox"
+                  :checked="form.member_employee_ids.includes(employee.id)"
+                  @change="toggleMember(employee.id)"
+                  class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] shrink-0"
+                />
+                <span class="truncate">{{ employee.user?.name }}</span>
+              </label>
+              <p v-if="selectableMemberCandidates.length === 0" class="text-sm text-gray-400 italic py-1.5">No staff data yet.</p>
+              <p v-else-if="filteredMemberCandidates.length === 0" class="text-sm text-gray-400 italic py-1.5">No employees match "{{ memberSearch }}".</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Team Responsibilities Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
           <div class="flex items-center gap-2.5 mb-5">
             <div
               class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
@@ -479,7 +592,7 @@ watch(
                 >
                   Responsibility {{ index + 1 }}
                 </label>
-                <div class="flex gap-2.5 items-start justify-center">
+                <div class="flex flex-col sm:flex-row sm:items-start gap-2.5 justify-center">
                   <Input
                     :id="`responsibility_${index}`"
                     :name="`responsibility_${index}`"
@@ -496,7 +609,7 @@ watch(
                   </Input>
                   <button
                     type="button"
-                    class="w-9 h-9 border border-[#DCDEDD] rounded-[12px] hover:border-red-500 hover:bg-red-50 transition-all duration-300 flex items-center justify-center cursor-pointer"
+                    class="w-9 h-9 border border-[#DCDEDD] rounded-[12px] hover:border-red-500 hover:bg-red-50 transition-all duration-300 flex items-center justify-center mt-6 cursor-pointer"
                     @click="removeResponsibility(index)"
                   >
                     <Trash2 class="w-5 h-5 text-gray-600" />
@@ -522,7 +635,7 @@ watch(
         </div>
 
         <!-- Team Settings Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
           <div class="flex items-center gap-2.5 mb-5">
             <div
               class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -537,13 +650,13 @@ watch(
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
             <!-- Initial Team Status (Full Width) -->
             <div class="md:col-span-2 mb-3.5">
               <label class="block text-brand-dark text-sm font-semibold mb-1"
                 >Initial Team Status</label
               >
-              <div class="grid grid-cols-2 gap-3.5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <!-- Active Option -->
                 <label
                   class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
