@@ -121,19 +121,28 @@ const todayLabel = computed(() =>
       <RouterLink
         v-if="announcements.length > 0"
         :to="{ name: 'admin.announcements.dashboard' }"
-        class="w-full sm:w-64 lg:w-80 shrink-0 bg-white/80 backdrop-blur-sm border border-[#DCDEDD] rounded-[12px] p-3.5 hover:border-[#0C51D9] hover:shadow-sm transition-all duration-300"
+        class="blue-gradient relative w-full sm:w-64 lg:w-80 shrink-0 overflow-hidden rounded-[12px] p-3.5 shadow-lg shadow-blue-900/25 ring-1 ring-white/10 transition-all duration-300 hover:shadow-xl hover:shadow-blue-900/35 hover:-translate-y-0.5"
       >
-        <div class="flex items-center gap-1.5 mb-2.5">
-          <Megaphone class="w-3.5 h-3.5 text-blue-500 shrink-0" />
-          <h3 class="text-brand-dark text-xs font-bold uppercase tracking-wide">Announcements</h3>
+        <!-- Decorative glow, echoing the banner's own orbs -->
+        <div class="pointer-events-none absolute -top-8 -right-6 w-24 h-24 rounded-full bg-white/10 blur-2xl"></div>
+
+        <div class="relative flex items-center gap-1.5 mb-2.5">
+          <div class="flex items-center justify-center w-6 h-6 rounded-full bg-white/15 shrink-0">
+            <Megaphone class="w-3.5 h-3.5 text-white" />
+          </div>
+          <h3 class="text-white text-xs font-bold uppercase tracking-wide">Announcements</h3>
+          <span class="ml-auto relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/60"></span>
+            <span class="relative inline-flex h-2 w-2 rounded-full bg-white"></span>
+          </span>
         </div>
-        <div class="space-y-2 max-h-40 overflow-hidden">
+        <div class="relative space-y-2 max-h-40 overflow-hidden">
           <div v-for="item in announcements" :key="item.id" class="min-w-0">
             <div class="flex items-center gap-1.5 min-w-0">
-              <Pin v-if="item.is_pinned" class="w-3 h-3 text-[#0C51D9] shrink-0" />
-              <p class="text-brand-dark text-xs sm:text-sm font-semibold truncate min-w-0">{{ item.title }}</p>
+              <Pin v-if="item.is_pinned" class="w-3 h-3 text-amber-300 shrink-0" />
+              <p class="text-white text-xs sm:text-sm font-semibold truncate min-w-0">{{ item.title }}</p>
             </div>
-            <p class="text-brand-light text-xs truncate">{{ item.body }}</p>
+            <p class="text-blue-100 text-xs truncate">{{ item.body }}</p>
           </div>
         </div>
       </RouterLink>
