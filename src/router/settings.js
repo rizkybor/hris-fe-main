@@ -7,6 +7,7 @@ import BankAccounts from '@/views/admin/settings/BankAccounts.vue';
 import SdmFields from '@/views/admin/settings/SdmFields.vue';
 import CertificateSettings from '@/views/admin/settings/CertificateSettings.vue';
 import BackupDatabase from '@/views/admin/settings/BackupDatabase.vue';
+import GreetingSettings from '@/views/admin/settings/GreetingSettings.vue';
 
 export default [
   {
@@ -53,5 +54,10 @@ export default [
     path: 'settings/backup',
     name: 'admin.settings.backup',
     component: BackupDatabase,
+  },
+  {
+    path: 'settings/greetings',
+    name: 'admin.settings.greetings',
+    component: GreetingSettings,
   },
 ];

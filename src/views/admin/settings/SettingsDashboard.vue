@@ -17,6 +17,7 @@ import {
   Database,
   SlidersHorizontal,
   User,
+  CalendarHeart,
 } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
@@ -95,6 +96,15 @@ const categories = [
         title: "Certificate Configuration",
         description: "Manage the certificate numbering format and background templates",
         permission: "certificate-menu",
+      },
+      {
+        to: { name: "admin.settings.greetings" },
+        icon: CalendarHeart,
+        title: "Calendar Greetings",
+        description: "Manage holidays, birthdays, meetings, and other date-based greetings shown on the dashboard",
+        permission: "greeting-menu",
+        iconBg: "bg-pink-50",
+        iconColor: "text-pink-600",
       },
     ],
   },

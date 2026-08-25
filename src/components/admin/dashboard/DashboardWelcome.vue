@@ -1,10 +1,21 @@
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
+import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/stores/auth";
+import { useGreetingStore } from "@/stores/greeting";
 import { getRoleBadgeClass, getRoleLabel } from "@/utils/badgeUtils";
-import { SparklesIcon } from "lucide-vue-next";
+import { SparklesIcon, PartyPopper, Cake, CalendarClock } from "lucide-vue-next";
 
 const authStore = useAuthStore();
+const greetingStore = useGreetingStore();
+const { todayGreetings } = storeToRefs(greetingStore);
+
+onMounted(() => {
+  greetingStore.fetchTodayGreetings();
+});
+
+const GREETING_ICONS = { holiday: PartyPopper, birthday: Cake, meeting: CalendarClock, custom: SparklesIcon };
+const greetingIcon = (type) => GREETING_ICONS[type] ?? SparklesIcon;
 
 const userName = computed(() => authStore.user?.name?.split(",")[0] || "there");
 
@@ -85,6 +96,17 @@ const todayLabel = computed(() =>
         <p class="text-brand-light text-sm sm:text-base mt-1">
           {{ roleSubtitle }}
         </p>
+
+        <div v-if="todayGreetings.length > 0" class="mt-3 flex flex-col gap-2">
+          <div
+            v-for="item in todayGreetings"
+            :key="item.id"
+            class="inline-flex items-center gap-2 self-start px-3 py-1.5 bg-white/80 border border-[#DCDEDD] rounded-full max-w-full"
+          >
+            <component :is="greetingIcon(item.type)" class="w-3.5 h-3.5 text-pink-500 shrink-0" />
+            <span class="text-brand-dark text-xs sm:text-sm font-semibold truncate">{{ item.message }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
