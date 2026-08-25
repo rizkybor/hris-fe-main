@@ -8,6 +8,7 @@ export const useBackupStore = defineStore("backup", {
     meta: { current_page: 1, last_page: 1, per_page: 10, total: 0 },
     loading: false,
     creating: false,
+    restoringId: null,
     error: null,
     success: null,
   }),
@@ -65,6 +66,28 @@ export const useBackupStore = defineStore("backup", {
       await axiosInstance.delete(`/backups/${id}`);
       this.backups = this.backups.filter((b) => b.id !== id);
       this.meta.total = Math.max(0, this.meta.total - 1);
+    },
+
+    // Overwrites the entire current database with this backup's snapshot.
+    // The backend takes its own safety snapshot before restoring, but the
+    // list here is now stale either way (the restored data may include
+    // backups created after the point restored to disappearing, and a
+    // fresh safety-snapshot row appearing) -- callers should refetch after
+    // this resolves rather than trying to patch local state.
+    async restoreBackup(id) {
+      this.restoringId = id;
+      this.error = null;
+      this.success = null;
+      try {
+        const { data } = await axiosInstance.post(`/backups/${id}/restore`);
+        this.success = data.message;
+        return data;
+      } catch (error) {
+        this.error = handleError(error);
+        throw error;
+      } finally {
+        this.restoringId = null;
+      }
     },
   },
 });

@@ -6,7 +6,16 @@ const token = Cookies.get('token')
 
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
-axios.defaults.headers.common['Content-Type'] = 'multipart/form-data';
+// Deliberately no default Content-Type here. A plain object body needs
+// 'application/json' (which axios sets automatically); a FormData body
+// (real file uploads) needs the browser to generate its own
+// 'multipart/form-data; boundary=...' -- which only happens when this
+// header is left unset. Forcing a fixed 'multipart/form-data' string here
+// broke every plain-JSON request in the app (Laravel can't parse a JSON
+// body sent under a boundary-less multipart header) while providing no
+// benefit to real uploads, which already set their own Content-Type
+// per-request. See stores/dashboardWidgets.js and stores/announcement.js
+// for two confirmed, previously-silent casualties of this default.
 axios.defaults.headers.common['Accept'] = 'application/json'
 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 
