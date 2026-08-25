@@ -3,14 +3,28 @@ import { ref, computed, watch, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { Megaphone, Plus, Pin, Pencil, Trash2, X, Eye } from "lucide-vue-next";
 import { useAnnouncementStore } from "@/stores/announcement";
+import { useAuthStore } from "@/stores/auth";
 import { can } from "@/helpers/permissionHelper";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useAnnouncementStore();
+const authStore = useAuthStore();
 const alertModal = useAlertModalStore();
 const { announcements, meta, loading, loadingDetail } = storeToRefs(store);
+
+// Mirrors the backend's canManage() rule: the announcement's own creator,
+// or a manager/superadmin, may edit or delete it -- everyone else shouldn't
+// even see the buttons, since clicking them would just 403.
+const canManage = (announcement) => {
+  const roles = authStore.user?.roles || [];
+  return (
+    announcement.created_by?.id === authStore.user?.id ||
+    roles.includes("manager") ||
+    roles.includes("superadmin")
+  );
+};
 
 const showModal = ref(false);
 const editingId = ref(null);
@@ -192,14 +206,14 @@ onMounted(() => {
               <Eye class="w-3.5 h-3.5 text-gray-600" />
             </button>
             <button
-              v-if="can('announcement-edit')"
+              v-if="can('announcement-edit') && canManage(announcement)"
               @click="openEditModal(announcement)"
               class="w-8 h-8 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] transition-colors"
             >
               <Pencil class="w-3.5 h-3.5 text-gray-600" />
             </button>
             <button
-              v-if="can('announcement-delete')"
+              v-if="can('announcement-delete') && canManage(announcement)"
               @click="handleDelete(announcement.id)"
               class="w-8 h-8 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-red-400 transition-colors"
             >
