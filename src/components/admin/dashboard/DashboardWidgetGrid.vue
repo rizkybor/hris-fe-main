@@ -86,6 +86,7 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   mediaQuery?.removeEventListener("change", handleMediaChange);
+  store.flushPendingSave(orderedWidgets.value.map((w) => w.key));
 });
 
 // "saved" is a transient confirmation, not a permanent state -- fades back

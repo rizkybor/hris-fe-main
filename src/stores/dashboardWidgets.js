@@ -41,6 +41,18 @@ export const useDashboardWidgetsStore = defineStore("dashboardWidgets", {
       saveTimer = setTimeout(() => this.saveOrder(order), 400);
     },
 
+    // Forces a pending debounced reorder to run immediately instead of
+    // waiting out the rest of its 400ms window -- called when the grid is
+    // about to unmount (e.g. navigating away) so a drag dropped right
+    // before leaving the page still gets its request sent rather than
+    // depending on the timer outliving the component.
+    flushPendingSave(order) {
+      if (!saveTimer) return;
+      clearTimeout(saveTimer);
+      saveTimer = null;
+      this.saveOrder(order);
+    },
+
     async saveOrder(order) {
       this.saving = true;
       this.error = null;
@@ -56,18 +68,25 @@ export const useDashboardWidgetsStore = defineStore("dashboardWidgets", {
     },
 
     // macOS/iOS-style widget resize -- applied optimistically (the grid
-    // reflows immediately) with the request fired in the background; a
-    // failed resize just gets corrected on the next reload rather than
-    // needing rollback state for what's a low-stakes, easily-repeated action.
+    // reflows immediately) with the request fired in the background. On
+    // failure the size is rolled back and saveStatus is surfaced (same as
+    // saveOrder) so a failed save is never silently indistinguishable from
+    // a successful one until the next reload.
     async resizeWidget(key, size) {
       const widget = this.widgets.find((w) => w.key === key);
-      if (widget) widget.size = size;
+      if (!widget) return;
+      const previousSize = widget.size;
+      widget.size = size;
 
+      this.saveStatus = "saving";
       this.error = null;
       try {
         await axiosInstance.put("/dashboard/widgets/size", { widget_key: key, size });
+        this.saveStatus = "saved";
       } catch (error) {
+        widget.size = previousSize;
         this.error = handleError(error);
+        this.saveStatus = "error";
       }
     },
 
