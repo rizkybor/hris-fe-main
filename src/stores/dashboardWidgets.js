@@ -57,7 +57,12 @@ export const useDashboardWidgetsStore = defineStore("dashboardWidgets", {
       this.saving = true;
       this.error = null;
       try {
-        await axiosInstance.put("/dashboard/widgets/order", { order });
+        // The axios instance defaults Content-Type to multipart/form-data
+        // (see plugins/axios.js) for file-upload endpoints; a plain JSON
+        // body sent under that header can't be parsed by Laravel at all,
+        // so this must be overridden here same as every other JSON-body
+        // store in the app does.
+        await axiosInstance.put("/dashboard/widgets/order", { order }, { headers: { "Content-Type": "application/json" } });
         this.saveStatus = "saved";
       } catch (error) {
         this.error = handleError(error);
@@ -81,7 +86,7 @@ export const useDashboardWidgetsStore = defineStore("dashboardWidgets", {
       this.saveStatus = "saving";
       this.error = null;
       try {
-        await axiosInstance.put("/dashboard/widgets/size", { widget_key: key, size });
+        await axiosInstance.put("/dashboard/widgets/size", { widget_key: key, size }, { headers: { "Content-Type": "application/json" } });
         this.saveStatus = "saved";
       } catch (error) {
         widget.size = previousSize;
