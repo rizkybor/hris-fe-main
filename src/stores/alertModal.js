@@ -1,10 +1,9 @@
 import { defineStore } from "pinia";
 
-// Auto-close both modes after this long if the user never responds -- a
-// confirm left open indefinitely (e.g. the user navigated away or just
-// forgot about it) shouldn't block whatever was waiting on its resolution
-// forever. Times out to the same outcome as clicking Cancel/close, never
-// Confirm, so a timeout can never itself trigger a destructive action.
+// Auto-close alert()-mode dialogs (informational, single OK button) after
+// this long if the user never responds -- confirm()-mode is excluded since
+// it's gating an actual decision (often a destructive one) that only the
+// user should make.
 const AUTO_CLOSE_MS = 5000;
 let autoCloseTimer = null;
 
@@ -57,7 +56,6 @@ export const useAlertModalStore = defineStore("alertModal", {
         this.resolver = resolve;
 
         clearAutoClose();
-        autoCloseTimer = setTimeout(() => this.handleCancel(), AUTO_CLOSE_MS);
       });
     },
 
