@@ -101,10 +101,10 @@ const todayLabel = computed(() =>
           <div
             v-for="item in todayGreetings"
             :key="item.id"
-            class="inline-flex items-center gap-2 self-start px-3 py-1.5 bg-white/80 border border-[#DCDEDD] rounded-full max-w-full"
+            class="inline-flex items-center gap-2 self-start px-3 py-1.5 bg-lime-200 border border-lime-300 rounded-full max-w-full"
           >
-            <component :is="greetingIcon(item.type)" class="w-3.5 h-3.5 text-pink-500 shrink-0" />
-            <span class="text-brand-dark text-xs sm:text-sm font-semibold truncate">{{ item.message }}</span>
+            <component :is="greetingIcon(item.type)" class="w-3.5 h-3.5 text-lime-700 shrink-0" />
+            <span class="text-lime-900 text-xs sm:text-sm font-semibold truncate">{{ item.message }}</span>
           </div>
         </div>
       </div>
