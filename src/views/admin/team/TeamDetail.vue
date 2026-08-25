@@ -1,33 +1,22 @@
 <script setup>
-import { onMounted, ref, watch, computed } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useTeamStore } from "@/stores/team";
 import { storeToRefs } from "pinia";
 import {
   Calendar,
-  Folder,
-  CheckCircle,
   Users,
-  UserPlus,
   Mail,
   Crown,
   Phone,
-  MessageCircle,
   UserCheck,
-  Settings,
   ListCheck,
   Check,
   Eye,
   Clock,
-  Activity,
-  FileText,
-  ExternalLink,
-  MessageSquare,
   AlertTriangle,
   Trash2,
 } from "lucide-vue-next";
-import _ from "lodash";
-import { debounce } from "lodash";
 import { formatToClientTimezone } from "@/helpers/format";
 import Alert from "@/components/common/Alert.vue";
 import Avatar from "@/components/common/Avatar.vue";
@@ -35,8 +24,6 @@ import ConfirmationModal from "@/components/common/ConfirmationModal.vue";
 import Header from "@/components/admin/team/detail/Header.vue";
 import Statistic from "@/components/admin/team/detail/Statistic.vue";
 import Chart from "@/components/admin/team/detail/Chart.vue";
-import { useEmployeeStore } from "@/stores/employee";
-import { Search, SearchX, ChevronDown } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
@@ -44,30 +31,26 @@ const id = route.params.id;
 
 const teamStore = useTeamStore();
 const { loading, success, error } = storeToRefs(teamStore);
-const { fetchTeam, deleteTeam, addMember, removeMember } = teamStore;
-
-const employeeStore = useEmployeeStore();
-const { employees } = storeToRefs(employeeStore);
-const { fetchEmployees } = employeeStore;
+const { fetchTeam, deleteTeam } = teamStore;
 
 const team = ref({});
 const showDeleteModal = ref(false);
-const showAddMemberModal = ref(false);
-const searchMember = ref("");
-const addingMember = ref(false);
-const removingMember = ref(false);
-const showRemoveMemberModal = ref(false);
-const memberToRemove = ref(null);
+const showAllMembers = ref(false);
 
-// Filter employees yang belum menjadi member
-const availableEmployees = computed(() => {
-  if (!team.value.members || !Array.isArray(team.value.members)) {
-    return employees.value;
-  }
-
-  const memberIds = team.value.members.map((member) => member.employee.id);
-  return employees.value.filter((employee) => !memberIds.includes(employee.id));
+// The grid can get long for large teams, so only the first page is shown
+// until "View More" is clicked -- there's no separate members endpoint to
+// paginate against, the full list already comes with the team payload.
+const MEMBERS_PAGE_SIZE = 8;
+const visibleMembers = computed(() => {
+  const members = team.value.members || [];
+  return showAllMembers.value ? members : members.slice(0, MEMBERS_PAGE_SIZE);
 });
+const hasMoreMembers = computed(
+  () => (team.value.members || []).length > MEMBERS_PAGE_SIZE
+);
+
+const isTeamLead = (member) =>
+  !!team.value.leader && member.employee?.user?.id === team.value.leader.id;
 
 const handleFetchTeam = async () => {
   const response = await fetchTeam(id);
@@ -84,70 +67,9 @@ const handleDeleteTeam = async () => {
   }
 };
 
-const openAddMemberModal = () => {
-  showAddMemberModal.value = true;
-  fetchEmployees({ limit: 6 });
-};
-
-const closeAddMemberModal = () => {
-  showAddMemberModal.value = false;
-  searchMember.value = "";
-};
-
-const handleAddMember = async (employee) => {
-  try {
-    addingMember.value = true;
-    await addMember(id, employee.id);
-
-    // Refresh team data
-    await handleFetchTeam();
-
-    closeAddMemberModal();
-  } catch (error) {
-    console.error("Failed to add member:", error);
-  } finally {
-    addingMember.value = false;
-  }
-};
-
-const handleRemoveMember = async (member) => {
-  try {
-    removingMember.value = true;
-    await removeMember(id, member.employee.id);
-    await handleFetchTeam();
-  } catch (error) {
-    console.error("Failed to remove member:", error);
-  } finally {
-    removingMember.value = false;
-  }
-};
-
-const openRemoveMemberModal = (member) => {
-  memberToRemove.value = member;
-  showRemoveMemberModal.value = true;
-};
-
-const confirmRemoveMember = async () => {
-  if (!memberToRemove.value) return;
-  await handleRemoveMember(memberToRemove.value);
-  showRemoveMemberModal.value = false;
-  memberToRemove.value = null;
-};
-
 onMounted(async () => {
   await handleFetchTeam();
 });
-
-watch(
-  searchMember,
-  debounce(() => {
-    fetchEmployees({
-      limit: 6,
-      search: searchMember.value,
-    });
-  }, 300),
-  { deep: true }
-);
 </script>
 
 <template>
@@ -260,20 +182,18 @@ watch(
 
         <!-- Action Buttons -->
         <div class="flex gap-1.5 mt-3.5 pt-3.5 border-t border-[#DCDEDD]">
-          <button
-            class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5 flex items-center justify-center gap-1.5"
-          >
-            <MessageCircle class="w-5 h-5 text-brand-light" />
-            <span class="text-brand-dark text-sm font-semibold">Message</span>
-          </button>
-          <button
+          <RouterLink
+            :to="{
+              name: 'admin.employees.detail',
+              params: { id: team.leader?.employee_profile?.id },
+            }"
             class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5 flex items-center justify-center gap-1.5"
           >
             <UserCheck class="w-5 h-5 text-brand-light" />
             <span class="text-brand-dark text-sm font-semibold"
               >View Profile</span
             >
-          </button>
+          </RouterLink>
         </div>
       </div>
 
@@ -290,78 +210,34 @@ watch(
       </div>
     </div>
 
-    <!-- Team Settings -->
+    <!-- Team Responsibilities -->
     <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
       <div class="flex items-center gap-2.5 mb-5">
         <div
-          class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
+          class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
         >
-          <Settings class="w-6 h-6 text-purple-600" />
+          <ListCheck class="w-6 h-6 text-orange-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-sm font-bold">Team Settings</h3>
-          <p class="text-brand-light text-sm">Configuration and status</p>
+          <h3 class="text-brand-dark text-sm font-bold">Team Responsibilities</h3>
+          <p class="text-brand-light text-sm">Key duties and objectives</p>
         </div>
       </div>
-      <div class="space-y-2.5">
-        <div class="flex justify-between items-center">
-          <span class="text-brand-light text-sm">Department</span>
-          <span class="text-brand-dark text-sm font-medium">
-            {{ _.capitalize(team.department) }}
-          </span>
-        </div>
-
-        <div class="flex justify-between items-center">
-          <span class="text-brand-light text-sm">Expected Size</span>
-          <span class="text-brand-dark text-sm font-medium">
-            {{ team.expected_size }} members
-          </span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-brand-light text-sm">Created Date</span>
-          <span class="text-brand-dark text-sm font-medium">
-            {{ formatToClientTimezone(team.created_at) }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Banner Image -->
-      <div class="mt-3.5">
-        <img
-          src="https://images.unsplash.com/photo-1557804506-669a67965ba0"
-          alt="Team Banner"
-          class="w-full h-[138px] object-cover rounded-[12px]"
-        />
-      </div>
-    </div>
-  </div>
-
-  <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 mb-5">
-    <div class="flex items-center gap-2.5 mb-5">
-      <div
-        class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
-      >
-        <ListCheck class="w-6 h-6 text-orange-600" />
-      </div>
-      <div>
-        <h3 class="text-brand-dark text-sm font-bold">Team Responsibilities</h3>
-        <p class="text-brand-light text-sm">Key duties and objectives</p>
-      </div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-      <div
-        class="flex items-start gap-2.5 p-3.5 bg-gray-50 rounded-[12px]"
-        v-for="responsibility in team.responsibilities"
-        :key="responsibility.id"
-      >
+      <div class="grid grid-cols-1 gap-3.5">
         <div
-          class="w-8 h-8 min-w-[32px] bg-blue-100 rounded-full flex items-center justify-center mt-1 flex-shrink-0"
+          class="flex items-start gap-2.5 p-3.5 bg-gray-50 rounded-[12px]"
+          v-for="responsibility in team.responsibilities"
+          :key="responsibility.id"
         >
-          <Check class="w-4 h-4 text-blue-600" />
+          <div
+            class="w-8 h-8 min-w-[32px] bg-blue-100 rounded-full flex items-center justify-center mt-1 flex-shrink-0"
+          >
+            <Check class="w-4 h-4 text-blue-600" />
+          </div>
+          <span class="text-brand-dark text-sm font-medium">{{
+            responsibility
+          }}</span>
         </div>
-        <span class="text-brand-dark text-sm font-medium">{{
-          responsibility
-        }}</span>
       </div>
     </div>
   </div>
@@ -380,19 +256,13 @@ watch(
           <p class="text-brand-light text-sm">Current team composition</p>
         </div>
       </div>
-      <div class="flex items-center gap-3.5">
+      <div class="flex items-center gap-3.5" v-if="hasMoreMembers">
         <button
+          @click="showAllMembers = !showAllMembers"
           class="bg-white border border-[#DCDEDD] text-brand-dark py-2.5 px-3.5 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
         >
           <Eye class="w-4 h-4" />
-          <span class="text-sm font-semibold">View More</span>
-        </button>
-        <button
-          @click="openAddMemberModal"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-1.5"
-        >
-          <UserPlus class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Add Member</span>
+          <span class="text-sm font-semibold">{{ showAllMembers ? "View Less" : "View More" }}</span>
         </button>
       </div>
     </div>
@@ -404,16 +274,16 @@ watch(
       <!-- Team Member 1 -->
       <div
         class="relative border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
-        v-for="member in team.members"
+        v-for="member in visibleMembers"
         :key="member.id"
       >
-        <button
-          @click="openRemoveMemberModal(member)"
-          :disabled="removingMember"
-          class="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-50 border border-red-200 hover:bg-red-100 transition-all duration-300 flex items-center justify-center disabled:opacity-60"
+        <span
+          v-if="isTeamLead(member)"
+          class="absolute top-3 right-3 px-1.5 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF] flex items-center gap-1"
         >
-          <Trash2 class="w-4 h-4 text-red-600" />
-        </button>
+          <Crown class="w-3 h-3" />
+          Team Lead
+        </span>
         <div class="flex flex-col items-center mb-2.5">
           <div class="relative">
             <Avatar
@@ -457,130 +327,6 @@ watch(
             >View Profile</span
           >
         </RouterLink>
-      </div>
-    </div>
-  </div>
-
-  <!-- Team Activity Row -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-    <!-- Team Activity -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
-      <div class="flex items-center gap-2.5 mb-5">
-        <div
-          class="w-9 h-9 bg-gray-50 rounded-[12px] flex items-center justify-center"
-        >
-          <Activity class="w-6 h-6 text-gray-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-sm font-bold">Recent Activity</h3>
-          <p class="text-brand-light text-sm">
-            Latest team updates and milestones
-          </p>
-        </div>
-      </div>
-      <div class="space-y-3.5">
-        <div class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px]">
-          <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-          <div class="flex-1">
-            <p class="text-brand-dark text-sm font-medium">
-              Project milestone completed: API Integration Phase
-            </p>
-            <p class="text-brand-light text-xs">3 days ago</p>
-          </div>
-          <div class="flex items-center gap-1 text-green-600">
-            <CheckCircle class="w-4 h-4" />
-            <span class="text-sm font-medium">Completed</span>
-          </div>
-        </div>
-        <div class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px]">
-          <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-          <div class="flex-1">
-            <p class="text-brand-dark text-sm font-medium">
-              New team member joined: Emily Rodriguez
-            </p>
-            <p class="text-brand-light text-xs">1 week ago</p>
-          </div>
-          <div class="flex items-center gap-1 text-blue-600">
-            <UserPlus class="w-4 h-4" />
-            <span class="text-sm font-medium">Member Added</span>
-          </div>
-        </div>
-        <div class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px]">
-          <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
-          <div class="flex-1">
-            <p class="text-brand-dark text-sm font-medium">
-              Team training session conducted: Advanced React Patterns
-            </p>
-            <p class="text-brand-light text-xs">2 weeks ago</p>
-          </div>
-          <div class="flex items-center gap-1 text-purple-600">
-            <i data-lucide="graduation-cap" class="w-4 h-4"></i>
-            <span class="text-sm font-medium">Training</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Team Resources -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
-      <div class="flex items-center gap-2.5 mb-5">
-        <div
-          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
-        >
-          <Folder class="w-6 h-6 text-blue-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-sm font-bold">Team Resources</h3>
-          <p class="text-brand-light text-sm">Essential tools and documents</p>
-        </div>
-      </div>
-      <div class="space-y-3.5">
-        <div
-          class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px] hover:bg-gray-100 transition-colors cursor-pointer"
-        >
-          <div
-            class="w-10 h-10 bg-green-100 rounded-[8px] flex items-center justify-center"
-          >
-            <FileText class="w-5 h-5 text-green-600" />
-          </div>
-          <div class="flex-1">
-            <p class="text-brand-dark text-sm font-medium">
-              Team Documentation
-            </p>
-            <p class="text-brand-light text-xs">
-              Project guidelines and processes
-            </p>
-          </div>
-          <ExternalLink class="w-4 h-4 text-gray-400" />
-        </div>
-        <div
-          class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px] hover:bg-gray-100 transition-colors cursor-pointer"
-        >
-          <div
-            class="w-10 h-10 bg-purple-100 rounded-[8px] flex items-center justify-center"
-          >
-            <Calendar class="w-5 h-5 text-purple-600" />
-          </div>
-          <div class="flex-1">
-            <p class="text-brand-dark text-sm font-medium">Team Calendar</p>
-            <p class="text-brand-light text-xs">Meetings and deadlines</p>
-          </div>
-          <ExternalLink class="w-4 h-4 text-gray-400" />
-        </div>
-        <div
-          class="flex items-center gap-3.5 p-3.5 bg-gray-50 rounded-[12px] hover:bg-gray-100 transition-colors cursor-pointer"
-        >
-          <div
-            class="w-10 h-10 bg-orange-100 rounded-[8px] flex items-center justify-center"
-          >
-            <MessageSquare class="w-5 h-5 text-orange-600" />
-          </div>
-          <div class="flex-1">
-            <p class="text-brand-dark text-sm font-medium">Team Chat</p>
-            <p class="text-brand-light text-xs">Communication channel</p>
-          </div>
-          <ExternalLink class="w-4 h-4 text-gray-400" />
-        </div>
       </div>
     </div>
   </div>
@@ -633,113 +379,4 @@ watch(
     @cancel="showDeleteModal = false"
   />
 
-  <ConfirmationModal
-    :show="showRemoveMemberModal"
-    title="Remove Member"
-    :message="`Are you sure you want to remove '${
-      memberToRemove?.employee?.user?.name || ''
-    }' from this team?`"
-    confirmText="Remove"
-    cancelText="Cancel"
-    type="danger"
-    :loading="loading"
-    @confirm="confirmRemoveMember"
-    @cancel="showRemoveMemberModal = false"
-  />
-
-  <!-- Add Member Modal -->
-  <div
-    class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center"
-    v-if="showAddMemberModal"
-  >
-    <div
-      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-3.5 max-h-[80vh] overflow-hidden"
-    >
-      <!-- Modal Header -->
-      <div class="p-5 border-b border-[#DCDEDD]">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div
-              class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
-            >
-              <UserPlus class="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-base font-bold">Add Team Member</h3>
-              <p class="text-brand-light text-sm font-normal">
-                Choose an employee to add to this team
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            @click="closeAddMemberModal"
-            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
-          >
-            <X class="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
-      </div>
-
-      <!-- Search Bar -->
-      <div class="p-5 border-b border-[#DCDEDD]">
-        <div class="relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-          >
-            <Search class="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-            placeholder="Search employees..."
-            v-model="searchMember"
-          />
-        </div>
-      </div>
-
-      <!-- Employees List -->
-      <div class="p-5 overflow-y-auto max-h-96">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-          <!-- Employee Option -->
-          <div
-            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5 cursor-pointer"
-            v-for="employee in availableEmployees"
-            :key="employee.id"
-            @click="handleAddMember(employee)"
-          >
-            <div class="flex items-center gap-3.5">
-              <Avatar
-                :src="employee.user?.profile_photo"
-                :alt="employee.user?.name"
-                size="w-10 h-10"
-                icon-size="w-5 h-5"
-                rounded="rounded-[12px]"
-              />
-              <div class="flex-1">
-                <h4 class="text-brand-dark text-sm font-bold">
-                  {{ employee.user?.name }}
-                </h4>
-                <p class="text-brand-light text-sm font-normal">
-                  {{ employee.job_information?.job_title }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- No Results Message -->
-        <div class="text-center py-6" v-if="availableEmployees.length === 0">
-          <SearchX class="w-9 h-9 text-gray-400 mx-auto mb-2.5" />
-          <h4 class="text-brand-dark text-sm font-semibold mb-1">
-            No employees available
-          </h4>
-          <p class="text-brand-light text-sm">
-            All employees are already members of this team or try adjusting your
-            search terms
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
 </template>

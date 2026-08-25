@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import VueApexCharts from "vue3-apexcharts";
-import { WalletIcon } from "lucide-vue-next";
+import { WalletIcon, Eye, EyeOff } from "lucide-vue-next";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -18,6 +18,7 @@ onMounted(() => {
   projectStore.fetchStatistics();
 });
 
+const showAmount = ref(false);
 const totalBudget = computed(() => projectStore.statistics.total_budget ?? 0);
 const budgetByMonth = computed(() => projectStore.statistics.budget_by_month ?? []);
 
@@ -118,9 +119,18 @@ const chartSeries = computed(() => [{ name: "Budget", data: chartSeriesData.valu
       <div class="flex-1">
         <h3 class="text-brand-dark text-base font-bold">Project Budget</h3>
         <Skeleton v-if="loadingStatistics" width="140px" height="14px" rounded="4px" class="mt-1" />
-        <p v-else class="text-brand-light text-xs">
+        <p v-else class="text-brand-light text-xs flex items-center gap-1.5">
           Total budget across all projects:
-          <span class="text-brand-dark font-semibold">{{ formatRupiah(totalBudget) }}</span>
+          <span class="text-brand-dark font-semibold">{{ showAmount ? formatRupiah(totalBudget) : "Rp ••••••••" }}</span>
+          <button
+            type="button"
+            @click="showAmount = !showAmount"
+            :aria-label="showAmount ? 'Hide amount' : 'Show amount'"
+            class="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <EyeOff v-if="showAmount" class="w-3.5 h-3.5" />
+            <Eye v-else class="w-3.5 h-3.5" />
+          </button>
         </p>
       </div>
 

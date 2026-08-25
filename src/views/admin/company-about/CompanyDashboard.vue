@@ -211,15 +211,23 @@ const saveCompany = async () => {
     <!-- Overview -->
     <div class="main-card rounded-[14px] p-5 lg:col-span-2 relative overflow-hidden">
       <div class="absolute -top-12 -right-12 w-48 h-48 bg-blue-500/20 rounded-full blur-2xl"></div>
-      <div class="relative z-10 flex items-center gap-4 mb-5">
-        <div class="w-14 h-14 bg-white border border-white/10 rounded-[12px] flex items-center justify-center shrink-0">
-          <img src="/images/jcd-only-color.png" alt="Company Logo" class="w-9 h-9 object-contain" />
+      <div class="relative z-10 mb-5">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 bg-white border border-white/10 rounded-[12px] flex items-center justify-center shrink-0">
+            <img src="/images/jcd-only-color.png" alt="Company Logo" class="w-9 h-9 object-contain" />
+          </div>
+          <div class="min-w-0">
+            <h2 class="text-white text-lg font-bold truncate">{{ company.name || "-" }}</h2>
+            <p v-if="company.legal_name" class="text-brand-white-70 text-sm truncate">{{ company.legal_name }}</p>
+          </div>
         </div>
-        <div class="min-w-0">
-          <h2 class="text-white text-lg font-bold truncate">{{ company.name || "-" }}</h2>
-          <p v-if="company.legal_name" class="text-brand-white-70 text-sm truncate">{{ company.legal_name }}</p>
-          <p v-if="company.description" :title="company.description" class="text-brand-white-70 text-sm truncate cursor-help">{{ company.description }}</p>
-        </div>
+        <p
+          v-if="company.description"
+          :title="company.description"
+          class="text-brand-white-70 text-sm leading-relaxed mt-3.5 pt-3.5 border-t border-white/10 line-clamp-2"
+        >
+          {{ company.description }}
+        </p>
       </div>
 
       <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-4">

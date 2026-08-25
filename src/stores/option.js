@@ -24,7 +24,6 @@ export const useOptionStore = defineStore("option", {
             try {
                 const response = await axiosInstance.get('/options/departments');
                 this.departments = response.data.data;
-                console.log('Departments loaded:', this.departments);
             } catch (error) {
                 this.error = handleError(error);
                 console.error('Failed to fetch departments:', error);

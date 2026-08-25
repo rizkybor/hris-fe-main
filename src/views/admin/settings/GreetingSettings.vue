@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { CalendarHeart, Plus, PartyPopper, Cake, CalendarClock, Sparkles, Pencil, Trash2, X, Repeat } from "lucide-vue-next";
+import { CalendarHeart, Plus, PartyPopper, Cake, CalendarClock, Sparkles, Pencil, Trash2, X, Repeat, ArrowLeft } from "lucide-vue-next";
 import { useGreetingStore } from "@/stores/greeting";
 import { can } from "@/helpers/permissionHelper";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -114,6 +114,14 @@ const formatDate = (value, recurring) => {
   <div class="px-4 py-4">
     <div class="bg-white mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-3">
+        <router-link
+          :to="{ name: 'admin.settings.dashboard' }"
+          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
+          aria-label="Back to Settings"
+          title="Back to Settings"
+        >
+          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+        </router-link>
         <div class="w-11 h-11 bg-pink-50 rounded-[12px] flex items-center justify-center">
           <CalendarHeart class="w-5 h-5 text-pink-600" />
         </div>

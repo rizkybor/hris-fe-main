@@ -56,9 +56,9 @@ const deletePhoto = () => {
 </script>
 
 <template>
-  <div class="flex flex-col md:flex-row gap-5 items-start">
+  <div class="flex flex-col lg:flex-row gap-5 items-start">
     <!-- Profile Photo Card -->
-    <div class="w-full md:w-80">
+    <div class="w-full lg:w-80">
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
