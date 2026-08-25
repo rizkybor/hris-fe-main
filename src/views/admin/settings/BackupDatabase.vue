@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { DatabaseBackup, Plus, Download, Trash2, Loader2, HardDrive, Search } from "lucide-vue-next";
+import { DatabaseBackup, Plus, Download, Trash2, RotateCcw, Loader2, HardDrive, Search } from "lucide-vue-next";
 import { useBackupStore } from "@/stores/backup";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
@@ -10,7 +10,7 @@ import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useBackupStore();
 const alertModal = useAlertModalStore();
-const { backups, meta, loading, creating, error } = storeToRefs(store);
+const { backups, meta, loading, creating, restoringId, error } = storeToRefs(store);
 
 const search = ref("");
 const isDeleteModalOpen = ref(false);
@@ -43,6 +43,22 @@ const handleDownload = async (backup) => {
 const confirmDelete = (backup) => {
   backupToDelete.value = backup;
   isDeleteModalOpen.value = true;
+};
+
+const handleRestore = async (backup) => {
+  const confirmed = await alertModal.confirm(
+    `This will PERMANENTLY REPLACE all current data with the contents of "${backup.filename}" (${formatDate(backup.created_at)}). A safety backup of the current state is taken automatically first, but this action itself cannot be undone from this screen, and you may be logged out afterward. Are you absolutely sure?`,
+    { title: "Restore Database", confirmText: "Yes, Restore", type: "danger" }
+  );
+  if (!confirmed) return;
+
+  try {
+    await store.restoreBackup(backup.id);
+    await alertModal.alert("Database restored successfully. The page will now reload.", { title: "Restore Complete", type: "success" });
+    window.location.reload();
+  } catch {
+    // error state is already surfaced via `error`
+  }
 };
 
 const handleDelete = async () => {
@@ -152,6 +168,16 @@ const formatDate = (date) =>
                     title="Download SQL"
                   >
                     <Download class="w-4 h-4 text-gray-600" />
+                  </button>
+                  <button
+                    v-if="can('backup-restore')"
+                    @click="handleRestore(backup)"
+                    :disabled="restoringId === backup.id"
+                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-orange-500 hover:bg-orange-50 disabled:opacity-50 group"
+                    title="Restore database from this backup"
+                  >
+                    <Loader2 v-if="restoringId === backup.id" class="w-4 h-4 text-orange-600 animate-spin" />
+                    <RotateCcw v-else class="w-4 h-4 text-gray-600 group-hover:text-orange-600" />
                   </button>
                   <button
                     v-if="can('backup-delete')"
