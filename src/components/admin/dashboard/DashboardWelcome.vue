@@ -3,15 +3,22 @@ import { computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/stores/auth";
 import { useGreetingStore } from "@/stores/greeting";
+import { useAnnouncementStore } from "@/stores/announcement";
 import { getRoleBadgeClass, getRoleLabel } from "@/utils/badgeUtils";
-import { SparklesIcon, PartyPopper, Cake, CalendarClock } from "lucide-vue-next";
+import { SparklesIcon, PartyPopper, Cake, CalendarClock, Megaphone, Pin } from "lucide-vue-next";
 
 const authStore = useAuthStore();
 const greetingStore = useGreetingStore();
 const { todayGreetings } = storeToRefs(greetingStore);
 
+const announcementStore = useAnnouncementStore();
+const { announcements } = storeToRefs(announcementStore);
+
 onMounted(() => {
   greetingStore.fetchTodayGreetings();
+  // The backend already scopes this to active (not-yet-expired) announcements
+  // for the current user's role, ordered pinned-first -- no client filtering needed.
+  announcementStore.fetchAnnouncements({ row_per_page: 3 });
 });
 
 const GREETING_ICONS = { holiday: PartyPopper, birthday: Cake, meeting: CalendarClock, custom: SparklesIcon };
@@ -109,6 +116,27 @@ const todayLabel = computed(() =>
           </div>
         </div>
       </div>
+
+      <!-- Announcements -->
+      <RouterLink
+        v-if="announcements.length > 0"
+        :to="{ name: 'admin.announcements.dashboard' }"
+        class="w-full sm:w-64 lg:w-80 shrink-0 bg-white/80 backdrop-blur-sm border border-[#DCDEDD] rounded-[12px] p-3.5 hover:border-[#0C51D9] hover:shadow-sm transition-all duration-300"
+      >
+        <div class="flex items-center gap-1.5 mb-2.5">
+          <Megaphone class="w-3.5 h-3.5 text-blue-500 shrink-0" />
+          <h3 class="text-brand-dark text-xs font-bold uppercase tracking-wide">Announcements</h3>
+        </div>
+        <div class="space-y-2 max-h-40 overflow-hidden">
+          <div v-for="item in announcements" :key="item.id" class="min-w-0">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <Pin v-if="item.is_pinned" class="w-3 h-3 text-[#0C51D9] shrink-0" />
+              <p class="text-brand-dark text-xs sm:text-sm font-semibold truncate min-w-0">{{ item.title }}</p>
+            </div>
+            <p class="text-brand-light text-xs truncate">{{ item.body }}</p>
+          </div>
+        </div>
+      </RouterLink>
     </div>
   </div>
 </template>

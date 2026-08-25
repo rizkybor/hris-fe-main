@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useTeamStore } from "@/stores/team";
 import { storeToRefs } from "pinia";
@@ -35,6 +35,22 @@ const { fetchTeam, deleteTeam } = teamStore;
 
 const team = ref({});
 const showDeleteModal = ref(false);
+const showAllMembers = ref(false);
+
+// The grid can get long for large teams, so only the first page is shown
+// until "View More" is clicked -- there's no separate members endpoint to
+// paginate against, the full list already comes with the team payload.
+const MEMBERS_PAGE_SIZE = 8;
+const visibleMembers = computed(() => {
+  const members = team.value.members || [];
+  return showAllMembers.value ? members : members.slice(0, MEMBERS_PAGE_SIZE);
+});
+const hasMoreMembers = computed(
+  () => (team.value.members || []).length > MEMBERS_PAGE_SIZE
+);
+
+const isTeamLead = (member) =>
+  !!team.value.leader && member.employee?.user?.id === team.value.leader.id;
 
 const handleFetchTeam = async () => {
   const response = await fetchTeam(id);
@@ -240,12 +256,13 @@ onMounted(async () => {
           <p class="text-brand-light text-sm">Current team composition</p>
         </div>
       </div>
-      <div class="flex items-center gap-3.5">
+      <div class="flex items-center gap-3.5" v-if="hasMoreMembers">
         <button
+          @click="showAllMembers = !showAllMembers"
           class="bg-white border border-[#DCDEDD] text-brand-dark py-2.5 px-3.5 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
         >
           <Eye class="w-4 h-4" />
-          <span class="text-sm font-semibold">View More</span>
+          <span class="text-sm font-semibold">{{ showAllMembers ? "View Less" : "View More" }}</span>
         </button>
       </div>
     </div>
@@ -257,9 +274,16 @@ onMounted(async () => {
       <!-- Team Member 1 -->
       <div
         class="relative border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
-        v-for="member in team.members"
+        v-for="member in visibleMembers"
         :key="member.id"
       >
+        <span
+          v-if="isTeamLead(member)"
+          class="absolute top-3 right-3 px-1.5 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF] flex items-center gap-1"
+        >
+          <Crown class="w-3 h-3" />
+          Team Lead
+        </span>
         <div class="flex flex-col items-center mb-2.5">
           <div class="relative">
             <Avatar

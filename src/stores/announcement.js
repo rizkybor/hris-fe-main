@@ -13,6 +13,7 @@ export const useAnnouncementStore = defineStore("announcement", {
         announcements: [],
         meta: { current_page: 1, last_page: 1, per_page: 10, total: 0 },
         loading: false,
+        loadingDetail: false,
         error: null,
         success: null,
     }),
@@ -31,6 +32,22 @@ export const useAnnouncementStore = defineStore("announcement", {
                 this.error = handleError(error);
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async fetchAnnouncement(id) {
+            this.loadingDetail = true;
+            this.error = null;
+
+            try {
+                const response = await axiosInstance.get(`/announcements/${id}`);
+
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            } finally {
+                this.loadingDetail = false;
             }
         },
 
