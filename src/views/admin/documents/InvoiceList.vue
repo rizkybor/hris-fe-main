@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { Receipt, Plus, Download, CheckCircle2, Ban, Trash2, Search, ArrowLeft } from "lucide-vue-next";
+import { Receipt, Plus, Download, FileText, Pencil, CheckCircle2, Ban, Trash2, Search, ArrowLeft } from "lucide-vue-next";
 import { useInvoiceStore } from "@/stores/invoice";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
@@ -38,6 +38,16 @@ const handleDownload = async (invoice) => {
     await store.downloadPdf(invoice.id, invoice.invoice_number);
   } finally {
     downloadingId.value = null;
+  }
+};
+
+const viewingId = ref(null);
+const handleViewPdf = async (invoice) => {
+  viewingId.value = invoice.id;
+  try {
+    await store.viewPdf(invoice.id);
+  } finally {
+    viewingId.value = null;
   }
 };
 
@@ -187,6 +197,14 @@ const formatDate = (date) =>
               <td class="py-3 pr-4">
                 <div class="flex items-center justify-end gap-1">
                   <button
+                    @click="handleViewPdf(invoice)"
+                    :disabled="viewingId === invoice.id"
+                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
+                    title="View PDF"
+                  >
+                    <FileText class="w-4 h-4 text-gray-600" />
+                  </button>
+                  <button
                     @click="handleDownload(invoice)"
                     :disabled="downloadingId === invoice.id"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
@@ -194,6 +212,14 @@ const formatDate = (date) =>
                   >
                     <Download class="w-4 h-4 text-gray-600" />
                   </button>
+                  <router-link
+                    v-if="can('invoice-edit')"
+                    :to="{ name: 'admin.invoices.edit', params: { id: invoice.id } }"
+                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
+                    title="Edit"
+                  >
+                    <Pencil class="w-4 h-4 text-gray-600" />
+                  </router-link>
                   <button
                     v-if="can('invoice-edit') && invoice.status === 'unpaid'"
                     @click="handleMarkPaid(invoice)"

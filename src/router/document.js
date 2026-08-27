@@ -33,6 +33,11 @@ export default [
     component: PurchaseOrderCreate,
   },
   {
+    path: 'documents/purchase-orders/:id/edit',
+    name: 'admin.purchase-orders.edit',
+    component: PurchaseOrderCreate,
+  },
+  {
     path: 'documents/invoices',
     name: 'admin.invoices.dashboard',
     component: InvoiceList,
@@ -40,6 +45,11 @@ export default [
   {
     path: 'documents/invoices/create',
     name: 'admin.invoices.create',
+    component: InvoiceCreate,
+  },
+  {
+    path: 'documents/invoices/:id/edit',
+    name: 'admin.invoices.edit',
     component: InvoiceCreate,
   },
   {
@@ -53,6 +63,11 @@ export default [
     component: PaymentReceiptCreate,
   },
   {
+    path: 'documents/payment-receipts/:id/edit',
+    name: 'admin.payment-receipts.edit',
+    component: PaymentReceiptCreate,
+  },
+  {
     path: 'documents/letters',
     name: 'admin.letters.dashboard',
     component: LetterList,
@@ -60,6 +75,11 @@ export default [
   {
     path: 'documents/letters/create',
     name: 'admin.letters.create',
+    component: LetterCreate,
+  },
+  {
+    path: 'documents/letters/:id/edit',
+    name: 'admin.letters.edit',
     component: LetterCreate,
   },
   {
