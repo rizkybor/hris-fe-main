@@ -170,8 +170,6 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         // Menyimpan data yang diterima
         this.fixedCostData.items = response.data.data.data;
         this.fixedCostData.meta = response.data.data.meta;
-
-        this.updateFixedCostSummary();
       } catch (error) {
         // Menangani error jika ada
         this.error = handleError(error);
@@ -179,21 +177,6 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         // Mengubah status loading menjadi false setelah request selesai
         this.loading = false;
       }
-    },
-
-    // Update the Fixed Cost summary
-    updateFixedCostSummary() {
-      const items = this.fixedCostData.items;
-      const totalBudget = items.reduce((acc, item) => acc + item.budget, 0);
-      const totalActual = items.reduce((acc, item) => acc + item.actual, 0);
-      const variance = totalBudget - totalActual;
-
-      this.statistics.fixed_cost.summary = {
-        total_budget: totalBudget,
-        total_actual: totalActual,
-        variance: variance,
-        total_items: items.length,
-      };
     },
 
     // Create new the Fixed Cost
@@ -204,6 +187,10 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         const response = await axiosInstance.post("fixed-costs", payload);
 
         this.success = response.data.message;
+        // Dashboard summary cards must reflect the true grand total, not
+        // just whatever page of the list happens to be loaded -- refetch
+        // the real aggregate from /company-finances/statistic.
+        await this.fetchStatistics();
       } catch (error) {
         this.error = handleError(error);
         throw error;
@@ -223,6 +210,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         });
 
         this.success = response.data.message;
+        await this.fetchStatistics();
       } catch (error) {
         this.error = handleError(error);
         throw error;
@@ -243,8 +231,10 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
           (item) => item.id !== id
         );
 
-        // Update summary
-        this.updateFixedCostSummary();
+        // Dashboard summary cards must reflect the true grand total, not
+        // just whatever page of the list happens to be loaded -- refetch
+        // the real aggregate from /company-finances/statistic.
+        await this.fetchStatistics();
 
         this.success = "Fixed Cost item deleted successfully";
       } catch (error) {
@@ -273,34 +263,11 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         // Menyimpan data yang diterima
         this.sdmResourceData.items = response.data.data.data;
         this.sdmResourceData.meta = response.data.data.meta;
-
-        this.updateSdmResourceSummary();
       } catch (error) {
         this.error = handleError(error);
       } finally {
         this.loading = false;
       }
-    },
-
-    // Update the SDM Resource summary
-    updateSdmResourceSummary() {
-      // sesuai struktur JSON API
-      const items = this.sdmResourceData.items;
-      const totalBudget = items.reduce(
-        (acc, item) => acc + Number(item.budget || 0),
-        0
-      );
-      const totalActual = items.reduce(
-        (acc, item) => acc + Number(item.actual || 0),
-        0
-      );
-      const variance = totalBudget - totalActual;
-      this.statistics.sdm_resource.summary = {
-        total_budget: totalBudget,
-        total_actual: totalActual,
-        variance,
-        total_items: items.length,
-      };
     },
 
     // Create new the SDM Resources
@@ -311,6 +278,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         const response = await axiosInstance.post("sdm-resources", payload);
 
         this.success = response.data.message;
+        await this.fetchStatistics();
       } catch (error) {
         this.error = handleError(error);
         throw error;
@@ -330,6 +298,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         });
 
         this.success = response.data.message;
+        await this.fetchStatistics();
       } catch (error) {
         this.error = handleError(error);
         throw error;
@@ -349,8 +318,10 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
           (item) => item.id !== id
         );
 
-        // Update summary
-        this.updateSdmResourceSummary();
+        // Dashboard summary cards must reflect the true grand total, not
+        // just whatever page of the list happens to be loaded -- refetch
+        // the real aggregate from /company-finances/statistic.
+        await this.fetchStatistics();
 
         this.success = "SDM Resource item deleted successfully";
       } catch (error) {
@@ -383,35 +354,11 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         // Simpan data & meta
         this.infraToolsData.items = response.data.data.data;
         this.infraToolsData.meta = response.data.data.meta;
-
-        // Optional: summary / stats
-        this.updateInfraToolsSummary();
       } catch (error) {
         this.error = handleError(error);
       } finally {
         this.loading = false;
       }
-    },
-
-    // Update the Infra Tools summary
-    updateInfraToolsSummary() {
-      const items = this.infraToolsData.items;
-      const total_monthly_fee = items.reduce(
-        (acc, item) => acc + Number(item.monthly_fee || 0),
-        0
-      );
-      const total_annual_fee = items.reduce(
-        (acc, item) => acc + Number(item.annual_fee || 0),
-        0
-      );
-      const total_infra_active = items.filter(
-        (item) => item.status === "active"
-      ).length;
-      this.statistics.infrastructure.summary = {
-        total_monthly_fee,
-        total_annual_fee,
-        total_infra_active,
-      };
     },
 
     // Create new the Infra Tools
@@ -425,6 +372,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         );
 
         this.success = response.data.message;
+        await this.fetchStatistics();
       } catch (error) {
         this.error = handleError(error);
         throw error;
@@ -447,6 +395,7 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         );
 
         this.success = response.data.message;
+        await this.fetchStatistics();
       } catch (error) {
         this.error = handleError(error);
         throw error;
@@ -466,8 +415,10 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
           (item) => item.id !== id
         );
 
-        // Update summary
-        this.updateInfraToolsSummary();
+        // Dashboard summary cards must reflect the true grand total, not
+        // just whatever page of the list happens to be loaded -- refetch
+        // the real aggregate from /company-finances/statistic.
+        await this.fetchStatistics();
 
         this.success = "Infrastructure item deleted successfully";
       } catch (error) {
