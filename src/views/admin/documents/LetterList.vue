@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { Mail, Plus, Download, Ban, Trash2, Search, ArrowLeft } from "lucide-vue-next";
+import { Mail, Plus, Download, FileText, Pencil, Ban, Trash2, Search, ArrowLeft } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
@@ -37,6 +37,16 @@ const handleDownload = async (letter) => {
     await store.downloadPdf(letter.id, letter.letter_number);
   } finally {
     downloadingId.value = null;
+  }
+};
+
+const viewingId = ref(null);
+const handleViewPdf = async (letter) => {
+  viewingId.value = letter.id;
+  try {
+    await store.viewPdf(letter.id);
+  } finally {
+    viewingId.value = null;
   }
 };
 
@@ -160,6 +170,14 @@ const formatDate = (date) =>
               <td class="py-3 pr-4">
                 <div class="flex items-center justify-end gap-1">
                   <button
+                    @click="handleViewPdf(letter)"
+                    :disabled="viewingId === letter.id"
+                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
+                    title="View PDF"
+                  >
+                    <FileText class="w-4 h-4 text-gray-600" />
+                  </button>
+                  <button
                     @click="handleDownload(letter)"
                     :disabled="downloadingId === letter.id"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
@@ -167,6 +185,14 @@ const formatDate = (date) =>
                   >
                     <Download class="w-4 h-4 text-gray-600" />
                   </button>
+                  <router-link
+                    v-if="can('letter-edit')"
+                    :to="{ name: 'admin.letters.edit', params: { id: letter.id } }"
+                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
+                    title="Edit"
+                  >
+                    <Pencil class="w-4 h-4 text-gray-600" />
+                  </router-link>
                   <button
                     v-if="can('letter-edit') && letter.status !== 'cancelled'"
                     @click="handleCancel(letter)"

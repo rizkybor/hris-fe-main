@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import { FileCheck2, Wallet } from "lucide-vue-next";
 import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
@@ -13,6 +13,11 @@ const { invoices } = storeToRefs(invoiceStore);
 const calculatorStore = useProjectCalculatorStore();
 const { pphTypes } = storeToRefs(calculatorStore);
 const router = useRouter();
+const route = useRoute();
+
+const editingId = computed(() => route.params.id || null);
+const isEditMode = computed(() => !!editingId.value);
+const existingReceiptNumber = ref("");
 
 const form = ref({
   numbering_mode: "automatic",
@@ -40,9 +45,38 @@ const applyPph23 = ref(false);
 const submitting = ref(false);
 const errorMessage = ref("");
 
-onMounted(() => {
-  invoiceStore.fetchInvoices({ row_per_page: 100 });
-  calculatorStore.fetchPphTypes();
+onMounted(async () => {
+  await Promise.all([
+    invoiceStore.fetchInvoices({ row_per_page: 100 }),
+    calculatorStore.fetchPphTypes(),
+  ]);
+
+  if (isEditMode.value) {
+    try {
+      const receipt = await store.fetchReceipt(editingId.value);
+      existingReceiptNumber.value = receipt.receipt_number;
+      form.value.client_code = receipt.client_code || "";
+      form.value.date = receipt.date;
+      form.value.amount = receipt.amount;
+      form.value.pph23_type = receipt.pph23_type;
+      form.value.pph23_percent = receipt.pph23_percent;
+      form.value.pph23_amount = receipt.pph23_amount;
+      form.value.received_from = receipt.received_from || "";
+      form.value.for_payment_of = receipt.for_payment_of || "";
+      form.value.invoice_id = receipt.invoice_id || "";
+      form.value.payment_status = receipt.payment_status || "paid";
+      form.value.recipient_name = receipt.recipient_name || "";
+
+      if (receipt.pph23_amount) {
+        applyPph23.value = true;
+        grossAmount.value = Number(receipt.amount) + Number(receipt.pph23_amount);
+      } else {
+        grossAmount.value = Number(receipt.amount);
+      }
+    } catch (error) {
+      errorMessage.value = "Failed to load payment receipt.";
+    }
+  }
 });
 
 const recomputePph23 = () => {
@@ -89,6 +123,27 @@ const handleSubmit = async () => {
   errorMessage.value = "";
   submitting.value = true;
   try {
+    if (isEditMode.value) {
+      // Numbering mode / receipt_number aren't editable once issued -- only
+      // the content fields PaymentReceiptUpdateRequest actually validates.
+      const payload = {
+        client_code: form.value.client_code,
+        date: form.value.date,
+        received_from: form.value.received_from,
+        amount: form.value.amount,
+        pph23_type: form.value.pph23_type,
+        pph23_percent: form.value.pph23_percent,
+        pph23_amount: form.value.pph23_amount,
+        for_payment_of: form.value.for_payment_of,
+        invoice_id: form.value.invoice_id || null,
+        payment_status: form.value.payment_status,
+        recipient_name: form.value.recipient_name,
+      };
+      await store.updateReceipt(editingId.value, payload);
+      router.push({ name: "admin.payment-receipts.dashboard" });
+      return;
+    }
+
     const payload = { ...form.value, invoice_id: form.value.invoice_id || null };
     if (payload.numbering_mode === "manual") {
       delete payload.client_code;
@@ -99,7 +154,7 @@ const handleSubmit = async () => {
     router.push({ name: "admin.payment-receipts.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to create Payment Receipt.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : `Failed to ${isEditMode.value ? "update" : "create"} Payment Receipt.`);
   } finally {
     submitting.value = false;
   }
@@ -114,9 +169,9 @@ const handleSubmit = async () => {
           <FileCheck2 class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Create Payment Receipt</h3>
+          <h3 class="text-brand-dark text-lg font-bold">{{ isEditMode ? "Edit Payment Receipt" : "Create Payment Receipt" }}</h3>
           <p class="text-brand-light text-sm">
-            {{ form.numbering_mode === "manual" ? "Receipt number will be used exactly as entered" : "Receipt number will be generated automatically when saved" }}
+            {{ isEditMode ? existingReceiptNumber : (form.numbering_mode === "manual" ? "Receipt number will be used exactly as entered" : "Receipt number will be generated automatically when saved") }}
           </p>
         </div>
       </div>
@@ -140,28 +195,34 @@ const handleSubmit = async () => {
               </option>
             </select>
           </div>
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Receipt Numbering</label>
-            <div class="flex items-center gap-4">
-              <label class="flex items-center gap-2 text-sm text-brand-dark">
-                <input type="radio" value="automatic" v-model="form.numbering_mode" />
-                Automatic
-              </label>
-              <label class="flex items-center gap-2 text-sm text-brand-dark">
-                <input type="radio" value="manual" v-model="form.numbering_mode" />
-                Manual
-              </label>
+          <template v-if="!isEditMode">
+            <div class="md:col-span-2">
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Receipt Numbering</label>
+              <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2 text-sm text-brand-dark">
+                  <input type="radio" value="automatic" v-model="form.numbering_mode" />
+                  Automatic
+                </label>
+                <label class="flex items-center gap-2 text-sm text-brand-dark">
+                  <input type="radio" value="manual" v-model="form.numbering_mode" />
+                  Manual
+                </label>
+              </div>
             </div>
-          </div>
-          <div v-if="form.numbering_mode === 'automatic'">
+            <div v-if="form.numbering_mode === 'automatic'">
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
+              <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
+              <p class="text-xs text-gray-400 mt-1">A short code only (no "/") — used in the receipt number, e.g. RCP/JCD-ZACO/...</p>
+            </div>
+            <div v-else>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Receipt Number</label>
+              <input v-model="form.receipt_number" type="text" required placeholder="e.g. RCP/JCD-FASTTRACK/1805/26.001" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+              <p class="text-xs text-gray-400 mt-1">Used exactly as entered — must be unique.</p>
+            </div>
+          </template>
+          <div v-else>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
             <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
-            <p class="text-xs text-gray-400 mt-1">A short code only (no "/") — used in the receipt number, e.g. RCP/JCD-ZACO/...</p>
-          </div>
-          <div v-else>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Receipt Number</label>
-            <input v-model="form.receipt_number" type="text" required placeholder="e.g. RCP/JCD-FASTTRACK/1805/26.001" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-            <p class="text-xs text-gray-400 mt-1">Used exactly as entered — must be unique.</p>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
@@ -230,7 +291,7 @@ const handleSubmit = async () => {
           :disabled="submitting"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
         >
-          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : "Save Payment Receipt" }}</span>
+          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : (isEditMode ? "Update Payment Receipt" : "Save Payment Receipt") }}</span>
         </button>
         <router-link
           :to="{ name: 'admin.payment-receipts.dashboard' }"

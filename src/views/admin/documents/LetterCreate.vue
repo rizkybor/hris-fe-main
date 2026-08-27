@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useRouter, RouterLink } from "vue-router";
+import { useRouter, useRoute, RouterLink } from "vue-router";
 import { storeToRefs } from "pinia";
-import { Mail, Settings, Plus, Trash2, Info, Tag, FileText } from "lucide-vue-next";
+import { Mail, Settings, Plus, Trash2, Info, Tag, FileText, CheckCircle2 } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
 import { useEmployeeStore } from "@/stores/employee";
 import { can } from "@/helpers/permissionHelper";
@@ -13,6 +13,10 @@ const { letterCodes, divisionCodes } = storeToRefs(store);
 const employeeStore = useEmployeeStore();
 const { employees } = storeToRefs(employeeStore);
 const router = useRouter();
+const route = useRoute();
+
+const editingId = computed(() => route.params.id || null);
+const isEditMode = computed(() => !!editingId.value);
 
 // Reference templates for structured letter types, so the body & required
 // sections don't have to be built from scratch every time. Deliberately
@@ -107,7 +111,13 @@ const form = ref({
   second_party_name: "",
   second_party_signatory_name: "",
   second_party_signatory_title: "",
+  template: "primary",
 });
+
+const TEMPLATE_OPTIONS = [
+  { value: "primary", label: "Primary", preview: "/images/template-letter-primary.png" },
+  { value: "secondary", label: "Secondary", preview: "/images/template-letter-secondary.png" },
+];
 
 const useItems = ref(false);
 const useSecondParty = ref(false);
@@ -115,6 +125,8 @@ const items = ref([{ description: "", specification: "", qty: "", price: 0 }]);
 
 const submitting = ref(false);
 const errorMessage = ref("");
+const loadingLetter = ref(false);
+const existingLetterNumber = ref("");
 
 onMounted(async () => {
   await Promise.all([
@@ -122,6 +134,45 @@ onMounted(async () => {
     store.fetchDivisionCodes(),
     employeeStore.fetchEmployees({ limit: 200 }),
   ]);
+
+  if (isEditMode.value) {
+    loadingLetter.value = true;
+    try {
+      const letter = await store.fetchLetter(editingId.value);
+      existingLetterNumber.value = letter.letter_number;
+      form.value.letter_code_id = letter.letter_code_id;
+      form.value.division_code_id = letter.division_code_id;
+      form.value.type = letter.type;
+      form.value.date = letter.date;
+      form.value.subject = letter.subject;
+      form.value.recipient = letter.recipient || "";
+      form.value.employee_id = letter.employee_id || "";
+      form.value.body = letter.body || "";
+      form.value.signatory_name = letter.signatory_name || "";
+      form.value.signatory_title = letter.signatory_title || "";
+      form.value.second_party_name = letter.second_party_name || "";
+      form.value.second_party_signatory_name = letter.second_party_signatory_name || "";
+      form.value.second_party_signatory_title = letter.second_party_signatory_title || "";
+      form.value.template = letter.template || "primary";
+
+      if (letter.items?.length) {
+        useItems.value = true;
+        items.value = letter.items.map((i) => ({
+          description: i.description || "",
+          specification: i.specification || "",
+          qty: i.qty || "",
+          price: i.price || 0,
+        }));
+      }
+      if (letter.second_party_name) {
+        useSecondParty.value = true;
+      }
+    } catch (error) {
+      errorMessage.value = "Failed to load letter.";
+    } finally {
+      loadingLetter.value = false;
+    }
+  }
 });
 
 const selectedCode = computed(() => {
@@ -162,6 +213,30 @@ const handleSubmit = async () => {
 
   submitting.value = true;
   try {
+    if (isEditMode.value) {
+      // Classification fields (code/division/type/date) are baked into the
+      // already-issued letter_number and intentionally not editable -- only
+      // content fields go in the update payload.
+      const payload = {
+        subject: form.value.subject,
+        recipient: form.value.recipient,
+        employee_id: form.value.employee_id || null,
+        body: form.value.body,
+        signatory_name: form.value.signatory_name,
+        signatory_title: form.value.signatory_title,
+        template: form.value.template,
+        second_party_name: useSecondParty.value ? form.value.second_party_name : null,
+        second_party_signatory_name: useSecondParty.value ? form.value.second_party_signatory_name : null,
+        second_party_signatory_title: useSecondParty.value ? form.value.second_party_signatory_title : null,
+      };
+      if (useItems.value) {
+        payload.items = items.value.filter((i) => i.description);
+      }
+      await store.updateLetter(editingId.value, payload);
+      router.push({ name: "admin.letters.dashboard" });
+      return;
+    }
+
     const payload = { ...form.value, employee_id: form.value.employee_id || null };
     if (useItems.value) {
       payload.items = items.value.filter((i) => i.description);
@@ -175,7 +250,7 @@ const handleSubmit = async () => {
     router.push({ name: "admin.letters.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to create Letter.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : `Failed to ${isEditMode.value ? "update" : "create"} Letter.`);
   } finally {
     submitting.value = false;
   }
@@ -190,8 +265,10 @@ const handleSubmit = async () => {
           <Mail class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Create Letter</h3>
-          <p class="text-brand-light text-sm">Letter number will be generated automatically when saved</p>
+          <h3 class="text-brand-dark text-lg font-bold">{{ isEditMode ? "Edit Letter" : "Create Letter" }}</h3>
+          <p class="text-brand-light text-sm">
+            {{ isEditMode ? existingLetterNumber : "Letter number will be generated automatically when saved" }}
+          </p>
         </div>
       </div>
       <router-link
@@ -211,34 +288,57 @@ const handleSubmit = async () => {
           </div>
           <h4 class="text-brand-dark font-bold">Letter Classification</h4>
         </div>
+        <p v-if="isEditMode" class="text-xs text-gray-400 mb-4 -mt-2 flex items-center gap-1">
+          <Info class="w-3 h-3 shrink-0" /> Letter Code, Division Code, Type, and Date are locked after creation -- they're baked into the already-issued letter number.
+        </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Letter Code</label>
-            <select v-model="form.letter_code_id" @change="applyTemplate" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+            <select v-model="form.letter_code_id" @change="applyTemplate" required :disabled="isEditMode" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm disabled:bg-gray-50 disabled:text-gray-400">
               <option value="" disabled>Select letter code</option>
               <option v-for="code in letterCodes" :key="code.id" :value="code.id">{{ code.code }} - {{ code.name }}</option>
             </select>
-            <p v-if="TEMPLATES[selectedCode]" class="text-xs text-[#0C51D9] mt-1 flex items-center gap-1">
+            <p v-if="!isEditMode && TEMPLATES[selectedCode]" class="text-xs text-[#0C51D9] mt-1 flex items-center gap-1">
               <Info class="w-3 h-3" /> A reference template has been auto-filled into Letter Content, please adjust as needed.
             </p>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Division Code</label>
-            <select v-model="form.division_code_id" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+            <select v-model="form.division_code_id" required :disabled="isEditMode" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm disabled:bg-gray-50 disabled:text-gray-400">
               <option value="" disabled>Select division code</option>
               <option v-for="code in divisionCodes" :key="code.id" :value="code.id">{{ code.code }} - {{ code.name }}</option>
             </select>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
-            <select v-model="form.type" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+            <select v-model="form.type" :disabled="isEditMode" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm disabled:bg-gray-50 disabled:text-gray-400">
               <option value="I">Internal (I)</option>
               <option value="E">External (E)</option>
             </select>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
-            <input v-model="form.date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <input v-model="form.date" type="date" required :disabled="isEditMode" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm disabled:bg-gray-50 disabled:text-gray-400" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Letterhead Template</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label
+                v-for="opt in TEMPLATE_OPTIONS"
+                :key="opt.value"
+                class="cursor-pointer rounded-xl border-2 overflow-hidden transition-all"
+                :class="form.template === opt.value ? 'border-[#0C51D9]' : 'border-[#DCDEDD] hover:border-[#0C51D9]/50'"
+              >
+                <input type="radio" v-model="form.template" :value="opt.value" class="hidden" />
+                <div class="h-28 w-full overflow-hidden bg-white">
+                  <img :src="opt.preview" alt="" class="w-full h-full object-cover object-top" />
+                </div>
+                <div class="px-3 py-2 flex items-center justify-between bg-gray-50">
+                  <span class="text-sm font-semibold text-brand-dark">{{ opt.label }}</span>
+                  <CheckCircle2 v-if="form.template === opt.value" class="w-4 h-4 text-[#0C51D9]" />
+                </div>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -348,7 +448,7 @@ const handleSubmit = async () => {
           :disabled="submitting"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
         >
-          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : "Save Letter" }}</span>
+          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : (isEditMode ? "Update Letter" : "Save Letter") }}</span>
         </button>
         <router-link
           :to="{ name: 'admin.letters.dashboard' }"

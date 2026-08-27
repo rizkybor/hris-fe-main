@@ -1,11 +1,16 @@
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { Plus, Trash2, ShoppingCart, Info, Package, Wallet, FileSignature } from "lucide-vue-next";
 import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
 
 const store = usePurchaseOrderStore();
 const router = useRouter();
+const route = useRoute();
+
+const editingId = computed(() => route.params.id || null);
+const isEditMode = computed(() => !!editingId.value);
+const existingPoNumber = ref("");
 
 const form = ref({
   type: "E",
@@ -36,15 +41,45 @@ const removeTerm = (i) => form.value.payment_terms.splice(i, 1);
 
 const totalPreview = () => form.value.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
 
+onMounted(async () => {
+  if (!isEditMode.value) return;
+
+  try {
+    const order = await store.fetchOrder(editingId.value);
+    existingPoNumber.value = order.po_number;
+    form.value.type = order.type;
+    form.value.date = order.date;
+    form.value.title = order.title;
+    form.value.client_name = order.client_name;
+    form.value.client_address = order.client_address || "";
+    form.value.client_phone = order.client_phone || "";
+    form.value.client_wa = order.client_wa || "";
+    form.value.items = order.items?.length ? order.items : form.value.items;
+    form.value.payment_terms = order.payment_terms?.length ? order.payment_terms : form.value.payment_terms;
+    form.value.warranty_months = order.warranty_months ?? 12;
+    form.value.replacement_days = order.replacement_days ?? 7;
+    form.value.buyer_signatory_name = order.buyer_signatory_name || "";
+    form.value.buyer_signatory_title = order.buyer_signatory_title || "";
+    form.value.vendor_signatory_name = order.vendor_signatory_name || "";
+    form.value.vendor_signatory_title = order.vendor_signatory_title || "";
+  } catch (error) {
+    errorMessage.value = "Failed to load purchase order.";
+  }
+});
+
 const handleSubmit = async () => {
   errorMessage.value = "";
   submitting.value = true;
   try {
-    const order = await store.createOrder(form.value);
+    if (isEditMode.value) {
+      await store.updateOrder(editingId.value, form.value);
+    } else {
+      await store.createOrder(form.value);
+    }
     router.push({ name: "admin.purchase-orders.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to create Purchase Order.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : `Failed to ${isEditMode.value ? "update" : "create"} Purchase Order.`);
   } finally {
     submitting.value = false;
   }
@@ -59,8 +94,8 @@ const handleSubmit = async () => {
           <ShoppingCart class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Create New Purchase Order</h3>
-          <p class="text-brand-light text-sm">PO number will be generated automatically when saved</p>
+          <h3 class="text-brand-dark text-lg font-bold">{{ isEditMode ? "Edit Purchase Order" : "Create New Purchase Order" }}</h3>
+          <p class="text-brand-light text-sm">{{ isEditMode ? existingPoNumber : "PO number will be generated automatically when saved" }}</p>
         </div>
       </div>
     </div>
@@ -220,7 +255,7 @@ const handleSubmit = async () => {
           :disabled="submitting"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
         >
-          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : "Save Purchase Order" }}</span>
+          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : (isEditMode ? "Update Purchase Order" : "Save Purchase Order") }}</span>
         </button>
         <router-link
           :to="{ name: 'admin.purchase-orders.dashboard' }"

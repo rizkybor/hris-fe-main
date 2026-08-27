@@ -135,5 +135,16 @@ export const useDocumentLetterStore = defineStore("documentLetter", {
       link.remove();
       window.URL.revokeObjectURL(url);
     },
+
+    // Opens the PDF inline in a new tab (browser's own viewer) instead of
+    // forcing a save-as -- the API route needs an auth header, so this
+    // can't just be a plain <a href> to the endpoint like a public file.
+    async viewPdf(id) {
+      const response = await axiosInstance.get(`/document-letters/${id}/export-pdf`, {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      window.open(url, "_blank");
+    },
   },
 });

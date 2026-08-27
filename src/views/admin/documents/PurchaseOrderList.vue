@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { ShoppingCart, Plus, Download, Ban, Trash2, Search, ArrowLeft } from "lucide-vue-next";
+import { ShoppingCart, Plus, Download, FileText, Pencil, Ban, Trash2, Search, ArrowLeft } from "lucide-vue-next";
 import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
@@ -40,6 +40,16 @@ const handleDownload = async (order) => {
     console.error(e);
   } finally {
     downloadingId.value = null;
+  }
+};
+
+const viewingId = ref(null);
+const handleViewPdf = async (order) => {
+  viewingId.value = order.id;
+  try {
+    await store.viewPdf(order.id);
+  } finally {
+    viewingId.value = null;
   }
 };
 
@@ -165,6 +175,14 @@ const formatDate = (date) =>
               <td class="py-3 pr-4">
                 <div class="flex items-center justify-end gap-1">
                   <button
+                    @click="handleViewPdf(order)"
+                    :disabled="viewingId === order.id"
+                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
+                    title="View PDF"
+                  >
+                    <FileText class="w-4 h-4 text-gray-600" />
+                  </button>
+                  <button
                     @click="handleDownload(order)"
                     :disabled="downloadingId === order.id"
                     class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
@@ -172,6 +190,14 @@ const formatDate = (date) =>
                   >
                     <Download class="w-4 h-4 text-gray-600" />
                   </button>
+                  <router-link
+                    v-if="can('purchase-order-edit')"
+                    :to="{ name: 'admin.purchase-orders.edit', params: { id: order.id } }"
+                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
+                    title="Edit"
+                  >
+                    <Pencil class="w-4 h-4 text-gray-600" />
+                  </router-link>
                   <button
                     v-if="can('purchase-order-edit') && order.status !== 'cancelled'"
                     @click="handleCancel(order)"
