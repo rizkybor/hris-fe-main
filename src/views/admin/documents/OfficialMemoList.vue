@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { FileSignature, Plus, Search, Trash2, Eye, ArrowLeft } from "lucide-vue-next";
+import { FileSignature, Plus, Search, Trash2, Eye, FileText, Pencil, ArrowLeft } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useDocumentLetterStore } from "@/stores/documentLetter";
 import { can } from "@/helpers/permissionHelper";
@@ -31,6 +31,16 @@ const handleSearch = () => load(1);
 const handleFilterChange = () => load(1);
 
 const goToDetail = (id) => router.push({ name: "admin.official-memos.detail", params: { id } });
+
+const viewingId = ref(null);
+const handleViewPdf = async (memo) => {
+  viewingId.value = memo.id;
+  try {
+    await store.viewPdf(memo.id);
+  } finally {
+    viewingId.value = null;
+  }
+};
 
 const handleDelete = async (memo) => {
   if (
@@ -152,6 +162,22 @@ const formatDate = (date) =>
                   >
                     <Eye class="w-4 h-4 text-gray-600" />
                   </button>
+                  <button
+                    @click="handleViewPdf(memo)"
+                    :disabled="viewingId === memo.id"
+                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
+                    title="View PDF"
+                  >
+                    <FileText class="w-4 h-4 text-gray-600" />
+                  </button>
+                  <router-link
+                    v-if="can('document-letter-edit') && memo.status === 'draft'"
+                    :to="{ name: 'admin.official-memos.edit', params: { id: memo.id } }"
+                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
+                    title="Edit"
+                  >
+                    <Pencil class="w-4 h-4 text-gray-600" />
+                  </router-link>
                   <button
                     v-if="can('document-letter-delete') && memo.status === 'draft'"
                     @click="handleDelete(memo)"

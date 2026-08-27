@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import { Plus, Trash2, Receipt, User, Package, Wallet, Briefcase } from "lucide-vue-next";
 import { useInvoiceStore } from "@/stores/invoice";
@@ -10,16 +10,54 @@ import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 
 const store = useInvoiceStore();
 const router = useRouter();
+const route = useRoute();
 const bankAccountStore = useBankAccountStore();
 const { bankAccounts } = storeToRefs(bankAccountStore);
 const projectStore = useProjectStore();
 const { projects } = storeToRefs(projectStore);
 const calculatorStore = useProjectCalculatorStore();
 const { pphTypes } = storeToRefs(calculatorStore);
-onMounted(() => {
-  bankAccountStore.fetchBankAccounts();
-  projectStore.fetchProjects();
-  calculatorStore.fetchPphTypes();
+
+const editingId = computed(() => route.params.id || null);
+const isEditMode = computed(() => !!editingId.value);
+const existingInvoiceNumber = ref("");
+
+onMounted(async () => {
+  await Promise.all([
+    bankAccountStore.fetchBankAccounts(),
+    projectStore.fetchProjects(),
+    calculatorStore.fetchPphTypes(),
+  ]);
+
+  if (isEditMode.value) {
+    try {
+      const invoice = await store.fetchInvoice(editingId.value);
+      existingInvoiceNumber.value = invoice.invoice_number;
+      form.value.project_id = invoice.project_id || "";
+      form.value.faktur_pajak_number = invoice.faktur_pajak_number || "";
+      form.value.client_code = invoice.client_code || "";
+      form.value.client_name = invoice.client_name || "";
+      form.value.client_pic = invoice.client_pic || "";
+      form.value.client_email = invoice.client_email || "";
+      form.value.client_phone = invoice.client_phone || "";
+      form.value.client_npwp = invoice.client_npwp || "";
+      form.value.date = invoice.date;
+      form.value.items = invoice.items?.length ? invoice.items : form.value.items;
+      form.value.ppn_percentage = invoice.ppn_percentage || 0;
+      form.value.admin_fee = invoice.admin_fee || 0;
+      form.value.bank_name = invoice.bank_name || "";
+      form.value.bank_account = invoice.bank_account || "";
+      form.value.terms = invoice.terms || "";
+      form.value.pph23_type = invoice.pph23_type;
+      form.value.pph23_percent = invoice.pph23_percent;
+
+      if (invoice.pph23_type) {
+        applyPph23.value = true;
+      }
+    } catch (error) {
+      errorMessage.value = "Failed to load invoice.";
+    }
+  }
 });
 
 // Purely informational heads-up that the client is expected to withhold
@@ -87,6 +125,33 @@ const handleSubmit = async () => {
   errorMessage.value = "";
   submitting.value = true;
   try {
+    if (isEditMode.value) {
+      // Numbering mode / invoice_number aren't editable once issued -- only
+      // the content fields InvoiceUpdateRequest actually validates.
+      const payload = {
+        project_id: form.value.project_id || null,
+        faktur_pajak_number: form.value.faktur_pajak_number,
+        client_code: form.value.client_code,
+        client_name: form.value.client_name,
+        client_pic: form.value.client_pic,
+        client_email: form.value.client_email,
+        client_phone: form.value.client_phone,
+        client_npwp: form.value.client_npwp,
+        date: form.value.date,
+        items: form.value.items,
+        ppn_percentage: form.value.ppn_percentage,
+        admin_fee: form.value.admin_fee,
+        bank_name: form.value.bank_name,
+        bank_account: form.value.bank_account,
+        terms: form.value.terms,
+        pph23_type: form.value.pph23_type,
+        pph23_percent: form.value.pph23_percent,
+      };
+      await store.updateInvoice(editingId.value, payload);
+      router.push({ name: "admin.invoices.dashboard" });
+      return;
+    }
+
     const payload = { ...form.value };
     if (payload.numbering_mode === "manual") {
       delete payload.client_code;
@@ -97,7 +162,7 @@ const handleSubmit = async () => {
     router.push({ name: "admin.invoices.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to create Invoice.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : `Failed to ${isEditMode.value ? "update" : "create"} Invoice.`);
   } finally {
     submitting.value = false;
   }
@@ -112,9 +177,9 @@ const handleSubmit = async () => {
           <Receipt class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Create Invoice</h3>
+          <h3 class="text-brand-dark text-lg font-bold">{{ isEditMode ? "Edit Invoice" : "Create Invoice" }}</h3>
           <p class="text-brand-light text-sm">
-            {{ form.numbering_mode === "manual" ? "Invoice number will be used exactly as entered" : "Invoice number will be generated automatically when saved" }}
+            {{ isEditMode ? existingInvoiceNumber : (form.numbering_mode === "manual" ? "Invoice number will be used exactly as entered" : "Invoice number will be generated automatically when saved") }}
           </p>
         </div>
       </div>
@@ -145,7 +210,7 @@ const handleSubmit = async () => {
           </div>
           <h4 class="text-brand-dark font-bold">Client Information</h4>
         </div>
-        <div class="mb-4">
+        <div v-if="!isEditMode" class="mb-4">
           <label class="text-sm font-semibold text-brand-dark mb-1 block">Invoice Numbering</label>
           <div class="flex items-center gap-4">
             <label class="flex items-center gap-2 text-sm text-brand-dark">
@@ -159,10 +224,10 @@ const handleSubmit = async () => {
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div v-if="form.numbering_mode === 'automatic'">
+          <div v-if="isEditMode || form.numbering_mode === 'automatic'">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
             <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
-            <p class="text-xs text-gray-400 mt-1">A short code only (no "/") — combined with the date and sequence, e.g. INV/JCD-ZACO/1805/26.001</p>
+            <p v-if="!isEditMode" class="text-xs text-gray-400 mt-1">A short code only (no "/") — combined with the date and sequence, e.g. INV/JCD-ZACO/1805/26.001</p>
           </div>
           <div v-else>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Invoice Number</label>
@@ -305,7 +370,7 @@ const handleSubmit = async () => {
           :disabled="submitting"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
         >
-          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : "Save Invoice" }}</span>
+          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : (isEditMode ? "Update Invoice" : "Save Invoice") }}</span>
         </button>
         <router-link
           :to="{ name: 'admin.invoices.dashboard' }"

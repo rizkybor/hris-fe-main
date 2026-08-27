@@ -2,6 +2,7 @@
 import CardList from "@/components/admin/project/list/CardList.vue";
 import Statistics from "@/components/admin/project/list/Statistics.vue";
 import BudgetChart from "@/components/admin/project/list/BudgetChart.vue";
+import RealizedChart from "@/components/admin/project/list/RealizedChart.vue";
 import ProjectProgressChart from "@/components/admin/project/list/ProjectProgressChart.vue";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
@@ -103,10 +104,11 @@ const handleDelete = async (project) => {
     <Statistics v-if="can('project-statistic')" />
     <div
       v-if="can('project-statistic')"
-      class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5"
+      class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5"
     >
       <ProjectProgressChart />
       <BudgetChart compact />
+      <RealizedChart compact />
     </div>
 
     <Alert type="success" :title="success" :show="success" />
