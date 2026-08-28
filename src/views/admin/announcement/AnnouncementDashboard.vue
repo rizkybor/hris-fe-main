@@ -256,7 +256,7 @@ onMounted(() => {
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Content</label>
             <textarea v-model="form.body" rows="5" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Audience</label>
               <select v-model="form.audience" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
@@ -265,7 +265,11 @@ onMounted(() => {
             </div>
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Valid Until (Optional)</label>
-              <input v-model="form.expires_at" type="date" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+              <input
+                v-model="form.expires_at"
+                type="date"
+                class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+              />
             </div>
           </div>
           <div>

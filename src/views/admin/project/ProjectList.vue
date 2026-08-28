@@ -104,7 +104,7 @@ const handleDelete = async (project) => {
     <Statistics v-if="can('project-statistic')" />
     <div
       v-if="can('project-statistic')"
-      class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5"
+      class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-5"
     >
       <ProjectProgressChart />
       <BudgetChart compact />
