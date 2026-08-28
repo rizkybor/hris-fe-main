@@ -12,9 +12,12 @@ import {
   PercentIcon,
   FolderKanban,
   PiggyBank,
+  Star,
+  X,
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
 import { useProjectStore } from "@/stores/project";
+import { useOptionStore } from "@/stores/option";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
@@ -23,6 +26,8 @@ import Pagination from "@/components/common/Pagination.vue";
 const reportStore = useReportStore();
 const projectStore = useProjectStore();
 const { projects } = storeToRefs(projectStore);
+const optionStore = useOptionStore();
+const { employmentTypes } = storeToRefs(optionStore);
 const {
   attendance,
   payroll,
@@ -33,8 +38,11 @@ const {
   project,
   pph23,
   projectExpense,
+  staffRaport,
+  staffRaportDetail,
   loading,
   exporting,
+  downloadingPdf,
 } = storeToRefs(reportStore);
 
 const tabs = [
@@ -47,15 +55,52 @@ const tabs = [
   { key: "ppn", label: "PPN", icon: PercentIcon },
   { key: "project", label: "Project", icon: FolderKanban },
   { key: "project_expense", label: "Project Cash", icon: PiggyBank },
+  { key: "staff_raport", label: "Staff Raport", icon: Star, permission: "staff-raport-menu" },
 ];
+
+const visibleTabs = computed(() => tabs.filter((t) => !t.permission || can(t.permission)));
 
 const activeTab = ref("attendance");
 const startDate = ref("");
 const endDate = ref("");
 const projectStatus = ref("");
 const projectExpenseProjectId = ref("");
+const staffRaportSearch = ref("");
+const staffRaportEmploymentType = ref("");
 
 const canExport = computed(() => can("report-export"));
+
+// Staff Raport detail modal
+const showRaportDetail = ref(false);
+const raportPeriod = ref("month");
+const loadingDetail = ref(false);
+
+const openRaportDetail = async (employeeId) => {
+  showRaportDetail.value = true;
+  loadingDetail.value = true;
+  try {
+    await reportStore.fetchStaffRaportDetail(employeeId, filterParams.value);
+  } finally {
+    loadingDetail.value = false;
+  }
+};
+
+const closeRaportDetail = () => {
+  showRaportDetail.value = false;
+};
+
+const handleDownloadPdf = async () => {
+  if (!staffRaportDetail.value) return;
+  try {
+    await reportStore.downloadStaffRaportPdf(
+      staffRaportDetail.value.employee.id,
+      raportPeriod.value,
+      staffRaportDetail.value.employee.name
+    );
+  } catch (error) {
+    console.error("PDF download failed", error);
+  }
+};
 
 const currentReport = computed(() => {
   return {
@@ -68,6 +113,7 @@ const currentReport = computed(() => {
     project: project.value,
     pph23: pph23.value,
     project_expense: projectExpense.value,
+    staff_raport: staffRaport.value,
   }[activeTab.value];
 });
 
@@ -153,6 +199,18 @@ const summaryCards = computed(() => {
         { label: "Total Debit", value: formatCurrency(summary.total_debit) },
         { label: "Total Credit", value: formatCurrency(summary.total_credit) },
       ];
+    case "staff_raport": {
+      const rows = staffRaport.value.rows || [];
+      const withScore = rows.filter((r) => r.overall_score !== null);
+      const avg = (key) =>
+        withScore.length ? Math.round((withScore.reduce((s, r) => s + (r[key] ?? 0), 0) / withScore.length) * 10) / 10 : 0;
+      return [
+        { label: "Total Staff (this page)", value: rows.length },
+        { label: "Avg. Attendance Rate", value: `${avg("attendance_rate")}%` },
+        { label: "Avg. Task Completion", value: `${avg("task_completion_rate")}%` },
+        { label: "Avg. Overall Score", value: `${avg("overall_score")}%` },
+      ];
+    }
     default:
       return [];
   }
@@ -212,6 +270,10 @@ const filterParams = computed(() => {
   if (activeTab.value === "project_expense" && projectExpenseProjectId.value) {
     params.project_id = projectExpenseProjectId.value;
   }
+  if (activeTab.value === "staff_raport") {
+    if (staffRaportSearch.value) params.search = staffRaportSearch.value;
+    if (staffRaportEmploymentType.value) params.employment_type = staffRaportEmploymentType.value;
+  }
   return params;
 });
 
@@ -220,6 +282,7 @@ const reportMeta = computed(() => {
   if (activeTab.value === "payroll") return payroll.value.meta;
   if (activeTab.value === "project") return project.value.meta;
   if (activeTab.value === "project_expense") return projectExpense.value.meta;
+  if (activeTab.value === "staff_raport") return staffRaport.value.meta;
   return null;
 });
 
@@ -252,6 +315,9 @@ async function loadReport(page = 1) {
     case "project_expense":
       await reportStore.fetchProjectExpenseReport({ ...filterParams.value, page });
       break;
+    case "staff_raport":
+      await reportStore.fetchStaffRaport({ ...filterParams.value, page });
+      break;
   }
 }
 
@@ -270,6 +336,7 @@ watch(activeTab, () => {
 onMounted(() => {
   loadReport();
   projectStore.fetchProjects({ limit: 200 });
+  optionStore.fetchEmploymentTypes();
 });
 </script>
 
@@ -296,7 +363,7 @@ onMounted(() => {
         </div>
 
         <button
-          v-if="canExport"
+          v-if="canExport && activeTab !== 'staff_raport'"
           @click="handleExport"
           :disabled="exporting"
           class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2 disabled:opacity-50"
@@ -311,7 +378,7 @@ onMounted(() => {
       <!-- Tabs -->
       <div class="tabs-scroll flex flex-nowrap gap-2 overflow-x-auto border-b border-[#DCDEDD] pb-4 mb-4">
         <button
-          v-for="tab in tabs"
+          v-for="tab in visibleTabs"
           :key="tab.key"
           @click="activeTab = tab.key"
           class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 shrink-0 whitespace-nowrap"
@@ -414,7 +481,31 @@ onMounted(() => {
             <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
           </select>
         </div>
+        <div v-if="activeTab === 'staff_raport'" class="flex-1">
+          <label class="text-xs text-brand-light font-medium mb-1 block">Name</label>
+          <input
+            v-model="staffRaportSearch"
+            @input="loadReport(1)"
+            type="text"
+            placeholder="Search staff name..."
+            class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+          />
+        </div>
+        <div v-if="activeTab === 'staff_raport'" class="flex-1">
+          <label class="text-xs text-brand-light font-medium mb-1 block">Employment Type</label>
+          <select
+            v-model="staffRaportEmploymentType"
+            @change="loadReport(1)"
+            class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+          >
+            <option value="">All Employment Types</option>
+            <option v-for="opt in employmentTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
       </div>
+      <p v-if="activeTab === 'staff_raport'" class="text-xs text-gray-400 -mt-1 mb-2">
+        Attendance rate and task completion (and the resulting score/stars) are calculated for this date range. Click a row to view full details and download a PDF for a different period.
+      </p>
       <p v-if="activeTab === 'project'" class="text-xs text-gray-400 -mt-1 mb-2">
         Filtered by each project's Start Date falling within this range.
       </p>
@@ -516,6 +607,15 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Keterangan</th>
               <th class="py-3 pr-4 font-semibold">Debit</th>
               <th class="py-3 pr-4 font-semibold">Kredit</th>
+            </template>
+            <template v-else-if="activeTab === 'staff_raport'">
+              <th class="py-3 pr-4 font-semibold">Name</th>
+              <th class="py-3 pr-4 font-semibold">Job Title</th>
+              <th class="py-3 pr-4 font-semibold">Employment Type</th>
+              <th class="py-3 pr-4 font-semibold">Attendance</th>
+              <th class="py-3 pr-4 font-semibold">Tasks Done</th>
+              <th class="py-3 pr-4 font-semibold">Rating</th>
+              <th class="py-3 pr-4 font-semibold"></th>
             </template>
           </tr>
         </thead>
@@ -663,6 +763,33 @@ onMounted(() => {
               <td class="py-3 pr-4 text-red-600">{{ row.type === "credit" ? formatCurrency(row.amount) : "-" }}</td>
             </tr>
           </template>
+          <template v-else-if="activeTab === 'staff_raport'">
+            <tr
+              v-for="(row, index) in tableRows"
+              :key="row.employee_id"
+              @click="openRaportDetail(row.employee_id)"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
+            >
+              <td class="py-3 pr-4 text-brand-light">{{ (staffRaport.meta.current_page - 1) * staffRaport.meta.per_page + index + 1 }}</td>
+              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name ?? "N/A" }}</td>
+              <td class="py-3 pr-4">{{ row.job_title ?? "-" }}</td>
+              <td class="py-3 pr-4 capitalize">{{ (row.employment_type || "-").replace("_", " ") }}</td>
+              <td class="py-3 pr-4">{{ row.attendance_rate !== null ? `${row.attendance_rate}%` : "-" }}</td>
+              <td class="py-3 pr-4">{{ row.task_completion_rate !== null ? `${row.task_completion_rate}%` : "-" }}</td>
+              <td class="py-3 pr-4">
+                <span class="flex items-center gap-0.5">
+                  <Star
+                    v-for="i in 5"
+                    :key="i"
+                    class="w-3.5 h-3.5"
+                    :class="i <= row.stars ? 'text-amber-500' : 'text-gray-200'"
+                    :fill="i <= row.stars ? 'currentColor' : 'none'"
+                  />
+                </span>
+              </td>
+              <td class="py-3 pr-4 text-[#0C51D9] text-xs font-semibold">View Detail</td>
+            </tr>
+          </template>
         </tbody>
       </table>
 
@@ -681,6 +808,120 @@ onMounted(() => {
         item-label="records"
         @page-change="loadReport"
       />
+    </div>
+
+    <!-- Staff Raport Detail Modal -->
+    <div v-if="showRaportDetail" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeRaportDetail">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between sticky top-0 bg-white">
+          <h3 class="text-brand-dark text-lg font-bold">Staff Raport</h3>
+          <button @click="closeRaportDetail" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+
+        <div v-if="loadingDetail" class="p-5">
+          <SkeletonStatCards :count="3" cols="grid-cols-3" />
+        </div>
+
+        <div v-else-if="staffRaportDetail" class="p-5 space-y-5">
+          <div>
+            <p class="text-brand-dark text-base font-bold">{{ staffRaportDetail.employee.name }}</p>
+            <p class="text-brand-light text-sm">
+              {{ staffRaportDetail.employee.code }}
+              <span v-if="staffRaportDetail.employee.job_title"> • {{ staffRaportDetail.employee.job_title }}</span>
+              <span v-if="staffRaportDetail.employee.team"> • {{ staffRaportDetail.employee.team }}</span>
+            </p>
+            <p class="text-brand-light text-xs mt-0.5 capitalize">
+              {{ (staffRaportDetail.employee.employment_type || "-").replace("_", " ") }}
+              <span v-if="staffRaportDetail.employee.start_date"> • Joined {{ formatDate(staffRaportDetail.employee.start_date) }}</span>
+            </p>
+            <div class="flex items-center gap-1 mt-2">
+              <Star
+                v-for="i in 5"
+                :key="i"
+                class="w-5 h-5"
+                :class="i <= staffRaportDetail.stars ? 'text-amber-500' : 'text-gray-200'"
+                :fill="i <= staffRaportDetail.stars ? 'currentColor' : 'none'"
+              />
+              <span class="text-sm text-brand-light ml-1">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : "No data" }}</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
+              <p class="text-brand-dark text-lg font-bold">{{ staffRaportDetail.attendance_rate !== null ? `${staffRaportDetail.attendance_rate}%` : "-" }}</p>
+              <p class="text-brand-light text-xs">Attendance ({{ staffRaportDetail.attendance.present + staffRaportDetail.attendance.late }}/{{ staffRaportDetail.attendance.total }})</p>
+            </div>
+            <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
+              <p class="text-brand-dark text-lg font-bold">{{ staffRaportDetail.task_completion_rate !== null ? `${staffRaportDetail.task_completion_rate}%` : "-" }}</p>
+              <p class="text-brand-light text-xs">Tasks Done ({{ staffRaportDetail.tasks.done }}/{{ staffRaportDetail.tasks.total }})</p>
+            </div>
+            <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
+              <p class="text-brand-dark text-lg font-bold">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : "-" }}</p>
+              <p class="text-brand-light text-xs">Overall Score</p>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="text-sm font-semibold text-brand-dark mb-2">Completed Tasks ({{ staffRaportDetail.completed_tasks.length }})</h4>
+            <div v-if="staffRaportDetail.completed_tasks.length" class="border border-[#DCDEDD] rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+              <div
+                v-for="(task, idx) in staffRaportDetail.completed_tasks"
+                :key="idx"
+                class="flex items-center justify-between gap-3 px-3.5 py-2.5 border-b border-[#DCDEDD] last:border-b-0 text-sm"
+              >
+                <span class="text-brand-dark">{{ task.title }}<span v-if="task.project_name" class="text-brand-light"> ({{ task.project_name }})</span></span>
+                <span class="text-brand-light text-xs shrink-0">{{ formatDate(task.due_date) }}</span>
+              </div>
+            </div>
+            <p v-else class="text-brand-light text-sm">No completed tasks in this period.</p>
+          </div>
+
+          <div v-if="staffRaportDetail.performance_review" class="border-t border-[#DCDEDD] pt-4">
+            <h4 class="text-sm font-semibold text-brand-dark mb-2">Latest Performance Review</h4>
+            <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3.5 space-y-2">
+              <div class="flex items-center justify-between text-xs text-brand-light">
+                <span>
+                  {{ staffRaportDetail.performance_review.period }}
+                  <span v-if="staffRaportDetail.performance_review.reviewer_name"> • Reviewed by {{ staffRaportDetail.performance_review.reviewer_name }}</span>
+                </span>
+                <span class="font-semibold text-[#0C51D9]">{{ staffRaportDetail.performance_review.overall_rating }} / 5</span>
+              </div>
+              <div v-if="staffRaportDetail.performance_review.category_scores" class="flex flex-wrap gap-2">
+                <span
+                  v-for="(score, category) in staffRaportDetail.performance_review.category_scores"
+                  :key="category"
+                  class="px-2 py-0.5 rounded-full text-xs bg-white border border-[#DCDEDD] text-brand-dark capitalize"
+                >
+                  {{ category.replace("_", " ") }}: {{ score }}/5
+                </span>
+              </div>
+              <p v-if="staffRaportDetail.performance_review.strengths" class="text-xs text-brand-dark"><strong>Strengths:</strong> {{ staffRaportDetail.performance_review.strengths }}</p>
+              <p v-if="staffRaportDetail.performance_review.areas_for_improvement" class="text-xs text-brand-dark"><strong>Areas for Improvement:</strong> {{ staffRaportDetail.performance_review.areas_for_improvement }}</p>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-[#DCDEDD]">
+            <label class="text-sm font-semibold text-brand-dark mb-2 block">Download PDF for period</label>
+            <div class="flex items-center gap-3">
+              <select v-model="raportPeriod" class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="all">All Time</option>
+              </select>
+              <button
+                @click="handleDownloadPdf"
+                :disabled="downloadingPdf"
+                class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 disabled:opacity-50 shrink-0"
+              >
+                <Download class="w-4 h-4 text-white" />
+                <span class="text-brand-white text-sm font-semibold">{{ downloadingPdf ? "Downloading..." : "Download PDF" }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
