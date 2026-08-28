@@ -180,7 +180,7 @@ watch(
 
     <div class="mb-5" v-if="typeof error === 'string'">
       <Transition name="fade">
-        <Alert type="danger" :title="error" message="" :show="true" />
+        <Alert :key="error" type="danger" :title="error" message="" :show="true" />
       </Transition>
     </div>
 
