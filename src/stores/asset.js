@@ -50,6 +50,14 @@ export const useAssetStore = defineStore("asset", {
             }
         },
 
+        async fetchNextCode({ category, purchase_date } = {}) {
+            const response = await axiosInstance.get("/company-assets/next-code", {
+                params: { category, purchase_date: purchase_date || undefined },
+            });
+
+            return response.data.data.asset_code;
+        },
+
         async createAsset(payload) {
             this.loading = true;
             this.error = null;

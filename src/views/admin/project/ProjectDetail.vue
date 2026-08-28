@@ -183,6 +183,7 @@ onMounted(async () => {
 </script>
 
 <template>
+    <div class="px-4 py-4">
   <!-- Deadline Risk Banner -->
   <div
     v-if="projectHealth && projectHealth.level !== 'on-track'"
@@ -637,4 +638,5 @@ onMounted(async () => {
     :additional-access="project.additional_access || []"
     class="mt-6"
   />
+  </div>
 </template>

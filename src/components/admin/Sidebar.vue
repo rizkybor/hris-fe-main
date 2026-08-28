@@ -106,8 +106,11 @@ const showCompanyFinance = computed(() =>
   canOneOf([
     "company-about-menu",
     "company-finance-menu",
+    "company-cash-book-menu",
+    "report-menu",
     "project-calculator-menu",
     "vendors-menu",
+    "asset-menu",
     "files-company-menu",
     "credential-account-list",
     "purchase-order-menu",
@@ -632,6 +635,32 @@ const showCompanyFinance = computed(() =>
           </RouterLink>
 
           <RouterLink
+            :to="{ name: 'admin.report.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.report'),
+            }"
+            v-if="can('report-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <BarChart3
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.report'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.report'),
+              }"
+              >Reports</span
+            >
+          </RouterLink>
+
+          <RouterLink
             :to="{ name: 'admin.project-calculator.dashboard' }"
             class="nav-link group relative rounded-[10px] transition-colors duration-150"
             :class="{
@@ -686,6 +715,32 @@ const showCompanyFinance = computed(() =>
                 'text-white font-semibold': $route.name?.startsWith('admin.vendors'),
               }"
               >Vendor</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.assets.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.assets'),
+            }"
+            v-if="can('asset-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <LaptopIcon
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.assets'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.assets'),
+              }"
+              >Assets</span
             >
           </RouterLink>
 
@@ -775,36 +830,10 @@ const showCompanyFinance = computed(() =>
         </div>
       </div>
 
-      <!-- Insights & Admin: reporting, audit trail, comms, assets, and system settings -->
+      <!-- Insights & Admin: audit trail, comms, and system settings -->
       <div>
         <h3 class="section-title">Insights &amp; Admin</h3>
         <div class="space-y-0.5">
-          <RouterLink
-            :to="{ name: 'admin.report.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.report'),
-            }"
-            v-if="can('report-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <BarChart3
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.report'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.report'),
-              }"
-              >Reports</span
-            >
-          </RouterLink>
-
           <RouterLink
             :to="{ name: 'admin.history.dashboard' }"
             class="nav-link group relative rounded-[10px] transition-colors duration-150"
@@ -854,32 +883,6 @@ const showCompanyFinance = computed(() =>
                 'text-white font-semibold': $route.name?.startsWith('admin.announcements'),
               }"
               >Announcements</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.assets.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.assets'),
-            }"
-            v-if="can('asset-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <LaptopIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.assets'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.assets'),
-              }"
-              >Assets</span
             >
           </RouterLink>
 

@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { Laptop, Plus, X, UserPlus, Undo2, Pencil, Trash2 } from "lucide-vue-next";
+import { Laptop, Plus, X, UserPlus, Undo2, Pencil, Trash2, RotateCw } from "lucide-vue-next";
 import { useAssetStore } from "@/stores/asset";
 import { useEmployeeStore } from "@/stores/employee";
 import { can } from "@/helpers/permissionHelper";
@@ -19,11 +19,12 @@ const { employees } = storeToRefs(employeeStore);
 const filters = ref({ search: "", category: "", status: "" });
 
 const categoryOptions = [
-  { value: "laptop", label: "Laptop" },
-  { value: "phone", label: "Phone" },
-  { value: "vehicle", label: "Vehicle" },
-  { value: "furniture", label: "Furniture" },
-  { value: "other", label: "Other" },
+  { value: "IT-HW", label: "Hardware / Perangkat IT", examples: "Laptop, PC Desktop, Monitor, Server, Router, Switch" },
+  { value: "IT-SW", label: "Software / Lisensi", examples: "Lisensi OS, Software SaaS Enterprise, Domain, SSL" },
+  { value: "OF-EQ", label: "Peralatan Kantor (Office Equipment)", examples: "Printer, Scanner, Projector, AC, TV Display" },
+  { value: "OF-FN", label: "Furnitur Kantor (Furniture)", examples: "Meja Kerja, Kursi Kantor, Lemari Arsip, Papan Tulis" },
+  { value: "M-VEH", label: "Kendaraan Operasional (Vehicle)", examples: "Mobil Dinas, Sepeda Motor" },
+  { value: "M-MISC", label: "Aset Pendukung Lainnya", examples: "Kamera, Drone, Alat Live Streaming, Smart Lock" },
 ];
 
 const statusLabels = {
@@ -39,7 +40,7 @@ const editingId = ref(null);
 const form = ref({
   asset_code: "",
   name: "",
-  category: "laptop",
+  category: "IT-HW",
   brand: "",
   model: "",
   serial_number: "",
@@ -50,6 +51,42 @@ const form = ref({
 });
 const submitting = ref(false);
 const errorMessage = ref("");
+const generatingCode = ref(false);
+// True while asset_code still reflects the last auto-generated suggestion --
+// as soon as the user types into the field directly, this flips false so
+// changing category/purchase date afterwards won't silently overwrite
+// whatever they typed.
+const codeAutoFilled = ref(true);
+
+const selectedCategoryExamples = computed(
+  () => categoryOptions.find((c) => c.value === form.value.category)?.examples
+);
+
+const generateCode = async () => {
+  generatingCode.value = true;
+  try {
+    form.value.asset_code = await store.fetchNextCode({
+      category: form.value.category,
+      purchase_date: form.value.purchase_date,
+    });
+    codeAutoFilled.value = true;
+  } catch {
+    // Suggestion is a convenience only -- if it fails, the user can still
+    // type the asset code manually.
+  } finally {
+    generatingCode.value = false;
+  }
+};
+
+const handleAssetCodeInput = () => {
+  codeAutoFilled.value = false;
+};
+
+watch([() => form.value.category, () => form.value.purchase_date], () => {
+  if (showFormModal.value && !editingId.value && codeAutoFilled.value) {
+    generateCode();
+  }
+});
 
 const showAssignModal = ref(false);
 const assigningAsset = ref(null);
@@ -59,11 +96,13 @@ const fetchData = async () => {
   await store.fetchAssets(filters.value);
 };
 
-const openCreateModal = () => {
+const openCreateModal = async () => {
   editingId.value = null;
-  form.value = { asset_code: "", name: "", category: "laptop", brand: "", model: "", serial_number: "", purchase_date: "", purchase_price: "", condition: "good", notes: "" };
+  form.value = { asset_code: "", name: "", category: "IT-HW", brand: "", model: "", serial_number: "", purchase_date: "", purchase_price: "", condition: "good", notes: "" };
   errorMessage.value = "";
+  codeAutoFilled.value = true;
   showFormModal.value = true;
+  await generateCode();
 };
 
 const openEditModal = (asset) => {
@@ -81,6 +120,9 @@ const openEditModal = (asset) => {
     notes: asset.notes ?? "",
   };
   errorMessage.value = "";
+  // Editing an existing asset: keep its real code as-is; don't auto-refresh
+  // just because the category select re-renders with the current value.
+  codeAutoFilled.value = false;
   showFormModal.value = true;
 };
 
@@ -296,18 +338,38 @@ onMounted(async () => {
         <form @submit.prevent="handleSubmit" class="p-5 space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Asset Code</label>
-              <input v-model="form.asset_code" type="text" required placeholder="AST-001" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Asset Code<span class="text-red-600 ml-1">*</span></label>
+              <div class="flex gap-2">
+                <input
+                  v-model="form.asset_code"
+                  @input="handleAssetCodeInput"
+                  type="text"
+                  required
+                  placeholder="JCD-IT-HW-26-0001"
+                  class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm font-mono"
+                />
+                <button
+                  type="button"
+                  @click="generateCode"
+                  :disabled="generatingCode"
+                  title="Generate next code for this category"
+                  class="shrink-0 w-[38px] h-[38px] rounded-xl border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] transition-colors disabled:opacity-50"
+                >
+                  <RotateCw class="w-4 h-4 text-gray-600" :class="{ 'animate-spin': generatingCode }" />
+                </button>
+              </div>
+              <p class="text-xs text-brand-light mt-1">Format: JCD-{Kategori}-{Tahun}-{No. Urut}</p>
             </div>
             <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Category</label>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Category<span class="text-red-600 ml-1">*</span></label>
               <select v-model="form.category" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-                <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">{{ opt.value }} — {{ opt.label }}</option>
               </select>
+              <p v-if="selectedCategoryExamples" class="text-xs text-brand-light mt-1">Contoh: {{ selectedCategoryExamples }}</p>
             </div>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Asset Name</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Asset Name<span class="text-red-600 ml-1">*</span></label>
             <input v-model="form.name" type="text" required placeholder="e.g. MacBook Pro 14" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
