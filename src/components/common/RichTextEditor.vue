@@ -639,13 +639,11 @@ const FORMAT_OPTIONS = [
   content: attr(data-placeholder);
   color: #9ca3af;
 }
-/* Mirrors the PDF's own first-line-indent on every paragraph (see
-   letter.blade.php's .body-content rule) so the editor is WYSIWYG --
-   paragraphs are indented automatically, no manual Tab needed at the
-   start of a new one. */
+/* Indentation is left to the Align/Indent controls (and Tab) instead of
+   being auto-applied to every paragraph -- matches the PDF, where
+   .body-content no longer forces a first-line-indent either. */
 .rich-text-editor :deep(p),
 .rich-text-editor > :deep(div) {
-  text-indent: 2.5em;
   margin: 0 0 0.5em 0;
 }
 .rich-text-editor :deep(ul) {
