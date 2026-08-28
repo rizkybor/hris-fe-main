@@ -276,19 +276,19 @@ onMounted(() => {
       </div>
 
       <!-- Tabs -->
-      <div class="flex flex-wrap gap-2 border-b border-[#DCDEDD] pb-4 mb-4">
+      <div class="tabs-scroll flex flex-nowrap gap-2 overflow-x-auto border-b border-[#DCDEDD] pb-4 mb-4">
         <button
           v-for="tab in tabs"
           :key="tab.key"
           @click="activeTab = tab.key"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200"
+          class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 shrink-0 whitespace-nowrap"
           :class="
             activeTab === tab.key
               ? 'bg-[#0C51D9] border-[#0C51D9] text-white'
               : 'border-[#DCDEDD] text-brand-dark hover:border-[#0C51D9]'
           "
         >
-          <component :is="tab.icon" class="w-4 h-4" />
+          <component :is="tab.icon" class="w-4 h-4 shrink-0" />
           <span class="text-sm font-semibold">{{ tab.label }}</span>
         </button>
       </div>
@@ -340,7 +340,7 @@ onMounted(() => {
             v-model="startDate"
             type="date"
             @change="loadReport(1)"
-            class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+            class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
         <div class="flex-1">
@@ -351,7 +351,7 @@ onMounted(() => {
             v-model="endDate"
             type="date"
             @change="loadReport(1)"
-            class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+            class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
         <div v-if="activeTab === 'project'" class="flex-1">
@@ -616,3 +616,16 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* 8 report tabs no longer wrap into a ragged multi-row block on mobile/
+   tablet -- they scroll horizontally in one row instead, scrollbar hidden
+   since the row itself makes it obvious there's more to swipe to. */
+.tabs-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+</style>

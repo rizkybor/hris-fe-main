@@ -481,12 +481,12 @@ watch(
 
   <div class="bg-white border border-[#DCDEDD] rounded-[14px] overflow-hidden">
     <!-- Tabs -->
-    <div class="flex items-center gap-1 px-3 pt-3 border-b border-[#DCDEDD]">
+    <div class="tabs-scroll flex flex-nowrap items-center gap-1 px-3 pt-3 border-b border-[#DCDEDD] overflow-x-auto">
       <button
         v-for="tab in tabs"
         :key="tab.key"
         @click="activeTab = tab.key"
-        class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-[10px] transition-colors duration-150 border-b-2"
+        class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-[10px] transition-colors duration-150 border-b-2 shrink-0 whitespace-nowrap"
         :class="activeTab === tab.key
           ? 'text-[#0C51D9] border-[#0C51D9] bg-blue-50/50'
           : 'text-gray-500 border-transparent hover:bg-gray-50'"
@@ -834,3 +834,15 @@ watch(
   </DeleteConfirmationModal>
 </div>
 </template>
+
+<style scoped>
+/* 3 finance tabs no longer risk overflowing the card on narrow screens --
+   they scroll horizontally in one row instead, scrollbar hidden. */
+.tabs-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+</style>

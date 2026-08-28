@@ -171,12 +171,12 @@ const saveCompany = async () => {
   <Alert type="error" :title="error" :show="!!error" />
 
   <!-- Page Header -->
-  <div class="bg-white mb-5 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
+  <div class="bg-white mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
         <Building2 class="w-5 h-5 text-[#0C51D9]" />
       </div>
-      <div>
+      <div class="min-w-0">
         <h3 class="text-brand-dark text-lg font-bold">Company About</h3>
         <p class="text-brand-light text-sm">Company profile shown across the system</p>
       </div>
@@ -184,7 +184,7 @@ const saveCompany = async () => {
     <button
       v-if="can('company-about-edit') && company"
       @click="openModal(true)"
-      class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 shrink-0"
+      class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto"
     >
       <Pencil class="w-4 h-4 text-white" />
       <span class="text-brand-white text-sm font-semibold">Edit</span>
@@ -430,7 +430,7 @@ const saveCompany = async () => {
                   <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <CalendarDays class="w-4 h-4 text-gray-400" />
                   </div>
-                  <input v-model="form.established_date" type="date" class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
+                  <input v-model="form.established_date" type="date" class="w-full h-[42px] pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-base sm:text-sm appearance-none hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
                 </div>
               </div>
               <div>

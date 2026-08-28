@@ -60,7 +60,7 @@ const chartSeries = computed(() => [completionRate.value]);
       <div class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
         <TrendingUp class="w-4 h-4 text-purple-600" />
       </div>
-      <div class="flex-1">
+      <div class="flex-1 min-w-0">
         <h3 class="text-brand-dark text-base font-bold">Project Progress</h3>
         <p class="text-brand-light text-xs">
           {{

@@ -478,7 +478,7 @@ onMounted(async () => {
       </div>
 
       <!-- Progress + Budget (headline metrics, highlighted) -->
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div
           class="bg-gradient-to-br from-purple-50/70 to-white border border-purple-100 rounded-[14px] hover:shadow-sm transition-all duration-300 p-4 border-l-4 border-l-purple-400"
         >
@@ -538,7 +538,7 @@ onMounted(async () => {
       </div>
 
       <!-- Start Date + End Date -->
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div
           class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
         >
