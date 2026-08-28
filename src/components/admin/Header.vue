@@ -15,7 +15,7 @@ import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, RouterLink } from "vue-router";
-import _ from "lodash";
+import { join } from "lodash-es";
 
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
@@ -408,7 +408,7 @@ const confirmLogout = async () => {
                 {{ user?.name }}
               </p>
               <p class="text-gray-400 text-xs font-medium leading-tight mt-0.5">
-                {{ _.join(user?.roles, ", ").toUpperCase() }}
+                {{ join(user?.roles, ", ").toUpperCase() }}
               </p>
             </div>
             <ChevronDownIcon
@@ -430,7 +430,7 @@ const confirmLogout = async () => {
                 </p>
                 <p class="text-xs text-gray-500 truncate">{{ user?.email }}</p>
                 <p class="text-xs text-gray-400 mt-0.5">
-                  {{ _.join(user?.roles, ", ").toUpperCase() }}
+                  {{ join(user?.roles, ", ").toUpperCase() }}
                 </p>
               </div>
 

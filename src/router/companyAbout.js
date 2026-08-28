@@ -1,5 +1,4 @@
-import CompanyAboutDashboard from '@/views/admin/company-about/CompanyDashboard.vue';
-
+const CompanyAboutDashboard = () => import('@/views/admin/company-about/CompanyDashboard.vue');
 export default [
   {
     path: 'company-about',

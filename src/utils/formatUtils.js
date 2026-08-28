@@ -45,4 +45,4 @@ export const getJobStatusText = (status) => {
   };
   return map[status] || capitalize(status);
 };
-import { capitalize as lodashCapitalize } from "lodash";
+import { capitalize as lodashCapitalize } from "lodash-es";

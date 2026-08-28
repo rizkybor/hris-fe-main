@@ -1,7 +1,7 @@
 <script setup>
 import { Building, Calendar, Edit, Share, Users } from "lucide-vue-next";
 import { RouterLink } from "vue-router";
-import _ from "lodash";
+import { capitalize } from "lodash-es";
 import { formatToClientTimezone } from "@/helpers/format";
 
 const props = defineProps({
@@ -62,7 +62,7 @@ const props = defineProps({
           </div>
           <div class="flex items-center gap-1.5">
             <Building class="w-4 h-4" />
-            <span>{{ _.capitalize(team.department) }}</span>
+            <span>{{ capitalize(team.department) }}</span>
           </div>
           <div class="flex items-center gap-1.5">
             <Calendar class="w-4 h-4" />

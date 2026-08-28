@@ -1,5 +1,4 @@
-import HistoryDashboard from '@/views/admin/history/HistoryDashboard.vue';
-
+const HistoryDashboard = () => import('@/views/admin/history/HistoryDashboard.vue');
 export default [
   {
     path: 'history',

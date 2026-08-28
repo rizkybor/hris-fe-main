@@ -2,18 +2,18 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AuthLayout from '@/layouts/Auth.vue'
 import AdminLayout from '@/layouts/Admin.vue'
-import Login from '@/views/auth/Login.vue'
-import ForgotPassword from '@/views/auth/ForgotPassword.vue'
-import ResetPassword from '@/views/auth/ResetPassword.vue'
-import AdminDashboard from '@/views/admin/Dashboard.vue'
+const Login = () => import('@/views/auth/Login.vue')
+const ForgotPassword = () => import('@/views/auth/ForgotPassword.vue')
+const ResetPassword = () => import('@/views/auth/ResetPassword.vue')
+const AdminDashboard = () => import('@/views/admin/Dashboard.vue')
 import teamRoutes from './team';
 import employeeRoutes from './employee';
-import EmployeeCreate from '@/views/admin/employee/EmployeeCreate.vue';
-import EmployeeEdit from '@/views/admin/employee/EmployeeEdit.vue';
-import EmployeeDetail from '@/views/admin/employee/EmployeeDetail.vue';
-import EmployeeProfile from '@/views/employee/EmployeeProfile.vue';
-import EmployeeTeam from '@/views/employee/EmployeeTeam.vue';
-import MyTasks from '@/views/employee/MyTasks.vue';
+const EmployeeCreate = () => import('@/views/admin/employee/EmployeeCreate.vue');
+const EmployeeEdit = () => import('@/views/admin/employee/EmployeeEdit.vue');
+const EmployeeDetail = () => import('@/views/admin/employee/EmployeeDetail.vue');
+const EmployeeProfile = () => import('@/views/employee/EmployeeProfile.vue');
+const EmployeeTeam = () => import('@/views/employee/EmployeeTeam.vue');
+const MyTasks = () => import('@/views/employee/MyTasks.vue');
 import EmployeeCreateLayout from '@/layouts/EmployeeCreateLayout.vue';
 import projectRoutes from './project';
 import attendanceRoutes from './attendance';

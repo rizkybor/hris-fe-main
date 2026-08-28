@@ -1,7 +1,7 @@
 <script setup>
 import { formatToClientTimezone } from "@/helpers/format";
 import { can } from "@/helpers/permissionHelper";
-import _ from "lodash";
+import { capitalize } from "lodash-es";
 import { Calendar, Crown, Edit, Eye, FileText } from "lucide-vue-next";
 import { RouterLink } from "vue-router";
 import Avatar from "@/components/common/Avatar.vue";
@@ -68,7 +68,7 @@ const getProgressColor = (progress) => {
         class="absolute bottom-2 left-2 px-2 py-1 rounded-md text-xs font-semibold"
         :class="getPriorityColor(data.priority)"
       >
-        {{ _.capitalize(data.priority || 'medium') }}
+        {{ capitalize(data.priority || 'medium') }}
       </div>
 
       <!-- Status Badge -->
@@ -76,7 +76,7 @@ const getProgressColor = (progress) => {
         class="absolute bottom-2 right-2 px-2 py-1 rounded-md text-xs font-semibold"
         :class="getStatusColor(data.status)"
       >
-        {{ _.capitalize(data.status || 'active') }}
+        {{ capitalize(data.status || 'active') }}
       </div>
     </div>
 

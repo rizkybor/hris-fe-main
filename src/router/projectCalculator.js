@@ -1,7 +1,6 @@
-import ProjectCalculatorDashboard from "@/views/admin/project-calculator/ProjectCalculatorDashboard.vue";
-import ProjectCalculatorForm from "@/views/admin/project-calculator/ProjectCalculatorForm.vue";
-import ProjectCalculatorDetail from "@/views/admin/project-calculator/ProjectCalculatorDetail.vue";
-
+const ProjectCalculatorDashboard = () => import("@/views/admin/project-calculator/ProjectCalculatorDashboard.vue");
+const ProjectCalculatorForm = () => import("@/views/admin/project-calculator/ProjectCalculatorForm.vue");
+const ProjectCalculatorDetail = () => import("@/views/admin/project-calculator/ProjectCalculatorDetail.vue");
 export default [
   {
     path: "project-calculator",

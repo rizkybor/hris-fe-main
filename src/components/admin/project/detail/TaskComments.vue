@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import { useRoute } from "vue-router";
 import { MessageSquare, Send, Trash2, AtSign, Smile, CornerUpLeft, X } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";

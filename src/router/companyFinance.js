@@ -1,5 +1,4 @@
-import CompanyFinanceDashboard from '@/views/admin/company-finance/CompanyFinanceDashboard.vue';
-
+const CompanyFinanceDashboard = () => import('@/views/admin/company-finance/CompanyFinanceDashboard.vue');
 export default [
   {
     path: 'company-finance',
