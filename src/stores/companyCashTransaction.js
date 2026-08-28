@@ -9,6 +9,8 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
     totalDebit: 0,
     totalCredit: 0,
     closingBalance: 0,
+    meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 },
+    lastParams: {},
     loading: false,
     saving: false,
     error: null,
@@ -16,16 +18,21 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
   }),
 
   actions: {
-    async fetchAll() {
+    async fetchAll(params = {}) {
       this.loading = true;
       this.error = null;
+      // Remembered so create/update/delete can refresh the same filtered
+      // page the user is currently looking at, instead of silently
+      // resetting them back to an unfiltered page 1.
+      this.lastParams = params;
       try {
-        const { data } = await axiosInstance.get("/company-cash-transactions");
+        const { data } = await axiosInstance.get("/company-cash-transactions", { params });
         this.transactions = data.data.items;
         this.openingBalance = data.data.opening_balance;
         this.totalDebit = data.data.total_debit;
         this.totalCredit = data.data.total_credit;
         this.closingBalance = data.data.closing_balance;
+        this.meta = data.data.meta;
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -39,7 +46,7 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
       try {
         const { data } = await axiosInstance.post("/company-cash-transactions", payload);
         this.success = data.message;
-        await this.fetchAll();
+        await this.fetchAll(this.lastParams);
         return data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -55,7 +62,7 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
       try {
         const { data } = await axiosInstance.put(`/company-cash-transactions/${id}`, payload);
         this.success = data.message;
-        await this.fetchAll();
+        await this.fetchAll(this.lastParams);
         return data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -70,7 +77,7 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
       try {
         const { data } = await axiosInstance.delete(`/company-cash-transactions/${id}`);
         this.success = data.message;
-        await this.fetchAll();
+        await this.fetchAll(this.lastParams);
       } catch (error) {
         this.error = handleError(error);
         throw error;
@@ -85,7 +92,7 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
           opening_balance: openingBalance,
         });
         this.success = data.message;
-        await this.fetchAll();
+        await this.fetchAll(this.lastParams);
         return data.data;
       } catch (error) {
         this.error = handleError(error);

@@ -14,8 +14,10 @@ import {
   Settings2,
 } from "lucide-vue-next";
 import { useCompanyCashTransactionStore } from "@/stores/companyCashTransaction";
+import { useProjectStore } from "@/stores/project";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
+import Pagination from "@/components/common/Pagination.vue";
 
 const store = useCompanyCashTransactionStore();
 const {
@@ -24,11 +26,29 @@ const {
   totalDebit,
   totalCredit,
   closingBalance,
+  meta,
   loading,
   saving,
 } = storeToRefs(store);
 
+const projectStore = useProjectStore();
+const { projects } = storeToRefs(projectStore);
+
 const canManage = computed(() => can("company-cash-book-create"));
+
+const projectFilter = ref("");
+
+const fetchData = (page = 1, rowPerPage = null) => {
+  store.fetchAll({
+    project_id: projectFilter.value || undefined,
+    page,
+    row_per_page: rowPerPage || meta.value.per_page || 15,
+  });
+};
+
+const handlePerPageChange = (rowPerPage) => {
+  fetchData(1, rowPerPage);
+};
 
 const isFormModalOpen = ref(false);
 const editingId = ref(null);
@@ -111,9 +131,10 @@ const handleDelete = async () => {
   }
 };
 
-// Newest first for reading, even though the store returns them oldest
-// first (chronological order is what the running-balance math needs).
-const displayedTransactions = computed(() => [...transactions.value].reverse());
+// The backend already returns newest-first, paginated -- balances are
+// computed server-side against the full chronological history before
+// that reversal, so no re-sorting is needed here.
+const displayedTransactions = computed(() => transactions.value);
 
 const formatDate = (date) => {
   if (!date) return "-";
@@ -147,7 +168,8 @@ const handleBalanceSubmit = async () => {
 };
 
 onMounted(() => {
-  store.fetchAll();
+  fetchData();
+  projectStore.fetchProjects({ limit: 200 });
 });
 </script>
 
@@ -206,6 +228,18 @@ onMounted(() => {
     </div>
 
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
+      <div class="mb-4 max-w-xs">
+        <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Filter by Project</label>
+        <select
+          v-model="projectFilter"
+          @change="fetchData(1)"
+          class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+        >
+          <option value="">All Projects</option>
+          <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
+        </select>
+      </div>
+
       <div v-if="loading" class="text-center py-8 text-xs text-gray-400">Loading transactions...</div>
 
       <div
@@ -223,6 +257,7 @@ onMounted(() => {
         <table class="min-w-full text-sm">
           <thead class="bg-gray-50">
             <tr>
+              <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">No</th>
               <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Tanggal</th>
               <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Keterangan</th>
               <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Sumber</th>
@@ -234,10 +269,11 @@ onMounted(() => {
           </thead>
           <tbody>
             <tr
-              v-for="transaction in displayedTransactions"
+              v-for="(transaction, index) in displayedTransactions"
               :key="transaction.id"
               class="border-t border-[#DCDEDD] hover:bg-gray-50/60"
             >
+              <td class="px-3 py-2.5 text-gray-500">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
               <td class="px-3 py-2.5 text-gray-500 whitespace-nowrap">{{ formatDate(transaction.transaction_date) }}</td>
               <td class="px-3 py-2.5">
                 <p class="text-brand-dark font-medium">{{ transaction.description }}</p>
@@ -296,6 +332,15 @@ onMounted(() => {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        v-if="!loading && transactions.length > 0"
+        :meta="meta"
+        :loading="loading"
+        item-label="transactions"
+        @page-change="fetchData"
+        @per-page-change="handlePerPageChange"
+      />
     </div>
 
     <!-- FORM MODAL -->
