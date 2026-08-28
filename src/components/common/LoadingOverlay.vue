@@ -1,5 +1,7 @@
 <script setup lang="ts">
-defineProps<{ show: boolean }>();
+withDefaults(defineProps<{ show: boolean; text?: string }>(), {
+  text: "Please wait a moment",
+});
 </script>
 
 <template>
@@ -8,98 +10,186 @@ defineProps<{ show: boolean }>();
       v-if="show"
       class="fixed inset-0 z-50 flex items-center justify-center"
     >
-      <!-- BLUR BACKDROP (INI KUNCINYA) -->
+      <!-- BACKDROP -->
       <div class="absolute inset-0 backdrop"></div>
+      <div class="absolute inset-0 glow"></div>
 
-      <!-- CONTENT -->
-      <div class="relative z-10 flex flex-col items-center gap-6">
-        <!-- SPINNER -->
-        <div class="flex items-end gap-2 spinner-bars">
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
+      <!-- CARD -->
+      <transition name="card" appear>
+        <div class="relative z-10 card flex flex-col items-center gap-5">
+          <!-- LOGO + RING SPINNER -->
+          <div class="relative flex items-center justify-center w-20 h-20">
+            <svg class="ring" viewBox="0 0 80 80">
+              <circle
+                class="ring-track"
+                cx="40"
+                cy="40"
+                r="34"
+                fill="none"
+                stroke-width="3"
+              />
+              <circle
+                class="ring-progress"
+                cx="40"
+                cy="40"
+                r="34"
+                fill="none"
+                stroke-width="3"
+              />
+            </svg>
+            <div class="logo-wrap">
+              <img
+                src="/images/jcd-only-color.png"
+                alt="Company Logo"
+                class="logo-img"
+              />
+            </div>
+          </div>
+
+          <!-- TEXT -->
+          <div class="flex flex-col items-center gap-1">
+            <p class="loading-text">{{ text }}</p>
+            <p class="brand-text">PT. Jendela Cakra Digital</p>
+          </div>
         </div>
-
-        <!-- TEXT -->
-        <p class="brand-text">PT. Jendela Cakra Digital</p>
-      </div>
+      </transition>
     </div>
   </transition>
 </template>
 
 <style scoped>
-/* ===== BACKDROP BLUR (REAL) ===== */
+/* ===== BACKDROP ===== */
 .backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);   /* dim */
-  backdrop-filter: blur(18px);       /* REAL BLUR */
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(4, 8, 20, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-/* ===== SPINNER ===== */
-.spinner-bars {
-  height: 64px;
-}
-
-.spinner-bars .bar {
-  width: 10px;
-  height: 100%;
-  background: linear-gradient(
-    135deg,
-    #38bdf8 0%,
-    #2563eb 50%,
-    #1e3a8a 100%
+.glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(37, 99, 235, 0.28) 0%,
+    rgba(37, 99, 235, 0) 55%
   );
-  border-radius: 6px;
-  animation: pulse 1.2s ease-in-out infinite;
-  transform-origin: center bottom;
+  pointer-events: none;
 }
 
-.spinner-bars .bar:nth-child(1) { animation-delay: 0s; }
-.spinner-bars .bar:nth-child(2) { animation-delay: 0.1s; }
-.spinner-bars .bar:nth-child(3) { animation-delay: 0.2s; }
-.spinner-bars .bar:nth-child(4) { animation-delay: 0.3s; }
-.spinner-bars .bar:nth-child(5) { animation-delay: 0.4s; }
-.spinner-bars .bar:nth-child(6) { animation-delay: 0.5s; }
-.spinner-bars .bar:nth-child(7) { animation-delay: 0.6s; }
-.spinner-bars .bar:nth-child(8) { animation-delay: 0.7s; }
-.spinner-bars .bar:nth-child(9) { animation-delay: 0.8s; }
+/* ===== CARD ===== */
+.card {
+  padding: 40px 48px;
+  border-radius: 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
 
-@keyframes pulse {
-  0% { transform: scaleY(0.3); opacity: 0.4; }
-  50% { transform: scaleY(1); opacity: 1; }
-  100% { transform: scaleY(0.3); opacity: 0.4; }
+/* ===== RING SPINNER ===== */
+.ring {
+  position: absolute;
+  inset: 0;
+  width: 80px;
+  height: 80px;
+  animation: spin 1.4s linear infinite;
+}
+
+.ring-track {
+  stroke: rgba(255, 255, 255, 0.12);
+}
+
+.ring-progress {
+  stroke: #4f8bff;
+  stroke-linecap: round;
+  stroke-dasharray: 214;
+  stroke-dashoffset: 160;
+  filter: drop-shadow(0 0 4px rgba(79, 139, 255, 0.7));
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== LOGO ===== */
+.logo-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+.logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
 }
 
 /* ===== TEXT ===== */
+.loading-text {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.02em;
+}
+
 .brand-text {
-  font-size: 13px;
-  letter-spacing: 0.25em;
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.85);
-  animation: textFade 2.2s ease-in-out infinite;
+  color: rgba(255, 255, 255, 0.45);
 }
 
-@keyframes textFade {
-  0% { opacity: 0.4; transform: translateY(4px); }
-  50% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0.4; transform: translateY(4px); }
-}
-
-/* ===== FADE ===== */
+/* ===== TRANSITIONS ===== */
 .overlay-enter-active,
 .overlay-leave-active {
-  transition: opacity .2s ease;
+  transition: opacity 0.25s ease;
 }
 .overlay-enter-from,
 .overlay-leave-to {
   opacity: 0;
+}
+
+.card-enter-active {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.card-enter-from {
+  opacity: 0;
+  transform: scale(0.92) translateY(8px);
+}
+.card-leave-to {
+  opacity: 0;
+  transform: scale(0.96);
 }
 </style>
