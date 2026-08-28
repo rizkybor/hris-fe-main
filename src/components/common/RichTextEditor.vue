@@ -405,10 +405,11 @@ const TOOLBAR_GROUPS = [
 ];
 
 const FORMAT_OPTIONS = [
-  { label: "Paragraf", value: "<p>" },
-  { label: "Heading 1", value: "<h1>" },
-  { label: "Heading 2", value: "<h2>" },
-  { label: "Heading 3", value: "<h3>" },
+  { label: "Normal Text", value: "<p>" },
+  { label: "Title", value: "<h1>" },
+  { label: "Subtitle", value: "<h2>" },
+  { label: "Heading", value: "<h3>" },
+  { label: "Sub Heading", value: "<h4>" },
 ];
 </script>
 
@@ -661,13 +662,20 @@ const FORMAT_OPTIONS = [
   margin: 0.5rem 0;
 }
 .rich-text-editor :deep(h2) {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin: -0.25rem 0 0.5rem 0;
 }
 .rich-text-editor :deep(h3) {
   font-size: 1.1rem;
   font-weight: 600;
+  margin: 0.5rem 0;
+}
+.rich-text-editor :deep(h4) {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
   margin: 0.5rem 0;
 }
 .rich-text-editor :deep(blockquote) {
