@@ -14,12 +14,15 @@ import {
   PiggyBank,
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
+import { useProjectStore } from "@/stores/project";
 import { can } from "@/helpers/permissionHelper";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 
 const reportStore = useReportStore();
+const projectStore = useProjectStore();
+const { projects } = storeToRefs(projectStore);
 const {
   attendance,
   payroll,
@@ -50,6 +53,7 @@ const activeTab = ref("attendance");
 const startDate = ref("");
 const endDate = ref("");
 const projectStatus = ref("");
+const projectExpenseProjectId = ref("");
 
 const canExport = computed(() => can("report-export"));
 
@@ -205,6 +209,9 @@ const filterParams = computed(() => {
   if (startDate.value) params.start_date = startDate.value;
   if (endDate.value) params.end_date = endDate.value;
   if (activeTab.value === "project" && projectStatus.value) params.status = projectStatus.value;
+  if (activeTab.value === "project_expense" && projectExpenseProjectId.value) {
+    params.project_id = projectExpenseProjectId.value;
+  }
   return params;
 });
 
@@ -262,6 +269,7 @@ watch(activeTab, () => {
 
 onMounted(() => {
   loadReport();
+  projectStore.fetchProjects({ limit: 200 });
 });
 </script>
 
@@ -395,6 +403,17 @@ onMounted(() => {
             <option value="cancelled">Cancelled</option>
           </select>
         </div>
+        <div v-if="activeTab === 'project_expense'" class="flex-1">
+          <label class="text-xs text-brand-light font-medium mb-1 block">Project</label>
+          <select
+            v-model="projectExpenseProjectId"
+            @change="loadReport(1)"
+            class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+          >
+            <option value="">All Projects</option>
+            <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
+          </select>
+        </div>
       </div>
       <p v-if="activeTab === 'project'" class="text-xs text-gray-400 -mt-1 mb-2">
         Filtered by each project's Start Date falling within this range.
@@ -492,12 +511,11 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Net Received</th>
             </template>
             <template v-else-if="activeTab === 'project_expense'">
+              <th class="py-3 pr-4 font-semibold">Tanggal</th>
               <th class="py-3 pr-4 font-semibold">Project Name</th>
-              <th class="py-3 pr-4 font-semibold">Leader</th>
-              <th class="py-3 pr-4 font-semibold">Budget (Saldo Awal)</th>
-              <th class="py-3 pr-4 font-semibold">Total Debit</th>
-              <th class="py-3 pr-4 font-semibold">Total Kredit</th>
-              <th class="py-3 pr-4 font-semibold">Saldo Akhir</th>
+              <th class="py-3 pr-4 font-semibold">Keterangan</th>
+              <th class="py-3 pr-4 font-semibold">Debit</th>
+              <th class="py-3 pr-4 font-semibold">Kredit</th>
             </template>
           </tr>
         </thead>
@@ -638,12 +656,11 @@ onMounted(() => {
               class="border-b border-[#F1F1F1] hover:bg-gray-50"
             >
               <td class="py-3 pr-4 text-brand-light">{{ (projectExpense.meta.current_page - 1) * projectExpense.meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name }}</td>
-              <td class="py-3 pr-4">{{ row.leader ?? "N/A" }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.budget) }}</td>
-              <td class="py-3 pr-4 text-red-600">{{ formatCurrency(row.total_debit) }}</td>
-              <td class="py-3 pr-4 text-emerald-600">{{ formatCurrency(row.total_credit) }}</td>
-              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ formatCurrency(row.balance) }}</td>
+              <td class="py-3 pr-4">{{ formatDate(row.transaction_date) }}</td>
+              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.project_name ?? "N/A" }}</td>
+              <td class="py-3 pr-4">{{ row.description }}</td>
+              <td class="py-3 pr-4 text-emerald-600">{{ row.type === "debit" ? formatCurrency(row.amount) : "-" }}</td>
+              <td class="py-3 pr-4 text-red-600">{{ row.type === "credit" ? formatCurrency(row.amount) : "-" }}</td>
             </tr>
           </template>
         </tbody>
