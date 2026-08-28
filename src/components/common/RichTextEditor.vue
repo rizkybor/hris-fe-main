@@ -58,6 +58,10 @@ onMounted(() => {
   if (editorRef.value) {
     editorRef.value.innerHTML = props.modelValue || "";
   }
+  // Chrome wraps new lines in <div> by default when Enter is pressed in a
+  // contenteditable, not <p> -- forcing this makes every new paragraph a
+  // real <p>, which is what the PDF's first-line-indent CSS targets.
+  document.execCommand("defaultParagraphSeparator", false, "p");
   document.addEventListener("selectionchange", trackSelection);
 });
 
@@ -123,6 +127,34 @@ const restoreSelection = () => {
   const selection = window.getSelection();
   selection.removeAllRanges();
   selection.addRange(savedSelection);
+};
+
+// contenteditable does nothing with Tab by default -- it just moves focus
+// off the editor. Mirror the common word-processor behavior instead: inside
+// a list, Tab/Shift+Tab change nesting level; anywhere else, Tab inserts a
+// fixed-width indent at the caret.
+const closestListItem = (node) => {
+  let el = node?.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+  while (el && el !== editorRef.value) {
+    if (el.tagName === "LI") return el;
+    el = el.parentElement;
+  }
+  return null;
+};
+
+const onEditorKeydown = (e) => {
+  if (e.key !== "Tab" || props.disabled) return;
+  e.preventDefault();
+
+  const selection = window.getSelection();
+  const inListItem = selection?.rangeCount && closestListItem(selection.anchorNode);
+
+  if (inListItem) {
+    document.execCommand(e.shiftKey ? "outdent" : "indent");
+  } else if (!e.shiftKey) {
+    document.execCommand("insertHTML", false, "&emsp;");
+  }
+  onInput();
 };
 
 const exec = (command, value = null) => {
@@ -591,6 +623,7 @@ const FORMAT_OPTIONS = [
       ref="editorRef"
       :contenteditable="!disabled"
       @input="onInput"
+      @keydown="onEditorKeydown"
       @mousemove="onEditorMouseMove"
       @mousedown="onEditorMouseDown"
       @mouseleave="editorRef.style.cursor = ''"
@@ -604,6 +637,15 @@ const FORMAT_OPTIONS = [
 .rich-text-editor:empty::before {
   content: attr(data-placeholder);
   color: #9ca3af;
+}
+/* Mirrors the PDF's own first-line-indent on every paragraph (see
+   letter.blade.php's .body-content rule) so the editor is WYSIWYG --
+   paragraphs are indented automatically, no manual Tab needed at the
+   start of a new one. */
+.rich-text-editor :deep(p),
+.rich-text-editor > :deep(div) {
+  text-indent: 2.5em;
+  margin: 0 0 0.5em 0;
 }
 .rich-text-editor :deep(ul) {
   list-style: disc;

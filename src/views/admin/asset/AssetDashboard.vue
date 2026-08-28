@@ -162,12 +162,12 @@ onMounted(async () => {
 
 <template>
   <div class="px-4 py-4">
-    <div class="bg-white mb-5 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
+    <div class="bg-white mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
           <Laptop class="w-5 h-5 text-[#0C51D9]" />
         </div>
-        <div>
+        <div class="min-w-0">
           <h3 class="text-brand-dark text-lg font-bold">Company Assets</h3>
           <p class="text-brand-light text-sm">Manage and track assets loaned to employees</p>
         </div>
@@ -175,7 +175,7 @@ onMounted(async () => {
       <button
         v-if="can('asset-create')"
         @click="openCreateModal"
-        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 shrink-0"
+        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto"
       >
         <Plus class="w-4 h-4 text-white" />
         <span class="text-brand-white text-sm font-semibold">Add Asset</span>
@@ -225,7 +225,7 @@ onMounted(async () => {
 
     <div v-else class="space-y-3">
       <div v-for="asset in assets" :key="asset.id" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center justify-between gap-4">
+        <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1 flex-wrap">
               <h4 class="text-brand-dark font-bold">{{ asset.name }}</h4>
@@ -294,7 +294,7 @@ onMounted(async () => {
           </button>
         </div>
         <form @submit.prevent="handleSubmit" class="p-5 space-y-4">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Asset Code</label>
               <input v-model="form.asset_code" type="text" required placeholder="AST-001" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
@@ -310,7 +310,7 @@ onMounted(async () => {
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Asset Name</label>
             <input v-model="form.name" type="text" required placeholder="e.g. MacBook Pro 14" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Merek</label>
               <input v-model="form.brand" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
@@ -324,10 +324,14 @@ onMounted(async () => {
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Serial Number</label>
             <input v-model="form.serial_number" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Purchase Date</label>
-              <input v-model="form.purchase_date" type="date" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+              <input
+                v-model="form.purchase_date"
+                type="date"
+                class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base sm:text-sm appearance-none"
+              />
             </div>
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Harga Beli (Rp)</label>

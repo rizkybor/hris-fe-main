@@ -4,6 +4,7 @@ import VueApexCharts from "vue3-apexcharts";
 import { TrendingUp, Briefcase, PlayCircle, Eye, EyeOff } from "lucide-vue-next";
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
 import { storeToRefs } from "pinia";
+import { formatRupiahCompact } from "@/utils/formatUtils";
 
 // Store
 const store = useCompanyFinanceStore();
@@ -199,19 +200,19 @@ const chartOptions = computed(() => ({
   },
   grid: {
     borderColor: "#f1f1f1",
-    padding: { top: 20, right: 20, bottom: 20, left: 20 },
+    padding: { top: 20, right: 10, bottom: 0, left: 10 },
   },
   xaxis: {
     categories: MONTH_LABELS,
   },
+  // Full "Rp10.000.000"-style labels eat too much of the plot width on
+  // narrow screens, squeezing the chart itself -- a compact form (Rp10jt)
+  // keeps the y-axis narrow at every breakpoint. Tooltips keep the exact
+  // full-precision amount since there's no width constraint there.
   yaxis: {
     min: 0,
     labels: {
-      formatter: (val: number) =>
-        new Intl.NumberFormat("id-ID", {
-          style: "currency",
-          currency: "IDR",
-        }).format(val),
+      formatter: (val: number) => formatRupiahCompact(val),
     },
   },
   tooltip: {
@@ -222,6 +223,11 @@ const chartOptions = computed(() => ({
           currency: "IDR",
         }).format(val),
     },
+  },
+  legend: {
+    position: "top",
+    horizontalAlign: "left",
+    fontSize: "12px",
   },
   dataLabels: { enabled: false },
 }));
@@ -403,14 +409,14 @@ const chartOptions = computed(() => ({
     <div
       class="xl:col-span-4 bg-white border rounded-[12px] p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300 mt-4"
     >
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-3 mb-2">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+        <div class="flex items-center gap-3 mb-2 min-w-0">
           <div
-            class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
+            class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center shrink-0"
           >
             <TrendingUp class="w-6 h-6 text-purple-600" />
           </div>
-          <div>
+          <div class="min-w-0">
             <h3 class="font-bold text-brand-dark text-lg">
               Operational Cost Trend
             </h3>
@@ -423,7 +429,7 @@ const chartOptions = computed(() => ({
         <div>
           <select
             v-model="selectedYear"
-            class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition cursor-pointer"
+            class="w-full sm:w-auto bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition cursor-pointer"
           >
             <option
               v-for="year in [2025, 2026, 2027, 2028, 2029, 2030]"
@@ -440,7 +446,8 @@ const chartOptions = computed(() => ({
           :options="chartOptions"
           :series="chartSeries"
           type="area"
-          height="300"
+          height="250"
+          class="w-full"
         />
       </div>
     </div>

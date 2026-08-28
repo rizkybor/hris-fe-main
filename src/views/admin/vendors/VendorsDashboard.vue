@@ -76,12 +76,12 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
   <!-- Vendors Grid Section -->
   <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-5">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
           <Briefcase class="w-6 h-6 text-blue-600" />
         </div>
-        <div>
+        <div class="min-w-0">
           <h3 class="text-brand-dark text-base font-bold">All Vendors</h3>
           <p class="text-brand-light text-sm font-normal">
             View and manage all vendor information
@@ -92,7 +92,7 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
       <!-- Add Vendor Button -->
       <div class="flex items-center gap-3.5" v-if="can('vendors-create')">
         <RouterLink
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-1.5"
+          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center justify-center gap-1.5 w-full sm:w-auto"
           :to="{ name: 'admin.vendors.create' }"
         >
           <Plus class="w-4 h-4 text-white" />

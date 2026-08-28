@@ -112,29 +112,31 @@ const chartSeries = computed(() => [{ name: "Realized", data: chartSeriesData.va
   <div
     class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5 hover:shadow-md transition-shadow duration-300"
   >
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-      <div class="w-10 h-10 bg-green-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
-        <BanknoteIcon class="w-4 h-4 text-green-600" />
-      </div>
-      <div class="flex-1">
-        <h3 class="text-brand-dark text-base font-bold">Project Realized</h3>
-        <Skeleton v-if="loadingStatistics" width="140px" height="14px" rounded="4px" class="mt-1" />
-        <p v-else class="text-brand-light text-xs flex items-center gap-1.5">
-          Total Payment Receipts collected on project invoices:
-          <span class="text-brand-dark font-semibold">{{ showAmount ? formatRupiah(totalRealized) : "Rp ••••••••" }}</span>
-          <button
-            type="button"
-            @click="showAmount = !showAmount"
-            :aria-label="showAmount ? 'Hide amount' : 'Show amount'"
-            class="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <EyeOff v-if="showAmount" class="w-3.5 h-3.5" />
-            <Eye v-else class="w-3.5 h-3.5" />
-          </button>
-        </p>
+    <div class="flex flex-col gap-3 mb-4">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 bg-green-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
+          <BanknoteIcon class="w-4 h-4 text-green-600" />
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-brand-dark text-base font-bold">Project Realized</h3>
+          <Skeleton v-if="loadingStatistics" width="140px" height="14px" rounded="4px" class="mt-1" />
+          <p v-else class="text-brand-light text-xs flex items-center flex-wrap gap-1.5">
+            Total Payment Receipts collected on project invoices:
+            <span class="text-brand-dark font-semibold">{{ showAmount ? formatRupiah(totalRealized) : "Rp ••••••••" }}</span>
+            <button
+              type="button"
+              @click="showAmount = !showAmount"
+              :aria-label="showAmount ? 'Hide amount' : 'Show amount'"
+              class="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <EyeOff v-if="showAmount" class="w-3.5 h-3.5" />
+              <Eye v-else class="w-3.5 h-3.5" />
+            </button>
+          </p>
+        </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center flex-wrap gap-2">
         <div class="flex items-center bg-gray-100 rounded-[10px] p-1">
           <button
             type="button"
