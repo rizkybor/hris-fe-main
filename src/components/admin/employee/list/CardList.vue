@@ -1,6 +1,6 @@
 <script setup>
 import { can } from "@/helpers/permissionHelper";
-import _ from "lodash";
+import { capitalize } from "lodash-es";
 import { Building, User, Calendar, Eye, Edit } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import Avatar from "@/components/common/Avatar.vue";
@@ -41,7 +41,7 @@ const goToDetail = () => {
       <span
         class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#F0FDF4] text-[#166534]"
       >
-        {{ _.capitalize(data?.job_information?.status) }}
+        {{ capitalize(data?.job_information?.status) }}
       </span>
     </div>
     <div class="flex items-center justify-between mb-2.5">
@@ -54,13 +54,13 @@ const goToDetail = () => {
         <p
           class="mt-1 text-[#6B7280] font-['Plus_Jakarta_Sans'] text-[14px] font-normal"
         >
-          {{ _.capitalize(data?.job_information?.job_title) }}
+          {{ capitalize(data?.job_information?.job_title) }}
         </p>
       </div>
       <span
         class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF]"
       >
-        {{ _.capitalize(data?.job_information?.skill_level) }}
+        {{ capitalize(data?.job_information?.skill_level) }}
       </span>
     </div>
 
@@ -71,11 +71,11 @@ const goToDetail = () => {
     <div class="space-y-1.5 mb-3.5">
       <div class="flex items-center gap-1.5 text-sm text-gray-500">
         <Building class="w-3.5 h-3.5" />
-        <span>{{ _.capitalize(data?.job_information?.work_location) }}</span>
+        <span>{{ capitalize(data?.job_information?.work_location) }}</span>
       </div>
       <div class="flex items-center gap-1.5 text-sm text-gray-500">
         <User class="w-3.5 h-3.5" />
-        <span>{{ _.capitalize(data?.gender) }}</span>
+        <span>{{ capitalize(data?.gender) }}</span>
       </div>
       <div class="flex items-center gap-1.5 text-sm text-gray-500">
         <Calendar class="w-3.5 h-3.5" />

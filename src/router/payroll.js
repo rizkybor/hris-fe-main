@@ -1,9 +1,8 @@
-import PayrollDashboard from '@/views/admin/payroll/PayrollDashboard.vue';
-import PayrollCreate from '@/views/admin/payroll/PayrollCreate.vue';
-import PayrollDetail from '@/views/admin/payroll/PayrollDetail.vue';
-import MyPayslips from '@/views/employee/MyPayslips.vue';
-import PayslipDetail from '@/views/employee/PayslipDetail.vue';
-
+const PayrollDashboard = () => import('@/views/admin/payroll/PayrollDashboard.vue');
+const PayrollCreate = () => import('@/views/admin/payroll/PayrollCreate.vue');
+const PayrollDetail = () => import('@/views/admin/payroll/PayrollDetail.vue');
+const MyPayslips = () => import('@/views/employee/MyPayslips.vue');
+const PayslipDetail = () => import('@/views/employee/PayslipDetail.vue');
 export default [
     {
         path: 'payroll',

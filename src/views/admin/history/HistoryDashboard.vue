@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { storeToRefs } from "pinia";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import {
   History,
   Search,

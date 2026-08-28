@@ -28,7 +28,7 @@ import {
   Users2,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import { useTeamStore } from "@/stores/team";
 import { useOptionStore } from "@/stores/option";
 import { useEmployeeStore } from "@/stores/employee";

@@ -5,7 +5,7 @@ import { useEmployeeStore } from "@/stores/employee";
 import { useOptionStore } from "@/stores/option";
 import { storeToRefs } from "pinia";
 import { ref, onMounted, watch } from "vue";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import {
   Search,
   Building,

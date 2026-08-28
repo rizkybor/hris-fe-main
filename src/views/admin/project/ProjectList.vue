@@ -20,7 +20,7 @@ import { ref } from "vue";
 import { onMounted } from "vue";
 import Pagination from "@/components/admin/team/Pagination.vue";
 import { watch } from "vue";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
 import Alert from "@/components/common/Alert.vue";

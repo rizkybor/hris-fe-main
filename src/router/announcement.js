@@ -1,5 +1,4 @@
-import AnnouncementDashboard from '@/views/admin/announcement/AnnouncementDashboard.vue';
-
+const AnnouncementDashboard = () => import('@/views/admin/announcement/AnnouncementDashboard.vue');
 export default [
   {
     path: 'announcements',

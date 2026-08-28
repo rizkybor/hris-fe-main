@@ -1,5 +1,4 @@
-import ReportDashboard from '@/views/admin/report/ReportDashboard.vue';
-
+const ReportDashboard = () => import('@/views/admin/report/ReportDashboard.vue');
 export default [
   {
     path: 'reports',

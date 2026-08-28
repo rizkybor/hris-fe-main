@@ -1,5 +1,4 @@
-import OrgChartDashboard from '@/views/admin/orgchart/OrgChartDashboard.vue';
-
+const OrgChartDashboard = () => import('@/views/admin/orgchart/OrgChartDashboard.vue');
 export default [
   {
     path: 'org-chart',

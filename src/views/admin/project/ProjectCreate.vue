@@ -34,7 +34,7 @@ import {
   Trash2,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import { useProjectStore } from "@/stores/project";
 import { useTeamStore } from "@/stores/team";
 import { useEmployeeStore } from "@/stores/employee";

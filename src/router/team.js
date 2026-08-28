@@ -1,8 +1,7 @@
-import TeamList from "@/views/admin/team/TeamList.vue";
-import TeamCreate from "@/views/admin/team/TeamCreate.vue";
-import TeamEdit from "@/views/admin/team/TeamEdit.vue";
-import TeamDetail from "@/views/admin/team/TeamDetail.vue";
-
+const TeamList = () => import("@/views/admin/team/TeamList.vue");
+const TeamCreate = () => import("@/views/admin/team/TeamCreate.vue");
+const TeamEdit = () => import("@/views/admin/team/TeamEdit.vue");
+const TeamDetail = () => import("@/views/admin/team/TeamDetail.vue");
 // team routes
 export default [
     {

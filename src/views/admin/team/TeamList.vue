@@ -6,7 +6,7 @@ import { useTeamStore } from "@/stores/team";
 import { useOptionStore } from "@/stores/option";
 import { storeToRefs } from "pinia";
 import { onMounted, ref, watch } from "vue";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import {
   Upload,
   Users,

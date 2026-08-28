@@ -19,7 +19,7 @@ import {
 } from "lucide-vue-next";
 import Avatar from "@/components/common/Avatar.vue";
 import TaskComments from "./TaskComments.vue";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import { getPriorityColor, TASK_TYPE_COLORS, getTaskTypeColorClasses } from "@/utils/styleHelpers";
 import { formatDate } from "@/utils/dateUtils";
 import { useEmployeeStore } from "@/stores/employee";

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import {
   Archive,
   Upload,

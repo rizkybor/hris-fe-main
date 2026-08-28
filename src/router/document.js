@@ -1,21 +1,20 @@
-import DocumentsHub from '@/views/admin/documents/DocumentsHub.vue';
-import PurchaseOrderList from '@/views/admin/documents/PurchaseOrderList.vue';
-import PurchaseOrderCreate from '@/views/admin/documents/PurchaseOrderCreate.vue';
-import InvoiceList from '@/views/admin/documents/InvoiceList.vue';
-import InvoiceCreate from '@/views/admin/documents/InvoiceCreate.vue';
-import PaymentReceiptList from '@/views/admin/documents/PaymentReceiptList.vue';
-import PaymentReceiptCreate from '@/views/admin/documents/PaymentReceiptCreate.vue';
-import LetterList from '@/views/admin/documents/LetterList.vue';
-import LetterCreate from '@/views/admin/documents/LetterCreate.vue';
-import CertificateList from '@/views/admin/documents/CertificateList.vue';
-import CertificateGenerate from '@/views/admin/documents/CertificateGenerate.vue';
-import OfficialMemoList from '@/views/admin/documents/OfficialMemoList.vue';
-import OfficialMemoForm from '@/views/admin/documents/OfficialMemoForm.vue';
-import OfficialMemoDetail from '@/views/admin/documents/OfficialMemoDetail.vue';
-import MeetingNoteList from '@/views/admin/documents/MeetingNoteList.vue';
-import MeetingNoteForm from '@/views/admin/documents/MeetingNoteForm.vue';
-import MeetingNoteDetail from '@/views/admin/documents/MeetingNoteDetail.vue';
-
+const DocumentsHub = () => import('@/views/admin/documents/DocumentsHub.vue');
+const PurchaseOrderList = () => import('@/views/admin/documents/PurchaseOrderList.vue');
+const PurchaseOrderCreate = () => import('@/views/admin/documents/PurchaseOrderCreate.vue');
+const InvoiceList = () => import('@/views/admin/documents/InvoiceList.vue');
+const InvoiceCreate = () => import('@/views/admin/documents/InvoiceCreate.vue');
+const PaymentReceiptList = () => import('@/views/admin/documents/PaymentReceiptList.vue');
+const PaymentReceiptCreate = () => import('@/views/admin/documents/PaymentReceiptCreate.vue');
+const LetterList = () => import('@/views/admin/documents/LetterList.vue');
+const LetterCreate = () => import('@/views/admin/documents/LetterCreate.vue');
+const CertificateList = () => import('@/views/admin/documents/CertificateList.vue');
+const CertificateGenerate = () => import('@/views/admin/documents/CertificateGenerate.vue');
+const OfficialMemoList = () => import('@/views/admin/documents/OfficialMemoList.vue');
+const OfficialMemoForm = () => import('@/views/admin/documents/OfficialMemoForm.vue');
+const OfficialMemoDetail = () => import('@/views/admin/documents/OfficialMemoDetail.vue');
+const MeetingNoteList = () => import('@/views/admin/documents/MeetingNoteList.vue');
+const MeetingNoteForm = () => import('@/views/admin/documents/MeetingNoteForm.vue');
+const MeetingNoteDetail = () => import('@/views/admin/documents/MeetingNoteDetail.vue');
 export default [
   {
     path: 'documents',

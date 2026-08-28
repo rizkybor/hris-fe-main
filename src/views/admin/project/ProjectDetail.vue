@@ -36,7 +36,7 @@ import {
 } from "@/utils/badgeUtils";
 import { getProjectHealth } from "@/utils/projectHealth";
 import { can } from "@/helpers/permissionHelper";
-import _ from "lodash";
+import { capitalize } from "lodash-es";
 import TaskBoard from "@/components/admin/project/detail/TaskBoard.vue";
 import ProjectDocuments from "@/components/admin/project/detail/ProjectDocuments.vue";
 import ProjectInvoices from "@/components/admin/project/detail/ProjectInvoices.vue";
@@ -246,13 +246,13 @@ onMounted(async () => {
             class="px-3 py-1.5 rounded-full text-xs font-semibold"
             :class="getProjectStatusColor(project.status)"
           >
-            {{ _.capitalize(project.status) }}
+            {{ capitalize(project.status) }}
           </div>
           <div
             class="px-3 py-1.5 rounded-full text-xs font-semibold"
             :class="getPriorityColor(project.priority)"
           >
-            {{ _.capitalize(project.priority) }}
+            {{ capitalize(project.priority) }}
           </div>
           <button
             v-if="can('project-export')"

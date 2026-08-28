@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { formatToClientTimezone } from "@/helpers/format";
 import { can } from "@/helpers/permissionHelper";
-import _ from "lodash";
+import { capitalize } from "lodash-es";
 import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, WalletIcon, AlertTriangle, Trash2 } from "lucide-vue-next";
 import { formatRupiah } from "@/utils/formatUtils";
 import { getProjectHealth, PROJECT_HEALTH_BADGE_CLASS } from "@/utils/projectHealth";
@@ -70,13 +70,13 @@ const getProgressColor = (progress) => {
           class="px-2 py-0.5 rounded-md text-xs font-semibold shadow-sm"
           :class="getPriorityColor(data.priority)"
         >
-          {{ _.capitalize(data.priority) }}
+          {{ capitalize(data.priority) }}
         </span>
         <span
           class="px-2 py-0.5 rounded-md text-xs font-semibold shadow-sm"
           :class="getStatusColor(data.status)"
         >
-          {{ _.capitalize(data.status) }}
+          {{ capitalize(data.status) }}
         </span>
       </div>
     </div>
