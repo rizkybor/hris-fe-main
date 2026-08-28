@@ -229,12 +229,10 @@ const handleSubmit = async () => {
       "emergency_contacts[0][phone]",
       step3Data.value.emergency_contact_phone
     );
-    if (step3Data.value.emergency_contact_email) {
-      formData.append(
-        "emergency_contacts[0][email]",
-        step3Data.value.emergency_contact_email
-      );
-    }
+    formData.append(
+      "emergency_contacts[0][email]",
+      step3Data.value.emergency_contact_email
+    );
 
     formData.append("preferred_language", step3Data.value.preferred_language);
     formData.append("additional_notes", step3Data.value.additional_notes);
