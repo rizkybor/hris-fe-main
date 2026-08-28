@@ -15,6 +15,7 @@ const OfficialMemoDetail = () => import('@/views/admin/documents/OfficialMemoDet
 const MeetingNoteList = () => import('@/views/admin/documents/MeetingNoteList.vue');
 const MeetingNoteForm = () => import('@/views/admin/documents/MeetingNoteForm.vue');
 const MeetingNoteDetail = () => import('@/views/admin/documents/MeetingNoteDetail.vue');
+const StaffTaskList = () => import('@/views/admin/documents/StaffTaskList.vue');
 export default [
   {
     path: 'documents',
@@ -130,5 +131,10 @@ export default [
     path: 'documents/meeting-notes/:id/edit',
     name: 'admin.meeting-notes.edit',
     component: MeetingNoteForm,
+  },
+  {
+    path: 'documents/staff-tasks',
+    name: 'admin.staff-tasks.dashboard',
+    component: StaffTaskList,
   },
 ];

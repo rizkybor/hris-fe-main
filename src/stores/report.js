@@ -13,8 +13,11 @@ export const useReportStore = defineStore("report", {
     project: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     pph23: { period: null, summary: {}, rows: [] },
     projectExpense: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
+    staffRaport: { period: null, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
+    staffRaportDetail: null,
     loading: false,
     exporting: false,
+    downloadingPdf: false,
     error: null,
   }),
 
@@ -133,6 +136,56 @@ export const useReportStore = defineStore("report", {
         this.error = handleError(error);
       } finally {
         this.loading = false;
+      }
+    },
+
+    async fetchStaffRaport(params = {}) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await axiosInstance.get("/reports/staff-raport", { params });
+        this.staffRaport = data.data;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchStaffRaportDetail(employeeId, params = {}) {
+      this.error = null;
+      try {
+        const { data } = await axiosInstance.get(`/reports/staff-raport/${employeeId}`, { params });
+        this.staffRaportDetail = data.data;
+        return data.data;
+      } catch (error) {
+        this.error = handleError(error);
+        throw error;
+      }
+    },
+
+    async downloadStaffRaportPdf(employeeId, period, employeeName = "staff") {
+      this.downloadingPdf = true;
+      this.error = null;
+      try {
+        const response = await axiosInstance.get(`/reports/staff-raport/${employeeId}/pdf`, {
+          params: { period },
+          responseType: "blob",
+        });
+
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `${employeeName.replace(/\s+/g, "-")}-raport-${period}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        this.error = handleError(error);
+        throw error;
+      } finally {
+        this.downloadingPdf = false;
       }
     },
 
