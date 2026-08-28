@@ -11,6 +11,7 @@ import {
   ReceiptIcon,
   PercentIcon,
   FolderKanban,
+  PiggyBank,
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
 import { can } from "@/helpers/permissionHelper";
@@ -19,8 +20,19 @@ import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 
 const reportStore = useReportStore();
-const { attendance, payroll, employee, finance, pph21, ppn, project, pph23, loading, exporting } =
-  storeToRefs(reportStore);
+const {
+  attendance,
+  payroll,
+  employee,
+  finance,
+  pph21,
+  ppn,
+  project,
+  pph23,
+  projectExpense,
+  loading,
+  exporting,
+} = storeToRefs(reportStore);
 
 const tabs = [
   { key: "attendance", label: "Attendance", icon: ClockIcon },
@@ -31,6 +43,7 @@ const tabs = [
   { key: "pph23", label: "PPh 23", icon: ReceiptIcon },
   { key: "ppn", label: "PPN", icon: PercentIcon },
   { key: "project", label: "Project", icon: FolderKanban },
+  { key: "project_expense", label: "Project Cash", icon: PiggyBank },
 ];
 
 const activeTab = ref("attendance");
@@ -50,6 +63,7 @@ const currentReport = computed(() => {
     ppn: ppn.value,
     project: project.value,
     pph23: pph23.value,
+    project_expense: projectExpense.value,
   }[activeTab.value];
 });
 
@@ -128,6 +142,13 @@ const summaryCards = computed(() => {
         { label: "Total PPh 23 Withheld", value: formatCurrency(summary.total_pph23) },
         { label: "Total Net Received", value: formatCurrency(summary.total_net_received) },
       ];
+    case "project_expense":
+      return [
+        { label: "Projects with Activity", value: summary.total_projects ?? 0 },
+        { label: "Total Budget", value: formatCurrency(summary.total_budget) },
+        { label: "Total Debit", value: formatCurrency(summary.total_debit) },
+        { label: "Total Credit", value: formatCurrency(summary.total_credit) },
+      ];
     default:
       return [];
   }
@@ -191,6 +212,7 @@ const reportMeta = computed(() => {
   if (activeTab.value === "attendance") return attendance.value.meta;
   if (activeTab.value === "payroll") return payroll.value.meta;
   if (activeTab.value === "project") return project.value.meta;
+  if (activeTab.value === "project_expense") return projectExpense.value.meta;
   return null;
 });
 
@@ -219,6 +241,9 @@ async function loadReport(page = 1) {
       break;
     case "pph23":
       await reportStore.fetchPph23Report(filterParams.value);
+      break;
+    case "project_expense":
+      await reportStore.fetchProjectExpenseReport({ ...filterParams.value, page });
       break;
   }
 }
@@ -374,6 +399,9 @@ onMounted(() => {
       <p v-if="activeTab === 'project'" class="text-xs text-gray-400 -mt-1 mb-2">
         Filtered by each project's Start Date falling within this range.
       </p>
+      <p v-if="activeTab === 'project_expense'" class="text-xs text-gray-400 -mt-1 mb-2">
+        Filtered by each cash transaction's date falling within this range -- Budget itself isn't date-scoped.
+      </p>
     </div>
 
     <!-- Summary Cards -->
@@ -462,6 +490,14 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Gross Amount</th>
               <th class="py-3 pr-4 font-semibold">PPh 23 Withheld</th>
               <th class="py-3 pr-4 font-semibold">Net Received</th>
+            </template>
+            <template v-else-if="activeTab === 'project_expense'">
+              <th class="py-3 pr-4 font-semibold">Project Name</th>
+              <th class="py-3 pr-4 font-semibold">Leader</th>
+              <th class="py-3 pr-4 font-semibold">Budget (Saldo Awal)</th>
+              <th class="py-3 pr-4 font-semibold">Total Debit</th>
+              <th class="py-3 pr-4 font-semibold">Total Kredit</th>
+              <th class="py-3 pr-4 font-semibold">Saldo Akhir</th>
             </template>
           </tr>
         </thead>
@@ -593,6 +629,21 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ formatCurrency(Number(row.amount) + Number(row.pph23_amount)) }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.pph23_amount) }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.amount) }}</td>
+            </tr>
+          </template>
+          <template v-else-if="activeTab === 'project_expense'">
+            <tr
+              v-for="(row, index) in tableRows"
+              :key="row.id"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+            >
+              <td class="py-3 pr-4 text-brand-light">{{ (projectExpense.meta.current_page - 1) * projectExpense.meta.per_page + index + 1 }}</td>
+              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name }}</td>
+              <td class="py-3 pr-4">{{ row.leader ?? "N/A" }}</td>
+              <td class="py-3 pr-4">{{ formatCurrency(row.budget) }}</td>
+              <td class="py-3 pr-4 text-red-600">{{ formatCurrency(row.total_debit) }}</td>
+              <td class="py-3 pr-4 text-emerald-600">{{ formatCurrency(row.total_credit) }}</td>
+              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ formatCurrency(row.balance) }}</td>
             </tr>
           </template>
         </tbody>

@@ -30,6 +30,7 @@ import {
   PanelLeftOpen,
   Sparkles,
   CalculatorIcon,
+  Landmark,
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
@@ -597,6 +598,36 @@ const showCompanyFinance = computed(() =>
                 ),
               }"
               >Operational Cost</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.company-cash-book.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith(
+                'admin.company-cash-book'
+              ),
+            }"
+            v-if="can('company-cash-book-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <Landmark
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.company-cash-book'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith(
+                  'admin.company-cash-book'
+                ),
+              }"
+              >Company Cash Book</span
             >
           </RouterLink>
 
