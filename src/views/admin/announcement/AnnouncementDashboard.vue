@@ -152,12 +152,12 @@ onMounted(() => {
 
 <template>
   <div class="px-4 py-4">
-    <div class="bg-white mb-5 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
+    <div class="bg-white mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
           <Megaphone class="w-5 h-5 text-[#0C51D9]" />
         </div>
-        <div>
+        <div class="min-w-0">
           <h3 class="text-brand-dark text-lg font-bold">Announcements</h3>
           <p class="text-brand-light text-sm">Broadcast information to the entire or selected teams</p>
         </div>
@@ -165,7 +165,7 @@ onMounted(() => {
       <button
         v-if="can('announcement-create')"
         @click="openCreateModal"
-        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 shrink-0"
+        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto"
       >
         <Plus class="w-4 h-4 text-white" />
         <span class="text-brand-white text-sm font-semibold">Create Announcement</span>

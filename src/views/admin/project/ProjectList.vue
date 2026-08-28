@@ -118,13 +118,13 @@ const handleDelete = async (project) => {
       <div
         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5"
       >
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 min-w-0">
           <div
             class="w-10 h-10 sm:w-11 sm:h-11 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0"
           >
             <Briefcase class="w-5 h-5 text-blue-600" />
           </div>
-          <div>
+          <div class="min-w-0">
             <h3 class="text-brand-dark text-lg font-bold">All Projects</h3>
             <p class="text-brand-light text-xs font-normal">
               View and manage all project information
@@ -139,7 +139,7 @@ const handleDelete = async (project) => {
           <span class="text-sm font-semibold">Import CSV</span>
         </button> -->
           <RouterLink
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-2"
+            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center justify-center gap-2 w-full sm:w-auto"
             :to="{ name: 'admin.projects.create' }"
           >
             <Plus class="w-4 h-4 text-white" />
