@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from "vue";
-import VueApexCharts from "vue3-apexcharts";
+import { computed, defineAsyncComponent } from "vue";
+const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 import { TrendingUp } from "lucide-vue-next";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";

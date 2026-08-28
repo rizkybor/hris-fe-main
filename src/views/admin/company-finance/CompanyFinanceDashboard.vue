@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import { can } from "@/helpers/permissionHelper";

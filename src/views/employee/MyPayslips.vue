@@ -3,7 +3,7 @@ import { ref, onMounted, watch, computed } from "vue";
 import { usePayrollStore } from "@/stores/payroll";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import {
   Search,
   Download,

@@ -1,9 +1,9 @@
 <script setup>
 import { UserPlus, TrendingUp } from "lucide-vue-next";
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch, defineAsyncComponent } from "vue";
 import { useTeamStore } from "@/stores/team";
 import { storeToRefs } from "pinia";
-import VueApexCharts from "vue3-apexcharts";
+const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 import Spinner from "@/components/common/skeleton/Spinner.vue";
 
 const props = defineProps({

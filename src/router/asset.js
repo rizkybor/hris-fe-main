@@ -1,5 +1,4 @@
-import AssetDashboard from '@/views/admin/asset/AssetDashboard.vue';
-
+const AssetDashboard = () => import('@/views/admin/asset/AssetDashboard.vue');
 export default [
   {
     path: 'assets',

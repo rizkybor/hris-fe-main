@@ -13,7 +13,7 @@ import {
   CheckCircle,
   X,
 } from "lucide-vue-next";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import Pagination from "@/components/admin/payroll/Pagination.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";

@@ -5,7 +5,7 @@ import Pagination from "@/components/admin/team/Pagination.vue";
 import Alert from "@/components/common/Alert.vue";
 import { storeToRefs } from "pinia";
 import { ref, onMounted, watch, computed } from "vue";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import { can } from "@/helpers/permissionHelper";
 import { Plus, Briefcase, Search, SearchX } from "lucide-vue-next";
 import { useVendorsStore } from "@/stores/vendor";

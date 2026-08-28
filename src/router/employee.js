@@ -1,6 +1,5 @@
-import EmployeeList from "@/views/admin/employee/EmployeeList.vue";
-import EmployeeSuccess from "@/views/admin/employee/EmployeeSuccess.vue";
-
+const EmployeeList = () => import("@/views/admin/employee/EmployeeList.vue");
+const EmployeeSuccess = () => import("@/views/admin/employee/EmployeeSuccess.vue");
 export default [
     {
         path: 'employees',

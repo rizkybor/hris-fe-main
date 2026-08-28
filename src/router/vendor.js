@@ -1,9 +1,7 @@
-import VendorsDashboard from '@/views/admin/vendors/VendorsDashboard.vue';
-import VendorsCreate from '@/views/admin/vendors/VendorsCreate.vue';
-import VendorsDetail from '@/views/admin/vendors/VendorsDetail.vue';
-import VendorsEdit from '@/views/admin/vendors/VendorsEdit.vue';
-
-
+const VendorsDashboard = () => import('@/views/admin/vendors/VendorsDashboard.vue');
+const VendorsCreate = () => import('@/views/admin/vendors/VendorsCreate.vue');
+const VendorsDetail = () => import('@/views/admin/vendors/VendorsDetail.vue');
+const VendorsEdit = () => import('@/views/admin/vendors/VendorsEdit.vue');
 export default [
   {
     path: 'vendors',

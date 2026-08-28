@@ -1,8 +1,7 @@
-import ProjectList from "@/views/admin/project/ProjectList.vue";
-import ProjectCreate from "@/views/admin/project/ProjectCreate.vue";
-import ProjectEdit from "@/views/admin/project/ProjectEdit.vue";
-import ProjectDetail from "@/views/admin/project/ProjectDetail.vue";
-
+const ProjectList = () => import("@/views/admin/project/ProjectList.vue");
+const ProjectCreate = () => import("@/views/admin/project/ProjectCreate.vue");
+const ProjectEdit = () => import("@/views/admin/project/ProjectEdit.vue");
+const ProjectDetail = () => import("@/views/admin/project/ProjectDetail.vue");
 export default [
     {
         path: '/admin/projects',

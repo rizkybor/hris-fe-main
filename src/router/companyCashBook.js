@@ -1,5 +1,4 @@
-import CompanyCashBookDashboard from '@/views/admin/company-cash-book/CompanyCashBookDashboard.vue';
-
+const CompanyCashBookDashboard = () => import('@/views/admin/company-cash-book/CompanyCashBookDashboard.vue');
 export default [
   {
     path: 'company-cash-book',

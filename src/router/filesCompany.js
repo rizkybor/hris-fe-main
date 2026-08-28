@@ -1,8 +1,7 @@
-import FilesCompanyDashboard from "@/views/admin/files/FilesCompanyDashboard.vue";
-import FilesCompanyCreate from "@/views/admin/files/FilesCompanyCreate.vue";
-import FilesCompanyDetail from "@/views/admin/files/FilesCompanyDetail.vue";
-import FilesCompanyEdit from "@/views/admin/files/FilesCompanyEdit.vue";
-
+const FilesCompanyDashboard = () => import("@/views/admin/files/FilesCompanyDashboard.vue");
+const FilesCompanyCreate = () => import("@/views/admin/files/FilesCompanyCreate.vue");
+const FilesCompanyDetail = () => import("@/views/admin/files/FilesCompanyDetail.vue");
+const FilesCompanyEdit = () => import("@/views/admin/files/FilesCompanyEdit.vue");
 export default [
   {
     path: "files-company",

@@ -1,8 +1,7 @@
-import AccountPasswordDashboard from "@/views/admin/account-password/AccountPasswordDashboard.vue";
-import AccountPasswordCreate from "@/views/admin/account-password/AccountPasswordCreate.vue";
-import AccountPasswordDetail from "@/views/admin/account-password/AccountPasswordDetail.vue";
-import AccountPasswordEdit from "@/views/admin/account-password/AccountPasswordEdit.vue";
-
+const AccountPasswordDashboard = () => import("@/views/admin/account-password/AccountPasswordDashboard.vue");
+const AccountPasswordCreate = () => import("@/views/admin/account-password/AccountPasswordCreate.vue");
+const AccountPasswordDetail = () => import("@/views/admin/account-password/AccountPasswordDetail.vue");
+const AccountPasswordEdit = () => import("@/views/admin/account-password/AccountPasswordEdit.vue");
 export default [
   {
     path: "account-password",

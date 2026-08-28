@@ -1,14 +1,13 @@
-import SettingsDashboard from '@/views/admin/settings/SettingsDashboard.vue';
-import RolesPermissions from '@/views/admin/settings/RolesPermissions.vue';
-import ConfigurableOptions from '@/views/admin/settings/ConfigurableOptions.vue';
-import StaffPermissions from '@/views/admin/settings/StaffPermissions.vue';
-import DocumentCodes from '@/views/admin/settings/DocumentCodes.vue';
-import BankAccounts from '@/views/admin/settings/BankAccounts.vue';
-import SdmFields from '@/views/admin/settings/SdmFields.vue';
-import CertificateSettings from '@/views/admin/settings/CertificateSettings.vue';
-import BackupDatabase from '@/views/admin/settings/BackupDatabase.vue';
-import GreetingSettings from '@/views/admin/settings/GreetingSettings.vue';
-
+const SettingsDashboard = () => import('@/views/admin/settings/SettingsDashboard.vue');
+const RolesPermissions = () => import('@/views/admin/settings/RolesPermissions.vue');
+const ConfigurableOptions = () => import('@/views/admin/settings/ConfigurableOptions.vue');
+const StaffPermissions = () => import('@/views/admin/settings/StaffPermissions.vue');
+const DocumentCodes = () => import('@/views/admin/settings/DocumentCodes.vue');
+const BankAccounts = () => import('@/views/admin/settings/BankAccounts.vue');
+const SdmFields = () => import('@/views/admin/settings/SdmFields.vue');
+const CertificateSettings = () => import('@/views/admin/settings/CertificateSettings.vue');
+const BackupDatabase = () => import('@/views/admin/settings/BackupDatabase.vue');
+const GreetingSettings = () => import('@/views/admin/settings/GreetingSettings.vue');
 export default [
   {
     path: 'settings',

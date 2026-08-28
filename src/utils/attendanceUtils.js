@@ -1,4 +1,4 @@
-import { startCase } from 'lodash';
+import { startCase } from 'lodash-es';
 
 /**
  * Get attendance/leave request status badge configuration
