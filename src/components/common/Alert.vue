@@ -50,7 +50,7 @@
       </p>
     </div>
     <button
-      @click="visible = false"
+      @click="close"
       class="ml-2 p-1 rounded hover:bg-black/10 transition"
       aria-label="Close"
       type="button"
@@ -74,23 +74,56 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 
 const props = defineProps({
   type: { type: String, default: "success" }, // success | danger
   title: { type: String, required: true },
   message: { type: String, required: true },
   show: { type: Boolean, default: true },
+  autoClose: { type: Boolean, default: true },
+  duration: { type: Number, default: 4000 },
 });
 
+const emit = defineEmits(["close"]);
+
 const visible = ref(props.show);
+let autoCloseTimer = null;
+
+const clearAutoCloseTimer = () => {
+  if (autoCloseTimer) {
+    clearTimeout(autoCloseTimer);
+    autoCloseTimer = null;
+  }
+};
+
+const startAutoCloseTimer = () => {
+  clearAutoCloseTimer();
+  if (props.autoClose) {
+    autoCloseTimer = setTimeout(close, props.duration);
+  }
+};
+
+const close = () => {
+  clearAutoCloseTimer();
+  visible.value = false;
+  emit("close");
+};
 
 watch(
   () => props.show,
   (val) => {
     visible.value = val;
-  }
+    if (val) {
+      startAutoCloseTimer();
+    } else {
+      clearAutoCloseTimer();
+    }
+  },
+  { immediate: true }
 );
+
+onBeforeUnmount(clearAutoCloseTimer);
 
 const bgClass = computed(() =>
   props.type === "danger" ? "bg-red-100" : "bg-green-100"
