@@ -129,7 +129,7 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
     </div>
 
     <!-- Loading -->
-    <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
+    <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-5" />
 
     <!-- Vendors Grid -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
