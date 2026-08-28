@@ -1,16 +1,87 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { storeToRefs } from "pinia";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useTaskStore } from "@/stores/task";
+import { useStaffTaskStore } from "@/stores/staffTask";
 import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
-import { Search, Calendar, Folder, ListChecks, FolderX, SearchX, ChevronDown } from "lucide-vue-next";
+import { Search, Calendar, Folder, ListChecks, FolderX, SearchX, ChevronDown, ClipboardList, X } from "lucide-vue-next";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { getPriorityColor } from "@/utils/styleHelpers";
+import StaffTaskComments from "@/components/admin/documents/StaffTaskComments.vue";
 
 const router = useRouter();
+const route = useRoute();
 const taskStore = useTaskStore();
 const { myTasks, loading } = storeToRefs(taskStore);
+
+// "Assigned Tasks" -- daily tasks handed out by Superadmin/Manager/Finance
+// Manager/Operational Director via Document Letters > Staff Tasks, distinct
+// from the Project Tasks below (which come from a Project's own board).
+const staffTaskStore = useStaffTaskStore();
+const { myStaffTasks, loading: staffTasksLoading } = storeToRefs(staffTaskStore);
+
+const STAFF_TASK_STATUS_OPTIONS = [
+  { value: "todo", label: "To Do" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "done", label: "Done" },
+];
+
+const staffTaskStatusClasses = {
+  todo: "bg-gray-100 text-gray-600",
+  in_progress: "bg-[#FEF3C7] text-[#D97706]",
+  done: "bg-[#F0FDF4] text-[#166534]",
+};
+
+const staffTaskStatusAccent = {
+  todo: "border-l-gray-400",
+  in_progress: "border-l-blue-500",
+  done: "border-l-green-500",
+};
+
+const updatingStaffTaskId = ref(null);
+const handleStaffTaskStatusChange = async (task, event) => {
+  const newStatus = event.target.value;
+  if (newStatus === task.my_assignment?.status) return;
+  updatingStaffTaskId.value = task.id;
+  try {
+    await staffTaskStore.updateMyStatus(task.id, newStatus);
+  } catch (error) {
+    console.error("Failed to update task status:", error);
+  } finally {
+    updatingStaffTaskId.value = null;
+  }
+};
+
+const staffTaskOverdue = (task) => {
+  if (!task.due_date || task.my_assignment?.status === "done") return false;
+  return new Date(task.due_date) < new Date(new Date().toDateString());
+};
+
+// Card previews show a plain-text snippet -- rendering raw HTML tags inside
+// a line-clamped card looks broken (stray "<p>" text, truncated mid-tag).
+const stripHtml = (html) => (html || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
+const detailStaffTask = ref(null);
+const showStaffTaskDetail = ref(false);
+const openStaffTaskDetail = (task) => {
+  detailStaffTask.value = task;
+  showStaffTaskDetail.value = true;
+};
+const closeStaffTaskDetail = () => {
+  showStaffTaskDetail.value = false;
+  detailStaffTask.value = null;
+};
+
+const staffTaskCommentAssignees = computed(() => {
+  if (!detailStaffTask.value) return [];
+  const list = (detailStaffTask.value.assignees || []).map((a) => ({ id: a.employee_id, name: a.name }));
+  const creatorEmployeeId = detailStaffTask.value.creator?.employee_profile?.id;
+  if (creatorEmployeeId && !list.some((a) => a.id === creatorEmployeeId)) {
+    list.push({ id: creatorEmployeeId, name: detailStaffTask.value.creator?.name });
+  }
+  return list;
+});
 
 // Same 5 statuses/labels as the Kanban board's columns (TaskBoard.vue's
 // COLUMNS), so a task's status reads identically everywhere.
@@ -136,13 +207,120 @@ const groupedTasks = computed(() => {
   return Array.from(groups.values());
 });
 
-onMounted(() => {
+onMounted(async () => {
   taskStore.fetchMyTasks(200, true);
+  await staffTaskStore.fetchMyStaffTasks();
+
+  // Deep-link from a StaffTaskAssigned/StaffTaskCommentMention notification
+  // (?staff_task=<id>, optionally &comment=<id>) -- open that task's detail
+  // straight away.
+  const targetId = route.query.staff_task ? Number(route.query.staff_task) : null;
+  if (targetId) {
+    const task = myStaffTasks.value.find((t) => t.id === targetId);
+    if (task) openStaffTaskDetail(task);
+  }
 });
 </script>
 
 <template>
   <div class="px-4 py-4">
+    <!-- Assigned Tasks: daily tasks handed out via Document Letters > Staff
+    Tasks (not tied to a Project), each with its own progress you verify. -->
+    <div v-if="staffTasksLoading || myStaffTasks.length > 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5 mb-4">
+      <div class="flex items-center gap-2 mb-3.5">
+        <div class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center shrink-0">
+          <ClipboardList class="w-4 h-4 text-emerald-600" />
+        </div>
+        <div>
+          <h4 class="text-brand-dark text-sm font-bold">Assigned Tasks</h4>
+          <p class="text-brand-light text-xs">Daily tasks assigned to you -- verify your progress here</p>
+        </div>
+      </div>
+
+      <div v-if="staffTasksLoading" class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <Skeleton v-for="i in 2" :key="i" height="90px" rounded="12px" />
+      </div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div
+          v-for="task in myStaffTasks"
+          :key="task.id"
+          @click="openStaffTaskDetail(task)"
+          class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5 hover:border-[#0C51D9] hover:border-2 hover:shadow-sm transition-all duration-300 cursor-pointer border-l-4"
+          :class="staffTaskStatusAccent[task.my_assignment?.status] ?? 'border-l-gray-300'"
+        >
+          <div class="flex items-start justify-between gap-2 mb-2.5">
+            <h4 class="text-brand-dark text-sm font-semibold flex-1 min-w-0">{{ task.title }}</h4>
+            <span
+              :class="staffTaskStatusClasses[task.my_assignment?.status]"
+              class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0"
+              >{{ STAFF_TASK_STATUS_OPTIONS.find((o) => o.value === task.my_assignment?.status)?.label ?? task.my_assignment?.status }}</span
+            >
+          </div>
+
+          <p v-if="task.description" class="text-brand-light text-xs mb-3 line-clamp-2">{{ stripHtml(task.description) }}</p>
+
+          <div class="flex items-center gap-1.5 mb-3 flex-wrap">
+            <span v-if="staffTaskOverdue(task)" class="px-2 py-0.5 rounded-md text-xs font-semibold bg-red-100 text-red-700">Overdue</span>
+            <div class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-50 text-gray-600">
+              <Calendar class="w-3 h-3" />
+              <span class="text-xs font-medium">{{ formatDate(task.due_date) }}</span>
+            </div>
+            <span class="text-xs text-gray-400">by {{ task.creator?.name }}</span>
+          </div>
+
+          <div class="pt-3 border-t border-gray-100">
+            <select
+              :value="task.my_assignment?.status"
+              @change="handleStaffTaskStatusChange(task, $event)"
+              @click.stop
+              :disabled="updatingStaffTaskId === task.id"
+              class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-[8px] text-xs font-medium hover:border-[#0C51D9] focus:border-[#0C51D9] outline-none transition-all disabled:opacity-50 bg-white"
+            >
+              <option v-for="opt in STAFF_TASK_STATUS_OPTIONS" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assigned Task Detail Modal -->
+    <div v-if="showStaffTaskDetail" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeStaffTaskDetail">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
+          <div>
+            <h3 class="text-brand-dark text-lg font-bold">{{ detailStaffTask?.title }}</h3>
+            <p class="text-brand-light text-xs mt-0.5">Due {{ formatDate(detailStaffTask?.due_date) }} • by {{ detailStaffTask?.creator?.name }}</p>
+          </div>
+          <button @click="closeStaffTaskDetail" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] shrink-0">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+        <div class="p-5 space-y-5">
+          <div v-if="detailStaffTask?.description" class="rich-text-content text-sm text-brand-dark leading-relaxed" v-html="detailStaffTask.description"></div>
+
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Your Status</label>
+            <select
+              :value="detailStaffTask?.my_assignment?.status"
+              @change="handleStaffTaskStatusChange(detailStaffTask, $event)"
+              class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm"
+            >
+              <option v-for="opt in STAFF_TASK_STATUS_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+          </div>
+
+          <StaffTaskComments
+            :staff-task-id="detailStaffTask.id"
+            :assignees="staffTaskCommentAssignees"
+            :can-comment="true"
+          />
+        </div>
+      </div>
+    </div>
+
     <div class="bg-white sm:p-2 mb-3">
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
@@ -303,3 +481,17 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Base .rich-text-content lives in src/assets/css/input.css -- these add
+   the same supplementary tag styling MeetingNoteDetail.vue uses. */
+.rich-text-content :deep(p) { margin-bottom: 0.75rem; }
+.rich-text-content :deep(ul) { list-style: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+.rich-text-content :deep(ol) { list-style: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+.rich-text-content :deep(h1) { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0; }
+.rich-text-content :deep(h2) { font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0; }
+.rich-text-content :deep(h3) { font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; }
+.rich-text-content :deep(blockquote) { border-left: 3px solid #0c51d9; padding-left: 0.75rem; color: #6b7280; margin: 0.5rem 0; }
+.rich-text-content :deep(a) { color: #0c51d9; text-decoration: underline; }
+.rich-text-content :deep(hr) { border: none; border-top: 1px solid #dcdedd; margin: 0.75rem 0; }
+</style>

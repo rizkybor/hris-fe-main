@@ -1,5 +1,5 @@
 <script setup>
-import { FileStack, ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, NotebookPen, ChevronRight } from "lucide-vue-next";
+import { FileStack, ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, NotebookPen, ListChecksIcon, ChevronRight } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
 const links = [
@@ -57,6 +57,15 @@ const links = [
     permission: "certificate-menu",
     iconBg: "bg-amber-50",
     iconColor: "text-amber-600",
+  },
+  {
+    to: { name: "admin.staff-tasks.dashboard" },
+    icon: ListChecksIcon,
+    title: "Staff Tasks",
+    description: "Assign daily tasks to all staff or hand-picked staff, and track each person's progress",
+    permission: "staff-task-menu",
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
   },
 ];
 </script>
