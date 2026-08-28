@@ -4,6 +4,18 @@ import Cookies from "js-cookie";
 import { defineStore } from "pinia";
 import router from "@/router";
 
+// Keeps the loading overlay visible for at least `ms`, even when the
+// request itself resolves faster -- otherwise it flashes for a few
+// milliseconds and the user can't tell it's actually there.
+const MIN_LOADING_MS = 900;
+const withMinDuration = (promise, ms = MIN_LOADING_MS) => {
+    const timer = new Promise((resolve) => setTimeout(resolve, ms));
+    return Promise.allSettled([promise, timer]).then(([result]) => {
+        if (result.status === 'rejected') throw result.reason;
+        return result.value;
+    });
+};
+
 export const useAuthStore = defineStore("auth", {
     state: () => ({
         user: null,
@@ -30,7 +42,7 @@ export const useAuthStore = defineStore("auth", {
             this.error = null
 
             try {
-                const response = await axiosInstance.post('/login', credentials)
+                const response = await withMinDuration(axiosInstance.post('/login', credentials))
 
                 const token = response.data.data.token
 
@@ -53,7 +65,7 @@ export const useAuthStore = defineStore("auth", {
             this.success = null
 
             try {
-                const response = await axiosInstance.post('/forgot-password', { email })
+                const response = await withMinDuration(axiosInstance.post('/forgot-password', { email }))
                 this.success = response.data.message
             } catch (error) {
                 this.error = handleError(error)
@@ -69,7 +81,7 @@ export const useAuthStore = defineStore("auth", {
             this.success = null
 
             try {
-                const response = await axiosInstance.post('/reset-password', payload)
+                const response = await withMinDuration(axiosInstance.post('/reset-password', payload))
                 this.success = response.data.message
             } catch (error) {
                 this.error = handleError(error)
