@@ -224,7 +224,7 @@ onMounted(async () => {
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <!-- Project Details Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6"
     >
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-6">
         <div class="flex items-center gap-3">
@@ -259,7 +259,7 @@ onMounted(async () => {
             v-if="can('project-export')"
             @click="handleExportProgress"
             :disabled="exporting"
-            class="border border-[#DCDEDD] text-brand-dark py-2 px-3.5 rounded-[8px] font-medium hover:bg-gray-50 hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="bg-white border border-[#DCDEDD] text-brand-dark py-2 px-3.5 rounded-[8px] font-medium hover:bg-gray-50 hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download class="w-3.5 h-3.5" />
             <span class="text-xs font-semibold">{{ exporting ? "Exporting..." : "Export Progress" }}</span>
@@ -269,7 +269,7 @@ onMounted(async () => {
 
       <!-- Project Image -->
       <div
-        class="w-full h-40 sm:h-52 md:h-56 bg-gradient-to-br from-blue-100 to-purple-100 relative overflow-hidden rounded-[12px] mb-6"
+        class="border border-[#DCDEDD] w-full h-40 sm:h-52 md:h-56 bg-gradient-to-br from-blue-100 to-purple-100 relative overflow-hidden rounded-[12px] mb-6"
       >
         <img
           :src="project.photo"
@@ -396,7 +396,7 @@ onMounted(async () => {
     <!-- Right Sidebar -->
     <div class="space-y-4">
       <!-- Project Leader Card -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 h-fit">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 h-fit">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-9 h-9 bg-green-50 rounded-[10px] flex items-center justify-center shrink-0"
@@ -431,7 +431,7 @@ onMounted(async () => {
               name: 'admin.employees.detail',
               params: { id: project.leader.id },
             }"
-            class="border border-[#DCDEDD] text-brand-dark py-2 px-3 rounded-[8px] font-medium hover:bg-gray-50 hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center gap-1.5 shrink-0"
+            class="bg-white border border-[#DCDEDD] text-brand-dark py-2 px-3 rounded-[8px] font-medium hover:bg-gray-50 hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center gap-1.5 shrink-0"
           >
             <User class="w-3.5 h-3.5" />
             <span class="text-xs font-semibold">Profile</span>
@@ -444,7 +444,7 @@ onMounted(async () => {
       </div>
 
       <!-- Vendor Card (optional) -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 h-fit">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 h-fit">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-9 h-9 bg-orange-50 rounded-[10px] flex items-center justify-center shrink-0"
@@ -548,7 +548,7 @@ onMounted(async () => {
       <!-- Start Date + End Date -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div
-          class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+          class="bg-gradient-to-br from-indigo-50/70 to-white border border-indigo-100 rounded-[14px] hover:shadow-sm transition-all duration-300 p-4 border-l-4 border-l-indigo-400"
         >
           <div
             class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center mb-3"
@@ -580,7 +580,7 @@ onMounted(async () => {
 
       <!-- Duration Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+        class="bg-gradient-to-br from-blue-50/70 to-white border border-blue-100 rounded-[14px] hover:shadow-sm transition-all duration-300 p-4 border-l-4 border-l-blue-400"
       >
         <div class="flex items-center justify-between">
           <div>

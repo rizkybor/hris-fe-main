@@ -42,7 +42,7 @@ const formatDate = (date) =>
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full flex flex-col">
+  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full flex flex-col">
     <div class="flex items-center gap-3 mb-5 shrink-0">
       <div class="w-9 h-9 sm:w-10 sm:h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
         <Receipt class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
@@ -61,7 +61,7 @@ const formatDate = (date) =>
     <div class="overflow-y-auto max-h-[320px] sm:max-h-[420px] pr-1 -mr-1">
       <div
         v-if="invoices.length === 0"
-        class="text-center py-10 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
+        class="text-center px-4 py-10 text-gray-500 bg-gray-100 rounded-[12px] border border-dashed border-[#DCDEDD]"
       >
         <ReceiptText class="w-9 h-9 text-gray-300 mx-auto mb-3" />
         <p class="text-sm font-semibold">No invoices linked yet</p>
