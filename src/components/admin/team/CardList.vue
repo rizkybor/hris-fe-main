@@ -1,5 +1,5 @@
 <script setup>
-import { CheckCircle, Eye, Edit } from "lucide-vue-next";
+import { CheckCircle, Eye, Edit, Users2 } from "lucide-vue-next";
 import { getStatusColor } from "@/utils/styleHelpers";
 import Avatar from "@/components/common/Avatar.vue";
 
@@ -23,12 +23,15 @@ const props = defineProps({
           <div
             class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"
           ></div>
-          <!-- Lucide icon -->
-          <img
-            :src="data.icon"
-            alt="Team Icon"
-            class="w-6 h-6 text-white relative z-10"
-          />
+          <template v-if="data.icon">
+            <img
+              :src="data.icon"
+              alt="Team Icon"
+              class="w-6 h-6 object-contain relative z-10"
+            />
+          </template>
+
+          <Users2 v-else class="w-5 h-5 text-white relative z-10" />
         </div>
         <div>
           <h4 class="text-brand-dark text-sm font-bold">{{ data.name }}</h4>

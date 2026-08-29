@@ -25,7 +25,8 @@ import {
   Search,
   SearchX,
   ChevronDown,
-  Users2,
+  Camera,
+  Users2
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash-es";
@@ -175,7 +176,7 @@ watch(
         <div
           class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
         >
-          <Users2 class="w-6 h-6 text-blue-600" />
+          <Users2 class="w-5 h-5 text-blue-600" />
         </div>
         <div>
           <h1 class="text-brand-dark text-base font-bold">Create New Team</h1>
@@ -249,10 +250,7 @@ watch(
                           class="w-7 h-7 sm:w-10 sm:h-10 object-contain"
                           v-if="form.icon_url"
                         />
-                        <Users2
-                          v-else
-                          class="w-8 h-8 sm:w-8 sm:h-8 text-white/90"
-                        />
+                        <Camera v-else class="w-7 h-7 text-white" />
                       </div>
 
                       <!-- Upload overlay (shown on hover) -->
