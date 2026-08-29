@@ -141,7 +141,7 @@ const handlePerPageChange = (perPage) => {
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
       <div>
         <h3
-          class="text-[#0C1C3C] font-['Plus_Jakarta_Sans'] text-[20px] font-bold"
+          class="text-[#0C1C3C] font-['Plus_Jakarta_Sans'] text-base font-bold"
         >
           All Employees
         </h3>

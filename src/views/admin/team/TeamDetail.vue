@@ -73,6 +73,7 @@ onMounted(async () => {
 </script>
 
 <template>
+    <div class="px-4 py-4">
   <Alert type="success" :title="success" :show="success" />
 
   <Header :team="team" />
@@ -83,7 +84,7 @@ onMounted(async () => {
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
     <!-- Team Lead Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
       <!-- Header Section -->
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-2.5">
@@ -107,7 +108,7 @@ onMounted(async () => {
 
       <div class="flex flex-col gap-3.5" v-if="team.leader">
         <!-- Team Lead Profile -->
-        <div class="border border-[#DCDEDD] rounded-[12px] p-3.5 mb-3.5">
+        <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5 mb-3.5">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3.5">
               <div class="relative">
@@ -187,7 +188,15 @@ onMounted(async () => {
               name: 'admin.employees.detail',
               params: { id: team.leader?.employee_profile?.id },
             }"
-            class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5 flex items-center justify-center gap-1.5"
+            class="w-full
+           bg-white
+           border border-[#DCDEDD]
+           rounded-[8px]
+           hover:border-[#0C51D9]
+           hover:bg-blue-100
+           transition-all duration-300
+           px-2.5 py-2.5
+           flex items-center justify-center gap-1.5"
           >
             <UserCheck class="w-5 h-5 text-brand-light" />
             <span class="text-brand-dark text-sm font-semibold"
@@ -211,7 +220,7 @@ onMounted(async () => {
     </div>
 
     <!-- Team Responsibilities -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
       <div class="flex items-center gap-2.5 mb-5">
         <div
           class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
@@ -230,9 +239,9 @@ onMounted(async () => {
           :key="responsibility.id"
         >
           <div
-            class="w-8 h-8 min-w-[32px] bg-blue-100 rounded-full flex items-center justify-center mt-1 flex-shrink-0"
+            class="w-8 h-8 min-w-[32px] bg-green-100 rounded-full flex items-center justify-center mt-1 flex-shrink-0"
           >
-            <Check class="w-4 h-4 text-blue-600" />
+            <Check class="w-4 h-4 text-green-600" />
           </div>
           <span class="text-brand-dark text-sm font-medium">{{
             responsibility
@@ -243,7 +252,7 @@ onMounted(async () => {
   </div>
 
   <!-- Team Members Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 mb-5">
+  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5 mb-5">
     <div class="flex items-center justify-between mb-5">
       <div class="flex items-center gap-2.5">
         <div
@@ -271,9 +280,9 @@ onMounted(async () => {
     <div
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5"
     >
-      <!-- Team Member 1 -->
+      <!-- Team Member Card -->
       <div
-        class="relative border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
+        class="bg-white relative border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
         v-for="member in visibleMembers"
         :key="member.id"
       >
@@ -320,7 +329,7 @@ onMounted(async () => {
             name: 'admin.employees.detail',
             params: { id: member.employee.id },
           }"
-          class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5 flex items-center justify-center gap-1.5"
+          class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-blue-100 transition-all duration-300 px-2.5 py-4 flex items-center justify-center gap-1.5"
         >
           <Eye class="w-5 h-5 text-gray-600" />
           <span class="text-brand-dark text-sm font-semibold"
@@ -379,4 +388,5 @@ onMounted(async () => {
     @cancel="showDeleteModal = false"
   />
 
+</div>
 </template>

@@ -12,7 +12,7 @@ defineProps({
     <div
       v-for="i in count"
       :key="i"
-      class="bg-white border border-[#DCDEDD] rounded-[14px] p-5"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5"
     >
       <div class="flex items-center justify-between">
         <div class="flex-1 min-w-0 pr-2">

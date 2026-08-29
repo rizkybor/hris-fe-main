@@ -958,7 +958,7 @@ onMounted(() => {
       </div>
 
       <!-- Danger Zone -->
-      <div class="bg-slate-50 border border-[#FEE2E2] rounded-[12px] p-5">
+      <div class="bg-white border border-[#FEE2E2] rounded-[12px] p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"

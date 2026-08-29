@@ -12,7 +12,7 @@ const props = defineProps({
 </script>
 <template>
   <div
-    class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
+    class="bg-white border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
   >
     <div class="flex items-center justify-between mb-2.5">
       <div class="flex items-center gap-2.5">

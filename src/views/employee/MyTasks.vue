@@ -330,7 +330,7 @@ onMounted(async () => {
             <ListChecks class="w-5 h-5 text-orange-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">My Tasks</h3>
+            <h3 class="text-brand-dark text-base font-bold">My Tasks</h3>
             <p class="text-brand-light text-xs">All tasks assigned to you, grouped by project</p>
           </div>
         </div>
