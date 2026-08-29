@@ -77,7 +77,7 @@ const links = [
         <router-link
           v-if="can(link.permission)"
           :to="link.to"
-          class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 flex flex-col gap-3 hover:border-[#0C51D9] hover:shadow-sm transition-all"
+          class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5 flex flex-col gap-3 hover:border-[#0C51D9] hover:shadow-sm transition-all"
         >
           <div
             class="w-12 h-12 rounded-[12px] flex items-center justify-center"

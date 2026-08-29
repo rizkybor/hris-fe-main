@@ -246,7 +246,7 @@ onMounted(async () => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Recent Attendance -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
       >
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-3">
@@ -354,7 +354,7 @@ onMounted(async () => {
       <!-- Leave Balance -->
       <div
         v-if="myLeaveBalance"
-        class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 flex items-center justify-between"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6 flex items-center justify-between"
       >
         <div>
           <p class="text-brand-light text-sm">Sisa Cuti Tahunan {{ myLeaveBalance.year }}</p>
@@ -369,7 +369,7 @@ onMounted(async () => {
 
       <!-- Leave Requests -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
       >
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-3">
@@ -477,7 +477,7 @@ onMounted(async () => {
         @click.self="closeLeaveRequestModal"
       >
         <div
-          class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden"
+          class="bg-slate-50 rounded-[14px] border border-[#DCDEDD] w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden"
         >
           <!-- Modal Header -->
           <div class="p-4 sm:p-6 border-b border-[#DCDEDD]">
@@ -519,7 +519,7 @@ onMounted(async () => {
                   <div class="md:col-span-2">
                     <label
                       class="block text-brand-dark text-base font-semibold mb-1"
-                      >Leave Type *</label
+                      >Leave Type<span class="text-red-600 ml-1">*</span></label
                     >
                     <select
                       v-model="leaveForm.leave_type"
@@ -541,7 +541,7 @@ onMounted(async () => {
                   <div>
                     <label
                       class="block text-brand-dark text-base font-semibold mb-1"
-                      >Start Date *</label
+                      >Start Date <span class="text-red-600 ml-1">*</span></label
                     >
                     <input
                       type="date"
@@ -556,7 +556,7 @@ onMounted(async () => {
                   <div>
                     <label
                       class="block text-brand-dark text-base font-semibold mb-1"
-                      >End Date *</label
+                      >End Date <span class="text-red-600 ml-1">*</span></label
                     >
                     <input
                       type="date"
@@ -606,7 +606,7 @@ onMounted(async () => {
                   <div>
                     <label
                       class="block text-brand-dark text-base font-semibold mb-1"
-                      >Reason for Leave *</label
+                      >Reason for Leave <span class="text-red-600 ml-1">*</span></label
                     >
                     <textarea
                       v-model="leaveForm.reason"
@@ -638,7 +638,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   @click="closeLeaveRequestModal"
-                  class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2"
+                  class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2"
                 >
                   <span class="text-brand-dark text-base font-semibold"
                     >Cancel</span

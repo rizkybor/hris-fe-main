@@ -238,7 +238,7 @@ onMounted(async () => {
       <div class="flex flex-col gap-3.5">
         <!-- Absent Today -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
+          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -263,7 +263,7 @@ onMounted(async () => {
 
         <!-- Late Arrivals -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
+          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -288,7 +288,7 @@ onMounted(async () => {
       <div class="flex flex-col gap-3.5">
         <!-- On Leave -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
+          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -312,7 +312,7 @@ onMounted(async () => {
 
         <!-- Remote Workers -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
+          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -339,7 +339,7 @@ onMounted(async () => {
       <div class="flex flex-col gap-3.5">
         <!-- Attendance Rate -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
+          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -364,7 +364,7 @@ onMounted(async () => {
 
         <!-- Pending Requests -->
         <div
-          class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
+          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -391,7 +391,7 @@ onMounted(async () => {
     <!-- Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <!-- Latest Leave Requests -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center gap-2.5">
             <div
@@ -496,7 +496,7 @@ onMounted(async () => {
       </div>
 
       <!-- Today's Attendance -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center gap-2.5">
             <div

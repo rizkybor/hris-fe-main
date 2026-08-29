@@ -132,7 +132,7 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
         </div>
       </div>
 
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Today</p>
@@ -148,7 +148,7 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
         </div>
       </div>
 
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">This Week</p>
@@ -164,7 +164,7 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
         </div>
       </div>
 
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between mb-2">
           <p class="text-brand-dark text-sm font-medium">Categories</p>
           <div class="w-10 h-10 bg-purple-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
@@ -189,7 +189,7 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
     </div>
 
     <!-- Filters + List -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
         <h3 class="text-brand-dark text-lg font-bold">All Activity</h3>
 
@@ -241,7 +241,7 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
         v-else-if="activities.length === 0"
         class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
       >
-        <History class="w-10 h-10 text-gray-300 mx-auto mb-3" />
+        <History class="bg-white w-10 h-10 text-gray-300 mx-auto mb-3" />
         <p class="text-lg font-semibold">No activity found</p>
         <p class="text-sm text-gray-400">Try adjusting your search or filters</p>
       </div>
@@ -251,7 +251,7 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
         <div
           v-for="activity in activities"
           :key="activity.id"
-          class="border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] transition-all duration-300"
+          class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] transition-all duration-300"
         >
           <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div class="flex items-start gap-3 min-w-0">

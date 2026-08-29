@@ -110,7 +110,7 @@ const chartSeries = computed(() => [{ name: "Realized", data: chartSeriesData.va
 
 <template>
   <div
-    class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5 hover:shadow-md transition-shadow duration-300"
+    class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5 hover:shadow-md transition-shadow duration-300"
   >
     <div class="flex flex-col gap-3 mb-4">
       <div class="flex items-start gap-3">

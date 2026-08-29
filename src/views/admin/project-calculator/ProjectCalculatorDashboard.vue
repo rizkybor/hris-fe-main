@@ -146,7 +146,7 @@ const onLandingPageRateSettingSaved = async () => {
     <!-- Stats -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -164,7 +164,7 @@ const onLandingPageRateSettingSaved = async () => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -182,7 +182,7 @@ const onLandingPageRateSettingSaved = async () => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -200,7 +200,7 @@ const onLandingPageRateSettingSaved = async () => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -222,7 +222,7 @@ const onLandingPageRateSettingSaved = async () => {
 
     <!-- Rate Setup Summary -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-3.5 mb-5 items-start">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-3.5">
           <div class="flex items-center gap-2.5">
             <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
@@ -236,7 +236,7 @@ const onLandingPageRateSettingSaved = async () => {
           <button
             v-if="can('project-calculator-settings')"
             @click="showRateModal = true"
-            class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 px-3.5 py-1.5 inline-flex items-center gap-1.5 self-start sm:self-center"
+            class="bg-amber-200 border border-amber-500 rounded-[10px] hover:bg-white hover:border-[#0C51D9] hover:border-2 transition-all duration-300 px-3.5 py-1.5 inline-flex items-center gap-1.5 self-start sm:self-center"
           >
             <SettingsIcon class="w-4 h-4 text-gray-600" />
             <span class="text-brand-dark text-sm font-semibold">Rate Config</span>
@@ -247,21 +247,21 @@ const onLandingPageRateSettingSaved = async () => {
           <Skeleton v-for="i in 4" :key="i" height="60px" rounded="12px" />
         </div>
         <div v-else class="grid grid-cols-2 gap-3.5">
-          <div class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <div class="p-2.5 rounded-[12px] bg-gray-100 border border-[#F1F1F1]">
             <p class="text-xs text-gray-500 font-medium">Team Fee / Month</p>
             <p class="text-brand-dark text-sm font-bold mt-1">{{ formatRupiahCompact(rateSetting.team_monthly_cost) }}</p>
           </div>
-          <div class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <div class="p-2.5 rounded-[12px] bg-gray-100 border border-[#F1F1F1]">
             <p class="text-xs text-gray-500 font-medium">Team &amp; Productive Hours</p>
             <p class="text-brand-dark text-sm font-bold mt-1">
               {{ rateSetting.team_size }} orang &middot; {{ rateSetting.total_productive_hours_per_month }} jam/bulan
             </p>
           </div>
-          <div class="p-2.5 rounded-[12px] bg-blue-50 border border-blue-100">
+          <div class="p-2.5 rounded-[12px] bg-blue-100 border border-blue-100">
             <p class="text-xs text-blue-600 font-medium">Rate Cost / Hour</p>
             <p class="text-blue-900 text-sm font-bold mt-1">{{ formatRupiah(rateSetting.rate_cost_per_hour) }}</p>
           </div>
-          <div class="p-2.5 rounded-[12px] bg-indigo-50 border border-indigo-100">
+          <div class="p-2.5 rounded-[12px] bg-indigo-100 border border-indigo-100">
             <p class="text-xs text-indigo-600 font-medium">Rate Sell / Hour ({{ rateSetting.margin_multiplier }}x)</p>
             <p class="text-indigo-900 text-sm font-bold mt-1">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</p>
           </div>
@@ -269,7 +269,7 @@ const onLandingPageRateSettingSaved = async () => {
       </div>
 
       <!-- Landing Page Rate Setup -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-3.5">
           <div class="flex items-center gap-2.5">
             <div class="w-11 h-11 bg-emerald-50 rounded-[12px] flex items-center justify-center">
@@ -283,7 +283,7 @@ const onLandingPageRateSettingSaved = async () => {
           <button
             v-if="can('project-calculator-menu')"
             @click="showLandingPageRateModal = true"
-            class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 px-3.5 py-1.5 inline-flex items-center gap-1.5 self-start sm:self-center"
+            class="bg-amber-200 border border-amber-500 rounded-[10px] hover:bg-white hover:border-[#0C51D9] hover:border-2 transition-all duration-300 px-3.5 py-1.5 inline-flex items-center gap-1.5 self-start sm:self-center"
           >
             <SettingsIcon class="w-4 h-4 text-gray-600" />
             <span class="text-brand-dark text-sm font-semibold">Landing Page Config</span>
@@ -294,19 +294,19 @@ const onLandingPageRateSettingSaved = async () => {
           <Skeleton v-for="i in 4" :key="i" height="60px" rounded="12px" />
         </div>
         <div v-else class="grid grid-cols-2 gap-3.5">
-          <div class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <div class="p-2.5 rounded-[12px] bg-gray-100 border border-[#F1F1F1]">
             <p class="text-xs text-gray-500 font-medium">Server Dedicated</p>
             <p class="text-brand-dark text-sm font-bold mt-1">{{ formatRupiah(landingPageRateSetting.server_dedicated_price) }}</p>
           </div>
-          <div class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <div class="p-2.5 rounded-[12px] bg-gray-100 border border-[#F1F1F1]">
             <p class="text-xs text-gray-500 font-medium">Server Shared</p>
             <p class="text-brand-dark text-sm font-bold mt-1">{{ formatRupiah(landingPageRateSetting.server_shared_price) }}</p>
           </div>
-          <div class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <div class="p-2.5 rounded-[12px] bg-gray-100 border border-[#F1F1F1]">
             <p class="text-xs text-gray-500 font-medium">Design Dedicated</p>
             <p class="text-brand-dark text-sm font-bold mt-1">{{ formatRupiah(landingPageRateSetting.design_dedicated_price) }}</p>
           </div>
-          <div class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
+          <div class="p-2.5 rounded-[12px] bg-gray-100 border border-[#F1F1F1]">
             <p class="text-xs text-gray-500 font-medium">Design Template</p>
             <p class="text-brand-dark text-sm font-bold mt-1">{{ formatRupiah(landingPageRateSetting.design_template_price) }}</p>
           </div>
@@ -315,7 +315,7 @@ const onLandingPageRateSettingSaved = async () => {
     </div>
 
     <!-- List -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-3.5">
         <h3 class="text-brand-dark text-sm font-bold">Estimate History</h3>
         <div class="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">

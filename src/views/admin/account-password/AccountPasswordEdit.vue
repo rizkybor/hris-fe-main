@@ -136,7 +136,7 @@ watch(
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
@@ -197,7 +197,7 @@ watch(
     <!-- Form -->
     <form v-if="!loading" @submit.prevent="submit" class="space-y-6">
       <!-- Account Detail -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-2 mb-5">
           <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
             <IdCard class="w-4.5 h-4.5 text-violet-600" />
@@ -253,7 +253,7 @@ watch(
       </div>
 
       <!-- Rotate Password -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-2 mb-5">
           <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
             <RotateCw class="w-4.5 h-4.5 text-violet-600" />
@@ -304,7 +304,7 @@ watch(
       </div>
 
       <!-- Notes -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-2 mb-5">
           <div class="w-9 h-9 bg-gray-100 rounded-[10px] flex items-center justify-center shrink-0">
             <FileText class="w-4.5 h-4.5 text-gray-500" />

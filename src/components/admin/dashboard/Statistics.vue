@@ -112,7 +112,7 @@ const payrollStats = computed(() => payrollStore.statistics);
     <!-- Row 1 Stats Cards -->
     <!-- Total Teams -->
     <div
-      class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
+      class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -133,7 +133,7 @@ const payrollStats = computed(() => payrollStore.statistics);
 
     <!-- Attendance Rate -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -184,7 +184,7 @@ const payrollStats = computed(() => payrollStore.statistics);
 
     <div
       v-else
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -207,7 +207,7 @@ const payrollStats = computed(() => payrollStore.statistics);
 
     <!-- Active Projects (below Attendance Rate) -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
     >
       <div class="flex items-center justify-between mb-2">
         <div>

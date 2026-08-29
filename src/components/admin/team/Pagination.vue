@@ -129,7 +129,7 @@ const goToNext = () => {
       <button
         @click="goToPrevious"
         :disabled="currentPage <= 1 || loading"
-        class="px-2.5 sm:px-3.5 py-1.5 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="bg-white px-2.5 sm:px-3.5 py-1.5 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ChevronLeft class="w-4 h-4" />
       </button>
@@ -156,7 +156,7 @@ const goToNext = () => {
       <button
         @click="goToNext"
         :disabled="currentPage >= lastPage || loading"
-        class="px-2.5 sm:px-3.5 py-1.5 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="bg-white px-2.5 sm:px-3.5 py-1.5 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ChevronRight class="w-4 h-4" />
       </button>

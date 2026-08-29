@@ -400,7 +400,7 @@ onUnmounted(() => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 items-start">
       <!-- Location and Camera -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-6"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-6"
       >
         <div class="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-6">
           <div
@@ -414,7 +414,7 @@ onUnmounted(() => {
             <MapPin class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
           </div>
           <div class="min-w-0">
-            <h3 class="text-brand-dark text-base sm:text-xl font-bold truncate">Location & Photo</h3>
+            <h3 class="text-brand-dark text-base sm:text-base font-bold truncate">Location & Photo</h3>
             <p class="text-brand-light text-xs sm:text-sm truncate">Verify where you're working from</p>
           </div>
         </div>
@@ -427,7 +427,7 @@ onUnmounted(() => {
               'bg-yellow-50': locationStatus === 'loading',
               'bg-green-50': locationStatus === 'success',
               'bg-red-50': locationStatus === 'error',
-              'bg-gray-50': locationStatus === 'default',
+              'bg-white': locationStatus === 'default',
             }"
             class="p-3 sm:p-4 rounded-[12px] border border-[#DCDEDD] mb-3"
           >
@@ -462,16 +462,16 @@ onUnmounted(() => {
           <button
             @click="getCurrentLocation"
             :disabled="isGettingLocation"
-            class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:py-2 flex items-center justify-center gap-2 mb-3 disabled:opacity-50"
+            class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-3 disabled:opacity-50 mb-3 disabled:cursor-not-allowed"
           >
-            <MapPin class="w-4 h-4 text-gray-600 shrink-0" />
-            <span class="text-brand-dark text-sm font-semibold text-center">
+            <MapPin class="w-4 h-4 text-brand-white shrink-0" />
+            <span class="text-brand-white text-sm font-semibold text-center">
               {{ isGettingLocation ? "Getting Location..." : currentLocation ? "Refresh Location" : "Get Current Location" }}
             </span>
           </button>
 
           <!-- Office Location Reference -->
-          <div class="p-3 sm:p-4 bg-blue-50 rounded-[12px] border border-[#DCDEDD]">
+          <div class="p-3 sm:p-4 bg-green-50 rounded-[12px] border border-[#DCDEDD]">
             <div class="flex items-start sm:items-center gap-3">
               <Building class="w-5 h-5 text-blue-600 shrink-0 mt-0.5 sm:mt-0" />
               <div class="min-w-0">
@@ -523,17 +523,17 @@ onUnmounted(() => {
             <button
               v-if="!currentStream"
               @click="startCamera"
-              class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:py-2 flex items-center justify-center gap-2"
+              class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Video class="w-4 h-4 text-gray-600" />
-              <span class="text-brand-dark text-sm font-semibold"
+              <Video class="w-4 h-4 text-brand-white" />
+              <span class="text-brand-white text-sm font-semibold"
                 >Start Camera</span
               >
             </button>
             <button
               v-if="currentStream"
               @click="capturePhoto"
-              class="flex-1 btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:py-2 flex items-center justify-center gap-2"
+              class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Camera class="w-4 h-4 text-white" />
               <span class="text-white text-sm font-semibold">Take Photo</span>
@@ -543,7 +543,7 @@ onUnmounted(() => {
           <button
             v-if="capturedPhotoData"
             @click="retakePhoto"
-            class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:py-2 flex items-center justify-center gap-2"
+            class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-4 sm:py-4 flex items-center justify-center gap-2"
           >
             <RotateCcw class="w-4 h-4 text-gray-600" />
             <span class="text-brand-dark text-sm font-semibold"
@@ -555,7 +555,7 @@ onUnmounted(() => {
 
       <!-- Clock In/Out Action -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-8"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-8"
       >
         <div class="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-6">
           <div
@@ -564,13 +564,13 @@ onUnmounted(() => {
             2
           </div>
           <div class="min-w-0">
-            <h3 class="text-brand-dark text-base sm:text-xl font-bold truncate">Confirm & Submit</h3>
+            <h3 class="text-brand-dark text-base sm:text-base font-bold truncate">Confirm & Submit</h3>
             <p class="text-brand-light text-xs sm:text-sm truncate">Review readiness, then clock in or out</p>
           </div>
         </div>
 
         <!-- Readiness Checklist -->
-        <div class="space-y-2 mb-6">
+        <div class="space-y-2 mb-6 bg-white">
           <div
             class="flex items-center gap-2.5 px-4 py-2.5 rounded-[10px] border"
             :class="currentLocation ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-[#DCDEDD]'"
@@ -603,12 +603,12 @@ onUnmounted(() => {
         <!-- Icon + Prompt -->
         <div class="text-center mb-6">
           <div
-            class="w-16 h-16 sm:w-20 sm:h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
+            class="w-12 h-12 sm:w-16 sm:h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
           >
-            <LogIn v-if="!isCheckedIn" class="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" />
-            <LogOut v-else class="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" />
+            <LogIn v-if="!isCheckedIn" class="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+            <LogOut v-else class="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
           </div>
-          <h4 class="text-brand-dark text-lg sm:text-2xl font-bold mb-1.5 sm:mb-2">
+          <h4 class="text-brand-dark text-base sm:text-xl font-bold mb-1.5 sm:mb-2">
             {{ isCheckedIn ? "Ready to Clock Out?" : "Ready to Clock In?" }}
           </h4>
           <p class="text-brand-light text-sm sm:text-base px-2">

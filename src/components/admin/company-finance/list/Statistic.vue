@@ -407,7 +407,7 @@ const chartOptions = computed(() => ({
 
     <!-- Chart (full width under cards) -->
     <div
-      class="xl:col-span-4 bg-white border rounded-[12px] p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300 mt-4"
+      class="xl:col-span-4 bg-slate-50 border rounded-[12px] p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300 mt-4"
     >
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
         <div class="flex items-center gap-3 mb-2 min-w-0">

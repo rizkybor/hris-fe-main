@@ -171,7 +171,7 @@ const handleDelete = async () => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
@@ -188,7 +188,7 @@ const handleDelete = async () => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5 flex items-center justify-between gap-4"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5 flex items-center justify-between gap-4"
       >
         <div>
           <p class="text-brand-dark text-sm font-medium">New Archive</p>
@@ -228,7 +228,7 @@ const handleDelete = async () => {
     </div>
 
     <!-- ================= ARCHIVE LIST ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
       >
@@ -254,7 +254,7 @@ const handleDelete = async () => {
         <div
           v-for="archive in archives"
           :key="archive.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
+          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
         >
           <div
             class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br rounded-[12px] flex items-center justify-center flex-shrink-0"
@@ -349,7 +349,7 @@ const handleDelete = async () => {
           <button
             @click="prevPage"
             :disabled="pagination.current_page === 1"
-            class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+            class="bg-white px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
           >
             <ChevronLeft class="w-4 h-4" /> Prev
           </button>
@@ -357,7 +357,7 @@ const handleDelete = async () => {
           <button
             @click="nextPage"
             :disabled="pagination.current_page === pagination.last_page"
-            class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+            class="bg-white px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
           >
             Next <ChevronRight class="w-4 h-4" />
           </button>

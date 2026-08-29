@@ -29,7 +29,7 @@ onMounted(() => {
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
     <!-- Total Projects Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-md transition-all duration-300 p-4 flex flex-col min-h-[144px] group"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-md transition-all duration-300 p-4 flex flex-col min-h-[144px] group"
     >
       <div class="flex items-center justify-between mb-3">
         <p class="text-brand-dark text-sm font-medium">Total Projects</p>
@@ -50,7 +50,7 @@ onMounted(() => {
 
     <!-- Active Projects Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-md transition-all duration-300 p-4 flex flex-col min-h-[144px] group"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-md transition-all duration-300 p-4 flex flex-col min-h-[144px] group"
     >
       <div class="flex items-center justify-between mb-3">
         <p class="text-brand-dark text-sm font-medium">Active Projects</p>
@@ -71,7 +71,7 @@ onMounted(() => {
 
     <!-- Total Budget Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-md transition-all duration-300 p-4 flex flex-col min-h-[144px] group"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:shadow-md transition-all duration-300 p-4 flex flex-col min-h-[144px] group"
     >
       <div class="flex items-center justify-between mb-3">
         <p class="text-brand-dark text-sm font-medium">Total Budget</p>
