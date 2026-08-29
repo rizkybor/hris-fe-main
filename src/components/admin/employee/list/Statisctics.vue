@@ -23,7 +23,7 @@ onMounted(() => {
 // Computed properties for statistics
 const total = computed(() => employeeStore.statistics.total);
 const addedThisMonth = computed(
-  () => employeeStore.statistics.added_this_month
+  () => employeeStore.statistics.added_this_month,
 );
 const active = computed(() => employeeStore.statistics.active);
 const activeChange = computed(() => employeeStore.statistics.active_change);
@@ -48,7 +48,10 @@ const toggleSalaryVisibility = () => {
     cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     class="mb-5"
   />
-  <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 mb-5">
+  <div
+    v-else
+    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 mb-5"
+  >
     <!-- Total Employees Card (spans 2 rows on the left) -->
     <div
       class="lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden main-card p-4"
@@ -81,9 +84,9 @@ const toggleSalaryVisibility = () => {
             </p>
           </div>
           <div
-            class="w-9 h-9 bg-white/20 rounded-[14px] flex items-center justify-center"
+            class="w-21 h-21 p-4 bg-white rounded-[14px] flex items-center justify-center"
           >
-            <Users class="w-8 h-8 text-white" />
+            <Users class="w-21 h-21 text-white/20" />
           </div>
         </div>
 
@@ -165,7 +168,10 @@ const toggleSalaryVisibility = () => {
           >
             {{ loading ? "..." : `Rp ${averageSalary.toLocaleString()}` }}
           </p>
-          <p v-else class="text-brand-dark text-xl font-extrabold leading-none my-1.5 tracking-widest">
+          <p
+            v-else
+            class="text-brand-dark text-xl font-extrabold leading-none my-1.5 tracking-widest"
+          >
             Rp ••••••••
           </p>
           <p class="text-success text-sm font-medium">Company average</p>
