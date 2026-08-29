@@ -36,7 +36,6 @@ onMounted(async () => {
 const isTotalAmountVisible = ref(false);
 const isAverageSalaryVisible = ref(false);
 
-
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString("id-ID", {
     year: "numeric",
@@ -71,14 +70,19 @@ const viewDetails = (id) => {
     <!-- Stats Layout -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <!-- Total Payroll Amount Card (spans 2 rows on the left) -->
-      <div class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-5">
+      <div
+        class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-5"
+      >
         <div class="flex flex-col justify-center h-full relative z-10">
           <!-- Trending Badge -->
           <div class="flex items-center gap-2 mb-3">
-            <div class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+            <div
+              class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm"
+            >
               <TrendingUp class="w-3 h-3 text-white" />
               <span class="text-brand-white text-xs font-semibold">
-                {{ (statistics.salary_change ?? 0) >= 0 ? "+" : "" }}{{ statistics.salary_change ?? 0 }}% this month
+                {{ (statistics.salary_change ?? 0) >= 0 ? "+" : ""
+                }}{{ statistics.salary_change ?? 0 }}% this month
               </span>
             </div>
           </div>
@@ -88,29 +92,48 @@ const viewDetails = (id) => {
               <p class="text-brand-white-90 text-xs font-medium">
                 Total Payroll Amount
               </p>
-              <Skeleton v-if="loading" dark width="120px" height="2.5rem" rounded="8px" class="my-3" />
-              <p v-else-if="isTotalAmountVisible" class="text-brand-white text-3xl lg:text-4xl font-extrabold leading-none my-3">
-                {{ formatRupiahCompact(statistics.total_amount) }}
-              </p>
-              <p v-else class="text-brand-white text-xl lg:text-xl font-extrabold leading-none my-3 tracking-widest">
-                Rp ••••••
-              </p>
+              <div class="flex items-center gap-2 my-3">
+                <Skeleton
+                  v-if="loading"
+                  dark
+                  width="120px"
+                  height="2.5rem"
+                  rounded="8px"
+                />
+
+                <p
+                  v-else-if="isTotalAmountVisible"
+                  class="text-brand-white text-xl font-bold leading-none"
+                >
+                  {{ formatRupiahCompact(statistics.total_amount) }}
+                </p>
+
+                <p
+                  v-else
+                  class="text-brand-white text-xl font-bold leading-none tracking-widest"
+                >
+                  Rp ••••••
+                </p>
+
+                <button
+                  type="button"
+                  @click="isTotalAmountVisible = !isTotalAmountVisible"
+                  class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors shrink-0"
+                  :title="isTotalAmountVisible ? 'Hide amount' : 'Show amount'"
+                >
+                  <Eye v-if="!isTotalAmountVisible" class="w-4 h-4" />
+                  <EyeOff v-else class="w-4 h-4" />
+                </button>
+              </div>
               <p class="text-brand-white-80 text-sm font-normal">
                 Monthly compensation
               </p>
             </div>
             <div class="flex flex-col items-center gap-2 flex-shrink-0">
-              <button
-                type="button"
-                @click="isTotalAmountVisible = !isTotalAmountVisible"
-                class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-                :title="isTotalAmountVisible ? 'Hide amount' : 'Show amount'"
+              <div
+                class="w-21 h-21 p-4 bg-white rounded-[14px] flex items-center justify-center"
               >
-                <Eye v-if="!isTotalAmountVisible" class="w-4 h-4" />
-                <EyeOff v-else class="w-4 h-4" />
-              </button>
-              <div class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center">
-                <DollarSign class="w-8 h-8 text-white" />
+                <DollarSign class="w-21 h-21 text-white/20" />
               </div>
             </div>
           </div>
@@ -118,12 +141,18 @@ const viewDetails = (id) => {
           <!-- Additional Info -->
           <div class="flex items-center gap-3 mt-auto">
             <div class="flex items-center gap-1">
-              <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span class="text-brand-white-70 text-[11px] font-normal">All Departments</span>
+              <div
+                class="w-2 h-2 bg-green-400 rounded-full animate-pulse"
+              ></div>
+              <span class="text-brand-white-70 text-[11px] font-normal"
+                >All Departments</span
+              >
             </div>
             <div class="flex items-center gap-1">
               <Star class="w-3 h-3 text-white opacity-70" />
-              <span class="text-brand-white-70 text-[11px] font-normal">On Schedule</span>
+              <span class="text-brand-white-70 text-[11px] font-normal"
+                >On Schedule</span
+              >
             </div>
           </div>
         </div>
@@ -132,17 +161,29 @@ const viewDetails = (id) => {
       <!-- Row 1 Stats Cards -->
       <!-- Employees Paid -->
       <div
-        class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
+        class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      >
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-xs font-medium">Employees Paid</p>
-            <Skeleton v-if="loading" width="50px" height="1.5rem" rounded="6px" class="my-1.5" />
-            <p v-else class="text-brand-dark text-2xl font-extrabold leading-tight my-1.5 truncate">
+            <Skeleton
+              v-if="loading"
+              width="50px"
+              height="1.5rem"
+              rounded="6px"
+              class="my-1.5"
+            />
+            <p
+              v-else
+              class="text-brand-dark text-2xl font-extrabold leading-tight my-1.5 truncate"
+            >
               {{ statistics.total_payroll }}
             </p>
             <p class="text-success text-xs font-medium">This month</p>
           </div>
-          <div class="w-10 h-10 bg-green-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
+          <div
+            class="w-10 h-10 bg-green-50 rounded-[10px] flex items-center justify-center flex-shrink-0"
+          >
             <UserCheck class="w-5 h-5 text-green-600" />
           </div>
         </div>
@@ -150,17 +191,29 @@ const viewDetails = (id) => {
 
       <!-- Pending Payments -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      >
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-xs font-medium">Pending Payments</p>
-            <Skeleton v-if="loading" width="50px" height="1.5rem" rounded="6px" class="my-1.5" />
-            <p v-else class="text-brand-dark text-2xl font-extrabold leading-tight my-1.5 truncate">
+            <Skeleton
+              v-if="loading"
+              width="50px"
+              height="1.5rem"
+              rounded="6px"
+              class="my-1.5"
+            />
+            <p
+              v-else
+              class="text-brand-dark text-2xl font-extrabold leading-tight my-1.5 truncate"
+            >
               {{ statistics.pending_review }}
             </p>
             <p class="text-danger text-xs font-medium">Need approval</p>
           </div>
-          <div class="w-10 h-10 bg-red-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
+          <div
+            class="w-10 h-10 bg-red-50 rounded-[10px] flex items-center justify-center flex-shrink-0"
+          >
             <Clock class="w-5 h-5 text-red-600" />
           </div>
         </div>
@@ -168,19 +221,31 @@ const viewDetails = (id) => {
 
       <!-- Quick Actions Card (spans 2 rows on the right) -->
       <div
-        class="lg:row-span-2 bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
-        <h3 class="text-brand-dark text-base font-bold mb-3.5">Payroll Actions</h3>
+        class="lg:row-span-2 bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      >
+        <h3 class="text-brand-dark text-base font-bold mb-3.5">
+          Payroll Actions
+        </h3>
         <div class="space-y-3">
-          <RouterLink v-if="can('payroll-create')" :to="{ name: 'admin.payroll.create' }"
-            class="btn-secondary w-full text-left rounded-[10px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-2">
+          <RouterLink
+            v-if="can('payroll-create')"
+            :to="{ name: 'admin.payroll.create' }"
+            class="btn-secondary w-full text-left rounded-[10px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-2"
+          >
             <Plus class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-xs font-semibold">Create New Payroll</span>
+            <span class="text-brand-white text-xs font-semibold"
+              >Create New Payroll</span
+            >
           </RouterLink>
 
-          <RouterLink :to="{ name: 'admin.report.dashboard' }"
-            class="btn-secondary w-full text-left border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2">
+          <RouterLink
+            :to="{ name: 'admin.report.dashboard' }"
+            class="btn-secondary w-full text-left border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2"
+          >
             <FileText class="w-4 h-4 text-gray-600" />
-            <span class="text-brand-dark text-xs font-medium">Generate Reports</span>
+            <span class="text-brand-dark text-xs font-medium"
+              >Generate Reports</span
+            >
           </RouterLink>
         </div>
       </div>
@@ -188,15 +253,28 @@ const viewDetails = (id) => {
       <!-- Row 2 Stats Cards -->
       <!-- Average Salary -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      >
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-xs font-medium">Average Salary</p>
-            <Skeleton v-if="loading" width="80px" height="1.5rem" rounded="6px" class="my-1.5" />
-            <p v-else-if="isAverageSalaryVisible" class="text-brand-dark text-xl lg:text-xl font-extrabold leading-tight my-1.5">
+            <Skeleton
+              v-if="loading"
+              width="80px"
+              height="1.5rem"
+              rounded="6px"
+              class="my-1.5"
+            />
+            <p
+              v-else-if="isAverageSalaryVisible"
+              class="text-brand-dark text-xl lg:text-xl font-extrabold leading-tight my-1.5"
+            >
               {{ formatRupiahCompact(statistics.average_salary) }}
             </p>
-            <p v-else class="text-brand-dark text-xl lg:text-xl font-extrabold leading-tight my-1.5 tracking-widest">
+            <p
+              v-else
+              class="text-brand-dark text-xl lg:text-xl font-extrabold leading-tight my-1.5 tracking-widest"
+            >
               Rp ••••••
             </p>
             <p class="text-success text-xs font-medium">Per employee</p>
@@ -211,7 +289,9 @@ const viewDetails = (id) => {
               <Eye v-if="!isAverageSalaryVisible" class="w-3.5 h-3.5" />
               <EyeOff v-else class="w-3.5 h-3.5" />
             </button>
-            <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center">
+            <div
+              class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center"
+            >
               <Banknote class="w-5 h-5 text-blue-600" />
             </div>
           </div>
@@ -220,17 +300,29 @@ const viewDetails = (id) => {
 
       <!-- Overtime Hours -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5">
+        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+      >
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
             <p class="text-brand-dark text-xs font-medium">Finalized</p>
-            <Skeleton v-if="loading" width="50px" height="1.5rem" rounded="6px" class="my-1.5" />
-            <p v-else class="text-brand-dark text-2xl font-extrabold leading-tight my-1.5 truncate">
+            <Skeleton
+              v-if="loading"
+              width="50px"
+              height="1.5rem"
+              rounded="6px"
+              class="my-1.5"
+            />
+            <p
+              v-else
+              class="text-brand-dark text-2xl font-extrabold leading-tight my-1.5 truncate"
+            >
               {{ statistics.finalized }}
             </p>
             <p class="text-purple-600 text-xs font-medium">This month</p>
           </div>
-          <div class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
+          <div
+            class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center flex-shrink-0"
+          >
             <Clock class="w-5 h-5 text-purple-600" />
           </div>
         </div>
@@ -242,17 +334,26 @@ const viewDetails = (id) => {
     <!-- Monthly Payroll Periods -->
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
       <div class="flex items-center justify-between mb-3.5">
-        <h3 class="text-brand-dark text-base font-bold">Monthly Payroll Periods</h3>
+        <h3 class="text-brand-dark text-base font-bold">
+          Monthly Payroll Periods
+        </h3>
       </div>
       <SkeletonList v-if="loading" :rows="3" />
 
       <div v-else class="space-y-3.5">
-        <div v-for="payroll in payrolls" :key="payroll.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-3.5 p-3.5 border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300">
+        <div
+          v-for="payroll in payrolls"
+          :key="payroll.id"
+          class="flex flex-col sm:flex-row sm:items-center gap-3.5 p-3.5 border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+        >
           <div class="flex items-center gap-3.5">
-            <div class="w-12 h-12 shrink-0 relative flex items-center justify-center rounded-[10px] overflow-hidden">
+            <div
+              class="w-12 h-12 shrink-0 relative flex items-center justify-center rounded-[10px] overflow-hidden"
+            >
               <!-- Background -->
-              <div class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[10px]"></div>
+              <div
+                class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[10px]"
+              ></div>
               <!-- Icon -->
               <Calendar class="w-6 h-6 text-white relative z-10" />
             </div>
@@ -276,10 +377,12 @@ const viewDetails = (id) => {
 
           <div class="flex items-center justify-between gap-4 sm:flex-1">
             <div class="flex flex-col justify-center items-center shrink-0">
-              <span :class="[
-                'px-2 py-0.5 rounded-md text-xs font-semibold',
-                getStatusColor(payroll.status),
-              ]">
+              <span
+                :class="[
+                  'px-2 py-0.5 rounded-md text-xs font-semibold',
+                  getStatusColor(payroll.status),
+                ]"
+              >
                 {{ payroll.status }}
               </span>
             </div>
@@ -288,17 +391,24 @@ const viewDetails = (id) => {
                 <p class="text-brand-dark text-sm font-bold">
                   {{ formatRupiahCompact(payroll.total_amount) }}
                 </p>
-                <p class="text-brand-light text-xs font-normal">Total payroll</p>
+                <p class="text-brand-light text-xs font-normal">
+                  Total payroll
+                </p>
               </div>
             </div>
-            <button @click="viewDetails(payroll.id)"
-              class="btn-details shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-[#0C51D9] hover:text-[#0C51D9] transition-all duration-300 py-2.5 px-4 flex items-center justify-center">
+            <button
+              @click="viewDetails(payroll.id)"
+              class="btn-details shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-[#0C51D9] hover:text-[#0C51D9] transition-all duration-300 py-2.5 px-4 flex items-center justify-center"
+            >
               <span class="text-brand-dark text-sm font-medium">Details</span>
             </button>
           </div>
         </div>
 
-        <div v-if="!loading && payrolls.length === 0" class="text-center py-12 text-gray-500">
+        <div
+          v-if="!loading && payrolls.length === 0"
+          class="text-center py-12 text-gray-500"
+        >
           <p class="text-base font-semibold">No payroll data found</p>
           <p class="text-xs">Create your first payroll to get started</p>
         </div>
