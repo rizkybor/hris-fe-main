@@ -148,7 +148,7 @@ watch(teamChartData, () => {
 <template>
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
     <!-- Team Growth Chart (Employee Joining) -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
       <div class="flex items-center gap-2.5 mb-5">
         <div
           class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -179,7 +179,7 @@ watch(teamChartData, () => {
     </div>
 
     <!-- Tasks Growth Chart -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
       <div class="flex items-center gap-2.5 mb-5">
         <div
           class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"

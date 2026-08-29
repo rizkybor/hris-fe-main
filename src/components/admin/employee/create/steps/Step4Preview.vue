@@ -66,7 +66,7 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Personal Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center gap-2.5 mb-5">
         <div
           class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -170,7 +170,7 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Job Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center gap-2.5 mb-5">
         <div
           class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -262,7 +262,7 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Bank Information -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center gap-2.5 mb-5">
         <div
           class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -318,7 +318,7 @@ const formatText = (text: string) => {
     </div>
 
     <!-- Emergency Contact -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center gap-2.5 mb-5">
         <div
           class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"

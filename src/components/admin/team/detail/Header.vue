@@ -12,7 +12,7 @@ const props = defineProps({
 });
 </script>
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5 sm:p-5">
+  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5 sm:p-5">
     <div class="flex flex-col sm:flex-row sm:items-center gap-3.5 sm:gap-5">
       <div class="flex items-center gap-3.5 min-w-0">
         <div class="relative shrink-0">
@@ -25,7 +25,7 @@ const props = defineProps({
             ></div>
             <!-- Lucide icon -->
             <img
-              class="w-5 h-5 sm:w-9 sm:h-9 text-white relative z-10"
+              class="w-8 h-8 sm:w-12 sm:h-12 text-white relative z-10"
               :src="team.icon"
               alt="Team Icon"
             />

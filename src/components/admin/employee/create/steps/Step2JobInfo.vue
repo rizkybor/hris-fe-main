@@ -127,10 +127,10 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-4 items-start lg:pr-4">
+  <div class="flex flex-col lg:flex-row gap-4 items-start lg:pr-4 p-5">
     <div class="flex-1 w-full space-y-5">
       <!-- Job Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -407,7 +407,7 @@ watch(
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <!-- Beginner Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-2.5">
                   <div
@@ -442,7 +442,7 @@ watch(
 
               <!-- Intermediate Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-2.5">
                   <div
@@ -477,7 +477,7 @@ watch(
 
               <!-- Advanced Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-2.5">
                   <div
@@ -512,7 +512,7 @@ watch(
 
               <!-- Expert Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-2.5">
                   <div
@@ -550,7 +550,7 @@ watch(
       </div>
 
       <!-- Bank Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"

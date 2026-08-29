@@ -29,7 +29,7 @@ const goToDetail = () => {
 <template>
   <!-- Employee Card 1 -->
   <div
-    class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
+    class="bg-white border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
   >
     <div class="flex items-start justify-between mb-2.5">
       <Avatar

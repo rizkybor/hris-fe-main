@@ -56,10 +56,10 @@ const deletePhoto = () => {
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-5 items-start">
+  <div class="flex flex-col lg:flex-row gap-5 items-start p-5">
     <!-- Profile Photo Card -->
     <div class="w-full lg:w-80">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -110,7 +110,7 @@ const deletePhoto = () => {
             <button
               type="button"
               @click="profilePhotoInput?.click()"
-              class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center gap-1.5"
+              class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center gap-1.5"
             >
               <FolderOpen class="w-4 h-4 text-gray-600" />
               <span class="text-brand-dark text-sm sm:text-sm font-semibold">Browse Photo</span>
@@ -126,7 +126,7 @@ const deletePhoto = () => {
     <!-- Form Section -->
     <div class="flex-1">
       <!-- Account Credentials Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -249,7 +249,7 @@ const deletePhoto = () => {
       </div>
 
       <!-- Personal Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -337,7 +337,7 @@ const deletePhoto = () => {
             <div class="flex flex-col sm:flex-row gap-3.5">
               <!-- Male Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-2.5">
                   <div
@@ -370,7 +370,7 @@ const deletePhoto = () => {
 
               <!-- Female Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-2.5">
                   <div
