@@ -97,7 +97,7 @@ const submit = async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Archive class="w-6 h-6 text-blue-600" />
@@ -133,7 +133,7 @@ const submit = async () => {
 
     <form @submit.prevent="submit" class="space-y-6">
       <!-- File Info -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-2 mb-5">
           <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
             <Info class="w-4.5 h-4.5 text-blue-600" />
@@ -161,7 +161,7 @@ const submit = async () => {
       </div>
 
       <!-- Upload -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-2 mb-5">
           <div class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center shrink-0">
             <Paperclip class="w-4.5 h-4.5 text-indigo-600" />
@@ -170,7 +170,7 @@ const submit = async () => {
         </div>
 
         <label class="block text-brand-dark text-sm font-semibold mb-1.5">
-          Upload File *
+          Upload File <span class="text-red-500">*</span>
         </label>
         <label
           class="flex flex-col items-center justify-center gap-2 w-full py-8 border-2 border-dashed rounded-[12px] cursor-pointer transition-all"

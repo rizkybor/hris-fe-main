@@ -109,7 +109,7 @@ const visibleActions = computed(() => {
 
 <template>
   <div
-    class="lg:row-span-2 bg-white border border-[#DCDEDD] rounded-[14px]
+    class="lg:row-span-2 bg-slate-50 border border-[#DCDEDD] rounded-[14px]
            hover:border-[#0C51D9] hover:border-2
            transition-all duration-300 p-5"
   >
@@ -131,7 +131,7 @@ const visibleActions = computed(() => {
             ? 'border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow'
             : 'border border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white'
         "
-        class="btn-secondary w-full text-left rounded-[12px] transition-all duration-300 px-4 py-3 inline-flex items-center gap-3"
+        class="bg-white btn-secondary w-full text-left rounded-[12px] transition-all duration-300 px-4 py-3 inline-flex items-center gap-3"
       >
         <div
           :class="action.variant === 'primary' ? 'bg-white/20' : 'bg-gray-100'"

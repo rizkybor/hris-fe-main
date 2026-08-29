@@ -143,7 +143,7 @@ const submit = () => {
     class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
   >
     <div
-      class="bg-white rounded-[14px] w-full max-w-md max-h-[90vh] overflow-y-auto p-6 shadow-xl"
+      class="bg-slate-50 rounded-[14px] w-full max-w-md max-h-[90vh] overflow-y-auto p-6 shadow-xl"
     >
       <h3 class="text-xl font-bold">
         {{
@@ -254,7 +254,7 @@ const submit = () => {
       </div>
 
       <div class="flex justify-end gap-3 mt-6">
-        <button class="px-4 py-2 border rounded-lg" @click="$emit('close')">
+        <button class="bg-white px-4 py-2 border rounded-lg" @click="$emit('close')">
           {{ props.mode === "view" ? "Close" : "Cancel" }}
         </button>
 

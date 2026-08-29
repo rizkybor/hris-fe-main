@@ -125,7 +125,7 @@ const totalDeductions = computed(() => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#10B981] hover:border-2 transition-all duration-300 p-6">
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#10B981] hover:border-2 transition-all duration-300 p-6">
         <div class="flex items-center justify-between mb-3">
           <div class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center">
             <ArrowUpRight class="w-6 h-6 text-green-600" />
@@ -139,7 +139,7 @@ const totalDeductions = computed(() => {
       </div>
 
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#EF4444] hover:border-2 transition-all duration-300 p-6">
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#EF4444] hover:border-2 transition-all duration-300 p-6">
         <div class="flex items-center justify-between mb-3">
           <div class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center">
             <ArrowDownRight class="w-6 h-6 text-red-600" />
@@ -153,8 +153,18 @@ const totalDeductions = computed(() => {
       </div>
     </div>
 
-    <!-- Search Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4">
+    <!-- Payslips Grid -->
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
+      <div class="mb-6">
+        <h3 class="text-[#0C1C3C] font-bold text-base">All Payslips</h3>
+        <p class="text-gray-600 text-sm mt-1">
+          Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} payslips
+        </p>
+      </div>
+
+
+       <!-- Search Section -->
+    <div class="bg-slate-50 mb-6">
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1 relative">
           <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -179,15 +189,6 @@ const totalDeductions = computed(() => {
         </select>
       </div>
     </div>
-
-    <!-- Payslips Grid -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="mb-6">
-        <h3 class="text-[#0C1C3C] font-bold text-base">All Payslips</h3>
-        <p class="text-gray-600 text-sm mt-1">
-          Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} payslips
-        </p>
-      </div>
 
       <SkeletonCardGrid v-if="loading" :count="4" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         class="mb-6" />

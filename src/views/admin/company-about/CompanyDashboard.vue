@@ -280,7 +280,7 @@ const saveCompany = async () => {
     </div>
 
     <!-- Vision -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center gap-3 mb-3">
         <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
           <Target class="w-4 h-4 text-blue-600" />
@@ -291,7 +291,7 @@ const saveCompany = async () => {
     </div>
 
     <!-- Mission -->
-    <div v-if="cleanedMission.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div v-if="cleanedMission.length" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center gap-3 mb-3">
         <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
           <Flag class="w-4 h-4 text-blue-600" />

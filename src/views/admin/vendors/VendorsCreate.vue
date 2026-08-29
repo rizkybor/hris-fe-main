@@ -52,7 +52,7 @@ const submit = async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 mb-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 mb-5">
       <div class="flex items-center gap-2.5">
         <div class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center">
           <Briefcase class="w-6 h-6 text-blue-600" />
@@ -82,7 +82,7 @@ const submit = async () => {
 
     <form @submit.prevent="submit" class="space-y-5">
       <!-- Company Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center gap-1.5 mb-4">
           <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
             <Building2 class="w-4.5 h-4.5 text-blue-600" />
@@ -92,7 +92,7 @@ const submit = async () => {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="md:col-span-2">
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Vendor Name *</label>
+            <label class="block text-brand-dark text-sm font-semibold mb-1">Vendor Name <span class="text-red-500">*</span></label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                 <Briefcase class="w-5 h-5 text-gray-400" />
@@ -139,7 +139,7 @@ const submit = async () => {
       </div>
 
       <!-- PIC / Contact -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center gap-1.5 mb-4">
           <div class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center shrink-0">
             <User class="w-4.5 h-4.5 text-emerald-600" />
@@ -149,7 +149,7 @@ const submit = async () => {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">PIC Name *</label>
+            <label class="block text-brand-dark text-sm font-semibold mb-1">PIC Name <span class="text-red-500">*</span></label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                 <User class="w-5 h-5 text-gray-400" />
@@ -164,7 +164,7 @@ const submit = async () => {
           </div>
 
           <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">PIC Phone *</label>
+            <label class="block text-brand-dark text-sm font-semibold mb-1">PIC Phone <span class="text-red-500">*</span></label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                 <Phone class="w-5 h-5 text-gray-400" />
@@ -196,7 +196,7 @@ const submit = async () => {
       </div>
 
       <!-- Additional Details -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center gap-1.5 mb-4">
           <div class="w-9 h-9 bg-orange-50 rounded-[10px] flex items-center justify-center shrink-0">
             <MapPin class="w-4.5 h-4.5 text-orange-600" />

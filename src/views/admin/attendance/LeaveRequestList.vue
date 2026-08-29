@@ -85,10 +85,10 @@ const confirmReject = async () => {
 
 <template>
   <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex items-center gap-3">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex items-center gap-3">
       <button
         @click="router.back()"
-        class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all shrink-0"
+        class="w-10 h-10 rounded-[12px] bg-white border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all shrink-0"
         aria-label="Back"
       >
         <ArrowLeft class="w-5 h-5 text-gray-600" />
@@ -102,7 +102,7 @@ const confirmReject = async () => {
       </div>
     </div>
 
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex flex-col sm:flex-row gap-3 mb-4">
         <div class="relative max-w-sm w-full">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

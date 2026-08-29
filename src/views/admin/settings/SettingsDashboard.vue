@@ -166,7 +166,7 @@ const visibleCategories = computed(() =>
           v-for="link in category.links"
           :key="link.title"
           :to="link.to"
-          class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 flex items-start gap-4 hover:border-[#0C51D9] hover:shadow-sm transition-all"
+          class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5 flex items-start gap-4 hover:border-[#0C51D9] hover:shadow-sm transition-all"
         >
           <div
             class="w-12 h-12 rounded-[12px] flex items-center justify-center shrink-0"

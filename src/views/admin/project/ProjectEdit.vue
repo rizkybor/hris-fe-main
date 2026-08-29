@@ -310,7 +310,7 @@ watch(
       </div>
       <form class="space-y-6" @submit.prevent="handleSubmit" v-else>
         <!-- Project Information Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center"
@@ -339,7 +339,7 @@ watch(
                   <div class="relative w-full sm:w-64 h-40">
                     <!-- Default background -->
                     <div
-                      class="w-full sm:w-64 h-40 absolute bg-gray-50 rounded-[12px] border-2 border-dashed border-[#DCDEDD]"
+                      class="w-full sm:w-64 h-40 absolute bg-white rounded-[12px] border-2 border-dashed border-[#DCDEDD]"
                     ></div>
 
                     <div
@@ -384,7 +384,7 @@ watch(
                   />
                   <button
                     type="button"
-                    class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
+                    class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
                   >
                     <ImagePlus class="w-4 h-4 text-gray-600" />
                     <span class="text-brand-dark text-sm font-semibold"
@@ -393,7 +393,7 @@ watch(
                   </button>
                   <button
                     type="button"
-                    class="hidden border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
+                    class="bg-white hidden border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
                   >
                     <Eye class="w-4 h-4 text-gray-600" />
                     <span class="text-brand-dark text-sm font-semibold"
@@ -402,7 +402,7 @@ watch(
                   </button>
                   <button
                     type="button"
-                    class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
+                    class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
                   >
                     <X class="w-4 h-4 text-gray-600" />
                     <span class="text-brand-dark text-sm font-semibold"
@@ -644,7 +644,7 @@ watch(
         </div>
 
         <!-- Project Access Section (optional quick links) -->
-        <div id="project-access-section" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+        <div id="project-access-section" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div class="w-10 h-10 bg-violet-50 rounded-[10px] flex items-center justify-center">
               <Link2 class="w-5 h-5 text-violet-600" />
@@ -748,7 +748,7 @@ watch(
         </div>
 
         <!-- Team Assignment Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center"
@@ -768,7 +768,7 @@ watch(
             <button
               type="button"
               @click="setAssignmentMode('employee')"
-              class="rounded-[12px] border p-4 text-left transition-all duration-300"
+              class="bg-white rounded-[12px] border p-4 text-left transition-all duration-300"
               :class="form.team_assignment_mode === 'employee' ? 'border-[#0C51D9] border-2 bg-blue-50/50' : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2'"
             >
               <p class="text-brand-dark text-sm font-bold">By Employee</p>
@@ -777,7 +777,7 @@ watch(
             <button
               type="button"
               @click="setAssignmentMode('team')"
-              class="rounded-[12px] border p-4 text-left transition-all duration-300"
+              class="bg-white rounded-[12px] border p-4 text-left transition-all duration-300"
               :class="form.team_assignment_mode === 'team' ? 'border-[#0C51D9] border-2 bg-blue-50/50' : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2'"
             >
               <p class="text-brand-dark text-sm font-bold">By Team</p>
@@ -791,7 +791,7 @@ watch(
               <label class="block text-brand-dark text-sm font-semibold mb-3">Select a Team <span class="text-red-600">*</span></label>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label
-                  class="group team-card flex items-center justify-between w-full min-h-[70px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer hover:border-[#0C51D9] hover:border-2"
+                  class="bg-white group team-card flex items-center justify-between w-full min-h-[70px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer hover:border-[#0C51D9] hover:border-2"
                   v-for="team in teams"
                   :key="team.id"
                 >
@@ -837,7 +837,7 @@ watch(
               <button
                 type="button"
                 @click="leaderModal = true"
-                class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
+                class="w-full bg-white border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
               >
                 <UserCheck class="w-5 h-5 text-gray-400" />
                 <span class="text-[#0D2929] font-normal flex-1">
@@ -907,7 +907,7 @@ watch(
         </div>
 
         <!-- Project Settings Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-10 h-10 bg-orange-50 rounded-[10px] flex items-center justify-center"
@@ -1091,7 +1091,7 @@ watch(
         </div>
 
         <!-- Project Inspect (optional, Project Leader-only) -->
-        <div v-if="isLeader" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
+        <div v-if="isLeader" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
           <div class="flex items-center gap-3 mb-6">
             <div class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center">
               <ClipboardCheck class="w-5 h-5 text-purple-600" />
@@ -1104,7 +1104,7 @@ watch(
             </div>
           </div>
 
-          <RichTextEditor v-model="inspectNoteDraft" placeholder="Write your inspection notes here..." />
+          <RichTextEditor class="bg-white" v-model="inspectNoteDraft" placeholder="Write your inspection notes here..." />
         </div>
 
         <!-- Form Actions -->

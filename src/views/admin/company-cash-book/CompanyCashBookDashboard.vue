@@ -181,7 +181,7 @@ onMounted(() => {
           <Landmark class="w-5 h-5 text-emerald-600" />
         </div>
         <div class="min-w-0">
-          <h3 class="text-brand-dark text-lg font-bold">Company Cash Book</h3>
+          <h3 class="text-brand-dark text-base font-bold">Company Cash Book</h3>
           <p class="text-brand-light text-sm">
             Real debit/credit transactions as they actually happen -- auto-synced from every project's own cash ledger, plus manual entries
           </p>
@@ -227,9 +227,9 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
       <div class="mb-4 max-w-xs">
-        <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Filter by Project</label>
+        <label class="text-xs text-brand-dark mb-1.5 block">Filter by Project</label>
         <select
           v-model="projectFilter"
           @change="fetchData(1)"
@@ -244,7 +244,7 @@ onMounted(() => {
 
       <div
         v-else-if="transactions.length === 0"
-        class="text-center py-10 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
+        class="text-center py-10 text-gray-500 bg-gray-100 rounded-[12px] border border-dashed border-[#DCDEDD]"
       >
         <Landmark class="w-9 h-9 text-gray-300 mx-auto mb-3" />
         <p class="text-sm font-semibold">No cash transactions yet</p>

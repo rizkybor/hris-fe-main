@@ -53,11 +53,11 @@ onMounted(async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 mb-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 mb-5">
       <div class="flex items-center gap-2.5">
         <button
           @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          class="bg-white w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
           aria-label="Back"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
@@ -112,7 +112,7 @@ onMounted(async () => {
       </div>
 
       <!-- Contact -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center gap-1.5 mb-4">
           <div class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center shrink-0">
             <User class="w-4.5 h-4.5 text-emerald-600" />
@@ -121,21 +121,21 @@ onMounted(async () => {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="flex items-center gap-2.5 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px]">
+          <div class="bg-slate-100 flex items-center gap-2.5 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px]">
             <User class="w-5 h-5 text-gray-400 shrink-0" />
             <div class="min-w-0">
               <p class="text-xs text-gray-500">PIC Name</p>
               <p class="text-brand-dark font-semibold truncate">{{ vendor.pic_name || "-" }}</p>
             </div>
           </div>
-          <div class="flex items-center gap-2.5 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px]">
+          <div class="bg-slate-100 flex items-center gap-2.5 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px]">
             <Phone class="w-5 h-5 text-gray-400 shrink-0" />
             <div class="min-w-0">
               <p class="text-xs text-gray-500">PIC Phone</p>
               <p class="text-brand-dark font-semibold truncate">{{ vendor.pic_phone || "-" }}</p>
             </div>
           </div>
-          <div class="md:col-span-2 flex items-center gap-2.5 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px]">
+          <div class="md:col-span-2 bg-slate-100 flex items-center gap-2.5 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px]">
             <Mail class="w-5 h-5 text-gray-400 shrink-0" />
             <div class="min-w-0">
               <p class="text-xs text-gray-500">Email</p>
@@ -146,7 +146,7 @@ onMounted(async () => {
       </div>
 
       <!-- Additional -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center gap-1.5 mb-4">
           <div class="w-9 h-9 bg-orange-50 rounded-[10px] flex items-center justify-center shrink-0">
             <MapPin class="w-4.5 h-4.5 text-orange-600" />
@@ -165,7 +165,7 @@ onMounted(async () => {
 
           <div>
             <p class="text-xs text-gray-500 mb-1">Notes</p>
-            <div class="flex items-start gap-2.5 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] bg-gray-50">
+            <div class="flex items-start gap-2.5 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] bg-slate-100">
               <FileText class="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
               <p class="text-brand-dark whitespace-pre-line">{{ vendor.notes || "-" }}</p>
             </div>
@@ -191,7 +191,7 @@ onMounted(async () => {
       </div>
 
       <!-- Projects (optional) -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center gap-1.5 mb-4">
           <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
             <FolderKanban class="w-4.5 h-4.5 text-blue-600" />

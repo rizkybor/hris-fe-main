@@ -479,7 +479,7 @@ watch(
   <div class="px-4 py-4">
   <Statistics v-if="can('company-finance-statistic')" class="mb-6" />
 
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] overflow-hidden">
+  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] overflow-hidden">
     <!-- Tabs -->
     <div class="tabs-scroll flex flex-nowrap items-center gap-1 px-3 pt-3 border-b border-[#DCDEDD] overflow-x-auto">
       <button
@@ -533,7 +533,7 @@ watch(
 
         <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
           <table class="min-w-full text-sm">
-            <thead class="bg-gray-50">
+            <thead class="bg-gray-100">
               <tr>
                 <th class="px-3 py-2.5 text-xs uppercase text-gray-500 font-semibold">No</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Item</th>
@@ -543,7 +543,7 @@ watch(
                 <th class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="bg-white">
               <tr
                 v-for="(item, index) in fixedCostPaginated"
                 :key="item.id"
@@ -623,7 +623,7 @@ watch(
 
         <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
           <table class="min-w-full text-sm">
-            <thead class="bg-gray-50">
+            <thead class="bg-gray-100">
               <tr>
                 <th class="px-3 py-2.5 text-xs uppercase text-gray-500 font-semibold">No</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Bidang</th>
@@ -636,7 +636,7 @@ watch(
                 <th class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="bg-white">
               <tr
                 v-for="(item, index) in sdmResourcePaginated"
                 :key="item.id"
@@ -731,7 +731,7 @@ watch(
 
         <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
           <table class="min-w-full text-sm">
-            <thead class="bg-gray-50">
+            <thead class="bg-gray-100">
               <tr>
                 <th class="px-3 py-2.5 text-xs uppercase text-gray-500 font-semibold">No</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Tech Stack</th>
@@ -743,7 +743,7 @@ watch(
                 <th class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="bg-white">
               <tr
                 v-for="(item, index) in infraPaginated"
                 :key="item.id"

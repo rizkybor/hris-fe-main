@@ -164,7 +164,7 @@ const formatDate = (date) => {
     </div>
 
     <!-- ================= ACCOUNT LIST ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
       >
@@ -204,7 +204,7 @@ const formatDate = (date) => {
         <div
           v-for="account in filteredAccounts"
           :key="account.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:shadow-sm transition-all"
+          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:shadow-sm transition-all"
         >
           <div
             class="w-16 h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden"
