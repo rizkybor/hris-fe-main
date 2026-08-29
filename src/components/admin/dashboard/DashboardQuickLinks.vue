@@ -14,14 +14,14 @@ const visibleLinks = computed(() =>
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
+  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
     <h3 class="text-brand-dark text-base font-bold mb-3.5">{{ title }}</h3>
     <div class="space-y-2">
       <RouterLink
         v-for="link in visibleLinks"
         :key="link.title"
         :to="link.to"
-        class="flex items-center gap-2.5 p-2.5 rounded-[10px] border border-[#DCDEDD] hover:border-[#0C51D9] hover:shadow-sm transition-all"
+        class="flex items-center gap-2.5 p-2.5 rounded-[10px] bg-white border border-[#DCDEDD] hover:border-[#0C51D9] hover:shadow-sm transition-all"
       >
         <div class="w-8 h-8 bg-blue-50 rounded-[8px] flex items-center justify-center shrink-0">
           <component :is="link.icon" class="w-4 h-4 text-[#0C51D9]" />

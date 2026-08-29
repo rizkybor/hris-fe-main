@@ -60,11 +60,11 @@ onMounted(async () => {
 <template>
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="flex items-center gap-3">
         <button
           @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-violet-400 hover:border-2 transition-all"
+          class="bg-white w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-violet-400 hover:border-2 transition-all"
           aria-label="Back"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
@@ -131,7 +131,7 @@ onMounted(async () => {
       </div>
 
       <!-- Password -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-2 mb-5">
           <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
             <Lock class="w-4.5 h-4.5 text-violet-600" />
@@ -139,7 +139,7 @@ onMounted(async () => {
           <h4 class="text-brand-dark font-bold">Password</h4>
         </div>
 
-        <div class="flex items-center gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px]">
+        <div class="flex items-center gap-3 px-4 py-3 border bg-gray-200 border-[#DCDEDD] rounded-[12px]">
           <Key class="w-5 h-5 text-violet-400" />
 
           <span class="font-mono tracking-widest flex-1">
@@ -170,9 +170,9 @@ onMounted(async () => {
       </div>
 
       <!-- Website & Notes -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
         <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-gray-100 rounded-[10px] flex items-center justify-center shrink-0">
+          <div class="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0">
             <FileText class="w-4.5 h-4.5 text-gray-500" />
           </div>
           <h4 class="text-brand-dark font-bold">Detail Tambahan</h4>
@@ -197,7 +197,7 @@ onMounted(async () => {
 
           <div>
             <p class="text-xs text-gray-500 mb-1">Notes</p>
-            <div class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-50">
+            <div class="flex items-start gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-200">
               <FileText class="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
               <p class="text-brand-dark whitespace-pre-line">
                 {{ account.notes || "—" }}
