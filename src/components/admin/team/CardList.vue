@@ -90,19 +90,19 @@ const props = defineProps({
     <div class="space-y-2.5 mb-3.5">
       <div class="flex items-center gap-1.5">
         <CheckCircle class="w-4 h-4 text-green-600" />
-        <span class="text-brand-dark text-sm font-semibold">
+        <span class="text-sm text-gray-500">
           {{ data.responsibilities?.length }} responsibilities
         </span>
       </div>
       <div class="flex items-center gap-1.5">
         <CheckCircle class="w-4 h-4 text-green-600" />
-        <span class="text-brand-dark text-sm font-semibold">
+        <span class="text-sm text-gray-500">
           {{ data.projects_count }} active projects
         </span>
       </div>
       <div class="flex items-center gap-1.5">
         <CheckCircle class="w-4 h-4 text-green-600" />
-        <span class="text-brand-dark text-sm font-semibold">
+        <span class="text-sm text-gray-500">
           0 completed tasks
         </span>
       </div>

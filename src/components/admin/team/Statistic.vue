@@ -68,9 +68,9 @@ const loading = computed(() => teamStore.loadingStatistics);
             </p>
           </div>
           <div
-            class="w-9 h-9 bg-white/20 rounded-[14px] flex items-center justify-center"
+            class="w-21 h-21 p-4 bg-white rounded-[14px] flex items-center justify-center"
           >
-            <Users class="w-8 h-8 text-white" />
+            <Users class="w-21 h-21 text-white/20" />
           </div>
         </div>
 

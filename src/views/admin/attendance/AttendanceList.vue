@@ -199,7 +199,7 @@ onMounted(async () => {
                 Present Today
               </p>
               <p
-                class="text-brand-white text-3xl font-extrabold leading-none my-3.5"
+                class="text-brand-white text-3xl font-bold leading-none my-3.5"
               >
                 {{ statistics.present_today || 0 }}
               </p>
@@ -208,9 +208,9 @@ onMounted(async () => {
               </p>
             </div>
             <div
-              class="w-9 h-9 bg-white/20 rounded-[14px] flex items-center justify-center"
+              class="w-21 h-21 p-4 bg-white rounded-[14px] flex items-center justify-center"
             >
-              <CheckCircle class="w-8 h-8 text-white" />
+              <CheckCircle class="w-21 h-21 text-white/20" />
             </div>
           </div>
 
