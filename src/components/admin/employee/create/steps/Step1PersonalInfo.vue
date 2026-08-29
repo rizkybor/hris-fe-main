@@ -56,10 +56,10 @@ const deletePhoto = () => {
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-5 items-start">
+  <div class="flex flex-col lg:flex-row gap-5 items-start p-5">
     <!-- Profile Photo Card -->
     <div class="w-full lg:w-80">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -126,7 +126,7 @@ const deletePhoto = () => {
     <!-- Form Section -->
     <div class="flex-1">
       <!-- Account Credentials Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -249,7 +249,7 @@ const deletePhoto = () => {
       </div>
 
       <!-- Personal Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"

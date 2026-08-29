@@ -261,7 +261,7 @@ onMounted(() => {
 
   <div v-else-if="employee">
     <!-- Employee Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5 sm:p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5 sm:p-5">
       <div class="flex flex-col sm:flex-row items-center sm:items-center gap-5">
         <div class="relative shrink-0">
           <Avatar
@@ -338,7 +338,7 @@ onMounted(() => {
     <!-- Performance Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -358,7 +358,7 @@ onMounted(() => {
         </div>
       </div>
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -386,7 +386,7 @@ onMounted(() => {
         </div>
       </div>
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -406,7 +406,7 @@ onMounted(() => {
         </div>
       </div>
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -451,7 +451,7 @@ onMounted(() => {
       <div
         ref="tabScrollRef"
         @scroll="updateTabFade"
-        class="bg-white border border-[#DCDEDD] rounded-[14px] p-1.5 overflow-x-auto"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-1.5 overflow-x-auto"
       >
         <div class="flex items-center gap-1 min-w-max">
           <button
@@ -489,7 +489,7 @@ onMounted(() => {
     <!-- Overview Tab -->
     <div v-show="activeTab === 'overview'" class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
       <!-- Team Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
         <div class="flex items-center gap-2.5 mb-3.5">
           <div
             class="w-9 h-9 bg-indigo-50 rounded-[12px] flex items-center justify-center"
@@ -526,7 +526,7 @@ onMounted(() => {
       </div>
 
       <!-- Contact Details -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
         <div class="flex items-center gap-2.5 mb-3.5">
           <div
             class="w-9 h-9 bg-teal-50 rounded-[12px] flex items-center justify-center"
@@ -561,7 +561,7 @@ onMounted(() => {
       </div>
 
       <!-- Personal Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
         <div class="flex items-center gap-2.5 mb-3.5">
           <div
             class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
@@ -604,7 +604,7 @@ onMounted(() => {
       </div>
 
       <!-- Address Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
         <div class="flex items-center gap-2.5 mb-3.5">
           <div
             class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -646,7 +646,7 @@ onMounted(() => {
     <!-- Employment & Bank Tab -->
     <div v-show="activeTab === 'employment'" class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
       <!-- Employment Details -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
         <div class="flex items-center gap-2.5 mb-3.5">
           <div
             class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -691,7 +691,7 @@ onMounted(() => {
       </div>
 
       <!-- Bank Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
         <div class="flex items-center gap-2.5 mb-3.5">
           <div
             class="w-9 h-9 bg-cyan-50 rounded-[12px] flex items-center justify-center"
@@ -732,7 +732,7 @@ onMounted(() => {
       </div>
 
       <!-- Administrative Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 lg:col-span-2">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5 lg:col-span-2">
         <div class="flex items-center gap-2.5 mb-3.5">
           <div
             class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
@@ -777,7 +777,7 @@ onMounted(() => {
 
     <!-- Emergency Contact Tab -->
     <div v-show="activeTab === 'emergency'" class="mb-5">
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 max-w-2xl">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5 max-w-2xl">
         <div class="flex items-center gap-2.5 mb-3.5">
           <div
             class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"
@@ -839,7 +839,7 @@ onMounted(() => {
     <!-- Performance Tab -->
     <div v-show="activeTab === 'performance'" class="mb-5 space-y-5">
       <!-- Performance Reviews -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-3.5">
           <div class="flex items-center gap-2.5">
             <div class="w-9 h-9 bg-yellow-50 rounded-[12px] flex items-center justify-center shrink-0">
@@ -877,7 +877,7 @@ onMounted(() => {
       </div>
 
       <!-- Disciplinary History -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
         <div class="flex items-center gap-2.5 mb-3.5">
           <div class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center">
             <ShieldAlert class="w-6 h-6 text-red-600" />
@@ -904,7 +904,7 @@ onMounted(() => {
     <!-- Offboarding Tab -->
     <div v-if="can('employee-edit')" v-show="activeTab === 'offboarding'" class="mb-5 space-y-5">
       <!-- Resignation / Offboarding -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-3.5">
           <div class="flex items-center gap-2.5">
             <div class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center shrink-0">
@@ -958,7 +958,7 @@ onMounted(() => {
       </div>
 
       <!-- Danger Zone -->
-      <div class="bg-white border border-[#FEE2E2] rounded-[12px] p-5">
+      <div class="bg-slate-50 border border-[#FEE2E2] rounded-[12px] p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"

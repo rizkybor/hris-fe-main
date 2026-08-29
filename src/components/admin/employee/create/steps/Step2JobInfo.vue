@@ -127,10 +127,10 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-4 items-start lg:pr-4">
+  <div class="flex flex-col lg:flex-row gap-4 items-start lg:pr-4 p-5">
     <div class="flex-1 w-full space-y-5">
       <!-- Job Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -550,7 +550,7 @@ watch(
       </div>
 
       <!-- Bank Information Section -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
         <div class="flex items-center gap-2.5 mb-5">
           <div
             class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"

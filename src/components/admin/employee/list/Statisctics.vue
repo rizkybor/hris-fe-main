@@ -108,7 +108,7 @@ const toggleSalaryVisibility = () => {
     <!-- Row 1 Stats Cards -->
     <!-- Active Employees -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -133,7 +133,7 @@ const toggleSalaryVisibility = () => {
 
     <!-- New Hires -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -154,7 +154,7 @@ const toggleSalaryVisibility = () => {
     <!-- Row 2 Stats Cards -->
     <!-- Average Salary -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -191,7 +191,7 @@ const toggleSalaryVisibility = () => {
 
     <!-- On Leave -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>

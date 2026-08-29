@@ -132,8 +132,47 @@ const handlePerPageChange = (perPage) => {
     </div>
   </div>
 
-  <!-- Search Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5">
+ 
+
+  <Alert type="success" :title="success" :show="success" />
+
+  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-5 p-4">
+    <!-- Section Cards -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
+      <div>
+        <h3
+          class="text-[#0C1C3C] font-['Plus_Jakarta_Sans'] text-[20px] font-bold"
+        >
+          All Employees
+        </h3>
+        <p
+          class="text-[#6B7280] font-['Plus_Jakarta_Sans'] text-[14px] font-normal mt-1"
+        >
+          Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} employees
+        </p>
+      </div>
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-[10px]">
+        <button
+          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5"
+        >
+          <Upload class="w-4 h-4 text-gray-600" />
+          <span class="text-brand-dark text-sm font-semibold">Import CSV</span>
+        </button>
+        <RouterLink
+          :to="{ name: 'admin.employees.create' }"
+          class="w-full sm:w-auto justify-center btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5"
+          v-if="can('employee-create')"
+        >
+          <UserPlus class="w-4 h-4 text-white" />
+          <span class="text-brand-white text-sm font-semibold"
+            >Add Employee</span
+          >
+        </RouterLink>
+      </div>
+    </div>
+
+         <!-- Search Section -->
+  <div class="bg-slate-50 rounded-[14px] mb-5">
     <div
       class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5"
     >
@@ -210,42 +249,6 @@ const handlePerPageChange = (perPage) => {
       </div>
     </div>
   </div>
-
-  <Alert type="success" :title="success" :show="success" />
-
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-5 p-4">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
-      <div>
-        <h3
-          class="text-[#0C1C3C] font-['Plus_Jakarta_Sans'] text-[20px] font-bold"
-        >
-          All Employees
-        </h3>
-        <p
-          class="text-[#6B7280] font-['Plus_Jakarta_Sans'] text-[14px] font-normal mt-1"
-        >
-          Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} employees
-        </p>
-      </div>
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-[10px]">
-        <button
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5"
-        >
-          <Upload class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark text-sm font-semibold">Import CSV</span>
-        </button>
-        <RouterLink
-          :to="{ name: 'admin.employees.create' }"
-          class="w-full sm:w-auto justify-center btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5"
-          v-if="can('employee-create')"
-        >
-          <UserPlus class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold"
-            >Add Employee</span
-          >
-        </RouterLink>
-      </div>
-    </div>
 
     <!-- Employee Grid -->
     <SkeletonCardGrid
