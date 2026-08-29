@@ -103,7 +103,7 @@ const handlePerPageChange = (perPage) => {
     </div>
 
       <!-- Search Section -->
-  <div class="bg-white mb-5">
+  <div class="bg-slate-50 mb-5">
     <div
       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3.5"
     >
