@@ -54,7 +54,7 @@ const chartSeries = computed(() => [completionRate.value]);
 
 <template>
   <div
-    class="h-full bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-5 hover:shadow-md transition-shadow duration-300"
+    class="h-full bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-4 sm:p-5 hover:shadow-md transition-shadow duration-300"
   >
     <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
       <div class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center flex-shrink-0">

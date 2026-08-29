@@ -74,7 +74,7 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
   <Alert type="error" :title="error" :show="!!error" />
 
   <!-- Vendors Grid Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
       <div class="flex items-center gap-2.5 min-w-0">

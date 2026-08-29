@@ -476,11 +476,11 @@ const submit = async () => {
 <template>
   <div class="max-w-6xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 mb-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 mb-5">
       <div class="flex items-center gap-2.5">
         <button
           @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-blue-400 transition-all flex-shrink-0"
+          class="bg-white w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-blue-400 transition-all flex-shrink-0"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
         </button>
@@ -507,10 +507,10 @@ const submit = async () => {
       <!-- Main form -->
       <div class="xl:col-span-2 space-y-5">
         <!-- Basic info -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3.5">
+        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 space-y-3.5">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label class="block text-sm font-semibold text-brand-dark mb-1">Project Name Example *</label>
+              <label class="block text-sm font-semibold text-brand-dark mb-1">Project Name Example <span class="text-red-500">*</span></label>
               <input
                 v-model="form.name"
                 type="text"
@@ -540,7 +540,7 @@ const submit = async () => {
                 :class="
                   form.scenario === 'feature'
                     ? 'border-[#0C51D9] bg-blue-50'
-                    : 'border-[#DCDEDD] hover:border-blue-200'
+                    : 'border-[#DCDEDD] hover:border-blue-200 bg-white'
                 "
               >
                 <div class="w-10 h-10 bg-blue-100 rounded-[10px] flex items-center justify-center flex-shrink-0">
@@ -558,7 +558,7 @@ const submit = async () => {
                 :class="
                   form.scenario === 'build'
                     ? 'border-violet-500 bg-violet-50'
-                    : 'border-[#DCDEDD] hover:border-violet-200'
+                    : 'border-[#DCDEDD] hover:border-violet-200 bg-white'
                 "
               >
                 <div class="w-10 h-10 bg-violet-100 rounded-[10px] flex items-center justify-center flex-shrink-0">
@@ -576,7 +576,7 @@ const submit = async () => {
                 :class="
                   form.scenario === 'landing_page'
                     ? 'border-emerald-500 bg-emerald-50'
-                    : 'border-[#DCDEDD] hover:border-emerald-200'
+                    : 'border-[#DCDEDD] hover:border-emerald-200 bg-white'
                 "
               >
                 <div class="w-10 h-10 bg-emerald-100 rounded-[10px] flex items-center justify-center flex-shrink-0">
@@ -657,7 +657,7 @@ const submit = async () => {
             <div
               v-for="(item, index) in form.items"
               :key="index"
-              class="p-3.5 border border-[#DCDEDD] rounded-[12px] space-y-2.5"
+              class="p-3.5 border border-[#DCDEDD] rounded-[12px] space-y-2.5 bg-slate-50"
             >
               <div class="flex items-center gap-1.5">
                 <input
@@ -723,7 +723,7 @@ const submit = async () => {
         </div>
 
         <!-- Landing Page Configuration -->
-        <div v-if="form.scenario === 'landing_page'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-5">
+        <div v-if="form.scenario === 'landing_page'" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 space-y-5">
           <div class="flex items-center gap-1.5">
             <div class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center shrink-0">
               <Globe class="w-4.5 h-4.5 text-emerald-600" />
@@ -739,7 +739,7 @@ const submit = async () => {
                 type="button"
                 @click="form.server_type = 'dedicated'"
                 class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
-                :class="form.server_type === 'dedicated' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
+                :class="form.server_type === 'dedicated' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200 bg-white'"
               >
                 <span class="text-sm font-semibold text-brand-dark">Dedicated</span>
                 <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.server_dedicated_price) }}</span>
@@ -748,7 +748,7 @@ const submit = async () => {
                 type="button"
                 @click="form.server_type = 'shared'"
                 class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
-                :class="form.server_type === 'shared' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
+                :class="form.server_type === 'shared' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200 bg-white'"
               >
                 <span class="text-sm font-semibold text-brand-dark">Shared</span>
                 <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.server_shared_price) }}</span>
@@ -764,7 +764,7 @@ const submit = async () => {
                 type="button"
                 @click="form.design_type = 'dedicated'"
                 class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
-                :class="form.design_type === 'dedicated' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
+                :class="form.design_type === 'dedicated' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200 bg-white'"
               >
                 <span class="text-sm font-semibold text-brand-dark">Dedicated</span>
                 <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.design_dedicated_price) }}</span>
@@ -773,7 +773,7 @@ const submit = async () => {
                 type="button"
                 @click="form.design_type = 'template'"
                 class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
-                :class="form.design_type === 'template' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200'"
+                :class="form.design_type === 'template' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200 bg-white'"
               >
                 <span class="text-sm font-semibold text-brand-dark">Template</span>
                 <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.design_template_price) }}</span>
@@ -811,7 +811,7 @@ const submit = async () => {
               <button
                 type="button"
                 @click="addAdditionalItem"
-                class="border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all px-2.5 py-1 inline-flex items-center gap-1"
+                class="bg-white border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all px-2.5 py-1 inline-flex items-center gap-1"
               >
                 <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
                 <span class="text-brand-dark text-xs font-semibold">Add Item</span>
@@ -826,7 +826,7 @@ const submit = async () => {
               <div
                 v-for="(item, index) in form.additional_items"
                 :key="index"
-                class="p-2.5 border border-[#DCDEDD] rounded-[10px] grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2.5 items-end"
+                class="bg-white p-2.5 border border-[#DCDEDD] rounded-[10px] grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2.5 items-end"
               >
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Description</label>
@@ -869,7 +869,7 @@ const submit = async () => {
         </div>
 
         <!-- Build-only extra fields -->
-        <div v-if="form.scenario === 'build'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div v-if="form.scenario === 'build'" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
             <label class="block text-sm font-semibold text-brand-dark mb-1">PM Overhead (%)</label>
             <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
@@ -881,7 +881,7 @@ const submit = async () => {
         </div>
 
         <!-- Tax + Notes -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3.5">
+        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 space-y-3.5">
           <label class="flex items-center gap-1.5 cursor-pointer">
             <input type="checkbox" v-model="form.include_ppn" class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]" />
             <span class="text-sm font-semibold text-brand-dark">Include PPN</span>
@@ -951,10 +951,10 @@ const submit = async () => {
 
       <!-- Summary sidebar -->
       <div class="xl:col-span-1">
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sticky top-6 space-y-3.5">
+        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sticky top-6 space-y-3.5">
           <h3 class="text-brand-dark text-sm font-bold">Summary</h3>
 
-          <div v-if="form.scenario !== 'landing_page'" class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1] flex items-center justify-between text-sm">
+          <div v-if="form.scenario !== 'landing_page'" class="p-2.5 rounded-[12px] bg-white border border-[#F1F1F1] flex items-center justify-between text-sm">
             <span class="text-gray-500">Rate Sell / Hour</span>
             <span class="font-semibold text-brand-dark">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</span>
           </div>

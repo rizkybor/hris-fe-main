@@ -161,7 +161,7 @@ const viewDetails = (id) => {
       <!-- Row 1 Stats Cards -->
       <!-- Employees Paid -->
       <div
-        class="stats-card bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
@@ -191,7 +191,7 @@ const viewDetails = (id) => {
 
       <!-- Pending Payments -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
@@ -221,7 +221,7 @@ const viewDetails = (id) => {
 
       <!-- Quick Actions Card (spans 2 rows on the right) -->
       <div
-        class="lg:row-span-2 bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="lg:row-span-2 bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <h3 class="text-brand-dark text-base font-bold mb-3.5">
           Payroll Actions
@@ -240,7 +240,7 @@ const viewDetails = (id) => {
 
           <RouterLink
             :to="{ name: 'admin.report.dashboard' }"
-            class="btn-secondary w-full text-left border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2"
+            class="bg-white btn-secondary w-full text-left border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2"
           >
             <FileText class="w-4 h-4 text-gray-600" />
             <span class="text-brand-dark text-xs font-medium"
@@ -253,7 +253,7 @@ const viewDetails = (id) => {
       <!-- Row 2 Stats Cards -->
       <!-- Average Salary -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
@@ -300,7 +300,7 @@ const viewDetails = (id) => {
 
       <!-- Overtime Hours -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-2">
@@ -332,7 +332,7 @@ const viewDetails = (id) => {
     <Alert type="success" :title="success" :show="success" />
 
     <!-- Monthly Payroll Periods -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
       <div class="flex items-center justify-between mb-3.5">
         <h3 class="text-brand-dark text-base font-bold">
           Monthly Payroll Periods

@@ -98,7 +98,7 @@ watch(
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-3.5 lg:gap-5 mb-5">
     <!-- ================= TOTAL VENDORS ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
       <div class="flex items-center justify-between mb-3.5">
         <p class="text-brand-dark text-sm font-medium">Total Vendors</p>
         <Briefcase class="w-6 h-6 text-blue-600" />
@@ -111,7 +111,7 @@ watch(
     </div>
 
     <!-- ================= BY TYPE ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
       <div class="flex items-center gap-1.5 mb-3.5">
         <Layers class="w-5 h-5 text-purple-600" />
         <p class="text-brand-dark text-sm font-medium">Vendors by Type</p>
@@ -141,7 +141,7 @@ watch(
     </div>
 
     <!-- ================= BY FIELD ================= -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
       <div class="flex items-center gap-1.5 mb-3.5">
         <Code class="w-5 h-5 text-green-600" />
         <p class="text-brand-dark text-sm font-medium">Vendors by Field</p>
