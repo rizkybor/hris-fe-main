@@ -37,7 +37,7 @@ const COLOR_CLASSES = {
 </script>
 
 <template>
-  <div v-if="links.length > 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
+  <div v-if="links.length > 0" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
     <div class="flex items-center gap-3 mb-5">
       <div class="w-9 h-9 sm:w-10 sm:h-10 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
         <Link2 class="w-4 h-4 sm:w-5 sm:h-5 text-violet-600" />
@@ -55,7 +55,7 @@ const COLOR_CLASSES = {
         :href="link.url"
         target="_blank"
         rel="noopener noreferrer"
-        class="group flex items-center gap-2.5 pl-3 pr-4 py-2.5 border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:shadow-sm transition-all max-w-full"
+        class="bg-white group flex items-center gap-2.5 pl-3 pr-4 py-2.5 border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:shadow-sm transition-all max-w-full"
       >
         <div :class="['w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0 transition-colors', COLOR_CLASSES[link.color]]">
           <component :is="link.icon" class="w-4 h-4" />
