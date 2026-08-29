@@ -407,7 +407,7 @@ watch(
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <!-- Beginner Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-2.5">
                   <div
@@ -442,7 +442,7 @@ watch(
 
               <!-- Intermediate Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-2.5">
                   <div
@@ -477,7 +477,7 @@ watch(
 
               <!-- Advanced Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-2.5">
                   <div
@@ -512,7 +512,7 @@ watch(
 
               <!-- Expert Option -->
               <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
               >
                 <div class="flex items-center gap-2.5">
                   <div
