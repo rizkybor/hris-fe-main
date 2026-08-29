@@ -153,7 +153,7 @@ const handlePerPageChange = (perPage) => {
       </div>
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-[10px]">
         <button
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5"
+          class="bg-white w-full sm:w-auto border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5"
         >
           <Upload class="w-4 h-4 text-gray-600" />
           <span class="text-brand-dark text-sm font-semibold">Import CSV</span>
