@@ -35,12 +35,12 @@ onMounted(async () => {
     </div>
 
     <div v-else class="space-y-6">
-      <div v-for="dept in departments" :key="dept.department" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
+      <div v-for="dept in departments" :key="dept.department" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
         <h4 class="text-brand-dark text-base font-bold mb-4 uppercase tracking-wide">
           {{ departmentLabels[dept.department] ?? dept.department }}
         </h4>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="team in dept.teams" :key="team.id" class="border border-[#DCDEDD] rounded-[12px] p-4">
+          <div v-for="team in dept.teams" :key="team.id" class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
             <div class="flex items-center gap-2 mb-3">
               <div class="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[10px] flex items-center justify-center">
                 <Crown class="w-4 h-4 text-white" />

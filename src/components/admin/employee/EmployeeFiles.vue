@@ -116,7 +116,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-5">
       <div class="flex items-center gap-2.5">
         <div class="w-11 h-11 sm:w-12 sm:h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0">
@@ -158,7 +158,7 @@ onMounted(() => {
 
     <div
       v-else-if="files.length === 0"
-      class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
+      class="text-center py-12 text-gray-500 bg-slate-100 rounded-[12px] border border-dashed border-[#DCDEDD]"
     >
       <FileText class="w-10 h-10 text-gray-300 mx-auto mb-2.5" />
       <p class="text-sm font-semibold">No files uploaded yet</p>

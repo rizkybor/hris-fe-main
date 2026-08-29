@@ -183,7 +183,7 @@ const totalDeductions = computed(() => {
     <!-- Payslips Grid -->
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
       <div class="mb-6">
-        <h3 class="text-[#0C1C3C] font-bold text-xl">All Payslips</h3>
+        <h3 class="text-[#0C1C3C] font-bold text-base">All Payslips</h3>
         <p class="text-gray-600 text-sm mt-1">
           Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} payslips
         </p>

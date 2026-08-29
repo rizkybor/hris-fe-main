@@ -125,7 +125,7 @@ const handleDelete = async (project) => {
             <Briefcase class="w-5 h-5 text-blue-600" />
           </div>
           <div class="min-w-0">
-            <h3 class="text-brand-dark text-lg font-bold">All Projects</h3>
+            <h3 class="text-brand-dark text-base font-bold">All Projects</h3>
             <p class="text-brand-light text-xs font-normal">
               View and manage all project information
             </p>

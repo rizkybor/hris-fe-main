@@ -94,7 +94,7 @@ const loading = computed(() => teamStore.loadingStatistics);
 
     <!-- Active Teams Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -116,7 +116,7 @@ const loading = computed(() => teamStore.loadingStatistics);
 
     <!-- Team Members Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -138,7 +138,7 @@ const loading = computed(() => teamStore.loadingStatistics);
 
     <!-- Average Team Size Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -158,7 +158,7 @@ const loading = computed(() => teamStore.loadingStatistics);
 
     <!-- Recent Teams Card -->
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>

@@ -6,7 +6,7 @@ defineEmits(["browse-employees"]);
 
 <template>
   <!-- Right Sidebar -->
-  <div class="w-full lg:w-80 flex-shrink-0 sticky top-6">
+  <div class="w-full lg:w-80 flex-shrink-0 sticky top-6 hidden lg:block md:block">
     <!-- Tips Section -->
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex items-center gap-2.5 mb-5">

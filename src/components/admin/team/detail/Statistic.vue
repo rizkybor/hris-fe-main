@@ -40,7 +40,7 @@ watch(() => props.team?.id, async (newId) => {
   <SkeletonStatCards v-if="loadingTeamStatistics" :count="4" class="mb-5" />
   <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -69,7 +69,7 @@ watch(() => props.team?.id, async (newId) => {
       </div>
     </div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -89,7 +89,7 @@ watch(() => props.team?.id, async (newId) => {
       </div>
     </div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>
@@ -112,7 +112,7 @@ watch(() => props.team?.id, async (newId) => {
       </div>
     </div>
     <div
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
+      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4"
     >
       <div class="flex items-center justify-between">
         <div>

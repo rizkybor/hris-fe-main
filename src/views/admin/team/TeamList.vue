@@ -74,8 +74,36 @@ const handlePerPageChange = (perPage) => {
   <div class="px-4 py-4">
   <Statistic />
 
-  <!-- Search Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5">
+  <Alert type="success" :title="success" :show="success" />
+
+  <!-- Team List Section -->
+  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5 sm:p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-5">
+      <div>
+        <h3 class="text-brand-dark text-base font-bold">All Teams</h3>
+        <p class="text-brand-light text-sm font-normal mt-1">
+          Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} teams
+        </p>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
+        <button
+          class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center gap-1.5 w-full sm:w-auto"
+        >
+          <Upload class="w-4 h-4 text-gray-600" />
+          <span class="text-brand-dark text-sm font-semibold">Import CSV</span>
+        </button>
+        <RouterLink
+          :to="{ name: 'admin.team.create' }"
+          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-1.5 w-full sm:w-auto"
+        >
+          <Users class="w-4 h-4 text-white" />
+          <span class="text-brand-white text-sm font-semibold">Add Team</span>
+        </RouterLink>
+      </div>
+    </div>
+
+      <!-- Search Section -->
+  <div class="bg-white mb-5">
     <div
       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3.5"
     >
@@ -104,7 +132,7 @@ const handlePerPageChange = (perPage) => {
             <CheckCircleIcon class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="w-full sm:w-auto pl-8 pr-6 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none font-semibold"
+            class="w-full sm:w-auto pl-8 pr-6 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
             v-model="filters.status"
           >
             <option value="">All Status</option>
@@ -128,7 +156,7 @@ const handlePerPageChange = (perPage) => {
             <BuildingIcon class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="w-full sm:w-auto pl-8 pr-6 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none font-semibold"
+            class="w-full sm:w-auto pl-8 pr-6 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
             v-model="filters.department"
           >
             <option value="">All Departments</option>
@@ -149,34 +177,6 @@ const handlePerPageChange = (perPage) => {
       </div>
     </div>
   </div>
-
-  <Alert type="success" :title="success" :show="success" />
-
-  <!-- Team List Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5 sm:p-4">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-5">
-      <div>
-        <h3 class="text-brand-dark text-base font-bold">All Teams</h3>
-        <p class="text-brand-light text-sm font-normal mt-1">
-          Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} teams
-        </p>
-      </div>
-      <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
-        <button
-          class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center gap-1.5 w-full sm:w-auto"
-        >
-          <Upload class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark text-sm font-semibold">Import CSV</span>
-        </button>
-        <RouterLink
-          :to="{ name: 'admin.team.create' }"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-1.5 w-full sm:w-auto"
-        >
-          <Users class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Add Team</span>
-        </RouterLink>
-      </div>
-    </div>
 
     <!-- Teams Grid -->
     <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
