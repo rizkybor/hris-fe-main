@@ -862,7 +862,7 @@ onMounted(() => {
           No performance reviews yet.
         </div>
         <div v-else class="space-y-2.5">
-          <div v-for="review in performanceReviews" :key="review.id" class="border border-[#DCDEDD] rounded-[12px] p-3.5">
+          <div v-for="review in performanceReviews" :key="review.id" class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5">
             <div class="flex items-center justify-between mb-1.5">
               <p class="text-brand-dark text-sm font-semibold">{{ review.period }}</p>
               <span class="px-1.5 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700">
