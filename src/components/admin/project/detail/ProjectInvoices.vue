@@ -74,7 +74,7 @@ const formatDate = (date) =>
         <div
           v-for="invoice in invoices"
           :key="invoice.id"
-          class="border border-[#DCDEDD] rounded-[12px] p-4"
+          class="bg-white border border-[#DCDEDD] rounded-[12px] p-4"
         >
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -103,7 +103,7 @@ const formatDate = (date) =>
               <div
                 v-for="receipt in invoice.receipts"
                 :key="receipt.id"
-                class="flex items-center justify-between text-xs bg-gray-50 rounded-lg px-3 py-2"
+                class="flex items-center justify-between text-xs bg-gray-100 rounded-lg px-3 py-2"
               >
                 <span class="font-mono text-brand-dark">{{ receipt.receipt_number }}</span>
                 <span class="text-brand-light">{{ formatDate(receipt.date) }}</span>
