@@ -83,7 +83,7 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
         </div>
         <div class="min-w-0">
           <h3 class="text-brand-dark text-base font-bold">All Vendors</h3>
-          <p class="text-brand-light text-sm font-normal">
+          <p class="text-brand-light text-xs font-normal">
             View and manage all vendor information
           </p>
         </div>

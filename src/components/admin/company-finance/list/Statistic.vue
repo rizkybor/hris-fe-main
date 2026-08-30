@@ -417,10 +417,10 @@ const chartOptions = computed(() => ({
             <TrendingUp class="w-6 h-6 text-purple-600" />
           </div>
           <div class="min-w-0">
-            <h3 class="font-bold text-brand-dark text-lg">
+            <h3 class="font-bold text-brand-dark text-base">
               Operational Cost Trend
             </h3>
-            <p class="text-sm text-gray-500">
+            <p class="text-xs text-gray-500">
               Monthly cost overview by category
             </p>
           </div>

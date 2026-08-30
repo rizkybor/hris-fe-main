@@ -491,7 +491,7 @@ const submit = async () => {
           <h1 class="text-brand-dark text-base font-bold">
             {{ isEditing ? "Edit Estimate" : "Create New Estimate" }}
           </h1>
-          <p class="text-brand-light text-sm">Fill in the details below, the total will be calculated automatically</p>
+          <p class="text-brand-light text-xs">Fill in the details below, the total will be calculated automatically</p>
         </div>
       </div>
     </div>
@@ -1027,7 +1027,7 @@ const submit = async () => {
             <p class="text-gray-400 text-xs mt-1">Setelah dipotong PPh oleh klien</p>
           </div>
 
-          <div class="flex items-center gap-1.5 p-2.5 rounded-[12px] bg-blue-50 border border-blue-100 text-sm">
+          <div class="flex items-center gap-1.5 p-2.5 rounded-[12px] bg-blue-50 border border-blue-100 text-xs">
             <ClockIcon class="w-4 h-4 text-blue-600 flex-shrink-0" />
             <span v-if="form.scenario === 'landing_page'" class="text-blue-800">
               Estimate Duration: <strong>{{ estimatedDurationWeeks ?? "-" }} weeks</strong>

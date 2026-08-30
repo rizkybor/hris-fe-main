@@ -210,8 +210,8 @@ onMounted(async () => {
           <Laptop class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div class="min-w-0">
-          <h3 class="text-brand-dark text-lg font-bold">Company Assets</h3>
-          <p class="text-brand-light text-sm">Manage and track assets loaned to employees</p>
+          <h3 class="text-brand-dark text-base font-bold">Company Assets</h3>
+          <p class="text-brand-light text-xs">Manage and track assets loaned to employees</p>
         </div>
       </div>
       <button
@@ -322,7 +322,7 @@ onMounted(async () => {
 
       <div v-if="assets.length === 0" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-10 text-center">
         <Laptop class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p class="text-brand-light text-sm">No assets yet.</p>
+        <p class="text-brand-light text-xs">No assets yet.</p>
       </div>
     </div>
 

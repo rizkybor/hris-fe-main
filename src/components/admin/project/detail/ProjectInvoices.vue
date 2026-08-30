@@ -38,13 +38,23 @@ const statusLabel = (status) => {
 };
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date
+    ? new Date(date).toLocaleDateString("id-ID", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "-";
 </script>
 
 <template>
-  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full flex flex-col">
+  <div
+    class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full flex flex-col"
+  >
     <div class="flex items-center gap-3 mb-5 shrink-0">
-      <div class="w-9 h-9 sm:w-10 sm:h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
+      <div
+        class="w-9 h-9 sm:w-10 sm:h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0"
+      >
         <Receipt class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
       </div>
       <div>
@@ -66,7 +76,8 @@ const formatDate = (date) =>
         <ReceiptText class="w-9 h-9 text-gray-300 mx-auto mb-3" />
         <p class="text-sm font-semibold">No invoices linked yet</p>
         <p class="text-xs text-gray-400">
-          Invoices are optional — link one to this project from the Invoice form to see it here.
+          Invoices are optional — link one to this project from the Invoice form
+          to see it here.
         </p>
       </div>
 
@@ -78,11 +89,19 @@ const formatDate = (date) =>
         >
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p class="text-brand-dark text-sm font-bold font-mono">{{ invoice.invoice_number }}</p>
-              <p class="text-brand-light text-xs mt-0.5">{{ formatDate(invoice.date) }} &middot; {{ formatRupiah(invoice.total) }}</p>
+              <p class="text-brand-dark text-sm font-bold font-mono">
+                {{ invoice.invoice_number }}
+              </p>
+              <p class="text-brand-light text-xs mt-0.5">
+                {{ formatDate(invoice.date) }} &middot;
+                {{ formatRupiah(invoice.total) }}
+              </p>
             </div>
             <div class="flex items-center gap-2">
-              <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="statusClass(invoice.status)">
+              <span
+                class="px-2 py-1 rounded-md text-xs font-semibold"
+                :class="statusClass(invoice.status)"
+              >
                 {{ statusLabel(invoice.status) }}
               </span>
               <button
@@ -97,20 +116,40 @@ const formatDate = (date) =>
           </div>
 
           <!-- Payment Receipts, if any -->
-          <div v-if="invoice.receipts && invoice.receipts.length > 0" class="mt-3.5 pt-3.5 border-t border-[#F1F1F1]">
-            <p class="text-brand-light text-xs font-semibold uppercase tracking-wide mb-2">Payment Receipts</p>
+          <div
+            v-if="invoice.receipts && invoice.receipts.length > 0"
+            class="mt-3.5 pt-3.5 border-t border-[#F1F1F1]"
+          >
+            <p
+              class="text-brand-light text-xs font-semibold uppercase tracking-wide mb-2"
+            >
+              Payment Receipts
+            </p>
+
             <div class="space-y-1.5">
               <div
                 v-for="receipt in invoice.receipts"
                 :key="receipt.id"
-                class="flex items-center justify-between text-xs bg-green-100 rounded-lg px-3 py-2"
+                class="grid grid-cols-2 gap-x-3 gap-y-1.5 bg-green-100 rounded-lg px-3 py-2 text-xs"
               >
-                <span class="font-mono text-brand-dark">{{ receipt.receipt_number }}</span>
-                <span class="text-brand-light">{{ formatDate(receipt.date) }}</span>
-                <span class="font-semibold text-brand-dark">{{ formatRupiah(receipt.amount) }}</span>
+                <!-- Receipt Number - Top Left -->
+                <span class="font-mono text-brand-dark min-w-0 truncate">
+                  {{ receipt.receipt_number }}
+                </span>
+
+                <!-- Date - Top Right -->
+                <span class="text-brand-light text-right whitespace-nowrap">
+                  {{ formatDate(receipt.date) }}
+                </span>
+
+                <!-- Amount - Bottom Left -->
+                <span class="font-semibold text-brand-dark col-span-1">
+                  {{ formatRupiah(receipt.amount) }}
+                </span>
               </div>
             </div>
           </div>
+          
         </div>
       </div>
     </div>
