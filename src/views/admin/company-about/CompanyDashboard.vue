@@ -177,8 +177,8 @@ const saveCompany = async () => {
         <Building2 class="w-5 h-5 text-[#0C51D9]" />
       </div>
       <div class="min-w-0">
-        <h3 class="text-brand-dark text-lg font-bold">Company About</h3>
-        <p class="text-brand-light text-sm">Company profile shown across the system</p>
+        <h3 class="text-brand-dark text-base font-bold">Company About</h3>
+        <p class="text-brand-light text-xs">Company profile shown across the system</p>
       </div>
     </div>
     <button
@@ -307,7 +307,7 @@ const saveCompany = async () => {
     </div>
 
     <!-- Branches -->
-    <div v-if="cleanedBranches.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 lg:col-span-2">
+    <div v-if="cleanedBranches.length" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 lg:col-span-2">
       <div class="flex items-center gap-3 mb-3">
         <div class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center shrink-0">
           <Network class="w-4 h-4 text-gray-500" />

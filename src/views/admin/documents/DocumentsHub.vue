@@ -90,7 +90,7 @@ const links = [
               {{ link.title }}
               <ChevronRight class="w-4 h-4 text-gray-400" />
             </p>
-            <p class="text-brand-light text-sm mt-1">{{ link.description }}</p>
+            <p class="text-brand-light text-xs mt-1">{{ link.description }}</p>
           </div>
         </router-link>
       </template>

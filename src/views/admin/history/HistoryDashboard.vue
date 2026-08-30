@@ -191,7 +191,7 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
     <!-- Filters + List -->
     <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-        <h3 class="text-brand-dark text-lg font-bold">All Activity</h3>
+        <h3 class="text-brand-dark text-base font-bold">All Activity</h3>
 
         <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 flex-wrap">
           <div class="relative w-full md:w-56">

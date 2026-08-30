@@ -355,9 +355,9 @@ onMounted(() => {
             <FileTextIcon class="w-5 h-5 text-[#0C51D9]" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">Reports</h3>
-            <p class="text-brand-light text-sm">
-              Company-wide reports across HR modules
+            <h3 class="text-brand-dark text-base font-bold">Reports</h3>
+            <p class="text-brand-light text-xs">
+              Company-wide reports across HR modules.
             </p>
           </div>
         </div>
@@ -520,7 +520,7 @@ onMounted(() => {
       <div
         v-for="card in summaryCards"
         :key="card.label"
-        class="bg-white border border-[#DCDEDD] rounded-[12px] p-4"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-4"
       >
         <p class="text-brand-light text-xs font-medium mb-1">
           {{ card.label }}
@@ -533,7 +533,7 @@ onMounted(() => {
 
     <!-- Table -->
     <SkeletonTable v-if="loading" :rows="6" :cols="6" />
-    <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 overflow-x-auto">
+    <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] px-4 overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left text-brand-light border-b border-[#DCDEDD]">

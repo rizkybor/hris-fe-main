@@ -133,7 +133,7 @@ const formatDate = (date) => {
               >
                 {{ statistics.total_accounts }}
               </p>
-              <p class="text-brand-white-80 text-base font-normal">
+              <p class="text-brand-white-80 text-sm font-normal">
                 Internal systems & services
               </p>
             </div>
@@ -168,7 +168,7 @@ const formatDate = (date) => {
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
       >
-        <h3 class="text-brand-dark text-lg font-bold">Accounts</h3>
+        <h3 class="text-brand-dark text-base font-bold">Accounts</h3>
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <!-- SEARCH -->

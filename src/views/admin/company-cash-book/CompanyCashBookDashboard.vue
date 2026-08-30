@@ -182,7 +182,7 @@ onMounted(() => {
         </div>
         <div class="min-w-0">
           <h3 class="text-brand-dark text-base font-bold">Company Cash Book</h3>
-          <p class="text-brand-light text-sm">
+          <p class="text-brand-light text-xs">
             Real debit/credit transactions as they actually happen -- auto-synced from every project's own cash ledger, plus manual entries
           </p>
         </div>

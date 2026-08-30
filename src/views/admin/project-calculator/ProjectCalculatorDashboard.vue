@@ -124,11 +124,11 @@ const onLandingPageRateSettingSaved = async () => {
             <Sparkles class="w-3 h-3 text-blue-300" />
             <span class="text-brand-white-80 text-xs font-medium">Professional Estimation Tool</span>
           </div>
-          <h1 class="text-brand-white text-lg sm:text-xl font-extrabold leading-tight">
+          <h1 class="text-brand-white text-xl sm:text-2xl font-extrabold leading-tight">
             Project Calculator
           </h1>
-          <p class="text-brand-white-70 text-sm sm:text-sm mt-1 max-w-xl">
-            Consistent development cost estimates &mdash; from adding features to building an app from scratch—based on timeframes and complexity factors.
+          <p class="text-brand-white-70 text-xs sm:text-xs mt-1 max-w-xl">
+            Consistent development cost estimates.
           </p>
         </div>
 
@@ -155,7 +155,7 @@ const onLandingPageRateSettingSaved = async () => {
             <p v-else class="text-brand-dark text-lg font-extrabold leading-tight my-1.5">
               {{ statistics.total_calculations }}
             </p>
-            <p class="text-gray-500 text-sm font-medium">{{ statistics.this_month }} this month</p>
+            <p class="text-gray-500 text-xs font-medium">{{ statistics.this_month }} this month</p>
           </div>
           <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
             <CalculatorIcon class="w-5 h-5 text-blue-600" />
@@ -173,7 +173,7 @@ const onLandingPageRateSettingSaved = async () => {
             <p v-else class="text-brand-dark text-lg font-extrabold leading-tight my-1.5 truncate">
               {{ formatRupiahCompact(statistics.total_value) }}
             </p>
-            <p class="text-gray-500 text-sm font-medium">all history</p>
+            <p class="text-gray-500 text-xs font-medium">all history</p>
           </div>
           <div class="w-11 h-11 bg-indigo-50 rounded-[12px] flex items-center justify-center">
             <WalletIcon class="w-5 h-5 text-indigo-600" />
@@ -191,7 +191,7 @@ const onLandingPageRateSettingSaved = async () => {
             <p v-else class="text-brand-dark text-lg font-extrabold leading-tight my-1.5 truncate">
               {{ formatRupiahCompact(statistics.average_value) }}
             </p>
-            <p class="text-gray-500 text-sm font-medium">/ estimate</p>
+            <p class="text-gray-500 text-xs font-medium">/ estimate</p>
           </div>
           <div class="w-11 h-11 bg-purple-50 rounded-[12px] flex items-center justify-center">
             <TrendingUpIcon class="w-5 h-5 text-purple-600" />
@@ -211,7 +211,7 @@ const onLandingPageRateSettingSaved = async () => {
               {{ statistics.total_build }} Builds<br />
               {{ statistics.total_landing_page }} Landing Pages
             </p>
-            <p class="text-gray-500 text-sm font-medium">breakdown by scenario</p>
+            <p class="text-gray-500 text-xs font-medium">breakdown by scenario</p>
           </div>
           <div class="w-11 h-11 bg-orange-50 rounded-[12px] flex items-center justify-center">
             <LayersIcon class="w-5 h-5 text-orange-600" />
@@ -230,7 +230,7 @@ const onLandingPageRateSettingSaved = async () => {
             </div>
             <div>
               <h3 class="text-brand-dark text-sm font-bold">Team Rate Setup</h3>
-              <p class="text-brand-light text-sm">Baseline fee &amp; rate/hour used throughout the estimation</p>
+              <p class="text-brand-light text-xs">Baseline fee &amp; rate/hour.</p>
             </div>
           </div>
           <button
@@ -277,7 +277,7 @@ const onLandingPageRateSettingSaved = async () => {
             </div>
             <div>
               <h3 class="text-brand-dark text-sm font-bold">Landing Page Rate Setup</h3>
-              <p class="text-brand-light text-sm">Server, Design, Developer rate &amp; margin used for the Landing Page scenario</p>
+              <p class="text-brand-light text-xs">The Landing Page scenario</p>
             </div>
           </div>
           <button
@@ -349,7 +349,7 @@ const onLandingPageRateSettingSaved = async () => {
       <div v-else-if="calculations.length === 0" class="text-center py-12">
         <CalculatorIcon class="w-10 h-10 text-gray-300 mx-auto mb-2.5" />
         <p class="text-brand-dark text-sm font-semibold">No estimates found</p>
-        <p class="text-brand-light text-sm mt-1">Create your first project estimate to start building your quotation history.</p>
+        <p class="text-brand-light text-xs mt-1">Create your first project estimate to start building your quotation history.</p>
       </div>
 
       <div v-else class="space-y-2.5">
