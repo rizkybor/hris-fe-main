@@ -18,6 +18,7 @@ import {
   SlidersHorizontal,
   User,
   CalendarHeart,
+  CalendarClock,
 } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
@@ -105,6 +106,15 @@ const categories = [
         permission: "greeting-menu",
         iconBg: "bg-pink-50",
         iconColor: "text-pink-600",
+      },
+      {
+        to: { name: "admin.settings.attendance" },
+        icon: CalendarClock,
+        title: "Attendance Settings",
+        description: "Control whether staff can Clock In/Out on Saturday & Sunday",
+        permission: "attendance-setting-edit",
+        iconBg: "bg-indigo-50",
+        iconColor: "text-indigo-600",
       },
     ],
   },

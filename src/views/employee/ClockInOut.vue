@@ -17,8 +17,11 @@ import {
   CheckCircle2,
   Circle,
   Timer,
+  CalendarOff,
+  Zap,
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
+import { useAttendanceSettingStore } from "@/stores/attendanceSetting";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
 
@@ -26,6 +29,19 @@ const attendanceStore = useAttendanceStore();
 const alertModal = useAlertModalStore();
 const { loading, todayAttendance } = storeToRefs(attendanceStore);
 const { checkIn, checkOut, fetchTodayAttendance } = attendanceStore;
+
+const attendanceSettingStore = useAttendanceSettingStore();
+const { setting: attendanceSetting } = storeToRefs(attendanceSettingStore);
+
+// Sat/Sun aren't scheduled work days -- Clock In/Out is disabled on them
+// unless Superadmin/Manager opened it up in Settings, in which case a
+// weekend clock-in is recorded as overtime instead of a normal day.
+const isWeekend = computed(() => {
+  const day = new Date().getDay(); // 0 = Sunday, 6 = Saturday
+  return day === 0 || day === 6;
+});
+
+const weekendCheckInBlocked = computed(() => isWeekend.value && !attendanceSetting.value.allow_weekend_check_in);
 
 // State
 const currentTime = ref("");
@@ -63,11 +79,22 @@ const workingHours = computed(() => {
 });
 
 const canCheckIn = computed(() => {
-  return currentLocation.value && !isCheckedIn.value;
+  return currentLocation.value && !isCheckedIn.value && !weekendCheckInBlocked.value;
 });
 
 const canCheckOut = computed(() => {
   return currentLocation.value && isCheckedIn.value;
+});
+
+const lateInfo = computed(() => {
+  if (!todayAttendance.value || todayAttendance.value.status !== "late" || !todayAttendance.value.late_minutes) {
+    return null;
+  }
+  const minutes = todayAttendance.value.late_minutes;
+  const hours = Math.floor(minutes / 60);
+  const remaining = minutes % 60;
+  const duration = hours > 0 ? `${hours}h ${remaining}m` : `${remaining}m`;
+  return `Terlambat ${duration} (batas jam masuk 09:00 WIB)`;
 });
 
 const checkInTime = computed(() => {
@@ -92,8 +119,13 @@ const attendanceStatus = computed(() => {
   if (!todayAttendance.value) {
     return { text: "Not Clocked In", class: "bg-red-100 text-red-700" };
   }
+  if (todayAttendance.value.status === "overtime") {
+    return { text: "Overtime (Lembur)", class: "bg-purple-100 text-purple-700" };
+  }
   if (todayAttendance.value.check_in && !todayAttendance.value.check_out) {
-    return { text: "Clocked In", class: "bg-green-100 text-green-700" };
+    return todayAttendance.value.status === "late"
+      ? { text: "Clocked In (Late)", class: "bg-amber-100 text-amber-700" }
+      : { text: "Clocked In", class: "bg-green-100 text-green-700" };
   }
   if (todayAttendance.value.check_in && todayAttendance.value.check_out) {
     return { text: "Completed", class: "bg-blue-100 text-blue-700" };
@@ -275,17 +307,24 @@ const handleCheckIn = async () => {
   }
 
   try {
-    await checkIn({
+    const attendance = await checkIn({
       check_in_lat: currentLocation.value.latitude,
       check_in_long: currentLocation.value.longitude,
     });
 
-    await alertModal.alert("Successfully clocked in!", { type: "success" });
+    if (attendance?.status === "overtime") {
+      await alertModal.alert("Clocked in for overtime (lembur) -- today is a weekend.", { type: "success" });
+    } else if (attendance?.status === "late" && attendance?.late_minutes) {
+      await alertModal.alert(`Clocked in, but you're late by ${attendance.late_minutes} minute(s) (cut-off is 09:00 WIB).`, { type: "warning" });
+    } else {
+      await alertModal.alert("Successfully clocked in!", { type: "success" });
+    }
     resetForNextAction();
     await fetchTodayAttendance();
   } catch (error) {
     console.error("Check in failed:", error);
-    await alertModal.alert("Failed to check in. Please try again.", { type: "danger" });
+    const message = error?.response?.data?.message || "Failed to check in. Please try again.";
+    await alertModal.alert(message, { type: "danger" });
   }
 };
 
@@ -325,7 +364,7 @@ const resetForNextAction = () => {
 let clockInterval;
 
 onMounted(async () => {
-  await fetchTodayAttendance();
+  await Promise.all([fetchTodayAttendance(), attendanceSettingStore.fetchSetting()]);
   updateClock();
   clockInterval = setInterval(updateClock, 1000);
 });
@@ -598,6 +637,37 @@ onUnmounted(() => {
               <span class="font-normal text-gray-400">(optional)</span>
             </span>
           </div>
+        </div>
+
+        <!-- Weekend blocked notice -->
+        <div
+          v-if="weekendCheckInBlocked && !isCheckedIn"
+          class="flex items-start gap-2.5 px-4 py-3 rounded-[10px] border border-red-100 bg-red-50 mb-4"
+        >
+          <CalendarOff class="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <p class="text-red-700 text-xs sm:text-sm">
+            Clock In tidak tersedia hari ini (Sabtu/Minggu). Hubungi Superadmin/Manager di menu Settings jika Anda perlu masuk lembur.
+          </p>
+        </div>
+
+        <!-- Overtime notice (weekend, but allowed) -->
+        <div
+          v-else-if="isWeekend && !isCheckedIn"
+          class="flex items-start gap-2.5 px-4 py-3 rounded-[10px] border border-purple-100 bg-purple-50 mb-4"
+        >
+          <Zap class="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+          <p class="text-purple-700 text-xs sm:text-sm">
+            Hari ini Sabtu/Minggu -- clock in akan tercatat sebagai lembur (overtime).
+          </p>
+        </div>
+
+        <!-- Late arrival notice -->
+        <div
+          v-if="lateInfo"
+          class="flex items-start gap-2.5 px-4 py-3 rounded-[10px] border border-amber-100 bg-amber-50 mb-4"
+        >
+          <Timer class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <p class="text-amber-700 text-xs sm:text-sm">{{ lateInfo }}</p>
         </div>
 
         <!-- Icon + Prompt -->

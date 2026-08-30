@@ -8,6 +8,7 @@ const SdmFields = () => import('@/views/admin/settings/SdmFields.vue');
 const CertificateSettings = () => import('@/views/admin/settings/CertificateSettings.vue');
 const BackupDatabase = () => import('@/views/admin/settings/BackupDatabase.vue');
 const GreetingSettings = () => import('@/views/admin/settings/GreetingSettings.vue');
+const AttendanceSettings = () => import('@/views/admin/settings/AttendanceSettings.vue');
 export default [
   {
     path: 'settings',
@@ -58,5 +59,10 @@ export default [
     path: 'settings/greetings',
     name: 'admin.settings.greetings',
     component: GreetingSettings,
+  },
+  {
+    path: 'settings/attendance',
+    name: 'admin.settings.attendance',
+    component: AttendanceSettings,
   },
 ];
