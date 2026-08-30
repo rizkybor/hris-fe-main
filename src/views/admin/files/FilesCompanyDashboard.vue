@@ -157,7 +157,7 @@ const handleDelete = async () => {
               >
                 {{ statistics.total_archives }}
               </p>
-              <p class="text-brand-white-80 text-base font-normal">
+              <p class="text-brand-white-80 text-sm font-normal">
                 Company document storage
               </p>
             </div>
@@ -192,7 +192,7 @@ const handleDelete = async () => {
       >
         <div>
           <p class="text-brand-dark text-sm font-medium">New Archive</p>
-          <p class="text-brand-light text-xs mt-1">Store a permanent document</p>
+          <p class="text-brand-light text-sm mt-1">Store a permanent document</p>
         </div>
         <router-link
           :to="{ name: 'admin.files-company.create' }"
@@ -232,7 +232,7 @@ const handleDelete = async () => {
       <div
         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
       >
-        <h3 class="text-brand-dark text-lg font-bold">File Archives</h3>
+        <h3 class="text-brand-dark text-base font-bold">File Archives</h3>
 
         <div class="relative w-full sm:w-64">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">

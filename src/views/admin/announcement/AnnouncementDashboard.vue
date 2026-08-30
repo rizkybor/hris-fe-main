@@ -158,8 +158,8 @@ onMounted(() => {
           <Megaphone class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div class="min-w-0">
-          <h3 class="text-brand-dark text-lg font-bold">Announcements</h3>
-          <p class="text-brand-light text-sm">Broadcast information to the entire or selected teams</p>
+          <h3 class="text-brand-dark text-base font-bold">Announcements</h3>
+          <p class="text-brand-light text-xs">Broadcast information to the entire or selected teams</p>
         </div>
       </div>
       <button
