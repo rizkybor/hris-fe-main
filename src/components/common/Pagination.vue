@@ -1,5 +1,5 @@
 <script setup>
-import { ChevronLeft, ChevronRight } from "lucide-vue-next";
+import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-vue-next";
 import { computed } from "vue";
 
 const props = defineProps({
@@ -99,14 +99,19 @@ const goToNext = () => {
       </p>
       <div v-if="showPerPage" class="flex items-center gap-2">
         <span class="text-brand-light text-sm">Show</span>
-        <select
-          :value="perPage"
-          @change="handlePerPageChange(parseInt($event.target.value))"
-          :disabled="loading"
-          class="px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all duration-300 bg-white disabled:opacity-50"
-        >
-          <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
-        </select>
+        <div class="relative">
+          <select
+            :value="perPage"
+            @change="handlePerPageChange(parseInt($event.target.value))"
+            :disabled="loading"
+            class="select-soft"
+          >
+            <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
       </div>
     </div>
 

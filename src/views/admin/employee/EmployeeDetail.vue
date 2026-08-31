@@ -48,6 +48,7 @@ import {
   Award,
   DoorOpen,
   ChevronRight,
+  ChevronDown,
 } from "lucide-vue-next";
 import { useScrollFade } from "@/composables/useScrollFade";
 
@@ -1080,10 +1081,15 @@ onMounted(() => {
         <form @submit.prevent="submitResignation" class="p-4 space-y-3.5">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
-            <select v-model="resignForm.type" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="resign">Resignation</option>
-              <option value="terminated">Termination</option>
-            </select>
+            <div class="relative">
+              <select v-model="resignForm.type" class="select-soft">
+                <option value="resign">Resignation</option>
+                <option value="terminated">Termination</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Reason</label>

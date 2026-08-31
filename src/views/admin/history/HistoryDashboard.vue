@@ -207,14 +207,19 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
             />
           </div>
 
-          <select
-            v-model="categoryFilter"
-            class="w-full md:w-auto px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
-            @change="fetchData(1)"
-          >
-            <option value="">All Categories</option>
-            <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
-          </select>
+          <div class="relative w-full md:w-auto">
+            <select
+              v-model="categoryFilter"
+              class="select-soft"
+              @change="fetchData(1)"
+            >
+              <option value="">All Categories</option>
+              <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
+            </select>
+            <ChevronDown
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            />
+          </div>
 
           <input
             v-model="dateFrom"

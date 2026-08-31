@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
-import { FileCheck2, Wallet } from "lucide-vue-next";
+import { FileCheck2, Wallet, ChevronDown } from "lucide-vue-next";
 import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
 import { useInvoiceStore } from "@/stores/invoice";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
@@ -188,12 +188,17 @@ const handleSubmit = async () => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="md:col-span-2">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Related Invoice (optional)</label>
-            <select v-model="form.invoice_id" @change="handleInvoiceSelect" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="">- Not related to an invoice -</option>
-              <option v-for="invoice in invoices" :key="invoice.id" :value="invoice.id">
-                {{ invoice.invoice_number }} - {{ invoice.client_name }}
-              </option>
-            </select>
+            <div class="relative w-full">
+              <select v-model="form.invoice_id" @change="handleInvoiceSelect" class="select-soft">
+                <option value="">- Not related to an invoice -</option>
+                <option v-for="invoice in invoices" :key="invoice.id" :value="invoice.id">
+                  {{ invoice.invoice_number }} - {{ invoice.client_name }}
+                </option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
           <template v-if="!isEditMode">
             <div class="md:col-span-2">
@@ -238,10 +243,15 @@ const handleSubmit = async () => {
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Payment Status</label>
-            <select v-model="form.payment_status" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="paid">Paid</option>
-              <option value="partial">Partial</option>
-            </select>
+            <div class="relative w-full">
+              <select v-model="form.payment_status" class="select-soft">
+                <option value="paid">Paid</option>
+                <option value="partial">Partial</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
           <div class="md:col-span-2">
             <label class="flex items-center gap-2 text-sm font-semibold text-brand-dark">
@@ -255,9 +265,14 @@ const handleSubmit = async () => {
           <template v-if="applyPph23">
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 Type</label>
-              <select v-model="form.pph23_type" @change="handlePph23TypeChange" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-                <option v-for="type in pphTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-              </select>
+              <div class="relative w-full">
+                <select v-model="form.pph23_type" @change="handlePph23TypeChange" class="select-soft">
+                  <option v-for="type in pphTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+                </select>
+                <ChevronDown
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                />
+              </div>
             </div>
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 (%)</label>

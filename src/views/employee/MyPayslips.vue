@@ -15,6 +15,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Wallet,
+  ChevronDown,
 } from "lucide-vue-next";
 import Pagination from "@/components/admin/team/Pagination.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
@@ -175,18 +176,23 @@ const totalDeductions = computed(() => {
             placeholder="Search payslips by month or year..." v-model="filters.search" />
         </div>
 
-        <select v-model.number="filters.year"
-          class="px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300">
-          <option :value="new Date().getFullYear()">
-            {{ new Date().getFullYear() }}
-          </option>
-          <option :value="new Date().getFullYear() - 1">
-            {{ new Date().getFullYear() - 1 }}
-          </option>
-          <option :value="new Date().getFullYear() - 2">
-            {{ new Date().getFullYear() - 2 }}
-          </option>
-        </select>
+        <div class="relative">
+          <select v-model.number="filters.year"
+            class="select-soft">
+            <option :value="new Date().getFullYear()">
+              {{ new Date().getFullYear() }}
+            </option>
+            <option :value="new Date().getFullYear() - 1">
+              {{ new Date().getFullYear() - 1 }}
+            </option>
+            <option :value="new Date().getFullYear() - 2">
+              {{ new Date().getFullYear() - 2 }}
+            </option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
       </div>
     </div>
 

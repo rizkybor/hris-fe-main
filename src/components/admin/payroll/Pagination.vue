@@ -1,5 +1,5 @@
 <script setup>
-import { ChevronLeft, ChevronRight } from "lucide-vue-next";
+import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-vue-next";
 import { computed } from "vue";
 
 const props = defineProps({
@@ -110,16 +110,21 @@ const goToNext = () => {
         <p class="text-[#6B7280] font-['Plus_Jakarta_Sans'] text-[14px] font-normal">
           Show
         </p>
-        <select
-          :value="perPage"
-          @change="handlePerPageChange(parseInt($event.target.value))"
-          :disabled="loading"
-          class="px-3 py-2 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all duration-300 bg-white appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <option v-for="option in perPageOptions" :key="option" :value="option">
-            {{ option }}
-          </option>
-        </select>
+        <div class="relative">
+          <select
+            :value="perPage"
+            @change="handlePerPageChange(parseInt($event.target.value))"
+            :disabled="loading"
+            class="select-soft"
+          >
+            <option v-for="option in perPageOptions" :key="option" :value="option">
+              {{ option }}
+            </option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
         <p class="text-[#6B7280] font-['Plus_Jakarta_Sans'] text-[14px] font-normal">
           per page
         </p>

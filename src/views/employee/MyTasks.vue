@@ -366,13 +366,12 @@ onMounted(async () => {
             </div>
 
             <!-- Status -->
-            <div class="pt-3 border-t border-gray-100">
+            <div class="pt-3 border-t border-gray-100 relative" @click.stop>
               <select
                 :value="task.my_assignment?.status"
                 @change="handleStaffTaskStatusChange(task, $event)"
-                @click.stop
                 :disabled="updatingStaffTaskId === task.id"
-                class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-[8px] text-xs font-medium hover:border-[#0C51D9] focus:border-[#0C51D9] outline-none transition-all disabled:opacity-50 bg-white"
+                class="select-soft"
               >
                 <option
                   v-for="opt in STAFF_TASK_STATUS_OPTIONS"
@@ -382,6 +381,10 @@ onMounted(async () => {
                   {{ opt.label }}
                 </option>
               </select>
+
+              <ChevronDown
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
             </div>
           </div>
         </div>
@@ -432,7 +435,7 @@ onMounted(async () => {
             <div class="relative">
               <select
                 v-model="projectFilter"
-                class="pl-3.5 pr-8 py-2.5 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-medium appearance-none bg-white max-w-[160px]"
+                class="select-soft max-w-[160px]"
               >
                 <option value="">All Projects</option>
 
@@ -454,7 +457,7 @@ onMounted(async () => {
             <div class="relative">
               <select
                 v-model="statusFilter"
-                class="pl-3.5 pr-8 py-2.5 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-medium appearance-none bg-white"
+                class="select-soft"
               >
                 <option value="">All Status</option>
 
@@ -617,13 +620,12 @@ onMounted(async () => {
                 </div>
 
                 <!-- Status -->
-                <div class="pt-3 border-t border-gray-100">
+                <div class="pt-3 border-t border-gray-100 relative" @click.stop>
                   <select
                     :value="task.status"
                     @change="handleStatusChange(task, $event)"
-                    @click.stop
                     :disabled="updatingTaskId === task.id"
-                    class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-[8px] text-xs font-medium hover:border-[#0C51D9] focus:border-[#0C51D9] outline-none transition-all disabled:opacity-50 bg-white"
+                    class="select-soft"
                   >
                     <option
                       v-for="opt in STATUS_OPTIONS"
@@ -633,6 +635,10 @@ onMounted(async () => {
                       {{ opt.label }}
                     </option>
                   </select>
+
+                  <ChevronDown
+                    class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                  />
                 </div>
               </div>
             </div>
@@ -690,19 +696,25 @@ onMounted(async () => {
               Your Status
             </label>
 
-            <select
-              :value="detailStaffTask?.my_assignment?.status"
-              @change="handleStaffTaskStatusChange(detailStaffTask, $event)"
-              class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm"
-            >
-              <option
-                v-for="opt in STAFF_TASK_STATUS_OPTIONS"
-                :key="opt.value"
-                :value="opt.value"
+            <div class="relative">
+              <select
+                :value="detailStaffTask?.my_assignment?.status"
+                @change="handleStaffTaskStatusChange(detailStaffTask, $event)"
+                class="select-soft"
               >
-                {{ opt.label }}
-              </option>
-            </select>
+                <option
+                  v-for="opt in STAFF_TASK_STATUS_OPTIONS"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  {{ opt.label }}
+                </option>
+              </select>
+
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
 
           <!-- Comments -->

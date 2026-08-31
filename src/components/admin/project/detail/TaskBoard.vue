@@ -341,7 +341,7 @@ onUnmounted(() => sentinelObserver?.disconnect());
           </div>
           <select
             v-model="priorityFilter"
-            class="pl-8 pr-8 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-medium appearance-none bg-white"
+            class="select-soft select-soft-icon-pl"
           >
             <option value="">All Priorities</option>
             <option value="urgent">Urgent</option>
@@ -355,7 +355,7 @@ onUnmounted(() => sentinelObserver?.disconnect());
         <div v-if="typeSuggestions.length" class="relative">
           <select
             v-model="typeFilter"
-            class="pl-3.5 pr-8 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-medium appearance-none bg-white max-w-[160px]"
+            class="select-soft max-w-[160px]"
           >
             <option value="">All Types</option>
             <option v-for="s in typeSuggestions" :key="s.type" :value="s.type">{{ s.type }}</option>

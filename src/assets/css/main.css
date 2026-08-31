@@ -1212,10 +1212,6 @@ video {
   height: 6rem;
 }
 
-.h-28 {
-  height: 7rem;
-}
-
 .h-3 {
   height: 0.75rem;
 }
@@ -1226,6 +1222,10 @@ video {
 
 .h-32 {
   height: 8rem;
+}
+
+.h-36 {
+  height: 9rem;
 }
 
 .h-4 {
@@ -3771,16 +3771,8 @@ video {
   padding-right: 1.25rem;
 }
 
-.pr-6 {
-  padding-right: 1.5rem;
-}
-
 .pr-8 {
   padding-right: 2rem;
-}
-
-.pr-9 {
-  padding-right: 2.25rem;
 }
 
 .pt-1 {
@@ -4865,6 +4857,58 @@ html {
   background-color: #FEF3C7;
 }
 
+/* Unified dropdown style for every plain <select> in the app -- white
+   base with a soft blue tint on hover/focus (instead of the harsh
+   hover:border-2 solid-blue treatment several pages used individually),
+   so every dropdown reads as one calm, professional family. Always pair
+   with a wrapping `position: relative` element and an absolutely
+   positioned chevron icon (`pointer-events-none`) since this hides the
+   native arrow via appearance:none. */
+
+.select-soft {
+  display: block;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #DCDEDD;
+  border-radius: 8px;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #0C1C3C;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.select-soft:hover {
+  border-color: #93C5FD;
+  background-color: #F8FAFC;
+}
+
+.select-soft:focus {
+  outline: none;
+  border-color: #60A5FA;
+  background-color: #EFF6FF;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+.select-soft:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #F9FAFB;
+}
+
+/* Extra left clearance for a `.select-soft` that also has a leading icon
+   (e.g. Filter/Building/Briefcase) inside its wrapper -- declared after
+   `.select-soft` so this longhand wins over that rule's shorthand
+   `padding` at equal specificity. */
+
+.select-soft-icon-pl {
+  padding-left: 2.5rem;
+}
+
 /* Typography styles */
 
 .text-brand-dark {
@@ -5175,6 +5219,11 @@ html {
 .hover\:border-\[\#10B981\]:hover {
   --tw-border-opacity: 1;
   border-color: rgb(16 185 129 / var(--tw-border-opacity, 1));
+}
+
+.hover\:border-\[\#93C5FD\]:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(147 197 253 / var(--tw-border-opacity, 1));
 }
 
 .hover\:border-\[\#B8C0CC\]:hover {
@@ -5528,9 +5577,9 @@ html {
   border-color: rgb(12 81 217 / var(--tw-border-opacity, 1));
 }
 
-.focus\:border-blue-500:focus {
+.focus\:border-\[\#60A5FA\]:focus {
   --tw-border-opacity: 1;
-  border-color: rgb(59 130 246 / var(--tw-border-opacity, 1));
+  border-color: rgb(96 165 250 / var(--tw-border-opacity, 1));
 }
 
 .focus\:border-violet-500:focus {
@@ -5565,6 +5614,11 @@ html {
   --tw-ring-color: rgb(12 81 217 / var(--tw-ring-opacity, 1));
 }
 
+.focus\:ring-\[\#60A5FA\]:focus {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(96 165 250 / var(--tw-ring-opacity, 1));
+}
+
 .focus\:ring-\[\#D90C0C\]:focus {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(217 12 12 / var(--tw-ring-opacity, 1));
@@ -5573,11 +5627,6 @@ html {
 .focus\:ring-blue-100:focus {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(219 234 254 / var(--tw-ring-opacity, 1));
-}
-
-.focus\:ring-blue-500:focus {
-  --tw-ring-opacity: 1;
-  --tw-ring-color: rgb(59 130 246 / var(--tw-ring-opacity, 1));
 }
 
 .focus\:ring-green-500:focus {

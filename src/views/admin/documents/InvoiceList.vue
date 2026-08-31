@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { Receipt, Plus, Download, FileText, Pencil, CheckCircle2, Ban, Trash2, Search, ArrowLeft } from "lucide-vue-next";
+import { Receipt, Plus, Download, FileText, Pencil, CheckCircle2, Ban, Trash2, Search, ArrowLeft, ChevronDown } from "lucide-vue-next";
 import { useInvoiceStore } from "@/stores/invoice";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
@@ -139,16 +139,21 @@ const formatDate = (date) =>
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
-        <select
-          v-model="statusFilter"
-          @change="handleFilterChange"
-          class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        >
-          <option value="">All Statuses</option>
-          <option value="unpaid">Unpaid</option>
-          <option value="paid">Paid</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        <div class="relative">
+          <select
+            v-model="statusFilter"
+            @change="handleFilterChange"
+            class="select-soft"
+          >
+            <option value="">All Statuses</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="paid">Paid</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
       </div>
 
       <SkeletonTable v-if="loading" :rows="6" :cols="10" />

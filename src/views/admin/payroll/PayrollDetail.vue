@@ -12,6 +12,7 @@ import {
   Download,
   CheckCircle,
   X,
+  ChevronDown,
 } from "lucide-vue-next";
 import { debounce } from "lodash-es";
 import Pagination from "@/components/admin/payroll/Pagination.vue";
@@ -361,13 +362,18 @@ const handleMarkAsPaid = async () => {
               class="w-full sm:w-auto pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300 text-sm" />
           </div>
 
-          <select v-model="departmentFilter"
-            class="w-full sm:w-auto px-3 py-2 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300 text-sm">
-            <option value="">All Positions</option>
-            <option v-for="position in positions" :key="position" :value="position">
-              {{ position }}
-            </option>
-          </select>
+          <div class="relative w-full sm:w-auto">
+            <select v-model="departmentFilter"
+              class="select-soft">
+              <option value="">All Positions</option>
+              <option v-for="position in positions" :key="position" :value="position">
+                {{ position }}
+              </option>
+            </select>
+            <ChevronDown
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            />
+          </div>
         </div>
       </div>
 

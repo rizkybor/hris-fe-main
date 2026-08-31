@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, defineAsyncComponent } from "vue";
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
-import { WalletIcon, Eye, EyeOff } from "lucide-vue-next";
+import { WalletIcon, Eye, EyeOff, ChevronDown } from "lucide-vue-next";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -156,13 +156,17 @@ const chartSeries = computed(() => [{ name: "Budget", data: chartSeriesData.valu
           </button>
         </div>
 
-        <select
-          v-if="viewMode === 'monthly'"
-          v-model.number="selectedYear"
-          class="px-3 py-2 border border-[#DCDEDD] rounded-[10px] text-sm font-semibold hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all"
-        >
-          <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
-        </select>
+        <div v-if="viewMode === 'monthly'" class="relative">
+          <select
+            v-model.number="selectedYear"
+            class="select-soft"
+          >
+            <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
       </div>
     </div>
 

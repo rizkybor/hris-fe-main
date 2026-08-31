@@ -14,6 +14,7 @@ import {
   PiggyBank,
   Star,
   X,
+  ChevronDown,
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
 import { useProjectStore } from "@/stores/project";
@@ -456,30 +457,40 @@ onMounted(() => {
         </div>
         <div v-if="activeTab === 'project'" class="flex-1">
           <label class="text-xs text-brand-light font-medium mb-1 block">Status</label>
-          <select
-            v-model="projectStatus"
-            @change="loadReport(1)"
-            class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          >
-            <option value="">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="planning">Planning</option>
-            <option value="active">Active</option>
-            <option value="on_hold">On Hold</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+          <div class="relative w-full">
+            <select
+              v-model="projectStatus"
+              @change="loadReport(1)"
+              class="select-soft"
+            >
+              <option value="">All Statuses</option>
+              <option value="draft">Draft</option>
+              <option value="planning">Planning</option>
+              <option value="active">Active</option>
+              <option value="on_hold">On Hold</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <ChevronDown
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            />
+          </div>
         </div>
         <div v-if="activeTab === 'project_expense'" class="flex-1">
           <label class="text-xs text-brand-light font-medium mb-1 block">Project</label>
-          <select
-            v-model="projectExpenseProjectId"
-            @change="loadReport(1)"
-            class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          >
-            <option value="">All Projects</option>
-            <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
-          </select>
+          <div class="relative w-full">
+            <select
+              v-model="projectExpenseProjectId"
+              @change="loadReport(1)"
+              class="select-soft"
+            >
+              <option value="">All Projects</option>
+              <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
+            </select>
+            <ChevronDown
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            />
+          </div>
         </div>
         <div v-if="activeTab === 'staff_raport'" class="flex-1">
           <label class="text-xs text-brand-light font-medium mb-1 block">Name</label>
@@ -493,14 +504,19 @@ onMounted(() => {
         </div>
         <div v-if="activeTab === 'staff_raport'" class="flex-1">
           <label class="text-xs text-brand-light font-medium mb-1 block">Employment Type</label>
-          <select
-            v-model="staffRaportEmploymentType"
-            @change="loadReport(1)"
-            class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          >
-            <option value="">All Employment Types</option>
-            <option v-for="opt in employmentTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-          </select>
+          <div class="relative w-full">
+            <select
+              v-model="staffRaportEmploymentType"
+              @change="loadReport(1)"
+              class="select-soft"
+            >
+              <option value="">All Employment Types</option>
+              <option v-for="opt in employmentTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+            <ChevronDown
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            />
+          </div>
         </div>
       </div>
       <p v-if="activeTab === 'staff_raport'" class="text-xs text-gray-400 -mt-1 mb-2">
@@ -905,11 +921,16 @@ onMounted(() => {
           <div class="pt-3 border-t border-[#DCDEDD]">
             <label class="text-sm font-semibold text-brand-dark mb-2 block">Download PDF for period</label>
             <div class="flex items-center gap-3">
-              <select v-model="raportPeriod" class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="all">All Time</option>
-              </select>
+              <div class="relative flex-1">
+                <select v-model="raportPeriod" class="select-soft">
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                  <option value="all">All Time</option>
+                </select>
+                <ChevronDown
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                />
+              </div>
               <button
                 @click="handleDownloadPdf"
                 :disabled="downloadingPdf"

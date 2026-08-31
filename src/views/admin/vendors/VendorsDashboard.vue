@@ -7,7 +7,7 @@ import { storeToRefs } from "pinia";
 import { ref, onMounted, watch, computed } from "vue";
 import { debounce } from "lodash-es";
 import { can } from "@/helpers/permissionHelper";
-import { Plus, Briefcase, Search, SearchX } from "lucide-vue-next";
+import { Plus, Briefcase, Search, SearchX, ChevronDown } from "lucide-vue-next";
 import { useVendorsStore } from "@/stores/vendor";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
@@ -115,16 +115,21 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
             v-model="filters.search"
           />
         </div>
-        <select
-          class="w-full sm:w-auto px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-          v-model="filters.status"
-        >
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="completed">Completed</option>
-          <option value="on-hold">On Hold</option>
-          <option value="overdue">Overdue</option>
-        </select>
+        <div class="relative w-full sm:w-auto">
+          <select
+            class="select-soft"
+            v-model="filters.status"
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="on-hold">On Hold</option>
+            <option value="overdue">Overdue</option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
       </div>
     </div>
 
