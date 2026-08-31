@@ -366,25 +366,27 @@ onMounted(async () => {
             </div>
 
             <!-- Status -->
-            <div class="pt-3 border-t border-gray-100 relative" @click.stop>
-              <select
-                :value="task.my_assignment?.status"
-                @change="handleStaffTaskStatusChange(task, $event)"
-                :disabled="updatingStaffTaskId === task.id"
-                class="select-soft"
-              >
-                <option
-                  v-for="opt in STAFF_TASK_STATUS_OPTIONS"
-                  :key="opt.value"
-                  :value="opt.value"
+            <div class="pt-3 border-t border-gray-100" @click.stop>
+              <div class="relative">
+                <select
+                  :value="task.my_assignment?.status"
+                  @change="handleStaffTaskStatusChange(task, $event)"
+                  :disabled="updatingStaffTaskId === task.id"
+                  class="select-soft"
                 >
-                  {{ opt.label }}
-                </option>
-              </select>
+                  <option
+                    v-for="opt in STAFF_TASK_STATUS_OPTIONS"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >
+                    {{ opt.label }}
+                  </option>
+                </select>
 
-              <ChevronDown
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-              />
+                <ChevronDown
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -449,7 +451,7 @@ onMounted(async () => {
               </select>
 
               <ChevronDown
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
               />
             </div>
 
@@ -471,7 +473,7 @@ onMounted(async () => {
               </select>
 
               <ChevronDown
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
               />
             </div>
 
@@ -620,25 +622,27 @@ onMounted(async () => {
                 </div>
 
                 <!-- Status -->
-                <div class="pt-3 border-t border-gray-100 relative" @click.stop>
-                  <select
-                    :value="task.status"
-                    @change="handleStatusChange(task, $event)"
-                    :disabled="updatingTaskId === task.id"
-                    class="select-soft"
-                  >
-                    <option
-                      v-for="opt in STATUS_OPTIONS"
-                      :key="opt.value"
-                      :value="opt.value"
+                <div class="pt-3 border-t border-gray-100" @click.stop>
+                  <div class="relative">
+                    <select
+                      :value="task.status"
+                      @change="handleStatusChange(task, $event)"
+                      :disabled="updatingTaskId === task.id"
+                      class="select-soft"
                     >
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                      <option
+                        v-for="opt in STATUS_OPTIONS"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >
+                        {{ opt.label }}
+                      </option>
+                    </select>
 
-                  <ChevronDown
-                    class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-                  />
+                    <ChevronDown
+                      class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
