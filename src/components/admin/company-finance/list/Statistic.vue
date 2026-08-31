@@ -13,21 +13,14 @@ const { loadingStatistics } = storeToRefs(store);
 const statisticsData = computed(() => ({
   fixed_cost: {
     summary: store.statistics?.fixed_cost?.summary ?? {
-      total_budget: 0,
       total_actual: 0,
-      variance: 0,
       total_items: 0,
     },
     items: store.statistics?.fixed_cost?.items ?? [],
   },
   sdm_resource: {
     summary: store.statistics?.sdm_resource?.summary ?? {
-      total_budget: 0,
       total_actual: 0,
-      variance: 0,
-      total_status_green: 0,
-      total_status_amber: 0,
-      total_status_red: 0,
     },
     items: store.statistics?.sdm_resource?.items ?? [],
   },
@@ -48,34 +41,13 @@ const statisticsData = computed(() => ({
 }));
 
 // Fixed Cost
-const fixedBudget = computed(
-  () => statisticsData.value.fixed_cost.summary.total_budget
-);
 const fixedActual = computed(
   () => statisticsData.value.fixed_cost.summary.total_actual
 );
-const fixedVariance = computed(
-  () => statisticsData.value.fixed_cost.summary.variance
-);
 
 // SDM Resource
-const sdmBudget = computed(
-  () => statisticsData.value.sdm_resource.summary.total_budget
-);
 const sdmActual = computed(
   () => statisticsData.value.sdm_resource.summary.total_actual
-);
-const sdmVariance = computed(
-  () => statisticsData.value.sdm_resource.summary.variance
-);
-const totalStatusGreen = computed(
-  () => statisticsData.value.sdm_resource.summary.total_status_green
-);
-const totalStatusAmber = computed(
-  () => statisticsData.value.sdm_resource.summary.total_status_amber
-);
-const totalStatusRed = computed(
-  () => statisticsData.value.sdm_resource.summary.total_status_red
 );
 
 // Infrastructure
@@ -262,27 +234,12 @@ const chartOptions = computed(() => ({
         <div class="mt-auto">
           <template v-if="isFixedCostVisible">
             <p class="text-lg font-extrabold text-success">
-              {{ loadingStatistics ? "-" : formatRp(fixedActual) }} /
-              <span class="text-gray-300">{{
-                loadingStatistics ? "-" : formatRp(fixedBudget)
-              }}</span>
+              {{ loadingStatistics ? "-" : formatRp(fixedActual) }}
             </p>
-            <p class="text-success text-base font-medium">
-              Actual /
-              <span class="text-gray-300">Budget </span>
-            </p>
-            <p
-              class="mt-2 text-sm font-semibold px-2 py-1 rounded-lg inline-block"
-              :class="{
-                'bg-gray-100 text-gray-800': fixedVariance >= 0,
-                'bg-red-100 text-red-800': fixedVariance < 0,
-              }"
-            >
-              Variance: {{ loadingStatistics ? "-" : formatRp(fixedVariance) }}
-            </p>
+            <p class="text-success text-base font-medium">Actual</p>
           </template>
           <p v-else class="text-lg font-extrabold text-success tracking-widest">
-            Rp •••••• / <span class="text-gray-300">Rp ••••••</span>
+            Rp ••••••
           </p>
         </div>
       </div>
@@ -313,49 +270,12 @@ const chartOptions = computed(() => ({
         <div class="mt-auto">
           <template v-if="isSdmResourceVisible">
             <p class="text-lg font-extrabold text-success">
-              {{ loadingStatistics ? "-" : formatRp(sdmActual) }} /
-              <span class="text-gray-300">{{
-                loadingStatistics ? "-" : formatRp(sdmBudget)
-              }}</span>
+              {{ loadingStatistics ? "-" : formatRp(sdmActual) }}
             </p>
-            <p class="text-success text-base font-medium">
-              Actual /
-              <span class="text-gray-300">Budget </span>
-            </p>
+            <p class="text-success text-base font-medium">Actual</p>
           </template>
           <p v-else class="text-lg font-extrabold text-success tracking-widest">
-            Rp •••••• / <span class="text-gray-300">Rp ••••••</span>
-          </p>
-          <!-- Divider tipis -->
-          <div class="my-2 border-t border-gray-200"></div>
-
-          <div class="mt-2 flex gap-2 text-sm font-medium">
-            <span
-              class="px-3 py-1 rounded-full bg-green-100 text-green-800 shadow-sm"
-            >
-              Green: {{ totalStatusGreen }}
-            </span>
-            <span
-              class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 shadow-sm"
-            >
-              Amber: {{ totalStatusAmber }}
-            </span>
-            <span
-              class="px-3 py-1 rounded-full bg-red-100 text-red-800 shadow-sm"
-            >
-              Red: {{ totalStatusRed }}
-            </span>
-          </div>
-
-          <p
-            v-if="isSdmResourceVisible"
-            class="mt-2 text-sm font-semibold px-2 py-1 rounded-lg inline-block"
-            :class="{
-              'bg-gray-100 text-gray-800': sdmVariance >= 0,
-              'bg-red-100 text-red-800': sdmVariance < 0,
-            }"
-          >
-            Variance: {{ loadingStatistics ? "-" : formatRp(sdmVariance) }}
+            Rp ••••••
           </p>
         </div>
       </div>
