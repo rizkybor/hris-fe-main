@@ -22,6 +22,7 @@ import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
+import { calculateMarketingFee } from "@/utils/marketingFee";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import RateSettingModal from "@/components/admin/project-calculator/RateSettingModal.vue";
@@ -381,11 +382,14 @@ const onLandingPageRateSettingSaved = async () => {
                 {{ scenarioMeta[calc.scenario].label }}
               </span>
             </div>
-            <p class="text-brand-light text-sm mt-0.5">
+            <p class="text-brand-light text-xs mt-0.5">
               <span v-if="calc.client_name">{{ calc.client_name }} &middot; </span>
               <span class="inline-flex items-center gap-1">
                 <ClockIcon class="w-3.5 h-3.5" />
                 {{ calc.estimated_duration_weeks ?? "-" }} weeks estimated
+              </span>
+              <span class="text-purple-600">
+                &middot; Fee Ref: {{ calculateMarketingFee(calc.grand_total).percent }}% ({{ formatRupiahCompact(calculateMarketingFee(calc.grand_total).amount) }})
               </span>
             </p>
           </div>

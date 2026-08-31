@@ -14,6 +14,7 @@ import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { storeToRefs } from "pinia";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
+import { calculateMarketingFee } from "@/utils/marketingFee";
 import { formatToClientTimezone } from "@/helpers/format";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
@@ -48,6 +49,10 @@ const scenarioMeta = {
 const landingPageItem = computed(() => (calc.value?.scenario === "landing_page" ? calc.value.items?.[0] : null));
 
 const displayTotal = computed(() => (calc.value?.include_ppn ? calc.value.total_with_ppn : calc.value?.grand_total));
+
+// Reference only -- a fair starting point for whoever brought in this deal
+// (Marketing / B2B-B2C Sales), never added to the client-facing total.
+const marketingFee = computed(() => calculateMarketingFee(calc.value?.grand_total));
 
 const printQuote = () => window.print();
 </script>
@@ -236,6 +241,17 @@ const printQuote = () => window.print();
             </div>
             <p class="text-gray-400 text-xs">Dipotong PPh oleh klien sesuai peraturan perpajakan yang berlaku</p>
           </template>
+
+          <div class="flex items-center justify-between mt-1.5 p-2.5 rounded-[12px] bg-purple-50 border border-purple-100 text-xs">
+            <span class="text-purple-800 font-medium">
+              Fee Marketing / B2B-B2C Sales
+              <span class="block text-purple-500 font-normal">Reference only, not added to total</span>
+            </span>
+            <span class="text-purple-800 font-bold text-right shrink-0 ml-2">
+              {{ marketingFee.percent }}%
+              <span class="block font-normal">{{ formatRupiah(marketingFee.amount) }}</span>
+            </span>
+          </div>
         </div>
       </div>
 
