@@ -902,7 +902,16 @@ onMounted(() => {
                   {{ staffRaportDetail.performance_review.period }}
                   <span v-if="staffRaportDetail.performance_review.reviewer_name"> • Reviewed by {{ staffRaportDetail.performance_review.reviewer_name }}</span>
                 </span>
-                <span class="font-semibold text-[#0C51D9]">{{ staffRaportDetail.performance_review.overall_rating }} / 5</span>
+                <span class="flex items-center gap-0.5">
+                  <Star
+                    v-for="i in 5"
+                    :key="i"
+                    class="w-3.5 h-3.5"
+                    :class="i <= Math.round(staffRaportDetail.performance_review.overall_rating) ? 'text-amber-500' : 'text-gray-200'"
+                    :fill="i <= Math.round(staffRaportDetail.performance_review.overall_rating) ? 'currentColor' : 'none'"
+                  />
+                  <span class="font-semibold text-[#0C51D9] ml-1">{{ staffRaportDetail.performance_review.overall_rating }}/5</span>
+                </span>
               </div>
               <div v-if="staffRaportDetail.performance_review.category_scores" class="flex flex-wrap gap-2">
                 <span
