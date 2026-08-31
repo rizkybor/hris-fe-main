@@ -48,6 +48,7 @@ import {
   Award,
   DoorOpen,
   ChevronRight,
+  ChevronDown,
 } from "lucide-vue-next";
 import { useScrollFade } from "@/composables/useScrollFade";
 
@@ -865,8 +866,15 @@ onMounted(() => {
           <div v-for="review in performanceReviews" :key="review.id" class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5">
             <div class="flex items-center justify-between mb-1.5">
               <p class="text-brand-dark text-sm font-semibold">{{ review.period }}</p>
-              <span class="px-1.5 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700">
-                {{ review.overall_rating }} / 5
+              <span class="flex items-center gap-0.5">
+                <Star
+                  v-for="i in 5"
+                  :key="i"
+                  class="w-3.5 h-3.5"
+                  :class="i <= Math.round(review.overall_rating) ? 'text-amber-500' : 'text-gray-200'"
+                  :fill="i <= Math.round(review.overall_rating) ? 'currentColor' : 'none'"
+                />
+                <span class="text-xs font-semibold text-brand-dark ml-1">{{ review.overall_rating }}/5</span>
               </span>
             </div>
             <p v-if="review.strengths" class="text-brand-light text-xs mb-1"><strong>Kelebihan:</strong> {{ review.strengths }}</p>
@@ -1080,10 +1088,15 @@ onMounted(() => {
         <form @submit.prevent="submitResignation" class="p-4 space-y-3.5">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
-            <select v-model="resignForm.type" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="resign">Resignation</option>
-              <option value="terminated">Termination</option>
-            </select>
+            <div class="relative">
+              <select v-model="resignForm.type" class="select-soft">
+                <option value="resign">Resignation</option>
+                <option value="terminated">Termination</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Reason</label>

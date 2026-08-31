@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { Award, Settings, Plus, Trash2, Info, ClipboardPaste, Loader2 } from "lucide-vue-next";
+import { Award, Settings, Plus, Trash2, Info, ClipboardPaste, Loader2, ChevronDown } from "lucide-vue-next";
 import { useCertificateStore } from "@/stores/certificate";
 import { can } from "@/helpers/permissionHelper";
 
@@ -177,10 +177,15 @@ const handleSubmit = async () => {
           </div>
           <div class="md:col-span-2">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Background Template</label>
-            <select v-model="form.certificate_template_id" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="">Default Premium (system default)</option>
-              <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">{{ tpl.name }}</option>
-            </select>
+            <div class="relative w-full">
+              <select v-model="form.certificate_template_id" class="select-soft">
+                <option value="">Default Premium (system default)</option>
+                <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">{{ tpl.name }}</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
         </div>
 

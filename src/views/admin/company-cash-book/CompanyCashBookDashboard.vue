@@ -14,6 +14,7 @@ import {
   Settings2,
   Eye,
   EyeOff,
+  ChevronDown,
 } from "lucide-vue-next";
 import { useCompanyCashTransactionStore } from "@/stores/companyCashTransaction";
 import { useProjectStore } from "@/stores/project";
@@ -254,14 +255,19 @@ const isBalanceVisible = ref(false);
     <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
       <div class="mb-4 max-w-xs">
         <label class="text-xs text-brand-dark mb-1.5 block">Filter by Project</label>
-        <select
-          v-model="projectFilter"
-          @change="fetchData(1)"
-          class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        >
-          <option value="">All Projects</option>
-          <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
-        </select>
+        <div class="relative">
+          <select
+            v-model="projectFilter"
+            @change="fetchData(1)"
+            class="select-soft"
+          >
+            <option value="">All Projects</option>
+            <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
       </div>
 
       <div v-if="loading" class="text-center py-8 text-xs text-gray-400">Loading transactions...</div>

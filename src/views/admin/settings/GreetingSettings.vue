@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { CalendarHeart, Plus, PartyPopper, Cake, CalendarClock, Sparkles, Pencil, Trash2, X, Repeat, ArrowLeft } from "lucide-vue-next";
+import { CalendarHeart, Plus, PartyPopper, Cake, CalendarClock, Sparkles, Pencil, Trash2, X, Repeat, ArrowLeft, ChevronDown } from "lucide-vue-next";
 import { useGreetingStore } from "@/stores/greeting";
 import { can } from "@/helpers/permissionHelper";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -218,9 +218,14 @@ const formatDate = (value, recurring) => {
             </div>
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
-              <select v-model="form.type" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-                <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-              </select>
+              <div class="relative">
+                <select v-model="form.type" class="select-soft">
+                  <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                </select>
+                <ChevronDown
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                />
+              </div>
             </div>
           </div>
 
@@ -234,9 +239,14 @@ const formatDate = (value, recurring) => {
 
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Audience</label>
-            <select v-model="form.audience" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option v-for="opt in audienceOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
+            <div class="relative">
+              <select v-model="form.audience" class="select-soft">
+                <option v-for="opt in audienceOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
 
           <label class="flex items-center gap-2 cursor-pointer">

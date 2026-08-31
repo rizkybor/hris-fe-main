@@ -75,13 +75,13 @@ const props = defineProps({
     <div class="flex gap-2.5">
       <RouterLink
         :to="{ name: 'admin.vendors.detail', params: { id: data.id } }"
-        class="flex-1 text-center py-1.5 px-2.5 rounded-lg border border-gray-300 hover:border-[#0C51D9] hover:bg-blue-50 text-gray-700 font-semibold transition-all duration-300"
+        class="flex-1 btn-view-soft"
       >
         View
       </RouterLink>
       <RouterLink
         :to="{ name: 'admin.vendors.edit', params: { id: data.id } }"
-        class="flex-1 text-center py-1.5 px-2.5 rounded-lg border border-gray-300 hover:border-[#0C51D9] hover:bg-blue-50 text-gray-700 font-semibold transition-all duration-300"
+        class="flex-1 btn-edit-soft"
       >
         Edit
       </RouterLink>

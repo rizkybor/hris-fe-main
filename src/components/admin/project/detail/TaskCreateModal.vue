@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from "vue";
-import { X, ListPlus, ClipboardList, AlignLeft, Flag, Layers, Calendar, Upload, Eye, Tag } from "lucide-vue-next";
+import { X, ListPlus, ClipboardList, AlignLeft, Flag, Layers, Calendar, Upload, Eye, Tag, ChevronDown } from "lucide-vue-next";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { TASK_TYPE_COLORS, getTaskTypeColorClasses } from "@/utils/styleHelpers";
 
@@ -203,18 +203,21 @@ const handleSubmit = async () => {
                 Priority
               </label>
               <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
                   <Flag class="w-4 h-4 text-gray-400" />
                 </div>
                 <select
                   v-model="formData.priority"
-                  class="w-full pl-10 pr-4 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold appearance-none"
+                  class="select-soft select-soft-icon-pl"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
                   <option value="urgent">Urgent</option>
                 </select>
+                <ChevronDown
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                />
               </div>
             </div>
 
@@ -224,12 +227,12 @@ const handleSubmit = async () => {
                 Status
               </label>
               <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
                   <Layers class="w-4 h-4 text-gray-400" />
                 </div>
                 <select
                   v-model="formData.status"
-                  class="w-full pl-10 pr-4 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold appearance-none"
+                  class="select-soft select-soft-icon-pl"
                 >
                   <option value="todo">To Do</option>
                   <option value="in_progress">In Progress</option>
@@ -237,6 +240,9 @@ const handleSubmit = async () => {
                   <option value="done">Done</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
+                <ChevronDown
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                />
               </div>
             </div>
           </div>

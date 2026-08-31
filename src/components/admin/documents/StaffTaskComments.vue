@@ -7,6 +7,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { getTimeAgo } from "@/utils/dateUtils";
 import { storeToRefs } from "pinia";
+import { axiosInstance } from "@/plugins/axios";
 import Avatar from "@/components/common/Avatar.vue";
 
 const props = defineProps({
@@ -58,13 +59,33 @@ const mentionStartIndex = ref(null);
 const showMentionDropdown = ref(false);
 const mentionDropdownStyle = ref({});
 
-// Mentions are scoped to this note's own assigned staff list (already
-// loaded with the note), so no network round-trip is needed -- just a
-// local name filter. The current user is excluded -- mentioning yourself
-// isn't meaningful and the backend rejects it anyway.
+// Manager, Finance Manager, and Operational Director are always
+// mentionable here regardless of task assignment -- fetched once since
+// this list is the same for every task, then merged with the task's own
+// assignees for the dropdown. The backend enforces the same allowance.
+const alwaysMentionableEmployees = ref([]);
+
+const fetchAlwaysMentionableEmployees = async () => {
+  try {
+    const { data } = await axiosInstance.get("employees", {
+      params: { roles: "manager,finance,operational_director", limit: 20 },
+    });
+    alwaysMentionableEmployees.value = data.data.map((employee) => ({
+      id: employee.id,
+      name: employee.user?.name,
+    }));
+  } catch (error) {
+    console.error("Failed to load always-mentionable employees:", error);
+  }
+};
+
+// The current user is excluded -- mentioning yourself isn't meaningful and
+// the backend rejects it anyway.
 const mentionableEmployees = computed(() => {
   const selfId = user.value?.employee_profile?.id;
-  return props.assignees.filter((a) => a.id !== selfId);
+  const combined = [...props.assignees, ...alwaysMentionableEmployees.value];
+  const byId = new Map(combined.map((a) => [a.id, a]));
+  return [...byId.values()].filter((a) => a.id !== selfId);
 });
 
 const mentionResults = computed(() => {
@@ -126,6 +147,7 @@ const closePickersOnOutsideClick = (event) => {
 
 onMounted(() => {
   loadComments();
+  fetchAlwaysMentionableEmployees();
   window.addEventListener("scroll", updateMentionDropdownPosition, true);
   window.addEventListener("resize", updateMentionDropdownPosition);
   window.addEventListener("scroll", updateEmojiPickerPosition, true);

@@ -14,6 +14,7 @@ import {
   SearchX,
   X,
   FolderPlus,
+  ChevronDown,
 } from "lucide-vue-next";
 import { computed } from "vue";
 import { ref } from "vue";
@@ -168,16 +169,21 @@ const handleDelete = async (project) => {
               v-model="filters.search"
             />
           </div>
-          <select
-            v-model="filters.status"
-            class="w-full sm:w-auto px-3.5 py-2.5 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-medium"
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-            <option value="on-hold">On Hold</option>
-            <option value="overdue">Overdue</option>
-          </select>
+          <div class="relative w-full sm:w-auto">
+            <select
+              v-model="filters.status"
+              class="select-soft"
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="on-hold">On Hold</option>
+              <option value="overdue">Overdue</option>
+            </select>
+            <ChevronDown
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            />
+          </div>
           <button
             v-if="hasActiveFilters"
             type="button"

@@ -298,7 +298,7 @@ const viewDetails = (id) => {
         </div>
       </div>
 
-      <!-- Overtime Hours -->
+      <!-- Finalized Payrolls -->
       <div
         class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >

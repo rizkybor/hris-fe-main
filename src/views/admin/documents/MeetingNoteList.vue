@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { NotebookPen, Plus, Search, Trash2, Eye, Pin, PinOff, ArrowLeft } from "lucide-vue-next";
+import { NotebookPen, Plus, Search, Trash2, Eye, Pin, PinOff, ArrowLeft, ChevronDown } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
 import { can } from "@/helpers/permissionHelper";
@@ -103,15 +103,20 @@ const formatDateTime = (date) =>
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
-        <select
-          v-model="typeFilter"
-          @change="handleFilterChange"
-          class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        >
-          <option value="">All Types</option>
-          <option value="internal">Internal</option>
-          <option value="external">External</option>
-        </select>
+        <div class="relative">
+          <select
+            v-model="typeFilter"
+            @change="handleFilterChange"
+            class="select-soft"
+          >
+            <option value="">All Types</option>
+            <option value="internal">Internal</option>
+            <option value="external">External</option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
       </div>
 
       <SkeletonTable v-if="loading" :rows="6" :cols="6" />

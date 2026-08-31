@@ -132,7 +132,7 @@ const handlePerPageChange = (perPage) => {
             <CheckCircleIcon class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="w-full sm:w-auto pl-8 pr-6 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
+            class="select-soft select-soft-icon-pl"
             v-model="filters.status"
           >
             <option value="">All Status</option>
@@ -156,7 +156,7 @@ const handlePerPageChange = (perPage) => {
             <BuildingIcon class="h-4 w-4 text-gray-400" />
           </div>
           <select
-            class="w-full sm:w-auto pl-8 pr-6 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
+            class="select-soft select-soft-icon-pl"
             v-model="filters.department"
           >
             <option value="">All Departments</option>

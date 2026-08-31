@@ -418,7 +418,7 @@ const FORMAT_OPTIONS = [
     <div v-if="!disabled" class="flex flex-wrap items-center gap-1 border-b border-[#DCDEDD] bg-gray-50 px-2 py-1.5">
       <select
         @change="setFormatBlock($event.target.value)"
-        class="text-xs border border-[#DCDEDD] rounded-md px-1.5 py-1 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#0C51D9] mr-1"
+        class="text-xs border border-[#DCDEDD] rounded-md px-1.5 py-1 bg-white text-gray-600 cursor-pointer transition-colors hover:border-[#93C5FD] hover:bg-blue-50 focus:outline-none focus:ring-1 focus:ring-[#60A5FA] focus:border-[#60A5FA] mr-1"
         title="Format Teks"
       >
         <option v-for="opt in FORMAT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>

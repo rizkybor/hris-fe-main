@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { Laptop, Plus, X, UserPlus, Undo2, Pencil, Trash2, RotateCw } from "lucide-vue-next";
+import { Laptop, Plus, X, UserPlus, Undo2, Pencil, Trash2, RotateCw, ChevronDown } from "lucide-vue-next";
 import { useAssetStore } from "@/stores/asset";
 import { useEmployeeStore } from "@/stores/employee";
 import { can } from "@/helpers/permissionHelper";
@@ -251,14 +251,24 @@ onMounted(async () => {
         placeholder="Search name, code, or serial number..."
         class="flex-1 min-w-[200px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm"
       />
-      <select v-model="filters.category" @change="fetchData" class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-        <option value="">All Categories</option>
-        <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-      </select>
-      <select v-model="filters.status" @change="fetchData" class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-        <option value="">All Statuses</option>
-        <option v-for="(cfg, key) in statusLabels" :key="key" :value="key">{{ cfg.label }}</option>
-      </select>
+      <div class="relative">
+        <select v-model="filters.category" @change="fetchData" class="select-soft">
+          <option value="">All Categories</option>
+          <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+        <ChevronDown
+          class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+        />
+      </div>
+      <div class="relative">
+        <select v-model="filters.status" @change="fetchData" class="select-soft">
+          <option value="">All Statuses</option>
+          <option v-for="(cfg, key) in statusLabels" :key="key" :value="key">{{ cfg.label }}</option>
+        </select>
+        <ChevronDown
+          class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+        />
+      </div>
     </div>
 
     <div v-if="loading" class="space-y-3">
@@ -362,9 +372,14 @@ onMounted(async () => {
             </div>
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">Category<span class="text-red-600 ml-1">*</span></label>
-              <select v-model="form.category" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-                <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">{{ opt.value }} — {{ opt.label }}</option>
-              </select>
+              <div class="relative">
+                <select v-model="form.category" required class="select-soft">
+                  <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">{{ opt.value }} — {{ opt.label }}</option>
+                </select>
+                <ChevronDown
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                />
+              </div>
               <p v-if="selectedCategoryExamples" class="text-xs text-brand-light mt-1">Contoh: {{ selectedCategoryExamples }}</p>
             </div>
           </div>
@@ -402,11 +417,16 @@ onMounted(async () => {
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Condition</label>
-            <select v-model="form.condition" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="damaged">Damaged</option>
-            </select>
+            <div class="relative">
+              <select v-model="form.condition" class="select-soft">
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+                <option value="damaged">Damaged</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Notes</label>
@@ -438,18 +458,28 @@ onMounted(async () => {
           <p class="text-sm text-brand-light">{{ assigningAsset?.name }} ({{ assigningAsset?.asset_code }})</p>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Employee</label>
-            <select v-model="assignForm.employee_id" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="" disabled>Select employee</option>
-              <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.user?.name }} ({{ emp.code }})</option>
-            </select>
+            <div class="relative">
+              <select v-model="assignForm.employee_id" required class="select-soft">
+                <option value="" disabled>Select employee</option>
+                <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.user?.name }} ({{ emp.code }})</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Condition at Handover</label>
-            <select v-model="assignForm.condition_at_assignment" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="damaged">Damaged</option>
-            </select>
+            <div class="relative">
+              <select v-model="assignForm.condition_at_assignment" class="select-soft">
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+                <option value="damaged">Damaged</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
           <div class="flex items-center gap-3 pt-2">
             <button type="submit" :disabled="submitting" class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-2.5 flex items-center gap-2 disabled:opacity-50">
