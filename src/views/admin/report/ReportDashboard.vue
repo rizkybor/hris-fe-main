@@ -525,7 +525,7 @@ onMounted(() => {
         <p class="text-brand-light text-xs font-medium mb-1">
           {{ card.label }}
         </p>
-        <p class="text-brand-dark text-xl font-bold">
+        <p class="text-brand-dark text-sm sm:text-xl font-bold truncate">
           {{ card.value }}
         </p>
       </div>
@@ -814,7 +814,7 @@ onMounted(() => {
     <div v-if="showRaportDetail" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeRaportDetail">
       <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between sticky top-0 bg-white">
-          <h3 class="text-brand-dark text-lg font-bold">Staff Raport</h3>
+          <h3 class="text-brand-dark text-sm sm:text-lg font-bold">Staff Raport</h3>
           <button @click="closeRaportDetail" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
             <X class="w-4 h-4 text-gray-600" />
           </button>
@@ -850,15 +850,15 @@ onMounted(() => {
 
           <div class="grid grid-cols-3 gap-3">
             <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
-              <p class="text-brand-dark text-lg font-bold">{{ staffRaportDetail.attendance_rate !== null ? `${staffRaportDetail.attendance_rate}%` : "-" }}</p>
+              <p class="text-brand-dark text-sm sm:text-lg font-bold">{{ staffRaportDetail.attendance_rate !== null ? `${staffRaportDetail.attendance_rate}%` : "-" }}</p>
               <p class="text-brand-light text-xs">Attendance ({{ staffRaportDetail.attendance.present + staffRaportDetail.attendance.late }}/{{ staffRaportDetail.attendance.total }})</p>
             </div>
             <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
-              <p class="text-brand-dark text-lg font-bold">{{ staffRaportDetail.task_completion_rate !== null ? `${staffRaportDetail.task_completion_rate}%` : "-" }}</p>
+              <p class="text-brand-dark text-sm sm:text-lg font-bold">{{ staffRaportDetail.task_completion_rate !== null ? `${staffRaportDetail.task_completion_rate}%` : "-" }}</p>
               <p class="text-brand-light text-xs">Tasks Done ({{ staffRaportDetail.tasks.done }}/{{ staffRaportDetail.tasks.total }})</p>
             </div>
             <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
-              <p class="text-brand-dark text-lg font-bold">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : "-" }}</p>
+              <p class="text-brand-dark text-sm sm:text-lg font-bold">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : "-" }}</p>
               <p class="text-brand-light text-xs">Overall Score</p>
             </div>
           </div>
