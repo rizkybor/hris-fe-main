@@ -86,19 +86,19 @@ const goToDetail = () => {
     </div>
     <div class="flex gap-1.5">
       <button
+        @click="goToDetail"
+        class="flex-1 btn-view-soft"
+      >
+        <Eye class="w-4 h-4" />
+        <span>View</span>
+      </button>
+      <button
         @click="goToEdit"
         class="flex-1 btn-edit-soft"
         v-if="can('employee-edit')"
       >
         <Edit class="w-4 h-4" />
         <span>Edit</span>
-      </button>
-      <button
-        @click="goToDetail"
-        class="flex-1 btn-view-soft"
-      >
-        <Eye class="w-4 h-4" />
-        <span>View</span>
       </button>
     </div>
   </div>
