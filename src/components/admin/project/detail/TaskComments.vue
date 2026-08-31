@@ -126,8 +126,10 @@ watch(() => props.taskId, loadComments);
 
 const searchMentions = debounce(async () => {
   try {
-    // Scoped to this project's team assignments only - matches who is
-    // actually allowed to comment/be mentioned on this project's tasks.
+    // Scoped to this project's team assignments, plus Manager/Finance
+    // Manager/Operational Director who are always mentionable regardless
+    // of project membership -- matches who is actually allowed to be
+    // mentioned on this project's tasks (see EmployeeProfileRepository).
     const { data } = await axiosInstance.get("employees", {
       params: { search: mentionQuery.value, project_id: props.projectId, limit: 5 },
     });
