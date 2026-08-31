@@ -337,7 +337,7 @@ onMounted(async () => {
             <div
               v-for="team in project.teams"
               :key="team.id"
-              class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-md transition-all duration-300 p-4"
+              class="bg-white border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:shadow-md transition-all duration-300 p-4"
             >
               <div class="flex items-center gap-3">
                 <div
