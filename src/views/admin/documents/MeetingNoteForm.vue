@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
-import { NotebookPen, Paperclip, X, FileText, Plus, UserPlus, Search, Users } from "lucide-vue-next";
+import { NotebookPen, Paperclip, X, FileText, Plus, UserPlus, Search, Users, ChevronDown } from "lucide-vue-next";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
 import { useEmployeeStore } from "@/stores/employee";
 import { useAuthStore } from "@/stores/auth";
@@ -189,13 +189,18 @@ const handleSubmit = async () => {
         </div>
         <div>
           <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Meeting Type</label>
-          <select
-            v-model="form.meeting_type"
-            class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          >
-            <option value="internal">Internal</option>
-            <option value="external">External</option>
-          </select>
+          <div class="relative">
+            <select
+              v-model="form.meeting_type"
+              class="select-soft"
+            >
+              <option value="internal">Internal</option>
+              <option value="external">External</option>
+            </select>
+            <ChevronDown
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            />
+          </div>
         </div>
         <div>
           <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Meeting Date & Time</label>

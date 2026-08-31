@@ -8,7 +8,7 @@
       <!-- slot icon -->
       <div
         v-if="$slots.icon"
-        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10"
       >
         <slot name="icon" />
       </div>
@@ -19,14 +19,8 @@
         v-model="modelValue"
         :required="required"
         :disabled="readonly"
-        :class="[
-          readonly ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer',
-          'w-full pl-10 pr-4 py-3 border rounded-[12px] transition-all duration-300 font-semibold',
-          'hover:border-[#0C51D9] hover:border-2',
-          'focus:border-[#0C51D9] focus:border-2 focus:bg-white',
-          'cursor-pointer',
-          borderColor,
-        ]"
+        class="select-soft"
+        :class="{ 'select-soft-icon-pl': $slots.icon }"
         :style="selectStyle"
         @change="modelValue = $event.target.value"
       >
@@ -35,6 +29,10 @@
           {{ opt.label }}
         </option>
       </select>
+
+      <ChevronDown
+        class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+      />
     </div>
 
     <p v-if="error" class="mt-2" :style="errorStyle">
@@ -45,6 +43,7 @@
 
 <script setup>
 import { computed } from "vue";
+import { ChevronDown } from "lucide-vue-next";
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -67,20 +66,16 @@ const modelValue = computed({
   set: (value) => emit("update:modelValue", value),
 });
 
-const borderColor = computed(() =>
-  props.error ? "border-[#DC2626] border-2" : "border-[#DCDEDD]"
-);
-
 const labelStyle = {
   color: "#4b5563",
   fontFamily: "Plus Jakarta Sans",
   fontSize: "14px",
   fontWeight: 600,
 };
-const selectStyle = {
-  background: "#ffffff",
-  paddingLeft: "40px",
-};
+// Inline (not a Tailwind class) since it needs to win over .select-soft's
+// own border-color at equal specificity -- an error state must always be
+// visible regardless of stylesheet source order.
+const selectStyle = computed(() => (props.error ? { borderColor: "#DC2626" } : {}));
 const errorStyle = {
   color: "#dc2626",
   fontFamily: "Plus Jakarta Sans",

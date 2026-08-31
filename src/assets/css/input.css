@@ -100,6 +100,56 @@ html {
     background-color: #FEF3C7;
 }
 
+/* Unified dropdown style for every plain <select> in the app -- white
+   base with a soft blue tint on hover/focus (instead of the harsh
+   hover:border-2 solid-blue treatment several pages used individually),
+   so every dropdown reads as one calm, professional family. Always pair
+   with a wrapping `position: relative` element and an absolutely
+   positioned chevron icon (`pointer-events-none`) since this hides the
+   native arrow via appearance:none. */
+.select-soft {
+    display: block;
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #DCDEDD;
+    border-radius: 8px;
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #0C1C3C;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.select-soft:hover {
+    border-color: #93C5FD;
+    background-color: #F8FAFC;
+}
+
+.select-soft:focus {
+    outline: none;
+    border-color: #60A5FA;
+    background-color: #EFF6FF;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+.select-soft:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #F9FAFB;
+}
+
+/* Extra left clearance for a `.select-soft` that also has a leading icon
+   (e.g. Filter/Building/Briefcase) inside its wrapper -- declared after
+   `.select-soft` so this longhand wins over that rule's shorthand
+   `padding` at equal specificity. */
+.select-soft-icon-pl {
+    padding-left: 2.5rem;
+}
+
 /* Typography styles */
 .text-brand-dark {
     color: #0C1C3C;

@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { Users, Search, Clock, ArrowLeft } from "lucide-vue-next";
+import { Users, Search, Clock, ArrowLeft, ChevronDown } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useAttendanceStore } from "@/stores/attendance";
 import { formatDateShort, formatTime as formatTimeUtil } from "@/utils/dateUtils.js";
@@ -82,17 +82,22 @@ const statusBadgeClass = (status) => {
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
-        <select
-          v-model="statusFilter"
-          @change="handleFilterChange"
-          class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        >
-          <option value="">All Statuses</option>
-          <option value="present">Present</option>
-          <option value="late">Late</option>
-          <option value="absent">Absent</option>
-          <option value="remote">Remote</option>
-        </select>
+        <div class="relative">
+          <select
+            v-model="statusFilter"
+            @change="handleFilterChange"
+            class="select-soft"
+          >
+            <option value="">All Statuses</option>
+            <option value="present">Present</option>
+            <option value="late">Late</option>
+            <option value="absent">Absent</option>
+            <option value="remote">Remote</option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
       </div>
 
       <SkeletonTable v-if="loading" :rows="6" :cols="7" />

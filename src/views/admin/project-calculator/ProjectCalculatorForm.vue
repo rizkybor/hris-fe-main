@@ -16,6 +16,7 @@ import {
   History,
   X,
   Search,
+  ChevronDown,
 } from "lucide-vue-next";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { useAlertModalStore } from "@/stores/alertModal";
@@ -911,16 +912,21 @@ const submit = async () => {
             <div v-if="form.include_pph" class="mt-2.5 ml-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Jenis PPh</label>
-                <select
-                  v-model="form.pph_type"
-                  @change="handlePphTypeChange"
-                  class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-                >
-                  <option value="" disabled>Pilih jenis PPh...</option>
-                  <option v-for="type in pphTypes" :key="type.value" :value="type.value">
-                    {{ type.label }}{{ type.default_rate !== null ? ` (${type.default_rate}%)` : "" }}
-                  </option>
-                </select>
+                <div class="relative">
+                  <select
+                    v-model="form.pph_type"
+                    @change="handlePphTypeChange"
+                    class="select-soft"
+                  >
+                    <option value="" disabled>Pilih jenis PPh...</option>
+                    <option v-for="type in pphTypes" :key="type.value" :value="type.value">
+                      {{ type.label }}{{ type.default_rate !== null ? ` (${type.default_rate}%)` : "" }}
+                    </option>
+                  </select>
+                  <ChevronDown
+                    class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                  />
+                </div>
               </div>
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Tarif PPh (%)</label>

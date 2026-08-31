@@ -115,7 +115,7 @@ const goToProjectFromTask = (projectId) => router.push({ name: "admin.projects.d
           </div>
           <select
             v-model="departmentFilter"
-            class="w-full sm:w-auto pl-10 pr-8 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 bg-white appearance-none"
+            class="select-soft select-soft-icon-pl"
           >
             <option value="">All Departments</option>
             <option v-for="dept in departments" :key="dept.value" :value="dept.value">

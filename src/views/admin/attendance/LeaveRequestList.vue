@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { CalendarClock, Search, Check, X, ArrowLeft } from "lucide-vue-next";
+import { CalendarClock, Search, Check, X, ArrowLeft, ChevronDown } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useLeaveRequestStore } from "@/stores/leaveRequest";
 import {
@@ -116,16 +116,21 @@ const confirmReject = async () => {
             class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
-        <select
-          v-model="statusFilter"
-          @change="handleFilterChange"
-          class="px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        >
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
+        <div class="relative">
+          <select
+            v-model="statusFilter"
+            @change="handleFilterChange"
+            class="select-soft"
+          >
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
       </div>
 
       <SkeletonTable v-if="loading" :rows="6" :cols="7" />

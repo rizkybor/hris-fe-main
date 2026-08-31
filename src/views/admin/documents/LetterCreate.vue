@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute, RouterLink } from "vue-router";
 import { storeToRefs } from "pinia";
-import { Mail, Settings, Plus, Trash2, Info, Tag, FileText, CheckCircle2 } from "lucide-vue-next";
+import { Mail, Settings, Plus, Trash2, Info, Tag, FileText, CheckCircle2, ChevronDown } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
 import { useEmployeeStore } from "@/stores/employee";
 import { can } from "@/helpers/permissionHelper";
@@ -294,27 +294,42 @@ const handleSubmit = async () => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Letter Code</label>
-            <select v-model="form.letter_code_id" @change="applyTemplate" required :disabled="isEditMode" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm disabled:bg-gray-50 disabled:text-gray-400">
-              <option value="" disabled>Select letter code</option>
-              <option v-for="code in letterCodes" :key="code.id" :value="code.id">{{ code.code }} - {{ code.name }}</option>
-            </select>
+            <div class="relative w-full">
+              <select v-model="form.letter_code_id" @change="applyTemplate" required :disabled="isEditMode" class="select-soft">
+                <option value="" disabled>Select letter code</option>
+                <option v-for="code in letterCodes" :key="code.id" :value="code.id">{{ code.code }} - {{ code.name }}</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
             <p v-if="!isEditMode && TEMPLATES[selectedCode]" class="text-xs text-[#0C51D9] mt-1 flex items-center gap-1">
               <Info class="w-3 h-3" /> A reference template has been auto-filled into Letter Content, please adjust as needed.
             </p>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Division Code</label>
-            <select v-model="form.division_code_id" required :disabled="isEditMode" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm disabled:bg-gray-50 disabled:text-gray-400">
-              <option value="" disabled>Select division code</option>
-              <option v-for="code in divisionCodes" :key="code.id" :value="code.id">{{ code.code }} - {{ code.name }}</option>
-            </select>
+            <div class="relative w-full">
+              <select v-model="form.division_code_id" required :disabled="isEditMode" class="select-soft">
+                <option value="" disabled>Select division code</option>
+                <option v-for="code in divisionCodes" :key="code.id" :value="code.id">{{ code.code }} - {{ code.name }}</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
-            <select v-model="form.type" :disabled="isEditMode" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm disabled:bg-gray-50 disabled:text-gray-400">
-              <option value="I">Internal (I)</option>
-              <option value="E">External (E)</option>
-            </select>
+            <div class="relative w-full">
+              <select v-model="form.type" :disabled="isEditMode" class="select-soft">
+                <option value="I">Internal (I)</option>
+                <option value="E">External (E)</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
@@ -330,7 +345,7 @@ const handleSubmit = async () => {
                 :class="form.template === opt.value ? 'border-[#0C51D9]' : 'border-[#DCDEDD] hover:border-[#0C51D9]/50'"
               >
                 <input type="radio" v-model="form.template" :value="opt.value" class="hidden" />
-                <div class="h-28 w-full overflow-hidden bg-white">
+                <div class="h-36 w-full overflow-hidden bg-white">
                   <img :src="opt.preview" alt="" class="w-full h-full object-cover object-top" />
                 </div>
                 <div class="px-3 py-2 flex items-center justify-between bg-gray-50">
@@ -355,18 +370,26 @@ const handleSubmit = async () => {
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Subject</label>
             <input v-model="form.subject" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
-          <div>
+          <div v-if="form.template !== 'secondary'">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">To (optional)</label>
             <textarea v-model="form.recipient" rows="2" placeholder="e.g. All Employees&#10;PT. Jendela Cakra Digital" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
+          <p v-else class="text-xs text-gray-400 -mt-1">
+            The Secondary template's Surat Keterangan-style layout doesn't address a specific recipient, so this field is hidden.
+          </p>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">
               Related Employee <span v-if="!requiresEmployee">(optional)</span>
             </label>
-            <select v-model="form.employee_id" :required="requiresEmployee" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="">Not addressed to a specific employee</option>
-              <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.user?.name }} ({{ emp.code }})</option>
-            </select>
+            <div class="relative w-full">
+              <select v-model="form.employee_id" :required="requiresEmployee" class="select-soft">
+                <option value="">Not addressed to a specific employee</option>
+                <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.user?.name }} ({{ emp.code }})</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
             <p v-if="requiresEmployee" class="text-xs text-orange-600 mt-1">
               Required for warning letters so it's recorded in the employee's history.
             </p>

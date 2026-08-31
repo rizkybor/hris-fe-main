@@ -16,6 +16,7 @@ import {
   Users2Icon,
   ClockIcon,
   Sparkles,
+  ChevronDown,
 } from "lucide-vue-next";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { useAlertModalStore } from "@/stores/alertModal";
@@ -331,16 +332,21 @@ const onLandingPageRateSettingSaved = async () => {
               class="w-full pl-8 pr-3.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
             />
           </div>
-          <select
-            v-model="scenarioFilter"
-            @change="fetchAll"
-            class="px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm font-semibold hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all"
-          >
-            <option value="">All Scenarios</option>
-            <option value="feature">New Feature</option>
-            <option value="build">Build from Scratch</option>
-            <option value="landing_page">Landing Page</option>
-          </select>
+          <div class="relative">
+            <select
+              v-model="scenarioFilter"
+              @change="fetchAll"
+              class="select-soft"
+            >
+              <option value="">All Scenarios</option>
+              <option value="feature">New Feature</option>
+              <option value="build">Build from Scratch</option>
+              <option value="landing_page">Landing Page</option>
+            </select>
+            <ChevronDown
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            />
+          </div>
         </div>
       </div>
 

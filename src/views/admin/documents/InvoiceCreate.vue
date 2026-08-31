@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
-import { Plus, Trash2, Receipt, User, Package, Wallet, Briefcase } from "lucide-vue-next";
+import { Plus, Trash2, Receipt, User, Package, Wallet, Briefcase, ChevronDown } from "lucide-vue-next";
 import { useInvoiceStore } from "@/stores/invoice";
 import { useBankAccountStore } from "@/stores/bankAccount";
 import { useProjectStore } from "@/stores/project";
@@ -195,10 +195,15 @@ const handleSubmit = async () => {
         </div>
         <div>
           <label class="text-sm font-semibold text-brand-dark mb-1 block">Project</label>
-          <select v-model="form.project_id" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-            <option value="">No project</option>
-            <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
-          </select>
+          <div class="relative w-full">
+            <select v-model="form.project_id" class="select-soft">
+              <option value="">No project</option>
+              <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
+            </select>
+            <ChevronDown
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            />
+          </div>
           <p class="text-xs text-gray-400 mt-1">Link this invoice to a project so it shows up on that project's page.</p>
         </div>
       </div>
@@ -314,10 +319,15 @@ const handleSubmit = async () => {
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Bank Name</label>
-            <select v-model="form.bank_name" @change="handleBankNameChange" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-              <option value="" disabled>Select a bank</option>
-              <option v-for="account in bankAccounts" :key="account.id" :value="account.bank_name">{{ account.bank_name }}</option>
-            </select>
+            <div class="relative w-full">
+              <select v-model="form.bank_name" @change="handleBankNameChange" class="select-soft">
+                <option value="" disabled>Select a bank</option>
+                <option v-for="account in bankAccounts" :key="account.id" :value="account.bank_name">{{ account.bank_name }}</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
             <p v-if="bankAccounts.length === 0" class="text-xs text-gray-400 mt-1">
               No bank accounts configured yet. Add one in Settings &rarr; Bank Accounts.
             </p>
@@ -342,9 +352,14 @@ const handleSubmit = async () => {
           <template v-if="applyPph23">
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 Type</label>
-              <select v-model="form.pph23_type" @change="handlePph23TypeChange" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm">
-                <option v-for="type in pphTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-              </select>
+              <div class="relative w-full">
+                <select v-model="form.pph23_type" @change="handlePph23TypeChange" class="select-soft">
+                  <option v-for="type in pphTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+                </select>
+                <ChevronDown
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                />
+              </div>
             </div>
             <div>
               <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 (%)</label>

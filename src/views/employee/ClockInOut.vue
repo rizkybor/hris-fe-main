@@ -60,21 +60,35 @@ const isCheckedIn = computed(() => {
   return todayAttendance.value?.check_in && !todayAttendance.value?.check_out;
 });
 
-const workingHours = computed(() => {
-  if (!todayAttendance.value?.check_in) {
-    return "0h 0m";
-  }
+// Clock Out is only allowed once a full 8-hour shift has elapsed since
+// Clock In -- mirrors the same rule enforced server-side in
+// AttendanceRepository::checkOut(). `currentTime` (ticking every second via
+// updateClock) is read here purely to keep this reactive minute-by-minute.
+const MIN_WORK_MINUTES_BEFORE_CHECK_OUT = 8 * 60;
+
+const elapsedWorkMinutes = computed(() => {
+  currentTime.value; // eslint-disable-line no-unused-expressions -- tick dependency
+  if (!todayAttendance.value?.check_in) return 0;
 
   const checkInTime = new Date(todayAttendance.value.check_in);
   const endTime = todayAttendance.value.check_out
     ? new Date(todayAttendance.value.check_out)
     : new Date(); // Use current time if still checked in
 
-  const diffMs = endTime - checkInTime;
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const hours = Math.floor(diffMins / 60);
-  const minutes = diffMins % 60;
+  return Math.floor((endTime - checkInTime) / (1000 * 60));
+});
 
+const workingHours = computed(() => {
+  const hours = Math.floor(elapsedWorkMinutes.value / 60);
+  const minutes = elapsedWorkMinutes.value % 60;
+  return `${hours}h ${minutes}m`;
+});
+
+const remainingUntilCheckOut = computed(() => {
+  const remaining = MIN_WORK_MINUTES_BEFORE_CHECK_OUT - elapsedWorkMinutes.value;
+  if (remaining <= 0) return null;
+  const hours = Math.floor(remaining / 60);
+  const minutes = remaining % 60;
   return `${hours}h ${minutes}m`;
 });
 
@@ -83,7 +97,11 @@ const canCheckIn = computed(() => {
 });
 
 const canCheckOut = computed(() => {
-  return currentLocation.value && isCheckedIn.value;
+  return (
+    currentLocation.value &&
+    isCheckedIn.value &&
+    elapsedWorkMinutes.value >= MIN_WORK_MINUTES_BEFORE_CHECK_OUT
+  );
 });
 
 const lateInfo = computed(() => {
@@ -345,7 +363,8 @@ const handleCheckOut = async () => {
     await fetchTodayAttendance();
   } catch (error) {
     console.error("Check out failed:", error);
-    await alertModal.alert("Failed to check out. Please try again.", { type: "danger" });
+    const message = error?.response?.data?.message || "Failed to check out. Please try again.";
+    await alertModal.alert(message, { type: "danger" });
   }
 };
 
@@ -713,6 +732,14 @@ onUnmounted(() => {
             {{ loading ? "Processing..." : "Clock Out" }}
           </span>
         </button>
+
+        <p
+          v-if="isCheckedIn && remainingUntilCheckOut"
+          class="text-amber-600 text-xs sm:text-sm mt-3 text-center px-2 font-medium"
+        >
+          <Timer class="w-4 h-4 inline mr-1 -mt-0.5" />
+          Clock Out available in {{ remainingUntilCheckOut }} (min. 8 hours worked)
+        </p>
 
         <p class="text-brand-light text-xs sm:text-sm mt-4 text-center px-2">
           <Info class="w-4 h-4 inline mr-1 -mt-0.5" />

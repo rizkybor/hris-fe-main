@@ -228,7 +228,7 @@ onMounted(() => {
 
   <div v-else-if="profile">
     <!-- Employee Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
       <div class="flex flex-col sm:flex-row sm:items-center gap-6">
         <div class="relative self-center sm:self-auto flex-shrink-0">
           <Avatar
@@ -295,7 +295,7 @@ onMounted(() => {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <!-- Tasks Completed Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -317,7 +317,7 @@ onMounted(() => {
 
       <!-- Attendance Rate Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -339,7 +339,7 @@ onMounted(() => {
 
       <!-- Active Projects Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -361,7 +361,7 @@ onMounted(() => {
 
       <!-- Performance Rating Card -->
       <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -387,7 +387,7 @@ onMounted(() => {
       <div
         ref="tabScrollRef"
         @scroll="updateTabFade"
-        class="bg-white border border-[#DCDEDD] rounded-[14px] p-2 overflow-x-auto"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-2 overflow-x-auto"
       >
         <div class="flex items-center gap-1 min-w-max">
           <button
@@ -425,7 +425,7 @@ onMounted(() => {
     <!-- Overview Tab -->
     <div v-show="activeTab === 'overview'" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
         <!-- Personal Information -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
             <div
               class="w-12 h-12 bg-teal-50 rounded-[12px] flex items-center justify-center"
@@ -483,7 +483,7 @@ onMounted(() => {
         </div>
 
         <!-- Location Details -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
             <div
               class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
@@ -545,7 +545,7 @@ onMounted(() => {
     <!-- Employment & Team Tab -->
     <div v-show="activeTab === 'employment'" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
         <!-- Employment Details -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
             <div
               class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
@@ -605,7 +605,7 @@ onMounted(() => {
 
         <!-- Team Information -->
         <div
-          class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 h-fit"
+          class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 h-fit"
           v-if="profile?.job_information?.team"
         >
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -682,7 +682,7 @@ onMounted(() => {
 
     <!-- Emergency Contact Tab -->
     <div v-show="activeTab === 'emergency'" class="mb-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 max-w-2xl">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 max-w-2xl">
         <div class="flex items-center gap-3 mb-4">
           <div
             class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
@@ -739,7 +739,7 @@ onMounted(() => {
     <!-- Tasks Tab -->
     <div v-show="activeTab === 'tasks'" class="mb-6">
         <!-- Latest 5 Tasks Assigned -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
               <div
@@ -772,7 +772,7 @@ onMounted(() => {
             <div
               v-for="task in latestTasks"
               :key="task.id"
-              class="border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+              class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
             >
               <div class="flex items-start justify-between mb-2">
                 <h4 class="text-brand-dark text-sm font-semibold">
@@ -805,7 +805,7 @@ onMounted(() => {
     <!-- Assets & Reviews Tab -->
     <div v-show="activeTab === 'more'" class="mb-6 space-y-6">
         <!-- My Assets -->
-        <div v-if="myAssets.length > 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div v-if="myAssets.length > 0" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
               <Laptop class="w-6 h-6 text-[#0C51D9]" />
@@ -819,7 +819,7 @@ onMounted(() => {
             <div
               v-for="asset in myAssets"
               :key="asset.id"
-              class="border border-[#DCDEDD] rounded-[12px] p-4 flex items-center justify-between"
+              class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 flex items-center justify-between"
             >
               <div>
                 <p class="text-brand-dark text-sm font-semibold">{{ asset.name }}</p>
@@ -831,7 +831,7 @@ onMounted(() => {
         </div>
 
         <!-- My Performance Reviews -->
-        <div v-if="myReviews.length > 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <div v-if="myReviews.length > 0" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-12 h-12 bg-yellow-50 rounded-[12px] flex items-center justify-center">
               <Star class="w-6 h-6 text-yellow-600" />
@@ -842,10 +842,19 @@ onMounted(() => {
             </div>
           </div>
           <div class="space-y-3">
-            <div v-for="review in myReviews" :key="review.id" class="border border-[#DCDEDD] rounded-[12px] p-4">
+            <div v-for="review in myReviews" :key="review.id" class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
               <div class="flex items-center justify-between mb-2">
                 <p class="text-brand-dark text-sm font-semibold">{{ review.period }}</p>
-                <span class="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700">{{ review.overall_rating }} / 5</span>
+                <span class="flex items-center gap-0.5">
+                  <Star
+                    v-for="i in 5"
+                    :key="i"
+                    class="w-3.5 h-3.5"
+                    :class="i <= Math.round(review.overall_rating) ? 'text-amber-500' : 'text-gray-200'"
+                    :fill="i <= Math.round(review.overall_rating) ? 'currentColor' : 'none'"
+                  />
+                  <span class="text-xs font-semibold text-brand-dark ml-1">{{ review.overall_rating }}/5</span>
+                </span>
               </div>
               <p v-if="review.strengths" class="text-brand-light text-xs mb-1"><strong>Strengths:</strong> {{ review.strengths }}</p>
               <p v-if="review.areas_for_improvement" class="text-brand-light text-xs mb-1"><strong>To Improve:</strong> {{ review.areas_for_improvement }}</p>
@@ -865,7 +874,7 @@ onMounted(() => {
         <!-- Empty State -->
         <div
           v-if="myAssets.length === 0 && myReviews.length === 0"
-          class="bg-white border border-[#DCDEDD] rounded-[14px] p-12 text-center"
+          class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-12 text-center"
         >
           <Star class="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p class="text-brand-light text-sm font-medium">
@@ -876,7 +885,7 @@ onMounted(() => {
 
     <!-- ID Card Tab -->
     <div v-show="activeTab === 'idcard'" class="mb-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
           <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center">

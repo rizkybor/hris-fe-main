@@ -10,6 +10,7 @@ import {
   CalendarPlus,
   Eye,
   CalendarX,
+  ChevronDown,
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
 import { useLeaveRequestStore } from "@/stores/leaveRequest";
@@ -519,20 +520,25 @@ onMounted(async () => {
                       class="block text-brand-dark text-base font-semibold mb-1"
                       >Leave Type<span class="text-red-600 ml-1">*</span></label
                     >
-                    <select
-                      v-model="leaveForm.leave_type"
-                      required
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-                    >
-                      <option value="">Select leave type</option>
-                      <option
-                        v-for="type in availableLeaveTypes"
-                        :key="type.value"
-                        :value="type.value"
+                    <div class="relative w-full">
+                      <select
+                        v-model="leaveForm.leave_type"
+                        required
+                        class="select-soft"
                       >
-                        {{ type.label }}
-                      </option>
-                    </select>
+                        <option value="">Select leave type</option>
+                        <option
+                          v-for="type in availableLeaveTypes"
+                          :key="type.value"
+                          :value="type.value"
+                        >
+                          {{ type.label }}
+                        </option>
+                      </select>
+                      <ChevronDown
+                        class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                      />
+                    </div>
                   </div>
 
                   <!-- Start Date -->
