@@ -23,7 +23,6 @@ const emit = defineEmits(["submit", "close"]);
 const form = reactive({
   financial_items: "",
   description: "",
-  budget: "",
   actual: "",
   notes: "",
 });
@@ -31,7 +30,6 @@ const form = reactive({
 const buildPayload = () => ({
   financial_items: form.financial_items,
   description: form.description,
-  budget: Number(form.budget),
   actual: Number(form.actual),
   notes: form.notes,
 });
@@ -40,7 +38,6 @@ const buildPayload = () => ({
 const errors = reactive({
   financial_items: "",
   description: "",
-  budget: "",
   actual: "",
 });
 
@@ -52,7 +49,6 @@ watch(
       if (props.mode === "edit" || props.mode === "view") {
         Object.assign(form, {
           ...props.data,
-          budget: props.data.budget ?? "",
           actual: props.data.actual ?? "",
         });
       } else if (props.mode === "add") {
@@ -81,14 +77,7 @@ const parseRupiah = (value) => {
   return Number(value.toString().replace(/[^0-9]/g, ""));
 };
 
-// Computed: budget & actual dengan read-only protection
-const budgetModel = computed({
-  get: () => formatRupiah(form.budget),
-  set: (val) => {
-    if (props.mode !== "view") form.budget = parseRupiah(val);
-  },
-});
-
+// Computed: actual dengan read-only protection
 const actualModel = computed({
   get: () => formatRupiah(form.actual),
   set: (val) => {
@@ -102,7 +91,6 @@ const validate = () => {
 
   errors.financial_items = form.financial_items ? "" : "Item is required";
   errors.description = form.description ? "" : "Description is required";
-  errors.budget = form.budget !== "" ? "" : "Budget is required";
 
   Object.values(errors).forEach((e) => {
     if (e) valid = false;
@@ -182,22 +170,6 @@ const validate = () => {
           />
           <p v-if="errors.description" class="text-red-500 text-sm mt-1">
             {{ errors.description }}
-          </p>
-        </div>
-
-        <!-- Budget -->
-        <div>
-          <BaseInput
-            id="budget"
-            label="Budget (Rp.)"
-            placeholder="add price budget item"
-            v-model="budgetModel"
-            :readonly="props.mode === 'view'"
-            :required="props.mode !== 'view'"
-            only-number
-          />
-          <p v-if="errors.budget" class="text-red-500 text-sm mt-1">
-            {{ errors.budget }}
           </p>
         </div>
 

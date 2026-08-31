@@ -27,33 +27,21 @@ onMounted(() => {
 
 const fieldOptions = computed(() => fields.value.map((f) => ({ value: f.id, label: f.name })));
 
-const ragOptions = [
-  { value: "red", label: "🔴 Red (Critical)" },
-  { value: "amber", label: "🟡 Amber (At Risk)" },
-  { value: "green", label: "🟢 Green (On Track)" },
-];
-
 const emit = defineEmits(["submit", "close"]);
 
 const form = reactive({
   sdm_field_id: "",
   productive_hours_per_month: "",
-  metrik: "",
   capacity_target: "",
-  budget: "",
   actual: "",
-  rag_status: "",
   notes: "",
 });
 
 const buildPayload = () => ({
   sdm_field_id: Number(form.sdm_field_id),
   productive_hours_per_month: Number(form.productive_hours_per_month),
-  metrik: form.metrik || null,
   capacity_target: form.capacity_target || null,
-  budget: Number(form.budget),
   actual: Number(form.actual),
-  rag_status: form.rag_status,
   notes: form.notes,
 });
 
@@ -61,8 +49,6 @@ const buildPayload = () => ({
 const errors = reactive({
   sdm_field_id: "",
   productive_hours_per_month: "",
-  budget: "",
-  rag_status: "",
 });
 
 watch(
@@ -73,7 +59,6 @@ watch(
         ...props.data,
         sdm_field_id: props.data.sdm_field_id ?? "",
         productive_hours_per_month: props.data.productive_hours_per_month ?? "",
-        budget: props.data.budget ?? "",
         actual: props.data.actual ?? "",
       });
     }
@@ -101,14 +86,7 @@ const parseRupiah = (value) => {
   return Number(value.toString().replace(/[^0-9]/g, ""));
 };
 
-// Computed: budget & actual dengan read-only protection
-const budgetModel = computed({
-  get: () => formatRupiah(form.budget),
-  set: (val) => {
-    if (props.mode !== "view") form.budget = parseRupiah(val);
-  },
-});
-
+// Computed: actual dengan read-only protection
 const actualModel = computed({
   get: () => formatRupiah(form.actual),
   set: (val) => {
@@ -123,8 +101,6 @@ const validate = () => {
   errors.sdm_field_id = form.sdm_field_id ? "" : "Bidang is required";
   errors.productive_hours_per_month =
     form.productive_hours_per_month !== "" ? "" : "Jam Produktif / Bulan is required";
-  errors.budget = form.budget !== "" ? "" : "Budget is required";
-  errors.rag_status = form.rag_status ? "" : "Status is required";
 
   Object.values(errors).forEach((e) => {
     if (e) valid = false;
@@ -206,21 +182,6 @@ const submit = () => {
           </p>
         </div>
 
-        <div>
-          <BaseInput
-            id="budget"
-            label="Budget (Rp.)"
-            placeholder="add price budget item"
-            v-model="budgetModel"
-            :readonly="props.mode === 'view'"
-            :required="props.mode !== 'view'"
-            only-number
-          />
-          <p v-if="errors.budget" class="text-red-500 text-sm mt-1">
-            {{ errors.budget }}
-          </p>
-        </div>
-
         <BaseInput
           id="actual"
           label="Actual (Rp.)"
@@ -228,29 +189,6 @@ const submit = () => {
           v-model="actualModel"
           :readonly="props.mode === 'view'"
           only-number
-        />
-
-        <div>
-          <BaseSelect
-            id="rag_status"
-            label="RAG Status"
-            placeholder="Select RAG status"
-            v-model="form.rag_status"
-            :options="ragOptions"
-            :required="props.mode !== 'view'"
-            :readonly="props.mode === 'view'"
-          />
-          <p v-if="errors.rag_status" class="text-red-500 text-sm mt-1">
-            {{ errors.rag_status }}
-          </p>
-        </div>
-
-        <BaseInput
-          id="metrik"
-          label="Metrik (Opsional)"
-          placeholder="add metric item"
-          v-model="form.metrik"
-          :readonly="props.mode === 'view'"
         />
 
         <BaseInput

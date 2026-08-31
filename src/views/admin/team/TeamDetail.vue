@@ -329,12 +329,10 @@ onMounted(async () => {
             name: 'admin.employees.detail',
             params: { id: member.employee.id },
           }"
-          class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-blue-100 transition-all duration-300 px-2.5 py-4 flex items-center justify-center gap-1.5"
+          class="w-full btn-view-soft"
         >
-          <Eye class="w-5 h-5 text-gray-600" />
-          <span class="text-brand-dark text-sm font-semibold"
-            >View Profile</span
-          >
+          <Eye class="w-5 h-5" />
+          <span>View Profile</span>
         </RouterLink>
       </div>
     </div>

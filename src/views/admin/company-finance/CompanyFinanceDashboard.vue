@@ -537,7 +537,6 @@ watch(
               <tr>
                 <th class="px-3 py-2.5 text-xs uppercase text-gray-500 font-semibold">No</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Item</th>
-                <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Budget</th>
                 <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Actual</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Notes</th>
                 <th class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Action</th>
@@ -553,9 +552,6 @@ watch(
                   {{ (fixedPage - 1) * perPage + index + 1 }}
                 </td>
                 <td class="px-3 py-2.5 font-medium text-brand-dark">{{ item.financial_items }}</td>
-                <td class="px-3 py-2.5 text-right">
-                  Rp {{ item.budget.toLocaleString() }}
-                </td>
                 <td class="px-3 py-2.5 text-right text-success">
                   Rp {{ item.actual.toLocaleString() }}
                 </td>
@@ -576,7 +572,7 @@ watch(
               </tr>
 
               <tr v-if="filteredFixed.length === 0">
-                <td colspan="6" class="text-center py-8 text-gray-400 text-sm">
+                <td colspan="5" class="text-center py-8 text-gray-400 text-sm">
                   No Fixed Cost data found.
                 </td>
               </tr>
@@ -619,7 +615,7 @@ watch(
           </button>
         </div>
 
-        <SkeletonTable v-if="store.loading" :rows="4" :cols="9" />
+        <SkeletonTable v-if="store.loading" :rows="4" :cols="7" />
 
         <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
           <table class="min-w-full text-sm">
@@ -628,11 +624,9 @@ watch(
                 <th class="px-3 py-2.5 text-xs uppercase text-gray-500 font-semibold">No</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Bidang</th>
                 <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Jam/Bulan</th>
-                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Metric</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Capacity</th>
-                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">RAG</th>
-                <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Budget</th>
                 <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Actual</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Notes</th>
                 <th class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Action</th>
               </tr>
             </thead>
@@ -647,27 +641,11 @@ watch(
                 </td>
                 <td class="px-3 py-2.5 font-medium text-brand-dark">{{ item.sdm_field_name ?? item.sdm_component }}</td>
                 <td class="px-3 py-2.5 text-right">{{ item.productive_hours_per_month ?? "-" }}</td>
-                <td class="px-3 py-2.5">{{ item.metrik }}</td>
                 <td class="px-3 py-2.5">{{ item.capacity_target }}</td>
-                <td class="px-3 py-2.5">
-                  <span
-                    class="px-2 py-1 rounded-md text-xs font-semibold"
-                    :class="{
-                      'bg-green-100 text-green-700': item.rag_status === 'green',
-                      'bg-yellow-100 text-yellow-700':
-                        item.rag_status === 'amber',
-                      'bg-red-100 text-red-700': item.rag_status === 'red',
-                    }"
-                  >
-                    {{ item.rag_status }}
-                  </span>
-                </td>
-                <td class="px-3 py-2.5 text-right">
-                  Rp {{ item.budget.toLocaleString() }}
-                </td>
                 <td class="px-3 py-2.5 text-right text-success">
                   Rp {{ item.actual.toLocaleString() }}
                 </td>
+                <td class="px-3 py-2.5 text-gray-500">{{ item.notes }}</td>
                 <td class="px-3 py-2.5">
                   <div class="flex justify-center gap-1">
                     <button @click="viewSdm(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors" title="View">
@@ -684,7 +662,7 @@ watch(
               </tr>
 
               <tr v-if="filteredSdm.length === 0">
-                <td colspan="9" class="text-center py-8 text-gray-400 text-sm">
+                <td colspan="7" class="text-center py-8 text-gray-400 text-sm">
                   No SDM Resource data found.
                 </td>
               </tr>

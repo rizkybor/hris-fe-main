@@ -45,6 +45,46 @@ html {
     box-shadow: -2px 2px 1px 0px #6197FF inset;
 }
 
+/* Unified text (non-icon-only) View/Edit action buttons -- same shape,
+   soft pastel color per action so they read consistently across every
+   list/table/detail page instead of the mix of gradient/outline styles
+   that existed before. */
+.btn-view-soft,
+.btn-edit-soft {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.5rem 0.875rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-width: 1px;
+    transition: all 0.2s ease;
+}
+
+.btn-view-soft {
+    background-color: #EFF6FF;
+    color: #1D4ED8;
+    border-color: #BFDBFE;
+}
+
+.btn-view-soft:hover {
+    background-color: #DBEAFE;
+    border-color: #93C5FD;
+}
+
+.btn-edit-soft {
+    background-color: #FFFBEB;
+    color: #B45309;
+    border-color: #FDE68A;
+}
+
+.btn-edit-soft:hover {
+    background-color: #FEF3C7;
+    border-color: #FCD34D;
+}
+
 /* Typography styles */
 .text-brand-dark {
     color: #0C1C3C;
