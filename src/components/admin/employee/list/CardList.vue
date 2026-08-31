@@ -87,18 +87,18 @@ const goToDetail = () => {
     <div class="flex gap-1.5">
       <button
         @click="goToEdit"
-        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5"
+        class="flex-1 btn-edit-soft"
         v-if="can('employee-edit')"
       >
-        <Edit class="w-4 h-4 text-gray-600" />
-        <span class="text-brand-dark text-sm font-semibold">Edit</span>
+        <Edit class="w-4 h-4" />
+        <span>Edit</span>
       </button>
       <button
         @click="goToDetail"
-        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5"
+        class="flex-1 btn-view-soft"
       >
-        <Eye class="w-4 h-4 text-gray-600" />
-        <span class="text-brand-dark text-sm font-semibold">View</span>
+        <Eye class="w-4 h-4" />
+        <span>View</span>
       </button>
     </div>
   </div>

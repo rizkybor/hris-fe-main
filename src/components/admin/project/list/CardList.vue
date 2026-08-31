@@ -156,10 +156,10 @@ const getProgressColor = (progress) => {
       <div class="flex items-center gap-2 pt-3 border-t border-[#DCDEDD]">
         <RouterLink
           :to="{ name: 'admin.projects.detail', params: { id: data.id } }"
-          class="btn-primary flex-1 rounded-[8px] border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow transition-all duration-300 px-3 py-4 flex items-center justify-center gap-1.5"
+          class="flex-1 btn-view-soft"
         >
-          <Eye class="w-3.5 h-3.5 text-white" />
-          <span class="text-brand-white text-xs font-semibold">View Details</span>
+          <Eye class="w-3.5 h-3.5" />
+          <span>View Details</span>
         </RouterLink>
         <RouterLink
           :to="{ name: 'admin.projects.edit', params: { id: data.id } }"

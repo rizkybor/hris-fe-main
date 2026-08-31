@@ -158,19 +158,19 @@ const getProgressColor = (progress) => {
     <div class="flex gap-2">
       <RouterLink
         :to="{ name: 'admin.projects.detail', params: { id: data.id } }"
-        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center justify-center gap-2"
+        class="flex-1 btn-view-soft"
       >
-        <Eye class="w-4 h-4 text-gray-600" />
-        <span class="text-brand-dark text-sm font-semibold">View</span>
+        <Eye class="w-4 h-4" />
+        <span>View</span>
       </RouterLink>
 
       <RouterLink
         v-if="can('project-edit')"
         :to="{ name: 'admin.projects.edit', params: { id: data.id } }"
-        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center justify-center gap-2"
+        class="flex-1 btn-edit-soft"
       >
-        <Edit class="w-4 h-4 text-gray-600" />
-        <span class="text-brand-dark text-sm font-semibold">Edit</span>
+        <Edit class="w-4 h-4" />
+        <span>Edit</span>
       </RouterLink>
     </div>
   </div>

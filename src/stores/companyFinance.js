@@ -10,21 +10,14 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
     statistics: {
       fixed_cost: {
         summary: {
-          total_budget: 0,
           total_actual: 0,
-          variance: 0,
           total_items: 0,
         },
         items: [],
       },
       sdm_resource: {
         summary: {
-          total_budget: 0,
           total_actual: 0,
-          variance: 0,
-          total_status_green: 0,
-          total_status_amber: 0,
-          total_status_red: 0,
         },
         items: [],
       },

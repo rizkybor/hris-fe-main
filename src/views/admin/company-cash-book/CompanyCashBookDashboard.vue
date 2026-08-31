@@ -12,6 +12,8 @@ import {
   ArrowUpCircle,
   Link2,
   Settings2,
+  Eye,
+  EyeOff,
 } from "lucide-vue-next";
 import { useCompanyCashTransactionStore } from "@/stores/companyCashTransaction";
 import { useProjectStore } from "@/stores/project";
@@ -171,6 +173,9 @@ onMounted(() => {
   fetchData();
   projectStore.fetchProjects({ limit: 200 });
 });
+
+// Hidden by default -- balance figures are sensitive, revealed only on demand.
+const isBalanceVisible = ref(false);
 </script>
 
 <template>
@@ -208,22 +213,41 @@ onMounted(() => {
     </div>
 
     <!-- Saldo summary -->
+    <div class="flex items-center justify-end mb-2">
+      <button
+        type="button"
+        @click="isBalanceVisible = !isBalanceVisible"
+        class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
+        :title="isBalanceVisible ? 'Hide amounts' : 'Show amounts'"
+      >
+        <Eye v-if="!isBalanceVisible" class="w-4 h-4" />
+        <EyeOff v-else class="w-4 h-4" />
+      </button>
+    </div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
       <div class="bg-gray-50 border border-[#DCDEDD] rounded-[10px] p-3.5">
         <p class="text-brand-light text-xs">Saldo Awal</p>
-        <p class="text-brand-dark text-sm font-bold mt-1 truncate">{{ formatRupiah(openingBalance) }}</p>
+        <p class="text-brand-dark text-xs sm:text-sm font-bold mt-1 truncate">
+          {{ isBalanceVisible ? formatRupiah(openingBalance) : "Rp ••••••" }}
+        </p>
       </div>
       <div class="bg-emerald-50 border border-emerald-100 rounded-[10px] p-3.5">
         <p class="text-emerald-600 text-xs">Total Debit (Masuk)</p>
-        <p class="text-emerald-700 text-sm font-bold mt-1 truncate">{{ formatRupiah(totalDebit) }}</p>
+        <p class="text-emerald-700 text-xs sm:text-sm font-bold mt-1 truncate">
+          {{ isBalanceVisible ? formatRupiah(totalDebit) : "Rp ••••••" }}
+        </p>
       </div>
       <div class="bg-red-50 border border-red-100 rounded-[10px] p-3.5">
         <p class="text-red-600 text-xs">Total Kredit (Keluar)</p>
-        <p class="text-red-700 text-sm font-bold mt-1 truncate">{{ formatRupiah(totalCredit) }}</p>
+        <p class="text-red-700 text-xs sm:text-sm font-bold mt-1 truncate">
+          {{ isBalanceVisible ? formatRupiah(totalCredit) : "Rp ••••••" }}
+        </p>
       </div>
       <div class="bg-blue-50 border border-blue-100 rounded-[10px] p-3.5">
         <p class="text-blue-600 text-xs">Saldo Akhir</p>
-        <p class="text-blue-700 text-sm font-bold mt-1 truncate">{{ formatRupiah(closingBalance) }}</p>
+        <p class="text-blue-700 text-xs sm:text-sm font-bold mt-1 truncate">
+          {{ isBalanceVisible ? formatRupiah(closingBalance) : "Rp ••••••" }}
+        </p>
       </div>
     </div>
 
@@ -292,20 +316,20 @@ onMounted(() => {
                   Manual
                 </span>
               </td>
-              <td class="px-3 py-2.5 text-right text-emerald-600">
+              <td class="px-3 py-2.5 text-right text-emerald-600 text-xs sm:text-sm">
                 <span v-if="transaction.type === 'debit'" class="inline-flex items-center gap-1 justify-end">
                   <ArrowUpCircle class="w-3.5 h-3.5" />
-                  {{ formatRupiah(transaction.amount) }}
+                  {{ isBalanceVisible ? formatRupiah(transaction.amount) : "Rp ••••••" }}
                 </span>
               </td>
-              <td class="px-3 py-2.5 text-right text-red-600">
+              <td class="px-3 py-2.5 text-right text-red-600 text-xs sm:text-sm">
                 <span v-if="transaction.type === 'credit'" class="inline-flex items-center gap-1 justify-end">
                   <ArrowDownCircle class="w-3.5 h-3.5" />
-                  {{ formatRupiah(transaction.amount) }}
+                  {{ isBalanceVisible ? formatRupiah(transaction.amount) : "Rp ••••••" }}
                 </span>
               </td>
-              <td class="px-3 py-2.5 text-right font-semibold text-brand-dark whitespace-nowrap">
-                {{ formatRupiah(transaction.balance) }}
+              <td class="px-3 py-2.5 text-right font-semibold text-brand-dark whitespace-nowrap text-xs sm:text-sm">
+                {{ isBalanceVisible ? formatRupiah(transaction.balance) : "Rp ••••••" }}
               </td>
               <td v-if="canManage" class="px-3 py-2.5">
                 <div v-if="!transaction.is_synced" class="flex justify-center gap-1">
