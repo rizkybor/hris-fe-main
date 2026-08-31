@@ -14,6 +14,7 @@ import {
   User,
   X,
   Download,
+  ArrowLeft,
 } from "lucide-vue-next";
 import { useDocumentLetterStore } from "@/stores/documentLetter";
 import { useAuthStore } from "@/stores/auth";
@@ -115,6 +116,14 @@ const handleDownload = async () => {
     </div>
 
     <template v-else-if="memo">
+      <router-link
+        :to="{ name: 'admin.official-memos.dashboard' }"
+        class="inline-flex items-center gap-1.5 text-brand-light hover:text-[#0C51D9] text-xs font-semibold mb-3 transition-colors"
+      >
+        <ArrowLeft class="w-3.5 h-3.5" />
+        Back to Official Memos
+      </router-link>
+
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div class="flex items-start gap-3 min-w-0">
           <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
@@ -226,7 +235,7 @@ const handleDownload = async () => {
             </div>
           </div>
 
-          <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-2 text-xs text-brand-light">
+          <div v-if="memo.submitted_at || memo.approved_at && memo.approver" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-2 text-xs text-brand-light">
             <p v-if="memo.submitted_at">Submitted: {{ formatDateTime(memo.submitted_at) }}</p>
             <p v-if="memo.approved_at && memo.approver">
               {{ memo.status === "rejected" ? "Rejected" : "Approved" }} by {{ memo.approver.name }} &middot;
