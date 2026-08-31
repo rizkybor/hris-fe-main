@@ -23,6 +23,7 @@ import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { formatRupiah } from "@/utils/formatUtils";
+import { calculateMarketingFee } from "@/utils/marketingFee";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
@@ -410,6 +411,10 @@ const grandTotal = computed(() => {
   }
   return itemsTotal.value;
 });
+
+// Reference only -- a fair starting point for whoever brought in this deal
+// (Marketing / B2B-B2C Sales), never added to the client-facing total.
+const marketingFee = computed(() => calculateMarketingFee(grandTotal.value));
 
 const ppnAmount = computed(() =>
   form.value.include_ppn ? grandTotal.value * (Number(form.value.ppn_percent || 0) / 100) : 0
@@ -1031,6 +1036,17 @@ const submit = async () => {
               <span class="text-green-700 text-base font-extrabold">{{ formatRupiah(netReceived) }}</span>
             </div>
             <p class="text-gray-400 text-xs mt-1">Setelah dipotong PPh oleh klien</p>
+          </div>
+
+          <div class="flex items-center justify-between p-2.5 rounded-[12px] bg-purple-50 border border-purple-100 text-xs">
+            <span class="text-purple-800 font-medium">
+              Fee Marketing / B2B-B2C Sales
+              <span class="block text-purple-500 font-normal">Reference only, not added to total</span>
+            </span>
+            <span class="text-purple-800 font-bold text-right shrink-0 ml-2">
+              {{ marketingFee.percent }}%
+              <span class="block font-normal">{{ formatRupiah(marketingFee.amount) }}</span>
+            </span>
           </div>
 
           <div class="flex items-center gap-1.5 p-2.5 rounded-[12px] bg-blue-50 border border-blue-100 text-xs">
