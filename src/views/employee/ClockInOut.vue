@@ -93,7 +93,7 @@ const remainingUntilCheckOut = computed(() => {
 });
 
 const canCheckIn = computed(() => {
-  return currentLocation.value && !isCheckedIn.value && !weekendCheckInBlocked.value;
+  return currentLocation.value && capturedPhotoData.value && !isCheckedIn.value && !weekendCheckInBlocked.value;
 });
 
 const canCheckOut = computed(() => {
@@ -324,10 +324,16 @@ const handleCheckIn = async () => {
     return;
   }
 
+  if (!capturedPhotoData.value) {
+    await alertModal.alert("Please take a photo before clocking in.", { type: "warning" });
+    return;
+  }
+
   try {
     const attendance = await checkIn({
       check_in_lat: currentLocation.value.latitude,
       check_in_long: currentLocation.value.longitude,
+      check_in_photo: capturedPhotoData.value,
     });
 
     if (attendance?.status === "overtime") {
@@ -653,7 +659,7 @@ onUnmounted(() => {
               :class="capturedPhotoData ? 'text-green-700' : 'text-brand-light'"
             >
               Photo captured
-              <span class="font-normal text-gray-400">(optional)</span>
+              <span v-if="!capturedPhotoData" class="font-normal text-red-500">(required)</span>
             </span>
           </div>
         </div>
@@ -743,7 +749,7 @@ onUnmounted(() => {
 
         <p class="text-brand-light text-xs sm:text-sm mt-4 text-center px-2">
           <Info class="w-4 h-4 inline mr-1 -mt-0.5" />
-          Please get your location before clocking in/out
+          Please get your location and take a photo before clocking in/out
         </p>
       </div>
     </div>

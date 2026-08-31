@@ -95,6 +95,7 @@ export const useAttendanceStore = defineStore("attendance", {
                 const data = {
                     check_in_lat: payload.check_in_lat,
                     check_in_long: payload.check_in_long,
+                    check_in_photo: payload.check_in_photo,
                 };
 
                 if (payload.notes) {
