@@ -110,14 +110,14 @@ const props = defineProps({
     <div class="flex gap-1.5">
       <RouterLink
         :to="{ name: 'admin.team.detail', params: { id: data.id } }"
-        class="btn-secondary flex-1 text-brand-dark text-sm font-semibold border border-[#DCDEDD] rounded-[8px] px-3.5 py-2.5 hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center gap-1.5"
+        class="flex-1 btn-view-soft"
       >
         <Eye class="w-4 h-4" />
         <span>View</span>
       </RouterLink>
       <RouterLink
         :to="{ name: 'admin.team.edit', params: { id: data.id } }"
-        class="btn-secondary flex-1 text-brand-dark text-sm font-semibold border border-[#DCDEDD] rounded-[8px] px-3.5 py-2.5 hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center gap-1.5"
+        class="flex-1 btn-edit-soft"
       >
         <Edit class="w-4 h-4" />
         <span>Edit</span>
