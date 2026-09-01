@@ -49,3 +49,23 @@ export const formatStatus = (status) => {
   if (!status) return '';
   return startCase(status.replace(/_/g, ' '));
 };
+
+/**
+ * Great-circle distance between two lat/long points, in meters -- mirrors
+ * AttendanceRepository::haversineDistanceMeters() server-side, used here
+ * only to show the employee a live "how far from office" indicator before
+ * they attempt Clock In (the server call is still the authoritative check).
+ */
+export const haversineDistanceMeters = (lat1, lon1, lat2, lon2) => {
+  const earthRadiusMeters = 6371000;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+
+  const latDelta = toRad(lat2 - lat1);
+  const lonDelta = toRad(lon2 - lon1);
+
+  const a =
+    Math.sin(latDelta / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(lonDelta / 2) ** 2;
+
+  return earthRadiusMeters * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};

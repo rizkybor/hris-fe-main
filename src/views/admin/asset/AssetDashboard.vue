@@ -1,9 +1,10 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { Laptop, Plus, X, UserPlus, Undo2, Pencil, Trash2, RotateCw, ChevronDown } from "lucide-vue-next";
+import { Laptop, Plus, X, UserPlus, Undo2, Pencil, Trash2, RotateCw, ChevronDown, Eye, ShieldCheck, ShieldAlert, Wrench } from "lucide-vue-next";
 import { useAssetStore } from "@/stores/asset";
 import { useEmployeeStore } from "@/stores/employee";
+import { useVendorsStore } from "@/stores/vendor";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -15,6 +16,9 @@ const { assets, statistics, loading } = storeToRefs(store);
 
 const employeeStore = useEmployeeStore();
 const { employees } = storeToRefs(employeeStore);
+
+const vendorsStore = useVendorsStore();
+const { vendors } = storeToRefs(vendorsStore);
 
 const filters = ref({ search: "", category: "", status: "" });
 
@@ -46,6 +50,9 @@ const form = ref({
   serial_number: "",
   purchase_date: "",
   purchase_price: "",
+  warranty_expiry_date: "",
+  useful_life_months: "",
+  supplier_vendor_id: "",
   condition: "good",
   notes: "",
 });
@@ -98,14 +105,21 @@ const fetchData = async () => {
 
 const openCreateModal = async () => {
   editingId.value = null;
-  form.value = { asset_code: "", name: "", category: "IT-HW", brand: "", model: "", serial_number: "", purchase_date: "", purchase_price: "", condition: "good", notes: "" };
+  form.value = { asset_code: "", name: "", category: "IT-HW", brand: "", model: "", serial_number: "", purchase_date: "", purchase_price: "", warranty_expiry_date: "", useful_life_months: "", supplier_vendor_id: "", condition: "good", notes: "" };
   errorMessage.value = "";
   codeAutoFilled.value = true;
   showFormModal.value = true;
+  if (vendors.value.length === 0) await vendorsStore.fetchAllVendors();
   await generateCode();
 };
 
-const openEditModal = (asset) => {
+// The API returns dates as full ISO timestamps (e.g.
+// "2027-02-28T00:00:00.000000Z") -- a native <input type="date"> only
+// accepts a bare "YYYY-MM-DD" and silently renders blank on anything else,
+// so this trims it down before it reaches a form field.
+const toDateInputValue = (dateString) => (dateString ? dateString.slice(0, 10) : "");
+
+const openEditModal = async (asset) => {
   editingId.value = asset.id;
   form.value = {
     asset_code: asset.asset_code,
@@ -114,8 +128,11 @@ const openEditModal = (asset) => {
     brand: asset.brand ?? "",
     model: asset.model ?? "",
     serial_number: asset.serial_number ?? "",
-    purchase_date: asset.purchase_date ?? "",
+    purchase_date: toDateInputValue(asset.purchase_date),
     purchase_price: asset.purchase_price ?? "",
+    warranty_expiry_date: toDateInputValue(asset.warranty_expiry_date),
+    useful_life_months: asset.useful_life_months ?? "",
+    supplier_vendor_id: asset.supplier_vendor_id ?? "",
     condition: asset.condition,
     notes: asset.notes ?? "",
   };
@@ -124,6 +141,7 @@ const openEditModal = (asset) => {
   // just because the category select re-renders with the current value.
   codeAutoFilled.value = false;
   showFormModal.value = true;
+  if (vendors.value.length === 0) await vendorsStore.fetchAllVendors();
 };
 
 const closeFormModal = () => {
@@ -194,6 +212,87 @@ const handleReturn = async (asset) => {
     await Promise.all([fetchData(), store.fetchStatistics()]);
   } catch (error) {
     await alertModal.alert(error?.response?.data?.message || "Failed to process asset return.", { type: "danger" });
+  }
+};
+
+// Detail modal (specs + maintenance log history)
+const showDetailModal = ref(false);
+const detailAsset = ref(null);
+const maintenanceLogs = ref([]);
+const maintenanceLoading = ref(false);
+const showMaintenanceForm = ref(false);
+const maintenanceForm = ref({ performed_at: "", description: "", cost: "", next_due_date: "" });
+const submittingMaintenance = ref(false);
+
+const supplierName = (asset) => vendors.value.find((v) => v.id === asset.supplier_vendor_id)?.name;
+
+// The API returns dates as full ISO timestamps (e.g.
+// "2027-02-28T00:00:00.000000Z") even for date-only columns -- this trims
+// that down to a compact "28 Feb 2027" for display.
+const fmtDate = (dateString) => {
+  if (!dateString) return "-";
+  return new Date(dateString).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+};
+
+const warrantyStatus = (asset) => {
+  if (!asset.warranty_expiry_date) return null;
+  return asset.is_under_warranty
+    ? { label: `Garansi s/d ${fmtDate(asset.warranty_expiry_date)}`, class: "bg-emerald-100 text-emerald-700", icon: ShieldCheck }
+    : { label: "Garansi Habis", class: "bg-red-100 text-red-700", icon: ShieldAlert };
+};
+
+const loadMaintenanceLogs = async (assetId) => {
+  maintenanceLoading.value = true;
+  try {
+    maintenanceLogs.value = await store.fetchMaintenanceLogs(assetId);
+  } catch {
+    maintenanceLogs.value = [];
+  } finally {
+    maintenanceLoading.value = false;
+  }
+};
+
+const openDetailModal = async (asset) => {
+  detailAsset.value = asset;
+  showDetailModal.value = true;
+  showMaintenanceForm.value = false;
+  if (vendors.value.length === 0) await vendorsStore.fetchAllVendors();
+  await loadMaintenanceLogs(asset.id);
+};
+
+const closeDetailModal = () => {
+  showDetailModal.value = false;
+  detailAsset.value = null;
+  maintenanceLogs.value = [];
+};
+
+const openMaintenanceForm = () => {
+  maintenanceForm.value = { performed_at: new Date().toISOString().split("T")[0], description: "", cost: "", next_due_date: "" };
+  showMaintenanceForm.value = true;
+};
+
+const submitMaintenanceLog = async () => {
+  submittingMaintenance.value = true;
+  try {
+    await store.createMaintenanceLog({ asset_id: detailAsset.value.id, ...maintenanceForm.value });
+    showMaintenanceForm.value = false;
+    await loadMaintenanceLogs(detailAsset.value.id);
+    await fetchData();
+  } catch (error) {
+    await alertModal.alert(error?.response?.data?.message || "Failed to save maintenance log.", { type: "danger" });
+  } finally {
+    submittingMaintenance.value = false;
+  }
+};
+
+const deleteMaintenanceLogHandler = async (log) => {
+  if (!(await alertModal.confirm("Delete this maintenance log?"))) return;
+  try {
+    await store.deleteMaintenanceLog(log.id);
+    await loadMaintenanceLogs(detailAsset.value.id);
+    await fetchData();
+  } catch (error) {
+    await alertModal.alert(error?.response?.data?.message || "Failed to delete maintenance log.", { type: "danger" });
   }
 };
 
@@ -285,17 +384,35 @@ onMounted(async () => {
               <span :class="['px-2 py-0.5 rounded-full text-xs font-semibold', statusLabels[asset.status]?.class]">
                 {{ statusLabels[asset.status]?.label ?? asset.status }}
               </span>
+              <span
+                v-if="warrantyStatus(asset)"
+                :class="['px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1', warrantyStatus(asset).class]"
+              >
+                <component :is="warrantyStatus(asset).icon" class="w-3 h-3" />
+                {{ warrantyStatus(asset).label }}
+              </span>
             </div>
             <p class="text-brand-light text-sm">
               {{ categoryOptions.find(c => c.value === asset.category)?.label ?? asset.category }}
               <span v-if="asset.brand"> • {{ asset.brand }}</span>
               <span v-if="asset.serial_number"> • SN: {{ asset.serial_number }}</span>
+              <span v-if="asset.current_book_value != null"> • Nilai Buku: {{ formatRupiah(asset.current_book_value) }}</span>
             </p>
             <p v-if="asset.assignee" class="text-xs text-blue-700 mt-1">
               Dipakai oleh {{ asset.assignee.name }}
             </p>
+            <p v-if="asset.next_maintenance_due_date" class="text-xs text-amber-700 mt-1 flex items-center gap-1">
+              <Wrench class="w-3 h-3" /> Jadwal maintenance berikutnya: {{ fmtDate(asset.next_maintenance_due_date) }}
+            </p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
+            <button
+              @click="openDetailModal(asset)"
+              title="View detail & maintenance history"
+              class="w-8 h-8 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] transition-colors"
+            >
+              <Eye class="w-3.5 h-3.5 text-gray-600" />
+            </button>
             <button
               v-if="can('asset-assign') && asset.status === 'available'"
               @click="openAssignModal(asset)"
@@ -415,6 +532,39 @@ onMounted(async () => {
               <input v-model.number="form.purchase_price" type="number" min="0" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
             </div>
           </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Warranty s/d</label>
+              <input
+                v-model="form.warranty_expiry_date"
+                type="date"
+                class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base sm:text-sm appearance-none"
+              />
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Masa Pakai (bulan)</label>
+              <input
+                v-model.number="form.useful_life_months"
+                type="number"
+                min="1"
+                placeholder="e.g. 36"
+                class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm"
+              />
+              <p class="text-xs text-brand-light mt-1">Untuk menghitung depresiasi nilai aset.</p>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Supplier</label>
+            <div class="relative">
+              <select v-model="form.supplier_vendor_id" class="select-soft">
+                <option value="">-- Tidak ditentukan --</option>
+                <option v-for="v in vendors" :key="v.id" :value="v.id">{{ v.name }}</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
+          </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Condition</label>
             <div class="relative">
@@ -488,6 +638,117 @@ onMounted(async () => {
             <button type="button" @click="closeAssignModal" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Cancel</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Detail Modal (specs + maintenance history) -->
+    <div v-if="showDetailModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeDetailModal">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-xl max-h-[90vh] overflow-y-auto">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
+          <div>
+            <h3 class="text-brand-dark text-lg font-bold">{{ detailAsset?.name }}</h3>
+            <p class="text-brand-light text-xs">{{ detailAsset?.asset_code }}</p>
+          </div>
+          <button @click="closeDetailModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+
+        <div class="p-5 space-y-5" v-if="detailAsset">
+          <!-- Specs -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-50 border border-[#DCDEDD] rounded-xl px-3 py-2.5">
+              <p class="text-xs text-gray-500">Harga Beli</p>
+              <p class="text-brand-dark text-sm font-semibold">{{ detailAsset.purchase_price != null ? formatRupiah(detailAsset.purchase_price) : "-" }}</p>
+            </div>
+            <div class="bg-slate-50 border border-[#DCDEDD] rounded-xl px-3 py-2.5">
+              <p class="text-xs text-gray-500">Nilai Buku Saat Ini</p>
+              <p class="text-brand-dark text-sm font-semibold">{{ detailAsset.current_book_value != null ? formatRupiah(detailAsset.current_book_value) : "-" }}</p>
+            </div>
+            <div class="bg-slate-50 border border-[#DCDEDD] rounded-xl px-3 py-2.5">
+              <p class="text-xs text-gray-500">Warranty</p>
+              <p class="text-brand-dark text-sm font-semibold">
+                {{ detailAsset.warranty_expiry_date ? fmtDate(detailAsset.warranty_expiry_date) : "-" }}
+                <span v-if="detailAsset.warranty_expiry_date" :class="detailAsset.is_under_warranty ? 'text-emerald-600' : 'text-red-600'">
+                  ({{ detailAsset.is_under_warranty ? "Aktif" : "Habis" }})
+                </span>
+              </p>
+            </div>
+            <div class="bg-slate-50 border border-[#DCDEDD] rounded-xl px-3 py-2.5">
+              <p class="text-xs text-gray-500">Supplier</p>
+              <p class="text-brand-dark text-sm font-semibold">{{ supplierName(detailAsset) || "-" }}</p>
+            </div>
+          </div>
+
+          <!-- Maintenance Log -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-1.5">
+                <Wrench class="w-4 h-4 text-amber-600" />
+                <h4 class="text-brand-dark font-bold text-sm">Riwayat Maintenance</h4>
+              </div>
+              <button
+                v-if="can('asset-maintenance-create') && !showMaintenanceForm"
+                @click="openMaintenanceForm"
+                class="text-xs font-semibold text-blue-700 hover:underline flex items-center gap-1"
+              >
+                <Plus class="w-3.5 h-3.5" /> Tambah Log
+              </button>
+            </div>
+
+            <!-- Add log form -->
+            <form v-if="showMaintenanceForm" @submit.prevent="submitMaintenanceLog" class="bg-slate-50 border border-[#DCDEDD] rounded-xl p-4 space-y-3 mb-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs font-semibold text-brand-dark mb-1 block">Tanggal Servis<span class="text-red-600 ml-1">*</span></label>
+                  <input v-model="maintenanceForm.performed_at" type="date" required class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label class="text-xs font-semibold text-brand-dark mb-1 block">Jadwal Berikutnya</label>
+                  <input v-model="maintenanceForm.next_due_date" type="date" class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+                </div>
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-brand-dark mb-1 block">Deskripsi<span class="text-red-600 ml-1">*</span></label>
+                <textarea v-model="maintenanceForm.description" required rows="2" class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-lg text-sm resize-none"></textarea>
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-brand-dark mb-1 block">Biaya (Rp)</label>
+                <input v-model.number="maintenanceForm.cost" type="number" min="0" class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="submit" :disabled="submittingMaintenance" class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2 text-xs font-semibold text-brand-white disabled:opacity-50">
+                  {{ submittingMaintenance ? "Saving..." : "Save Log" }}
+                </button>
+                <button type="button" @click="showMaintenanceForm = false" class="px-4 py-2 rounded-lg border border-[#DCDEDD] text-brand-dark text-xs font-semibold hover:bg-gray-50">Cancel</button>
+              </div>
+            </form>
+
+            <div v-if="maintenanceLoading" class="text-center py-4 text-gray-400 text-sm">Loading...</div>
+            <div v-else-if="maintenanceLogs.length === 0" class="text-center py-6 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-[#DCDEDD] text-sm">
+              Belum ada riwayat maintenance
+            </div>
+            <div v-else class="space-y-2">
+              <div v-for="log in maintenanceLogs" :key="log.id" class="border border-[#DCDEDD] rounded-xl p-3 flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <p class="text-brand-dark text-sm font-semibold">{{ fmtDate(log.performed_at) }}</p>
+                  <p class="text-brand-dark text-sm">{{ log.description }}</p>
+                  <p class="text-xs text-brand-light mt-0.5">
+                    <span v-if="log.cost">{{ formatRupiah(log.cost) }} • </span>
+                    <span v-if="log.next_due_date">Jadwal berikutnya: {{ fmtDate(log.next_due_date) }}</span>
+                  </p>
+                </div>
+                <button
+                  v-if="can('asset-maintenance-delete')"
+                  @click="deleteMaintenanceLogHandler(log)"
+                  class="w-7 h-7 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-red-400 shrink-0"
+                >
+                  <Trash2 class="w-3.5 h-3.5 text-red-500" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

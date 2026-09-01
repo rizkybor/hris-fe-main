@@ -1,6 +1,6 @@
 <script setup>
 import { formatToClientTimezone } from "@/helpers/format";
-import { User, Phone, Mail, MapPin } from "lucide-vue-next";
+import { User, Phone, Mail, MapPin, Star } from "lucide-vue-next";
 
 const props = defineProps({
   data: {
@@ -15,9 +15,15 @@ const props = defineProps({
     class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-[#0C51D9]"
   >
     <!-- Vendor Name -->
-    <h4 class="text-brand-dark text-base font-bold mb-2.5 truncate">
-      {{ data.name || "Unnamed Vendor" }}
-    </h4>
+    <div class="flex items-center justify-between gap-2 mb-2.5">
+      <h4 class="text-brand-dark text-base font-bold truncate">
+        {{ data.name || "Unnamed Vendor" }}
+      </h4>
+      <div v-if="data.average_rating" class="flex items-center gap-1 shrink-0">
+        <Star class="w-4 h-4 text-amber-400" fill="currentColor" />
+        <span class="text-brand-dark text-sm font-semibold">{{ data.average_rating }}</span>
+      </div>
+    </div>
 
    <!-- Vendor Type & Field as Chips -->
 <div class="flex flex-wrap gap-1.5 mb-2.5">

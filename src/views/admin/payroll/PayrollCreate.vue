@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { usePayrollStore } from "@/stores/payroll";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
   Calendar,
@@ -9,11 +9,18 @@ import {
   Plus,
   ArrowLeft,
   AlertCircle,
+  Gift,
 } from "lucide-vue-next";
 
 const router = useRouter();
+const route = useRoute();
 const payrollStore = usePayrollStore();
 const { loading, error } = storeToRefs(payrollStore);
+
+// "?type=thr" lets the dashboard's "Generate THR" shortcut land here
+// pre-selected, without needing a whole separate page for what's really
+// the same one-field form.
+const payrollType = ref(route.query.type === "thr" ? "thr" : "monthly");
 
 const form = ref({
   salary_month: new Date().toISOString().slice(0, 7),
@@ -21,7 +28,11 @@ const form = ref({
 
 const handleSubmit = async () => {
   try {
-    await payrollStore.generatePayroll(form.value);
+    if (payrollType.value === "thr") {
+      await payrollStore.generateThrPayroll(form.value);
+    } else {
+      await payrollStore.generatePayroll(form.value);
+    }
     router.push({ name: "admin.payroll.dashboard" });
   } catch (error) {
     console.error("Error creating payroll:", error);
@@ -50,10 +61,46 @@ const formatMonth = (month) => {
               <Calendar class="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-xl font-bold">Generate Payroll</h3>
+              <h3 class="text-brand-dark text-xl font-bold">
+                {{ payrollType === "thr" ? "Generate THR" : "Generate Payroll" }}
+              </h3>
               <p class="text-brand-light text-sm font-normal">
-                Select the salary month to generate payroll for all active employees
+                {{
+                  payrollType === "thr"
+                    ? "Select the month to generate THR (Tunjangan Hari Raya) for eligible employees"
+                    : "Select the salary month to generate payroll for all active employees"
+                }}
               </p>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-brand-dark text-base font-semibold mb-1">Payroll Type *</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                @click="payrollType = 'monthly'"
+                :class="[
+                  'px-4 py-3 rounded-[12px] border-2 text-sm font-semibold transition-all duration-300',
+                  payrollType === 'monthly'
+                    ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9]'
+                    : 'border-[#DCDEDD] text-brand-dark hover:border-[#0C51D9]',
+                ]"
+              >
+                Monthly Payroll
+              </button>
+              <button
+                type="button"
+                @click="payrollType = 'thr'"
+                :class="[
+                  'px-4 py-3 rounded-[12px] border-2 text-sm font-semibold transition-all duration-300',
+                  payrollType === 'thr'
+                    ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9]'
+                    : 'border-[#DCDEDD] text-brand-dark hover:border-[#0C51D9]',
+                ]"
+              >
+                THR (Tunjangan Hari Raya)
+              </button>
             </div>
           </div>
 
@@ -79,7 +126,15 @@ const formatMonth = (month) => {
           <!-- Info Box -->
           <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-[12px] flex items-start gap-3">
             <AlertCircle class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
+            <div v-if="payrollType === 'thr'">
+              <h4 class="text-blue-900 text-sm font-semibold mb-1">Automatic Generation (THR)</h4>
+              <p class="text-blue-800 text-sm">
+                THR will be generated for every employee with at least 1 month of continuous service, prorated by
+                tenure (full amount at 12+ months). This is a separate run from the regular monthly payroll -- both
+                can exist for the same month.
+              </p>
+            </div>
+            <div v-else>
               <h4 class="text-blue-900 text-sm font-semibold mb-1">Automatic Generation</h4>
               <p class="text-blue-800 text-sm">
                 Payroll will be automatically generated for all active employees based on their attendance records for the selected month. Salaries will be calculated based on attendance, sick days, and absences.
@@ -135,9 +190,10 @@ const formatMonth = (month) => {
               class="btn-primary w-full rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span class="text-brand-white text-sm sm:text-base font-semibold">{{
-                loading ? "Generating..." : "Generate Payroll"
+                loading ? "Generating..." : payrollType === "thr" ? "Generate THR" : "Generate Payroll"
               }}</span>
-              <Plus class="w-4 h-4 text-white" />
+              <Gift v-if="payrollType === 'thr'" class="w-4 h-4 text-white" />
+              <Plus v-else class="w-4 h-4 text-white" />
             </button>
             <button
               type="button"

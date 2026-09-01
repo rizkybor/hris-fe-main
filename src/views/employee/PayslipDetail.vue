@@ -128,11 +128,20 @@ const formatPeriod = (date) => {
         <div class="border-b-2 border-gray-200 pb-6 mb-6">
           <div class="flex items-start justify-between">
             <div>
-              <h1 class="text-3xl font-extrabold text-brand-dark mb-2">
-                Payslip
-              </h1>
+              <div class="flex items-center gap-2 mb-2">
+                <h1 class="text-3xl font-extrabold text-brand-dark">
+                  {{ payslip.type === "thr" ? "THR Payslip" : "Payslip" }}
+                </h1>
+                <span
+                  v-if="payslip.type === 'thr'"
+                  class="px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full"
+                >THR</span>
+              </div>
               <p class="text-gray-600">
                 {{ formatPeriod(payslip.period) }}
+                <span v-if="payslip.type === 'thr' && payslip.months_of_service != null">
+                  &middot; Masa kerja: {{ payslip.months_of_service }}/12 bulan
+                </span>
               </p>
             </div>
             <div class="text-right">
