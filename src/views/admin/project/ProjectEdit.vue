@@ -32,6 +32,8 @@ import {
   ClipboardCheck,
   Link2,
   Trash2,
+  CheckCircle2,
+  XCircle,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash-es";
@@ -1074,6 +1076,76 @@ watch(
                       type="radio"
                       name="project_status"
                       value="draft"
+                      class="hidden"
+                      v-model="form.status"
+                    />
+                    <div
+                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
+                    ></div>
+                    <p
+                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
+                    ></p>
+                  </div>
+                </label>
+
+                <!-- Completed Option -->
+                <label
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center"
+                    >
+                      <CheckCircle2 class="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div class="flex flex-col">
+                      <p class="text-brand-dark text-sm font-semibold">
+                        Completed
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
+                  >
+                    <input
+                      type="radio"
+                      name="project_status"
+                      value="completed"
+                      class="hidden"
+                      v-model="form.status"
+                    />
+                    <div
+                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
+                    ></div>
+                    <p
+                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
+                    ></p>
+                  </div>
+                </label>
+
+                <!-- Cancelled Option -->
+                <label
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-9 h-9 bg-red-50 rounded-[10px] flex items-center justify-center"
+                    >
+                      <XCircle class="w-5 h-5 text-red-600" />
+                    </div>
+                    <div class="flex flex-col">
+                      <p class="text-brand-dark text-sm font-semibold">
+                        Cancelled
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
+                  >
+                    <input
+                      type="radio"
+                      name="project_status"
+                      value="cancelled"
                       class="hidden"
                       v-model="form.status"
                     />
