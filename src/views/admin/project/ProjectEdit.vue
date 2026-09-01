@@ -90,6 +90,8 @@ const form = ref({
   photo: "",
   photo_url: "",
   budget: "",
+  warranty_period_months: "",
+  retention_period_months: "",
   project_leader_id: "",
   team_assignment_mode: "employee",
   team_id: "",
@@ -214,6 +216,14 @@ const handleSubmit = async () => {
   }
   payload.budget =
     parseInt(String(form.value.budget).replace(/[^0-9]/g, "")) || 0;
+  payload.warranty_period_months =
+    form.value.warranty_period_months === "" || form.value.warranty_period_months === null
+      ? null
+      : parseInt(form.value.warranty_period_months);
+  payload.retention_period_months =
+    form.value.retention_period_months === "" || form.value.retention_period_months === null
+      ? null
+      : parseInt(form.value.retention_period_months);
   payload.additional_access = form.value.additional_access.filter((item) => item.name && item.url);
   await updateProject(id, payload);
 
@@ -940,6 +950,30 @@ watch(
               >
                 <template #icon> Rp </template>
               </Input>
+            </div>
+
+            <!-- Warranty & Retention Period -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
+              <Input
+                id="warranty_period_months"
+                name="warranty_period_months"
+                type="number"
+                min="0"
+                v-model="form.warranty_period_months"
+                label="Warranty Period (months, optional)"
+                placeholder="e.g. 12"
+                :error="error?.warranty_period_months?.join(', ')"
+              />
+              <Input
+                id="retention_period_months"
+                name="retention_period_months"
+                type="number"
+                min="0"
+                v-model="form.retention_period_months"
+                label="Retention Period (months, optional)"
+                placeholder="e.g. 6"
+                :error="error?.retention_period_months?.join(', ')"
+              />
             </div>
 
             <!-- Initial Project Status (Full Width) -->

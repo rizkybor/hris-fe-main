@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   Download,
   Building2,
+  ShieldCheck,
+  Lock,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import router from "@/router";
@@ -272,7 +274,7 @@ onMounted(async () => {
         class="border border-[#DCDEDD] w-full h-40 sm:h-52 md:h-56 bg-gradient-to-br from-blue-100 to-purple-100 relative overflow-hidden rounded-[12px] mb-6"
       >
         <img
-          :src="project.photo"
+          :src="project.photo || '/images/og-image.png'"
           alt="Project Image"
           class="w-full h-full object-cover rounded-[12px]"
         />
@@ -595,6 +597,44 @@ onMounted(async () => {
           >
             <Clock class="w-4 h-4 text-blue-600" />
           </div>
+        </div>
+      </div>
+
+      <!-- Warranty + Retention Period (only shown when the project has them set) -->
+      <div
+        v-if="project.warranty_period_months || project.retention_period_months"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-4"
+      >
+        <div
+          v-if="project.warranty_period_months"
+          class="bg-gradient-to-br from-emerald-50/70 to-white border border-emerald-100 rounded-[14px] hover:shadow-sm transition-all duration-300 p-4 border-l-4 border-l-emerald-400"
+        >
+          <div
+            class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center mb-3"
+          >
+            <ShieldCheck class="w-4 h-4 text-emerald-600" />
+          </div>
+          <p class="text-brand-dark text-xs font-medium">Warranty Period</p>
+          <p class="text-brand-dark text-base font-extrabold leading-snug my-1.5">
+            {{ project.warranty_period_months }} months
+          </p>
+          <p class="text-emerald-600 text-xs font-medium">After project completion</p>
+        </div>
+
+        <div
+          v-if="project.retention_period_months"
+          class="bg-gradient-to-br from-amber-50/70 to-white border border-amber-100 rounded-[14px] hover:shadow-sm transition-all duration-300 p-4 border-l-4 border-l-amber-400"
+        >
+          <div
+            class="w-9 h-9 bg-amber-50 rounded-[10px] flex items-center justify-center mb-3"
+          >
+            <Lock class="w-4 h-4 text-amber-600" />
+          </div>
+          <p class="text-brand-dark text-xs font-medium">Retention Period</p>
+          <p class="text-brand-dark text-base font-extrabold leading-snug my-1.5">
+            {{ project.retention_period_months }} months
+          </p>
+          <p class="text-amber-600 text-xs font-medium">Contract term</p>
         </div>
       </div>
     </div>
