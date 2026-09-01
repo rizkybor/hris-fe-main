@@ -321,16 +321,28 @@ onMounted(async () => {
                 {{ task.title }}
               </h4>
 
-              <span
-                :class="staffTaskStatusClasses[task.my_assignment?.status]"
-                class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0"
-              >
-                {{
-                  STAFF_TASK_STATUS_OPTIONS.find(
-                    (o) => o.value === task.my_assignment?.status,
-                  )?.label ?? task.my_assignment?.status
-                }}
-              </span>
+              <!-- Status: compact colored select, doubles as the status badge -->
+              <div class="relative inline-block shrink-0" @click.stop>
+                <select
+                  :value="task.my_assignment?.status"
+                  @change="handleStaffTaskStatusChange(task, $event)"
+                  :disabled="updatingStaffTaskId === task.id"
+                  :class="staffTaskStatusClasses[task.my_assignment?.status]"
+                  class="status-select-badge"
+                >
+                  <option
+                    v-for="opt in STAFF_TASK_STATUS_OPTIONS"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >
+                    {{ opt.label }}
+                  </option>
+                </select>
+
+                <ChevronDown
+                  class="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-current opacity-60 pointer-events-none"
+                />
+              </div>
             </div>
 
             <!-- Description -->
@@ -342,7 +354,7 @@ onMounted(async () => {
             </p>
 
             <!-- Meta -->
-            <div class="flex items-center gap-1.5 mb-3 flex-wrap">
+            <div class="flex items-center gap-1.5 flex-wrap">
               <span
                 v-if="staffTaskOverdue(task)"
                 class="px-2 py-0.5 rounded-md text-xs font-semibold bg-red-100 text-red-700"
@@ -363,30 +375,6 @@ onMounted(async () => {
               <span class="text-xs text-gray-400">
                 by {{ task.creator?.name }}
               </span>
-            </div>
-
-            <!-- Status -->
-            <div class="pt-3 border-t border-gray-100" @click.stop>
-              <div class="relative">
-                <select
-                  :value="task.my_assignment?.status"
-                  @change="handleStaffTaskStatusChange(task, $event)"
-                  :disabled="updatingStaffTaskId === task.id"
-                  class="select-soft"
-                >
-                  <option
-                    v-for="opt in STAFF_TASK_STATUS_OPTIONS"
-                    :key="opt.value"
-                    :value="opt.value"
-                  >
-                    {{ opt.label }}
-                  </option>
-                </select>
-
-                <ChevronDown
-                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -580,12 +568,28 @@ onMounted(async () => {
                     {{ task.title }}
                   </h4>
 
-                  <span
-                    :class="task.statusClass"
-                    class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0"
-                  >
-                    {{ task.statusLabel }}
-                  </span>
+                  <!-- Status: compact colored select, doubles as the status badge -->
+                  <div class="relative inline-block shrink-0" @click.stop>
+                    <select
+                      :value="task.status"
+                      @change="handleStatusChange(task, $event)"
+                      :disabled="updatingTaskId === task.id"
+                      :class="task.statusClass"
+                      class="status-select-badge"
+                    >
+                      <option
+                        v-for="opt in STATUS_OPTIONS"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >
+                        {{ opt.label }}
+                      </option>
+                    </select>
+
+                    <ChevronDown
+                      class="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-current opacity-60 pointer-events-none"
+                    />
+                  </div>
                 </div>
 
                 <!-- Description -->
@@ -597,7 +601,7 @@ onMounted(async () => {
                 </p>
 
                 <!-- Meta -->
-                <div class="flex items-center gap-1.5 mb-3 flex-wrap">
+                <div class="flex items-center gap-1.5 flex-wrap">
                   <span
                     :class="getPriorityColor(task.priority)"
                     class="px-2 py-0.5 rounded-md text-xs font-semibold capitalize"
@@ -618,30 +622,6 @@ onMounted(async () => {
                     <span class="text-xs font-medium">
                       {{ task.dueDate }}
                     </span>
-                  </div>
-                </div>
-
-                <!-- Status -->
-                <div class="pt-3 border-t border-gray-100" @click.stop>
-                  <div class="relative">
-                    <select
-                      :value="task.status"
-                      @change="handleStatusChange(task, $event)"
-                      :disabled="updatingTaskId === task.id"
-                      class="select-soft"
-                    >
-                      <option
-                        v-for="opt in STATUS_OPTIONS"
-                        :key="opt.value"
-                        :value="opt.value"
-                      >
-                        {{ opt.label }}
-                      </option>
-                    </select>
-
-                    <ChevronDown
-                      class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-                    />
                   </div>
                 </div>
               </div>

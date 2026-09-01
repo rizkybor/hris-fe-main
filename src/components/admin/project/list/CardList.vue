@@ -3,8 +3,7 @@ import { computed } from "vue";
 import { formatToClientTimezone } from "@/helpers/format";
 import { can } from "@/helpers/permissionHelper";
 import { capitalize } from "lodash-es";
-import { Calendar, Crown, Edit, Eye, FileText, FolderKanban, WalletIcon, AlertTriangle, Trash2 } from "lucide-vue-next";
-import { formatRupiah } from "@/utils/formatUtils";
+import { Calendar, Crown, Edit, Eye, FileText, ShieldCheck, Lock, AlertTriangle, Trash2 } from "lucide-vue-next";
 import { getProjectHealth, PROJECT_HEALTH_BADGE_CLASS } from "@/utils/projectHealth";
 import Avatar from "@/components/common/Avatar.vue";
 
@@ -56,13 +55,9 @@ const getProgressColor = (progress) => {
       class="w-full h-32 sm:h-36 bg-gradient-to-br from-blue-100 to-purple-100 relative overflow-hidden"
     >
       <img
-        v-if="data.photo"
         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        :src="data.photo"
+        :src="data.photo || '/images/og-image.png'"
       />
-      <div v-else class="w-full h-full flex items-center justify-center">
-        <FolderKanban class="w-10 h-10 text-blue-300" />
-      </div>
       <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent"></div>
 
       <div class="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between">
@@ -131,15 +126,8 @@ const getProgressColor = (progress) => {
         </div>
       </div>
 
-      <!-- Meta info row: budget pill + team/date, unified compact style -->
+      <!-- Meta info row: team/date, unified compact style -->
       <div class="flex flex-wrap items-center gap-1.5 mb-3.5">
-        <span
-          v-if="data.budget"
-          class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md text-[11px] font-semibold"
-        >
-          <WalletIcon class="w-3 h-3" />
-          {{ formatRupiah(data.budget) }}
-        </span>
         <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-50 text-gray-600 rounded-md text-[11px] font-medium truncate max-w-full">
           <FileText class="w-3 h-3 shrink-0" />
           <span v-if="data.teams.length > 0" class="truncate">{{ data.teams.map((team) => team.name).join(", ") }}</span>
@@ -149,6 +137,20 @@ const getProgressColor = (progress) => {
         <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-50 text-gray-600 rounded-md text-[11px] font-medium">
           <Calendar class="w-3 h-3 shrink-0" />
           {{ formatToClientTimezone(data.start_date) }} - {{ data.end_date ? formatToClientTimezone(data.end_date) : "N/A" }}
+        </span>
+        <span
+          v-if="data.warranty_period_months"
+          class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[11px] font-semibold"
+        >
+          <ShieldCheck class="w-3 h-3 shrink-0" />
+          {{ data.warranty_period_months }}mo warranty
+        </span>
+        <span
+          v-if="data.retention_period_months"
+          class="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded-md text-[11px] font-semibold"
+        >
+          <Lock class="w-3 h-3 shrink-0" />
+          {{ data.retention_period_months }}mo retention
         </span>
       </div>
 
