@@ -11,6 +11,7 @@ import {
   Eye,
   CalendarX,
   ChevronDown,
+  Paperclip,
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
 import { useLeaveRequestStore } from "@/stores/leaveRequest";
@@ -69,9 +70,12 @@ const leaveForm = ref({
   leave_type: "",
   start_date: "",
   end_date: "",
+  is_half_day: false,
   reason: "",
   emergency_contact: "",
+  attachment: null,
 });
+const attachmentInputRef = ref(null);
 
 // Computed
 const recentAttendances = computed(() => {
@@ -79,6 +83,7 @@ const recentAttendances = computed(() => {
 });
 
 const totalDaysCalculated = computed(() => {
+  if (leaveForm.value.is_half_day) return 0.5;
   if (!leaveForm.value.start_date || !leaveForm.value.end_date) {
     return 0;
   }
@@ -87,6 +92,15 @@ const totalDaysCalculated = computed(() => {
     leaveForm.value.end_date
   );
 });
+
+// Mirrors LeaveRequestStoreRequest's own rule server-side: a doctor's note
+// is required for sick leave spanning more than one day.
+const attachmentRequired = computed(
+  () =>
+    leaveForm.value.leave_type === "sick_leave" &&
+    !leaveForm.value.is_half_day &&
+    totalDaysCalculated.value > 1
+);
 
 const pendingRequestsCount = computed(() => {
   return myLeaveRequests.value.filter((r) => r.status === "pending").length;
@@ -106,9 +120,25 @@ const closeLeaveRequestModal = () => {
     leave_type: "",
     start_date: "",
     end_date: "",
+    is_half_day: false,
     reason: "",
     emergency_contact: "",
+    attachment: null,
   };
+  if (attachmentInputRef.value) attachmentInputRef.value.value = "";
+};
+
+// Half-day only makes sense for a single day -- keep End Date locked to
+// Start Date while it's checked, same rule the backend enforces.
+const toggleHalfDay = () => {
+  leaveForm.value.is_half_day = !leaveForm.value.is_half_day;
+  if (leaveForm.value.is_half_day) {
+    leaveForm.value.end_date = leaveForm.value.start_date;
+  }
+};
+
+const handleAttachmentChange = (event) => {
+  leaveForm.value.attachment = event.target.files?.[0] ?? null;
 };
 
 const submitLeaveRequest = async () => {
@@ -124,6 +154,14 @@ const submitLeaveRequest = async () => {
 
   if (endDate < startDate) {
     await alertModal.alert("End date must be after start date.", { type: "warning" });
+    return;
+  }
+
+  if (attachmentRequired.value && !leaveForm.value.attachment) {
+    await alertModal.alert(
+      "Lampiran surat keterangan dokter wajib diunggah untuk cuti sakit lebih dari 1 hari.",
+      { type: "warning" }
+    );
     return;
   }
 
@@ -172,6 +210,11 @@ const closeLeaveDetailsModal = () => {
 };
 
 const updateEndDateMin = () => {
+  if (leaveForm.value.is_half_day) {
+    leaveForm.value.end_date = leaveForm.value.start_date;
+    return;
+  }
+
   if (leaveForm.value.start_date && leaveForm.value.end_date) {
     if (new Date(leaveForm.value.end_date) < new Date(leaveForm.value.start_date)) {
       leaveForm.value.end_date = leaveForm.value.start_date;
@@ -566,9 +609,23 @@ onMounted(async () => {
                       type="date"
                       v-model="leaveForm.end_date"
                       :min="leaveForm.start_date"
+                      :disabled="leaveForm.is_half_day"
                       required
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
+                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
+                  </div>
+
+                  <!-- Half Day -->
+                  <div class="md:col-span-2">
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        :checked="leaveForm.is_half_day"
+                        @change="toggleHalfDay"
+                        class="w-4 h-4 rounded border-[#DCDEDD] text-[#0C51D9] focus:ring-[#0C51D9]"
+                      />
+                      <span class="text-brand-dark text-sm font-semibold">Cuti Setengah Hari (Half Day)</span>
+                    </label>
                   </div>
 
                   <!-- Total Days -->
@@ -633,6 +690,27 @@ onMounted(async () => {
                       class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
                       placeholder="Phone number for emergency contact"
                     />
+                  </div>
+
+                  <!-- Attachment -->
+                  <div>
+                    <label class="block text-brand-dark text-base font-semibold mb-1">
+                      Lampiran (Surat Keterangan Dokter, dll.)
+                      <span v-if="attachmentRequired" class="text-red-600 ml-1">*</span>
+                      <span v-else class="text-brand-light text-sm font-normal ml-1">(Optional)</span>
+                    </label>
+                    <input
+                      ref="attachmentInputRef"
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.pdf"
+                      @change="handleAttachmentChange"
+                      class="w-full text-sm border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 file:mr-3 file:py-2.5 file:px-4 file:rounded-l-[12px] file:border-0 file:bg-gray-100 file:text-brand-dark file:font-semibold file:cursor-pointer"
+                    />
+                    <p v-if="attachmentRequired" class="text-red-600 text-xs mt-1.5 flex items-center gap-1">
+                      <Paperclip class="w-3.5 h-3.5" />
+                      Wajib diunggah untuk cuti sakit lebih dari 1 hari.
+                    </p>
+                    <p v-else class="text-brand-light text-xs mt-1.5">Format: JPG, PNG, atau PDF, maks. 5MB.</p>
                   </div>
                 </div>
               </div>
@@ -797,6 +875,7 @@ onMounted(async () => {
                             {{
                               selectedLeaveRequest.total_days === 1 ? "day" : "days"
                             }}
+                            <span v-if="selectedLeaveRequest.is_half_day" class="text-sm font-semibold text-blue-600">(Half Day)</span>
                           </p>
                           <p class="text-brand-light text-sm">
                             Working days (excluding weekends)
@@ -841,6 +920,25 @@ onMounted(async () => {
                         formatRequestDateLong(selectedLeaveRequest.created_at)
                       }}</span>
                     </div>
+                  </div>
+
+                  <!-- Attachment -->
+                  <div v-if="selectedLeaveRequest.attachment_url">
+                    <label
+                      class="block text-brand-dark text-base font-semibold mb-2"
+                      >Lampiran</label
+                    >
+                    <a
+                      :href="selectedLeaveRequest.attachment_url"
+                      target="_blank"
+                      rel="noopener"
+                      class="p-3 bg-blue-50 rounded-[12px] border border-[#DCDEDD] flex items-center gap-2 hover:border-[#0C51D9] transition-all duration-300"
+                    >
+                      <Paperclip class="w-4 h-4 text-blue-600 shrink-0" />
+                      <span class="text-blue-700 text-sm font-medium truncate">{{
+                        selectedLeaveRequest.attachment_original_name || "Lihat Lampiran"
+                      }}</span>
+                    </a>
                   </div>
                 </div>
               </div>

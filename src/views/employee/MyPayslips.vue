@@ -208,9 +208,15 @@ const totalDeductions = computed(() => {
               class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center group-hover:bg-blue-100 transition-all duration-300">
               <FileText class="w-6 h-6 text-blue-600" />
             </div>
-            <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-              Paid
-            </span>
+            <div class="flex items-center gap-1.5">
+              <span
+                v-if="payslip.type === 'thr'"
+                class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full"
+              >THR</span>
+              <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                Paid
+              </span>
+            </div>
           </div>
 
           <div class="mb-4">

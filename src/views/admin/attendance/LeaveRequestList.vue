@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { CalendarClock, Search, Check, X, ArrowLeft, ChevronDown } from "lucide-vue-next";
+import { CalendarClock, Search, Check, X, ArrowLeft, ChevronDown, Paperclip } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useLeaveRequestStore } from "@/stores/leaveRequest";
 import {
@@ -174,6 +174,8 @@ const confirmReject = async () => {
               <td class="py-3 pr-4 whitespace-nowrap">
                 {{ formatDate(request.start_date) }} - {{ formatDate(request.end_date) }}
                 <span class="text-brand-light">({{ request.days }} days)</span>
+                <span v-if="request.is_half_day" class="text-blue-600 text-xs font-semibold ml-1">Half</span>
+                <Paperclip v-if="request.attachment_url" class="w-3.5 h-3.5 text-gray-400 inline ml-1" />
               </td>
               <td class="py-3 pr-4 max-w-[240px] truncate" :title="request.reason">{{ request.reason || "-" }}</td>
               <td class="py-3 pr-4">
@@ -238,8 +240,19 @@ const confirmReject = async () => {
             </div>
             <p class="text-brand-dark text-sm">
               {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ selectedLeaveRequest.days }} days)
+              <span v-if="selectedLeaveRequest.is_half_day" class="text-blue-600 font-semibold">(Half Day)</span>
             </p>
             <p class="text-brand-light text-sm mt-2">{{ selectedLeaveRequest.reason }}</p>
+            <a
+              v-if="selectedLeaveRequest.attachment_url"
+              :href="selectedLeaveRequest.attachment_url"
+              target="_blank"
+              rel="noopener"
+              class="mt-3 inline-flex items-center gap-1.5 text-blue-600 text-sm font-medium hover:underline"
+            >
+              <Paperclip class="w-3.5 h-3.5" />
+              {{ selectedLeaveRequest.attachment_original_name || "Lihat Lampiran" }}
+            </a>
           </div>
         </div>
 
@@ -289,8 +302,19 @@ const confirmReject = async () => {
             </div>
             <p class="text-brand-dark text-sm">
               {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ selectedLeaveRequest.days }} days)
+              <span v-if="selectedLeaveRequest.is_half_day" class="text-blue-600 font-semibold">(Half Day)</span>
             </p>
             <p class="text-brand-light text-sm mt-2">{{ selectedLeaveRequest.reason }}</p>
+            <a
+              v-if="selectedLeaveRequest.attachment_url"
+              :href="selectedLeaveRequest.attachment_url"
+              target="_blank"
+              rel="noopener"
+              class="mt-3 inline-flex items-center gap-1.5 text-blue-600 text-sm font-medium hover:underline"
+            >
+              <Paperclip class="w-3.5 h-3.5" />
+              {{ selectedLeaveRequest.attachment_original_name || "Lihat Lampiran" }}
+            </a>
           </div>
         </div>
 

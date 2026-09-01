@@ -102,6 +102,24 @@ export const usePayrollStore = defineStore("payroll", {
             }
         },
 
+        // THR (Tunjangan Hari Raya) is a separate payroll run from the
+        // regular monthly one, based on tenure rather than attendance.
+        async generateThrPayroll(payload) {
+            this.loading = true;
+
+            try {
+                const response = await axiosInstance.post('/payrolls/generate-thr', payload);
+
+                this.success = response.data.message;
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async updatePayrollDetail(id, payload) {
             this.loading = true;
 
