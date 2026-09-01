@@ -133,6 +133,44 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
+    /* ======================= VENDOR EVALUATIONS (rating) ======================= */
+    async fetchVendorEvaluations(vendorId) {
+      try {
+        const response = await axiosInstance.get(`/vendors/${vendorId}/evaluations`);
+        return response.data.data;
+      } catch (error) {
+        this.error = handleError(error);
+        throw error;
+      }
+    },
+
+    async createVendorEvaluation(payload) {
+      this.loading = true;
+      try {
+        const response = await axiosInstance.post("/vendor-evaluations", payload);
+        this.success = response.data.message;
+        return response.data.data;
+      } catch (error) {
+        this.error = handleError(error);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async deleteVendorEvaluation(id) {
+      this.loading = true;
+      try {
+        await axiosInstance.delete(`/vendor-evaluations/${id}`);
+        this.success = "Evaluation deleted successfully";
+      } catch (error) {
+        this.error = handleError(error);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     /* ======================= VENDORS ATTACHMENT ======================= */
     async fetchVendorsAttachmentPaginated(params) {
       this.loading = true;

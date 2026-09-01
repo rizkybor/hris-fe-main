@@ -121,5 +121,39 @@ export const useAssetStore = defineStore("asset", {
                 throw error;
             }
         },
+
+        /* ======================= MAINTENANCE LOGS ======================= */
+        async fetchMaintenanceLogs(assetId) {
+            try {
+                const response = await axiosInstance.get(`/company-assets/${assetId}/maintenance-logs`);
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
+
+        async createMaintenanceLog(payload) {
+            this.loading = true;
+            try {
+                const response = await axiosInstance.post("/asset-maintenance-logs", payload);
+                this.success = response.data.message;
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async deleteMaintenanceLog(id) {
+            try {
+                await axiosInstance.delete(`/asset-maintenance-logs/${id}`);
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
     },
 });

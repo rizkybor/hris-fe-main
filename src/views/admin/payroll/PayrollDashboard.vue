@@ -16,6 +16,7 @@ import {
   Users,
   Eye,
   EyeOff,
+  Gift,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
@@ -239,6 +240,15 @@ const viewDetails = (id) => {
           </RouterLink>
 
           <RouterLink
+            v-if="can('payroll-create')"
+            :to="{ name: 'admin.payroll.create', query: { type: 'thr' } }"
+            class="bg-white btn-secondary w-full text-left border border-purple-200 rounded-[10px] hover:border-purple-400 hover:border-2 focus:border-purple-400 focus:border-2 focus:bg-white transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2"
+          >
+            <Gift class="w-4 h-4 text-purple-600" />
+            <span class="text-brand-dark text-xs font-medium">Generate THR</span>
+          </RouterLink>
+
+          <RouterLink
             :to="{ name: 'admin.report.dashboard' }"
             class="bg-white btn-secondary w-full text-left border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2"
           >
@@ -362,6 +372,12 @@ const viewDetails = (id) => {
                 <p class="text-brand-dark text-sm font-bold">
                   {{ formatDate(payroll.period) }}
                 </p>
+                <span
+                  v-if="payroll.type === 'thr'"
+                  class="px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-700 flex items-center gap-1"
+                >
+                  <Gift class="w-3 h-3" /> THR
+                </span>
               </div>
               <div class="flex items-center gap-2">
                 <Users class="w-3.5 h-3.5 text-gray-600 shrink-0" />

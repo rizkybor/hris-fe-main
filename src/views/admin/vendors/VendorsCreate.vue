@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { Briefcase, Save, User, Phone, Mail, MapPin, Tag, Layers, FileText, Building2 } from "lucide-vue-next";
+import { Briefcase, Save, User, Phone, Mail, MapPin, Tag, Layers, FileText, Building2, ScrollText } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { useVendorsStore } from "@/stores/vendor";
 import { errorMessage } from "@/helpers/errorHelper";
@@ -21,6 +21,9 @@ const form = ref({
   pic_phone: "",
   email: "",
   address: "",
+  npwp: "",
+  siup_number: "",
+  nib_number: "",
   notes: "",
 });
 
@@ -191,6 +194,49 @@ const submit = async () => {
                 class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
               />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legalitas (optional -- vendor may be an individual, not a company) -->
+      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
+        <div class="flex items-center gap-1.5 mb-1">
+          <div class="w-9 h-9 bg-purple-50 rounded-[10px] flex items-center justify-center shrink-0">
+            <ScrollText class="w-4.5 h-4.5 text-purple-600" />
+          </div>
+          <h4 class="text-brand-dark font-bold">Legalitas (Opsional)</h4>
+        </div>
+        <p class="text-brand-light text-xs mb-4 ml-11">
+          Kosongkan jika vendor merupakan perorangan, bukan badan usaha terdaftar.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1">NPWP</label>
+            <input
+              v-model="form.npwp"
+              type="text"
+              placeholder="00.000.000.0-000.000"
+              class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            />
+          </div>
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1">Nomor SIUP</label>
+            <input
+              v-model="form.siup_number"
+              type="text"
+              placeholder="e.g. SIUP-123/2020"
+              class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            />
+          </div>
+          <div>
+            <label class="block text-brand-dark text-sm font-semibold mb-1">Nomor NIB</label>
+            <input
+              v-model="form.nib_number"
+              type="text"
+              placeholder="e.g. 1234567890123"
+              class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+            />
           </div>
         </div>
       </div>

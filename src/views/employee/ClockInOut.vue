@@ -22,8 +22,10 @@ import {
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
 import { useAttendanceSettingStore } from "@/stores/attendanceSetting";
+import { useAuthStore } from "@/stores/auth";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
+import { haversineDistanceMeters } from "@/utils/attendanceUtils";
 
 const attendanceStore = useAttendanceStore();
 const alertModal = useAlertModalStore();
@@ -32,6 +34,19 @@ const { checkIn, checkOut, fetchTodayAttendance } = attendanceStore;
 
 const attendanceSettingStore = useAttendanceSettingStore();
 const { setting: attendanceSetting } = storeToRefs(attendanceSettingStore);
+
+const authStore = useAuthStore();
+const { user } = storeToRefs(authStore);
+
+// Only Work Location = Office employees are geofenced server-side (see
+// AttendanceRepository::guardOfficeGeofence()) -- this mirrors that same
+// condition so Remote/Hybrid employees aren't shown a distance check that
+// will never actually apply to them.
+const isOfficeWorker = computed(() => user.value?.employee_profile?.job_information?.work_location === "office");
+
+const hasOfficeCoordinates = computed(
+  () => attendanceSetting.value.office_latitude != null && attendanceSetting.value.office_longitude != null
+);
 
 // Sat/Sun aren't scheduled work days -- Clock In/Out is disabled on them
 // unless Superadmin/Manager opened it up in Settings, in which case a
@@ -54,6 +69,24 @@ const locationName = ref("Location not detected");
 const locationAddress = ref("Click 'Get Location' to detect your current position");
 const locationCoords = ref("");
 const isGettingLocation = ref(false);
+
+const distanceFromOffice = computed(() => {
+  if (!currentLocation.value || !hasOfficeCoordinates.value) return null;
+
+  return Math.round(
+    haversineDistanceMeters(
+      Number(attendanceSetting.value.office_latitude),
+      Number(attendanceSetting.value.office_longitude),
+      currentLocation.value.latitude,
+      currentLocation.value.longitude
+    )
+  );
+});
+
+const isWithinOfficeRadius = computed(() => {
+  if (distanceFromOffice.value === null) return null;
+  return distanceFromOffice.value <= (attendanceSetting.value.office_radius_meters ?? 150);
+});
 
 // Computed
 const isCheckedIn = computed(() => {
@@ -534,16 +567,31 @@ onUnmounted(() => {
             </span>
           </button>
 
-          <!-- Office Location Reference -->
-          <div class="p-3 sm:p-4 bg-green-50 rounded-[12px] border border-[#DCDEDD]">
+          <!-- Office Location Reference -- only meaningful for Work
+               Location = Office employees, who are the only ones actually
+               geofenced server-side (see AttendanceRepository::
+               guardOfficeGeofence()). -->
+          <div
+            v-if="isOfficeWorker && hasOfficeCoordinates"
+            class="p-3 sm:p-4 rounded-[12px] border border-[#DCDEDD]"
+            :class="{
+              'bg-green-50': isWithinOfficeRadius === true,
+              'bg-red-50': isWithinOfficeRadius === false,
+              'bg-white': isWithinOfficeRadius === null,
+            }"
+          >
             <div class="flex items-start sm:items-center gap-3">
               <Building class="w-5 h-5 text-blue-600 shrink-0 mt-0.5 sm:mt-0" />
               <div class="min-w-0">
                 <p class="text-brand-dark text-sm sm:text-base font-semibold">
-                  Jakarta Office
+                  Office Radius: {{ attendanceSetting.office_radius_meters ?? 150 }}m
                 </p>
-                <p class="text-brand-light text-xs sm:text-sm break-words">
-                  Jl. Sudirman No. 123, Jakarta
+                <p v-if="distanceFromOffice !== null" class="text-xs sm:text-sm break-words" :class="isWithinOfficeRadius ? 'text-green-700' : 'text-red-700'">
+                  You're {{ distanceFromOffice }}m from the office --
+                  {{ isWithinOfficeRadius ? "within range" : "outside the allowed radius" }}
+                </p>
+                <p v-else class="text-brand-light text-xs sm:text-sm break-words">
+                  Get your location to check distance from the office
                 </p>
               </div>
             </div>

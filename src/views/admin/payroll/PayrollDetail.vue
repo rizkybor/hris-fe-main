@@ -112,6 +112,7 @@ const fetchPayrollDetails = async (page = 1) => {
         attended_days: detail.attended_days || 0,
         sick_days: detail.sick_days || 0,
         absent_days: detail.absent_days || 0,
+        months_of_service: detail.months_of_service,
         basic_salary: parseFloat(detail.original_salary) || 0,
         deductions:
           parseFloat(detail.original_salary) -
@@ -169,6 +170,11 @@ onMounted(async () => {
 // Server-side filtering is now handled by the API
 const filteredEmployees = computed(() => employees.value);
 
+// THR rows have no attendance data (eligibility is tenure-based, not
+// attendance-based -- see PayrollRepository::generateThrPayroll()), so the
+// Attendance column is swapped for Months of Service instead.
+const isThr = computed(() => payroll.value?.type === "thr");
+
 // Watch for search query changes with debounce
 watch(
   searchQuery,
@@ -191,6 +197,10 @@ const getAttendancePercentage = (attendedDays, totalDays) => {
 };
 
 const deductionBreakdown = (emp) => {
+  if (isThr.value) {
+    return [`PPh 21: ${formatRupiah(emp.pph21)}`].join("\n");
+  }
+
   const attendanceDeduction =
     emp.deductions - emp.bpjs_kesehatan_employee - emp.bpjs_jht_employee - emp.bpjs_jp_employee - emp.pph21;
   return [
@@ -345,7 +355,13 @@ const handleMarkAsPaid = async () => {
             <Users class="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Employee Details</h3>
+            <div class="flex items-center gap-2">
+              <h3 class="text-brand-dark text-xl font-bold">Employee Details</h3>
+              <span
+                v-if="isThr"
+                class="px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-700"
+              >THR</span>
+            </div>
             <p class="text-brand-light text-sm font-normal">
               Complete payroll breakdown by employee
             </p>
@@ -396,10 +412,10 @@ const handleMarkAsPaid = async () => {
                 Bank Account
               </th>
               <th class="text-center py-3 px-4 font-semibold text-brand-dark text-sm">
-                Attendance
+                {{ isThr ? "Months of Service" : "Attendance" }}
               </th>
               <th class="text-right py-3 px-4 font-semibold text-brand-dark text-sm">
-                Basic Salary
+                {{ isThr ? "Gross THR" : "Basic Salary" }}
               </th>
               <th class="text-right py-3 px-4 font-semibold text-brand-dark text-sm">
                 Deductions
@@ -440,7 +456,10 @@ const handleMarkAsPaid = async () => {
                   <p class="text-brand-light text-xs">{{ emp.account_number }}</p>
                 </div>
               </td>
-              <td class="py-4 px-4 text-center">
+              <td v-if="isThr" class="py-4 px-4 text-center">
+                <span class="text-sm font-semibold text-brand-dark">{{ emp.months_of_service ?? "-" }}/12</span>
+              </td>
+              <td v-else class="py-4 px-4 text-center">
                 <div class="flex items-center justify-center gap-2">
                   <span :class="[
                     'text-sm font-semibold',

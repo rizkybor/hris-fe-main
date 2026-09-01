@@ -81,7 +81,23 @@ export const useLeaveRequestStore = defineStore("leaveRequest", {
             this.error = null;
 
             try {
-                const response = await axiosInstance.post('leave-requests', payload);
+                // A File attachment needs multipart/form-data -- plain JSON
+                // can't carry binary content. Sent as a regular JSON body
+                // when there's no file (the common case), since the backend
+                // treats both the same way.
+                const hasFile = payload.attachment instanceof File;
+                const body = hasFile
+                    ? Object.entries(payload).reduce((formData, [key, value]) => {
+                        if (value !== null && value !== undefined && value !== '') {
+                            formData.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : value);
+                        }
+                        return formData;
+                    }, new FormData())
+                    : payload;
+
+                const response = await axiosInstance.post('leave-requests', body, {
+                    headers: hasFile ? { 'Content-Type': 'multipart/form-data' } : undefined,
+                });
 
                 this.success = response.data.message;
                 return response.data.data;
