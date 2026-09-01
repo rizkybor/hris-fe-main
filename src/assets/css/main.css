@@ -2598,6 +2598,11 @@ video {
   border-color: rgb(253 224 71 / var(--tw-border-opacity, 1));
 }
 
+.border-l-amber-400 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(251 191 36 / var(--tw-border-opacity, 1));
+}
+
 .border-l-amber-500 {
   --tw-border-opacity: 1;
   border-left-color: rgb(245 158 11 / var(--tw-border-opacity, 1));
@@ -3236,6 +3241,12 @@ video {
 
 .from-amber-50 {
   --tw-gradient-from: #fffbeb var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(255 251 235 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.from-amber-50\/70 {
+  --tw-gradient-from: rgb(255 251 235 / 0.7) var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(255 251 235 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
@@ -4105,6 +4116,10 @@ video {
   color: rgb(30 58 138 / var(--tw-text-opacity, 1));
 }
 
+.text-current {
+  color: currentColor;
+}
+
 .text-cyan-600 {
   --tw-text-opacity: 1;
   color: rgb(8 145 178 / var(--tw-text-opacity, 1));
@@ -4921,6 +4936,40 @@ html {
 
 .select-soft-icon-pl {
   padding-left: 2.5rem;
+}
+
+/* Compact status select that reads as a colored badge (e.g. task cards on
+   MyTasks) -- pairs with a status color utility class supplied by the
+   caller for bg/text (background/text stay whatever that class sets; only
+   sizing/shape/appearance-reset live here so it never fights that color). */
+
+.status-select-badge {
+  display: inline-block;
+  width: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: none;
+  border-radius: 6px;
+  padding: 0.125rem 1.375rem 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-select-badge:hover {
+  filter: brightness(0.97);
+}
+
+.status-select-badge:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(12, 81, 217, 0.3);
+}
+
+.status-select-badge:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Typography styles */

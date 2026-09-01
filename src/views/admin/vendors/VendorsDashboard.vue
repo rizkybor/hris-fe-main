@@ -9,11 +9,13 @@ import { debounce } from "lodash-es";
 import { can } from "@/helpers/permissionHelper";
 import { Plus, Briefcase, Search, SearchX, ChevronDown } from "lucide-vue-next";
 import { useVendorsStore } from "@/stores/vendor";
+import { useAlertModalStore } from "@/stores/alertModal";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 
 const vendorsStore = useVendorsStore();
 const { vendorsData, success, loading } = storeToRefs(vendorsStore);
-const { fetchVendorsPaginated } = vendorsStore;
+const { fetchVendorsPaginated, deleteVendor } = vendorsStore;
+const alertModal = useAlertModalStore();
 
 const serverOptions = ref({
   page: 1,
@@ -60,6 +62,24 @@ const handlePerPageChange = (perPage) => {
 // Computed properties sesuai store
 const vendorsList = computed(() => vendorsData.value?.items || []);
 const vendorsMeta = computed(() => vendorsData.value?.meta || {});
+
+const handleDelete = async (vendor) => {
+  const ok = await alertModal.confirm(
+    `Delete vendor "${vendor.name}"? This action cannot be undone.`,
+    {
+      type: "danger",
+      confirmText: "Delete",
+    },
+  );
+  if (!ok) return;
+
+  try {
+    await deleteVendor(vendor.id);
+    await fetchData();
+  } catch (error) {
+    await alertModal.alert("Failed to delete vendor.", { type: "danger" });
+  }
+};
 </script>
 
 <template>
@@ -138,7 +158,7 @@ const vendorsMeta = computed(() => vendorsData.value?.meta || {});
 
     <!-- Vendors Grid -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-4">
-      <CardList v-for="vendor in vendorsList" :key="vendor.id" :data="vendor" />
+      <CardList v-for="vendor in vendorsList" :key="vendor.id" :data="vendor" @delete="handleDelete" />
     </div>
 
      <!-- Pagination -->

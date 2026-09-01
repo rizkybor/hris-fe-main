@@ -29,6 +29,7 @@ export const getProjectStatusColor = (status) => {
   const statusConfig = {
     active: "bg-[#EBF8FF] text-[#1E40AF]",
     completed: "bg-[#F0FDF4] text-[#166534]",
+    cancelled: "bg-[#FEE2E2] text-[#991B1B]",
     "on-hold": "bg-[#FEF3C7] text-[#92400E]",
     overdue: "bg-[#FEE2E2] text-[#991B1B]",
   };

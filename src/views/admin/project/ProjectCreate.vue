@@ -70,6 +70,8 @@ const form = ref({
   photo: "",
   photo_url: "",
   budget: "",
+  warranty_period_months: "",
+  retention_period_months: "",
   project_leader_id: "",
   team_assignment_mode: "employee",
   team_id: "",
@@ -157,6 +159,14 @@ const handleSubmit = async () => {
   const payload = { ...form.value };
   payload.budget =
     parseInt(String(form.value.budget).replace(/[^0-9]/g, "")) || 0;
+  payload.warranty_period_months =
+    form.value.warranty_period_months === "" || form.value.warranty_period_months === null
+      ? null
+      : parseInt(form.value.warranty_period_months);
+  payload.retention_period_months =
+    form.value.retention_period_months === "" || form.value.retention_period_months === null
+      ? null
+      : parseInt(form.value.retention_period_months);
   // Drop rows the user started but never finished (only name or only url
   // filled in) rather than sending a half-empty pair the backend would
   // reject.
@@ -862,6 +872,28 @@ watch(
               >
                 <template #icon> Rp </template>
               </Input>
+            </div>
+
+            <!-- Warranty & Retention Period -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
+              <Input
+                id="warranty_period_months"
+                name="warranty_period_months"
+                type="number"
+                min="0"
+                v-model="form.warranty_period_months"
+                label="Warranty Period (months, optional)"
+                placeholder="e.g. 12"
+              />
+              <Input
+                id="retention_period_months"
+                name="retention_period_months"
+                type="number"
+                min="0"
+                v-model="form.retention_period_months"
+                label="Retention Period (months, optional)"
+                placeholder="e.g. 6"
+              />
             </div>
 
             <!-- Initial Project Status (Full Width) -->

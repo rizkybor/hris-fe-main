@@ -32,6 +32,8 @@ import {
   ClipboardCheck,
   Link2,
   Trash2,
+  CheckCircle2,
+  XCircle,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash-es";
@@ -88,6 +90,8 @@ const form = ref({
   photo: "",
   photo_url: "",
   budget: "",
+  warranty_period_months: "",
+  retention_period_months: "",
   project_leader_id: "",
   team_assignment_mode: "employee",
   team_id: "",
@@ -212,6 +216,14 @@ const handleSubmit = async () => {
   }
   payload.budget =
     parseInt(String(form.value.budget).replace(/[^0-9]/g, "")) || 0;
+  payload.warranty_period_months =
+    form.value.warranty_period_months === "" || form.value.warranty_period_months === null
+      ? null
+      : parseInt(form.value.warranty_period_months);
+  payload.retention_period_months =
+    form.value.retention_period_months === "" || form.value.retention_period_months === null
+      ? null
+      : parseInt(form.value.retention_period_months);
   payload.additional_access = form.value.additional_access.filter((item) => item.name && item.url);
   await updateProject(id, payload);
 
@@ -940,6 +952,30 @@ watch(
               </Input>
             </div>
 
+            <!-- Warranty & Retention Period -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
+              <Input
+                id="warranty_period_months"
+                name="warranty_period_months"
+                type="number"
+                min="0"
+                v-model="form.warranty_period_months"
+                label="Warranty Period (months, optional)"
+                placeholder="e.g. 12"
+                :error="error?.warranty_period_months?.join(', ')"
+              />
+              <Input
+                id="retention_period_months"
+                name="retention_period_months"
+                type="number"
+                min="0"
+                v-model="form.retention_period_months"
+                label="Retention Period (months, optional)"
+                placeholder="e.g. 6"
+                :error="error?.retention_period_months?.join(', ')"
+              />
+            </div>
+
             <!-- Initial Project Status (Full Width) -->
             <div class="md:col-span-2 mb-4">
               <label class="block text-brand-dark text-sm font-semibold mb-1"
@@ -1074,6 +1110,76 @@ watch(
                       type="radio"
                       name="project_status"
                       value="draft"
+                      class="hidden"
+                      v-model="form.status"
+                    />
+                    <div
+                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
+                    ></div>
+                    <p
+                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
+                    ></p>
+                  </div>
+                </label>
+
+                <!-- Completed Option -->
+                <label
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center"
+                    >
+                      <CheckCircle2 class="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div class="flex flex-col">
+                      <p class="text-brand-dark text-sm font-semibold">
+                        Completed
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
+                  >
+                    <input
+                      type="radio"
+                      name="project_status"
+                      value="completed"
+                      class="hidden"
+                      v-model="form.status"
+                    />
+                    <div
+                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
+                    ></div>
+                    <p
+                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
+                    ></p>
+                  </div>
+                </label>
+
+                <!-- Cancelled Option -->
+                <label
+                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-9 h-9 bg-red-50 rounded-[10px] flex items-center justify-center"
+                    >
+                      <XCircle class="w-5 h-5 text-red-600" />
+                    </div>
+                    <div class="flex flex-col">
+                      <p class="text-brand-dark text-sm font-semibold">
+                        Cancelled
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
+                  >
+                    <input
+                      type="radio"
+                      name="project_status"
+                      value="cancelled"
                       class="hidden"
                       v-model="form.status"
                     />
