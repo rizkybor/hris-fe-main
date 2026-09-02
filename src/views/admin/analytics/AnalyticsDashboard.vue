@@ -263,7 +263,7 @@ const handleDelete = async (source) => {
               allowfullscreen
               sandbox="allow-scripts allow-same-origin allow-popups"
               :title="source.name"
-              class="block"
+              class="block p-4 sm:p-5 w-full h-[400px] border-none rounded-b-[12px] bg-white"
             ></iframe>
           </div>
         </div>
