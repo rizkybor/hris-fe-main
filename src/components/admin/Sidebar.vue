@@ -31,6 +31,7 @@ import {
   Sparkles,
   CalculatorIcon,
   Landmark,
+  LineChart,
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
@@ -835,6 +836,32 @@ const showCompanyFinance = computed(() =>
       <div>
         <h3 class="section-title">Insights &amp; Admin</h3>
         <div class="space-y-0.5">
+          <RouterLink
+            :to="{ name: 'admin.analytics.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.analytics'),
+            }"
+            v-if="can('analytics-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <LineChart
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.analytics'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.analytics'),
+              }"
+              >Analytics</span
+            >
+          </RouterLink>
+
           <RouterLink
             :to="{ name: 'admin.history.dashboard' }"
             class="nav-link group relative rounded-[10px] transition-colors duration-150"
