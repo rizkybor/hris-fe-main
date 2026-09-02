@@ -149,7 +149,7 @@ const formatPeriod = (date) => {
                 <Building class="w-8 h-8 text-white" />
               </div>
               <p class="text-sm font-semibold text-brand-dark">
-                {{ payslip.company_name || "JCD-HRIS" }}
+                {{ payslip.company_name || "JCD-HRIS+" }}
               </p>
               <p class="text-xs text-gray-600">
                 {{ payslip.company_address || "Indonesia" }}
