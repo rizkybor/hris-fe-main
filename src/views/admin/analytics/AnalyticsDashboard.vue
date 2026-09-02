@@ -12,6 +12,7 @@ import {
   Trash2,
   ExternalLink,
   Globe,
+  PlayCircle,
 } from "lucide-vue-next";
 import { useAnalyticsSourceStore } from "@/stores/analyticsSource";
 import { useAlertModalStore } from "@/stores/alertModal";
@@ -43,6 +44,23 @@ const TYPE_ICON_BG = {
 
 const categorySuggestions = computed(() => categories.value.map((c) => c.category));
 const totalSources = computed(() => categories.value.reduce((sum, c) => sum + c.sources.length, 0));
+
+// Each embed is a whole separate third-party page (PostHog/Looker Studio,
+// its own JS, its own API calls) -- loading every source's iframe the
+// moment the page opens means firing all of that at once even for
+// sources the user never scrolls to. Nothing sets a source's `src` until
+// its card is explicitly clicked to load, so the network/CPU cost is
+// only ever paid for what's actually being looked at.
+const loadedSourceIds = ref(new Set());
+const loadSource = (id) => loadedSourceIds.value.add(id);
+const isLoaded = (id) => loadedSourceIds.value.has(id);
+
+// A source's embed gets unloaded (back to the click-to-load placeholder)
+// whenever the list is refetched, since a stale embed_url shouldn't keep
+// rendering under a since-edited source.
+watch(categories, () => {
+  loadedSourceIds.value = new Set();
+});
 
 // ===== Add / Edit modal =====
 const showModal = ref(false);
@@ -148,9 +166,20 @@ const handleDelete = async (source) => {
 
     <!-- Loading -->
     <div v-if="loading" class="space-y-5">
-      <div v-for="i in 2" :key="i" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div v-for="i in 2" :key="i" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
         <Skeleton width="240px" height="20px" class="mb-4" />
-        <Skeleton height="420px" rounded="12px" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div v-for="j in 2" :key="j" class="border border-[#DCDEDD] rounded-[12px] overflow-hidden">
+            <div class="flex items-center gap-2.5 p-3.5 bg-slate-50 border-b border-[#DCDEDD]">
+              <Skeleton width="32px" height="32px" rounded="8px" />
+              <div class="flex-1 min-w-0">
+                <Skeleton width="140px" height="14px" class="mb-1.5" />
+                <Skeleton width="180px" height="11px" />
+              </div>
+            </div>
+            <Skeleton height="520px" rounded="0" />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -190,7 +219,7 @@ const handleDelete = async (source) => {
       >
         <h3 class="text-brand-dark text-base font-bold mb-4">{{ group.category }}</h3>
 
-        <div class="space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div
             v-for="source in group.sources"
             :key="source.id"
@@ -255,6 +284,22 @@ const handleDelete = async (source) => {
               </div>
             </div>
 
+            <!-- Click-to-load: the embed is a whole separate third-party
+                 page (its own JS, its own API calls to PostHog/Looker
+                 Studio) -- only mount the iframe (and so only fire that
+                 network/CPU cost) once this specific source is actually
+                 requested, not for every source the moment the page opens. -->
+            <button
+              v-if="!isLoaded(source.id)"
+              type="button"
+              @click="loadSource(source.id)"
+              class="flex flex-col items-center justify-center gap-2 w-full h-[520px] sm:h-[620px] lg:h-[720px] bg-slate-50 hover:bg-slate-100 transition-colors duration-200 text-gray-500 hover:text-[#0C51D9]"
+            >
+              <PlayCircle class="w-8 h-8" />
+              <span class="text-sm font-semibold">Click to load {{ source.type_label }}</span>
+              <span class="text-xs text-gray-400">Loads the embed on demand to save bandwidth</span>
+            </button>
+
             <!-- No padding on the iframe itself: it shrinks the embedded
                  document's own viewport (padding counts against the fixed
                  height below), which was clipping PostHog/Looker Studio's
@@ -264,6 +309,7 @@ const handleDelete = async (source) => {
                  single chart -- too short and they clip/scroll internally
                  regardless of width. -->
             <iframe
+              v-else
               :src="source.embed_url"
               frameborder="0"
               allowfullscreen
