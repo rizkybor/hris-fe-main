@@ -156,7 +156,7 @@ const showCompanyFinance = computed(() =>
         </div>
         <div class="sidebar-brand-text">
           <h1 class="text-white text-sm font-bold whitespace-nowrap leading-tight">
-            HRIS
+            HRIS+
             <span class="text-[10px] font-medium text-white/40 ml-0.5"> v3.3 </span>
           </h1>
           <p class="text-white/50 text-xs font-normal whitespace-nowrap leading-tight">

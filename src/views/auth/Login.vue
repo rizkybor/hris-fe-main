@@ -68,7 +68,7 @@ const handleSubmit = async () => {
         </div>
         <div>
            <h1 class="text-brand-dark text-xl font-bold">
-            HRIS
+            HRIS+
             <span class="text-xs font-medium text-gray-400 ml-1"> v3.3 </span>
           </h1>
           <p class="text-brand-dark text-xs font-normal">
