@@ -31,7 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
           />
         </div>
         <div>
-          <h1 class="text-brand-dark text-sm font-bold">HRIS
+          <h1 class="text-brand-dark text-sm font-bold">HRIS+
             <span class="text-xs font-medium text-gray-400 ml-1"> v3.3 </span></h1>
           <p class="text-brand-dark text-xs font-normal">Jendela Cakra Digital</p>
         </div>
