@@ -255,15 +255,21 @@ const handleDelete = async (source) => {
               </div>
             </div>
 
+            <!-- No padding on the iframe itself: it shrinks the embedded
+                 document's own viewport (padding counts against the fixed
+                 height below), which was clipping PostHog/Looker Studio's
+                 internal layout rather than just adding breathing room
+                 around it. Height grows at each breakpoint since these
+                 embeds are dashboards with several stacked tiles, not a
+                 single chart -- too short and they clip/scroll internally
+                 regardless of width. -->
             <iframe
               :src="source.embed_url"
-              width="100%"
-              height="400"
               frameborder="0"
               allowfullscreen
               sandbox="allow-scripts allow-same-origin allow-popups"
               :title="source.name"
-              class="block p-4 sm:p-5 w-full h-[400px] border-none rounded-b-[12px] bg-white"
+              class="block w-full h-[520px] sm:h-[620px] lg:h-[720px] border-none bg-white"
             ></iframe>
           </div>
         </div>
