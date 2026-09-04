@@ -7,18 +7,13 @@ import {
   ClockIcon,
   TrendingUpIcon,
   StarIcon,
-  Calendar,
   BellIcon,
 } from "lucide-vue-next";
-import { useRouter } from "vue-router";
 import QuickActions from "./QuickActions.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { axiosInstance } from "@/plugins/axios";
-import { useTaskStore } from "@/stores/task";
 import { useNotificationStore } from "@/stores/notification";
 import { getTimeAgo } from "@/utils/dateUtils";
-
-const router = useRouter();
 
 const statistics = ref({
   attendance_rate: 0,
@@ -37,19 +32,7 @@ const statistics = ref({
   leave_balance: null,
 });
 
-const taskStore = useTaskStore();
 const notificationStore = useNotificationStore();
-
-const upcomingTasks = computed(() => {
-  return taskStore.myTasks.map((t: any) => ({
-    id: t.id,
-    title: t.name || "Task",
-    project: t.project?.name || "-",
-    priority: t.priority || "medium",
-    dueDate: t.due_date || "",
-    status: t.status || "todo",
-  }));
-});
 
 const recentActivities = computed(() => {
   return notificationStore.notifications.map((n: any) => ({
@@ -67,10 +50,6 @@ const loadMoreActivities = async () => {
   await notificationStore.fetchNotifications(activitiesLimit.value);
 };
 
-const goToAllTasks = () => {
-  router.push({ name: "admin.projects" });
-};
-
 const loading = ref(false);
 const currentDayOfMonth = computed(() => new Date().getDate());
 const onTimePercentage = computed(() => {
@@ -80,45 +59,6 @@ const onTimePercentage = computed(() => {
   const ontime = Math.max(0, present - late);
   return Math.round((ontime / present) * 100 * 10) / 10;
 });
-
-const getPriorityClass = (priority: string) => {
-  switch (priority) {
-    case "high":
-      return "bg-red-100 text-red-600";
-    case "medium":
-      return "bg-yellow-100 text-yellow-600";
-    case "low":
-      return "bg-green-100 text-green-600";
-    default:
-      return "bg-gray-100 text-gray-600";
-  }
-};
-
-const getStatusClass = (status: string) => {
-  switch (status) {
-    case "in_progress":
-      return "bg-blue-100 text-blue-600";
-    case "pending":
-      return "bg-gray-100 text-gray-600";
-    case "completed":
-      return "bg-green-100 text-green-600";
-    default:
-      return "bg-gray-100 text-gray-600";
-  }
-};
-
-const formatDate = (dateString: string) => {
-  if (!dateString) return "No due date";
-  const date = new Date(dateString);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  if (date.toDateString() === today.toDateString()) return "Today";
-  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
-
-  return date.toLocaleDateString("id-ID", { month: "short", day: "numeric" });
-};
 
 const fetchMyStatistics = async () => {
   loading.value = true;
@@ -154,7 +94,6 @@ const fetchMyStatistics = async () => {
 
 onMounted(() => {
   fetchMyStatistics();
-  taskStore.fetchMyTasks(5);
   notificationStore.fetchNotifications(activitiesLimit.value);
 });
 </script>
@@ -341,67 +280,8 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- Additional Sections -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-    <!-- Upcoming Tasks -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-brand-dark text-base sm:text-lg font-bold">
-          Upcoming Tasks
-        </h3>
-        <button
-          @click="goToAllTasks"
-          class="text-[#0C51D9] text-xs sm:text-sm font-medium hover:underline"
-        >
-          View All
-        </button>
-      </div>
-
-      <div v-if="taskStore.loading" class="space-y-3">
-        <Skeleton v-for="i in 3" :key="i" height="72px" rounded="12px" />
-      </div>
-
-      <div v-else-if="upcomingTasks.length === 0" class="text-center py-6 text-sm text-gray-400">
-        No upcoming tasks
-      </div>
-
-      <div v-else class="space-y-3">
-        <div
-          v-for="task in upcomingTasks"
-          :key="task.id"
-          class="p-4 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] transition-all duration-300"
-        >
-          <div class="flex items-start justify-between mb-2">
-            <div class="flex-1">
-              <h4 class="text-brand-dark text-sm font-semibold mb-1">
-                {{ task.title }}
-              </h4>
-              <p class="text-gray-500 text-xs">{{ task.project }}</p>
-            </div>
-            <span
-              :class="getPriorityClass(task.priority)"
-              class="px-2 py-1 rounded-md text-xs font-semibold capitalize"
-            >
-              {{ task.priority }}
-            </span>
-          </div>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2 text-xs text-gray-500">
-              <Calendar class="w-3.5 h-3.5" />
-              <span>{{ formatDate(task.dueDate) }}</span>
-            </div>
-            <span
-              :class="getStatusClass(task.status)"
-              class="px-2 py-1 rounded-md text-xs font-medium capitalize"
-            >
-              {{ task.status.replace("_", " ") }}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Recent Activities -->
+  <!-- Recent Activities -->
+  <div class="mb-6">
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-brand-dark text-base sm:text-lg font-bold">
