@@ -176,7 +176,7 @@ onMounted(fetchData);
       </button>
     </div>
 
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
+    <div class="mb-4">
       <input
         v-model="filters.search"
         @input="fetchData"
