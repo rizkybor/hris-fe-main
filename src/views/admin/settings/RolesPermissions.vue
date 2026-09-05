@@ -123,6 +123,23 @@ const filteredGroups = computed(() => {
   });
 });
 
+// filteredGroups already arrives ordered by section then label (backend
+// sorts it that way), so clustering consecutive same-section entries here
+// preserves that order without needing a separate sort pass.
+const sectionedGroups = computed(() => {
+  const sections = [];
+  const bySection = new Map();
+  for (const group of filteredGroups.value) {
+    const key = group.section || "Other";
+    if (!bySection.has(key)) {
+      bySection.set(key, { section: key, groups: [] });
+      sections.push(bySection.get(key));
+    }
+    bySection.get(key).groups.push(group);
+  }
+  return sections;
+});
+
 const selectedInGroup = (group) =>
   group.permissions.filter((p) => form.value.permissions.includes(p.name)).length;
 
@@ -399,52 +416,59 @@ async function handleDelete() {
                 />
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div
-                  v-for="group in filteredGroups"
-                  :key="group.key"
-                  class="border border-[#DCDEDD] rounded-xl p-3"
-                >
-                  <button
-                    type="button"
-                    @click="toggleGroup(group)"
-                    class="w-full flex items-center justify-between mb-2 group/header"
-                  >
-                    <span class="flex items-center gap-1.5 text-sm font-semibold text-brand-dark">
-                      <CheckSquare
-                        v-if="selectedInGroup(group) === group.permissions.length"
-                        class="w-4 h-4 text-[#0C51D9]"
-                      />
-                      <Square v-else class="w-4 h-4 text-gray-300 group-hover/header:text-gray-400" />
-                      {{ group.label }}
-                    </span>
-                    <span class="text-xs text-gray-400 font-medium">
-                      {{ selectedInGroup(group) }}/{{ group.permissions.length }}
-                    </span>
-                  </button>
-                  <div class="flex flex-wrap gap-1.5">
-                    <label
-                      v-for="perm in group.permissions"
-                      :key="perm.id"
-                      class="flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border cursor-pointer transition-colors"
-                      :class="
-                        form.permissions.includes(perm.name)
-                          ? 'bg-blue-50 border-[#0C51D9] text-[#0C51D9]'
-                          : 'border-[#DCDEDD] text-brand-dark hover:border-gray-400'
-                      "
+              <div class="space-y-5">
+                <div v-for="section in sectionedGroups" :key="section.section">
+                  <p class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
+                    {{ section.section }}
+                  </p>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div
+                      v-for="group in section.groups"
+                      :key="group.key"
+                      class="border border-[#DCDEDD] rounded-xl p-3"
                     >
-                      <input
-                        type="checkbox"
-                        class="hidden"
-                        :checked="form.permissions.includes(perm.name)"
-                        @change="togglePermission(perm.name)"
-                      />
-                      {{ perm.action }}
-                    </label>
+                      <button
+                        type="button"
+                        @click="toggleGroup(group)"
+                        class="w-full flex items-center justify-between mb-2 group/header"
+                      >
+                        <span class="flex items-center gap-1.5 text-sm font-semibold text-brand-dark">
+                          <CheckSquare
+                            v-if="selectedInGroup(group) === group.permissions.length"
+                            class="w-4 h-4 text-[#0C51D9]"
+                          />
+                          <Square v-else class="w-4 h-4 text-gray-300 group-hover/header:text-gray-400" />
+                          {{ group.label }}
+                        </span>
+                        <span class="text-xs text-gray-400 font-medium">
+                          {{ selectedInGroup(group) }}/{{ group.permissions.length }}
+                        </span>
+                      </button>
+                      <div class="flex flex-wrap gap-1.5">
+                        <label
+                          v-for="perm in group.permissions"
+                          :key="perm.id"
+                          class="flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border cursor-pointer transition-colors"
+                          :class="
+                            form.permissions.includes(perm.name)
+                              ? 'bg-blue-50 border-[#0C51D9] text-[#0C51D9]'
+                              : 'border-[#DCDEDD] text-brand-dark hover:border-gray-400'
+                          "
+                        >
+                          <input
+                            type="checkbox"
+                            class="hidden"
+                            :checked="form.permissions.includes(perm.name)"
+                            @change="togglePermission(perm.name)"
+                          />
+                          {{ perm.action }}
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div v-if="filteredGroups.length === 0" class="sm:col-span-2 text-center py-8 text-sm text-gray-400">
+                <div v-if="filteredGroups.length === 0" class="text-center py-8 text-sm text-gray-400">
                   No modules match "{{ permissionSearch }}"
                 </div>
               </div>
