@@ -2,33 +2,33 @@ import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
 
-export const useVendorsStore = defineStore("vendors", {
+export const useClientStore = defineStore("clients", {
   state: () => ({
     // Master Data
-    vendorsData: {
+    clientsData: {
       items: [],
       meta: { current_page: 1, per_page: 10, total: 0, last_page: 1 },
     },
-    // Full (non-paginated) vendor list -- for pickers like the Project
-    // Create/Edit form's optional "Vendor" dropdown.
-    vendors: [],
-    vendorsAttachmentData: {
+    // Full (non-paginated) client list -- for pickers like the Project
+    // Create/Edit form's optional "Client" dropdown.
+    clients: [],
+    clientsAttachmentData: {
       items: [],
       meta: { current_page: 1, per_page: 10, total: 0, last_page: 1 },
     },
-    vendorsTaskPivotData: {
+    clientsTaskPivotData: {
       items: [],
       meta: { current_page: 1, per_page: 10, total: 0, last_page: 1 },
     },
-    vendorsTaskListData: {
+    clientsTaskListData: {
       items: [],
       meta: { current_page: 1, per_page: 10, total: 0, last_page: 1 },
     },
-    vendorsTaskScopeData: {
+    clientsTaskScopeData: {
       items: [],
       meta: { current_page: 1, per_page: 10, total: 0, last_page: 1 },
     },
-    vendorsTaskPaymentData: {
+    clientsTaskPaymentData: {
       items: [],
       meta: { current_page: 1, per_page: 10, total: 0, last_page: 1 },
     },
@@ -39,12 +39,12 @@ export const useVendorsStore = defineStore("vendors", {
   }),
 
   actions: {
-    /* ======================= VENDORS ======================= */
-    async fetchAllVendors(params = {}) {
+    /* ======================= CLIENTS ======================= */
+    async fetchAllClient(params = {}) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get("/vendors", { params });
-        this.vendors = response.data.data;
+        const response = await axiosInstance.get("/clients", { params });
+        this.clients = response.data.data;
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -52,17 +52,17 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async fetchVendorsPaginated(params) {
+    async fetchClientPaginated(params) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get("/vendors/all/paginated", {
+        const response = await axiosInstance.get("/clients/all/paginated", {
           params: {
             row_per_page: params.per_page || 10,
             search: params.search || "",
           },
         });
-        this.vendorsData.items = response.data.data.data;
-        this.vendorsData.meta = response.data.data.meta;
+        this.clientsData.items = response.data.data.data;
+        this.clientsData.meta = response.data.data.meta;
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -70,10 +70,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async fetchVendorById(id) {
+    async fetchClientById(id) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get(`/vendors/${id}`);
+        const response = await axiosInstance.get(`/clients/${id}`);
         return response.data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -82,10 +82,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async createVendor(payload) {
+    async createClient(payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.post("/vendors", payload);
+        const response = await axiosInstance.post("/clients", payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -94,10 +94,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async updateVendor(id, payload) {
+    async updateClient(id, payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.put(`/vendors/${id}`, payload);
+        const response = await axiosInstance.put(`/clients/${id}`, payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -106,14 +106,14 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async deleteVendor(id) {
+    async deleteClient(id) {
       this.loading = true;
       try {
-        await axiosInstance.delete(`/vendors/${id}`);
-        this.vendorsData.items = this.vendorsData.items.filter(
+        await axiosInstance.delete(`/clients/${id}`);
+        this.clientsData.items = this.clientsData.items.filter(
           (item) => item.id !== id
         );
-        this.success = "Vendor deleted successfully";
+        this.success = "Client deleted successfully";
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -121,10 +121,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async fetchVendorsStatistics() {
+    async fetchClientStatistics() {
       this.loading = true;
       try {
-        const response = await axiosInstance.get("/vendors/statistic");
+        const response = await axiosInstance.get("/clients/statistic");
         this.statistics = response.data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -133,10 +133,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    /* ======================= VENDOR EVALUATIONS (rating) ======================= */
-    async fetchVendorEvaluations(vendorId) {
+    /* ======================= CLIENT EVALUATIONS (rating) ======================= */
+    async fetchClientEvaluations(clientId) {
       try {
-        const response = await axiosInstance.get(`/vendors/${vendorId}/evaluations`);
+        const response = await axiosInstance.get(`/clients/${clientId}/evaluations`);
         return response.data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -144,10 +144,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async createVendorEvaluation(payload) {
+    async createClientEvaluation(payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.post("/vendor-evaluations", payload);
+        const response = await axiosInstance.post("/client-evaluations", payload);
         this.success = response.data.message;
         return response.data.data;
       } catch (error) {
@@ -158,10 +158,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async deleteVendorEvaluation(id) {
+    async deleteClientEvaluation(id) {
       this.loading = true;
       try {
-        await axiosInstance.delete(`/vendor-evaluations/${id}`);
+        await axiosInstance.delete(`/client-evaluations/${id}`);
         this.success = "Evaluation deleted successfully";
       } catch (error) {
         this.error = handleError(error);
@@ -171,12 +171,12 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    /* ======================= VENDORS ATTACHMENT ======================= */
-    async fetchVendorsAttachmentPaginated(params) {
+    /* ======================= CLIENTS ATTACHMENT ======================= */
+    async fetchClientAttachmentPaginated(params) {
       this.loading = true;
       try {
         const response = await axiosInstance.get(
-          "/vendors-attachment/all/paginated",
+          "/client-attachments/all/paginated",
           {
             params: {
               row_per_page: params.per_page || 10,
@@ -184,8 +184,8 @@ export const useVendorsStore = defineStore("vendors", {
             },
           }
         );
-        this.vendorsAttachmentData.items = response.data.data.data;
-        this.vendorsAttachmentData.meta = response.data.data.meta;
+        this.clientsAttachmentData.items = response.data.data.data;
+        this.clientsAttachmentData.meta = response.data.data.meta;
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -193,10 +193,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async fetchVendorAttachmentById(id) {
+    async fetchClientAttachmentById(id) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get(`/vendors-attachment/${id}`);
+        const response = await axiosInstance.get(`/client-attachments/${id}`);
         return response.data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -205,10 +205,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async createVendorAttachment(payload) {
+    async createClientAttachment(payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.post("/vendors-attachment", payload);
+        const response = await axiosInstance.post("/client-attachments", payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -217,10 +217,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async updateVendorAttachment(id, payload) {
+    async updateClientAttachment(id, payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.put(`/vendors-attachment/${id}`, payload);
+        const response = await axiosInstance.put(`/client-attachments/${id}`, payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -229,14 +229,14 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async deleteVendorAttachment(id) {
+    async deleteClientAttachment(id) {
       this.loading = true;
       try {
-        await axiosInstance.delete(`/vendors-attachment/${id}`);
-        this.vendorsAttachmentData.items = this.vendorsAttachmentData.items.filter(
+        await axiosInstance.delete(`/client-attachments/${id}`);
+        this.clientsAttachmentData.items = this.clientsAttachmentData.items.filter(
           (item) => item.id !== id
         );
-        this.success = "Vendor attachment deleted successfully";
+        this.success = "Client attachment deleted successfully";
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -244,18 +244,18 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    /* ======================= VENDORS TASK PIVOT ======================= */
-    async fetchVendorsTaskPivotPaginated(params) {
+    /* ======================= CLIENTS TASK PIVOT ======================= */
+    async fetchClientTaskPivotPaginated(params) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get("/vendors-task-pivot/all/paginated", {
+        const response = await axiosInstance.get("/client-task-pivot/all/paginated", {
           params: {
             row_per_page: params.per_page || 10,
             search: params.search || "",
           },
         });
-        this.vendorsTaskPivotData.items = response.data.data.data;
-        this.vendorsTaskPivotData.meta = response.data.data.meta;
+        this.clientsTaskPivotData.items = response.data.data.data;
+        this.clientsTaskPivotData.meta = response.data.data.meta;
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -263,10 +263,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async fetchVendorsTaskPivotById(id) {
+    async fetchClientTaskPivotById(id) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get(`/vendors-task-pivot/${id}`);
+        const response = await axiosInstance.get(`/client-task-pivot/${id}`);
         return response.data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -275,10 +275,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async createVendorsTaskPivot(payload) {
+    async createClientTaskPivot(payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.post("/vendors-task-pivot", payload);
+        const response = await axiosInstance.post("/client-task-pivot", payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -287,10 +287,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async updateVendorsTaskPivot(id, payload) {
+    async updateClientTaskPivot(id, payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.put(`/vendors-task-pivot/${id}`, payload);
+        const response = await axiosInstance.put(`/client-task-pivot/${id}`, payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -299,14 +299,14 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async deleteVendorsTaskPivot(id) {
+    async deleteClientTaskPivot(id) {
       this.loading = true;
       try {
-        await axiosInstance.delete(`/vendors-task-pivot/${id}`);
-        this.vendorsTaskPivotData.items = this.vendorsTaskPivotData.items.filter(
+        await axiosInstance.delete(`/client-task-pivot/${id}`);
+        this.clientsTaskPivotData.items = this.clientsTaskPivotData.items.filter(
           (item) => item.id !== id
         );
-        this.success = "Vendor task pivot deleted successfully";
+        this.success = "Client task pivot deleted successfully";
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -314,18 +314,18 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    /* ======================= VENDORS TASK LIST ======================= */
-    async fetchVendorsTaskListPaginated(params) {
+    /* ======================= CLIENTS TASK LIST ======================= */
+    async fetchClientTaskListPaginated(params) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get("/vendors-task-list/all/paginated", {
+        const response = await axiosInstance.get("/client-task-list/all/paginated", {
           params: {
             row_per_page: params.per_page || 10,
             search: params.search || "",
           },
         });
-        this.vendorsTaskListData.items = response.data.data.data;
-        this.vendorsTaskListData.meta = response.data.data.meta;
+        this.clientsTaskListData.items = response.data.data.data;
+        this.clientsTaskListData.meta = response.data.data.meta;
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -333,10 +333,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async fetchVendorsTaskListById(id) {
+    async fetchClientTaskListById(id) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get(`/vendors-task-list/${id}`);
+        const response = await axiosInstance.get(`/client-task-list/${id}`);
         return response.data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -345,10 +345,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async createVendorsTaskList(payload) {
+    async createClientTaskList(payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.post("/vendors-task-list", payload);
+        const response = await axiosInstance.post("/client-task-list", payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -357,10 +357,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async updateVendorsTaskList(id, payload) {
+    async updateClientTaskList(id, payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.put(`/vendors-task-list/${id}`, payload);
+        const response = await axiosInstance.put(`/client-task-list/${id}`, payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -369,14 +369,14 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async deleteVendorsTaskList(id) {
+    async deleteClientTaskList(id) {
       this.loading = true;
       try {
-        await axiosInstance.delete(`/vendors-task-list/${id}`);
-        this.vendorsTaskListData.items = this.vendorsTaskListData.items.filter(
+        await axiosInstance.delete(`/client-task-list/${id}`);
+        this.clientsTaskListData.items = this.clientsTaskListData.items.filter(
           (item) => item.id !== id
         );
-        this.success = "Vendor task list deleted successfully";
+        this.success = "Client task list deleted successfully";
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -384,18 +384,18 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    /* ======================= VENDORS TASK SCOPE ======================= */
-    async fetchVendorsTaskScopePaginated(params) {
+    /* ======================= CLIENTS TASK SCOPE ======================= */
+    async fetchClientTaskScopePaginated(params) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get("/vendors-task-scope/all/paginated", {
+        const response = await axiosInstance.get("/client-task-scope/all/paginated", {
           params: {
             row_per_page: params.per_page || 10,
             search: params.search || "",
           },
         });
-        this.vendorsTaskScopeData.items = response.data.data.data;
-        this.vendorsTaskScopeData.meta = response.data.data.meta;
+        this.clientsTaskScopeData.items = response.data.data.data;
+        this.clientsTaskScopeData.meta = response.data.data.meta;
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -403,10 +403,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async fetchVendorsTaskScopeById(id) {
+    async fetchClientTaskScopeById(id) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get(`/vendors-task-scope/${id}`);
+        const response = await axiosInstance.get(`/client-task-scope/${id}`);
         return response.data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -415,10 +415,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async createVendorsTaskScope(payload) {
+    async createClientTaskScope(payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.post("/vendors-task-scope", payload);
+        const response = await axiosInstance.post("/client-task-scope", payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -427,10 +427,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async updateVendorsTaskScope(id, payload) {
+    async updateClientTaskScope(id, payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.put(`/vendors-task-scope/${id}`, payload);
+        const response = await axiosInstance.put(`/client-task-scope/${id}`, payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -439,14 +439,14 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async deleteVendorsTaskScope(id) {
+    async deleteClientTaskScope(id) {
       this.loading = true;
       try {
-        await axiosInstance.delete(`/vendors-task-scope/${id}`);
-        this.vendorsTaskScopeData.items = this.vendorsTaskScopeData.items.filter(
+        await axiosInstance.delete(`/client-task-scope/${id}`);
+        this.clientsTaskScopeData.items = this.clientsTaskScopeData.items.filter(
           (item) => item.id !== id
         );
-        this.success = "Vendor task scope deleted successfully";
+        this.success = "Client task scope deleted successfully";
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -454,18 +454,18 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    /* ======================= VENDORS TASK PAYMENT ======================= */
-    async fetchVendorsTaskPaymentPaginated(params) {
+    /* ======================= CLIENTS TASK PAYMENT ======================= */
+    async fetchClientTaskPaymentPaginated(params) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get("/vendors-task-payment/all/paginated", {
+        const response = await axiosInstance.get("/client-task-payment/all/paginated", {
           params: {
             row_per_page: params.per_page || 10,
             search: params.search || "",
           },
         });
-        this.vendorsTaskPaymentData.items = response.data.data.data;
-        this.vendorsTaskPaymentData.meta = response.data.data.meta;
+        this.clientsTaskPaymentData.items = response.data.data.data;
+        this.clientsTaskPaymentData.meta = response.data.data.meta;
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -473,10 +473,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async fetchVendorsTaskPaymentById(id) {
+    async fetchClientTaskPaymentById(id) {
       this.loading = true;
       try {
-        const response = await axiosInstance.get(`/vendors-task-payment/${id}`);
+        const response = await axiosInstance.get(`/client-task-payment/${id}`);
         return response.data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -485,10 +485,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async createVendorsTaskPayment(payload) {
+    async createClientTaskPayment(payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.post("/vendors-task-payment", payload);
+        const response = await axiosInstance.post("/client-task-payment", payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -497,10 +497,10 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async updateVendorsTaskPayment(id, payload) {
+    async updateClientTaskPayment(id, payload) {
       this.loading = true;
       try {
-        const response = await axiosInstance.put(`/vendors-task-payment/${id}`, payload);
+        const response = await axiosInstance.put(`/client-task-payment/${id}`, payload);
         this.success = response.data.message;
       } catch (error) {
         this.error = handleError(error);
@@ -509,14 +509,14 @@ export const useVendorsStore = defineStore("vendors", {
       }
     },
 
-    async deleteVendorsTaskPayment(id) {
+    async deleteClientTaskPayment(id) {
       this.loading = true;
       try {
-        await axiosInstance.delete(`/vendors-task-payment/${id}`);
-        this.vendorsTaskPaymentData.items = this.vendorsTaskPaymentData.items.filter(
+        await axiosInstance.delete(`/client-task-payment/${id}`);
+        this.clientsTaskPaymentData.items = this.clientsTaskPaymentData.items.filter(
           (item) => item.id !== id
         );
-        this.success = "Vendor task payment deleted successfully";
+        this.success = "Client task payment deleted successfully";
       } catch (error) {
         this.error = handleError(error);
       } finally {

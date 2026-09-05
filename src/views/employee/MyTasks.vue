@@ -26,7 +26,7 @@ const taskStore = useTaskStore();
 const { myTasks, loading } = storeToRefs(taskStore);
 
 // "Assigned Tasks" -- daily tasks handed out by Superadmin/Manager/Finance
-// Manager/Operational Director via Document Letters > Staff Tasks, distinct
+// Manager/Operational Director via Business Documents > Staff Tasks, distinct
 // from the Project Tasks below (which come from a Project's own board).
 const staffTaskStore = useStaffTaskStore();
 const { myStaffTasks, loading: staffTasksLoading } =

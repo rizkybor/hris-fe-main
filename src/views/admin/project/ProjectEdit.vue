@@ -40,7 +40,7 @@ import { debounce } from "lodash-es";
 import { useProjectStore } from "@/stores/project";
 import { useTeamStore } from "@/stores/team";
 import { useEmployeeStore } from "@/stores/employee";
-import { useVendorsStore } from "@/stores/vendor";
+import { useClientStore } from "@/stores/client";
 import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
@@ -74,9 +74,9 @@ const employeeStore = useEmployeeStore();
 const { employees } = storeToRefs(employeeStore);
 const { fetchEmployees } = employeeStore;
 
-const vendorsStore = useVendorsStore();
-const { vendors } = storeToRefs(vendorsStore);
-const vendorOptions = computed(() => vendors.value.map((vendor) => ({ value: vendor.id, label: vendor.name })));
+const clientsStore = useClientStore();
+const { clients } = storeToRefs(clientsStore);
+const clientOptions = computed(() => clients.value.map((client) => ({ value: client.id, label: client.name })));
 
 const form = ref({
   id: "",
@@ -96,7 +96,7 @@ const form = ref({
   team_assignment_mode: "employee",
   team_id: "",
   member_employee_ids: [],
-  vendor_id: "",
+  client_id: "",
   access_project_name: "",
   access_project_url: "",
   access_github_name: "",
@@ -193,7 +193,7 @@ const handleFetchProject = async () => {
     .map((member) => member.id)
     .filter((memberId) => memberId !== form.value.project_leader_id);
 
-  form.value.vendor_id = response.vendor_id ?? "";
+  form.value.client_id = response.client_id ?? "";
   form.value.additional_access = response.additional_access || [];
 
   // ProjectResource includes inspect_note, but it's tracked separately
@@ -263,7 +263,7 @@ onMounted(async () => {
     await fetchEmployees({
       limit: 6,
     });
-    await vendorsStore.fetchAllVendors();
+    await clientsStore.fetchAllClient();
 
     const { data } = await axiosInstance.get("employees");
     memberCandidates.value = data.data;
@@ -619,21 +619,21 @@ watch(
               </div>
             </div>
 
-            <!-- Vendor (optional) -->
+            <!-- Client (optional) -->
             <div class="md:col-span-2 mb-4">
               <Select
-                id="vendor_id"
-                name="vendor_id"
-                v-model="form.vendor_id"
-                label="Vendor (optional)"
-                placeholder="No vendor"
-                :options="vendorOptions"
+                id="client_id"
+                name="client_id"
+                v-model="form.client_id"
+                label="Client (optional)"
+                placeholder="No client"
+                :options="clientOptions"
               >
                 <template #icon>
                   <Building2 class="h-5 w-5 text-gray-400" />
                 </template>
               </Select>
-              <p class="text-brand-light text-xs mt-1">Link this project to the vendor it's contracted through, if any.</p>
+              <p class="text-brand-light text-xs mt-1">Link this project to the client it's contracted through, if any.</p>
             </div>
 
             <!-- Project Description -->

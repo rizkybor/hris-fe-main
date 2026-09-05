@@ -138,7 +138,7 @@ const handleSubmit = async () => {
         <h4 class="text-brand-dark font-bold mb-4">Certificate Information</h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Certificate Title</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Certificate Title <span class="text-red-600">*</span></label>
             <input v-model="form.title" type="text" required placeholder="e.g. Advanced React Training Certificate" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
@@ -154,11 +154,11 @@ const handleSubmit = async () => {
             <input v-model="form.end_date" type="date" :min="form.start_date || undefined" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Signatory Name</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Signatory Name <span class="text-red-600">*</span></label>
             <input v-model="form.signatory_name" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Signatory Position</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Signatory Position <span class="text-red-600">*</span></label>
             <input v-model="form.signatory_title" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
         </div>
@@ -168,11 +168,11 @@ const handleSubmit = async () => {
         <h4 class="text-brand-dark font-bold mb-4">Numbering & Template</h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Category Code</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Category Code <span class="text-red-600">*</span></label>
             <input v-model="form.category_code" type="text" required placeholder="e.g. TRAINING" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Program Code</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Program Code <span class="text-red-600">*</span></label>
             <input v-model="form.program_code" type="text" required placeholder="e.g. REACT101" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
           </div>
           <div class="md:col-span-2">
@@ -205,7 +205,7 @@ const handleSubmit = async () => {
 
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-center justify-between mb-1">
-          <h4 class="text-brand-dark font-bold">Recipients</h4>
+          <h4 class="text-brand-dark font-bold">Recipients <span class="text-red-600">*</span></h4>
           <button type="button" @click="showBulkPaste = !showBulkPaste" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
             <ClipboardPaste class="w-4 h-4" /> Bulk Paste
           </button>

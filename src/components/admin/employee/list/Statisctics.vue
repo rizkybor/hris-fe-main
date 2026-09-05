@@ -86,7 +86,7 @@ const toggleSalaryVisibility = () => {
           <div
             class="w-21 h-21 p-4 bg-white rounded-[14px] flex items-center justify-center"
           >
-            <Users class="w-21 h-21 text-white/20" />
+            <Users class="w-21 h-21 text-brand-primary" />
           </div>
         </div>
 

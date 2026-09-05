@@ -2,26 +2,26 @@
 import { ref, computed, onMounted, watch, defineAsyncComponent } from "vue";
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 import { TrendingUp, Briefcase, Layers, Code } from "lucide-vue-next";
-import { useVendorsStore } from "@/stores/vendor";
+import { useClientStore } from "@/stores/client";
 import { storeToRefs } from "pinia";
 
 /* ================= STORE ================= */
-const vendorStore = useVendorsStore();
-const { loading, statistics } = storeToRefs(vendorStore);
+const clientStore = useClientStore();
+const { loading, statistics } = storeToRefs(clientStore);
 
 /* ================= FETCH ================= */
 onMounted(() => {
-  vendorStore.fetchVendorsStatistics();
+  clientStore.fetchClientStatistics();
 });
 
 /* ================= COMPUTED ================= */
-const totalVendors = computed(
-  () => statistics.value?.summary?.total_vendors ?? 0
+const totalClient = computed(
+  () => statistics.value?.summary?.total_clients ?? 0
 );
 
-const vendorsByType = computed(() => statistics.value?.by_type ?? []);
+const clientsByType = computed(() => statistics.value?.by_type ?? []);
 
-const vendorsByField = computed(() => statistics.value?.by_field ?? []);
+const clientsByField = computed(() => statistics.value?.by_field ?? []);
 
 /* ================= CHART ================= */
 const chartOptions = ref({
@@ -73,20 +73,20 @@ const chartOptions = ref({
 /* ================= SERIES ================= */
 const chartSeries = ref([
   {
-    name: "Vendors",
+    name: "Client",
     data: [],
   },
 ]);
 
 /* ================= WATCH ================= */
 watch(
-  vendorsByType,
+  clientsByType,
   (val) => {
     chartOptions.value.xaxis.categories = val.map((item: any) => item.type);
 
     chartSeries.value = [
       {
-        name: "Vendors",
+        name: "Client",
         data: val.map((item: any) => item.total),
       },
     ];
@@ -97,24 +97,24 @@ watch(
 
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-3.5 lg:gap-5 mb-5">
-    <!-- ================= TOTAL VENDORS ================= -->
+    <!-- ================= TOTAL CLIENTS ================= -->
     <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
       <div class="flex items-center justify-between mb-3.5">
-        <p class="text-brand-dark text-sm font-medium">Total Vendors</p>
+        <p class="text-brand-dark text-sm font-medium">Total Client</p>
         <Briefcase class="w-6 h-6 text-blue-600" />
       </div>
 
       <p class="text-brand-dark text-xl font-extrabold">
-        {{ loading ? "-" : totalVendors }}
+        {{ loading ? "-" : totalClient }}
       </p>
-      <p class="text-success text-sm font-medium">Registered vendors</p>
+      <p class="text-success text-sm font-medium">Registered clients</p>
     </div>
 
     <!-- ================= BY TYPE ================= -->
     <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
       <div class="flex items-center gap-1.5 mb-3.5">
         <Layers class="w-5 h-5 text-purple-600" />
-        <p class="text-brand-dark text-sm font-medium">Vendors by Type</p>
+        <p class="text-brand-dark text-sm font-medium">Client by Type</p>
       </div>
 
       <!-- LIST CONTAINER -->
@@ -122,7 +122,7 @@ watch(
         class="space-y-1.5 max-h-[180px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
       >
         <li
-          v-for="item in vendorsByType"
+          v-for="item in clientsByType"
           :key="item.type"
           class="flex justify-between items-center text-sm bg-gray-50 rounded-md px-2.5 py-1.5 hover:bg-gray-100 transition"
         >
@@ -135,7 +135,7 @@ watch(
         </li>
       </ul>
 
-      <p v-if="!vendorsByType.length" class="text-brand-light text-sm mt-1.5">
+      <p v-if="!clientsByType.length" class="text-brand-light text-sm mt-1.5">
         No data
       </p>
     </div>
@@ -144,7 +144,7 @@ watch(
     <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
       <div class="flex items-center gap-1.5 mb-3.5">
         <Code class="w-5 h-5 text-green-600" />
-        <p class="text-brand-dark text-sm font-medium">Vendors by Field</p>
+        <p class="text-brand-dark text-sm font-medium">Client by Field</p>
       </div>
 
       <!-- LIST CONTAINER -->
@@ -152,7 +152,7 @@ watch(
         class="space-y-1.5 max-h-[180px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
       >
         <li
-          v-for="item in vendorsByField"
+          v-for="item in clientsByField"
           :key="item.field"
           class="flex justify-between items-center text-sm bg-gray-50 rounded-md px-2.5 py-1.5 hover:bg-gray-100 transition"
         >
@@ -165,12 +165,12 @@ watch(
         </li>
       </ul>
 
-      <p v-if="!vendorsByField.length" class="text-brand-light text-sm mt-1.5">
+      <p v-if="!clientsByField.length" class="text-brand-light text-sm mt-1.5">
         No data
       </p>
 
       <!-- OPTIONAL: Scroll hint -->
-      <p v-if="vendorsByField.length > 5" class="text-xs text-gray-400 mt-1.5">
+      <p v-if="clientsByField.length > 5" class="text-xs text-gray-400 mt-1.5">
         Scroll to see more
       </p>
     </div>
@@ -183,10 +183,10 @@ watch(
         <TrendingUp class="w-6 h-6 text-purple-600" />
         <div>
           <h3 class="text-brand-dark text-sm font-bold">
-            Vendor Statistics Chart
+            Client Statistics Chart
           </h3>
           <p class="text-brand-light text-sm">
-            Vendors distribution by type
+            Client distribution by type
           </p>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { storeToRefs } from "pinia";
 import { Laptop, Plus, X, UserPlus, Undo2, Pencil, Trash2, RotateCw, ChevronDown, Eye, ShieldCheck, ShieldAlert, Wrench } from "lucide-vue-next";
 import { useAssetStore } from "@/stores/asset";
 import { useEmployeeStore } from "@/stores/employee";
-import { useVendorsStore } from "@/stores/vendor";
+import { useSupplierStore } from "@/stores/supplier";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -17,8 +17,26 @@ const { assets, statistics, loading } = storeToRefs(store);
 const employeeStore = useEmployeeStore();
 const { employees } = storeToRefs(employeeStore);
 
-const vendorsStore = useVendorsStore();
-const { vendors } = storeToRefs(vendorsStore);
+const supplierStore = useSupplierStore();
+const { suppliers } = storeToRefs(supplierStore);
+
+const showAddSupplier = ref(false);
+const newSupplierName = ref("");
+const addingSupplier = ref(false);
+const handleAddSupplier = async () => {
+  if (!newSupplierName.value.trim()) return;
+  addingSupplier.value = true;
+  try {
+    const supplier = await supplierStore.createSupplier({ name: newSupplierName.value.trim() });
+    form.value.supplier_id = supplier.id;
+    newSupplierName.value = "";
+    showAddSupplier.value = false;
+  } catch (error) {
+    await alertModal.alert("Failed to add supplier.", { type: "danger" });
+  } finally {
+    addingSupplier.value = false;
+  }
+};
 
 const filters = ref({ search: "", category: "", status: "" });
 
@@ -52,7 +70,7 @@ const form = ref({
   purchase_price: "",
   warranty_expiry_date: "",
   useful_life_months: "",
-  supplier_vendor_id: "",
+  supplier_id: "",
   condition: "good",
   notes: "",
 });
@@ -105,11 +123,11 @@ const fetchData = async () => {
 
 const openCreateModal = async () => {
   editingId.value = null;
-  form.value = { asset_code: "", name: "", category: "IT-HW", brand: "", model: "", serial_number: "", purchase_date: "", purchase_price: "", warranty_expiry_date: "", useful_life_months: "", supplier_vendor_id: "", condition: "good", notes: "" };
+  form.value = { asset_code: "", name: "", category: "IT-HW", brand: "", model: "", serial_number: "", purchase_date: "", purchase_price: "", warranty_expiry_date: "", useful_life_months: "", supplier_id: "", condition: "good", notes: "" };
   errorMessage.value = "";
   codeAutoFilled.value = true;
   showFormModal.value = true;
-  if (vendors.value.length === 0) await vendorsStore.fetchAllVendors();
+  if (suppliers.value.length === 0) await supplierStore.fetchAllSuppliers();
   await generateCode();
 };
 
@@ -132,7 +150,7 @@ const openEditModal = async (asset) => {
     purchase_price: asset.purchase_price ?? "",
     warranty_expiry_date: toDateInputValue(asset.warranty_expiry_date),
     useful_life_months: asset.useful_life_months ?? "",
-    supplier_vendor_id: asset.supplier_vendor_id ?? "",
+    supplier_id: asset.supplier_id ?? "",
     condition: asset.condition,
     notes: asset.notes ?? "",
   };
@@ -141,7 +159,7 @@ const openEditModal = async (asset) => {
   // just because the category select re-renders with the current value.
   codeAutoFilled.value = false;
   showFormModal.value = true;
-  if (vendors.value.length === 0) await vendorsStore.fetchAllVendors();
+  if (suppliers.value.length === 0) await supplierStore.fetchAllSuppliers();
 };
 
 const closeFormModal = () => {
@@ -224,7 +242,7 @@ const showMaintenanceForm = ref(false);
 const maintenanceForm = ref({ performed_at: "", description: "", cost: "", next_due_date: "" });
 const submittingMaintenance = ref(false);
 
-const supplierName = (asset) => vendors.value.find((v) => v.id === asset.supplier_vendor_id)?.name;
+const supplierName = (asset) => suppliers.value.find((v) => v.id === asset.supplier_id)?.name;
 
 // The API returns dates as full ISO timestamps (e.g.
 // "2027-02-28T00:00:00.000000Z") even for date-only columns -- this trims
@@ -256,7 +274,7 @@ const openDetailModal = async (asset) => {
   detailAsset.value = asset;
   showDetailModal.value = true;
   showMaintenanceForm.value = false;
-  if (vendors.value.length === 0) await vendorsStore.fetchAllVendors();
+  if (suppliers.value.length === 0) await supplierStore.fetchAllSuppliers();
   await loadMaintenanceLogs(asset.id);
 };
 
@@ -555,14 +573,52 @@ onMounted(async () => {
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Supplier</label>
-            <div class="relative">
-              <select v-model="form.supplier_vendor_id" class="select-soft">
-                <option value="">-- Tidak ditentukan --</option>
-                <option v-for="v in vendors" :key="v.id" :value="v.id">{{ v.name }}</option>
-              </select>
-              <ChevronDown
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            <div class="flex items-center gap-2">
+              <div class="relative flex-1">
+                <select v-model="form.supplier_id" class="select-soft">
+                  <option value="">-- Tidak ditentukan --</option>
+                  <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
+                </select>
+                <ChevronDown
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                />
+              </div>
+              <button
+                type="button"
+                @click="showAddSupplier = true"
+                title="Add new supplier"
+                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300"
+              >
+                <Plus class="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+
+            <!-- Quick-add: suppliers aren't a managed module of their own,
+                 just a name to remember who an asset was bought from -- no
+                 need to leave this form to add one. -->
+            <div v-if="showAddSupplier" class="flex items-center gap-2 mt-2">
+              <input
+                v-model="newSupplierName"
+                type="text"
+                placeholder="Supplier name"
+                class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm"
+                @keyup.enter="handleAddSupplier"
               />
+              <button
+                type="button"
+                @click="handleAddSupplier"
+                :disabled="addingSupplier || !newSupplierName.trim()"
+                class="px-3 py-2 rounded-[8px] text-xs font-semibold text-white bg-[#0C51D9] hover:brightness-110 disabled:opacity-50 transition-all duration-300"
+              >
+                {{ addingSupplier ? "Saving..." : "Save" }}
+              </button>
+              <button
+                type="button"
+                @click="showAddSupplier = false; newSupplierName = ''"
+                class="px-3 py-2 rounded-[8px] text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-all duration-300"
+              >
+                Cancel
+              </button>
             </div>
           </div>
           <div>

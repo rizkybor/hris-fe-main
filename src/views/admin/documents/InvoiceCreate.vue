@@ -230,21 +230,21 @@ const handleSubmit = async () => {
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div v-if="isEditMode || form.numbering_mode === 'automatic'">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code <span class="text-red-600">*</span></label>
             <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
             <p v-if="!isEditMode" class="text-xs text-gray-400 mt-1">A short code only (no "/") — combined with the date and sequence, e.g. INV/JCD-ZACO/1805/26.001</p>
           </div>
           <div v-else>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Invoice Number</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Invoice Number <span class="text-red-600">*</span></label>
             <input v-model="form.invoice_number" type="text" required placeholder="e.g. INV/JCD-FASTTRACK/1805/26.001" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
             <p class="text-xs text-gray-400 mt-1">Used exactly as entered — must be unique.</p>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date <span class="text-red-600">*</span></label>
             <input v-model="form.date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Name</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Name <span class="text-red-600">*</span></label>
             <input v-model="form.client_name" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
@@ -281,6 +281,12 @@ const handleSubmit = async () => {
           <button type="button" @click="addItem" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
             <Plus class="w-4 h-4" /> Add Item
           </button>
+        </div>
+        <div class="hidden md:grid grid-cols-5 gap-3 mb-1">
+          <span class="md:col-span-2 text-xs font-semibold text-gray-500">Description <span class="text-red-600">*</span></span>
+          <span class="text-xs font-semibold text-gray-500">Qty</span>
+          <span class="text-xs font-semibold text-gray-500">Rate</span>
+          <span class="text-xs font-semibold text-gray-500">Total (Rp) <span class="text-red-600">*</span></span>
         </div>
         <div v-for="(item, i) in form.items" :key="i" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3 items-start">
           <textarea

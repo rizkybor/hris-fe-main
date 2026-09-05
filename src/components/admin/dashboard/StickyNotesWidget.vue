@@ -40,7 +40,7 @@ const colorFor = (index) => NOTE_COLORS[index % NOTE_COLORS.length];
     </div>
 
     <div v-if="pinnedMeetingNotes.length === 0" class="text-center py-6 text-sm text-gray-400">
-      No Meeting Notes pinned yet. Pin an important note from Document Letters so it shows up here.
+      No Meeting Notes pinned yet. Pin an important note from Business Documents so it shows up here.
     </div>
 
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">

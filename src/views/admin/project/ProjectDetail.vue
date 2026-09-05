@@ -445,7 +445,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Vendor Card (optional) -->
+      <!-- Client Card (optional) -->
       <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 h-fit">
         <div class="flex items-center gap-3 mb-4">
           <div
@@ -454,27 +454,27 @@ onMounted(async () => {
             <Building2 class="w-4 h-4 text-orange-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-sm font-bold">Vendor</h3>
+            <h3 class="text-brand-dark text-sm font-bold">Client</h3>
             <p class="text-brand-light text-xs font-normal">
-              Contracted vendor, if any
+              Contracted client, if any
             </p>
           </div>
         </div>
 
-        <div v-if="project.vendor" class="flex items-center gap-3">
+        <div v-if="project.client" class="flex items-center gap-3">
           <div class="w-10 h-10 bg-orange-50 rounded-[10px] flex items-center justify-center shrink-0">
             <Building2 class="w-4 h-4 text-orange-600" />
           </div>
           <div class="flex-1 min-w-0">
             <h4 class="text-brand-dark text-sm font-bold mb-0.5 truncate">
-              {{ project.vendor.name }}
+              {{ project.client.name }}
             </h4>
             <p class="text-brand-light text-xs truncate">
-              {{ project.vendor.pic_name || project.vendor.email || "-" }}
+              {{ project.client.pic_name || project.client.email || "-" }}
             </p>
           </div>
           <RouterLink
-            :to="{ name: 'admin.vendors.detail', params: { id: project.vendor.id } }"
+            :to="{ name: 'admin.clients.detail', params: { id: project.client.id } }"
             class="border border-[#DCDEDD] text-brand-dark py-2 px-3 rounded-[8px] font-medium hover:bg-gray-50 hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center gap-1.5 shrink-0"
           >
             <Building2 class="w-3.5 h-3.5" />
@@ -483,7 +483,7 @@ onMounted(async () => {
         </div>
         <div v-else class="flex items-center gap-2 py-2 text-gray-400 text-xs">
           <Building2 class="w-4 h-4" />
-          No vendor linked
+          No client linked
         </div>
       </div>
 
