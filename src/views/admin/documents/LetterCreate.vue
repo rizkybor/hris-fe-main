@@ -293,7 +293,7 @@ const handleSubmit = async () => {
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Letter Code</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Letter Code <span class="text-red-600">*</span></label>
             <div class="relative w-full">
               <select v-model="form.letter_code_id" @change="applyTemplate" required :disabled="isEditMode" class="select-soft">
                 <option value="" disabled>Select letter code</option>
@@ -308,7 +308,7 @@ const handleSubmit = async () => {
             </p>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Division Code</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Division Code <span class="text-red-600">*</span></label>
             <div class="relative w-full">
               <select v-model="form.division_code_id" required :disabled="isEditMode" class="select-soft">
                 <option value="" disabled>Select division code</option>
@@ -320,7 +320,7 @@ const handleSubmit = async () => {
             </div>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Type <span class="text-red-600">*</span></label>
             <div class="relative w-full">
               <select v-model="form.type" :disabled="isEditMode" class="select-soft">
                 <option value="I">Internal (I)</option>
@@ -332,7 +332,7 @@ const handleSubmit = async () => {
             </div>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date <span class="text-red-600">*</span></label>
             <input v-model="form.date" type="date" required :disabled="isEditMode" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm disabled:bg-gray-50 disabled:text-gray-400" />
           </div>
           <div class="md:col-span-2">
@@ -367,7 +367,7 @@ const handleSubmit = async () => {
         </div>
         <div class="space-y-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Subject</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Subject <span class="text-red-600">*</span></label>
             <input v-model="form.subject" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div v-if="form.template !== 'secondary'">
@@ -395,7 +395,7 @@ const handleSubmit = async () => {
             </p>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Letter Content</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Letter Content <span class="text-red-600">*</span></label>
             <RichTextEditor v-model="form.body" placeholder="Dear Sir/Madam, ..." />
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

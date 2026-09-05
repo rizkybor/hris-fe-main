@@ -421,10 +421,10 @@ const ppnAmount = computed(() =>
 );
 const totalWithPpn = computed(() => grandTotal.value + ppnAmount.value);
 
-// PPh is withheld by the client, not added -- it reduces what the vendor
+// PPh is withheld by the client, not added -- it reduces what the company
 // actually receives in cash (netReceived), it never changes what the
 // client is invoiced (totalWithPpn/grandTotal). Its base (DPP) is the
-// service fee only, never the PPN portion, since PPN isn't the vendor's
+// service fee only, never the PPN portion, since PPN isn't the company's
 // income.
 const handlePphTypeChange = () => {
   const selected = pphTypes.value.find((t) => t.value === form.value.pph_type);

@@ -90,7 +90,7 @@ const titles = {
     subtitle: "Employee has been added",
   },
   "admin.attendances": {
-    title: "Attendance",
+    title: "Attendance Summary",
     subtitle: "Review clock in/out records",
   },
   "admin.projects": {
@@ -137,9 +137,25 @@ const titles = {
     title: "Edit Credential",
     subtitle: "Update and change the company account password",
   },
-  "admin.vendors.dashboard": {
-    title: "Vendors",
-    subtitle: "View All Vendors on Dashboard",
+  "admin.clients.dashboard": {
+    title: "Our Clients",
+    subtitle: "View All Clients on Dashboard",
+  },
+  "admin.clients.create": {
+    title: "Add Client",
+    subtitle: "Register a new client",
+  },
+  "admin.clients.detail": {
+    title: "Client Details",
+    subtitle: "View client information",
+  },
+  "admin.clients.edit": {
+    title: "Edit Client",
+    subtitle: "Update client information",
+  },
+  "admin.subscriptions.dashboard": {
+    title: "Subscriptions",
+    subtitle: "Manage recurring billing for maintenance, domain renewal, and SaaS subscriptions",
   },
   "admin.company-about.dashboard": {
     title: "Company About",
@@ -182,7 +198,7 @@ const titles = {
     subtitle: "Update file metadata or replace the attached document",
   },
   "admin.documents.dashboard": {
-    title: "Document Letters",
+    title: "Business Documents",
     subtitle: "Letters, Invoice, Payment Receipt, Purchase Order, Official Memo, Meeting Note, and Certificate",
   },
   "admin.purchase-orders.dashboard": {
@@ -261,6 +277,10 @@ const titles = {
     title: "Certificate",
     subtitle: "History of issued certificates",
   },
+  "admin.staff-tasks.dashboard": {
+    title: "Staff Tasks",
+    subtitle: "Assign daily tasks to all staff or hand-picked staff, and track progress",
+  },
   "admin.certificates.create": {
     title: "Generate Certificate",
     subtitle: "Create new certificate, single or mass",
@@ -274,7 +294,7 @@ const titles = {
     subtitle: "Generate and manage full SQL backups of the database",
   },
   "admin.report.dashboard": {
-    title: "Reports",
+    title: "Reporting",
     subtitle: "Generate and review company-wide reports",
   },
   "admin.history.dashboard": {

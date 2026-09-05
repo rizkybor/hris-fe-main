@@ -162,9 +162,9 @@ const handleDelete = async () => {
               </p>
             </div>
             <div
-              class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center flex-shrink-0"
+              class="w-16 h-16 bg-white rounded-[14px] flex items-center justify-center flex-shrink-0"
             >
-              <Archive class="w-8 h-8 text-white" />
+              <Archive class="w-8 h-8 text-brand-primary" />
             </div>
           </div>
         </div>

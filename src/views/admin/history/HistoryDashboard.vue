@@ -41,7 +41,7 @@ const categoryColors = {
   Finance: "bg-emerald-50 text-emerald-700",
   "Document Files": "bg-cyan-50 text-cyan-700",
   "Business Documents": "bg-sky-50 text-sky-700",
-  Vendor: "bg-pink-50 text-pink-700",
+  Client: "bg-pink-50 text-pink-700",
 };
 
 const categoryClass = (category) => categoryColors[category] || "bg-gray-100 text-gray-700";
@@ -125,8 +125,8 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
               </p>
               <p class="text-brand-white-80 text-sm font-normal">All-time system events</p>
             </div>
-            <div class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center flex-shrink-0">
-              <Activity class="w-8 h-8 text-white" />
+            <div class="w-16 h-16 bg-white rounded-[14px] flex items-center justify-center flex-shrink-0">
+              <Activity class="w-8 h-8 text-brand-primary" />
             </div>
           </div>
         </div>

@@ -62,10 +62,10 @@ const allActions = [
     variant: "default",
   },
   {
-    label: "Add Vendor",
+    label: "Add Client",
     icon: Building2Icon,
-    route: "admin.vendors.create",
-    permission: "vendors-create",
+    route: "admin.clients.create",
+    permission: "clients-create",
     variant: "default",
   },
   {

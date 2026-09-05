@@ -26,8 +26,8 @@ const form = ref({
   replacement_days: 7,
   buyer_signatory_name: "",
   buyer_signatory_title: "",
-  vendor_signatory_name: "",
-  vendor_signatory_title: "",
+  client_signatory_name: "",
+  client_signatory_title: "",
 });
 
 const submitting = ref(false);
@@ -60,8 +60,8 @@ onMounted(async () => {
     form.value.replacement_days = order.replacement_days ?? 7;
     form.value.buyer_signatory_name = order.buyer_signatory_name || "";
     form.value.buyer_signatory_title = order.buyer_signatory_title || "";
-    form.value.vendor_signatory_name = order.vendor_signatory_name || "";
-    form.value.vendor_signatory_title = order.vendor_signatory_title || "";
+    form.value.client_signatory_name = order.client_signatory_name || "";
+    form.value.client_signatory_title = order.client_signatory_title || "";
   } catch (error) {
     errorMessage.value = "Failed to load purchase order.";
   }
@@ -110,7 +110,7 @@ const handleSubmit = async () => {
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Type</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Type <span class="text-red-600">*</span></label>
             <div class="relative w-full">
               <select v-model="form.type" class="select-soft">
                 <option value="E">External (E)</option>
@@ -122,15 +122,15 @@ const handleSubmit = async () => {
             </div>
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date <span class="text-red-600">*</span></label>
             <input v-model="form.date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Title / Subject</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Title / Subject <span class="text-red-600">*</span></label>
             <input v-model="form.title" type="text" required placeholder="e.g. Purchase of Smart Locker" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Vendor Name / Client</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Name <span class="text-red-600">*</span></label>
             <input v-model="form.client_name" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
@@ -163,15 +163,15 @@ const handleSubmit = async () => {
         <div v-for="(item, i) in form.items" :key="i" class="border border-[#DCDEDD] rounded-xl p-4 mb-3">
           <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div class="md:col-span-2">
-              <label class="text-xs text-gray-500 mb-1 block">Description</label>
+              <label class="text-xs text-gray-500 mb-1 block">Description <span class="text-red-600">*</span></label>
               <input v-model="item.description" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
             </div>
             <div>
-              <label class="text-xs text-gray-500 mb-1 block">Quantity</label>
+              <label class="text-xs text-gray-500 mb-1 block">Quantity <span class="text-red-600">*</span></label>
               <input v-model="item.qty" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
             </div>
             <div>
-              <label class="text-xs text-gray-500 mb-1 block">Price (Rp)</label>
+              <label class="text-xs text-gray-500 mb-1 block">Price (Rp) <span class="text-red-600">*</span></label>
               <input v-model.number="item.price" type="number" min="0" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
             </div>
             <div class="md:col-span-4">
@@ -242,12 +242,12 @@ const handleSubmit = async () => {
             <input v-model="form.buyer_signatory_title" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Vendor Signatory (Name)</label>
-            <input v-model="form.vendor_signatory_name" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Signatory (Name)</label>
+            <input v-model="form.client_signatory_name" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Position</label>
-            <input v-model="form.vendor_signatory_title" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <input v-model="form.client_signatory_title" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
         </div>
       </div>

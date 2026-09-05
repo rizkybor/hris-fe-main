@@ -20,7 +20,8 @@ import attendanceRoutes from './attendance';
 import payrollRoutes from './payroll';
 import accountPasswordRoutes from './accountPassword';
 import filesCompanyRoutes from './filesCompany';
-import vendorsRoutes from './vendor';
+import clientsRoutes from './client';
+import subscriptionRoutes from './subscription';
 import companyAboutRoutes from './companyAbout';
 import companyFinanceRoutes from './companyFinance'
 import companyCashBookRoutes from './companyCashBook'
@@ -76,7 +77,8 @@ const router = createRouter({
         ...payrollRoutes,
         ...accountPasswordRoutes,
         ...filesCompanyRoutes,
-        ...vendorsRoutes,
+        ...clientsRoutes,
+        ...subscriptionRoutes,
         ...companyAboutRoutes,
         ...companyFinanceRoutes,
         ...companyCashBookRoutes,

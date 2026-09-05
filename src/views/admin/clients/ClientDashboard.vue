@@ -1,6 +1,6 @@
 <script setup>
-import CardList from "@/components/admin/vendor/list/CardList.vue";
-import Statistics from "@/components/admin/vendor/list/Statistics.vue";
+import CardList from "@/components/admin/client/list/CardList.vue";
+import Statistics from "@/components/admin/client/list/Statistics.vue";
 import Pagination from "@/components/admin/team/Pagination.vue";
 import Alert from "@/components/common/Alert.vue";
 import { storeToRefs } from "pinia";
@@ -8,13 +8,13 @@ import { ref, onMounted, watch, computed } from "vue";
 import { debounce } from "lodash-es";
 import { can } from "@/helpers/permissionHelper";
 import { Plus, Briefcase, Search, SearchX, ChevronDown } from "lucide-vue-next";
-import { useVendorsStore } from "@/stores/vendor";
+import { useClientStore } from "@/stores/client";
 import { useAlertModalStore } from "@/stores/alertModal";
-import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
-const vendorsStore = useVendorsStore();
-const { vendorsData, success, loading } = storeToRefs(vendorsStore);
-const { fetchVendorsPaginated, deleteVendor } = vendorsStore;
+const clientsStore = useClientStore();
+const { clientsData, success, loading } = storeToRefs(clientsStore);
+const { fetchClientPaginated, deleteClient } = clientsStore;
 const alertModal = useAlertModalStore();
 
 const serverOptions = ref({
@@ -29,7 +29,7 @@ const filters = ref({
 
 // Fetch data
 const fetchData = async () => {
-  await fetchVendorsPaginated({
+  await fetchClientPaginated({
     ...serverOptions.value,
     ...filters.value,
   });
@@ -60,12 +60,12 @@ const handlePerPageChange = (perPage) => {
 };
 
 // Computed properties sesuai store
-const vendorsList = computed(() => vendorsData.value?.items || []);
-const vendorsMeta = computed(() => vendorsData.value?.meta || {});
+const clientsList = computed(() => clientsData.value?.items || []);
+const clientsMeta = computed(() => clientsData.value?.meta || {});
 
-const handleDelete = async (vendor) => {
+const handleDelete = async (client) => {
   const ok = await alertModal.confirm(
-    `Delete vendor "${vendor.name}"? This action cannot be undone.`,
+    `Delete client "${client.name}"? This action cannot be undone.`,
     {
       type: "danger",
       confirmText: "Delete",
@@ -74,10 +74,10 @@ const handleDelete = async (vendor) => {
   if (!ok) return;
 
   try {
-    await deleteVendor(vendor.id);
+    await deleteClient(client.id);
     await fetchData();
   } catch (error) {
-    await alertModal.alert("Failed to delete vendor.", { type: "danger" });
+    await alertModal.alert("Failed to delete client.", { type: "danger" });
   }
 };
 </script>
@@ -93,7 +93,7 @@ const handleDelete = async (vendor) => {
   <!-- Error Alert -->
   <Alert type="error" :title="error" :show="!!error" />
 
-  <!-- Vendors Grid Section -->
+  <!-- Client Grid Section -->
   <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
@@ -102,21 +102,21 @@ const handleDelete = async (vendor) => {
           <Briefcase class="w-6 h-6 text-blue-600" />
         </div>
         <div class="min-w-0">
-          <h3 class="text-brand-dark text-base font-bold">All Vendors</h3>
+          <h3 class="text-brand-dark text-base font-bold">All Client</h3>
           <p class="text-brand-light text-xs font-normal">
-            View and manage all vendor information
+            View and manage all client information
           </p>
         </div>
       </div>
 
-      <!-- Add Vendor Button -->
-      <div class="flex items-center gap-3.5" v-if="can('vendors-create')">
+      <!-- Add Client Button -->
+      <div class="flex items-center gap-3.5" v-if="can('clients-create')">
         <RouterLink
           class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center justify-center gap-1.5 w-full sm:w-auto"
-          :to="{ name: 'admin.vendors.create' }"
+          :to="{ name: 'admin.clients.create' }"
         >
           <Plus class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Add Vendor</span>
+          <span class="text-brand-white text-sm font-semibold">Add Client</span>
         </RouterLink>
       </div>
     </div>
@@ -131,7 +131,7 @@ const handleDelete = async (vendor) => {
           <input
             type="text"
             class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-            placeholder="Search vendors..."
+            placeholder="Search clients..."
             v-model="filters.search"
           />
         </div>
@@ -154,16 +154,18 @@ const handleDelete = async (vendor) => {
     </div>
 
     <!-- Loading -->
-    <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-5" />
+    <div v-if="loading" class="space-y-3 mb-4">
+      <Skeleton v-for="i in 6" :key="i" height="90px" rounded="12px" />
+    </div>
 
-    <!-- Vendors Grid -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-4">
-      <CardList v-for="vendor in vendorsList" :key="vendor.id" :data="vendor" @delete="handleDelete" />
+    <!-- Client List -->
+    <div v-else class="space-y-3 mb-4">
+      <CardList v-for="client in clientsList" :key="client.id" :data="client" @delete="handleDelete" />
     </div>
 
      <!-- Pagination -->
     <Pagination
-      :meta="vendorsMeta"
+      :meta="clientsMeta"
       :loading="loading"
       @page-change="handlePageChange"
       @per-page-change="handlePerPageChange"
@@ -171,10 +173,10 @@ const handleDelete = async (vendor) => {
     </div>
 
     <!-- No Data Message -->
-    <div class="text-center py-12" v-if="vendorsList.length === 0 && !loading">
+    <div class="text-center py-12" v-if="clientsList.length === 0 && !loading">
       <SearchX class="w-9 h-9 text-gray-400 mx-auto mb-3.5" />
       <h4 class="text-brand-dark text-sm font-semibold mb-1.5">
-        No vendors found
+        No clients found
       </h4>
       <p class="text-brand-light text-sm">
         Try adjusting your search terms or filters
