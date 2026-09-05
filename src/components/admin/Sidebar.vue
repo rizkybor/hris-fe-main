@@ -129,15 +129,20 @@ const showInsights = computed(() => canOneOf(["analytics-menu", "history-menu"])
 // a section defaults to expanded when its key is absent from storage.
 const SECTION_KEYS = ["overview", "myWorkspace", "people", "company", "finance", "tools", "insights"];
 
+// First login (nothing in storage yet) shows only General expanded, every
+// other section starts collapsed -- a returning user's own choice (once
+// they've toggled anything) always wins over this default.
+const defaultCollapsed = (key) => key !== "overview";
+
 const loadCollapsedSections = () => {
   try {
     const raw = JSON.parse(localStorage.getItem("sidebar-collapsed-sections") || "{}");
     return SECTION_KEYS.reduce((acc, key) => {
-      acc[key] = !!raw[key];
+      acc[key] = key in raw ? !!raw[key] : defaultCollapsed(key);
       return acc;
     }, {});
   } catch {
-    return SECTION_KEYS.reduce((acc, key) => ({ ...acc, [key]: false }), {});
+    return SECTION_KEYS.reduce((acc, key) => ({ ...acc, [key]: defaultCollapsed(key) }), {});
   }
 };
 
