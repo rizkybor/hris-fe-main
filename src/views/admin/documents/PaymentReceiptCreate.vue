@@ -215,34 +215,34 @@ const handleSubmit = async () => {
               </div>
             </div>
             <div v-if="form.numbering_mode === 'automatic'">
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code <span class="text-red-600">*</span></label>
               <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
               <p class="text-xs text-gray-400 mt-1">A short code only (no "/") — used in the receipt number, e.g. RCP/JCD-ZACO/...</p>
             </div>
             <div v-else>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Receipt Number</label>
+              <label class="text-sm font-semibold text-brand-dark mb-1 block">Receipt Number <span class="text-red-600">*</span></label>
               <input v-model="form.receipt_number" type="text" required placeholder="e.g. RCP/JCD-FASTTRACK/1805/26.001" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
               <p class="text-xs text-gray-400 mt-1">Used exactly as entered — must be unique.</p>
             </div>
           </template>
           <div v-else>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code <span class="text-red-600">*</span></label>
             <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date <span class="text-red-600">*</span></label>
             <input v-model="form.date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Received From</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Received From <span class="text-red-600">*</span></label>
             <input v-model="form.received_from" type="text" required placeholder="e.g. Mr. Zakaria - Zaco Law Firm" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">{{ applyPph23 ? "Gross Amount (Rp)" : "Amount (Rp)" }}</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">{{ applyPph23 ? "Gross Amount (Rp)" : "Amount (Rp)" }} <span class="text-red-600">*</span></label>
             <input v-model.number="grossAmount" @input="recomputePph23" type="number" min="0" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Payment Status</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Payment Status <span class="text-red-600">*</span></label>
             <div class="relative w-full">
               <select v-model="form.payment_status" class="select-soft">
                 <option value="paid">Paid</option>
@@ -288,7 +288,7 @@ const handleSubmit = async () => {
             </div>
           </template>
           <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">For Payment Of</label>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">For Payment Of <span class="text-red-600">*</span></label>
             <textarea v-model="form.for_payment_of" rows="2" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
           </div>
           <div class="md:col-span-2">

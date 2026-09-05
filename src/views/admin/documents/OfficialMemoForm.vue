@@ -104,7 +104,7 @@ const handleSubmit = async () => {
           />
         </div>
         <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Document Date</label>
+          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Document Date <span class="text-red-600">*</span></label>
           <input
             v-model="form.document_date"
             type="date"
@@ -115,7 +115,7 @@ const handleSubmit = async () => {
       </div>
 
       <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Subject / Title</label>
+        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Subject / Title <span class="text-red-600">*</span></label>
         <input
           v-model="form.subject"
           type="text"
@@ -143,7 +143,7 @@ const handleSubmit = async () => {
       </div>
 
       <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Memo Content</label>
+        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Memo Content <span class="text-red-600">*</span></label>
         <RichTextEditor v-model="form.body" placeholder="Dear ..." />
       </div>
 

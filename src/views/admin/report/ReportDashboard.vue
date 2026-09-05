@@ -15,11 +15,14 @@ import {
   Star,
   X,
   ChevronDown,
+  ChevronRight,
+  RefreshCw,
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
 import { useProjectStore } from "@/stores/project";
 import { useOptionStore } from "@/stores/option";
 import { can } from "@/helpers/permissionHelper";
+import { useScrollFade } from "@/composables/useScrollFade";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
@@ -38,6 +41,7 @@ const {
   ppn,
   project,
   pph23,
+  subscription,
   projectExpense,
   staffRaport,
   staffRaportDetail,
@@ -56,16 +60,24 @@ const tabs = [
   { key: "ppn", label: "PPN", icon: PercentIcon },
   { key: "project", label: "Project", icon: FolderKanban },
   { key: "project_expense", label: "Project Cash", icon: PiggyBank },
+  { key: "subscription", label: "Subscription", icon: RefreshCw },
   { key: "staff_raport", label: "Staff Raport", icon: Star, permission: "staff-raport-menu" },
 ];
 
 const visibleTabs = computed(() => tabs.filter((t) => !t.permission || can(t.permission)));
+
+// 11 tabs routinely overflow the row at every breakpoint (not just mobile),
+// so unlike other tab bars in the app this hint stays visible on desktop
+// and tablet too -- shown/hidden based on actual scroll position, not a
+// fixed screen-size breakpoint.
+const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
 
 const activeTab = ref("attendance");
 const startDate = ref("");
 const endDate = ref("");
 const projectStatus = ref("");
 const projectExpenseProjectId = ref("");
+const subscriptionStatus = ref("");
 const staffRaportSearch = ref("");
 const staffRaportEmploymentType = ref("");
 
@@ -114,6 +126,7 @@ const currentReport = computed(() => {
     project: project.value,
     pph23: pph23.value,
     project_expense: projectExpense.value,
+    subscription: subscription.value,
     staff_raport: staffRaport.value,
   }[activeTab.value];
 });
@@ -200,6 +213,13 @@ const summaryCards = computed(() => {
         { label: "Total Debit", value: formatCurrency(summary.total_debit) },
         { label: "Total Credit", value: formatCurrency(summary.total_credit) },
       ];
+    case "subscription":
+      return [
+        { label: "MRR (Monthly Recurring Revenue)", value: formatCurrency(summary.mrr) },
+        { label: "ARR (Annual Recurring Revenue)", value: formatCurrency(summary.arr) },
+        { label: "Active Subscriptions", value: summary.active_count ?? 0 },
+        { label: "Upcoming Renewals (30d)", value: summary.upcoming_renewals_count ?? 0 },
+      ];
     case "staff_raport": {
       const rows = staffRaport.value.rows || [];
       const withScore = rows.filter((r) => r.overall_score !== null);
@@ -245,6 +265,18 @@ const tableRows = computed(() => {
   return currentReport.value?.rows || [];
 });
 
+const subscriptionStatusClass = {
+  active: "bg-green-50 text-green-700",
+  postponed: "bg-amber-50 text-amber-700",
+  cancelled: "bg-gray-100 text-gray-500",
+};
+
+const subscriptionStatusLabel = {
+  active: "Active",
+  postponed: "Postponed",
+  cancelled: "Not Active",
+};
+
 function formatCurrency(value) {
   const number = Number(value ?? 0);
   return new Intl.NumberFormat("id-ID", {
@@ -265,8 +297,10 @@ function formatDate(value) {
 
 const filterParams = computed(() => {
   const params = {};
-  if (startDate.value) params.start_date = startDate.value;
-  if (endDate.value) params.end_date = endDate.value;
+  if (activeTab.value !== "subscription") {
+    if (startDate.value) params.start_date = startDate.value;
+    if (endDate.value) params.end_date = endDate.value;
+  }
   if (activeTab.value === "project" && projectStatus.value) params.status = projectStatus.value;
   if (activeTab.value === "project_expense" && projectExpenseProjectId.value) {
     params.project_id = projectExpenseProjectId.value;
@@ -274,6 +308,9 @@ const filterParams = computed(() => {
   if (activeTab.value === "staff_raport") {
     if (staffRaportSearch.value) params.search = staffRaportSearch.value;
     if (staffRaportEmploymentType.value) params.employment_type = staffRaportEmploymentType.value;
+  }
+  if (activeTab.value === "subscription" && subscriptionStatus.value) {
+    params.status = subscriptionStatus.value;
   }
   return params;
 });
@@ -315,6 +352,9 @@ async function loadReport(page = 1) {
       break;
     case "project_expense":
       await reportStore.fetchProjectExpenseReport({ ...filterParams.value, page });
+      break;
+    case "subscription":
+      await reportStore.fetchSubscriptionReport(filterParams.value);
       break;
     case "staff_raport":
       await reportStore.fetchStaffRaport({ ...filterParams.value, page });
@@ -377,21 +417,44 @@ onMounted(() => {
       </div>
 
       <!-- Tabs -->
-      <div class="tabs-scroll flex flex-nowrap gap-2 overflow-x-auto border-b border-[#DCDEDD] pb-4 mb-4">
-        <button
-          v-for="tab in visibleTabs"
-          :key="tab.key"
-          @click="activeTab = tab.key"
-          class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 shrink-0 whitespace-nowrap"
-          :class="
-            activeTab === tab.key
-              ? 'bg-[#0C51D9] border-[#0C51D9] text-white'
-              : 'border-[#DCDEDD] text-brand-dark hover:border-[#0C51D9]'
-          "
+      <div class="relative mb-4">
+        <div
+          ref="tabScrollRef"
+          @scroll="updateTabFade"
+          class="tabs-scroll flex flex-nowrap gap-2 overflow-x-auto border-b border-[#DCDEDD] pb-4"
         >
-          <component :is="tab.icon" class="w-4 h-4 shrink-0" />
-          <span class="text-sm font-semibold">{{ tab.label }}</span>
-        </button>
+          <button
+            v-for="tab in visibleTabs"
+            :key="tab.key"
+            @click="activeTab = tab.key"
+            class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 shrink-0 whitespace-nowrap"
+            :class="
+              activeTab === tab.key
+                ? 'bg-[#0C51D9] border-[#0C51D9] text-white'
+                : 'border-[#DCDEDD] text-brand-dark hover:border-[#0C51D9]'
+            "
+          >
+            <component :is="tab.icon" class="w-4 h-4 shrink-0" />
+            <span class="text-sm font-semibold">{{ tab.label }}</span>
+          </button>
+        </div>
+        <!-- More tabs off-screen -- shown/hidden by actual scroll position
+             (not a screen-size breakpoint), since this row overflows on
+             desktop and tablet too, not just mobile. -->
+        <Transition name="fade">
+          <div
+            v-if="showTabRightFade"
+            class="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white via-white/80 to-transparent flex items-center justify-end pr-1"
+          >
+            <ChevronRight class="w-4 h-4 text-[#0C51D9] scroll-hint-nudge" />
+          </div>
+        </Transition>
+        <Transition name="fade">
+          <div
+            v-if="showTabLeftFade"
+            class="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/80 to-transparent"
+          ></div>
+        </Transition>
       </div>
 
       <!-- When this data appears -->
@@ -433,7 +496,7 @@ onMounted(() => {
         v-if="activeTab !== 'employee'"
         class="flex flex-col sm:flex-row gap-3 mb-2"
       >
-        <div class="flex-1">
+        <div v-if="activeTab !== 'subscription'" class="flex-1">
           <label class="text-xs text-brand-light font-medium mb-1 block"
             >Start Date</label
           >
@@ -444,7 +507,7 @@ onMounted(() => {
             class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
-        <div class="flex-1">
+        <div v-if="activeTab !== 'subscription'" class="flex-1">
           <label class="text-xs text-brand-light font-medium mb-1 block"
             >End Date</label
           >
@@ -454,6 +517,24 @@ onMounted(() => {
             @change="loadReport(1)"
             class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
+        </div>
+        <div v-if="activeTab === 'subscription'" class="flex-1">
+          <label class="text-xs text-brand-light font-medium mb-1 block">Status</label>
+          <div class="relative w-full">
+            <select
+              v-model="subscriptionStatus"
+              @change="loadReport(1)"
+              class="select-soft"
+            >
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="postponed">Postponed</option>
+              <option value="cancelled">Not Active</option>
+            </select>
+            <ChevronDown
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            />
+          </div>
         </div>
         <div v-if="activeTab === 'project'" class="flex-1">
           <label class="text-xs text-brand-light font-medium mb-1 block">Status</label>
@@ -547,6 +628,47 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- Status Breakdown & Upcoming Renewals (Subscription only) -->
+    <div v-if="!loading && activeTab === 'subscription'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+        <p class="text-brand-dark text-sm font-bold mb-3">Status Breakdown</p>
+        <div class="space-y-2">
+          <div
+            v-for="item in subscription.status_breakdown"
+            :key="item.status"
+            class="flex items-center justify-between text-sm"
+          >
+            <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="subscriptionStatusClass[item.status] || 'bg-gray-100 text-gray-500'">
+              {{ subscriptionStatusLabel[item.status] || item.status }}
+            </span>
+            <span class="text-brand-dark font-semibold">{{ item.count }} subscription{{ item.count === 1 ? "" : "s" }}</span>
+          </div>
+          <p v-if="!subscription.status_breakdown?.length" class="text-sm text-gray-400">No subscriptions yet.</p>
+        </div>
+      </div>
+
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
+        <p class="text-brand-dark text-sm font-bold mb-3">Upcoming Renewals (next 30 days)</p>
+        <div class="space-y-2 max-h-48 overflow-y-auto">
+          <div
+            v-for="row in subscription.upcoming_renewals"
+            :key="row.id"
+            class="flex items-center justify-between text-sm border-b border-[#F1F1F1] pb-2 last:border-0 last:pb-0"
+          >
+            <div class="min-w-0">
+              <p class="text-brand-dark font-semibold truncate">{{ row.name }}</p>
+              <p class="text-gray-400 text-xs">{{ row.client?.name ?? "-" }}</p>
+            </div>
+            <div class="text-right shrink-0 ml-3">
+              <p class="text-brand-dark font-semibold">{{ formatCurrency(row.amount) }}</p>
+              <p class="text-gray-400 text-xs">{{ formatDate(row.next_due_date) }}</p>
+            </div>
+          </div>
+          <p v-if="!subscription.upcoming_renewals?.length" class="text-sm text-gray-400">No renewals due in the next 30 days.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Table -->
     <SkeletonTable v-if="loading" :rows="6" :cols="6" />
     <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] px-4 overflow-x-auto">
@@ -623,6 +745,15 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Keterangan</th>
               <th class="py-3 pr-4 font-semibold">Debit</th>
               <th class="py-3 pr-4 font-semibold">Kredit</th>
+            </template>
+            <template v-else-if="activeTab === 'subscription'">
+              <th class="py-3 pr-4 font-semibold">Name</th>
+              <th class="py-3 pr-4 font-semibold">Client</th>
+              <th class="py-3 pr-4 font-semibold">Service Type</th>
+              <th class="py-3 pr-4 font-semibold">Billing Cycle</th>
+              <th class="py-3 pr-4 font-semibold">Amount</th>
+              <th class="py-3 pr-4 font-semibold">Status</th>
+              <th class="py-3 pr-4 font-semibold">Next Due Date</th>
             </template>
             <template v-else-if="activeTab === 'staff_raport'">
               <th class="py-3 pr-4 font-semibold">Name</th>
@@ -777,6 +908,26 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ row.description }}</td>
               <td class="py-3 pr-4 text-emerald-600">{{ row.type === "debit" ? formatCurrency(row.amount) : "-" }}</td>
               <td class="py-3 pr-4 text-red-600">{{ row.type === "credit" ? formatCurrency(row.amount) : "-" }}</td>
+            </tr>
+          </template>
+          <template v-else-if="activeTab === 'subscription'">
+            <tr
+              v-for="(row, idx) in tableRows"
+              :key="row.id"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+            >
+              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
+              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name }}</td>
+              <td class="py-3 pr-4">{{ row.client?.name ?? "-" }}</td>
+              <td class="py-3 pr-4 capitalize">{{ (row.service_type || "-").replace(/_/g, " ") }}</td>
+              <td class="py-3 pr-4 capitalize">{{ row.billing_cycle }}</td>
+              <td class="py-3 pr-4">{{ formatCurrency(row.amount) }}</td>
+              <td class="py-3 pr-4">
+                <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="subscriptionStatusClass[row.status] || 'bg-gray-100 text-gray-500'">
+                  {{ subscriptionStatusLabel[row.status] || row.status }}
+                </span>
+              </td>
+              <td class="py-3 pr-4">{{ formatDate(row.next_due_date) }}</td>
             </tr>
           </template>
           <template v-else-if="activeTab === 'staff_raport'">
@@ -957,14 +1108,24 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* 8 report tabs no longer wrap into a ragged multi-row block on mobile/
-   tablet -- they scroll horizontally in one row instead, scrollbar hidden
-   since the row itself makes it obvious there's more to swipe to. */
+/* Report tabs no longer wrap into a ragged multi-row block on mobile/
+   tablet -- they scroll horizontally in one row instead. Scrollbar hidden
+   since the fade + chevron hint below now does the job of signaling
+   there's more to swipe to. */
 .tabs-scroll {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 .tabs-scroll::-webkit-scrollbar {
   display: none;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

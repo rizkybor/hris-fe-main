@@ -16,6 +16,7 @@ const categories = [
   { key: "ptkp_status", label: "PTKP Status (PPh21)" },
   { key: "bank_name", label: "Bank Name" },
   { key: "preferred_language", label: "Preferred Language" },
+  { key: "subscription_service_type", label: "Subscription Service Type" },
 ];
 
 const activeCategory = ref(categories[0].key);

@@ -61,12 +61,12 @@ const handleSubmit = async () => {
 
 <template>
   <div class="p-5">
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6 mb-6">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6 mb-6">
       <div class="flex items-center gap-3 mb-6">
         <button
           type="button"
           @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          class="bg-white w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
           aria-label="Back"
         >
           <ArrowLeft class="w-5 h-5 text-gray-600" />
@@ -237,7 +237,7 @@ const handleSubmit = async () => {
           <button
             type="button"
             @click="router.back()"
-            class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
+            class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
           >
             Cancel
           </button>
