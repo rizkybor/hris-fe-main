@@ -35,7 +35,14 @@ const STATUS_OPTIONS = [
 const clientOptions = computed(() => props.clients.map((c) => ({ value: c.id, label: c.name })));
 const projectOptions = computed(() => props.projects.map((p) => ({ value: p.id, label: p.name })));
 
-const emptyService = () => ({ service_type: "", product_name: "", amount: "", notes: "" });
+const emptyService = () => ({
+  service_type: "",
+  product_name: "",
+  amount: "",
+  ppn_percentage: "",
+  icann_fee: "",
+  notes: "",
+});
 
 const emptyForm = () => ({
   name: "",
@@ -100,8 +107,48 @@ const toggleApplyPph23 = () => {
   }
 };
 
-const ppnAmount = computed(() => Math.round(totalAmount.value * ((Number(form.ppn_percentage) || 0) / 100)));
-const invoiceTotal = computed(() => totalAmount.value + ppnAmount.value + (Number(form.admin_fee) || 0));
+// With several services, each optionally carries its own VAT/PPN% (0% if
+// left blank) -- the invoice-level field becomes a computed "Total VAT /
+// PPN (%)" (blended rate) instead of one flat user-entered rate. With a
+// single service, form.ppn_percentage is that one rate as before.
+const isMultiService = computed(() => form.services.length > 1);
+
+const ppnAmount = computed(() => {
+  if (isMultiService.value) {
+    return Math.round(
+      form.services.reduce((sum, s) => sum + (Number(s.amount) || 0) * ((Number(s.ppn_percentage) || 0) / 100), 0)
+    );
+  }
+  return Math.round(totalAmount.value * ((Number(form.ppn_percentage) || 0) / 100));
+});
+
+const totalPpnPercentage = computed(() => {
+  if (!isMultiService.value) return Number(form.ppn_percentage) || 0;
+  return totalAmount.value > 0 ? Math.round((ppnAmount.value / totalAmount.value) * 10000) / 100 : 0;
+});
+
+// One service's own amount + its own VAT/PPN + its own ICANN fee, shown
+// inline on its row so it's clear each service is taxed (and surcharged)
+// on its own amount rather than the whole subscription.
+const serviceTotal = (service) =>
+  Math.round((Number(service.amount) || 0) * (1 + (Number(service.ppn_percentage) || 0) / 100)) +
+  (Number(service.icann_fee) || 0);
+
+// With several services, "Subtotal" is the sum of each service's own
+// amount + its own VAT/PPN (i.e. sum of serviceTotal() above minus ICANN
+// fees, which are shown as their own line) rather than summing amounts
+// and VAT separately -- same total, presented the way a multi-service
+// invoice is actually itemized.
+const servicesSubtotal = computed(() => totalAmount.value + ppnAmount.value);
+
+// Optional pass-through registrar fee (e.g. ICANN's fee on a domain) --
+// not taxed, added on top same as Admin Fee, available regardless of how
+// many services there are since even a single domain service can have one.
+const icannFeeTotal = computed(() => form.services.reduce((sum, s) => sum + (Number(s.icann_fee) || 0), 0));
+
+const invoiceTotal = computed(
+  () => totalAmount.value + ppnAmount.value + (Number(form.admin_fee) || 0) + icannFeeTotal.value
+);
 const pph23EstimatedAmount = computed(() => Math.round((invoiceTotal.value * (Number(form.pph23_percent) || 0)) / 100));
 
 // Maintenance is the only service type that's ever tied to a Project --
@@ -130,6 +177,8 @@ watch(
                 service_type: s.service_type ?? "",
                 product_name: s.product_name ?? "",
                 amount: s.amount ?? "",
+                ppn_percentage: s.ppn_percentage ?? "",
+                icann_fee: s.icann_fee ?? "",
                 notes: s.notes ?? "",
               }))
             : [emptyService()],
@@ -165,9 +214,15 @@ const submit = () => {
   payload.services = form.services.map((s) => {
     const service = { ...s };
     if (!service.product_name) delete service.product_name;
+    if (service.ppn_percentage === "" || service.ppn_percentage === null) delete service.ppn_percentage;
+    if (service.icann_fee === "" || service.icann_fee === null) delete service.icann_fee;
     if (!service.notes) delete service.notes;
     return service;
   });
+  // With multiple services, the invoice-level rate is a computed blend of
+  // each service's own -- the backend recomputes this too, but send the
+  // same number so what's displayed here matches what gets saved.
+  if (isMultiService.value) payload.ppn_percentage = totalPpnPercentage.value;
   if (!payload.project_id) delete payload.project_id;
   if (!payload.notes) delete payload.notes;
   // bank_account is a read-only display field derived from bank_name on
@@ -218,7 +273,12 @@ const submit = () => {
 
         <div>
           <div class="flex items-center justify-between mb-1">
-            <label class="block text-brand-dark text-sm font-semibold">Services</label>
+            <div class="flex items-center gap-1.5">
+              <label class="block text-brand-dark text-sm font-semibold">Services</label>
+              <span class="px-1.5 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700">
+                {{ form.services.length }}
+              </span>
+            </div>
             <button
               type="button"
               @click="addService"
@@ -236,31 +296,30 @@ const submit = () => {
             <div
               v-for="(service, index) in form.services"
               :key="index"
-              class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-3 space-y-3"
+              class="relative bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-3 space-y-3"
             >
-              <div class="flex items-start gap-2">
-                <div class="flex-1">
-                  <BaseSelect
-                    :id="`subscription-service-type-${index}`"
-                    label="Service Type"
-                    placeholder="Select a service type"
-                    v-model="service.service_type"
-                    :options="serviceTypeOptions"
-                    required
-                  />
-                  <p v-if="serviceErrors(index, 'service_type')" class="text-red-500 text-sm mt-1">
-                    {{ serviceErrors(index, "service_type").join(", ") }}
-                  </p>
-                </div>
-                <button
-                  v-if="form.services.length > 1"
-                  type="button"
-                  @click="removeService(index)"
-                  title="Remove service"
-                  class="w-9 h-9 mt-6 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-red-400 hover:bg-red-50 group/delete transition-colors"
-                >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-                </button>
+              <button
+                v-if="form.services.length > 1"
+                type="button"
+                @click="removeService(index)"
+                title="Remove service"
+                class="absolute top-2 right-2 w-6 h-6 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[6px] bg-white hover:border-red-400 hover:bg-red-50 group/delete transition-colors"
+              >
+                <Trash2 class="w-3 h-3 text-gray-500 group-hover/delete:text-red-600" />
+              </button>
+
+              <div class="pr-8">
+                <BaseSelect
+                  :id="`subscription-service-type-${index}`"
+                  label="Service Type"
+                  placeholder="Select a service type"
+                  v-model="service.service_type"
+                  :options="serviceTypeOptions"
+                  required
+                />
+                <p v-if="serviceErrors(index, 'service_type')" class="text-red-500 text-sm mt-1">
+                  {{ serviceErrors(index, "service_type").join(", ") }}
+                </p>
               </div>
 
               <div v-if="service.service_type === 'saas_subscription'">
@@ -289,6 +348,52 @@ const submit = () => {
                   {{ serviceErrors(index, "amount").join(", ") }}
                 </p>
               </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div v-if="form.services.length > 1">
+                  <label :for="`subscription-service-ppn-${index}`" class="block mb-2 text-gray-700 text-brand-light font-jakarta text-xs">
+                    VAT / PPN (%)
+                  </label>
+                  <input
+                    :id="`subscription-service-ppn-${index}`"
+                    v-model="service.ppn_percentage"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    placeholder="0"
+                    class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm"
+                  />
+                  <p v-if="serviceErrors(index, 'ppn_percentage')" class="text-red-500 text-sm mt-1">
+                    {{ serviceErrors(index, "ppn_percentage").join(", ") }}
+                  </p>
+                </div>
+                <div>
+                  <label :for="`subscription-service-icann-${index}`" class="block mb-2 text-gray-700 text-brand-light font-jakarta text-xs">
+                    ICANN Fee (Rp)
+                  </label>
+                  <input
+                    :id="`subscription-service-icann-${index}`"
+                    v-model="service.icann_fee"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm"
+                  />
+                  <p v-if="serviceErrors(index, 'icann_fee')" class="text-red-500 text-sm mt-1">
+                    {{ serviceErrors(index, "icann_fee").join(", ") }}
+                  </p>
+                </div>
+              </div>
+
+              <p v-if="Number(service.amount) > 0" class="text-xs text-brand-light">
+                Rp {{ (Number(service.amount) || 0).toLocaleString("id-ID") }}
+                <template v-if="Number(service.ppn_percentage) > 0"> + VAT {{ service.ppn_percentage }}%</template>
+                <template v-if="Number(service.icann_fee) > 0"> + ICANN Fee Rp {{ Number(service.icann_fee).toLocaleString("id-ID") }}</template>
+                <template v-if="Number(service.ppn_percentage) > 0 || Number(service.icann_fee) > 0">
+                  = <span class="font-semibold text-brand-dark">Rp {{ serviceTotal(service).toLocaleString("id-ID") }}</span>
+                </template>
+              </p>
             </div>
           </div>
         </div>
@@ -390,6 +495,7 @@ const submit = () => {
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
               <BaseInput
+                v-if="!isMultiService"
                 id="subscription-ppn"
                 label="VAT / PPN (%)"
                 type="number"
@@ -398,6 +504,16 @@ const submit = () => {
                 step="0.01"
                 v-model.number="form.ppn_percentage"
               />
+              <template v-else>
+                <label class="block text-brand-dark text-sm font-semibold mb-1">Total VAT / PPN (%)</label>
+                <input
+                  :value="`${totalPpnPercentage}%`"
+                  type="text"
+                  readonly
+                  class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm bg-gray-50"
+                />
+                <p class="text-xs text-brand-light mt-1">Blended from each service's own VAT / PPN (%) above.</p>
+              </template>
             </div>
             <div>
               <BaseInput
@@ -468,9 +584,18 @@ const submit = () => {
           </div>
 
           <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
-            <div class="flex justify-between"><span>Amount</span><span>Rp {{ totalAmount.toLocaleString("id-ID") }}</span></div>
-            <div class="flex justify-between"><span>VAT ({{ form.ppn_percentage || 0 }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
+            <template v-if="isMultiService">
+              <!-- Each service is taxed on its own amount at its own rate
+                   (see the per-row total above) -- Subtotal here is the
+                   sum of those, not amount and VAT summed separately. -->
+              <div class="flex justify-between"><span>Subtotal (services incl. VAT)</span><span>Rp {{ servicesSubtotal.toLocaleString("id-ID") }}</span></div>
+            </template>
+            <template v-else>
+              <div class="flex justify-between"><span>Amount</span><span>Rp {{ totalAmount.toLocaleString("id-ID") }}</span></div>
+              <div class="flex justify-between"><span>VAT ({{ totalPpnPercentage }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
+            </template>
             <div class="flex justify-between"><span>Admin Fee</span><span>Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</span></div>
+            <div v-if="icannFeeTotal > 0" class="flex justify-between"><span>ICANN Fee</span><span>Rp {{ icannFeeTotal.toLocaleString("id-ID") }}</span></div>
             <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total per Invoice</span><span>Rp {{ invoiceTotal.toLocaleString("id-ID") }}</span></div>
           </div>
           </div>

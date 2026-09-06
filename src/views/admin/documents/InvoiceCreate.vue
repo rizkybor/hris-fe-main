@@ -45,6 +45,7 @@ onMounted(async () => {
       form.value.items = invoice.items?.length ? invoice.items : form.value.items;
       form.value.ppn_percentage = invoice.ppn_percentage || 0;
       form.value.admin_fee = invoice.admin_fee || 0;
+      form.value.icann_fee = invoice.icann_fee || 0;
       form.value.bank_name = invoice.bank_name || "";
       form.value.bank_account = invoice.bank_account || "";
       form.value.terms = invoice.terms || "";
@@ -81,6 +82,7 @@ const form = ref({
   items: [{ description: "", quantity: "", rate: "", total: 0 }],
   ppn_percentage: 0,
   admin_fee: 0,
+  icann_fee: 0,
   bank_name: "",
   bank_account: "",
   terms: "Payment is due within 14 days of the invoice date.\nServices may be suspended if payment is not received.\nPayments already made are non-refundable.",
@@ -101,7 +103,9 @@ const handleBankNameChange = () => {
 
 const subtotal = computed(() => form.value.items.reduce((sum, item) => sum + (Number(item.total) || 0), 0));
 const ppnAmount = computed(() => Math.round(subtotal.value * ((Number(form.value.ppn_percentage) || 0) / 100)));
-const total = computed(() => subtotal.value + ppnAmount.value + (Number(form.value.admin_fee) || 0));
+const total = computed(
+  () => subtotal.value + ppnAmount.value + (Number(form.value.admin_fee) || 0) + (Number(form.value.icann_fee) || 0)
+);
 const pph23EstimatedAmount = computed(() => Math.round((total.value * (Number(form.value.pph23_percent) || 0)) / 100));
 
 const toggleApplyPph23 = () => {
@@ -141,6 +145,7 @@ const handleSubmit = async () => {
         items: form.value.items,
         ppn_percentage: form.value.ppn_percentage,
         admin_fee: form.value.admin_fee,
+        icann_fee: form.value.icann_fee,
         bank_name: form.value.bank_name,
         bank_account: form.value.bank_account,
         terms: form.value.terms,
@@ -324,6 +329,11 @@ const handleSubmit = async () => {
             <input v-model.number="form.admin_fee" type="number" min="0" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
           <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">ICANN Fee (Rp) (optional)</label>
+            <input v-model.number="form.icann_fee" type="number" min="0" placeholder="0" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <p class="text-xs text-gray-400 mt-1">Pass-through registrar fee, e.g. for a domain -- not part of VAT.</p>
+          </div>
+          <div>
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Bank Name</label>
             <div class="relative w-full">
               <select v-model="form.bank_name" @change="handleBankNameChange" class="select-soft">
@@ -379,6 +389,7 @@ const handleSubmit = async () => {
           <div class="flex justify-between"><span>Subtotal</span><span>Rp {{ subtotal.toLocaleString("id-ID") }}</span></div>
           <div class="flex justify-between"><span>VAT ({{ form.ppn_percentage || 0 }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
           <div class="flex justify-between"><span>Admin Fee</span><span>Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</span></div>
+          <div v-if="Number(form.icann_fee) > 0" class="flex justify-between"><span>ICANN Fee</span><span>Rp {{ Number(form.icann_fee).toLocaleString("id-ID") }}</span></div>
           <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total</span><span>Rp {{ total.toLocaleString("id-ID") }}</span></div>
         </div>
       </div>
