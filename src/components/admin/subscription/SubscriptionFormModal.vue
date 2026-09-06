@@ -330,21 +330,22 @@ const submit = () => {
                 </p>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-3">
-                <div>
-                  <BaseInput
-                    :id="`subscription-service-amount-${index}`"
-                    label="Amount (Rp)"
-                    type="number"
-                    min="0"
-                    placeholder="500000"
-                    v-model="service.amount"
-                    required
-                  />
-                  <p v-if="serviceErrors(index, 'amount')" class="text-red-500 text-sm mt-1">
-                    {{ serviceErrors(index, "amount").join(", ") }}
-                  </p>
-                </div>
+              <div>
+                <BaseInput
+                  :id="`subscription-service-amount-${index}`"
+                  label="Amount (Rp)"
+                  type="number"
+                  min="0"
+                  placeholder="500000"
+                  v-model="service.amount"
+                  required
+                />
+                <p v-if="serviceErrors(index, 'amount')" class="text-red-500 text-sm mt-1">
+                  {{ serviceErrors(index, "amount").join(", ") }}
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div v-if="form.services.length > 1">
                   <label :for="`subscription-service-ppn-${index}`" class="block mb-2 text-gray-700 font-semibold font-jakarta text-[14px]">
                     VAT / PPN (%)
@@ -363,24 +364,23 @@ const submit = () => {
                     {{ serviceErrors(index, "ppn_percentage").join(", ") }}
                   </p>
                 </div>
-              </div>
-
-              <div class="sm:w-1/2 sm:pr-1.5">
-                <label :for="`subscription-service-icann-${index}`" class="block mb-2 text-gray-700 font-semibold font-jakarta text-[14px]">
-                  ICANN Fee (Rp) (optional)
-                </label>
-                <input
-                  :id="`subscription-service-icann-${index}`"
-                  v-model="service.icann_fee"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm"
-                />
-                <p class="text-xs text-brand-light mt-1">Pass-through registrar fee (e.g. domain) -- not taxed.</p>
-                <p v-if="serviceErrors(index, 'icann_fee')" class="text-red-500 text-sm mt-1">
-                  {{ serviceErrors(index, "icann_fee").join(", ") }}
-                </p>
+                <div>
+                  <label :for="`subscription-service-icann-${index}`" class="block mb-2 text-gray-700 font-semibold font-jakarta text-[14px]">
+                    ICANN Fee (Rp) (optional)
+                  </label>
+                  <input
+                    :id="`subscription-service-icann-${index}`"
+                    v-model="service.icann_fee"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm"
+                  />
+                  <p class="text-xs text-brand-light mt-1">Pass-through registrar fee (e.g. domain) -- not taxed.</p>
+                  <p v-if="serviceErrors(index, 'icann_fee')" class="text-red-500 text-sm mt-1">
+                    {{ serviceErrors(index, "icann_fee").join(", ") }}
+                  </p>
+                </div>
               </div>
 
               <p v-if="Number(service.amount) > 0" class="text-xs text-brand-light">
