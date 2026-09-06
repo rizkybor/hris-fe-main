@@ -393,10 +393,11 @@ onMounted(async () => {
     </div>
 
     <div v-else class="space-y-3">
-      <div v-for="asset in assets" :key="asset.id" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+      <div v-for="(asset, index) in assets" :key="asset.id" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-gray-400 text-xs font-semibold shrink-0">{{ index + 1 }}.</span>
               <h4 class="text-brand-dark font-bold">{{ asset.name }}</h4>
               <span class="text-xs text-gray-400">{{ asset.asset_code }}</span>
               <span :class="['px-2 py-0.5 rounded-full text-xs font-semibold', statusLabels[asset.status]?.class]">

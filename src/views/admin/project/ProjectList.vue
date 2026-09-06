@@ -112,7 +112,7 @@ const handleDelete = async (project) => {
       <RealizedChart compact />
     </div>
 
-    <Alert type="success" :title="success" :show="success" />
+    <Alert type="success" :title="success" :show="success" @close="projectStore.clearMessages()" />
 
     <!-- Projects Grid Section -->
     <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">

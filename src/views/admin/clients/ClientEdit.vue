@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Briefcase, Save, ArrowLeft, User, Phone, Mail, MapPin, Tag, Layers, FileText, Building2, ScrollText } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
@@ -58,7 +58,19 @@ const loadClient = async () => {
   }
 };
 
-onMounted(loadClient);
+onMounted(() => {
+  loadClient();
+  if (clientsStore.clients.length === 0) clientsStore.fetchAllClient();
+});
+
+// Suggests values already used by other clients (via a <datalist>, so the
+// browser's native "pick one or just keep typing" behavior handles the
+// "recommend but allow a new value" requirement for free).
+const uniqueValues = (key) =>
+  [...new Set(clientsStore.clients.map((c) => c[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+const clientTypeOptions = computed(() => uniqueValues("type"));
+const clientFieldOptions = computed(() => uniqueValues("field"));
 
 const submit = async () => {
   error.value = "";
@@ -171,8 +183,13 @@ const submit = async () => {
               <input
                 v-model="form.type"
                 type="text"
+                list="client-type-options"
+                autocomplete="off"
                 class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
               />
+              <datalist id="client-type-options">
+                <option v-for="opt in clientTypeOptions" :key="opt" :value="opt" />
+              </datalist>
             </div>
           </div>
 
@@ -185,8 +202,13 @@ const submit = async () => {
               <input
                 v-model="form.field"
                 type="text"
+                list="client-field-options"
+                autocomplete="off"
                 class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
               />
+              <datalist id="client-field-options">
+                <option v-for="opt in clientFieldOptions" :key="opt" :value="opt" />
+              </datalist>
             </div>
           </div>
         </div>

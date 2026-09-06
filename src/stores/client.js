@@ -59,6 +59,9 @@ export const useClientStore = defineStore("clients", {
           params: {
             row_per_page: params.per_page || 10,
             search: params.search || "",
+            page: params.page || 1,
+            type: params.type || undefined,
+            field: params.field || undefined,
           },
         });
         this.clientsData.items = response.data.data.data;
@@ -522,6 +525,15 @@ export const useClientStore = defineStore("clients", {
       } finally {
         this.loading = false;
       }
+    },
+
+    // Success/error persist in this store across route changes (Pinia
+    // stores are singletons) -- without this, a stale message set by a
+    // create/update/delete resurfaces every time the list remounts, e.g.
+    // navigating away and back, since it's never otherwise cleared.
+    clearMessages() {
+      this.success = null;
+      this.error = null;
     },
   },
 });

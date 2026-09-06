@@ -249,8 +249,8 @@ const handleGenerateInvoice = async (subscription) => {
       </div>
     </div>
 
-    <Alert type="success" :title="success" :show="!!success" />
-    <Alert type="error" :title="typeof error === 'string' ? error : ''" :show="!!error && typeof error === 'string'" />
+    <Alert type="success" :title="success" :show="!!success" @close="store.clearMessages()" />
+    <Alert type="error" :title="typeof error === 'string' ? error : ''" :show="!!error && typeof error === 'string'" @close="store.clearMessages()" />
 
     <!-- Loading -->
     <div v-if="loading" class="space-y-3">

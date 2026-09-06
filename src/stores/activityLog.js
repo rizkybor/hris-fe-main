@@ -60,5 +60,33 @@ export const useActivityLogStore = defineStore("activityLog", {
                 this.loadingStatistics = false;
             }
         },
+
+        // Hard delete (Activity has no soft-delete column) -- gated
+        // server-side to Superadmin/Manager only.
+        async deleteRow(id) {
+            this.error = null;
+            try {
+                await axiosInstance.post("/history/delete-row", { id });
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
+
+        // Log-retention "purge old entries" action -- returns the count
+        // of entries deleted.
+        async deleteByRange(startDate, endDate) {
+            this.error = null;
+            try {
+                const { data } = await axiosInstance.post("/history/delete-range", {
+                    start_date: startDate,
+                    end_date: endDate,
+                });
+                return data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
     },
 });

@@ -134,7 +134,7 @@ const handlePerPageChange = (perPage) => {
 
  
 
-  <Alert type="success" :title="success" :show="success" />
+  <Alert type="success" :title="success" :show="success" @close="employeeStore.clearMessages()" />
 
   <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-5 p-4">
     <!-- Section Cards -->

@@ -12,14 +12,26 @@ import {
   Activity,
   CalendarDays,
   Tag,
+  Trash2,
+  CalendarRange,
+  X,
 } from "lucide-vue-next";
 import { useActivityLogStore } from "@/stores/activityLog";
+import { useAlertModalStore } from "@/stores/alertModal";
+import { hasAnyRole } from "@/helpers/permissionHelper";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 
 const store = useActivityLogStore();
+const alertModal = useAlertModalStore();
 const { activities, categories, statistics, meta, loading, loadingStatistics } =
   storeToRefs(store);
+
+// Deleting a log entry is a permanent hard delete (no soft-delete/undo),
+// so this is gated by role -- Superadmin/Manager only -- matching the
+// backend's RoleMiddleware check on the same two endpoints.
+const canDeleteHistory = computed(() => hasAnyRole(["superadmin", "manager"]));
+const deletingRowId = ref(null);
 
 const searchQuery = ref("");
 const categoryFilter = ref("");
@@ -73,6 +85,61 @@ const fetchData = async (page = 1) => {
 };
 
 const handlePageChange = (page) => fetchData(page);
+
+const handleDeleteRow = async (activity) => {
+  if (!(await alertModal.confirm("Delete this activity log entry? This is a permanent hard delete and cannot be undone.", { type: "danger", confirmText: "Delete" }))) return;
+
+  deletingRowId.value = activity.id;
+  try {
+    await store.deleteRow(activity.id);
+    await fetchData(meta.value.current_page);
+  } catch (error) {
+    await alertModal.alert(error?.response?.data?.message || "Failed to delete activity log entry.", { type: "danger" });
+  } finally {
+    deletingRowId.value = null;
+  }
+};
+
+// Delete-by-range modal
+const showDeleteRangeModal = ref(false);
+const deleteRangeStart = ref("");
+const deleteRangeEnd = ref("");
+const deletingRange = ref(false);
+
+const openDeleteRangeModal = () => {
+  deleteRangeStart.value = "";
+  deleteRangeEnd.value = "";
+  showDeleteRangeModal.value = true;
+};
+
+const closeDeleteRangeModal = () => {
+  showDeleteRangeModal.value = false;
+};
+
+const handleDeleteRange = async () => {
+  if (!deleteRangeStart.value || !deleteRangeEnd.value) return;
+
+  if (
+    !(await alertModal.confirm(
+      `Delete every activity log entry between ${deleteRangeStart.value} and ${deleteRangeEnd.value}? This is a permanent hard delete and cannot be undone.`,
+      { type: "danger", confirmText: "Delete Range" }
+    ))
+  )
+    return;
+
+  deletingRange.value = true;
+  try {
+    const result = await store.deleteByRange(deleteRangeStart.value, deleteRangeEnd.value);
+    showDeleteRangeModal.value = false;
+    await store.fetchStatistics();
+    await fetchData(1);
+    await alertModal.alert(`${result?.deleted ?? 0} activity log entr${result?.deleted === 1 ? "y" : "ies"} deleted.`, { type: "success" });
+  } catch (error) {
+    await alertModal.alert(error?.response?.data?.message || "Failed to delete entries in this range.", { type: "danger" });
+  } finally {
+    deletingRange.value = false;
+  }
+};
 
 const toggleExpand = (id) => {
   expandedId.value = expandedId.value === id ? null : id;
@@ -191,7 +258,17 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
     <!-- Filters + List -->
     <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-        <h3 class="text-brand-dark text-base font-bold">All Activity</h3>
+        <div class="flex items-center gap-3">
+          <h3 class="text-brand-dark text-base font-bold">All Activity</h3>
+          <button
+            v-if="canDeleteHistory"
+            @click="openDeleteRangeModal"
+            class="rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-all duration-300 px-3 py-2 flex items-center gap-1.5"
+          >
+            <CalendarRange class="w-3.5 h-3.5" />
+            <span class="text-xs font-semibold">Delete by Date Range</span>
+          </button>
+        </div>
 
         <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 flex-wrap">
           <div class="relative w-full md:w-56">
@@ -299,6 +376,15 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
                 <ChevronUp v-if="expandedId === activity.id" class="w-4 h-4 text-gray-600" />
                 <ChevronDown v-else class="w-4 h-4 text-gray-600" />
               </button>
+              <button
+                v-if="canDeleteHistory"
+                @click="handleDeleteRow(activity)"
+                :disabled="deletingRowId === activity.id"
+                title="Delete"
+                class="w-8 h-8 rounded-lg border border-[#DCDEDD] flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete transition-all shrink-0 disabled:opacity-50"
+              >
+                <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+              </button>
             </div>
           </div>
 
@@ -344,6 +430,44 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
             class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Next
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete by Date Range Modal -->
+    <div v-if="showDeleteRangeModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeDeleteRangeModal">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
+          <h3 class="text-brand-dark text-lg font-bold">Delete by Date Range</h3>
+          <button @click="closeDeleteRangeModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+        <div class="p-5 space-y-4">
+          <p class="text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+            This permanently deletes every activity log entry created in this range. There is no soft-delete/undo for log entries.
+          </p>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Start Date</label>
+            <input v-model="deleteRangeStart" type="date" class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">End Date</label>
+            <input v-model="deleteRangeEnd" type="date" class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+          </div>
+        </div>
+        <div class="p-5 border-t border-[#DCDEDD] flex justify-end gap-3">
+          <button type="button" @click="closeDeleteRangeModal" class="px-4 py-2.5 border border-[#DCDEDD] rounded-[10px] text-sm font-semibold hover:border-[#0C51D9] transition-colors">
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="handleDeleteRange"
+            :disabled="deletingRange || !deleteRangeStart || !deleteRangeEnd"
+            class="rounded-[8px] border border-red-600 bg-red-600 hover:brightness-110 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {{ deletingRange ? "Deleting..." : "Delete Range" }}
           </button>
         </div>
       </div>

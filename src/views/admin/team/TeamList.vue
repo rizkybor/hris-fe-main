@@ -74,7 +74,7 @@ const handlePerPageChange = (perPage) => {
   <div class="px-4 py-4">
   <Statistic />
 
-  <Alert type="success" :title="success" :show="success" />
+  <Alert type="success" :title="success" :show="success" @close="teamStore.clearMessages()" />
 
   <!-- Team List Section -->
   <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5 sm:p-4">
