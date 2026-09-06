@@ -35,7 +35,14 @@ const STATUS_OPTIONS = [
 const clientOptions = computed(() => props.clients.map((c) => ({ value: c.id, label: c.name })));
 const projectOptions = computed(() => props.projects.map((p) => ({ value: p.id, label: p.name })));
 
-const emptyService = () => ({ service_type: "", product_name: "", amount: "", ppn_percentage: "", notes: "" });
+const emptyService = () => ({
+  service_type: "",
+  product_name: "",
+  amount: "",
+  ppn_percentage: "",
+  icann_fee: "",
+  notes: "",
+});
 
 const emptyForm = () => ({
   name: "",
@@ -120,19 +127,28 @@ const totalPpnPercentage = computed(() => {
   return totalAmount.value > 0 ? Math.round((ppnAmount.value / totalAmount.value) * 10000) / 100 : 0;
 });
 
-// One service's own amount + its own VAT/PPN, shown inline on its row so
-// it's clear each service is taxed on its own amount rather than the
-// whole subscription.
+// One service's own amount + its own VAT/PPN + its own ICANN fee, shown
+// inline on its row so it's clear each service is taxed (and surcharged)
+// on its own amount rather than the whole subscription.
 const serviceTotal = (service) =>
-  Math.round((Number(service.amount) || 0) * (1 + (Number(service.ppn_percentage) || 0) / 100));
+  Math.round((Number(service.amount) || 0) * (1 + (Number(service.ppn_percentage) || 0) / 100)) +
+  (Number(service.icann_fee) || 0);
 
 // With several services, "Subtotal" is the sum of each service's own
-// amount + its own VAT/PPN (i.e. sum of serviceTotal() above) rather than
-// summing amounts and VAT separately -- same total, presented the way a
-// multi-service invoice is actually itemized.
+// amount + its own VAT/PPN (i.e. sum of serviceTotal() above minus ICANN
+// fees, which are shown as their own line) rather than summing amounts
+// and VAT separately -- same total, presented the way a multi-service
+// invoice is actually itemized.
 const servicesSubtotal = computed(() => totalAmount.value + ppnAmount.value);
 
-const invoiceTotal = computed(() => totalAmount.value + ppnAmount.value + (Number(form.admin_fee) || 0));
+// Optional pass-through registrar fee (e.g. ICANN's fee on a domain) --
+// not taxed, added on top same as Admin Fee, available regardless of how
+// many services there are since even a single domain service can have one.
+const icannFeeTotal = computed(() => form.services.reduce((sum, s) => sum + (Number(s.icann_fee) || 0), 0));
+
+const invoiceTotal = computed(
+  () => totalAmount.value + ppnAmount.value + (Number(form.admin_fee) || 0) + icannFeeTotal.value
+);
 const pph23EstimatedAmount = computed(() => Math.round((invoiceTotal.value * (Number(form.pph23_percent) || 0)) / 100));
 
 // Maintenance is the only service type that's ever tied to a Project --
@@ -162,6 +178,7 @@ watch(
                 product_name: s.product_name ?? "",
                 amount: s.amount ?? "",
                 ppn_percentage: s.ppn_percentage ?? "",
+                icann_fee: s.icann_fee ?? "",
                 notes: s.notes ?? "",
               }))
             : [emptyService()],
@@ -198,6 +215,7 @@ const submit = () => {
     const service = { ...s };
     if (!service.product_name) delete service.product_name;
     if (service.ppn_percentage === "" || service.ppn_percentage === null) delete service.ppn_percentage;
+    if (service.icann_fee === "" || service.icann_fee === null) delete service.icann_fee;
     if (!service.notes) delete service.notes;
     return service;
   });
@@ -347,11 +365,30 @@ const submit = () => {
                 </div>
               </div>
 
-              <p v-if="form.services.length > 1 && Number(service.amount) > 0" class="text-xs text-brand-light">
+              <div class="sm:w-1/2 sm:pr-1.5">
+                <label :for="`subscription-service-icann-${index}`" class="block mb-2 text-gray-700 font-semibold font-jakarta text-[14px]">
+                  ICANN Fee (Rp) (optional)
+                </label>
+                <input
+                  :id="`subscription-service-icann-${index}`"
+                  v-model="service.icann_fee"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm"
+                />
+                <p class="text-xs text-brand-light mt-1">Pass-through registrar fee (e.g. domain) -- not taxed.</p>
+                <p v-if="serviceErrors(index, 'icann_fee')" class="text-red-500 text-sm mt-1">
+                  {{ serviceErrors(index, "icann_fee").join(", ") }}
+                </p>
+              </div>
+
+              <p v-if="Number(service.amount) > 0" class="text-xs text-brand-light">
                 Rp {{ (Number(service.amount) || 0).toLocaleString("id-ID") }}
-                <template v-if="Number(service.ppn_percentage) > 0">
-                  + VAT {{ service.ppn_percentage }}% =
-                  <span class="font-semibold text-brand-dark">Rp {{ serviceTotal(service).toLocaleString("id-ID") }}</span>
+                <template v-if="Number(service.ppn_percentage) > 0"> + VAT {{ service.ppn_percentage }}%</template>
+                <template v-if="Number(service.icann_fee) > 0"> + ICANN Fee Rp {{ Number(service.icann_fee).toLocaleString("id-ID") }}</template>
+                <template v-if="Number(service.ppn_percentage) > 0 || Number(service.icann_fee) > 0">
+                  = <span class="font-semibold text-brand-dark">Rp {{ serviceTotal(service).toLocaleString("id-ID") }}</span>
                 </template>
               </p>
             </div>
@@ -555,6 +592,7 @@ const submit = () => {
               <div class="flex justify-between"><span>VAT ({{ totalPpnPercentage }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
             </template>
             <div class="flex justify-between"><span>Admin Fee</span><span>Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</span></div>
+            <div v-if="icannFeeTotal > 0" class="flex justify-between"><span>ICANN Fee</span><span>Rp {{ icannFeeTotal.toLocaleString("id-ID") }}</span></div>
             <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total per Invoice</span><span>Rp {{ invoiceTotal.toLocaleString("id-ID") }}</span></div>
           </div>
           </div>

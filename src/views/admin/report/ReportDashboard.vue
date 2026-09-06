@@ -378,6 +378,12 @@ function subscriptionServicesLabel(services) {
     .replace(/_/g, " ");
 }
 
+// Sum of every bundled service's optional ICANN/registrar fee -- not part
+// of VAT, so it's tallied separately from the VAT/PPN total above.
+function subscriptionIcannFeeTotal(subscription) {
+  return (subscription.services || []).reduce((sum, s) => sum + (Number(s.icann_fee) || 0), 0);
+}
+
 function formatCurrency(value) {
   const number = Number(value ?? 0);
   return new Intl.NumberFormat("id-ID", {
@@ -1359,6 +1365,7 @@ onMounted(() => {
                   <p class="text-brand-dark font-semibold capitalize truncate">{{ (service.service_type || "-").replace(/_/g, " ") }}</p>
                   <p v-if="service.product_name" class="text-gray-400 text-xs truncate">{{ service.product_name }}</p>
                   <p v-if="service.ppn_percentage" class="text-gray-400 text-xs">VAT/PPN {{ service.ppn_percentage }}%</p>
+                  <p v-if="service.icann_fee > 0" class="text-gray-400 text-xs">ICANN Fee {{ formatCurrency(service.icann_fee) }}</p>
                 </div>
                 <p class="text-brand-dark font-semibold shrink-0 ml-3">{{ formatCurrency(service.amount) }}</p>
               </div>
@@ -1373,6 +1380,7 @@ onMounted(() => {
               <span>{{ formatCurrency(Math.round((Number(selectedSubscription.amount) || 0) * ((Number(selectedSubscription.ppn_percentage) || 0) / 100))) }}</span>
             </div>
             <div class="flex justify-between"><span>Admin Fee</span><span>{{ formatCurrency(selectedSubscription.admin_fee) }}</span></div>
+            <div v-if="subscriptionIcannFeeTotal(selectedSubscription) > 0" class="flex justify-between"><span>ICANN Fee</span><span>{{ formatCurrency(subscriptionIcannFeeTotal(selectedSubscription)) }}</span></div>
             <div v-if="selectedSubscription.pph23_type" class="flex justify-between"><span>PPh 23</span><span>{{ selectedSubscription.pph23_percent }}%</span></div>
           </div>
 
