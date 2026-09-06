@@ -352,6 +352,16 @@ const subscriptionStatusLabel = {
   cancelled: "Not Active",
 };
 
+// A subscription can bundle several services -- list them all instead of
+// the single service_type this column used to show.
+function subscriptionServicesLabel(services) {
+  if (!services?.length) return "-";
+  return services
+    .map((s) => (s.product_name ? `${s.service_type} (${s.product_name})` : s.service_type))
+    .join(", ")
+    .replace(/_/g, " ");
+}
+
 function formatCurrency(value) {
   const number = Number(value ?? 0);
   return new Intl.NumberFormat("id-ID", {
@@ -834,7 +844,7 @@ onMounted(() => {
             <template v-else-if="activeTab === 'subscription'">
               <th class="py-3 pr-4 font-semibold">Name</th>
               <th class="py-3 pr-4 font-semibold">Client</th>
-              <th class="py-3 pr-4 font-semibold">Service Type</th>
+              <th class="py-3 pr-4 font-semibold">Services</th>
               <th class="py-3 pr-4 font-semibold">Billing Cycle</th>
               <th class="py-3 pr-4 font-semibold">Amount</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
@@ -1075,7 +1085,7 @@ onMounted(() => {
               <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
               <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name }}</td>
               <td class="py-3 pr-4">{{ row.client?.name ?? "-" }}</td>
-              <td class="py-3 pr-4 capitalize">{{ (row.service_type || "-").replace(/_/g, " ") }}</td>
+              <td class="py-3 pr-4 capitalize">{{ subscriptionServicesLabel(row.services) }}</td>
               <td class="py-3 pr-4 capitalize">{{ row.billing_cycle }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.amount) }}</td>
               <td class="py-3 pr-4">
