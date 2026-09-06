@@ -769,7 +769,7 @@ onMounted(() => {
     <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] px-4 overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead>
-          <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
+          <tr class="text-left text-brand-light border-b border-[#DCDEDD] bg-slate-50">
             <th class="py-3 pr-4 font-semibold">No</th>
             <template v-if="activeTab === 'attendance'">
               <th class="py-3 pr-4 font-semibold">Date</th>
