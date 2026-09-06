@@ -291,31 +291,30 @@ const submit = () => {
             <div
               v-for="(service, index) in form.services"
               :key="index"
-              class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-3 space-y-3"
+              class="relative bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-3 space-y-3"
             >
-              <div class="flex items-start gap-2">
-                <div class="flex-1">
-                  <BaseSelect
-                    :id="`subscription-service-type-${index}`"
-                    label="Service Type"
-                    placeholder="Select a service type"
-                    v-model="service.service_type"
-                    :options="serviceTypeOptions"
-                    required
-                  />
-                  <p v-if="serviceErrors(index, 'service_type')" class="text-red-500 text-sm mt-1">
-                    {{ serviceErrors(index, "service_type").join(", ") }}
-                  </p>
-                </div>
-                <button
-                  v-if="form.services.length > 1"
-                  type="button"
-                  @click="removeService(index)"
-                  title="Remove service"
-                  class="w-9 h-9 mt-6 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-red-400 hover:bg-red-50 group/delete transition-colors"
-                >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-                </button>
+              <button
+                v-if="form.services.length > 1"
+                type="button"
+                @click="removeService(index)"
+                title="Remove service"
+                class="absolute top-2 right-2 w-6 h-6 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[6px] bg-white hover:border-red-400 hover:bg-red-50 group/delete transition-colors"
+              >
+                <Trash2 class="w-3 h-3 text-gray-500 group-hover/delete:text-red-600" />
+              </button>
+
+              <div class="pr-8">
+                <BaseSelect
+                  :id="`subscription-service-type-${index}`"
+                  label="Service Type"
+                  placeholder="Select a service type"
+                  v-model="service.service_type"
+                  :options="serviceTypeOptions"
+                  required
+                />
+                <p v-if="serviceErrors(index, 'service_type')" class="text-red-500 text-sm mt-1">
+                  {{ serviceErrors(index, "service_type").join(", ") }}
+                </p>
               </div>
 
               <div v-if="service.service_type === 'saas_subscription'">
