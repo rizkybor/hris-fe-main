@@ -15,7 +15,7 @@ import { useEmployeeStore } from "@/stores/employee";
 import { useLetterStore } from "@/stores/letter";
 import { usePerformanceReviewStore } from "@/stores/performanceReview";
 import { useResignationStore } from "@/stores/resignation";
-import { can } from "@/helpers/permissionHelper";
+import { can, hasAnyRole } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
 import {
@@ -49,6 +49,8 @@ import {
   DoorOpen,
   ChevronRight,
   ChevronDown,
+  UserX,
+  UserCheck,
 } from "lucide-vue-next";
 import { useScrollFade } from "@/composables/useScrollFade";
 
@@ -240,6 +242,48 @@ const handleDeleteEmployee = async () => {
       router.push({ name: "admin.employees" });
     }
   } catch (error) {}
+};
+
+// Blocking login is separate from Resignation/Termination and from
+// job_information.status (which only affects payroll/reporting) --
+// Superadmin/Manager/Finance/Operational Director only; the elevated-role
+// restriction below is a UI-side hint, the real rule is enforced server-side.
+const canManageAccountStatus = computed(() =>
+  hasAnyRole(["superadmin", "manager", "finance", "operational_director"])
+);
+const targetIsElevated = computed(() =>
+  (employee.value?.user?.roles || []).some((r: string) =>
+    ["manager", "finance", "operational_director"].includes(r)
+  )
+);
+const canToggleThisAccount = computed(
+  () => canManageAccountStatus.value && (!targetIsElevated.value || hasAnyRole(["superadmin"]))
+);
+const togglingAccountStatus = ref(false);
+
+const handleToggleAccountStatus = async () => {
+  const isActive = employee.value?.user?.is_active;
+  const action = isActive ? "deactivate" : "activate";
+  const ok = await alertModal.confirm(
+    isActive
+      ? `Deactivate ${employee.value?.user?.name}'s account? They will be immediately logged out and unable to log in until reactivated.`
+      : `Activate ${employee.value?.user?.name}'s account? They will be able to log in again.`,
+    { type: isActive ? "danger" : "info", confirmText: isActive ? "Deactivate" : "Activate" }
+  );
+  if (!ok) return;
+
+  togglingAccountStatus.value = true;
+  try {
+    const updated = await employeeStore.toggleAccountStatus(route.params.id as string);
+    if (employee.value && updated?.user) {
+      employee.value.user.is_active = updated.user.is_active;
+    }
+    await alertModal.alert(`Account ${action}d successfully.`, { type: "success" });
+  } catch (error: any) {
+    await alertModal.alert(error?.response?.data?.message || `Failed to ${action} account.`, { type: "danger" });
+  } finally {
+    togglingAccountStatus.value = false;
+  }
 };
 
 onMounted(() => {
@@ -962,6 +1006,45 @@ onMounted(() => {
           >
             Selesaikan Offboarding
           </button>
+        </div>
+      </div>
+
+      <!-- Account Access -->
+      <div v-if="canManageAccountStatus" class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
+        <div class="flex flex-col sm:flex-row gap-3.5 justify-between items-start sm:items-center">
+          <div class="flex items-center gap-2.5">
+            <div
+              :class="[
+                'w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0',
+                employee.user?.is_active ? 'bg-green-50' : 'bg-red-50',
+              ]"
+            >
+              <UserCheck v-if="employee.user?.is_active" class="w-5 h-5 text-green-600" />
+              <UserX v-else class="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <h3 class="text-brand-dark text-sm font-bold">Account Login Access</h3>
+              <p class="text-brand-light text-sm">
+                {{ employee.user?.is_active ? "This account can currently log in." : "This account is deactivated and cannot log in." }}
+              </p>
+            </div>
+          </div>
+          <button
+            v-if="canToggleThisAccount"
+            @click="handleToggleAccountStatus"
+            :disabled="togglingAccountStatus"
+            :class="[
+              'w-full sm:w-auto px-3.5 py-1.5 rounded-lg border text-sm font-semibold shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5',
+              employee.user?.is_active
+                ? 'border-red-300 text-red-700 hover:bg-red-50'
+                : 'border-green-300 text-green-700 hover:bg-green-50',
+            ]"
+          >
+            <UserX v-if="employee.user?.is_active" class="w-4 h-4" />
+            <UserCheck v-else class="w-4 h-4" />
+            {{ togglingAccountStatus ? "Processing..." : employee.user?.is_active ? "Deactivate Account" : "Activate Account" }}
+          </button>
+          <p v-else class="text-xs text-brand-light">Only Superadmin can change this account's status.</p>
         </div>
       </div>
 
