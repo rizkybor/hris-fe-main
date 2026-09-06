@@ -61,10 +61,10 @@ const formatMonth = (month) => {
               <Calendar class="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h3 class="text-brand-dark text-xl font-bold">
+              <h3 class="text-brand-dark text-base font-bold">
                 {{ payrollType === "thr" ? "Generate THR" : "Generate Payroll" }}
               </h3>
-              <p class="text-brand-light text-sm font-normal">
+              <p class="text-brand-light text-xs font-normal">
                 {{
                   payrollType === "thr"
                     ? "Select the month to generate THR (Tunjangan Hari Raya) for eligible employees"
@@ -164,8 +164,8 @@ const formatMonth = (month) => {
             <Calculator class="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h3 class="text-brand-dark text-xl font-bold">Payroll Summary</h3>
-            <p class="text-brand-light text-sm font-normal">Generation details</p>
+            <h3 class="text-brand-dark text-base font-bold">Payroll Summary</h3>
+            <p class="text-brand-light text-xs font-normal">Generation details</p>
           </div>
         </div>
 
