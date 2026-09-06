@@ -970,7 +970,7 @@ onMounted(() => {
           <button
             v-if="!resignation || resignation.status === 'completed'"
             @click="openResignModal"
-            class="w-full sm:w-auto px-3.5 py-1.5 rounded-lg border border-orange-300 text-orange-700 text-sm font-semibold hover:bg-orange-50 shrink-0"
+            class="w-full sm:w-auto px-3.5 py-1.5 rounded-lg border border-orange-300 text-orange-700 text-xs font-semibold hover:bg-orange-50 shrink-0"
           >
             Start Resignation/Termination Process
           </button>
@@ -1034,7 +1034,7 @@ onMounted(() => {
             @click="handleToggleAccountStatus"
             :disabled="togglingAccountStatus"
             :class="[
-              'w-full sm:w-auto px-3.5 py-1.5 rounded-lg border text-sm font-semibold shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5',
+              'w-full sm:w-auto px-3.5 py-1.5 rounded-lg border text-xs font-semibold shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5',
               employee.user?.is_active
                 ? 'border-red-300 text-red-700 hover:bg-red-50'
                 : 'border-green-300 text-green-700 hover:bg-green-50',
@@ -1078,14 +1078,14 @@ onMounted(() => {
           <div class="flex gap-2.5">
             <button
               @click="backupEmployee"
-              class="bg-white border border-[#DCDEDD] text-brand-dark py-2.5 px-5 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+              class="bg-white border border-[#DCDEDD] text-brand-dark py-2.5 px-5 rounded-[8px] text-xs hover:bg-gray-50 transition-colors flex items-center gap-1.5"
             >
               <Download class="w-4 h-4" />
               Backup Data
             </button>
             <button
               @click="showDeleteModal = true"
-              class="bg-red-600 border border-red-700 text-white py-2.5 px-5 rounded-[8px] font-semibold hover:bg-red-700 transition-colors flex items-center gap-1.5"
+              class="bg-red-600 border border-red-700 text-white py-2.5 px-5 rounded-[8px] text-xs hover:bg-red-700 transition-colors flex items-center gap-1.5"
             >
               <Trash2 class="w-4 h-4" />
               Delete Employee
