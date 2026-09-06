@@ -75,13 +75,13 @@ const formatMonth = (month) => {
           </div>
 
           <div class="mb-4">
-            <label class="block text-brand-dark text-base font-semibold mb-1">Payroll Type *</label>
+            <label class="block text-brand-dark text-base mb-1">Payroll Type <span class="text-red-500">*</span></label>
             <div class="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 @click="payrollType = 'monthly'"
                 :class="[
-                  'px-4 py-3 rounded-[12px] border-2 text-sm font-semibold transition-all duration-300',
+                  'px-4 py-3 rounded-[12px] border-2 text-sm transition-all duration-300',
                   payrollType === 'monthly'
                     ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9]'
                     : 'border-[#DCDEDD] text-brand-dark hover:border-[#0C51D9]',
@@ -105,8 +105,8 @@ const formatMonth = (month) => {
           </div>
 
           <div class="mb-4">
-            <label class="block text-brand-dark text-base font-semibold mb-1"
-              >Salary Month *</label
+            <label class="block text-brand-dark text-base mb-1"
+              >Salary Month <span class="text-red-500">*</span></label
             >
             <div class="relative">
               <div
@@ -173,10 +173,10 @@ const formatMonth = (month) => {
           <div
             class="flex justify-between items-center py-2 bg-blue-50 px-3 rounded-[8px] mb-4"
           >
-            <span class="text-blue-700 text-base font-semibold"
+            <span class="text-blue-700 text-xs"
               >Selected Month:</span
             >
-            <span class="text-blue-700 text-base font-bold">{{
+            <span class="text-blue-700 text-xs font-bold">{{
               formatMonth(form.salary_month)
             }}</span>
           </div>
