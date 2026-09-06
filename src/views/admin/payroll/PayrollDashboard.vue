@@ -416,7 +416,8 @@ const viewDetails = (id) => {
         <div
           v-for="payroll in payrolls"
           :key="payroll.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-3.5 p-3.5 border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+          @click="viewDetails(payroll.id)"
+          class="flex flex-col sm:flex-row sm:items-center gap-3.5 p-3.5 border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 cursor-pointer"
         >
           <div class="flex items-center gap-3.5">
             <div
@@ -475,14 +476,8 @@ const viewDetails = (id) => {
               </div>
             </div>
             <button
-              @click="viewDetails(payroll.id)"
-              class="btn-details shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-[#0C51D9] hover:text-[#0C51D9] transition-all duration-300 py-2.5 px-4 flex items-center justify-center"
-            >
-              <span class="text-brand-dark text-sm font-medium">Details</span>
-            </button>
-            <button
               v-if="canManagePayroll"
-              @click="handleRegenerate(payroll)"
+              @click.stop="handleRegenerate(payroll)"
               title="Regenerate"
               class="shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-yellow-500 hover:text-yellow-600 transition-all duration-300 p-2.5 flex items-center justify-center"
             >
@@ -490,7 +485,7 @@ const viewDetails = (id) => {
             </button>
             <button
               v-if="canManagePayroll"
-              @click="handleDeletePayroll(payroll)"
+              @click.stop="handleDeletePayroll(payroll)"
               title="Delete"
               class="shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-red-500 hover:text-red-600 transition-all duration-300 p-2.5 flex items-center justify-center"
             >
