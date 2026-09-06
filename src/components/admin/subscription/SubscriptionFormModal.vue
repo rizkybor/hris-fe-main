@@ -316,7 +316,7 @@ const submit = () => {
                   </p>
                 </div>
                 <div v-if="form.services.length > 1">
-                  <label :for="`subscription-service-ppn-${index}`" class="block text-brand-dark text-sm font-semibold mb-1">
+                  <label :for="`subscription-service-ppn-${index}`" class="block mb-2 text-gray-700 font-semibold font-jakarta text-[14px]">
                     VAT/PPN % (opt.)
                   </label>
                   <input
