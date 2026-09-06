@@ -19,6 +19,7 @@ import {
   User,
   CalendarHeart,
   CalendarClock,
+  Wallet,
 } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
@@ -115,6 +116,15 @@ const categories = [
         permission: "attendance-setting-edit",
         iconBg: "bg-indigo-50",
         iconColor: "text-indigo-600",
+      },
+      {
+        to: { name: "admin.settings.payroll" },
+        icon: Wallet,
+        title: "Payroll Settings",
+        description: "Control how Payroll is automatically generated",
+        permission: "payroll-setting-edit",
+        iconBg: "bg-green-50",
+        iconColor: "text-green-600",
       },
     ],
   },
