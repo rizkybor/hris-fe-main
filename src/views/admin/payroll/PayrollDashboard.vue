@@ -405,7 +405,7 @@ const viewDetails = (id) => {
             <div class="flex-1 flex flex-col justify-center items-center">
               <div class="text-left">
                 <p class="text-brand-dark text-sm font-bold">
-                  {{ formatRupiahCompact(payroll.total_amount) }}
+                  {{ isTotalAmountVisible ? formatRupiahCompact(payroll.total_amount) : "Rp ••••••" }}
                 </p>
                 <p class="text-brand-light text-xs font-normal">
                   Total payroll

@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { usePayrollStore } from "@/stores/payroll";
+import { useProjectStore } from "@/stores/project";
 import {
   ArrowLeft,
   Users,
@@ -13,6 +14,9 @@ import {
   CheckCircle,
   X,
   ChevronDown,
+  Pencil,
+  Eye,
+  EyeOff,
 } from "lucide-vue-next";
 import { debounce } from "lodash-es";
 import Pagination from "@/components/admin/payroll/Pagination.vue";
@@ -26,6 +30,7 @@ import Avatar from "@/components/common/Avatar.vue";
 const route = useRoute();
 const router = useRouter();
 const payrollStore = usePayrollStore();
+const projectStore = useProjectStore();
 const alertModal = useAlertModalStore();
 
 const payroll = ref(null);
@@ -48,6 +53,33 @@ const departmentFilter = ref("");
 const showMarkAsPaidModal = ref(false);
 const paymentDate = ref(new Date().toISOString().split("T")[0]);
 const markingAsPaid = ref(false);
+
+// Manual per-employee override -- lets Superadmin/HR/Finance correct one
+// employee's payroll when their actual situation doesn't match the
+// automatic generation formula (e.g. a special-case bonus/deduction, or a
+// startup arrangement where they're paid a cut of a project instead of a
+// fixed figure).
+const showEditModal = ref(false);
+const editingEmployee = ref(null);
+const editForm = ref({
+  payment_mode: "manual",
+  final_salary: 0,
+  gross_salary: 0,
+  bpjs_kesehatan_employee: 0,
+  bpjs_jht_employee: 0,
+  bpjs_jp_employee: 0,
+  pph21: 0,
+  total_deduction: 0,
+  source_project_id: "",
+  project_percentage: 0,
+  notes: "",
+});
+const savingEdit = ref(false);
+const loadingProjects = ref(false);
+
+// Hidden by default -- salary figures are sensitive, revealed only on demand.
+const showAmounts = ref(false);
+const maskRupiah = (formatted) => (showAmounts.value ? formatted : "Rp ••••••");
 
 const fetchPayrollSummary = async () => {
   try {
@@ -102,6 +134,7 @@ const fetchPayrollDetails = async (page = 1) => {
     // Map payroll_details to employees format
     employees.value =
       response.data?.map((detail) => ({
+        detail_id: detail.id,
         id: detail.employee?.id,
         name: detail.employee?.user?.name || "N/A",
         employee_id: detail.employee?.code || detail.employee?.id,
@@ -118,12 +151,23 @@ const fetchPayrollDetails = async (page = 1) => {
           parseFloat(detail.original_salary) -
           parseFloat(detail.final_salary) || 0,
         net_salary: parseFloat(detail.final_salary) || 0,
+        gross_salary: parseFloat(detail.gross_salary) || 0,
         bpjs_kesehatan_employee: parseFloat(detail.bpjs_kesehatan_employee) || 0,
         bpjs_jht_employee: parseFloat(detail.bpjs_jht_employee) || 0,
         bpjs_jp_employee: parseFloat(detail.bpjs_jp_employee) || 0,
+        bpjs_kesehatan_company: parseFloat(detail.bpjs_kesehatan_company) || 0,
+        bpjs_jht_company: parseFloat(detail.bpjs_jht_company) || 0,
+        bpjs_jp_company: parseFloat(detail.bpjs_jp_company) || 0,
+        bpjs_jkk_company: parseFloat(detail.bpjs_jkk_company) || 0,
+        bpjs_jkm_company: parseFloat(detail.bpjs_jkm_company) || 0,
         pph21: parseFloat(detail.pph21) || 0,
+        total_deduction: parseFloat(detail.total_deduction) || 0,
         status: payroll.value?.status === "paid" ? "paid" : "pending",
         notes: detail.notes,
+        payment_mode: detail.payment_mode || "manual",
+        source_project_id: detail.source_project_id,
+        project_percentage: detail.project_percentage,
+        source_project: detail.source_project,
         bank_name: detail.employee?.bank_information?.bank_name || "N/A",
         account_number:
           detail.employee?.bank_information?.account_number || "N/A",
@@ -174,6 +218,8 @@ const filteredEmployees = computed(() => employees.value);
 // attendance-based -- see PayrollRepository::generateThrPayroll()), so the
 // Attendance column is swapped for Months of Service instead.
 const isThr = computed(() => payroll.value?.type === "thr");
+
+const canEditPayroll = computed(() => can("payroll-edit") && payroll.value?.status !== "paid");
 
 // Watch for search query changes with debounce
 watch(
@@ -230,6 +276,87 @@ const closeMarkAsPaidModal = () => {
   showMarkAsPaidModal.value = false;
 };
 
+const openEditModal = async (emp) => {
+  editingEmployee.value = emp;
+  editForm.value = {
+    payment_mode: emp.payment_mode || "manual",
+    final_salary: emp.net_salary || 0,
+    gross_salary: emp.gross_salary || 0,
+    bpjs_kesehatan_employee: emp.bpjs_kesehatan_employee || 0,
+    bpjs_jht_employee: emp.bpjs_jht_employee || 0,
+    bpjs_jp_employee: emp.bpjs_jp_employee || 0,
+    pph21: emp.pph21 || 0,
+    total_deduction: emp.total_deduction || 0,
+    source_project_id: emp.source_project_id || "",
+    project_percentage: emp.project_percentage || 0,
+    notes: emp.notes || "",
+  };
+  showEditModal.value = true;
+
+  if (projectStore.projects.length === 0) {
+    loadingProjects.value = true;
+    try {
+      await projectStore.fetchProjects();
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    } finally {
+      loadingProjects.value = false;
+    }
+  }
+};
+
+const closeEditModal = () => {
+  showEditModal.value = false;
+  editingEmployee.value = null;
+};
+
+// Client-side preview only -- the authoritative figure is always
+// recomputed server-side from the project's current budget.
+const projectPercentagePreview = computed(() => {
+  const project = projectStore.projects.find((p) => p.id === editForm.value.source_project_id);
+  if (!project || !editForm.value.project_percentage) return 0;
+  return (parseFloat(project.budget) || 0) * (parseFloat(editForm.value.project_percentage) / 100);
+});
+
+const handleSaveEdit = async () => {
+  if (!editingEmployee.value) return;
+
+  const payload = {
+    notes: editForm.value.notes,
+    payment_mode: editForm.value.payment_mode,
+  };
+
+  if (editForm.value.payment_mode === "project_percentage") {
+    payload.source_project_id = editForm.value.source_project_id;
+    payload.project_percentage = editForm.value.project_percentage;
+  } else {
+    payload.final_salary = editForm.value.final_salary;
+    payload.gross_salary = editForm.value.gross_salary;
+    payload.bpjs_kesehatan_employee = editForm.value.bpjs_kesehatan_employee;
+    payload.bpjs_jht_employee = editForm.value.bpjs_jht_employee;
+    payload.bpjs_jp_employee = editForm.value.bpjs_jp_employee;
+    payload.pph21 = editForm.value.pph21;
+    payload.total_deduction = editForm.value.total_deduction;
+  }
+
+  try {
+    savingEdit.value = true;
+    await payrollStore.updatePayrollDetail(editingEmployee.value.detail_id, payload);
+    await fetchPayrollDetails(pagination.value.current_page);
+    await fetchPayrollStatistics();
+    closeEditModal();
+    await alertModal.alert("Payroll detail updated successfully.", { type: "success" });
+  } catch (error) {
+    console.error("Error updating payroll detail:", error);
+    await alertModal.alert(
+      error?.response?.data?.message || "Failed to update payroll detail.",
+      { type: "danger" }
+    );
+  } finally {
+    savingEdit.value = false;
+  }
+};
+
 const handleMarkAsPaid = async () => {
   try {
     markingAsPaid.value = true;
@@ -256,11 +383,25 @@ const handleMarkAsPaid = async () => {
 <template>
   <div class="space-y-6">
     <!-- Back Button -->
-    <button @click="router.back()"
-      class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-2">
-      <ArrowLeft class="w-4 h-4 text-gray-600" />
-      <span class="text-brand-dark text-base font-semibold">Back</span>
-    </button>
+    <div class="flex items-center justify-between">
+      <button @click="router.back()"
+        class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-2">
+        <ArrowLeft class="w-4 h-4 text-gray-600" />
+        <span class="text-brand-dark text-base font-semibold">Back</span>
+      </button>
+
+      <button
+        type="button"
+        @click="showAmounts = !showAmounts"
+        class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-2"
+      >
+        <Eye v-if="!showAmounts" class="w-4 h-4 text-gray-600" />
+        <EyeOff v-else class="w-4 h-4 text-gray-600" />
+        <span class="text-brand-dark text-sm font-semibold">
+          {{ showAmounts ? "Hide Amounts" : "Show Amounts" }}
+        </span>
+      </button>
+    </div>
 
     <!-- Payroll Summary Cards -->
     <SkeletonStatCards v-if="loading || loadingStatistics" :count="4" />
@@ -289,7 +430,7 @@ const handleMarkAsPaid = async () => {
           <div>
             <p class="text-brand-dark text-sm font-medium">Total Payroll</p>
             <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2">
-              {{ loadingStatistics ? "..." : formatRupiahCompact(payrollStatistics?.total_amount || 0) }}
+              {{ loadingStatistics ? "..." : maskRupiah(formatRupiahCompact(payrollStatistics?.total_amount || 0)) }}
             </p>
             <p class="text-success text-sm font-medium">This period</p>
           </div>
@@ -309,7 +450,7 @@ const handleMarkAsPaid = async () => {
               {{
                 loadingStatistics
                   ? "..."
-                  : formatRupiahCompact(payrollStatistics?.average_salary || 0)
+                  : maskRupiah(formatRupiahCompact(payrollStatistics?.average_salary || 0))
               }}
             </p>
             <p class="text-success text-sm font-medium">Per employee</p>
@@ -394,7 +535,7 @@ const handleMarkAsPaid = async () => {
       </div>
 
       <!-- Employee Table -->
-      <SkeletonTable v-if="loadingDetails" :rows="6" :cols="9" />
+      <SkeletonTable v-if="loadingDetails" :rows="6" :cols="canEditPayroll ? 10 : 9" />
       <div v-else class="overflow-x-auto">
         <table class="min-w-full">
           <thead>
@@ -425,6 +566,9 @@ const handleMarkAsPaid = async () => {
               </th>
               <th class="text-center py-3 px-4 font-semibold text-brand-dark text-sm">
                 Status
+              </th>
+              <th v-if="canEditPayroll" class="text-center py-3 px-4 font-semibold text-brand-dark text-sm">
+                Actions
               </th>
             </tr>
           </thead>
@@ -487,21 +631,31 @@ const handleMarkAsPaid = async () => {
               </td>
               <td class="py-4 px-4 text-right">
                 <span class="text-brand-dark text-sm font-semibold">{{
-                  formatRupiah(emp.basic_salary)
+                  maskRupiah(formatRupiah(emp.basic_salary))
                   }}</span>
               </td>
               <td class="py-4 px-4 text-right">
+                <span v-if="emp.payment_mode === 'project_percentage'" class="text-brand-light text-sm" title="Not applicable -- paid as a percentage of a project's budget, not the attendance-based formula">
+                  N/A
+                </span>
                 <span
+                  v-else
                   class="text-red-600 text-sm font-semibold cursor-help underline decoration-dotted"
-                  :title="deductionBreakdown(emp)"
+                  :title="showAmounts ? deductionBreakdown(emp) : 'Click Show Amounts to see the breakdown'"
                 >{{
-                  formatRupiah(emp.deductions)
+                  maskRupiah(formatRupiah(emp.deductions))
                   }}</span>
               </td>
               <td class="py-4 px-4 text-right">
                 <span class="text-green-600 text-sm font-bold">{{
-                  formatRupiah(emp.net_salary)
+                  maskRupiah(formatRupiah(emp.net_salary))
                   }}</span>
+                <span
+                  v-if="emp.payment_mode === 'project_percentage'"
+                  class="block text-[11px] text-purple-600 font-medium mt-0.5"
+                >
+                  {{ emp.project_percentage }}% of {{ emp.source_project?.name || "project" }}
+                </span>
               </td>
               <td class="py-4 px-4 text-center">
                 <span :class="[
@@ -512,6 +666,15 @@ const handleMarkAsPaid = async () => {
                 ]">
                   {{ emp.status === "paid" ? "Paid" : "Pending" }}
                 </span>
+              </td>
+              <td v-if="canEditPayroll" class="py-4 px-4 text-center">
+                <button
+                  @click="openEditModal(emp)"
+                  title="Edit"
+                  class="w-8 h-8 rounded-full inline-flex items-center justify-center hover:bg-blue-50 transition-colors"
+                >
+                  <Pencil class="w-4 h-4 text-blue-600" />
+                </button>
               </td>
             </tr>
           </tbody>
@@ -590,6 +753,149 @@ const handleMarkAsPaid = async () => {
               </span>
             </button>
             <button @click="closeMarkAsPaidModal" :disabled="markingAsPaid"
+              class="flex-1 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+              <span class="text-brand-dark text-sm font-semibold">Cancel</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Edit Payroll Detail Modal -->
+    <Teleport to="body">
+      <div v-if="showEditModal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+        @click.self="closeEditModal" style="margin: 0; padding: 0">
+        <div class="bg-white rounded-[14px] p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-brand-dark text-xl font-bold">
+              Edit Payroll — {{ editingEmployee?.name }}
+            </h3>
+            <button @click="closeEditModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+
+          <p class="text-brand-light text-sm mb-5">
+            Override this employee's automatically generated figures when their actual
+            situation differs -- e.g. a fixed manual amount, or a cut of a project instead.
+          </p>
+
+          <div class="space-y-4">
+            <!-- Payment Mode -->
+            <div>
+              <label class="block text-brand-dark text-sm font-semibold mb-2">Payment Mode</label>
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  @click="editForm.payment_mode = 'manual'"
+                  :class="[
+                    'px-4 py-2.5 rounded-[10px] border text-sm font-semibold transition-all',
+                    editForm.payment_mode === 'manual'
+                      ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9]'
+                      : 'border-[#DCDEDD] text-brand-light hover:border-[#0C51D9]',
+                  ]"
+                >
+                  Fixed Amount (Rp)
+                </button>
+                <button
+                  type="button"
+                  @click="editForm.payment_mode = 'project_percentage'"
+                  :class="[
+                    'px-4 py-2.5 rounded-[10px] border text-sm font-semibold transition-all',
+                    editForm.payment_mode === 'project_percentage'
+                      ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9]'
+                      : 'border-[#DCDEDD] text-brand-light hover:border-[#0C51D9]',
+                  ]"
+                >
+                  % of a Project
+                </button>
+              </div>
+            </div>
+
+            <!-- Fixed Amount mode -->
+            <template v-if="editForm.payment_mode === 'manual'">
+              <div>
+                <label class="block text-brand-dark text-sm font-semibold mb-2">Final Salary (Take-home)</label>
+                <input type="number" min="0" v-model.number="editForm.final_salary"
+                  class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
+              </div>
+              <div>
+                <label class="block text-brand-dark text-sm font-semibold mb-2">Gross Salary</label>
+                <input type="number" min="0" v-model.number="editForm.gross_salary"
+                  class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-brand-dark text-sm font-semibold mb-2">BPJS Kesehatan</label>
+                  <input type="number" min="0" v-model.number="editForm.bpjs_kesehatan_employee"
+                    class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
+                </div>
+                <div>
+                  <label class="block text-brand-dark text-sm font-semibold mb-2">BPJS JHT</label>
+                  <input type="number" min="0" v-model.number="editForm.bpjs_jht_employee"
+                    class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
+                </div>
+                <div>
+                  <label class="block text-brand-dark text-sm font-semibold mb-2">BPJS JP</label>
+                  <input type="number" min="0" v-model.number="editForm.bpjs_jp_employee"
+                    class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
+                </div>
+                <div>
+                  <label class="block text-brand-dark text-sm font-semibold mb-2">PPh 21</label>
+                  <input type="number" min="0" v-model.number="editForm.pph21"
+                    class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-brand-dark text-sm font-semibold mb-2">Total Deduction</label>
+                <input type="number" min="0" v-model.number="editForm.total_deduction"
+                  class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
+              </div>
+            </template>
+
+            <!-- Percentage of Project mode -->
+            <template v-else>
+              <div>
+                <label class="block text-brand-dark text-sm font-semibold mb-2">Project</label>
+                <select v-model="editForm.source_project_id" class="select-soft w-full">
+                  <option value="" disabled>{{ loadingProjects ? "Loading projects..." : "Select a project" }}</option>
+                  <option v-for="project in projectStore.projects" :key="project.id" :value="project.id">
+                    {{ project.name }} — {{ formatRupiah(project.budget) }}
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-brand-dark text-sm font-semibold mb-2">Percentage (%)</label>
+                <input type="number" min="0" max="100" step="0.1" v-model.number="editForm.project_percentage"
+                  class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
+              </div>
+              <div class="bg-purple-50 border border-purple-100 rounded-[12px] p-3">
+                <p class="text-purple-700 text-sm font-semibold">
+                  Estimated payout: {{ formatRupiah(projectPercentagePreview) }}
+                </p>
+                <p class="text-purple-600 text-xs mt-1">
+                  Recalculated from the project's current budget when you save.
+                </p>
+              </div>
+            </template>
+
+            <div>
+              <label class="block text-brand-dark text-sm font-semibold mb-2">Notes</label>
+              <textarea v-model="editForm.notes" rows="2"
+                class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300"
+                placeholder="Optional reason for this override..."></textarea>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 mt-6">
+            <button @click="handleSaveEdit" :disabled="savingEdit"
+              class="flex-1 btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+              <span class="text-brand-white text-sm font-semibold">
+                {{ savingEdit ? "Saving..." : "Save Changes" }}
+              </span>
+            </button>
+            <button @click="closeEditModal" :disabled="savingEdit"
               class="flex-1 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
               <span class="text-brand-dark text-sm font-semibold">Cancel</span>
             </button>
