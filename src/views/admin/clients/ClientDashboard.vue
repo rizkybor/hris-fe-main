@@ -13,7 +13,7 @@ import { useAlertModalStore } from "@/stores/alertModal";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
 const clientsStore = useClientStore();
-const { clientsData, success, loading } = storeToRefs(clientsStore);
+const { clientsData, clients, success, error, loading } = storeToRefs(clientsStore);
 const { fetchClientPaginated, deleteClient } = clientsStore;
 const alertModal = useAlertModalStore();
 
@@ -24,8 +24,18 @@ const serverOptions = ref({
 
 const filters = ref({
   search: "",
-  status: "",
+  type: "",
+  field: "",
 });
+
+// Options for the Type/Field filters -- drawn from the full (unpaginated)
+// client list, which is already fetched for pickers elsewhere, so every
+// value in use shows up here even if it's not on the current page.
+const uniqueValues = (key) =>
+  [...new Set(clients.value.map((c) => c[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+const clientTypeOptions = computed(() => uniqueValues("type"));
+const clientFieldOptions = computed(() => uniqueValues("field"));
 
 // Fetch data
 const fetchData = async () => {
@@ -35,7 +45,10 @@ const fetchData = async () => {
   });
 };
 
-onMounted(fetchData);
+onMounted(() => {
+  fetchData();
+  if (clients.value.length === 0) clientsStore.fetchAllClient();
+});
 
 // Watch filters with debounce
 watch(
@@ -88,10 +101,10 @@ const handleDelete = async (client) => {
   <Statistics v-if="can('project-statistic')" />
 
   <!-- Success Alert -->
-  <Alert type="success" :title="success" :show="!!success" />
+  <Alert type="success" :title="success" :show="!!success" @close="clientsStore.clearMessages()" />
 
   <!-- Error Alert -->
-  <Alert type="error" :title="error" :show="!!error" />
+  <Alert type="error" :title="error" :show="!!error" @close="clientsStore.clearMessages()" />
 
   <!-- Client Grid Section -->
   <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
@@ -138,13 +151,22 @@ const handleDelete = async (client) => {
         <div class="relative w-full sm:w-auto">
           <select
             class="select-soft"
-            v-model="filters.status"
+            v-model="filters.type"
           >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-            <option value="on-hold">On Hold</option>
-            <option value="overdue">Overdue</option>
+            <option value="">All Types</option>
+            <option v-for="opt in clientTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+          <ChevronDown
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+          />
+        </div>
+        <div class="relative w-full sm:w-auto">
+          <select
+            class="select-soft"
+            v-model="filters.field"
+          >
+            <option value="">All Fields</option>
+            <option v-for="opt in clientFieldOptions" :key="opt" :value="opt">{{ opt }}</option>
           </select>
           <ChevronDown
             class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
@@ -160,7 +182,13 @@ const handleDelete = async (client) => {
 
     <!-- Client List -->
     <div v-else class="space-y-3 mb-4">
-      <CardList v-for="client in clientsList" :key="client.id" :data="client" @delete="handleDelete" />
+      <CardList
+        v-for="(client, index) in clientsList"
+        :key="client.id"
+        :data="client"
+        :number="(clientsMeta.current_page - 1) * clientsMeta.per_page + index + 1"
+        @delete="handleDelete"
+      />
     </div>
 
      <!-- Pagination -->

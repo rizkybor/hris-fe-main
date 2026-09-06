@@ -192,7 +192,7 @@ onMounted(fetchData);
 
     <div v-else class="space-y-3">
       <div
-        v-for="task in staffTasks"
+        v-for="(task, index) in staffTasks"
         :key="task.id"
         @click="openDetailModal(task)"
         class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 cursor-pointer hover:border-[#0C51D9] transition-colors"
@@ -200,6 +200,7 @@ onMounted(fetchData);
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-gray-400 text-xs font-semibold shrink-0">{{ index + 1 }}.</span>
               <h4 class="text-brand-dark font-bold">{{ task.title }}</h4>
               <span
                 class="px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1"
