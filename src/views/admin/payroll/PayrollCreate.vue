@@ -75,7 +75,7 @@ const formatMonth = (month) => {
           </div>
 
           <div class="mb-4">
-            <label class="block text-brand-dark text-base mb-1">Payroll Type <span class="text-red-500">*</span></label>
+            <label class="block text-brand-dark text-sm mb-1">Payroll Type <span class="text-red-500">*</span></label>
             <div class="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -105,7 +105,7 @@ const formatMonth = (month) => {
           </div>
 
           <div class="mb-4">
-            <label class="block text-brand-dark text-base mb-1"
+            <label class="block text-brand-dark text-sm mb-1"
               >Salary Month <span class="text-red-500">*</span></label
             >
             <div class="relative">
