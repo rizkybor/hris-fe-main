@@ -86,6 +86,20 @@ export const usePayrollStore = defineStore("payroll", {
             }
         },
 
+        // Lets the Generate form show a confirm dialog first, saying whether
+        // this period is brand-new or already has data that would be replaced.
+        async checkPeriod(salaryMonth, type) {
+            try {
+                const response = await axiosInstance.get('/payrolls/check-period', {
+                    params: { salary_month: salaryMonth, type },
+                });
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
+
         async generatePayroll(payload) {
             this.loading = true;
 
