@@ -138,6 +138,23 @@ export const useEmployeeStore = defineStore("employee", {
         },
 
 
+        // Blocks/restores the employee's ability to log in -- distinct from
+        // job_information.status, which only affects payroll/reporting.
+        // Superadmin/Manager/Finance/Operational Director only; Manager/
+        // Finance/Operational Director accounts can only be toggled by
+        // Superadmin (enforced server-side).
+        async toggleAccountStatus(id) {
+            this.error = null;
+            try {
+                const response = await axiosInstance.post(`employees/${id}/toggle-account-status`);
+                this.success = response.data.message;
+                return response.data.data;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            }
+        },
+
         async fetchLatestEmployees() {
             this.loadingLatest = true;
 
