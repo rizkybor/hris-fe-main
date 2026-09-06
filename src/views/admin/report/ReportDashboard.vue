@@ -193,6 +193,20 @@ const closeSubscriptionDetail = () => {
   showSubscriptionDetail.value = false;
 };
 
+// PPN invoice detail modal -- same idea: the report row is already the
+// full Invoice record, so no extra request is needed to show it.
+const showInvoiceDetail = ref(false);
+const selectedInvoice = ref(null);
+
+const openInvoiceDetail = (row) => {
+  selectedInvoice.value = row;
+  showInvoiceDetail.value = true;
+};
+
+const closeInvoiceDetail = () => {
+  showInvoiceDetail.value = false;
+};
+
 const handleDownloadPdf = async () => {
   if (!staffRaportDetail.value) return;
   try {
@@ -999,7 +1013,8 @@ onMounted(() => {
             <tr
               v-for="(row, idx) in tableRows"
               :key="row.id ?? idx"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+              @click="openInvoiceDetail(row)"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
             >
               <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
               <td class="py-3 pr-4">{{ formatDate(row.date) }}</td>
@@ -1010,7 +1025,7 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ formatCurrency(row.ppn_amount) }}</td>
               <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
                 <button
-                  @click="handleDeleteRow(row)"
+                  @click.stop="handleDeleteRow(row)"
                   :disabled="deletingRowId === rowIdField(row)"
                   title="Delete"
                   class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
@@ -1387,6 +1402,85 @@ onMounted(() => {
           <div v-if="selectedSubscription.terms">
             <p class="text-brand-dark text-sm font-semibold mb-1">Terms & Conditions</p>
             <p class="text-gray-500 text-xs whitespace-pre-line">{{ selectedSubscription.terms }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PPN Invoice Detail Modal -->
+    <div
+      v-if="showInvoiceDetail && selectedInvoice"
+      class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="closeInvoiceDetail"
+    >
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between sticky top-0 bg-white">
+          <div class="min-w-0">
+            <h3 class="text-brand-dark text-sm sm:text-lg font-bold truncate">{{ selectedInvoice.invoice_number }}</h3>
+            <p class="text-brand-light text-xs mt-0.5">Invoice Detail</p>
+          </div>
+          <button @click="closeInvoiceDetail" class="w-9 h-9 shrink-0 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="text-gray-400 text-xs">Date</p>
+              <p class="text-brand-dark font-semibold">{{ formatDate(selectedInvoice.date) }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Faktur Pajak No.</p>
+              <p class="text-brand-dark font-semibold">{{ selectedInvoice.faktur_pajak_number ?? "-" }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Client</p>
+              <p class="text-brand-dark font-semibold">{{ selectedInvoice.client_name }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">NPWP</p>
+              <p class="text-brand-dark font-semibold">{{ selectedInvoice.client_npwp ?? "-" }}</p>
+            </div>
+          </div>
+
+          <div v-if="selectedInvoice.items?.length">
+            <p class="text-brand-dark text-sm font-bold mb-2">Items</p>
+            <div class="space-y-2">
+              <div
+                v-for="(item, idx) in selectedInvoice.items"
+                :key="idx"
+                class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm"
+              >
+                <span class="min-w-0 truncate pr-3">{{ item.description }}</span>
+                <span class="text-brand-dark font-semibold shrink-0">{{ formatCurrency(item.total) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
+            <div class="flex justify-between"><span>DPP (Subtotal)</span><span>{{ formatCurrency(selectedInvoice.subtotal) }}</span></div>
+            <div class="flex justify-between"><span>PPN ({{ selectedInvoice.ppn_percentage || 0 }}%)</span><span>{{ formatCurrency(selectedInvoice.ppn_amount) }}</span></div>
+            <div v-if="selectedInvoice.admin_fee > 0" class="flex justify-between"><span>Admin Fee</span><span>{{ formatCurrency(selectedInvoice.admin_fee) }}</span></div>
+            <div v-if="selectedInvoice.icann_fee > 0" class="flex justify-between"><span>ICANN Fee</span><span>{{ formatCurrency(selectedInvoice.icann_fee) }}</span></div>
+            <div v-if="selectedInvoice.pph23_type" class="flex justify-between"><span>PPh 23</span><span>{{ selectedInvoice.pph23_percent }}%</span></div>
+            <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total Amount Due</span><span>{{ formatCurrency(selectedInvoice.total) }}</span></div>
+          </div>
+
+          <div v-if="selectedInvoice.bank_name" class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="text-gray-400 text-xs">Bank</p>
+              <p class="text-brand-dark font-semibold">{{ selectedInvoice.bank_name }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Account Number</p>
+              <p class="text-brand-dark font-semibold">{{ selectedInvoice.bank_account ?? "-" }}</p>
+            </div>
+          </div>
+
+          <div v-if="selectedInvoice.terms">
+            <p class="text-brand-dark text-sm font-semibold mb-1">Terms & Conditions</p>
+            <p class="text-gray-500 text-xs whitespace-pre-line">{{ selectedInvoice.terms }}</p>
           </div>
         </div>
       </div>
