@@ -11,10 +11,12 @@ import {
   AlertCircle,
   Gift,
 } from "lucide-vue-next";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const router = useRouter();
 const route = useRoute();
 const payrollStore = usePayrollStore();
+const alertModal = useAlertModalStore();
 const { loading, error } = storeToRefs(payrollStore);
 
 // "?type=thr" lets the dashboard's "Generate THR" shortcut land here
@@ -26,24 +28,55 @@ const form = ref({
   salary_month: new Date().toISOString().slice(0, 7),
 });
 
-const handleSubmit = async () => {
-  try {
-    if (payrollType.value === "thr") {
-      await payrollStore.generateThrPayroll(form.value);
-    } else {
-      await payrollStore.generatePayroll(form.value);
-    }
-    router.push({ name: "admin.payroll.dashboard" });
-  } catch (error) {
-    console.error("Error creating payroll:", error);
-  }
-};
-
 const formatMonth = (month) => {
   if (!month) return "-";
   const [year, monthNum] = month.split("-");
   const date = new Date(year, monthNum - 1);
   return date.toLocaleDateString("id-ID", { year: "numeric", month: "long" });
+};
+
+const handleSubmit = async () => {
+  const label = payrollType.value === "thr" ? "THR" : "Payroll";
+  const period = formatMonth(form.value.salary_month);
+
+  try {
+    const check = await payrollStore.checkPeriod(form.value.salary_month, payrollType.value);
+
+    let regenerate = false;
+
+    if (check.exists) {
+      if (!check.can_regenerate) {
+        await alertModal.alert(
+          `A ${label} for ${period} already exists (${check.employee_count ?? 0} employees, status: ${check.status}). Only Superadmin, Manager, or Finance can regenerate it.`,
+          { type: "warning" }
+        );
+        return;
+      }
+
+      const ok = await alertModal.confirm(
+        `A ${label} for ${period} already exists (${check.employee_count ?? 0} employees, status: ${check.status}). Generating again will REPLACE all its employee details with freshly computed ones. Continue?`,
+        { type: "warning", confirmText: "Regenerate" }
+      );
+      if (!ok) return;
+      regenerate = true;
+    } else {
+      const ok = await alertModal.confirm(
+        `Generate a new ${label} for ${period}? This is a brand-new period with no existing data.`,
+        { type: "info", confirmText: "Generate" }
+      );
+      if (!ok) return;
+    }
+
+    const payload = { ...form.value, regenerate };
+    if (payrollType.value === "thr") {
+      await payrollStore.generateThrPayroll(payload);
+    } else {
+      await payrollStore.generatePayroll(payload);
+    }
+    router.push({ name: "admin.payroll.dashboard" });
+  } catch (error) {
+    console.error("Error creating payroll:", error);
+  }
 };
 </script>
 
