@@ -193,6 +193,35 @@ const closeSubscriptionDetail = () => {
   showSubscriptionDetail.value = false;
 };
 
+// PPN invoice detail modal -- same idea: the report row is already the
+// full Invoice record, so no extra request is needed to show it.
+const showInvoiceDetail = ref(false);
+const selectedInvoice = ref(null);
+
+const openInvoiceDetail = (row) => {
+  selectedInvoice.value = row;
+  showInvoiceDetail.value = true;
+};
+
+const closeInvoiceDetail = () => {
+  showInvoiceDetail.value = false;
+};
+
+// PPh 23 receipt detail modal -- same idea again: the report row is
+// already the full PaymentReceipt record (with its invoice relation
+// loaded), so no extra request is needed to show it.
+const showReceiptDetail = ref(false);
+const selectedReceipt = ref(null);
+
+const openReceiptDetail = (row) => {
+  selectedReceipt.value = row;
+  showReceiptDetail.value = true;
+};
+
+const closeReceiptDetail = () => {
+  showReceiptDetail.value = false;
+};
+
 const handleDownloadPdf = async () => {
   if (!staffRaportDetail.value) return;
   try {
@@ -376,6 +405,12 @@ function subscriptionServicesLabel(services) {
     .map((s) => (s.product_name ? `${s.service_type} (${s.product_name})` : s.service_type))
     .join(", ")
     .replace(/_/g, " ");
+}
+
+// Sum of every bundled service's optional ICANN/registrar fee -- not part
+// of VAT, so it's tallied separately from the VAT/PPN total above.
+function subscriptionIcannFeeTotal(subscription) {
+  return (subscription.services || []).reduce((sum, s) => sum + (Number(s.icann_fee) || 0), 0);
 }
 
 function formatCurrency(value) {
@@ -993,7 +1028,8 @@ onMounted(() => {
             <tr
               v-for="(row, idx) in tableRows"
               :key="row.id ?? idx"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+              @click="openInvoiceDetail(row)"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
             >
               <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
               <td class="py-3 pr-4">{{ formatDate(row.date) }}</td>
@@ -1004,7 +1040,7 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ formatCurrency(row.ppn_amount) }}</td>
               <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
                 <button
-                  @click="handleDeleteRow(row)"
+                  @click.stop="handleDeleteRow(row)"
                   :disabled="deletingRowId === rowIdField(row)"
                   title="Delete"
                   class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
@@ -1045,7 +1081,8 @@ onMounted(() => {
             <tr
               v-for="(row, idx) in tableRows"
               :key="row.id ?? idx"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+              @click="openReceiptDetail(row)"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
             >
               <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
               <td class="py-3 pr-4">{{ formatDate(row.date) }}</td>
@@ -1058,7 +1095,7 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ formatCurrency(row.amount) }}</td>
               <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
                 <button
-                  @click="handleDeleteRow(row)"
+                  @click.stop="handleDeleteRow(row)"
                   :disabled="deletingRowId === rowIdField(row)"
                   title="Delete"
                   class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
@@ -1358,6 +1395,8 @@ onMounted(() => {
                 <div class="min-w-0">
                   <p class="text-brand-dark font-semibold capitalize truncate">{{ (service.service_type || "-").replace(/_/g, " ") }}</p>
                   <p v-if="service.product_name" class="text-gray-400 text-xs truncate">{{ service.product_name }}</p>
+                  <p v-if="service.ppn_percentage" class="text-gray-400 text-xs">VAT/PPN {{ service.ppn_percentage }}%</p>
+                  <p v-if="service.icann_fee > 0" class="text-gray-400 text-xs">ICANN Fee {{ formatCurrency(service.icann_fee) }}</p>
                 </div>
                 <p class="text-brand-dark font-semibold shrink-0 ml-3">{{ formatCurrency(service.amount) }}</p>
               </div>
@@ -1367,14 +1406,157 @@ onMounted(() => {
 
           <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
             <div class="flex justify-between"><span>Amount</span><span>{{ formatCurrency(selectedSubscription.amount) }}</span></div>
-            <div class="flex justify-between"><span>VAT ({{ selectedSubscription.ppn_percentage || 0 }}%)</span><span>{{ formatCurrency(Math.round((Number(selectedSubscription.amount) || 0) * ((Number(selectedSubscription.ppn_percentage) || 0) / 100))) }}</span></div>
+            <div class="flex justify-between">
+              <span>{{ selectedSubscription.services?.length > 1 ? "Total VAT / PPN" : "VAT / PPN" }} ({{ selectedSubscription.ppn_percentage || 0 }}%)</span>
+              <span>{{ formatCurrency(Math.round((Number(selectedSubscription.amount) || 0) * ((Number(selectedSubscription.ppn_percentage) || 0) / 100))) }}</span>
+            </div>
             <div class="flex justify-between"><span>Admin Fee</span><span>{{ formatCurrency(selectedSubscription.admin_fee) }}</span></div>
+            <div v-if="subscriptionIcannFeeTotal(selectedSubscription) > 0" class="flex justify-between"><span>ICANN Fee</span><span>{{ formatCurrency(subscriptionIcannFeeTotal(selectedSubscription)) }}</span></div>
             <div v-if="selectedSubscription.pph23_type" class="flex justify-between"><span>PPh 23</span><span>{{ selectedSubscription.pph23_percent }}%</span></div>
           </div>
 
           <div v-if="selectedSubscription.terms">
             <p class="text-brand-dark text-sm font-semibold mb-1">Terms & Conditions</p>
             <p class="text-gray-500 text-xs whitespace-pre-line">{{ selectedSubscription.terms }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PPN Invoice Detail Modal -->
+    <div
+      v-if="showInvoiceDetail && selectedInvoice"
+      class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="closeInvoiceDetail"
+    >
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between sticky top-0 bg-white">
+          <div class="min-w-0">
+            <h3 class="text-brand-dark text-sm sm:text-lg font-bold truncate">{{ selectedInvoice.invoice_number }}</h3>
+            <p class="text-brand-light text-xs mt-0.5">Invoice Detail</p>
+          </div>
+          <button @click="closeInvoiceDetail" class="w-9 h-9 shrink-0 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="text-gray-400 text-xs">Date</p>
+              <p class="text-brand-dark font-semibold">{{ formatDate(selectedInvoice.date) }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Faktur Pajak No.</p>
+              <p class="text-brand-dark font-semibold">{{ selectedInvoice.faktur_pajak_number ?? "-" }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Client</p>
+              <p class="text-brand-dark font-semibold">{{ selectedInvoice.client_name }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">NPWP</p>
+              <p class="text-brand-dark font-semibold">{{ selectedInvoice.client_npwp ?? "-" }}</p>
+            </div>
+          </div>
+
+          <div v-if="selectedInvoice.items?.length">
+            <p class="text-brand-dark text-sm font-bold mb-2">Items</p>
+            <div class="space-y-2">
+              <div
+                v-for="(item, idx) in selectedInvoice.items"
+                :key="idx"
+                class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm"
+              >
+                <span class="min-w-0 truncate pr-3">{{ item.description }}</span>
+                <span class="text-brand-dark font-semibold shrink-0">{{ formatCurrency(item.total) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
+            <div class="flex justify-between"><span>DPP (Subtotal)</span><span>{{ formatCurrency(selectedInvoice.subtotal) }}</span></div>
+            <div class="flex justify-between"><span>PPN ({{ selectedInvoice.ppn_percentage || 0 }}%)</span><span>{{ formatCurrency(selectedInvoice.ppn_amount) }}</span></div>
+            <div v-if="selectedInvoice.admin_fee > 0" class="flex justify-between"><span>Admin Fee</span><span>{{ formatCurrency(selectedInvoice.admin_fee) }}</span></div>
+            <div v-if="selectedInvoice.icann_fee > 0" class="flex justify-between"><span>ICANN Fee</span><span>{{ formatCurrency(selectedInvoice.icann_fee) }}</span></div>
+            <div v-if="selectedInvoice.pph23_type" class="flex justify-between"><span>PPh 23</span><span>{{ selectedInvoice.pph23_percent }}%</span></div>
+            <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total Amount Due</span><span>{{ formatCurrency(selectedInvoice.total) }}</span></div>
+          </div>
+
+          <div v-if="selectedInvoice.bank_name" class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="text-gray-400 text-xs">Bank</p>
+              <p class="text-brand-dark font-semibold">{{ selectedInvoice.bank_name }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Account Number</p>
+              <p class="text-brand-dark font-semibold">{{ selectedInvoice.bank_account ?? "-" }}</p>
+            </div>
+          </div>
+
+          <div v-if="selectedInvoice.terms">
+            <p class="text-brand-dark text-sm font-semibold mb-1">Terms & Conditions</p>
+            <p class="text-gray-500 text-xs whitespace-pre-line">{{ selectedInvoice.terms }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PPh 23 Receipt Detail Modal -->
+    <div
+      v-if="showReceiptDetail && selectedReceipt"
+      class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="closeReceiptDetail"
+    >
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between sticky top-0 bg-white">
+          <div class="min-w-0">
+            <h3 class="text-brand-dark text-sm sm:text-lg font-bold truncate">{{ selectedReceipt.receipt_number }}</h3>
+            <p class="text-brand-light text-xs mt-0.5">Payment Receipt Detail</p>
+          </div>
+          <button @click="closeReceiptDetail" class="w-9 h-9 shrink-0 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="text-gray-400 text-xs">Date</p>
+              <p class="text-brand-dark font-semibold">{{ formatDate(selectedReceipt.date) }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Invoice No.</p>
+              <p class="text-brand-dark font-semibold">{{ selectedReceipt.invoice?.invoice_number ?? "-" }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Received From</p>
+              <p class="text-brand-dark font-semibold">{{ selectedReceipt.invoice?.client_name ?? selectedReceipt.received_from }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Recipient</p>
+              <p class="text-brand-dark font-semibold">{{ selectedReceipt.recipient_name ?? "-" }}</p>
+            </div>
+          </div>
+
+          <div v-if="selectedReceipt.for_payment_of">
+            <p class="text-brand-dark text-sm font-semibold mb-1">For Payment Of</p>
+            <p class="text-gray-500 text-xs whitespace-pre-line">{{ selectedReceipt.for_payment_of }}</p>
+          </div>
+
+          <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
+            <div class="flex justify-between"><span>Gross Amount</span><span>{{ formatCurrency(Number(selectedReceipt.amount) + Number(selectedReceipt.pph23_amount)) }}</span></div>
+            <div class="flex justify-between"><span>PPh 23 Withheld ({{ Number(selectedReceipt.pph23_percent) }}%)</span><span>{{ formatCurrency(selectedReceipt.pph23_amount) }}</span></div>
+            <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Net Received</span><span>{{ formatCurrency(selectedReceipt.amount) }}</span></div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <span v-if="selectedReceipt.pph23_type" class="px-2 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700">
+              {{ selectedReceipt.pph23_type }}
+            </span>
+            <span v-if="selectedReceipt.payment_status" class="px-2 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 capitalize">
+              {{ selectedReceipt.payment_status }}
+            </span>
           </div>
         </div>
       </div>
