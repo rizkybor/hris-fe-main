@@ -67,18 +67,13 @@ const handleToggle = async () => {
             Last changed by {{ setting.updated_by.name }}
           </p>
         </div>
-        <button
-          type="button"
-          @click="handleToggle"
+        <input
+          type="checkbox"
+          :checked="setting.attendance_exempt_roles_enabled"
+          @change="handleToggle"
           :disabled="saving"
-          class="shrink-0 w-12 h-7 rounded-full transition-colors duration-200 relative disabled:opacity-50"
-          :class="setting.attendance_exempt_roles_enabled ? 'bg-[#0C51D9]' : 'bg-gray-300'"
-        >
-          <span
-            class="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform duration-200"
-            :class="setting.attendance_exempt_roles_enabled ? 'translate-x-[22px]' : 'translate-x-0'"
-          ></span>
-        </button>
+          class="shrink-0 w-5 h-5 mt-0.5 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] disabled:opacity-50 cursor-pointer"
+        />
       </div>
 
       <p v-if="errorMessage" class="text-red-500 text-sm mt-4">{{ errorMessage }}</p>
