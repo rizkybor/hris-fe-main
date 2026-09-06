@@ -300,7 +300,7 @@ const submit = () => {
                 </p>
               </div>
 
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-[2fr_1fr] gap-3">
                 <div>
                   <BaseInput
                     :id="`subscription-service-amount-${index}`"
@@ -318,7 +318,7 @@ const submit = () => {
                 <div v-if="form.services.length > 1">
                   <BaseInput
                     :id="`subscription-service-ppn-${index}`"
-                    label="VAT / PPN (%) (optional)"
+                    label="VAT/PPN % (opt.)"
                     type="number"
                     min="0"
                     max="100"
