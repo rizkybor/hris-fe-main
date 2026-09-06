@@ -38,11 +38,19 @@ const goToDetail = () => {
         size="w-9 h-9"
         icon-size="w-5 h-5"
       />
-      <span
-        class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#F0FDF4] text-[#166534]"
-      >
-        {{ capitalize(data?.job_information?.status) }}
-      </span>
+      <div class="flex flex-col items-end gap-1">
+        <span
+          v-if="data?.user?.is_active === false"
+          class="px-1.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700"
+        >
+          Login Disabled
+        </span>
+        <span
+          class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#F0FDF4] text-[#166534]"
+        >
+          {{ capitalize(data?.job_information?.status) }}
+        </span>
+      </div>
     </div>
     <div class="flex items-center justify-between mb-2.5">
       <div class="text-left">
