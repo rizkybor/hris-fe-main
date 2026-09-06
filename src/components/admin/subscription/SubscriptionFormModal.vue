@@ -316,15 +316,18 @@ const submit = () => {
                   </p>
                 </div>
                 <div v-if="form.services.length > 1">
-                  <BaseInput
+                  <label :for="`subscription-service-ppn-${index}`" class="block text-brand-dark text-sm font-semibold mb-1">
+                    VAT/PPN % (opt.)
+                  </label>
+                  <input
                     :id="`subscription-service-ppn-${index}`"
-                    label="VAT/PPN % (opt.)"
+                    v-model="service.ppn_percentage"
                     type="number"
                     min="0"
                     max="100"
                     step="0.01"
                     placeholder="0"
-                    v-model="service.ppn_percentage"
+                    class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm"
                   />
                   <p v-if="serviceErrors(index, 'ppn_percentage')" class="text-red-500 text-sm mt-1">
                     {{ serviceErrors(index, "ppn_percentage").join(", ") }}
