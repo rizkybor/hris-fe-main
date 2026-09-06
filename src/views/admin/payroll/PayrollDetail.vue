@@ -473,7 +473,7 @@ const handleRegenerate = async () => {
       <button @click="router.back()"
         class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-2">
         <ArrowLeft class="w-4 h-4 text-gray-600" />
-        <span class="text-brand-dark text-base font-semibold">Back</span>
+        <span class="text-brand-dark text-sm font-semibold hidden sm:inline">Back</span>
       </button>
 
       <button
@@ -583,13 +583,13 @@ const handleRegenerate = async () => {
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h3 class="text-brand-dark text-xl font-bold">Employee Details</h3>
+              <h3 class="text-brand-dark text-base font-bold">Employee Details</h3>
               <span
                 v-if="isThr"
                 class="px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-700"
               >THR</span>
             </div>
-            <p class="text-brand-light text-sm font-normal">
+            <p class="text-brand-light text-xs font-normal">
               Complete payroll breakdown by employee
             </p>
           </div>
@@ -789,8 +789,8 @@ const handleRegenerate = async () => {
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Export & Actions</h3>
-          <p class="text-brand-light text-sm font-normal mt-1">
+          <h3 class="text-brand-dark text-base font-bold">Export & Actions</h3>
+          <p class="text-brand-light text-xs font-normal mt-1">
             Download reports and manage payroll data
           </p>
         </div>
