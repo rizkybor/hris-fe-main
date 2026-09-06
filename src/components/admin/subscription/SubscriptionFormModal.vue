@@ -273,7 +273,12 @@ const submit = () => {
 
         <div>
           <div class="flex items-center justify-between mb-1">
-            <label class="block text-brand-dark text-sm font-semibold">Services</label>
+            <div class="flex items-center gap-1.5">
+              <label class="block text-brand-dark text-sm font-semibold">Services</label>
+              <span class="px-1.5 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700">
+                {{ form.services.length }}
+              </span>
+            </div>
             <button
               type="button"
               @click="addService"
