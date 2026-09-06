@@ -35,7 +35,7 @@ const STATUS_OPTIONS = [
 const clientOptions = computed(() => props.clients.map((c) => ({ value: c.id, label: c.name })));
 const projectOptions = computed(() => props.projects.map((p) => ({ value: p.id, label: p.name })));
 
-const emptyService = () => ({ service_type: "", product_name: "", amount: "", notes: "" });
+const emptyService = () => ({ service_type: "", product_name: "", amount: "", ppn_percentage: "", notes: "" });
 
 const emptyForm = () => ({
   name: "",
@@ -100,7 +100,26 @@ const toggleApplyPph23 = () => {
   }
 };
 
-const ppnAmount = computed(() => Math.round(totalAmount.value * ((Number(form.ppn_percentage) || 0) / 100)));
+// With several services, each optionally carries its own VAT/PPN% (0% if
+// left blank) -- the invoice-level field becomes a computed "Total VAT /
+// PPN (%)" (blended rate) instead of one flat user-entered rate. With a
+// single service, form.ppn_percentage is that one rate as before.
+const isMultiService = computed(() => form.services.length > 1);
+
+const ppnAmount = computed(() => {
+  if (isMultiService.value) {
+    return Math.round(
+      form.services.reduce((sum, s) => sum + (Number(s.amount) || 0) * ((Number(s.ppn_percentage) || 0) / 100), 0)
+    );
+  }
+  return Math.round(totalAmount.value * ((Number(form.ppn_percentage) || 0) / 100));
+});
+
+const totalPpnPercentage = computed(() => {
+  if (!isMultiService.value) return Number(form.ppn_percentage) || 0;
+  return totalAmount.value > 0 ? Math.round((ppnAmount.value / totalAmount.value) * 10000) / 100 : 0;
+});
+
 const invoiceTotal = computed(() => totalAmount.value + ppnAmount.value + (Number(form.admin_fee) || 0));
 const pph23EstimatedAmount = computed(() => Math.round((invoiceTotal.value * (Number(form.pph23_percent) || 0)) / 100));
 
@@ -130,6 +149,7 @@ watch(
                 service_type: s.service_type ?? "",
                 product_name: s.product_name ?? "",
                 amount: s.amount ?? "",
+                ppn_percentage: s.ppn_percentage ?? "",
                 notes: s.notes ?? "",
               }))
             : [emptyService()],
@@ -165,9 +185,14 @@ const submit = () => {
   payload.services = form.services.map((s) => {
     const service = { ...s };
     if (!service.product_name) delete service.product_name;
+    if (service.ppn_percentage === "" || service.ppn_percentage === null) delete service.ppn_percentage;
     if (!service.notes) delete service.notes;
     return service;
   });
+  // With multiple services, the invoice-level rate is a computed blend of
+  // each service's own -- the backend recomputes this too, but send the
+  // same number so what's displayed here matches what gets saved.
+  if (isMultiService.value) payload.ppn_percentage = totalPpnPercentage.value;
   if (!payload.project_id) delete payload.project_id;
   if (!payload.notes) delete payload.notes;
   // bank_account is a read-only display field derived from bank_name on
@@ -275,19 +300,36 @@ const submit = () => {
                 </p>
               </div>
 
-              <div>
-                <BaseInput
-                  :id="`subscription-service-amount-${index}`"
-                  label="Amount (Rp)"
-                  type="number"
-                  min="0"
-                  placeholder="500000"
-                  v-model="service.amount"
-                  required
-                />
-                <p v-if="serviceErrors(index, 'amount')" class="text-red-500 text-sm mt-1">
-                  {{ serviceErrors(index, "amount").join(", ") }}
-                </p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <BaseInput
+                    :id="`subscription-service-amount-${index}`"
+                    label="Amount (Rp)"
+                    type="number"
+                    min="0"
+                    placeholder="500000"
+                    v-model="service.amount"
+                    required
+                  />
+                  <p v-if="serviceErrors(index, 'amount')" class="text-red-500 text-sm mt-1">
+                    {{ serviceErrors(index, "amount").join(", ") }}
+                  </p>
+                </div>
+                <div v-if="form.services.length > 1">
+                  <BaseInput
+                    :id="`subscription-service-ppn-${index}`"
+                    label="VAT / PPN (%) (optional)"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    placeholder="0"
+                    v-model="service.ppn_percentage"
+                  />
+                  <p v-if="serviceErrors(index, 'ppn_percentage')" class="text-red-500 text-sm mt-1">
+                    {{ serviceErrors(index, "ppn_percentage").join(", ") }}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -390,6 +432,7 @@ const submit = () => {
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
               <BaseInput
+                v-if="!isMultiService"
                 id="subscription-ppn"
                 label="VAT / PPN (%)"
                 type="number"
@@ -398,6 +441,16 @@ const submit = () => {
                 step="0.01"
                 v-model.number="form.ppn_percentage"
               />
+              <template v-else>
+                <label class="block text-brand-dark text-sm font-semibold mb-1">Total VAT / PPN (%)</label>
+                <input
+                  :value="`${totalPpnPercentage}%`"
+                  type="text"
+                  readonly
+                  class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm bg-gray-50"
+                />
+                <p class="text-xs text-brand-light mt-1">Blended from each service's own VAT / PPN (%) above.</p>
+              </template>
             </div>
             <div>
               <BaseInput
@@ -469,7 +522,7 @@ const submit = () => {
 
           <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
             <div class="flex justify-between"><span>Amount</span><span>Rp {{ totalAmount.toLocaleString("id-ID") }}</span></div>
-            <div class="flex justify-between"><span>VAT ({{ form.ppn_percentage || 0 }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
+            <div class="flex justify-between"><span>VAT ({{ totalPpnPercentage }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
             <div class="flex justify-between"><span>Admin Fee</span><span>Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</span></div>
             <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total per Invoice</span><span>Rp {{ invoiceTotal.toLocaleString("id-ID") }}</span></div>
           </div>

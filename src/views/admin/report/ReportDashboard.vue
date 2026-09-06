@@ -1358,6 +1358,7 @@ onMounted(() => {
                 <div class="min-w-0">
                   <p class="text-brand-dark font-semibold capitalize truncate">{{ (service.service_type || "-").replace(/_/g, " ") }}</p>
                   <p v-if="service.product_name" class="text-gray-400 text-xs truncate">{{ service.product_name }}</p>
+                  <p v-if="service.ppn_percentage" class="text-gray-400 text-xs">VAT/PPN {{ service.ppn_percentage }}%</p>
                 </div>
                 <p class="text-brand-dark font-semibold shrink-0 ml-3">{{ formatCurrency(service.amount) }}</p>
               </div>
@@ -1367,7 +1368,10 @@ onMounted(() => {
 
           <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
             <div class="flex justify-between"><span>Amount</span><span>{{ formatCurrency(selectedSubscription.amount) }}</span></div>
-            <div class="flex justify-between"><span>VAT ({{ selectedSubscription.ppn_percentage || 0 }}%)</span><span>{{ formatCurrency(Math.round((Number(selectedSubscription.amount) || 0) * ((Number(selectedSubscription.ppn_percentage) || 0) / 100))) }}</span></div>
+            <div class="flex justify-between">
+              <span>{{ selectedSubscription.services?.length > 1 ? "Total VAT / PPN" : "VAT / PPN" }} ({{ selectedSubscription.ppn_percentage || 0 }}%)</span>
+              <span>{{ formatCurrency(Math.round((Number(selectedSubscription.amount) || 0) * ((Number(selectedSubscription.ppn_percentage) || 0) / 100))) }}</span>
+            </div>
             <div class="flex justify-between"><span>Admin Fee</span><span>{{ formatCurrency(selectedSubscription.admin_fee) }}</span></div>
             <div v-if="selectedSubscription.pph23_type" class="flex justify-between"><span>PPh 23</span><span>{{ selectedSubscription.pph23_percent }}%</span></div>
           </div>
