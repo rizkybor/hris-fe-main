@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
-import { X, ChevronDown } from "lucide-vue-next";
+import { X, ChevronDown, Plus, Trash2 } from "lucide-vue-next";
 import BaseInput from "@/components/common/form/Input.vue";
 import BaseSelect from "@/components/common/form/Select.vue";
 
@@ -35,14 +35,14 @@ const STATUS_OPTIONS = [
 const clientOptions = computed(() => props.clients.map((c) => ({ value: c.id, label: c.name })));
 const projectOptions = computed(() => props.projects.map((p) => ({ value: p.id, label: p.name })));
 
+const emptyService = () => ({ service_type: "", product_name: "", amount: "", notes: "" });
+
 const emptyForm = () => ({
   name: "",
-  service_type: "",
-  product_name: "",
+  services: [emptyService()],
   project_id: "",
   client_id: "",
   billing_cycle: "monthly",
-  amount: "",
   start_date: "",
   next_due_date: "",
   status: "active",
@@ -57,6 +57,16 @@ const emptyForm = () => ({
 });
 
 const form = reactive(emptyForm());
+
+const totalAmount = computed(() => form.services.reduce((sum, s) => sum + (Number(s.amount) || 0), 0));
+
+const addService = () => form.services.push(emptyService());
+const removeService = (index) => {
+  if (form.services.length <= 1) return;
+  form.services.splice(index, 1);
+};
+
+const serviceErrors = (index, field) => props.errors[`services.${index}.${field}`];
 
 // Collapsible so the (now required) invoice-billing fields don't crowd out
 // the subscription's own details by default -- expanded by default since
@@ -90,17 +100,18 @@ const toggleApplyPph23 = () => {
   }
 };
 
-const ppnAmount = computed(() => Math.round((Number(form.amount) || 0) * ((Number(form.ppn_percentage) || 0) / 100)));
-const invoiceTotal = computed(() => (Number(form.amount) || 0) + ppnAmount.value + (Number(form.admin_fee) || 0));
+const ppnAmount = computed(() => Math.round(totalAmount.value * ((Number(form.ppn_percentage) || 0) / 100)));
+const invoiceTotal = computed(() => totalAmount.value + ppnAmount.value + (Number(form.admin_fee) || 0));
 const pph23EstimatedAmount = computed(() => Math.round((invoiceTotal.value * (Number(form.pph23_percent) || 0)) / 100));
 
 // Maintenance is the only service type that's ever tied to a Project --
-// clearing project_id when switching away avoids silently submitting a
-// stale project link for a domain/SaaS subscription.
+// clearing project_id when no row is website_maintenance anymore avoids
+// silently submitting a stale project link for a domain/SaaS-only
+// subscription.
 watch(
-  () => form.service_type,
-  (type) => {
-    if (type !== "website_maintenance") form.project_id = "";
+  () => form.services.map((s) => s.service_type),
+  (types) => {
+    if (!types.includes("website_maintenance")) form.project_id = "";
   }
 );
 
@@ -113,12 +124,18 @@ watch(
     if (props.mode === "edit") {
       Object.assign(form, {
         name: props.data.name ?? "",
-        service_type: props.data.service_type ?? "",
-        product_name: props.data.product_name ?? "",
+        services:
+          props.data.services?.length > 0
+            ? props.data.services.map((s) => ({
+                service_type: s.service_type ?? "",
+                product_name: s.product_name ?? "",
+                amount: s.amount ?? "",
+                notes: s.notes ?? "",
+              }))
+            : [emptyService()],
         project_id: props.data.project_id ?? "",
         client_id: props.data.client_id ?? "",
         billing_cycle: props.data.billing_cycle ?? "monthly",
-        amount: props.data.amount ?? "",
         start_date: toDateInputValue(props.data.start_date),
         next_due_date: toDateInputValue(props.data.next_due_date),
         status: props.data.status ?? "active",
@@ -145,8 +162,13 @@ const title = computed(() => (props.mode === "edit" ? "Edit Subscription" : "Add
 
 const submit = () => {
   const payload = { ...form };
+  payload.services = form.services.map((s) => {
+    const service = { ...s };
+    if (!service.product_name) delete service.product_name;
+    if (!service.notes) delete service.notes;
+    return service;
+  });
   if (!payload.project_id) delete payload.project_id;
-  if (!payload.product_name) delete payload.product_name;
   if (!payload.notes) delete payload.notes;
   // bank_account is a read-only display field derived from bank_name on
   // the backend at invoice-generation time -- only bank_name is stored.
@@ -195,28 +217,80 @@ const submit = () => {
         </div>
 
         <div>
-          <BaseSelect
-            id="subscription-service-type"
-            label="Service Type"
-            placeholder="Select a service type"
-            v-model="form.service_type"
-            :options="serviceTypeOptions"
-            required
-          />
-          <p v-if="errors.service_type" class="text-red-500 text-sm mt-1">{{ errors.service_type.join(", ") }}</p>
-          <p v-if="serviceTypeOptions.length === 0" class="text-xs text-gray-400 mt-1">
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-brand-dark text-sm font-semibold">Services</label>
+            <button
+              type="button"
+              @click="addService"
+              class="inline-flex items-center gap-1 text-xs font-semibold text-[#0C51D9] hover:underline"
+            >
+              <Plus class="w-3.5 h-3.5" /> Add Service
+            </button>
+          </div>
+          <p v-if="errors.services" class="text-red-500 text-sm mb-2">{{ errors.services.join(", ") }}</p>
+          <p v-if="serviceTypeOptions.length === 0" class="text-xs text-gray-400 mb-2">
             No service types configured yet. Add one in Settings &rarr; Dropdown Options.
           </p>
-        </div>
 
-        <div v-if="form.service_type === 'saas_subscription'">
-          <BaseInput
-            id="subscription-product-name"
-            label="Product Name"
-            placeholder="e.g. Ticket Management (Yaap), Jstock"
-            v-model="form.product_name"
-          />
-          <p v-if="errors.product_name" class="text-red-500 text-sm mt-1">{{ errors.product_name.join(", ") }}</p>
+          <div class="space-y-3">
+            <div
+              v-for="(service, index) in form.services"
+              :key="index"
+              class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-3 space-y-3"
+            >
+              <div class="flex items-start gap-2">
+                <div class="flex-1">
+                  <BaseSelect
+                    :id="`subscription-service-type-${index}`"
+                    label="Service Type"
+                    placeholder="Select a service type"
+                    v-model="service.service_type"
+                    :options="serviceTypeOptions"
+                    required
+                  />
+                  <p v-if="serviceErrors(index, 'service_type')" class="text-red-500 text-sm mt-1">
+                    {{ serviceErrors(index, "service_type").join(", ") }}
+                  </p>
+                </div>
+                <button
+                  v-if="form.services.length > 1"
+                  type="button"
+                  @click="removeService(index)"
+                  title="Remove service"
+                  class="w-9 h-9 mt-6 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-red-400 hover:bg-red-50 group/delete transition-colors"
+                >
+                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                </button>
+              </div>
+
+              <div v-if="service.service_type === 'saas_subscription'">
+                <BaseInput
+                  :id="`subscription-product-name-${index}`"
+                  label="Product Name"
+                  placeholder="e.g. Ticket Management (Yaap), Jstock"
+                  v-model="service.product_name"
+                />
+                <p v-if="serviceErrors(index, 'product_name')" class="text-red-500 text-sm mt-1">
+                  {{ serviceErrors(index, "product_name").join(", ") }}
+                </p>
+              </div>
+
+              <div>
+                <BaseInput
+                  :id="`subscription-service-amount-${index}`"
+                  label="Amount (Rp)"
+                  type="number"
+                  min="0"
+                  placeholder="500000"
+                  v-model="service.amount"
+                  required
+                />
+                <p v-if="serviceErrors(index, 'amount')" class="text-red-500 text-sm mt-1">
+                  {{ serviceErrors(index, "amount").join(", ") }}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -231,7 +305,7 @@ const submit = () => {
           <p v-if="errors.client_id" class="text-red-500 text-sm mt-1">{{ errors.client_id.join(", ") }}</p>
         </div>
 
-        <div v-if="form.service_type === 'website_maintenance'">
+        <div v-if="form.services.some((s) => s.service_type === 'website_maintenance')">
           <BaseSelect
             id="subscription-project"
             label="Project (optional)"
@@ -242,28 +316,14 @@ const submit = () => {
           <p class="text-brand-light text-xs mt-1">Link this maintenance to the website project it covers, if any.</p>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <BaseSelect
-              id="subscription-billing-cycle"
-              label="Billing Cycle"
-              v-model="form.billing_cycle"
-              :options="BILLING_CYCLE_OPTIONS"
-              required
-            />
-          </div>
-          <div>
-            <BaseInput
-              id="subscription-amount"
-              label="Amount (Rp)"
-              type="number"
-              min="0"
-              placeholder="500000"
-              v-model="form.amount"
-              required
-            />
-            <p v-if="errors.amount" class="text-red-500 text-sm mt-1">{{ errors.amount.join(", ") }}</p>
-          </div>
+        <div>
+          <BaseSelect
+            id="subscription-billing-cycle"
+            label="Billing Cycle"
+            v-model="form.billing_cycle"
+            :options="BILLING_CYCLE_OPTIONS"
+            required
+          />
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -408,7 +468,7 @@ const submit = () => {
           </div>
 
           <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
-            <div class="flex justify-between"><span>Amount</span><span>Rp {{ (Number(form.amount) || 0).toLocaleString("id-ID") }}</span></div>
+            <div class="flex justify-between"><span>Amount</span><span>Rp {{ totalAmount.toLocaleString("id-ID") }}</span></div>
             <div class="flex justify-between"><span>VAT ({{ form.ppn_percentage || 0 }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
             <div class="flex justify-between"><span>Admin Fee</span><span>Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</span></div>
             <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total per Invoice</span><span>Rp {{ invoiceTotal.toLocaleString("id-ID") }}</span></div>

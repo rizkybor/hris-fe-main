@@ -177,6 +177,22 @@ const closeRaportDetail = () => {
   showRaportDetail.value = false;
 };
 
+// Subscription detail modal -- the report row already carries everything
+// needed (client, project, bundled services, invoice configuration), so
+// this just opens with the clicked row rather than making another
+// request.
+const showSubscriptionDetail = ref(false);
+const selectedSubscription = ref(null);
+
+const openSubscriptionDetail = (row) => {
+  selectedSubscription.value = row;
+  showSubscriptionDetail.value = true;
+};
+
+const closeSubscriptionDetail = () => {
+  showSubscriptionDetail.value = false;
+};
+
 const handleDownloadPdf = async () => {
   if (!staffRaportDetail.value) return;
   try {
@@ -351,6 +367,16 @@ const subscriptionStatusLabel = {
   postponed: "Postponed",
   cancelled: "Not Active",
 };
+
+// A subscription can bundle several services -- list them all instead of
+// the single service_type this column used to show.
+function subscriptionServicesLabel(services) {
+  if (!services?.length) return "-";
+  return services
+    .map((s) => (s.product_name ? `${s.service_type} (${s.product_name})` : s.service_type))
+    .join(", ")
+    .replace(/_/g, " ");
+}
 
 function formatCurrency(value) {
   const number = Number(value ?? 0);
@@ -759,7 +785,7 @@ onMounted(() => {
     <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] px-4 overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead>
-          <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
+          <tr class="text-left text-brand-light border-b border-[#DCDEDD] bg-slate-50">
             <th class="py-3 pr-4 font-semibold">No</th>
             <template v-if="activeTab === 'attendance'">
               <th class="py-3 pr-4 font-semibold">Date</th>
@@ -834,7 +860,7 @@ onMounted(() => {
             <template v-else-if="activeTab === 'subscription'">
               <th class="py-3 pr-4 font-semibold">Name</th>
               <th class="py-3 pr-4 font-semibold">Client</th>
-              <th class="py-3 pr-4 font-semibold">Service Type</th>
+              <th class="py-3 pr-4 font-semibold">Services</th>
               <th class="py-3 pr-4 font-semibold">Billing Cycle</th>
               <th class="py-3 pr-4 font-semibold">Amount</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
@@ -1070,12 +1096,13 @@ onMounted(() => {
             <tr
               v-for="(row, idx) in tableRows"
               :key="row.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+              @click="openSubscriptionDetail(row)"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
             >
               <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
               <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name }}</td>
               <td class="py-3 pr-4">{{ row.client?.name ?? "-" }}</td>
-              <td class="py-3 pr-4 capitalize">{{ (row.service_type || "-").replace(/_/g, " ") }}</td>
+              <td class="py-3 pr-4 capitalize">{{ subscriptionServicesLabel(row.services) }}</td>
               <td class="py-3 pr-4 capitalize">{{ row.billing_cycle }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.amount) }}</td>
               <td class="py-3 pr-4">
@@ -1086,7 +1113,7 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ formatDate(row.next_due_date) }}</td>
               <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
                 <button
-                  @click="handleDeleteRow(row)"
+                  @click.stop="handleDeleteRow(row)"
                   :disabled="deletingRowId === rowIdField(row)"
                   title="Delete"
                   class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
@@ -1266,6 +1293,88 @@ onMounted(() => {
                 <span class="text-brand-white text-sm font-semibold">{{ downloadingPdf ? "Downloading..." : "Download PDF" }}</span>
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscription Detail Modal -->
+    <div
+      v-if="showSubscriptionDetail && selectedSubscription"
+      class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="closeSubscriptionDetail"
+    >
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between sticky top-0 bg-white">
+          <div class="min-w-0">
+            <h3 class="text-brand-dark text-sm sm:text-lg font-bold truncate">{{ selectedSubscription.name }}</h3>
+            <p class="text-brand-light text-xs mt-0.5">Subscription Detail</p>
+          </div>
+          <button @click="closeSubscriptionDetail" class="w-9 h-9 shrink-0 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+
+        <div class="p-5 space-y-4">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="subscriptionStatusClass[selectedSubscription.status] || 'bg-gray-100 text-gray-500'">
+              {{ subscriptionStatusLabel[selectedSubscription.status] || selectedSubscription.status }}
+            </span>
+            <span class="inline-flex items-center gap-1 text-xs text-gray-500">
+              <Building2Icon class="w-3.5 h-3.5" /> {{ selectedSubscription.client?.name ?? "-" }}
+            </span>
+            <span v-if="selectedSubscription.project" class="inline-flex items-center gap-1 text-xs text-gray-500">
+              <FolderKanban class="w-3.5 h-3.5" /> {{ selectedSubscription.project.name }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="text-gray-400 text-xs">Billing Cycle</p>
+              <p class="text-brand-dark font-semibold capitalize">{{ selectedSubscription.billing_cycle }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Next Due Date</p>
+              <p class="text-brand-dark font-semibold">{{ formatDate(selectedSubscription.next_due_date) }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Last Invoiced</p>
+              <p class="text-brand-dark font-semibold">{{ selectedSubscription.last_invoiced_at ? formatDate(selectedSubscription.last_invoiced_at) : "-" }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs">Bank Account</p>
+              <p class="text-brand-dark font-semibold">{{ selectedSubscription.bank_name ?? "-" }}</p>
+            </div>
+          </div>
+
+          <div>
+            <p class="text-brand-dark text-sm font-bold mb-2">Services</p>
+            <div class="space-y-2">
+              <div
+                v-for="service in selectedSubscription.services"
+                :key="service.id"
+                class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm"
+              >
+                <div class="min-w-0">
+                  <p class="text-brand-dark font-semibold capitalize truncate">{{ (service.service_type || "-").replace(/_/g, " ") }}</p>
+                  <p v-if="service.product_name" class="text-gray-400 text-xs truncate">{{ service.product_name }}</p>
+                </div>
+                <p class="text-brand-dark font-semibold shrink-0 ml-3">{{ formatCurrency(service.amount) }}</p>
+              </div>
+              <p v-if="!selectedSubscription.services?.length" class="text-sm text-gray-400">No services on this subscription.</p>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
+            <div class="flex justify-between"><span>Amount</span><span>{{ formatCurrency(selectedSubscription.amount) }}</span></div>
+            <div class="flex justify-between"><span>VAT ({{ selectedSubscription.ppn_percentage || 0 }}%)</span><span>{{ formatCurrency(Math.round((Number(selectedSubscription.amount) || 0) * ((Number(selectedSubscription.ppn_percentage) || 0) / 100))) }}</span></div>
+            <div class="flex justify-between"><span>Admin Fee</span><span>{{ formatCurrency(selectedSubscription.admin_fee) }}</span></div>
+            <div v-if="selectedSubscription.pph23_type" class="flex justify-between"><span>PPh 23</span><span>{{ selectedSubscription.pph23_percent }}%</span></div>
+          </div>
+
+          <div v-if="selectedSubscription.terms">
+            <p class="text-brand-dark text-sm font-semibold mb-1">Terms & Conditions</p>
+            <p class="text-gray-500 text-xs whitespace-pre-line">{{ selectedSubscription.terms }}</p>
           </div>
         </div>
       </div>

@@ -308,10 +308,13 @@ const handleGenerateInvoice = async (subscription) => {
               </span>
             </div>
             <div class="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-medium">
-                {{ serviceTypeLabel[subscription.service_type] || subscription.service_type }}
+              <span
+                v-for="service in subscription.services"
+                :key="service.id"
+                class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-medium"
+              >
+                {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
               </span>
-              <span v-if="subscription.product_name" class="inline-flex items-center gap-1">&middot; {{ subscription.product_name }}</span>
               <span class="inline-flex items-center gap-1">
                 <Building2 class="w-3 h-3" /> {{ subscription.client?.name || "-" }}
               </span>
