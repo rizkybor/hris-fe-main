@@ -8,6 +8,7 @@ import {
   Search,
   Download,
   Eye,
+  EyeOff,
   Calendar,
   DollarSign,
   FileText,
@@ -92,6 +93,10 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
+// Hidden by default -- salary figures are sensitive, revealed only on demand.
+const showAmounts = ref(false);
+const maskCurrency = (value) => (showAmounts.value ? formatCurrency(value) : "Rp ••••••••");
+
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString("id-ID", {
     year: "numeric",
@@ -113,9 +118,23 @@ const totalDeductions = computed(() => {
 
 <template>
   <div class="px-4 py-4">
+    <div class="flex justify-end mb-4">
+      <button
+        type="button"
+        @click="showAmounts = !showAmounts"
+        class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 px-4 py-2 flex items-center gap-2"
+      >
+        <Eye v-if="!showAmounts" class="w-4 h-4 text-gray-600" />
+        <EyeOff v-else class="w-4 h-4 text-gray-600" />
+        <span class="text-brand-dark text-sm font-semibold">
+          {{ showAmounts ? "Hide Amounts" : "Show Amounts" }}
+        </span>
+      </button>
+    </div>
+
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[14px] p-6 text-white">
+      <div class="main-card rounded-[14px] border border-[#0B1042] relative overflow-hidden p-4 text-white">
         <div class="flex items-center justify-between mb-3">
           <div class="w-12 h-12 bg-white/20 rounded-[12px] flex items-center justify-center backdrop-blur-sm">
             <FileText class="w-6 h-6" />
@@ -134,7 +153,7 @@ const totalDeductions = computed(() => {
         </div>
         <p class="text-brand-dark text-sm font-medium mb-2">Total Earnings</p>
         <p class="text-brand-dark text-xl font-extrabold">
-          {{ formatCurrency(totalEarnings) }}
+          {{ maskCurrency(totalEarnings) }}
         </p>
         <p class="text-success text-sm font-medium mt-1">This year</p>
       </div>
@@ -148,7 +167,7 @@ const totalDeductions = computed(() => {
         </div>
         <p class="text-brand-dark text-sm font-medium mb-2">Total Deductions</p>
         <p class="text-brand-dark text-xl font-extrabold">
-          {{ formatCurrency(totalDeductions) }}
+          {{ maskCurrency(totalDeductions) }}
         </p>
         <p class="text-danger text-sm font-medium mt-1">This year</p>
       </div>
@@ -227,7 +246,7 @@ const totalDeductions = computed(() => {
             <div class="flex items-center gap-2">
               <DollarSign class="w-4 h-4 text-gray-400" />
               <p class="text-brand-dark text-xl font-extrabold">
-                {{ formatCurrency(payslip.net_salary) }}
+                {{ maskCurrency(payslip.net_salary) }}
               </p>
             </div>
           </div>
