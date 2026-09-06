@@ -171,10 +171,12 @@ const handleGenerateInvoice = async (subscription) => {
     ? new Date(subscription.next_due_date).getFullYear()
     : new Date(subscription.next_due_date).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
-  const ok = await alertModal.confirm(
-    `Generate invoice for "${subscription.name}" — ${periodLabel}, ${formatRupiah(subscription.amount)}?`,
-    { confirmText: "Generate" }
-  );
+  let message = `Generate invoice for "${subscription.name}" — ${periodLabel}, ${formatRupiah(subscription.amount)}?`;
+  if (subscription.invoices_count > 0 && subscription.latest_invoice_number) {
+    message += `\n\nNote: This subscription already has an invoice on record (No. ${subscription.latest_invoice_number}). Please review it before generating another.`;
+  }
+
+  const ok = await alertModal.confirm(message, { confirmText: "Generate" });
   if (!ok) return;
 
   try {
