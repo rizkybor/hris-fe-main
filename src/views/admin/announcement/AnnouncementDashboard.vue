@@ -178,13 +178,14 @@ onMounted(() => {
 
     <div v-else class="space-y-3">
       <div
-        v-for="announcement in announcements"
+        v-for="(announcement, index) in announcements"
         :key="announcement.id"
         class="bg-white border border-[#DCDEDD] rounded-[14px] p-5"
       >
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-gray-400 text-xs font-semibold shrink-0">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}.</span>
               <Pin v-if="announcement.is_pinned" class="w-3.5 h-3.5 text-[#0C51D9]" />
               <h4 class="text-brand-dark font-bold">{{ announcement.title }}</h4>
               <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">

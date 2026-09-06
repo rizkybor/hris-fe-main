@@ -17,11 +17,14 @@ import {
   ChevronDown,
   ChevronRight,
   RefreshCw,
+  Trash2,
+  CalendarRange,
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
 import { useProjectStore } from "@/stores/project";
 import { useOptionStore } from "@/stores/option";
-import { can } from "@/helpers/permissionHelper";
+import { useAlertModalStore } from "@/stores/alertModal";
+import { can, hasAnyRole } from "@/helpers/permissionHelper";
 import { useScrollFade } from "@/composables/useScrollFade";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
@@ -65,6 +68,78 @@ const tabs = [
 ];
 
 const visibleTabs = computed(() => tabs.filter((t) => !t.permission || can(t.permission)));
+
+// Only tabs backed by exactly one real, deletable record -- not Finance
+// (three tables merged into fake rows), PPh 21 or Staff Raport (both
+// purely computed from Payroll/Attendance, no table of their own).
+// Deleting here deletes the underlying real record, so this is gated by
+// role (Superadmin/Manager only), matching the backend's RoleMiddleware
+// check on the same two endpoints.
+const DELETABLE_REPORT_TYPES = ["attendance", "payroll", "employee", "ppn", "pph23", "project", "project_expense", "subscription"];
+const canDeleteReports = computed(() => hasAnyRole(["superadmin", "manager"]));
+const showDeleteColumn = computed(() => canDeleteReports.value && DELETABLE_REPORT_TYPES.includes(activeTab.value));
+
+const alertModal = useAlertModalStore();
+const deletingRowId = ref(null);
+
+const rowIdField = (row) => row.id ?? row.employee_id;
+
+const handleDeleteRow = async (row) => {
+  const id = rowIdField(row);
+  if (!(await alertModal.confirm("Delete this record? This deletes the actual underlying record, not just its appearance in this report.", { type: "danger", confirmText: "Delete" }))) return;
+
+  deletingRowId.value = id;
+  try {
+    await reportStore.deleteRow(activeTab.value, id);
+    await loadReport(reportMeta.value?.current_page || 1);
+  } catch (error) {
+    await alertModal.alert(error?.response?.data?.message || "Failed to delete record.", { type: "danger" });
+  } finally {
+    deletingRowId.value = null;
+  }
+};
+
+// Delete-by-range modal
+const showDeleteRangeModal = ref(false);
+const deleteRangeStart = ref("");
+const deleteRangeEnd = ref("");
+const deletingRange = ref(false);
+
+const openDeleteRangeModal = () => {
+  deleteRangeStart.value = "";
+  deleteRangeEnd.value = "";
+  showDeleteRangeModal.value = true;
+};
+
+const closeDeleteRangeModal = () => {
+  showDeleteRangeModal.value = false;
+};
+
+const handleDeleteRange = async () => {
+  if (!deleteRangeStart.value || !deleteRangeEnd.value) return;
+  const tabLabel = tabs.find((t) => t.key === activeTab.value)?.label ?? activeTab.value;
+
+  if (
+    !(await alertModal.confirm(
+      `Delete every "${tabLabel}" record between ${deleteRangeStart.value} and ${deleteRangeEnd.value}? This deletes the actual underlying records and cannot be undone from this screen.`,
+      { type: "danger", confirmText: "Delete Range" }
+    ))
+  )
+    return;
+
+  deletingRange.value = true;
+  try {
+    const result = await reportStore.deleteByRange(activeTab.value, deleteRangeStart.value, deleteRangeEnd.value);
+    showDeleteRangeModal.value = false;
+    await loadReport(1);
+    const skippedNote = result?.skipped?.length ? ` ${result.skipped.length} record(s) were skipped (e.g. already-paid Payroll).` : "";
+    await alertModal.alert(`${result?.deleted ?? 0} record(s) deleted.${skippedNote}`, { type: "success" });
+  } catch (error) {
+    await alertModal.alert(error?.response?.data?.message || "Failed to delete records in this range.", { type: "danger" });
+  } finally {
+    deletingRange.value = false;
+  }
+};
 
 // 11 tabs routinely overflow the row at every breakpoint (not just mobile),
 // so unlike other tab bars in the app this hint stays visible on desktop
@@ -403,17 +478,27 @@ onMounted(() => {
           </div>
         </div>
 
-        <button
-          v-if="canExport && activeTab !== 'staff_raport'"
-          @click="handleExport"
-          :disabled="exporting"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2 disabled:opacity-50"
-        >
-          <Download class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">
-            {{ exporting ? "Exporting..." : "Export Excel" }}
-          </span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            v-if="showDeleteColumn"
+            @click="openDeleteRangeModal"
+            class="rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-all duration-300 px-4 py-3 flex items-center gap-2"
+          >
+            <CalendarRange class="w-4 h-4" />
+            <span class="text-sm font-semibold">Delete by Date Range</span>
+          </button>
+          <button
+            v-if="canExport && activeTab !== 'staff_raport'"
+            @click="handleExport"
+            :disabled="exporting"
+            class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2 disabled:opacity-50"
+          >
+            <Download class="w-4 h-4 text-white" />
+            <span class="text-brand-white text-sm font-semibold">
+              {{ exporting ? "Exporting..." : "Export Excel" }}
+            </span>
+          </button>
+        </div>
       </div>
 
       <!-- Tabs -->
@@ -764,6 +849,7 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Rating</th>
               <th class="py-3 pr-4 font-semibold"></th>
             </template>
+            <th v-if="showDeleteColumn" class="py-3 pr-4 font-semibold text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -785,6 +871,16 @@ onMounted(() => {
               <td class="py-3 pr-4 capitalize">
                 {{ (row.status || "").replace("_", " ") }}
               </td>
+              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
+                <button
+                  @click="handleDeleteRow(row)"
+                  :disabled="deletingRowId === rowIdField(row)"
+                  title="Delete"
+                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
+                >
+                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                </button>
+              </td>
             </tr>
           </template>
           <template v-else-if="activeTab === 'payroll'">
@@ -801,6 +897,16 @@ onMounted(() => {
               <td class="py-3 pr-4 capitalize">
                 {{ row.payment_status === "paid" ? "Paid" : "Pending" }}
               </td>
+              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
+                <button
+                  @click="handleDeleteRow(row)"
+                  :disabled="deletingRowId === rowIdField(row)"
+                  title="Delete"
+                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
+                >
+                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                </button>
+              </td>
             </tr>
           </template>
           <template v-else-if="activeTab === 'employee'">
@@ -816,6 +922,16 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ row.job_information?.team?.name ?? "N/A" }}</td>
               <td class="py-3 pr-4 capitalize">
                 {{ row.job_information?.status ?? "N/A" }}
+              </td>
+              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
+                <button
+                  @click="handleDeleteRow(row)"
+                  :disabled="deletingRowId === rowIdField(row)"
+                  title="Delete"
+                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
+                >
+                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                </button>
               </td>
             </tr>
           </template>
@@ -860,6 +976,16 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ row.client_name }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.subtotal) }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.ppn_amount) }}</td>
+              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
+                <button
+                  @click="handleDeleteRow(row)"
+                  :disabled="deletingRowId === rowIdField(row)"
+                  title="Delete"
+                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
+                >
+                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                </button>
+              </td>
             </tr>
           </template>
           <template v-else-if="activeTab === 'project'">
@@ -877,6 +1003,16 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ row.end_date ? formatDate(row.end_date) : "-" }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.budget) }}</td>
               <td class="py-3 pr-4">{{ row.tasks_done_count }}/{{ row.tasks_total_count }}</td>
+              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
+                <button
+                  @click="handleDeleteRow(row)"
+                  :disabled="deletingRowId === rowIdField(row)"
+                  title="Delete"
+                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
+                >
+                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                </button>
+              </td>
             </tr>
           </template>
           <template v-else-if="activeTab === 'pph23'">
@@ -894,6 +1030,16 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ formatCurrency(Number(row.amount) + Number(row.pph23_amount)) }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.pph23_amount) }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.amount) }}</td>
+              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
+                <button
+                  @click="handleDeleteRow(row)"
+                  :disabled="deletingRowId === rowIdField(row)"
+                  title="Delete"
+                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
+                >
+                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                </button>
+              </td>
             </tr>
           </template>
           <template v-else-if="activeTab === 'project_expense'">
@@ -908,6 +1054,16 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ row.description }}</td>
               <td class="py-3 pr-4 text-emerald-600">{{ row.type === "debit" ? formatCurrency(row.amount) : "-" }}</td>
               <td class="py-3 pr-4 text-red-600">{{ row.type === "credit" ? formatCurrency(row.amount) : "-" }}</td>
+              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
+                <button
+                  @click="handleDeleteRow(row)"
+                  :disabled="deletingRowId === rowIdField(row)"
+                  title="Delete"
+                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
+                >
+                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                </button>
+              </td>
             </tr>
           </template>
           <template v-else-if="activeTab === 'subscription'">
@@ -928,6 +1084,16 @@ onMounted(() => {
                 </span>
               </td>
               <td class="py-3 pr-4">{{ formatDate(row.next_due_date) }}</td>
+              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
+                <button
+                  @click="handleDeleteRow(row)"
+                  :disabled="deletingRowId === rowIdField(row)"
+                  title="Delete"
+                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
+                >
+                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                </button>
+              </td>
             </tr>
           </template>
           <template v-else-if="activeTab === 'staff_raport'">
@@ -1101,6 +1267,44 @@ onMounted(() => {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete by Date Range Modal -->
+    <div v-if="showDeleteRangeModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeDeleteRangeModal">
+      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md">
+        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
+          <h3 class="text-brand-dark text-lg font-bold">Delete by Date Range</h3>
+          <button @click="closeDeleteRangeModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
+            <X class="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+        <div class="p-5 space-y-4">
+          <p class="text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+            This permanently deletes every underlying record in this range, not just its appearance in the report. This cannot be undone from this screen.
+          </p>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">Start Date</label>
+            <input v-model="deleteRangeStart" type="date" class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-brand-dark mb-1 block">End Date</label>
+            <input v-model="deleteRangeEnd" type="date" class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+          </div>
+        </div>
+        <div class="p-5 border-t border-[#DCDEDD] flex justify-end gap-3">
+          <button type="button" @click="closeDeleteRangeModal" class="px-4 py-2.5 border border-[#DCDEDD] rounded-[10px] text-sm font-semibold hover:border-[#0C51D9] transition-colors">
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="handleDeleteRange"
+            :disabled="deletingRange || !deleteRangeStart || !deleteRangeEnd"
+            class="rounded-[8px] border border-red-600 bg-red-600 hover:brightness-110 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {{ deletingRange ? "Deleting..." : "Delete Range" }}
+          </button>
         </div>
       </div>
     </div>
