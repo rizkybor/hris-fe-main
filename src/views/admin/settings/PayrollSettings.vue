@@ -53,9 +53,9 @@ const handleToggle = async () => {
 
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 max-w-xl">
       <div v-if="loading" class="text-brand-light text-sm">Loading...</div>
-      <div v-else class="flex items-start justify-between gap-4">
-        <div>
-          <p class="text-brand-dark text-sm font-semibold mb-1">Exempt Manager/Finance/Operational Director from Attendance</p>
+      <div v-else class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div class="flex-1 min-w-0">
+          <p class="text-brand-dark text-sm font-semibold mb-1">Attendance Exemption</p>
           <p class="text-brand-light text-xs">
             By default, generating Payroll requires an employee to have at least one attendance
             record for that month, or they're left out entirely. Turning this on keeps
