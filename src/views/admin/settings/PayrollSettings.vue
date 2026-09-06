@@ -76,7 +76,7 @@ const handleToggle = async () => {
         >
           <span
             class="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform duration-200"
-            :class="setting.attendance_exempt_roles_enabled ? 'translate-x-[22px]' : 'translate-x-0.5'"
+            :class="setting.attendance_exempt_roles_enabled ? 'translate-x-[22px]' : 'translate-x-0'"
           ></span>
         </button>
       </div>
