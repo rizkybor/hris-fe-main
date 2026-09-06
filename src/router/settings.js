@@ -9,6 +9,7 @@ const CertificateSettings = () => import('@/views/admin/settings/CertificateSett
 const BackupDatabase = () => import('@/views/admin/settings/BackupDatabase.vue');
 const GreetingSettings = () => import('@/views/admin/settings/GreetingSettings.vue');
 const AttendanceSettings = () => import('@/views/admin/settings/AttendanceSettings.vue');
+const PayrollSettings = () => import('@/views/admin/settings/PayrollSettings.vue');
 export default [
   {
     path: 'settings',
@@ -64,5 +65,10 @@ export default [
     path: 'settings/attendance',
     name: 'admin.settings.attendance',
     component: AttendanceSettings,
+  },
+  {
+    path: 'settings/payroll',
+    name: 'admin.settings.payroll',
+    component: PayrollSettings,
   },
 ];
