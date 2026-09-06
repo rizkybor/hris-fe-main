@@ -136,6 +136,22 @@ export const usePayrollStore = defineStore("payroll", {
             }
         },
 
+        // Superadmin/Manager/Finance only -- see PayrollController::destroyDetail().
+        async deletePayrollDetail(id) {
+            this.loading = true;
+
+            try {
+                const response = await axiosInstance.delete(`/payroll-details/${id}`);
+
+                this.success = response.data.message;
+            } catch (error) {
+                this.error = handleError(error);
+                throw error;
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async markAsPaid(id, payload) {
             this.loading = true;
 

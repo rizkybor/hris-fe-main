@@ -17,11 +17,13 @@ import {
   Pencil,
   Eye,
   EyeOff,
+  Trash2,
+  RefreshCw,
 } from "lucide-vue-next";
 import { debounce } from "lodash-es";
 import Pagination from "@/components/admin/payroll/Pagination.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
-import { can } from "@/helpers/permissionHelper";
+import { can, hasAnyRole } from "@/helpers/permissionHelper";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
@@ -221,6 +223,12 @@ const isThr = computed(() => payroll.value?.type === "thr");
 
 const canEditPayroll = computed(() => can("payroll-edit") && payroll.value?.status !== "paid");
 
+// Deleting a detail row, deleting/regenerating a paid payroll -- these
+// override data that's already been processed/paid, so (unlike the plain
+// edit above) they stay available regardless of paid status, but only for
+// the roles the backend itself trusts to do that.
+const canManagePayroll = computed(() => hasAnyRole(["superadmin", "manager", "finance"]));
+
 // Watch for search query changes with debounce
 watch(
   searchQuery,
@@ -378,6 +386,84 @@ const handleMarkAsPaid = async () => {
     markingAsPaid.value = false;
   }
 };
+
+const handleDeleteDetail = async (emp) => {
+  const ok = await alertModal.confirm(
+    `Delete ${emp.name}'s payroll entry for this period? This cannot be undone.`,
+    { type: "danger", confirmText: "Delete" }
+  );
+  if (!ok) return;
+
+  try {
+    await payrollStore.deletePayrollDetail(emp.detail_id);
+    await fetchPayrollDetails(pagination.value.current_page);
+    await fetchPayrollStatistics();
+  } catch (error) {
+    console.error("Error deleting payroll detail:", error);
+    await alertModal.alert(
+      error?.response?.data?.message || "Failed to delete payroll detail.",
+      { type: "danger" }
+    );
+  }
+};
+
+const handleDeletePayroll = async () => {
+  const label = isThr.value ? "THR" : "Payroll";
+  const ok = await alertModal.confirm(
+    `Delete this entire ${label} period? This permanently removes it and all its employee details.`,
+    { type: "danger", confirmText: "Delete" }
+  );
+  if (!ok) return;
+
+  try {
+    await payrollStore.deletePayroll(route.params.id);
+    router.push({ name: "admin.payroll.dashboard" });
+  } catch (error) {
+    console.error("Error deleting payroll:", error);
+    await alertModal.alert(
+      error?.response?.data?.message || "Failed to delete payroll.",
+      { type: "danger" }
+    );
+  }
+};
+
+const regenerating = ref(false);
+
+const handleRegenerate = async () => {
+  const label = isThr.value ? "THR" : "Payroll";
+  const ok = await alertModal.confirm(
+    `Re-generate this ${label} period? This replaces all existing employee details with freshly computed ones.`,
+    { type: "warning", confirmText: "Regenerate" }
+  );
+  if (!ok) return;
+
+  const salaryMonth = new Date(payroll.value.salary_month).toISOString().slice(0, 7);
+  const payload = { salary_month: salaryMonth, regenerate: true };
+
+  try {
+    regenerating.value = true;
+    if (isThr.value) {
+      await payrollStore.generateThrPayroll(payload);
+    } else {
+      await payrollStore.generatePayroll(payload);
+    }
+    await alertModal.alert(
+      `${label} regeneration is being processed in the background. Please check back shortly.`,
+      { type: "success" }
+    );
+    await fetchPayrollSummary();
+    await fetchPayrollStatistics();
+    await fetchPayrollDetails(pagination.value.current_page);
+  } catch (error) {
+    console.error("Error regenerating payroll:", error);
+    await alertModal.alert(
+      error?.response?.data?.message || `Failed to regenerate ${label}.`,
+      { type: "danger" }
+    );
+  } finally {
+    regenerating.value = false;
+  }
+};
 </script>
 
 <template>
@@ -387,7 +473,7 @@ const handleMarkAsPaid = async () => {
       <button @click="router.back()"
         class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-2">
         <ArrowLeft class="w-4 h-4 text-gray-600" />
-        <span class="text-brand-dark text-base font-semibold">Back</span>
+        <span class="text-brand-dark text-sm font-semibold hidden sm:inline">Back</span>
       </button>
 
       <button
@@ -497,13 +583,13 @@ const handleMarkAsPaid = async () => {
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h3 class="text-brand-dark text-xl font-bold">Employee Details</h3>
+              <h3 class="text-brand-dark text-base font-bold">Employee Details</h3>
               <span
                 v-if="isThr"
                 class="px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-700"
               >THR</span>
             </div>
-            <p class="text-brand-light text-sm font-normal">
+            <p class="text-brand-light text-xs font-normal">
               Complete payroll breakdown by employee
             </p>
           </div>
@@ -535,7 +621,7 @@ const handleMarkAsPaid = async () => {
       </div>
 
       <!-- Employee Table -->
-      <SkeletonTable v-if="loadingDetails" :rows="6" :cols="canEditPayroll ? 10 : 9" />
+      <SkeletonTable v-if="loadingDetails" :rows="6" :cols="canEditPayroll || canManagePayroll ? 10 : 9" />
       <div v-else class="overflow-x-auto">
         <table class="min-w-full">
           <thead>
@@ -567,7 +653,7 @@ const handleMarkAsPaid = async () => {
               <th class="text-center py-3 px-4 font-semibold text-brand-dark text-sm">
                 Status
               </th>
-              <th v-if="canEditPayroll" class="text-center py-3 px-4 font-semibold text-brand-dark text-sm">
+              <th v-if="canEditPayroll || canManagePayroll" class="text-center py-3 px-4 font-semibold text-brand-dark text-sm">
                 Actions
               </th>
             </tr>
@@ -667,14 +753,25 @@ const handleMarkAsPaid = async () => {
                   {{ emp.status === "paid" ? "Paid" : "Pending" }}
                 </span>
               </td>
-              <td v-if="canEditPayroll" class="py-4 px-4 text-center">
-                <button
-                  @click="openEditModal(emp)"
-                  title="Edit"
-                  class="w-8 h-8 rounded-full inline-flex items-center justify-center hover:bg-blue-50 transition-colors"
-                >
-                  <Pencil class="w-4 h-4 text-blue-600" />
-                </button>
+              <td v-if="canEditPayroll || canManagePayroll" class="py-4 px-4 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  <button
+                    v-if="canEditPayroll"
+                    @click="openEditModal(emp)"
+                    title="Edit"
+                    class="w-8 h-8 rounded-full inline-flex items-center justify-center hover:bg-blue-50 transition-colors"
+                  >
+                    <Pencil class="w-4 h-4 text-blue-600" />
+                  </button>
+                  <button
+                    v-if="canManagePayroll"
+                    @click="handleDeleteDetail(emp)"
+                    title="Delete"
+                    class="w-8 h-8 rounded-full inline-flex items-center justify-center hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 class="w-4 h-4 text-red-600" />
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -692,8 +789,8 @@ const handleMarkAsPaid = async () => {
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Export & Actions</h3>
-          <p class="text-brand-light text-sm font-normal mt-1">
+          <h3 class="text-brand-dark text-base font-bold">Export & Actions</h3>
+          <p class="text-brand-light text-xs font-normal mt-1">
             Download reports and manage payroll data
           </p>
         </div>
@@ -709,6 +806,20 @@ const handleMarkAsPaid = async () => {
             class="border border-green-600 bg-green-50 rounded-[12px] hover:bg-green-100 hover:border-green-700 transition-all duration-300 px-4 py-2 flex items-center gap-2">
             <CheckCircle class="w-4 h-4 text-green-600" />
             <span class="text-green-700 text-sm font-semibold">Mark as Paid</span>
+          </button>
+
+          <button v-if="canManagePayroll" @click="handleRegenerate" :disabled="regenerating"
+            class="border border-yellow-500 bg-yellow-50 rounded-[12px] hover:bg-yellow-100 hover:border-yellow-600 transition-all duration-300 px-4 py-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <RefreshCw class="w-4 h-4 text-yellow-700" />
+            <span class="text-yellow-700 text-sm font-semibold">
+              {{ regenerating ? "Regenerating..." : "Regenerate" }}
+            </span>
+          </button>
+
+          <button v-if="canManagePayroll" @click="handleDeletePayroll"
+            class="border border-red-600 bg-red-50 rounded-[12px] hover:bg-red-100 hover:border-red-700 transition-all duration-300 px-4 py-2 flex items-center gap-2">
+            <Trash2 class="w-4 h-4 text-red-600" />
+            <span class="text-red-700 text-sm font-semibold">Delete Payroll</span>
           </button>
         </div>
       </div>
