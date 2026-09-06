@@ -74,7 +74,7 @@ onMounted(async () => {
 
 <template>
     <div class="px-4 py-4">
-  <Alert type="success" :title="success" :show="success" />
+  <Alert type="success" :title="success" :show="success" @close="teamStore.clearMessages()" />
 
   <Header :team="team" />
 

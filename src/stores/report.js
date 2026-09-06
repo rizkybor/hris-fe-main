@@ -203,6 +203,36 @@ export const useReportStore = defineStore("report", {
       }
     },
 
+    // Deletes the underlying real record (not just "removes it from the
+    // report") -- gated server-side to Superadmin/Manager only.
+    async deleteRow(type, id) {
+      this.error = null;
+      try {
+        await axiosInstance.post("/reports/delete-row", { type, id });
+      } catch (error) {
+        this.error = handleError(error);
+        throw error;
+      }
+    },
+
+    // Returns { deleted, skipped } -- a row that can't legally be deleted
+    // (e.g. an already-paid Payroll) is skipped rather than aborting the
+    // whole range, so the caller can report both counts to the user.
+    async deleteByRange(type, startDate, endDate) {
+      this.error = null;
+      try {
+        const { data } = await axiosInstance.post("/reports/delete-range", {
+          type,
+          start_date: startDate,
+          end_date: endDate,
+        });
+        return data.data;
+      } catch (error) {
+        this.error = handleError(error);
+        throw error;
+      }
+    },
+
     async exportReport(type, params = {}) {
       this.exporting = true;
       this.error = null;

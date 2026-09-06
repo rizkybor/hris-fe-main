@@ -89,6 +89,14 @@ const handleDelete = async () => {
     </div>
 
     <template v-else-if="note">
+      <router-link
+        :to="{ name: 'admin.meeting-notes.dashboard' }"
+        class="inline-flex items-center gap-1.5 text-brand-light hover:text-[#0C51D9] text-xs font-semibold mb-3 transition-colors"
+      >
+        <ArrowLeft class="w-3.5 h-3.5" />
+        Back to Meeting Notes
+      </router-link>
+
       <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div class="flex items-start gap-3 min-w-0">
           <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">

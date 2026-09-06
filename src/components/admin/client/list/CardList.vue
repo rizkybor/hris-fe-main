@@ -10,6 +10,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  number: {
+    type: Number,
+    default: null,
+  },
 });
 
 const emit = defineEmits(["delete"]);
@@ -32,6 +36,7 @@ const goToDetail = () => {
     <div class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-wrap mb-1.5">
+          <span v-if="number" class="text-gray-400 text-xs font-semibold shrink-0">{{ number }}.</span>
           <h4 class="text-brand-dark text-sm font-bold truncate">{{ data?.name || "Unnamed Client" }}</h4>
           <span
             v-if="data?.type"

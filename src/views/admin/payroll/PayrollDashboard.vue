@@ -339,7 +339,7 @@ const viewDetails = (id) => {
       </div>
     </div>
 
-    <Alert type="success" :title="success" :show="success" />
+    <Alert type="success" :title="success" :show="success" @close="payrollStore.clearMessages()" />
 
     <!-- Monthly Payroll Periods -->
     <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">

@@ -270,5 +270,14 @@ export const useTeamStore = defineStore("team", {
             return arr;
         },
 
+        // Success/error persist across route changes (Pinia stores are
+        // singletons) -- without this, a stale message resurfaces every
+        // time the list/detail page remounts, since nothing else ever
+        // clears it.
+        clearMessages() {
+            this.success = null;
+            this.error = null;
+        },
+
     }
 })
