@@ -120,6 +120,18 @@ const totalPpnPercentage = computed(() => {
   return totalAmount.value > 0 ? Math.round((ppnAmount.value / totalAmount.value) * 10000) / 100 : 0;
 });
 
+// One service's own amount + its own VAT/PPN, shown inline on its row so
+// it's clear each service is taxed on its own amount rather than the
+// whole subscription.
+const serviceTotal = (service) =>
+  Math.round((Number(service.amount) || 0) * (1 + (Number(service.ppn_percentage) || 0) / 100));
+
+// With several services, "Subtotal" is the sum of each service's own
+// amount + its own VAT/PPN (i.e. sum of serviceTotal() above) rather than
+// summing amounts and VAT separately -- same total, presented the way a
+// multi-service invoice is actually itemized.
+const servicesSubtotal = computed(() => totalAmount.value + ppnAmount.value);
+
 const invoiceTotal = computed(() => totalAmount.value + ppnAmount.value + (Number(form.admin_fee) || 0));
 const pph23EstimatedAmount = computed(() => Math.round((invoiceTotal.value * (Number(form.pph23_percent) || 0)) / 100));
 
@@ -317,7 +329,7 @@ const submit = () => {
                 </div>
                 <div v-if="form.services.length > 1">
                   <label :for="`subscription-service-ppn-${index}`" class="block mb-2 text-gray-700 font-semibold font-jakarta text-[14px]">
-                    VAT/PPN % (opt.)
+                    VAT / PPN (%)
                   </label>
                   <input
                     :id="`subscription-service-ppn-${index}`"
@@ -334,6 +346,14 @@ const submit = () => {
                   </p>
                 </div>
               </div>
+
+              <p v-if="form.services.length > 1 && Number(service.amount) > 0" class="text-xs text-brand-light">
+                Rp {{ (Number(service.amount) || 0).toLocaleString("id-ID") }}
+                <template v-if="Number(service.ppn_percentage) > 0">
+                  + VAT {{ service.ppn_percentage }}% =
+                  <span class="font-semibold text-brand-dark">Rp {{ serviceTotal(service).toLocaleString("id-ID") }}</span>
+                </template>
+              </p>
             </div>
           </div>
         </div>
@@ -524,8 +544,16 @@ const submit = () => {
           </div>
 
           <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
-            <div class="flex justify-between"><span>Amount</span><span>Rp {{ totalAmount.toLocaleString("id-ID") }}</span></div>
-            <div class="flex justify-between"><span>VAT ({{ totalPpnPercentage }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
+            <template v-if="isMultiService">
+              <!-- Each service is taxed on its own amount at its own rate
+                   (see the per-row total above) -- Subtotal here is the
+                   sum of those, not amount and VAT summed separately. -->
+              <div class="flex justify-between"><span>Subtotal (services incl. VAT)</span><span>Rp {{ servicesSubtotal.toLocaleString("id-ID") }}</span></div>
+            </template>
+            <template v-else>
+              <div class="flex justify-between"><span>Amount</span><span>Rp {{ totalAmount.toLocaleString("id-ID") }}</span></div>
+              <div class="flex justify-between"><span>VAT ({{ totalPpnPercentage }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
+            </template>
             <div class="flex justify-between"><span>Admin Fee</span><span>Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</span></div>
             <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total per Invoice</span><span>Rp {{ invoiceTotal.toLocaleString("id-ID") }}</span></div>
           </div>
