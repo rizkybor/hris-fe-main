@@ -300,7 +300,7 @@ const submit = () => {
                 </p>
               </div>
 
-              <div class="grid grid-cols-[2fr_1fr] gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-3">
                 <div>
                   <BaseInput
                     :id="`subscription-service-amount-${index}`"
