@@ -498,7 +498,7 @@ const handleRegenerate = async () => {
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Total Employees</p>
-            <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2">
+            <p class="text-brand-dark text-base font-extrabold leading-tight my-2">
               {{ loadingStatistics ? "..." : (payrollStatistics?.total_employees || 0) }}
             </p>
             <p class="text-success text-sm font-medium">All departments</p>
@@ -515,7 +515,7 @@ const handleRegenerate = async () => {
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Total Payroll</p>
-            <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2">
+            <p class="text-brand-dark text-base font-extrabold leading-tight my-2">
               {{ loadingStatistics ? "..." : maskRupiah(formatRupiahCompact(payrollStatistics?.total_amount || 0)) }}
             </p>
             <p class="text-success text-sm font-medium">This period</p>
@@ -532,7 +532,7 @@ const handleRegenerate = async () => {
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Average Salary</p>
-            <p class="text-brand-dark text-3xl font-extrabold leading-tight my-2">
+            <p class="text-brand-dark text-base font-extrabold leading-tight my-2">
               {{
                 loadingStatistics
                   ? "..."
@@ -553,7 +553,7 @@ const handleRegenerate = async () => {
         <div class="flex items-center justify-between">
           <div>
             <p class="text-brand-dark text-sm font-medium">Processed On</p>
-            <p class="text-brand-dark text-2xl font-extrabold leading-tight my-2">
+            <p class="text-brand-dark text-base font-extrabold leading-tight my-2">
               {{
                 loading
                   ? "..."
