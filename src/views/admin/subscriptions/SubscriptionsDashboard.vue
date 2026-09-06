@@ -107,6 +107,18 @@ const dueBadge = (subscription) => {
   return null;
 };
 
+// H-30: highlights the whole card once a subscription is within 30 days
+// of (or past) its next due date -- a wider heads-up than dueBadge's 7-day
+// badge, which stays as-is for the tighter "about to renew" callout.
+const isNearDue = (subscription) => {
+  if (subscription.status !== "active") return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(subscription.next_due_date);
+  const diffDays = Math.round((due - today) / (1000 * 60 * 60 * 24));
+  return diffDays <= 30;
+};
+
 // ===== Add / Edit modal =====
 const showModal = ref(false);
 const modalMode = ref("add");
@@ -291,7 +303,8 @@ const handleGenerateInvoice = async (subscription) => {
       <div
         v-for="(subscription, index) in subscriptions"
         :key="subscription.id"
-        class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 hover:border-[#0C51D9] transition-all duration-300"
+        class="rounded-[14px] p-4 hover:border-[#0C51D9] transition-all duration-300"
+        :class="isNearDue(subscription) ? 'bg-orange-100 border border-orange-500' : 'bg-white border border-[#DCDEDD]'"
       >
         <div class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
           <div class="flex-1 min-w-0">
