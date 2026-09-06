@@ -17,21 +17,83 @@ import {
   Eye,
   EyeOff,
   Gift,
+  Trash2,
+  RefreshCw,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
-import { can } from "@/helpers/permissionHelper";
+import { can, hasAnyRole } from "@/helpers/permissionHelper";
+import { useAlertModalStore } from "@/stores/alertModal";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 
 const router = useRouter();
 const payrollStore = usePayrollStore();
+const alertModal = useAlertModalStore();
 const { payrolls, statistics, loading, success } = storeToRefs(payrollStore);
+
+const fetchList = () => payrollStore.fetchPayrolls({ page: 1, row_per_page: 10 });
 
 onMounted(async () => {
   await payrollStore.fetchStatistics();
-  await payrollStore.fetchPayrolls({ page: 1, row_per_page: 10 });
+  await fetchList();
 });
+
+// Deleting a paid payroll, or re-generating one that already has details,
+// overrides data that's already been processed/paid out -- restricted to
+// the same trusted roles server-side enforces.
+const canManagePayroll = computed(() => hasAnyRole(["superadmin", "manager", "finance"]));
+
+const handleDeletePayroll = async (payroll) => {
+  const label = payroll.type === "thr" ? "THR" : "Payroll";
+  const ok = await alertModal.confirm(
+    `Delete this ${label} period (${formatDate(payroll.period || payroll.salary_month)})? This permanently removes it and all its employee details.`,
+    { type: "danger", confirmText: "Delete" }
+  );
+  if (!ok) return;
+
+  try {
+    await payrollStore.deletePayroll(payroll.id);
+    await payrollStore.fetchStatistics();
+    await fetchList();
+  } catch (error) {
+    await alertModal.alert(
+      error?.response?.data?.message || "Failed to delete payroll.",
+      { type: "danger" }
+    );
+  }
+};
+
+const handleRegenerate = async (payroll) => {
+  const label = payroll.type === "thr" ? "THR" : "Payroll";
+  const ok = await alertModal.confirm(
+    `Re-generate ${label} for ${formatDate(payroll.period || payroll.salary_month)}? This replaces the existing employee details for this period with freshly computed ones.`,
+    { type: "warning", confirmText: "Regenerate" }
+  );
+  if (!ok) return;
+
+  const salaryMonth = new Date(payroll.salary_month).toISOString().slice(0, 7);
+  const payload = { salary_month: salaryMonth, regenerate: true };
+
+  try {
+    if (payroll.type === "thr") {
+      await payrollStore.generateThrPayroll(payload);
+    } else {
+      await payrollStore.generatePayroll(payload);
+    }
+    await alertModal.alert(
+      `${label} regeneration is being processed in the background. Please check back shortly.`,
+      { type: "success" }
+    );
+    await payrollStore.fetchStatistics();
+    await fetchList();
+  } catch (error) {
+    await alertModal.alert(
+      error?.response?.data?.message || `Failed to regenerate ${label}.`,
+      { type: "danger" }
+    );
+  }
+};
 
 // Hidden by default -- payroll amounts are sensitive, revealed only on demand.
 const isTotalAmountVisible = ref(false);
@@ -417,6 +479,22 @@ const viewDetails = (id) => {
               class="btn-details shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-[#0C51D9] hover:text-[#0C51D9] transition-all duration-300 py-2.5 px-4 flex items-center justify-center"
             >
               <span class="text-brand-dark text-sm font-medium">Details</span>
+            </button>
+            <button
+              v-if="canManagePayroll"
+              @click="handleRegenerate(payroll)"
+              title="Regenerate"
+              class="shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-yellow-500 hover:text-yellow-600 transition-all duration-300 p-2.5 flex items-center justify-center"
+            >
+              <RefreshCw class="w-4 h-4" />
+            </button>
+            <button
+              v-if="canManagePayroll"
+              @click="handleDeletePayroll(payroll)"
+              title="Delete"
+              class="shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-red-500 hover:text-red-600 transition-all duration-300 p-2.5 flex items-center justify-center"
+            >
+              <Trash2 class="w-4 h-4" />
             </button>
           </div>
         </div>
