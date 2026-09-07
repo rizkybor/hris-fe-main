@@ -9,6 +9,7 @@ import { capitalize } from "@/utils/formatUtils.js";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import Avatar from "@/components/common/Avatar.vue";
+import AttendanceDetailModal from "@/components/admin/attendance/AttendanceDetailModal.vue";
 
 const router = useRouter();
 const store = useAttendanceStore();
@@ -16,11 +17,15 @@ const { attendances, meta, loading } = storeToRefs(store);
 
 const search = ref("");
 const statusFilter = ref("");
+const startDate = ref("");
+const endDate = ref("");
 
 const load = (page = 1) => {
   store.fetchAllPaginated({
     search: search.value || undefined,
     status: statusFilter.value || undefined,
+    start_date: startDate.value || undefined,
+    end_date: endDate.value || undefined,
     page,
   });
 };
@@ -29,6 +34,18 @@ onMounted(() => load());
 
 const handleSearch = () => load(1);
 const handleFilterChange = () => load(1);
+
+const showDetail = ref(false);
+const selectedAttendance = ref(null);
+
+const openDetail = (attendance) => {
+  selectedAttendance.value = attendance;
+  showDetail.value = true;
+};
+
+const closeDetail = () => {
+  showDetail.value = false;
+};
 
 const formatDate = (date) => (date ? formatDateShort(date) : "N/A");
 const formatTime = (time) => (time ? formatTimeUtil(time) : "-");
@@ -98,6 +115,22 @@ const statusBadgeClass = (status) => {
             class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
           />
         </div>
+        <div class="flex items-center gap-2">
+          <input
+            v-model="startDate"
+            @change="handleFilterChange"
+            type="date"
+            class="border border-[#DCDEDD] rounded-xl text-sm px-3 py-2 focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+          />
+          <span class="text-brand-light text-sm">to</span>
+          <input
+            v-model="endDate"
+            @change="handleFilterChange"
+            type="date"
+            :min="startDate || undefined"
+            class="border border-[#DCDEDD] rounded-xl text-sm px-3 py-2 focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+          />
+        </div>
       </div>
 
       <SkeletonTable v-if="loading" :rows="6" :cols="7" />
@@ -120,7 +153,8 @@ const statusBadgeClass = (status) => {
             <tr
               v-for="(attendance, index) in attendances"
               :key="attendance.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+              @click="openDetail(attendance)"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
             >
               <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4">
@@ -165,5 +199,7 @@ const statusBadgeClass = (status) => {
 
       <Pagination :meta="meta" :loading="loading" item-label="records" @page-change="load" />
     </div>
+
+    <AttendanceDetailModal :show="showDetail" :attendance="selectedAttendance" @close="closeDetail" />
   </div>
 </template>

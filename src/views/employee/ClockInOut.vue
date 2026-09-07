@@ -132,6 +132,7 @@ const canCheckIn = computed(() => {
 const canCheckOut = computed(() => {
   return (
     currentLocation.value &&
+    capturedPhotoData.value &&
     isCheckedIn.value &&
     elapsedWorkMinutes.value >= MIN_WORK_MINUTES_BEFORE_CHECK_OUT
   );
@@ -391,10 +392,16 @@ const handleCheckOut = async () => {
     return;
   }
 
+  if (!capturedPhotoData.value) {
+    await alertModal.alert("Please take a photo before clocking out.", { type: "warning" });
+    return;
+  }
+
   try {
     await checkOut({
       check_out_lat: currentLocation.value.latitude,
       check_out_long: currentLocation.value.longitude,
+      check_out_photo: capturedPhotoData.value,
     });
 
     await alertModal.alert("Successfully clocked out!", { type: "success" });
