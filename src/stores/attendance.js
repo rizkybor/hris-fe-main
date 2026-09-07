@@ -124,6 +124,7 @@ export const useAttendanceStore = defineStore("attendance", {
                 const data = {
                     check_out_lat: payload.check_out_lat,
                     check_out_long: payload.check_out_long,
+                    check_out_photo: payload.check_out_photo,
                 };
 
                 if (payload.notes) {

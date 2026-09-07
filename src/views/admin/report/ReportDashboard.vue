@@ -29,6 +29,8 @@ import { useScrollFade } from "@/composables/useScrollFade";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
+import AttendanceDetailModal from "@/components/admin/attendance/AttendanceDetailModal.vue";
+import { formatTime as formatTimeUtil } from "@/utils/dateUtils";
 
 const reportStore = useReportStore();
 const projectStore = useProjectStore();
@@ -220,6 +222,28 @@ const openReceiptDetail = (row) => {
 
 const closeReceiptDetail = () => {
   showReceiptDetail.value = false;
+};
+
+// Attendance detail modal -- shared with Attendance Records so both pages
+// show the same photo/location breakdown from the same component.
+const showAttendanceDetail = ref(false);
+const selectedAttendance = ref(null);
+
+const openAttendanceDetail = (row) => {
+  selectedAttendance.value = row;
+  showAttendanceDetail.value = true;
+};
+
+const closeAttendanceDetail = () => {
+  showAttendanceDetail.value = false;
+};
+
+const attendanceStatusClass = {
+  present: "bg-green-50 text-green-700",
+  late: "bg-amber-50 text-amber-700",
+  absent: "bg-red-50 text-red-700",
+  remote: "bg-blue-50 text-blue-700",
+  overtime: "bg-purple-50 text-purple-700",
 };
 
 const handleDownloadPdf = async () => {
@@ -918,23 +942,29 @@ onMounted(() => {
             <tr
               v-for="(row, index) in tableRows"
               :key="row.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+              @click="openAttendanceDetail(row)"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
             >
               <td class="py-3 pr-4 text-brand-light">{{ (attendance.meta.current_page - 1) * attendance.meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4">{{ formatDate(row.date) }}</td>
               <td class="py-3 pr-4">{{ row.employee?.user?.name ?? "N/A" }}</td>
               <td class="py-3 pr-4">
-                {{ row.check_in ? formatDate(row.check_in) : "-" }}
+                <span class="tabular-nums">{{ row.check_in ? formatTimeUtil(row.check_in) : "-" }}</span>
+                <p v-if="row.status === 'late' && row.late_minutes" class="text-amber-600 text-xs mt-0.5">
+                  late by {{ Math.floor(row.late_minutes / 60) > 0 ? `${Math.floor(row.late_minutes / 60)}h ` : "" }}{{ row.late_minutes % 60 }}m
+                </p>
+              </td>
+              <td class="py-3 pr-4 tabular-nums">
+                {{ row.check_out ? formatTimeUtil(row.check_out) : "-" }}
               </td>
               <td class="py-3 pr-4">
-                {{ row.check_out ? formatDate(row.check_out) : "-" }}
-              </td>
-              <td class="py-3 pr-4 capitalize">
-                {{ (row.status || "").replace("_", " ") }}
+                <span class="px-2 py-0.5 rounded-md text-xs font-semibold capitalize" :class="attendanceStatusClass[row.status] || 'bg-gray-100 text-gray-500'">
+                  {{ (row.status || "").replace("_", " ") }}
+                </span>
               </td>
               <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
                 <button
-                  @click="handleDeleteRow(row)"
+                  @click.stop="handleDeleteRow(row)"
                   :disabled="deletingRowId === rowIdField(row)"
                   title="Delete"
                   class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
@@ -1561,6 +1591,8 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <AttendanceDetailModal :show="showAttendanceDetail" :attendance="selectedAttendance" @close="closeAttendanceDetail" />
 
     <!-- Delete by Date Range Modal -->
     <div v-if="showDeleteRangeModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeDeleteRangeModal">
