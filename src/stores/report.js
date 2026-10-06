@@ -178,12 +178,12 @@ export const useReportStore = defineStore("report", {
       }
     },
 
-    async downloadStaffRaportPdf(employeeId, period, employeeName = "staff") {
+    async downloadStaffRaportPdf(employeeId, period, employeeName = "staff", withSignature = false) {
       this.downloadingPdf = true;
       this.error = null;
       try {
         const response = await axiosInstance.get(`/reports/staff-raport/${employeeId}/pdf`, {
-          params: { period },
+          params: { period, with_signature: withSignature ? 1 : 0 },
           responseType: "blob",
         });
 
