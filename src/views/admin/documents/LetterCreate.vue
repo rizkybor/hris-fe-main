@@ -7,6 +7,7 @@ import { useLetterStore } from "@/stores/letter";
 import { useEmployeeStore } from "@/stores/employee";
 import { can } from "@/helpers/permissionHelper";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
+import SignatureToggle from "@/components/common/SignatureToggle.vue";
 
 const store = useLetterStore();
 const { letterCodes, divisionCodes } = storeToRefs(store);
@@ -112,6 +113,7 @@ const form = ref({
   second_party_signatory_name: "",
   second_party_signatory_title: "",
   template: "primary",
+  use_signature: false,
 });
 
 const TEMPLATE_OPTIONS = [
@@ -154,6 +156,7 @@ onMounted(async () => {
       form.value.second_party_signatory_name = letter.second_party_signatory_name || "";
       form.value.second_party_signatory_title = letter.second_party_signatory_title || "";
       form.value.template = letter.template || "primary";
+      form.value.use_signature = !!letter.use_signature;
 
       if (letter.items?.length) {
         useItems.value = true;
@@ -225,6 +228,7 @@ const handleSubmit = async () => {
         signatory_name: form.value.signatory_name,
         signatory_title: form.value.signatory_title,
         template: form.value.template,
+        use_signature: form.value.use_signature,
         second_party_name: useSecondParty.value ? form.value.second_party_name : null,
         second_party_signatory_name: useSecondParty.value ? form.value.second_party_signatory_name : null,
         second_party_signatory_title: useSecondParty.value ? form.value.second_party_signatory_title : null,
@@ -408,6 +412,7 @@ const handleSubmit = async () => {
               <input v-model="form.signatory_title" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
             </div>
           </div>
+          <SignatureToggle v-model="form.use_signature" hint="Stamps the first party's signature onto the PDF." />
         </div>
       </div>
 

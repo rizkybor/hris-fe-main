@@ -6,6 +6,7 @@ import { FileSignature, User, ShieldCheck, Paperclip, X, FileText } from "lucide
 import { useDocumentLetterStore } from "@/stores/documentLetter";
 import { useAuthStore } from "@/stores/auth";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
+import SignatureToggle from "@/components/common/SignatureToggle.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -22,6 +23,7 @@ const form = ref({
   subject: "",
   document_date: new Date().toISOString().slice(0, 10),
   body: "",
+  use_signature: false,
 });
 
 const newAttachments = ref([]);
@@ -36,6 +38,7 @@ onMounted(async () => {
       subject: memo.subject,
       document_date: memo.document_date?.slice(0, 10),
       body: memo.body,
+      use_signature: !!memo.use_signature,
     };
     existingAttachments.value = memo.attachments || [];
   }
@@ -59,6 +62,9 @@ const buildFormData = () => {
   formData.append("subject", form.value.subject);
   formData.append("document_date", form.value.document_date);
   formData.append("body", form.value.body);
+  // "1"/"0" rather than true/false -- FormData stringifies, and Laravel's
+  // boolean rule rejects the string "true".
+  formData.append("use_signature", form.value.use_signature ? "1" : "0");
   newAttachments.value.forEach((file) => formData.append("attachments[]", file));
   removeAttachmentIds.value.forEach((id) => formData.append("remove_attachment_ids[]", id));
   return formData;
@@ -146,6 +152,8 @@ const handleSubmit = async () => {
         <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Memo Content <span class="text-red-600">*</span></label>
         <RichTextEditor v-model="form.body" placeholder="Dear ..." />
       </div>
+
+      <SignatureToggle v-model="form.use_signature" hint="Stamps the sender's signature onto the PDF." />
 
       <div>
         <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Attachments</label>

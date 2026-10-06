@@ -29,6 +29,7 @@ import { useScrollFade } from "@/composables/useScrollFade";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
+import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import AttendanceDetailModal from "@/components/admin/attendance/AttendanceDetailModal.vue";
 import { formatTime as formatTimeUtil } from "@/utils/dateUtils";
 
@@ -163,6 +164,7 @@ const canExport = computed(() => can("report-export"));
 // Staff Raport detail modal
 const showRaportDetail = ref(false);
 const raportPeriod = ref("month");
+const raportUseSignature = ref(false);
 const loadingDetail = ref(false);
 
 const openRaportDetail = async (employeeId) => {
@@ -252,7 +254,8 @@ const handleDownloadPdf = async () => {
     await reportStore.downloadStaffRaportPdf(
       staffRaportDetail.value.employee.id,
       raportPeriod.value,
-      staffRaportDetail.value.employee.name
+      staffRaportDetail.value.employee.name,
+      raportUseSignature.value
     );
   } catch (error) {
     console.error("PDF download failed", error);
@@ -1360,6 +1363,7 @@ onMounted(() => {
                 <span class="text-brand-white text-sm font-semibold">{{ downloadingPdf ? "Downloading..." : "Download PDF" }}</span>
               </button>
             </div>
+            <SignatureToggle v-model="raportUseSignature" class="mt-3" hint="Stamps the Director's signature onto the PDF." />
           </div>
         </div>
       </div>
