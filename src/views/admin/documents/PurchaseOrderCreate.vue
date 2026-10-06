@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { Plus, Trash2, ShoppingCart, Info, Package, Wallet, FileSignature, ChevronDown } from "lucide-vue-next";
 import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
+import SignatureToggle from "@/components/common/SignatureToggle.vue";
 
 const store = usePurchaseOrderStore();
 const router = useRouter();
@@ -28,6 +29,7 @@ const form = ref({
   buyer_signatory_title: "",
   client_signatory_name: "",
   client_signatory_title: "",
+  use_signature: false,
 });
 
 const submitting = ref(false);
@@ -62,6 +64,7 @@ onMounted(async () => {
     form.value.buyer_signatory_title = order.buyer_signatory_title || "";
     form.value.client_signatory_name = order.client_signatory_name || "";
     form.value.client_signatory_title = order.client_signatory_title || "";
+    form.value.use_signature = !!order.use_signature;
   } catch (error) {
     errorMessage.value = "Failed to load purchase order.";
   }
@@ -249,6 +252,7 @@ const handleSubmit = async () => {
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Position</label>
             <input v-model="form.client_signatory_title" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
+          <SignatureToggle v-model="form.use_signature" class="md:col-span-2" hint="Stamps the buyer signatory's signature onto the PDF." />
         </div>
       </div>
 

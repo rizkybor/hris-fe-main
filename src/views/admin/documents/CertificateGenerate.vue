@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { Award, Settings, Plus, Trash2, Info, ClipboardPaste, Loader2, ChevronDown } from "lucide-vue-next";
 import { useCertificateStore } from "@/stores/certificate";
+import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import { can } from "@/helpers/permissionHelper";
 
 const store = useCertificateStore();
@@ -17,6 +18,7 @@ const form = ref({
   end_date: "",
   signatory_name: "",
   signatory_title: "",
+  use_signature: false,
   category_code: "",
   program_code: "",
   certificate_template_id: "",
@@ -161,6 +163,7 @@ const handleSubmit = async () => {
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Signatory Position <span class="text-red-600">*</span></label>
             <input v-model="form.signatory_title" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
           </div>
+          <SignatureToggle v-model="form.use_signature" class="md:col-span-2" />
         </div>
       </div>
 
