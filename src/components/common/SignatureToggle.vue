@@ -1,15 +1,14 @@
 <script setup>
+import { SIGNATORIES } from "@/utils/signatories";
+
 // Opt-in for stamping the signatory's scanned signature onto the exported
-// PDF. The backend only has signatures on file for the names below (see
-// hris-api App\Support\SignatureImage); any other signatory name renders
-// the usual blank space even when this is checked.
+// PDF. The backend only has signatures on file for SIGNATORIES; any other
+// signatory name renders the usual blank space even when this is checked.
 const model = defineModel({ type: Boolean, default: false });
 
 defineProps({
   hint: { type: String, default: "" },
 });
-
-const SIGNERS = ["Aldi PP, S.Ikom", "Andy Saputra, S.T.", "Rizky Ajie Kurniawan, S.Kom"];
 </script>
 
 <template>
@@ -20,7 +19,7 @@ const SIGNERS = ["Aldi PP, S.Ikom", "Andy Saputra, S.T.", "Rizky Ajie Kurniawan,
     </label>
     <p class="text-xs text-gray-400 mt-1">
       {{ hint || "Stamps the signatory's signature onto the PDF." }}
-      Available for: {{ SIGNERS.join(", ") }}.
+      Available for: {{ SIGNATORIES.join(", ") }}.
     </p>
   </div>
 </template>
