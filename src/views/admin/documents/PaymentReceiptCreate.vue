@@ -4,6 +4,8 @@ import { useRouter, useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import { FileCheck2, Wallet, ChevronDown } from "lucide-vue-next";
 import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
+import SignatureToggle from "@/components/common/SignatureToggle.vue";
+import { SIGNATORIES } from "@/utils/signatories";
 import { useInvoiceStore } from "@/stores/invoice";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 
@@ -33,6 +35,7 @@ const form = ref({
   invoice_id: "",
   payment_status: "paid",
   recipient_name: "",
+  use_signature: false,
 });
 
 // The amount before any PPh 23 withholding -- `form.amount` (what the DB
@@ -66,6 +69,7 @@ onMounted(async () => {
       form.value.invoice_id = receipt.invoice_id || "";
       form.value.payment_status = receipt.payment_status || "paid";
       form.value.recipient_name = receipt.recipient_name || "";
+      form.value.use_signature = !!receipt.use_signature;
 
       if (receipt.pph23_amount) {
         applyPph23.value = true;
@@ -109,6 +113,21 @@ const handlePph23TypeChange = () => {
   recomputePph23();
 };
 
+// Cancelled invoices can't be paid against, so they're left out -- except
+// the one an existing receipt is already linked to, so editing it doesn't
+// silently blank the select.
+const invoiceOptions = computed(() =>
+  invoices.value.filter((i) => i.status !== "cancelled" || i.id === Number(form.value.invoice_id))
+);
+
+// Older receipts may carry a free-typed name from before this was a
+// dropdown -- keep it selectable so editing doesn't drop it.
+const signatoryOptions = computed(() =>
+  form.value.recipient_name && !SIGNATORIES.includes(form.value.recipient_name)
+    ? [form.value.recipient_name, ...SIGNATORIES]
+    : SIGNATORIES
+);
+
 const handleInvoiceSelect = () => {
   const invoice = invoices.value.find((i) => i.id === Number(form.value.invoice_id));
   if (invoice) {
@@ -138,6 +157,7 @@ const handleSubmit = async () => {
         invoice_id: form.value.invoice_id || null,
         payment_status: form.value.payment_status,
         recipient_name: form.value.recipient_name,
+        use_signature: form.value.use_signature,
       };
       await store.updateReceipt(editingId.value, payload);
       router.push({ name: "admin.payment-receipts.dashboard" });
@@ -191,7 +211,7 @@ const handleSubmit = async () => {
             <div class="relative w-full">
               <select v-model="form.invoice_id" @change="handleInvoiceSelect" class="select-soft">
                 <option value="">- Not related to an invoice -</option>
-                <option v-for="invoice in invoices" :key="invoice.id" :value="invoice.id">
+                <option v-for="invoice in invoiceOptions" :key="invoice.id" :value="invoice.id">
                   {{ invoice.invoice_number }} - {{ invoice.client_name }}
                 </option>
               </select>
@@ -293,8 +313,17 @@ const handleSubmit = async () => {
           </div>
           <div class="md:col-span-2">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Recipient Name (Signatory)</label>
-            <input v-model="form.recipient_name" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
+            <div class="relative w-full">
+              <select v-model="form.recipient_name" class="select-soft">
+                <option value="">- Select signatory -</option>
+                <option v-for="name in signatoryOptions" :key="name" :value="name">{{ name }}</option>
+              </select>
+              <ChevronDown
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
+          <SignatureToggle v-model="form.use_signature" class="md:col-span-2" hint="Stamps the recipient's signature onto the PDF." />
         </div>
       </div>
 
