@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import DashboardWelcome from "@/components/admin/dashboard/DashboardWelcome.vue";
 import DashboardWidgetGrid from "@/components/admin/dashboard/DashboardWidgetGrid.vue";
+import SptTahunanAlert from "@/components/admin/dashboard/SptTahunanAlert.vue";
 </script>
 
 <template>
   <div class="px-4 py-4 space-y-6">
+    <SptTahunanAlert />
+
     <DashboardWelcome />
 
     <!-- Which widgets appear and in what order is now driven entirely by
