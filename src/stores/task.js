@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { axiosInstance } from '@/plugins/axios';
 import { handleError } from "@/helpers/errorHelper";
+import { toRequestBody } from "@/helpers/formDataHelper";
 
 export const useTaskStore = defineStore("task", {
     state: () => ({
@@ -53,7 +54,7 @@ export const useTaskStore = defineStore("task", {
             this.error = null;
 
             try {
-                const response = await axiosInstance.post('project-tasks', payload);
+                const response = await axiosInstance.post('project-tasks', toRequestBody(payload));
 
                 this.success = response.data.message;
                 return response.data.data;
@@ -70,10 +71,10 @@ export const useTaskStore = defineStore("task", {
             this.error = null;
 
             try {
-                const response = await axiosInstance.post(`project-tasks/${id}`, {
+                const response = await axiosInstance.post(`project-tasks/${id}`, toRequestBody({
                     ...payload,
                     _method: 'PUT',
-                });
+                }));
 
                 // Update task in local state
                 const taskIndex = this.tasks.findIndex(t => t.id === id);

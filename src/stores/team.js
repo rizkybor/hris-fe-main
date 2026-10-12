@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { axiosInstance } from '@/plugins/axios';
 import { handleError } from "@/helpers/errorHelper";
+import { toRequestBody } from "@/helpers/formDataHelper";
 
 export const useTeamStore = defineStore("team", {
     state: () => ({
@@ -91,7 +92,7 @@ export const useTeamStore = defineStore("team", {
             this.loading = true;
 
             try {
-                const response = await axiosInstance.post('teams', payload);
+                const response = await axiosInstance.post('teams', toRequestBody(payload));
 
                 this.success = response.data.message;
             } catch (error) {
@@ -105,10 +106,10 @@ export const useTeamStore = defineStore("team", {
             this.loading = true;
 
             try {
-                const response = await axiosInstance.post(`teams/${id}`, {
+                const response = await axiosInstance.post(`teams/${id}`, toRequestBody({
                     ...payload,
                     _method: 'PUT',
-                });
+                }));
 
                 this.success = response.data.message;
             } catch (error) {
