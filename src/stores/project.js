@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { axiosInstance } from '@/plugins/axios';
 import { handleError } from "@/helpers/errorHelper";
+import { toRequestBody } from "@/helpers/formDataHelper";
 
 export const useProjectStore = defineStore("project", {
     state: () => ({
@@ -95,7 +96,7 @@ export const useProjectStore = defineStore("project", {
             this.loading = true;
 
             try {
-                const response = await axiosInstance.post('projects', payload);
+                const response = await axiosInstance.post('projects', toRequestBody(payload));
 
                 this.success = response.data.message;
             } catch (error) {
@@ -109,10 +110,10 @@ export const useProjectStore = defineStore("project", {
             this.loading = true;
 
             try {
-                const response = await axiosInstance.post(`projects/${id}`, {
+                const response = await axiosInstance.post(`projects/${id}`, toRequestBody({
                     ...payload,
                     _method: 'PUT',
-                });
+                }));
 
                 this.success = response.data.message;
             } catch (error) {
