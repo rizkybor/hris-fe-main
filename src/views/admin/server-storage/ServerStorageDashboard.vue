@@ -1,7 +1,19 @@
 <script setup>
 import { computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { HardDrive, RefreshCw, Database, FolderOpen } from "lucide-vue-next";
+import {
+  HardDrive,
+  RefreshCw,
+  Database,
+  Archive,
+  Upload,
+  FileText,
+  Search,
+  Zap,
+  Package,
+  Code2,
+  Server,
+} from "lucide-vue-next";
 import { useServerStorageStore } from "@/stores/serverStorage";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
@@ -32,6 +44,36 @@ const level = computed(() => {
   return { color: "#0C51D9", label: "Healthy", badge: "bg-green-50 text-green-700" };
 });
 
+// Fixed color + icon per backend category key, so a category keeps the
+// same look no matter which others are present (Database is omitted when
+// MySQL's size can't be read).
+const CATEGORY_STYLE = {
+  database: { color: "#4F46E5", icon: Database },
+  backups: { color: "#0891B2", icon: Archive },
+  uploads: { color: "#16A34A", icon: Upload },
+  logs: { color: "#D97706", icon: FileText },
+  search_index: { color: "#DB2777", icon: Search },
+  cache: { color: "#7C3AED", icon: Zap },
+  dependencies: { color: "#0C51D9", icon: Package },
+  application: { color: "#0F766E", icon: Code2 },
+  system: { color: "#64748B", icon: Server },
+};
+
+const categories = computed(() =>
+  (storage.value?.categories ?? []).map((c) => ({
+    ...c,
+    ...(CATEGORY_STYLE[c.key] ?? { color: "#94A3B8", icon: HardDrive }),
+    percentOfDisk: storage.value.disk.total_bytes ? (c.bytes / storage.value.disk.total_bytes) * 100 : 0,
+    percentOfUsed: storage.value.disk.used_bytes ? (c.bytes / storage.value.disk.used_bytes) * 100 : 0,
+  }))
+);
+
+const sortedCategories = computed(() => [...categories.value].sort((a, b) => b.bytes - a.bytes));
+
+const hasDatabase = computed(() => categories.value.some((c) => c.key === "database"));
+
+const formatPercent = (value) => (value > 0 && value < 0.1 ? "<0.1" : value.toFixed(1));
+
 const checkedAt = computed(() =>
   storage.value?.checked_at
     ? new Date(storage.value.checked_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })
@@ -56,7 +98,7 @@ const checkedAt = computed(() =>
 
         <button
           type="button"
-          @click="store.fetchStorage()"
+          @click="store.fetchStorage(true)"
           :disabled="loading"
           class="rounded-[8px] border border-[#DCDEDD] bg-white hover:border-[#0C51D9] transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5 w-full sm:w-auto disabled:opacity-50"
         >
@@ -91,10 +133,14 @@ const checkedAt = computed(() =>
           </span>
         </div>
 
-        <div class="w-full bg-gray-100 rounded-full overflow-hidden" style="height: 14px">
+        <!-- Stacked by category; the grey track left over is the free space -->
+        <div class="w-full bg-gray-100 rounded-full overflow-hidden flex" style="height: 14px">
           <div
-            class="h-full rounded-full transition-all duration-500"
-            :style="{ width: `${Math.min(usedPercent, 100)}%`, backgroundColor: level.color }"
+            v-for="category in categories"
+            :key="category.key"
+            class="h-full transition-all duration-500"
+            :style="{ width: `${category.percentOfDisk}%`, backgroundColor: category.color }"
+            :title="`${category.label}: ${formatBytes(category.bytes)}`"
           ></div>
         </div>
         <div class="flex items-center justify-between mt-2 text-sm">
@@ -120,29 +166,61 @@ const checkedAt = computed(() =>
         </div>
       </div>
 
-      <!-- What the HRIS itself takes up on that disk -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h3 class="text-brand-dark text-base font-bold">HRIS Usage</h3>
-        <p class="text-brand-light text-xs mb-4">Space taken by this application on the disk above</p>
+      <!-- What the used space is made of -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-5">
+        <h3 class="text-brand-dark text-base font-bold">Usage Breakdown</h3>
+        <p class="text-brand-light text-xs mb-4">What the {{ formatBytes(storage.disk.used_bytes) }} of used space is taken up by</p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="flex items-center gap-3 border border-[#DCDEDD] rounded-[12px] p-4">
-            <div class="w-10 h-10 bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0">
-              <Database class="w-5 h-5 text-indigo-600" />
+        <div class="space-y-3">
+          <div v-for="category in sortedCategories" :key="category.key" class="flex items-center gap-3">
+            <div
+              class="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
+              :style="{ backgroundColor: `${category.color}1A` }"
+            >
+              <component :is="category.icon" class="w-4 h-4" :style="{ color: category.color }" />
             </div>
-            <div>
-              <p class="text-brand-light text-sm font-medium">Database</p>
-              <p class="text-brand-dark text-lg font-bold">{{ formatBytes(storage.breakdown.database_bytes) }}</p>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-brand-dark text-sm font-semibold truncate">{{ category.label }}</p>
+                <p class="text-brand-dark text-sm font-bold shrink-0">{{ formatBytes(category.bytes) }}</p>
+              </div>
+              <div class="flex items-center gap-3 mt-1">
+                <div class="flex-1 bg-gray-100 rounded-full overflow-hidden" style="height: 6px">
+                  <div
+                    class="h-full rounded-full"
+                    :style="{ width: `${Math.min(category.percentOfUsed, 100)}%`, backgroundColor: category.color }"
+                  ></div>
+                </div>
+                <span class="text-brand-light text-xs shrink-0 text-right" style="width: 48px">
+                  {{ formatPercent(category.percentOfUsed) }}%
+                </span>
+              </div>
             </div>
           </div>
-          <div class="flex items-center gap-3 border border-[#DCDEDD] rounded-[12px] p-4">
-            <div class="w-10 h-10 bg-orange-50 rounded-[12px] flex items-center justify-center shrink-0">
-              <FolderOpen class="w-5 h-5 text-orange-600" />
-            </div>
-            <div>
-              <p class="text-brand-light text-sm font-medium">App Storage (logs, cache, backups)</p>
-              <p class="text-brand-dark text-lg font-bold">{{ formatBytes(storage.breakdown.app_storage_bytes) }}</p>
-            </div>
+        </div>
+
+        <p class="text-brand-light text-xs mt-4">
+          <span class="font-semibold">System &amp; Other</span> is everything outside this application: the
+          operating system, other apps or sites on the VPS, and MySQL's own logs.
+          <template v-if="!hasDatabase">
+            The database size couldn't be read, so it's included there too.
+          </template>
+        </p>
+      </div>
+
+      <!-- Biggest database tables -->
+      <div v-if="storage.largest_tables?.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <h3 class="text-brand-dark text-base font-bold">Largest Database Tables</h3>
+        <p class="text-brand-light text-xs mb-4">The tables taking up the most space in the database</p>
+
+        <div class="divide-y divide-gray-100">
+          <div
+            v-for="table in storage.largest_tables"
+            :key="table.name"
+            class="flex items-center justify-between gap-3 py-2.5"
+          >
+            <p class="text-brand-dark text-sm font-medium truncate">{{ table.name }}</p>
+            <p class="text-brand-dark text-sm font-bold shrink-0">{{ formatBytes(table.bytes) }}</p>
           </div>
         </div>
       </div>

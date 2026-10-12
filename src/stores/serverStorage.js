@@ -10,12 +10,14 @@ export const useServerStorageStore = defineStore("serverStorage", {
   }),
 
   actions: {
-    async fetchStorage() {
+    async fetchStorage(refresh = false) {
       this.loading = true;
       this.error = null;
 
       try {
-        const response = await axiosInstance.get("/server-storage");
+        const response = await axiosInstance.get("/server-storage", {
+          params: refresh ? { refresh: 1 } : {},
+        });
 
         this.storage = response.data.data;
       } catch (error) {
