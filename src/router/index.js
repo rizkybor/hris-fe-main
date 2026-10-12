@@ -34,6 +34,7 @@ import assetRoutes from './asset';
 import orgchartRoutes from './orgchart';
 import projectCalculatorRoutes from './projectCalculator';
 import analyticsRoutes from './analytics';
+import serverStorageRoutes from './serverStorage';
 
 
 
@@ -87,6 +88,7 @@ const router = createRouter({
         ...documentRoutes,
         ...historyRoutes,
         ...analyticsRoutes,
+        ...serverStorageRoutes,
         ...announcementRoutes,
         ...assetRoutes,
         ...orgchartRoutes,
