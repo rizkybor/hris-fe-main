@@ -301,6 +301,10 @@ const titles = {
     title: "History",
     subtitle: "Track and review every activity across the system",
   },
+  "admin.server-storage.dashboard": {
+    title: "Server Storage",
+    subtitle: "Monitor disk usage of the VPS",
+  },
   "admin.announcements.dashboard": {
     title: "Announcements",
     subtitle: "Broadcast information to your team",
