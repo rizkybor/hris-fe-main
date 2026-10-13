@@ -33,6 +33,7 @@ import announcementRoutes from './announcement';
 import assetRoutes from './asset';
 import orgchartRoutes from './orgchart';
 import projectCalculatorRoutes from './projectCalculator';
+import flowchartRoutes from './flowchart';
 import analyticsRoutes from './analytics';
 import serverStorageRoutes from './serverStorage';
 
@@ -93,6 +94,7 @@ const router = createRouter({
         ...assetRoutes,
         ...orgchartRoutes,
         ...projectCalculatorRoutes,
+        ...flowchartRoutes,
         {
           path: 'my-profile',
           name: 'employee.profile',
