@@ -58,7 +58,7 @@ const emptyForm = () => ({
   admin_fee: 0,
   bank_name: "",
   bank_account: "",
-  terms: "Payment is due within 14 days of the invoice date.\nServices may be suspended if payment is not received.\nPayments already made are non-refundable.",
+  terms: "Payment is due within 7 days of the invoice date.\nServices may be suspended if payment is not received.\nPayments already made are non-refundable.",
   pph23_type: null,
   pph23_percent: null,
 });

@@ -24,6 +24,7 @@ import {
   BarChart3,
   History as HistoryIcon,
   HardDrive,
+  Workflow,
   Megaphone as MegaphoneIcon,
   Laptop as LaptopIcon,
   Network as NetworkIcon,
@@ -121,7 +122,7 @@ const showFinance = computed(() =>
   ])
 );
 
-const showTools = computed(() => canOneOf(["project-calculator-menu"]));
+const showTools = computed(() => canOneOf(["project-calculator-menu", "flowchart-menu"]));
 
 const showInsights = computed(() => canOneOf(["analytics-menu", "history-menu", "server-storage-menu"]));
 
@@ -866,6 +867,32 @@ watch(
                 ),
               }"
               >Project Calculator</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.flowchart.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.flowchart'),
+            }"
+            v-if="can('flowchart-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <Workflow
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.flowchart'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.flowchart'),
+              }"
+              >Flowchart</span
             >
           </RouterLink>
         </div>
