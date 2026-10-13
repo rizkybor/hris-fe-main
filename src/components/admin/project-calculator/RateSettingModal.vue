@@ -65,7 +65,9 @@ const previewProductiveHours = computed(() =>
     .reduce((sum, i) => sum + Number(i.productive_hours_per_month || 0), 0)
 );
 
-const previewTeamSize = computed(() => form.value.selected_sdm_resource_ids.length);
+const previewTeamSize = computed(
+  () => sdmResourceItems.value.filter((i) => form.value.selected_sdm_resource_ids.includes(i.id)).length
+);
 
 const previewRateCost = computed(() =>
   previewProductiveHours.value > 0 ? previewTeamMonthlyCost.value / previewProductiveHours.value : 0
