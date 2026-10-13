@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Building2,
   FolderKanban,
+  MailCheck,
 } from "lucide-vue-next";
 import { useSubscriptionStore } from "@/stores/subscription";
 import { useClientStore } from "@/stores/client";
@@ -118,6 +119,14 @@ const isNearDue = (subscription) => {
   const diffDays = Math.round((due - today) / (1000 * 60 * 60 * 24));
   return diffDays <= 30;
 };
+
+// The backend's daily H-30 job records which due date it already emailed
+// contact@ about; once that matches the current next_due_date, this cycle's
+// reminder has gone out.
+const reminderSent = (subscription) =>
+  !!subscription.due_reminder_sent_for &&
+  !!subscription.next_due_date &&
+  subscription.due_reminder_sent_for === String(subscription.next_due_date).slice(0, 10);
 
 // ===== Add / Edit modal =====
 const showModal = ref(false);
@@ -345,6 +354,13 @@ const handleGenerateInvoice = async (subscription) => {
             <div class="text-left lg:text-right">
               <p class="text-brand-dark text-xs font-semibold">{{ formatDate(subscription.next_due_date) }}</p>
               <p class="text-gray-400 text-xs">Next due</p>
+              <p
+                v-if="reminderSent(subscription)"
+                class="text-emerald-600 text-xs font-medium flex items-center gap-1 lg:justify-end"
+                :title="`Reminder email sent for the ${formatDate(subscription.next_due_date)} due date`"
+              >
+                <MailCheck class="w-3.5 h-3.5" /> Reminder emailed
+              </p>
             </div>
 
             <div class="flex items-center gap-1.5">

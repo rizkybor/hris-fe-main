@@ -301,6 +301,22 @@ const titles = {
     title: "History",
     subtitle: "Track and review every activity across the system",
   },
+  "admin.flowchart.dashboard": {
+    title: "Flowchart",
+    subtitle: "Design and export process flowcharts",
+  },
+  "admin.flowchart.create": {
+    title: "New Flowchart",
+    subtitle: "Design a process flowchart",
+  },
+  "admin.flowchart.detail": {
+    title: "Flowchart",
+    subtitle: "View and export a process flowchart",
+  },
+  "admin.flowchart.edit": {
+    title: "Edit Flowchart",
+    subtitle: "Design a process flowchart",
+  },
   "admin.server-storage.dashboard": {
     title: "Server Storage",
     subtitle: "Monitor disk usage of the VPS",
