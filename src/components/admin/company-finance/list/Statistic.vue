@@ -236,7 +236,7 @@ const chartOptions = computed(() => ({
             <p class="text-lg font-extrabold text-success">
               {{ loadingStatistics ? "-" : formatRp(fixedActual) }}
             </p>
-            <p class="text-success text-base font-medium">Actual</p>
+            <p class="text-success text-base font-medium">Actual · item Digunakan</p>
           </template>
           <p v-else class="text-lg font-extrabold text-success tracking-widest">
             Rp ••••••
@@ -272,7 +272,7 @@ const chartOptions = computed(() => ({
             <p class="text-lg font-extrabold text-success">
               {{ loadingStatistics ? "-" : formatRp(sdmActual) }}
             </p>
-            <p class="text-success text-base font-medium">Actual</p>
+            <p class="text-success text-base font-medium">Actual · item Digunakan</p>
           </template>
           <p v-else class="text-lg font-extrabold text-success tracking-widest">
             Rp ••••••
@@ -319,7 +319,7 @@ const chartOptions = computed(() => ({
           <p
             class="text-sm font-medium inline-block px-2 py-1 rounded bg-gray-100 text-gray-800"
           >
-            Infrastructure Active: {{ infraActive }}
+            Infrastructure Digunakan: {{ infraActive }}
           </p>
         </div>
       </div>
