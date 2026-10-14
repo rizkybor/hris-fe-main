@@ -26,6 +26,26 @@ const { pphTypes } = storeToRefs(store);
 const calc = ref(null);
 const loading = ref(true);
 
+// Infrastructure Tools can be shown per month or per year. Snapshots saved
+// before annual_fee was captured (or a tool with only one of the two fees
+// filled in) fall back to monthly x 12 / annual / 12, flagged as estimates.
+const infraPeriod = ref("monthly");
+
+const infraFee = (tool) => {
+  const monthly = Number(tool.monthly_fee || 0);
+  const annual = Number(tool.annual_fee || 0);
+  if (infraPeriod.value === "annual") {
+    return annual > 0 ? { amount: annual, estimated: false } : { amount: Math.round(monthly * 12), estimated: monthly > 0 };
+  }
+  return monthly > 0 ? { amount: monthly, estimated: false } : { amount: Math.round(annual / 12), estimated: annual > 0 };
+};
+
+const infraTotal = computed(() =>
+  (calc.value?.rate_setting_snapshot?.infrastructure_tools ?? []).reduce((sum, tool) => sum + infraFee(tool).amount, 0)
+);
+
+const infraUnit = computed(() => (infraPeriod.value === "annual" ? "/thn" : "/bln"));
+
 onMounted(async () => {
   loading.value = true;
   try {
@@ -311,11 +331,37 @@ const printQuote = () => window.print();
             </ul>
           </div>
           <div v-if="calc.rate_setting_snapshot.infrastructure_tools?.length">
-            <p class="text-brand-dark font-semibold mb-1">Infrastructure Tools</p>
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <p class="text-brand-dark font-semibold">Infrastructure Tools</p>
+              <div class="inline-flex rounded-[8px] border border-[#DCDEDD] bg-gray-50 text-xs font-semibold" style="padding: 2px">
+                <button
+                  v-for="option in [
+                    { value: 'monthly', label: 'Bulanan' },
+                    { value: 'annual', label: 'Tahunan' },
+                  ]"
+                  :key="option.value"
+                  type="button"
+                  class="px-2 py-0.5 rounded-[6px] transition-colors"
+                  :class="infraPeriod === option.value ? 'bg-white text-[#0C51D9] shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                  @click="infraPeriod = option.value"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
             <ul class="space-y-1">
               <li v-for="t in calc.rate_setting_snapshot.infrastructure_tools" :key="t.id" class="flex items-center justify-between text-gray-600">
                 <span>{{ t.name }}<span v-if="t.vendor" class="text-gray-400"> ({{ t.vendor }})</span></span>
-                <span class="text-brand-dark font-medium">{{ formatRupiah(t.monthly_fee) }}/bln</span>
+                <span
+                  class="text-brand-dark font-medium"
+                  :title="infraFee(t).estimated ? (infraPeriod === 'annual' ? 'Estimasi: biaya bulanan × 12' : 'Estimasi: biaya tahunan ÷ 12') : ''"
+                >
+                  {{ formatRupiah(infraFee(t).amount) }}{{ infraUnit }}<span v-if="infraFee(t).estimated" class="text-gray-400 font-normal"> est.</span>
+                </span>
+              </li>
+              <li class="flex items-center justify-between border-t border-[#F1F1F1] pt-1 mt-1">
+                <span class="text-brand-dark font-semibold">Total</span>
+                <span class="text-brand-dark font-bold">{{ formatRupiah(infraTotal) }}{{ infraUnit }}</span>
               </li>
             </ul>
           </div>
