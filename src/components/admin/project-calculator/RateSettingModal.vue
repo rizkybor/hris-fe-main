@@ -2,15 +2,16 @@
 import { ref, computed, onMounted } from "vue";
 import { X, Users2Icon, Loader2, WalletIcon, LayersIcon, ServerIcon, ClockIcon } from "lucide-vue-next";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
-import { useCompanyFinanceStore } from "@/stores/companyFinance";
 import { storeToRefs } from "pinia";
 import { formatRupiah } from "@/utils/formatUtils";
 
 const emit = defineEmits(["close", "saved"]);
 const store = useProjectCalculatorStore();
-const financeStore = useCompanyFinanceStore();
 const { rateSetting, saving } = storeToRefs(store);
-const { statistics: financeStatistics, loadingStatistics } = storeToRefs(financeStore);
+// All items, "Digunakan" or not -- the team rate is set up independently of
+// which items count toward the Operational Cost totals.
+const options = ref({ fixed_costs: [], sdm_resources: [], infrastructure_tools: [] });
+const loadingStatistics = ref(true);
 
 const form = ref({
   selected_fixed_cost_ids: [],
@@ -23,7 +24,13 @@ const form = ref({
 const errorMessage = ref("");
 
 onMounted(async () => {
-  await financeStore.fetchStatistics();
+  try {
+    options.value = await store.fetchRateSettingOptions();
+  } catch (error) {
+    errorMessage.value = "Gagal memuat daftar item Operational Cost.";
+  } finally {
+    loadingStatistics.value = false;
+  }
 
   form.value = {
     selected_fixed_cost_ids: [...(rateSetting.value.selected_fixed_cost_ids || [])],
@@ -35,9 +42,9 @@ onMounted(async () => {
   };
 });
 
-const fixedCostItems = computed(() => financeStatistics.value?.fixed_cost?.items ?? []);
-const sdmResourceItems = computed(() => financeStatistics.value?.sdm_resource?.items ?? []);
-const infrastructureItems = computed(() => financeStatistics.value?.infrastructure?.items ?? []);
+const fixedCostItems = computed(() => options.value.fixed_costs ?? []);
+const sdmResourceItems = computed(() => options.value.sdm_resources ?? []);
+const infrastructureItems = computed(() => options.value.infrastructure_tools ?? []);
 
 const toggle = (list, id) => {
   const idx = list.indexOf(id);
@@ -133,6 +140,7 @@ const submit = async () => {
                     class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] flex-shrink-0"
                   />
                   <span class="text-sm text-brand-dark font-medium truncate">{{ item.financial_items }}</span>
+                  <span v-if="item.status === 'inactive'" class="text-[10px] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 flex-shrink-0" title="Tidak Digunakan di Operational Cost (tetap bisa dipilih)">Tidak Digunakan</span>
                 </span>
                 <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.actual) }}</span>
               </label>
@@ -161,6 +169,7 @@ const submit = async () => {
                   />
                   <span class="text-sm text-brand-dark font-medium truncate">{{ item.sdm_component }}</span>
                   <span v-if="item.productive_hours_per_month" class="text-xs text-gray-400 flex-shrink-0">({{ item.productive_hours_per_month }} jam/bln)</span>
+                  <span v-if="item.status === 'inactive'" class="text-[10px] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 flex-shrink-0" title="Tidak Digunakan di Operational Cost (tetap bisa dipilih)">Tidak Digunakan</span>
                 </span>
                 <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.actual) }}</span>
               </label>
@@ -188,6 +197,7 @@ const submit = async () => {
                     class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] flex-shrink-0"
                   />
                   <span class="text-sm text-brand-dark font-medium truncate">{{ item.tech_stack_component }}</span>
+                  <span v-if="item.status === 'inactive'" class="text-[10px] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 flex-shrink-0" title="Tidak Digunakan di Operational Cost (tetap bisa dipilih)">Tidak Digunakan</span>
                 </span>
                 <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.monthly_fee) }}/bln</span>
               </label>
