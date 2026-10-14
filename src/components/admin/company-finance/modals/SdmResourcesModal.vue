@@ -32,7 +32,6 @@ const emit = defineEmits(["submit", "close"]);
 const form = reactive({
   sdm_field_id: "",
   productive_hours_per_month: "",
-  capacity_target: "",
   actual: "",
   notes: "",
 });
@@ -40,7 +39,6 @@ const form = reactive({
 const buildPayload = () => ({
   sdm_field_id: Number(form.sdm_field_id),
   productive_hours_per_month: Number(form.productive_hours_per_month),
-  capacity_target: form.capacity_target || null,
   actual: Number(form.actual),
   notes: form.notes,
 });
@@ -189,14 +187,6 @@ const submit = () => {
           v-model="actualModel"
           :readonly="props.mode === 'view'"
           only-number
-        />
-
-        <BaseInput
-          id="capacity_target"
-          label="Capacity Target (Opsional)"
-          placeholder="add capacity of target"
-          v-model="form.capacity_target"
-          :readonly="props.mode === 'view'"
         />
 
         <BaseInput
