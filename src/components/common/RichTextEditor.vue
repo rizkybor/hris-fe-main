@@ -24,12 +24,19 @@ import {
   Trash2,
   Palette,
   PaintBucket,
+  ImagePlus,
+  Loader2,
 } from "lucide-vue-next";
+import { useAlertModalStore } from "@/stores/alertModal";
 
 const props = defineProps({
   modelValue: { type: String, default: "" },
   placeholder: { type: String, default: "Tulis isi dokumen di sini..." },
   disabled: { type: Boolean, default: false },
+  // Optional `async (file) => url`. When given, the toolbar gets an Insert
+  // Image button that uploads the picked file and places it at the caret;
+  // editors without it (letters, memos...) are unchanged.
+  uploadImage: { type: Function, default: null },
 });
 const emit = defineEmits(["update:modelValue"]);
 
@@ -165,6 +172,32 @@ const exec = (command, value = null) => {
 };
 
 const setFormatBlock = (tag) => exec("formatBlock", tag);
+
+const imageInput = ref(null);
+const uploadingImage = ref(false);
+
+const openImagePicker = () => {
+  trackSelection();
+  imageInput.value?.click();
+};
+
+const onImageSelected = async (event) => {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (!file || !props.uploadImage) return;
+  uploadingImage.value = true;
+  try {
+    const url = await props.uploadImage(file);
+    editorRef.value?.focus();
+    restoreSelection();
+    document.execCommand("insertImage", false, url);
+    onInput();
+  } catch (error) {
+    await useAlertModalStore().alert(error?.message || "Gambar gagal diunggah.", { type: "danger" });
+  } finally {
+    uploadingImage.value = false;
+  }
+};
 
 const openLinkPopover = () => {
   trackSelection();
@@ -438,6 +471,21 @@ const FORMAT_OPTIONS = [
         </button>
       </template>
 
+      <template v-if="uploadImage">
+        <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+        <button
+          type="button"
+          title="Insert Image"
+          :disabled="uploadingImage"
+          @mousedown.prevent="openImagePicker"
+          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors disabled:opacity-50"
+        >
+          <Loader2 v-if="uploadingImage" class="w-4 h-4 animate-spin" />
+          <ImagePlus v-else class="w-4 h-4" />
+        </button>
+        <input ref="imageInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" @change="onImageSelected" />
+      </template>
+
       <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
       <div class="relative">
         <button
@@ -690,6 +738,11 @@ const FORMAT_OPTIONS = [
   border: none;
   border-top: 1px solid #dcdedd;
   margin: 0.75rem 0;
+}
+.rich-text-editor :deep(img) {
+  max-width: 100%;
+  height: auto;
+  margin: 0.5rem 0;
 }
 .rich-text-editor :deep(table) {
   width: 100%;

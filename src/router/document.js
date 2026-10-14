@@ -16,6 +16,8 @@ const MeetingNoteList = () => import('@/views/admin/documents/MeetingNoteList.vu
 const MeetingNoteForm = () => import('@/views/admin/documents/MeetingNoteForm.vue');
 const MeetingNoteDetail = () => import('@/views/admin/documents/MeetingNoteDetail.vue');
 const StaffTaskList = () => import('@/views/admin/documents/StaffTaskList.vue');
+const ProposalList = () => import('@/views/admin/documents/ProposalList.vue');
+const ProposalEditor = () => import('@/views/admin/documents/ProposalEditor.vue');
 export default [
   {
     path: 'documents',
@@ -66,6 +68,16 @@ export default [
     path: 'documents/payment-receipts/:id/edit',
     name: 'admin.payment-receipts.edit',
     component: PaymentReceiptCreate,
+  },
+  {
+    path: 'documents/proposals',
+    name: 'admin.proposals.dashboard',
+    component: ProposalList,
+  },
+  {
+    path: 'documents/proposals/:id/edit',
+    name: 'admin.proposals.edit',
+    component: ProposalEditor,
   },
   {
     path: 'documents/letters',
