@@ -878,6 +878,10 @@ video {
   z-index: 90;
 }
 
+.z-\[95\] {
+  z-index: 95;
+}
+
 .z-\[9998\] {
   z-index: 9998;
 }
@@ -1407,6 +1411,10 @@ video {
 
 .max-h-\[calc\(90vh-140px\)\] {
   max-height: calc(90vh - 140px);
+}
+
+.max-h-full {
+  max-height: 100%;
 }
 
 .min-h-0 {
@@ -5783,6 +5791,10 @@ html {
 .hover\:ring-\[\#0C51D9\]:hover {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(12 81 217 / var(--tw-ring-opacity, 1));
+}
+
+.hover\:ring-\[\#0C51D9\]\/20:hover {
+  --tw-ring-color: rgb(12 81 217 / 0.2);
 }
 
 .hover\:ring-\[\#0C51D9\]\/30:hover {

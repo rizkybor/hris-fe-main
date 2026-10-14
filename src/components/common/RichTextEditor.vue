@@ -26,6 +26,7 @@ import {
   PaintBucket,
   ImagePlus,
   Loader2,
+  Workflow,
 } from "lucide-vue-next";
 import { useAlertModalStore } from "@/stores/alertModal";
 
@@ -37,6 +38,10 @@ const props = defineProps({
   // Image button that uploads the picked file and places it at the caret;
   // editors without it (letters, memos...) are unchanged.
   uploadImage: { type: Function, default: null },
+  // Optional `async () => ({ url, id, name }) | null` that lets the user
+  // pick a saved flowchart; it's inserted at the caret as an image linked
+  // to its source (data-flowchart-id) plus a caption.
+  insertFlowchart: { type: Function, default: null },
 });
 const emit = defineEmits(["update:modelValue"]);
 
@@ -179,6 +184,32 @@ const uploadingImage = ref(false);
 const openImagePicker = () => {
   trackSelection();
   imageInput.value?.click();
+};
+
+const insertingFlowchart = ref(false);
+
+const escapeHtml = (text) =>
+  String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+const pickFlowchart = async () => {
+  if (!props.insertFlowchart) return;
+  trackSelection();
+  insertingFlowchart.value = true;
+  try {
+    const picked = await props.insertFlowchart();
+    if (!picked) return;
+    editorRef.value?.focus();
+    restoreSelection();
+    const name = escapeHtml(picked.name || "Flowchart");
+    document.execCommand(
+      "insertHTML",
+      false,
+      `<p><img src="${escapeHtml(picked.url)}" data-flowchart-id="${Number(picked.id)}" alt="Flowchart: ${name}"></p><p><em>Gambar: ${name}</em></p><p></p>`
+    );
+    onInput();
+  } finally {
+    insertingFlowchart.value = false;
+  }
 };
 
 const onImageSelected = async (event) => {
@@ -485,6 +516,16 @@ const FORMAT_OPTIONS = [
         </button>
         <input ref="imageInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" @change="onImageSelected" />
       </template>
+      <button
+        v-if="insertFlowchart"
+        type="button"
+        title="Insert Flowchart"
+        :disabled="insertingFlowchart"
+        @mousedown.prevent="pickFlowchart"
+        class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors disabled:opacity-50"
+      >
+        <Workflow class="w-4 h-4" />
+      </button>
 
       <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
       <div class="relative">
