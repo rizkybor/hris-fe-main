@@ -36,6 +36,7 @@ import projectCalculatorRoutes from './projectCalculator';
 import flowchartRoutes from './flowchart';
 import analyticsRoutes from './analytics';
 import serverStorageRoutes from './serverStorage';
+const NotFound = () => import('@/views/errors/NotFound.vue');
 
 
 
@@ -114,7 +115,13 @@ const router = createRouter({
           path: 'my-tasks',
           name: 'employee.tasks',
           component: MyTasks,
-        }
+        },
+        // Unknown /admin/... URL: 404 inside the admin layout.
+        {
+          path: ':pathMatch(.*)*',
+          name: 'admin.not-found',
+          component: NotFound,
+        },
       ],
     },
     {
@@ -179,6 +186,13 @@ const router = createRouter({
           component: ResetPassword,
         },
       ],
+    },
+    // Any other unknown URL: standalone 404 page.
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFound,
+      props: { standalone: true },
     },
   ],
 })

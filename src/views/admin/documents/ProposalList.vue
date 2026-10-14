@@ -2,7 +2,8 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { FileText, Plus, Search, Eye, Pencil, Copy, Trash2, ChevronDown, X, Loader2, Layers } from "lucide-vue-next";
+import { FileText, Plus, Search, Eye, Pencil, Copy, Trash2, ChevronDown, X, Loader2, Layers, Share2 } from "lucide-vue-next";
+import ShareProposalModal from "@/components/admin/documents/ShareProposalModal.vue";
 import { useProposalStore } from "@/stores/proposal";
 import { useClientStore } from "@/stores/client";
 import { useAlertModalStore } from "@/stores/alertModal";
@@ -118,6 +119,13 @@ const handleDelete = async (proposal) => {
 };
 
 const canCreate = computed(() => can("proposal-create"));
+
+const sharingId = ref(null);
+// Reflect a status change (e.g. Draft -> Terkirim after emailing) in the row.
+const onShared = (updated) => {
+  const row = proposals.value.find((p) => p.id === updated.id);
+  if (row) row.status = updated.status;
+};
 </script>
 
 <template>
@@ -234,6 +242,15 @@ const canCreate = computed(() => can("proposal-create"));
                     <Loader2 v-if="busyId === `pdf-${proposal.id}`" class="w-4 h-4 text-gray-600 animate-spin" />
                     <Eye v-else class="w-4 h-4 text-gray-600" />
                   </button>
+                  <button
+                    v-if="can('proposal-edit')"
+                    type="button"
+                    class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-1.5 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
+                    title="Bagikan (link, email, WhatsApp)"
+                    @click="sharingId = proposal.id"
+                  >
+                    <Share2 class="w-4 h-4 text-gray-600" />
+                  </button>
                   <RouterLink
                     v-if="can('proposal-edit')"
                     :to="{ name: 'admin.proposals.edit', params: { id: proposal.id } }"
@@ -272,6 +289,8 @@ const canCreate = computed(() => can("proposal-create"));
         <Pagination :meta="meta" :loading="loading" item-label="proposals" @page-change="fetchPage" />
       </div>
     </div>
+
+    <ShareProposalModal v-if="sharingId" :proposal-id="sharingId" @close="sharingId = null" @updated="onShared" />
 
     <!-- New proposal modal -->
     <div

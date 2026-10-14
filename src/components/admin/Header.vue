@@ -309,6 +309,10 @@ const titles = {
     title: "History",
     subtitle: "Track and review every activity across the system",
   },
+  "admin.not-found": {
+    title: "Halaman tidak ditemukan",
+    subtitle: "Alamat ini tidak tersedia",
+  },
   "admin.flowchart.dashboard": {
     title: "Flowchart",
     subtitle: "Design and export process flowcharts",
