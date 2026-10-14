@@ -1,8 +1,17 @@
 <script setup>
-import { ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, NotebookPen, ChevronRight } from "lucide-vue-next";
+import { ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, NotebookPen, ChevronRight, FileText } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
 const links = [
+  {
+    to: { name: "admin.proposals.dashboard" },
+    icon: FileText,
+    title: "Proposal Penawaran",
+    description: "Write sales proposals from the JCD template and export them as PDF",
+    permission: "proposal-menu",
+    iconBg: "bg-violet-50",
+    iconColor: "text-violet-600",
+  },
   {
     to: { name: "admin.letters.dashboard" },
     icon: Mail,

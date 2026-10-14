@@ -225,6 +225,14 @@ const titles = {
     title: "Create Payment Receipt",
     subtitle: "Generate a new payment receipt",
   },
+  "admin.proposals.dashboard": {
+    title: "Proposal Penawaran",
+    subtitle: "Sales proposals built from the JCD template",
+  },
+  "admin.proposals.edit": {
+    title: "Edit Proposal Penawaran",
+    subtitle: "Edit each section, then preview or download the PDF",
+  },
   "admin.letters.dashboard": {
     title: "Letters",
     subtitle: "Company letter register (internal and external)",
