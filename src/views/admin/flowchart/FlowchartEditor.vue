@@ -33,6 +33,7 @@ import FlowchartNode from "@/components/admin/flowchart/FlowchartNode.vue";
 import { SHAPES, SHAPE_KEYS, COLOR_PRESETS, makeNode } from "@/components/admin/flowchart/flowchartShapes";
 import { exportFlowchartJpg, exportFlowchartPdf, renderFlowchartPreview } from "@/components/admin/flowchart/exportFlowchart";
 import { useFlowchartStore } from "@/stores/flowchart";
+import { useAuthStore } from "@/stores/auth";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
@@ -72,6 +73,9 @@ const {
 
 const name = ref("Untitled Flowchart");
 const description = ref("");
+// Who the flowchart is for -- shown in the export's details and licence line.
+const preparedFor = ref("");
+const authStore = useAuthStore();
 const nodes = ref([]);
 const edges = ref([]);
 const meta = ref(null);
@@ -138,7 +142,7 @@ const snapshot = () => JSON.stringify({ nodes: serializeNodes(nodes.value), edge
 
 const savedState = ref(null);
 const savedMeta = ref("");
-const metaState = () => JSON.stringify({ name: name.value, description: description.value });
+const metaState = () => JSON.stringify({ name: name.value, description: description.value, preparedFor: preparedFor.value });
 const isDirty = computed(() => !isReadonly.value && savedState.value !== null && (currentState.value !== savedState.value || metaState() !== savedMeta.value));
 const currentState = ref("");
 
@@ -330,6 +334,7 @@ const load = async () => {
     meta.value = flowchart;
     name.value = flowchart.name;
     description.value = flowchart.description ?? "";
+    preparedFor.value = flowchart.prepared_for ?? "";
     nodes.value = flowchart.data?.nodes ?? [];
     edges.value = (flowchart.data?.edges ?? []).map(styledEdge);
     await nextTick();
@@ -365,6 +370,7 @@ const save = async () => {
   const payload = {
     name: name.value.trim(),
     description: description.value.trim() || null,
+    prepared_for: preparedFor.value.trim() || null,
     data: { nodes: serializeNodes(nodes.value), edges: serializeEdges(edges.value), viewport: getViewport() },
   };
   try {
@@ -398,7 +404,20 @@ const doExport = async (format) => {
   exporting.value = true;
   removeSelectedElements();
   await nextTick();
-  const options = { name: name.value, description: description.value, orientation: exportOrientation.value };
+  const options = {
+    name: name.value,
+    description: description.value,
+    orientation: exportOrientation.value,
+    // Document details printed on the export: who made it and when (an
+    // unsaved draft is attributed to the current user, today), and who it's for.
+    meta: {
+      id: meta.value?.id ?? null,
+      preparedFor: preparedFor.value.trim(),
+      createdBy: meta.value?.creator?.name ?? authStore.user?.name ?? "",
+      createdAt: meta.value?.created_at ?? new Date().toISOString(),
+      updatedAt: meta.value?.updated_at ?? null,
+    },
+  };
   try {
     if (format === "jpg") await exportFlowchartJpg(vueFlowRef.value, getNodes.value, options);
     else await exportFlowchartPdf(vueFlowRef.value, getNodes.value, options);
@@ -516,6 +535,16 @@ const updatedLabel = computed(() => {
           :placeholder="isReadonly ? '' : 'Add a short description (optional)'"
           class="w-full bg-transparent text-brand-light text-xs outline-none border-b border-transparent focus:border-[#0C51D9] transition-colors mt-0.5"
         />
+        <label class="flex items-center gap-1.5 mt-0.5 text-xs text-brand-light">
+          <span class="shrink-0 font-semibold">Disiapkan untuk:</span>
+          <input
+            v-model="preparedFor"
+            :readonly="isReadonly"
+            maxlength="255"
+            :placeholder="isReadonly ? '-' : 'cth. PT Misael Berkat Abadi (opsional)'"
+            class="flex-1 min-w-0 bg-transparent text-brand-dark outline-none border-b border-transparent focus:border-[#0C51D9] transition-colors"
+          />
+        </label>
       </div>
 
       <span v-if="isDirty" class="text-xs font-semibold text-amber-600 shrink-0">Unsaved changes</span>
