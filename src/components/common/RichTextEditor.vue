@@ -28,6 +28,7 @@ import {
   Loader2,
   Workflow,
 } from "lucide-vue-next";
+
 import { useAlertModalStore } from "@/stores/alertModal";
 
 const props = defineProps({
@@ -89,14 +90,94 @@ onBeforeUnmount(() => {
 watch(
   () => props.modelValue,
   (value) => {
-    if (editorRef.value && editorRef.value.innerHTML !== (value || "")) {
+    // Compared without the editor-only selected-image class, which the
+    // emitted value never contains.
+    if (editorRef.value && cleanHtml() !== (value || "")) {
+      deselectImage();
       editorRef.value.innerHTML = value || "";
     }
   }
 );
 
+// The selected-image outline is editor-only state, never part of the value.
+const SELECTED_IMG_CLASS = "rte-img-selected";
+const cleanHtml = () =>
+  (editorRef.value?.innerHTML || "").replace(/\s?class="rte-img-selected"/g, "").replace(/\srte-img-selected/g, "");
+
 const onInput = () => {
-  emit("update:modelValue", editorRef.value?.innerHTML || "");
+  if (selectedImage.value && !editorRef.value?.contains(selectedImage.value)) deselectImage();
+  emit("update:modelValue", cleanHtml());
+};
+
+// ===== Image size & alignment =====
+// Clicking an image (e.g. an inserted flowchart) selects it and shows a size
+// / alignment bar under the toolbar. Width is stored as a percentage of the
+// text width (inline style), so the PDF keeps the same proportion.
+const selectedImage = ref(null);
+const imageWidth = ref(100);
+const IMAGE_SIZES = [
+  { label: "S", value: 40 },
+  { label: "M", value: 60 },
+  { label: "L", value: 80 },
+  { label: "Full", value: 100 },
+];
+
+const selectImage = (img) => {
+  if (selectedImage.value && selectedImage.value !== img) selectedImage.value.classList.remove(SELECTED_IMG_CLASS);
+  selectedImage.value = img;
+  img.classList.add(SELECTED_IMG_CLASS);
+  const match = /^(\d+(?:\.\d+)?)%$/.exec(img.style.width || "");
+  imageWidth.value = match ? Math.round(Number(match[1])) : 100;
+  imageAlign.value = img.parentElement?.style?.textAlign || "left";
+};
+
+const deselectImage = () => {
+  selectedImage.value?.classList.remove(SELECTED_IMG_CLASS);
+  if (selectedImage.value?.getAttribute("class") === "") selectedImage.value.removeAttribute("class");
+  selectedImage.value = null;
+};
+
+const setImageWidth = (pct) => {
+  const img = selectedImage.value;
+  if (!img) return;
+  imageWidth.value = pct;
+  img.removeAttribute("width");
+  img.removeAttribute("height");
+  img.style.width = pct >= 100 ? "100%" : `${pct}%`;
+  img.style.height = "";
+  onInput();
+};
+
+// Alignment lives on the image's own paragraph (wrapping it in one first if
+// it sits directly in the editor), so it carries over to the PDF as-is.
+const imageBlock = (img) => {
+  let el = img.parentElement;
+  while (el && el !== editorRef.value && !["P", "DIV", "LI", "TD", "TH", "BLOCKQUOTE"].includes(el.tagName)) el = el.parentElement;
+  if (!el || el === editorRef.value) {
+    const p = document.createElement("p");
+    img.parentNode.insertBefore(p, img);
+    p.appendChild(img);
+    return p;
+  }
+  return el;
+};
+
+const imageAlign = ref("left");
+
+const setImageAlign = (align) => {
+  const img = selectedImage.value;
+  if (!img) return;
+  imageBlock(img).style.textAlign = align === "left" ? "" : align;
+  imageAlign.value = align;
+  onInput();
+};
+
+const removeSelectedImage = () => {
+  const img = selectedImage.value;
+  if (!img) return;
+  deselectImage();
+  img.remove();
+  onInput();
 };
 
 // The link popover needs the caret position that existed *before* the
@@ -188,9 +269,6 @@ const openImagePicker = () => {
 
 const insertingFlowchart = ref(false);
 
-const escapeHtml = (text) =>
-  String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-
 const pickFlowchart = async () => {
   if (!props.insertFlowchart) return;
   trackSelection();
@@ -198,14 +276,36 @@ const pickFlowchart = async () => {
   try {
     const picked = await props.insertFlowchart();
     if (!picked) return;
-    editorRef.value?.focus();
-    restoreSelection();
-    const name = escapeHtml(picked.name || "Flowchart");
-    document.execCommand(
-      "insertHTML",
-      false,
-      `<p><img src="${escapeHtml(picked.url)}" data-flowchart-id="${Number(picked.id)}" alt="Flowchart: ${name}"></p><p><em>Gambar: ${name}</em></p><p></p>`
-    );
+    // Inserted as its own blocks right after the paragraph holding the
+    // caret (never merged into a line of text), so it can be sized and
+    // aligned on its own.
+    const name = picked.name || "Flowchart";
+    const imgBlock = document.createElement("p");
+    const img = document.createElement("img");
+    img.src = picked.url;
+    img.alt = `Flowchart: ${name}`;
+    img.setAttribute("data-flowchart-id", String(Number(picked.id)));
+    imgBlock.appendChild(img);
+    const caption = document.createElement("p");
+    const em = document.createElement("em");
+    em.textContent = `Gambar: ${name}`;
+    caption.appendChild(em);
+    const after = document.createElement("p");
+    after.appendChild(document.createElement("br"));
+
+    const anchor = savedSelection?.startContainer;
+    let block = anchor && editorRef.value.contains(anchor) ? (anchor.nodeType === Node.TEXT_NODE ? anchor.parentElement : anchor) : null;
+    while (block && block.parentElement !== editorRef.value) block = block.parentElement;
+    if (block && block !== editorRef.value) block.after(imgBlock, caption, after);
+    else editorRef.value.append(imgBlock, caption, after);
+
+    editorRef.value.focus();
+    const range = document.createRange();
+    range.setStart(after, 0);
+    range.collapse(true);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
     onInput();
   } finally {
     insertingFlowchart.value = false;
@@ -397,6 +497,11 @@ const onEditorMouseMove = (e) => {
 
 const onEditorMouseDown = (e) => {
   if (props.disabled) return;
+  if (e.target?.tagName === "IMG") {
+    selectImage(e.target);
+  } else if (selectedImage.value) {
+    deselectImage();
+  }
   const cell = closestCell(e.target);
   if (!cell) return;
   const edge = resizeEdgeAt(cell, e.clientX, e.clientY);
@@ -710,6 +815,59 @@ const FORMAT_OPTIONS = [
     </div>
 
     <div
+      v-if="selectedImage && !disabled"
+      class="flex flex-wrap items-center gap-2 border-b border-[#DCDEDD] bg-blue-50 px-2.5 py-1.5 text-xs text-brand-dark"
+    >
+      <span class="font-semibold">Gambar:</span>
+      <div class="inline-flex rounded-md border border-[#DCDEDD] bg-white overflow-hidden">
+        <button
+          v-for="size in IMAGE_SIZES"
+          :key="size.value"
+          type="button"
+          class="px-2 py-1 font-semibold transition-colors"
+          :class="imageWidth === size.value ? 'bg-[#0C51D9] text-white' : 'text-gray-600 hover:bg-gray-100'"
+          :title="`Lebar ${size.value}%`"
+          @mousedown.prevent="setImageWidth(size.value)"
+        >
+          {{ size.label }}
+        </button>
+      </div>
+      <input
+        type="range"
+        min="20"
+        max="100"
+        step="5"
+        :value="imageWidth"
+        class="w-28 accent-[#0C51D9]"
+        title="Atur lebar"
+        @input="setImageWidth(Number($event.target.value))"
+      />
+      <span class="w-9 tabular-nums">{{ imageWidth }}%</span>
+      <span class="w-px h-5 bg-[#DCDEDD]" />
+      <div class="inline-flex gap-0.5">
+        <button
+          v-for="opt in [
+            { value: 'left', icon: AlignLeft, title: 'Rata kiri' },
+            { value: 'center', icon: AlignCenter, title: 'Tengah' },
+            { value: 'right', icon: AlignRight, title: 'Rata kanan' },
+          ]"
+          :key="opt.value"
+          type="button"
+          class="p-1 rounded-md transition-colors"
+          :class="imageAlign === opt.value ? 'bg-white text-[#0C51D9] shadow-sm' : 'text-gray-600 hover:bg-white'"
+          :title="opt.title"
+          @mousedown.prevent="setImageAlign(opt.value)"
+        >
+          <component :is="opt.icon" class="w-4 h-4" />
+        </button>
+      </div>
+      <button type="button" class="ml-auto p-1 rounded-md text-gray-600 hover:bg-red-50 hover:text-red-600" title="Hapus gambar" @mousedown.prevent="removeSelectedImage">
+        <Trash2 class="w-4 h-4" />
+      </button>
+      <button type="button" class="px-1.5 py-0.5 rounded-md text-gray-500 hover:bg-white" title="Selesai" @mousedown.prevent="deselectImage">Selesai</button>
+    </div>
+
+    <div
       ref="editorRef"
       :contenteditable="!disabled"
       @input="onInput"
@@ -781,9 +939,17 @@ const FORMAT_OPTIONS = [
   margin: 0.75rem 0;
 }
 .rich-text-editor :deep(img) {
+  /* inline-block (Tailwind's reset makes images block) so the paragraph's
+     text-align positions it, the same way the PDF does. */
+  display: inline-block;
   max-width: 100%;
   height: auto;
   margin: 0.5rem 0;
+  cursor: pointer;
+}
+.rich-text-editor :deep(img.rte-img-selected) {
+  outline: 2px solid #0c51d9;
+  outline-offset: 2px;
 }
 .rich-text-editor :deep(table) {
   width: 100%;
