@@ -63,6 +63,13 @@ export const useProjectCalculatorStore = defineStore("projectCalculator", {
             }
         },
 
+        // Every Fixed Cost / SDM Resource / Infrastructure Tool the Team Rate
+        // Setup can pick, regardless of its Operational Cost usage status.
+        async fetchRateSettingOptions() {
+            const { data } = await axiosInstance.get("/project-calculator/rate-setting/options");
+            return data.data;
+        },
+
         async updateRateSetting(payload) {
             this.saving = true;
             this.error = null;
