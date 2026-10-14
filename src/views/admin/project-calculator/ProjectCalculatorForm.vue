@@ -72,6 +72,9 @@ const form = ref({
   scenario: "feature",
   pm_overhead_percent: 12,
   infra_setup_cost: 0,
+  // Feature/Build: people actually working on this project -- the duration
+  // uses their share of the team's capacity, not the whole team's.
+  allocated_developers: 1,
   // Landing Page fields -- unused (harmless) unless scenario === 'landing_page'.
   server_type: "shared",
   design_type: "template",
@@ -242,6 +245,8 @@ onMounted(async () => {
         scenario: calc.scenario,
         pm_overhead_percent: calc.pm_overhead_percent ?? rateSetting.value.pm_overhead_percent,
         infra_setup_cost: calc.infra_setup_cost ?? rateSetting.value.default_infra_setup_cost,
+        // Estimates saved before this field existed assumed the whole team.
+        allocated_developers: calc.allocated_developers ?? (rateSetting.value.team_size || 1),
         server_type: lp?.server_type ?? "shared",
         design_type: lp?.design_type ?? "template",
         estimated_hours: lp?.estimated_hours ?? 0,
@@ -443,10 +448,27 @@ const estimatedDurationWeeks = computed(() => {
     const hours = Number(form.value.estimated_hours || 0);
     return hours > 0 ? Math.ceil(hours / devCount / 40) : null;
   }
-  const capacityPerWeek =
-    (rateSetting.value.total_productive_hours_per_month || 0) / 4.33;
+  const capacityPerWeek = allocatedCapacityPerMonth.value / 4.33;
   return capacityPerWeek > 0 ? Math.ceil(totalHoursSum.value / capacityPerWeek) : null;
 });
+
+// Mirrors ProjectCalculatorService: average productive hours per person in
+// the Team Rate Setup x people allocated to this project.
+const hoursPerPerson = computed(() => {
+  const size = Number(rateSetting.value.team_size || 0);
+  return size > 0 ? Number(rateSetting.value.total_productive_hours_per_month || 0) / size : 0;
+});
+
+const allocatedCapacityPerMonth = computed(() => {
+  const allocated = Math.max(1, Number(form.value.allocated_developers || 1));
+  return hoursPerPerson.value > 0
+    ? hoursPerPerson.value * allocated
+    : Number(rateSetting.value.total_productive_hours_per_month || 0);
+});
+
+const estimatedDurationMonths = computed(() =>
+  estimatedDurationWeeks.value ? (estimatedDurationWeeks.value / 4.33).toFixed(1).replace(".", ",") : null
+);
 
 const canSave = computed(() => {
   if (!form.value.name) return false;
@@ -1057,8 +1079,30 @@ const submit = async () => {
             </span>
             <span v-else class="text-blue-800">
               Estimate Duration: <strong>{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
-              ({{ totalHoursSum.toFixed(1) }} hours &middot; team capacity {{ rateSetting.total_productive_hours_per_month }} hours/month)
+              <template v-if="estimatedDurationMonths"> (&asymp; {{ estimatedDurationMonths }} months)</template>
+              <span class="block text-blue-600">
+                {{ totalHoursSum.toFixed(1) }} hours &middot; {{ form.allocated_developers }} developer{{ form.allocated_developers > 1 ? "s" : "" }}
+                &middot; {{ Math.round(allocatedCapacityPerMonth) }} hours/month
+              </span>
             </span>
+          </div>
+
+          <div v-if="form.scenario !== 'landing_page'" class="p-2.5 rounded-[12px] bg-white border border-[#DCDEDD] text-xs">
+            <label class="flex items-center justify-between gap-2 text-brand-dark font-semibold">
+              Developer dialokasikan
+              <input
+                v-model.number="form.allocated_developers"
+                type="number"
+                min="1"
+                :max="Math.max(1, rateSetting.team_size || 1)"
+                step="1"
+                class="w-16 px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm text-right focus:border-[#0C51D9] outline-none"
+              />
+            </label>
+            <p class="text-gray-400 mt-1 leading-snug">
+              Orang yang benar-benar mengerjakan proyek ini, dari {{ rateSetting.team_size || 0 }} orang di Team Rate Setup
+              (&asymp; {{ Math.round(hoursPerPerson) }} jam/orang/bulan). Hanya memengaruhi durasi, bukan harga.
+            </p>
           </div>
 
           <button

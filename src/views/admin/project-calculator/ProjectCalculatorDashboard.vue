@@ -386,7 +386,7 @@ const onLandingPageRateSettingSaved = async () => {
               <span v-if="calc.client_name">{{ calc.client_name }} &middot; </span>
               <span class="inline-flex items-center gap-1">
                 <ClockIcon class="w-3.5 h-3.5" />
-                {{ calc.estimated_duration_weeks ?? "-" }} weeks estimated
+                {{ calc.estimated_duration_weeks ?? "-" }} weeks estimated<template v-if="calc.estimated_duration_weeks"> (&asymp; {{ (calc.estimated_duration_weeks / 4.33).toFixed(1).replace(".", ",") }} months)</template>
               </span>
               <span class="text-purple-600">
                 &middot; Fee Ref: {{ calculateMarketingFee(calc.grand_total).percent }}% ({{ formatRupiahCompact(calculateMarketingFee(calc.grand_total).amount) }})

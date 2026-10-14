@@ -277,7 +277,7 @@ const printQuote = () => window.print();
 
       <div class="mt-5 flex items-center gap-1.5 p-2.5 rounded-[12px] bg-blue-50 border border-blue-100 text-sm w-fit">
         <ClockIcon class="w-4 h-4 text-blue-600 flex-shrink-0" />
-        <span class="text-blue-800">Estimated duration: <strong>{{ calc.estimated_duration_weeks ?? "-" }} weeks</strong></span>
+        <span class="text-blue-800">Estimated duration: <strong>{{ calc.estimated_duration_weeks ?? "-" }} weeks</strong><template v-if="calc.estimated_duration_weeks"> (&asymp; {{ (calc.estimated_duration_weeks / 4.33).toFixed(1).replace(".", ",") }} months)</template><template v-if="calc.allocated_developers"> &middot; {{ calc.allocated_developers }} developer{{ calc.allocated_developers > 1 ? "s" : "" }}</template></span>
       </div>
 
       <div v-if="calc.notes" class="mt-5 pt-5 border-t border-[#F1F1F1]">
