@@ -21,6 +21,7 @@ import {
   Share2,
 } from "lucide-vue-next";
 import ShareProposalModal from "@/components/admin/documents/ShareProposalModal.vue";
+import FlowchartPickerModal from "@/components/admin/documents/FlowchartPickerModal.vue";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import { useProposalStore } from "@/stores/proposal";
 import { useClientStore } from "@/stores/client";
@@ -119,6 +120,16 @@ const scrollToSection = (id, focusTitle = false) => {
   const el = document.getElementById(`section-${id}`);
   el?.scrollIntoView({ behavior: "smooth", block: "start" });
   if (focusTitle) el?.querySelector("input")?.select();
+};
+
+// ===== Flowcharts =====
+// The editor's Insert Flowchart button awaits this; the picker resolves it
+// with the chosen flowchart, or null when closed.
+const flowchartPicker = ref(null);
+const pickFlowchart = () => new Promise((resolve) => (flowchartPicker.value = { resolve }));
+const closeFlowchartPicker = (picked = null) => {
+  flowchartPicker.value?.resolve(picked);
+  flowchartPicker.value = null;
 };
 
 // ===== Images =====
@@ -446,7 +457,7 @@ const lastSaved = computed(() => {
                 </div>
               </div>
 
-              <RichTextEditor v-model="section.content" :upload-image="uploadEditorImage" placeholder="Tulis isi bagian ini..." />
+              <RichTextEditor v-model="section.content" :upload-image="uploadEditorImage" :insert-flowchart="pickFlowchart" placeholder="Tulis isi bagian ini..." />
             </div>
 
             <div class="flex justify-center">
@@ -499,6 +510,8 @@ const lastSaved = computed(() => {
         </aside>
       </div>
     </template>
+
+    <FlowchartPickerModal v-if="flowchartPicker" @select="closeFlowchartPicker" @close="closeFlowchartPicker(null)" />
 
     <ShareProposalModal v-if="showShare" :proposal-id="route.params.id" @close="showShare = false" @updated="onShared" />
   </div>

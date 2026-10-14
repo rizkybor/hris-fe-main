@@ -56,6 +56,13 @@ export const useFlowchartStore = defineStore("flowchart", {
       }
     },
 
+    // Snapshot used when the flowchart is inserted into other documents.
+    async uploadPreview(id, blob) {
+      const formData = new FormData();
+      formData.append("image", blob, `flowchart-${id}.png`);
+      await axiosInstance.post(`/flowcharts/${id}/preview`, formData);
+    },
+
     async deleteFlowchart(id) {
       await axiosInstance.delete(`/flowcharts/${id}`);
       this.flowcharts = this.flowcharts.filter((f) => f.id !== id);
