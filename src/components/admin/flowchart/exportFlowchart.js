@@ -158,3 +158,41 @@ export async function exportFlowchartPdf(vueFlowEl, nodes, { name, description, 
   pdf.addImage(page.toDataURL("image/jpeg", JPEG_QUALITY), "JPEG", 0, 0, pageMm.width, pageMm.height, undefined, "FAST");
   pdf.save(`${slugify(name)}.pdf`);
 }
+
+// Max width of the snapshot embedded in other documents (Proposal
+// Penawaran) -- sharp at A4 width without making uploads heavy.
+const PREVIEW_MAX_WIDTH = 1600;
+
+/**
+ * PNG snapshot of the whole diagram on white, cropped to the shapes (no
+ * page, title or margins) -- stored with the flowchart so other documents
+ * can show it. Returns null for an empty diagram.
+ */
+export async function renderFlowchartPreview(vueFlowEl, nodes) {
+  if (!vueFlowEl || !nodes.length) return null;
+
+  const bounds = getRectOfNodes(nodes);
+  const width = Math.ceil(bounds.width + DIAGRAM_PADDING * 2);
+  const height = Math.ceil(bounds.height + DIAGRAM_PADDING * 2);
+  const pixelRatio = Math.min(2, PREVIEW_MAX_WIDTH / width);
+
+  const pane = vueFlowEl.querySelector(".vue-flow__transformationpane");
+  vueFlowEl.classList.add("fc-exporting");
+  try {
+    const canvas = await toCanvas(pane, {
+      backgroundColor: "#FFFFFF",
+      width,
+      height,
+      pixelRatio,
+      style: {
+        width: `${width}px`,
+        height: `${height}px`,
+        transform: `translate(${DIAGRAM_PADDING - bounds.x}px, ${DIAGRAM_PADDING - bounds.y}px) scale(1)`,
+      },
+      filter: (el) => !EXCLUDED_CLASSES.some((cls) => el.classList?.contains(cls)),
+    });
+    return await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  } finally {
+    vueFlowEl.classList.remove("fc-exporting");
+  }
+}

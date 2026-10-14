@@ -31,7 +31,7 @@ import {
 } from "lucide-vue-next";
 import FlowchartNode from "@/components/admin/flowchart/FlowchartNode.vue";
 import { SHAPES, SHAPE_KEYS, COLOR_PRESETS, makeNode } from "@/components/admin/flowchart/flowchartShapes";
-import { exportFlowchartJpg, exportFlowchartPdf } from "@/components/admin/flowchart/exportFlowchart";
+import { exportFlowchartJpg, exportFlowchartPdf, renderFlowchartPreview } from "@/components/admin/flowchart/exportFlowchart";
 import { useFlowchartStore } from "@/stores/flowchart";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
@@ -344,6 +344,18 @@ const load = async () => {
   }
 };
 
+// After each save, a PNG snapshot is stored with the flowchart so documents
+// that embed it (Proposal Penawaran) show the latest version. Runs in the
+// background: a failed snapshot never blocks or fails the save itself.
+const refreshPreview = async (id) => {
+  try {
+    const blob = await renderFlowchartPreview(vueFlowRef.value, getNodes.value);
+    if (blob) await store.uploadPreview(id, blob);
+  } catch (error) {
+    console.warn("Flowchart preview could not be updated", error);
+  }
+};
+
 const save = async () => {
   if (isReadonly.value || store.saving) return;
   if (!name.value.trim()) {
@@ -365,6 +377,7 @@ const save = async () => {
       markSaved();
       router.replace({ name: "admin.flowchart.edit", params: { id: created.id } });
     }
+    refreshPreview(meta.value.id);
   } catch (error) {
     await alertModal.alert(errorMessage(error, "Flowchart could not be saved."), { type: "danger" });
   }
