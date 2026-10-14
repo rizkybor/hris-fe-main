@@ -18,7 +18,9 @@ import {
   FileText,
   ListTree,
   SeparatorHorizontal,
+  Share2,
 } from "lucide-vue-next";
+import ShareProposalModal from "@/components/admin/documents/ShareProposalModal.vue";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import { useProposalStore } from "@/stores/proposal";
 import { useClientStore } from "@/stores/client";
@@ -191,6 +193,21 @@ const openPdf = async (download = false) => {
   }
 };
 
+// The shared link shows the saved version, so unsaved edits are saved first.
+const showShare = ref(false);
+const openShare = async () => {
+  if (isDirty.value && !(await save())) return;
+  showShare.value = true;
+};
+
+// Emailing a draft marks it as sent -- mirror that without touching edits.
+const onShared = (updated) => {
+  const wasClean = !isDirty.value;
+  proposal.value = { ...proposal.value, ...updated };
+  doc.value.status = updated.status;
+  if (wasClean) savedState.value = snapshot();
+};
+
 const onKeydown = (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
     event.preventDefault();
@@ -267,6 +284,16 @@ const lastSaved = computed(() => {
           <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
         </div>
 
+        <button
+          type="button"
+          class="rounded-[10px] border border-[#DCDEDD] bg-white px-3 py-2 flex items-center gap-1.5 hover:border-[#0C51D9] transition-colors disabled:opacity-50 shrink-0"
+          :disabled="saving"
+          title="Bagikan lewat link, email, atau WhatsApp"
+          @click="openShare"
+        >
+          <Share2 class="w-4 h-4 text-brand-dark" />
+          <span class="text-brand-dark text-sm font-semibold">Bagikan</span>
+        </button>
         <button
           type="button"
           class="rounded-[10px] border border-[#DCDEDD] bg-white px-3 py-2 flex items-center gap-1.5 hover:border-[#0C51D9] transition-colors disabled:opacity-50 shrink-0"
@@ -472,6 +499,8 @@ const lastSaved = computed(() => {
         </aside>
       </div>
     </template>
+
+    <ShareProposalModal v-if="showShare" :proposal-id="route.params.id" @close="showShare = false" @updated="onShared" />
   </div>
 </template>
 

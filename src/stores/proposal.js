@@ -66,6 +66,22 @@ export const useProposalStore = defineStore("proposal", {
       this.proposals = this.proposals.filter((p) => p.id !== id);
     },
 
+    // ----- Share link -----
+    async shareProposal(id, expiresInDays = null) {
+      const { data } = await axiosInstance.post(`/proposals/${id}/share`, { expires_in_days: expiresInDays });
+      return data.data;
+    },
+
+    async unshareProposal(id) {
+      const { data } = await axiosInstance.delete(`/proposals/${id}/share`);
+      return data.data;
+    },
+
+    async shareByEmail(id, payload) {
+      const { data } = await axiosInstance.post(`/proposals/${id}/share/email`, payload);
+      return data.data;
+    },
+
     async uploadImage(file) {
       const formData = new FormData();
       formData.append("image", file);
