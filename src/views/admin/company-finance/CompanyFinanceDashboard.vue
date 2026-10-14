@@ -12,6 +12,7 @@ import DeleteConfirmationModal from "@/components/common/ConfirmationModal.vue";
 import { Eye, Edit, Trash2, Wallet, Users, Server, Search, Plus } from "lucide-vue-next";
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
 import Pagination from "@/components/common/Pagination.vue";
+import { operationalCostStatusLabel, operationalCostStatusClass, expiryState } from "@/utils/operationalCostStatus";
 
 const store = useCompanyFinanceStore();
 
@@ -389,8 +390,8 @@ const paginate = (data, page) =>
 const pageCount = (data) => Math.ceil(data.length / perPage);
 
 const formatDate = (date) => {
-  if (!date) return "";
-  return date.split("T")[0];
+  if (!date) return "-";
+  return new Date(`${String(date).slice(0, 10)}T00:00:00`).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 };
 
 const openDeleteModal = ({ title, message, type = "danger", onConfirm }) => {
@@ -529,7 +530,7 @@ watch(
           </button>
         </div>
 
-        <SkeletonTable v-if="store.loading" :rows="4" :cols="6" />
+        <SkeletonTable v-if="store.loading" :rows="4" :cols="7" />
 
         <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
           <table class="min-w-full text-sm">
@@ -538,6 +539,8 @@ watch(
                 <th class="px-3 py-2.5 text-xs uppercase text-gray-500 font-semibold">No</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Item</th>
                 <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Actual</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Expired</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Status</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Notes</th>
                 <th class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Action</th>
               </tr>
@@ -547,6 +550,8 @@ watch(
                 v-for="(item, index) in fixedCostPaginated"
                 :key="item.id"
                 class="border-t border-[#DCDEDD] hover:bg-gray-50/60"
+                :class="{ 'opacity-60': item.status !== 'active' }"
+                :title="item.status !== 'active' ? 'Tidak Digunakan — tidak dihitung ke total' : ''"
               >
                 <td class="px-3 py-2.5 text-gray-500">
                   {{ (fixedPage - 1) * perPage + index + 1 }}
@@ -554,6 +559,15 @@ watch(
                 <td class="px-3 py-2.5 font-medium text-brand-dark">{{ item.financial_items }}</td>
                 <td class="px-3 py-2.5 text-right text-success">
                   Rp {{ item.actual.toLocaleString() }}
+                </td>
+                <td class="px-3 py-2.5 whitespace-nowrap">
+                  <p>{{ formatDate(item.expired_date) }}</p>
+                  <p v-if="expiryState(item)" class="text-xs font-semibold" :class="expiryState(item).class">{{ expiryState(item).label }}</p>
+                </td>
+                <td class="px-3 py-2.5">
+                  <span class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap" :class="operationalCostStatusClass(item.status)">
+                    {{ operationalCostStatusLabel(item.status) }}
+                  </span>
                 </td>
                 <td class="px-3 py-2.5 text-gray-500">{{ item.notes }}</td>
                 <td class="px-3 py-2.5">
@@ -572,7 +586,7 @@ watch(
               </tr>
 
               <tr v-if="filteredFixed.length === 0">
-                <td colspan="5" class="text-center py-8 text-gray-400 text-sm">
+                <td colspan="7" class="text-center py-8 text-gray-400 text-sm">
                   No Fixed Cost data found.
                 </td>
               </tr>
@@ -615,7 +629,7 @@ watch(
           </button>
         </div>
 
-        <SkeletonTable v-if="store.loading" :rows="4" :cols="6" />
+        <SkeletonTable v-if="store.loading" :rows="4" :cols="8" />
 
         <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
           <table class="min-w-full text-sm">
@@ -625,6 +639,8 @@ watch(
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Bidang</th>
                 <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Jam/Bulan</th>
                 <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Actual</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Expired</th>
+                <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Status</th>
                 <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Notes</th>
                 <th class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Action</th>
               </tr>
@@ -634,6 +650,8 @@ watch(
                 v-for="(item, index) in sdmResourcePaginated"
                 :key="item.id"
                 class="border-t border-[#DCDEDD] hover:bg-gray-50/60"
+                :class="{ 'opacity-60': item.status !== 'active' }"
+                :title="item.status !== 'active' ? 'Tidak Digunakan — tidak dihitung ke total' : ''"
               >
                 <td class="px-3 py-2.5 text-gray-500">
                   {{ (sdmPage - 1) * perPage + index + 1 }}
@@ -642,6 +660,15 @@ watch(
                 <td class="px-3 py-2.5 text-right">{{ item.productive_hours_per_month ?? "-" }}</td>
                 <td class="px-3 py-2.5 text-right text-success">
                   Rp {{ item.actual.toLocaleString() }}
+                </td>
+                <td class="px-3 py-2.5 whitespace-nowrap">
+                  <p>{{ formatDate(item.expired_date) }}</p>
+                  <p v-if="expiryState(item)" class="text-xs font-semibold" :class="expiryState(item).class">{{ expiryState(item).label }}</p>
+                </td>
+                <td class="px-3 py-2.5">
+                  <span class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap" :class="operationalCostStatusClass(item.status)">
+                    {{ operationalCostStatusLabel(item.status) }}
+                  </span>
                 </td>
                 <td class="px-3 py-2.5 text-gray-500">{{ item.notes }}</td>
                 <td class="px-3 py-2.5">
@@ -660,7 +687,7 @@ watch(
               </tr>
 
               <tr v-if="filteredSdm.length === 0">
-                <td colspan="6" class="text-center py-8 text-gray-400 text-sm">
+                <td colspan="8" class="text-center py-8 text-gray-400 text-sm">
                   No SDM Resource data found.
                 </td>
               </tr>
@@ -724,6 +751,8 @@ watch(
                 v-for="(item, index) in infraPaginated"
                 :key="item.id"
                 class="border-t border-[#DCDEDD] hover:bg-gray-50/60"
+                :class="{ 'opacity-60': item.status !== 'active' }"
+                :title="item.status !== 'active' ? 'Tidak Digunakan — tidak dihitung ke total' : ''"
               >
                 <td class="px-3 py-2.5 text-gray-500">
                   {{ (infraPage - 1) * perPage + index + 1 }}
@@ -738,8 +767,15 @@ watch(
                 <td class="px-3 py-2.5 text-right">
                   Rp {{ item.annual_fee.toLocaleString() }}
                 </td>
-                <td class="px-3 py-2.5">{{ formatDate(item.expired_date) }}</td>
-                <td class="px-3 py-2.5">{{ item.status }}</td>
+                <td class="px-3 py-2.5 whitespace-nowrap">
+                  <p>{{ formatDate(item.expired_date) }}</p>
+                  <p v-if="expiryState(item)" class="text-xs font-semibold" :class="expiryState(item).class">{{ expiryState(item).label }}</p>
+                </td>
+                <td class="px-3 py-2.5">
+                  <span class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap" :class="operationalCostStatusClass(item.status)">
+                    {{ operationalCostStatusLabel(item.status) }}
+                  </span>
+                </td>
                 <td class="px-3 py-2.5">
                   <div class="flex justify-center gap-1">
                     <button @click="viewInfra(item)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors" title="View">

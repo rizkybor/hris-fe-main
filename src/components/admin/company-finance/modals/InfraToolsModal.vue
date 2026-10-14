@@ -1,6 +1,6 @@
 <script setup>
 import BaseInput from "@/components/common/form/Input.vue";
-import BaseSelect from "@/components/common/form/Select.vue";
+import UsageStatusFields from "./UsageStatusFields.vue";
 import { reactive, watch, computed } from "vue";
 
 const props = defineProps({
@@ -16,12 +16,6 @@ const props = defineProps({
   },
 });
 
-const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "active_monitoring_required", label: "Active – Monitoring" },
-  { value: "active_non_critical", label: "Active – Non-Critical" },
-  { value: "inactive", label: "Inactive" },
-];
 
 const emit = defineEmits(["submit", "close"]);
 
@@ -40,7 +34,7 @@ const buildPayload = () => ({
   vendor: form.vendor,
   monthly_fee: Number(form.monthly_fee),
   annual_fee: Number(form.annual_fee),
-  expired_date: form.expired_date,
+  expired_date: form.expired_date || null,
   status: form.status,
   notes: form.notes,
 });
@@ -61,14 +55,14 @@ watch(
         ...props.data,
         monthly_fee: props.data.monthly_fee ?? "",
         annual_fee: props.data.annual_fee ?? "",
-        expired_date: props.data.expired_date
-          ? props.data.expired_date.split("T")[0]
-          : "",
+        expired_date: props.data.expired_date ? String(props.data.expired_date).slice(0, 10) : "",
+        status: props.data.status || "active",
       });
     }
 
     if (show && props.mode === "add") {
       Object.keys(form).forEach((key) => (form[key] = ""));
+      form.status = "active";
     }
   },
   { immediate: true }
@@ -113,9 +107,10 @@ const validate = () => {
     ? ""
     : "Tech Stack is required";
   errors.vendor = form.vendor !== "" ? "" : "Vendor is required";
+  // Expired is required while the item is in use (mirrors the API rule).
+  errors.status = form.status ? "" : "Status wajib dipilih";
   errors.expired_date =
-    form.expired_date !== "" ? "" : "Expired Date is required";
-  errors.status = form.status !== "" ? "" : "Status is required";
+    form.status === "active" && !form.expired_date ? "Expired wajib diisi untuk item yang Digunakan" : "";
 
   Object.values(errors).forEach((e) => {
     if (e) valid = false;
@@ -215,34 +210,12 @@ const submit = () => {
           only-number
         />
 
-        <div>
-          <BaseInput
-            id="expired"
-            type="date"
-            label="Expired Date"
-            v-model="form.expired_date"
-            :readonly="props.mode === 'view'"
-            :required="props.mode !== 'view'"
-          />
-          <p v-if="errors.expired_date" class="text-red-500 text-sm mt-1">
-            {{ errors.expired_date }}
-          </p>
-        </div>
-
-        <div>
-          <BaseSelect
-            id="status"
-            label="Status"
-            placeholder="Select status"
-            v-model="form.status"
-            :options="statusOptions"
-            :required="props.mode !== 'view'"
-            :readonly="props.mode === 'view'"
-          />
-          <p v-if="errors.status" class="text-red-500 text-sm mt-1">
-            {{ errors.status }}
-          </p>
-        </div>
+        <UsageStatusFields
+          v-model:status="form.status"
+          v-model:expired-date="form.expired_date"
+          :readonly="props.mode === 'view'"
+          :errors="errors"
+        />
 
         <BaseInput
           id="notes"

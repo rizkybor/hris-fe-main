@@ -393,18 +393,21 @@ const tableRows = computed(() => {
         name: r.financial_items,
         budget: r.budget,
         actual: r.actual,
+        status: r.status,
       })),
       ...(rows.infrastructure_tools || []).map((r) => ({
         category: "Infrastructure",
         name: r.tech_stack_component,
         budget: r.monthly_fee,
         actual: r.annual_fee,
+        status: r.status,
       })),
       ...(rows.sdm_resources || []).map((r) => ({
         category: "SDM Resource",
         name: r.sdm_component,
         budget: r.budget,
         actual: r.actual,
+        status: r.status,
       })),
     ];
   }
@@ -875,6 +878,7 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Item</th>
               <th class="py-3 pr-4 font-semibold">Budget</th>
               <th class="py-3 pr-4 font-semibold">Actual</th>
+              <th class="py-3 pr-4 font-semibold">Status</th>
             </template>
             <template v-else-if="activeTab === 'pph21'">
               <th class="py-3 pr-4 font-semibold">Period</th>
@@ -1040,6 +1044,14 @@ onMounted(() => {
               <td class="py-3 pr-4">{{ row.name }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.budget) }}</td>
               <td class="py-3 pr-4">{{ formatCurrency(row.actual) }}</td>
+              <td class="py-3 pr-4">
+                <span
+                  class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap"
+                  :class="row.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'"
+                >
+                  {{ row.status === "active" ? "Digunakan" : "Tidak Digunakan" }}
+                </span>
+              </td>
             </tr>
           </template>
           <template v-else-if="activeTab === 'pph21'">

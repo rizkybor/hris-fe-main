@@ -1,6 +1,7 @@
 <script setup>
 import BaseInput from "@/components/common/form/Input.vue";
 import BaseSelect from "@/components/common/form/Select.vue";
+import UsageStatusFields from "./UsageStatusFields.vue";
 import { reactive, watch, computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useSdmFieldStore } from "@/stores/sdmField";
@@ -33,6 +34,8 @@ const form = reactive({
   sdm_field_id: "",
   productive_hours_per_month: "",
   actual: "",
+  status: "active",
+  expired_date: "",
   notes: "",
 });
 
@@ -40,6 +43,8 @@ const buildPayload = () => ({
   sdm_field_id: Number(form.sdm_field_id),
   productive_hours_per_month: Number(form.productive_hours_per_month),
   actual: Number(form.actual),
+  status: form.status,
+  expired_date: form.expired_date || null,
   notes: form.notes,
 });
 
@@ -47,6 +52,8 @@ const buildPayload = () => ({
 const errors = reactive({
   sdm_field_id: "",
   productive_hours_per_month: "",
+  status: "",
+  expired_date: "",
 });
 
 watch(
@@ -58,11 +65,14 @@ watch(
         sdm_field_id: props.data.sdm_field_id ?? "",
         productive_hours_per_month: props.data.productive_hours_per_month ?? "",
         actual: props.data.actual ?? "",
+        status: props.data.status || "active",
+        expired_date: props.data.expired_date ? String(props.data.expired_date).slice(0, 10) : "",
       });
     }
 
     if (show && props.mode === "add") {
       Object.keys(form).forEach((key) => (form[key] = ""));
+      form.status = "active";
     }
   },
   { immediate: true }
@@ -99,6 +109,10 @@ const validate = () => {
   errors.sdm_field_id = form.sdm_field_id ? "" : "Bidang is required";
   errors.productive_hours_per_month =
     form.productive_hours_per_month !== "" ? "" : "Jam Produktif / Bulan is required";
+  // Expired is required while the item is in use (mirrors the API rule).
+  errors.status = form.status ? "" : "Status wajib dipilih";
+  errors.expired_date =
+    form.status === "active" && !form.expired_date ? "Expired wajib diisi untuk item yang Digunakan" : "";
 
   Object.values(errors).forEach((e) => {
     if (e) valid = false;
@@ -187,6 +201,13 @@ const submit = () => {
           v-model="actualModel"
           :readonly="props.mode === 'view'"
           only-number
+        />
+
+        <UsageStatusFields
+          v-model:status="form.status"
+          v-model:expired-date="form.expired_date"
+          :readonly="props.mode === 'view'"
+          :errors="errors"
         />
 
         <BaseInput

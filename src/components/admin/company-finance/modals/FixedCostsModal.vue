@@ -1,5 +1,6 @@
 <script setup>
 import BaseInput from "@/components/common/form/Input.vue";
+import UsageStatusFields from "./UsageStatusFields.vue";
 import { reactive, watch, computed } from "vue";
 
 // Props
@@ -24,6 +25,8 @@ const form = reactive({
   financial_items: "",
   description: "",
   actual: "",
+  status: "active",
+  expired_date: "",
   notes: "",
 });
 
@@ -31,6 +34,8 @@ const buildPayload = () => ({
   financial_items: form.financial_items,
   description: form.description,
   actual: Number(form.actual),
+  status: form.status,
+  expired_date: form.expired_date || null,
   notes: form.notes,
 });
 
@@ -39,6 +44,8 @@ const errors = reactive({
   financial_items: "",
   description: "",
   actual: "",
+  status: "",
+  expired_date: "",
 });
 
 // Watcher: reset form saat modal dibuka atau data berubah
@@ -50,9 +57,12 @@ watch(
         Object.assign(form, {
           ...props.data,
           actual: props.data.actual ?? "",
+          status: props.data.status || "active",
+          expired_date: props.data.expired_date ? String(props.data.expired_date).slice(0, 10) : "",
         });
       } else if (props.mode === "add") {
         Object.keys(form).forEach((key) => (form[key] = ""));
+        form.status = "active";
       }
       // Reset errors
       Object.keys(errors).forEach((key) => (errors[key] = ""));
@@ -91,6 +101,10 @@ const validate = () => {
 
   errors.financial_items = form.financial_items ? "" : "Item is required";
   errors.description = form.description ? "" : "Description is required";
+  // Expired is required while the item is in use (mirrors the API rule).
+  errors.status = form.status ? "" : "Status wajib dipilih";
+  errors.expired_date =
+    form.status === "active" && !form.expired_date ? "Expired wajib diisi untuk item yang Digunakan" : "";
 
   Object.values(errors).forEach((e) => {
     if (e) valid = false;
@@ -181,6 +195,14 @@ const validate = () => {
           v-model="actualModel"
           :readonly="props.mode === 'view'"
           only-number
+        />
+
+        <!-- Status & Expired -->
+        <UsageStatusFields
+          v-model:status="form.status"
+          v-model:expired-date="form.expired_date"
+          :readonly="props.mode === 'view'"
+          :errors="errors"
         />
 
         <!-- Notes -->
