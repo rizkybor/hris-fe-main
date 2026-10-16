@@ -15,6 +15,10 @@ import {
   Eye,
   EyeOff,
   ChevronDown,
+  Paperclip,
+  FileText,
+  Upload,
+  ExternalLink,
 } from "lucide-vue-next";
 import { useCompanyCashTransactionStore } from "@/stores/companyCashTransaction";
 import { useProjectStore } from "@/stores/project";
@@ -66,13 +70,61 @@ const emptyForm = () => ({
   amount: "",
   transaction_date: new Date().toISOString().slice(0, 10),
   notes: "",
+  proof: null, // new File to upload
+  remove_proof: false,
 });
+
+// ===== Proof of transaction (optional) =====
+const PROOF_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const PROOF_MAX_BYTES = 5 * 1024 * 1024;
+const existingProof = ref(null); // proof already saved on the row being edited
+const proofPreviewUrl = ref("");
+const proofInput = ref(null);
+
+const resetProofPreview = () => {
+  if (proofPreviewUrl.value) URL.revokeObjectURL(proofPreviewUrl.value);
+  proofPreviewUrl.value = "";
+};
+
+const onProofSelected = (event) => {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (!file) return;
+  if (!PROOF_TYPES.includes(file.type)) {
+    formError.value = "Bukti transaksi harus berupa JPG, PNG, WEBP, atau PDF.";
+    return;
+  }
+  if (file.size > PROOF_MAX_BYTES) {
+    formError.value = "Ukuran bukti transaksi maksimal 5 MB.";
+    return;
+  }
+  formError.value = "";
+  resetProofPreview();
+  form.value.proof = file;
+  form.value.remove_proof = false;
+  if (file.type.startsWith("image/")) proofPreviewUrl.value = URL.createObjectURL(file);
+};
+
+const clearNewProof = () => {
+  form.value.proof = null;
+  resetProofPreview();
+};
+
+const removeExistingProof = () => {
+  form.value.remove_proof = true;
+};
+
+// Small viewer for a saved proof (from the table or the edit form).
+const viewingProof = ref(null);
+const openProof = (proof) => (viewingProof.value = proof);
 
 const form = ref(emptyForm());
 
 const openCreateModal = () => {
   editingId.value = null;
   form.value = emptyForm();
+  existingProof.value = null;
+  resetProofPreview();
   formError.value = "";
   isFormModalOpen.value = true;
 };
@@ -85,13 +137,18 @@ const openEditModal = (transaction) => {
     amount: transaction.amount,
     transaction_date: transaction.transaction_date,
     notes: transaction.notes || "",
+    proof: null,
+    remove_proof: false,
   };
+  existingProof.value = transaction.proof || null;
+  resetProofPreview();
   formError.value = "";
   isFormModalOpen.value = true;
 };
 
 const closeFormModal = () => {
   isFormModalOpen.value = false;
+  resetProofPreview();
 };
 
 const handleSubmit = async () => {
@@ -102,11 +159,17 @@ const handleSubmit = async () => {
     return;
   }
 
+  // Only send proof fields that actually change something.
+  const { proof, remove_proof, ...fields } = form.value;
+  const payload = { ...fields };
+  if (proof) payload.proof = proof;
+  else if (editingId.value && remove_proof) payload.remove_proof = true;
+
   try {
     if (editingId.value) {
-      await store.updateTransaction(editingId.value, form.value);
+      await store.updateTransaction(editingId.value, payload);
     } else {
-      await store.createTransaction(form.value);
+      await store.createTransaction(payload);
     }
     closeFormModal();
   } catch (err) {
@@ -308,6 +371,14 @@ const isBalanceVisible = ref(false);
               <td class="px-3 py-2.5">
                 <p class="text-brand-dark font-medium">{{ transaction.description }}</p>
                 <p v-if="transaction.notes" class="text-gray-400 text-xs mt-0.5">{{ transaction.notes }}</p>
+                <button
+                  v-if="transaction.proof"
+                  type="button"
+                  class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#0C51D9] hover:underline"
+                  @click="openProof(transaction.proof)"
+                >
+                  <Paperclip class="w-3 h-3" /> Lihat bukti
+                </button>
               </td>
               <td class="px-3 py-2.5">
                 <span
@@ -457,6 +528,51 @@ const isBalanceVisible = ref(false);
               ></textarea>
             </div>
 
+            <!-- Proof of transaction -->
+            <div>
+              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
+                Bukti Transaksi <span class="text-gray-400 font-normal">(opsional)</span>
+              </label>
+
+              <!-- New file picked -->
+              <div v-if="form.proof" class="flex items-center gap-3 p-2.5 border border-[#DCDEDD] rounded-lg">
+                <img v-if="proofPreviewUrl" :src="proofPreviewUrl" alt="Pratinjau" class="w-12 h-12 rounded-md object-cover border border-[#EEF0F2]" />
+                <div v-else class="w-12 h-12 rounded-md bg-red-50 flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-red-600" /></div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm text-brand-dark font-medium truncate">{{ form.proof.name }}</p>
+                  <p class="text-xs text-gray-400">Akan diunggah saat disimpan</p>
+                </div>
+                <button type="button" class="text-xs font-semibold text-gray-500 hover:text-red-600" @click="clearNewProof">Batal</button>
+              </div>
+
+              <!-- Proof already saved on this transaction -->
+              <div v-else-if="existingProof && !form.remove_proof" class="flex items-center gap-3 p-2.5 border border-[#DCDEDD] rounded-lg">
+                <img v-if="existingProof.is_image" :src="existingProof.url" alt="Bukti" class="w-12 h-12 rounded-md object-cover border border-[#EEF0F2]" />
+                <div v-else class="w-12 h-12 rounded-md bg-red-50 flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-red-600" /></div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm text-brand-dark font-medium truncate">{{ existingProof.name || "Bukti transaksi" }}</p>
+                  <button type="button" class="text-xs font-semibold text-[#0C51D9] hover:underline" @click="openProof(existingProof)">Lihat</button>
+                </div>
+                <button type="button" class="text-xs font-semibold text-gray-500 hover:text-[#0C51D9]" @click="proofInput?.click()">Ganti</button>
+                <button type="button" class="text-xs font-semibold text-gray-500 hover:text-red-600" @click="removeExistingProof">Hapus</button>
+              </div>
+
+              <!-- Nothing attached -->
+              <button
+                v-else
+                type="button"
+                class="w-full flex items-center justify-center gap-2 px-3.5 py-3 border border-dashed border-[#DCDEDD] rounded-lg text-sm text-gray-500 hover:border-[#0C51D9] hover:text-[#0C51D9] transition"
+                @click="proofInput?.click()"
+              >
+                <Upload class="w-4 h-4" /> Unggah bukti (JPG, PNG, WEBP, PDF · maks. 5 MB)
+              </button>
+              <p v-if="existingProof && form.remove_proof && !form.proof" class="text-xs text-gray-500 mt-1">
+                Bukti lama akan dihapus saat disimpan.
+                <button type="button" class="font-semibold text-[#0C51D9] hover:underline" @click="form.remove_proof = false">Urungkan</button>
+              </p>
+              <input ref="proofInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="hidden" @change="onProofSelected" />
+            </div>
+
             <p v-if="formError" class="text-red-500 text-xs">{{ formError }}</p>
 
             <div class="grid grid-cols-2 gap-3 pt-2">
@@ -476,6 +592,35 @@ const isBalanceVisible = ref(false);
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- PROOF VIEWER (kept small) -->
+    <Transition name="fade">
+      <div v-if="viewingProof" class="fixed inset-0 z-[100] flex items-center justify-center p-5">
+        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="viewingProof = null"></div>
+        <div class="relative bg-white rounded-[14px] w-full max-w-sm p-4 shadow-xl">
+          <button @click="viewingProof = null" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600"><X class="w-5 h-5" /></button>
+          <p class="text-brand-dark text-sm font-bold mb-0.5">Bukti Transaksi</p>
+          <p class="text-xs text-gray-400 truncate pr-6 mb-3">{{ viewingProof.name }}</p>
+
+          <div v-if="viewingProof.is_image" class="bg-gray-50 border border-[#EEF0F2] rounded-lg flex items-center justify-center p-2">
+            <img :src="viewingProof.url" :alt="viewingProof.name" class="max-w-full object-contain rounded" style="max-height: 320px" />
+          </div>
+          <div v-else class="bg-gray-50 border border-[#EEF0F2] rounded-lg flex flex-col items-center justify-center py-8">
+            <FileText class="w-10 h-10 text-red-600 mb-2" />
+            <p class="text-xs text-gray-500">Dokumen PDF</p>
+          </div>
+
+          <a
+            :href="viewingProof.url"
+            target="_blank"
+            rel="noopener"
+            class="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition"
+          >
+            <ExternalLink class="w-4 h-4" /> {{ viewingProof.is_image ? "Buka ukuran penuh" : "Buka PDF" }}
+          </a>
         </div>
       </div>
     </Transition>
