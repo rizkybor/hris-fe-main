@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
+import { toRequestBody } from "@/helpers/formDataHelper";
 
 export const useCompanyCashTransactionStore = defineStore("companyCashTransaction", {
   state: () => ({
@@ -44,7 +45,8 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
       this.saving = true;
       this.error = null;
       try {
-        const { data } = await axiosInstance.post("/company-cash-transactions", payload);
+        // Multipart when a proof file is attached, plain JSON otherwise.
+        const { data } = await axiosInstance.post("/company-cash-transactions", toRequestBody(payload));
         this.success = data.message;
         await this.fetchAll(this.lastParams);
         return data.data;
@@ -60,7 +62,9 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
       this.saving = true;
       this.error = null;
       try {
-        const { data } = await axiosInstance.put(`/company-cash-transactions/${id}`, payload);
+        // POST + _method so a proof file can go along (PHP doesn't parse
+        // multipart bodies on a real PUT).
+        const { data } = await axiosInstance.post(`/company-cash-transactions/${id}`, toRequestBody({ ...payload, _method: "PUT" }));
         this.success = data.message;
         await this.fetchAll(this.lastParams);
         return data.data;
