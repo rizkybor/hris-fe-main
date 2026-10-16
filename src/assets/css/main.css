@@ -742,10 +742,6 @@ video {
   left: 33.333333%;
 }
 
-.left-2 {
-  left: 0.5rem;
-}
-
 .left-2\.5 {
   left: 0.625rem;
 }
@@ -868,6 +864,10 @@ video {
 
 .z-50 {
   z-index: 50;
+}
+
+.z-\[100\] {
+  z-index: 100;
 }
 
 .z-\[60\] {
@@ -3901,6 +3901,10 @@ video {
 
 .pr-5 {
   padding-right: 1.25rem;
+}
+
+.pr-6 {
+  padding-right: 1.5rem;
 }
 
 .pr-8 {
