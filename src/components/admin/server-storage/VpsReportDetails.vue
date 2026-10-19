@@ -4,11 +4,8 @@ import { HardDrive, MemoryStick, Cpu, Check, ExternalLink, RefreshCcw } from "lu
 import { formatBytes, usageLevel, formatUptime, SITE_TYPES, sslState, copyText } from "@/utils/serverMetrics";
 
 // What one VPS's agent last reported: usage, hosted websites, folder sizes.
-// Used by the VPS detail modal and by the HRIS app-server tab (which has
-// its own disk view, hence hideDisk).
 const props = defineProps({
   server: { type: Object, required: true },
-  hideDisk: { type: Boolean, default: false },
 });
 
 const breakdownTotal = computed(() => props.server.report?.disk?.used || 0);
@@ -36,8 +33,8 @@ const copy = async (text, key) => {
         {{ copied === "update" ? "Tersalin" : "Salin perintah update" }}
       </button>
     </div>
-    <div class="grid grid-cols-1 gap-3" :class="hideDisk ? 'sm:grid-cols-2' : 'sm:grid-cols-3'">
-      <div v-if="!hideDisk" class="vm-stat">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="vm-stat">
         <p class="vm-stat-label"><HardDrive class="w-3.5 h-3.5" /> Disk ({{ server.report.disk.mount }})</p>
         <p class="vm-stat-value" :class="usageLevel(server.report.disk.used_percent).text">{{ server.report.disk.used_percent }}%</p>
         <p class="vm-stat-sub">{{ formatBytes(server.report.disk.used) }} terpakai · sisa {{ formatBytes(server.report.disk.free) }} dari {{ formatBytes(server.report.disk.total) }}</p>
@@ -101,7 +98,7 @@ const copy = async (text, key) => {
       </template>
     </div>
 
-    <div v-if="!hideDisk">
+    <div>
       <div class="flex items-center justify-between mb-2">
         <p class="text-brand-dark text-sm font-bold">Pemakaian Disk per Folder</p>
         <p class="text-xs text-brand-light">Diukur {{ formatDateTime(server.report.breakdown_at) }} · diperbarui tiap 6 jam</p>

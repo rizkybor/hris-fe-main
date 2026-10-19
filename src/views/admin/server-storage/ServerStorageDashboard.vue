@@ -1,14 +1,6 @@
 <script setup>
-import { ref } from "vue";
-import { HardDrive, Server, AppWindow } from "lucide-vue-next";
+import { HardDrive } from "lucide-vue-next";
 import VpsMonitor from "@/components/admin/server-storage/VpsMonitor.vue";
-import AppServerStorage from "@/components/admin/server-storage/AppServerStorage.vue";
-
-const tabs = [
-  { key: "vps", label: "VPS", icon: Server },
-  { key: "app", label: "Server Aplikasi HRIS", icon: AppWindow },
-];
-const tab = ref("vps");
 </script>
 
 <template>
@@ -20,26 +12,11 @@ const tab = ref("vps");
         </div>
         <div class="min-w-0">
           <h3 class="text-brand-dark text-base font-bold">Server Storage</h3>
-          <p class="text-brand-light text-xs font-normal">Pemantauan disk, RAM, dan CPU setiap VPS yang Anda kelola</p>
+          <p class="text-brand-light text-xs font-normal">Pemantauan disk, RAM, CPU, dan website setiap VPS yang Anda kelola</p>
         </div>
-      </div>
-
-      <div class="flex gap-1 mt-4 border-b border-[#DCDEDD] -mb-5 -mx-5 px-5">
-        <button
-          v-for="t in tabs"
-          :key="t.key"
-          type="button"
-          class="px-3.5 py-2.5 text-sm font-semibold inline-flex items-center gap-1.5 border-b-2 -mb-px transition-colors"
-          :class="tab === t.key ? 'border-[#0C51D9] text-[#0C51D9]' : 'border-transparent text-brand-light hover:text-brand-dark'"
-          @click="tab = t.key"
-        >
-          <component :is="t.icon" class="w-4 h-4" />
-          {{ t.label }}
-        </button>
       </div>
     </div>
 
-    <VpsMonitor v-if="tab === 'vps'" />
-    <AppServerStorage v-else @open-vps="tab = 'vps'" />
+    <VpsMonitor />
   </div>
 </template>
