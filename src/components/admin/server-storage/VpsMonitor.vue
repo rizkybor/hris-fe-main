@@ -17,12 +17,15 @@ import {
   MemoryStick,
   Cpu,
   ChevronRight,
+  Globe,
+  ExternalLink,
+  RefreshCcw,
 } from "lucide-vue-next";
 import { useServerMonitorStore } from "@/stores/serverMonitor";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
-import { formatBytes, usageLevel, STATUS, timeAgo, formatUptime } from "@/utils/serverMetrics";
+import { formatBytes, usageLevel, STATUS, timeAgo, formatUptime, SITE_TYPES, sslState } from "@/utils/serverMetrics";
 
 const store = useServerMonitorStore();
 const alertModal = useAlertModalStore();
@@ -43,11 +46,18 @@ const clock = setInterval(() => (now.value = Date.now()), 30000);
 onBeforeUnmount(() => clearInterval(clock));
 const ago = (value) => (now.value, timeAgo(value));
 
+// Sites whose certificate expires within 14 days (or already has).
+const sslWarnings = (server) => (server.report?.sites || []).filter((site) => site.ssl && sslState(site).days < 14).length;
+const siteCount = (server) => (server.report?.sites || []).filter((site) => !site.unlinked).length;
+
 const summary = computed(() => ({
   total: servers.value.length,
   online: servers.value.filter((s) => s.status === "online").length,
   attention: servers.value.filter(
-    (s) => s.status === "offline" || (s.report && (s.report.disk.used_percent >= 90 || s.report.memory.used_percent >= 90))
+    (s) =>
+      s.status === "offline" ||
+      (s.report && (s.report.disk.used_percent >= 90 || s.report.memory.used_percent >= 90)) ||
+      sslWarnings(s) > 0
   ).length,
 }));
 
@@ -147,6 +157,10 @@ const remove = async (server) => {
 const detail = ref(null);
 const openDetail = (server) => (detail.value = server);
 const breakdownTotal = computed(() => detail.value?.report?.disk?.used || 0);
+const detailSites = computed(() => (detail.value?.report?.sites || []).filter((site) => !site.unlinked));
+const detailFolders = computed(() => (detail.value?.report?.sites || []).filter((site) => site.unlinked));
+const siteLabel = (site) => site.domains?.[0] || (site.server ? "Situs default (tanpa domain)" : site.path);
+const siteType = (site) => SITE_TYPES[site.type] || SITE_TYPES.unknown;
 const formatDateTime = (value) =>
   value ? new Date(value).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
 </script>
@@ -240,8 +254,12 @@ const formatDateTime = (value) =>
         </p>
 
         <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-[#F1F1F1] text-xs text-brand-light">
-          <span>Laporan terakhir: {{ ago(server.last_report_at) }}</span>
-          <ChevronRight class="w-4 h-4" />
+          <span>
+            Laporan terakhir: {{ ago(server.last_report_at) }}
+            <template v-if="server.report?.sites"> · <Globe class="w-3 h-3 inline -mt-0.5" /> {{ siteCount(server) }} website</template>
+            <span v-if="sslWarnings(server)" class="text-red-600 font-semibold"> · {{ sslWarnings(server) }} SSL hampir habis</span>
+          </span>
+          <ChevronRight class="w-4 h-4 shrink-0" />
         </div>
       </button>
     </div>
@@ -341,6 +359,13 @@ const formatDateTime = (value) =>
 
         <div class="p-5 overflow-y-auto space-y-5">
           <template v-if="detail.report">
+            <div v-if="detail.agent_outdated" class="bg-blue-50 border border-blue-200 rounded-[10px] p-3 text-xs text-blue-900 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+              <span>Agen di VPS ini versi lama ({{ detail.report.agent_version }}). Perbarui agar daftar website ikut terbaca. Jalankan di VPS (tanpa token baru):</span>
+              <button type="button" class="vm-btn shrink-0" @click="copy(detail.update_command, 'update')">
+                <Check v-if="copied === 'update'" class="w-4 h-4 text-green-600" /><RefreshCcw v-else class="w-4 h-4" />
+                {{ copied === "update" ? "Tersalin" : "Salin perintah update" }}
+              </button>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="vm-stat">
                 <p class="vm-stat-label"><HardDrive class="w-3.5 h-3.5" /> Disk ({{ detail.report.disk.mount }})</p>
@@ -360,6 +385,50 @@ const formatDateTime = (value) =>
                 <p class="vm-stat-value" :class="usageLevel(detail.report.cpu.usage_percent).text">{{ detail.report.cpu.usage_percent }}%</p>
                 <p class="vm-stat-sub">{{ detail.report.cpu.cores }} core · load {{ detail.report.cpu.load1 }} / {{ detail.report.cpu.load5 }} / {{ detail.report.cpu.load15 }} (1/5/15 mnt)</p>
               </div>
+            </div>
+
+            <div v-if="detail.report.sites">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-brand-dark text-sm font-bold">Website &amp; Sistem ({{ detailSites.length }})</p>
+                <p class="text-xs text-brand-light">Dibaca dari konfigurasi nginx/apache</p>
+              </div>
+              <p v-if="!detailSites.length" class="text-xs text-brand-light">Tidak ada website yang terkonfigurasi di nginx/apache.</p>
+              <div v-else class="border border-[#DCDEDD] rounded-[12px] divide-y divide-[#F1F1F1]">
+                <div v-for="site in detailSites" :key="siteLabel(site) + site.path" class="p-3 flex flex-col sm:flex-row sm:items-start gap-2 justify-between">
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <a v-if="site.domains?.length" :href="`${site.ssl ? 'https' : 'http'}://${site.domains[0]}`" target="_blank" rel="noopener" class="text-brand-dark text-sm font-semibold hover:text-[#0C51D9] inline-flex items-center gap-1">
+                        {{ site.domains[0] }} <ExternalLink class="w-3 h-3" />
+                      </a>
+                      <span v-else class="text-brand-dark text-sm font-semibold">{{ siteLabel(site) }}</span>
+                      <span class="px-1.5 py-0.5 rounded text-[11px] font-semibold" :class="siteType(site).class">{{ siteType(site).label + (site.version ? ` ${site.version}` : "") }}</span>
+                    </div>
+                    <p v-if="site.domains?.length > 1" class="text-[11px] text-brand-light mt-0.5 break-all">juga: {{ site.domains.slice(1).join(", ") }}</p>
+                    <p class="text-[11px] text-brand-light mt-0.5 break-all">
+                      <template v-if="site.path"><code>{{ site.path }}</code></template>
+                      <template v-if="site.proxy"> · proxy ke <code>{{ site.proxy }}</code><template v-if="site.process"> ({{ site.process }})</template></template>
+                      <template v-if="site.server"> · {{ site.server }}</template>
+                    </p>
+                  </div>
+                  <div class="flex sm:flex-col items-center sm:items-end gap-1.5 shrink-0">
+                    <span class="text-brand-dark text-xs font-semibold">{{ site.bytes != null ? formatBytes(site.bytes) : "-" }}</span>
+                    <span class="px-1.5 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap" :class="sslState(site).class">{{ sslState(site).label }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <template v-if="detailFolders.length">
+                <p class="text-brand-dark text-xs font-bold mt-3 mb-1.5">Folder di /var/www tanpa domain ({{ detailFolders.length }})</p>
+                <p class="text-[11px] text-brand-light mb-1.5">Tidak dipakai oleh konfigurasi web server mana pun. Bisa jadi sisa proyek lama yang aman dihapus; periksa dulu.</p>
+                <div class="border border-[#DCDEDD] rounded-[12px] divide-y divide-[#F1F1F1]">
+                  <div v-for="site in detailFolders" :key="site.path" class="px-3 py-2 flex items-center justify-between gap-2 text-xs">
+                    <span class="min-w-0 break-all"><code class="text-brand-dark">{{ site.path }}</code>
+                      <span v-if="site.type !== 'folder'" class="ml-1 px-1.5 py-0.5 rounded text-[11px] font-semibold" :class="siteType(site).class">{{ siteType(site).label + (site.version ? ` ${site.version}` : "") }}</span>
+                    </span>
+                    <span class="text-brand-dark font-semibold shrink-0">{{ site.bytes != null ? formatBytes(site.bytes) : "-" }}</span>
+                  </div>
+                </div>
+              </template>
             </div>
 
             <div>
