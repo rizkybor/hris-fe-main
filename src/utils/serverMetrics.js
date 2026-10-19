@@ -42,3 +42,29 @@ export const formatUptime = (seconds) => {
   const hours = Math.floor((seconds % 86400) / 3600);
   return days > 0 ? `${days} hari ${hours} jam` : `${hours} jam ${Math.floor((seconds % 3600) / 60)} menit`;
 };
+
+// Kinds of site the agent recognises from the web server config.
+export const SITE_TYPES = {
+  laravel: { label: "Laravel", class: "bg-red-50 text-red-700" },
+  wordpress: { label: "WordPress", class: "bg-sky-50 text-sky-700" },
+  node: { label: "Node.js", class: "bg-green-50 text-green-700" },
+  proxy: { label: "Aplikasi (proxy)", class: "bg-violet-50 text-violet-700" },
+  codeigniter: { label: "CodeIgniter", class: "bg-orange-50 text-orange-700" },
+  php: { label: "PHP", class: "bg-indigo-50 text-indigo-700" },
+  static: { label: "Situs statis", class: "bg-slate-100 text-slate-700" },
+  redirect: { label: "Redirect", class: "bg-slate-100 text-slate-600" },
+  folder: { label: "Folder", class: "bg-slate-100 text-slate-600" },
+  unknown: { label: "Lainnya", class: "bg-slate-100 text-slate-600" },
+};
+
+// SSL badge: expired / under 14 days red, under 30 days amber, else green.
+export const sslState = (site) => {
+  if (!site.ssl) return { label: "Tanpa SSL", class: "bg-slate-100 text-slate-600" };
+  if (!site.ssl_expires_at) return { label: "SSL", class: "bg-green-50 text-green-700" };
+  const days = Math.floor((new Date(site.ssl_expires_at).getTime() - Date.now()) / 86400000);
+  if (days < 0) return { label: "SSL kedaluwarsa", class: "bg-red-50 text-red-600", days };
+  const label = `SSL s/d ${new Date(site.ssl_expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}`;
+  if (days < 14) return { label: `${label} (${days} hari)`, class: "bg-red-50 text-red-600", days };
+  if (days < 30) return { label: `${label} (${days} hari)`, class: "bg-amber-50 text-amber-700", days };
+  return { label, class: "bg-green-50 text-green-700", days };
+};
