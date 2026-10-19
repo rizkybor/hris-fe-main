@@ -13,14 +13,30 @@ import {
   Package,
   Code2,
   Server,
+  Activity,
 } from "lucide-vue-next";
 import { useServerStorageStore } from "@/stores/serverStorage";
+import { useServerMonitorStore } from "@/stores/serverMonitor";
+import { STATUS, timeAgo } from "@/utils/serverMetrics";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import VpsReportDetails from "@/components/admin/server-storage/VpsReportDetails.vue";
+
+defineEmits(["open-vps"]);
 
 const store = useServerStorageStore();
 const { storage, loading, error } = storeToRefs(store);
+const monitor = useServerMonitorStore();
 
-onMounted(() => store.fetchStorage());
+onMounted(() => {
+  store.fetchStorage();
+  if (!monitor.loaded) monitor.fetchServers();
+});
+
+// RAM, CPU and websites come from the monitoring agent, when one runs on
+// this same server -- matched by hostname.
+const agentServer = computed(() =>
+  storage.value?.hostname ? monitor.servers.find((s) => s.report?.hostname === storage.value.hostname) : null
+);
 
 const formatBytes = (bytes) => {
   if (bytes === null || bytes === undefined) return "-";
@@ -154,6 +170,28 @@ const checkedAt = computed(() =>
             </p>
           </div>
         </div>
+      </div>
+
+      <!-- RAM, CPU and websites, from this server's monitoring agent -->
+      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <div class="flex items-center gap-2 min-w-0">
+            <Activity class="w-5 h-5 text-[#0C51D9] shrink-0" />
+            <h3 class="text-brand-dark text-base font-bold">RAM, CPU &amp; Website</h3>
+            <span v-if="agentServer" class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="STATUS[agentServer.status].class">{{ STATUS[agentServer.status].label }}</span>
+          </div>
+          <p v-if="agentServer" class="text-xs text-brand-light">
+            Dari agen VPS <strong class="text-brand-dark">{{ agentServer.name }}</strong> · laporan {{ timeAgo(agentServer.last_report_at) }}
+          </p>
+        </div>
+
+        <VpsReportDetails v-if="agentServer" :server="agentServer" hide-disk />
+        <div v-else-if="monitor.loaded" class="bg-slate-50 border border-dashed border-[#DCDEDD] rounded-[12px] p-4 text-sm text-brand-light">
+          Pasang agen pemantauan di server ini agar RAM, CPU, daftar website, dan masa berlaku SSL ikut tampil di sini.
+          Tambahkan server ini (hostname <code class="text-brand-dark">{{ storage.hostname || "-" }}</code>) di tab VPS, lalu jalankan perintah instalasinya.
+          <button type="button" class="block mt-2 text-sm font-semibold text-[#0C51D9] hover:underline" @click="$emit('open-vps')">Buka tab VPS →</button>
+        </div>
+        <Skeleton v-else class="h-24 w-full rounded-[12px]" />
       </div>
 
       <!-- What the used space is made of -->
