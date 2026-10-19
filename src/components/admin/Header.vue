@@ -331,7 +331,7 @@ const titles = {
   },
   "admin.server-storage.dashboard": {
     title: "Server Storage",
-    subtitle: "Monitor disk usage of the VPS",
+    subtitle: "Monitor disk, RAM and CPU of your VPS",
   },
   "admin.announcements.dashboard": {
     title: "Announcements",
