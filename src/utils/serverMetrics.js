@@ -68,3 +68,18 @@ export const sslState = (site) => {
   if (days < 30) return { label: `${label} (${days} hari)`, class: "bg-amber-50 text-amber-700", days };
   return { label, class: "bg-green-50 text-green-700", days };
 };
+
+// Clipboard with a fallback for plain-http pages, where navigator.clipboard
+// isn't available.
+export const copyText = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+};
