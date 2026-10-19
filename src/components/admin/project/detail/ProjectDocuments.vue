@@ -163,37 +163,39 @@ onMounted(() => {
         </p>
       </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- One document per row: this card sits in a three-column row, too
+           narrow to split into a grid without cutting the names off. -->
+      <div v-else class="flex flex-col gap-2.5">
       <div
         v-for="document in documents"
         :key="document.id"
-        class="flex items-start gap-3 p-4 border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
+        class="flex items-center gap-3 p-3 bg-white border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
       >
         <div
-          class="w-10 h-10 bg-teal-50 rounded-[10px] flex items-center justify-center shrink-0"
+          class="w-9 h-9 bg-teal-50 rounded-[10px] flex items-center justify-center shrink-0"
         >
           <FileText class="w-4 h-4 text-teal-600" />
         </div>
         <div class="flex-1 min-w-0">
-          <p class="text-brand-dark text-xs font-bold truncate">
+          <p
+            class="text-brand-dark text-sm font-semibold leading-snug line-clamp-2 break-words"
+            :title="document.document_name"
+          >
             {{ document.document_name }}
           </p>
-          <p v-if="document.description" class="text-brand-light text-xs mt-0.5 line-clamp-2">
+          <p v-if="document.description" class="text-brand-light text-xs mt-0.5 line-clamp-2 break-words">
             {{ document.description }}
           </p>
-          <div class="flex items-center gap-2 mt-2 flex-wrap">
+          <div class="flex items-center gap-1.5 mt-1 flex-wrap text-xs text-gray-500">
             <span
               v-if="document.type_file"
-              class="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium uppercase"
+              class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-semibold uppercase text-[10px] leading-none"
             >
               {{ document.type_file }}
             </span>
-            <span v-if="document.size_file" class="text-xs text-gray-400">
-              {{ document.size_file }}
-            </span>
-            <span class="text-xs text-gray-400">
-              {{ formatDate(document.created_at) }}
-            </span>
+            <span v-if="document.size_file" class="whitespace-nowrap">{{ document.size_file }}</span>
+            <span v-if="document.size_file" class="text-gray-300">·</span>
+            <span class="whitespace-nowrap">{{ formatDate(document.created_at) }}</span>
           </div>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
