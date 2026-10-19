@@ -40,6 +40,6 @@ const tab = ref("vps");
     </div>
 
     <VpsMonitor v-if="tab === 'vps'" />
-    <AppServerStorage v-else />
+    <AppServerStorage v-else @open-vps="tab = 'vps'" />
   </div>
 </template>
