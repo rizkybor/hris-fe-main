@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
-import { NotebookPen, Pencil, Trash2, Pin, PinOff, FileText, Users, Calendar, Building2, CheckSquare, Square } from "lucide-vue-next";
+import { NotebookPen, Pencil, Trash2, Pin, PinOff, FileText, Users, Calendar, Building2, CheckSquare, Square, ArrowLeft, FileDown, Loader2 } from "lucide-vue-next";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
 import { useAuthStore } from "@/stores/auth";
 import { can } from "@/helpers/permissionHelper";
@@ -37,6 +37,18 @@ const mentionableEmployees = computed(() => {
 });
 
 const pinBusy = ref(false);
+const pdfBusy = ref(false);
+
+const downloadPdf = async () => {
+  pdfBusy.value = true;
+  try {
+    await store.downloadPdf(note.value.id, note.value.document_number);
+  } catch {
+    await alertModal.alert("PDF gagal dibuat. Coba lagi beberapa saat.", { type: "danger" });
+  } finally {
+    pdfBusy.value = false;
+  }
+};
 let heartbeatTimer = null;
 
 const load = () => store.fetchMeetingNote(route.params.id);
@@ -114,7 +126,17 @@ const handleDelete = async () => {
           </div>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-2 shrink-0 flex-wrap">
+          <button
+            @click="downloadPdf"
+            :disabled="pdfBusy"
+            title="Unduh Meeting Note ini sebagai PDF (Notulen Rapat)"
+            class="px-4 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-blue-50 hover:border-[#0C51D9] flex items-center gap-2 disabled:opacity-50"
+          >
+            <Loader2 v-if="pdfBusy" class="w-4 h-4 animate-spin" />
+            <FileDown v-else class="w-4 h-4" />
+            Download PDF
+          </button>
           <button
             v-if="can('meeting-note-pin') && isCreator"
             @click="togglePin"
