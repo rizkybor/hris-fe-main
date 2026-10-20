@@ -117,5 +117,21 @@ export const useMeetingNoteStore = defineStore("meetingNote", {
         // Same as sendHeartbeat -- non-critical background polling.
       }
     },
+
+    // Saves the note as a PDF ("Notulen Rapat"). Fetched as a blob because
+    // the route needs the auth header, so a plain link can't be used.
+    async downloadPdf(id, documentNumber) {
+      const response = await axiosInstance.get(`/meeting-notes/${id}/export-pdf`, {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Notulen-${(documentNumber || id).toString().replace(/[\/\\\s]/g, "-")}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    },
   },
 });
