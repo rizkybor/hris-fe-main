@@ -30,11 +30,22 @@ const selectableEmployees = computed(() => {
 const isEditing = computed(() => !!route.params.id);
 const saving = ref(false);
 
+// <input type="datetime-local"> works in the browser's local time with no
+// zone ("2026-10-20T10:00"), while the API stores and returns UTC -- convert
+// both ways so the form shows the same time as the detail page and list.
+const toLocalInput = (value) => {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+const toIsoString = (localValue) => (localValue ? new Date(localValue).toISOString() : "");
+
 const form = ref({
   document_number: "",
   title: "",
   meeting_type: "internal",
-  meeting_date: new Date().toISOString().slice(0, 16),
+  meeting_date: toLocalInput(),
   body: "",
   attendee_employee_ids: [],
 });
@@ -66,7 +77,7 @@ onMounted(async () => {
       document_number: note.document_number,
       title: note.title,
       meeting_type: note.meeting_type,
-      meeting_date: note.meeting_date?.slice(0, 16),
+      meeting_date: toLocalInput(note.meeting_date),
       body: note.body || "",
       attendee_employee_ids: (note.attendees || [])
         .map((a) => a.id)
@@ -126,7 +137,7 @@ const buildFormData = () => {
   if (form.value.document_number) formData.append("document_number", form.value.document_number);
   formData.append("title", form.value.title);
   formData.append("meeting_type", form.value.meeting_type);
-  formData.append("meeting_date", form.value.meeting_date);
+  formData.append("meeting_date", toIsoString(form.value.meeting_date));
   formData.append("body", form.value.body);
   form.value.attendee_employee_ids.forEach((id) => formData.append("attendee_employee_ids[]", id));
   actionItems.value
