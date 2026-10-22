@@ -25,6 +25,7 @@ import Spinner from "@/components/common/skeleton/Spinner.vue";
 import { getProjectStatusColor } from "@/utils/badgeUtils";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
+import MaintenancePanel from "@/components/admin/maintenance/MaintenancePanel.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -405,6 +406,9 @@ const deleteEvaluation = async (id) => {
           </router-link>
         </div>
       </div>
+
+      <!-- Maintenance contracts (optional) -->
+      <MaintenancePanel v-if="can('maintenance-menu') || can('maintenance-list')" :client-id="client.id" />
     </div>
 
     <!-- Add Evaluation Modal -->

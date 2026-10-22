@@ -110,6 +110,10 @@ const addAdditionalAccess = () => form.value.additional_access.push({ name: "", 
 const removeAdditionalAccess = (i) => form.value.additional_access.splice(i, 1);
 
 const projectPhotoInput = ref(null);
+// Set by "Remove Photo" so the save deletes the stored photo; picking a new
+// photo afterwards clears it again.
+const removePhoto = ref(false);
+const photoError = ref("");
 const leaderModal = ref(false);
 const searchLeader = ref("");
 const selectedLeader = ref(null);
@@ -176,6 +180,7 @@ const handleFetchProject = async () => {
 
   form.value.photo_url = response.photo;
   form.value.photo = null;
+  removePhoto.value = false;
 
   form.value.project_leader_id = response.leader?.id ?? "";
 
@@ -225,6 +230,11 @@ const handleSubmit = async () => {
       ? null
       : parseInt(form.value.retention_period_months);
   payload.additional_access = form.value.additional_access.filter((item) => item.name && item.url);
+  // Only a newly picked File is uploaded; the existing photo is otherwise
+  // left as it is (or removed when asked to).
+  delete payload.photo_url;
+  if (!(form.value.photo instanceof File)) delete payload.photo;
+  if (removePhoto.value && !(form.value.photo instanceof File)) payload.remove_photo = true;
   await updateProject(id, payload);
 
   if (success.value) {
@@ -232,12 +242,34 @@ const handleSubmit = async () => {
   }
 };
 
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+
 const handleProjectPhotoSelect = (e) => {
   const file = e.target.files[0];
-  if (file) {
+  photoError.value = "";
+  if (!file) return;
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    photoError.value = "Please choose a JPG, PNG or WebP image.";
+  } else if (file.size > MAX_PHOTO_BYTES) {
+    photoError.value = "The photo must be 2MB or smaller.";
+  } else {
+    if (form.value.photo_url?.startsWith("blob:")) URL.revokeObjectURL(form.value.photo_url);
     form.value.photo = file;
     form.value.photo_url = URL.createObjectURL(file);
+    removePhoto.value = false;
   }
+  // Allows picking the same file again after removing it.
+  e.target.value = "";
+};
+
+const openPhotoPicker = () => projectPhotoInput.value?.click();
+
+const handleRemovePhoto = () => {
+  if (form.value.photo_url?.startsWith("blob:")) URL.revokeObjectURL(form.value.photo_url);
+  form.value.photo = null;
+  form.value.photo_url = "";
+  removePhoto.value = true;
+  photoError.value = "";
 };
 
 const handleSelectLeader = (employee) => {
@@ -372,16 +404,16 @@ watch(
                       </div>
                     </div>
 
-                    <!-- Upload overlay (shown on hover) - only when no photo uploaded -->
+                    <!-- Upload overlay (shown on hover) -->
                     <div
                       class="absolute inset-0 rounded-[12px] flex items-center justify-center transition-all duration-300 cursor-pointer z-20 group"
+                      @click="openPhotoPicker"
                     >
                       <div
                         class="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 rounded-[12px] transition-opacity duration-300"
                       ></div>
                       <Upload
                         class="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 relative z-10"
-                        @click="projectPhotoInput.click()"
                       />
                     </div>
                   </div>
@@ -389,13 +421,14 @@ watch(
                 <div class="flex flex-col gap-2">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     class="hidden"
                     ref="projectPhotoInput"
                     @change="handleProjectPhotoSelect"
                   />
                   <button
                     type="button"
+                    @click="openPhotoPicker"
                     class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
                   >
                     <ImagePlus class="w-4 h-4 text-gray-600" />
@@ -413,7 +446,9 @@ watch(
                     >
                   </button>
                   <button
+                    v-if="form.photo_url"
                     type="button"
+                    @click="handleRemovePhoto"
                     class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
                   >
                     <X class="w-4 h-4 text-gray-600" />
@@ -422,8 +457,10 @@ watch(
                     >
                   </button>
                   <p class="text-brand-light text-xs">
-                    JPG, PNG up to 2MB (recommended: 640x424px)
+                    JPG, PNG or WebP up to 2MB (recommended: 640x424px)
                   </p>
+                  <p v-if="photoError" class="text-red-500 text-xs">{{ photoError }}</p>
+                  <p v-else-if="removePhoto" class="text-amber-600 text-xs">The photo will be removed when you save.</p>
                 </div>
               </div>
             </div>

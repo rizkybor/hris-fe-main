@@ -45,6 +45,7 @@ import ProjectInvoices from "@/components/admin/project/detail/ProjectInvoices.v
 import ProjectInspect from "@/components/admin/project/detail/ProjectInspect.vue";
 import ProjectAccess from "@/components/admin/project/detail/ProjectAccess.vue";
 import ProjectCashLedger from "@/components/admin/project/detail/ProjectCashLedger.vue";
+import MaintenancePanel from "@/components/admin/maintenance/MaintenancePanel.vue";
 import Avatar from "@/components/common/Avatar.vue";
 
 const route = useRoute();
@@ -666,6 +667,9 @@ onMounted(async () => {
     :can-manage="canManageCashLedger"
     class="mt-6"
   />
+
+  <!-- Maintenance contracts tied to this project (optional) -->
+  <MaintenancePanel v-if="can('maintenance-menu') || can('maintenance-list')" :project-id="id" class="mt-6" />
 
   <!-- Project Access (optional quick links) -->
   <ProjectAccess

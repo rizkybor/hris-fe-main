@@ -22,6 +22,7 @@ import accountPasswordRoutes from './accountPassword';
 import filesCompanyRoutes from './filesCompany';
 import clientsRoutes from './client';
 import subscriptionRoutes from './subscription';
+import maintenanceRoutes from './maintenance';
 import companyAboutRoutes from './companyAbout';
 import companyFinanceRoutes from './companyFinance'
 import companyCashBookRoutes from './companyCashBook'
@@ -82,6 +83,7 @@ const router = createRouter({
         ...filesCompanyRoutes,
         ...clientsRoutes,
         ...subscriptionRoutes,
+        ...maintenanceRoutes,
         ...companyAboutRoutes,
         ...companyFinanceRoutes,
         ...companyCashBookRoutes,
