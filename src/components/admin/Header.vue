@@ -153,6 +153,14 @@ const titles = {
     title: "Edit Client",
     subtitle: "Update client information",
   },
+  "admin.maintenance.dashboard": {
+    title: "Maintenance",
+    subtitle: "Monthly maintenance hour quotas per client",
+  },
+  "admin.maintenance.detail": {
+    title: "Maintenance Detail",
+    subtitle: "Quota, work log, development balance and new features",
+  },
   "admin.subscriptions.dashboard": {
     title: "Subscriptions",
     subtitle: "Manage recurring billing for maintenance, domain renewal, and SaaS subscriptions",
