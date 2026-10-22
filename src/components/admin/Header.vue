@@ -94,7 +94,7 @@ const titles = {
     subtitle: "Review clock in/out records",
   },
   "admin.projects": {
-    title: "Projects",
+    title: "Project Lists",
     subtitle: "Manage projects and tasks",
   },
   "admin.projects.create": {
@@ -154,7 +154,7 @@ const titles = {
     subtitle: "Update client information",
   },
   "admin.maintenance.dashboard": {
-    title: "Maintenance",
+    title: "Maintenance Lists",
     subtitle: "Monthly maintenance hour quotas per client",
   },
   "admin.maintenance.detail": {
@@ -162,7 +162,7 @@ const titles = {
     subtitle: "Quota, work log, development balance and new features",
   },
   "admin.subscriptions.dashboard": {
-    title: "Subscriptions",
+    title: "Subscription Lists",
     subtitle: "Manage recurring billing for maintenance, domain renewal, and SaaS subscriptions",
   },
   "admin.company-about.dashboard": {
@@ -172,6 +172,10 @@ const titles = {
   "admin.company-finance.dashboard": {
     title: "Operational Cost",
     subtitle: "Company Operational Cost Overview",
+  },
+  "admin.company-cash-book.dashboard": {
+    title: "Company Cash Book",
+    subtitle: "Track company cash in and out",
   },
   "admin.project-calculator.dashboard": {
     title: "Project Calculator",
@@ -338,7 +342,7 @@ const titles = {
     subtitle: "Design a process flowchart",
   },
   "admin.server-storage.dashboard": {
-    title: "Server Storage",
+    title: "Server Lists",
     subtitle: "Monitor disk, RAM and CPU of your VPS",
   },
   "admin.announcements.dashboard": {
