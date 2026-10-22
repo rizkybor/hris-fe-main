@@ -1,244 +1,207 @@
-<script setup lang="ts">
-import { onMounted, computed } from "vue";
+<script setup>
+import { computed, onMounted, ref } from "vue";
 import {
-  TrendingUpIcon,
-  UsersIcon,
-  CalendarCheckIcon,
-  CheckSquareIcon,
-  FolderIcon,
-  StarIcon,
-  BanknoteIcon,
+  Banknote,
+  Receipt,
+  FolderKanban,
+  RefreshCw,
+  UserCheck,
+  Wallet,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  HandCoins,
+  Users,
+  CalendarCheck,
+  CalendarClock,
+  Plane,
+  ArrowUpRight,
+  ArrowDownRight,
+  AlertTriangle,
+  ChevronRight,
+  Gauge,
 } from "lucide-vue-next";
-import QuickActions from "./QuickActions.vue";
+import { axiosInstance } from "@/plugins/axios";
+import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
-import { useDashboardStore } from "@/stores/dashboard";
-import { usePayrollStore } from "@/stores/payroll";
-import { can } from "@/helpers/permissionHelper";
-import { formatRupiah } from "@/utils/formatUtils";
 
-const dashboardStore = useDashboardStore();
-const payrollStore = usePayrollStore();
+// Key Metrics: the backend picks the set for the user's role (business for
+// Manager/Operational Director, cash for Finance, people for HR) and drops
+// any metric the user can't otherwise open. The first metric is the hero.
+const data = ref(null);
+const loading = ref(true);
+const failed = ref(false);
 
-// Finance-only holders (no employee-create) with payroll access get a
-// payroll highlight in place of the generic company-wide task metric.
-const showPayrollHighlight = computed(
-  () => !can("employee-create") && can("payroll-statistics")
-);
-
-onMounted(() => {
-  dashboardStore.fetchStatistics();
-  if (showPayrollHighlight.value) {
-    payrollStore.fetchStatistics();
+onMounted(async () => {
+  try {
+    data.value = (await axiosInstance.get("/dashboard/insights/key-metrics")).data.data;
+  } catch {
+    failed.value = true;
+  } finally {
+    loading.value = false;
   }
 });
 
-// Computed properties for statistics
-const employees = computed(() => dashboardStore.statistics.employees);
-const teams = computed(() => dashboardStore.statistics.teams);
-const attendance = computed(() => dashboardStore.statistics.attendance);
-const tasks = computed(() => dashboardStore.statistics.tasks);
-const projects = computed(() => dashboardStore.statistics.projects);
-const loading = computed(() => dashboardStore.loading);
-const payrollStats = computed(() => payrollStore.statistics);
+const PROFILE = {
+  business: "Business overview",
+  finance: "Finance overview",
+  people: "People overview",
+};
+
+const ICONS = {
+  revenue: Banknote,
+  receivables: Receipt,
+  projects: FolderKanban,
+  recurring: RefreshCw,
+  present_today: UserCheck,
+  cash_balance: Wallet,
+  cash_in: ArrowDownToLine,
+  cash_out: ArrowUpFromLine,
+  payroll: HandCoins,
+  employees: Users,
+  attendance_rate: CalendarCheck,
+  pending_leave: CalendarClock,
+  on_leave: Plane,
+};
+
+const hero = computed(() => data.value?.metrics?.[0] ?? null);
+const tiles = computed(() => data.value?.metrics?.slice(1) ?? []);
+
+const formatValue = (m, compact = false) => {
+  if (m.display) return m.display;
+  if (m.value === null || m.value === undefined) return "-";
+  if (m.format === "rupiah") return compact ? formatRupiahCompact(m.value) : formatRupiah(m.value);
+  if (m.format === "percent") return `${Number(m.value).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
+  return Number(m.value).toLocaleString("id-ID");
+};
+
+const formatDelta = (d) => {
+  if (d.format === "rupiah") return formatRupiahCompact(d.value);
+  if (d.format === "percent") return `${d.value.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
+  if (d.format === "points") return `${d.value.toLocaleString("id-ID", { maximumFractionDigits: 1 })} pts`;
+  return `+${d.value}`;
+};
+
+// Arrow shows the direction; colour shows whether that's good. A delta
+// without a `good` flag (e.g. "+2 new projects") is neutral information.
+const deltaClass = (d) => {
+  if (d.good === undefined) return "bg-slate-100 text-slate-600";
+  return d.good ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600";
+};
+const heroDeltaClass = (d) => {
+  if (d.good === undefined) return "bg-white/15 text-white";
+  return d.good ? "bg-green-400/20 text-green-200" : "bg-red-400/20 text-red-200";
+};
+const toneClass = (tone) => (tone === "danger" ? "text-red-600" : tone === "warning" ? "text-amber-700" : "text-brand-light");
 </script>
 
 <template>
-  <!-- Stats Layout -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-    <!-- Our Employees Card (spans 2 rows on the left) -->
-    <div
-      class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-4 sm:p-5"
-    >
-      <!-- Decorative glow orbs -->
-      <div
-        class="pointer-events-none absolute -top-10 -right-8 w-40 h-40 rounded-full bg-blue-500/20 blur-3xl"
-      ></div>
-      <div
-        class="pointer-events-none absolute -bottom-14 -left-6 w-40 h-40 rounded-full bg-indigo-500/10 blur-3xl"
-      ></div>
-
-      <div class="flex flex-col justify-center h-full relative z-10">
-        <!-- Trending Badge -->
-        <div class="flex items-center gap-2 mb-3">
-          <div
-            class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm"
-          >
-            <TrendingUpIcon class="w-3 h-3 text-white" />
-            <span class="text-brand-white text-xs font-semibold"
-              >+{{ employees.added_this_month }} this month</span
-            >
-          </div>
+  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
+          <Gauge class="w-5 h-5 text-[#0C51D9]" />
         </div>
-
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-          <div>
-            <p class="text-brand-white-90 text-sm font-medium">Our Employees</p>
-            <Skeleton v-if="loading" dark width="100px" height="2.5rem" rounded="8px" class="my-4" />
-            <p
-              v-else
-              class="text-brand-white text-3xl sm:text-5xl font-extrabold leading-none my-4"
-            >
-              {{ employees.total.toLocaleString() }}
-            </p>
-            <p class="text-brand-white-80 text-base font-normal">
-              Active team members
-            </p>
-          </div>
-          <div
-            class="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-[14px] flex items-center justify-center"
-          >
-            <UsersIcon class="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-          </div>
-        </div>
-
-        <!-- Additional Info -->
-        <div class="flex items-center gap-3 mt-auto">
-          <div class="flex items-center gap-1">
-            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span class="text-brand-white-70 text-xs font-normal"
-              >Active Status</span
-            >
-          </div>
-          <div class="flex items-center gap-1">
-            <StarIcon class="w-3 h-3 text-white opacity-70" />
-            <span class="text-brand-white-70 text-xs font-normal"
-              >Top Performers</span
-            >
-          </div>
+        <div class="min-w-0">
+          <h3 class="text-brand-dark text-lg font-bold">Key Metrics</h3>
+          <p class="text-brand-light text-xs">
+            {{ data ? `${PROFILE[data.profile] || "Overview"} · ${data.period}` : "Overview" }}
+          </p>
         </div>
       </div>
     </div>
 
-    <!-- Row 1 Stats Cards -->
-    <!-- Total Teams -->
-    <div
-      class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
-    >
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-brand-dark text-sm font-medium">Total Teams</p>
-          <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
-          <p v-else class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
-            {{ teams.total }}
-          </p>
-          <p class="text-success text-sm font-medium">+{{ teams.new_teams }} new teams</p>
-        </div>
-        <div
-          class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
-        >
-          <UsersIcon class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-        </div>
-      </div>
+    <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <Skeleton class="sm:col-span-2 lg:row-span-2" height="100%" rounded="14px" style="min-height: 196px" />
+      <Skeleton v-for="i in 4" :key="i" height="92px" rounded="12px" />
     </div>
 
-    <!-- Attendance Rate -->
-    <div
-      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
-    >
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-brand-dark text-sm font-medium">Attendance Rate</p>
-          <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
-          <p v-else class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
-            {{ attendance.rate }}%
-          </p>
-          <p :class="attendance.change >= 0 ? 'text-success' : 'text-danger'" class="text-sm font-medium">
-            {{ attendance.change >= 0 ? '+' : '' }}{{ attendance.change }}% from last week
-          </p>
-        </div>
-        <div
-          class="w-10 h-10 sm:w-12 sm:h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
-        >
-          <CalendarCheckIcon class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-        </div>
-      </div>
-    </div>
+    <p v-else-if="failed" class="text-sm text-gray-500 py-8 text-center">Couldn't load key metrics.</p>
+    <p v-else-if="!hero" class="text-sm text-gray-500 py-8 text-center">No metrics available for your role.</p>
 
-    <!-- Quick Actions Card (spans 2 rows on the right) -->
-    <QuickActions />
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Hero: the one number this role checks first -->
+      <RouterLink
+        :to="hero.route ? { name: hero.route } : ''"
+        class="km-hero sm:col-span-2 lg:row-span-2 rounded-[14px] p-5 flex flex-col justify-between text-white group"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-[10px] bg-white/15 flex items-center justify-center">
+              <component :is="ICONS[hero.key]" class="w-5 h-5 text-white" />
+            </div>
+            <p class="text-white/85 text-sm font-semibold">{{ hero.label }}</p>
+          </div>
+          <ChevronRight class="w-5 h-5 text-white/50 group-hover:text-white transition-colors" />
+        </div>
 
-    <!-- Row 2 Stats Cards -->
-    <!-- Payroll highlight for finance-oriented roles, Tasks Completed otherwise -->
-    <div
-      v-if="showPayrollHighlight"
-      class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
-    >
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-brand-dark text-sm font-medium">Payroll This Month</p>
-          <Skeleton v-if="payrollStore.loadingStatistics" width="80px" height="1.75rem" rounded="6px" class="my-2" />
-          <p v-else class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
-            {{ formatRupiah(payrollStats.total_amount) }}
+        <div class="my-5">
+          <p class="text-3xl sm:text-4xl font-extrabold leading-tight tracking-tight break-words">
+            {{ formatValue(hero) }}<span v-if="hero.suffix" class="text-white/60 text-2xl font-bold">{{ hero.suffix }}</span>
           </p>
-          <p class="text-gray-500 text-sm font-medium">
-            {{ payrollStats.pending_review || 0 }} pending review
-          </p>
+          <div v-if="hero.delta" class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md font-semibold" :class="heroDeltaClass(hero.delta)">
+              <ArrowUpRight v-if="hero.delta.direction === 'up'" class="w-3.5 h-3.5" />
+              <ArrowDownRight v-else class="w-3.5 h-3.5" />
+              {{ formatDelta(hero.delta) }}
+            </span>
+            <span class="text-white/70">{{ hero.delta.label }}</span>
+          </div>
         </div>
-        <div
-          class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
-        >
-          <BanknoteIcon class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
-        </div>
-      </div>
-    </div>
 
-    <div
-      v-else
-      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
-    >
-      <div class="flex items-center justify-between">
         <div>
-          <p class="text-brand-dark text-sm font-medium">Tasks Completed</p>
-          <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
-          <p v-else class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
-            {{ tasks.completed }}
-          </p>
-          <p :class="tasks.change >= 0 ? 'text-success' : 'text-danger'" class="text-sm font-medium">
-            {{ tasks.change >= 0 ? '+' : '' }}{{ tasks.change }} from yesterday
+          <div v-if="hero.progress !== undefined" class="w-full bg-white/15 rounded-full overflow-hidden mb-2" style="height: 6px">
+            <div class="h-full rounded-full bg-white" :style="{ width: `${Math.min(hero.progress, 100)}%` }"></div>
+          </div>
+          <p class="text-white/75 text-xs flex items-center gap-1">
+            <AlertTriangle v-if="hero.tone" class="w-3.5 h-3.5 text-amber-300" />{{ hero.sub }}
           </p>
         </div>
-        <div
-          class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
-        >
-          <CheckSquareIcon class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
-        </div>
-      </div>
-    </div>
+      </RouterLink>
 
-    <!-- Active Projects (below Attendance Rate) -->
-    <div
-      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 p-4 sm:p-5"
-    >
-      <div class="flex items-center justify-between mb-2">
-        <div>
-          <p class="text-brand-dark text-sm font-medium">Active Projects</p>
-          <Skeleton v-if="loading" width="50px" height="1.75rem" rounded="6px" class="my-2" />
-          <p v-else class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2">
-            {{ projects.active }}
+      <!-- Supporting metrics -->
+      <RouterLink
+        v-for="m in tiles"
+        :key="m.key"
+        :to="m.route ? { name: m.route } : ''"
+        class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] hover:bg-white transition-colors group flex flex-col"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-brand-light text-xs font-semibold truncate">{{ m.label }}</p>
+          <div class="w-8 h-8 rounded-[8px] bg-white border border-[#EEF1F5] flex items-center justify-center shrink-0 group-hover:border-[#0C51D9]/30">
+            <component :is="ICONS[m.key]" class="w-4 h-4 text-[#0C51D9]" />
+          </div>
+        </div>
+        <p class="text-brand-dark text-xl sm:text-2xl font-extrabold leading-tight mt-1" :title="m.format === 'rupiah' && m.value != null ? formatRupiah(m.value) : undefined">
+          {{ formatValue(m, true) }}<span v-if="m.suffix" class="text-brand-light text-base font-bold">{{ m.suffix }}</span>
+        </p>
+        <div v-if="m.progress !== undefined" class="w-full bg-gray-200 rounded-full overflow-hidden mt-2" style="height: 5px">
+          <div class="h-full rounded-full bg-[#0C51D9]" :style="{ width: `${Math.min(m.progress, 100)}%` }"></div>
+        </div>
+        <div class="mt-auto pt-2 space-y-1">
+          <p v-if="m.delta" class="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded font-semibold" :class="deltaClass(m.delta)">
+              <ArrowUpRight v-if="m.delta.direction === 'up'" class="w-3 h-3" />
+              <ArrowDownRight v-else class="w-3 h-3" />
+              {{ formatDelta(m.delta) }}
+            </span>
+            <span class="text-brand-light">{{ m.delta.label }}</span>
           </p>
-          <p class="text-success text-sm font-medium">+{{ projects.new_projects }} new projects</p>
+          <p class="text-[11px] flex items-center gap-1" :class="toneClass(m.tone)">
+            <AlertTriangle v-if="m.tone" class="w-3 h-3 shrink-0" /><span class="truncate">{{ m.sub }}</span>
+          </p>
         </div>
-        <div
-          class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
-        >
-          <FolderIcon class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
-        </div>
-      </div>
-      <div class="pt-2 border-t border-[#F1F1F1]">
-        <div class="flex items-center justify-between text-xs mb-1">
-          <span class="text-brand-light">Task Completion</span>
-          <Skeleton v-if="loading" width="28px" height="12px" rounded="4px" />
-          <span v-else class="text-brand-dark font-semibold">
-            {{ `${projects.completion_rate ?? 0}%` }}
-          </span>
-        </div>
-        <div class="w-full bg-gray-200 rounded-full h-1.5">
-          <div
-            class="h-1.5 rounded-full bg-orange-500 transition-all duration-300"
-            :style="{ width: `${loading ? 0 : (projects.completion_rate ?? 0)}%` }"
-          ></div>
-        </div>
-      </div>
+      </RouterLink>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Solid brand navy with one soft highlight -- no busy gradients. */
+.km-hero {
+  background: radial-gradient(120% 90% at 100% 0%, rgba(12, 81, 217, 0.55) 0%, rgba(12, 81, 217, 0) 60%), #0b1d51;
+  min-height: 196px;
+}
+.km-hero:hover {
+  box-shadow: 0 8px 24px -12px rgba(11, 29, 81, 0.6);
+}
+</style>
