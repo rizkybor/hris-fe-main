@@ -93,7 +93,7 @@ onMounted(() => {
         <div class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center shrink-0">
           <CalendarClock class="w-4 h-4 text-indigo-600" />
         </div>
-        <h3 class="text-brand-dark text-base sm:text-lg font-bold">Upcoming Tasks</h3>
+        <h3 class="text-brand-dark text-base font-bold">Upcoming Tasks</h3>
       </div>
       <button
         type="button"

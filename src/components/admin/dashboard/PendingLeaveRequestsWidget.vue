@@ -31,7 +31,7 @@ onMounted(() => {
           <ClipboardList class="w-4 h-4 text-indigo-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Pending Leave Requests</h3>
+          <h3 class="text-brand-dark text-base font-bold">Pending Leave Requests</h3>
           <p class="text-brand-light text-sm">{{ leaveMeta.total }} awaiting your review</p>
         </div>
       </div>

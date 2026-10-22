@@ -284,7 +284,7 @@ onMounted(() => {
   <div class="mb-6">
     <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-brand-dark text-base sm:text-lg font-bold">
+        <h3 class="text-brand-dark text-base font-bold">
           Recent Activities
         </h3>
         <button

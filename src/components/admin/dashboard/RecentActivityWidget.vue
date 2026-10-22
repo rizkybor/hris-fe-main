@@ -22,7 +22,7 @@ onMounted(() => {
           <History class="w-5 h-5 text-gray-500" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Recent Activity</h3>
+          <h3 class="text-brand-dark text-base font-bold">Recent Activity</h3>
           <p class="text-brand-light text-sm">Latest changes across the system</p>
         </div>
       </div>
