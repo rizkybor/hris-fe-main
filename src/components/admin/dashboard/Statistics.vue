@@ -19,6 +19,8 @@ import {
   AlertTriangle,
   ChevronRight,
   Gauge,
+  Eye,
+  EyeOff,
 } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
@@ -63,19 +65,28 @@ const ICONS = {
   on_leave: Plane,
 };
 
+// Rupiah amounts start hidden, like Project Budget/Realized; one eye toggle
+// reveals every amount in the widget.
+const showAmount = ref(false);
+const MASK = "Rp ••••••••";
+const hasRupiah = computed(() => (data.value?.metrics ?? []).some((m) => m.format === "rupiah" && m.value != null));
+
 const hero = computed(() => data.value?.metrics?.[0] ?? null);
 const tiles = computed(() => data.value?.metrics?.slice(1) ?? []);
 
 const formatValue = (m, compact = false) => {
   if (m.display) return m.display;
   if (m.value === null || m.value === undefined) return "-";
-  if (m.format === "rupiah") return compact ? formatRupiahCompact(m.value) : formatRupiah(m.value);
+  if (m.format === "rupiah") {
+    if (!showAmount.value) return MASK;
+    return compact ? formatRupiahCompact(m.value) : formatRupiah(m.value);
+  }
   if (m.format === "percent") return `${Number(m.value).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
   return Number(m.value).toLocaleString("id-ID");
 };
 
 const formatDelta = (d) => {
-  if (d.format === "rupiah") return formatRupiahCompact(d.value);
+  if (d.format === "rupiah") return showAmount.value ? formatRupiahCompact(d.value) : "Rp ••••";
   if (d.format === "percent") return `${d.value.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
   if (d.format === "points") return `${d.value.toLocaleString("id-ID", { maximumFractionDigits: 1 })} pts`;
   return `+${d.value}`;
@@ -108,6 +119,17 @@ const toneClass = (tone) => (tone === "danger" ? "text-red-600" : tone === "warn
           </p>
         </div>
       </div>
+      <button
+        v-if="hasRupiah"
+        type="button"
+        @click="showAmount = !showAmount"
+        :aria-label="showAmount ? 'Hide amounts' : 'Show amounts'"
+        :title="showAmount ? 'Hide amounts' : 'Show amounts'"
+        class="w-8 h-8 rounded-[8px] flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+      >
+        <EyeOff v-if="showAmount" class="w-4 h-4" />
+        <Eye v-else class="w-4 h-4" />
+      </button>
     </div>
 
     <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -171,7 +193,7 @@ const toneClass = (tone) => (tone === "danger" ? "text-red-600" : tone === "warn
             <component :is="ICONS[m.key]" class="w-4 h-4 text-[#0C51D9]" />
           </div>
         </div>
-        <p class="text-brand-dark text-xl sm:text-2xl font-extrabold leading-tight mt-1" :title="m.format === 'rupiah' && m.value != null ? formatRupiah(m.value) : undefined">
+        <p class="text-brand-dark text-xl sm:text-2xl font-extrabold leading-tight mt-1" :title="showAmount && m.format === 'rupiah' && m.value != null ? formatRupiah(m.value) : undefined">
           {{ formatValue(m, true) }}<span v-if="m.suffix" class="text-brand-light text-base font-bold">{{ m.suffix }}</span>
         </p>
         <div v-if="m.progress !== undefined" class="w-full bg-gray-200 rounded-full overflow-hidden mt-2" style="height: 5px">
