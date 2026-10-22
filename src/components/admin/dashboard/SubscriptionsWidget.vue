@@ -69,7 +69,7 @@ const formatDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString("
           <RefreshCw class="w-5 h-5 text-indigo-600" />
         </div>
         <div class="min-w-0">
-          <h3 class="text-brand-dark text-lg font-bold">Subscriptions</h3>
+          <h3 class="text-brand-dark text-base font-bold">Subscriptions</h3>
           <p class="text-brand-light text-xs">Expected billing over the next 12 months</p>
         </div>
       </div>
