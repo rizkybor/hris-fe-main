@@ -926,76 +926,6 @@ watch(
         </div>
       </div>
 
-      <!-- Insights: analytics dashboards and system audit trail -->
-      <div v-if="showInsights">
-        <button
-          type="button"
-          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
-          style="padding: 0 8px 0 12px"
-          @click="toggleSection('insights')"
-        >
-          <span>Insights</span>
-          <ChevronDown
-            class="w-3 h-3 shrink-0 transition-transform duration-150"
-            :class="{ '-rotate-90': collapsedSections.insights }"
-          />
-        </button>
-        <div v-show="!collapsedSections.insights" class="space-y-0.5">
-          <RouterLink
-            :to="{ name: 'admin.analytics.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.analytics'),
-            }"
-            v-if="can('analytics-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <LineChart
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.analytics'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.analytics'),
-              }"
-              >Analytics</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.history.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.history'),
-            }"
-            v-if="can('history-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <HistoryIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.history'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.history'),
-              }"
-              >History</span
-            >
-          </RouterLink>
-
-        </div>
-      </div>
-
       <!-- Company: company profile, assets, credentials, comms, and settings -->
       <div>
         <button
@@ -1173,6 +1103,76 @@ watch(
               >Settings</span
             >
           </RouterLink>
+        </div>
+      </div>
+
+      <!-- Insights: analytics dashboards and system audit trail -->
+      <div v-if="showInsights">
+        <button
+          type="button"
+          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
+          style="padding: 0 8px 0 12px"
+          @click="toggleSection('insights')"
+        >
+          <span>Insights</span>
+          <ChevronDown
+            class="w-3 h-3 shrink-0 transition-transform duration-150"
+            :class="{ '-rotate-90': collapsedSections.insights }"
+          />
+        </button>
+        <div v-show="!collapsedSections.insights" class="space-y-0.5">
+          <RouterLink
+            :to="{ name: 'admin.analytics.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.analytics'),
+            }"
+            v-if="can('analytics-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <LineChart
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.analytics'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.analytics'),
+              }"
+              >Analytics</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.history.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.history'),
+            }"
+            v-if="can('history-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <HistoryIcon
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.history'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.history'),
+              }"
+              >History</span
+            >
+          </RouterLink>
+
         </div>
       </div>
     </nav>
