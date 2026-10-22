@@ -27,7 +27,6 @@ import {
   Workflow,
   Megaphone as MegaphoneIcon,
   Laptop as LaptopIcon,
-  Network as NetworkIcon,
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
@@ -96,6 +95,7 @@ const showMyWorkspace = computed(() =>
     "project-menu",
     "subscription-menu",
     "maintenance-menu",
+    "server-storage-menu",
     "staff-task-menu",
   ])
 );
@@ -126,7 +126,11 @@ const showFinance = computed(() =>
 
 const showTools = computed(() => canOneOf(["project-calculator-menu", "flowchart-menu"]));
 
-const showInsights = computed(() => canOneOf(["analytics-menu", "history-menu", "server-storage-menu"]));
+const showCompany = computed(() =>
+  canOneOf(["company-about-menu", "asset-menu", "files-company-menu", "credential-account-list", "announcement-menu"])
+);
+
+const showInsights = computed(() => canOneOf(["analytics-menu", "history-menu"]));
 
 // Each nav section can be individually collapsed via its title. State is
 // keyed by section id and persisted so a user's preference survives reloads;
@@ -491,7 +495,7 @@ watch(
               :class="{
                 'text-white font-semibold': $route.name?.startsWith('admin.projects'),
               }"
-              >Projects</span
+              >Project Lists</span
             >
           </RouterLink>
 
@@ -517,7 +521,7 @@ watch(
               :class="{
                 'text-white font-semibold': $route.name?.startsWith('admin.subscriptions'),
               }"
-              >Subscriptions</span
+              >Subscription Lists</span
             >
           </RouterLink>
 
@@ -543,7 +547,33 @@ watch(
               :class="{
                 'text-white font-semibold': $route.name?.startsWith('admin.maintenance'),
               }"
-              >Maintenance</span
+              >Maintenance Lists</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.server-storage.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.server-storage'),
+            }"
+            v-if="can('server-storage-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <HardDrive
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.server-storage'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.server-storage'),
+              }"
+              >Server Lists</span
             >
           </RouterLink>
 
@@ -639,32 +669,6 @@ watch(
                 'text-white font-semibold': $route.name?.startsWith('admin.team'),
               }"
               >Our Teams</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.orgchart.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.orgchart'),
-            }"
-            v-if="can('team-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <NetworkIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.orgchart'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.orgchart'),
-              }"
-              >Organization Chart</span
             >
           </RouterLink>
 
@@ -920,109 +924,14 @@ watch(
               :class="{
                 'text-white font-semibold': $route.name?.startsWith('admin.flowchart'),
               }"
-              >Flowchart</span
+              >Flowchart Maker</span
             >
           </RouterLink>
         </div>
       </div>
 
-      <!-- Insights: analytics dashboards and system audit trail -->
-      <div v-if="showInsights">
-        <button
-          type="button"
-          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
-          style="padding: 0 8px 0 12px"
-          @click="toggleSection('insights')"
-        >
-          <span>Insights</span>
-          <ChevronDown
-            class="w-3 h-3 shrink-0 transition-transform duration-150"
-            :class="{ '-rotate-90': collapsedSections.insights }"
-          />
-        </button>
-        <div v-show="!collapsedSections.insights" class="space-y-0.5">
-          <RouterLink
-            :to="{ name: 'admin.analytics.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.analytics'),
-            }"
-            v-if="can('analytics-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <LineChart
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.analytics'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.analytics'),
-              }"
-              >Analytics</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.history.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.history'),
-            }"
-            v-if="can('history-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <HistoryIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.history'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.history'),
-              }"
-              >History</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.server-storage.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.server-storage'),
-            }"
-            v-if="can('server-storage-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <HardDrive
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.server-storage'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.server-storage'),
-              }"
-              >Server Storage</span
-            >
-          </RouterLink>
-        </div>
-      </div>
-
-      <!-- Company: company profile, assets, credentials, comms, and settings -->
-      <div>
+      <!-- Company: company profile, assets, credentials, and comms -->
+      <div v-if="showCompany">
         <button
           type="button"
           class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
@@ -1173,33 +1082,104 @@ watch(
               >Announcements</span
             >
           </RouterLink>
+        </div>
+      </div>
 
+      <!-- Insights: analytics dashboards and system audit trail -->
+      <div v-if="showInsights">
+        <button
+          type="button"
+          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
+          style="padding: 0 8px 0 12px"
+          @click="toggleSection('insights')"
+        >
+          <span>Insights</span>
+          <ChevronDown
+            class="w-3 h-3 shrink-0 transition-transform duration-150"
+            :class="{ '-rotate-90': collapsedSections.insights }"
+          />
+        </button>
+        <div v-show="!collapsedSections.insights" class="space-y-0.5">
           <RouterLink
-            :to="{ name: 'admin.settings.dashboard' }"
+            :to="{ name: 'admin.analytics.dashboard' }"
             class="nav-link group relative rounded-[10px] transition-colors duration-150"
             :class="{
-              'nav-link-active': $route.name?.startsWith('admin.settings'),
+              'nav-link-active': $route.name?.startsWith('admin.analytics'),
             }"
+            v-if="can('analytics-menu')"
             @click="onNavigate"
             @mouseenter="showTooltip"
             @mouseleave="hideTooltip"
           >
-            <SettingsIcon
+            <LineChart
               class="w-[18px] h-[18px] text-white/45 shrink-0"
               :class="{
-                'text-white': $route.name?.startsWith('admin.settings'),
+                'text-white': $route.name?.startsWith('admin.analytics'),
               }"
             />
             <span
               class="nav-label text-white/70 text-sm font-medium"
               :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.settings'),
+                'text-white font-semibold': $route.name?.startsWith('admin.analytics'),
               }"
-              >Settings</span
+              >Analytics</span
             >
           </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.history.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.history'),
+            }"
+            v-if="can('history-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <HistoryIcon
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.history'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.history'),
+              }"
+              >History</span
+            >
+          </RouterLink>
+
         </div>
       </div>
+
+      <!-- Settings: standalone, outside any section -->
+      <RouterLink
+        :to="{ name: 'admin.settings.dashboard' }"
+        class="nav-link group relative rounded-[10px] transition-colors duration-150"
+        :class="{
+          'nav-link-active': $route.name?.startsWith('admin.settings'),
+        }"
+        @click="onNavigate"
+        @mouseenter="showTooltip"
+        @mouseleave="hideTooltip"
+      >
+        <SettingsIcon
+          class="w-[18px] h-[18px] text-white/45 shrink-0"
+          :class="{
+            'text-white': $route.name?.startsWith('admin.settings'),
+          }"
+        />
+        <span
+          class="nav-label text-white/70 text-sm font-medium"
+          :class="{
+            'text-white font-semibold': $route.name?.startsWith('admin.settings'),
+          }"
+          >Settings</span
+        >
+      </RouterLink>
     </nav>
 
     <div class="sidebar-quote px-4 pb-4 mt-auto">
