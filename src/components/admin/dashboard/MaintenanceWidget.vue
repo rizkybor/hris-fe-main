@@ -65,7 +65,7 @@ const barColor = (p) => (p.overage > 0 ? "#DC2626" : p.used_percent >= 75 ? "#D9
           <Wrench class="w-5 h-5 text-teal-600" />
         </div>
         <div class="min-w-0">
-          <h3 class="text-brand-dark text-lg font-bold">Maintenance</h3>
+          <h3 class="text-brand-dark text-base font-bold">Maintenance</h3>
           <p class="text-brand-light text-xs">Quota used this month</p>
         </div>
       </div>

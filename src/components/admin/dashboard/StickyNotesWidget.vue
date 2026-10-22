@@ -36,7 +36,7 @@ const colorFor = (index) => NOTE_COLORS[index % NOTE_COLORS.length];
       <div class="w-8 h-8 bg-amber-100 rounded-[10px] flex items-center justify-center shrink-0">
         <Pin class="w-4 h-4 text-amber-600" />
       </div>
-      <h3 class="text-brand-dark text-lg font-bold">Sticky Notes</h3>
+      <h3 class="text-brand-dark text-base font-bold">Sticky Notes</h3>
     </div>
 
     <div v-if="pinnedMeetingNotes.length === 0" class="text-center py-6 text-sm text-gray-400">
