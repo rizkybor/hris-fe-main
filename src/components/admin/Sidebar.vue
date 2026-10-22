@@ -94,6 +94,8 @@ const showMyWorkspace = computed(() =>
     "task-list",
     "attendance-menu",
     "project-menu",
+    "subscription-menu",
+    "maintenance-menu",
     "staff-task-menu",
   ])
 );
@@ -103,8 +105,6 @@ const showPeople = computed(() =>
     "employee-menu",
     "team-menu",
     "clients-menu",
-    "subscription-menu",
-    "maintenance-menu",
     "purchase-order-menu",
     "invoice-menu",
     "payment-receipt-menu",
@@ -496,6 +496,58 @@ watch(
           </RouterLink>
 
           <RouterLink
+            :to="{ name: 'admin.subscriptions.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.subscriptions'),
+            }"
+            v-if="can('subscription-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <RefreshCw
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.subscriptions'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.subscriptions'),
+              }"
+              >Subscriptions</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.maintenance.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.maintenance'),
+            }"
+            v-if="can('maintenance-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <Wrench
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.maintenance'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.maintenance'),
+              }"
+              >Maintenance</span
+            >
+          </RouterLink>
+
+          <RouterLink
             :to="{ name: 'admin.attendances' }"
             class="nav-link group relative rounded-[10px] transition-colors duration-150"
             :class="{
@@ -523,7 +575,7 @@ watch(
         </div>
       </div>
 
-      <!-- Administration: employee roster, teams, org structure, clients, subscriptions, and business documents -->
+      <!-- Administration: employee roster, teams, org structure, clients, and business documents -->
       <div v-if="showPeople">
         <button
           type="button"
@@ -639,58 +691,6 @@ watch(
                 'text-white font-semibold': $route.name?.startsWith('admin.clients'),
               }"
               >Our Clients</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.subscriptions.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.subscriptions'),
-            }"
-            v-if="can('subscription-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <RefreshCw
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.subscriptions'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.subscriptions'),
-              }"
-              >Subscriptions</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.maintenance.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.maintenance'),
-            }"
-            v-if="can('maintenance-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <Wrench
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.maintenance'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.maintenance'),
-              }"
-              >Maintenance</span
             >
           </RouterLink>
 

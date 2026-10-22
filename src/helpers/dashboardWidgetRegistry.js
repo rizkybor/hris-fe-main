@@ -68,4 +68,12 @@ export const DASHBOARD_WIDGET_REGISTRY = {
     title: "Upcoming Tasks",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/UpcomingTasksWidget.vue")),
   },
+  subscriptions: {
+    title: "Subscriptions",
+    component: defineAsyncComponent(() => import("@/components/admin/dashboard/SubscriptionsWidget.vue")),
+  },
+  maintenance: {
+    title: "Maintenance",
+    component: defineAsyncComponent(() => import("@/components/admin/dashboard/MaintenanceWidget.vue")),
+  },
 };

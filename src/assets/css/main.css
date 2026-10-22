@@ -926,6 +926,11 @@ video {
   grid-column: 1 / -1;
 }
 
+.-mx-2 {
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
+
 .mx-0\.5 {
   margin-left: 0.125rem;
   margin-right: 0.125rem;
@@ -6115,6 +6120,11 @@ html {
 .group\/header:hover .group-hover\/header\:text-gray-400 {
   --tw-text-opacity: 1;
   color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
+
+.group\/row:hover .group-hover\/row\:text-\[\#0C51D9\] {
+  --tw-text-opacity: 1;
+  color: rgb(12 81 217 / var(--tw-text-opacity, 1));
 }
 
 .group:hover .group-hover\:text-\[\#0C51D9\] {
