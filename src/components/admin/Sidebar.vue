@@ -126,6 +126,10 @@ const showFinance = computed(() =>
 
 const showTools = computed(() => canOneOf(["project-calculator-menu", "flowchart-menu"]));
 
+const showCompany = computed(() =>
+  canOneOf(["company-about-menu", "asset-menu", "files-company-menu", "credential-account-list", "announcement-menu"])
+);
+
 const showInsights = computed(() => canOneOf(["analytics-menu", "history-menu"]));
 
 // Each nav section can be individually collapsed via its title. State is
@@ -926,8 +930,8 @@ watch(
         </div>
       </div>
 
-      <!-- Company: company profile, assets, credentials, comms, and settings -->
-      <div>
+      <!-- Company: company profile, assets, credentials, and comms -->
+      <div v-if="showCompany">
         <button
           type="button"
           class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
@@ -1078,31 +1082,6 @@ watch(
               >Announcements</span
             >
           </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.settings.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.settings'),
-            }"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <SettingsIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.settings'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.settings'),
-              }"
-              >Settings</span
-            >
-          </RouterLink>
         </div>
       </div>
 
@@ -1175,6 +1154,32 @@ watch(
 
         </div>
       </div>
+
+      <!-- Settings: standalone, outside any section -->
+      <RouterLink
+        :to="{ name: 'admin.settings.dashboard' }"
+        class="nav-link group relative rounded-[10px] transition-colors duration-150"
+        :class="{
+          'nav-link-active': $route.name?.startsWith('admin.settings'),
+        }"
+        @click="onNavigate"
+        @mouseenter="showTooltip"
+        @mouseleave="hideTooltip"
+      >
+        <SettingsIcon
+          class="w-[18px] h-[18px] text-white/45 shrink-0"
+          :class="{
+            'text-white': $route.name?.startsWith('admin.settings'),
+          }"
+        />
+        <span
+          class="nav-label text-white/70 text-sm font-medium"
+          :class="{
+            'text-white font-semibold': $route.name?.startsWith('admin.settings'),
+          }"
+          >Settings</span
+        >
+      </RouterLink>
     </nav>
 
     <div class="sidebar-quote px-4 pb-4 mt-auto">
