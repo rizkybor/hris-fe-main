@@ -42,7 +42,7 @@ const goToProjectDetail = (id) => {
           <AlertTriangle class="w-5 h-5 text-orange-600" />
         </div>
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Projects at Risk</h3>
+          <h3 class="text-brand-dark text-base font-bold">Projects at Risk</h3>
           <p class="text-brand-light text-xs">Behind schedule or close to deadline</p>
         </div>
       </div>

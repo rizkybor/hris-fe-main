@@ -102,7 +102,7 @@ const toneClass = (tone) => (tone === "danger" ? "text-red-600" : tone === "warn
           <Gauge class="w-5 h-5 text-[#0C51D9]" />
         </div>
         <div class="min-w-0">
-          <h3 class="text-brand-dark text-lg font-bold">Key Metrics</h3>
+          <h3 class="text-brand-dark text-base font-bold">Key Metrics</h3>
           <p class="text-brand-light text-xs">
             {{ data ? `${PROFILE[data.profile] || "Overview"} · ${data.period}` : "Overview" }}
           </p>
