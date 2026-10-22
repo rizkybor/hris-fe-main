@@ -3420,10 +3420,6 @@ video {
   background-image: linear-gradient(to right, var(--tw-gradient-stops));
 }
 
-.bg-gradient-to-t {
-  background-image: linear-gradient(to top, var(--tw-gradient-stops));
-}
-
 .from-\[\#0c51d9\] {
   --tw-gradient-from: #0c51d9 var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(12 81 217 / 0) var(--tw-gradient-to-position);
@@ -3433,6 +3429,12 @@ video {
 .from-\[\#1e1147\] {
   --tw-gradient-from: #1e1147 var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(30 17 71 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.from-\[\#E8EEFC\] {
+  --tw-gradient-from: #E8EEFC var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(232 238 252 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
@@ -3451,12 +3453,6 @@ video {
 .from-amber-500 {
   --tw-gradient-from: #f59e0b var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(245 158 11 / 0) var(--tw-gradient-to-position);
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
-
-.from-black\/40 {
-  --tw-gradient-from: rgb(0 0 0 / 0.4) var(--tw-gradient-from-position);
-  --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
@@ -3612,6 +3608,10 @@ video {
 
 .to-\[\#0f0a24\] {
   --tw-gradient-to: #0f0a24 var(--tw-gradient-to-position);
+}
+
+.to-\[\#F3EEFD\] {
+  --tw-gradient-to: #F3EEFD var(--tw-gradient-to-position);
 }
 
 .to-amber-600 {
@@ -4169,6 +4169,10 @@ video {
   font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction);
 }
 
+.leading-\[1\.125rem\] {
+  line-height: 1.125rem;
+}
+
 .leading-none {
   line-height: 1;
 }
@@ -4205,6 +4209,10 @@ video {
 .text-\[\#0C51D9\] {
   --tw-text-opacity: 1;
   color: rgb(12 81 217 / var(--tw-text-opacity, 1));
+}
+
+.text-\[\#0C51D9\]\/70 {
+  color: rgb(12 81 217 / 0.7);
 }
 
 .text-\[\#0D2929\] {
@@ -4852,6 +4860,10 @@ video {
 .ring-amber-500 {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(245 158 11 / var(--tw-ring-opacity, 1));
+}
+
+.ring-black\/5 {
+  --tw-ring-color: rgb(0 0 0 / 0.05);
 }
 
 .ring-blue-500 {
@@ -6346,10 +6358,6 @@ html {
 
   .sm\:h-32 {
     height: 8rem;
-  }
-
-  .sm\:h-36 {
-    height: 9rem;
   }
 
   .sm\:h-48 {
