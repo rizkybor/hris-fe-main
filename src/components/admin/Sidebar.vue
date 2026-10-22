@@ -27,7 +27,6 @@ import {
   Workflow,
   Megaphone as MegaphoneIcon,
   Laptop as LaptopIcon,
-  Network as NetworkIcon,
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
@@ -96,6 +95,7 @@ const showMyWorkspace = computed(() =>
     "project-menu",
     "subscription-menu",
     "maintenance-menu",
+    "server-storage-menu",
     "staff-task-menu",
   ])
 );
@@ -126,7 +126,7 @@ const showFinance = computed(() =>
 
 const showTools = computed(() => canOneOf(["project-calculator-menu", "flowchart-menu"]));
 
-const showInsights = computed(() => canOneOf(["analytics-menu", "history-menu", "server-storage-menu"]));
+const showInsights = computed(() => canOneOf(["analytics-menu", "history-menu"]));
 
 // Each nav section can be individually collapsed via its title. State is
 // keyed by section id and persisted so a user's preference survives reloads;
@@ -491,7 +491,7 @@ watch(
               :class="{
                 'text-white font-semibold': $route.name?.startsWith('admin.projects'),
               }"
-              >Projects</span
+              >Project Lists</span
             >
           </RouterLink>
 
@@ -517,7 +517,7 @@ watch(
               :class="{
                 'text-white font-semibold': $route.name?.startsWith('admin.subscriptions'),
               }"
-              >Subscriptions</span
+              >Subscription Lists</span
             >
           </RouterLink>
 
@@ -543,7 +543,33 @@ watch(
               :class="{
                 'text-white font-semibold': $route.name?.startsWith('admin.maintenance'),
               }"
-              >Maintenance</span
+              >Maintenance Lists</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.server-storage.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.server-storage'),
+            }"
+            v-if="can('server-storage-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <HardDrive
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.server-storage'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.server-storage'),
+              }"
+              >Server Lists</span
             >
           </RouterLink>
 
@@ -639,32 +665,6 @@ watch(
                 'text-white font-semibold': $route.name?.startsWith('admin.team'),
               }"
               >Our Teams</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.orgchart.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.orgchart'),
-            }"
-            v-if="can('team-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <NetworkIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.orgchart'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.orgchart'),
-              }"
-              >Organization Chart</span
             >
           </RouterLink>
 
@@ -920,7 +920,7 @@ watch(
               :class="{
                 'text-white font-semibold': $route.name?.startsWith('admin.flowchart'),
               }"
-              >Flowchart</span
+              >Flowchart Maker</span
             >
           </RouterLink>
         </div>
@@ -993,31 +993,6 @@ watch(
             >
           </RouterLink>
 
-          <RouterLink
-            :to="{ name: 'admin.server-storage.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.server-storage'),
-            }"
-            v-if="can('server-storage-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <HardDrive
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.server-storage'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.server-storage'),
-              }"
-              >Server Storage</span
-            >
-          </RouterLink>
         </div>
       </div>
 
