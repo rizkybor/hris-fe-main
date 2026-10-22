@@ -117,7 +117,7 @@ const visibleActions = computed(() => {
       <div class="w-8 h-8 bg-blue-50 rounded-[10px] flex items-center justify-center">
         <ZapIcon class="w-4 h-4 text-blue-600" />
       </div>
-      <h3 class="text-brand-dark text-lg font-bold">Quick Actions</h3>
+      <h3 class="text-brand-dark text-base font-bold">Quick Actions</h3>
     </div>
 
     <div class="space-y-3">

@@ -37,7 +37,7 @@ const quickLinks = computed(() =>
 
 <template>
   <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-    <h3 class="text-brand-dark text-lg font-bold mb-4">System Settings</h3>
+    <h3 class="text-brand-dark text-base font-bold mb-4">System Settings</h3>
     <div class="space-y-2">
       <RouterLink
         v-for="link in quickLinks"
