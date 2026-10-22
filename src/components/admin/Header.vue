@@ -173,6 +173,10 @@ const titles = {
     title: "Operational Cost",
     subtitle: "Company Operational Cost Overview",
   },
+  "admin.company-cash-book.dashboard": {
+    title: "Company Cash Book",
+    subtitle: "Track company cash in and out",
+  },
   "admin.project-calculator.dashboard": {
     title: "Project Calculator",
     subtitle: "Estimate development cost by feature or from scratch",
