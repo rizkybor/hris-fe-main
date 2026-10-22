@@ -1,6 +1,6 @@
 <script setup>
 import { computed, defineAsyncComponent, onMounted, ref } from "vue";
-import { RefreshCw, ArrowRight, AlertCircle } from "lucide-vue-next";
+import { RefreshCw, ArrowRight, AlertCircle, Eye, EyeOff } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -23,40 +23,49 @@ onMounted(async () => {
   }
 });
 
+// Amounts start hidden, like Key Metrics and Project Budget; the bars
+// still show the shape of the year without revealing the figures.
+const showAmount = ref(false);
+const money = (value, full = false) => (showAmount.value ? (full ? formatRupiah(value) : formatRupiahCompact(value)) : "Rp ••••••••");
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const monthLabel = (ym) => MONTHS[Number(ym.slice(5, 7)) - 1];
 const forecast = computed(() => data.value?.forecast ?? []);
 const yearTotal = computed(() => forecast.value.reduce((sum, f) => sum + f.amount, 0));
 
 const series = computed(() => [{ name: "Expected billing", data: forecast.value.map((f) => f.amount) }]);
-const chartOptions = computed(() => ({
-  chart: { type: "bar", height: 200, toolbar: { show: false }, animations: { enabled: false }, fontFamily: "inherit" },
-  plotOptions: { bar: { borderRadius: 4, borderRadiusApplication: "end", columnWidth: "42%" } },
-  dataLabels: { enabled: false },
-  colors: ["#0C51D9"],
-  states: { hover: { filter: { type: "darken", value: 0.9 } } },
-  grid: { borderColor: "#EEF1F5", strokeDashArray: 0, padding: { left: 4, right: 4 } },
-  xaxis: {
-    categories: forecast.value.map((f) => monthLabel(f.month)),
-    axisBorder: { show: false },
-    axisTicks: { show: false },
-    labels: { style: { colors: "#64748B", fontSize: "11px" } },
-  },
-  yaxis: {
-    tickAmount: 3,
-    labels: { formatter: (v) => formatRupiahCompact(v), style: { colors: "#64748B", fontSize: "11px" } },
-  },
-  tooltip: {
-    custom: ({ dataPointIndex }) => {
-      const f = forecast.value[dataPointIndex];
-      const [y, m] = f.month.split("-");
-      return `<div style="padding:8px 10px;font-size:12px;color:#0f172a">
-        <div style="color:#64748b">${MONTHS[Number(m) - 1]} ${y}</div>
-        <div style="font-weight:700">${formatRupiah(f.amount)}</div>
-        <div style="color:#64748b">${f.count} subscription${f.count === 1 ? "" : "s"} due</div></div>`;
+const chartOptions = computed(() => {
+  // Read here (not only inside the formatter) so toggling re-renders the axis.
+  const shown = showAmount.value;
+  return {
+    chart: { type: "bar", height: 200, toolbar: { show: false }, animations: { enabled: false }, fontFamily: "inherit" },
+    plotOptions: { bar: { borderRadius: 4, borderRadiusApplication: "end", columnWidth: "42%" } },
+    dataLabels: { enabled: false },
+    colors: ["#0C51D9"],
+    states: { hover: { filter: { type: "darken", value: 0.9 } } },
+    grid: { borderColor: "#EEF1F5", strokeDashArray: 0, padding: { left: 4, right: 4 } },
+    xaxis: {
+      categories: forecast.value.map((f) => monthLabel(f.month)),
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      labels: { style: { colors: "#64748B", fontSize: "11px" } },
     },
-  },
-}));
+    yaxis: {
+      tickAmount: 3,
+      labels: { formatter: (v) => (shown ? formatRupiahCompact(v) : "Rp •••"), style: { colors: "#64748B", fontSize: "11px" } },
+    },
+    tooltip: {
+      custom: ({ dataPointIndex }) => {
+        const f = forecast.value[dataPointIndex];
+        const [y, m] = f.month.split("-");
+        return `<div style="padding:8px 10px;font-size:12px;color:#0f172a">
+          <div style="color:#64748b">${MONTHS[Number(m) - 1]} ${y}</div>
+          <div style="font-weight:700">${money(f.amount, true)}</div>
+          <div style="color:#64748b">${f.count} subscription${f.count === 1 ? "" : "s"} due</div></div>`;
+      },
+    },
+  };
+});
 
 const formatDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
 </script>
@@ -73,9 +82,22 @@ const formatDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString("
           <p class="text-brand-light text-xs">Expected billing over the next 12 months</p>
         </div>
       </div>
-      <RouterLink :to="{ name: 'admin.subscriptions.dashboard' }" class="text-sm font-semibold text-[#0C51D9] hover:underline flex items-center gap-1 shrink-0">
-        View all <ArrowRight class="w-3.5 h-3.5" />
-      </RouterLink>
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          v-if="data?.active_count"
+          type="button"
+          @click="showAmount = !showAmount"
+          :aria-label="showAmount ? 'Hide amounts' : 'Show amounts'"
+          :title="showAmount ? 'Hide amounts' : 'Show amounts'"
+          class="w-8 h-8 rounded-[8px] flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <EyeOff v-if="showAmount" class="w-4 h-4" />
+          <Eye v-else class="w-4 h-4" />
+        </button>
+        <RouterLink :to="{ name: 'admin.subscriptions.dashboard' }" class="text-sm font-semibold text-[#0C51D9] hover:underline flex items-center gap-1">
+          View all <ArrowRight class="w-3.5 h-3.5" />
+        </RouterLink>
+      </div>
     </div>
 
     <div v-if="loading" class="space-y-3">
@@ -94,18 +116,18 @@ const formatDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString("
         </div>
         <div class="rounded-[10px] bg-slate-50 px-3 py-2" title="Yearly subscriptions counted as 1/12 per month">
           <p class="text-[11px] text-brand-light">Per month</p>
-          <p class="text-brand-dark text-base font-bold">{{ formatRupiahCompact(data.monthly_value) }}</p>
+          <p class="text-brand-dark text-base font-bold">{{ money(data.monthly_value) }}</p>
         </div>
         <div class="rounded-[10px] bg-slate-50 px-3 py-2">
           <p class="text-[11px] text-brand-light">Due in 30 days</p>
           <p class="text-brand-dark text-base font-bold">{{ data.due_soon_count }}</p>
-          <p v-if="data.due_soon_count" class="text-[11px] text-brand-light">{{ formatRupiahCompact(data.due_soon_amount) }}</p>
+          <p v-if="data.due_soon_count" class="text-[11px] text-brand-light">{{ money(data.due_soon_amount) }}</p>
         </div>
       </div>
 
       <div class="flex items-baseline justify-between text-xs text-brand-light">
         <span>Projected billing per month</span>
-        <span>12-month total <strong class="text-brand-dark">{{ formatRupiahCompact(yearTotal) }}</strong></span>
+        <span>12-month total <strong class="text-brand-dark">{{ money(yearTotal) }}</strong></span>
       </div>
       <div class="-mx-2">
         <VueApexCharts type="bar" height="200" :options="chartOptions" :series="series" />
@@ -119,7 +141,7 @@ const formatDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString("
             <p class="text-brand-light truncate">{{ s.client || "-" }}</p>
           </div>
           <div class="text-right shrink-0">
-            <p class="text-brand-dark font-semibold">{{ formatRupiahCompact(s.amount) }}</p>
+            <p class="text-brand-dark font-semibold">{{ money(s.amount) }}</p>
             <p class="flex items-center justify-end gap-1" :class="s.overdue ? 'text-red-600 font-semibold' : 'text-brand-light'">
               <AlertCircle v-if="s.overdue" class="w-3 h-3" />{{ s.overdue ? "Overdue · " : "" }}{{ formatDate(s.next_due_date) }}
             </p>
