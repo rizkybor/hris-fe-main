@@ -30,6 +30,7 @@ import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import SubscriptionFormModal from "@/components/admin/subscription/SubscriptionFormModal.vue";
+import SubscriptionsRecap from "@/components/admin/subscription/SubscriptionsRecap.vue";
 
 const store = useSubscriptionStore();
 const { subscriptions, meta, loading, error, success, generatingId } = storeToRefs(store);
@@ -128,6 +129,9 @@ const reminderSent = (subscription) =>
   !!subscription.next_due_date &&
   subscription.due_reminder_sent_for === String(subscription.next_due_date).slice(0, 10);
 
+// Bumped after any change so the recap above the list reloads.
+const recapKey = ref(0);
+
 // ===== Add / Edit modal =====
 const showModal = ref(false);
 const modalMode = ref("add");
@@ -165,6 +169,7 @@ const handleSubmit = async ({ mode, id, payload }) => {
       // next_due_date, so start back at page 1 rather than guessing.
       await fetchData(1);
     }
+    recapKey.value++;
     showModal.value = false;
   } catch (err) {
     formErrors.value = err?.response?.data?.errors || {};
@@ -182,6 +187,7 @@ const handleDelete = async (subscription) => {
 
   try {
     await store.deleteSubscription(subscription.id);
+    recapKey.value++;
   } catch (err) {
     await alertModal.alert("Failed to delete subscription.", { type: "danger" });
   }
@@ -205,6 +211,7 @@ const handleGenerateInvoice = async (subscription) => {
     // next_due_date/last_invoiced_at/invoices_count all changed on the
     // backend -- reload this page to reflect them on the row.
     await fetchData();
+    recapKey.value++;
     await alertModal.alert("Invoice generated successfully.", { type: "success" });
   } catch (err) {
     await alertModal.alert(err?.response?.data?.message || "Failed to generate invoice.", { type: "danger" });
@@ -274,6 +281,8 @@ const handleGenerateInvoice = async (subscription) => {
         </div>
       </div>
     </div>
+
+    <SubscriptionsRecap :service-type-options="serviceTypeOptions" :refresh-key="recapKey" />
 
     <Alert type="success" :title="success" :show="!!success" @close="store.clearMessages()" />
     <Alert type="error" :title="typeof error === 'string' ? error : ''" :show="!!error && typeof error === 'string'" @close="store.clearMessages()" />
