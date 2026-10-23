@@ -1220,6 +1220,10 @@ video {
   display: grid;
 }
 
+.inline-grid {
+  display: inline-grid;
+}
+
 .contents {
   display: contents;
 }
@@ -6533,6 +6537,10 @@ html {
 
   .sm\:w-36 {
     width: 9rem;
+  }
+
+  .sm\:w-44 {
+    width: 11rem;
   }
 
   .sm\:w-48 {
