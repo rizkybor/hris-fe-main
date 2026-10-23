@@ -25,7 +25,7 @@ import { useConfigurableOptionStore } from "@/stores/configurableOption";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
-import { formatDateLong as formatDate } from "@/utils/dateUtils";
+import { formatDateLong as formatDate, formatDate as formatDateMedium } from "@/utils/dateUtils";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import Pagination from "@/components/common/Pagination.vue";
@@ -213,10 +213,11 @@ const handleGenerateInvoice = async (subscription) => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
+  <!-- The admin layout already pads the page, so phones get little extra. -->
+  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
     <!-- Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-5">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-4 sm:mb-5">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-5">
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="w-9 h-9 bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0">
             <RefreshCw class="w-6 h-6 text-indigo-600" />
@@ -253,21 +254,23 @@ const handleGenerateInvoice = async (subscription) => {
             placeholder="Search by name..."
           />
         </div>
-        <div class="relative w-full sm:w-auto">
-          <select v-model="serviceTypeFilter" class="select-soft">
+        <div class="grid grid-cols-2 sm:flex gap-2 sm:gap-3.5">
+        <div class="relative w-full sm:w-auto min-w-0">
+          <select v-model="serviceTypeFilter" class="select-soft w-full">
             <option value="">All Types</option>
             <option v-for="opt in serviceTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
           <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
         </div>
-        <div class="relative w-full sm:w-auto">
-          <select v-model="statusFilter" class="select-soft">
+        <div class="relative w-full sm:w-auto min-w-0">
+          <select v-model="statusFilter" class="select-soft w-full">
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="postponed">Postponed</option>
             <option value="cancelled">Not Active</option>
           </select>
           <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+        </div>
         </div>
       </div>
     </div>
@@ -312,65 +315,78 @@ const handleGenerateInvoice = async (subscription) => {
       <div
         v-for="(subscription, index) in subscriptions"
         :key="subscription.id"
-        class="rounded-[14px] p-4 hover:border-[#0C51D9] transition-all duration-300"
+        class="rounded-[14px] p-3.5 sm:p-4 hover:border-[#0C51D9] transition-all duration-300"
         :class="isNearDue(subscription) ? 'bg-orange-100 border border-orange-500' : 'bg-white border border-[#DCDEDD]'"
       >
         <div class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap mb-1.5">
-              <span class="text-gray-400 text-xs font-semibold shrink-0">
-                {{ (meta.current_page - 1) * meta.per_page + index + 1 }}.
-              </span>
-              <h4 class="text-brand-dark text-sm font-bold truncate">{{ subscription.name }}</h4>
-              <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="STATUS_CLASS[subscription.status] || 'bg-gray-100 text-gray-500'">
-                {{ STATUS_LABEL[subscription.status] || subscription.status }}
-              </span>
-              <span v-if="dueBadge(subscription)" class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="dueBadge(subscription).class">
-                {{ dueBadge(subscription).label }}
-              </span>
-            </div>
-            <div class="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
-              <span
-                v-for="service in subscription.services"
-                :key="service.id"
-                class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-medium"
-              >
-                {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
-              </span>
-              <span class="inline-flex items-center gap-1">
-                <Building2 class="w-3 h-3" /> {{ subscription.client?.name || "-" }}
-              </span>
-              <span v-if="subscription.project" class="inline-flex items-center gap-1">
-                <FolderKanban class="w-3 h-3" /> {{ subscription.project.name }}
-              </span>
+          <!-- Number, name, badges, services, client/project -->
+          <div class="flex items-start gap-2 flex-1 min-w-0">
+            <span class="text-gray-400 text-xs font-semibold shrink-0 tabular-nums leading-5">
+              {{ (meta.current_page - 1) * meta.per_page + index + 1 }}.
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-start sm:items-center gap-x-2 gap-y-1 flex-wrap mb-1.5">
+                <h4 class="text-brand-dark text-sm font-bold leading-5 line-clamp-2 sm:line-clamp-1 break-words min-w-0" :title="subscription.name">
+                  {{ subscription.name }}
+                </h4>
+                <span class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0" :class="STATUS_CLASS[subscription.status] || 'bg-gray-100 text-gray-500'">
+                  {{ STATUS_LABEL[subscription.status] || subscription.status }}
+                </span>
+                <span v-if="dueBadge(subscription)" class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0" :class="dueBadge(subscription).class">
+                  {{ dueBadge(subscription).label }}
+                </span>
+              </div>
+              <div class="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
+                <span
+                  v-for="service in subscription.services"
+                  :key="service.id"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-medium max-w-full truncate"
+                >
+                  {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
+                </span>
+                <span class="inline-flex items-center gap-1 min-w-0 max-w-full">
+                  <Building2 class="w-3 h-3 shrink-0" /> <span class="truncate">{{ subscription.client?.name || "-" }}</span>
+                </span>
+                <span v-if="subscription.project" class="inline-flex items-center gap-1 min-w-0 max-w-full">
+                  <FolderKanban class="w-3 h-3 shrink-0" /> <span class="truncate">{{ subscription.project.name }}</span>
+                </span>
+              </div>
             </div>
           </div>
 
-          <div class="flex items-center gap-4 lg:gap-6 shrink-0">
-            <div class="text-left lg:text-right">
-              <p class="text-brand-dark text-sm font-bold">{{ formatRupiah(subscription.amount) }}</p>
-              <p class="text-gray-400 text-xs capitalize">{{ subscription.billing_cycle }}</p>
-            </div>
-            <div class="text-left lg:text-right">
-              <p class="text-brand-dark text-xs font-semibold">{{ formatDate(subscription.next_due_date) }}</p>
-              <p class="text-gray-400 text-xs">Next due</p>
-              <p
-                v-if="reminderSent(subscription)"
-                class="text-emerald-600 text-xs font-medium flex items-center gap-1 lg:justify-end"
-                :title="`Reminder email sent for the ${formatDate(subscription.next_due_date)} due date`"
-              >
-                <MailCheck class="w-3.5 h-3.5" /> Reminder emailed
-              </p>
+          <!-- Amount, next due and actions: one row on desktop; on phones the
+               figures sit side by side and the actions get their own row. -->
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 shrink-0 pl-5 lg:pl-0">
+            <div class="grid grid-cols-2 gap-3 sm:flex sm:gap-6">
+              <div class="lg:text-right min-w-0">
+                <p class="text-brand-dark text-sm font-bold">{{ formatRupiah(subscription.amount) }}</p>
+                <p class="text-gray-400 text-xs capitalize">{{ subscription.billing_cycle }}</p>
+              </div>
+              <div class="lg:text-right min-w-0">
+                <p class="text-brand-dark text-xs font-semibold">
+                  <span class="sm:hidden">{{ formatDateMedium(subscription.next_due_date) }}</span>
+                  <span class="hidden sm:inline">{{ formatDate(subscription.next_due_date) }}</span>
+                </p>
+                <p class="text-gray-400 text-xs">Next due</p>
+                <p
+                  v-if="reminderSent(subscription)"
+                  class="text-emerald-600 text-xs font-medium flex items-center gap-1 lg:justify-end"
+                  :title="`Reminder email sent for the ${formatDate(subscription.next_due_date)} due date`"
+                >
+                  <MailCheck class="w-3.5 h-3.5 shrink-0" /> Reminder emailed
+                </p>
+              </div>
             </div>
 
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center justify-end gap-1.5 pt-3 sm:pt-0 border-t border-black/5 sm:border-0">
               <button
                 v-if="can('subscription-generate-invoice') && subscription.status === 'active'"
                 type="button"
                 @click="handleGenerateInvoice(subscription)"
                 :disabled="generatingId === subscription.id"
                 title="Generate Invoice"
-                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 disabled:opacity-50"
+                aria-label="Generate invoice"
+                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] bg-white rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 disabled:opacity-50"
               >
                 <Receipt class="w-4 h-4 text-gray-600" />
               </button>
@@ -379,7 +395,8 @@ const handleGenerateInvoice = async (subscription) => {
                 type="button"
                 @click="openEdit(subscription)"
                 title="Edit"
-                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300"
+                aria-label="Edit subscription"
+                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] bg-white rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300"
               >
                 <Edit class="w-3.5 h-3.5 text-gray-600" />
               </button>
@@ -388,7 +405,8 @@ const handleGenerateInvoice = async (subscription) => {
                 type="button"
                 @click="handleDelete(subscription)"
                 title="Delete"
-                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-red-400 hover:bg-red-50 group/delete transition-all duration-300"
+                aria-label="Delete subscription"
+                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] bg-white rounded-[8px] hover:border-red-400 hover:bg-red-50 group/delete transition-all duration-300"
               >
                 <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
               </button>
