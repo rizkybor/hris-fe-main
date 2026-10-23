@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { Users, Search, Clock, ArrowLeft, ChevronDown } from "lucide-vue-next";
+import { Users, Search, Clock, ArrowLeft, ChevronDown, Pencil } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useAttendanceStore } from "@/stores/attendance";
 import { formatDateShort, formatTime as formatTimeUtil } from "@/utils/dateUtils.js";
@@ -10,6 +10,8 @@ import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import Avatar from "@/components/common/Avatar.vue";
 import AttendanceDetailModal from "@/components/admin/attendance/AttendanceDetailModal.vue";
+import EditAttendanceModal from "@/components/admin/attendance/EditAttendanceModal.vue";
+import { can } from "@/helpers/permissionHelper";
 
 const router = useRouter();
 const store = useAttendanceStore();
@@ -47,6 +49,16 @@ const closeDetail = () => {
   showDetail.value = false;
 };
 
+// Manager, Operational Director and Finance can correct a record (attendance-edit).
+const canEdit = can("attendance-edit");
+const showEdit = ref(false);
+const editing = ref(null);
+const openEdit = (attendance) => {
+  editing.value = attendance;
+  showEdit.value = true;
+};
+const onSaved = () => load(meta.value?.current_page || 1);
+
 const formatDate = (date) => (date ? formatDateShort(date) : "N/A");
 const formatTime = (time) => (time ? formatTimeUtil(time) : "-");
 
@@ -60,6 +72,10 @@ const statusBadgeClass = (status) => {
       return "bg-red-50 text-red-700";
     case "remote":
       return "bg-blue-50 text-blue-700";
+    case "overtime":
+      return "bg-violet-50 text-violet-700";
+    case "sick_leave":
+      return "bg-rose-50 text-rose-700";
     default:
       return "bg-gray-100 text-gray-600";
   }
@@ -110,6 +126,8 @@ const statusBadgeClass = (status) => {
             <option value="late">Late</option>
             <option value="absent">Absent</option>
             <option value="remote">Remote</option>
+            <option value="overtime">Overtime</option>
+            <option value="sick_leave">Sick</option>
           </select>
           <ChevronDown
             class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
@@ -147,6 +165,7 @@ const statusBadgeClass = (status) => {
               <th class="py-3 pr-4 font-semibold">Check-out</th>
               <th class="py-3 pr-4 font-semibold">Total Hours</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
+              <th v-if="canEdit" class="py-3 font-semibold text-right">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -185,8 +204,18 @@ const statusBadgeClass = (status) => {
               <td class="py-3 pr-4">{{ attendance.total_hours || "-" }}</td>
               <td class="py-3 pr-4">
                 <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="statusBadgeClass(attendance.status)">
-                  {{ capitalize(attendance.status) || "-" }}
+                  {{ attendance.status === "sick_leave" ? "Sick" : capitalize(attendance.status) || "-" }}
                 </span>
+              </td>
+              <td v-if="canEdit" class="py-3 text-right">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 px-2.5 h-8 rounded-[8px] border border-[#DCDEDD] text-xs font-semibold text-gray-700 hover:border-[#0C51D9] hover:text-[#0C51D9] transition-colors"
+                  :aria-label="`Edit attendance of ${attendance.employee?.user?.name || 'employee'}`"
+                  @click.stop="openEdit(attendance)"
+                >
+                  <Pencil class="w-3.5 h-3.5" />Edit
+                </button>
               </td>
             </tr>
           </tbody>
@@ -201,5 +230,6 @@ const statusBadgeClass = (status) => {
     </div>
 
     <AttendanceDetailModal :show="showDetail" :attendance="selectedAttendance" @close="closeDetail" />
+    <EditAttendanceModal :show="showEdit" :attendance="editing" @close="showEdit = false" @saved="onSaved" />
   </div>
 </template>

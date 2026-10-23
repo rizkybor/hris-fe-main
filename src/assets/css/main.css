@@ -6551,6 +6551,10 @@ html {
     max-width: 220px;
   }
 
+  .sm\:max-w-md {
+    max-width: 28rem;
+  }
+
   .sm\:flex-1 {
     flex: 1 1 0%;
   }
