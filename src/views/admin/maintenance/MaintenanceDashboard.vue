@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { debounce } from "lodash-es";
@@ -11,6 +11,7 @@ import { can } from "@/helpers/permissionHelper";
 import { formatHours, formatMonth, CONTRACT_STATUS, usageColor } from "@/utils/maintenance";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import ContractFormModal from "@/components/admin/maintenance/ContractFormModal.vue";
+import MaintenanceRecap from "@/components/admin/maintenance/MaintenanceRecap.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -47,15 +48,6 @@ onMounted(async () => {
 });
 watch([search, statusFilter, clientFilter], debounce(fetchData, 300));
 
-const summary = computed(() => {
-  const active = contracts.value.filter((c) => c.status === "active");
-  return {
-    active: active.length,
-    remaining: active.reduce((sum, c) => sum + (c.current_period?.remaining || 0), 0),
-    over: active.filter((c) => (c.current_period?.overage || 0) > 0).length,
-    balance: contracts.value.reduce((sum, c) => sum + (c.balance_hours || 0), 0),
-  };
-});
 
 // ===== Create =====
 const showForm = ref(false);
@@ -138,24 +130,7 @@ const handleSubmit = async (payload) => {
       </div>
     </div>
 
-    <div v-if="contracts.length" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-4 sm:mb-5">
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5">
-        <p class="text-brand-light text-xs font-medium">Active contracts</p>
-        <p class="text-brand-dark text-xl font-bold">{{ summary.active }}</p>
-      </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5">
-        <p class="text-brand-light text-xs font-medium">Hours left this month</p>
-        <p class="text-brand-dark text-xl font-bold">{{ formatHours(summary.remaining) }}</p>
-      </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5">
-        <p class="text-brand-light text-xs font-medium">Over quota</p>
-        <p class="text-xl font-bold" :class="summary.over ? 'text-red-600' : 'text-brand-dark'">{{ summary.over }}</p>
-      </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5">
-        <p class="text-brand-light text-xs font-medium">Development balance</p>
-        <p class="text-brand-dark text-xl font-bold">{{ formatHours(summary.balance) }}</p>
-      </div>
-    </div>
+    <MaintenanceRecap />
 
     <div v-if="error && typeof error === 'string'" class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-[12px] p-3.5 mb-4">{{ error }}</div>
 

@@ -9,6 +9,7 @@ import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import StaffTaskComments from "@/components/admin/documents/StaffTaskComments.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
+import StaffTasksRecap from "@/components/admin/documents/StaffTasksRecap.vue";
 
 const store = useStaffTaskStore();
 const alertModal = useAlertModalStore();
@@ -43,6 +44,8 @@ const detailTask = ref(null);
 const fetchData = async () => {
   await store.fetchStaffTasks(filters.value);
 };
+// Bumped after a create/edit/delete so the recap follows.
+const recapKey = ref(0);
 
 const formatDate = (dateString) => {
   if (!dateString) return "-";
@@ -99,6 +102,7 @@ const handleSubmit = async () => {
       await store.createStaffTask(form.value);
     }
     showFormModal.value = false;
+    recapKey.value++;
     await fetchData();
   } catch (error) {
     const data = error?.response?.data;
@@ -112,6 +116,7 @@ const handleDelete = async (id) => {
   if (!(await alertModal.confirm("Delete this task? Every assignee's progress on it will be removed too."))) return;
   try {
     await store.deleteStaffTask(id);
+    recapKey.value++;
   } catch (error) {
     await alertModal.alert(error?.response?.data?.message || "Failed to delete task.", { type: "danger" });
   }
@@ -155,7 +160,7 @@ onMounted(fetchData);
 </script>
 
 <template>
-  <div class="px-4 py-4">
+  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
     <div class="bg-white mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div class="flex items-center gap-3 min-w-0">
         <div class="w-11 h-11 bg-emerald-50 rounded-[12px] flex items-center justify-center shrink-0">
@@ -175,6 +180,8 @@ onMounted(fetchData);
         <span class="text-brand-white text-sm font-semibold">Add Task</span>
       </button>
     </div>
+
+    <StaffTasksRecap :refresh-key="recapKey" />
 
     <div class="mb-4">
       <input

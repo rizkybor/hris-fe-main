@@ -25,6 +25,7 @@ import {
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { getPriorityColor } from "@/utils/styleHelpers";
 import StaffTaskComments from "@/components/admin/documents/StaffTaskComments.vue";
+import MyTasksRecap from "@/components/employee/MyTasksRecap.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -304,6 +305,8 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+
+    <MyTasksRecap :items="items" :loading="initialLoading" />
 
     <!-- Toolbar -->
     <div class="flex flex-col lg:flex-row lg:items-center gap-2.5 sm:gap-3 mb-4">

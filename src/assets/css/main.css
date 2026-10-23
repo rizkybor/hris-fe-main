@@ -2100,6 +2100,10 @@ video {
   gap: 10px;
 }
 
+.gap-\[2px\] {
+  gap: 2px;
+}
+
 .gap-x-2 {
   -moz-column-gap: 0.5rem;
        column-gap: 0.5rem;
@@ -2910,6 +2914,11 @@ video {
   background-color: rgb(12 81 217 / var(--tw-bg-opacity, 1));
 }
 
+.bg-\[\#1baf7a\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(27 175 122 / var(--tw-bg-opacity, 1));
+}
+
 .bg-\[\#2a78d6\] {
   --tw-bg-opacity: 1;
   background-color: rgb(42 120 214 / var(--tw-bg-opacity, 1));
@@ -2948,6 +2957,11 @@ video {
 .bg-\[\#FEF3C7\] {
   --tw-bg-opacity: 1;
   background-color: rgb(254 243 199 / var(--tw-bg-opacity, 1));
+}
+
+.bg-\[\#dc2626\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(220 38 38 / var(--tw-bg-opacity, 1));
 }
 
 .bg-amber-100 {
@@ -6229,6 +6243,11 @@ html {
 .group:hover .group-hover\:bg-pink-100 {
   --tw-bg-opacity: 1;
   background-color: rgb(252 231 243 / var(--tw-bg-opacity, 1));
+}
+
+.group\/bar:hover .group-hover\/bar\:text-\[\#0C51D9\] {
+  --tw-text-opacity: 1;
+  color: rgb(12 81 217 / var(--tw-text-opacity, 1));
 }
 
 .group\/delete:hover .group-hover\/delete\:text-red-600 {
