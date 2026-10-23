@@ -7,7 +7,7 @@ export const useReportStore = defineStore("report", {
     attendance: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     payroll: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     employee: { summary: {}, rows: [] },
-    finance: { period: null, summary: {}, rows: {} },
+    finance: { source: null, period: null, summary: {}, rows: [], meta: null },
     pph21: { period: null, summary: {}, rows: [] },
     ppn: { period: null, summary: {}, rows: [] },
     project: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
