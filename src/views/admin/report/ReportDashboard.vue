@@ -161,6 +161,19 @@ const staffRaportEmploymentType = ref("");
 
 const canExport = computed(() => can("report-export"));
 
+// Finance tab has two sources: the Company Cash Book (default) or Operational Cost.
+const FINANCE_SOURCES = [
+  { key: "cash_book", label: "Company Cash Book" },
+  { key: "operational_cost", label: "Operational Cost" },
+];
+const financeSource = ref("cash_book");
+const isOperationalCost = computed(() => activeTab.value === "finance" && financeSource.value === "operational_cost");
+const setFinanceSource = (key) => {
+  if (financeSource.value === key) return;
+  financeSource.value = key;
+  loadReport(1);
+};
+
 // Staff Raport detail modal
 const showRaportDetail = ref(false);
 // One period drives both the modal and the PDF: "filter" = the list's date
@@ -338,20 +351,19 @@ const summaryCards = computed(() => {
         { label: "Inactive", value: summary.inactive ?? 0 },
       ];
     case "finance":
+      if (summary.items_total !== undefined) {
+        return [
+          { label: "Fixed Cost / bulan", value: formatCurrency(summary.fixed_cost) },
+          { label: "SDM / bulan", value: formatCurrency(summary.sdm) },
+          { label: "Infrastructure / bulan", value: formatCurrency(summary.infrastructure_monthly) },
+          { label: "Infrastructure / tahun", value: formatCurrency(summary.infrastructure_annual) },
+        ];
+      }
       return [
-        {
-          label: "Company Balance",
-          value: formatCurrency(summary.company_balance),
-        },
-        {
-          label: "Fixed Cost (Actual)",
-          value: formatCurrency(summary.fixed_cost_actual),
-        },
-        {
-          label: "Infrastructure (Monthly)",
-          value: formatCurrency(summary.infrastructure_monthly_fee),
-        },
-        { label: "SDM Actual", value: formatCurrency(summary.sdm_actual) },
+        { label: "Saldo Awal Periode", value: formatCurrency(summary.period_opening) },
+        { label: "Total Debit (Masuk)", value: formatCurrency(summary.total_debit) },
+        { label: "Total Kredit (Keluar)", value: formatCurrency(summary.total_credit) },
+        { label: "Saldo Akhir Periode", value: formatCurrency(summary.period_closing) },
       ];
     case "pph21":
       return [
@@ -415,30 +427,9 @@ const summaryCards = computed(() => {
 
 const tableRows = computed(() => {
   if (activeTab.value === "finance") {
-    const rows = currentReport.value?.rows || {};
-    return [
-      ...(rows.fixed_costs || []).map((r) => ({
-        category: "Fixed Cost",
-        name: r.financial_items,
-        budget: r.budget,
-        actual: r.actual,
-        status: r.status,
-      })),
-      ...(rows.infrastructure_tools || []).map((r) => ({
-        category: "Infrastructure",
-        name: r.tech_stack_component,
-        budget: r.monthly_fee,
-        actual: r.annual_fee,
-        status: r.status,
-      })),
-      ...(rows.sdm_resources || []).map((r) => ({
-        category: "SDM Resource",
-        name: r.sdm_component,
-        budget: r.budget,
-        actual: r.actual,
-        status: r.status,
-      })),
-    ];
+    // Ignore a response from the other source still on screen mid-switch.
+    const report = currentReport.value;
+    return report?.source === financeSource.value && Array.isArray(report.rows) ? report.rows : [];
   }
 
   return currentReport.value?.rows || [];
@@ -496,6 +487,13 @@ const filterParams = computed(() => {
     if (startDate.value) params.start_date = startDate.value;
     if (endDate.value) params.end_date = endDate.value;
   }
+  if (activeTab.value === "finance") {
+    params.source = financeSource.value;
+    if (financeSource.value === "operational_cost") {
+      delete params.start_date;
+      delete params.end_date;
+    }
+  }
   if (activeTab.value === "project" && projectStatus.value) params.status = projectStatus.value;
   if (activeTab.value === "project_expense" && projectExpenseProjectId.value) {
     params.project_id = projectExpenseProjectId.value;
@@ -516,6 +514,7 @@ const reportMeta = computed(() => {
   if (activeTab.value === "project") return project.value.meta;
   if (activeTab.value === "project_expense") return projectExpense.value.meta;
   if (activeTab.value === "staff_raport") return staffRaport.value.meta;
+  if (activeTab.value === "finance" && finance.value?.source === "cash_book" && financeSource.value === "cash_book") return finance.value.meta;
   return null;
 });
 
@@ -531,7 +530,7 @@ async function loadReport(page = 1) {
       await reportStore.fetchEmployeeReport();
       break;
     case "finance":
-      await reportStore.fetchFinanceReport(filterParams.value);
+      await reportStore.fetchFinanceReport({ ...filterParams.value, page });
       break;
     case "pph21":
       await reportStore.fetchPph21Report(filterParams.value);
@@ -696,9 +695,35 @@ onMounted(() => {
         Laporan ini adalah rekap siap ekspor untuk membantu pengisian Coretax secara manual, bukan integrasi otomatis ke sistem DJP.
       </div>
 
+      <!-- Finance source -->
+      <div v-if="activeTab === 'finance'" class="mb-3">
+        <div class="inline-grid grid-cols-2 bg-gray-100 rounded-[10px] p-1 w-full sm:w-auto" role="tablist" aria-label="Finance data source">
+          <button
+            v-for="src in FINANCE_SOURCES"
+            :key="src.key"
+            type="button"
+            role="tab"
+            :aria-selected="financeSource === src.key"
+            class="px-3 sm:px-4 py-1.5 rounded-[8px] text-[13px] sm:text-sm font-semibold transition-colors"
+            :class="financeSource === src.key ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-light hover:text-brand-dark'"
+            @click="setFinanceSource(src.key)"
+          >
+            {{ src.label }}
+          </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">
+          <template v-if="financeSource === 'cash_book'">
+            Transaksi kas nyata (manual + otomatis dari Cash Ledger tiap project) dalam rentang tanggal ini. Saldo dihitung berjalan dari Saldo Awal Company Cash Book.
+          </template>
+          <template v-else>
+            Biaya operasional yang berlaku saat ini, sama seperti halaman Operational Cost. Total hanya menghitung item berstatus Digunakan; tidak terikat rentang tanggal.
+          </template>
+        </p>
+      </div>
+
       <!-- Filters -->
       <div
-        v-if="activeTab !== 'employee'"
+        v-if="activeTab !== 'employee' && !isOperationalCost"
         class="flex flex-col sm:flex-row gap-3 mb-2"
       >
         <div v-if="activeTab !== 'subscription'" class="flex-1">
@@ -902,12 +927,20 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Team</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
             </template>
-            <template v-else-if="activeTab === 'finance'">
+            <template v-else-if="activeTab === 'finance' && isOperationalCost">
               <th class="py-3 pr-4 font-semibold">Category</th>
               <th class="py-3 pr-4 font-semibold">Item</th>
-              <th class="py-3 pr-4 font-semibold">Budget</th>
-              <th class="py-3 pr-4 font-semibold">Actual</th>
+              <th class="py-3 pr-4 font-semibold text-right whitespace-nowrap">Biaya / Bulan</th>
+              <th class="py-3 pr-4 font-semibold text-right whitespace-nowrap">Biaya / Tahun</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
+            </template>
+            <template v-else-if="activeTab === 'finance'">
+              <th class="py-3 pr-4 font-semibold">Tanggal</th>
+              <th class="py-3 pr-4 font-semibold">Keterangan</th>
+              <th class="py-3 pr-4 font-semibold">Sumber</th>
+              <th class="py-3 pr-4 font-semibold text-right">Debit</th>
+              <th class="py-3 pr-4 font-semibold text-right">Kredit</th>
+              <th class="py-3 pr-4 font-semibold text-right">Saldo</th>
             </template>
             <template v-else-if="activeTab === 'pph21'">
               <th class="py-3 pr-4 font-semibold">Period</th>
@@ -1062,25 +1095,49 @@ onMounted(() => {
               </td>
             </tr>
           </template>
-          <template v-else-if="activeTab === 'finance'">
+          <template v-else-if="activeTab === 'finance' && isOperationalCost">
             <tr
               v-for="(row, idx) in tableRows"
-              :key="idx"
+              :key="`${row.category}-${row.id}`"
               class="border-b border-[#F1F1F1] hover:bg-gray-50"
+              :class="{ 'opacity-60': !row.in_use }"
             >
               <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
-              <td class="py-3 pr-4">{{ row.category }}</td>
+              <td class="py-3 pr-4 whitespace-nowrap">{{ row.category }}</td>
               <td class="py-3 pr-4">{{ row.name }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.budget) }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.actual) }}</td>
+              <td class="py-3 pr-4 text-right whitespace-nowrap">{{ formatCurrency(row.monthly) }}</td>
+              <td class="py-3 pr-4 text-right whitespace-nowrap">{{ row.annual !== null ? formatCurrency(row.annual) : "-" }}</td>
               <td class="py-3 pr-4">
                 <span
                   class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap"
-                  :class="row.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'"
+                  :class="row.in_use ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'"
                 >
-                  {{ row.status === "active" ? "Digunakan" : "Tidak Digunakan" }}
+                  {{ row.in_use ? "Digunakan" : "Tidak Digunakan" }}
                 </span>
               </td>
+            </tr>
+          </template>
+          <template v-else-if="activeTab === 'finance'">
+            <tr
+              v-for="(row, idx) in tableRows"
+              :key="row.id"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+            >
+              <td class="py-3 pr-4 text-brand-light">{{ (reportMeta ? (reportMeta.current_page - 1) * reportMeta.per_page : 0) + idx + 1 }}</td>
+              <td class="py-3 pr-4 whitespace-nowrap">{{ formatDate(row.transaction_date) }}</td>
+              <td class="py-3 pr-4 min-w-[180px]">
+                <p class="text-brand-dark font-medium">{{ row.description }}</p>
+                <p v-if="row.notes" class="text-gray-400 text-xs">{{ row.notes }}</p>
+              </td>
+              <td class="py-3 pr-4">
+                <span
+                  class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap"
+                  :class="row.is_synced ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-600'"
+                >{{ row.source }}</span>
+              </td>
+              <td class="py-3 pr-4 text-right whitespace-nowrap text-emerald-600">{{ row.type === "debit" ? formatCurrency(row.amount) : "" }}</td>
+              <td class="py-3 pr-4 text-right whitespace-nowrap text-red-600">{{ row.type === "credit" ? formatCurrency(row.amount) : "" }}</td>
+              <td class="py-3 pr-4 text-right whitespace-nowrap font-semibold text-brand-dark">{{ formatCurrency(row.balance) }}</td>
             </tr>
           </template>
           <template v-else-if="activeTab === 'pph21'">
