@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { CalendarClock, ArrowLeft, MapPinned } from "lucide-vue-next";
 import { useAttendanceSettingStore } from "@/stores/attendanceSetting";
 import { RouterLink } from "vue-router";
+import HolidayManager from "@/components/admin/attendance/HolidayManager.vue";
 
 const store = useAttendanceSettingStore();
 const { setting, loading } = storeToRefs(store);
@@ -206,5 +207,7 @@ const useCurrentLocation = () => {
         <p v-if="geofenceSuccess" class="text-green-600 text-sm mt-2">{{ geofenceSuccess }}</p>
       </div>
     </div>
+
+    <HolidayManager />
   </div>
 </template>
