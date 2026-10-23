@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
+import { debounce } from "lodash-es";
 import { storeToRefs } from "pinia";
 import {
   Landmark,
@@ -19,6 +20,9 @@ import {
   FileText,
   Upload,
   ExternalLink,
+  Search,
+  RotateCcw,
+  History,
 } from "lucide-vue-next";
 import { useCompanyCashTransactionStore } from "@/stores/companyCashTransaction";
 import { useProjectStore } from "@/stores/project";
@@ -30,6 +34,8 @@ const store = useCompanyCashTransactionStore();
 const {
   transactions,
   openingBalance,
+  openingBalanceUpdatedAt,
+  openingBalanceUpdatedBy,
   totalDebit,
   totalCredit,
   closingBalance,
@@ -43,15 +49,51 @@ const { projects } = storeToRefs(projectStore);
 
 const canManage = computed(() => can("company-cash-book-create"));
 
-const projectFilter = ref("");
+// ===== Filters =====
+const emptyFilters = () => ({ search: "", project_id: "", type: "", source: "", start_date: "", end_date: "" });
+const filters = ref(emptyFilters());
+const hasFilters = computed(() => Object.values(filters.value).some(Boolean));
+const resetFilters = () => (filters.value = emptyFilters());
+
+// Quick ranges for the date filter (WIB calendar days).
+const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const PERIODS = [
+  { key: "this_month", label: "Bulan ini", range: (n) => [new Date(n.getFullYear(), n.getMonth(), 1), new Date(n.getFullYear(), n.getMonth() + 1, 0)] },
+  { key: "last_month", label: "Bulan lalu", range: (n) => [new Date(n.getFullYear(), n.getMonth() - 1, 1), new Date(n.getFullYear(), n.getMonth(), 0)] },
+  { key: "this_year", label: "Tahun ini", range: (n) => [new Date(n.getFullYear(), 0, 1), new Date(n.getFullYear(), 11, 31)] },
+];
+const activePeriod = computed(() => {
+  const now = new Date();
+  return PERIODS.find((p) => {
+    const [a, b] = p.range(now).map(ymd);
+    return filters.value.start_date === a && filters.value.end_date === b;
+  })?.key;
+});
+const applyPeriod = (p) => {
+  if (activePeriod.value === p.key) {
+    filters.value = { ...filters.value, start_date: "", end_date: "" };
+    return;
+  }
+  const [a, b] = p.range(new Date()).map(ymd);
+  filters.value = { ...filters.value, start_date: a, end_date: b };
+};
 
 const fetchData = (page = 1, rowPerPage = null) => {
+  const f = filters.value;
   store.fetchAll({
-    project_id: projectFilter.value || undefined,
+    search: f.search.trim() || undefined,
+    project_id: f.project_id || undefined,
+    type: f.type || undefined,
+    source: f.source || undefined,
+    start_date: f.start_date || undefined,
+    end_date: f.end_date && (!f.start_date || f.end_date >= f.start_date) ? f.end_date : undefined,
     page,
     row_per_page: rowPerPage || meta.value.per_page || 15,
   });
 };
+
+const refetch = debounce(() => fetchData(1), 300);
+watch(filters, refetch, { deep: true });
 
 const handlePerPageChange = (rowPerPage) => {
   fetchData(1, rowPerPage);
@@ -211,6 +253,21 @@ const formatDate = (date) => {
   });
 };
 
+// "Updated 21 Okt 2026, 14.05 WIB · by Rina" under Saldo Awal.
+const openingBalanceStamp = computed(() => {
+  if (!openingBalanceUpdatedAt.value) return null;
+  const date = new Date(openingBalanceUpdatedAt.value);
+  const text = new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Jakarta",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+  return { text: `${text} WIB`, by: openingBalanceUpdatedBy.value, full: date.toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) };
+});
+
 // --- Opening balance editor ---
 const isBalanceModalOpen = ref(false);
 const balanceDraft = ref(0);
@@ -243,7 +300,7 @@ const isBalanceVisible = ref(false);
 </script>
 
 <template>
-  <div class="px-4 py-4">
+  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
     <div class="bg-white mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div class="flex items-center gap-3 min-w-0">
         <div class="w-11 h-11 bg-emerald-50 rounded-[12px] flex items-center justify-center shrink-0">
@@ -289,20 +346,30 @@ const isBalanceVisible = ref(false);
       </button>
     </div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-      <div class="bg-gray-50 border border-[#DCDEDD] rounded-[10px] p-3.5">
+      <div class="bg-gray-50 border border-[#DCDEDD] rounded-[10px] p-3.5 min-w-0">
         <p class="text-brand-light text-xs">Saldo Awal</p>
         <p class="text-brand-dark text-xs sm:text-sm font-bold mt-1 truncate">
           {{ isBalanceVisible ? formatRupiah(openingBalance) : "Rp ••••••" }}
         </p>
+        <p
+          class="text-[10px] sm:text-[11px] text-gray-500 mt-1 flex items-start gap-1 leading-snug"
+          :title="openingBalanceStamp ? `Terakhir diperbarui ${openingBalanceStamp.full}${openingBalanceStamp.by ? ' oleh ' + openingBalanceStamp.by : ''}` : ''"
+        >
+          <History class="w-3 h-3 shrink-0 mt-px" />
+          <span v-if="openingBalanceStamp" class="min-w-0">
+            Diperbarui {{ openingBalanceStamp.text }}<span v-if="openingBalanceStamp.by" class="hidden sm:inline"> · {{ openingBalanceStamp.by }}</span>
+          </span>
+          <span v-else>Belum pernah diatur</span>
+        </p>
       </div>
       <div class="bg-emerald-50 border border-emerald-100 rounded-[10px] p-3.5">
-        <p class="text-emerald-600 text-xs">Total Debit (Masuk)</p>
+        <p class="text-emerald-600 text-xs">Total Debit (Masuk)<span v-if="hasFilters" class="opacity-70"> · filtered</span></p>
         <p class="text-emerald-700 text-xs sm:text-sm font-bold mt-1 truncate">
           {{ isBalanceVisible ? formatRupiah(totalDebit) : "Rp ••••••" }}
         </p>
       </div>
       <div class="bg-red-50 border border-red-100 rounded-[10px] p-3.5">
-        <p class="text-red-600 text-xs">Total Kredit (Keluar)</p>
+        <p class="text-red-600 text-xs">Total Kredit (Keluar)<span v-if="hasFilters" class="opacity-70"> · filtered</span></p>
         <p class="text-red-700 text-xs sm:text-sm font-bold mt-1 truncate">
           {{ isBalanceVisible ? formatRupiah(totalCredit) : "Rp ••••••" }}
         </p>
@@ -316,20 +383,66 @@ const isBalanceVisible = ref(false);
     </div>
 
     <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
-      <div class="mb-4 max-w-xs">
-        <label class="text-xs text-brand-dark mb-1.5 block">Filter by Project</label>
-        <div class="relative">
-          <select
-            v-model="projectFilter"
-            @change="fetchData(1)"
-            class="select-soft"
-          >
-            <option value="">All Projects</option>
-            <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
-          </select>
-          <ChevronDown
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-          />
+      <!-- Filters: one row on desktop, stacked on phones. The Saldo column
+           stays the company-wide running balance whatever is filtered. -->
+      <div class="mb-4 space-y-2.5">
+        <div class="grid grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,0.9fr)] gap-2.5">
+          <div class="relative col-span-2 lg:col-span-1">
+            <Search class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input v-model="filters.search" type="text" placeholder="Cari keterangan, catatan, project..." class="cb-input" style="padding-left: 2.25rem" />
+          </div>
+          <div class="relative col-span-2 lg:col-span-1">
+            <select v-model="filters.project_id" class="select-soft w-full" aria-label="Project">
+              <option value="">Semua Project</option>
+              <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
+            </select>
+            <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          </div>
+          <div class="relative">
+            <select v-model="filters.type" class="select-soft w-full" aria-label="Jenis">
+              <option value="">Debit & Kredit</option>
+              <option value="debit">Debit (Masuk)</option>
+              <option value="credit">Kredit (Keluar)</option>
+            </select>
+            <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          </div>
+          <div class="relative">
+            <select v-model="filters.source" class="select-soft w-full" aria-label="Sumber">
+              <option value="">Semua Sumber</option>
+              <option value="manual">Manual</option>
+              <option value="project">Dari Project</option>
+            </select>
+            <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 lg:w-[340px]">
+            <input v-model="filters.start_date" type="date" class="cb-input" aria-label="Dari tanggal" />
+            <span class="text-xs text-gray-400">s/d</span>
+            <input v-model="filters.end_date" type="date" :min="filters.start_date || undefined" class="cb-input" aria-label="Sampai tanggal" />
+          </div>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button
+              v-for="p in PERIODS"
+              :key="p.key"
+              type="button"
+              class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-colors"
+              :class="activePeriod === p.key ? 'bg-blue-50 border-[#0C51D9] text-[#0C51D9]' : 'bg-white border-[#DCDEDD] text-gray-600 hover:border-[#0C51D9]'"
+              @click="applyPeriod(p)"
+            >
+              {{ p.label }}
+            </button>
+            <button
+              v-if="hasFilters"
+              type="button"
+              class="px-2.5 py-1.5 rounded-full text-xs font-semibold text-gray-500 hover:text-red-600 inline-flex items-center gap-1"
+              @click="resetFilters"
+            >
+              <RotateCcw class="w-3 h-3" /> Reset
+            </button>
+          </div>
+          <p v-if="hasFilters && !loading" class="text-xs text-gray-500 lg:ml-auto">{{ meta.total }} transaksi cocok</p>
         </div>
       </div>
 
@@ -340,10 +453,16 @@ const isBalanceVisible = ref(false);
         class="text-center py-10 text-gray-500 bg-gray-100 rounded-[12px] border border-dashed border-[#DCDEDD]"
       >
         <Landmark class="w-9 h-9 text-gray-300 mx-auto mb-3" />
+        <template v-if="hasFilters">
+          <p class="text-sm font-semibold">Tidak ada transaksi yang cocok dengan filter</p>
+          <button type="button" class="text-xs font-semibold text-[#0C51D9] hover:underline mt-1" @click="resetFilters">Reset filter</button>
+        </template>
+        <template v-else>
         <p class="text-sm font-semibold">No cash transactions yet</p>
         <p class="text-xs text-gray-400">
           Recording a transaction on any project's own Cash Ledger will automatically appear here too.
         </p>
+        </template>
       </div>
 
       <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
@@ -717,6 +836,9 @@ const isBalanceVisible = ref(false);
 </template>
 
 <style scoped>
+.cb-input { width: 100%; border: 1px solid #dcdedd; border-radius: 8px; padding: 7px 12px; font-size: 13px; background: #fff; color: #0f172a; outline: none; min-height: 40px; }
+.cb-input:hover { border-color: #93c5fd; }
+.cb-input:focus { border-color: #0c51d9; }
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
