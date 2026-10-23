@@ -248,6 +248,20 @@ const attendanceStatusClass = {
   overtime: "bg-purple-50 text-purple-700",
 };
 
+// Punctuality boxes in the raport detail.
+const raportAttendanceBoxes = computed(() => {
+  const a = staffRaportDetail.value?.attendance;
+  if (!a) return [];
+  const missed = (a.absent ?? 0) + (a.no_record ?? 0);
+  const t = a.late_tiers || {};
+  return [
+    { label: "On time", value: (a.present ?? 0) + (a.remote ?? 0), sub: a.remote ? `incl. ${a.remote} remote` : null },
+    { label: "Late", value: a.late ?? 0, class: a.late ? "text-amber-700" : null, sub: a.late ? `${a.late_minutes} min total · ${t.severe || 0} over 1 h` : null },
+    { label: "Absent / no check-in", value: missed, class: missed ? "text-red-600" : null, sub: a.no_record ? `${a.no_record} without any record` : null },
+    { label: "Not counted", value: (a.sick_leave ?? 0) + (a.leave ?? 0) + (a.holidays ?? 0), sub: `${a.sick_leave ?? 0} sick · ${a.leave ?? 0} leave · ${a.holidays ?? 0} holiday` },
+  ];
+});
+
 const handleDownloadPdf = async () => {
   if (!staffRaportDetail.value) return;
   try {
@@ -1293,16 +1307,34 @@ onMounted(() => {
           <div class="grid grid-cols-3 gap-3">
             <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
               <p class="text-brand-dark text-sm sm:text-lg font-bold">{{ staffRaportDetail.attendance_rate !== null ? `${staffRaportDetail.attendance_rate}%` : "-" }}</p>
-              <p class="text-brand-light text-xs">Attendance ({{ staffRaportDetail.attendance.present + staffRaportDetail.attendance.late }}/{{ staffRaportDetail.attendance.total }})</p>
+              <p class="text-brand-light text-xs">Attendance ({{ staffRaportDetail.attendance.total }} working days)</p>
             </div>
             <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
               <p class="text-brand-dark text-sm sm:text-lg font-bold">{{ staffRaportDetail.task_completion_rate !== null ? `${staffRaportDetail.task_completion_rate}%` : "-" }}</p>
-              <p class="text-brand-light text-xs">Tasks Done ({{ staffRaportDetail.tasks.done }}/{{ staffRaportDetail.tasks.total }})</p>
+              <p class="text-brand-light text-xs">Tasks Done ({{ staffRaportDetail.tasks.done }}/{{ staffRaportDetail.tasks.total }} due)</p>
             </div>
             <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
               <p class="text-brand-dark text-sm sm:text-lg font-bold">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : "-" }}</p>
               <p class="text-brand-light text-xs">Overall Score</p>
             </div>
+          </div>
+
+          <!-- How the attendance score was reached, day by day -->
+          <div v-if="staffRaportDetail.attendance.working_days !== undefined">
+            <h4 class="text-sm font-semibold text-brand-dark mb-2">Attendance &amp; Punctuality</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div v-for="b in raportAttendanceBoxes" :key="b.label" class="border border-[#DCDEDD] rounded-lg px-3 py-2">
+                <p class="text-brand-light">{{ b.label }}</p>
+                <p class="font-bold text-sm" :class="b.class || 'text-brand-dark'">{{ b.value }}</p>
+                <p v-if="b.sub" class="text-[11px] text-brand-light">{{ b.sub }}</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-brand-light mt-2 leading-relaxed">
+              Each working day is scored: on time / remote 100, late up to 15 min 90, 16–60 min 75, over 60 min 50, absent or no check-in 0.
+              Sick days, approved leave and holidays aren't counted.
+              <span v-if="staffRaportDetail.tasks.upcoming"> {{ staffRaportDetail.tasks.upcoming }} task(s) not yet due are left out of the task rate.</span>
+              <span v-if="staffRaportDetail.tasks.staff_done_late" class="text-amber-700"> {{ staffRaportDetail.tasks.staff_done_late }} staff task(s) were completed after the due date.</span>
+            </p>
           </div>
 
           <div>
