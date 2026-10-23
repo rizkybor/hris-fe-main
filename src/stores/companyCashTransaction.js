@@ -7,6 +7,8 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
   state: () => ({
     transactions: [],
     openingBalance: 0,
+    openingBalanceUpdatedAt: null,
+    openingBalanceUpdatedBy: null,
     totalDebit: 0,
     totalCredit: 0,
     closingBalance: 0,
@@ -30,6 +32,8 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
         const { data } = await axiosInstance.get("/company-cash-transactions", { params });
         this.transactions = data.data.items;
         this.openingBalance = data.data.opening_balance;
+        this.openingBalanceUpdatedAt = data.data.opening_balance_updated_at ?? null;
+        this.openingBalanceUpdatedBy = data.data.opening_balance_updated_by ?? null;
         this.totalDebit = data.data.total_debit;
         this.totalCredit = data.data.total_credit;
         this.closingBalance = data.data.closing_balance;

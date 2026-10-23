@@ -49,6 +49,16 @@ export const useAttendanceStore = defineStore("attendance", {
             }
         },
 
+        // Attendance Records -> Edit (attendance-edit). Times are "HH:mm" WIB
+        // on the record's own date.
+        async updateAttendance(id, payload) {
+            const response = await axiosInstance.put(`attendances/${id}`, payload);
+            const updated = response.data.data;
+            const index = this.attendances.findIndex((a) => a.id === id);
+            if (index !== -1) this.attendances[index] = { ...this.attendances[index], ...updated };
+            return updated;
+        },
+
         async fetchAllPaginated(params = {}) {
             this.loading = true;
             this.error = null;

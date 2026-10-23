@@ -157,10 +157,10 @@ const openDetail = (server) => (detail.value = server);
         <span class="px-2.5 py-1 rounded-lg bg-green-50 text-green-700"><strong>{{ summary.online }}</strong> online</span>
         <span v-if="summary.attention" class="px-2.5 py-1 rounded-lg bg-red-50 text-red-600"><strong>{{ summary.attention }}</strong> perlu perhatian</span>
       </div>
-      <div class="flex gap-2">
+      <div class="grid grid-cols-2 sm:flex gap-2">
         <button
           type="button"
-          class="rounded-[8px] border border-[#DCDEDD] bg-white hover:border-[#0C51D9] px-3.5 py-2 flex items-center gap-1.5 disabled:opacity-50"
+          class="rounded-[8px] border border-[#DCDEDD] bg-white hover:border-[#0C51D9] px-3.5 py-2 flex items-center justify-center gap-1.5 disabled:opacity-50"
           :disabled="loading"
           @click="store.fetchServers()"
         >
@@ -170,7 +170,7 @@ const openDetail = (server) => (detail.value = server);
         <button
           v-if="canManage"
           type="button"
-          class="btn-primary rounded-[8px] border border-[#2151A0] blue-gradient blue-btn-shadow px-3.5 py-2 flex items-center gap-1.5"
+          class="btn-primary rounded-[8px] border border-[#2151A0] blue-gradient blue-btn-shadow px-3.5 py-2 flex items-center justify-center gap-1.5"
           @click="openAdd"
         >
           <Plus class="w-4 h-4 text-white" />
@@ -199,15 +199,14 @@ const openDetail = (server) => (detail.value = server);
         v-for="server in servers"
         :key="server.id"
         type="button"
-        class="text-left bg-white border border-[#DCDEDD] rounded-[14px] p-4 hover:border-[#0C51D9] hover:shadow-sm transition-all"
+        class="text-left bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-4 hover:border-[#0C51D9] hover:shadow-sm transition-all min-w-0"
         @click="openDetail(server)"
       >
         <div class="flex items-start justify-between gap-2 mb-3">
           <div class="min-w-0">
             <p class="text-brand-dark text-base font-bold truncate">{{ server.name }}</p>
-            <p class="text-brand-light text-xs truncate">
-              {{ server.ip_address || "IP belum diisi" }}<template v-if="server.report?.os"> · {{ server.report.os }}</template>
-            </p>
+            <p class="text-brand-light text-xs truncate">{{ server.ip_address || "IP belum diisi" }}</p>
+            <p v-if="server.report?.os" class="text-brand-light text-xs truncate">{{ server.report.os }}</p>
           </div>
           <span class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1" :class="STATUS[server.status].class">
             <span class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: STATUS[server.status].dot }"></span>
@@ -326,7 +325,7 @@ const openDetail = (server) => (detail.value = server);
     <!-- Detail modal -->
     <div v-if="detail" class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[90] flex items-center justify-center p-3.5" @click.self="detail = null">
       <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-start justify-between gap-3">
+        <div class="p-4 sm:p-5 border-b border-[#DCDEDD] flex items-start justify-between gap-3">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <h3 class="text-brand-dark text-base font-bold truncate">{{ detail.name }}</h3>

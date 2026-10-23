@@ -25,6 +25,7 @@ import {
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { getPriorityColor } from "@/utils/styleHelpers";
 import StaffTaskComments from "@/components/admin/documents/StaffTaskComments.vue";
+import MyTasksRecap from "@/components/employee/MyTasksRecap.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -178,11 +179,11 @@ const groups = computed(() =>
 const summary = computed(() => {
   const by = (key) => items.value.filter((i) => bucketOf(i) === key).length;
   return [
-    { key: "overdue", label: "Overdue", value: by("overdue"), icon: AlertTriangle, class: "text-red-600 bg-red-50" },
-    { key: "today", label: "Due today", value: by("today"), icon: CalendarClock, class: "text-amber-600 bg-amber-50" },
-    { key: "week", label: "Next 7 days", value: by("week"), icon: CalendarRange, class: "text-[#0C51D9] bg-blue-50" },
-    { key: "open", label: "Open", value: items.value.filter((i) => !isClosed(i)).length, icon: ListChecks, class: "text-indigo-600 bg-indigo-50" },
-    { key: "completed", label: "Completed", value: by("completed"), icon: CheckCircle2, class: "text-green-600 bg-green-50" },
+    { key: "overdue", label: "Overdue", short: "Overdue", value: by("overdue"), icon: AlertTriangle, class: "text-red-600 bg-red-50" },
+    { key: "today", label: "Due today", short: "Today", value: by("today"), icon: CalendarClock, class: "text-amber-600 bg-amber-50" },
+    { key: "week", label: "Next 7 days", short: "7 days", value: by("week"), icon: CalendarRange, class: "text-[#0C51D9] bg-blue-50" },
+    { key: "open", label: "Open", short: "Open", value: items.value.filter((i) => !isClosed(i)).length, icon: ListChecks, class: "text-indigo-600 bg-indigo-50" },
+    { key: "completed", label: "Completed", short: "Done", value: by("completed"), icon: CheckCircle2, class: "text-green-600 bg-green-50" },
   ];
 });
 
@@ -269,10 +270,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
+  <!-- The admin layout already pads the page, so phones get little extra. -->
+  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
     <!-- Header + summary -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5 mb-4">
-      <div class="flex items-center gap-3 mb-4">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3 sm:p-5 mb-4">
+      <div class="flex items-center gap-3 mb-3 sm:mb-4">
         <div class="w-10 h-10 bg-orange-50 rounded-[10px] flex items-center justify-center shrink-0">
           <ListChecks class="w-5 h-5 text-orange-600" />
         </div>
@@ -282,23 +284,33 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-        <div v-for="s in summary" :key="s.key" class="bg-white border border-[#DCDEDD] rounded-[12px] px-3.5 py-3 flex items-center gap-3">
-          <div class="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" :class="s.class">
+      <!-- Five across at every width: compact number-over-label tiles on
+           phones, icon tiles from sm up. -->
+      <div class="grid grid-cols-5 gap-1.5 sm:gap-2.5">
+        <div
+          v-for="s in summary"
+          :key="s.key"
+          class="bg-white border border-[#DCDEDD] rounded-[10px] sm:rounded-[12px] px-1 py-2 sm:px-3.5 sm:py-3 flex flex-col sm:flex-row items-center sm:items-center gap-0.5 sm:gap-3 text-center sm:text-left min-w-0"
+        >
+          <div class="hidden sm:flex w-9 h-9 rounded-[10px] items-center justify-center shrink-0" :class="s.class">
             <component :is="s.icon" class="w-4 h-4" />
           </div>
-          <div class="min-w-0">
-            <p class="text-brand-light text-xs font-medium truncate">{{ s.label }}</p>
-            <Skeleton v-if="initialLoading" width="28px" height="20px" rounded="4px" />
-            <p v-else class="text-brand-dark text-xl font-extrabold leading-tight">{{ s.value }}</p>
+          <div class="min-w-0 w-full sm:w-auto flex flex-col-reverse sm:flex-col">
+            <p class="text-brand-light text-[10px] sm:text-xs font-medium truncate">
+              <span class="sm:hidden">{{ s.short }}</span><span class="hidden sm:inline">{{ s.label }}</span>
+            </p>
+            <Skeleton v-if="initialLoading" width="24px" height="20px" rounded="4px" class="mx-auto sm:mx-0" />
+            <p v-else class="text-lg sm:text-xl font-extrabold leading-tight" :class="s.key === 'overdue' && s.value ? 'text-red-600' : 'text-brand-dark'">{{ s.value }}</p>
           </div>
         </div>
       </div>
     </div>
 
+    <MyTasksRecap :items="items" :loading="initialLoading" />
+
     <!-- Toolbar -->
-    <div class="flex flex-col lg:flex-row lg:items-center gap-3 mb-4">
-      <div class="flex bg-gray-100 rounded-[10px] p-1 shrink-0 self-start">
+    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5 sm:gap-3 mb-4">
+      <div class="grid grid-cols-3 sm:flex bg-gray-100 rounded-[10px] p-1 shrink-0 w-full sm:w-auto sm:self-start">
         <button
           v-for="t in [
             { key: 'all', label: 'All', icon: ListChecks },
@@ -307,13 +319,13 @@ onMounted(async () => {
           ]"
           :key="t.key"
           type="button"
-          class="px-3 py-1.5 rounded-[8px] text-sm font-semibold inline-flex items-center gap-1.5 transition-colors"
+          class="px-2 sm:px-3 py-1.5 rounded-[8px] text-[13px] sm:text-sm font-semibold inline-flex items-center justify-center gap-1 sm:gap-1.5 transition-colors min-w-0"
           :class="sourceTab === t.key ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-light hover:text-brand-dark'"
           @click="sourceTab = t.key"
         >
-          <component :is="t.icon" class="w-4 h-4" />
-          {{ t.label }}
-          <span class="text-xs font-semibold px-1.5 rounded-full" :class="sourceTab === t.key ? 'bg-blue-50 text-[#0C51D9]' : 'bg-gray-200 text-gray-500'">{{ counts[t.key] }}</span>
+          <component :is="t.icon" class="w-4 h-4 shrink-0 hidden sm:block" />
+          <span class="truncate">{{ t.label }}</span>
+          <span class="text-[11px] sm:text-xs font-semibold px-1.5 rounded-full shrink-0" :class="sourceTab === t.key ? 'bg-blue-50 text-[#0C51D9]' : 'bg-gray-200 text-gray-500'">{{ counts[t.key] }}</span>
         </button>
       </div>
 
@@ -327,16 +339,16 @@ onMounted(async () => {
         />
       </div>
 
-      <div class="flex items-center gap-2 flex-wrap">
-        <div v-if="sourceTab !== 'assigned' && projects.length" class="relative">
-          <select v-model="projectFilter" class="select-soft max-w-[180px]">
+      <div class="grid grid-cols-2 sm:flex items-center gap-2">
+        <div v-if="sourceTab !== 'assigned' && projects.length" class="relative min-w-0">
+          <select v-model="projectFilter" class="select-soft w-full sm:max-w-[180px]">
             <option value="">All Projects</option>
             <option v-for="p in projects" :key="p.id ?? 'none'" :value="String(p.id)">{{ p.name }}</option>
           </select>
           <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
         </div>
-        <div class="relative">
-          <select v-model="statusFilter" class="select-soft">
+        <div class="relative min-w-0" :class="{ 'col-span-2': sourceTab === 'assigned' || !projects.length }">
+          <select v-model="statusFilter" class="select-soft w-full">
             <option value="">All Status</option>
             <option v-for="opt in STATUS_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
@@ -346,9 +358,9 @@ onMounted(async () => {
           v-if="hasActiveFilters"
           type="button"
           @click="clearFilters"
-          class="px-3 py-2.5 rounded-[10px] text-xs font-semibold text-gray-500 hover:text-[#0C51D9] hover:bg-gray-50 transition-colors shrink-0"
+          class="col-span-2 sm:col-span-1 px-3 py-2 sm:py-2.5 rounded-[10px] text-xs font-semibold text-gray-500 hover:text-[#0C51D9] hover:bg-gray-50 transition-colors shrink-0"
         >
-          Clear
+          Clear filters
         </button>
       </div>
     </div>
@@ -387,7 +399,7 @@ onMounted(async () => {
       <section v-for="group in groups" :key="group.key" class="bg-white border border-[#DCDEDD] rounded-[14px] overflow-hidden">
         <button
           type="button"
-          class="w-full flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-[#EEF1F5] text-left"
+          class="w-full flex items-center gap-2 px-3 sm:px-4 py-3 bg-slate-50 border-b border-[#EEF1F5] text-left"
           :class="{ 'cursor-pointer hover:bg-slate-100': group.key === 'completed', 'cursor-default': group.key !== 'completed', '!border-b-0': group.key === 'completed' && !showCompleted }"
           @click="group.key === 'completed' && (showCompleted = !showCompleted)"
         >
@@ -405,25 +417,25 @@ onMounted(async () => {
           <li
             v-for="item in group.items"
             :key="item.uid"
-            class="px-4 py-3 flex items-start gap-3 hover:bg-slate-50 transition-colors"
+            class="px-3 sm:px-4 py-3 flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2 hover:bg-slate-50 transition-colors"
             :class="item.source === 'project' && !item.projectId ? 'cursor-default' : 'cursor-pointer'"
             @click="openItem(item)"
           >
             <span class="mt-1.5 w-2 h-2 rounded-full shrink-0" :class="STATUS_DOT[item.status] || 'bg-gray-300'"></span>
 
-            <div class="flex-1 min-w-0">
-              <p class="text-brand-dark text-sm font-semibold leading-snug" :class="{ 'line-through text-gray-400': isClosed(item) }">
+            <div class="flex-1 min-w-0 basis-[calc(100%-1.25rem)] sm:basis-auto">
+              <p class="text-brand-dark text-sm font-semibold leading-snug break-words" :class="{ 'line-through text-gray-400': isClosed(item) }">
                 {{ item.title }}
               </p>
               <p v-if="item.description" class="text-brand-light text-xs mt-0.5 line-clamp-1">{{ item.description }}</p>
               <div class="flex items-center gap-1.5 flex-wrap mt-1.5 text-xs">
                 <span
                   v-if="item.source === 'project'"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-medium max-w-[220px]"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-medium max-w-full sm:max-w-[220px]"
                 >
                   <Folder class="w-3 h-3 shrink-0" /><span class="truncate">{{ item.projectName }}</span>
                 </span>
-                <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-medium max-w-[220px]">
+                <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-medium max-w-full sm:max-w-[220px]">
                   <ClipboardList class="w-3 h-3 shrink-0" /><span class="truncate">Assigned{{ item.creatorName ? ` by ${item.creatorName}` : "" }}</span>
                 </span>
                 <span v-if="item.priority" :class="getPriorityColor(item.priority)" class="px-2 py-0.5 rounded-md font-semibold capitalize">
@@ -440,8 +452,9 @@ onMounted(async () => {
               </div>
             </div>
 
-            <!-- Status: compact colored select, doubles as the status badge -->
-            <div class="relative inline-block shrink-0" @click.stop>
+            <!-- Status: compact colored select, doubles as the status badge.
+                 Below the title on phones so the title keeps the full width. -->
+            <div class="relative inline-block shrink-0 ml-5 sm:ml-0" @click.stop>
               <select
                 :value="item.status"
                 :disabled="updatingUid === item.uid"
@@ -466,18 +479,18 @@ onMounted(async () => {
     <!-- ========================================================= -->
     <div
       v-if="showStaffTaskDetail"
-      class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      class="fixed inset-0 backdrop-blur-sm bg-black/20 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       @click.self="closeStaffTaskDetail"
     >
       <div
-        class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        class="bg-white rounded-t-[16px] sm:rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[88vh] sm:max-h-[90vh] overflow-y-auto"
       >
         <!-- Modal Header -->
         <div
-          class="p-5 border-b border-[#DCDEDD] flex items-center justify-between"
+          class="p-4 sm:p-5 border-b border-[#DCDEDD] flex items-start justify-between gap-3 sticky top-0 bg-white z-10"
         >
           <div class="min-w-0">
-            <h3 class="text-brand-dark text-lg font-bold">
+            <h3 class="text-brand-dark text-base font-bold break-words">
               {{ detailStaffTask?.title }}
             </h3>
 
@@ -496,7 +509,7 @@ onMounted(async () => {
         </div>
 
         <!-- Modal Body -->
-        <div class="p-5 space-y-5">
+        <div class="p-4 sm:p-5 space-y-5">
           <!-- Description -->
           <div
             v-if="detailStaffTask?.description"

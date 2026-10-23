@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { debounce } from "lodash-es";
@@ -11,6 +11,7 @@ import { can } from "@/helpers/permissionHelper";
 import { formatHours, formatMonth, CONTRACT_STATUS, usageColor } from "@/utils/maintenance";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import ContractFormModal from "@/components/admin/maintenance/ContractFormModal.vue";
+import MaintenanceRecap from "@/components/admin/maintenance/MaintenanceRecap.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -47,15 +48,6 @@ onMounted(async () => {
 });
 watch([search, statusFilter, clientFilter], debounce(fetchData, 300));
 
-const summary = computed(() => {
-  const active = contracts.value.filter((c) => c.status === "active");
-  return {
-    active: active.length,
-    remaining: active.reduce((sum, c) => sum + (c.current_period?.remaining || 0), 0),
-    over: active.filter((c) => (c.current_period?.overage || 0) > 0).length,
-    balance: contracts.value.reduce((sum, c) => sum + (c.balance_hours || 0), 0),
-  };
-});
 
 // ===== Create =====
 const showForm = ref(false);
@@ -83,9 +75,10 @@ const handleSubmit = async (payload) => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-5">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+  <!-- The admin layout already pads the page, so phones get little extra. -->
+  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
+    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-4 sm:mb-5">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-5">
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="w-9 h-9 bg-teal-50 rounded-[12px] flex items-center justify-center shrink-0">
             <Wrench class="w-5 h-5 text-teal-600" />
@@ -118,41 +111,26 @@ const handleSubmit = async (payload) => {
             placeholder="Search contract, client or project..."
           />
         </div>
-        <div class="relative w-full sm:w-56">
-          <select v-model="clientFilter" class="select-soft">
+        <div class="grid grid-cols-2 sm:flex gap-2 sm:gap-3.5">
+        <div class="relative w-full sm:w-56 min-w-0">
+          <select v-model="clientFilter" class="select-soft w-full">
             <option value="">All Clients</option>
             <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
           <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
         </div>
-        <div class="relative w-full sm:w-auto">
-          <select v-model="statusFilter" class="select-soft">
+        <div class="relative w-full sm:w-auto min-w-0">
+          <select v-model="statusFilter" class="select-soft w-full">
             <option value="">All Status</option>
             <option v-for="(s, key) in CONTRACT_STATUS" :key="key" :value="key">{{ s.label }}</option>
           </select>
           <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
         </div>
+        </div>
       </div>
     </div>
 
-    <div v-if="contracts.length" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5">
-        <p class="text-brand-light text-xs font-medium">Active contracts</p>
-        <p class="text-brand-dark text-xl font-bold">{{ summary.active }}</p>
-      </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5">
-        <p class="text-brand-light text-xs font-medium">Hours left this month</p>
-        <p class="text-brand-dark text-xl font-bold">{{ formatHours(summary.remaining) }}</p>
-      </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5">
-        <p class="text-brand-light text-xs font-medium">Over quota</p>
-        <p class="text-xl font-bold" :class="summary.over ? 'text-red-600' : 'text-brand-dark'">{{ summary.over }}</p>
-      </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5">
-        <p class="text-brand-light text-xs font-medium">Development balance</p>
-        <p class="text-brand-dark text-xl font-bold">{{ formatHours(summary.balance) }}</p>
-      </div>
-    </div>
+    <MaintenanceRecap />
 
     <div v-if="error && typeof error === 'string'" class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-[12px] p-3.5 mb-4">{{ error }}</div>
 
@@ -187,20 +165,22 @@ const handleSubmit = async (payload) => {
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       <router-link
-        v-for="contract in contracts"
+        v-for="(contract, index) in contracts"
         :key="contract.id"
         :to="{ name: 'admin.maintenance.detail', params: { id: contract.id } }"
         class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 hover:border-[#0C51D9] hover:shadow-sm transition-all flex flex-col"
       >
         <div class="flex items-start justify-between gap-2 mb-1.5">
-          <h4 class="text-brand-dark text-sm font-bold leading-snug">{{ contract.name }}</h4>
+          <h4 class="text-brand-dark text-sm font-bold leading-snug min-w-0 break-words">
+            <span class="text-gray-400 text-xs font-semibold tabular-nums mr-1">{{ index + 1 }}.</span>{{ contract.name }}
+          </h4>
           <span class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0" :class="CONTRACT_STATUS[contract.status]?.class">
             {{ CONTRACT_STATUS[contract.status]?.label }}
           </span>
         </div>
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mb-3.5">
-          <span class="inline-flex items-center gap-1"><Building2 class="w-3 h-3" /> {{ contract.client?.name || "-" }}</span>
-          <span v-if="contract.project" class="inline-flex items-center gap-1"><FolderKanban class="w-3 h-3" /> {{ contract.project.name }}</span>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mb-3.5 min-w-0">
+          <span class="inline-flex items-center gap-1 min-w-0 max-w-full"><Building2 class="w-3 h-3 shrink-0" /> <span class="truncate">{{ contract.client?.name || "-" }}</span></span>
+          <span v-if="contract.project" class="inline-flex items-center gap-1 min-w-0 max-w-full"><FolderKanban class="w-3 h-3 shrink-0" /> <span class="truncate">{{ contract.project.name }}</span></span>
         </div>
 
         <template v-if="contract.current_period">

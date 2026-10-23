@@ -57,7 +57,7 @@ const titles = {
     subtitle: "Monitor your team performance and key metrics",
   },
   "admin.teams": {
-    title: "Teams",
+    title: "Our Teams",
     subtitle: "Manage teams and organization units",
   },
   "admin.team.detail": {
