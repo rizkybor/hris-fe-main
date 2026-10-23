@@ -13,6 +13,8 @@ export const useReportStore = defineStore("report", {
     project: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     pph23: { period: null, summary: {}, rows: [] },
     subscription: { summary: {}, status_breakdown: [], upcoming_renewals: [], rows: [] },
+    maintenance: { month: null, summary: {}, rows: [] },
+    documents: null,
     projectExpense: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     staffRaport: { period: null, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     staffRaportDetail: null,
@@ -120,6 +122,32 @@ export const useReportStore = defineStore("report", {
       try {
         const { data } = await axiosInstance.get("/reports/pph23", { params });
         this.pph23 = data.data;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchDocumentReport(params = {}) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await axiosInstance.get("/reports/documents", { params });
+        this.documents = data.data;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchMaintenanceReport(params = {}) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await axiosInstance.get("/reports/maintenance", { params });
+        this.maintenance = data.data;
       } catch (error) {
         this.error = handleError(error);
       } finally {
