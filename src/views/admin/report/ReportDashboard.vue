@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref, computed, watch } from "vue";
 import { storeToRefs } from "pinia";
+import { useRouter } from "vue-router";
 import {
   FileTextIcon,
   Download,
@@ -17,6 +18,7 @@ import {
   ChevronDown,
   ChevronRight,
   RefreshCw,
+  Wrench,
   Trash2,
   CalendarRange,
 } from "lucide-vue-next";
@@ -31,8 +33,11 @@ import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import AttendanceDetailModal from "@/components/admin/attendance/AttendanceDetailModal.vue";
+import DocumentReport from "@/components/admin/report/DocumentReport.vue";
 import { formatTime as formatTimeUtil } from "@/utils/dateUtils";
+import { formatHours, CONTRACT_STATUS, LEFTOVER_POLICY, usageColor } from "@/utils/maintenance";
 
+const router = useRouter();
 const reportStore = useReportStore();
 const projectStore = useProjectStore();
 const { projects } = storeToRefs(projectStore);
@@ -48,6 +53,8 @@ const {
   project,
   pph23,
   subscription,
+  maintenance,
+  documents,
   projectExpense,
   staffRaport,
   staffRaportDetail,
@@ -66,7 +73,9 @@ const tabs = [
   { key: "ppn", label: "PPN", icon: PercentIcon },
   { key: "project", label: "Project", icon: FolderKanban },
   { key: "project_expense", label: "Project Cash", icon: PiggyBank },
-  { key: "subscription", label: "Subscription", icon: RefreshCw },
+  { key: "subscription", label: "Subscription Lists", icon: RefreshCw },
+  { key: "maintenance", label: "Maintenance Lists", icon: Wrench },
+  { key: "documents", label: "Document Reports", icon: FileTextIcon },
   { key: "staff_raport", label: "Staff Raport", icon: Star, permission: "staff-raport-menu" },
 ];
 
@@ -156,6 +165,9 @@ const endDate = ref("");
 const projectStatus = ref("");
 const projectExpenseProjectId = ref("");
 const subscriptionStatus = ref("");
+// Maintenance Lists: contract status + which month's quota use to show.
+const maintenanceStatus = ref("");
+const maintenanceMonth = ref(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`);
 const staffRaportSearch = ref("");
 const staffRaportEmploymentType = ref("");
 
@@ -316,6 +328,7 @@ const currentReport = computed(() => {
     pph23: pph23.value,
     project_expense: projectExpense.value,
     subscription: subscription.value,
+    maintenance: maintenance.value,
     staff_raport: staffRaport.value,
   }[activeTab.value];
 });
@@ -408,6 +421,13 @@ const summaryCards = computed(() => {
         { label: "Active Subscriptions", value: summary.active_count ?? 0 },
         { label: "Upcoming Renewals (30d)", value: summary.upcoming_renewals_count ?? 0 },
       ];
+    case "maintenance":
+      return [
+        { label: "Active Contracts", value: `${summary.active_count ?? 0} / ${summary.total_count ?? 0}` },
+        { label: `Hours Used · ${maintenanceMonthLabel.value}`, value: `${formatHours(summary.used)} / ${formatHours(summary.available)}` },
+        { label: "Over Quota", value: summary.over_count ?? 0 },
+        { label: "Development Balance", value: formatHours(summary.balance), sub: summary.expiring ? `${formatHours(summary.expiring)} expiring in 30 days` : null },
+      ];
     case "staff_raport": {
       const rows = staffRaport.value.rows || [];
       const withScore = rows.filter((r) => r.overall_score !== null);
@@ -463,6 +483,11 @@ function subscriptionIcannFeeTotal(subscription) {
   return (subscription.services || []).reduce((sum, s) => sum + (Number(s.icann_fee) || 0), 0);
 }
 
+const maintenanceMonthLabel = computed(() => {
+  const m = maintenance.value?.month;
+  return m ? new Date(`${m}-01T00:00:00`).toLocaleDateString("id-ID", { month: "short", year: "numeric" }) : "this month";
+});
+
 function formatCurrency(value) {
   const number = Number(value ?? 0);
   return new Intl.NumberFormat("id-ID", {
@@ -483,7 +508,7 @@ function formatDate(value) {
 
 const filterParams = computed(() => {
   const params = {};
-  if (activeTab.value !== "subscription") {
+  if (!["subscription", "maintenance"].includes(activeTab.value)) {
     if (startDate.value) params.start_date = startDate.value;
     if (endDate.value) params.end_date = endDate.value;
   }
@@ -501,6 +526,10 @@ const filterParams = computed(() => {
   if (activeTab.value === "staff_raport") {
     if (staffRaportSearch.value) params.search = staffRaportSearch.value;
     if (staffRaportEmploymentType.value) params.employment_type = staffRaportEmploymentType.value;
+  }
+  if (activeTab.value === "maintenance") {
+    if (maintenanceStatus.value) params.status = maintenanceStatus.value;
+    if (maintenanceMonth.value) params.month = maintenanceMonth.value;
   }
   if (activeTab.value === "subscription" && subscriptionStatus.value) {
     params.status = subscriptionStatus.value;
@@ -549,6 +578,12 @@ async function loadReport(page = 1) {
       break;
     case "subscription":
       await reportStore.fetchSubscriptionReport(filterParams.value);
+      break;
+    case "maintenance":
+      await reportStore.fetchMaintenanceReport(filterParams.value);
+      break;
+    case "documents":
+      await reportStore.fetchDocumentReport(filterParams.value);
       break;
     case "staff_raport":
       await reportStore.fetchStaffRaport({ ...filterParams.value, page });
@@ -726,7 +761,26 @@ onMounted(() => {
         v-if="activeTab !== 'employee' && !isOperationalCost"
         class="flex flex-col sm:flex-row gap-3 mb-2"
       >
-        <div v-if="activeTab !== 'subscription'" class="flex-1">
+        <div v-if="activeTab === 'maintenance'" class="flex-1">
+          <label class="text-xs text-brand-light font-medium mb-1 block">Month</label>
+          <input
+            v-model="maintenanceMonth"
+            type="month"
+            @change="loadReport(1)"
+            class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+          />
+        </div>
+        <div v-if="activeTab === 'maintenance'" class="flex-1">
+          <label class="text-xs text-brand-light font-medium mb-1 block">Status</label>
+          <div class="relative w-full">
+            <select v-model="maintenanceStatus" @change="loadReport(1)" class="select-soft">
+              <option value="">All Statuses</option>
+              <option v-for="(st, key) in CONTRACT_STATUS" :key="key" :value="key">{{ st.label }}</option>
+            </select>
+            <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+        <div v-if="!['subscription', 'maintenance'].includes(activeTab)" class="flex-1">
           <label class="text-xs text-brand-light font-medium mb-1 block"
             >Start Date</label
           >
@@ -737,7 +791,7 @@ onMounted(() => {
             class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
         </div>
-        <div v-if="activeTab !== 'subscription'" class="flex-1">
+        <div v-if="!['subscription', 'maintenance'].includes(activeTab)" class="flex-1">
           <label class="text-xs text-brand-light font-medium mb-1 block"
             >End Date</label
           >
@@ -841,6 +895,9 @@ onMounted(() => {
       </p>
     </div>
 
+    <DocumentReport v-if="activeTab === 'documents'" :data="documents" :loading="loading" />
+
+    <template v-else>
     <!-- Summary Cards -->
     <SkeletonStatCards v-if="loading" :count="4" cols="grid-cols-2 lg:grid-cols-4" class="mb-6" />
     <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -855,6 +912,7 @@ onMounted(() => {
         <p class="text-brand-dark text-sm sm:text-xl font-bold truncate">
           {{ card.value }}
         </p>
+        <p v-if="card.sub" class="text-amber-700 text-[11px] mt-0.5 truncate">{{ card.sub }}</p>
       </div>
     </div>
 
@@ -993,6 +1051,15 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Amount</th>
               <th class="py-3 pr-4 font-semibold">Status</th>
               <th class="py-3 pr-4 font-semibold">Next Due Date</th>
+            </template>
+            <template v-else-if="activeTab === 'maintenance'">
+              <th class="py-3 pr-4 font-semibold">Contract</th>
+              <th class="py-3 pr-4 font-semibold">Client / Project</th>
+              <th class="py-3 pr-4 font-semibold text-right whitespace-nowrap">Quota / Month</th>
+              <th class="py-3 pr-4 font-semibold min-w-[170px]">Used ({{ maintenanceMonthLabel }})</th>
+              <th class="py-3 pr-4 font-semibold">Leftover</th>
+              <th class="py-3 pr-4 font-semibold text-right whitespace-nowrap">Dev. Balance</th>
+              <th class="py-3 pr-4 font-semibold">Status</th>
             </template>
             <template v-else-if="activeTab === 'staff_raport'">
               <th class="py-3 pr-4 font-semibold">Name</th>
@@ -1291,6 +1358,45 @@ onMounted(() => {
               </td>
             </tr>
           </template>
+          <template v-else-if="activeTab === 'maintenance'">
+            <tr
+              v-for="(row, idx) in tableRows"
+              :key="row.id"
+              @click="router.push({ name: 'admin.maintenance.detail', params: { id: row.id } })"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
+            >
+              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
+              <td class="py-3 pr-4 font-semibold text-brand-dark min-w-[150px]">{{ row.name }}</td>
+              <td class="py-3 pr-4 min-w-[150px]">
+                <p>{{ row.client ?? "-" }}</p>
+                <p v-if="row.project" class="text-xs text-gray-400">{{ row.project }}</p>
+              </td>
+              <td class="py-3 pr-4 text-right whitespace-nowrap">{{ formatHours(row.monthly_quota_hours) }}</td>
+              <td class="py-3 pr-4">
+                <template v-if="row.period">
+                  <div class="flex items-center justify-between gap-2 text-xs mb-1">
+                    <span class="whitespace-nowrap">{{ formatHours(row.period.used) }} / {{ formatHours(row.period.total) }}</span>
+                    <span class="font-semibold" :class="row.period.overage > 0 ? 'text-red-600' : row.period.used_percent >= 75 ? 'text-amber-700' : 'text-brand-dark'">{{ Math.round(row.period.used_percent) }}%</span>
+                  </div>
+                  <div class="w-full bg-gray-100 rounded-full overflow-hidden" style="height: 6px">
+                    <div class="h-full rounded-full" :style="{ width: `${Math.min(100, Math.max(2, row.period.used_percent))}%`, backgroundColor: usageColor(row.period) }"></div>
+                  </div>
+                  <p v-if="row.period.overage > 0" class="text-[11px] text-red-600 mt-0.5">{{ formatHours(row.period.overage) }} over quota</p>
+                </template>
+                <span v-else class="text-xs text-gray-400">Not running this month</span>
+              </td>
+              <td class="py-3 pr-4 text-xs whitespace-nowrap">{{ LEFTOVER_POLICY[row.leftover_policy]?.short ?? row.leftover_policy }}</td>
+              <td class="py-3 pr-4 text-right whitespace-nowrap">
+                {{ formatHours(row.balance) }}
+                <p v-if="row.expiring" class="text-[11px] text-amber-700">{{ formatHours(row.expiring) }} expiring</p>
+              </td>
+              <td class="py-3 pr-4">
+                <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="CONTRACT_STATUS[row.status]?.class || 'bg-gray-100 text-gray-500'">
+                  {{ CONTRACT_STATUS[row.status]?.label ?? row.status }}
+                </span>
+              </td>
+            </tr>
+          </template>
           <template v-else-if="activeTab === 'staff_raport'">
             <tr
               v-for="(row, index) in tableRows"
@@ -1337,6 +1443,8 @@ onMounted(() => {
         @page-change="loadReport"
       />
     </div>
+
+    </template>
 
     <!-- Staff Raport Detail Modal -->
     <div v-if="showRaportDetail" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeRaportDetail">
