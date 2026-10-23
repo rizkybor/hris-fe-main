@@ -163,18 +163,33 @@ const canExport = computed(() => can("report-export"));
 
 // Staff Raport detail modal
 const showRaportDetail = ref(false);
-const raportPeriod = ref("month");
+// One period drives both the modal and the PDF: "filter" = the list's date
+// range (what the row's score was computed for), or week / month / all time.
+const raportPeriod = ref("filter");
 const raportUseSignature = ref(false);
 const loadingDetail = ref(false);
+const raportEmployeeId = ref(null);
 
-const openRaportDetail = async (employeeId) => {
-  showRaportDetail.value = true;
+const raportPeriodParams = () => {
+  if (raportPeriod.value !== "filter") return { period: raportPeriod.value };
+  const { start_date, end_date } = filterParams.value;
+  return start_date && end_date ? { start_date, end_date } : { period: "month" };
+};
+
+const loadRaportDetail = async () => {
   loadingDetail.value = true;
   try {
-    await reportStore.fetchStaffRaportDetail(employeeId, filterParams.value);
+    await reportStore.fetchStaffRaportDetail(raportEmployeeId.value, raportPeriodParams());
   } finally {
     loadingDetail.value = false;
   }
+};
+
+const openRaportDetail = async (employeeId) => {
+  raportEmployeeId.value = employeeId;
+  raportPeriod.value = "filter";
+  showRaportDetail.value = true;
+  await loadRaportDetail();
 };
 
 const closeRaportDetail = () => {
@@ -267,7 +282,7 @@ const handleDownloadPdf = async () => {
   try {
     await reportStore.downloadStaffRaportPdf(
       staffRaportDetail.value.employee.id,
-      raportPeriod.value,
+      raportPeriodParams(),
       staffRaportDetail.value.employee.name,
       raportUseSignature.value
     );
@@ -1292,6 +1307,21 @@ onMounted(() => {
               {{ (staffRaportDetail.employee.employment_type || "-").replace("_", " ") }}
               <span v-if="staffRaportDetail.employee.start_date"> • Joined {{ formatDate(staffRaportDetail.employee.start_date) }}</span>
             </p>
+            <div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 bg-blue-50/60 border border-blue-100 rounded-lg px-3 py-2">
+              <p class="text-xs text-brand-dark flex-1">
+                Period: <strong>{{ staffRaportDetail.period_label }}</strong>
+                <span class="text-brand-light">({{ formatDate(staffRaportDetail.period.start_date) }} – {{ formatDate(staffRaportDetail.period.end_date) }})</span>
+              </p>
+              <div class="relative sm:w-44">
+                <select v-model="raportPeriod" class="select-soft" aria-label="Raport period" @change="loadRaportDetail">
+                  <option value="filter">Report filter period</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                  <option value="all">All Time</option>
+                </select>
+                <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
             <div class="flex items-center gap-1 mt-2">
               <Star
                 v-for="i in 5"
@@ -1349,7 +1379,7 @@ onMounted(() => {
                 <span class="text-brand-light text-xs shrink-0">{{ formatDate(task.due_date) }}</span>
               </div>
             </div>
-            <p v-else class="text-brand-light text-sm">No completed tasks in this period.</p>
+            <p v-else class="text-brand-light text-sm">No completed tasks due in this period.</p>
           </div>
 
           <div v-if="staffRaportDetail.performance_review" class="border-t border-[#DCDEDD] pt-4">
@@ -1386,18 +1416,9 @@ onMounted(() => {
           </div>
 
           <div class="pt-3 border-t border-[#DCDEDD]">
-            <label class="text-sm font-semibold text-brand-dark mb-2 block">Download PDF for period</label>
-            <div class="flex items-center gap-3">
-              <div class="relative flex-1">
-                <select v-model="raportPeriod" class="select-soft">
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                  <option value="all">All Time</option>
-                </select>
-                <ChevronDown
-                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-                />
-              </div>
+            <label class="text-sm font-semibold text-brand-dark mb-2 block">Download PDF</label>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+              <p class="text-xs text-brand-light flex-1">Uses the period above: <strong class="text-brand-dark">{{ staffRaportDetail.period_label }}</strong></p>
               <button
                 @click="handleDownloadPdf"
                 :disabled="downloadingPdf"
