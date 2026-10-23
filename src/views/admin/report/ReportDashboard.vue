@@ -33,6 +33,7 @@ import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import AttendanceDetailModal from "@/components/admin/attendance/AttendanceDetailModal.vue";
+import DocumentReport from "@/components/admin/report/DocumentReport.vue";
 import { formatTime as formatTimeUtil } from "@/utils/dateUtils";
 import { formatHours, CONTRACT_STATUS, LEFTOVER_POLICY, usageColor } from "@/utils/maintenance";
 
@@ -53,6 +54,7 @@ const {
   pph23,
   subscription,
   maintenance,
+  documents,
   projectExpense,
   staffRaport,
   staffRaportDetail,
@@ -73,6 +75,7 @@ const tabs = [
   { key: "project_expense", label: "Project Cash", icon: PiggyBank },
   { key: "subscription", label: "Subscription Lists", icon: RefreshCw },
   { key: "maintenance", label: "Maintenance Lists", icon: Wrench },
+  { key: "documents", label: "Document Reports", icon: FileTextIcon },
   { key: "staff_raport", label: "Staff Raport", icon: Star, permission: "staff-raport-menu" },
 ];
 
@@ -579,6 +582,9 @@ async function loadReport(page = 1) {
     case "maintenance":
       await reportStore.fetchMaintenanceReport(filterParams.value);
       break;
+    case "documents":
+      await reportStore.fetchDocumentReport(filterParams.value);
+      break;
     case "staff_raport":
       await reportStore.fetchStaffRaport({ ...filterParams.value, page });
       break;
@@ -889,6 +895,9 @@ onMounted(() => {
       </p>
     </div>
 
+    <DocumentReport v-if="activeTab === 'documents'" :data="documents" :loading="loading" />
+
+    <template v-else>
     <!-- Summary Cards -->
     <SkeletonStatCards v-if="loading" :count="4" cols="grid-cols-2 lg:grid-cols-4" class="mb-6" />
     <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -1434,6 +1443,8 @@ onMounted(() => {
         @page-change="loadReport"
       />
     </div>
+
+    </template>
 
     <!-- Staff Raport Detail Modal -->
     <div v-if="showRaportDetail" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeRaportDetail">
