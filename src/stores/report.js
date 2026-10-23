@@ -178,19 +178,21 @@ export const useReportStore = defineStore("report", {
       }
     },
 
-    async downloadStaffRaportPdf(employeeId, period, employeeName = "staff", withSignature = false) {
+    // periodParams: { period: "week" | "month" | "all" } or { start_date, end_date }.
+    async downloadStaffRaportPdf(employeeId, periodParams, employeeName = "staff", withSignature = false) {
       this.downloadingPdf = true;
       this.error = null;
       try {
         const response = await axiosInstance.get(`/reports/staff-raport/${employeeId}/pdf`, {
-          params: { period, with_signature: withSignature ? 1 : 0 },
+          params: { ...periodParams, with_signature: withSignature ? 1 : 0 },
           responseType: "blob",
         });
 
         const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute("download", `${employeeName.replace(/\s+/g, "-")}-raport-${period}.pdf`);
+        const suffix = periodParams.period || `${periodParams.start_date}_${periodParams.end_date}`;
+        link.setAttribute("download", `${employeeName.replace(/\s+/g, "-")}-raport-${suffix}.pdf`);
         document.body.appendChild(link);
         link.click();
         link.remove();
