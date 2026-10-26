@@ -128,15 +128,47 @@ const signatoryOptions = computed(() =>
     : SIGNATORIES
 );
 
+// The printed receipt adds "berdasarkan Invoice No. ..." for a linked
+// invoice by itself, so the suggestion only describes what's being paid
+// (from the invoice items) -- and never overwrites text the user typed.
+const lastSuggestion = ref("");
+const suggestForPayment = (invoice) => {
+  const items = (invoice.items || []).map((i) => i.description).filter(Boolean);
+  if (!items.length) return "Pembayaran";
+  return `Pembayaran ${items.slice(0, 2).join(", ")}${items.length > 2 ? ", dll." : ""}`;
+};
+
 const handleInvoiceSelect = () => {
   const invoice = invoices.value.find((i) => i.id === Number(form.value.invoice_id));
   if (invoice) {
     form.value.client_code = invoice.client_code || "";
     grossAmount.value = Number(invoice.total);
-    form.value.for_payment_of = `berdasarkan Invoice No. ${invoice.invoice_number}`;
+    const current = form.value.for_payment_of.trim();
+    if (!current || current === lastSuggestion.value) {
+      lastSuggestion.value = suggestForPayment(invoice);
+      form.value.for_payment_of = lastSuggestion.value;
+    }
     recomputePph23();
   }
 };
+
+const selectedInvoiceNumber = computed(
+  () => invoices.value.find((i) => i.id === Number(form.value.invoice_id))?.invoice_number || ""
+);
+
+// Same rule as PaymentReceipt::forPaymentLine() on the API, so the preview
+// matches the PDF: a trailing invoice reference is dropped (the PDF adds its
+// own); text naming the invoice mid-sentence is printed as written.
+const escapeRegex = (v) => v.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+const printedForPayment = computed(() => {
+  const number = selectedInvoiceNumber.value;
+  let text = form.value.for_payment_of.trim();
+  if (!number) return { text, appendInvoice: false };
+  const trailing = new RegExp(`[\\s,.;-]*(berdasarkan\\s+|sesuai\\s+|for\\s+)?(invoice|inv)\\.?\\s*(no\\.?|nomor|number|#)?\\s*:?\\s*${escapeRegex(number)}[\\s.]*$`, "i");
+  text = text.replace(trailing, "").replace(/^[\s,.;-]+|[\s,.;-]+$/g, "");
+  if (text.toLowerCase().includes(number.toLowerCase())) return { text, appendInvoice: false };
+  return { text: text || "Pembayaran", appendInvoice: true };
+});
 
 const handleSubmit = async () => {
   errorMessage.value = "";
@@ -310,6 +342,10 @@ const handleSubmit = async () => {
           <div class="md:col-span-2">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">For Payment Of <span class="text-red-600">*</span></label>
             <textarea v-model="form.for_payment_of" rows="2" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
+            <p v-if="selectedInvoiceNumber" class="text-xs text-brand-light mt-1">
+              Printed as: <span class="text-brand-dark">{{ printedForPayment.text }}<template v-if="printedForPayment.appendInvoice"> berdasarkan Invoice No. <strong>{{ selectedInvoiceNumber }}</strong>.</template></span>
+              — the invoice number is added automatically.
+            </p>
           </div>
           <div class="md:col-span-2">
             <label class="text-sm font-semibold text-brand-dark mb-1 block">Recipient Name (Signatory)</label>
