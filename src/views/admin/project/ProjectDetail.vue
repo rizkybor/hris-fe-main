@@ -44,7 +44,7 @@ import ProjectDocuments from "@/components/admin/project/detail/ProjectDocuments
 import ProjectInvoices from "@/components/admin/project/detail/ProjectInvoices.vue";
 import ProjectInspect from "@/components/admin/project/detail/ProjectInspect.vue";
 import ProjectAccess from "@/components/admin/project/detail/ProjectAccess.vue";
-import ProjectCashLedger from "@/components/admin/project/detail/ProjectCashLedger.vue";
+import ProjectBilling from "@/components/admin/project/detail/ProjectBilling.vue";
 import MaintenancePanel from "@/components/admin/maintenance/MaintenancePanel.vue";
 import Avatar from "@/components/common/Avatar.vue";
 
@@ -58,12 +58,6 @@ const authStore = useAuthStore();
 const isProjectLeader = computed(() => {
   const myEmployeeId = authStore.user?.employee_profile?.id;
   return !!myEmployeeId && myEmployeeId === project.value.leader?.id;
-});
-// Mirrors ProjectCashTransactionController::canManage() -- the project's
-// own leader, or a manager/superadmin who may manage any project's ledger.
-const canManageCashLedger = computed(() => {
-  const roles = authStore.user?.roles || [];
-  return isProjectLeader.value || roles.includes("manager") || roles.includes("superadmin");
 });
 const handleInspectNoteUpdated = (note) => {
   project.value.inspect_note = note;
@@ -660,13 +654,8 @@ onMounted(async () => {
     />
   </div>
 
-  <!-- Project Cash Ledger (debit/credit, only the Project Leader may record entries) -->
-  <ProjectCashLedger
-    v-if="can('project-expense-list')"
-    :project-id="id"
-    :can-manage="canManageCashLedger"
-    class="mt-6"
-  />
+  <!-- Invoiced vs paid for this project -->
+  <ProjectBilling v-if="can('project-expense-list')" :project-id="id" class="mt-6" />
 
   <!-- Maintenance contracts tied to this project (optional) -->
   <MaintenancePanel v-if="can('maintenance-menu') || can('maintenance-list')" :project-id="id" class="mt-6" />
