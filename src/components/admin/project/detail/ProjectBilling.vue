@@ -31,16 +31,16 @@ const visible = ref(false);
 const money = (v) => (visible.value ? formatRupiah(v ?? 0) : "Rp ••••••");
 
 const STATUS = {
-  settled: { label: "Sesuai — semua invoice lunas", class: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 },
-  outstanding: { label: "Belum sesuai — masih ada sisa tagihan", class: "bg-amber-50 text-amber-800 border-amber-200", icon: Clock },
-  overpaid: { label: "Lebih bayar — pembayaran melebihi tagihan", class: "bg-red-50 text-red-700 border-red-200", icon: AlertTriangle },
-  not_invoiced: { label: "Belum ada invoice untuk project ini", class: "bg-gray-50 text-gray-600 border-[#DCDEDD]", icon: ReceiptText },
+  settled: { label: "Settled — every invoice is fully paid", class: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 },
+  outstanding: { label: "Not settled — there is still an outstanding balance", class: "bg-amber-50 text-amber-800 border-amber-200", icon: Clock },
+  overpaid: { label: "Overpaid — payments exceed the invoiced amount", class: "bg-red-50 text-red-700 border-red-200", icon: AlertTriangle },
+  not_invoiced: { label: "No invoices for this project yet", class: "bg-gray-50 text-gray-600 border-[#DCDEDD]", icon: ReceiptText },
 };
 const INVOICE_STATE = {
-  paid: { label: "Lunas", class: "bg-green-50 text-green-700" },
-  partial: { label: "Sebagian", class: "bg-amber-50 text-amber-700" },
-  unpaid: { label: "Belum dibayar", class: "bg-red-50 text-red-700" },
-  overpaid: { label: "Lebih bayar", class: "bg-red-50 text-red-700" },
+  paid: { label: "Paid", class: "bg-green-50 text-green-700" },
+  partial: { label: "Partially paid", class: "bg-amber-50 text-amber-700" },
+  unpaid: { label: "Unpaid", class: "bg-red-50 text-red-700" },
+  overpaid: { label: "Overpaid", class: "bg-red-50 text-red-700" },
   cancelled: { label: "Cancelled", class: "bg-gray-100 text-gray-500" },
 };
 
@@ -59,7 +59,7 @@ const bar = computed(() => {
 });
 
 const openInvoice = ref(null);
-const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-");
+const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-");
 </script>
 
 <template>
@@ -70,14 +70,14 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("id-
           <ReceiptText class="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
         </div>
         <div class="min-w-0">
-          <h3 class="text-brand-dark text-base sm:text-lg font-bold">Penagihan &amp; Pembayaran</h3>
-          <p class="text-brand-light text-xs">Invoice project ini dibandingkan dengan pembayaran dari Payment Receipt</p>
+          <h3 class="text-brand-dark text-base sm:text-lg font-bold">Billing &amp; Payments</h3>
+          <p class="text-brand-light text-xs">This project's invoices compared with payments from Payment Receipts</p>
         </div>
       </div>
       <button
         type="button"
         class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 shrink-0"
-        :title="visible ? 'Sembunyikan nominal' : 'Tampilkan nominal'"
+        :title="visible ? 'Hide amounts' : 'Show amounts'"
         :aria-label="visible ? 'Hide amounts' : 'Show amounts'"
         @click="visible = !visible"
       >
@@ -86,9 +86,9 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("id-
       </button>
     </div>
 
-    <div v-if="loading && !data" class="text-center py-8 text-xs text-gray-400">Memuat data penagihan...</div>
+    <div v-if="loading && !data" class="text-center py-8 text-xs text-gray-400">Loading billing data...</div>
     <p v-else-if="failed" class="text-sm text-gray-500 bg-white border border-[#DCDEDD] rounded-[12px] p-4">
-      Gagal memuat data penagihan. <button type="button" class="text-[#0C51D9] font-semibold hover:underline" @click="load">Coba lagi</button>
+      Couldn't load billing data. <button type="button" class="text-[#0C51D9] font-semibold hover:underline" @click="load">Try again</button>
     </p>
 
     <template v-else-if="data">
@@ -101,31 +101,31 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("id-
       <!-- Figures -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div class="bg-white border border-[#DCDEDD] rounded-[10px] p-3.5 min-w-0">
-          <p class="text-brand-light text-xs">Nilai Project</p>
+          <p class="text-brand-light text-xs">Project Value</p>
           <p class="text-brand-dark text-sm font-bold mt-1 truncate">{{ money(data.project_value) }}</p>
-          <p class="text-[11px] text-gray-400 mt-0.5 leading-snug">Belum ditagih {{ money(data.not_invoiced) }}</p>
+          <p class="text-[11px] text-gray-400 mt-0.5 leading-snug">Not invoiced yet {{ money(data.not_invoiced) }}</p>
         </div>
         <div class="bg-white border border-[#DCDEDD] rounded-[10px] p-3.5 min-w-0">
-          <p class="text-brand-light text-xs">Total Invoice</p>
+          <p class="text-brand-light text-xs">Total Invoiced</p>
           <p class="text-brand-dark text-sm font-bold mt-1 truncate">{{ money(data.invoiced_total) }}</p>
           <p class="text-[11px] text-gray-400 mt-0.5 leading-snug">
-            DPP {{ money(data.invoiced_subtotal) }}<template v-if="data.invoiced_percent !== null"> · {{ data.invoiced_percent }}% nilai project</template>
+            DPP {{ money(data.invoiced_subtotal) }}<template v-if="data.invoiced_percent !== null"> · {{ data.invoiced_percent }}% of project value</template>
           </p>
         </div>
         <div class="bg-white border border-[#DCDEDD] rounded-[10px] p-3.5 min-w-0">
-          <p class="text-brand-light text-xs">Total Pembayaran</p>
+          <p class="text-brand-light text-xs">Total Paid</p>
           <p class="text-emerald-700 text-sm font-bold mt-1 truncate">{{ money(data.paid_total) }}</p>
           <p class="text-[11px] text-gray-400 mt-0.5 leading-snug">
-            <template v-if="data.paid_percent !== null">{{ data.paid_percent }}% dari invoice</template>
+            <template v-if="data.paid_percent !== null">{{ data.paid_percent }}% of invoiced</template>
             <template v-if="data.pph23_withheld"> · incl. PPh 23 {{ money(data.pph23_withheld) }}</template>
           </p>
         </div>
         <div class="bg-white border rounded-[10px] p-3.5 min-w-0" :class="data.outstanding > 0 ? 'border-amber-200' : data.outstanding < 0 ? 'border-red-200' : 'border-[#DCDEDD]'">
-          <p class="text-brand-light text-xs">{{ data.outstanding < 0 ? "Lebih Bayar" : "Sisa Tagihan" }}</p>
+          <p class="text-brand-light text-xs">{{ data.outstanding < 0 ? "Overpaid" : "Outstanding" }}</p>
           <p class="text-sm font-bold mt-1 truncate" :class="data.outstanding > 0 ? 'text-amber-700' : data.outstanding < 0 ? 'text-red-600' : 'text-brand-dark'">
             {{ money(Math.abs(data.outstanding)) }}
           </p>
-          <p class="text-[11px] text-gray-400 mt-0.5 leading-snug">Invoice − pembayaran</p>
+          <p class="text-[11px] text-gray-400 mt-0.5 leading-snug">Invoiced − paid</p>
         </div>
       </div>
 
@@ -136,26 +136,26 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("id-
           <div v-if="bar.invoiced" class="h-full bg-[#eda100]" :style="{ width: `${bar.invoiced}%` }"></div>
         </div>
         <p class="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-[11px] text-brand-light">
-          <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-[#1baf7a]"></span>Sudah dibayar {{ Math.round(bar.paid) }}%</span>
-          <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-[#eda100]"></span>Ditagih, belum dibayar {{ Math.round(bar.invoiced) }}%</span>
-          <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-gray-200"></span>Belum ditagih {{ Math.round(bar.rest) }}%</span>
+          <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-[#1baf7a]"></span>Paid {{ Math.round(bar.paid) }}%</span>
+          <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-[#eda100]"></span>Invoiced, not yet paid {{ Math.round(bar.invoiced) }}%</span>
+          <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-gray-200"></span>Not invoiced yet {{ Math.round(bar.rest) }}%</span>
         </p>
       </div>
 
       <p v-if="data.mismatch_count" class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-[10px] px-3 py-2 mb-4 flex items-start gap-2">
         <AlertTriangle class="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        {{ data.mismatch_count }} invoice berstatus Paid/Unpaid yang tidak sesuai dengan Payment Receipt-nya — cek dan perbarui status invoice tersebut.
+        {{ data.mismatch_count }} invoice{{ data.mismatch_count === 1 ? " is" : "s are" }} marked Paid/Unpaid differently from {{ data.mismatch_count === 1 ? "its" : "their" }} Payment Receipts — please check and update the invoice status.
       </p>
 
       <!-- Per invoice -->
       <div v-if="!data.invoices.length" class="text-center py-8 text-gray-500 bg-white rounded-[12px] border border-dashed border-[#DCDEDD]">
         <ReceiptText class="w-8 h-8 text-gray-300 mx-auto mb-2" />
-        <p class="text-sm font-semibold">Belum ada invoice</p>
-        <p class="text-xs text-gray-400">Pilih project ini saat membuat Invoice agar muncul di sini.</p>
+        <p class="text-sm font-semibold">No invoices yet</p>
+        <p class="text-xs text-gray-400">Select this project when creating an Invoice for it to appear here.</p>
       </div>
       <div v-else class="bg-white rounded-[12px] border border-[#DCDEDD] divide-y divide-[#EEF1F5]">
         <div class="hidden sm:grid grid-cols-[1.3fr_1fr_1fr_1fr_auto] gap-x-3 px-3.5 py-2 text-[11px] font-semibold uppercase text-gray-500 bg-gray-50 rounded-t-[12px]">
-          <span>Invoice</span><span>Total Invoice</span><span>Dibayar</span><span>Sisa</span><span class="w-[118px] text-right">Status</span>
+          <span>Invoice</span><span>Invoiced</span><span>Paid</span><span>Outstanding</span><span class="w-[118px] text-right">Status</span>
         </div>
         <div v-for="inv in data.invoices" :key="inv.id" :class="{ 'opacity-60': inv.state === 'cancelled' }">
           <button
@@ -166,24 +166,24 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("id-
           >
             <span class="min-w-0">
               <span class="block text-sm font-semibold text-brand-dark truncate">{{ inv.invoice_number }}</span>
-              <span class="block text-[11px] text-gray-400">{{ formatDate(inv.date) }} · {{ inv.receipts.length }} receipt</span>
+              <span class="block text-[11px] text-gray-400">{{ formatDate(inv.date) }} · {{ inv.receipts.length }} receipt{{ inv.receipts.length === 1 ? "" : "s" }}</span>
             </span>
             <span class="flex items-center justify-end gap-1.5 justify-self-end sm:order-last sm:w-[118px]">
               <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold whitespace-nowrap" :class="INVOICE_STATE[inv.state].class">{{ INVOICE_STATE[inv.state].label }}</span>
-              <AlertTriangle v-if="inv.status_mismatch" class="w-3.5 h-3.5 text-amber-600" :title="`Status invoice: ${inv.invoice_status}`" />
+              <AlertTriangle v-if="inv.status_mismatch" class="w-3.5 h-3.5 text-amber-600" :title="`Invoice status: ${inv.invoice_status}`" />
               <ChevronDown class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': openInvoice === inv.id }" />
             </span>
-            <span class="text-xs sm:text-sm"><span class="sm:hidden text-gray-400">Invoice </span>{{ money(inv.total) }}</span>
-            <span class="text-xs sm:text-sm text-emerald-700"><span class="sm:hidden text-gray-400">Dibayar </span>{{ money(inv.paid) }}</span>
+            <span class="text-xs sm:text-sm"><span class="sm:hidden text-gray-400">Invoiced </span>{{ money(inv.total) }}</span>
+            <span class="text-xs sm:text-sm text-emerald-700"><span class="sm:hidden text-gray-400">Paid </span>{{ money(inv.paid) }}</span>
             <span class="text-xs sm:text-sm col-span-2 sm:col-span-1" :class="inv.outstanding > 0 ? 'text-amber-700 font-semibold' : inv.outstanding < 0 ? 'text-red-600 font-semibold' : 'text-gray-400'">
-              <span class="sm:hidden text-gray-400 font-normal">Sisa </span>{{ inv.outstanding === 0 ? "—" : money(inv.outstanding) }}
+              <span class="sm:hidden text-gray-400 font-normal">Outstanding </span>{{ inv.outstanding === 0 ? "—" : money(inv.outstanding) }}
             </span>
           </button>
           <div v-if="openInvoice === inv.id" class="px-3.5 pb-3 text-xs">
             <p v-if="inv.status_mismatch" class="text-amber-800 mb-2">
-              Status invoice tercatat <strong>{{ inv.invoice_status === "paid" ? "Paid" : "Unpaid" }}</strong>, tapi menurut Payment Receipt: <strong>{{ INVOICE_STATE[inv.state].label }}</strong>.
+              The invoice is marked <strong>{{ inv.invoice_status === "paid" ? "Paid" : "Unpaid" }}</strong>, but according to its Payment Receipts it is <strong>{{ INVOICE_STATE[inv.state].label }}</strong>.
             </p>
-            <p v-if="!inv.receipts.length" class="text-gray-400">Belum ada Payment Receipt untuk invoice ini.</p>
+            <p v-if="!inv.receipts.length" class="text-gray-400">No Payment Receipts for this invoice yet.</p>
             <ul v-else class="space-y-1">
               <li v-for="r in inv.receipts" :key="r.id" class="flex flex-wrap justify-between gap-x-3 bg-gray-50 rounded-md px-2.5 py-1.5">
                 <span class="text-brand-dark font-medium">{{ r.receipt_number }} <span class="text-gray-400 font-normal">· {{ formatDate(r.date) }}</span></span>
@@ -197,7 +197,7 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("id-
               v-if="can('invoice-edit')"
               :to="{ name: 'admin.invoices.edit', params: { id: inv.id } }"
               class="inline-block mt-2 text-[#0C51D9] font-semibold hover:underline"
-            >Buka invoice →</RouterLink>
+            >Open invoice →</RouterLink>
           </div>
         </div>
       </div>

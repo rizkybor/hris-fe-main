@@ -12,7 +12,7 @@ import {
   ReceiptIcon,
   PercentIcon,
   FolderKanban,
-  PiggyBank,
+  AlertTriangle,
   Star,
   X,
   ChevronDown,
@@ -55,7 +55,6 @@ const {
   subscription,
   maintenance,
   documents,
-  projectExpense,
   staffRaport,
   staffRaportDetail,
   loading,
@@ -72,7 +71,6 @@ const tabs = [
   { key: "pph23", label: "PPh 23", icon: ReceiptIcon },
   { key: "ppn", label: "PPN", icon: PercentIcon },
   { key: "project", label: "Project", icon: FolderKanban },
-  { key: "project_expense", label: "Project Cash", icon: PiggyBank },
   { key: "subscription", label: "Subscription Lists", icon: RefreshCw },
   { key: "maintenance", label: "Maintenance Lists", icon: Wrench },
   { key: "documents", label: "Document Reports", icon: FileTextIcon },
@@ -87,7 +85,7 @@ const visibleTabs = computed(() => tabs.filter((t) => !t.permission || can(t.per
 // Deleting here deletes the underlying real record, so this is gated by
 // role (Superadmin/Manager only), matching the backend's RoleMiddleware
 // check on the same two endpoints.
-const DELETABLE_REPORT_TYPES = ["attendance", "payroll", "employee", "ppn", "pph23", "project", "project_expense", "subscription"];
+const DELETABLE_REPORT_TYPES = ["attendance", "payroll", "employee", "ppn", "pph23", "project", "subscription"];
 const canDeleteReports = computed(() => hasAnyRole(["superadmin", "manager"]));
 const showDeleteColumn = computed(() => canDeleteReports.value && DELETABLE_REPORT_TYPES.includes(activeTab.value));
 
@@ -163,7 +161,6 @@ const activeTab = ref("attendance");
 const startDate = ref("");
 const endDate = ref("");
 const projectStatus = ref("");
-const projectExpenseProjectId = ref("");
 const subscriptionStatus = ref("");
 // Maintenance Lists: contract status + which month's quota use to show.
 const maintenanceStatus = ref("");
@@ -326,7 +323,6 @@ const currentReport = computed(() => {
     ppn: ppn.value,
     project: project.value,
     pph23: pph23.value,
-    project_expense: projectExpense.value,
     subscription: subscription.value,
     maintenance: maintenance.value,
     staff_raport: staffRaport.value,
@@ -393,26 +389,27 @@ const summaryCards = computed(() => {
         { label: "Total DPP", value: formatCurrency(summary.total_dpp) },
         { label: "Total PPN", value: formatCurrency(summary.total_ppn) },
       ];
-    case "project":
+    case "project": {
+      const counts = summary.billing_status_counts || {};
+      const paidPct = summary.total_invoiced ? Math.round((summary.total_paid / summary.total_invoiced) * 100) : null;
       return [
-        { label: "Total Projects", value: summary.total_projects ?? 0 },
-        { label: "Active", value: summary.active_projects ?? 0 },
-        { label: "Completed", value: summary.completed_projects ?? 0 },
-        { label: "Total Budget", value: formatCurrency(summary.total_budget) },
+        { label: "Projects", value: summary.total_projects ?? 0, sub: `${summary.active_projects ?? 0} active · ${summary.completed_projects ?? 0} completed`, subClass: "text-brand-light" },
+        { label: "Total Budget", value: formatCurrency(summary.total_budget), sub: `Not invoiced yet ${formatCurrency(summary.total_not_invoiced)}`, subClass: "text-brand-light" },
+        { label: "Invoiced", value: formatCurrency(summary.total_invoiced), sub: `Paid ${formatCurrency(summary.total_paid)}${paidPct !== null ? ` (${paidPct}%)` : ""}`, subClass: "text-emerald-700" },
+        {
+          label: "Outstanding",
+          value: formatCurrency(summary.total_outstanding),
+          sub: `${counts.settled ?? 0} settled · ${counts.outstanding ?? 0} outstanding${counts.overpaid ? ` · ${counts.overpaid} overpaid` : ""}`,
+          subClass: summary.total_outstanding > 0 ? "text-amber-700" : "text-brand-light",
+        },
       ];
+    }
     case "pph23":
       return [
         { label: "Receipts", value: summary.total_receipts ?? 0 },
         { label: "Total Gross", value: formatCurrency(summary.total_gross) },
         { label: "Total PPh 23 Withheld", value: formatCurrency(summary.total_pph23) },
         { label: "Total Net Received", value: formatCurrency(summary.total_net_received) },
-      ];
-    case "project_expense":
-      return [
-        { label: "Projects with Activity", value: summary.total_projects ?? 0 },
-        { label: "Total Budget", value: formatCurrency(summary.total_budget) },
-        { label: "Total Debit", value: formatCurrency(summary.total_debit) },
-        { label: "Total Credit", value: formatCurrency(summary.total_credit) },
       ];
     case "subscription":
       return [
@@ -454,6 +451,14 @@ const tableRows = computed(() => {
 
   return currentReport.value?.rows || [];
 });
+
+// Project tab: invoiced vs paid per project (see ProjectBillingService).
+const BILLING_STATUS = {
+  settled: { label: "Settled", class: "bg-green-50 text-green-700" },
+  outstanding: { label: "Outstanding", class: "bg-amber-50 text-amber-700" },
+  overpaid: { label: "Overpaid", class: "bg-red-50 text-red-700" },
+  not_invoiced: { label: "Not invoiced", class: "bg-gray-100 text-gray-500" },
+};
 
 const subscriptionStatusClass = {
   active: "bg-green-50 text-green-700",
@@ -520,9 +525,6 @@ const filterParams = computed(() => {
     }
   }
   if (activeTab.value === "project" && projectStatus.value) params.status = projectStatus.value;
-  if (activeTab.value === "project_expense" && projectExpenseProjectId.value) {
-    params.project_id = projectExpenseProjectId.value;
-  }
   if (activeTab.value === "staff_raport") {
     if (staffRaportSearch.value) params.search = staffRaportSearch.value;
     if (staffRaportEmploymentType.value) params.employment_type = staffRaportEmploymentType.value;
@@ -541,7 +543,6 @@ const reportMeta = computed(() => {
   if (activeTab.value === "attendance") return attendance.value.meta;
   if (activeTab.value === "payroll") return payroll.value.meta;
   if (activeTab.value === "project") return project.value.meta;
-  if (activeTab.value === "project_expense") return projectExpense.value.meta;
   if (activeTab.value === "staff_raport") return staffRaport.value.meta;
   if (activeTab.value === "finance" && finance.value?.source === "cash_book" && financeSource.value === "cash_book") return finance.value.meta;
   return null;
@@ -572,9 +573,6 @@ async function loadReport(page = 1) {
       break;
     case "pph23":
       await reportStore.fetchPph23Report(filterParams.value);
-      break;
-    case "project_expense":
-      await reportStore.fetchProjectExpenseReport({ ...filterParams.value, page });
       break;
     case "subscription":
       await reportStore.fetchSubscriptionReport(filterParams.value);
@@ -841,22 +839,6 @@ onMounted(() => {
             />
           </div>
         </div>
-        <div v-if="activeTab === 'project_expense'" class="flex-1">
-          <label class="text-xs text-brand-light font-medium mb-1 block">Project</label>
-          <div class="relative w-full">
-            <select
-              v-model="projectExpenseProjectId"
-              @change="loadReport(1)"
-              class="select-soft"
-            >
-              <option value="">All Projects</option>
-              <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
-            </select>
-            <ChevronDown
-              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-            />
-          </div>
-        </div>
         <div v-if="activeTab === 'staff_raport'" class="flex-1">
           <label class="text-xs text-brand-light font-medium mb-1 block">Name</label>
           <input
@@ -888,10 +870,7 @@ onMounted(() => {
         Attendance rate and task completion (and the resulting score/stars) are calculated for this date range. Click a row to view full details and download a PDF for a different period.
       </p>
       <p v-if="activeTab === 'project'" class="text-xs text-gray-400 -mt-1 mb-2">
-        Filtered by each project's Start Date falling within this range.
-      </p>
-      <p v-if="activeTab === 'project_expense'" class="text-xs text-gray-400 -mt-1 mb-2">
-        Filtered by each cash transaction's date falling within this range -- Budget itself isn't date-scoped.
+        Filtered by each project's Start Date falling within this range. Invoiced and Paid cover all invoices linked to each project (cancelled excluded; paid includes PPh 23 withheld). Click a project for its invoice details.
       </p>
     </div>
 
@@ -912,7 +891,7 @@ onMounted(() => {
         <p class="text-brand-dark text-sm sm:text-xl font-bold truncate">
           {{ card.value }}
         </p>
-        <p v-if="card.sub" class="text-amber-700 text-[11px] mt-0.5 truncate">{{ card.sub }}</p>
+        <p v-if="card.sub" class="text-[11px] mt-0.5 truncate" :class="card.subClass || 'text-amber-700'">{{ card.sub }}</p>
       </div>
     </div>
 
@@ -1025,6 +1004,10 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">End Date</th>
               <th class="py-3 pr-4 font-semibold">Budget</th>
               <th class="py-3 pr-4 font-semibold">Tasks Done</th>
+              <th class="py-3 pr-4 font-semibold text-right">Invoiced</th>
+              <th class="py-3 pr-4 font-semibold text-right">Paid</th>
+              <th class="py-3 pr-4 font-semibold text-right">Outstanding</th>
+              <th class="py-3 pr-4 font-semibold">Billing</th>
             </template>
             <template v-else-if="activeTab === 'pph23'">
               <th class="py-3 pr-4 font-semibold">Date</th>
@@ -1035,13 +1018,6 @@ onMounted(() => {
               <th class="py-3 pr-4 font-semibold">Gross Amount</th>
               <th class="py-3 pr-4 font-semibold">PPh 23 Withheld</th>
               <th class="py-3 pr-4 font-semibold">Net Received</th>
-            </template>
-            <template v-else-if="activeTab === 'project_expense'">
-              <th class="py-3 pr-4 font-semibold">Tanggal</th>
-              <th class="py-3 pr-4 font-semibold">Project Name</th>
-              <th class="py-3 pr-4 font-semibold">Keterangan</th>
-              <th class="py-3 pr-4 font-semibold">Debit</th>
-              <th class="py-3 pr-4 font-semibold">Kredit</th>
             </template>
             <template v-else-if="activeTab === 'subscription'">
               <th class="py-3 pr-4 font-semibold">Name</th>
@@ -1252,20 +1228,35 @@ onMounted(() => {
             <tr
               v-for="(row, index) in tableRows"
               :key="row.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+              @click="router.push({ name: 'admin.projects.detail', params: { id: row.id } })"
+              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
             >
               <td class="py-3 pr-4 text-brand-light">{{ (project.meta.current_page - 1) * project.meta.per_page + index + 1 }}</td>
               <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name }}</td>
               <td class="py-3 pr-4">{{ row.project_leader?.user?.name ?? "N/A" }}</td>
               <td class="py-3 pr-4 capitalize">{{ (row.status || "").replace("_", " ") }}</td>
               <td class="py-3 pr-4 capitalize">{{ row.priority }}</td>
-              <td class="py-3 pr-4">{{ formatDate(row.start_date) }}</td>
-              <td class="py-3 pr-4">{{ row.end_date ? formatDate(row.end_date) : "-" }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.budget) }}</td>
+              <td class="py-3 pr-4 whitespace-nowrap">{{ formatDate(row.start_date) }}</td>
+              <td class="py-3 pr-4 whitespace-nowrap">{{ row.end_date ? formatDate(row.end_date) : "-" }}</td>
+              <td class="py-3 pr-4 whitespace-nowrap">{{ formatCurrency(row.budget) }}</td>
               <td class="py-3 pr-4">{{ row.tasks_done_count }}/{{ row.tasks_total_count }}</td>
+              <td class="py-3 pr-4 text-right whitespace-nowrap">
+                {{ formatCurrency(row.billing?.invoiced_total) }}
+                <p v-if="row.billing?.invoiced_percent !== null && row.billing?.invoiced_percent !== undefined" class="text-[11px] text-gray-400">{{ row.billing.invoiced_percent }}% of value</p>
+              </td>
+              <td class="py-3 pr-4 text-right whitespace-nowrap text-emerald-700">{{ formatCurrency(row.billing?.paid_total) }}</td>
+              <td class="py-3 pr-4 text-right whitespace-nowrap" :class="row.billing?.outstanding > 0 ? 'text-amber-700 font-semibold' : row.billing?.outstanding < 0 ? 'text-red-600 font-semibold' : 'text-gray-400'">
+                {{ row.billing?.outstanding ? formatCurrency(Math.abs(row.billing.outstanding)) : "—" }}
+              </td>
+              <td class="py-3 pr-4 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap" :class="BILLING_STATUS[row.billing?.status]?.class || 'bg-gray-100 text-gray-500'">
+                  {{ BILLING_STATUS[row.billing?.status]?.label ?? "-" }}
+                </span>
+                <AlertTriangle v-if="row.billing?.mismatch_count" class="inline w-3.5 h-3.5 text-amber-600 ml-1" :title="`${row.billing.mismatch_count} invoice(s) marked Paid/Unpaid differently from their receipts`" />
+              </td>
               <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
                 <button
-                  @click="handleDeleteRow(row)"
+                  @click.stop="handleDeleteRow(row)"
                   :disabled="deletingRowId === rowIdField(row)"
                   title="Delete"
                   class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
@@ -1294,30 +1285,6 @@ onMounted(() => {
               <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
                 <button
                   @click.stop="handleDeleteRow(row)"
-                  :disabled="deletingRowId === rowIdField(row)"
-                  title="Delete"
-                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
-                >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-                </button>
-              </td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'project_expense'">
-            <tr
-              v-for="(row, index) in tableRows"
-              :key="row.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ (projectExpense.meta.current_page - 1) * projectExpense.meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4">{{ formatDate(row.transaction_date) }}</td>
-              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.project_name ?? "N/A" }}</td>
-              <td class="py-3 pr-4">{{ row.description }}</td>
-              <td class="py-3 pr-4 text-emerald-600">{{ row.type === "debit" ? formatCurrency(row.amount) : "-" }}</td>
-              <td class="py-3 pr-4 text-red-600">{{ row.type === "credit" ? formatCurrency(row.amount) : "-" }}</td>
-              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
-                <button
-                  @click="handleDeleteRow(row)"
                   :disabled="deletingRowId === rowIdField(row)"
                   title="Delete"
                   class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"

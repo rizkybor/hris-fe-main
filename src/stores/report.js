@@ -15,7 +15,6 @@ export const useReportStore = defineStore("report", {
     subscription: { summary: {}, status_breakdown: [], upcoming_renewals: [], rows: [] },
     maintenance: { month: null, summary: {}, rows: [] },
     documents: null,
-    projectExpense: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     staffRaport: { period: null, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
     staffRaportDetail: null,
     loading: false,
@@ -161,19 +160,6 @@ export const useReportStore = defineStore("report", {
       try {
         const { data } = await axiosInstance.get("/reports/subscription", { params });
         this.subscription = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async fetchProjectExpenseReport(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/project-expense", { params });
-        this.projectExpense = data.data;
       } catch (error) {
         this.error = handleError(error);
       } finally {
