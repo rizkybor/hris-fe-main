@@ -47,7 +47,8 @@ export const useAuthStore = defineStore("auth", {
 
                 const token = response.data.data.token
 
-                Cookies.set('token', token)
+                // Secure on https, and never sent with cross-site requests.
+                Cookies.set('token', token, { secure: window.location.protocol === 'https:', sameSite: 'strict' })
                 this.token = token
 
                 this.success = response.data.message
