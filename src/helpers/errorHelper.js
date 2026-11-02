@@ -3,11 +3,16 @@ export function handleError(error) {
         return error.response.data.errors
     } else if (error.response && error.response.status === 401) {
         return error.response.data.message
+    } else if (error.response && error.response.status === 403) {
+        // e.g. a deactivated account at login, or a missing permission
+        return error.response.data.message
     } else if (error.response && error.response.status === 400) {
         return error.response.data.message
     } else if (error.response && error.response.status === 429) {
         return error.response.data.message
     } else if (error.response && error.response.status === 500) {
+        return error.response.data.message
+    } else if (error.response?.data?.message) {
         return error.response.data.message
     } else {
         console.log(error)
