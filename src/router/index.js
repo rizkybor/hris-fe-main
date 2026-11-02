@@ -23,6 +23,7 @@ import filesCompanyRoutes from './filesCompany';
 import clientsRoutes from './client';
 import subscriptionRoutes from './subscription';
 import maintenanceRoutes from './maintenance';
+import screeningRoutes from './screening';
 import companyAboutRoutes from './companyAbout';
 import companyFinanceRoutes from './companyFinance'
 import companyCashBookRoutes from './companyCashBook'
@@ -84,6 +85,7 @@ const router = createRouter({
         ...clientsRoutes,
         ...subscriptionRoutes,
         ...maintenanceRoutes,
+        ...screeningRoutes,
         ...companyAboutRoutes,
         ...companyFinanceRoutes,
         ...companyCashBookRoutes,
