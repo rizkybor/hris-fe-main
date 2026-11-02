@@ -2,6 +2,7 @@
 import { computed, ref, watch } from "vue";
 import {
   LayoutDashboard,
+  ClipboardCheck,
   UsersIcon,
   UsersRound,
   Contact,
@@ -93,6 +94,7 @@ const showMyWorkspace = computed(() =>
     "task-list",
     "attendance-menu",
     "project-menu",
+    "screening-menu",
     "subscription-menu",
     "maintenance-menu",
     "server-storage-menu",
@@ -470,6 +472,32 @@ watch(
                 'text-white font-semibold': $route.name?.startsWith('admin.staff-tasks'),
               }"
               >Staff Tasks</span
+            >
+          </RouterLink>
+
+          <RouterLink
+            :to="{ name: 'admin.screening.dashboard' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{
+              'nav-link-active': $route.name?.startsWith('admin.screening'),
+            }"
+            v-if="can('screening-menu')"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <ClipboardCheck
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{
+                'text-white': $route.name?.startsWith('admin.screening'),
+              }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{
+                'text-white font-semibold': $route.name?.startsWith('admin.screening'),
+              }"
+              >Client Screening</span
             >
           </RouterLink>
 

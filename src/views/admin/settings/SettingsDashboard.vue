@@ -20,6 +20,7 @@ import {
   CalendarHeart,
   CalendarClock,
   Wallet,
+  ClipboardCheck,
 } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
@@ -107,6 +108,15 @@ const categories = [
         permission: "greeting-menu",
         iconBg: "bg-pink-50",
         iconColor: "text-pink-600",
+      },
+      {
+        to: { name: "admin.settings.client-screening" },
+        icon: ClipboardCheck,
+        title: "Client Screening",
+        description: "Service catalog (synced from the Rate Card) and the client needs questionnaire",
+        permission: "screening-settings",
+        iconBg: "bg-teal-50",
+        iconColor: "text-teal-600",
       },
       {
         to: { name: "admin.settings.attendance" },
