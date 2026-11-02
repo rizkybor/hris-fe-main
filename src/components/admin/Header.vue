@@ -153,6 +153,18 @@ const titles = {
     title: "Edit Client",
     subtitle: "Update client information",
   },
+  "admin.screening.dashboard": {
+    title: "Client Screening",
+    subtitle: "Client needs questionnaires and the services to offer",
+  },
+  "admin.screening.detail": {
+    title: "Screening Detail",
+    subtitle: "Answers, recommended services and the needs summary",
+  },
+  "admin.settings.client-screening": {
+    title: "Client Screening Settings",
+    subtitle: "Service catalog from the Rate Card and the questionnaire",
+  },
   "admin.maintenance.dashboard": {
     title: "Maintenance Lists",
     subtitle: "Monthly maintenance hour quotas per client",
