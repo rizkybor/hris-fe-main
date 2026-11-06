@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { canOneOf } from '@/helpers/permissionHelper'
 import AuthLayout from '@/layouts/Auth.vue'
 import AdminLayout from '@/layouts/Admin.vue'
 const Login = () => import('@/views/auth/Login.vue')
@@ -210,6 +211,14 @@ router.beforeEach(async (to, from, next) => {
       try {
         if (!authStore.user) {
           await authStore.checkAuth()
+        }
+
+        // Routes may declare meta.permission (one name or a list, any of
+        // which is enough); without it, opening the URL directly would show
+        // an empty page while the API answers 403.
+        const required = to.meta.permission
+        if (required && !canOneOf([].concat(required))) {
+          return next({ name: 'admin.dashboard' })
         }
 
         next()
