@@ -21,6 +21,7 @@ import {
   CalendarClock,
   Wallet,
   ClipboardCheck,
+  FileSignature,
 } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
@@ -117,6 +118,13 @@ const categories = [
         permission: "screening-settings",
         iconBg: "bg-teal-50",
         iconColor: "text-teal-600",
+      },
+      {
+        to: { name: "admin.settings.documents" },
+        icon: FileSignature,
+        title: "Document Settings",
+        description: "Show signatory names with or without academic degrees on generated PDFs",
+        permission: "document-setting-edit",
       },
       {
         to: { name: "admin.settings.attendance" },

@@ -7,15 +7,18 @@ export default [
     path: 'client-screening',
     name: 'admin.screening.dashboard',
     component: ScreeningList,
+    meta: { permission: ['screening-menu', 'screening-list'] },
   },
   {
     path: 'client-screening/:id',
     name: 'admin.screening.detail',
     component: ScreeningDetail,
+    meta: { permission: ['screening-menu', 'screening-list'] },
   },
   {
     path: 'settings/client-screening',
     name: 'admin.settings.client-screening',
     component: ScreeningSettings,
+    meta: { permission: 'screening-settings' },
   },
 ];

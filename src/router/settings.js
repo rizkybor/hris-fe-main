@@ -10,6 +10,7 @@ const BackupDatabase = () => import('@/views/admin/settings/BackupDatabase.vue')
 const GreetingSettings = () => import('@/views/admin/settings/GreetingSettings.vue');
 const AttendanceSettings = () => import('@/views/admin/settings/AttendanceSettings.vue');
 const PayrollSettings = () => import('@/views/admin/settings/PayrollSettings.vue');
+const DocumentSettings = () => import('@/views/admin/settings/DocumentSettings.vue');
 export default [
   {
     path: 'settings',
@@ -70,5 +71,11 @@ export default [
     path: 'settings/payroll',
     name: 'admin.settings.payroll',
     component: PayrollSettings,
+  },
+  {
+    path: 'settings/documents',
+    name: 'admin.settings.documents',
+    component: DocumentSettings,
+    meta: { permission: 'document-setting-edit' },
   },
 ];
