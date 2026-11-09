@@ -1,0 +1,160 @@
+<script setup>
+// Searchable select (combobox): a button showing the choice; opening it
+// shows a search box and a filtered, keyboard-navigable list.
+// options: [{ value, label, hint? }].
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { ChevronDown, Search, Check, Loader2 } from "lucide-vue-next";
+
+const props = defineProps({
+  modelValue: { type: [String, Number], default: "" },
+  options: { type: Array, default: () => [] },
+  placeholder: { type: String, default: "Select..." },
+  searchPlaceholder: { type: String, default: "Search..." },
+  disabled: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
+  invalid: { type: Boolean, default: false },
+  id: { type: String, default: undefined },
+  icon: { type: [Object, Function], default: null },
+  emptyText: { type: String, default: "No matches" },
+});
+const emit = defineEmits(["update:modelValue", "change"]);
+
+const root = ref(null);
+const searchInput = ref(null);
+const listEl = ref(null);
+const open = ref(false);
+const query = ref("");
+const active = ref(0);
+
+const selected = computed(() => props.options.find((o) => String(o.value) === String(props.modelValue)) || null);
+
+const normalize = (text) =>
+  String(text || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+
+// Label prefix matches first, then other matches; capped for speed.
+const filtered = computed(() => {
+  const q = normalize(query.value.trim());
+  if (!q) return props.options.slice(0, 500);
+  const starts = [];
+  const contains = [];
+  for (const o of props.options) {
+    const label = normalize(o.label);
+    if (label.startsWith(q)) starts.push(o);
+    else if (label.includes(q) || normalize(o.hint).includes(q)) contains.push(o);
+    if (starts.length + contains.length >= 500) break;
+  }
+  return [...starts, ...contains];
+});
+
+const toggle = async () => {
+  if (props.disabled) return;
+  open.value = !open.value;
+  if (open.value) {
+    query.value = "";
+    active.value = Math.max(0, filtered.value.findIndex((o) => String(o.value) === String(props.modelValue)));
+    await nextTick();
+    searchInput.value?.focus();
+    scrollActive();
+  }
+};
+
+const choose = (option) => {
+  if (!option) return;
+  emit("update:modelValue", option.value);
+  emit("change", option);
+  open.value = false;
+};
+
+const scrollActive = () => {
+  nextTick(() => listEl.value?.querySelector(`[data-index="${active.value}"]`)?.scrollIntoView({ block: "nearest" }));
+};
+
+const onKey = (event) => {
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    active.value = Math.min(filtered.value.length - 1, active.value + 1);
+    scrollActive();
+  } else if (event.key === "ArrowUp") {
+    event.preventDefault();
+    active.value = Math.max(0, active.value - 1);
+    scrollActive();
+  } else if (event.key === "Enter") {
+    event.preventDefault();
+    choose(filtered.value[active.value]);
+  } else if (event.key === "Escape") {
+    open.value = false;
+  }
+};
+
+watch(query, () => (active.value = 0));
+
+const onDocClick = (event) => {
+  if (open.value && root.value && !root.value.contains(event.target)) open.value = false;
+};
+onMounted(() => document.addEventListener("mousedown", onDocClick));
+onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
+</script>
+
+<template>
+  <div ref="root" class="relative">
+    <button
+      :id="id"
+      type="button"
+      @click="toggle"
+      @keydown.down.prevent="!open && toggle()"
+      :disabled="disabled"
+      :aria-expanded="open"
+      aria-haspopup="listbox"
+      class="w-full flex items-center gap-2 pr-3 py-3 border rounded-[12px] bg-white text-left transition-all duration-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+      :class="[icon ? 'pl-12' : 'pl-4', invalid ? 'border-red-500' : 'border-[#DCDEDD]']"
+    >
+      <component v-if="icon" :is="icon" class="absolute left-4 w-5 h-5 text-gray-400" />
+      <span class="flex-1 truncate" :class="selected ? 'font-semibold text-brand-dark' : 'text-gray-400'">
+        {{ selected ? selected.label : placeholder }}
+      </span>
+      <Loader2 v-if="loading" class="w-4 h-4 text-gray-400 animate-spin shrink-0" />
+      <ChevronDown v-else class="w-4 h-4 text-gray-400 shrink-0 transition-transform" :class="{ 'rotate-180': open }" />
+    </button>
+
+    <div
+      v-if="open"
+      class="absolute z-30 mt-1.5 w-full bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg overflow-hidden"
+    >
+      <div class="relative border-b border-[#F1F1F1]">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          ref="searchInput"
+          v-model="query"
+          type="text"
+          :placeholder="searchPlaceholder"
+          class="w-full pl-9 pr-3 py-2.5 text-sm focus:outline-none"
+          @keydown="onKey"
+          role="combobox"
+          aria-autocomplete="list"
+          :aria-expanded="open"
+        />
+      </div>
+      <ul ref="listEl" class="max-h-64 overflow-y-auto py-1" role="listbox">
+        <li v-if="!filtered.length" class="px-3 py-2 text-sm text-brand-light">{{ loading ? "Loading..." : emptyText }}</li>
+        <li
+          v-for="(option, index) in filtered"
+          :key="option.value"
+          :data-index="index"
+          role="option"
+          :aria-selected="String(option.value) === String(modelValue)"
+          @mousedown.prevent="choose(option)"
+          @mouseenter="active = index"
+          class="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer"
+          :class="index === active ? 'bg-violet-50 text-violet-800' : 'text-brand-dark'"
+        >
+          <span class="flex-1 truncate">{{ option.label }}</span>
+          <span v-if="option.hint" class="text-[11px] font-mono text-gray-400">{{ option.hint }}</span>
+          <Check v-if="String(option.value) === String(modelValue)" class="w-4 h-4 text-violet-600 shrink-0" />
+        </li>
+      </ul>
+    </div>
+  </div>
+</template>
