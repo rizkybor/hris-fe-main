@@ -16,6 +16,7 @@ import { storeToRefs } from "pinia";
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, RouterLink } from "vue-router";
 import { join } from "lodash-es";
+import { useLicenseManagerStore } from "@/stores/licenseManager";
 
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
@@ -136,6 +137,10 @@ const titles = {
   "admin.account-password.edit": {
     title: "Edit Credential",
     subtitle: "Update and change the company account password",
+  },
+  "admin.license-manager.overview": {
+    title: "License Manager",
+    subtitle: "License keys for every app, one list per product",
   },
   "admin.clients.dashboard": {
     title: "Our Clients",
@@ -410,8 +415,23 @@ const titles = {
   },
 };
 
+// License pages are per product: the title carries the product name.
+const LICENSE_PAGE_TITLES = {
+  "admin.license-manager.licenses.dashboard": ["Licenses", "Issue and manage license keys"],
+  "admin.license-manager.licenses.create": ["Create License", "Generate a new license key"],
+  "admin.license-manager.licenses.detail": ["License Detail", "Active period, devices and tracking"],
+  "admin.license-manager.licenses.edit": ["Edit License", "Update details, extend or deactivate"],
+};
+const licenseStore = useLicenseManagerStore();
+
 const pageInfo = computed(() => {
   const name = route.name?.toString() || "";
+  const licensePage = LICENSE_PAGE_TITLES[name];
+  if (licensePage) {
+    const code = String(route.params.product || "");
+    const productName = licenseStore.productByCode(code)?.name || code.toUpperCase();
+    return { title: `${productName} · ${licensePage[0]}`, subtitle: licensePage[1] };
+  }
   return titles[name] || titles["admin.dashboard"];
 });
 

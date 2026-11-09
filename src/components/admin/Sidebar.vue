@@ -18,6 +18,7 @@ import {
   FolderClosedIcon,
   FolderKanban,
   KeyRoundIcon,
+  Key as KeyIcon,
   Building2Icon,
   CircleDollarSign,
   FileStack,
@@ -41,7 +42,9 @@ import {
 } from "lucide-vue-next";
 
 import { can, canOneOf } from "@/helpers/permissionHelper";
-import { RouterLink } from "vue-router";
+import { useLicenseManagerStore } from "@/stores/licenseManager";
+import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
+import { RouterLink, useRoute } from "vue-router";
 
 const props = defineProps(["isOpen"]);
 const emit = defineEmits(["navigate"]);
@@ -132,12 +135,28 @@ const showCompany = computed(() =>
   canOneOf(["company-about-menu", "asset-menu", "files-company-menu", "credential-account-list", "announcement-menu"])
 );
 
+// License Manager: Overview, then one entry per active product (loaded
+// from the API). Products are managed on the overview.
+const showLicenseManager = computed(() => can("license-manager-menu"));
+const route = useRoute();
+const licenseStore = useLicenseManagerStore();
+const licenseProducts = computed(() => licenseStore.activeProducts);
+watch(
+  showLicenseManager,
+  (show) => {
+    if (show) licenseStore.fetchProducts().catch(() => {});
+  },
+  { immediate: true }
+);
+const isLicenseProductRoute = (code) =>
+  route.name?.startsWith("admin.license-manager.licenses") && route.params.product === code;
+
 const showInsights = computed(() => canOneOf(["analytics-menu", "history-menu"]));
 
 // Each nav section can be individually collapsed via its title. State is
 // keyed by section id and persisted so a user's preference survives reloads;
 // a section defaults to expanded when its key is absent from storage.
-const SECTION_KEYS = ["overview", "myWorkspace", "people", "company", "finance", "tools", "insights"];
+const SECTION_KEYS = ["overview", "myWorkspace", "people", "company", "licenseManager", "finance", "tools", "insights"];
 
 // First login (nothing in storage yet) shows only General expanded, every
 // other section starts collapsed -- a returning user's own choice (once
@@ -1110,6 +1129,68 @@ watch(
               >Announcements</span
             >
           </RouterLink>
+        </div>
+      </div>
+
+      <!-- License Manager: license keys for the owner's apps, per product -->
+      <div v-if="showLicenseManager">
+        <button
+          type="button"
+          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
+          style="padding: 0 8px 0 12px"
+          @click="toggleSection('licenseManager')"
+        >
+          <span>License Manager</span>
+          <ChevronDown
+            class="w-3 h-3 shrink-0 transition-transform duration-150"
+            :class="{ '-rotate-90': collapsedSections.licenseManager }"
+          />
+        </button>
+        <div v-show="!collapsedSections.licenseManager" class="space-y-0.5">
+          <RouterLink
+            v-if="can('license-manager-menu')"
+            :to="{ name: 'admin.license-manager.overview' }"
+            class="nav-link group relative rounded-[10px] transition-colors duration-150"
+            :class="{ 'nav-link-active': $route.name === 'admin.license-manager.overview' }"
+            @click="onNavigate"
+            @mouseenter="showTooltip"
+            @mouseleave="hideTooltip"
+          >
+            <KeyIcon
+              class="w-[18px] h-[18px] text-white/45 shrink-0"
+              :class="{ 'text-white': $route.name === 'admin.license-manager.overview' }"
+            />
+            <span
+              class="nav-label text-white/70 text-sm font-medium"
+              :class="{ 'text-white font-semibold': $route.name === 'admin.license-manager.overview' }"
+              >Overview</span
+            >
+          </RouterLink>
+
+          <template v-if="can('license-manager-list')">
+            <RouterLink
+              v-for="product in licenseProducts"
+              :key="product.code"
+              :to="{ name: 'admin.license-manager.licenses.dashboard', params: { product: product.code } }"
+              class="nav-link group relative rounded-[10px] transition-colors duration-150"
+              :class="{ 'nav-link-active': isLicenseProductRoute(product.code) }"
+              @click="onNavigate"
+              @mouseenter="showTooltip"
+              @mouseleave="hideTooltip"
+            >
+              <ProductIcon
+                :product="product"
+                :size="20"
+                class="opacity-90"
+                :class="{ 'opacity-100 ring-2 ring-white/40': isLicenseProductRoute(product.code) }"
+              />
+              <span
+                class="nav-label text-white/70 text-sm font-medium"
+                :class="{ 'text-white font-semibold': isLicenseProductRoute(product.code) }"
+                >{{ product.name }}</span
+              >
+            </RouterLink>
+          </template>
         </div>
       </div>
 
