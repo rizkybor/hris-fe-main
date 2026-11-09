@@ -20,6 +20,7 @@ import projectRoutes from './project';
 import attendanceRoutes from './attendance';
 import payrollRoutes from './payroll';
 import accountPasswordRoutes from './accountPassword';
+import licenseManagerRoutes from './licenseManager';
 import filesCompanyRoutes from './filesCompany';
 import clientsRoutes from './client';
 import subscriptionRoutes from './subscription';
@@ -82,6 +83,7 @@ const router = createRouter({
         ...attendanceRoutes,
         ...payrollRoutes,
         ...accountPasswordRoutes,
+        ...licenseManagerRoutes,
         ...filesCompanyRoutes,
         ...clientsRoutes,
         ...subscriptionRoutes,
