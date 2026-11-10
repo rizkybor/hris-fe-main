@@ -31,7 +31,9 @@ import {
   Hash,
   ScrollText,
   ArrowRight,
+  MessageCircle,
 } from "lucide-vue-next";
+import ShareLicenseModal from "@/components/admin/license-manager/ShareLicenseModal.vue";
 import LicensePeriodCard from "@/components/admin/license-manager/LicensePeriodCard.vue";
 import LicenseTrackingTimeline from "@/components/admin/license-manager/LicenseTrackingTimeline.vue";
 import Alert from "@/components/common/Alert.vue";
@@ -157,6 +159,10 @@ const reference = computed(() => {
   const platform = String(l.platform || "mac").toUpperCase();
   return `LIC-${code}-${platform}-${String(l.sequence ?? l.id).padStart(4, "0")}`;
 });
+
+// Share the certificate by email (PDF attached) or WhatsApp (7-day link).
+const shareTab = ref(null);
+const onShared = () => timeline.value?.reload();
 
 const downloading = ref(false);
 const downloadPdf = async () => {
@@ -482,6 +488,22 @@ const isMac = (platform) => /mac/i.test(platform || "");
                 <FileDown class="w-4 h-4" />
                 {{ downloading ? "Preparing PDF..." : "Download License PDF" }}
               </button>
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <button
+                  type="button"
+                  @click="shareTab = 'email'"
+                  class="rounded-[12px] border border-[#DCDEDD] hover:border-[#0C51D9] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold"
+                >
+                  <Mail class="w-4 h-4 text-[#0C51D9]" /> Share by Email
+                </button>
+                <button
+                  type="button"
+                  @click="shareTab = 'whatsapp'"
+                  class="rounded-[12px] border border-[#DCDEDD] hover:border-[#25D366] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold"
+                >
+                  <MessageCircle class="w-4 h-4 text-[#25D366]" /> Share via WhatsApp
+                </button>
+              </div>
             </div>
           </div>
 
@@ -531,6 +553,15 @@ const isMac = (platform) => /mac/i.test(platform || "");
         </aside>
       </div>
     </LicenseProductGate>
+
+    <ShareLicenseModal
+      v-if="shareTab && license"
+      :license="license"
+      :product-name="productName"
+      :initial-tab="shareTab"
+      @shared="onShared"
+      @close="shareTab = null"
+    />
   </div>
 </template>
 
