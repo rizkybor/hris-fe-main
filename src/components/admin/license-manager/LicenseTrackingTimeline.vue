@@ -1,30 +1,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import {
-  Activity,
-  ChevronDown,
-  ChevronRight,
-  Sparkles,
-  PencilLine,
-  Power,
-  PowerOff,
-  CalendarPlus,
-  BadgeCheck,
-  Unplug,
-  Trash2,
-  MonitorCheck,
-  RefreshCw,
-  RotateCcw,
-  LogOut,
-  ShieldX,
-  MonitorX,
-  CircleSlash,
-  CalendarX2,
-  Globe,
-  UserCog,
-  Laptop,
-} from "lucide-vue-next";
+import { Activity, ChevronDown, ChevronRight, Globe, UserCog, Laptop } from "lucide-vue-next";
+import { eventIcon } from "@/components/admin/license-manager/licenseEventIcons";
 import Pagination from "@/components/common/Pagination.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
@@ -51,25 +29,6 @@ const filter = ref("");
 const page = ref(1);
 const perPage = ref(15);
 const expanded = ref({});
-
-const ICONS = {
-  created: Sparkles,
-  updated: PencilLine,
-  activated_by_admin: Power,
-  deactivated_by_admin: PowerOff,
-  extended: CalendarPlus,
-  plan_changed: BadgeCheck,
-  device_released_by_admin: Unplug,
-  deleted: Trash2,
-  device_activated: MonitorCheck,
-  device_reactivated: RotateCcw,
-  refreshed: RefreshCw,
-  device_released: LogOut,
-  denied_device_limit: ShieldX,
-  denied_inactive: CircleSlash,
-  denied_expired: CalendarX2,
-  denied_wrong_platform: MonitorX,
-};
 
 // Filter options grouped as Admin / App / Denied.
 const filterGroups = computed(() => {
@@ -126,6 +85,9 @@ const summaryLine = (event) => {
     if (meta.source === "cli") parts.push("via command line");
     return parts.join(" · ");
   }
+  if (event.event === "app_updated" && (meta.from || meta.to)) {
+    return `${meta.from || "?"} → ${meta.to || "?"}`;
+  }
   if (event.event === "updated" && meta.changes) {
     const fields = Object.keys(meta.changes).map((f) => FIELD_LABELS[f] || f);
     return fields.join(", ");
@@ -177,7 +139,7 @@ const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.va
           aria-hidden="true"
         ></span>
         <div class="w-9 h-9 rounded-full ring-4 flex items-center justify-center shrink-0 z-10" :class="eventToneClass(event)">
-          <component :is="ICONS[event.event] || Activity" class="w-4 h-4" />
+          <component :is="eventIcon(event)" class="w-4 h-4" />
         </div>
 
         <div

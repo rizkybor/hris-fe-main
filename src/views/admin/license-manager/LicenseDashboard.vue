@@ -28,6 +28,7 @@ import {
   Monitor,
   Clock,
   PieChart,
+  History,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import Pagination from "@/components/common/Pagination.vue";
@@ -72,6 +73,7 @@ const canView = computed(() => can("license-manager-view"));
 const canCreate = computed(() => can("license-manager-create"));
 const canEdit = computed(() => can("license-manager-edit"));
 const canDelete = computed(() => can("license-manager-delete"));
+const canSeeVersions = computed(() => can("license-release-menu"));
 
 const serverOptions = ref({ page: 1, per_page: 10 });
 const filters = ref({ search: "", status: "", type: "", plan: "", platform: "", sort: "" });
@@ -330,6 +332,14 @@ const statusBadge = (license) =>
             <RouterLink :to="{ name: 'admin.license-manager.overview' }" :class="[secondaryBtn, 'flex-1 md:flex-none']">
               <LayoutGrid class="w-4 h-4 text-gray-500" />
               Overview
+            </RouterLink>
+            <RouterLink
+              v-if="canSeeVersions"
+              :to="{ name: 'admin.license-manager.versions', params: { product: productCode } }"
+              :class="[secondaryBtn, 'flex-1 md:flex-none']"
+            >
+              <History class="w-4 h-4 text-gray-500" />
+              Versions
             </RouterLink>
             <RouterLink
               v-if="canCreate"

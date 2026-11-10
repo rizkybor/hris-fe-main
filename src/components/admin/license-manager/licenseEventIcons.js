@@ -19,6 +19,7 @@ import {
   MonitorX,
   CircleSlash,
   CalendarX2,
+  CircleArrowUp,
 } from "lucide-vue-next";
 
 export const EVENT_ICONS = {
@@ -34,6 +35,7 @@ export const EVENT_ICONS = {
   device_reactivated: RotateCcw,
   refreshed: RefreshCw,
   device_released: LogOut,
+  app_updated: CircleArrowUp,
   denied_device_limit: ShieldX,
   denied_inactive: CircleSlash,
   denied_expired: CalendarX2,

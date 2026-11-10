@@ -44,6 +44,9 @@ const toApiPayload = (payload) => {
     max_devices: Number(payload.max_devices),
     notes: payload.notes || null,
     is_active: !!payload.is_active,
+    // Only meaningful for Lifetime; blank lets the API use the product's
+    // current major.
+    ...(type === "lifetime" ? { updates_major: blankToNull(payload.updates_major) === null ? null : Number(payload.updates_major) } : {}),
   };
 };
 
@@ -91,6 +94,9 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
     events: [],
     eventsMeta: { current_page: 1, last_page: 1, per_page: 15, total: 0, from: 0, to: 0 },
     eventsLoading: false,
+    releases: [],
+    releasesInfo: { current_major: null, latest_version: null, versions_in_use: [] },
+    releasesLoading: false,
     loading: false,
     error: null,
     success: null,
@@ -99,6 +105,7 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
   getters: {
     // Admin license endpoints are nested under the product code.
     base: (state) => `/license-manager/products/${state.productCode}/licenses`,
+    releasesBase: (state) => `/license-manager/products/${state.productCode}/releases`,
     activeProducts: (state) => state.products.filter((p) => p.is_active),
     productByCode: (state) => (code) => state.products.find((p) => p.code === code) || null,
   },
@@ -114,6 +121,8 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
         this.summary = null;
         this.currentLicense = null;
         this.events = [];
+        this.releases = [];
+        this.releasesInfo = { current_major: null, latest_version: null, versions_in_use: [] };
       }
     },
 
@@ -383,6 +392,101 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
     },
 
     /* =============================
+     * RELEASES (versions of the product's app)
+     * ============================= */
+    async fetchReleases(params = {}) {
+      this.releasesLoading = true;
+      try {
+        const { data } = await axiosInstance.get(this.releasesBase, {
+          params: {
+            status: params.status || undefined,
+            platform: params.platform || undefined,
+            search: params.search || undefined,
+          },
+        });
+        const payload = data.data ?? {};
+        this.releases = payload.releases ?? [];
+        this.releasesInfo = {
+          current_major: payload.current_major ?? null,
+          latest_version: payload.latest_version ?? null,
+          versions_in_use: payload.versions_in_use ?? [],
+        };
+        return payload;
+      } catch (e) {
+        this.error = handleError(e);
+        throw e;
+      } finally {
+        this.releasesLoading = false;
+      }
+    },
+
+    async fetchRelease(id) {
+      const { data } = await axiosInstance.get(`${this.releasesBase}/${id}`);
+      return data.data;
+    },
+
+    // 422s are left to the caller (field errors in the form).
+    async createRelease(payload) {
+      const { data } = await axiosInstance.post(this.releasesBase, payload);
+      this.releases = [data.data, ...this.releases];
+      return data.data;
+    },
+
+    async updateRelease(id, payload) {
+      const { data } = await axiosInstance.put(`${this.releasesBase}/${id}`, payload);
+      this.releases = this.releases.map((r) => (r.id === id ? data.data : r));
+      return data.data;
+    },
+
+    // Installer upload (.dmg / .zip / .pkg, up to 2 GB): multipart, no
+    // timeout, progress reported as 0-100.
+    async uploadReleaseFile(id, file, onProgress = null) {
+      const form = new FormData();
+      form.append("file", file);
+      const { data } = await axiosInstance.post(`${this.releasesBase}/${id}/file`, form, {
+        timeout: 0,
+        onUploadProgress: (event) => {
+          if (onProgress && event.total) onProgress(Math.round((event.loaded / event.total) * 100));
+        },
+      });
+      this.releases = this.releases.map((r) => (r.id === id ? data.data : r));
+      return data.data;
+    },
+
+    async deleteReleaseFile(id) {
+      const { data } = await axiosInstance.delete(`${this.releasesBase}/${id}/file`);
+      const updated = data?.data && typeof data.data === "object" ? data.data : null;
+      this.releases = this.releases.map((r) => (r.id === id ? updated || { ...r, file: null } : r));
+      return updated;
+    },
+
+    // Blob download (keeps the Bearer token), saved under the stored name.
+    async downloadReleaseFile(release) {
+      const response = await axiosInstance.get(`${this.releasesBase}/${release.id}/file`, {
+        responseType: "blob",
+        timeout: 0,
+      });
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = release.file?.name || `${release.version}.dmg`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    },
+
+    async deleteRelease(id) {
+      try {
+        await axiosInstance.delete(`${this.releasesBase}/${id}`);
+        this.releases = this.releases.filter((r) => r.id !== id);
+      } catch (e) {
+        this.error = handleError(e);
+        throw e;
+      }
+    },
+
+    /* =============================
      * INDONESIAN REGIONS: [{code, name}] sorted by name
      * ============================= */
     async fetchRegions(level, parentCode = null) {
@@ -428,6 +532,7 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
       this.currentLicense = null;
       this.summary = null;
       this.events = [];
+      this.releases = [];
       this.error = null;
       this.success = null;
     },

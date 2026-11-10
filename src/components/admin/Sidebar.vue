@@ -137,7 +137,10 @@ const showCompany = computed(() =>
 
 // License Manager: Overview, then one entry per active product (loaded
 // from the API). Products are managed on the overview.
-const showLicenseManager = computed(() => can("license-manager-menu"));
+// Versions (release history) has its own module, license-release-*.
+const showLicenseManager = computed(() => canOneOf(["license-manager-menu", "license-release-menu"]));
+const canListLicenses = computed(() => can("license-manager-list"));
+const canSeeVersions = computed(() => can("license-release-menu"));
 const route = useRoute();
 const licenseStore = useLicenseManagerStore();
 const licenseProducts = computed(() => licenseStore.activeProducts);
@@ -150,6 +153,8 @@ watch(
 );
 const isLicenseProductRoute = (code) =>
   route.name?.startsWith("admin.license-manager.licenses") && route.params.product === code;
+const isLicenseVersionsRoute = (code) =>
+  route.name === "admin.license-manager.versions" && route.params.product === code;
 
 const showInsights = computed(() => canOneOf(["analytics-menu", "history-menu"]));
 
@@ -1167,29 +1172,53 @@ watch(
             >
           </RouterLink>
 
-          <template v-if="can('license-manager-list')">
-            <RouterLink
-              v-for="product in licenseProducts"
-              :key="product.code"
-              :to="{ name: 'admin.license-manager.licenses.dashboard', params: { product: product.code } }"
-              class="nav-link group relative rounded-[10px] transition-colors duration-150"
-              :class="{ 'nav-link-active': isLicenseProductRoute(product.code) }"
-              @click="onNavigate"
-              @mouseenter="showTooltip"
-              @mouseleave="hideTooltip"
-            >
-              <ProductIcon
-                :product="product"
-                :size="20"
-                class="opacity-90"
-                :class="{ 'opacity-100 ring-2 ring-white/40': isLicenseProductRoute(product.code) }"
-              />
-              <span
-                class="nav-label text-white/70 text-sm font-medium"
-                :class="{ 'text-white font-semibold': isLicenseProductRoute(product.code) }"
-                >{{ product.name }}</span
+          <template v-if="canListLicenses || canSeeVersions">
+            <template v-for="product in licenseProducts" :key="product.code">
+              <!-- Without license-manager-list the product opens its Versions page -->
+              <RouterLink
+                :to="{
+                  name: canListLicenses ? 'admin.license-manager.licenses.dashboard' : 'admin.license-manager.versions',
+                  params: { product: product.code },
+                }"
+                class="nav-link group relative rounded-[10px] transition-colors duration-150"
+                :class="{ 'nav-link-active': canListLicenses ? isLicenseProductRoute(product.code) : isLicenseVersionsRoute(product.code) }"
+                @click="onNavigate"
+                @mouseenter="showTooltip"
+                @mouseleave="hideTooltip"
               >
-            </RouterLink>
+                <ProductIcon
+                  :product="product"
+                  :size="20"
+                  class="opacity-90"
+                  :class="{ 'opacity-100 ring-2 ring-white/40': isLicenseProductRoute(product.code) || isLicenseVersionsRoute(product.code) }"
+                />
+                <span
+                  class="nav-label text-white/70 text-sm font-medium"
+                  :class="{ 'text-white font-semibold': isLicenseProductRoute(product.code) || isLicenseVersionsRoute(product.code) }"
+                  >{{ product.name }}</span
+                >
+              </RouterLink>
+              <!-- The product's release history, shown while one of its pages is open -->
+              <RouterLink
+                v-if="canListLicenses && canSeeVersions && (isLicenseProductRoute(product.code) || isLicenseVersionsRoute(product.code))"
+                :to="{ name: 'admin.license-manager.versions', params: { product: product.code } }"
+                class="nav-link group relative rounded-[10px] transition-colors duration-150"
+                :class="[{ 'nav-link-active': isLicenseVersionsRoute(product.code) }, collapsed ? '' : '!pl-9']"
+                @click="onNavigate"
+                @mouseenter="showTooltip"
+                @mouseleave="hideTooltip"
+              >
+                <HistoryIcon
+                  class="w-[18px] h-[18px] text-white/45 shrink-0"
+                  :class="{ 'text-white': isLicenseVersionsRoute(product.code) }"
+                />
+                <span
+                  class="nav-label text-white/70 text-sm font-medium"
+                  :class="{ 'text-white font-semibold': isLicenseVersionsRoute(product.code) }"
+                  >Versions</span
+                >
+              </RouterLink>
+            </template>
           </template>
         </div>
       </div>

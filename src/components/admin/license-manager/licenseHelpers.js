@@ -365,6 +365,9 @@ export const licenseToForm = (license) => {
     duration: hasExpiry ? "custom" : defaultDurationFor(plan),
     expires_at: hasExpiry ? toDateInput(license.expires_at) : "",
     max_devices: license?.max_devices ?? planDefaultMaxDevices(plan),
+    // Lifetime only: the major version the license covers (blank = the
+    // product's current major, filled in by the API).
+    updates_major: license?.updates_major ?? "",
     notes: license?.notes || "",
     is_active: license ? !!license.is_active : true,
   };
@@ -444,6 +447,11 @@ export const validateLicenseForm = (form) => {
     if (form.duration === "custom" && !form.expires_at) errors.expires_at = "Pick an expiry date.";
   }
 
+  if (planType(form.plan) === "lifetime" && !blank(form.updates_major)) {
+    const major = Number(form.updates_major);
+    if (!Number.isInteger(major) || major < 1 || major > 99) errors.updates_major = "Use a whole number from 1 to 99.";
+  }
+
   const max = Number(form.max_devices);
   if (!Number.isInteger(max) || max < 1 || max > 100) errors.max_devices = "Max devices must be between 1 and 100.";
   return errors;
@@ -510,6 +518,7 @@ export const EVENT_TYPES = {
   device_reactivated: { label: "Device re-activated", tone: "teal", group: "App" },
   refreshed: { label: "License refreshed", tone: "sky", group: "App" },
   device_released: { label: "Device released from the app", tone: "amber", group: "App" },
+  app_updated: { label: "App updated", tone: "indigo", group: "App" },
   denied_device_limit: { label: "Denied: device limit reached", tone: "red", group: "Denied" },
   denied_inactive: { label: "Denied: license switched off", tone: "red", group: "Denied" },
   denied_expired: { label: "Denied: license expired", tone: "red", group: "Denied" },
@@ -560,6 +569,7 @@ export const FIELD_LABELS = {
   type: "Type",
   starts_at: "Starts",
   max_devices: "Max devices",
+  updates_major: "Covers major version",
   notes: "Notes",
 };
 
