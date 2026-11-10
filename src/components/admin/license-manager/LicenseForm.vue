@@ -476,6 +476,27 @@ const secondaryBtn =
             </div>
           </div>
 
+          <div v-if="isLifetimePlan" class="mb-5 max-w-xs">
+            <LicenseFormField
+              field="updates_major"
+              label="Covers Major Version"
+              :error="fieldError('updates_major')"
+              hint="Lifetime covers one major version and its updates; raise it after a paid upgrade."
+              v-slot="{ id }"
+            >
+              <input
+                :id="id"
+                v-model.number="form.updates_major"
+                type="number"
+                min="1"
+                max="99"
+                step="1"
+                :placeholder="product?.current_major ? String(product.current_major) : '1'"
+                :class="inputClass('updates_major', false)"
+              />
+            </LicenseFormField>
+          </div>
+
           <div v-else data-field="duration" class="mb-5">
             <p class="block text-brand-dark text-sm font-semibold mb-1.5">Duration <span class="text-red-500">*</span></p>
             <div class="flex flex-wrap items-center gap-3">

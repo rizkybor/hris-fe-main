@@ -439,6 +439,10 @@ const isMac = (platform) => /mac/i.test(platform || "");
                 <dt class="text-brand-light">Type</dt>
                 <dd class="font-semibold text-brand-dark">{{ license.type === "lifetime" ? "Lifetime" : "Term" }}</dd>
               </div>
+              <div v-if="license.updates_label" class="flex items-start justify-between gap-3">
+                <dt class="text-brand-light shrink-0">Updates</dt>
+                <dd class="font-semibold text-brand-dark text-right">{{ license.updates_label }}</dd>
+              </div>
               <div class="flex items-center justify-between gap-3">
                 <dt class="text-brand-light">Max devices</dt>
                 <dd class="font-semibold text-brand-dark tabular-nums">{{ devicesUsed }} / {{ license.max_devices }} used</dd>

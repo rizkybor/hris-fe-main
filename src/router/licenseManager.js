@@ -5,6 +5,7 @@ const LicenseDashboard = () => import("@/views/admin/license-manager/LicenseDash
 const LicenseCreate = () => import("@/views/admin/license-manager/LicenseCreate.vue");
 const LicenseDetail = () => import("@/views/admin/license-manager/LicenseDetail.vue");
 const LicenseEdit = () => import("@/views/admin/license-manager/LicenseEdit.vue");
+const LicenseVersions = () => import("@/views/admin/license-manager/LicenseVersions.vue");
 
 // Lowercase letters, digits and single hyphens.
 const PRODUCT = ":product([a-z0-9-]+)"; // vue-router param regexes can't contain groups; the API validates codes
@@ -44,5 +45,12 @@ export default [
     name: "admin.license-manager.licenses.edit",
     component: LicenseEdit,
     meta: { permission: "license-manager-edit" },
+  },
+  // Release history of the product's app (changelog + versions in use).
+  {
+    path: `license-manager/${PRODUCT}/versions`,
+    name: "admin.license-manager.versions",
+    component: LicenseVersions,
+    meta: { permission: "license-release-menu" },
   },
 ];

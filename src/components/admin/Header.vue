@@ -421,6 +421,7 @@ const LICENSE_PAGE_TITLES = {
   "admin.license-manager.licenses.create": ["Create License", "Generate a new license key"],
   "admin.license-manager.licenses.detail": ["License Detail", "Active period, devices and tracking"],
   "admin.license-manager.licenses.edit": ["Edit License", "Update details, extend or deactivate"],
+  "admin.license-manager.versions": ["Versions", "Release history, installers and versions in use"],
 };
 const licenseStore = useLicenseManagerStore();
 
