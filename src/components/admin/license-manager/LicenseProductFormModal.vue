@@ -273,7 +273,7 @@ const inputClass = (field) => [
               label="Key Prefix"
               required
               :error="fieldError('key_prefix')"
-              :hint="`New keys look like ${keyPreview(form.key_prefix || 'XX', 'trial', product?.next_sequence || 1)} (01 Trial · 02 Professional · 03 Lifetime · 04 Organization)`"
+              :hint="`New keys look like ${keyPreview(form.key_prefix || 'XX', 'professional', product?.next_sequences?.mac || 1)} (Mac 31 Trial · 32 Professional · 33 Lifetime · 34 Organization; iPad 52 · 53 · 54)`"
               v-slot="{ id }"
             >
               <input :id="id" v-model.trim="form.key_prefix" type="text" maxlength="6" placeholder="OC" :class="[inputClass('key_prefix'), 'font-mono uppercase']" />

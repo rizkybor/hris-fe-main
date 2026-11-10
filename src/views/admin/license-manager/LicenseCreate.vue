@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ArrowLeft, CheckCircle2, Eye, Plus, FileDown } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
@@ -46,7 +46,8 @@ const submit = async () => {
   try {
     created.value = await store.createLicense(form.value);
     // Start the License PDF download right away (a failure is shown, the
-    // button below stays available).
+    // button below stays available). A Mac + iPad bundle has one PDF with
+    // both keys.
     if (can("license-manager-view")) downloadPdf();
   } catch (err) {
     errors.value = validationErrors(err);
@@ -56,6 +57,16 @@ const submit = async () => {
   }
 };
 
+// The created license plus, for "Mac + iPad", the other key of the bundle.
+const createdKeys = computed(() =>
+  created.value
+    ? [
+        { id: created.value.id, key: created.value.key, platform: created.value.platform, platform_label: created.value.platform_label },
+        ...(created.value.bundle || []),
+      ]
+    : []
+);
+
 const downloading = ref(false);
 const downloadError = ref("");
 const downloadPdf = async () => {
@@ -63,7 +74,8 @@ const downloadPdf = async () => {
   downloading.value = true;
   downloadError.value = "";
   try {
-    await store.downloadCertificate(created.value.id, `${productName.value}-License-${created.value.key}.pdf`);
+    const keys = createdKeys.value.map((license) => license.key).join("_");
+    await store.downloadCertificate(created.value.id, `${productName.value}-License-${keys}.pdf`);
   } catch (err) {
     downloadError.value = errorMessage(err, "The license PDF could not be downloaded.");
   } finally {
@@ -114,21 +126,30 @@ const createAnother = () => {
               </span>
             </div>
 
-            <p class="text-violet-200 text-xs font-semibold uppercase tracking-wider mb-3">License Key</p>
-            <div class="flex items-center gap-3 bg-white rounded-[16px] pl-5 pr-3 py-4 shadow-lg max-w-full">
-              <span class="font-mono text-xl sm:text-3xl lg:text-4xl font-bold tracking-wider text-brand-dark break-all select-all">
-                {{ created.key }}
-              </span>
-              <CopyKeyButton :value="created.key" size="md" />
+            <div v-for="license in createdKeys" :key="license.id" class="flex flex-col items-center max-w-full mb-5 last:mb-0">
+              <p class="text-violet-200 text-xs font-semibold uppercase tracking-wider mb-3">
+                {{ createdKeys.length > 1 ? `${license.platform_label} License Key` : "License Key" }}
+              </p>
+              <div class="flex items-center gap-3 bg-white rounded-[16px] pl-5 pr-3 py-4 shadow-lg max-w-full">
+                <span class="font-mono text-xl sm:text-3xl lg:text-4xl font-bold tracking-wider text-brand-dark break-all select-all">
+                  {{ license.key }}
+                </span>
+                <CopyKeyButton :value="license.key" size="md" />
+              </div>
             </div>
 
             <p class="text-violet-200/80 text-sm mt-5 max-w-xl">
-              Send this key to the licensee to activate {{ productName }} {{ planLabel(created) }}.
+              <template v-if="createdKeys.length > 1">
+                Send both keys to the licensee: the Mac key activates {{ productName }} {{ planLabel(created) }} on a Mac, the iPad key on an iPad.
+              </template>
+              <template v-else>
+                Send this key to the licensee to activate {{ productName }} {{ planLabel(created) }} on {{ created.platform_label || "Mac" }}.
+              </template>
               <template v-if="created.type === 'term' && created.expires_at">
                 Valid until {{ formatDate(created.expires_at) }}.
               </template>
               <template v-else>Lifetime license, never expires.</template>
-              Up to {{ created.max_devices }} device(s).
+              Up to {{ created.max_devices }} device(s){{ createdKeys.length > 1 ? " per key" : "" }}.
             </p>
 
             <button
@@ -139,7 +160,7 @@ const createAnother = () => {
               class="mt-8 w-full sm:w-auto rounded-[14px] bg-[#F2821F] hover:brightness-110 transition-all px-8 py-4 flex items-center justify-center gap-2.5 text-white text-base font-bold shadow-lg disabled:opacity-60"
             >
               <FileDown class="w-5 h-5" />
-              {{ downloading ? "Preparing PDF..." : "Download License PDF" }}
+              {{ downloading ? "Preparing PDF..." : createdKeys.length > 1 ? "Download License PDF (Mac + iPad)" : "Download License PDF" }}
             </button>
             <p v-if="downloadError" class="text-red-300 text-xs mt-2">{{ downloadError }}</p>
 
