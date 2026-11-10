@@ -488,20 +488,23 @@ const isMac = (platform) => /mac/i.test(platform || "");
                 <FileDown class="w-4 h-4" />
                 {{ downloading ? "Preparing PDF..." : "Download License PDF" }}
               </button>
-              <div class="grid grid-cols-2 gap-2 mt-2">
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light mt-3 mb-1.5">Share certificate</p>
+              <div class="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   @click="shareTab = 'email'"
-                  class="rounded-[12px] border border-[#DCDEDD] hover:border-[#0C51D9] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold"
+                  class="rounded-[12px] border border-[#DCDEDD] hover:border-[#0C51D9] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold whitespace-nowrap"
+                  title="Share the certificate by email"
                 >
-                  <Mail class="w-4 h-4 text-[#0C51D9]" /> Share by Email
+                  <Mail class="w-4 h-4 text-[#0C51D9]" /> Email
                 </button>
                 <button
                   type="button"
                   @click="shareTab = 'whatsapp'"
-                  class="rounded-[12px] border border-[#DCDEDD] hover:border-[#25D366] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold"
+                  class="rounded-[12px] border border-[#DCDEDD] hover:border-[#25D366] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold whitespace-nowrap"
+                  title="Share the certificate via WhatsApp"
                 >
-                  <MessageCircle class="w-4 h-4 text-[#25D366]" /> Share via WhatsApp
+                  <MessageCircle class="w-4 h-4 text-[#25D366]" /> WhatsApp
                 </button>
               </div>
             </div>
