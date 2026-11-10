@@ -534,16 +534,16 @@ const statusBadge = (license) =>
               <!-- Fixed layout: the columns have set widths and the licensee
                    column takes the rest (truncated), so the table fits the
                    content width from xl (no horizontal scroll at >= 1280px). -->
-              <table class="w-full min-w-[940px] table-fixed text-sm">
+              <table class="w-full min-w-[980px] table-fixed text-sm">
                 <thead>
                   <tr class="text-left">
                     <th :class="th">Licensee</th>
-                    <th :class="[th, 'w-[96px]']">Plan</th>
+                    <th :class="[th, 'w-[104px]']">Plan</th>
                     <th :class="[th, 'w-[212px]']">License key</th>
                     <th :class="[th, 'w-[152px]']">Active period</th>
                     <th :class="[th, 'w-[108px]']">Remaining</th>
                     <th :class="[th, 'w-[76px]']">Devices</th>
-                    <th :class="[th, 'w-[72px]']">Status</th>
+                    <th :class="[th, 'w-[104px]']">Status</th>
                     <th :class="[th, 'hidden 2xl:table-cell w-[112px]']">Last activity</th>
                     <th :class="[th, 'text-right w-[100px]']"><span class="sr-only">Actions</span></th>
                   </tr>
@@ -594,11 +594,12 @@ const statusBadge = (license) =>
 
                     <!-- Plan -->
                     <td class="py-3.5 px-3">
-                      <div class="flex items-center gap-1">
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap" :class="platformChipClass(license.platform)">
+                      <!-- Platform over plan: both fit the narrow column -->
+                      <div class="flex flex-col items-start gap-1">
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" :class="platformChipClass(license.platform)">
                           {{ licensePlatformLabel(license) }}
                         </span>
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap" :class="planChipClass(license.plan)">
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" :class="planChipClass(license.plan)">
                           {{ planLabel(license) }}
                         </span>
                       </div>

@@ -20,6 +20,10 @@ import {
   CircleSlash,
   CalendarX2,
   CircleArrowUp,
+  FileDown,
+  Mail,
+  MessageCircle,
+  ExternalLink,
 } from "lucide-vue-next";
 
 export const EVENT_ICONS = {
@@ -31,6 +35,10 @@ export const EVENT_ICONS = {
   plan_changed: BadgeCheck,
   device_released_by_admin: Unplug,
   deleted: Trash2,
+  certificate_downloaded: FileDown,
+  certificate_emailed: Mail,
+  certificate_shared_whatsapp: MessageCircle,
+  certificate_link_opened: ExternalLink,
   device_activated: MonitorCheck,
   device_reactivated: RotateCcw,
   refreshed: RefreshCw,

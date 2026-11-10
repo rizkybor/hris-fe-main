@@ -31,7 +31,9 @@ import {
   Hash,
   ScrollText,
   ArrowRight,
+  MessageCircle,
 } from "lucide-vue-next";
+import ShareLicenseModal from "@/components/admin/license-manager/ShareLicenseModal.vue";
 import LicensePeriodCard from "@/components/admin/license-manager/LicensePeriodCard.vue";
 import LicenseTrackingTimeline from "@/components/admin/license-manager/LicenseTrackingTimeline.vue";
 import Alert from "@/components/common/Alert.vue";
@@ -156,6 +158,25 @@ const reference = computed(() => {
   const code = String(l.product?.code || productCode.value || "").toUpperCase();
   const platform = String(l.platform || "mac").toUpperCase();
   return `LIC-${code}-${platform}-${String(l.sequence ?? l.id).padStart(4, "0")}`;
+});
+
+// Share the certificate by email (PDF attached) or WhatsApp (7-day link).
+const shareTab = ref(null);
+const onShared = () => timeline.value?.reload();
+
+// Key card: status as a dot + word, the rest as one neutral line.
+const keyStatus = computed(() => {
+  if (expired.value) return { label: "Expired", dot: "bg-red-500", text: "text-red-600" };
+  return license.value?.is_active
+    ? { label: "Active", dot: "bg-emerald-500", text: "text-emerald-700" }
+    : { label: "Inactive", dot: "bg-gray-400", text: "text-gray-500" };
+});
+const keyMeta = computed(() => {
+  const l = license.value;
+  if (!l) return "";
+  const parts = [l.product?.name || productName.value, licensePlatformLabel(l), planLabel(l)];
+  if (categoryLabel(l) !== planLabel(l)) parts.push(categoryLabel(l));
+  return parts.filter(Boolean).join(" · ");
 });
 
 const downloading = ref(false);
@@ -334,38 +355,22 @@ const isMac = (platform) => /mac/i.test(platform || "");
       <div v-else-if="license" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         <!-- ===================== Left: 8 columns ===================== -->
         <div class="lg:col-span-8 space-y-5 min-w-0">
-          <!-- Key hero -->
-          <div class="bg-gradient-to-br from-[#1e1147] via-[#150c33] to-[#0f0a24] rounded-[16px] p-6 relative overflow-hidden">
-            <div class="absolute -top-10 -right-10 w-40 h-40 bg-violet-500/20 rounded-full blur-2xl"></div>
-            <div class="relative z-10">
-              <div class="flex flex-wrap items-center gap-2 mb-3">
-                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/15 text-white">{{ license.product?.name || productName }}</span>
-                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/15 text-white">{{ licensePlatformLabel(license) }}</span>
-                <span class="text-xs font-semibold px-2.5 py-1 rounded-full" :class="planChipClass(license.plan, true)">
-                  {{ planLabel(license) }}<template v-if="categoryLabel(license) !== planLabel(license)"> &middot; {{ categoryLabel(license) }}</template>
-                </span>
-                <span
-                  class="text-xs font-semibold px-2.5 py-1 rounded-full"
-                  :class="license.type === 'lifetime' ? 'bg-violet-500/20 text-violet-200' : 'bg-blue-500/20 text-blue-200'"
-                >
-                  {{ license.type === "lifetime" ? "Lifetime" : "Term" }}
-                </span>
-                <span v-if="expired" class="text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/20 text-red-300">Expired</span>
-                <span
-                  v-else
-                  class="text-xs font-semibold px-2.5 py-1 rounded-full"
-                  :class="license.is_active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-white/60'"
-                >
-                  {{ license.is_active ? "Active" : "Inactive" }}
-                </span>
-              </div>
-              <div class="flex items-center gap-3 bg-white rounded-[12px] px-4 py-3">
-                <span class="font-mono text-lg sm:text-2xl font-bold tracking-wider text-brand-dark break-all flex-1 select-all">
-                  {{ license.key }}
-                </span>
-                <CopyKeyButton :value="license.key" size="md" />
-              </div>
+          <!-- Key: a plain card -- label + status, the key, one quiet meta line -->
+          <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-3 mb-2.5">
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light">License key</p>
+              <span class="inline-flex items-center gap-1.5 text-xs font-semibold" :class="keyStatus.text">
+                <span class="w-1.5 h-1.5 rounded-full" :class="keyStatus.dot"></span>
+                {{ keyStatus.label }}
+              </span>
             </div>
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-lg sm:text-2xl font-bold tracking-wider text-brand-dark break-all flex-1 select-all">
+                {{ license.key }}
+              </span>
+              <CopyKeyButton :value="license.key" size="md" />
+            </div>
+            <p class="text-xs text-brand-light mt-3">{{ keyMeta }}</p>
           </div>
 
           <!-- Active period -->
@@ -482,6 +487,25 @@ const isMac = (platform) => /mac/i.test(platform || "");
                 <FileDown class="w-4 h-4" />
                 {{ downloading ? "Preparing PDF..." : "Download License PDF" }}
               </button>
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light mt-3 mb-1.5">Share certificate</p>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  @click="shareTab = 'email'"
+                  class="rounded-[12px] border border-[#DCDEDD] hover:border-[#0C51D9] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold whitespace-nowrap"
+                  title="Share the certificate by email"
+                >
+                  <Mail class="w-4 h-4 text-[#0C51D9]" /> Email
+                </button>
+                <button
+                  type="button"
+                  @click="shareTab = 'whatsapp'"
+                  class="rounded-[12px] border border-[#DCDEDD] hover:border-[#25D366] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold whitespace-nowrap"
+                  title="Share the certificate via WhatsApp"
+                >
+                  <MessageCircle class="w-4 h-4 text-[#25D366]" /> WhatsApp
+                </button>
+              </div>
             </div>
           </div>
 
@@ -531,6 +555,15 @@ const isMac = (platform) => /mac/i.test(platform || "");
         </aside>
       </div>
     </LicenseProductGate>
+
+    <ShareLicenseModal
+      v-if="shareTab && license"
+      :license="license"
+      :product-name="productName"
+      :initial-tab="shareTab"
+      @shared="onShared"
+      @close="shareTab = null"
+    />
   </div>
 </template>
 
