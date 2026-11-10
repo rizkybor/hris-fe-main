@@ -16,6 +16,7 @@ import {
   RotateCcw,
   LogOut,
   ShieldX,
+  MonitorX,
   CircleSlash,
   CalendarX2,
 } from "lucide-vue-next";
@@ -36,6 +37,7 @@ export const EVENT_ICONS = {
   denied_device_limit: ShieldX,
   denied_inactive: CircleSlash,
   denied_expired: CalendarX2,
+  denied_wrong_platform: MonitorX,
 };
 
 export const eventIcon = (event) => EVENT_ICONS[event?.event] || Activity;

@@ -18,6 +18,7 @@ import {
   RotateCcw,
   LogOut,
   ShieldX,
+  MonitorX,
   CircleSlash,
   CalendarX2,
   Globe,
@@ -67,6 +68,7 @@ const ICONS = {
   denied_device_limit: ShieldX,
   denied_inactive: CircleSlash,
   denied_expired: CalendarX2,
+  denied_wrong_platform: MonitorX,
 };
 
 // Filter options grouped as Admin / App / Denied.
