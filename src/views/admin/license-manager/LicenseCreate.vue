@@ -45,9 +45,10 @@ const submit = async () => {
   loading.value = true;
   try {
     created.value = await store.createLicense(form.value);
-    // Start the License PDF download(s) right away (a failure is shown, the
-    // buttons below stay available). "Mac + iPad" makes two keys.
-    if (can("license-manager-view")) createdKeys.value.forEach((license) => downloadPdf(license));
+    // Start the License PDF download right away (a failure is shown, the
+    // button below stays available). A Mac + iPad bundle has one PDF with
+    // both keys.
+    if (can("license-manager-view")) downloadPdf();
   } catch (err) {
     errors.value = validationErrors(err);
     error.value = errorMessage(err, "Failed to create license.");
@@ -66,18 +67,19 @@ const createdKeys = computed(() =>
     : []
 );
 
-const downloading = ref(null);
+const downloading = ref(false);
 const downloadError = ref("");
-const downloadPdf = async (license) => {
-  if (!license) return;
-  downloading.value = license.id;
+const downloadPdf = async () => {
+  if (!created.value) return;
+  downloading.value = true;
   downloadError.value = "";
   try {
-    await store.downloadCertificate(license.id, `${productName.value}-License-${license.key}.pdf`);
+    const keys = createdKeys.value.map((license) => license.key).join("_");
+    await store.downloadCertificate(created.value.id, `${productName.value}-License-${keys}.pdf`);
   } catch (err) {
     downloadError.value = errorMessage(err, "The license PDF could not be downloaded.");
   } finally {
-    downloading.value = null;
+    downloading.value = false;
   }
 };
 
@@ -150,25 +152,16 @@ const createAnother = () => {
               Up to {{ created.max_devices }} device(s){{ createdKeys.length > 1 ? " per key" : "" }}.
             </p>
 
-            <div v-if="can('license-manager-view')" class="mt-8 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <button
-                v-for="license in createdKeys"
-                :key="license.id"
-                type="button"
-                @click="downloadPdf(license)"
-                :disabled="downloading === license.id"
-                class="w-full sm:w-auto rounded-[14px] bg-[#F2821F] hover:brightness-110 transition-all px-8 py-4 flex items-center justify-center gap-2.5 text-white text-base font-bold shadow-lg disabled:opacity-60"
-              >
-                <FileDown class="w-5 h-5" />
-                {{
-                  downloading === license.id
-                    ? "Preparing PDF..."
-                    : createdKeys.length > 1
-                      ? `Download ${license.platform_label} PDF`
-                      : "Download License PDF"
-                }}
-              </button>
-            </div>
+            <button
+              v-if="can('license-manager-view')"
+              type="button"
+              @click="downloadPdf"
+              :disabled="downloading"
+              class="mt-8 w-full sm:w-auto rounded-[14px] bg-[#F2821F] hover:brightness-110 transition-all px-8 py-4 flex items-center justify-center gap-2.5 text-white text-base font-bold shadow-lg disabled:opacity-60"
+            >
+              <FileDown class="w-5 h-5" />
+              {{ downloading ? "Preparing PDF..." : createdKeys.length > 1 ? "Download License PDF (Mac + iPad)" : "Download License PDF" }}
+            </button>
             <p v-if="downloadError" class="text-red-300 text-xs mt-2">{{ downloadError }}</p>
 
             <div class="flex flex-col sm:flex-row gap-3 mt-5 w-full sm:w-auto">

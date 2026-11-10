@@ -163,7 +163,12 @@ const downloadPdf = async () => {
   downloading.value = true;
   error.value = "";
   try {
-    await store.downloadCertificate(license.value.id, `${productName.value}-License-${license.value.key}.pdf`);
+    // A Mac + iPad bundle shares one PDF with both keys (Mac first).
+    const keys = [license.value, ...(license.value.bundle || [])]
+      .sort((a, b) => (a.platform === "mac" ? -1 : b.platform === "mac" ? 1 : 0))
+      .map((l) => l.key)
+      .join("_");
+    await store.downloadCertificate(license.value.id, `${productName.value}-License-${keys}.pdf`);
     timeline.value?.reload();
   } catch (err) {
     error.value = errorMessage(err, "Failed to download the license PDF.");
