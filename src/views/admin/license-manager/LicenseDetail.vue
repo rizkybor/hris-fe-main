@@ -411,6 +411,18 @@ const isMac = (platform) => /mac/i.test(platform || "");
                   <span class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="platformChipClass(license.platform)">{{ licensePlatformLabel(license) }}</span>
                 </dd>
               </div>
+              <!-- Mac + iPad generated together: the other key of the bundle -->
+              <div v-for="sibling in license.bundle || []" :key="sibling.id" class="flex items-start justify-between gap-3">
+                <dt class="text-brand-light shrink-0">Paired {{ sibling.platform_label }} key</dt>
+                <dd class="text-right min-w-0">
+                  <router-link
+                    :to="{ name: 'admin.license-manager.licenses.detail', params: { product: productCode, id: sibling.id } }"
+                    class="font-mono text-xs font-semibold text-violet-700 hover:underline break-all"
+                  >
+                    {{ sibling.key }}
+                  </router-link>
+                </dd>
+              </div>
               <div class="flex items-center justify-between gap-3">
                 <dt class="text-brand-light">Plan</dt>
                 <dd class="flex items-center gap-1.5">

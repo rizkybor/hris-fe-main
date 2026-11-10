@@ -55,7 +55,18 @@ export const PLATFORM_OPTIONS = [
   { value: "ipad", label: "iPad", note: "iPadOS · no Trial", plans: ["professional", "lifetime", "organization"] },
 ];
 
-const platformOption = (value) => PLATFORM_OPTIONS.find((p) => p.value === value);
+// Create-only choice: a Mac and an iPad key generated together (one
+// bundle, same licensee / plan / period). Not for Trial.
+export const PLATFORM_BOTH = "both";
+export const PLATFORM_CHOICES = [
+  ...PLATFORM_OPTIONS,
+  { value: PLATFORM_BOTH, label: "Mac + iPad", note: "Two keys at once · no Trial", plans: ["professional", "lifetime", "organization"] },
+];
+
+const platformOption = (value) => PLATFORM_CHOICES.find((p) => p.value === value);
+
+// The platforms a choice stands for ("both" = Mac and iPad).
+export const platformsOf = (choice) => (choice === PLATFORM_BOTH ? ["mac", "ipad"] : [normalizePlatform(choice)]);
 
 export const normalizePlatform = (platform) => (platformOption(platform) ? platform : "mac");
 
@@ -74,6 +85,7 @@ export const planGroupsFor = (platform) =>
 export const PLATFORM_CHIP = {
   mac: "bg-slate-100 text-slate-700",
   ipad: "bg-sky-50 text-sky-700",
+  both: "bg-indigo-50 text-indigo-700",
 };
 
 export const platformChipClass = (platform) => PLATFORM_CHIP[normalizePlatform(platform)];
@@ -399,7 +411,7 @@ export const validateLicenseForm = (form) => {
   const category = categoryOfPlan(form.plan);
   const blank = (v) => v === null || v === undefined || String(v).trim() === "";
 
-  if (!PLATFORM_OPTIONS.some((p) => p.value === form.platform)) errors.platform = "Choose Mac or iPad.";
+  if (!PLATFORM_CHOICES.some((p) => p.value === form.platform)) errors.platform = "Choose Mac, iPad, or Mac + iPad.";
   if (!PLAN_OPTIONS.some((p) => p.value === form.plan)) errors.plan = "Choose a plan.";
   else if (!errors.platform && !planAllowedOn(form.platform, form.plan))
     errors.plan = `The ${planOption(form.plan).label} plan is not available for ${platformOption(form.platform).label} licenses.`;

@@ -35,6 +35,7 @@ import {
   Laptop,
   Tablet,
   Lock,
+  Layers,
 } from "lucide-vue-next";
 import LicenseStatusSwitch from "@/components/admin/license-manager/LicenseStatusSwitch.vue";
 import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
@@ -44,6 +45,8 @@ import LicenseLocationFields from "@/components/admin/license-manager/LicenseLoc
 import {
   PLAN_OPTIONS,
   PLATFORM_OPTIONS,
+  PLATFORM_CHOICES,
+  platformsOf,
   planGroupsFor,
   planAllowedOn,
   platformChipClass,
@@ -96,7 +99,10 @@ const isLifetimePlan = computed(() => planType(form.value.plan) === "lifetime");
 // iPad has no Trial, so its picker shows one card less.
 const planGroups = computed(() => planGroupsFor(form.value.platform));
 const individualCount = computed(() => planGroups.value.find((g) => g.label === "Individual")?.plans.length || 0);
-const platformInfo = computed(() => PLATFORM_OPTIONS.find((p) => p.value === form.value.platform) || null);
+// Create offers Mac, iPad, or both at once; edit shows the fixed platform.
+const platformChoices = computed(() => (props.isEdit ? PLATFORM_OPTIONS : PLATFORM_CHOICES));
+const platformInfo = computed(() => PLATFORM_CHOICES.find((p) => p.value === form.value.platform) || null);
+const platformIcon = (value) => (value === "ipad" ? Tablet : value === "both" ? Layers : Laptop);
 const durations = computed(() => durationOptionsFor(form.value.plan));
 const required = (field) => isRequiredField(category.value, field, form.value.country);
 const fullAddress = computed(() => formatAddress(form.value));
@@ -182,9 +188,13 @@ watch(
 
 const planInfo = computed(() => PLAN_OPTIONS.find((p) => p.value === form.value.plan) || null);
 const period = computed(() => periodPreview(form.value));
-const keyPreview = computed(() =>
-  props.licenseKey ||
-    buildKeyPreview(props.product?.key_prefix, form.value.plan, props.product?.next_sequences?.[form.value.platform], form.value.platform)
+// One preview per key: "Mac + iPad" generates two.
+const keyPreviews = computed(() =>
+  props.licenseKey
+    ? [props.licenseKey]
+    : platformsOf(form.value.platform).map((platform) =>
+        buildKeyPreview(props.product?.key_prefix, form.value.plan, props.product?.next_sequences?.[platform], platform)
+      )
 );
 
 // Required-fields checklist, using the same client rules as the submit.
@@ -278,9 +288,9 @@ const secondaryBtn =
           <!-- Platform: Mac or iPad, fixed after create -->
           <div data-field="platform" class="mb-4">
             <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light mb-2">Platform</p>
-            <div class="grid grid-cols-2 gap-3 sm:max-w-md">
+            <div class="grid gap-3" :class="isEdit ? 'grid-cols-2 sm:max-w-md' : 'grid-cols-1 sm:grid-cols-3'">
               <button
-                v-for="option in PLATFORM_OPTIONS"
+                v-for="option in platformChoices"
                 :key="option.value"
                 type="button"
                 :disabled="isEdit && form.platform !== option.value"
@@ -289,7 +299,7 @@ const secondaryBtn =
                 :class="form.platform === option.value ? 'border-violet-500 ring-2 ring-violet-500/20 bg-violet-50/40' : 'border-[#DCDEDD] hover:border-violet-300'"
                 :aria-pressed="form.platform === option.value"
               >
-                <component :is="option.value === 'ipad' ? Tablet : Laptop" class="w-[18px] h-[18px] text-violet-600 shrink-0" />
+                <component :is="platformIcon(option.value)" class="w-[18px] h-[18px] text-violet-600 shrink-0" />
                 <span class="flex-1 min-w-0">
                   <span class="block text-sm font-bold text-brand-dark">{{ option.label }}</span>
                   <span class="block text-xs text-brand-light">{{ option.note }}</span>
@@ -671,9 +681,17 @@ const secondaryBtn =
               <dd class="font-semibold text-brand-dark">{{ display(form.max_devices) }}</dd>
             </div>
             <div class="pt-3.5 border-t border-[#F1F1F1]">
-              <dt class="flex items-center gap-1.5 text-brand-light mb-1.5"><KeyRound class="w-4 h-4" /> {{ licenseKey ? "Key" : "Key preview" }}</dt>
-              <dd class="font-mono text-xs font-bold tracking-wider text-brand-dark bg-slate-50 border border-dashed border-[#DCDEDD] rounded-[10px] px-3 py-2 break-all">
-                {{ keyPreview }}
+              <dt class="flex items-center gap-1.5 text-brand-light mb-1.5">
+                <KeyRound class="w-4 h-4" /> {{ licenseKey ? "Key" : keyPreviews.length > 1 ? "Key previews (2 keys)" : "Key preview" }}
+              </dt>
+              <dd class="space-y-1.5">
+                <p
+                  v-for="preview in keyPreviews"
+                  :key="preview"
+                  class="font-mono text-xs font-bold tracking-wider text-brand-dark bg-slate-50 border border-dashed border-[#DCDEDD] rounded-[10px] px-3 py-2 break-all"
+                >
+                  {{ preview }}
+                </p>
               </dd>
             </div>
 

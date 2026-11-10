@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ArrowLeft, CheckCircle2, Eye, Plus, FileDown } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
@@ -45,9 +45,9 @@ const submit = async () => {
   loading.value = true;
   try {
     created.value = await store.createLicense(form.value);
-    // Start the License PDF download right away (a failure is shown, the
-    // button below stays available).
-    if (can("license-manager-view")) downloadPdf();
+    // Start the License PDF download(s) right away (a failure is shown, the
+    // buttons below stay available). "Mac + iPad" makes two keys.
+    if (can("license-manager-view")) createdKeys.value.forEach((license) => downloadPdf(license));
   } catch (err) {
     errors.value = validationErrors(err);
     error.value = errorMessage(err, "Failed to create license.");
@@ -56,18 +56,28 @@ const submit = async () => {
   }
 };
 
-const downloading = ref(false);
+// The created license plus, for "Mac + iPad", the other key of the bundle.
+const createdKeys = computed(() =>
+  created.value
+    ? [
+        { id: created.value.id, key: created.value.key, platform: created.value.platform, platform_label: created.value.platform_label },
+        ...(created.value.bundle || []),
+      ]
+    : []
+);
+
+const downloading = ref(null);
 const downloadError = ref("");
-const downloadPdf = async () => {
-  if (!created.value) return;
-  downloading.value = true;
+const downloadPdf = async (license) => {
+  if (!license) return;
+  downloading.value = license.id;
   downloadError.value = "";
   try {
-    await store.downloadCertificate(created.value.id, `${productName.value}-License-${created.value.key}.pdf`);
+    await store.downloadCertificate(license.id, `${productName.value}-License-${license.key}.pdf`);
   } catch (err) {
     downloadError.value = errorMessage(err, "The license PDF could not be downloaded.");
   } finally {
-    downloading.value = false;
+    downloading.value = null;
   }
 };
 
@@ -114,33 +124,51 @@ const createAnother = () => {
               </span>
             </div>
 
-            <p class="text-violet-200 text-xs font-semibold uppercase tracking-wider mb-3">License Key</p>
-            <div class="flex items-center gap-3 bg-white rounded-[16px] pl-5 pr-3 py-4 shadow-lg max-w-full">
-              <span class="font-mono text-xl sm:text-3xl lg:text-4xl font-bold tracking-wider text-brand-dark break-all select-all">
-                {{ created.key }}
-              </span>
-              <CopyKeyButton :value="created.key" size="md" />
+            <div v-for="license in createdKeys" :key="license.id" class="flex flex-col items-center max-w-full mb-5 last:mb-0">
+              <p class="text-violet-200 text-xs font-semibold uppercase tracking-wider mb-3">
+                {{ createdKeys.length > 1 ? `${license.platform_label} License Key` : "License Key" }}
+              </p>
+              <div class="flex items-center gap-3 bg-white rounded-[16px] pl-5 pr-3 py-4 shadow-lg max-w-full">
+                <span class="font-mono text-xl sm:text-3xl lg:text-4xl font-bold tracking-wider text-brand-dark break-all select-all">
+                  {{ license.key }}
+                </span>
+                <CopyKeyButton :value="license.key" size="md" />
+              </div>
             </div>
 
             <p class="text-violet-200/80 text-sm mt-5 max-w-xl">
-              Send this key to the licensee to activate {{ productName }} {{ planLabel(created) }}.
+              <template v-if="createdKeys.length > 1">
+                Send both keys to the licensee: the Mac key activates {{ productName }} {{ planLabel(created) }} on a Mac, the iPad key on an iPad.
+              </template>
+              <template v-else>
+                Send this key to the licensee to activate {{ productName }} {{ planLabel(created) }} on {{ created.platform_label || "Mac" }}.
+              </template>
               <template v-if="created.type === 'term' && created.expires_at">
                 Valid until {{ formatDate(created.expires_at) }}.
               </template>
               <template v-else>Lifetime license, never expires.</template>
-              Up to {{ created.max_devices }} device(s).
+              Up to {{ created.max_devices }} device(s){{ createdKeys.length > 1 ? " per key" : "" }}.
             </p>
 
-            <button
-              v-if="can('license-manager-view')"
-              type="button"
-              @click="downloadPdf"
-              :disabled="downloading"
-              class="mt-8 w-full sm:w-auto rounded-[14px] bg-[#F2821F] hover:brightness-110 transition-all px-8 py-4 flex items-center justify-center gap-2.5 text-white text-base font-bold shadow-lg disabled:opacity-60"
-            >
-              <FileDown class="w-5 h-5" />
-              {{ downloading ? "Preparing PDF..." : "Download License PDF" }}
-            </button>
+            <div v-if="can('license-manager-view')" class="mt-8 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <button
+                v-for="license in createdKeys"
+                :key="license.id"
+                type="button"
+                @click="downloadPdf(license)"
+                :disabled="downloading === license.id"
+                class="w-full sm:w-auto rounded-[14px] bg-[#F2821F] hover:brightness-110 transition-all px-8 py-4 flex items-center justify-center gap-2.5 text-white text-base font-bold shadow-lg disabled:opacity-60"
+              >
+                <FileDown class="w-5 h-5" />
+                {{
+                  downloading === license.id
+                    ? "Preparing PDF..."
+                    : createdKeys.length > 1
+                      ? `Download ${license.platform_label} PDF`
+                      : "Download License PDF"
+                }}
+              </button>
+            </div>
             <p v-if="downloadError" class="text-red-300 text-xs mt-2">{{ downloadError }}</p>
 
             <div class="flex flex-col sm:flex-row gap-3 mt-5 w-full sm:w-auto">
