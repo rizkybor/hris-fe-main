@@ -47,6 +47,37 @@ export const PLAN_GROUPS = [
   { label: "Organization", plans: [planOption("organization")] },
 ];
 
+// The device platform a license is for, fixed at creation (mirrors
+// License::PLATFORM_*): a Mac key only activates on a Mac, an iPad key only
+// on an iPad. iPad has no Trial.
+export const PLATFORM_OPTIONS = [
+  { value: "mac", label: "Mac", note: "macOS", plans: ["trial", "professional", "lifetime", "organization"] },
+  { value: "ipad", label: "iPad", note: "iPadOS · no Trial", plans: ["professional", "lifetime", "organization"] },
+];
+
+const platformOption = (value) => PLATFORM_OPTIONS.find((p) => p.value === value);
+
+export const normalizePlatform = (platform) => (platformOption(platform) ? platform : "mac");
+
+// Mac / iPad of a license (not the device's reported OS: see platformLabel).
+export const licensePlatformLabel = (license) =>
+  license?.platform_label || platformOption(license?.platform)?.label || "Mac";
+
+export const planAllowedOn = (platform, plan) => !!platformOption(normalizePlatform(platform))?.plans.includes(plan);
+
+// PLAN_GROUPS without the plans a platform does not sell (empty groups dropped).
+export const planGroupsFor = (platform) =>
+  PLAN_GROUPS.map((group) => ({ ...group, plans: group.plans.filter((plan) => planAllowedOn(platform, plan.value)) })).filter(
+    (group) => group.plans.length
+  );
+
+export const PLATFORM_CHIP = {
+  mac: "bg-slate-100 text-slate-700",
+  ipad: "bg-sky-50 text-sky-700",
+};
+
+export const platformChipClass = (platform) => PLATFORM_CHIP[normalizePlatform(platform)];
+
 export const CATEGORY_LABELS = { individual: "Individual", organization: "Organization" };
 
 // Older records may still carry the draft value "pro".
@@ -93,23 +124,26 @@ export const planBarClass = (plan) => PLAN_BAR[normalizePlan(plan)] || "bg-gray-
 
 // The license type follows the plan: only the Lifetime plan is lifetime,
 // every other plan (trial, professional, organization) is a term license.
-// Key format {prefix}{planCode}-XXXX-XXXX-XXXX-{sequence}, e.g.
-// OC01-7KQM-2XRT-9HZP-0001 (mirrors License::PLAN_CODES). A key never
-// changes, so its plan code is the plan at creation.
-export const PLAN_CODES = { trial: "01", professional: "02", lifetime: "03", organization: "04" };
+// Key format {prefix}{platform}{plan}-XXXX-XXXX-XXXX-{sequence}, e.g.
+// OC32-7KQM-2XRT-9HZP-0001 (mirrors License::PLATFORM_CODES / PLAN_DIGITS):
+// Mac 31 Trial, 32 Professional, 33 Lifetime, 34 Organization; iPad 52, 53,
+// 54. A key never changes, so its code is the platform and plan at creation.
+export const PLATFORM_CODES = { mac: "3", ipad: "5" };
+export const PLAN_DIGITS = { trial: "1", professional: "2", lifetime: "3", organization: "4" };
 
-export const planCode = (plan) => PLAN_CODES[normalizePlan(plan)] || "00";
+export const planCode = (plan, platform = "mac") =>
+  `${PLATFORM_CODES[normalizePlatform(platform)]}${PLAN_DIGITS[normalizePlan(plan)] || "0"}`;
 
 export const padSequence = (n) => String(Math.max(1, Number(n) || 1)).padStart(4, "0");
 
-// Preview of the next key: "OC02-XXXX-XXXX-XXXX-0007".
-export const keyPreview = (prefix, plan, sequence = 1) =>
-  `${String(prefix || "XX").toUpperCase()}${planCode(plan)}-XXXX-XXXX-XXXX-${padSequence(sequence)}`;
+// Preview of the next key: "OC32-XXXX-XXXX-XXXX-0007".
+export const keyPreview = (prefix, plan, sequence = 1, platform = "mac") =>
+  `${String(prefix || "XX").toUpperCase()}${planCode(plan, platform)}-XXXX-XXXX-XXXX-${padSequence(sequence)}`;
 
-// Example for a product, e.g. "OC01-XXXX-XXXX-XXXX-0001".
+// Example for a product, e.g. "OC31-XXXX-XXXX-XXXX-0001".
 export const keyExample = (prefix) => keyPreview(prefix, "trial", 1);
 
-// List masking: first and last group visible, "OC02-••••-••••-••••-0001".
+// List masking: first and last group visible, "OC32-••••-••••-••••-0001".
 export const maskLicenseKey = (key) => {
   const parts = String(key || "").split("-");
   if (parts.length < 3) return key || "-";
@@ -291,6 +325,7 @@ export const licenseToForm = (license) => {
   const hasExpiry = license?.type === "term" && !!license?.expires_at;
 
   return {
+    platform: normalizePlatform(license?.platform),
     plan,
     type: planType(plan),
     licensee_name: license?.licensee_name || "",
@@ -364,7 +399,10 @@ export const validateLicenseForm = (form) => {
   const category = categoryOfPlan(form.plan);
   const blank = (v) => v === null || v === undefined || String(v).trim() === "";
 
+  if (!PLATFORM_OPTIONS.some((p) => p.value === form.platform)) errors.platform = "Choose Mac or iPad.";
   if (!PLAN_OPTIONS.some((p) => p.value === form.plan)) errors.plan = "Choose a plan.";
+  else if (!errors.platform && !planAllowedOn(form.platform, form.plan))
+    errors.plan = `The ${planOption(form.plan).label} plan is not available for ${platformOption(form.platform).label} licenses.`;
 
   for (const field of requiredFields(category, form.country)) {
     if (blank(form[field])) errors[field] = requiredMessage(field, category);
@@ -463,6 +501,7 @@ export const EVENT_TYPES = {
   denied_device_limit: { label: "Denied: device limit reached", tone: "red", group: "Denied" },
   denied_inactive: { label: "Denied: license switched off", tone: "red", group: "Denied" },
   denied_expired: { label: "Denied: license expired", tone: "red", group: "Denied" },
+  denied_wrong_platform: { label: "Denied: wrong platform", tone: "red", group: "Denied" },
 };
 
 export const EVENT_TONE_CLASS = {

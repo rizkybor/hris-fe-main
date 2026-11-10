@@ -50,6 +50,9 @@ import {
   planLabel,
   planChipClass,
   planCategory,
+  PLATFORM_OPTIONS,
+  licensePlatformLabel,
+  platformChipClass,
   organizationTypeLabel,
   formatDate,
   formatDateTime,
@@ -71,7 +74,7 @@ const canEdit = computed(() => can("license-manager-edit"));
 const canDelete = computed(() => can("license-manager-delete"));
 
 const serverOptions = ref({ page: 1, per_page: 10 });
-const filters = ref({ search: "", status: "", type: "", plan: "", sort: "" });
+const filters = ref({ search: "", status: "", type: "", plan: "", platform: "", sort: "" });
 const success = ref("");
 const error = ref("");
 const togglingId = ref(null);
@@ -169,11 +172,11 @@ const paginationMeta = computed(() => {
 });
 
 const hasFilters = computed(
-  () => !!(filters.value.search || filters.value.status || filters.value.type || filters.value.plan)
+  () => !!(filters.value.search || filters.value.status || filters.value.type || filters.value.plan || filters.value.platform)
 );
 
 const clearFilters = () => {
-  filters.value = { ...filters.value, search: "", status: "", type: "", plan: "" };
+  filters.value = { ...filters.value, search: "", status: "", type: "", plan: "", platform: "" };
 };
 
 const flash = (message) => {
@@ -417,6 +420,20 @@ const statusBadge = (license) =>
             </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div class="flex flex-wrap items-center gap-1.5">
+              <div class="flex items-center gap-1 p-0.5 rounded-full bg-slate-100" role="group" aria-label="Filter by platform">
+                <button
+                  v-for="opt in [{ value: '', label: 'All platforms' }, ...PLATFORM_OPTIONS]"
+                  :key="opt.value || 'all'"
+                  type="button"
+                  @click="filters.platform = opt.value"
+                  class="px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                  :class="filters.platform === opt.value ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-light hover:text-brand-dark'"
+                  :aria-pressed="filters.platform === opt.value"
+                >
+                  {{ opt.label }}
+                </button>
+              </div>
               <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by plan">
                 <button
                   type="button"
@@ -443,6 +460,7 @@ const statusBadge = (license) =>
                   {{ opt.label }}
                   <span v-if="summary?.by_plan" class="tabular-nums opacity-60">{{ summary.by_plan[opt.value] ?? 0 }}</span>
                 </button>
+              </div>
               </div>
               <div class="flex items-center gap-3 text-xs text-brand-light shrink-0">
                 <button v-if="hasFilters" type="button" @click="clearFilters" class="font-semibold text-violet-600 hover:text-violet-700">
@@ -566,9 +584,14 @@ const statusBadge = (license) =>
 
                     <!-- Plan -->
                     <td class="py-3.5 px-3">
-                      <span class="text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap" :class="planChipClass(license.plan)">
-                        {{ planLabel(license) }}
-                      </span>
+                      <div class="flex items-center gap-1">
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap" :class="platformChipClass(license.platform)">
+                          {{ licensePlatformLabel(license) }}
+                        </span>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap" :class="planChipClass(license.plan)">
+                          {{ planLabel(license) }}
+                        </span>
+                      </div>
                     </td>
 
                     <!-- Key -->
@@ -710,6 +733,7 @@ const statusBadge = (license) =>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="platformChipClass(license.platform)">{{ licensePlatformLabel(license) }}</span>
                       <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="planChipClass(license.plan)">{{ planLabel(license) }}</span>
                       <span v-if="isOrganization(license)" class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-700">
                         Org · {{ organizationTypeLabel(license.organization_type) }}

@@ -54,6 +54,8 @@ import {
   organizationTypeLabel,
   planLabel,
   planChipClass,
+  licensePlatformLabel,
+  platformChipClass,
   categoryLabel,
   planCategory,
 } from "@/components/admin/license-manager/licenseHelpers";
@@ -146,12 +148,14 @@ const locationItems = (l) => [
   { label: "Country", value: l.country, icon: Globe },
 ];
 
-// LIC-OCCA-0001, the same reference as on the certificate.
+// LIC-OCCA-MAC-0001 / LIC-OCCA-IPAD-0001, the same reference as on the
+// certificate (Mac and iPad number their licenses separately).
 const reference = computed(() => {
   const l = license.value;
   if (!l) return "-";
   const code = String(l.product?.code || productCode.value || "").toUpperCase();
-  return `LIC-${code}-${String(l.sequence ?? l.id).padStart(4, "0")}`;
+  const platform = String(l.platform || "mac").toUpperCase();
+  return `LIC-${code}-${platform}-${String(l.sequence ?? l.id).padStart(4, "0")}`;
 });
 
 const downloading = ref(false);
@@ -331,6 +335,7 @@ const isMac = (platform) => /mac/i.test(platform || "");
             <div class="relative z-10">
               <div class="flex flex-wrap items-center gap-2 mb-3">
                 <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/15 text-white">{{ license.product?.name || productName }}</span>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/15 text-white">{{ licensePlatformLabel(license) }}</span>
                 <span class="text-xs font-semibold px-2.5 py-1 rounded-full" :class="planChipClass(license.plan, true)">
                   {{ planLabel(license) }}<template v-if="categoryLabel(license) !== planLabel(license)"> &middot; {{ categoryLabel(license) }}</template>
                 </span>
@@ -400,6 +405,12 @@ const isMac = (platform) => /mac/i.test(platform || "");
               <h4 class="text-brand-dark font-bold">License</h4>
             </div>
             <dl class="px-5 py-4 space-y-3 text-sm">
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-brand-light">Platform</dt>
+                <dd>
+                  <span class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="platformChipClass(license.platform)">{{ licensePlatformLabel(license) }}</span>
+                </dd>
+              </div>
               <div class="flex items-center justify-between gap-3">
                 <dt class="text-brand-light">Plan</dt>
                 <dd class="flex items-center gap-1.5">

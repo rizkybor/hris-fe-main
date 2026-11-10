@@ -34,6 +34,8 @@ const toApiPayload = (payload) => {
   if (details.member_count !== null) details.member_count = Number(details.member_count);
 
   return {
+    // Fixed after create; the API accepts the same value on update.
+    platform: payload.platform,
     plan: payload.plan,
     ...details,
     type,
@@ -191,6 +193,7 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
             status: params.status || undefined,
             type: params.type || undefined,
             plan: params.plan || undefined,
+            platform: params.platform || undefined,
             sort_by: params.sort_by || undefined,
             sort_dir: params.sort_dir || undefined,
             page: params.page || 1,

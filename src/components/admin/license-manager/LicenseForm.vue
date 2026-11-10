@@ -32,6 +32,9 @@ import {
   CheckCircle2,
   Circle,
   ListChecks,
+  Laptop,
+  Tablet,
+  Lock,
 } from "lucide-vue-next";
 import LicenseStatusSwitch from "@/components/admin/license-manager/LicenseStatusSwitch.vue";
 import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
@@ -39,8 +42,11 @@ import LicenseFormField from "@/components/admin/license-manager/LicenseFormFiel
 import CopyKeyButton from "@/components/admin/license-manager/CopyKeyButton.vue";
 import LicenseLocationFields from "@/components/admin/license-manager/LicenseLocationFields.vue";
 import {
-  PLAN_GROUPS,
   PLAN_OPTIONS,
+  PLATFORM_OPTIONS,
+  planGroupsFor,
+  planAllowedOn,
+  platformChipClass,
   ORGANIZATION_TYPE_OPTIONS,
   requiredFields,
   requiredFieldLabel,
@@ -87,6 +93,10 @@ const fieldError = (field) => {
 const category = computed(() => categoryOfPlan(form.value.plan));
 const isOrganization = computed(() => category.value === "organization");
 const isLifetimePlan = computed(() => planType(form.value.plan) === "lifetime");
+// iPad has no Trial, so its picker shows one card less.
+const planGroups = computed(() => planGroupsFor(form.value.platform));
+const individualCount = computed(() => planGroups.value.find((g) => g.label === "Individual")?.plans.length || 0);
+const platformInfo = computed(() => PLATFORM_OPTIONS.find((p) => p.value === form.value.platform) || null);
 const durations = computed(() => durationOptionsFor(form.value.plan));
 const required = (field) => isRequiredField(category.value, field, form.value.country);
 const fullAddress = computed(() => formatAddress(form.value));
@@ -139,6 +149,14 @@ const selectPlan = (plan) => {
   }
 };
 
+// The platform is fixed once the license exists (it is part of the key).
+// Switching to iPad while Trial is picked moves to Professional.
+const selectPlatform = (platform) => {
+  if (props.isEdit) return;
+  form.value.platform = platform;
+  if (!planAllowedOn(platform, form.value.plan)) selectPlan("professional");
+};
+
 // Max devices stepper (1-100).
 const stepDevices = (delta) => {
   const current = Number(form.value.max_devices) || 0;
@@ -165,7 +183,8 @@ watch(
 const planInfo = computed(() => PLAN_OPTIONS.find((p) => p.value === form.value.plan) || null);
 const period = computed(() => periodPreview(form.value));
 const keyPreview = computed(() =>
-  props.licenseKey || buildKeyPreview(props.product?.key_prefix, form.value.plan, props.product?.next_sequence)
+  props.licenseKey ||
+    buildKeyPreview(props.product?.key_prefix, form.value.plan, props.product?.next_sequences?.[form.value.platform], form.value.platform)
 );
 
 // Required-fields checklist, using the same client rules as the submit.
@@ -256,13 +275,42 @@ const secondaryBtn =
             <h4 class="text-brand-dark font-bold">Plan <span class="text-red-500">*</span></h4>
           </div>
 
+          <!-- Platform: Mac or iPad, fixed after create -->
+          <div data-field="platform" class="mb-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light mb-2">Platform</p>
+            <div class="grid grid-cols-2 gap-3 sm:max-w-md">
+              <button
+                v-for="option in PLATFORM_OPTIONS"
+                :key="option.value"
+                type="button"
+                :disabled="isEdit && form.platform !== option.value"
+                @click="selectPlatform(option.value)"
+                class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-[12px] border-2 bg-white text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                :class="form.platform === option.value ? 'border-violet-500 ring-2 ring-violet-500/20 bg-violet-50/40' : 'border-[#DCDEDD] hover:border-violet-300'"
+                :aria-pressed="form.platform === option.value"
+              >
+                <component :is="option.value === 'ipad' ? Tablet : Laptop" class="w-[18px] h-[18px] text-violet-600 shrink-0" />
+                <span class="flex-1 min-w-0">
+                  <span class="block text-sm font-bold text-brand-dark">{{ option.label }}</span>
+                  <span class="block text-xs text-brand-light">{{ option.note }}</span>
+                </span>
+                <Lock v-if="isEdit && form.platform === option.value" class="w-4 h-4 text-brand-light shrink-0" />
+                <CheckCircle2 v-else-if="form.platform === option.value" class="w-[18px] h-[18px] text-violet-600 shrink-0" />
+              </button>
+            </div>
+            <p v-if="isEdit" class="text-xs text-brand-light mt-2">The platform is part of the key, so it cannot be changed.</p>
+            <p v-if="fieldError('platform')" class="text-xs text-red-600 mt-2">{{ fieldError("platform") }}</p>
+          </div>
+
           <!-- Group labels above their cards (md and up) -->
-          <div class="hidden md:grid grid-cols-4 gap-3 mb-2">
-            <p class="col-span-3 text-[11px] font-semibold uppercase tracking-wider text-brand-light">Individual</p>
+          <div class="hidden md:grid gap-3 mb-2" :class="individualCount === 3 ? 'grid-cols-4' : 'grid-cols-3'">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light" :class="individualCount === 3 ? 'col-span-3' : 'col-span-2'">
+              Individual
+            </p>
             <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light">Organization</p>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-            <template v-for="group in PLAN_GROUPS" :key="group.label">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" :class="individualCount === 3 ? 'md:grid-cols-4' : 'md:grid-cols-3'">
+            <template v-for="group in planGroups" :key="group.label">
               <button
                 v-for="plan in group.plans"
                 :key="plan.value"
@@ -567,6 +615,14 @@ const secondaryBtn =
           </div>
 
           <dl class="px-5 py-4 space-y-3.5 text-sm">
+            <div class="flex items-center justify-between gap-3">
+              <dt class="text-brand-light">Platform</dt>
+              <dd>
+                <span v-if="platformInfo" class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="platformChipClass(form.platform)">
+                  {{ platformInfo.label }}
+                </span>
+              </dd>
+            </div>
             <div class="flex items-center justify-between gap-3">
               <dt class="text-brand-light">Plan</dt>
               <dd class="flex items-center gap-1.5 min-w-0">
