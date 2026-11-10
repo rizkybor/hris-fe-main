@@ -11,7 +11,13 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
     openingBalanceUpdatedBy: null,
     totalDebit: 0,
     totalCredit: 0,
+    // Part of totalDebit (spending is recorded as Debit).
+    totalSpending: 0,
     closingBalance: 0,
+    // Spending per person (on behalf of) over the current filters.
+    spendingByEmployee: [],
+    // Employees a spending entry can be recorded on behalf of.
+    employeeOptions: [],
     meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 },
     lastParams: {},
     loading: false,
@@ -36,12 +42,23 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
         this.openingBalanceUpdatedBy = data.data.opening_balance_updated_by ?? null;
         this.totalDebit = data.data.total_debit;
         this.totalCredit = data.data.total_credit;
+        this.totalSpending = data.data.total_spending ?? 0;
         this.closingBalance = data.data.closing_balance;
+        this.spendingByEmployee = data.data.spending_by_employee ?? [];
         this.meta = data.data.meta;
       } catch (error) {
         this.error = handleError(error);
       } finally {
         this.loading = false;
+      }
+    },
+
+    async fetchEmployeeOptions() {
+      try {
+        const { data } = await axiosInstance.get("/company-cash-book/employee-options");
+        this.employeeOptions = data.data;
+      } catch (error) {
+        this.error = handleError(error);
       }
     },
 

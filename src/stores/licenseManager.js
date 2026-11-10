@@ -521,6 +521,18 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     },
 
+    // Emails the certificate (PDF attached) to the licensee.
+    async shareCertificateByEmail(id, payload) {
+      const { data } = await axiosInstance.post(`${this.base}/${id}/certificate/email`, payload);
+      return data.data;
+    },
+
+    // A 7-day signed link to the certificate PDF, for a WhatsApp message.
+    async createCertificateShareLink(id, phone = null) {
+      const { data } = await axiosInstance.post(`${this.base}/${id}/certificate/share-link`, { phone });
+      return data.data;
+    },
+
     clearMessages() {
       this.error = null;
       this.success = null;
