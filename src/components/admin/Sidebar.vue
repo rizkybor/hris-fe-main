@@ -32,7 +32,6 @@ import {
   Laptop as LaptopIcon,
   PanelLeftClose,
   PanelLeftOpen,
-  Sparkles,
   CalculatorIcon,
   Landmark,
   LineChart,
@@ -53,7 +52,7 @@ const emit = defineEmits(["navigate"]);
 const onNavigate = () => emit("navigate");
 
 // Desktop-only icon-rail collapse. Mobile always shows the full sidebar as
-// an overlay, so this is deliberately not wired into the isOpen prop.
+// a drawer, so this is deliberately not wired into the isOpen prop.
 const collapsed = ref(localStorage.getItem("sidebar-collapsed") === "true");
 
 const toggleCollapsed = () => {
@@ -80,7 +79,7 @@ const showTooltip = (event) => {
   tooltipText.value = label;
   tooltipStyle.value = {
     top: `${rect.top + rect.height / 2}px`,
-    left: `${rect.right + 14}px`,
+    left: `${rect.right + 12}px`,
   };
 };
 
@@ -194,983 +193,223 @@ watch(
   },
   { deep: true }
 );
+
+// ---------------------------------------------------------------------------
+// Menu (redesign): the same links, permissions and active rules as before,
+// as data. `show` is evaluated against the current user's permissions;
+// `active` against the current route.
+// ---------------------------------------------------------------------------
+const startsWith = (...prefixes) => () => prefixes.some((p) => route.name?.startsWith(p));
+const isRoute = (name) => () => route.name === name;
+
+const SECTIONS = computed(() => [
+  {
+    key: "overview",
+    title: "General",
+    show: true,
+    items: [
+      { label: "Dashboard", icon: LayoutDashboard, to: { name: "admin.dashboard" }, show: true, active: isRoute("admin.dashboard") },
+      { label: "Clock In/Out", icon: ClockIcon, to: { name: "employee.attendance.clock" }, show: can("attendance-check-in") || can("attendance-check-out"), active: isRoute("employee.attendance.clock") },
+      { label: "My Attendance", icon: CalendarCheck, to: { name: "employee.attendance.my-attendances" }, show: can("attendance-my-attendances"), active: isRoute("employee.attendance.my-attendances") },
+      { label: "My Payslips", icon: Wallet, to: { name: "employee.payslips" }, show: can("payslip-view"), active: startsWith("employee.payslips") },
+    ],
+  },
+  {
+    key: "myWorkspace",
+    title: "My Workspace",
+    show: showMyWorkspace.value,
+    items: [
+      { label: "My Profile", icon: CircleUserRound, to: { name: "employee.profile" }, show: can("profile-menu"), active: isRoute("employee.profile") },
+      { label: "My Team", icon: Contact, to: { name: "employee.team" }, show: can("team-view"), active: isRoute("employee.team") },
+      { label: "My Tasks", icon: ListChecksIcon, to: { name: "employee.tasks" }, show: can("task-list"), active: startsWith("employee.tasks") },
+      { label: "Staff Tasks", icon: ClipboardList, to: { name: "admin.staff-tasks.dashboard" }, show: can("staff-task-menu"), active: startsWith("admin.staff-tasks") },
+      { label: "Client Screening", icon: ClipboardCheck, to: { name: "admin.screening.dashboard" }, show: can("screening-menu"), active: startsWith("admin.screening") },
+      { label: "Project Lists", icon: FolderKanban, to: { name: "admin.projects" }, show: can("project-menu"), active: startsWith("admin.projects") },
+      { label: "Subscription Lists", icon: RefreshCw, to: { name: "admin.subscriptions.dashboard" }, show: can("subscription-menu"), active: startsWith("admin.subscriptions") },
+      { label: "Maintenance Lists", icon: Wrench, to: { name: "admin.maintenance.dashboard" }, show: can("maintenance-menu"), active: startsWith("admin.maintenance") },
+      { label: "Server Lists", icon: HardDrive, to: { name: "admin.server-storage.dashboard" }, show: can("server-storage-menu"), active: startsWith("admin.server-storage") },
+      { label: "Attendance Summary", icon: CalendarDays, to: { name: "admin.attendances" }, show: can("attendance-menu"), active: isRoute("admin.attendances") },
+    ],
+  },
+  {
+    key: "people",
+    title: "Administration",
+    show: showPeople.value,
+    items: [
+      { label: "Employees", icon: UsersIcon, to: { name: "admin.employees" }, show: can("employee-menu"), active: startsWith("admin.employee") },
+      { label: "Our Teams", icon: UsersRound, to: { name: "admin.teams" }, show: can("team-menu"), active: startsWith("admin.team") },
+      { label: "Our Clients", icon: Handshake, to: { name: "admin.clients.dashboard" }, show: can("clients-menu"), active: startsWith("admin.clients") },
+      {
+        label: "Business Documents",
+        icon: FileStack,
+        to: { name: "admin.documents.dashboard" },
+        show: canOneOf(["purchase-order-menu", "invoice-menu", "payment-receipt-menu", "letter-menu", "certificate-menu", "document-letter-menu", "meeting-note-menu", "proposal-menu"]),
+        active: startsWith("admin.documents", "admin.purchase-orders", "admin.invoices", "admin.payment-receipts", "admin.letters", "admin.certificates", "admin.official-memos", "admin.meeting-notes", "admin.proposals"),
+      },
+    ],
+  },
+  {
+    key: "finance",
+    title: "Finance",
+    show: showFinance.value,
+    items: [
+      { label: "Operational Cost", icon: CircleDollarSign, to: { name: "admin.company-finance.dashboard" }, show: can("company-finance-menu"), active: startsWith("admin.company-finance") },
+      { label: "Company Cash Book", icon: Landmark, to: { name: "admin.company-cash-book.dashboard" }, show: can("company-cash-book-menu"), active: startsWith("admin.company-cash-book") },
+      { label: "Payroll", icon: Banknote, to: { name: "admin.payroll.dashboard" }, show: can("payroll-menu"), active: startsWith("admin.payroll") },
+      { label: "Reporting", icon: BarChart3, to: { name: "admin.report.dashboard" }, show: can("report-menu"), active: startsWith("admin.report") },
+    ],
+  },
+  {
+    key: "tools",
+    title: "Tools",
+    show: showTools.value,
+    items: [
+      { label: "Project Calculator", icon: CalculatorIcon, to: { name: "admin.project-calculator.dashboard" }, show: can("project-calculator-menu"), active: startsWith("admin.project-calculator") },
+      { label: "Flowchart Maker", icon: Workflow, to: { name: "admin.flowchart.dashboard" }, show: can("flowchart-menu"), active: startsWith("admin.flowchart") },
+    ],
+  },
+  {
+    key: "company",
+    title: "Company",
+    show: showCompany.value,
+    items: [
+      { label: "Company About", icon: Building2Icon, to: { name: "admin.company-about.dashboard" }, show: can("company-about-menu"), active: startsWith("admin.company-about") },
+      { label: "Assets", icon: LaptopIcon, to: { name: "admin.assets.dashboard" }, show: can("asset-menu"), active: startsWith("admin.assets") },
+      { label: "Document Files", icon: FolderClosedIcon, to: { name: "admin.files-company.dashboard" }, show: can("files-company-menu"), active: startsWith("admin.files-company") },
+      { label: "Credential", icon: KeyRoundIcon, to: { name: "admin.account-password.dashboard" }, show: can("credential-account-list"), active: startsWith("admin.account-password") },
+      { label: "Announcements", icon: MegaphoneIcon, to: { name: "admin.announcements.dashboard" }, show: can("announcement-menu"), active: startsWith("admin.announcements") },
+    ],
+  },
+  // License Manager (products come from the API) renders after Company.
+  {
+    key: "insights",
+    title: "Insights",
+    show: showInsights.value,
+    items: [
+      { label: "Analytics", icon: LineChart, to: { name: "admin.analytics.dashboard" }, show: can("analytics-menu"), active: startsWith("admin.analytics") },
+      { label: "History", icon: HistoryIcon, to: { name: "admin.history.dashboard" }, show: can("history-menu"), active: startsWith("admin.history") },
+    ],
+  },
+]);
+const sectionsBeforeLicense = computed(() => SECTIONS.value.filter((s) => s.key !== "insights" && s.show));
+const sectionsAfterLicense = computed(() => SECTIONS.value.filter((s) => s.key === "insights" && s.show));
+const settingsActive = startsWith("admin.settings");
+
+const itemClass = (active) => [
+  "nav-item group flex items-center gap-2.5 h-8 px-2.5 rounded-[7px] text-ui-small border transition-colors duration-ui-fast",
+  active
+    ? "bg-ui-surface border-ui-line text-ui-ink font-semibold shadow-ui-raised"
+    : "border-transparent text-ui-text hover:bg-ui-hover hover:text-ui-ink",
+  collapsed.value ? "lg:justify-center lg:px-0 lg:h-9" : "",
+];
+const iconClass = (active) => ["w-4 h-4 shrink-0", active ? "text-ui-ink" : "text-ui-muted group-hover:text-ui-ink"];
+const labelClass = computed(() => ["nav-label truncate", collapsed.value ? "lg:hidden" : ""]);
 </script>
 
 <template>
-  <!-- Mobile Overlay handled by layout -->
-
-  <!-- Sidebar -->
+  <!-- Desktop: a quiet panel next to the content (icon rail when collapsed).
+       Phones and tablets: a drawer opened from the tab bar's "More". -->
   <aside
     id="sidebar"
-    class="sidebar-gradient fixed lg:relative inset-y-0 left-0 z-50 w-64 h-screen border-r border-white/5 flex flex-col transform transition-all duration-300 ease-in-out"
+    class="fixed lg:relative inset-y-0 left-0 z-50 h-screen flex flex-col bg-ui-bg border-r border-ui-line font-sans transition-[transform,width] duration-ui-slow ease-ui-out w-[280px]"
     :class="[
-      props.isOpen ? 'translate-x-0' : '-translate-x-full',
+      props.isOpen ? 'translate-x-0 shadow-ui-overlay lg:shadow-none' : '-translate-x-full',
       'lg:translate-x-0',
-      collapsed ? 'lg:w-20 is-collapsed' : 'lg:w-64',
+      collapsed ? 'lg:w-[72px] is-collapsed' : 'lg:w-[248px]',
     ]"
     :data-collapsed="collapsed"
+    aria-label="Main navigation"
   >
-    <!-- Logo Section -->
-    <div
-      class="px-4 py-3 border-b border-white/10 flex items-center"
-      :class="collapsed ? 'lg:flex-col lg:gap-3 lg:px-2' : 'justify-between'"
-    >
-      <div
-        class="flex items-center gap-3"
-        :class="{ 'lg:flex-col lg:gap-1': collapsed }"
-      >
-        <div class="w-10 h-10 relative flex items-center justify-center shrink-0 bg-white rounded-[10px] shadow-sm">
-          <img
-            src="/images/jcd-only-color.png"
-            alt="Company Logo"
-            class="w-9 h-9 relative z-10 object-contain"
-          />
-        </div>
-        <div class="sidebar-brand-text">
-          <h1 class="text-white text-sm font-bold whitespace-nowrap leading-tight">
-            HRIS+
-            <span class="text-[10px] font-medium text-white/40 ml-0.5"> v{{ APP_VERSION_SHORT }} </span>
-          </h1>
-          <p class="text-white/50 text-xs font-normal whitespace-nowrap leading-tight">
-            Jendela Cakra Digital
-          </p>
-        </div>
+    <!-- Brand -->
+    <div class="flex items-center gap-2.5 px-3.5 pt-3.5 pb-3" :class="collapsed ? 'lg:flex-col lg:px-2 lg:gap-2' : ''">
+      <div class="w-8 h-8 shrink-0 rounded-[9px] bg-ui-surface border border-ui-line flex items-center justify-center">
+        <img src="/images/jcd-only-color.png" alt="Jendela Cakra Digital" class="w-6 h-6 object-contain" />
       </div>
-
+      <div class="min-w-0 flex-1" :class="collapsed ? 'lg:hidden' : ''">
+        <div class="flex items-center gap-1.5">
+          <span class="text-ui-h3 text-ui-ink">HRIS+</span>
+          <span class="text-[10.5px] leading-[15px] px-1.5 rounded border border-ui-line text-ui-muted tabular-nums">v{{ APP_VERSION_SHORT }}</span>
+        </div>
+        <p class="text-ui-cap text-ui-muted truncate">Jendela Cakra Digital</p>
+      </div>
       <button
-        class="hidden lg:flex w-9 h-9 rounded-full items-center justify-center text-white/50 hover:bg-white/10 hover:text-white transition-colors duration-150 shrink-0"
+        type="button"
+        class="hidden lg:inline-flex w-8 h-8 shrink-0 items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
         :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         @click="toggleCollapsed"
       >
         <PanelLeftOpen v-if="collapsed" class="w-4 h-4" />
         <PanelLeftClose v-else class="w-4 h-4" />
       </button>
       <button
-        class="lg:hidden w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:bg-white/10 hover:text-white transition-colors duration-150"
+        type="button"
+        class="lg:hidden w-8 h-8 shrink-0 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
+        aria-label="Close menu"
         @click="onNavigate"
       >
-        <XIcon class="w-5 h-5" />
+        <XIcon class="w-[18px] h-[18px]" />
       </button>
     </div>
 
-    <!-- Navigation Menu -->
-    <nav
-      class="px-4 py-3 space-y-4 flex-1 overflow-y-auto pb-8 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
-    >
-      <!-- General: dashboard and clock in/out -->
-      <div>
-        <button
-          type="button"
-          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
-          style="padding: 0 8px 0 12px"
-          @click="toggleSection('overview')"
-        >
-          <span>General</span>
-          <ChevronDown
-            class="w-3 h-3 shrink-0 transition-transform duration-150"
-            :class="{ '-rotate-90': collapsedSections.overview }"
-          />
-        </button>
-        <div v-show="!collapsedSections.overview" class="space-y-0.5">
-          <RouterLink
-            :to="{ name: 'admin.dashboard' }"
-            :class="{
-              'nav-link-active': $route.name === 'admin.dashboard',
-            }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto overscroll-contain px-3 pb-4 space-y-1" :class="collapsed ? 'lg:px-2' : ''">
+      <template v-for="section in sectionsBeforeLicense" :key="section.key">
+        <div>
+          <button
+            type="button"
+            class="w-full flex items-center justify-between px-2.5 pt-3 pb-1 text-ui-over uppercase text-ui-faint hover:text-ui-muted transition-colors"
+            :class="collapsed ? 'lg:hidden' : ''"
+            :aria-expanded="!collapsedSections[section.key]"
+            @click="toggleSection(section.key)"
           >
-            <LayoutDashboard
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name === 'admin.dashboard',
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name === 'admin.dashboard',
-              }"
-              >Dashboard</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'employee.attendance.clock' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name === 'employee.attendance.clock',
-            }"
-            v-if="can('attendance-check-in') || can('attendance-check-out')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <ClockIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name === 'employee.attendance.clock',
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name === 'employee.attendance.clock',
-              }"
-              >Clock In/Out</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'employee.attendance.my-attendances' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active':
-                $route.name === 'employee.attendance.my-attendances',
-            }"
-            v-if="can('attendance-my-attendances')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <CalendarCheck
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white':
-                  $route.name === 'employee.attendance.my-attendances',
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold':
-                  $route.name === 'employee.attendance.my-attendances',
-              }"
-              >My Attendance</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'employee.payslips' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('employee.payslips'),
-            }"
-            v-if="can('payslip-view')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <Wallet
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('employee.payslips'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold':
-                  $route.name?.startsWith('employee.payslips'),
-              }"
-              >My Payslips</span
-            >
-          </RouterLink>
+            <span>{{ section.title }}</span>
+            <ChevronDown class="w-3 h-3 shrink-0 transition-transform duration-ui-fast" :class="{ '-rotate-90': collapsedSections[section.key] }" />
+          </button>
+          <div v-if="collapsed" class="hidden lg:block h-px bg-ui-line mx-2 my-2"></div>
+          <div v-show="!collapsedSections[section.key] || collapsed" class="space-y-px">
+            <template v-for="item in section.items" :key="item.label">
+              <RouterLink
+                v-if="item.show"
+                :to="item.to"
+                :class="itemClass(item.active())"
+                :aria-current="item.active() ? 'page' : undefined"
+                @click="onNavigate"
+                @mouseenter="showTooltip"
+                @mouseleave="hideTooltip"
+              >
+                <component :is="item.icon" :class="iconClass(item.active())" />
+                <span :class="labelClass">{{ item.label }}</span>
+              </RouterLink>
+            </template>
+          </div>
         </div>
-      </div>
+      </template>
 
-      <!-- My Workspace: self-service items scoped to the logged-in employee -->
-      <div v-if="showMyWorkspace">
-        <button
-          type="button"
-          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
-          style="padding: 0 8px 0 12px"
-          @click="toggleSection('myWorkspace')"
-        >
-          <span>My Workspace</span>
-          <ChevronDown
-            class="w-3 h-3 shrink-0 transition-transform duration-150"
-            :class="{ '-rotate-90': collapsedSections.myWorkspace }"
-          />
-        </button>
-        <div v-show="!collapsedSections.myWorkspace" class="space-y-0.5">
-          <RouterLink
-            :to="{ name: 'employee.profile' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name === 'employee.profile',
-            }"
-            v-if="can('profile-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <CircleUserRound
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name === 'employee.profile',
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name === 'employee.profile',
-              }"
-              >My Profile</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'employee.team' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name === 'employee.team',
-            }"
-            v-if="can('team-view')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <Contact
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name === 'employee.team',
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name === 'employee.team',
-              }"
-              >My Team</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'employee.tasks' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('employee.tasks'),
-            }"
-            v-if="can('task-list')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <ListChecksIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('employee.tasks'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('employee.tasks'),
-              }"
-              >My Tasks</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.staff-tasks.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.staff-tasks'),
-            }"
-            v-if="can('staff-task-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <ClipboardList
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.staff-tasks'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.staff-tasks'),
-              }"
-              >Staff Tasks</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.screening.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.screening'),
-            }"
-            v-if="can('screening-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <ClipboardCheck
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.screening'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.screening'),
-              }"
-              >Client Screening</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.projects' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.projects'),
-            }"
-            v-if="can('project-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <FolderKanban
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.projects'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.projects'),
-              }"
-              >Project Lists</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.subscriptions.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.subscriptions'),
-            }"
-            v-if="can('subscription-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <RefreshCw
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.subscriptions'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.subscriptions'),
-              }"
-              >Subscription Lists</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.maintenance.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.maintenance'),
-            }"
-            v-if="can('maintenance-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <Wrench
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.maintenance'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.maintenance'),
-              }"
-              >Maintenance Lists</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.server-storage.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.server-storage'),
-            }"
-            v-if="can('server-storage-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <HardDrive
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.server-storage'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.server-storage'),
-              }"
-              >Server Lists</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.attendances' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name === 'admin.attendances',
-            }"
-            v-if="can('attendance-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <CalendarDays
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name === 'admin.attendances',
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name === 'admin.attendances',
-              }"
-              >Attendance Summary</span
-            >
-          </RouterLink>
-        </div>
-      </div>
-
-      <!-- Administration: employee roster, teams, org structure, clients, and business documents -->
-      <div v-if="showPeople">
-        <button
-          type="button"
-          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
-          style="padding: 0 8px 0 12px"
-          @click="toggleSection('people')"
-        >
-          <span>Administration</span>
-          <ChevronDown
-            class="w-3 h-3 shrink-0 transition-transform duration-150"
-            :class="{ '-rotate-90': collapsedSections.people }"
-          />
-        </button>
-        <div v-show="!collapsedSections.people" class="space-y-0.5">
-          <RouterLink
-            :to="{ name: 'admin.employees' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.employee'),
-            }"
-            v-if="can('employee-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <UsersIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.employee'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.employee'),
-              }"
-              >Employees</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.teams' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.team'),
-            }"
-            v-if="can('team-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <UsersRound
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.team'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.team'),
-              }"
-              >Our Teams</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.clients.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.clients'),
-            }"
-            v-if="can('clients-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <Handshake
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.clients'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.clients'),
-              }"
-              >Our Clients</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.documents.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates') || $route.name?.startsWith('admin.official-memos') || $route.name?.startsWith('admin.meeting-notes') || $route.name?.startsWith('admin.proposals'),
-            }"
-            v-if="canOneOf(['purchase-order-menu', 'invoice-menu', 'payment-receipt-menu', 'letter-menu', 'certificate-menu', 'document-letter-menu', 'meeting-note-menu', 'proposal-menu'])"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <FileStack
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates') || $route.name?.startsWith('admin.official-memos') || $route.name?.startsWith('admin.meeting-notes') || $route.name?.startsWith('admin.proposals'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.documents') || $route.name?.startsWith('admin.purchase-orders') || $route.name?.startsWith('admin.invoices') || $route.name?.startsWith('admin.payment-receipts') || $route.name?.startsWith('admin.letters') || $route.name?.startsWith('admin.certificates') || $route.name?.startsWith('admin.official-memos') || $route.name?.startsWith('admin.meeting-notes') || $route.name?.startsWith('admin.proposals'),
-              }"
-              >Business Documents</span
-            >
-          </RouterLink>
-        </div>
-      </div>
-
-      <!-- Finance: operational cost, cash book, payroll, and staff reports -->
-      <div v-if="showFinance">
-        <button
-          type="button"
-          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
-          style="padding: 0 8px 0 12px"
-          @click="toggleSection('finance')"
-        >
-          <span>Finance</span>
-          <ChevronDown
-            class="w-3 h-3 shrink-0 transition-transform duration-150"
-            :class="{ '-rotate-90': collapsedSections.finance }"
-          />
-        </button>
-        <div v-show="!collapsedSections.finance" class="space-y-0.5">
-          <RouterLink
-            :to="{ name: 'admin.company-finance.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith(
-                'admin.company-finance'
-              ),
-            }"
-            v-if="can('company-finance-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <CircleDollarSign
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.company-finance'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith(
-                  'admin.company-finance'
-                ),
-              }"
-              >Operational Cost</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.company-cash-book.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith(
-                'admin.company-cash-book'
-              ),
-            }"
-            v-if="can('company-cash-book-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <Landmark
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.company-cash-book'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith(
-                  'admin.company-cash-book'
-                ),
-              }"
-              >Company Cash Book</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.payroll.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.payroll'),
-            }"
-            v-if="can('payroll-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <Banknote
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.payroll'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.payroll'),
-              }"
-              >Payroll</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.report.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.report'),
-            }"
-            v-if="can('report-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <BarChart3
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.report'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.report'),
-              }"
-              >Reporting</span
-            >
-          </RouterLink>
-        </div>
-      </div>
-
-      <!-- Tools: standalone utilities -->
-      <div v-if="showTools">
-        <button
-          type="button"
-          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
-          style="padding: 0 8px 0 12px"
-          @click="toggleSection('tools')"
-        >
-          <span>Tools</span>
-          <ChevronDown
-            class="w-3 h-3 shrink-0 transition-transform duration-150"
-            :class="{ '-rotate-90': collapsedSections.tools }"
-          />
-        </button>
-        <div v-show="!collapsedSections.tools" class="space-y-0.5">
-          <RouterLink
-            :to="{ name: 'admin.project-calculator.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith(
-                'admin.project-calculator'
-              ),
-            }"
-            v-if="can('project-calculator-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <CalculatorIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith(
-                  'admin.project-calculator'
-                ),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith(
-                  'admin.project-calculator'
-                ),
-              }"
-              >Project Calculator</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.flowchart.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.flowchart'),
-            }"
-            v-if="can('flowchart-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <Workflow
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.flowchart'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.flowchart'),
-              }"
-              >Flowchart Maker</span
-            >
-          </RouterLink>
-        </div>
-      </div>
-
-      <!-- Company: company profile, assets, credentials, and comms -->
-      <div v-if="showCompany">
-        <button
-          type="button"
-          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
-          style="padding: 0 8px 0 12px"
-          @click="toggleSection('company')"
-        >
-          <span>Company</span>
-          <ChevronDown
-            class="w-3 h-3 shrink-0 transition-transform duration-150"
-            :class="{ '-rotate-90': collapsedSections.company }"
-          />
-        </button>
-        <div v-show="!collapsedSections.company" class="space-y-0.5">
-          <RouterLink
-            :to="{ name: 'admin.company-about.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.company-about'),
-            }"
-            v-if="can('company-about-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <Building2Icon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.company-about'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith(
-                  'admin.company-about'
-                ),
-              }"
-              >Company About</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.assets.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.assets'),
-            }"
-            v-if="can('asset-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <LaptopIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.assets'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.assets'),
-              }"
-              >Assets</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.files-company.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.files-company'),
-            }"
-            v-if="can('files-company-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <FolderClosedIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.files-company'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith(
-                  'admin.files-company'
-                ),
-              }"
-              >Document Files</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.account-password.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith(
-                'admin.account-password'
-              ),
-            }"
-            v-if="can('credential-account-list')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <KeyRoundIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.account-password'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith(
-                  'admin.account-password'
-                ),
-              }"
-              >Credential</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.announcements.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.announcements'),
-            }"
-            v-if="can('announcement-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <MegaphoneIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.announcements'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.announcements'),
-              }"
-              >Announcements</span
-            >
-          </RouterLink>
-        </div>
-      </div>
-
-      <!-- License Manager: license keys for the owner's apps, per product -->
+      <!-- License Manager: Overview, then one entry per product -->
       <div v-if="showLicenseManager">
         <button
           type="button"
-          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
-          style="padding: 0 8px 0 12px"
+          class="w-full flex items-center justify-between px-2.5 pt-3 pb-1 text-ui-over uppercase text-ui-faint hover:text-ui-muted transition-colors"
+          :class="collapsed ? 'lg:hidden' : ''"
+          :aria-expanded="!collapsedSections.licenseManager"
           @click="toggleSection('licenseManager')"
         >
           <span>License Manager</span>
-          <ChevronDown
-            class="w-3 h-3 shrink-0 transition-transform duration-150"
-            :class="{ '-rotate-90': collapsedSections.licenseManager }"
-          />
+          <ChevronDown class="w-3 h-3 shrink-0 transition-transform duration-ui-fast" :class="{ '-rotate-90': collapsedSections.licenseManager }" />
         </button>
-        <div v-show="!collapsedSections.licenseManager" class="space-y-0.5">
+        <div v-if="collapsed" class="hidden lg:block h-px bg-ui-line mx-2 my-2"></div>
+        <div v-show="!collapsedSections.licenseManager || collapsed" class="space-y-px">
           <RouterLink
             v-if="can('license-manager-menu')"
             :to="{ name: 'admin.license-manager.overview' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{ 'nav-link-active': $route.name === 'admin.license-manager.overview' }"
+            :class="itemClass($route.name === 'admin.license-manager.overview')"
             @click="onNavigate"
             @mouseenter="showTooltip"
             @mouseleave="hideTooltip"
           >
-            <KeyIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{ 'text-white': $route.name === 'admin.license-manager.overview' }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{ 'text-white font-semibold': $route.name === 'admin.license-manager.overview' }"
-              >Overview</span
-            >
+            <KeyIcon :class="iconClass($route.name === 'admin.license-manager.overview')" />
+            <span :class="labelClass">Overview</span>
           </RouterLink>
 
           <template v-if="canListLicenses || canSeeVersions">
@@ -1181,164 +420,88 @@ watch(
                   name: canListLicenses ? 'admin.license-manager.licenses.dashboard' : 'admin.license-manager.versions',
                   params: { product: product.code },
                 }"
-                class="nav-link group relative rounded-[10px] transition-colors duration-150"
-                :class="{ 'nav-link-active': canListLicenses ? isLicenseProductRoute(product.code) : isLicenseVersionsRoute(product.code) }"
+                :class="itemClass(canListLicenses ? isLicenseProductRoute(product.code) : isLicenseVersionsRoute(product.code))"
                 @click="onNavigate"
                 @mouseenter="showTooltip"
                 @mouseleave="hideTooltip"
               >
-                <ProductIcon
-                  :product="product"
-                  :size="20"
-                  class="opacity-90"
-                  :class="{ 'opacity-100 ring-2 ring-white/40': isLicenseProductRoute(product.code) || isLicenseVersionsRoute(product.code) }"
-                />
-                <span
-                  class="nav-label text-white/70 text-sm font-medium"
-                  :class="{ 'text-white font-semibold': isLicenseProductRoute(product.code) || isLicenseVersionsRoute(product.code) }"
-                  >{{ product.name }}</span
-                >
+                <ProductIcon :product="product" :size="18" class="shrink-0" />
+                <span :class="labelClass">{{ product.name }}</span>
               </RouterLink>
               <!-- The product's release history, shown while one of its pages is open -->
               <RouterLink
                 v-if="canListLicenses && canSeeVersions && (isLicenseProductRoute(product.code) || isLicenseVersionsRoute(product.code))"
                 :to="{ name: 'admin.license-manager.versions', params: { product: product.code } }"
-                class="nav-link group relative rounded-[10px] transition-colors duration-150"
-                :class="[{ 'nav-link-active': isLicenseVersionsRoute(product.code) }, collapsed ? '' : '!pl-9']"
+                :class="[itemClass(isLicenseVersionsRoute(product.code)), collapsed ? '' : 'ml-5']"
                 @click="onNavigate"
                 @mouseenter="showTooltip"
                 @mouseleave="hideTooltip"
               >
-                <HistoryIcon
-                  class="w-[18px] h-[18px] text-white/45 shrink-0"
-                  :class="{ 'text-white': isLicenseVersionsRoute(product.code) }"
-                />
-                <span
-                  class="nav-label text-white/70 text-sm font-medium"
-                  :class="{ 'text-white font-semibold': isLicenseVersionsRoute(product.code) }"
-                  >Versions</span
-                >
+                <HistoryIcon :class="iconClass(isLicenseVersionsRoute(product.code))" />
+                <span :class="labelClass">Versions</span>
               </RouterLink>
             </template>
           </template>
         </div>
       </div>
 
-      <!-- Insights: analytics dashboards and system audit trail -->
-      <div v-if="showInsights">
-        <button
-          type="button"
-          class="section-title w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left hover:text-white/60 transition-colors duration-150"
-          style="padding: 0 8px 0 12px"
-          @click="toggleSection('insights')"
-        >
-          <span>Insights</span>
-          <ChevronDown
-            class="w-3 h-3 shrink-0 transition-transform duration-150"
-            :class="{ '-rotate-90': collapsedSections.insights }"
-          />
-        </button>
-        <div v-show="!collapsedSections.insights" class="space-y-0.5">
-          <RouterLink
-            :to="{ name: 'admin.analytics.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.analytics'),
-            }"
-            v-if="can('analytics-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
+      <template v-for="section in sectionsAfterLicense" :key="section.key">
+        <div>
+          <button
+            type="button"
+            class="w-full flex items-center justify-between px-2.5 pt-3 pb-1 text-ui-over uppercase text-ui-faint hover:text-ui-muted transition-colors"
+            :class="collapsed ? 'lg:hidden' : ''"
+            :aria-expanded="!collapsedSections[section.key]"
+            @click="toggleSection(section.key)"
           >
-            <LineChart
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.analytics'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.analytics'),
-              }"
-              >Analytics</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.history.dashboard' }"
-            class="nav-link group relative rounded-[10px] transition-colors duration-150"
-            :class="{
-              'nav-link-active': $route.name?.startsWith('admin.history'),
-            }"
-            v-if="can('history-menu')"
-            @click="onNavigate"
-            @mouseenter="showTooltip"
-            @mouseleave="hideTooltip"
-          >
-            <HistoryIcon
-              class="w-[18px] h-[18px] text-white/45 shrink-0"
-              :class="{
-                'text-white': $route.name?.startsWith('admin.history'),
-              }"
-            />
-            <span
-              class="nav-label text-white/70 text-sm font-medium"
-              :class="{
-                'text-white font-semibold': $route.name?.startsWith('admin.history'),
-              }"
-              >History</span
-            >
-          </RouterLink>
-
+            <span>{{ section.title }}</span>
+            <ChevronDown class="w-3 h-3 shrink-0 transition-transform duration-ui-fast" :class="{ '-rotate-90': collapsedSections[section.key] }" />
+          </button>
+          <div v-if="collapsed" class="hidden lg:block h-px bg-ui-line mx-2 my-2"></div>
+          <div v-show="!collapsedSections[section.key] || collapsed" class="space-y-px">
+            <template v-for="item in section.items" :key="item.label">
+              <RouterLink
+                v-if="item.show"
+                :to="item.to"
+                :class="itemClass(item.active())"
+                :aria-current="item.active() ? 'page' : undefined"
+                @click="onNavigate"
+                @mouseenter="showTooltip"
+                @mouseleave="hideTooltip"
+              >
+                <component :is="item.icon" :class="iconClass(item.active())" />
+                <span :class="labelClass">{{ item.label }}</span>
+              </RouterLink>
+            </template>
+          </div>
         </div>
-      </div>
+      </template>
+    </nav>
 
-      <!-- Settings: standalone, outside any section -->
+    <!-- Settings: standalone, pinned to the bottom -->
+    <div class="px-3 py-3 border-t border-ui-line" :class="collapsed ? 'lg:px-2' : ''">
       <RouterLink
         :to="{ name: 'admin.settings.dashboard' }"
-        class="nav-link group relative rounded-[10px] transition-colors duration-150"
-        :class="{
-          'nav-link-active': $route.name?.startsWith('admin.settings'),
-        }"
+        :class="itemClass(settingsActive())"
         @click="onNavigate"
         @mouseenter="showTooltip"
         @mouseleave="hideTooltip"
       >
-        <SettingsIcon
-          class="w-[18px] h-[18px] text-white/45 shrink-0"
-          :class="{
-            'text-white': $route.name?.startsWith('admin.settings'),
-          }"
-        />
-        <span
-          class="nav-label text-white/70 text-sm font-medium"
-          :class="{
-            'text-white font-semibold': $route.name?.startsWith('admin.settings'),
-          }"
-          >Settings</span
-        >
+        <SettingsIcon :class="iconClass(settingsActive())" />
+        <span :class="labelClass">Settings</span>
       </RouterLink>
-    </nav>
-
-    <div class="sidebar-quote px-4 pb-4 mt-auto">
-      <div
-        class="bg-white/15 border border-white/10 rounded-[12px] p-3 flex items-start gap-2.5"
-      >
-        <Sparkles class="w-4 h-4 text-[#4C8DFF] shrink-0 mt-0.5" />
-        <div class="min-w-0">
-          <p class="text-white/80 text-xs font-semibold leading-snug">
-            "Success comes from what you do consistently."
-          </p>
-          <p class="text-white/35 text-[11px] mt-0.5">– Marie Forleo</p>
-        </div>
-      </div>
     </div>
   </aside>
 
   <Teleport to="body">
-    <div v-if="tooltipText" class="sidebar-tooltip" :style="tooltipStyle">
-      {{ tooltipText }}
-    </div>
+    <Transition name="ui-fade">
+      <div
+        v-if="tooltipText"
+        class="fixed z-[60] -translate-y-1/2 pointer-events-none whitespace-nowrap bg-ui-ink text-white text-ui-cap font-medium px-2.5 py-1.5 rounded-ui-control shadow-ui-overlay"
+        :style="tooltipStyle"
+      >
+        {{ tooltipText }}
+      </div>
+    </Transition>
   </Teleport>
 </template>

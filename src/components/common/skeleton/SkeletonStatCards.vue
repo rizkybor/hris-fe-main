@@ -1,4 +1,5 @@
 <script setup>
+// KPI row placeholder (label, value, caption), like the redesign's KPI cards.
 import Skeleton from "./Skeleton.vue";
 
 defineProps({
@@ -8,22 +9,11 @@ defineProps({
 </script>
 
 <template>
-  <div class="grid gap-4" :class="cols">
-    <div
-      v-for="i in count"
-      :key="i"
-      class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5"
-    >
-      <div class="flex items-center justify-between">
-        <div class="flex-1 min-w-0 pr-2">
-          <Skeleton width="90px" height="14px" />
-          <div class="my-3">
-            <Skeleton width="70px" height="28px" />
-          </div>
-          <Skeleton width="110px" height="12px" />
-        </div>
-        <Skeleton width="56px" height="56px" rounded="16px" />
-      </div>
+  <div class="grid gap-3 sm:gap-4" :class="cols" role="status" aria-label="Loading">
+    <div v-for="i in count" :key="i" class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-[18px]">
+      <Skeleton width="88px" height="12px" />
+      <div class="mt-3"><Skeleton width="64px" height="24px" rounded="6px" /></div>
+      <div class="mt-2.5"><Skeleton width="120px" height="10px" /></div>
     </div>
   </div>
 </template>

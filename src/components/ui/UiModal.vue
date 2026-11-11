@@ -12,6 +12,8 @@ const props = defineProps({
   description: { type: String, default: "" },
   size: { type: String, default: "md" }, // sm 440 | md 560 | lg 720
   persistent: { type: Boolean, default: false },
+  // Stacking: confirm dialogs sit above other modals.
+  zIndex: { type: Number, default: 100 },
 });
 const emit = defineEmits(["close"]);
 
@@ -54,7 +56,7 @@ onBeforeUnmount(() => {
 <template>
   <Teleport to="body">
     <Transition name="ui-fade">
-      <div v-if="open" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6">
+      <div v-if="open" class="fixed inset-0 flex items-end sm:items-center justify-center sm:p-6" :style="{ zIndex }">
         <div class="absolute inset-0 bg-ui-ink/30" aria-hidden="true" @click="!persistent && close()"></div>
         <div
           ref="panel"
@@ -70,7 +72,7 @@ onBeforeUnmount(() => {
         >
           <!-- Grabber: phones only -->
           <div class="sm:hidden w-9 h-[5px] rounded-full bg-ui-line-strong mx-auto mt-2" aria-hidden="true"></div>
-          <header v-if="title || $slots.header" class="flex items-start gap-3 px-5 sm:px-6 pt-4 sm:pt-5 pb-4 border-b border-ui-line">
+          <header v-if="title || $slots.header" :class="['flex items-start gap-3 px-5 sm:px-6 pt-4 sm:pt-5 pb-4', $slots.default ? 'border-b border-ui-line' : '']">
             <slot name="header">
               <div class="flex-1 min-w-0">
                 <h2 class="text-ui-h2 text-ui-ink">{{ title }}</h2>
@@ -87,7 +89,7 @@ onBeforeUnmount(() => {
               <X class="w-[18px] h-[18px]" />
             </button>
           </header>
-          <div class="flex-1 overflow-y-auto px-5 sm:px-6 py-5"><slot /></div>
+          <div v-if="$slots.default" class="flex-1 overflow-y-auto px-5 sm:px-6 py-5"><slot /></div>
           <footer
             v-if="$slots.footer"
             class="flex items-center justify-end gap-2 px-5 sm:px-6 pt-3.5 border-t border-ui-line bg-ui-subtle/60 sm:rounded-b-ui-modal pb-[max(14px,env(safe-area-inset-bottom))]"

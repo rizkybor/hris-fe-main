@@ -7,7 +7,7 @@ import { RouterLink } from "vue-router";
 import { Loader2 } from "lucide-vue-next";
 
 const props = defineProps({
-  variant: { type: String, default: "primary" }, // primary | secondary | ghost | danger
+  variant: { type: String, default: "primary" }, // primary | secondary | ghost | danger | destructive
   size: { type: String, default: "md" }, // sm | md | lg
   type: { type: String, default: "button" },
   icon: { type: [Object, Function], default: null },
@@ -24,6 +24,7 @@ const VARIANTS = {
   secondary: "bg-ui-surface text-ui-ink border-ui-line-strong hover:bg-ui-subtle",
   ghost: "bg-transparent text-ui-text border-transparent hover:bg-ui-hover",
   danger: "bg-ui-surface text-ui-bad border-ui-bad/30 hover:bg-ui-bad-soft",
+  destructive: "bg-ui-bad text-white border-transparent hover:bg-ui-bad/90",
 };
 const SIZES = {
   sm: "h-[30px] px-2.5 text-ui-cap gap-1.5 rounded-[7px]",

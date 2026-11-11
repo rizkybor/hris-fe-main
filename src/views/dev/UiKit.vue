@@ -3,7 +3,12 @@
 // and token in one place, to check them against the Figma file.
 import { computed, ref } from "vue";
 import { Plus, Download, Search, Mail, Trash2 } from "lucide-vue-next";
-import { UiBadge, UiButton, UiCard, UiInput, UiModal, UiPagination, UiSelect, UiSwitch, UiTable } from "@/components/ui";
+import { UiBadge, UiButton, UiCard, UiConfirmDialog, UiInput, UiModal, UiPagination, UiSelect, UiSpinner, UiSwitch, UiTable } from "@/components/ui";
+import LoadingOverlay from "@/components/common/LoadingOverlay.vue";
+import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
+import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
+import { useAlertModalStore } from "@/stores/alertModal";
 import { useToastStore } from "@/stores/toast";
 import { APP_VERSION, APP_VERSION_SHORT } from "@/utils/appVersion";
 
@@ -52,6 +57,26 @@ const rupiah = (n) => `Rp ${n.toLocaleString("id-ID")}`;
 
 // Modal demo
 const confirmOpen = ref(false);
+const confirmBusy = ref(false);
+const warnOpen = ref(false);
+const overlay = ref(false);
+const alertModal = useAlertModalStore();
+const deleteInvoice = () => {
+  confirmBusy.value = true;
+  setTimeout(() => {
+    confirmBusy.value = false;
+    confirmOpen.value = false;
+    toast.success("Invoice deleted.");
+  }, 1200);
+};
+const showOverlay = () => {
+  overlay.value = true;
+  setTimeout(() => (overlay.value = false), 2000);
+};
+const globalConfirm = async () => {
+  const ok = await alertModal.confirm("Send payslips for November to 42 employees?", { title: "Send payslips", type: "info", confirmText: "Send" });
+  if (ok) toast.success("Payslips queued.");
+};
 const formOpen = ref(false);
 
 // Motion demo
@@ -162,9 +187,28 @@ const removeItem = (i) => listItems.value.splice(i, 1);
     <UiCard title="Overlays" subtitle="Modal on desktop, bottom sheet on phones; toast for short confirmations">
       <div class="flex flex-wrap gap-3">
         <UiButton variant="danger" :icon="Trash2" @click="confirmOpen = true">Delete invoice…</UiButton>
+        <UiButton variant="secondary" @click="warnOpen = true">Warning confirm</UiButton>
+        <UiButton variant="secondary" @click="globalConfirm">Global confirm()</UiButton>
+        <UiButton variant="secondary" @click="alertModal.alert('Your session will expire in 5 minutes.', { title: 'Heads up', type: 'warning' })">Global alert()</UiButton>
         <UiButton variant="secondary" @click="formOpen = true">Form modal</UiButton>
         <UiButton variant="secondary" @click="toast.success('License created.', 'The PDF is downloading.')">Success toast</UiButton>
         <UiButton variant="secondary" @click="toast.error('Could not save', 'Check your connection and try again.')">Error toast</UiButton>
+      </div>
+    </UiCard>
+
+    <UiCard title="Loaders" subtitle="Skeletons mirror the layout they replace; spinner for small areas; overlay for blocking work">
+      <div class="space-y-6">
+        <SkeletonStatCards :count="4" />
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonTable :rows="4" :cols="4" />
+          <SkeletonList :rows="3" />
+        </div>
+        <div class="flex flex-wrap items-center gap-6">
+          <UiSpinner :center="false" />
+          <UiSpinner :center="false" label="Loading attendance…" />
+          <UiButton loading>Saving</UiButton>
+          <UiButton variant="secondary" @click="showOverlay">Full-screen overlay (2s)</UiButton>
+        </div>
       </div>
     </UiCard>
 
@@ -208,13 +252,24 @@ const removeItem = (i) => listItems.value.splice(i, 1);
       </div>
     </UiCard>
 
-    <UiModal v-model:open="confirmOpen" title="Delete invoice INV-2026-114?" description="The draft and its line items are removed. This can't be undone." size="sm">
-      <p class="text-ui-small text-ui-muted">Confirm dialogs keep their message short; the action button names what happens.</p>
-      <template #footer="{ close }">
-        <UiButton variant="secondary" @click="close">Cancel</UiButton>
-        <UiButton class="!bg-ui-bad hover:!bg-ui-bad/90" @click="close(); toast.success('Invoice deleted.')">Delete</UiButton>
-      </template>
-    </UiModal>
+    <UiConfirmDialog
+      v-model:open="confirmOpen"
+      type="danger"
+      title="Delete invoice INV-2026-114?"
+      message="The draft and its line items are removed. This can't be undone."
+      confirm-text="Delete"
+      :loading="confirmBusy"
+      @confirm="deleteInvoice"
+    />
+    <UiConfirmDialog
+      v-model:open="warnOpen"
+      type="warning"
+      title="Discard changes?"
+      message="You have unsaved edits on this employee. Leaving now discards them."
+      confirm-text="Discard"
+      @confirm="warnOpen = false"
+    />
+    <LoadingOverlay :show="overlay" text="Signing you in" />
 
     <UiModal v-model:open="formOpen" title="New announcement">
       <div class="space-y-4">

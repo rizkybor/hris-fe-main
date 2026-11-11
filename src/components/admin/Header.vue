@@ -6,7 +6,6 @@ import {
   ReceiptIcon,
   SettingsIcon,
   LogOutIcon,
-  MenuIcon,
 } from "lucide-vue-next";
 import ConfirmActionModal from "@/components/common/ConfirmationModal.vue";
 import NotificationBell from "@/components/admin/NotificationBell.vue";
@@ -454,119 +453,84 @@ const confirmLogout = async () => {
 </script>
 
 <template>
-  <header
-    class="page-header bg-white border-b border-[#DCDEDD] px-3 sm:px-5 py-2.5 sm:py-3"
-  >
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3 sm:gap-4">
-        <button
-          class="lg:hidden w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
-          @click="emit('toggle-sidebar')"
-        >
-          <MenuIcon class="w-[18px] h-[18px]" />
-        </button>
-        <div>
-          <h2 class="text-brand-dark text-base sm:text-lg font-bold leading-tight">
-            {{ pageTitle }}
-          </h2>
-          <p class="hidden sm:block text-brand-light text-xs font-normal mt-0.5">
-            {{ pageSubtitle }}
-          </p>
-        </div>
-      </div>
+  <header class="page-header h-14 shrink-0 flex items-center gap-3 px-4 sm:px-6 bg-ui-bg border-b border-ui-line font-sans">
+    <!-- Page title (from the route), subtitle on larger screens -->
+    <div class="flex-1 min-w-0">
+      <h2 class="text-[15px] leading-5 font-semibold text-ui-ink truncate">{{ pageTitle }}</h2>
+      <p class="hidden sm:block text-ui-cap text-ui-muted truncate">{{ pageSubtitle }}</p>
+    </div>
 
-      <div class="flex items-center gap-3">
-        <!-- Action Buttons -->
-        <div class="hidden sm:flex items-center gap-1">
-          <NotificationBell />
+    <div class="flex items-center gap-1">
+      <NotificationBell />
+      <RouterLink
+        :to="{ name: 'admin.settings.dashboard' }"
+        class="hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
+        aria-label="Settings"
+      >
+        <SettingsIcon class="w-[18px] h-[18px]" />
+      </RouterLink>
+    </div>
+
+    <div class="hidden sm:block w-px h-6 bg-ui-line mx-1"></div>
+
+    <!-- User menu -->
+    <div ref="profileMenuRef" class="relative z-50">
+      <button
+        type="button"
+        class="flex items-center gap-2.5 rounded-[10px] py-1 pl-1 pr-1.5 hover:bg-ui-hover transition-colors focus:outline-none focus-visible:shadow-ui-focus"
+        aria-haspopup="true"
+        :aria-expanded="isOpen"
+        @click="isOpen = !isOpen"
+      >
+        <Avatar :src="user?.profile_photo" :alt="user?.name" size="w-8 h-8" />
+        <div class="hidden md:block text-left max-w-[160px]">
+          <p class="text-ui-small font-medium text-ui-ink leading-tight truncate">{{ user?.name }}</p>
+          <p class="text-[11px] text-ui-muted leading-tight mt-0.5 truncate capitalize">{{ join(user?.roles, ", ") }}</p>
+        </div>
+        <ChevronDownIcon class="w-4 h-4 text-ui-faint shrink-0 transition-transform duration-ui-fast" :class="{ 'rotate-180': isOpen }" />
+      </button>
+
+      <Transition name="ui-pop">
+        <div
+          v-if="isOpen"
+          role="menu"
+          class="absolute right-0 top-full mt-2 w-60 bg-ui-surface border border-ui-line rounded-[12px] shadow-ui-overlay p-1.5 origin-top-right"
+        >
+          <div class="px-2.5 py-2.5 mb-1 border-b border-ui-line">
+            <p class="text-ui-small font-semibold text-ui-ink truncate">{{ user?.name }}</p>
+            <p class="text-ui-cap text-ui-muted truncate">{{ user?.email }}</p>
+            <p class="text-[11px] text-ui-faint mt-0.5 truncate capitalize">{{ join(user?.roles, ", ") }}</p>
+          </div>
+          <RouterLink
+            :to="{ name: 'employee.profile.edit' }"
+            role="menuitem"
+            class="flex items-center gap-2.5 h-9 px-2.5 rounded-ui-control text-ui-small text-ui-text hover:bg-ui-hover hover:text-ui-ink transition-colors"
+            @click="isOpen = false"
+          >
+            <UserIcon class="w-4 h-4 text-ui-muted" />
+            Profil Pengguna
+          </RouterLink>
           <RouterLink
             :to="{ name: 'admin.settings.dashboard' }"
-            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
+            role="menuitem"
+            class="flex items-center gap-2.5 h-9 px-2.5 rounded-ui-control text-ui-small text-ui-text hover:bg-ui-hover hover:text-ui-ink transition-colors"
+            @click="isOpen = false"
           >
-            <SettingsIcon class="w-[18px] h-[18px]" />
+            <SettingsIcon class="w-4 h-4 text-ui-muted" />
+            Pengaturan Sistem
           </RouterLink>
-        </div>
-
-        <!-- Divider -->
-        <div class="hidden sm:block w-px h-6 bg-[#DCDEDD] mx-2"></div>
-
-        <!-- User Profile -->
-        <div ref="profileMenuRef" class="relative z-50">
+          <div class="h-px bg-ui-line my-1"></div>
           <button
             type="button"
-            class="flex items-center gap-2 sm:gap-2.5 rounded-full hover:bg-gray-50 transition-colors duration-150 py-1 pr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0C51D9] focus-visible:ring-offset-1"
-            aria-haspopup="true"
-            :aria-expanded="isOpen"
-            @click="isOpen = !isOpen"
+            role="menuitem"
+            class="w-full flex items-center gap-2.5 h-9 px-2.5 rounded-ui-control text-ui-small text-ui-bad hover:bg-ui-bad-soft transition-colors text-left"
+            @click="isOpen = false; handleLogout()"
           >
-            <Avatar :src="user?.profile_photo" :alt="user?.name" size="w-8 h-8 sm:w-9 sm:h-9" />
-            <div class="hidden md:block text-left">
-              <p class="text-brand-dark text-sm font-semibold leading-tight">
-                {{ user?.name }}
-              </p>
-              <p class="text-gray-400 text-xs font-medium leading-tight mt-0.5">
-                {{ join(user?.roles, ", ").toUpperCase() }}
-              </p>
-            </div>
-            <ChevronDownIcon
-              class="w-4 h-4 text-gray-400 shrink-0 transition-transform duration-150"
-              :class="{ 'rotate-180': isOpen }"
-            />
+            <LogOutIcon class="w-4 h-4" />
+            Keluar
           </button>
-
-          <!-- Dropdown Menu -->
-          <Transition name="menu-pop">
-            <div
-              v-if="isOpen"
-              role="menu"
-              class="absolute right-0 top-full mt-2 w-56 bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg py-2 origin-top-right"
-            >
-              <div class="px-4 py-3 border-b border-[#DCDEDD]">
-                <p class="text-sm font-semibold text-gray-900 truncate">
-                  {{ user?.name }}
-                </p>
-                <p class="text-xs text-gray-500 truncate">{{ user?.email }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">
-                  {{ join(user?.roles, ", ").toUpperCase() }}
-                </p>
-              </div>
-
-              <div class="py-1">
-                <RouterLink
-                  :to="{ name: 'employee.profile.edit' }"
-                  role="menuitem"
-                  class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                  @click="isOpen = false"
-                >
-                  <UserIcon class="w-4 h-4 text-gray-400" />
-                  Profil Pengguna
-                </RouterLink>
-                <RouterLink
-                  :to="{ name: 'admin.settings.dashboard' }"
-                  role="menuitem"
-                  class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                  @click="isOpen = false"
-                >
-                  <SettingsIcon class="w-4 h-4 text-gray-400" />
-                  Pengaturan Sistem
-                </RouterLink>
-              </div>
-
-              <div class="border-t border-[#DCDEDD] py-1">
-                <button
-                  type="button"
-                  role="menuitem"
-                  @click="isOpen = false; handleLogout()"
-                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer text-left"
-                >
-                  <LogOutIcon class="w-4 h-4" />
-                  Keluar
-                </button>
-              </div>
-            </div>
-          </Transition>
         </div>
-      </div>
+      </Transition>
     </div>
 
     <ConfirmActionModal
@@ -582,15 +546,3 @@ const confirmLogout = async () => {
     />
   </header>
 </template>
-
-<style scoped>
-.menu-pop-enter-active,
-.menu-pop-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.menu-pop-enter-from,
-.menu-pop-leave-to {
-  opacity: 0;
-  transform: scale(0.96) translateY(-4px);
-}
-</style>

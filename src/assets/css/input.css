@@ -62,11 +62,6 @@ html {
     background: linear-gradient(265.5deg, #0C51D9 5.45%, #6F96E3 52%, #0C51D9 100.36%);
 }
 
-/* Same dark navy identity as .main-card's hero gradient, reoriented
-   vertically for a tall side panel instead of a wide card. */
-.sidebar-gradient {
-    background: linear-gradient(180deg, #040724 0%, #0C1448 50%, #040724 100%);
-}
 
 .blue-btn-shadow {
     box-shadow: 2px 2px 1px 0px #6197FF8C inset;
@@ -290,67 +285,8 @@ html {
     animation: scroll-hint-nudge 1.2s ease-in-out infinite;
 }
 
-/* Button and link styles */
-.nav-link {
-    display: flex;
-    padding: 8px 12px;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 10px;
-    align-self: stretch;
-    background: transparent;
-}
 
-.nav-link:hover {
-    background: rgba(255, 255, 255, 0.06);
-}
 
-.nav-link-active {
-    display: flex;
-    padding: 8px 12px 8px 9px;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 10px;
-    align-self: stretch;
-    background: rgba(76, 141, 255, 0.14);
-    border-left: 3px solid #4C8DFF;
-}
-
-/* Sidebar icon-rail collapse. The .is-collapsed class can be present at
-   any viewport width, but the rail only makes sense once the sidebar is
-   a persistent panel rather than a mobile overlay, so these rules are
-   scoped to the same breakpoint as Tailwind's `lg:` (1024px). */
-@media (min-width: 1024px) {
-    #sidebar.is-collapsed .nav-link,
-    #sidebar.is-collapsed .nav-link-active {
-        justify-content: center;
-        padding: 10px 0;
-        border-left: none;
-    }
-
-    #sidebar.is-collapsed .sidebar-brand-text,
-    #sidebar.is-collapsed .section-title,
-    #sidebar.is-collapsed .sidebar-quote,
-    #sidebar.is-collapsed .nav-label {
-        display: none;
-    }
-}
-
-/* Floating label shown for a collapsed nav-link on hover, teleported to
-   <body> so it isn't clipped by the sidebar's scrollable nav container. */
-.sidebar-tooltip {
-    position: fixed;
-    white-space: nowrap;
-    background: #0C1C3C;
-    color: #FFF;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 8px 14px;
-    border-radius: 8px;
-    transform: translateY(-50%);
-    pointer-events: none;
-    z-index: 60;
-}
 
 .btn-primary {
     display: flex;
@@ -379,19 +315,6 @@ html {
     box-shadow: -2px 2px 1px 0 #1A2570 inset, 2px 2px 1px 0 rgba(26, 37, 112, 0.55) inset;
 }
 
-/* Section headers (light text for the dark sidebar-gradient background) */
-.section-title {
-    color: rgba(255, 255, 255, 0.35);
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: normal;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-    padding-left: 12px;
-}
 
 /* Badge styles */
 .badge-expert {
@@ -475,16 +398,19 @@ html {
 @keyframes ui-scale-in { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
 @keyframes ui-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
 
+/* Fill mode is "backwards", never "both": a transform animation that stays
+   filled after it ends makes the element a containing block, so fixed
+   overlays inside a page would be positioned against the page. */
 /* One-shot entrance animations */
-.ui-anim-fade { animation: ui-fade-in var(--ui-dur-base) var(--ui-ease-out) both; }
-.ui-anim-fade-up { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) both; }
-.ui-anim-scale { animation: ui-scale-in var(--ui-dur-base) var(--ui-ease-out) both; }
+.ui-anim-fade { animation: ui-fade-in var(--ui-dur-base) var(--ui-ease-out) backwards; }
+.ui-anim-fade-up { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) backwards; }
+.ui-anim-scale { animation: ui-scale-in var(--ui-dur-base) var(--ui-ease-out) backwards; }
 /* Page content when a route opens (enter only: navigation is never held up) */
-.ui-page-enter { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) both; }
+.ui-page-enter { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) backwards; }
 
 /* Lists and card grids: children rise in one after another; only the
    first 8 are staggered so long lists are not slowed down. */
-.ui-stagger > * { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) both; animation-delay: 280ms; }
+.ui-stagger > * { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) backwards; animation-delay: 280ms; }
 .ui-stagger > :nth-child(1) { animation-delay: 0ms; }
 .ui-stagger > :nth-child(2) { animation-delay: 35ms; }
 .ui-stagger > :nth-child(3) { animation-delay: 70ms; }
@@ -495,9 +421,9 @@ html {
 .ui-stagger > :nth-child(8) { animation-delay: 245ms; }
 
 /* Dialog panel: scales in on desktop, slides up as a sheet on phones */
-.ui-dialog { animation: ui-scale-in var(--ui-dur-base) var(--ui-ease-out) both; }
+.ui-dialog { animation: ui-scale-in var(--ui-dur-base) var(--ui-ease-out) backwards; }
 @media (max-width: 639px) {
-    .ui-dialog { animation: ui-sheet-up var(--ui-dur-slow) var(--ui-ease-out) both; }
+    .ui-dialog { animation: ui-sheet-up var(--ui-dur-slow) var(--ui-ease-out) backwards; }
 }
 
 /* Vue <Transition name="ui-fade"> / "ui-pop" (menus, popovers) */
