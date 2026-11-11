@@ -4,7 +4,7 @@ import { ref, computed, onMounted } from "vue";
 import { UiAlert, UiButton, UiInput } from "@/components/ui";
 import { AtSign, Lock } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
-import LoadingOverlay from "@/components/common/LoadingOverlay.vue"
+import ButterflyLoader from "@/components/auth/ButterflyLoader.vue";
 
 
 const authStore = useAuthStore();
@@ -27,6 +27,8 @@ const form = ref({
 onMounted(() => {
   authStore.error = null;
   authStore.success = null;
+  // Warm the loader's logo so the sign-in screen never shows up empty.
+  new Image().src = "/images/jcd-logo-light.png";
 });
 
 const handleSubmit = async () => {
@@ -39,7 +41,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <LoadingOverlay :show="loading" :text="$t('auth.login.authenticating')" />
+  <ButterflyLoader :show="loading" :text="$t('auth.login.authenticating')" />
 
   <div class="space-y-7">
     <div>

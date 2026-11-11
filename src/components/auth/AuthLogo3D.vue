@@ -35,7 +35,13 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   unmounted = true;
-  stop?.();
+  // Cleaning up the graphics must never get in the way of leaving the page
+  // (in development Vue rethrows errors from this hook mid-navigation).
+  try {
+    stop?.();
+  } catch (error) {
+    console.error(error);
+  }
 });
 </script>
 

@@ -603,7 +603,8 @@ export async function start(host, onReady) {
     io.disconnect();
     geometry.dispose();
     faceTexture.dispose();
-    logo.traverse((o) => o.isMesh && o.material.forEach((m) => m.dispose()));
+    // Pieces carry [face, edge] materials, the hit area a single one.
+    logo.traverse((o) => o.isMesh && [].concat(o.material).forEach((m) => m.dispose()));
     face.dispose();
     edge.dispose();
     renderer.dispose();
