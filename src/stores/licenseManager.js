@@ -42,6 +42,8 @@ const toApiPayload = (payload) => {
     duration: isTerm ? payload.duration : null,
     expires_at: isCustom ? payload.expires_at || null : null,
     max_devices: Number(payload.max_devices),
+    // Create only (the API ignores it on update).
+    key_mode: payload.key_mode || "per_device",
     notes: payload.notes || null,
     is_active: !!payload.is_active,
     // Only meaningful for Lifetime; blank lets the API use the product's
@@ -507,8 +509,13 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
     /* =============================
      * CERTIFICATE PDF (blob download, keeps the Bearer token)
      * ============================= */
-    async downloadCertificate(id, fallbackName = "License.pdf") {
-      const response = await axiosInstance.get(`${this.base}/${id}/certificate`, { responseType: "blob" });
+    // keyId: a certificate for that one key (one key per device) instead
+    // of the whole license.
+    async downloadCertificate(id, fallbackName = "License.pdf", keyId = null) {
+      const response = await axiosInstance.get(`${this.base}/${id}/certificate`, {
+        responseType: "blob",
+        params: keyId ? { key_id: keyId } : undefined,
+      });
       const disposition = response.headers?.["content-disposition"] || "";
       const match = /filename="?([^";]+)"?/i.exec(disposition);
       const url = URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
@@ -528,8 +535,8 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
     },
 
     // A 7-day signed link to the certificate PDF, for a WhatsApp message.
-    async createCertificateShareLink(id, phone = null) {
-      const { data } = await axiosInstance.post(`${this.base}/${id}/certificate/share-link`, { phone });
+    async createCertificateShareLink(id, phone = null, keyId = null) {
+      const { data } = await axiosInstance.post(`${this.base}/${id}/certificate/share-link`, { phone, key_id: keyId || undefined });
       return data.data;
     },
 
