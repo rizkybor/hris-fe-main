@@ -51,6 +51,7 @@ import {
   planAllowedOn,
   platformChipClass,
   ORGANIZATION_TYPE_OPTIONS,
+  KEY_MODE_OPTIONS,
   requiredFields,
   requiredFieldLabel,
   formatAddress,
@@ -161,6 +162,13 @@ const selectPlatform = (platform) => {
   if (props.isEdit) return;
   form.value.platform = platform;
   if (!planAllowedOn(platform, form.value.plan)) selectPlan("professional");
+};
+
+// One key per device vs one shared key; fixed after create.
+const perDevice = computed(() => form.value.key_mode === "per_device");
+const keyModeIcon = (value) => (value === "per_device" ? KeyRound : Users);
+const selectKeyMode = (mode) => {
+  if (!props.isEdit) form.value.key_mode = mode;
 };
 
 // Max devices stepper (1-100).
@@ -557,6 +565,33 @@ const secondaryBtn =
           </div>
           <p v-if="fieldError('type')" class="text-xs text-red-600 -mt-3 mb-5">{{ fieldError("type") }}</p>
 
+          <!-- Key mode: one key per device or one shared key -->
+          <div data-field="key_mode" class="mb-5">
+            <p class="block text-brand-dark text-sm font-semibold mb-1.5">Keys</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                v-for="option in KEY_MODE_OPTIONS"
+                :key="option.value"
+                type="button"
+                :disabled="isEdit && form.key_mode !== option.value"
+                @click="selectKeyMode(option.value)"
+                class="flex items-start gap-2.5 px-3.5 py-3 rounded-[12px] border-2 bg-white text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                :class="form.key_mode === option.value ? 'border-violet-500 ring-2 ring-violet-500/20 bg-violet-50/40' : 'border-[#DCDEDD] hover:border-violet-300'"
+                :aria-pressed="form.key_mode === option.value"
+              >
+                <component :is="keyModeIcon(option.value)" class="w-[18px] h-[18px] text-violet-600 shrink-0 mt-0.5" />
+                <span class="flex-1 min-w-0">
+                  <span class="block text-sm font-bold text-brand-dark">{{ option.label }}</span>
+                  <span class="block text-xs text-brand-light leading-snug">{{ option.note }}</span>
+                </span>
+                <Lock v-if="isEdit && form.key_mode === option.value" class="w-4 h-4 text-brand-light shrink-0" />
+                <CheckCircle2 v-else-if="form.key_mode === option.value" class="w-[18px] h-[18px] text-violet-600 shrink-0" />
+              </button>
+            </div>
+            <p v-if="isEdit" class="text-xs text-brand-light mt-2">The key mode is set when the license is created.</p>
+            <p v-if="fieldError('key_mode')" class="text-xs text-red-600 mt-2">{{ fieldError("key_mode") }}</p>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div data-field="max_devices">
               <label for="license-max_devices" class="block text-brand-dark text-sm font-semibold mb-1.5">
@@ -594,7 +629,15 @@ const secondaryBtn =
                   <Plus class="w-4 h-4" />
                 </button>
               </div>
-              <p v-if="!fieldError('max_devices')" class="text-xs text-brand-light mt-1.5">Devices that can use this key at once.</p>
+              <p v-if="!fieldError('max_devices')" class="text-xs text-brand-light mt-1.5">
+                {{
+                  perDevice
+                    ? isEdit
+                      ? "One key per device; raising it adds keys."
+                      : `${Number(form.max_devices) || 0} unique key(s) are generated, one per device.`
+                    : "Devices that can use this key at once."
+                }}
+              </p>
               <p v-else class="text-xs text-red-600 mt-1.5">{{ fieldError("max_devices") }}</p>
             </div>
 
@@ -701,9 +744,16 @@ const secondaryBtn =
               <dt class="flex items-center gap-1.5 text-brand-light"><MonitorSmartphone class="w-4 h-4" /> Max devices</dt>
               <dd class="font-semibold text-brand-dark">{{ display(form.max_devices) }}</dd>
             </div>
+            <div class="flex items-center justify-between gap-3">
+              <dt class="flex items-center gap-1.5 text-brand-light"><KeyRound class="w-4 h-4" /> Keys</dt>
+              <dd class="font-semibold text-brand-dark text-right">
+                {{ perDevice ? `${display(form.max_devices)} · one per device` : "One shared key" }}
+              </dd>
+            </div>
             <div class="pt-3.5 border-t border-[#F1F1F1]">
               <dt class="flex items-center gap-1.5 text-brand-light mb-1.5">
-                <KeyRound class="w-4 h-4" /> {{ licenseKey ? "Key" : keyPreviews.length > 1 ? "Key previews (2 keys)" : "Key preview" }}
+                <KeyRound class="w-4 h-4" />
+                {{ licenseKey ? (perDevice ? "Key 1" : "Key") : keyPreviews.length > 1 ? "Key previews (2 platforms)" : perDevice ? "Key 1 preview" : "Key preview" }}
               </dt>
               <dd class="space-y-1.5">
                 <p
@@ -712,6 +762,9 @@ const secondaryBtn =
                   class="font-mono text-xs font-bold tracking-wider text-brand-dark bg-slate-50 border border-dashed border-[#DCDEDD] rounded-[10px] px-3 py-2 break-all"
                 >
                   {{ preview }}
+                </p>
+                <p v-if="perDevice && !licenseKey && Number(form.max_devices) > 1" class="text-[11px] text-brand-light">
+                  + {{ Number(form.max_devices) - 1 }} more key(s){{ keyPreviews.length > 1 ? " per platform" : "" }} with the same number.
                 </p>
               </dd>
             </div>

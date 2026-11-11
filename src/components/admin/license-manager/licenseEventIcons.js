@@ -24,6 +24,8 @@ import {
   Mail,
   MessageCircle,
   ExternalLink,
+  KeyRound,
+  KeySquare,
 } from "lucide-vue-next";
 
 export const EVENT_ICONS = {
@@ -48,6 +50,8 @@ export const EVENT_ICONS = {
   denied_inactive: CircleSlash,
   denied_expired: CalendarX2,
   denied_wrong_platform: MonitorX,
+  denied_key_used: KeyRound,
+  denied_key_in_use: KeySquare,
 };
 
 export const eventIcon = (event) => EVENT_ICONS[event?.event] || Activity;

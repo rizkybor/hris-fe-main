@@ -365,6 +365,9 @@ export const licenseToForm = (license) => {
     duration: hasExpiry ? "custom" : defaultDurationFor(plan),
     expires_at: hasExpiry ? toDateInput(license.expires_at) : "",
     max_devices: license?.max_devices ?? planDefaultMaxDevices(plan),
+    // per_device: one unique key per device (new licenses default to it);
+    // shared: one key for every device. Fixed after create.
+    key_mode: license?.key_mode || "per_device",
     // Lifetime only: the major version the license covers (blank = the
     // product's current major, filled in by the API).
     updates_major: license?.updates_major ?? "",
@@ -526,6 +529,21 @@ export const EVENT_TYPES = {
   denied_inactive: { label: "Denied: license switched off", tone: "red", group: "Denied" },
   denied_expired: { label: "Denied: license expired", tone: "red", group: "Denied" },
   denied_wrong_platform: { label: "Denied: wrong platform", tone: "red", group: "Denied" },
+  denied_key_used: { label: "Denied: key already used", tone: "red", group: "Denied" },
+  denied_key_in_use: { label: "Denied: key in use on another device", tone: "red", group: "Denied" },
+};
+
+// Key modes, offered on create only.
+export const KEY_MODE_OPTIONS = [
+  { value: "per_device", label: "One key per device", note: "Each device gets its own key; a released key can't be used again." },
+  { value: "shared", label: "One shared key", note: "Every device uses the same key, up to Max devices." },
+];
+
+// Per-device key status: label + dot/text classes.
+export const KEY_STATUS = {
+  available: { label: "Available", dot: "bg-emerald-500", text: "text-emerald-700", chip: "bg-emerald-50 text-emerald-700" },
+  in_use: { label: "In use", dot: "bg-blue-500", text: "text-blue-700", chip: "bg-blue-50 text-blue-700" },
+  used: { label: "Used", dot: "bg-gray-400", text: "text-gray-500", chip: "bg-gray-100 text-gray-500" },
 };
 
 export const EVENT_TONE_CLASS = {

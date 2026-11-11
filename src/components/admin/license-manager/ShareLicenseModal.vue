@@ -30,6 +30,8 @@ const keys = computed(() =>
   [props.license, ...(props.license.bundle || [])].sort((a, b) => (a.platform === "mac" ? -1 : b.platform === "mac" ? 1 : 0))
 );
 const isBundle = computed(() => keys.value.length > 1);
+const perDevice = computed(() => props.license.key_mode === "per_device");
+const MAX_LISTED_KEYS = 10;
 const contactName = computed(() => props.license.contact_name || props.license.licensee_name || "");
 
 const email = ref({ to: props.license.licensee_email || "", recipient_name: contactName.value, cc: "", message: "" });
@@ -39,15 +41,33 @@ let waEdited = false;
 const buildMessage = () => {
   const name = wa.value.recipient_name.trim();
   const lines = [name ? `Dear ${name},` : "Dear Sir/Madam,", "", `Thank you for choosing ${product.value}. Here is your ${product.value} ${planLabel(props.license)} license.`, ""];
-  for (const key of keys.value) lines.push(`${isBundle.value ? `${key.platform_label} key` : "License key"}: *${key.key}*`);
-  if (isBundle.value) lines.push("(Use the Mac key on a Mac and the iPad key on an iPad.)");
+  if (perDevice.value) {
+    // One key per device: list the keys (up to 10 per platform), otherwise
+    // point to the certificate's Device Keys page.
+    for (const license of keys.value) {
+      const list = license.keys || [];
+      const title = isBundle.value ? `${license.platform_label} keys` : "License keys";
+      if (list.length && list.length <= MAX_LISTED_KEYS) {
+        lines.push(`${title} (one per device):`);
+        for (const k of list) lines.push(`${k.position}. *${k.key}*${k.status === "available" ? "" : ` (${k.status === "used" ? "used" : "in use"})`}`);
+      } else {
+        lines.push(`${title}: ${list.length || license.max_devices} keys, one per device, listed on the Device Keys page of the certificate.`);
+      }
+      lines.push("");
+    }
+    lines.push("Each key works on one device only; a key whose device was released cannot be used again.");
+    if (isBundle.value) lines.push("(Use the Mac keys on a Mac and the iPad keys on an iPad.)");
+  } else {
+    for (const key of keys.value) lines.push(`${isBundle.value ? `${key.platform_label} key` : "License key"}: *${key.key}*`);
+    if (isBundle.value) lines.push("(Use the Mac key on a Mac and the iPad key on an iPad.)");
+  }
   lines.push(
     "",
     "Download your license certificate (PDF):",
     LINK_PLACEHOLDER,
     "(The link is valid for 7 days.)",
     "",
-    `To activate, open ${product.value}, open License from the plan chip next to the app name, then paste the key. Please keep the key private.`,
+    `To activate, open ${product.value}, open License from the plan chip next to the app name, then paste ${perDevice.value ? "one key per device" : "the key"}. Please keep ${perDevice.value ? "the keys" : "the key"} private.`,
     "",
     "Kind regards,",
     "PT Jendela Cakra Digital"
