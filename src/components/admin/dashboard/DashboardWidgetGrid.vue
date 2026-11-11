@@ -140,7 +140,7 @@ const handleResetLayout = async () => {
           <button type="button" class="h-8 px-3 rounded-ui-control text-ui-small font-medium bg-white/10 hover:bg-white/15 inline-flex items-center gap-1.5" @click="handleResetLayout">
             <RotateCcw class="w-3.5 h-3.5" /> Reset
           </button>
-          <button type="button" class="h-8 px-3.5 rounded-ui-control text-ui-small font-medium bg-white text-ui-ink hover:bg-white/90" @click="editing = false">Done</button>
+          <button type="button" class="h-8 px-3.5 rounded-ui-control text-ui-small font-medium bg-white text-ui-ink-fill hover:bg-white/90" @click="editing = false">Done</button>
         </div>
       </div>
       <div v-else-if="orderedWidgets.length > 0" key="idle" class="flex justify-end -mt-1 mb-2">

@@ -3058,11 +3058,11 @@ button:disabled,
 
 .border-ui-ink {
   --tw-border-opacity: 1;
-  border-color: rgb(var(--ui-ink) / var(--tw-border-opacity, 1));
+  border-color: rgb(var(--ui-ink-fill) / var(--tw-border-opacity, 1));
 }
 
 .border-ui-ink\/5 {
-  border-color: rgb(var(--ui-ink) / 0.05);
+  border-color: rgb(var(--ui-ink-fill) / 0.05);
 }
 
 .border-ui-line {
@@ -3546,6 +3546,11 @@ button:disabled,
   background-color: rgb(var(--ui-bg) / 0.8);
 }
 
+.bg-ui-brand {
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--ui-brand) / var(--tw-bg-opacity, 1));
+}
+
 .bg-ui-faint {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--ui-faint) / var(--tw-bg-opacity, 1));
@@ -3568,19 +3573,7 @@ button:disabled,
 
 .bg-ui-ink {
   --tw-bg-opacity: 1;
-  background-color: rgb(var(--ui-ink) / var(--tw-bg-opacity, 1));
-}
-
-.bg-ui-ink\/0 {
-  background-color: rgb(var(--ui-ink) / 0);
-}
-
-.bg-ui-ink\/30 {
-  background-color: rgb(var(--ui-ink) / 0.3);
-}
-
-.bg-ui-ink\/80 {
-  background-color: rgb(var(--ui-ink) / 0.8);
+  background-color: rgb(var(--ui-ink-fill) / var(--tw-bg-opacity, 1));
 }
 
 .bg-ui-line {
@@ -3614,6 +3607,18 @@ button:disabled,
 
 .bg-ui-ok\/60 {
   background-color: rgb(var(--ui-ok) / 0.6);
+}
+
+.bg-ui-scrim\/0 {
+  background-color: rgb(var(--ui-scrim) / 0);
+}
+
+.bg-ui-scrim\/30 {
+  background-color: rgb(var(--ui-scrim) / 0.3);
+}
+
+.bg-ui-scrim\/80 {
+  background-color: rgb(var(--ui-scrim) / 0.8);
 }
 
 .bg-ui-subtle {
@@ -4768,6 +4773,11 @@ button:disabled,
   color: rgb(var(--ui-ink) / var(--tw-text-opacity, 1));
 }
 
+.text-ui-ink-fill {
+  --tw-text-opacity: 1;
+  color: rgb(var(--ui-ink-fill) / var(--tw-text-opacity, 1));
+}
+
 .text-ui-line-strong {
   --tw-text-opacity: 1;
   color: rgb(var(--ui-line-strong) / var(--tw-text-opacity, 1));
@@ -5049,7 +5059,7 @@ button:disabled,
 
 .ring-ui-ink {
   --tw-ring-opacity: 1;
-  --tw-ring-color: rgb(var(--ui-ink) / var(--tw-ring-opacity, 1));
+  --tw-ring-color: rgb(var(--ui-ink-fill) / var(--tw-ring-opacity, 1));
 }
 
 .ring-ui-line {
@@ -5267,6 +5277,75 @@ button:disabled,
   /* #175CD3 */
   --ui-info-soft: 239 248 255;
   /* #EFF8FF */
+  --ui-ink-fill: 15 27 45;
+  /* = ink; fills paired with white text */
+  --ui-shimmer: 255 255 255 / 0.65;
+  /* skeleton sweep */
+  --ui-scrim: 15 27 45;
+  /* behind dialogs, drawers, photo hovers */
+  --ui-brand: 15 27 45;
+  /* fixed navy brand panel (sign-in) */
+  color-scheme: light;
+}
+
+/* Dark appearance (Settings → Appearance, or the OS when set to System).
+   index.html / useTheme set data-theme on <html> before the app mounts.
+   Same navy family, lifted surfaces; status colours brightened so they
+   stay readable on dark backgrounds. */
+
+:root[data-theme="dark"] {
+  --ui-bg: 11 16 24;
+  /* #0B1018 */
+  --ui-surface: 18 24 35;
+  /* #121823 */
+  --ui-subtle: 24 32 45;
+  /* #18202D */
+  --ui-hover: 30 39 54;
+  /* #1E2736 */
+  --ui-line: 37 47 64;
+  /* #252F40 */
+  --ui-line-strong: 54 66 86;
+  /* #364256 */
+  --ui-ink: 237 241 247;
+  /* #EDF1F7 headings */
+  --ui-text: 200 208 220;
+  /* #C8D0DC */
+  --ui-muted: 146 157 175;
+  /* #929DAF */
+  --ui-faint: 104 116 136;
+  /* #687488 */
+  --ui-accent: 102 148 255;
+  /* #6694FF */
+  --ui-accent-soft: 26 39 66;
+  /* #1A2742 */
+  --ui-ok: 76 201 132;
+  /* #4CC984 */
+  --ui-ok-soft: 18 44 33;
+  /* #122C21 */
+  --ui-warn: 240 167 70;
+  /* #F0A746 */
+  --ui-warn-soft: 48 34 15;
+  /* #30220F */
+  --ui-bad: 248 113 106;
+  /* #F8716A */
+  --ui-bad-soft: 52 23 23;
+  /* #341717 */
+  --ui-info: 96 165 250;
+  /* #60A5FA */
+  --ui-info-soft: 17 34 58;
+  /* #11223A */
+  --ui-ink-fill: 46 98 214;
+  /* #2E62D6 primary fill */
+  --ui-shimmer: 255 255 255 / 0.06;
+  --ui-scrim: 0 0 0;
+  color-scheme: dark;
+}
+
+/* The navy company mark disappears on dark surfaces: show it in white.
+   Exports (canvas) draw the original file, so they are unaffected. */
+
+:root[data-theme="dark"] img[src*="jcd-only-color"] {
+  filter: brightness(0) invert(1);
 }
 
 html {
@@ -6013,12 +6092,12 @@ html {
   background-color: rgb(var(--ui-hover) / 0.6);
 }
 
-.hover\:bg-ui-ink\/40:hover {
-  background-color: rgb(var(--ui-ink) / 0.4);
+.hover\:bg-ui-ink\/90:hover {
+  background-color: rgb(var(--ui-ink-fill) / 0.9);
 }
 
-.hover\:bg-ui-ink\/90:hover {
-  background-color: rgb(var(--ui-ink) / 0.9);
+.hover\:bg-ui-scrim\/40:hover {
+  background-color: rgb(var(--ui-scrim) / 0.4);
 }
 
 .hover\:bg-ui-subtle:hover {
@@ -6253,12 +6332,12 @@ html {
   border-color: rgb(var(--ui-line-strong) / var(--tw-border-opacity, 1));
 }
 
-.group:hover .group-hover\:bg-ui-ink\/30 {
-  background-color: rgb(var(--ui-ink) / 0.3);
+.group:hover .group-hover\:bg-ui-scrim\/30 {
+  background-color: rgb(var(--ui-scrim) / 0.3);
 }
 
-.group:hover .group-hover\:bg-ui-ink\/40 {
-  background-color: rgb(var(--ui-ink) / 0.4);
+.group:hover .group-hover\:bg-ui-scrim\/40 {
+  background-color: rgb(var(--ui-scrim) / 0.4);
 }
 
 .group\/bar:hover .group-hover\/bar\:text-ui-accent {
@@ -6297,7 +6376,7 @@ html {
 
 .has-\[\:checked\]\:border-ui-ink:has(:checked) {
   --tw-border-opacity: 1;
-  border-color: rgb(var(--ui-ink) / var(--tw-border-opacity, 1));
+  border-color: rgb(var(--ui-ink-fill) / var(--tw-border-opacity, 1));
 }
 
 .has-\[\:checked\]\:bg-ui-accent-soft\/40:has(:checked) {
@@ -6318,7 +6397,7 @@ html {
 
 .has-\[\:checked\]\:ring-ui-ink:has(:checked) {
   --tw-ring-opacity: 1;
-  --tw-ring-color: rgb(var(--ui-ink) / var(--tw-ring-opacity, 1));
+  --tw-ring-color: rgb(var(--ui-ink-fill) / var(--tw-ring-opacity, 1));
 }
 
 .group:has(:checked) .group-has-\[\:checked\]\:block {
@@ -6869,7 +6948,7 @@ html {
 
   .sm\:border-ui-ink {
     --tw-border-opacity: 1;
-    border-color: rgb(var(--ui-ink) / var(--tw-border-opacity, 1));
+    border-color: rgb(var(--ui-ink-fill) / var(--tw-border-opacity, 1));
   }
 
   .sm\:border-ui-line {

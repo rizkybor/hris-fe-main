@@ -166,7 +166,7 @@ const handleSubmit = async () => {
             <Avatar :src="form.profile_photo_url" :alt="form.name" size="w-24 h-24" />
             <!-- Hover overlay -->
             <div
-              class="absolute inset-0 rounded-full bg-ui-ink/0 group-hover:bg-ui-ink/40 transition-colors duration-ui-base ease-ui-out flex items-center justify-center"
+              class="absolute inset-0 rounded-full bg-ui-scrim/0 group-hover:bg-ui-scrim/40 transition-colors duration-ui-base ease-ui-out flex items-center justify-center"
             >
               <Camera class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-ui-base" />
             </div>

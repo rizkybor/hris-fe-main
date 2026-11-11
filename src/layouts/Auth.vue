@@ -35,7 +35,7 @@ const POINTS = ["Attendance with photo and location", "Payroll and payslips", "P
     </div>
 
     <!-- Brand side (desktop) -->
-    <div class="hidden lg:flex relative flex-1 bg-ui-ink overflow-hidden">
+    <div class="hidden lg:flex relative flex-1 bg-ui-brand overflow-hidden">
       <AuthBackdrop />
       <div class="relative z-10 flex flex-col justify-center px-16 xl:px-24 max-w-[640px]">
         <p class="text-ui-over uppercase text-white/50">HRIS+ for growing teams</p>

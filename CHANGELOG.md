@@ -33,6 +33,13 @@ features, permissions and API calls are unchanged.
 - Every table numbers its rows ("#"), continuing across pages.
 - Every clickable control shows the pointer cursor.
 
+### Appearance
+- Light, Dark and System (follows the device) — switch it in the user
+  menu, top right. The choice is remembered per browser and applied
+  before the page paints, so there is no white flash.
+- Charts, status colours, dialogs and the sign-in page all have dark
+  variants; the document editor stays a white page, like the PDF.
+
 ### Screens
 - Sign-in, password reset and error pages, with a light animated
   backdrop on desktop.

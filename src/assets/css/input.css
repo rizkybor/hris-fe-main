@@ -66,6 +66,48 @@
     --ui-bad-soft: 254 243 242;    /* #FEF3F2 */
     --ui-info: 23 92 211;          /* #175CD3 */
     --ui-info-soft: 239 248 255;   /* #EFF8FF */
+    --ui-ink-fill: 15 27 45;       /* = ink; fills paired with white text */
+    --ui-shimmer: 255 255 255 / 0.65; /* skeleton sweep */
+    --ui-scrim: 15 27 45;          /* behind dialogs, drawers, photo hovers */
+    --ui-brand: 15 27 45;          /* fixed navy brand panel (sign-in) */
+    color-scheme: light;
+}
+
+/* Dark appearance (Settings → Appearance, or the OS when set to System).
+   index.html / useTheme set data-theme on <html> before the app mounts.
+   Same navy family, lifted surfaces; status colours brightened so they
+   stay readable on dark backgrounds. */
+:root[data-theme="dark"] {
+    --ui-bg: 11 16 24;             /* #0B1018 */
+    --ui-surface: 18 24 35;        /* #121823 */
+    --ui-subtle: 24 32 45;         /* #18202D */
+    --ui-hover: 30 39 54;          /* #1E2736 */
+    --ui-line: 37 47 64;           /* #252F40 */
+    --ui-line-strong: 54 66 86;    /* #364256 */
+    --ui-ink: 237 241 247;         /* #EDF1F7 headings */
+    --ui-text: 200 208 220;        /* #C8D0DC */
+    --ui-muted: 146 157 175;       /* #929DAF */
+    --ui-faint: 104 116 136;       /* #687488 */
+    --ui-accent: 102 148 255;      /* #6694FF */
+    --ui-accent-soft: 26 39 66;    /* #1A2742 */
+    --ui-ok: 76 201 132;           /* #4CC984 */
+    --ui-ok-soft: 18 44 33;        /* #122C21 */
+    --ui-warn: 240 167 70;         /* #F0A746 */
+    --ui-warn-soft: 48 34 15;      /* #30220F */
+    --ui-bad: 248 113 106;         /* #F8716A */
+    --ui-bad-soft: 52 23 23;       /* #341717 */
+    --ui-info: 96 165 250;         /* #60A5FA */
+    --ui-info-soft: 17 34 58;      /* #11223A */
+    --ui-ink-fill: 46 98 214;      /* #2E62D6 primary fill */
+    --ui-shimmer: 255 255 255 / 0.06;
+    --ui-scrim: 0 0 0;
+    color-scheme: dark;
+}
+
+/* The navy company mark disappears on dark surfaces: show it in white.
+   Exports (canvas) draw the original file, so they are unaffected. */
+:root[data-theme="dark"] img[src*="jcd-only-color"] {
+    filter: brightness(0) invert(1);
 }
 
 html {

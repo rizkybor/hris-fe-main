@@ -57,7 +57,7 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <Transition name="ui-fade">
       <div v-if="open" class="fixed inset-0 flex items-end sm:items-center justify-center sm:p-6" :style="{ zIndex }">
-        <div class="absolute inset-0 bg-ui-ink/30" aria-hidden="true" @click="!persistent && close()"></div>
+        <div class="absolute inset-0 bg-ui-scrim/30" aria-hidden="true" @click="!persistent && close()"></div>
         <div
           ref="panel"
           role="dialog"

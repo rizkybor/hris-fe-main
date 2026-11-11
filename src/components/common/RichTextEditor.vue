@@ -884,6 +884,13 @@ const FORMAT_OPTIONS = [
 <style scoped>
 /* Content styles mirror the exported PDF on purpose (headings, quotes,
    links, tables) -- only the editor chrome follows the UI tokens. */
+/* The editable area is the document itself (it mirrors the PDF), so in
+   dark mode it stays a white sheet with dark text, like a page. */
+:global(:root[data-theme="dark"]) .rich-text-editor {
+  background: #fff;
+  color: #1f2937;
+  caret-color: #1f2937;
+}
 .rich-text-editor:empty::before {
   content: attr(data-placeholder);
   color: rgb(var(--ui-faint));

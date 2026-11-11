@@ -62,6 +62,6 @@ watch(
   <MobileTabBar :more-open="isSidebarOpen" @more="toggleSidebar" />
 
   <Transition name="ui-fade">
-    <div v-if="isSidebarOpen" class="fixed inset-0 z-40 bg-ui-ink/30 lg:hidden" @click="closeSidebar"></div>
+    <div v-if="isSidebarOpen" class="fixed inset-0 z-40 bg-ui-scrim/30 lg:hidden" @click="closeSidebar"></div>
   </Transition>
 </template>

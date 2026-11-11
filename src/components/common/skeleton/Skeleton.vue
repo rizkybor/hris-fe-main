@@ -29,7 +29,7 @@ defineProps({
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.65), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--ui-shimmer)), transparent);
   animation: ui-skeleton-sweep 1.5s var(--ui-ease-out, ease) infinite;
 }
 .ui-skeleton--dark {

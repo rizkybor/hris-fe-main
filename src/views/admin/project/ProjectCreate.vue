@@ -339,7 +339,7 @@ watch(
                     <Image class="w-8 h-8 mb-2" />
                     <span class="text-ui-small font-medium text-ui-muted">Project Photo</span>
                   </span>
-                  <span class="absolute inset-0 bg-ui-ink/0 group-hover:bg-ui-ink/30 transition-colors flex items-center justify-center">
+                  <span class="absolute inset-0 bg-ui-scrim/0 group-hover:bg-ui-scrim/30 transition-colors flex items-center justify-center">
                     <Upload class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                   </span>
                 </button>

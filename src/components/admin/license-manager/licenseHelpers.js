@@ -119,7 +119,7 @@ const PLAN_CHIP = {
 const PLAN_CHIP_DARK = {
   trial: "bg-white/10 text-white/80",
   professional: "bg-white/15 text-white",
-  lifetime: "bg-white text-ui-ink",
+  lifetime: "bg-white text-ui-ink-fill",
   organization: "bg-transparent text-white border border-white/30",
 };
 

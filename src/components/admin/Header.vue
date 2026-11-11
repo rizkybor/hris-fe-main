@@ -7,7 +7,11 @@ import {
   ReceiptIcon,
   SettingsIcon,
   LogOutIcon,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-vue-next";
+import { useTheme } from "@/composables/useTheme";
 import ConfirmActionModal from "@/components/common/ConfirmationModal.vue";
 import NotificationBell from "@/components/admin/NotificationBell.vue";
 import Avatar from "@/components/common/Avatar.vue";
@@ -458,6 +462,14 @@ const pageInfo = computed(() => {
 
 const pageTitle = computed(() => pageInfo.value.title);
 
+// Appearance switch in the user menu.
+const { mode: themeMode, setMode: setThemeMode } = useTheme();
+const THEME_OPTIONS = [
+  { value: "light", label: "Terang", icon: Sun },
+  { value: "dark", label: "Gelap", icon: Moon },
+  { value: "system", label: "Sistem", icon: Monitor },
+];
+
 // Breadcrumb section, named like the sidebar groups. First matching
 // route-name prefix wins; the dashboard has no section.
 const SECTION_RULES = [
@@ -563,6 +575,25 @@ const confirmLogout = async () => {
             <SettingsIcon class="w-4 h-4 text-ui-muted" />
             Pengaturan Sistem
           </RouterLink>
+          <!-- Appearance: stays open so the change is visible right away. -->
+          <div class="px-2.5 pt-2 pb-1.5">
+            <p class="text-ui-cap text-ui-muted mb-1.5">Tampilan</p>
+            <div class="grid grid-cols-3 gap-0.5 p-0.5 bg-ui-subtle border border-ui-line rounded-ui-control" role="radiogroup" aria-label="Tampilan">
+              <button
+                v-for="opt in THEME_OPTIONS"
+                :key="opt.value"
+                type="button"
+                role="radio"
+                :aria-checked="themeMode === opt.value"
+                class="h-8 rounded-[6px] flex items-center justify-center gap-1 text-ui-cap font-medium transition-colors"
+                :class="themeMode === opt.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
+                @click.stop="setThemeMode(opt.value)"
+              >
+                <component :is="opt.icon" class="w-3.5 h-3.5" />
+                {{ opt.label }}
+              </button>
+            </div>
+          </div>
           <div class="h-px bg-ui-line my-1"></div>
           <button
             type="button"

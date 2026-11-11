@@ -5,6 +5,7 @@ import './assets/css/main.css'
 
 import App from './App.vue'
 import router from './router'
+import { initTheme } from './composables/useTheme'
 
 // vue3-apexcharts's own onMounted hook calls its internal init() (async,
 // returns the chart's render() promise) without awaiting or catching it --
@@ -25,4 +26,5 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
+initTheme()
 app.mount('#app')

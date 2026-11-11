@@ -713,7 +713,7 @@ watch(
         class="fixed inset-0 z-[150] flex items-center justify-center p-5"
         @click="lightboxOpen = false"
       >
-        <div class="absolute inset-0 bg-ui-ink/80"></div>
+        <div class="absolute inset-0 bg-ui-scrim/80"></div>
         <button
           type="button"
           @click="lightboxOpen = false"

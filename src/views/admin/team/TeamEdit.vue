@@ -305,7 +305,7 @@ watch(
                     <button
                       type="button"
                       aria-label="Upload Icon"
-                      class="absolute inset-0 rounded-full flex items-center justify-center cursor-pointer group bg-ui-ink/0 hover:bg-ui-ink/40 transition-colors focus:outline-none focus-visible:shadow-ui-focus"
+                      class="absolute inset-0 rounded-full flex items-center justify-center cursor-pointer group bg-ui-scrim/0 hover:bg-ui-scrim/40 transition-colors focus:outline-none focus-visible:shadow-ui-focus"
                       @click="teamIconInput?.click()"
                     >
                       <Upload class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />

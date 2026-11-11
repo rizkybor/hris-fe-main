@@ -2,7 +2,8 @@
 
 // Redesign tokens (HRIS+ v4.0, palette "B · Navy + Blue"). Colours are CSS
 // variables holding RGB channels (see src/assets/css/input.css), so the
-// same class works in light and -- later -- dark mode, and opacity
+// same class works in light and dark mode (input.css redefines the
+// variables under [data-theme="dark"]), and opacity
 // modifiers like bg-ui-ink/10 keep working. Everything new lives under the
 // "ui" prefix so it never collides with the existing classes.
 const token = (name) => `rgb(var(--ui-${name}) / <alpha-value>)`;
@@ -44,8 +45,23 @@ export default {
                     'bad-soft': token('bad-soft'),
                     info: token('info'),
                     'info-soft': token('info-soft'),
+                    // Ink as a fill (primary buttons, dark hero panels, active
+                    // chips) -- always paired with white text. Same colour as
+                    // ink in light mode; a deep blue in dark mode, where ink
+                    // itself turns light for headings.
+                    'ink-fill': token('ink-fill'),
+                    // Dark veil behind dialogs/drawers (black in dark mode) and the
+                    // fixed navy brand surface.
+                    scrim: token('scrim'),
+                    brand: token('brand'),
                 },
             },
+            // bg-/border-/ring-ui-ink paint the ink-fill colour, so the many
+            // "bg-ui-ink text-white" pairs keep their contrast in dark mode
+            // while text-ui-ink still follows the heading colour.
+            backgroundColor: { ui: { ink: token('ink-fill') } },
+            borderColor: { ui: { ink: token('ink-fill') } },
+            ringColor: { ui: { ink: token('ink-fill') } },
             fontFamily: {
                 sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
                 mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
