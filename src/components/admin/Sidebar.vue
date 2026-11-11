@@ -1,4 +1,5 @@
 <script setup>
+import { APP_VERSION_SHORT } from "@/utils/appVersion";
 import { computed, ref, watch } from "vue";
 import {
   LayoutDashboard,
@@ -228,7 +229,7 @@ watch(
         <div class="sidebar-brand-text">
           <h1 class="text-white text-sm font-bold whitespace-nowrap leading-tight">
             HRIS+
-            <span class="text-[10px] font-medium text-white/40 ml-0.5"> v3.3 </span>
+            <span class="text-[10px] font-medium text-white/40 ml-0.5"> v{{ APP_VERSION_SHORT }} </span>
           </h1>
           <p class="text-white/50 text-xs font-normal whitespace-nowrap leading-tight">
             Jendela Cakra Digital

@@ -131,7 +131,7 @@ const onInput = (event) => {
 
 const errorStyle = {
   color: "#dc2626",
-  fontFamily: "Plus Jakarta Sans",
+  fontFamily: "Inter",
   fontSize: "14px",
   fontWeight: 400,
 };

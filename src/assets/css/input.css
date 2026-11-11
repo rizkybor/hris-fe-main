@@ -3,9 +3,37 @@
 @tailwind utilities;
 
 
+/* Redesign tokens (HRIS+ v4.0, palette "B · Navy + Blue"), as RGB channels
+   so Tailwind's ui-* colours (tailwind.config.js) accept opacity
+   modifiers. Dark mode (stage 9) only has to redefine these variables. */
+:root {
+    --ui-bg: 245 247 250;          /* #F5F7FA page background */
+    --ui-surface: 255 255 255;     /* #FFFFFF cards, inputs */
+    --ui-subtle: 240 243 247;      /* #F0F3F7 quiet fills */
+    --ui-hover: 234 238 244;       /* #EAEEF4 row / item hover */
+    --ui-line: 227 232 239;        /* #E3E8EF borders, dividers */
+    --ui-line-strong: 205 213 224; /* #CDD5E0 input borders */
+    --ui-ink: 15 27 45;            /* #0F1B2D headings, primary buttons */
+    --ui-text: 52 64 84;           /* #344054 body text */
+    --ui-muted: 102 112 133;       /* #667085 secondary text */
+    --ui-faint: 152 162 179;       /* #98A2B3 placeholders, row numbers */
+    --ui-accent: 31 91 216;        /* #1F5BD8 focus, links, selection */
+    --ui-accent-soft: 234 240 252; /* #EAF0FC */
+    --ui-ok: 6 118 71;             /* #067647 */
+    --ui-ok-soft: 236 253 243;     /* #ECFDF3 */
+    --ui-warn: 181 71 8;           /* #B54708 */
+    --ui-warn-soft: 255 250 235;   /* #FFFAEB */
+    --ui-bad: 180 35 24;           /* #B42318 */
+    --ui-bad-soft: 254 243 242;    /* #FEF3F2 */
+    --ui-info: 23 92 211;          /* #175CD3 */
+    --ui-info-soft: 239 248 255;   /* #EFF8FF */
+}
+
 html {
-    font-family: "Plus Jakarta Sans", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #0C1C3C;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Condensed display face for the ID Card's name -- self-hosted (not a
@@ -186,17 +214,17 @@ html {
 /* Typography styles */
 .text-brand-dark {
     color: #0C1C3C;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 .text-brand-light {
     color: #6B7280;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 .text-brand-white {
     color: #FFF;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 /* Shared read-only rendering for RichTextEditor output (v-html'd `body`
@@ -228,27 +256,27 @@ html {
 
 .text-brand-white-90 {
     color: rgba(255, 255, 255, 0.9);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 .text-brand-white-80 {
     color: rgba(255, 255, 255, 0.8);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 .text-brand-white-70 {
     color: rgba(255, 255, 255, 0.7);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 .text-success {
     color: #059669;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 .text-danger {
     color: #DC2626;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 /* Nudges a chevron left-right to hint that a tab bar can be swiped
@@ -354,7 +382,7 @@ html {
 /* Section headers (light text for the dark sidebar-gradient background) */
 .section-title {
     color: rgba(255, 255, 255, 0.35);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     font-style: normal;
     font-weight: 600;
@@ -426,4 +454,83 @@ html {
 }
 .scroll-soft:hover::-webkit-scrollbar-thumb {
   background-color: #A9ACBD;
+}
+
+/* ------------------------------------------------------------------------
+   Motion (HRIS+ v4.0 redesign)
+   Light by design: CSS only, transform + opacity only (no layout work),
+   120-240ms, one easing. Everything is switched off for people who ask
+   their device to reduce motion.
+   ------------------------------------------------------------------------ */
+:root {
+    --ui-ease-out: cubic-bezier(0.2, 0, 0, 1);
+    --ui-ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ui-dur-fast: 120ms;
+    --ui-dur-base: 180ms;
+    --ui-dur-slow: 240ms;
+}
+
+@keyframes ui-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes ui-scale-in { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes ui-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+
+/* One-shot entrance animations */
+.ui-anim-fade { animation: ui-fade-in var(--ui-dur-base) var(--ui-ease-out) both; }
+.ui-anim-fade-up { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) both; }
+.ui-anim-scale { animation: ui-scale-in var(--ui-dur-base) var(--ui-ease-out) both; }
+/* Page content when a route opens (enter only: navigation is never held up) */
+.ui-page-enter { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) both; }
+
+/* Lists and card grids: children rise in one after another; only the
+   first 8 are staggered so long lists are not slowed down. */
+.ui-stagger > * { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) both; animation-delay: 280ms; }
+.ui-stagger > :nth-child(1) { animation-delay: 0ms; }
+.ui-stagger > :nth-child(2) { animation-delay: 35ms; }
+.ui-stagger > :nth-child(3) { animation-delay: 70ms; }
+.ui-stagger > :nth-child(4) { animation-delay: 105ms; }
+.ui-stagger > :nth-child(5) { animation-delay: 140ms; }
+.ui-stagger > :nth-child(6) { animation-delay: 175ms; }
+.ui-stagger > :nth-child(7) { animation-delay: 210ms; }
+.ui-stagger > :nth-child(8) { animation-delay: 245ms; }
+
+/* Dialog panel: scales in on desktop, slides up as a sheet on phones */
+.ui-dialog { animation: ui-scale-in var(--ui-dur-base) var(--ui-ease-out) both; }
+@media (max-width: 639px) {
+    .ui-dialog { animation: ui-sheet-up var(--ui-dur-slow) var(--ui-ease-out) both; }
+}
+
+/* Vue <Transition name="ui-fade"> / "ui-pop" (menus, popovers) */
+.ui-fade-enter-active { transition: opacity var(--ui-dur-base) var(--ui-ease-out); }
+.ui-fade-leave-active { transition: opacity var(--ui-dur-fast) var(--ui-ease-in); }
+.ui-fade-enter-from, .ui-fade-leave-to { opacity: 0; }
+
+.ui-pop-enter-active { transition: opacity var(--ui-dur-fast) var(--ui-ease-out), transform var(--ui-dur-fast) var(--ui-ease-out); }
+.ui-pop-leave-active { transition: opacity var(--ui-dur-fast) var(--ui-ease-in), transform var(--ui-dur-fast) var(--ui-ease-in); }
+.ui-pop-enter-from, .ui-pop-leave-to { opacity: 0; transform: translateY(-4px) scale(0.98); }
+
+/* <TransitionGroup name="ui-list">: items fade in/out, the rest glide */
+.ui-list-enter-active, .ui-list-leave-active { transition: opacity var(--ui-dur-base) var(--ui-ease-out), transform var(--ui-dur-base) var(--ui-ease-out); }
+.ui-list-enter-from, .ui-list-leave-to { opacity: 0; transform: translateY(6px); }
+.ui-list-move { transition: transform var(--ui-dur-slow) var(--ui-ease-out); }
+
+/* Small feedback: press (buttons) and lift (clickable cards) */
+.ui-press {
+    transition: transform var(--ui-dur-fast) var(--ui-ease-out), background-color var(--ui-dur-fast) var(--ui-ease-out),
+        border-color var(--ui-dur-fast) var(--ui-ease-out), color var(--ui-dur-fast) var(--ui-ease-out), box-shadow var(--ui-dur-fast) var(--ui-ease-out);
+}
+.ui-press:active { transform: scale(0.98); }
+.ui-lift { transition: transform var(--ui-dur-base) var(--ui-ease-out), box-shadow var(--ui-dur-base) var(--ui-ease-out); }
+@media (hover: hover) {
+    .ui-lift:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgb(15 27 45 / 0.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

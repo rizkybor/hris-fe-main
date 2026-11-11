@@ -29,7 +29,7 @@
       <h4
         :style="{
           color: textColor,
-          fontFamily: 'Plus Jakarta Sans',
+          fontFamily: 'Inter',
           fontSize: '14px',
           fontWeight: 600,
           margin: 0,
@@ -40,7 +40,7 @@
       <p
         :style="{
           color: textColor,
-          fontFamily: 'Plus Jakarta Sans',
+          fontFamily: 'Inter',
           fontSize: '14px',
           fontWeight: 400,
           margin: 0,

@@ -60,7 +60,7 @@ const borderColor = computed(() =>
 
 const labelStyle = {
   color: "#4b5563",
-  fontFamily: "Plus Jakarta Sans",
+  fontFamily: "Inter",
   fontSize: "14px",
   fontWeight: 600,
 };
@@ -69,7 +69,7 @@ const textareaStyle = {
 };
 const errorStyle = {
   color: "#dc2626",
-  fontFamily: "Plus Jakarta Sans",
+  fontFamily: "Inter",
   fontSize: "14px",
   fontWeight: 400,
 };

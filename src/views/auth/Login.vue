@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { APP_VERSION_SHORT } from "@/utils/appVersion";
 import { useAuthStore } from "@/stores/auth";
 import { ref, computed, onMounted } from "vue";
 import Alert from "@/components/common/Alert.vue";
@@ -69,7 +70,7 @@ const handleSubmit = async () => {
         <div>
            <h1 class="text-brand-dark text-xl font-bold">
             HRIS+
-            <span class="text-xs font-medium text-gray-400 ml-1"> v3.3 </span>
+            <span class="text-xs font-medium text-gray-400 ml-1"> v{{ APP_VERSION_SHORT }} </span>
           </h1>
           <p class="text-brand-dark text-xs font-normal">
             PT. Jendela Cakra Digital

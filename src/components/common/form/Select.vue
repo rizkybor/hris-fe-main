@@ -68,7 +68,7 @@ const modelValue = computed({
 
 const labelStyle = {
   color: "#4b5563",
-  fontFamily: "Plus Jakarta Sans",
+  fontFamily: "Inter",
   fontSize: "14px",
   fontWeight: 600,
 };
@@ -78,7 +78,7 @@ const labelStyle = {
 const selectStyle = computed(() => (props.error ? { borderColor: "#DC2626" } : {}));
 const errorStyle = {
   color: "#dc2626",
-  fontFamily: "Plus Jakarta Sans",
+  fontFamily: "Inter",
   fontSize: "14px",
   fontWeight: 400,
 };
