@@ -1,8 +1,10 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
-import { X, ChevronDown, Plus, Trash2 } from "lucide-vue-next";
-import BaseInput from "@/components/common/form/Input.vue";
-import BaseSelect from "@/components/common/form/Select.vue";
+import { ChevronDown, Plus, Trash2 } from "lucide-vue-next";
+import { UiModal, UiInput, UiSelect, UiButton } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   show: Boolean,
@@ -21,16 +23,16 @@ const props = defineProps({
 
 const emit = defineEmits(["submit", "close"]);
 
-const BILLING_CYCLE_OPTIONS = [
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
-];
+const BILLING_CYCLE_OPTIONS = computed(() => [
+  { value: "monthly", label: t("subscriptions.cycle.monthly") },
+  { value: "yearly", label: t("subscriptions.cycle.yearly") },
+]);
 
-const STATUS_OPTIONS = [
-  { value: "active", label: "Active" },
-  { value: "postponed", label: "Postponed" },
-  { value: "cancelled", label: "Not Active" },
-];
+const STATUS_OPTIONS = computed(() => [
+  { value: "active", label: t("subscriptions.status.active") },
+  { value: "postponed", label: t("subscriptions.status.postponed") },
+  { value: "cancelled", label: t("subscriptions.status.cancelled") },
+]);
 
 const clientOptions = computed(() => props.clients.map((c) => ({ value: c.id, label: c.name })));
 const projectOptions = computed(() => props.projects.map((p) => ({ value: p.id, label: p.name })));
@@ -91,7 +93,7 @@ const handleBankNameChange = () => {
 };
 
 const handlePph23TypeChange = () => {
-  const type = props.pphTypes.find((t) => t.value === form.pph23_type);
+  const type = props.pphTypes.find((p) => p.value === form.pph23_type);
   if (type?.default_rate != null) {
     form.pph23_percent = type.default_rate;
   }
@@ -207,7 +209,26 @@ watch(
   { immediate: true }
 );
 
-const title = computed(() => (props.mode === "edit" ? "Edit Subscription" : "Add Subscription"));
+// The pickers load when the modal opens: fill the account number in once
+// the bank accounts arrive.
+watch(
+  () => props.bankAccounts,
+  () => {
+    if (props.show && form.bank_name && !form.bank_account) handleBankNameChange();
+  }
+);
+
+const title = computed(() => (props.mode === "edit" ? t("subscriptions.form.editTitle") : t("subscriptions.form.addTitle")));
+
+// Presentation only: token classes for the native number fields (they keep
+// their min / max / step) and the "No project" choice.
+const LABEL = "block text-ui-small font-medium text-ui-ink mb-1.5";
+const FIELD =
+  "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus read-only:bg-ui-subtle read-only:text-ui-muted";
+const ERR = "text-ui-cap text-ui-bad mt-1.5";
+const projectSelectOptions = computed(() => [{ value: "", label: t("subscriptions.form.noProject") }, ...projectOptions.value]);
+const bankOptions = computed(() => props.bankAccounts.map((a) => ({ value: a.bank_name, label: a.bank_name })));
+const pphTypeOptions = computed(() => props.pphTypes.map((p) => ({ value: p.value, label: p.label })));
 
 const submit = () => {
   const payload = { ...form };
@@ -238,387 +259,295 @@ const submit = () => {
 </script>
 
 <template>
-  <div
-    v-if="show"
-    class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-    @click.self="$emit('close')"
+  <UiModal
+    :open="show"
+    size="lg"
+    :title="title"
+    :description="$t('subscriptions.form.description')"
+    @close="$emit('close')"
   >
-    <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
-      <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">{{ title }}</h3>
-          <p class="text-brand-light text-xs mt-0.5">
-            Manual recurring billing -- click "Generate Invoice" on the list each period.
-          </p>
-        </div>
-        <button
-          @click="$emit('close')"
-          class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] shrink-0"
-        >
-          <X class="w-4 h-4 text-gray-600" />
-        </button>
-      </div>
+    <div class="space-y-5">
+      <UiInput
+        id="subscription-name"
+        :label="$t('common.labels.name')"
+        :placeholder="$t('subscriptions.form.namePlaceholder')"
+        v-model="form.name"
+        required
+        :error="errors.name ? errors.name.join(', ') : ''"
+      />
 
-      <div class="p-5 space-y-4">
-        <div>
-          <BaseInput
-            id="subscription-name"
-            label="Name"
-            placeholder="e.g. Website Maintenance - PT ABC"
-            v-model="form.name"
-            required
-          />
-          <p v-if="errors.name" class="text-red-500 text-sm mt-1">{{ errors.name.join(", ") }}</p>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <div class="flex items-center gap-1.5">
-              <label class="block text-brand-dark text-sm font-semibold">Services</label>
-              <span class="px-1.5 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700">
-                {{ form.services.length }}
-              </span>
-            </div>
-            <button
-              type="button"
-              @click="addService"
-              class="inline-flex items-center gap-1 text-xs font-semibold text-[#0C51D9] hover:underline"
-            >
-              <Plus class="w-3.5 h-3.5" /> Add Service
-            </button>
+      <!-- Services -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-1.5">
+            <span class="text-ui-small font-medium text-ui-ink">{{ $t("subscriptions.form.services") }}</span>
+            <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-md bg-ui-subtle text-ui-cap font-medium text-ui-text tabular-nums">
+              {{ form.services.length }}
+            </span>
           </div>
-          <p v-if="errors.services" class="text-red-500 text-sm mb-2">{{ errors.services.join(", ") }}</p>
-          <p v-if="serviceTypeOptions.length === 0" class="text-xs text-gray-400 mb-2">
-            No service types configured yet. Add one in Settings &rarr; Dropdown Options.
-          </p>
+          <UiButton variant="ghost" size="sm" :icon="Plus" class="!text-ui-accent" @click="addService">{{ $t("subscriptions.form.addService") }}</UiButton>
+        </div>
+        <p v-if="errors.services" :class="[ERR, 'mb-2 !mt-0']">{{ errors.services.join(", ") }}</p>
+        <p v-if="serviceTypeOptions.length === 0" class="text-ui-cap text-ui-muted mb-2">
+          {{ $t("subscriptions.form.noServiceTypes") }}
+        </p>
 
-          <div class="space-y-3">
-            <div
-              v-for="(service, index) in form.services"
-              :key="index"
-              class="relative bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-3 space-y-3"
+        <div class="space-y-3">
+          <div
+            v-for="(service, index) in form.services"
+            :key="index"
+            class="relative bg-ui-subtle/60 border border-ui-line rounded-ui-card p-3.5 sm:p-4"
+          >
+            <button
+              v-if="form.services.length > 1"
+              type="button"
+              @click="removeService(index)"
+              :title="$t('subscriptions.form.removeService')"
+              :aria-label="$t('subscriptions.form.removeService')"
+              class="ui-press absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-ui-control text-ui-muted hover:text-ui-bad hover:bg-ui-bad-soft"
             >
-              <button
-                v-if="form.services.length > 1"
-                type="button"
-                @click="removeService(index)"
-                title="Remove service"
-                class="absolute top-2 right-2 w-6 h-6 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[6px] bg-white hover:border-red-400 hover:bg-red-50 group/delete transition-colors"
-              >
-                <Trash2 class="w-3 h-3 text-gray-500 group-hover/delete:text-red-600" />
-              </button>
+              <Trash2 class="w-3.5 h-3.5" />
+            </button>
 
-              <div class="pr-8">
-                <BaseSelect
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div :class="form.services.length > 1 ? 'pr-8 sm:pr-0' : ''">
+                <UiSelect
                   :id="`subscription-service-type-${index}`"
-                  label="Service Type"
-                  placeholder="Select a service type"
+                  :label="$t('subscriptions.form.serviceType')"
+                  :placeholder="$t('subscriptions.form.selectServiceType')"
                   v-model="service.service_type"
                   :options="serviceTypeOptions"
                   required
+                  :error="serviceErrors(index, 'service_type') ? serviceErrors(index, 'service_type').join(', ') : ''"
                 />
-                <p v-if="serviceErrors(index, 'service_type')" class="text-red-500 text-sm mt-1">
-                  {{ serviceErrors(index, "service_type").join(", ") }}
-                </p>
               </div>
 
-              <div v-if="service.service_type === 'saas_subscription'">
-                <BaseInput
-                  :id="`subscription-product-name-${index}`"
-                  label="Product Name"
-                  placeholder="e.g. Ticket Management (Yaap), Jstock"
-                  v-model="service.product_name"
-                />
-                <p v-if="serviceErrors(index, 'product_name')" class="text-red-500 text-sm mt-1">
-                  {{ serviceErrors(index, "product_name").join(", ") }}
-                </p>
-              </div>
-
-              <div>
-                <BaseInput
+              <div :class="form.services.length > 1 ? 'sm:pr-8' : ''">
+                <label :for="`subscription-service-amount-${index}`" :class="LABEL">{{ $t("subscriptions.form.amountRp") }}<span class="text-ui-bad"> *</span></label>
+                <input
                   :id="`subscription-service-amount-${index}`"
-                  label="Amount (Rp)"
+                  v-model="service.amount"
                   type="number"
                   min="0"
                   placeholder="500000"
-                  v-model="service.amount"
                   required
+                  :class="[FIELD, 'tabular-nums']"
                 />
-                <p v-if="serviceErrors(index, 'amount')" class="text-red-500 text-sm mt-1">
-                  {{ serviceErrors(index, "amount").join(", ") }}
-                </p>
+                <p v-if="serviceErrors(index, 'amount')" :class="ERR">{{ serviceErrors(index, "amount").join(", ") }}</p>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div v-if="form.services.length > 1">
-                  <label :for="`subscription-service-ppn-${index}`" class="block mb-2 text-gray-700 text-brand-light font-jakarta text-xs">
-                    VAT / PPN (%)
-                  </label>
-                  <input
-                    :id="`subscription-service-ppn-${index}`"
-                    v-model="service.ppn_percentage"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    placeholder="0"
-                    class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm"
-                  />
-                  <p v-if="serviceErrors(index, 'ppn_percentage')" class="text-red-500 text-sm mt-1">
-                    {{ serviceErrors(index, "ppn_percentage").join(", ") }}
-                  </p>
-                </div>
-                <div>
-                  <label :for="`subscription-service-icann-${index}`" class="block mb-2 text-gray-700 text-brand-light font-jakarta text-xs">
-                    ICANN Fee (Rp)
-                  </label>
-                  <input
-                    :id="`subscription-service-icann-${index}`"
-                    v-model="service.icann_fee"
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm"
-                  />
-                  <p v-if="serviceErrors(index, 'icann_fee')" class="text-red-500 text-sm mt-1">
-                    {{ serviceErrors(index, "icann_fee").join(", ") }}
-                  </p>
-                </div>
+              <div v-if="service.service_type === 'saas_subscription'" class="sm:col-span-2">
+                <UiInput
+                  :id="`subscription-product-name-${index}`"
+                  :label="$t('subscriptions.form.productName')"
+                  :placeholder="$t('subscriptions.form.productNamePlaceholder')"
+                  v-model="service.product_name"
+                  :error="serviceErrors(index, 'product_name') ? serviceErrors(index, 'product_name').join(', ') : ''"
+                />
               </div>
 
-              <p v-if="Number(service.amount) > 0" class="text-xs text-brand-light">
-                Rp {{ (Number(service.amount) || 0).toLocaleString("id-ID") }}
-                <template v-if="Number(service.ppn_percentage) > 0"> + VAT {{ service.ppn_percentage }}%</template>
-                <template v-if="Number(service.icann_fee) > 0"> + ICANN Fee Rp {{ Number(service.icann_fee).toLocaleString("id-ID") }}</template>
-                <template v-if="Number(service.ppn_percentage) > 0 || Number(service.icann_fee) > 0">
-                  = <span class="font-semibold text-brand-dark">Rp {{ serviceTotal(service).toLocaleString("id-ID") }}</span>
-                </template>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <BaseSelect
-            id="subscription-client"
-            label="Client"
-            placeholder="Select a client"
-            v-model="form.client_id"
-            :options="clientOptions"
-            required
-          />
-          <p v-if="errors.client_id" class="text-red-500 text-sm mt-1">{{ errors.client_id.join(", ") }}</p>
-        </div>
-
-        <div v-if="form.services.some((s) => s.service_type === 'website_maintenance')">
-          <BaseSelect
-            id="subscription-project"
-            label="Project (optional)"
-            placeholder="No project"
-            v-model="form.project_id"
-            :options="projectOptions"
-          />
-          <p class="text-brand-light text-xs mt-1">Link this maintenance to the website project it covers, if any.</p>
-        </div>
-
-        <div>
-          <BaseSelect
-            id="subscription-billing-cycle"
-            label="Billing Cycle"
-            v-model="form.billing_cycle"
-            :options="BILLING_CYCLE_OPTIONS"
-            required
-          />
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <BaseInput
-              id="subscription-start-date"
-              label="Start Date"
-              type="date"
-              v-model="form.start_date"
-              required
-            />
-            <p v-if="errors.start_date" class="text-red-500 text-sm mt-1">{{ errors.start_date.join(", ") }}</p>
-          </div>
-          <div>
-            <BaseInput
-              id="subscription-next-due-date"
-              label="Next Due Date"
-              type="date"
-              v-model="form.next_due_date"
-              required
-            />
-            <p v-if="errors.next_due_date" class="text-red-500 text-sm mt-1">{{ errors.next_due_date.join(", ") }}</p>
-          </div>
-        </div>
-
-        <div v-if="mode === 'edit'">
-          <BaseSelect
-            id="subscription-status"
-            label="Status"
-            v-model="form.status"
-            :options="STATUS_OPTIONS"
-          />
-        </div>
-
-        <div>
-          <label class="block text-brand-dark text-sm font-semibold mb-1">Notes (optional)</label>
-          <textarea
-            v-model="form.notes"
-            rows="2"
-            placeholder="Any internal notes about this subscription..."
-            class="w-full border rounded-[12px] transition-all duration-300 hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white border-[#DCDEDD] px-3.5 py-3 text-sm"
-          ></textarea>
-        </div>
-
-        <div class="bg-blue-50/60 border border-blue-100 rounded-[12px] p-4">
-          <button
-            type="button"
-            class="w-full flex items-center justify-between bg-transparent border-0 outline-none cursor-pointer text-left"
-            @click="showInvoiceConfig = !showInvoiceConfig"
-          >
-            <span class="block">
-              <span class="block text-brand-dark text-sm font-bold">Invoice Configuration</span>
-              <span class="block text-brand-light text-xs mt-0.5">
-                Applied to every invoice generated from this subscription -- configure once instead of re-entering it each period.
-              </span>
-            </span>
-            <ChevronDown
-              class="w-4 h-4 shrink-0 text-brand-dark transition-transform duration-150"
-              :class="{ '-rotate-180': !showInvoiceConfig }"
-            />
-          </button>
-
-          <div v-show="showInvoiceConfig" class="mt-4">
-          <div class="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <BaseInput
-                v-if="!isMultiService"
-                id="subscription-ppn"
-                label="VAT / PPN (%)"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                v-model.number="form.ppn_percentage"
-              />
-              <template v-else>
-                <label class="block text-brand-dark text-sm font-semibold mb-1">Total VAT / PPN (%)</label>
+              <div v-if="form.services.length > 1">
+                <label :for="`subscription-service-ppn-${index}`" :class="LABEL">{{ $t("subscriptions.form.vat") }}</label>
                 <input
-                  :value="`${totalPpnPercentage}%`"
-                  type="text"
-                  readonly
-                  class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm bg-gray-50"
+                  :id="`subscription-service-ppn-${index}`"
+                  v-model="service.ppn_percentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  placeholder="0"
+                  :class="[FIELD, 'tabular-nums']"
                 />
-                <p class="text-xs text-brand-light mt-1">Blended from each service's own VAT / PPN (%) above.</p>
+                <p v-if="serviceErrors(index, 'ppn_percentage')" :class="ERR">{{ serviceErrors(index, "ppn_percentage").join(", ") }}</p>
+              </div>
+              <div>
+                <label :for="`subscription-service-icann-${index}`" :class="LABEL">{{ $t("subscriptions.form.icannFeeRp") }}</label>
+                <input
+                  :id="`subscription-service-icann-${index}`"
+                  v-model="service.icann_fee"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  :class="[FIELD, 'tabular-nums']"
+                />
+                <p v-if="serviceErrors(index, 'icann_fee')" :class="ERR">{{ serviceErrors(index, "icann_fee").join(", ") }}</p>
+              </div>
+            </div>
+
+            <p v-if="Number(service.amount) > 0" class="text-ui-cap text-ui-muted mt-3 tabular-nums">
+              Rp {{ (Number(service.amount) || 0).toLocaleString("id-ID") }}
+              <template v-if="Number(service.ppn_percentage) > 0">{{ $t("subscriptions.form.plusVat", { n: service.ppn_percentage }) }}</template>
+              <template v-if="Number(service.icann_fee) > 0">{{ $t("subscriptions.form.plusIcann", { amount: Number(service.icann_fee).toLocaleString("id-ID") }) }}</template>
+              <template v-if="Number(service.ppn_percentage) > 0 || Number(service.icann_fee) > 0">
+                = <span class="font-medium text-ui-ink">Rp {{ serviceTotal(service).toLocaleString("id-ID") }}</span>
+              </template>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <UiSelect
+          id="subscription-client"
+          :label="$t('common.labels.client')"
+          :placeholder="$t('subscriptions.form.selectClient')"
+          v-model="form.client_id"
+          :options="clientOptions"
+          required
+          :error="errors.client_id ? errors.client_id.join(', ') : ''"
+        />
+
+        <UiSelect
+          v-if="form.services.some((s) => s.service_type === 'website_maintenance')"
+          id="subscription-project"
+          :label="$t('subscriptions.form.projectOptional')"
+          v-model="form.project_id"
+          :options="projectSelectOptions"
+          :hint="$t('subscriptions.form.projectHint')"
+        />
+
+        <UiSelect
+          id="subscription-billing-cycle"
+          :label="$t('subscriptions.form.billingCycle')"
+          v-model="form.billing_cycle"
+          :options="BILLING_CYCLE_OPTIONS"
+          required
+        />
+
+        <UiSelect v-if="mode === 'edit'" id="subscription-status" :label="$t('common.labels.status')" v-model="form.status" :options="STATUS_OPTIONS" />
+
+        <UiInput
+          id="subscription-start-date"
+          :label="$t('subscriptions.form.startDate')"
+          type="date"
+          v-model="form.start_date"
+          required
+          :error="errors.start_date ? errors.start_date.join(', ') : ''"
+        />
+        <UiInput
+          id="subscription-next-due-date"
+          :label="$t('subscriptions.form.nextDueDate')"
+          type="date"
+          v-model="form.next_due_date"
+          required
+          :error="errors.next_due_date ? errors.next_due_date.join(', ') : ''"
+        />
+      </div>
+
+      <UiInput v-model="form.notes" :label="$t('subscriptions.form.notesOptional')" :rows="2" :placeholder="$t('subscriptions.form.notesPlaceholder')" />
+
+      <!-- Invoice configuration -->
+      <div class="border border-ui-line rounded-ui-card">
+        <button
+          type="button"
+          class="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left rounded-ui-card hover:bg-ui-subtle/60 focus:outline-none focus-visible:shadow-ui-focus"
+          :aria-expanded="showInvoiceConfig"
+          @click="showInvoiceConfig = !showInvoiceConfig"
+        >
+          <span class="block min-w-0">
+            <span class="block text-ui-h3 text-ui-ink">{{ $t("subscriptions.form.invoiceConfig") }}</span>
+            <span class="block text-ui-cap text-ui-muted mt-0.5">
+              {{ $t("subscriptions.form.invoiceConfigHint") }}
+            </span>
+          </span>
+          <ChevronDown
+            class="w-4 h-4 shrink-0 text-ui-muted transition-transform duration-150"
+            :class="{ '-rotate-180': showInvoiceConfig }"
+          />
+        </button>
+
+        <div v-show="showInvoiceConfig" class="px-4 pb-4 pt-1 space-y-4 border-t border-ui-line">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
+            <div>
+              <template v-if="!isMultiService">
+                <label for="subscription-ppn" :class="LABEL">{{ $t("subscriptions.form.vat") }}</label>
+                <input
+                  id="subscription-ppn"
+                  v-model.number="form.ppn_percentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  :class="[FIELD, 'tabular-nums']"
+                />
+              </template>
+              <template v-else>
+                <label :class="LABEL">{{ $t("subscriptions.form.totalVat") }}</label>
+                <input :value="`${totalPpnPercentage}%`" type="text" readonly :class="[FIELD, 'tabular-nums']" />
+                <p class="text-ui-cap text-ui-muted mt-1.5">{{ $t("subscriptions.form.blendedHint") }}</p>
               </template>
             </div>
             <div>
-              <BaseInput
-                id="subscription-admin-fee"
-                label="Admin Fee (Rp)"
-                type="number"
-                min="0"
-                v-model.number="form.admin_fee"
-              />
+              <label for="subscription-admin-fee" :class="LABEL">{{ $t("subscriptions.form.adminFeeRp") }}</label>
+              <input id="subscription-admin-fee" v-model.number="form.admin_fee" type="number" min="0" :class="[FIELD, 'tabular-nums']" />
             </div>
-          </div>
 
-          <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-1">Bank Account <span class="text-red-600">*</span></label>
-              <div class="relative w-full">
-                <select v-model="form.bank_name" @change="handleBankNameChange" required class="select-soft">
-                  <option value="" disabled>Select a bank account</option>
-                  <option v-for="account in bankAccounts" :key="account.id" :value="account.bank_name">{{ account.bank_name }}</option>
-                </select>
-                <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-              </div>
-              <p v-if="errors.bank_name" class="text-red-500 text-sm mt-1">{{ errors.bank_name.join(", ") }}</p>
-              <p v-if="bankAccounts.length === 0" class="text-xs text-gray-400 mt-1">
-                No bank accounts configured yet. Add one in Settings &rarr; Bank Accounts.
+              <UiSelect
+                :label="$t('subscriptions.form.bankAccount')"
+                :placeholder="$t('subscriptions.form.selectBank')"
+                v-model="form.bank_name"
+                :options="bankOptions"
+                required
+                :error="errors.bank_name ? errors.bank_name.join(', ') : ''"
+                @change="handleBankNameChange"
+              />
+              <p v-if="bankAccounts.length === 0" class="text-ui-cap text-ui-muted mt-1.5">
+                {{ $t("subscriptions.form.noBanks") }}
               </p>
             </div>
             <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-1">Account Number <span class="text-red-600">*</span></label>
-              <input v-model="form.bank_account" type="text" readonly required class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm bg-gray-50" />
+              <label :class="LABEL">{{ $t("subscriptions.form.accountNumber") }}<span class="text-ui-bad"> *</span></label>
+              <input v-model="form.bank_account" type="text" readonly required :class="[FIELD, 'tabular-nums']" />
             </div>
           </div>
 
-          <div class="mb-4">
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Terms & Conditions</label>
-            <textarea
-              v-model="form.terms"
-              rows="3"
-              class="w-full border rounded-[12px] transition-all duration-300 hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white border-[#DCDEDD] px-3.5 py-3 text-sm resize-none"
-            ></textarea>
-          </div>
+          <UiInput v-model="form.terms" :label="$t('subscriptions.form.terms')" :rows="3" />
 
-          <div class="mb-4">
-            <label class="flex items-center gap-2 text-sm font-semibold text-brand-dark">
-              <input type="checkbox" v-model="applyPph23" @change="toggleApplyPph23" />
-              Subject to PPh 23 withholding?
+          <div>
+            <label class="flex items-center gap-2.5 text-ui-small font-medium text-ui-ink cursor-pointer">
+              <input type="checkbox" v-model="applyPph23" @change="toggleApplyPph23" class="w-4 h-4 accent-ui-ink" />
+              {{ $t("subscriptions.form.pph23") }}
             </label>
-            <p class="text-xs text-brand-light mt-1">
-              Informational only -- adds a note to the invoice PDF. Does not change Total Amount Due.
+            <p class="text-ui-cap text-ui-muted mt-1 pl-[26px]">
+              {{ $t("subscriptions.form.pph23Hint") }}
             </p>
           </div>
 
-          <div v-if="applyPph23" class="grid grid-cols-2 gap-4 mb-4">
+          <div v-if="applyPph23" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <UiSelect :label="$t('subscriptions.form.pph23Type')" v-model="form.pph23_type" :options="pphTypeOptions" @change="handlePph23TypeChange" />
             <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-1">PPh 23 Type</label>
-              <div class="relative w-full">
-                <select v-model="form.pph23_type" @change="handlePph23TypeChange" class="select-soft">
-                  <option v-for="type in pphTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                </select>
-                <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-            <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-1">PPh 23 (%)</label>
-              <input v-model.number="form.pph23_percent" type="number" min="0" max="100" step="0.1" class="w-full border rounded-[12px] border-[#DCDEDD] px-3.5 py-3 text-sm" />
-              <p class="text-xs text-brand-light mt-1">Estimated: Rp {{ pph23EstimatedAmount.toLocaleString("id-ID") }}</p>
+              <label :class="LABEL">PPh 23 (%)</label>
+              <input v-model.number="form.pph23_percent" type="number" min="0" max="100" step="0.1" :class="[FIELD, 'tabular-nums']" />
+              <p class="text-ui-cap text-ui-muted mt-1.5 tabular-nums">{{ $t("subscriptions.form.estimated", { amount: pph23EstimatedAmount.toLocaleString("id-ID") }) }}</p>
             </div>
           </div>
 
-          <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
+          <!-- Totals -->
+          <dl class="bg-ui-subtle rounded-ui-control px-4 py-3 text-ui-small text-ui-text space-y-1.5">
             <template v-if="isMultiService">
               <!-- Each service is taxed on its own amount at its own rate
                    (see the per-row total above) -- Subtotal here is the
                    sum of those, not amount and VAT summed separately. -->
-              <div class="flex justify-between"><span>Subtotal (services incl. VAT)</span><span>Rp {{ servicesSubtotal.toLocaleString("id-ID") }}</span></div>
+              <div class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.subtotalServices") }}</dt><dd class="tabular-nums text-right">Rp {{ servicesSubtotal.toLocaleString("id-ID") }}</dd></div>
             </template>
             <template v-else>
-              <div class="flex justify-between"><span>Amount</span><span>Rp {{ totalAmount.toLocaleString("id-ID") }}</span></div>
-              <div class="flex justify-between"><span>VAT ({{ totalPpnPercentage }}%)</span><span>Rp {{ ppnAmount.toLocaleString("id-ID") }}</span></div>
+              <div class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.amount") }}</dt><dd class="tabular-nums text-right">Rp {{ totalAmount.toLocaleString("id-ID") }}</dd></div>
+              <div class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.vatN", { n: totalPpnPercentage }) }}</dt><dd class="tabular-nums text-right">Rp {{ ppnAmount.toLocaleString("id-ID") }}</dd></div>
             </template>
-            <div class="flex justify-between"><span>Admin Fee</span><span>Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</span></div>
-            <div v-if="icannFeeTotal > 0" class="flex justify-between"><span>ICANN Fee</span><span>Rp {{ icannFeeTotal.toLocaleString("id-ID") }}</span></div>
-            <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total per Invoice</span><span>Rp {{ invoiceTotal.toLocaleString("id-ID") }}</span></div>
-          </div>
-          </div>
+            <div class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.adminFee") }}</dt><dd class="tabular-nums text-right">Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</dd></div>
+            <div v-if="icannFeeTotal > 0" class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.icannFee") }}</dt><dd class="tabular-nums text-right">Rp {{ icannFeeTotal.toLocaleString("id-ID") }}</dd></div>
+            <div class="flex justify-between gap-3 font-semibold text-ui-ink pt-1.5 border-t border-ui-line">
+              <dt>{{ $t("subscriptions.form.totalPerInvoice") }}</dt><dd class="tabular-nums text-right">Rp {{ invoiceTotal.toLocaleString("id-ID") }}</dd>
+            </div>
+          </dl>
         </div>
       </div>
-
-      <div class="p-5 border-t border-[#DCDEDD] flex justify-end gap-3">
-        <button
-          type="button"
-          class="px-4 py-2.5 border border-[#DCDEDD] rounded-[10px] text-sm font-semibold hover:border-[#0C51D9] transition-colors"
-          @click="$emit('close')"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-          :disabled="loading"
-          @click="submit"
-        >
-          {{ loading ? "Saving..." : "Save" }}
-        </button>
-      </div>
     </div>
-  </div>
+
+    <template #footer>
+      <UiButton variant="secondary" @click="$emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
+      <UiButton :loading="loading" @click="submit">{{ loading ? $t("common.actions.saving") : $t("common.actions.save") }}</UiButton>
+    </template>
+  </UiModal>
 </template>

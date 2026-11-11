@@ -5,7 +5,7 @@ import SptTahunanAlert from "@/components/admin/dashboard/SptTahunanAlert.vue";
 </script>
 
 <template>
-  <div class="px-4 py-4 space-y-6">
+  <div class="px-1 sm:px-3 lg:px-5 py-3 sm:py-5 space-y-6">
     <SptTahunanAlert />
 
     <DashboardWelcome />

@@ -14,9 +14,12 @@ import {
   X,
   Image as ImageIcon,
 } from "lucide-vue-next";
-import { Input, TextArea, Select } from "@/components/common/form";
+import { UiInput, UiSelect } from "@/components/ui";
 import RightSidebarStep3 from "@/components/admin/employee/create/RightSidebarStep3.vue";
 import EmployeeFiles from "@/components/admin/employee/EmployeeFiles.vue";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
 
 interface Props {
   modelValue: {
@@ -65,7 +68,7 @@ const handlePickFiles = (event: Event) => {
     (file) => !ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE
   );
   if (invalid) {
-    pickerError.value = `"${invalid.name}" is not allowed. Only PDF, PNG, or JPEG files up to 2MB are supported.`;
+    pickerError.value = t("employees.files.notAllowed", { name: invalid.name });
     if (fileInputRef.value) fileInputRef.value.value = "";
     return;
   }
@@ -100,160 +103,118 @@ const { preferredLanguages } = storeToRefs(optionStore);
 onMounted(() => {
   optionStore.fetchPreferredLanguages();
 });
+
+// Presentation only: keep a blank, re-selectable first option.
+const languageOptions = computed(() => [
+  { value: "", label: t("employees.form.fields.preferredLanguagePlaceholder") },
+  ...(preferredLanguages.value || []).map((o: any) => {
+    const key = `employees.enums.language.${o.value}`;
+    return te(key) ? { ...o, label: t(key) } : o;
+  }),
+]);
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-4 items-start lg:pr-4">
-    <div class="flex-1 w-full space-y-5">
+  <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-5 items-start">
+    <div class="min-w-0 space-y-5 ui-stagger">
       <!-- Emergency Contact Section -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
-        <div class="flex items-center gap-2.5 mb-5">
-          <div
-            class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"
-          >
-            <Phone class="w-6 h-6 text-red-600" />
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+        <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+          <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line bg-ui-surface text-ui-text flex items-center justify-center">
+            <Phone class="w-4 h-4" />
+          </span>
+          <div class="min-w-0">
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.emergency.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.emergency.subtitle") }}</p>
           </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Emergency Contact</h3>
-            <p class="text-brand-light text-sm font-normal">
-              Optional -- person to contact in case of emergency. Leave blank if not available yet.
-            </p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        </header>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
           <!-- Emergency Contact Name -->
-          <div class="mb-3.5">
-            <Input
-              v-model="form.emergency_contact_name"
-              label="Full Name (optional)"
-              placeholder="Emergency contact name"
-              :error="
-                props.errors?.['emergency_contacts.0.full_name']?.join(', ')
-              "
-            >
-              <template #icon>
-                <User class="w-5 h-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
+          <UiInput
+            v-model="form.emergency_contact_name"
+            :label="$t('employees.form.fields.contactName')"
+            :placeholder="$t('employees.form.fields.contactNamePlaceholder')"
+            :icon="User"
+            :error="props.errors?.['emergency_contacts.0.full_name']?.join(', ')"
+          />
 
           <!-- Emergency Contact Relationship -->
-          <div class="mb-3.5">
-            <Input
-              v-model="form.emergency_contact_relationship"
-              label="Relationship (optional)"
-              placeholder="e.g., Spouse, Parent, Sibling"
-              :error="
-                props.errors?.['emergency_contacts.0.relationship']?.join(', ')
-              "
-            >
-              <template #icon>
-                <User class="w-5 h-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
+          <UiInput
+            v-model="form.emergency_contact_relationship"
+            :label="$t('employees.form.fields.relationship')"
+            :placeholder="$t('employees.form.fields.relationshipPlaceholder')"
+            :icon="User"
+            :error="props.errors?.['emergency_contacts.0.relationship']?.join(', ')"
+          />
 
           <!-- Emergency Contact Phone -->
-          <div class="mb-3.5">
-            <Input
-              v-model="form.emergency_contact_phone"
-              label="Phone Number (optional)"
-              placeholder="+62 812-3456-7890"
-              :error="props.errors?.['emergency_contacts.0.phone']?.join(', ')"
-            >
-              <template #icon>
-                <Phone class="w-5 h-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
+          <UiInput
+            v-model="form.emergency_contact_phone"
+            :label="$t('employees.form.fields.contactPhone')"
+            placeholder="+62 812-3456-7890"
+            :icon="Phone"
+            :error="props.errors?.['emergency_contacts.0.phone']?.join(', ')"
+          />
 
           <!-- Emergency Contact Email -->
-          <div class="mb-3.5">
-            <Input
-              v-model="form.emergency_contact_email"
-              label="Email Address"
-              placeholder="emergency@email.com"
-              type="email"
-              :error="props.errors?.['emergency_contacts.0.email']?.join(', ')"
-            >
-              <template #icon>
-                <Mail class="w-5 h-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
+          <UiInput
+            v-model="form.emergency_contact_email"
+            :label="$t('employees.form.fields.email')"
+            placeholder="emergency@email.com"
+            type="email"
+            :icon="Mail"
+            :error="props.errors?.['emergency_contacts.0.email']?.join(', ')"
+          />
         </div>
-      </div>
+      </section>
 
       <!-- Additional Information Section -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
-        <div class="flex items-center gap-2.5 mb-5">
-          <div
-            class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
-          >
-            <FileText class="w-6 h-6 text-orange-600" />
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+        <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+          <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line bg-ui-surface text-ui-text flex items-center justify-center">
+            <FileText class="w-4 h-4" />
+          </span>
+          <div class="min-w-0">
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.additional.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.additional.subtitle") }}</p>
           </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">
-              Additional Information
-            </h3>
-            <p class="text-brand-light text-sm font-normal">
-              Optional details and preferences
-            </p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        </header>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
           <!-- Preferred Language -->
-          <div class="mb-3.5">
-            <Select
-              v-model="form.preferred_language"
-              label="Preferred Language"
-              placeholder="Select language"
-              :error="props.errors?.preferred_language?.join(', ')"
-              :options="preferredLanguages"
-            >
-              <template #icon>
-                <Globe class="w-5 h-5 text-gray-400" />
-              </template>
-            </Select>
-          </div>
+          <UiSelect
+            v-model="form.preferred_language"
+            :label="$t('employees.form.fields.preferredLanguage')"
+            :error="props.errors?.preferred_language?.join(', ')"
+            :options="languageOptions"
+          />
 
           <!-- Additional Notes -->
-          <div class="md:col-span-2 mb-3.5">
-            <TextArea
+          <div class="md:col-span-2 min-w-0">
+            <UiInput
               v-model="form.additional_notes"
-              label="Additional Notes"
-              placeholder="Any additional information about the employee..."
+              :label="$t('employees.form.fields.additionalNotes')"
+              :placeholder="$t('employees.form.fields.additionalNotesPlaceholder')"
+              :icon="FileText"
               :error="props.errors?.additional_notes?.join(', ')"
-              rows="4"
-            >
-              <template #icon>
-                <FileText class="w-5 h-5 text-gray-400" />
-              </template>
-            </TextArea>
+              :rows="4"
+            />
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- Documents Section -->
       <EmployeeFiles v-if="isEditing && employeeId" :employee-id="employeeId" />
 
-      <div v-else class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
-        <div class="flex items-center gap-2.5 mb-5">
-          <div
-            class="w-9 h-9 bg-indigo-50 rounded-[12px] flex items-center justify-center"
-          >
-            <FileText class="w-6 h-6 text-indigo-600" />
+      <section v-else class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+        <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+          <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line bg-ui-surface text-ui-text flex items-center justify-center">
+            <FileText class="w-4 h-4" />
+          </span>
+          <div class="min-w-0">
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.documents.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.documents.subtitle") }}</p>
           </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Documents</h3>
-            <p class="text-brand-light text-sm font-normal">
-              Optional -- PDF, PNG, or JPEG, up to 2MB each. Uploaded once the employee is created.
-            </p>
-          </div>
-        </div>
-
+        </header>
         <input
           ref="fileInputRef"
           type="file"
@@ -266,48 +227,49 @@ onMounted(() => {
         <button
           type="button"
           @click="fileInputRef?.click()"
-          class="w-full border-2 border-dashed border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-3.5 py-5 flex flex-col items-center justify-center gap-1"
+          class="w-full border border-dashed border-ui-line-strong rounded-ui-card bg-ui-subtle/50 hover:bg-ui-subtle hover:border-ui-accent transition-colors duration-ui-base px-4 py-6 flex flex-col items-center justify-center gap-1.5 focus:outline-none focus-visible:shadow-ui-focus"
         >
-          <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center">
-            <Upload class="w-4 h-4 text-blue-600" />
-          </div>
-          <span class="text-brand-dark text-sm font-semibold">Choose Files</span>
-          <span class="text-brand-light text-xs">PDF, PNG, or JPEG up to 2MB each</span>
+          <span class="w-9 h-9 rounded-ui-control bg-ui-surface border border-ui-line text-ui-text flex items-center justify-center">
+            <Upload class="w-4 h-4" />
+          </span>
+          <span class="text-ui-small font-medium text-ui-ink">{{ $t("employees.form.documents.choose") }}</span>
+          <span class="text-ui-cap text-ui-muted">{{ $t("employees.form.documents.rules") }}</span>
         </button>
 
-        <p v-if="pickerError" class="text-red-500 text-xs mt-1.5">{{ pickerError }}</p>
+        <p v-if="pickerError" class="text-ui-cap text-ui-bad mt-1.5">{{ pickerError }}</p>
 
-        <div v-if="queuedDocuments.length" class="space-y-1.5 mt-3.5">
-          <div
+        <TransitionGroup v-if="queuedDocuments.length" name="ui-list" tag="ul" class="space-y-2 mt-4">
+          <li
             v-for="(file, index) in queuedDocuments"
             :key="`${file.name}-${index}`"
-            class="flex items-center gap-2.5 p-2.5 border border-[#DCDEDD] rounded-[10px]"
+            class="flex items-center gap-3 p-2.5 border border-ui-line rounded-ui-control bg-ui-surface"
           >
-            <div class="w-9 h-9 bg-indigo-50 rounded-[8px] flex items-center justify-center shrink-0">
-              <ImageIcon v-if="isImage(file)" class="w-4 h-4 text-indigo-600" />
-              <FileText v-else class="w-4 h-4 text-indigo-600" />
-            </div>
+            <span class="w-9 h-9 shrink-0 rounded-ui-control bg-ui-subtle text-ui-text flex items-center justify-center">
+              <ImageIcon v-if="isImage(file)" class="w-4 h-4" />
+              <FileText v-else class="w-4 h-4" />
+            </span>
             <div class="flex-1 min-w-0">
-              <p class="text-brand-light text-xs truncate mb-1">{{ file.name }} &middot; {{ (file.size / 1024).toFixed(0) }} KB</p>
+              <p class="text-ui-cap text-ui-muted truncate mb-1">{{ file.name }} &middot; <span class="tabular-nums">{{ (file.size / 1024).toFixed(0) }} KB</span></p>
               <input
                 :value="queuedDocumentNames[index]"
                 @input="updateQueuedDocumentName(index, ($event.target as HTMLInputElement).value)"
                 type="text"
                 required
-                placeholder="Document name (required)"
-                class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:border-2 outline-none"
+                :placeholder="$t('employees.form.documents.namePlaceholder')"
+                class="w-full h-8 px-2.5 bg-ui-surface text-ui-small text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
               />
             </div>
             <button
               type="button"
               @click="removeQueuedDocument(index)"
-              class="text-gray-400 hover:text-red-600 transition-colors shrink-0"
+              class="w-8 h-8 shrink-0 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
+              :aria-label="$t('employees.form.documents.remove')"
             >
               <X class="w-4 h-4" />
             </button>
-          </div>
-        </div>
-      </div>
+          </li>
+        </TransitionGroup>
+      </section>
     </div>
 
     <RightSidebarStep3 />

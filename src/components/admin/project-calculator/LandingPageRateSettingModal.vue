@@ -1,8 +1,12 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { X, Globe, Loader2, ServerIcon, PaletteIcon } from "lucide-vue-next";
+import { ServerIcon, PaletteIcon } from "lucide-vue-next";
+import { UiModal, UiButton, UiAlert } from "@/components/ui";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const emit = defineEmits(["close", "saved"]);
 const store = useProjectCalculatorStore();
@@ -33,83 +37,64 @@ const submit = async () => {
   } catch (error) {
     const data = error?.response?.data;
     errorMessage.value =
-      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal menyimpan konfigurasi Landing Page.");
+      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t("calculator.lpModal.saveFailed"));
   }
 };
+
+// Presentation only: native number field (keeps v-model.number) in the field style.
+const fieldClass =
+  "w-full h-[38px] px-3 text-right tabular-nums bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
 </script>
 
 <template>
-  <div class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[90] flex items-center justify-center p-3.5" @click.self="emit('close')">
-    <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
-      <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between flex-shrink-0">
-        <div class="flex items-center gap-2.5">
-          <div class="w-11 h-11 bg-emerald-50 rounded-[12px] flex items-center justify-center">
-            <Globe class="w-5 h-5 text-emerald-600" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Landing Page Rate Setup</h3>
-            <p class="text-brand-light text-sm">Configure the package pricing used by the Landing Page scenario</p>
-          </div>
+  <UiModal
+    :open="true"
+    size="md"
+    :title="$t('calculator.dashboard.lpRate.title')"
+    :description="$t('calculator.lpModal.description')"
+    @close="emit('close')"
+  >
+    <div class="space-y-5">
+      <UiAlert v-if="errorMessage" tone="bad">{{ errorMessage }}</UiAlert>
+
+      <div>
+        <div class="flex items-center gap-1.5 mb-2">
+          <ServerIcon class="w-4 h-4 text-ui-faint" />
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("calculator.lpModal.server") }}</h3>
         </div>
-        <button @click="emit('close')" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors">
-          <X class="w-5 h-5" />
-        </button>
-      </div>
-
-      <div class="p-5 space-y-5 overflow-y-auto">
-        <p v-if="errorMessage" class="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5">
-          {{ errorMessage }}
-        </p>
-
-        <div>
-          <div class="flex items-center gap-1.5 mb-1.5">
-            <ServerIcon class="w-4 h-4 text-emerald-600" />
-            <h4 class="text-brand-dark text-sm font-bold">Server</h4>
-          </div>
-          <div class="grid grid-cols-2 gap-3.5">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Dedicated (Rp)</label>
-              <input v-model.number="form.server_dedicated_price" type="number" min="0" step="10000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Shared (Rp)</label>
-              <input v-model.number="form.server_shared_price" type="number" min="0" step="10000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div class="flex items-center gap-1.5 mb-1.5">
-            <PaletteIcon class="w-4 h-4 text-emerald-600" />
-            <h4 class="text-brand-dark text-sm font-bold">Design</h4>
-          </div>
-          <div class="grid grid-cols-2 gap-3.5">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Dedicated (Rp)</label>
-              <input v-model.number="form.design_dedicated_price" type="number" min="0" step="10000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Template (Rp)</label>
-              <input v-model.number="form.design_template_price" type="number" min="0" step="10000" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
-            </div>
-          </div>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block">
+            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.lpModal.dedicated") }}</span>
+            <input v-model.number="form.server_dedicated_price" type="number" min="0" step="10000" :class="fieldClass" />
+          </label>
+          <label class="block">
+            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.lpModal.shared") }}</span>
+            <input v-model.number="form.server_shared_price" type="number" min="0" step="10000" :class="fieldClass" />
+          </label>
         </div>
       </div>
 
-      <div class="p-5 border-t border-[#DCDEDD] flex gap-2.5 justify-end flex-shrink-0">
-        <button @click="emit('close')" :disabled="saving" class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 transition-all px-5 py-2.5">
-          <span class="text-brand-dark text-sm font-semibold">Cancel</span>
-        </button>
-        <button
-          @click="submit"
-          :disabled="saving"
-          class="rounded-[8px] hover:brightness-110 focus:ring-2 transition-all px-5 py-2.5 flex items-center gap-1.5 disabled:opacity-50"
-          style="background-color: #059669; border: 1px solid #047857; color: #fff"
-        >
-          <Loader2 v-if="saving" class="w-4 h-4 animate-spin" style="color: #fff" />
-          <span class="text-sm font-semibold" style="color: #fff">{{ saving ? "Saving..." : "Save Configuration" }}</span>
-        </button>
+      <div>
+        <div class="flex items-center gap-1.5 mb-2">
+          <PaletteIcon class="w-4 h-4 text-ui-faint" />
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("calculator.lpModal.design") }}</h3>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block">
+            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.lpModal.dedicated") }}</span>
+            <input v-model.number="form.design_dedicated_price" type="number" min="0" step="10000" :class="fieldClass" />
+          </label>
+          <label class="block">
+            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.lpModal.template") }}</span>
+            <input v-model.number="form.design_template_price" type="number" min="0" step="10000" :class="fieldClass" />
+          </label>
+        </div>
       </div>
     </div>
-  </div>
+
+    <template #footer>
+      <UiButton variant="secondary" :disabled="saving" @click="emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
+      <UiButton :loading="saving" @click="submit">{{ saving ? $t("common.actions.saving") : $t("calculator.lpModal.save") }}</UiButton>
+    </template>
+  </UiModal>
 </template>

@@ -1,0 +1,71 @@
+{
+  "format": {
+    "label": "Format teks",
+    "normal": "Teks normal",
+    "title": "Judul",
+    "subtitle": "Subjudul",
+    "heading": "Heading",
+    "subHeading": "Sub heading"
+  },
+  "toolbar": {
+    "undo": "Urungkan",
+    "redo": "Ulangi",
+    "bold": "Tebal",
+    "italic": "Miring",
+    "underline": "Garis bawah",
+    "strikethrough": "Coret",
+    "bulletList": "Daftar poin",
+    "numberedList": "Daftar bernomor",
+    "quote": "Kutipan",
+    "alignLeft": "Rata kiri",
+    "alignCenter": "Rata tengah",
+    "alignRight": "Rata kanan",
+    "justify": "Rata kiri-kanan",
+    "removeLink": "Hapus tautan",
+    "horizontalLine": "Garis horizontal",
+    "clearFormatting": "Hapus format",
+    "insertImage": "Sisipkan gambar",
+    "insertFlowchart": "Sisipkan flowchart",
+    "insertLink": "Sisipkan tautan",
+    "insertTable": "Sisipkan tabel"
+  },
+  "table": {
+    "rows": "Baris",
+    "cols": "Kolom",
+    "addRowBelow": "Tambah baris di bawah",
+    "deleteRow": "Hapus baris ini",
+    "addColRight": "Tambah kolom di kanan",
+    "deleteCol": "Hapus kolom ini",
+    "deleteTable": "Hapus tabel",
+    "columnColor": "Warna kolom",
+    "rowColor": "Warna baris"
+  },
+  "colors": {
+    "none": "Tanpa warna",
+    "gray": "Abu-abu",
+    "red": "Merah",
+    "yellow": "Kuning",
+    "green": "Hijau",
+    "blue": "Biru",
+    "purple": "Ungu"
+  },
+  "image": {
+    "label": "Gambar:",
+    "width": "Lebar {n}%",
+    "full": "Penuh",
+    "setWidth": "Atur lebar",
+    "alignLeft": "Rata kiri",
+    "center": "Tengah",
+    "alignRight": "Rata kanan",
+    "remove": "Hapus gambar",
+    "done": "Selesai",
+    "uploadFailed": "Gambar gagal diunggah."
+  },
+  "recap": {
+    "title": "Rekap",
+    "hide": "Sembunyikan",
+    "show": "Tampilkan",
+    "loadFailed": "Rekap gagal dimuat.",
+    "retry": "Coba lagi"
+  }
+}

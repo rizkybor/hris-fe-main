@@ -14,13 +14,12 @@ import {
   FolderKanban,
   AlertTriangle,
   Star,
-  X,
-  ChevronDown,
   ChevronRight,
   RefreshCw,
   Wrench,
   Trash2,
   CalendarRange,
+  Search,
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
 import { useProjectStore } from "@/stores/project";
@@ -29,13 +28,17 @@ import { useAlertModalStore } from "@/stores/alertModal";
 import { can, hasAnyRole } from "@/helpers/permissionHelper";
 import { useScrollFade } from "@/composables/useScrollFade";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
-import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import { UiPageHeader, UiStat, UiButton, UiBadge, UiInput, UiSelect, UiTable, UiEmpty, UiAlert, UiModal } from "@/components/ui";
 import Pagination from "@/components/common/Pagination.vue";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import AttendanceDetailModal from "@/components/admin/attendance/AttendanceDetailModal.vue";
 import DocumentReport from "@/components/admin/report/DocumentReport.vue";
 import { formatTime as formatTimeUtil } from "@/utils/dateUtils";
 import { formatHours, CONTRACT_STATUS, LEFTOVER_POLICY, usageColor } from "@/utils/maintenance";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t, te } = useI18n();
 
 const router = useRouter();
 const reportStore = useReportStore();
@@ -62,22 +65,22 @@ const {
   downloadingPdf,
 } = storeToRefs(reportStore);
 
-const tabs = [
-  { key: "attendance", label: "Attendance", icon: ClockIcon },
-  { key: "payroll", label: "Payroll", icon: Wallet },
-  { key: "employee", label: "Employee", icon: Users },
-  { key: "finance", label: "Finance", icon: Building2Icon },
+const tabs = computed(() => [
+  { key: "attendance", label: t("reports.tabs.attendance"), icon: ClockIcon },
+  { key: "payroll", label: t("reports.tabs.payroll"), icon: Wallet },
+  { key: "employee", label: t("reports.tabs.employee"), icon: Users },
+  { key: "finance", label: t("reports.tabs.finance"), icon: Building2Icon },
   { key: "pph21", label: "PPh 21", icon: ReceiptIcon },
   { key: "pph23", label: "PPh 23", icon: ReceiptIcon },
   { key: "ppn", label: "PPN", icon: PercentIcon },
-  { key: "project", label: "Project", icon: FolderKanban },
-  { key: "subscription", label: "Subscription Lists", icon: RefreshCw },
-  { key: "maintenance", label: "Maintenance Lists", icon: Wrench },
-  { key: "documents", label: "Document Reports", icon: FileTextIcon },
-  { key: "staff_raport", label: "Staff Raport", icon: Star, permission: "staff-raport-menu" },
-];
+  { key: "project", label: t("reports.tabs.project"), icon: FolderKanban },
+  { key: "subscription", label: t("reports.tabs.subscription"), icon: RefreshCw },
+  { key: "maintenance", label: t("reports.tabs.maintenance"), icon: Wrench },
+  { key: "documents", label: t("reports.tabs.documents"), icon: FileTextIcon },
+  { key: "staff_raport", label: t("reports.tabs.staffRaport"), icon: Star, permission: "staff-raport-menu" },
+]);
 
-const visibleTabs = computed(() => tabs.filter((t) => !t.permission || can(t.permission)));
+const visibleTabs = computed(() => tabs.value.filter((tab) => !tab.permission || can(tab.permission)));
 
 // Only tabs backed by exactly one real, deletable record -- not Finance
 // (three tables merged into fake rows), PPh 21 or Staff Raport (both
@@ -96,14 +99,14 @@ const rowIdField = (row) => row.id ?? row.employee_id;
 
 const handleDeleteRow = async (row) => {
   const id = rowIdField(row);
-  if (!(await alertModal.confirm("Delete this record? This deletes the actual underlying record, not just its appearance in this report.", { type: "danger", confirmText: "Delete" }))) return;
+  if (!(await alertModal.confirm(t("reports.delete.rowConfirm"), { type: "danger", confirmText: t("common.actions.delete") }))) return;
 
   deletingRowId.value = id;
   try {
     await reportStore.deleteRow(activeTab.value, id);
     await loadReport(reportMeta.value?.current_page || 1);
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Failed to delete record.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || t("reports.delete.rowFailed"), { type: "danger" });
   } finally {
     deletingRowId.value = null;
   }
@@ -127,12 +130,12 @@ const closeDeleteRangeModal = () => {
 
 const handleDeleteRange = async () => {
   if (!deleteRangeStart.value || !deleteRangeEnd.value) return;
-  const tabLabel = tabs.find((t) => t.key === activeTab.value)?.label ?? activeTab.value;
+  const tabLabel = tabs.value.find((tab) => tab.key === activeTab.value)?.label ?? activeTab.value;
 
   if (
     !(await alertModal.confirm(
-      `Delete every "${tabLabel}" record between ${deleteRangeStart.value} and ${deleteRangeEnd.value}? This deletes the actual underlying records and cannot be undone from this screen.`,
-      { type: "danger", confirmText: "Delete Range" }
+      t("reports.delete.rangeConfirm", { tab: tabLabel, start: deleteRangeStart.value, end: deleteRangeEnd.value }),
+      { type: "danger", confirmText: t("reports.delete.range") }
     ))
   )
     return;
@@ -142,10 +145,10 @@ const handleDeleteRange = async () => {
     const result = await reportStore.deleteByRange(activeTab.value, deleteRangeStart.value, deleteRangeEnd.value);
     showDeleteRangeModal.value = false;
     await loadReport(1);
-    const skippedNote = result?.skipped?.length ? ` ${result.skipped.length} record(s) were skipped (e.g. already-paid Payroll).` : "";
-    await alertModal.alert(`${result?.deleted ?? 0} record(s) deleted.${skippedNote}`, { type: "success" });
+    const skippedNote = result?.skipped?.length ? ` ${t("reports.delete.skipped", { n: result.skipped.length }, result.skipped.length)}` : "";
+    await alertModal.alert(`${t("reports.delete.deleted", { n: result?.deleted ?? 0 }, result?.deleted ?? 0)}${skippedNote}`, { type: "success" });
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Failed to delete records in this range.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || t("reports.delete.rangeFailed"), { type: "danger" });
   } finally {
     deletingRange.value = false;
   }
@@ -171,10 +174,10 @@ const staffRaportEmploymentType = ref("");
 const canExport = computed(() => can("report-export"));
 
 // Finance tab has two sources: the Company Cash Book (default) or Operational Cost.
-const FINANCE_SOURCES = [
-  { key: "cash_book", label: "Company Cash Book" },
-  { key: "operational_cost", label: "Operational Cost" },
-];
+const FINANCE_SOURCES = computed(() => [
+  { key: "cash_book", label: t("reports.finance.cashBook") },
+  { key: "operational_cost", label: t("reports.finance.operationalCost") },
+]);
 const financeSource = ref("cash_book");
 const isOperationalCost = computed(() => activeTab.value === "finance" && financeSource.value === "operational_cost");
 const setFinanceSource = (key) => {
@@ -277,12 +280,12 @@ const closeAttendanceDetail = () => {
   showAttendanceDetail.value = false;
 };
 
-const attendanceStatusClass = {
-  present: "bg-green-50 text-green-700",
-  late: "bg-amber-50 text-amber-700",
-  absent: "bg-red-50 text-red-700",
-  remote: "bg-blue-50 text-blue-700",
-  overtime: "bg-purple-50 text-purple-700",
+const attendanceStatusTone = {
+  present: "ok",
+  late: "warn",
+  absent: "bad",
+  remote: "info",
+  overtime: "accent",
 };
 
 // Punctuality boxes in the raport detail.
@@ -290,12 +293,12 @@ const raportAttendanceBoxes = computed(() => {
   const a = staffRaportDetail.value?.attendance;
   if (!a) return [];
   const missed = (a.absent ?? 0) + (a.no_record ?? 0);
-  const t = a.late_tiers || {};
+  const tiers = a.late_tiers || {};
   return [
-    { label: "On time", value: (a.present ?? 0) + (a.remote ?? 0), sub: a.remote ? `incl. ${a.remote} remote` : null },
-    { label: "Late", value: a.late ?? 0, class: a.late ? "text-amber-700" : null, sub: a.late ? `${a.late_minutes} min total · ${t.severe || 0} over 1 h` : null },
-    { label: "Absent / no check-in", value: missed, class: missed ? "text-red-600" : null, sub: a.no_record ? `${a.no_record} without any record` : null },
-    { label: "Not counted", value: (a.sick_leave ?? 0) + (a.leave ?? 0) + (a.holidays ?? 0), sub: `${a.sick_leave ?? 0} sick · ${a.leave ?? 0} leave · ${a.holidays ?? 0} holiday` },
+    { label: t("reports.raport.onTime"), value: (a.present ?? 0) + (a.remote ?? 0), sub: a.remote ? t("reports.raport.inclRemote", { n: a.remote }) : null },
+    { label: t("reports.raport.late"), value: a.late ?? 0, class: a.late ? "text-ui-warn" : null, sub: a.late ? t("reports.raport.lateSub", { minutes: a.late_minutes, severe: tiers.severe || 0 }) : null },
+    { label: t("reports.raport.absent"), value: missed, class: missed ? "text-ui-bad" : null, sub: a.no_record ? t("reports.raport.noRecord", { n: a.no_record }) : null },
+    { label: t("reports.raport.notCounted"), value: (a.sick_leave ?? 0) + (a.leave ?? 0) + (a.holidays ?? 0), sub: t("reports.raport.notCountedSub", { sick: a.sick_leave ?? 0, leave: a.leave ?? 0, holiday: a.holidays ?? 0 }) },
   ];
 });
 
@@ -335,95 +338,95 @@ const summaryCards = computed(() => {
   switch (activeTab.value) {
     case "attendance":
       return [
-        { label: "Total Records", value: summary.total_records ?? 0 },
-        { label: "Present", value: summary.present ?? 0 },
-        { label: "Late", value: summary.late ?? 0 },
-        { label: "Absent", value: summary.absent ?? 0 },
+        { label: t("reports.summary.totalRecords"), value: summary.total_records ?? 0 },
+        { label: t("reports.summary.present"), value: summary.present ?? 0 },
+        { label: t("reports.summary.late"), value: summary.late ?? 0 },
+        { label: t("reports.summary.absent"), value: summary.absent ?? 0 },
       ];
     case "payroll":
       return [
-        { label: "Payroll Runs", value: summary.total_payroll_runs ?? 0 },
-        { label: "Employees Paid", value: summary.total_employees_paid ?? 0 },
+        { label: t("reports.summary.payrollRuns"), value: summary.total_payroll_runs ?? 0 },
+        { label: t("reports.summary.employeesPaid"), value: summary.total_employees_paid ?? 0 },
         {
-          label: "Total Original Salary",
+          label: t("reports.summary.totalOriginalSalary"),
           value: formatCurrency(summary.total_original_salary),
         },
         {
-          label: "Total Final Salary",
+          label: t("reports.summary.totalFinalSalary"),
           value: formatCurrency(summary.total_final_salary),
         },
       ];
     case "employee":
       return [
-        { label: "Total Employees", value: summary.total_employees ?? 0 },
-        { label: "Active", value: summary.active ?? 0 },
-        { label: "Inactive", value: summary.inactive ?? 0 },
+        { label: t("reports.summary.totalEmployees"), value: summary.total_employees ?? 0 },
+        { label: t("reports.summary.active"), value: summary.active ?? 0 },
+        { label: t("reports.summary.inactive"), value: summary.inactive ?? 0 },
       ];
     case "finance":
       if (summary.items_total !== undefined) {
         return [
-          { label: "Fixed Cost / bulan", value: formatCurrency(summary.fixed_cost) },
-          { label: "SDM / bulan", value: formatCurrency(summary.sdm) },
-          { label: "Infrastructure / bulan", value: formatCurrency(summary.infrastructure_monthly) },
-          { label: "Infrastructure / tahun", value: formatCurrency(summary.infrastructure_annual) },
+          { label: t("reports.summary.fixedCostMonth"), value: formatCurrency(summary.fixed_cost) },
+          { label: t("reports.summary.sdmMonth"), value: formatCurrency(summary.sdm) },
+          { label: t("reports.summary.infraMonth"), value: formatCurrency(summary.infrastructure_monthly) },
+          { label: t("reports.summary.infraYear"), value: formatCurrency(summary.infrastructure_annual) },
         ];
       }
       return [
-        { label: "Saldo Awal Periode", value: formatCurrency(summary.period_opening) },
-        { label: "Total Debit (Masuk)", value: formatCurrency(summary.total_debit) },
-        { label: "Total Kredit (Keluar)", value: formatCurrency(summary.total_credit) },
-        { label: "Saldo Akhir Periode", value: formatCurrency(summary.period_closing) },
+        { label: t("reports.summary.periodOpening"), value: formatCurrency(summary.period_opening) },
+        { label: t("reports.summary.totalDebit"), value: formatCurrency(summary.total_debit) },
+        { label: t("reports.summary.totalCredit"), value: formatCurrency(summary.total_credit) },
+        { label: t("reports.summary.periodClosing"), value: formatCurrency(summary.period_closing) },
       ];
     case "pph21":
       return [
-        { label: "Employees Taxed", value: summary.total_employees_taxed ?? 0 },
+        { label: t("reports.summary.employeesTaxed"), value: summary.total_employees_taxed ?? 0 },
         {
-          label: "Total Gross Salary",
+          label: t("reports.summary.totalGrossSalary"),
           value: formatCurrency(summary.total_gross_salary),
         },
-        { label: "Total PPh 21", value: formatCurrency(summary.total_pph21) },
+        { label: t("reports.summary.totalPph21"), value: formatCurrency(summary.total_pph21) },
       ];
     case "ppn":
       return [
-        { label: "Invoices", value: summary.total_invoices ?? 0 },
-        { label: "Total DPP", value: formatCurrency(summary.total_dpp) },
-        { label: "Total PPN", value: formatCurrency(summary.total_ppn) },
+        { label: t("reports.summary.invoices"), value: summary.total_invoices ?? 0 },
+        { label: t("reports.summary.totalDpp"), value: formatCurrency(summary.total_dpp) },
+        { label: t("reports.summary.totalPpn"), value: formatCurrency(summary.total_ppn) },
       ];
     case "project": {
       const counts = summary.billing_status_counts || {};
       const paidPct = summary.total_invoiced ? Math.round((summary.total_paid / summary.total_invoiced) * 100) : null;
       return [
-        { label: "Projects", value: summary.total_projects ?? 0, sub: `${summary.active_projects ?? 0} active · ${summary.completed_projects ?? 0} completed`, subClass: "text-brand-light" },
-        { label: "Total Budget", value: formatCurrency(summary.total_budget), sub: `Not invoiced yet ${formatCurrency(summary.total_not_invoiced)}`, subClass: "text-brand-light" },
-        { label: "Invoiced", value: formatCurrency(summary.total_invoiced), sub: `Paid ${formatCurrency(summary.total_paid)}${paidPct !== null ? ` (${paidPct}%)` : ""}`, subClass: "text-emerald-700" },
+        { label: t("reports.summary.projects"), value: summary.total_projects ?? 0, sub: t("reports.summary.projectsSub", { active: summary.active_projects ?? 0, completed: summary.completed_projects ?? 0 }), subClass: "text-ui-muted" },
+        { label: t("reports.summary.totalBudget"), value: formatCurrency(summary.total_budget), sub: t("reports.summary.notInvoicedYet", { amount: formatCurrency(summary.total_not_invoiced) }), subClass: "text-ui-muted" },
+        { label: t("reports.summary.invoiced"), value: formatCurrency(summary.total_invoiced), sub: `${t("reports.summary.paidSub", { amount: formatCurrency(summary.total_paid) })}${paidPct !== null ? ` (${paidPct}%)` : ""}`, subClass: "text-ui-ok" },
         {
-          label: "Outstanding",
+          label: t("reports.summary.outstanding"),
           value: formatCurrency(summary.total_outstanding),
-          sub: `${counts.settled ?? 0} settled · ${counts.outstanding ?? 0} outstanding${counts.overpaid ? ` · ${counts.overpaid} overpaid` : ""}`,
-          subClass: summary.total_outstanding > 0 ? "text-amber-700" : "text-brand-light",
+          sub: `${t("reports.summary.outstandingSub", { settled: counts.settled ?? 0, outstanding: counts.outstanding ?? 0 })}${counts.overpaid ? t("reports.summary.overpaidSub", { n: counts.overpaid }) : ""}`,
+          subClass: summary.total_outstanding > 0 ? "text-ui-warn" : "text-ui-muted",
         },
       ];
     }
     case "pph23":
       return [
-        { label: "Receipts", value: summary.total_receipts ?? 0 },
-        { label: "Total Gross", value: formatCurrency(summary.total_gross) },
-        { label: "Total PPh 23 Withheld", value: formatCurrency(summary.total_pph23) },
-        { label: "Total Net Received", value: formatCurrency(summary.total_net_received) },
+        { label: t("reports.summary.receipts"), value: summary.total_receipts ?? 0 },
+        { label: t("reports.summary.totalGross"), value: formatCurrency(summary.total_gross) },
+        { label: t("reports.summary.totalPph23"), value: formatCurrency(summary.total_pph23) },
+        { label: t("reports.summary.totalNet"), value: formatCurrency(summary.total_net_received) },
       ];
     case "subscription":
       return [
-        { label: "MRR (Monthly Recurring Revenue)", value: formatCurrency(summary.mrr) },
-        { label: "ARR (Annual Recurring Revenue)", value: formatCurrency(summary.arr) },
-        { label: "Active Subscriptions", value: summary.active_count ?? 0 },
-        { label: "Upcoming Renewals (30d)", value: summary.upcoming_renewals_count ?? 0 },
+        { label: t("reports.summary.mrr"), value: formatCurrency(summary.mrr) },
+        { label: t("reports.summary.arr"), value: formatCurrency(summary.arr) },
+        { label: t("reports.summary.activeSubscriptions"), value: summary.active_count ?? 0 },
+        { label: t("reports.summary.upcomingRenewals"), value: summary.upcoming_renewals_count ?? 0 },
       ];
     case "maintenance":
       return [
-        { label: "Active Contracts", value: `${summary.active_count ?? 0} / ${summary.total_count ?? 0}` },
-        { label: `Hours Used · ${maintenanceMonthLabel.value}`, value: `${formatHours(summary.used)} / ${formatHours(summary.available)}` },
-        { label: "Over Quota", value: summary.over_count ?? 0 },
-        { label: "Development Balance", value: formatHours(summary.balance), sub: summary.expiring ? `${formatHours(summary.expiring)} expiring in 30 days` : null },
+        { label: t("reports.summary.activeContracts"), value: `${summary.active_count ?? 0} / ${summary.total_count ?? 0}` },
+        { label: t("reports.summary.hoursUsed", { month: maintenanceMonthLabel.value }), value: `${formatHours(summary.used)} / ${formatHours(summary.available)}` },
+        { label: t("reports.summary.overQuota"), value: summary.over_count ?? 0 },
+        { label: t("reports.summary.devBalance"), value: formatHours(summary.balance), sub: summary.expiring ? t("reports.summary.expiring", { hours: formatHours(summary.expiring) }) : null },
       ];
     case "staff_raport": {
       const rows = staffRaport.value.rows || [];
@@ -431,10 +434,10 @@ const summaryCards = computed(() => {
       const avg = (key) =>
         withScore.length ? Math.round((withScore.reduce((s, r) => s + (r[key] ?? 0), 0) / withScore.length) * 10) / 10 : 0;
       return [
-        { label: "Total Staff (this page)", value: rows.length },
-        { label: "Avg. Attendance Rate", value: `${avg("attendance_rate")}%` },
-        { label: "Avg. Task Completion", value: `${avg("task_completion_rate")}%` },
-        { label: "Avg. Overall Score", value: `${avg("overall_score")}%` },
+        { label: t("reports.summary.totalStaff"), value: rows.length },
+        { label: t("reports.summary.avgAttendance"), value: `${avg("attendance_rate")}%` },
+        { label: t("reports.summary.avgTasks"), value: `${avg("task_completion_rate")}%` },
+        { label: t("reports.summary.avgScore"), value: `${avg("overall_score")}%` },
       ];
     }
     default:
@@ -453,24 +456,32 @@ const tableRows = computed(() => {
 });
 
 // Project tab: invoiced vs paid per project (see ProjectBillingService).
-const BILLING_STATUS = {
-  settled: { label: "Settled", class: "bg-green-50 text-green-700" },
-  outstanding: { label: "Outstanding", class: "bg-amber-50 text-amber-700" },
-  overpaid: { label: "Overpaid", class: "bg-red-50 text-red-700" },
-  not_invoiced: { label: "Not invoiced", class: "bg-gray-100 text-gray-500" },
+const BILLING_STATUS = computed(() => ({
+  settled: { label: t("reports.billing.settled"), tone: "ok" },
+  outstanding: { label: t("reports.billing.outstanding"), tone: "warn" },
+  overpaid: { label: t("reports.billing.overpaid"), tone: "bad" },
+  not_invoiced: { label: t("reports.billing.notInvoiced"), tone: "neutral" },
+}));
+
+const subscriptionStatusTone = {
+  active: "ok",
+  postponed: "warn",
+  cancelled: "neutral",
 };
 
-const subscriptionStatusClass = {
-  active: "bg-green-50 text-green-700",
-  postponed: "bg-amber-50 text-amber-700",
-  cancelled: "bg-gray-100 text-gray-500",
-};
+const contractStatusTone = { active: "ok", paused: "warn", ended: "neutral" };
 
-const subscriptionStatusLabel = {
-  active: "Active",
-  postponed: "Postponed",
-  cancelled: "Not Active",
-};
+const subscriptionStatusLabel = computed(() => ({
+  active: t("reports.subscriptionStatus.active"),
+  postponed: t("reports.subscriptionStatus.postponed"),
+  cancelled: t("reports.subscriptionStatus.cancelled"),
+}));
+
+// Display label for an enum value: translated when the key exists,
+// otherwise the value in Title Case.
+const enumLabel = (group, v) => (v && te(`reports.${group}.${v}`) ? t(`reports.${group}.${v}`) : titleCase(v));
+const contractStatusLabel = (v) => (te(`reports.contractStatus.${v}`) ? t(`reports.contractStatus.${v}`) : CONTRACT_STATUS[v]?.label ?? v);
+const leftoverLabel = (v) => (te(`reports.leftover.${v}`) ? t(`reports.leftover.${v}`) : LEFTOVER_POLICY[v]?.short ?? v);
 
 // A subscription can bundle several services -- list them all instead of
 // the single service_type this column used to show.
@@ -490,7 +501,7 @@ function subscriptionIcannFeeTotal(subscription) {
 
 const maintenanceMonthLabel = computed(() => {
   const m = maintenance.value?.month;
-  return m ? new Date(`${m}-01T00:00:00`).toLocaleDateString("id-ID", { month: "short", year: "numeric" }) : "this month";
+  return m ? new Date(`${m}-01T00:00:00`).toLocaleDateString(localeTag(), { month: "short", year: "numeric" }) : t("reports.thisMonth");
 });
 
 function formatCurrency(value) {
@@ -504,7 +515,7 @@ function formatCurrency(value) {
 
 function formatDate(value) {
   if (!value) return "-";
-  return new Date(value).toLocaleDateString("id-ID", {
+  return new Date(value).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -606,1254 +617,1135 @@ onMounted(() => {
   projectStore.fetchProjects({ limit: 200 });
   optionStore.fetchEmploymentTypes();
 });
+
+// ----- Presentation only: table columns, row keys, row clicks and the
+// phone card for each report. -----
+const R = "right";
+const COLUMNS = computed(() => ({
+  attendance: [
+    { key: "date", label: t("reports.columns.date") },
+    { key: "employee", label: t("reports.columns.employee") },
+    { key: "check_in", label: t("reports.columns.checkIn") },
+    { key: "check_out", label: t("reports.columns.checkOut") },
+    { key: "status", label: t("reports.columns.status") },
+  ],
+  payroll: [
+    { key: "period", label: t("reports.columns.period") },
+    { key: "employee", label: t("reports.columns.employee") },
+    { key: "original_salary", label: t("reports.columns.originalSalary"), align: R },
+    { key: "final_salary", label: t("reports.columns.finalSalary"), align: R },
+    { key: "status", label: t("reports.columns.status") },
+  ],
+  employee: [
+    { key: "code", label: t("reports.columns.code") },
+    { key: "name", label: t("reports.columns.name") },
+    { key: "job_title", label: t("reports.columns.jobTitle") },
+    { key: "team", label: t("reports.columns.team") },
+    { key: "status", label: t("reports.columns.status") },
+  ],
+  operational_cost: [
+    { key: "category", label: t("reports.columns.category") },
+    { key: "item", label: t("reports.columns.item") },
+    { key: "monthly", label: t("reports.columns.costPerMonth"), align: R },
+    { key: "annual", label: t("reports.columns.costPerYear"), align: R },
+    { key: "status", label: t("reports.columns.status") },
+  ],
+  finance: [
+    { key: "date", label: t("reports.columns.date") },
+    { key: "description", label: t("reports.columns.description") },
+    { key: "source", label: t("reports.columns.source") },
+    { key: "debit", label: t("reports.columns.debit"), align: R },
+    { key: "credit", label: t("reports.columns.credit"), align: R },
+    { key: "balance", label: t("reports.columns.balance"), align: R },
+  ],
+  pph21: [
+    { key: "period", label: t("reports.columns.period") },
+    { key: "employee", label: t("reports.columns.employee") },
+    { key: "npwp", label: t("reports.columns.npwp") },
+    { key: "ptkp", label: t("reports.columns.ptkp") },
+    { key: "gross", label: t("reports.columns.grossSalary"), align: R },
+    { key: "pph21", label: t("reports.columns.pph21"), align: R },
+  ],
+  ppn: [
+    { key: "date", label: t("reports.columns.date") },
+    { key: "faktur", label: t("reports.columns.faktur") },
+    { key: "invoice", label: t("reports.columns.invoiceNo") },
+    { key: "client", label: t("reports.columns.client") },
+    { key: "dpp", label: t("reports.columns.dpp"), align: R },
+    { key: "ppn", label: t("reports.columns.ppn"), align: R },
+  ],
+  project: [
+    { key: "name", label: t("reports.columns.projectName") },
+    { key: "leader", label: t("reports.columns.leader") },
+    { key: "status", label: t("reports.columns.status") },
+    { key: "priority", label: t("reports.columns.priority") },
+    { key: "start_date", label: t("reports.columns.startDate") },
+    { key: "end_date", label: t("reports.columns.endDate") },
+    { key: "budget", label: t("reports.columns.budget"), align: R },
+    { key: "tasks", label: t("reports.columns.tasksDone") },
+    { key: "invoiced", label: t("reports.columns.invoiced"), align: R },
+    { key: "paid", label: t("reports.columns.paid"), align: R },
+    { key: "outstanding", label: t("reports.columns.outstanding"), align: R },
+    { key: "billing", label: t("reports.columns.billing") },
+  ],
+  pph23: [
+    { key: "date", label: t("reports.columns.date") },
+    { key: "receipt", label: t("reports.columns.receiptNo") },
+    { key: "invoice", label: t("reports.columns.invoiceNo") },
+    { key: "client", label: t("reports.columns.client") },
+    { key: "percent", label: t("reports.columns.pph23Percent"), align: R },
+    { key: "gross", label: t("reports.columns.grossAmount"), align: R },
+    { key: "withheld", label: t("reports.columns.pph23Withheld"), align: R },
+    { key: "net", label: t("reports.columns.netReceived"), align: R },
+  ],
+  subscription: [
+    { key: "name", label: t("reports.columns.name") },
+    { key: "client", label: t("reports.columns.client") },
+    { key: "services", label: t("reports.columns.services") },
+    { key: "cycle", label: t("reports.columns.billingCycle") },
+    { key: "amount", label: t("reports.columns.amount"), align: R },
+    { key: "status", label: t("reports.columns.status") },
+    { key: "next_due", label: t("reports.columns.nextDue") },
+  ],
+  maintenance: [
+    { key: "contract", label: t("reports.columns.contract") },
+    { key: "client", label: t("reports.columns.clientProject") },
+    { key: "quota", label: t("reports.columns.quotaMonth"), align: R },
+    { key: "used", label: t("reports.columns.used"), class: "min-w-[170px]" },
+    { key: "leftover", label: t("reports.columns.leftover") },
+    { key: "balance", label: t("reports.columns.devBalance"), align: R },
+    { key: "status", label: t("reports.columns.status") },
+  ],
+  staff_raport: [
+    { key: "name", label: t("reports.columns.name") },
+    { key: "job_title", label: t("reports.columns.jobTitle") },
+    { key: "employment_type", label: t("reports.columns.employmentType") },
+    { key: "attendance", label: t("reports.columns.attendance"), align: R },
+    { key: "tasks", label: t("reports.columns.tasksDone"), align: R },
+    { key: "rating", label: t("reports.columns.rating") },
+    { key: "view", label: "" },
+  ],
+}));
+
+const tableColumns = computed(() => {
+  const key = isOperationalCost.value ? "operational_cost" : activeTab.value;
+  let cols = COLUMNS.value[key] || [];
+  if (activeTab.value === "maintenance") {
+    cols = cols.map((c) => (c.key === "used" ? { ...c, label: t("reports.columns.usedMonth", { month: maintenanceMonthLabel.value }) } : c));
+  }
+  return showDeleteColumn.value ? [...cols, { key: "actions", label: t("common.labels.actions"), align: R, width: 72 }] : cols;
+});
+
+const tableRowKey = (row) => {
+  if (isOperationalCost.value) return `${row.category}-${row.id}`;
+  if (activeTab.value === "staff_raport") return row.employee_id;
+  return row.id;
+};
+
+const CLICKABLE_TABS = ["attendance", "ppn", "project", "pph23", "subscription", "maintenance", "staff_raport"];
+const rowsClickable = computed(() => CLICKABLE_TABS.includes(activeTab.value));
+
+const onRowClick = (row) => {
+  switch (activeTab.value) {
+    case "attendance":
+      return openAttendanceDetail(row);
+    case "ppn":
+      return openInvoiceDetail(row);
+    case "project":
+      return router.push({ name: "admin.projects.detail", params: { id: row.id } });
+    case "pph23":
+      return openReceiptDetail(row);
+    case "subscription":
+      return openSubscriptionDetail(row);
+    case "maintenance":
+      return router.push({ name: "admin.maintenance.detail", params: { id: row.id } });
+    case "staff_raport":
+      return openRaportDetail(row.employee_id);
+  }
+};
+
+const titleCase = (v) => (v ? String(v).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "-");
+const lateLabel = (m) => t("reports.lateBy", { duration: `${Math.floor(m / 60) > 0 ? `${Math.floor(m / 60)}h ` : ""}${m % 60}m` });
+
+// Phone card: kicker line, title, sub line, amount on the right and a badge.
+const mobileCard = (row) => {
+  switch (activeTab.value) {
+    case "attendance":
+      return {
+        kicker: formatDate(row.date),
+        title: row.employee?.user?.name ?? "N/A",
+        sub: `${t("reports.mobile.in")} ${row.check_in ? formatTimeUtil(row.check_in) : "-"} · ${t("reports.mobile.out")} ${row.check_out ? formatTimeUtil(row.check_out) : "-"}${row.status === "late" && row.late_minutes ? ` · ${lateLabel(row.late_minutes)}` : ""}`,
+        badge: { tone: attendanceStatusTone[row.status] || "neutral", label: enumLabel("attendanceStatus", row.status) },
+      };
+    case "payroll":
+      return {
+        kicker: formatDate(row.salary_month),
+        title: row.employee?.user?.name ?? "N/A",
+        sub: t("reports.mobile.original", { amount: formatCurrency(row.original_salary) }),
+        amount: formatCurrency(row.final_salary),
+        badge: { tone: row.payment_status === "paid" ? "ok" : "warn", label: row.payment_status === "paid" ? t("reports.paymentStatus.paid") : t("reports.paymentStatus.pending") },
+      };
+    case "employee":
+      return {
+        kicker: row.code,
+        title: row.user?.name ?? "N/A",
+        sub: [row.job_information?.job_title, row.job_information?.team?.name].filter(Boolean).join(" · ") || "N/A",
+        badge: { tone: "neutral", label: enumLabel("employeeStatus", row.job_information?.status ?? "N/A") },
+      };
+    case "finance":
+      if (isOperationalCost.value) {
+        return {
+          kicker: row.category,
+          title: row.name,
+          sub: row.annual !== null ? t("reports.mobile.perYear", { amount: formatCurrency(row.annual) }) : null,
+          amount: formatCurrency(row.monthly),
+          badge: { tone: row.in_use ? "ok" : "neutral", label: row.in_use ? t("finance.usageStatus.active") : t("finance.usageStatus.inactive") },
+        };
+      }
+      return {
+        kicker: `${formatDate(row.transaction_date)} · ${row.source}`,
+        title: row.description,
+        sub: t("reports.mobile.balance", { amount: formatCurrency(row.balance) }),
+        amount: `${row.type === "debit" ? "+" : "−"}${formatCurrency(row.amount)}`,
+        amountClass: row.type === "debit" ? "text-ui-ok" : "text-ui-bad",
+      };
+    case "pph21":
+      return {
+        kicker: formatDate(row.salary_month),
+        title: row.employee?.user?.name ?? "N/A",
+        sub: `${row.employee?.job_information?.ptkp_status ?? "TK/0"} · ${t("reports.mobile.gross", { amount: formatCurrency(row.gross_salary) })}`,
+        amount: formatCurrency(row.pph21),
+      };
+    case "ppn":
+      return { kicker: row.invoice_number, mono: true, title: row.client_name, sub: `DPP ${formatCurrency(row.subtotal)} · ${formatDate(row.date)}`, amount: formatCurrency(row.ppn_amount) };
+    case "project":
+      return {
+        kicker: enumLabel("projectStatus", row.status),
+        title: row.name,
+        sub: `${row.project_leader?.user?.name ?? "N/A"} · ${t("reports.mobile.tasks", { done: row.tasks_done_count, total: row.tasks_total_count })}`,
+        amount: formatCurrency(row.billing?.invoiced_total),
+        badge: { tone: BILLING_STATUS.value[row.billing?.status]?.tone || "neutral", label: BILLING_STATUS.value[row.billing?.status]?.label ?? "-" },
+      };
+    case "pph23":
+      return {
+        kicker: row.receipt_number,
+        mono: true,
+        title: row.invoice?.client_name ?? row.received_from,
+        sub: `${Number(row.pph23_percent)}% · ${t("reports.mobile.net", { amount: formatCurrency(row.amount) })}`,
+        amount: formatCurrency(row.pph23_amount),
+      };
+    case "subscription":
+      return {
+        kicker: `${enumLabel("billingCycle", row.billing_cycle)} · ${t("reports.mobile.due", { date: formatDate(row.next_due_date) })}`,
+        title: row.name,
+        sub: row.client?.name ?? "-",
+        amount: formatCurrency(row.amount),
+        badge: { tone: subscriptionStatusTone[row.status] || "neutral", label: subscriptionStatusLabel.value[row.status] || row.status },
+      };
+    case "maintenance":
+      return {
+        kicker: row.client ?? "-",
+        title: row.name,
+        sub: row.period ? t("reports.mobile.hoursUsed", { used: formatHours(row.period.used), total: formatHours(row.period.total), pct: Math.round(row.period.used_percent) }) : t("reports.maintenance.notRunning"),
+        amount: formatHours(row.balance),
+        badge: { tone: contractStatusTone[row.status] || "neutral", label: contractStatusLabel(row.status) },
+      };
+    case "staff_raport":
+      return {
+        kicker: row.job_title ?? "-",
+        title: row.name ?? "N/A",
+        sub: `${t("reports.columns.attendance")} ${row.attendance_rate !== null ? `${row.attendance_rate}%` : "-"} · ${t("reports.mobile.tasksLabel")} ${row.task_completion_rate !== null ? `${row.task_completion_rate}%` : "-"}`,
+        stars: row.stars,
+      };
+    default:
+      return { title: "-" };
+  }
+};
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div
-      class="bg-white"
-    >
-      <div
-        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5"
-      >
-        <div class="flex items-center gap-3">
-          <div
-            class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center"
-          >
-            <FileTextIcon class="w-5 h-5 text-[#0C51D9]" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Reports</h3>
-            <p class="text-brand-light text-xs">
-              Company-wide reports across HR modules.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button
-            v-if="showDeleteColumn"
-            @click="openDeleteRangeModal"
-            class="rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-all duration-300 px-4 py-3 flex items-center gap-2"
-          >
-            <CalendarRange class="w-4 h-4" />
-            <span class="text-sm font-semibold">Delete by Date Range</span>
-          </button>
-          <button
-            v-if="canExport && activeTab !== 'staff_raport'"
-            @click="handleExport"
-            :disabled="exporting"
-            class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2 disabled:opacity-50"
-          >
-            <Download class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">
-              {{ exporting ? "Exporting..." : "Export Excel" }}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Tabs -->
-      <div class="relative mb-4">
-        <div
-          ref="tabScrollRef"
-          @scroll="updateTabFade"
-          class="tabs-scroll flex flex-nowrap gap-2 overflow-x-auto border-b border-[#DCDEDD] pb-4"
-        >
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <div class="lg:flex lg:items-start lg:gap-6">
+      <!-- Desktop: report rail -->
+      <aside class="hidden lg:block w-[208px] shrink-0 sticky top-0" :aria-label="$t('reports.reportType')">
+        <p class="text-ui-over uppercase text-ui-faint px-2.5 mb-2">{{ $t('reports.count', { n: visibleTabs.length }, visibleTabs.length) }}</p>
+        <nav class="flex flex-col gap-0.5" role="tablist" aria-orientation="vertical">
           <button
             v-for="tab in visibleTabs"
             :key="tab.key"
-            @click="activeTab = tab.key"
-            class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 shrink-0 whitespace-nowrap"
-            :class="
-              activeTab === tab.key
-                ? 'bg-[#0C51D9] border-[#0C51D9] text-white'
-                : 'border-[#DCDEDD] text-brand-dark hover:border-[#0C51D9]'
-            "
-          >
-            <component :is="tab.icon" class="w-4 h-4 shrink-0" />
-            <span class="text-sm font-semibold">{{ tab.label }}</span>
-          </button>
-        </div>
-        <!-- More tabs off-screen -- shown/hidden by actual scroll position
-             (not a screen-size breakpoint), since this row overflows on
-             desktop and tablet too, not just mobile. -->
-        <Transition name="fade">
-          <div
-            v-if="showTabRightFade"
-            class="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white via-white/80 to-transparent flex items-center justify-end pr-1"
-          >
-            <ChevronRight class="w-4 h-4 text-[#0C51D9] scroll-hint-nudge" />
-          </div>
-        </Transition>
-        <Transition name="fade">
-          <div
-            v-if="showTabLeftFade"
-            class="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/80 to-transparent"
-          ></div>
-        </Transition>
-      </div>
-
-      <!-- When this data appears -->
-      <div
-        v-if="activeTab === 'pph21'"
-        class="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-3"
-      >
-        Data muncul setelah ada Payroll yang sudah di-Run untuk periode terkait, dan hasil perhitungannya menghasilkan PPh 21 terutang (gaji karyawan melebihi PTKP). Belum ada Payroll berjalan pada periode ini = tabel akan kosong.
-      </div>
-      <div
-        v-if="activeTab === 'ppn'"
-        class="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-3"
-      >
-        Data muncul setelah ada Invoice yang dibuat pada periode terkait dengan PPN (%) diisi lebih dari 0 saat pembuatan Invoice. Invoice tanpa PPN tidak akan muncul di sini.
-      </div>
-      <div
-        v-if="activeTab === 'pph23'"
-        class="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-3"
-      >
-        Data muncul setelah ada Payment Receipt yang dibuat pada periode terkait dengan PPh 23 diisi (checkbox "Dipotong PPh 23?" saat membuat Payment Receipt). Payment Receipt tanpa PPh 23 tidak akan muncul di sini.
-      </div>
-
-      <!-- Disclaimer -->
-      <div
-        v-if="activeTab === 'pph21'"
-        class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-3"
-      >
-        PPh 21 dihitung dengan metode tahunan (Pasal 17), belum menggunakan metode TER bulanan DJP. Gunakan sebagai draft rekap, verifikasi ulang sebelum diinput ke Coretax.
-      </div>
-      <div
-        v-if="activeTab === 'ppn' || activeTab === 'pph21' || activeTab === 'pph23'"
-        class="text-xs text-brand-light bg-gray-50 border border-[#DCDEDD] rounded-xl px-3 py-2 mb-3"
-      >
-        Laporan ini adalah rekap siap ekspor untuk membantu pengisian Coretax secara manual, bukan integrasi otomatis ke sistem DJP.
-      </div>
-
-      <!-- Finance source -->
-      <div v-if="activeTab === 'finance'" class="mb-3">
-        <div class="inline-grid grid-cols-2 bg-gray-100 rounded-[10px] p-1 w-full sm:w-auto" role="tablist" aria-label="Finance data source">
-          <button
-            v-for="src in FINANCE_SOURCES"
-            :key="src.key"
             type="button"
             role="tab"
-            :aria-selected="financeSource === src.key"
-            class="px-3 sm:px-4 py-1.5 rounded-[8px] text-[13px] sm:text-sm font-semibold transition-colors"
-            :class="financeSource === src.key ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-light hover:text-brand-dark'"
-            @click="setFinanceSource(src.key)"
+            :aria-selected="activeTab === tab.key"
+            @click="activeTab = tab.key"
+            :class="[
+              'ui-press w-full flex items-center gap-2.5 h-9 px-2.5 rounded-ui-control border text-left text-ui-body whitespace-nowrap focus:outline-none focus-visible:shadow-ui-focus',
+              activeTab === tab.key
+                ? 'bg-ui-surface border-ui-line text-ui-ink font-medium shadow-ui-raised'
+                : 'border-transparent text-ui-text hover:bg-ui-hover',
+            ]"
           >
-            {{ src.label }}
+            <component :is="tab.icon" class="w-4 h-4 shrink-0" :class="activeTab === tab.key ? 'text-ui-ink' : 'text-ui-faint'" />
+            <span class="truncate">{{ tab.label }}</span>
           </button>
-        </div>
-        <p class="text-xs text-gray-400 mt-2">
-          <template v-if="financeSource === 'cash_book'">
-            Transaksi kas nyata (manual + otomatis dari Cash Ledger tiap project) dalam rentang tanggal ini. Saldo dihitung berjalan dari Saldo Awal Company Cash Book.
+        </nav>
+      </aside>
+
+      <!-- Report content -->
+      <div class="flex-1 min-w-0 space-y-5">
+        <UiPageHeader :title="$t('reports.title')" :subtitle="$t('reports.subtitle')">
+          <template #actions>
+            <UiButton v-if="showDeleteColumn" variant="danger" :icon="CalendarRange" @click="openDeleteRangeModal">{{ $t('reports.delete.byRange') }}</UiButton>
+            <UiButton v-if="canExport && activeTab !== 'staff_raport'" :icon="Download" :loading="exporting" @click="handleExport">
+              {{ exporting ? $t('reports.exporting') : $t("common.actions.exportExcel") }}
+            </UiButton>
           </template>
-          <template v-else>
-            Biaya operasional yang berlaku saat ini, sama seperti halaman Operational Cost. Total hanya menghitung item berstatus Digunakan; tidak terikat rentang tanggal.
-          </template>
-        </p>
-      </div>
+        </UiPageHeader>
 
-      <!-- Filters -->
-      <div
-        v-if="activeTab !== 'employee' && !isOperationalCost"
-        class="flex flex-col sm:flex-row gap-3 mb-2"
-      >
-        <div v-if="activeTab === 'maintenance'" class="flex-1">
-          <label class="text-xs text-brand-light font-medium mb-1 block">Month</label>
-          <input
-            v-model="maintenanceMonth"
-            type="month"
-            @change="loadReport(1)"
-            class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <div v-if="activeTab === 'maintenance'" class="flex-1">
-          <label class="text-xs text-brand-light font-medium mb-1 block">Status</label>
-          <div class="relative w-full">
-            <select v-model="maintenanceStatus" @change="loadReport(1)" class="select-soft">
-              <option value="">All Statuses</option>
-              <option v-for="(st, key) in CONTRACT_STATUS" :key="key" :value="key">{{ st.label }}</option>
-            </select>
-            <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-          </div>
-        </div>
-        <div v-if="!['subscription', 'maintenance'].includes(activeTab)" class="flex-1">
-          <label class="text-xs text-brand-light font-medium mb-1 block"
-            >Start Date</label
-          >
-          <input
-            v-model="startDate"
-            type="date"
-            @change="loadReport(1)"
-            class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <div v-if="!['subscription', 'maintenance'].includes(activeTab)" class="flex-1">
-          <label class="text-xs text-brand-light font-medium mb-1 block"
-            >End Date</label
-          >
-          <input
-            v-model="endDate"
-            type="date"
-            @change="loadReport(1)"
-            class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <div v-if="activeTab === 'subscription'" class="flex-1">
-          <label class="text-xs text-brand-light font-medium mb-1 block">Status</label>
-          <div class="relative w-full">
-            <select
-              v-model="subscriptionStatus"
-              @change="loadReport(1)"
-              class="select-soft"
-            >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="postponed">Postponed</option>
-              <option value="cancelled">Not Active</option>
-            </select>
-            <ChevronDown
-              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-            />
-          </div>
-        </div>
-        <div v-if="activeTab === 'project'" class="flex-1">
-          <label class="text-xs text-brand-light font-medium mb-1 block">Status</label>
-          <div class="relative w-full">
-            <select
-              v-model="projectStatus"
-              @change="loadReport(1)"
-              class="select-soft"
-            >
-              <option value="">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="planning">Planning</option>
-              <option value="active">Active</option>
-              <option value="on_hold">On Hold</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <ChevronDown
-              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-            />
-          </div>
-        </div>
-        <div v-if="activeTab === 'staff_raport'" class="flex-1">
-          <label class="text-xs text-brand-light font-medium mb-1 block">Name</label>
-          <input
-            v-model="staffRaportSearch"
-            @input="loadReport(1)"
-            type="text"
-            placeholder="Search staff name..."
-            class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <div v-if="activeTab === 'staff_raport'" class="flex-1">
-          <label class="text-xs text-brand-light font-medium mb-1 block">Employment Type</label>
-          <div class="relative w-full">
-            <select
-              v-model="staffRaportEmploymentType"
-              @change="loadReport(1)"
-              class="select-soft"
-            >
-              <option value="">All Employment Types</option>
-              <option v-for="opt in employmentTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
-            <ChevronDown
-              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-            />
-          </div>
-        </div>
-      </div>
-      <p v-if="activeTab === 'staff_raport'" class="text-xs text-gray-400 -mt-1 mb-2">
-        Attendance rate and task completion (and the resulting score/stars) are calculated for this date range. Click a row to view full details and download a PDF for a different period.
-      </p>
-      <p v-if="activeTab === 'project'" class="text-xs text-gray-400 -mt-1 mb-2">
-        Filtered by each project's Start Date falling within this range. Invoiced and Paid cover all invoices linked to each project (cancelled excluded; paid includes PPh 23 withheld). Click a project for its invoice details.
-      </p>
-    </div>
-
-    <DocumentReport v-if="activeTab === 'documents'" :data="documents" :loading="loading" />
-
-    <template v-else>
-    <!-- Summary Cards -->
-    <SkeletonStatCards v-if="loading" :count="4" cols="grid-cols-2 lg:grid-cols-4" class="mb-6" />
-    <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div
-        v-for="card in summaryCards"
-        :key="card.label"
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-4"
-      >
-        <p class="text-brand-light text-xs font-medium mb-1">
-          {{ card.label }}
-        </p>
-        <p class="text-brand-dark text-sm sm:text-xl font-bold truncate">
-          {{ card.value }}
-        </p>
-        <p v-if="card.sub" class="text-[11px] mt-0.5 truncate" :class="card.subClass || 'text-amber-700'">{{ card.sub }}</p>
-      </div>
-    </div>
-
-    <!-- Status Breakdown & Upcoming Renewals (Subscription only) -->
-    <div v-if="!loading && activeTab === 'subscription'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-        <p class="text-brand-dark text-sm font-bold mb-3">Status Breakdown</p>
-        <div class="space-y-2">
-          <div
-            v-for="item in subscription.status_breakdown"
-            :key="item.status"
-            class="flex items-center justify-between text-sm"
-          >
-            <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="subscriptionStatusClass[item.status] || 'bg-gray-100 text-gray-500'">
-              {{ subscriptionStatusLabel[item.status] || item.status }}
-            </span>
-            <span class="text-brand-dark font-semibold">{{ item.count }} subscription{{ item.count === 1 ? "" : "s" }}</span>
-          </div>
-          <p v-if="!subscription.status_breakdown?.length" class="text-sm text-gray-400">No subscriptions yet.</p>
-        </div>
-      </div>
-
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-        <p class="text-brand-dark text-sm font-bold mb-3">Upcoming Renewals (next 30 days)</p>
-        <div class="space-y-2 max-h-48 overflow-y-auto">
-          <div
-            v-for="row in subscription.upcoming_renewals"
-            :key="row.id"
-            class="flex items-center justify-between text-sm border-b border-[#F1F1F1] pb-2 last:border-0 last:pb-0"
-          >
-            <div class="min-w-0">
-              <p class="text-brand-dark font-semibold truncate">{{ row.name }}</p>
-              <p class="text-gray-400 text-xs">{{ row.client?.name ?? "-" }}</p>
-            </div>
-            <div class="text-right shrink-0 ml-3">
-              <p class="text-brand-dark font-semibold">{{ formatCurrency(row.amount) }}</p>
-              <p class="text-gray-400 text-xs">{{ formatDate(row.next_due_date) }}</p>
+        <!-- Phones / tablets: scrolling chips -->
+        <div class="relative lg:hidden">
+          <div ref="tabScrollRef" @scroll="updateTabFade" class="overflow-x-auto [scrollbar-width:none]">
+            <div class="flex items-center gap-1.5 min-w-max pr-10" role="tablist" :aria-label="$t('reports.reportType')">
+              <button
+                v-for="tab in visibleTabs"
+                :key="tab.key"
+                type="button"
+                role="tab"
+                :aria-selected="activeTab === tab.key"
+                @click="activeTab = tab.key"
+                :class="[
+                  'ui-press shrink-0 inline-flex items-center gap-2 whitespace-nowrap font-medium h-8 px-3 rounded-full border text-ui-small focus:outline-none focus-visible:shadow-ui-focus',
+                  activeTab === tab.key ? 'bg-ui-ink text-white border-ui-ink' : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover',
+                ]"
+              >
+                {{ tab.label }}
+              </button>
             </div>
           </div>
-          <p v-if="!subscription.upcoming_renewals?.length" class="text-sm text-gray-400">No renewals due in the next 30 days.</p>
+          <!-- More tabs off-screen: shown by scroll position -->
+          <Transition name="ui-fade">
+            <div v-if="showTabRightFade" class="pointer-events-none absolute right-0 top-0 h-8 flex items-center">
+              <span class="w-7 h-7 rounded-full bg-ui-surface border border-ui-line shadow-ui-raised flex items-center justify-center">
+                <ChevronRight class="w-4 h-4 text-ui-accent scroll-hint-nudge" />
+              </span>
+            </div>
+          </Transition>
         </div>
-      </div>
-    </div>
 
-    <!-- Table -->
-    <SkeletonTable v-if="loading" :rows="6" :cols="6" />
-    <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] px-4 overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead>
-          <tr class="text-left text-brand-light border-b border-[#DCDEDD] bg-slate-50">
-            <th class="py-3 pr-4 font-semibold">No</th>
-            <template v-if="activeTab === 'attendance'">
-              <th class="py-3 pr-4 font-semibold">Date</th>
-              <th class="py-3 pr-4 font-semibold">Employee</th>
-              <th class="py-3 pr-4 font-semibold">Check In</th>
-              <th class="py-3 pr-4 font-semibold">Check Out</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-            </template>
-            <template v-else-if="activeTab === 'payroll'">
-              <th class="py-3 pr-4 font-semibold">Period</th>
-              <th class="py-3 pr-4 font-semibold">Employee</th>
-              <th class="py-3 pr-4 font-semibold">Original Salary</th>
-              <th class="py-3 pr-4 font-semibold">Final Salary</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-            </template>
-            <template v-else-if="activeTab === 'employee'">
-              <th class="py-3 pr-4 font-semibold">Code</th>
-              <th class="py-3 pr-4 font-semibold">Name</th>
-              <th class="py-3 pr-4 font-semibold">Job Title</th>
-              <th class="py-3 pr-4 font-semibold">Team</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-            </template>
-            <template v-else-if="activeTab === 'finance' && isOperationalCost">
-              <th class="py-3 pr-4 font-semibold">Category</th>
-              <th class="py-3 pr-4 font-semibold">Item</th>
-              <th class="py-3 pr-4 font-semibold text-right whitespace-nowrap">Biaya / Bulan</th>
-              <th class="py-3 pr-4 font-semibold text-right whitespace-nowrap">Biaya / Tahun</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-            </template>
-            <template v-else-if="activeTab === 'finance'">
-              <th class="py-3 pr-4 font-semibold">Tanggal</th>
-              <th class="py-3 pr-4 font-semibold">Keterangan</th>
-              <th class="py-3 pr-4 font-semibold">Sumber</th>
-              <th class="py-3 pr-4 font-semibold text-right">Debit</th>
-              <th class="py-3 pr-4 font-semibold text-right">Kredit</th>
-              <th class="py-3 pr-4 font-semibold text-right">Saldo</th>
-            </template>
-            <template v-else-if="activeTab === 'pph21'">
-              <th class="py-3 pr-4 font-semibold">Period</th>
-              <th class="py-3 pr-4 font-semibold">Employee</th>
-              <th class="py-3 pr-4 font-semibold">NPWP</th>
-              <th class="py-3 pr-4 font-semibold">PTKP Status</th>
-              <th class="py-3 pr-4 font-semibold">Gross Salary</th>
-              <th class="py-3 pr-4 font-semibold">PPh 21</th>
-            </template>
-            <template v-else-if="activeTab === 'ppn'">
-              <th class="py-3 pr-4 font-semibold">Date</th>
-              <th class="py-3 pr-4 font-semibold">Faktur Pajak No.</th>
-              <th class="py-3 pr-4 font-semibold">Invoice No.</th>
-              <th class="py-3 pr-4 font-semibold">Client</th>
-              <th class="py-3 pr-4 font-semibold">DPP</th>
-              <th class="py-3 pr-4 font-semibold">PPN</th>
-            </template>
-            <template v-else-if="activeTab === 'project'">
-              <th class="py-3 pr-4 font-semibold">Project Name</th>
-              <th class="py-3 pr-4 font-semibold">Leader</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold">Priority</th>
-              <th class="py-3 pr-4 font-semibold">Start Date</th>
-              <th class="py-3 pr-4 font-semibold">End Date</th>
-              <th class="py-3 pr-4 font-semibold">Budget</th>
-              <th class="py-3 pr-4 font-semibold">Tasks Done</th>
-              <th class="py-3 pr-4 font-semibold text-right">Invoiced</th>
-              <th class="py-3 pr-4 font-semibold text-right">Paid</th>
-              <th class="py-3 pr-4 font-semibold text-right">Outstanding</th>
-              <th class="py-3 pr-4 font-semibold">Billing</th>
-            </template>
-            <template v-else-if="activeTab === 'pph23'">
-              <th class="py-3 pr-4 font-semibold">Date</th>
-              <th class="py-3 pr-4 font-semibold">Receipt No.</th>
-              <th class="py-3 pr-4 font-semibold">Invoice No.</th>
-              <th class="py-3 pr-4 font-semibold">Client</th>
-              <th class="py-3 pr-4 font-semibold">% PPh 23</th>
-              <th class="py-3 pr-4 font-semibold">Gross Amount</th>
-              <th class="py-3 pr-4 font-semibold">PPh 23 Withheld</th>
-              <th class="py-3 pr-4 font-semibold">Net Received</th>
-            </template>
-            <template v-else-if="activeTab === 'subscription'">
-              <th class="py-3 pr-4 font-semibold">Name</th>
-              <th class="py-3 pr-4 font-semibold">Client</th>
-              <th class="py-3 pr-4 font-semibold">Services</th>
-              <th class="py-3 pr-4 font-semibold">Billing Cycle</th>
-              <th class="py-3 pr-4 font-semibold">Amount</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold">Next Due Date</th>
-            </template>
-            <template v-else-if="activeTab === 'maintenance'">
-              <th class="py-3 pr-4 font-semibold">Contract</th>
-              <th class="py-3 pr-4 font-semibold">Client / Project</th>
-              <th class="py-3 pr-4 font-semibold text-right whitespace-nowrap">Quota / Month</th>
-              <th class="py-3 pr-4 font-semibold min-w-[170px]">Used ({{ maintenanceMonthLabel }})</th>
-              <th class="py-3 pr-4 font-semibold">Leftover</th>
-              <th class="py-3 pr-4 font-semibold text-right whitespace-nowrap">Dev. Balance</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-            </template>
-            <template v-else-if="activeTab === 'staff_raport'">
-              <th class="py-3 pr-4 font-semibold">Name</th>
-              <th class="py-3 pr-4 font-semibold">Job Title</th>
-              <th class="py-3 pr-4 font-semibold">Employment Type</th>
-              <th class="py-3 pr-4 font-semibold">Attendance</th>
-              <th class="py-3 pr-4 font-semibold">Tasks Done</th>
-              <th class="py-3 pr-4 font-semibold">Rating</th>
-              <th class="py-3 pr-4 font-semibold"></th>
-            </template>
-            <th v-if="showDeleteColumn" class="py-3 pr-4 font-semibold text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <template v-if="activeTab === 'attendance'">
-            <tr
-              v-for="(row, index) in tableRows"
-              :key="row.id"
-              @click="openAttendanceDetail(row)"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ (attendance.meta.current_page - 1) * attendance.meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4">{{ formatDate(row.date) }}</td>
-              <td class="py-3 pr-4">{{ row.employee?.user?.name ?? "N/A" }}</td>
-              <td class="py-3 pr-4">
-                <span class="tabular-nums">{{ row.check_in ? formatTimeUtil(row.check_in) : "-" }}</span>
-                <p v-if="row.status === 'late' && row.late_minutes" class="text-amber-600 text-xs mt-0.5">
-                  late by {{ Math.floor(row.late_minutes / 60) > 0 ? `${Math.floor(row.late_minutes / 60)}h ` : "" }}{{ row.late_minutes % 60 }}m
-                </p>
-              </td>
-              <td class="py-3 pr-4 tabular-nums">
-                {{ row.check_out ? formatTimeUtil(row.check_out) : "-" }}
-              </td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold capitalize" :class="attendanceStatusClass[row.status] || 'bg-gray-100 text-gray-500'">
-                  {{ (row.status || "").replace("_", " ") }}
-                </span>
-              </td>
-              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
+        <!-- When this data appears / disclaimers -->
+        <div v-if="['pph21', 'ppn', 'pph23'].includes(activeTab)" class="space-y-2">
+          <UiAlert v-if="activeTab === 'pph21'" tone="info">
+            {{ $t('reports.notices.pph21') }}
+          </UiAlert>
+          <UiAlert v-if="activeTab === 'ppn'" tone="info">
+            {{ $t('reports.notices.ppn') }}
+          </UiAlert>
+          <UiAlert v-if="activeTab === 'pph23'" tone="info">
+            {{ $t('reports.notices.pph23') }}
+          </UiAlert>
+          <UiAlert v-if="activeTab === 'pph21'" tone="warn">
+            {{ $t('reports.notices.pph21Method') }}
+          </UiAlert>
+          <p class="text-ui-cap text-ui-muted bg-ui-subtle border border-ui-line rounded-ui-control px-3.5 py-2.5">
+            {{ $t('reports.notices.coretax') }}
+          </p>
+        </div>
+
+        <!-- Toolbar: finance source + filters, one row above the content -->
+        <div v-if="activeTab === 'finance' || (activeTab !== 'employee' && !isOperationalCost)" class="space-y-2">
+          <div class="flex flex-col lg:flex-row lg:flex-wrap lg:items-end gap-3">
+            <div v-if="activeTab === 'finance'" class="min-w-0">
+              <p class="text-ui-small font-medium text-ui-ink mb-1.5 hidden lg:block">{{ $t('reports.finance.source') }}</p>
+              <div class="grid grid-cols-2 bg-ui-subtle border border-ui-line rounded-ui-control p-0.5 w-full sm:w-auto sm:inline-grid" role="tablist" :aria-label="$t('reports.finance.sourceAria')">
                 <button
-                  @click.stop="handleDeleteRow(row)"
-                  :disabled="deletingRowId === rowIdField(row)"
-                  title="Delete"
-                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
+                  v-for="src in FINANCE_SOURCES"
+                  :key="src.key"
+                  type="button"
+                  role="tab"
+                  :aria-selected="financeSource === src.key"
+                  class="ui-press h-[33px] px-3 sm:px-4 rounded-[6px] text-ui-small font-medium whitespace-nowrap transition-colors"
+                  :class="financeSource === src.key ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
+                  @click="setFinanceSource(src.key)"
                 >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                  {{ src.label }}
                 </button>
-              </td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'payroll'">
-            <tr
-              v-for="(row, index) in tableRows"
-              :key="row.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ (payroll.meta.current_page - 1) * payroll.meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4">{{ formatDate(row.salary_month) }}</td>
-              <td class="py-3 pr-4">{{ row.employee?.user?.name ?? "N/A" }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.original_salary) }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.final_salary) }}</td>
-              <td class="py-3 pr-4 capitalize">
-                {{ row.payment_status === "paid" ? "Paid" : "Pending" }}
-              </td>
-              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
-                <button
-                  @click="handleDeleteRow(row)"
-                  :disabled="deletingRowId === rowIdField(row)"
-                  title="Delete"
-                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
-                >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-                </button>
-              </td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'employee'">
-            <tr
-              v-for="(row, index) in tableRows"
-              :key="row.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ index + 1 }}</td>
-              <td class="py-3 pr-4">{{ row.code }}</td>
-              <td class="py-3 pr-4">{{ row.user?.name ?? "N/A" }}</td>
-              <td class="py-3 pr-4">{{ row.job_information?.job_title ?? "N/A" }}</td>
-              <td class="py-3 pr-4">{{ row.job_information?.team?.name ?? "N/A" }}</td>
-              <td class="py-3 pr-4 capitalize">
-                {{ row.job_information?.status ?? "N/A" }}
-              </td>
-              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
-                <button
-                  @click="handleDeleteRow(row)"
-                  :disabled="deletingRowId === rowIdField(row)"
-                  title="Delete"
-                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
-                >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-                </button>
-              </td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'finance' && isOperationalCost">
-            <tr
-              v-for="(row, idx) in tableRows"
-              :key="`${row.category}-${row.id}`"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
-              :class="{ 'opacity-60': !row.in_use }"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
-              <td class="py-3 pr-4 whitespace-nowrap">{{ row.category }}</td>
-              <td class="py-3 pr-4">{{ row.name }}</td>
-              <td class="py-3 pr-4 text-right whitespace-nowrap">{{ formatCurrency(row.monthly) }}</td>
-              <td class="py-3 pr-4 text-right whitespace-nowrap">{{ row.annual !== null ? formatCurrency(row.annual) : "-" }}</td>
-              <td class="py-3 pr-4">
-                <span
-                  class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap"
-                  :class="row.in_use ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'"
-                >
-                  {{ row.in_use ? "Digunakan" : "Tidak Digunakan" }}
-                </span>
-              </td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'finance'">
-            <tr
-              v-for="(row, idx) in tableRows"
-              :key="row.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ (reportMeta ? (reportMeta.current_page - 1) * reportMeta.per_page : 0) + idx + 1 }}</td>
-              <td class="py-3 pr-4 whitespace-nowrap">{{ formatDate(row.transaction_date) }}</td>
-              <td class="py-3 pr-4 min-w-[180px]">
-                <p class="text-brand-dark font-medium">{{ row.description }}</p>
-                <p v-if="row.notes" class="text-gray-400 text-xs">{{ row.notes }}</p>
-              </td>
-              <td class="py-3 pr-4">
-                <span
-                  class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap"
-                  :class="row.is_synced ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-600'"
-                >{{ row.source }}</span>
-              </td>
-              <td class="py-3 pr-4 text-right whitespace-nowrap text-emerald-600">{{ row.type === "debit" ? formatCurrency(row.amount) : "" }}</td>
-              <td class="py-3 pr-4 text-right whitespace-nowrap text-red-600">{{ row.type === "credit" ? formatCurrency(row.amount) : "" }}</td>
-              <td class="py-3 pr-4 text-right whitespace-nowrap font-semibold text-brand-dark">{{ formatCurrency(row.balance) }}</td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'pph21'">
-            <tr
-              v-for="(row, idx) in tableRows"
-              :key="row.id ?? idx"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
-              <td class="py-3 pr-4">{{ formatDate(row.salary_month) }}</td>
-              <td class="py-3 pr-4">{{ row.employee?.user?.name ?? "N/A" }}</td>
-              <td class="py-3 pr-4">{{ row.employee?.npwp ?? "-" }}</td>
-              <td class="py-3 pr-4">{{ row.employee?.job_information?.ptkp_status ?? "TK/0" }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.gross_salary) }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.pph21) }}</td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'ppn'">
-            <tr
-              v-for="(row, idx) in tableRows"
-              :key="row.id ?? idx"
-              @click="openInvoiceDetail(row)"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
-              <td class="py-3 pr-4">{{ formatDate(row.date) }}</td>
-              <td class="py-3 pr-4">{{ row.faktur_pajak_number ?? "-" }}</td>
-              <td class="py-3 pr-4">{{ row.invoice_number }}</td>
-              <td class="py-3 pr-4">{{ row.client_name }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.subtotal) }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.ppn_amount) }}</td>
-              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
-                <button
-                  @click.stop="handleDeleteRow(row)"
-                  :disabled="deletingRowId === rowIdField(row)"
-                  title="Delete"
-                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
-                >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-                </button>
-              </td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'project'">
-            <tr
-              v-for="(row, index) in tableRows"
-              :key="row.id"
-              @click="router.push({ name: 'admin.projects.detail', params: { id: row.id } })"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ (project.meta.current_page - 1) * project.meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name }}</td>
-              <td class="py-3 pr-4">{{ row.project_leader?.user?.name ?? "N/A" }}</td>
-              <td class="py-3 pr-4 capitalize">{{ (row.status || "").replace("_", " ") }}</td>
-              <td class="py-3 pr-4 capitalize">{{ row.priority }}</td>
-              <td class="py-3 pr-4 whitespace-nowrap">{{ formatDate(row.start_date) }}</td>
-              <td class="py-3 pr-4 whitespace-nowrap">{{ row.end_date ? formatDate(row.end_date) : "-" }}</td>
-              <td class="py-3 pr-4 whitespace-nowrap">{{ formatCurrency(row.budget) }}</td>
-              <td class="py-3 pr-4">{{ row.tasks_done_count }}/{{ row.tasks_total_count }}</td>
-              <td class="py-3 pr-4 text-right whitespace-nowrap">
-                {{ formatCurrency(row.billing?.invoiced_total) }}
-                <p v-if="row.billing?.invoiced_percent !== null && row.billing?.invoiced_percent !== undefined" class="text-[11px] text-gray-400">{{ row.billing.invoiced_percent }}% of value</p>
-              </td>
-              <td class="py-3 pr-4 text-right whitespace-nowrap text-emerald-700">{{ formatCurrency(row.billing?.paid_total) }}</td>
-              <td class="py-3 pr-4 text-right whitespace-nowrap" :class="row.billing?.outstanding > 0 ? 'text-amber-700 font-semibold' : row.billing?.outstanding < 0 ? 'text-red-600 font-semibold' : 'text-gray-400'">
-                {{ row.billing?.outstanding ? formatCurrency(Math.abs(row.billing.outstanding)) : "—" }}
-              </td>
-              <td class="py-3 pr-4 whitespace-nowrap">
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap" :class="BILLING_STATUS[row.billing?.status]?.class || 'bg-gray-100 text-gray-500'">
-                  {{ BILLING_STATUS[row.billing?.status]?.label ?? "-" }}
-                </span>
-                <AlertTriangle v-if="row.billing?.mismatch_count" class="inline w-3.5 h-3.5 text-amber-600 ml-1" :title="`${row.billing.mismatch_count} invoice(s) marked Paid/Unpaid differently from their receipts`" />
-              </td>
-              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
-                <button
-                  @click.stop="handleDeleteRow(row)"
-                  :disabled="deletingRowId === rowIdField(row)"
-                  title="Delete"
-                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
-                >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-                </button>
-              </td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'pph23'">
-            <tr
-              v-for="(row, idx) in tableRows"
-              :key="row.id ?? idx"
-              @click="openReceiptDetail(row)"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
-              <td class="py-3 pr-4">{{ formatDate(row.date) }}</td>
-              <td class="py-3 pr-4">{{ row.receipt_number }}</td>
-              <td class="py-3 pr-4">{{ row.invoice?.invoice_number ?? "-" }}</td>
-              <td class="py-3 pr-4">{{ row.invoice?.client_name ?? row.received_from }}</td>
-              <td class="py-3 pr-4">{{ Number(row.pph23_percent) }}%</td>
-              <td class="py-3 pr-4">{{ formatCurrency(Number(row.amount) + Number(row.pph23_amount)) }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.pph23_amount) }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.amount) }}</td>
-              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
-                <button
-                  @click.stop="handleDeleteRow(row)"
-                  :disabled="deletingRowId === rowIdField(row)"
-                  title="Delete"
-                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
-                >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-                </button>
-              </td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'subscription'">
-            <tr
-              v-for="(row, idx) in tableRows"
-              :key="row.id"
-              @click="openSubscriptionDetail(row)"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
-              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name }}</td>
-              <td class="py-3 pr-4">{{ row.client?.name ?? "-" }}</td>
-              <td class="py-3 pr-4 capitalize">{{ subscriptionServicesLabel(row.services) }}</td>
-              <td class="py-3 pr-4 capitalize">{{ row.billing_cycle }}</td>
-              <td class="py-3 pr-4">{{ formatCurrency(row.amount) }}</td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="subscriptionStatusClass[row.status] || 'bg-gray-100 text-gray-500'">
-                  {{ subscriptionStatusLabel[row.status] || row.status }}
-                </span>
-              </td>
-              <td class="py-3 pr-4">{{ formatDate(row.next_due_date) }}</td>
-              <td v-if="showDeleteColumn" class="py-3 pr-4 text-right">
-                <button
-                  @click.stop="handleDeleteRow(row)"
-                  :disabled="deletingRowId === rowIdField(row)"
-                  title="Delete"
-                  class="w-8 h-8 rounded-full border border-[#DCDEDD] inline-flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete disabled:opacity-50"
-                >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-                </button>
-              </td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'maintenance'">
-            <tr
-              v-for="(row, idx) in tableRows"
-              :key="row.id"
-              @click="router.push({ name: 'admin.maintenance.detail', params: { id: row.id } })"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ idx + 1 }}</td>
-              <td class="py-3 pr-4 font-semibold text-brand-dark min-w-[150px]">{{ row.name }}</td>
-              <td class="py-3 pr-4 min-w-[150px]">
-                <p>{{ row.client ?? "-" }}</p>
-                <p v-if="row.project" class="text-xs text-gray-400">{{ row.project }}</p>
-              </td>
-              <td class="py-3 pr-4 text-right whitespace-nowrap">{{ formatHours(row.monthly_quota_hours) }}</td>
-              <td class="py-3 pr-4">
-                <template v-if="row.period">
-                  <div class="flex items-center justify-between gap-2 text-xs mb-1">
-                    <span class="whitespace-nowrap">{{ formatHours(row.period.used) }} / {{ formatHours(row.period.total) }}</span>
-                    <span class="font-semibold" :class="row.period.overage > 0 ? 'text-red-600' : row.period.used_percent >= 75 ? 'text-amber-700' : 'text-brand-dark'">{{ Math.round(row.period.used_percent) }}%</span>
+              </div>
+            </div>
+
+            <div v-if="activeTab !== 'employee' && !isOperationalCost" class="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-end gap-2 sm:gap-3">
+              <UiInput v-if="activeTab === 'maintenance'" v-model="maintenanceMonth" :label="$t('common.labels.month')" type="month" class="sm:w-[180px]" @change="loadReport(1)" />
+              <UiSelect
+                v-if="activeTab === 'maintenance'"
+                v-model="maintenanceStatus"
+                :label="$t('common.labels.status')"
+                :options="[{ value: '', label: $t('common.labels.allStatuses') }, ...Object.keys(CONTRACT_STATUS).map((key) => ({ value: key, label: contractStatusLabel(key) }))]"
+                class="sm:w-[180px]"
+                @change="loadReport(1)"
+              />
+              <UiInput v-if="!['subscription', 'maintenance'].includes(activeTab)" v-model="startDate" :label="$t('common.labels.startDate')" type="date" class="sm:w-[170px]" @change="loadReport(1)" />
+              <UiInput v-if="!['subscription', 'maintenance'].includes(activeTab)" v-model="endDate" :label="$t('common.labels.endDate')" type="date" class="sm:w-[170px]" @change="loadReport(1)" />
+              <UiSelect
+                v-if="activeTab === 'subscription'"
+                v-model="subscriptionStatus"
+                :label="$t('common.labels.status')"
+                :options="[
+                  { value: '', label: $t('common.labels.allStatuses') },
+                  { value: 'active', label: subscriptionStatusLabel.active },
+                  { value: 'postponed', label: subscriptionStatusLabel.postponed },
+                  { value: 'cancelled', label: subscriptionStatusLabel.cancelled },
+                ]"
+                class="col-span-2 sm:w-[200px]"
+                @change="loadReport(1)"
+              />
+              <UiSelect
+                v-if="activeTab === 'project'"
+                v-model="projectStatus"
+                :label="$t('common.labels.status')"
+                :options="[
+                  { value: '', label: $t('common.labels.allStatuses') },
+                  ...['draft', 'planning', 'active', 'on_hold', 'completed', 'cancelled'].map((v) => ({ value: v, label: enumLabel('projectStatus', v) })),
+                ]"
+                class="col-span-2 sm:w-[180px]"
+                @change="loadReport(1)"
+              />
+              <UiInput
+                v-if="activeTab === 'staff_raport'"
+                v-model="staffRaportSearch"
+                :label="$t('common.labels.name')"
+                :icon="Search"
+                :placeholder="$t('reports.staff.searchPlaceholder')"
+                class="col-span-2 sm:w-[240px]"
+                @input="loadReport(1)"
+              />
+              <UiSelect
+                v-if="activeTab === 'staff_raport'"
+                v-model="staffRaportEmploymentType"
+                :label="$t('reports.columns.employmentType')"
+                :options="[{ value: '', label: $t('reports.staff.allEmploymentTypes') }, ...(employmentTypes || [])]"
+                class="col-span-2 sm:w-[220px]"
+                @change="loadReport(1)"
+              />
+            </div>
+          </div>
+
+          <p v-if="activeTab === 'finance'" class="text-ui-cap text-ui-muted">
+            <template v-if="financeSource === 'cash_book'">
+              {{ $t('reports.finance.cashBookHint') }}
+            </template>
+            <template v-else>
+              {{ $t('reports.finance.operationalCostHint') }}
+            </template>
+          </p>
+          <p v-if="activeTab === 'staff_raport'" class="text-ui-cap text-ui-muted">
+            {{ $t('reports.staff.hint') }}
+          </p>
+          <p v-if="activeTab === 'project'" class="text-ui-cap text-ui-muted">
+            {{ $t('reports.projectHint') }}
+          </p>
+        </div>
+
+        <DocumentReport v-if="activeTab === 'documents'" :data="documents" :loading="loading" />
+
+        <template v-else>
+          <!-- Summary -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 ui-stagger">
+            <template v-if="loading">
+              <UiStat v-for="i in 4" :key="`sk-${i}`" label="" loading />
+            </template>
+            <template v-else>
+              <UiStat
+                v-for="card in summaryCards"
+                :key="card.label"
+                :label="card.label"
+                :value="card.value"
+                :class="summaryCards.length === 3 ? 'last:col-span-2 lg:last:col-span-1' : ''"
+              >
+                <span class="text-ui-h2 sm:text-ui-h1" :title="String(card.value)">{{ card.value }}</span>
+                <template v-if="card.sub" #hint>
+                  <span :class="card.subClass || 'text-ui-warn'">{{ card.sub }}</span>
+                </template>
+              </UiStat>
+            </template>
+          </div>
+
+          <!-- Status Breakdown & Upcoming Renewals (Subscription only) -->
+          <div v-if="!loading && activeTab === 'subscription'" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5">
+              <h2 class="text-ui-h3 text-ui-ink mb-3">{{ $t('reports.subscription.statusBreakdown') }}</h2>
+              <div class="space-y-2.5">
+                <div v-for="item in subscription.status_breakdown" :key="item.status" class="flex items-center justify-between gap-3">
+                  <UiBadge :tone="subscriptionStatusTone[item.status] || 'neutral'" dot>{{ subscriptionStatusLabel[item.status] || item.status }}</UiBadge>
+                  <span class="text-ui-small text-ui-ink font-medium tabular-nums">{{ $t('reports.subscription.count', { n: item.count }, item.count) }}</span>
+                </div>
+                <p v-if="!subscription.status_breakdown?.length" class="text-ui-small text-ui-muted">{{ $t('reports.subscription.none') }}</p>
+              </div>
+            </section>
+
+            <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5">
+              <h2 class="text-ui-h3 text-ui-ink mb-3">{{ $t('reports.subscription.upcoming') }}</h2>
+              <div class="max-h-48 overflow-y-auto divide-y divide-ui-line">
+                <div v-for="row in subscription.upcoming_renewals" :key="row.id" class="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
+                  <div class="min-w-0">
+                    <p class="text-ui-small text-ui-ink font-medium truncate">{{ row.name }}</p>
+                    <p class="text-ui-cap text-ui-muted truncate">{{ row.client?.name ?? "-" }}</p>
                   </div>
-                  <div class="w-full bg-gray-100 rounded-full overflow-hidden" style="height: 6px">
+                  <div class="text-right shrink-0">
+                    <p class="text-ui-small text-ui-ink font-medium tabular-nums">{{ formatCurrency(row.amount) }}</p>
+                    <p class="text-ui-cap text-ui-muted">{{ formatDate(row.next_due_date) }}</p>
+                  </div>
+                </div>
+                <p v-if="!subscription.upcoming_renewals?.length" class="text-ui-small text-ui-muted">{{ $t('reports.subscription.noUpcoming') }}</p>
+              </div>
+            </section>
+          </div>
+
+          <!-- Table -->
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+            <UiTable
+              :key="isOperationalCost ? 'operational_cost' : activeTab"
+              :columns="tableColumns"
+              :rows="tableRows"
+              :row-key="tableRowKey"
+              :meta="reportMeta"
+              :loading="loading"
+              :skeleton-rows="6"
+              :clickable="rowsClickable"
+              @row-click="onRowClick"
+            >
+              <!-- Shared cells -->
+              <template #cell-actions="{ row }">
+                <UiButton
+                  variant="ghost"
+                  size="sm"
+                  :icon="Trash2"
+                  :loading="deletingRowId === rowIdField(row)"
+                  :disabled="deletingRowId === rowIdField(row)"
+                  :title="$t('common.actions.delete')"
+                  :aria-label="$t('common.actions.delete')"
+                  class="hover:text-ui-bad"
+                  @click.stop="handleDeleteRow(row)"
+                />
+              </template>
+
+              <!-- Attendance / PPN / PPh 23 dates, and other per-tab cells -->
+              <template #cell-date="{ row }">
+                <span class="whitespace-nowrap">{{ activeTab === "finance" ? formatDate(row.transaction_date) : formatDate(row.date) }}</span>
+              </template>
+              <template #cell-employee="{ row }">
+                <span class="text-ui-ink font-medium">{{ row.employee?.user?.name ?? "N/A" }}</span>
+              </template>
+              <template #cell-check_in="{ row }">
+                <span class="tabular-nums">{{ row.check_in ? formatTimeUtil(row.check_in) : "-" }}</span>
+                <p v-if="row.status === 'late' && row.late_minutes" class="text-ui-cap text-ui-warn mt-0.5">{{ lateLabel(row.late_minutes) }}</p>
+              </template>
+              <template #cell-check_out="{ row }">
+                <span class="tabular-nums">{{ row.check_out ? formatTimeUtil(row.check_out) : "-" }}</span>
+              </template>
+              <template #cell-period="{ row }">
+                <span class="whitespace-nowrap">{{ formatDate(row.salary_month) }}</span>
+              </template>
+              <template #cell-original_salary="{ row }">
+                <span class="tabular-nums whitespace-nowrap">{{ formatCurrency(row.original_salary) }}</span>
+              </template>
+              <template #cell-final_salary="{ row }">
+                <span class="tabular-nums whitespace-nowrap text-ui-ink font-medium">{{ formatCurrency(row.final_salary) }}</span>
+              </template>
+              <template #cell-code="{ row }">
+                <span class="font-mono text-ui-cap">{{ row.code }}</span>
+              </template>
+              <template #cell-name="{ row }">
+                <span class="text-ui-ink font-medium" :class="activeTab === 'project' ? 'whitespace-nowrap' : ''">
+                  {{ activeTab === "employee" ? row.user?.name ?? "N/A" : activeTab === "staff_raport" ? row.name ?? "N/A" : row.name }}
+                </span>
+              </template>
+              <template #cell-job_title="{ row }">
+                {{ activeTab === "employee" ? row.job_information?.job_title ?? "N/A" : row.job_title ?? "-" }}
+              </template>
+              <template #cell-team="{ row }">{{ row.job_information?.team?.name ?? "N/A" }}</template>
+              <template #cell-status="{ row }">
+                <UiBadge v-if="activeTab === 'attendance'" :tone="attendanceStatusTone[row.status] || 'neutral'" dot>{{ enumLabel('attendanceStatus', row.status) }}</UiBadge>
+                <UiBadge v-else-if="activeTab === 'payroll'" :tone="row.payment_status === 'paid' ? 'ok' : 'warn'" dot>{{ row.payment_status === "paid" ? $t('reports.paymentStatus.paid') : $t('reports.paymentStatus.pending') }}</UiBadge>
+                <UiBadge v-else-if="activeTab === 'employee'" tone="neutral">{{ enumLabel("employeeStatus", row.job_information?.status ?? "N/A") }}</UiBadge>
+                <UiBadge v-else-if="isOperationalCost" :tone="row.in_use ? 'ok' : 'neutral'" dot class="whitespace-nowrap">{{ row.in_use ? $t("finance.usageStatus.active") : $t("finance.usageStatus.inactive") }}</UiBadge>
+                <span v-else-if="activeTab === 'project'" class="whitespace-nowrap">{{ enumLabel("projectStatus", row.status) }}</span>
+                <UiBadge v-else-if="activeTab === 'subscription'" :tone="subscriptionStatusTone[row.status] || 'neutral'" dot>{{ subscriptionStatusLabel[row.status] || row.status }}</UiBadge>
+                <UiBadge v-else-if="activeTab === 'maintenance'" :tone="contractStatusTone[row.status] || 'neutral'" dot>{{ contractStatusLabel(row.status) }}</UiBadge>
+              </template>
+
+              <!-- Finance -->
+              <template #cell-category="{ row }">
+                <span class="whitespace-nowrap" :class="row.in_use ? '' : 'text-ui-faint'">{{ row.category }}</span>
+              </template>
+              <template #cell-item="{ row }">
+                <span :class="row.in_use ? 'text-ui-ink' : 'text-ui-faint'">{{ row.name }}</span>
+              </template>
+              <template #cell-monthly="{ row }">
+                <span class="tabular-nums whitespace-nowrap" :class="row.in_use ? 'text-ui-ink' : 'text-ui-faint'">{{ formatCurrency(row.monthly) }}</span>
+              </template>
+              <template #cell-annual="{ row }">
+                <span class="tabular-nums whitespace-nowrap" :class="row.in_use ? '' : 'text-ui-faint'">{{ row.annual !== null ? formatCurrency(row.annual) : "-" }}</span>
+              </template>
+              <template #cell-description="{ row }">
+                <div class="min-w-[180px] py-2">
+                  <p class="text-ui-ink font-medium">{{ row.description }}</p>
+                  <p v-if="row.notes" class="text-ui-cap text-ui-muted">{{ row.notes }}</p>
+                </div>
+              </template>
+              <template #cell-source="{ row }">
+                <UiBadge :tone="row.is_synced ? 'info' : 'neutral'" class="whitespace-nowrap">{{ row.source }}</UiBadge>
+              </template>
+              <template #cell-debit="{ row }">
+                <span class="tabular-nums whitespace-nowrap text-ui-ok">{{ row.type === "debit" ? formatCurrency(row.amount) : "" }}</span>
+              </template>
+              <template #cell-credit="{ row }">
+                <span class="tabular-nums whitespace-nowrap text-ui-bad">{{ row.type === "credit" ? formatCurrency(row.amount) : "" }}</span>
+              </template>
+              <template #cell-balance="{ row }">
+                <template v-if="activeTab === 'maintenance'">
+                  <span class="tabular-nums whitespace-nowrap">{{ formatHours(row.balance) }}</span>
+                  <p v-if="row.expiring" class="text-ui-cap text-ui-warn whitespace-nowrap">{{ $t('reports.maintenance.expiring', { hours: formatHours(row.expiring) }) }}</p>
+                </template>
+                <span v-else class="tabular-nums whitespace-nowrap font-medium text-ui-ink">{{ formatCurrency(row.balance) }}</span>
+              </template>
+
+              <!-- Tax -->
+              <template #cell-npwp="{ row }">{{ row.employee?.npwp ?? "-" }}</template>
+              <template #cell-ptkp="{ row }">{{ row.employee?.job_information?.ptkp_status ?? "TK/0" }}</template>
+              <template #cell-gross="{ row }">
+                <span class="tabular-nums whitespace-nowrap">{{ activeTab === "pph21" ? formatCurrency(row.gross_salary) : formatCurrency(Number(row.amount) + Number(row.pph23_amount)) }}</span>
+              </template>
+              <template #cell-pph21="{ row }">
+                <span class="tabular-nums whitespace-nowrap text-ui-ink font-medium">{{ formatCurrency(row.pph21) }}</span>
+              </template>
+              <template #cell-faktur="{ row }">
+                <span class="font-mono text-ui-cap whitespace-nowrap">{{ row.faktur_pajak_number ?? "-" }}</span>
+              </template>
+              <template #cell-invoice="{ row }">
+                <span class="font-mono text-ui-cap text-ui-ink whitespace-nowrap">{{ activeTab === "ppn" ? row.invoice_number : row.invoice?.invoice_number ?? "-" }}</span>
+              </template>
+              <template #cell-client="{ row }">
+                <template v-if="activeTab === 'maintenance'">
+                  <div class="min-w-[150px]">
+                    <p>{{ row.client ?? "-" }}</p>
+                    <p v-if="row.project" class="text-ui-cap text-ui-muted">{{ row.project }}</p>
+                  </div>
+                </template>
+                <template v-else-if="activeTab === 'ppn'">{{ row.client_name }}</template>
+                <template v-else-if="activeTab === 'pph23'">{{ row.invoice?.client_name ?? row.received_from }}</template>
+                <template v-else>{{ row.client?.name ?? "-" }}</template>
+              </template>
+              <template #cell-dpp="{ row }">
+                <span class="tabular-nums whitespace-nowrap">{{ formatCurrency(row.subtotal) }}</span>
+              </template>
+              <template #cell-ppn="{ row }">
+                <span class="tabular-nums whitespace-nowrap text-ui-ink font-medium">{{ formatCurrency(row.ppn_amount) }}</span>
+              </template>
+              <template #cell-receipt="{ row }">
+                <span class="font-mono text-ui-cap text-ui-ink whitespace-nowrap">{{ row.receipt_number }}</span>
+              </template>
+              <template #cell-percent="{ row }">
+                <span class="tabular-nums">{{ Number(row.pph23_percent) }}%</span>
+              </template>
+              <template #cell-withheld="{ row }">
+                <span class="tabular-nums whitespace-nowrap text-ui-ink font-medium">{{ formatCurrency(row.pph23_amount) }}</span>
+              </template>
+              <template #cell-net="{ row }">
+                <span class="tabular-nums whitespace-nowrap">{{ formatCurrency(row.amount) }}</span>
+              </template>
+
+              <!-- Project -->
+              <template #cell-leader="{ row }"><span class="whitespace-nowrap">{{ row.project_leader?.user?.name ?? "N/A" }}</span></template>
+              <template #cell-priority="{ row }">{{ enumLabel("priority", row.priority) }}</template>
+              <template #cell-start_date="{ row }">
+                <span class="whitespace-nowrap">{{ formatDate(row.start_date) }}</span>
+              </template>
+              <template #cell-end_date="{ row }">
+                <span class="whitespace-nowrap">{{ row.end_date ? formatDate(row.end_date) : "-" }}</span>
+              </template>
+              <template #cell-budget="{ row }">
+                <span class="tabular-nums whitespace-nowrap">{{ formatCurrency(row.budget) }}</span>
+              </template>
+              <template #cell-tasks="{ row }">
+                <span class="tabular-nums">
+                  {{ activeTab === "project" ? `${row.tasks_done_count}/${row.tasks_total_count}` : row.task_completion_rate !== null ? `${row.task_completion_rate}%` : "-" }}
+                </span>
+              </template>
+              <template #cell-invoiced="{ row }">
+                <span class="tabular-nums whitespace-nowrap">{{ formatCurrency(row.billing?.invoiced_total) }}</span>
+                <p v-if="row.billing?.invoiced_percent !== null && row.billing?.invoiced_percent !== undefined" class="text-ui-cap text-ui-muted whitespace-nowrap">{{ $t('reports.ofValue', { pct: row.billing.invoiced_percent }) }}</p>
+              </template>
+              <template #cell-paid="{ row }">
+                <span class="tabular-nums whitespace-nowrap text-ui-ok">{{ formatCurrency(row.billing?.paid_total) }}</span>
+              </template>
+              <template #cell-outstanding="{ row }">
+                <span
+                  class="tabular-nums whitespace-nowrap"
+                  :class="row.billing?.outstanding > 0 ? 'text-ui-warn font-medium' : row.billing?.outstanding < 0 ? 'text-ui-bad font-medium' : 'text-ui-faint'"
+                >{{ row.billing?.outstanding ? formatCurrency(Math.abs(row.billing.outstanding)) : "—" }}</span>
+              </template>
+              <template #cell-billing="{ row }">
+                <span class="inline-flex items-center gap-1 whitespace-nowrap">
+                  <UiBadge :tone="BILLING_STATUS[row.billing?.status]?.tone || 'neutral'" dot>{{ BILLING_STATUS[row.billing?.status]?.label ?? "-" }}</UiBadge>
+                  <AlertTriangle
+                    v-if="row.billing?.mismatch_count"
+                    class="w-3.5 h-3.5 text-ui-warn"
+                    :title="$t('reports.billing.mismatch', { n: row.billing.mismatch_count }, row.billing.mismatch_count)"
+                  />
+                </span>
+              </template>
+
+              <!-- Subscription -->
+              <template #cell-services="{ row }">
+                <span class="capitalize">{{ subscriptionServicesLabel(row.services) }}</span>
+              </template>
+              <template #cell-cycle="{ row }">
+                <span>{{ enumLabel("billingCycle", row.billing_cycle) }}</span>
+              </template>
+              <template #cell-amount="{ row }">
+                <span class="tabular-nums whitespace-nowrap text-ui-ink font-medium">{{ formatCurrency(row.amount) }}</span>
+              </template>
+              <template #cell-next_due="{ row }">
+                <span class="whitespace-nowrap">{{ formatDate(row.next_due_date) }}</span>
+              </template>
+
+              <!-- Maintenance -->
+              <template #cell-contract="{ row }">
+                <span class="text-ui-ink font-medium block min-w-[150px]">{{ row.name }}</span>
+              </template>
+              <template #cell-quota="{ row }">
+                <span class="tabular-nums whitespace-nowrap">{{ formatHours(row.monthly_quota_hours) }}</span>
+              </template>
+              <template #cell-used="{ row }">
+                <div v-if="row.period" class="py-2">
+                  <div class="flex items-center justify-between gap-2 text-ui-cap mb-1">
+                    <span class="whitespace-nowrap tabular-nums">{{ formatHours(row.period.used) }} / {{ formatHours(row.period.total) }}</span>
+                    <span
+                      class="font-medium tabular-nums"
+                      :class="row.period.overage > 0 ? 'text-ui-bad' : row.period.used_percent >= 75 ? 'text-ui-warn' : 'text-ui-ink'"
+                    >{{ Math.round(row.period.used_percent) }}%</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
                     <div class="h-full rounded-full" :style="{ width: `${Math.min(100, Math.max(2, row.period.used_percent))}%`, backgroundColor: usageColor(row.period) }"></div>
                   </div>
-                  <p v-if="row.period.overage > 0" class="text-[11px] text-red-600 mt-0.5">{{ formatHours(row.period.overage) }} over quota</p>
-                </template>
-                <span v-else class="text-xs text-gray-400">Not running this month</span>
-              </td>
-              <td class="py-3 pr-4 text-xs whitespace-nowrap">{{ LEFTOVER_POLICY[row.leftover_policy]?.short ?? row.leftover_policy }}</td>
-              <td class="py-3 pr-4 text-right whitespace-nowrap">
-                {{ formatHours(row.balance) }}
-                <p v-if="row.expiring" class="text-[11px] text-amber-700">{{ formatHours(row.expiring) }} expiring</p>
-              </td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="CONTRACT_STATUS[row.status]?.class || 'bg-gray-100 text-gray-500'">
-                  {{ CONTRACT_STATUS[row.status]?.label ?? row.status }}
-                </span>
-              </td>
-            </tr>
-          </template>
-          <template v-else-if="activeTab === 'staff_raport'">
-            <tr
-              v-for="(row, index) in tableRows"
-              :key="row.employee_id"
-              @click="openRaportDetail(row.employee_id)"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ (staffRaport.meta.current_page - 1) * staffRaport.meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4 font-semibold text-brand-dark">{{ row.name ?? "N/A" }}</td>
-              <td class="py-3 pr-4">{{ row.job_title ?? "-" }}</td>
-              <td class="py-3 pr-4 capitalize">{{ (row.employment_type || "-").replace("_", " ") }}</td>
-              <td class="py-3 pr-4">{{ row.attendance_rate !== null ? `${row.attendance_rate}%` : "-" }}</td>
-              <td class="py-3 pr-4">{{ row.task_completion_rate !== null ? `${row.task_completion_rate}%` : "-" }}</td>
-              <td class="py-3 pr-4">
-                <span class="flex items-center gap-0.5">
+                  <p v-if="row.period.overage > 0" class="text-ui-cap text-ui-bad mt-0.5">{{ $t('reports.maintenance.overQuota', { hours: formatHours(row.period.overage) }) }}</p>
+                </div>
+                <span v-else class="text-ui-cap text-ui-muted">{{ $t('reports.maintenance.notRunning') }}</span>
+              </template>
+              <template #cell-leftover="{ row }">
+                <span class="text-ui-cap whitespace-nowrap">{{ leftoverLabel(row.leftover_policy) }}</span>
+              </template>
+
+              <!-- Staff raport -->
+              <template #cell-employment_type="{ row }">
+                <span class="capitalize">{{ (row.employment_type || "-").replace("_", " ") }}</span>
+              </template>
+              <template #cell-attendance="{ row }">
+                <span class="tabular-nums">{{ row.attendance_rate !== null ? `${row.attendance_rate}%` : "-" }}</span>
+              </template>
+              <template #cell-rating="{ row }">
+                <span class="flex items-center gap-0.5" :aria-label="$t('reports.stars', { n: row.stars })">
                   <Star
                     v-for="i in 5"
                     :key="i"
                     class="w-3.5 h-3.5"
-                    :class="i <= row.stars ? 'text-amber-500' : 'text-gray-200'"
+                    :class="i <= row.stars ? 'text-ui-warn' : 'text-ui-line-strong'"
                     :fill="i <= row.stars ? 'currentColor' : 'none'"
                   />
                 </span>
-              </td>
-              <td class="py-3 pr-4 text-[#0C51D9] text-xs font-semibold">View Detail</td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
+              </template>
+              <template #cell-view>
+                <span class="text-ui-cap font-medium text-ui-accent whitespace-nowrap">{{ $t('reports.viewDetail') }}</span>
+              </template>
 
-      <div
-        v-if="!loading && tableRows.length === 0"
-        class="text-center py-12 text-gray-500"
-      >
-        <p class="text-lg font-semibold">No data found</p>
-        <p class="text-sm">Try adjusting the date range or filters</p>
+              <!-- Phones: stacked row cards -->
+              <template #mobile="{ row, number }">
+                <div class="flex items-start gap-3 px-4 py-3.5">
+                  <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
+                  <div class="flex-1 min-w-0">
+                    <p v-if="mobileCard(row).kicker" class="text-ui-cap text-ui-muted truncate" :class="mobileCard(row).mono ? 'font-mono' : ''">{{ mobileCard(row).kicker }}</p>
+                    <p class="text-ui-body font-medium text-ui-ink truncate">{{ mobileCard(row).title }}</p>
+                    <p v-if="mobileCard(row).sub" class="text-ui-cap text-ui-muted mt-0.5 truncate">{{ mobileCard(row).sub }}</p>
+                    <span v-if="mobileCard(row).stars !== undefined" class="flex items-center gap-0.5 mt-1">
+                      <Star
+                        v-for="i in 5"
+                        :key="i"
+                        class="w-3.5 h-3.5"
+                        :class="i <= mobileCard(row).stars ? 'text-ui-warn' : 'text-ui-line-strong'"
+                        :fill="i <= mobileCard(row).stars ? 'currentColor' : 'none'"
+                      />
+                    </span>
+                  </div>
+                  <div class="text-right shrink-0 flex flex-col items-end gap-1.5">
+                    <p v-if="mobileCard(row).amount" class="text-ui-body font-medium tabular-nums" :class="mobileCard(row).amountClass || 'text-ui-ink'">{{ mobileCard(row).amount }}</p>
+                    <UiBadge v-if="mobileCard(row).badge" :tone="mobileCard(row).badge.tone" dot>{{ mobileCard(row).badge.label }}</UiBadge>
+                    <button
+                      v-if="showDeleteColumn"
+                      type="button"
+                      class="ui-press inline-flex items-center gap-1 text-ui-cap font-medium text-ui-bad disabled:opacity-50"
+                      :disabled="deletingRowId === rowIdField(row)"
+                      @click.stop="handleDeleteRow(row)"
+                    >
+                      <Trash2 class="w-3.5 h-3.5" />{{ $t("common.actions.delete") }}
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+              <template #empty>
+                <UiEmpty :icon="FileTextIcon" :title="$t('reports.empty.title')" :message="$t('reports.empty.message')" compact />
+              </template>
+            </UiTable>
+
+            <div v-if="reportMeta && reportMeta.total > 0" class="px-4 pb-3 border-t border-ui-line">
+              <Pagination :meta="reportMeta" :loading="loading" :item-label="$t('reports.itemLabel')" @page-change="loadReport" />
+            </div>
+          </section>
+        </template>
+
       </div>
-
-      <Pagination
-        v-if="reportMeta"
-        :meta="reportMeta"
-        :loading="loading"
-        item-label="records"
-        @page-change="loadReport"
-      />
     </div>
-
-    </template>
 
     <!-- Staff Raport Detail Modal -->
-    <div v-if="showRaportDetail" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeRaportDetail">
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between sticky top-0 bg-white">
-          <h3 class="text-brand-dark text-sm sm:text-lg font-bold">Staff Raport</h3>
-          <button @click="closeRaportDetail" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
+    <UiModal v-model:open="showRaportDetail" :title="$t('reports.tabs.staffRaport')" size="lg" @close="closeRaportDetail">
+      <div v-if="loadingDetail">
+        <SkeletonStatCards :count="3" cols="grid-cols-3" />
+      </div>
+
+      <div v-else-if="staffRaportDetail" class="space-y-5">
+        <div>
+          <p class="text-ui-h2 text-ui-ink">{{ staffRaportDetail.employee.name }}</p>
+          <p class="text-ui-small text-ui-muted">
+            {{ staffRaportDetail.employee.code }}
+            <span v-if="staffRaportDetail.employee.job_title"> • {{ staffRaportDetail.employee.job_title }}</span>
+            <span v-if="staffRaportDetail.employee.team"> • {{ staffRaportDetail.employee.team }}</span>
+          </p>
+          <p class="text-ui-cap text-ui-muted mt-0.5 capitalize">
+            {{ (staffRaportDetail.employee.employment_type || "-").replace("_", " ") }}
+            <span v-if="staffRaportDetail.employee.start_date"> • {{ $t('reports.raport.joined') }} {{ formatDate(staffRaportDetail.employee.start_date) }}</span>
+          </p>
+          <div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 bg-ui-subtle border border-ui-line rounded-ui-control px-3 py-2">
+            <p class="text-ui-cap text-ui-text flex-1">
+              {{ $t('common.labels.period') }}: <strong class="text-ui-ink font-semibold">{{ staffRaportDetail.period_label }}</strong>
+              <span class="text-ui-muted">({{ formatDate(staffRaportDetail.period.start_date) }} – {{ formatDate(staffRaportDetail.period.end_date) }})</span>
+            </p>
+            <UiSelect
+              v-model="raportPeriod"
+              :aria-label="$t('reports.raport.periodAria')"
+              :options="[
+                { value: 'filter', label: $t('reports.raport.periods.filter') },
+                { value: 'week', label: $t('reports.raport.periods.week') },
+                { value: 'month', label: $t('reports.raport.periods.month') },
+                { value: 'all', label: $t('reports.raport.periods.all') },
+              ]"
+              class="sm:w-48"
+              @change="loadRaportDetail"
+            />
+          </div>
+          <div class="flex items-center gap-1 mt-2">
+            <Star
+              v-for="i in 5"
+              :key="i"
+              class="w-5 h-5"
+              :class="i <= staffRaportDetail.stars ? 'text-ui-warn' : 'text-ui-line-strong'"
+              :fill="i <= staffRaportDetail.stars ? 'currentColor' : 'none'"
+            />
+            <span class="text-ui-small text-ui-muted ml-1 tabular-nums">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : $t('reports.raport.noData') }}</span>
+          </div>
         </div>
 
-        <div v-if="loadingDetail" class="p-5">
-          <SkeletonStatCards :count="3" cols="grid-cols-3" />
+        <div class="grid grid-cols-3 gap-2 sm:gap-3">
+          <div class="bg-ui-subtle rounded-ui-control p-3 min-w-0">
+            <p class="text-ui-h3 sm:text-ui-h2 text-ui-ink tabular-nums">{{ staffRaportDetail.attendance_rate !== null ? `${staffRaportDetail.attendance_rate}%` : "-" }}</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t('reports.raport.attendanceDays', { n: staffRaportDetail.attendance.total }) }}</p>
+          </div>
+          <div class="bg-ui-subtle rounded-ui-control p-3 min-w-0">
+            <p class="text-ui-h3 sm:text-ui-h2 text-ui-ink tabular-nums">{{ staffRaportDetail.task_completion_rate !== null ? `${staffRaportDetail.task_completion_rate}%` : "-" }}</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t('reports.raport.tasksDue', { done: staffRaportDetail.tasks.done, total: staffRaportDetail.tasks.total }) }}</p>
+          </div>
+          <div class="bg-ui-subtle rounded-ui-control p-3 min-w-0">
+            <p class="text-ui-h3 sm:text-ui-h2 text-ui-ink tabular-nums">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : "-" }}</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t('reports.raport.overallScore') }}</p>
+          </div>
         </div>
 
-        <div v-else-if="staffRaportDetail" class="p-5 space-y-5">
-          <div>
-            <p class="text-brand-dark text-base font-bold">{{ staffRaportDetail.employee.name }}</p>
-            <p class="text-brand-light text-sm">
-              {{ staffRaportDetail.employee.code }}
-              <span v-if="staffRaportDetail.employee.job_title"> • {{ staffRaportDetail.employee.job_title }}</span>
-              <span v-if="staffRaportDetail.employee.team"> • {{ staffRaportDetail.employee.team }}</span>
-            </p>
-            <p class="text-brand-light text-xs mt-0.5 capitalize">
-              {{ (staffRaportDetail.employee.employment_type || "-").replace("_", " ") }}
-              <span v-if="staffRaportDetail.employee.start_date"> • Joined {{ formatDate(staffRaportDetail.employee.start_date) }}</span>
-            </p>
-            <div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 bg-blue-50/60 border border-blue-100 rounded-lg px-3 py-2">
-              <p class="text-xs text-brand-dark flex-1">
-                Period: <strong>{{ staffRaportDetail.period_label }}</strong>
-                <span class="text-brand-light">({{ formatDate(staffRaportDetail.period.start_date) }} – {{ formatDate(staffRaportDetail.period.end_date) }})</span>
-              </p>
-              <div class="relative sm:w-44">
-                <select v-model="raportPeriod" class="select-soft" aria-label="Raport period" @change="loadRaportDetail">
-                  <option value="filter">Report filter period</option>
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                  <option value="all">All Time</option>
-                </select>
-                <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-            <div class="flex items-center gap-1 mt-2">
-              <Star
-                v-for="i in 5"
-                :key="i"
-                class="w-5 h-5"
-                :class="i <= staffRaportDetail.stars ? 'text-amber-500' : 'text-gray-200'"
-                :fill="i <= staffRaportDetail.stars ? 'currentColor' : 'none'"
-              />
-              <span class="text-sm text-brand-light ml-1">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : "No data" }}</span>
+        <!-- How the attendance score was reached, day by day -->
+        <div v-if="staffRaportDetail.attendance.working_days !== undefined">
+          <h4 class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.raport.punctuality') }}</h4>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div v-for="b in raportAttendanceBoxes" :key="b.label" class="border border-ui-line rounded-ui-control px-3 py-2 min-w-0">
+              <p class="text-ui-cap text-ui-muted">{{ b.label }}</p>
+              <p class="text-ui-h3 tabular-nums" :class="b.class || 'text-ui-ink'">{{ b.value }}</p>
+              <p v-if="b.sub" class="text-ui-cap text-ui-muted">{{ b.sub }}</p>
             </div>
           </div>
+          <p class="text-ui-cap text-ui-muted mt-2">
+            {{ $t('reports.raport.scoring') }}
+            <span v-if="staffRaportDetail.tasks.upcoming"> {{ $t('reports.raport.upcomingTasks', { n: staffRaportDetail.tasks.upcoming }, staffRaportDetail.tasks.upcoming) }}</span>
+            <span v-if="staffRaportDetail.tasks.staff_done_late" class="text-ui-warn"> {{ $t('reports.raport.lateTasks', { n: staffRaportDetail.tasks.staff_done_late }, staffRaportDetail.tasks.staff_done_late) }}</span>
+          </p>
+        </div>
 
-          <div class="grid grid-cols-3 gap-3">
-            <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
-              <p class="text-brand-dark text-sm sm:text-lg font-bold">{{ staffRaportDetail.attendance_rate !== null ? `${staffRaportDetail.attendance_rate}%` : "-" }}</p>
-              <p class="text-brand-light text-xs">Attendance ({{ staffRaportDetail.attendance.total }} working days)</p>
-            </div>
-            <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
-              <p class="text-brand-dark text-sm sm:text-lg font-bold">{{ staffRaportDetail.task_completion_rate !== null ? `${staffRaportDetail.task_completion_rate}%` : "-" }}</p>
-              <p class="text-brand-light text-xs">Tasks Done ({{ staffRaportDetail.tasks.done }}/{{ staffRaportDetail.tasks.total }} due)</p>
-            </div>
-            <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3">
-              <p class="text-brand-dark text-sm sm:text-lg font-bold">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : "-" }}</p>
-              <p class="text-brand-light text-xs">Overall Score</p>
+        <div>
+          <h4 class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.raport.completedTasks', { n: staffRaportDetail.completed_tasks.length }) }}</h4>
+          <div v-if="staffRaportDetail.completed_tasks.length" class="border border-ui-line rounded-ui-control divide-y divide-ui-line max-h-48 overflow-y-auto">
+            <div v-for="(task, idx) in staffRaportDetail.completed_tasks" :key="idx" class="flex items-center justify-between gap-3 px-3.5 py-2.5 text-ui-small">
+              <span class="text-ui-ink">{{ task.title }}<span v-if="task.project_name" class="text-ui-muted"> ({{ task.project_name }})</span></span>
+              <span class="text-ui-cap text-ui-muted shrink-0">{{ formatDate(task.due_date) }}</span>
             </div>
           </div>
+          <p v-else class="text-ui-small text-ui-muted">{{ $t('reports.raport.noCompleted') }}</p>
+        </div>
 
-          <!-- How the attendance score was reached, day by day -->
-          <div v-if="staffRaportDetail.attendance.working_days !== undefined">
-            <h4 class="text-sm font-semibold text-brand-dark mb-2">Attendance &amp; Punctuality</h4>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <div v-for="b in raportAttendanceBoxes" :key="b.label" class="border border-[#DCDEDD] rounded-lg px-3 py-2">
-                <p class="text-brand-light">{{ b.label }}</p>
-                <p class="font-bold text-sm" :class="b.class || 'text-brand-dark'">{{ b.value }}</p>
-                <p v-if="b.sub" class="text-[11px] text-brand-light">{{ b.sub }}</p>
-              </div>
+        <div v-if="staffRaportDetail.performance_review" class="border-t border-ui-line pt-4">
+          <h4 class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.raport.latestReview') }}</h4>
+          <div class="bg-ui-subtle rounded-ui-control p-3.5 space-y-2">
+            <div class="flex items-center justify-between gap-2 text-ui-cap text-ui-muted">
+              <span>
+                {{ staffRaportDetail.performance_review.period }}
+                <span v-if="staffRaportDetail.performance_review.reviewer_name"> • {{ $t('reports.raport.reviewedBy', { name: staffRaportDetail.performance_review.reviewer_name }) }}</span>
+              </span>
+              <span class="flex items-center gap-0.5 shrink-0">
+                <Star
+                  v-for="i in 5"
+                  :key="i"
+                  class="w-3.5 h-3.5"
+                  :class="i <= Math.round(staffRaportDetail.performance_review.overall_rating) ? 'text-ui-warn' : 'text-ui-line-strong'"
+                  :fill="i <= Math.round(staffRaportDetail.performance_review.overall_rating) ? 'currentColor' : 'none'"
+                />
+                <span class="font-medium text-ui-ink tabular-nums ml-1">{{ staffRaportDetail.performance_review.overall_rating }}/5</span>
+              </span>
             </div>
-            <p class="text-[11px] text-brand-light mt-2 leading-relaxed">
-              Each working day is scored: on time / remote 100, late up to 15 min 90, 16–60 min 75, over 60 min 50, absent or no check-in 0.
-              Sick days, approved leave and holidays aren't counted.
-              <span v-if="staffRaportDetail.tasks.upcoming"> {{ staffRaportDetail.tasks.upcoming }} task(s) not yet due are left out of the task rate.</span>
-              <span v-if="staffRaportDetail.tasks.staff_done_late" class="text-amber-700"> {{ staffRaportDetail.tasks.staff_done_late }} staff task(s) were completed after the due date.</span>
-            </p>
+            <div v-if="staffRaportDetail.performance_review.category_scores" class="flex flex-wrap gap-1.5">
+              <UiBadge v-for="(score, category) in staffRaportDetail.performance_review.category_scores" :key="category" tone="outline" class="capitalize">
+                {{ category.replace("_", " ") }}: {{ score }}/5
+              </UiBadge>
+            </div>
+            <p v-if="staffRaportDetail.performance_review.strengths" class="text-ui-cap text-ui-text"><strong class="text-ui-ink">{{ $t('reports.raport.strengths') }}</strong> {{ staffRaportDetail.performance_review.strengths }}</p>
+            <p v-if="staffRaportDetail.performance_review.areas_for_improvement" class="text-ui-cap text-ui-text"><strong class="text-ui-ink">{{ $t('reports.raport.improvements') }}</strong> {{ staffRaportDetail.performance_review.areas_for_improvement }}</p>
           </div>
+        </div>
 
-          <div>
-            <h4 class="text-sm font-semibold text-brand-dark mb-2">Completed Tasks ({{ staffRaportDetail.completed_tasks.length }})</h4>
-            <div v-if="staffRaportDetail.completed_tasks.length" class="border border-[#DCDEDD] rounded-xl overflow-hidden max-h-48 overflow-y-auto">
-              <div
-                v-for="(task, idx) in staffRaportDetail.completed_tasks"
-                :key="idx"
-                class="flex items-center justify-between gap-3 px-3.5 py-2.5 border-b border-[#DCDEDD] last:border-b-0 text-sm"
-              >
-                <span class="text-brand-dark">{{ task.title }}<span v-if="task.project_name" class="text-brand-light"> ({{ task.project_name }})</span></span>
-                <span class="text-brand-light text-xs shrink-0">{{ formatDate(task.due_date) }}</span>
-              </div>
-            </div>
-            <p v-else class="text-brand-light text-sm">No completed tasks due in this period.</p>
+        <div class="pt-4 border-t border-ui-line">
+          <p class="text-ui-h3 text-ui-ink mb-2">{{ $t("common.actions.downloadPdf") }}</p>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <p class="text-ui-cap text-ui-muted flex-1">{{ $t('reports.raport.usesPeriod') }} <strong class="text-ui-ink font-semibold">{{ staffRaportDetail.period_label }}</strong></p>
+            <UiButton :icon="Download" :loading="downloadingPdf" class="shrink-0" @click="handleDownloadPdf">
+              {{ downloadingPdf ? $t('reports.downloading') : $t("common.actions.downloadPdf") }}
+            </UiButton>
           </div>
-
-          <div v-if="staffRaportDetail.performance_review" class="border-t border-[#DCDEDD] pt-4">
-            <h4 class="text-sm font-semibold text-brand-dark mb-2">Latest Performance Review</h4>
-            <div class="bg-gray-50 border border-[#DCDEDD] rounded-xl p-3.5 space-y-2">
-              <div class="flex items-center justify-between text-xs text-brand-light">
-                <span>
-                  {{ staffRaportDetail.performance_review.period }}
-                  <span v-if="staffRaportDetail.performance_review.reviewer_name"> • Reviewed by {{ staffRaportDetail.performance_review.reviewer_name }}</span>
-                </span>
-                <span class="flex items-center gap-0.5">
-                  <Star
-                    v-for="i in 5"
-                    :key="i"
-                    class="w-3.5 h-3.5"
-                    :class="i <= Math.round(staffRaportDetail.performance_review.overall_rating) ? 'text-amber-500' : 'text-gray-200'"
-                    :fill="i <= Math.round(staffRaportDetail.performance_review.overall_rating) ? 'currentColor' : 'none'"
-                  />
-                  <span class="font-semibold text-[#0C51D9] ml-1">{{ staffRaportDetail.performance_review.overall_rating }}/5</span>
-                </span>
-              </div>
-              <div v-if="staffRaportDetail.performance_review.category_scores" class="flex flex-wrap gap-2">
-                <span
-                  v-for="(score, category) in staffRaportDetail.performance_review.category_scores"
-                  :key="category"
-                  class="px-2 py-0.5 rounded-full text-xs bg-white border border-[#DCDEDD] text-brand-dark capitalize"
-                >
-                  {{ category.replace("_", " ") }}: {{ score }}/5
-                </span>
-              </div>
-              <p v-if="staffRaportDetail.performance_review.strengths" class="text-xs text-brand-dark"><strong>Strengths:</strong> {{ staffRaportDetail.performance_review.strengths }}</p>
-              <p v-if="staffRaportDetail.performance_review.areas_for_improvement" class="text-xs text-brand-dark"><strong>Areas for Improvement:</strong> {{ staffRaportDetail.performance_review.areas_for_improvement }}</p>
-            </div>
-          </div>
-
-          <div class="pt-3 border-t border-[#DCDEDD]">
-            <label class="text-sm font-semibold text-brand-dark mb-2 block">Download PDF</label>
-            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-              <p class="text-xs text-brand-light flex-1">Uses the period above: <strong class="text-brand-dark">{{ staffRaportDetail.period_label }}</strong></p>
-              <button
-                @click="handleDownloadPdf"
-                :disabled="downloadingPdf"
-                class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 disabled:opacity-50 shrink-0"
-              >
-                <Download class="w-4 h-4 text-white" />
-                <span class="text-brand-white text-sm font-semibold">{{ downloadingPdf ? "Downloading..." : "Download PDF" }}</span>
-              </button>
-            </div>
-            <SignatureToggle v-model="raportUseSignature" class="mt-3" hint="Stamps the Director's signature onto the PDF." />
-          </div>
+          <SignatureToggle v-model="raportUseSignature" class="mt-3" :hint="$t('reports.raport.signatureHint')" />
         </div>
       </div>
-    </div>
+    </UiModal>
 
     <!-- Subscription Detail Modal -->
-    <div
-      v-if="showSubscriptionDetail && selectedSubscription"
-      class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="closeSubscriptionDetail"
+    <UiModal
+      :open="showSubscriptionDetail && !!selectedSubscription"
+      :title="selectedSubscription?.name || ''"
+      :description="$t('reports.subscription.detail')"
+      @close="closeSubscriptionDetail"
     >
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between sticky top-0 bg-white">
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-sm sm:text-lg font-bold truncate">{{ selectedSubscription.name }}</h3>
-            <p class="text-brand-light text-xs mt-0.5">Subscription Detail</p>
-          </div>
-          <button @click="closeSubscriptionDetail" class="w-9 h-9 shrink-0 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
+      <div v-if="selectedSubscription" class="space-y-4">
+        <div class="flex items-center gap-2 flex-wrap">
+          <UiBadge :tone="subscriptionStatusTone[selectedSubscription.status] || 'neutral'" dot>
+            {{ subscriptionStatusLabel[selectedSubscription.status] || selectedSubscription.status }}
+          </UiBadge>
+          <span class="inline-flex items-center gap-1 text-ui-cap text-ui-muted"><Building2Icon class="w-3.5 h-3.5" /> {{ selectedSubscription.client?.name ?? "-" }}</span>
+          <span v-if="selectedSubscription.project" class="inline-flex items-center gap-1 text-ui-cap text-ui-muted">
+            <FolderKanban class="w-3.5 h-3.5" /> {{ selectedSubscription.project.name }}
+          </span>
         </div>
 
-        <div class="p-5 space-y-4">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="subscriptionStatusClass[selectedSubscription.status] || 'bg-gray-100 text-gray-500'">
-              {{ subscriptionStatusLabel[selectedSubscription.status] || selectedSubscription.status }}
-            </span>
-            <span class="inline-flex items-center gap-1 text-xs text-gray-500">
-              <Building2Icon class="w-3.5 h-3.5" /> {{ selectedSubscription.client?.name ?? "-" }}
-            </span>
-            <span v-if="selectedSubscription.project" class="inline-flex items-center gap-1 text-xs text-gray-500">
-              <FolderKanban class="w-3.5 h-3.5" /> {{ selectedSubscription.project.name }}
-            </span>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p class="text-gray-400 text-xs">Billing Cycle</p>
-              <p class="text-brand-dark font-semibold capitalize">{{ selectedSubscription.billing_cycle }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-xs">Next Due Date</p>
-              <p class="text-brand-dark font-semibold">{{ formatDate(selectedSubscription.next_due_date) }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-xs">Last Invoiced</p>
-              <p class="text-brand-dark font-semibold">{{ selectedSubscription.last_invoiced_at ? formatDate(selectedSubscription.last_invoiced_at) : "-" }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-xs">Bank Account</p>
-              <p class="text-brand-dark font-semibold">{{ selectedSubscription.bank_name ?? "-" }}</p>
-            </div>
-          </div>
-
+        <dl class="grid grid-cols-2 gap-4">
           <div>
-            <p class="text-brand-dark text-sm font-bold mb-2">Services</p>
-            <div class="space-y-2">
-              <div
-                v-for="service in selectedSubscription.services"
-                :key="service.id"
-                class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm"
-              >
-                <div class="min-w-0">
-                  <p class="text-brand-dark font-semibold capitalize truncate">{{ (service.service_type || "-").replace(/_/g, " ") }}</p>
-                  <p v-if="service.product_name" class="text-gray-400 text-xs truncate">{{ service.product_name }}</p>
-                  <p v-if="service.ppn_percentage" class="text-gray-400 text-xs">VAT/PPN {{ service.ppn_percentage }}%</p>
-                  <p v-if="service.icann_fee > 0" class="text-gray-400 text-xs">ICANN Fee {{ formatCurrency(service.icann_fee) }}</p>
-                </div>
-                <p class="text-brand-dark font-semibold shrink-0 ml-3">{{ formatCurrency(service.amount) }}</p>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.columns.billingCycle') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ enumLabel("billingCycle", selectedSubscription.billing_cycle) }}</dd>
+          </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.columns.nextDue') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ formatDate(selectedSubscription.next_due_date) }}</dd>
+          </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.subscription.lastInvoiced') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ selectedSubscription.last_invoiced_at ? formatDate(selectedSubscription.last_invoiced_at) : "-" }}</dd>
+          </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.bankAccount') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ selectedSubscription.bank_name ?? "-" }}</dd>
+          </div>
+        </dl>
+
+        <div>
+          <p class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.columns.services') }}</p>
+          <div class="space-y-2">
+            <div v-for="service in selectedSubscription.services" :key="service.id" class="flex items-center justify-between gap-3 bg-ui-subtle rounded-ui-control px-3 py-2">
+              <div class="min-w-0">
+                <p class="text-ui-small text-ui-ink font-medium capitalize truncate">{{ (service.service_type || "-").replace(/_/g, " ") }}</p>
+                <p v-if="service.product_name" class="text-ui-cap text-ui-muted truncate">{{ service.product_name }}</p>
+                <p v-if="service.ppn_percentage" class="text-ui-cap text-ui-muted">VAT/PPN {{ service.ppn_percentage }}%</p>
+                <p v-if="service.icann_fee > 0" class="text-ui-cap text-ui-muted">ICANN Fee {{ formatCurrency(service.icann_fee) }}</p>
               </div>
-              <p v-if="!selectedSubscription.services?.length" class="text-sm text-gray-400">No services on this subscription.</p>
+              <p class="text-ui-small text-ui-ink font-medium tabular-nums shrink-0">{{ formatCurrency(service.amount) }}</p>
             </div>
+            <p v-if="!selectedSubscription.services?.length" class="text-ui-small text-ui-muted">{{ $t('reports.subscription.noServices') }}</p>
           </div>
+        </div>
 
-          <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
-            <div class="flex justify-between"><span>Amount</span><span>{{ formatCurrency(selectedSubscription.amount) }}</span></div>
-            <div class="flex justify-between">
-              <span>{{ selectedSubscription.services?.length > 1 ? "Total VAT / PPN" : "VAT / PPN" }} ({{ selectedSubscription.ppn_percentage || 0 }}%)</span>
-              <span>{{ formatCurrency(Math.round((Number(selectedSubscription.amount) || 0) * ((Number(selectedSubscription.ppn_percentage) || 0) / 100))) }}</span>
-            </div>
-            <div class="flex justify-between"><span>Admin Fee</span><span>{{ formatCurrency(selectedSubscription.admin_fee) }}</span></div>
-            <div v-if="subscriptionIcannFeeTotal(selectedSubscription) > 0" class="flex justify-between"><span>ICANN Fee</span><span>{{ formatCurrency(subscriptionIcannFeeTotal(selectedSubscription)) }}</span></div>
-            <div v-if="selectedSubscription.pph23_type" class="flex justify-between"><span>PPh 23</span><span>{{ selectedSubscription.pph23_percent }}%</span></div>
+        <div class="bg-ui-subtle rounded-ui-control p-4 text-ui-small text-ui-text space-y-1">
+          <div class="flex justify-between gap-3"><span>{{ $t('reports.columns.amount') }}</span><span class="tabular-nums">{{ formatCurrency(selectedSubscription.amount) }}</span></div>
+          <div class="flex justify-between gap-3">
+            <span>{{ selectedSubscription.services?.length > 1 ? $t('reports.subscription.totalVat') : $t('reports.subscription.vat') }} ({{ selectedSubscription.ppn_percentage || 0 }}%)</span>
+            <span class="tabular-nums">{{ formatCurrency(Math.round((Number(selectedSubscription.amount) || 0) * ((Number(selectedSubscription.ppn_percentage) || 0) / 100))) }}</span>
           </div>
+          <div class="flex justify-between gap-3"><span>{{ $t('reports.adminFee') }}</span><span class="tabular-nums">{{ formatCurrency(selectedSubscription.admin_fee) }}</span></div>
+          <div v-if="subscriptionIcannFeeTotal(selectedSubscription) > 0" class="flex justify-between gap-3">
+            <span>ICANN Fee</span><span class="tabular-nums">{{ formatCurrency(subscriptionIcannFeeTotal(selectedSubscription)) }}</span>
+          </div>
+          <div v-if="selectedSubscription.pph23_type" class="flex justify-between gap-3"><span>PPh 23</span><span class="tabular-nums">{{ selectedSubscription.pph23_percent }}%</span></div>
+        </div>
 
-          <div v-if="selectedSubscription.terms">
-            <p class="text-brand-dark text-sm font-semibold mb-1">Terms & Conditions</p>
-            <p class="text-gray-500 text-xs whitespace-pre-line">{{ selectedSubscription.terms }}</p>
-          </div>
+        <div v-if="selectedSubscription.terms">
+          <p class="text-ui-small text-ui-ink font-medium mb-1">{{ $t('reports.terms') }}</p>
+          <p class="text-ui-cap text-ui-muted whitespace-pre-line">{{ selectedSubscription.terms }}</p>
         </div>
       </div>
-    </div>
+    </UiModal>
 
     <!-- PPN Invoice Detail Modal -->
-    <div
-      v-if="showInvoiceDetail && selectedInvoice"
-      class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="closeInvoiceDetail"
+    <UiModal
+      :open="showInvoiceDetail && !!selectedInvoice"
+      :title="selectedInvoice?.invoice_number || ''"
+      :description="$t('reports.invoiceDetail')"
+      @close="closeInvoiceDetail"
     >
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between sticky top-0 bg-white">
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-sm sm:text-lg font-bold truncate">{{ selectedInvoice.invoice_number }}</h3>
-            <p class="text-brand-light text-xs mt-0.5">Invoice Detail</p>
+      <div v-if="selectedInvoice" class="space-y-4">
+        <dl class="grid grid-cols-2 gap-4">
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.date") }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ formatDate(selectedInvoice.date) }}</dd>
           </div>
-          <button @click="closeInvoiceDetail" class="w-9 h-9 shrink-0 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.columns.faktur') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ selectedInvoice.faktur_pajak_number ?? "-" }}</dd>
+          </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.client") }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ selectedInvoice.client_name }}</dd>
+          </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">NPWP</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ selectedInvoice.client_npwp ?? "-" }}</dd>
+          </div>
+        </dl>
+
+        <div v-if="selectedInvoice.items?.length">
+          <p class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.items') }}</p>
+          <div class="space-y-2">
+            <div v-for="(item, idx) in selectedInvoice.items" :key="idx" class="flex items-center justify-between gap-3 bg-ui-subtle rounded-ui-control px-3 py-2 text-ui-small">
+              <span class="min-w-0 truncate text-ui-text">{{ item.description }}</span>
+              <span class="text-ui-ink font-medium tabular-nums shrink-0">{{ formatCurrency(item.total) }}</span>
+            </div>
+          </div>
         </div>
 
-        <div class="p-5 space-y-4">
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p class="text-gray-400 text-xs">Date</p>
-              <p class="text-brand-dark font-semibold">{{ formatDate(selectedInvoice.date) }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-xs">Faktur Pajak No.</p>
-              <p class="text-brand-dark font-semibold">{{ selectedInvoice.faktur_pajak_number ?? "-" }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-xs">Client</p>
-              <p class="text-brand-dark font-semibold">{{ selectedInvoice.client_name }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-xs">NPWP</p>
-              <p class="text-brand-dark font-semibold">{{ selectedInvoice.client_npwp ?? "-" }}</p>
-            </div>
+        <div class="bg-ui-subtle rounded-ui-control p-4 text-ui-small text-ui-text space-y-1">
+          <div class="flex justify-between gap-3"><span>{{ $t('reports.dppSubtotal') }}</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.subtotal) }}</span></div>
+          <div class="flex justify-between gap-3"><span>PPN ({{ selectedInvoice.ppn_percentage || 0 }}%)</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.ppn_amount) }}</span></div>
+          <div v-if="selectedInvoice.admin_fee > 0" class="flex justify-between gap-3"><span>{{ $t('reports.adminFee') }}</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.admin_fee) }}</span></div>
+          <div v-if="selectedInvoice.icann_fee > 0" class="flex justify-between gap-3"><span>ICANN Fee</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.icann_fee) }}</span></div>
+          <div v-if="selectedInvoice.pph23_type" class="flex justify-between gap-3"><span>PPh 23</span><span class="tabular-nums">{{ selectedInvoice.pph23_percent }}%</span></div>
+          <div class="flex justify-between gap-3 font-semibold text-ui-ink pt-1.5 mt-1 border-t border-ui-line">
+            <span>{{ $t('reports.totalDue') }}</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.total) }}</span>
           </div>
+        </div>
 
-          <div v-if="selectedInvoice.items?.length">
-            <p class="text-brand-dark text-sm font-bold mb-2">Items</p>
-            <div class="space-y-2">
-              <div
-                v-for="(item, idx) in selectedInvoice.items"
-                :key="idx"
-                class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm"
-              >
-                <span class="min-w-0 truncate pr-3">{{ item.description }}</span>
-                <span class="text-brand-dark font-semibold shrink-0">{{ formatCurrency(item.total) }}</span>
-              </div>
-            </div>
+        <dl v-if="selectedInvoice.bank_name" class="grid grid-cols-2 gap-4">
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.bank') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ selectedInvoice.bank_name }}</dd>
           </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.accountNumber') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium tabular-nums">{{ selectedInvoice.bank_account ?? "-" }}</dd>
+          </div>
+        </dl>
 
-          <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
-            <div class="flex justify-between"><span>DPP (Subtotal)</span><span>{{ formatCurrency(selectedInvoice.subtotal) }}</span></div>
-            <div class="flex justify-between"><span>PPN ({{ selectedInvoice.ppn_percentage || 0 }}%)</span><span>{{ formatCurrency(selectedInvoice.ppn_amount) }}</span></div>
-            <div v-if="selectedInvoice.admin_fee > 0" class="flex justify-between"><span>Admin Fee</span><span>{{ formatCurrency(selectedInvoice.admin_fee) }}</span></div>
-            <div v-if="selectedInvoice.icann_fee > 0" class="flex justify-between"><span>ICANN Fee</span><span>{{ formatCurrency(selectedInvoice.icann_fee) }}</span></div>
-            <div v-if="selectedInvoice.pph23_type" class="flex justify-between"><span>PPh 23</span><span>{{ selectedInvoice.pph23_percent }}%</span></div>
-            <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Total Amount Due</span><span>{{ formatCurrency(selectedInvoice.total) }}</span></div>
-          </div>
-
-          <div v-if="selectedInvoice.bank_name" class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p class="text-gray-400 text-xs">Bank</p>
-              <p class="text-brand-dark font-semibold">{{ selectedInvoice.bank_name }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-xs">Account Number</p>
-              <p class="text-brand-dark font-semibold">{{ selectedInvoice.bank_account ?? "-" }}</p>
-            </div>
-          </div>
-
-          <div v-if="selectedInvoice.terms">
-            <p class="text-brand-dark text-sm font-semibold mb-1">Terms & Conditions</p>
-            <p class="text-gray-500 text-xs whitespace-pre-line">{{ selectedInvoice.terms }}</p>
-          </div>
+        <div v-if="selectedInvoice.terms">
+          <p class="text-ui-small text-ui-ink font-medium mb-1">{{ $t('reports.terms') }}</p>
+          <p class="text-ui-cap text-ui-muted whitespace-pre-line">{{ selectedInvoice.terms }}</p>
         </div>
       </div>
-    </div>
+    </UiModal>
 
     <!-- PPh 23 Receipt Detail Modal -->
-    <div
-      v-if="showReceiptDetail && selectedReceipt"
-      class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="closeReceiptDetail"
+    <UiModal
+      :open="showReceiptDetail && !!selectedReceipt"
+      :title="selectedReceipt?.receipt_number || ''"
+      :description="$t('reports.receiptDetail')"
+      @close="closeReceiptDetail"
     >
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between sticky top-0 bg-white">
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-sm sm:text-lg font-bold truncate">{{ selectedReceipt.receipt_number }}</h3>
-            <p class="text-brand-light text-xs mt-0.5">Payment Receipt Detail</p>
+      <div v-if="selectedReceipt" class="space-y-4">
+        <dl class="grid grid-cols-2 gap-4">
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.date") }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ formatDate(selectedReceipt.date) }}</dd>
           </div>
-          <button @click="closeReceiptDetail" class="w-9 h-9 shrink-0 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.columns.invoiceNo') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ selectedReceipt.invoice?.invoice_number ?? "-" }}</dd>
+          </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.receivedFrom') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ selectedReceipt.invoice?.client_name ?? selectedReceipt.received_from }}</dd>
+          </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.recipient') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ selectedReceipt.recipient_name ?? "-" }}</dd>
+          </div>
+        </dl>
+
+        <div v-if="selectedReceipt.for_payment_of">
+          <p class="text-ui-small text-ui-ink font-medium mb-1">{{ $t('reports.forPaymentOf') }}</p>
+          <p class="text-ui-cap text-ui-muted whitespace-pre-line">{{ selectedReceipt.for_payment_of }}</p>
         </div>
 
-        <div class="p-5 space-y-4">
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p class="text-gray-400 text-xs">Date</p>
-              <p class="text-brand-dark font-semibold">{{ formatDate(selectedReceipt.date) }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-xs">Invoice No.</p>
-              <p class="text-brand-dark font-semibold">{{ selectedReceipt.invoice?.invoice_number ?? "-" }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-xs">Received From</p>
-              <p class="text-brand-dark font-semibold">{{ selectedReceipt.invoice?.client_name ?? selectedReceipt.received_from }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-xs">Recipient</p>
-              <p class="text-brand-dark font-semibold">{{ selectedReceipt.recipient_name ?? "-" }}</p>
-            </div>
+        <div class="bg-ui-subtle rounded-ui-control p-4 text-ui-small text-ui-text space-y-1">
+          <div class="flex justify-between gap-3">
+            <span>{{ $t('reports.columns.grossAmount') }}</span><span class="tabular-nums">{{ formatCurrency(Number(selectedReceipt.amount) + Number(selectedReceipt.pph23_amount)) }}</span>
           </div>
+          <div class="flex justify-between gap-3">
+            <span>{{ $t('reports.columns.pph23Withheld') }} ({{ Number(selectedReceipt.pph23_percent) }}%)</span><span class="tabular-nums">{{ formatCurrency(selectedReceipt.pph23_amount) }}</span>
+          </div>
+          <div class="flex justify-between gap-3 font-semibold text-ui-ink pt-1.5 mt-1 border-t border-ui-line">
+            <span>{{ $t('reports.columns.netReceived') }}</span><span class="tabular-nums">{{ formatCurrency(selectedReceipt.amount) }}</span>
+          </div>
+        </div>
 
-          <div v-if="selectedReceipt.for_payment_of">
-            <p class="text-brand-dark text-sm font-semibold mb-1">For Payment Of</p>
-            <p class="text-gray-500 text-xs whitespace-pre-line">{{ selectedReceipt.for_payment_of }}</p>
-          </div>
-
-          <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
-            <div class="flex justify-between"><span>Gross Amount</span><span>{{ formatCurrency(Number(selectedReceipt.amount) + Number(selectedReceipt.pph23_amount)) }}</span></div>
-            <div class="flex justify-between"><span>PPh 23 Withheld ({{ Number(selectedReceipt.pph23_percent) }}%)</span><span>{{ formatCurrency(selectedReceipt.pph23_amount) }}</span></div>
-            <div class="flex justify-between font-bold text-brand-dark pt-1 border-t border-gray-200"><span>Net Received</span><span>{{ formatCurrency(selectedReceipt.amount) }}</span></div>
-          </div>
-
-          <div class="flex items-center gap-2 flex-wrap">
-            <span v-if="selectedReceipt.pph23_type" class="px-2 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700">
-              {{ selectedReceipt.pph23_type }}
-            </span>
-            <span v-if="selectedReceipt.payment_status" class="px-2 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 capitalize">
-              {{ selectedReceipt.payment_status }}
-            </span>
-          </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <UiBadge v-if="selectedReceipt.pph23_type" tone="info">{{ selectedReceipt.pph23_type }}</UiBadge>
+          <UiBadge v-if="selectedReceipt.payment_status" tone="neutral" class="capitalize">{{ selectedReceipt.payment_status }}</UiBadge>
         </div>
       </div>
-    </div>
+    </UiModal>
 
     <AttendanceDetailModal :show="showAttendanceDetail" :attendance="selectedAttendance" @close="closeAttendanceDetail" />
 
     <!-- Delete by Date Range Modal -->
-    <div v-if="showDeleteRangeModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeDeleteRangeModal">
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-brand-dark text-lg font-bold">Delete by Date Range</h3>
-          <button @click="closeDeleteRangeModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
-        <div class="p-5 space-y-4">
-          <p class="text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
-            This permanently deletes every underlying record in this range, not just its appearance in the report. This cannot be undone from this screen.
-          </p>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Start Date</label>
-            <input v-model="deleteRangeStart" type="date" class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">End Date</label>
-            <input v-model="deleteRangeEnd" type="date" class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-        </div>
-        <div class="p-5 border-t border-[#DCDEDD] flex justify-end gap-3">
-          <button type="button" @click="closeDeleteRangeModal" class="px-4 py-2.5 border border-[#DCDEDD] rounded-[10px] text-sm font-semibold hover:border-[#0C51D9] transition-colors">
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="handleDeleteRange"
-            :disabled="deletingRange || !deleteRangeStart || !deleteRangeEnd"
-            class="rounded-[8px] border border-red-600 bg-red-600 hover:brightness-110 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {{ deletingRange ? "Deleting..." : "Delete Range" }}
-          </button>
+    <UiModal v-model:open="showDeleteRangeModal" :title="$t('reports.delete.byRange')" size="sm" @close="closeDeleteRangeModal">
+      <div class="space-y-4">
+        <UiAlert tone="bad">
+          {{ $t('reports.delete.rangeWarning') }}
+        </UiAlert>
+        <div class="grid grid-cols-2 gap-3">
+          <UiInput v-model="deleteRangeStart" type="date" :label="$t('common.labels.startDate')" />
+          <UiInput v-model="deleteRangeEnd" type="date" :label="$t('common.labels.endDate')" />
         </div>
       </div>
-    </div>
+      <template #footer>
+        <UiButton variant="secondary" @click="closeDeleteRangeModal">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton variant="destructive" :loading="deletingRange" :disabled="!deleteRangeStart || !deleteRangeEnd" @click="handleDeleteRange">
+          {{ deletingRange ? $t("common.actions.deleting") : $t('reports.delete.range') }}
+        </UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>
-
-<style scoped>
-/* Report tabs no longer wrap into a ragged multi-row block on mobile/
-   tablet -- they scroll horizontally in one row instead. Scrollbar hidden
-   since the fade + chevron hint below now does the job of signaling
-   there's more to swipe to. */
-.tabs-scroll {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.tabs-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

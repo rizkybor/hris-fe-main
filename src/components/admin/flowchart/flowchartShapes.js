@@ -3,6 +3,12 @@
 // curves and the cylinder's ellipses never distort when a node is resized.
 // `path(w, h)` returns the SVG elements as { tag, attrs } objects; FlowchartNode
 // renders them and applies the node's fill/stroke.
+import { t } from "@/i18n";
+
+// Each shape's display name lives in flowchart.shapes.<key>; `label` is the
+// English fallback.
+export const shapeLabel = (key) => t(`flowchart.shapes.${key}`);
+
 const P = 1.5; // half the stroke width, so the outline isn't clipped at the edges
 
 export const SHAPES = {
@@ -144,7 +150,7 @@ export const makeNode = (shape, position, id) => {
     style: { width: `${def.size.width}px`, height: `${def.size.height}px` },
     data: {
       shape,
-      label: shape === "text" ? "Text" : def.label,
+      label: shapeLabel(shape),
       fill: def.colors.fill,
       stroke: def.colors.stroke,
       textColor: "#0F172A",

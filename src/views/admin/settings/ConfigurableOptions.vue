@@ -1,26 +1,38 @@
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { ListChecks, Plus, Trash2, Pencil, X, Check, ChevronRight, ArrowLeft } from "lucide-vue-next";
 import { useConfigurableOptionStore } from "@/stores/configurableOption";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { useScrollFade } from "@/composables/useScrollFade";
+import { UiBadge, UiButton, UiChips, UiEmpty, UiInput, UiPageHeader, UiTable } from "@/components/ui";
 
+const { t } = useI18n();
 const store = useConfigurableOptionStore();
 const alertModal = useAlertModalStore();
 const { options, loading } = storeToRefs(store);
 
 const categories = [
-  { key: "employment_type", label: "Employment Type" },
-  { key: "ptkp_status", label: "PTKP Status (PPh21)" },
-  { key: "bank_name", label: "Bank Name" },
-  { key: "preferred_language", label: "Preferred Language" },
-  { key: "subscription_service_type", label: "Subscription Service Type" },
+  { key: "employment_type", labelKey: "employmentType" },
+  { key: "ptkp_status", labelKey: "ptkpStatus" },
+  { key: "bank_name", labelKey: "bankName" },
+  { key: "preferred_language", labelKey: "preferredLanguage" },
+  { key: "subscription_service_type", labelKey: "subscriptionServiceType" },
 ];
 
 const activeCategory = ref(categories[0].key);
 const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
+
+// Presentation only.
+const categoryChips = computed(() => categories.map((c) => ({ value: c.key, label: t(`settings.options.categories.${c.labelKey}`) })));
+const optionColumns = computed(() => [
+  { key: "label", label: t("settings.options.columns.label") },
+  { key: "value", label: t("settings.options.columns.value") },
+  { key: "is_active", label: t("common.labels.status"), width: 120 },
+  { key: "actions", label: "", align: "right", width: 120 },
+]);
 
 const newValue = ref("");
 const newLabel = ref("");
@@ -38,7 +50,7 @@ watch(activeCategory, load);
 const handleAdd = async () => {
   formError.value = "";
   if (!newValue.value.trim() || !newLabel.value.trim()) {
-    formError.value = "Value and label are both required.";
+    formError.value = t("settings.options.required");
     return;
   }
   try {
@@ -50,7 +62,7 @@ const handleAdd = async () => {
     newValue.value = "";
     newLabel.value = "";
   } catch (error) {
-    formError.value = error?.response?.data?.message || "Failed to add option.";
+    formError.value = error?.response?.data?.message || t("settings.options.addFailed");
   }
 };
 
@@ -69,7 +81,7 @@ const saveEdit = async (option) => {
     await store.updateOption(option.id, { value: editValue.value.trim(), label: editLabel.value.trim() });
     editingId.value = null;
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Failed to update option.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || t("settings.options.updateFailed"), { type: "danger" });
   }
 };
 
@@ -77,160 +89,103 @@ const toggleActive = async (option) => {
   try {
     await store.updateOption(option.id, { is_active: !option.is_active });
   } catch (error) {
-    await alertModal.alert("Failed to update option.", { type: "danger" });
+    await alertModal.alert(t("settings.options.updateFailed"), { type: "danger" });
   }
 };
 
 const handleDelete = async (option) => {
-  if (!(await alertModal.confirm(`Delete "${option.label}"? Employees already using this value keep it, but it won't be selectable anymore.`))) return;
+  if (!(await alertModal.confirm(t("settings.options.deleteConfirm", { label: option.label })))) return;
   try {
     await store.deleteOption(option.id);
   } catch (error) {
-    await alertModal.alert("Failed to delete option.", { type: "danger" });
+    await alertModal.alert(t("settings.options.deleteFailed"), { type: "danger" });
   }
 };
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="bg-white mb-5">
-      <div class="flex items-center gap-3">
-        <router-link
-          :to="{ name: 'admin.settings.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Settings"
-          title="Back to Settings"
-        >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('settings.options.title')" :subtitle="$t('settings.options.subtitle')">
+      <template #eyebrow>
+        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" :aria-label="$t('settings.backToSettings')" :title="$t('settings.backToSettings')">
+          <ArrowLeft class="w-4 h-4" /> {{ $t("settings.settings") }}
         </router-link>
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <ListChecks class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Dropdown Options</h3>
-          <p class="text-brand-light text-sm">
-            Add or remove the values employees can pick from on the Create/Edit Employee form
-          </p>
-        </div>
-      </div>
-    </div>
+      </template>
+    </UiPageHeader>
 
-    <!-- Category Tabs -->
-    <div class="relative mb-6">
-      <div
-        ref="tabScrollRef"
-        @scroll="updateTabFade"
-        class="bg-white border border-[#DCDEDD] rounded-[14px] p-2 overflow-x-auto"
-      >
-        <div class="flex items-center gap-1 min-w-max">
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+      <div class="px-4 sm:px-5 pt-4 pb-3 border-b border-ui-line space-y-3">
+        <UiChips v-model="activeCategory" :options="categoryChips" />
+
+        <!-- Add Form -->
+        <form v-if="can('option-create')" @submit.prevent="handleAdd" class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+          <UiInput v-model="newValue" :placeholder="$t('settings.options.valuePlaceholder')" :aria-label="$t('settings.options.columns.value')" />
+          <UiInput v-model="newLabel" :placeholder="$t('settings.options.labelPlaceholder')" :aria-label="$t('settings.options.columns.label')" />
+          <UiButton type="submit" :icon="Plus">{{ $t("common.actions.add") }}</UiButton>
+        </form>
+        <p v-if="formError" class="text-ui-small text-ui-bad">{{ formError }}</p>
+      </div>
+
+      <UiTable :columns="optionColumns" :rows="options" :loading="loading" :skeleton-rows="4">
+        <template #cell-label="{ row }">
+          <UiInput v-if="editingId === row.id" v-model="editLabel" :aria-label="$t('settings.options.columns.label')" />
+          <span v-else class="text-ui-ink font-medium">{{ row.label }}</span>
+        </template>
+        <template #cell-value="{ row }">
+          <UiInput v-if="editingId === row.id" v-model="editValue" mono :aria-label="$t('settings.options.columns.value')" />
+          <code v-else class="font-mono text-ui-cap text-ui-muted">{{ row.value }}</code>
+        </template>
+        <template #cell-is_active="{ row }">
           <button
-            v-for="category in categories"
-            :key="category.key"
-            @click="activeCategory = category.key"
-            :class="[
-              'px-4 py-2.5 rounded-[10px] text-sm font-semibold transition-all duration-200 whitespace-nowrap',
-              activeCategory === category.key
-                ? 'blue-gradient blue-btn-shadow text-white'
-                : 'text-brand-light hover:bg-gray-50 hover:text-brand-dark',
-            ]"
+            v-if="can('option-edit') && editingId !== row.id"
+            type="button"
+            class="ui-press"
+            :title="row.is_active ? $t('settings.options.clickToHide') : $t('settings.options.clickToActivate')"
+            @click="toggleActive(row)"
           >
-            {{ category.label }}
+            <UiBadge :tone="row.is_active ? 'ok' : 'neutral'" dot>{{ row.is_active ? $t("common.labels.active") : $t("settings.options.hidden") }}</UiBadge>
           </button>
-        </div>
-      </div>
-      <Transition name="fade">
-        <div
-          v-if="showTabRightFade"
-          class="sm:hidden pointer-events-none absolute inset-y-0 right-0 w-10 rounded-r-[14px] bg-gradient-to-l from-white via-white/80 to-transparent flex items-center justify-end pr-1"
-        >
-          <ChevronRight class="w-4 h-4 text-[#0C51D9] scroll-hint-nudge" />
-        </div>
-      </Transition>
-      <Transition name="fade">
-        <div
-          v-if="showTabLeftFade"
-          class="sm:hidden pointer-events-none absolute inset-y-0 left-0 w-8 rounded-l-[14px] bg-gradient-to-r from-white via-white/80 to-transparent"
-        ></div>
-      </Transition>
-    </div>
+          <UiBadge v-else :tone="row.is_active ? 'ok' : 'neutral'" dot>{{ row.is_active ? $t("common.labels.active") : $t("settings.options.hidden") }}</UiBadge>
+        </template>
+        <template #cell-actions="{ row }">
+          <div v-if="editingId === row.id" class="flex items-center justify-end gap-1">
+            <UiButton size="sm" :icon="Check" :aria-label="$t('common.actions.save')" @click="saveEdit(row)" />
+            <UiButton variant="ghost" size="sm" :icon="X" :aria-label="$t('common.actions.cancel')" @click="cancelEdit" />
+          </div>
+          <div v-else class="flex items-center justify-end gap-1">
+            <UiButton v-if="can('option-edit')" variant="ghost" size="sm" :icon="Pencil" :aria-label="$t('common.actions.edit')" @click="startEdit(row)" />
+            <UiButton v-if="can('option-delete')" variant="ghost" size="sm" :icon="Trash2" :aria-label="$t('common.actions.delete')" @click="handleDelete(row)" />
+          </div>
+        </template>
 
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 max-w-2xl">
-      <!-- Add Form -->
-      <form v-if="can('option-create')" @submit.prevent="handleAdd" class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 mb-5">
-        <input
-          v-model="newValue"
-          type="text"
-          placeholder="Value (e.g. gopay)"
-          class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        />
-        <input
-          v-model="newLabel"
-          type="text"
-          placeholder="Label (e.g. GoPay)"
-          class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        />
-        <button type="submit" class="p-2 bg-[#0C51D9] text-white rounded-lg shrink-0 flex items-center justify-center">
-          <Plus class="w-4 h-4" />
-        </button>
-      </form>
-
-      <p v-if="formError" class="text-red-500 text-sm mb-4">{{ formError }}</p>
-
-      <div v-if="loading" class="text-center py-6 text-sm text-gray-400">Loading...</div>
-      <div v-else class="space-y-2">
-        <div
-          v-for="option in options"
-          :key="option.id"
-          class="flex items-center gap-3 p-3 border border-[#DCDEDD] rounded-lg"
-        >
-          <template v-if="editingId === option.id">
-            <input v-model="editValue" class="flex-1 px-2 py-1.5 border border-[#DCDEDD] rounded-md text-sm" />
-            <input v-model="editLabel" class="flex-1 px-2 py-1.5 border border-[#DCDEDD] rounded-md text-sm" />
-            <button @click="saveEdit(option)" class="text-green-600 hover:text-green-700 shrink-0">
-              <Check class="w-4 h-4" />
-            </button>
-            <button @click="cancelEdit" class="text-gray-400 hover:text-gray-600 shrink-0">
-              <X class="w-4 h-4" />
-            </button>
-          </template>
-          <template v-else>
-            <div class="flex-1 min-w-0">
-              <p class="text-brand-dark text-sm font-semibold truncate">{{ option.label }}</p>
-              <p class="text-gray-400 text-xs truncate">value: {{ option.value }}</p>
+        <template #mobile="{ row, number }">
+          <div v-if="editingId === row.id" class="px-4 py-3.5 space-y-2">
+            <UiInput v-model="editValue" mono :aria-label="$t('settings.options.columns.value')" />
+            <UiInput v-model="editLabel" :aria-label="$t('settings.options.columns.label')" />
+            <div class="flex justify-end gap-2">
+              <UiButton variant="secondary" size="sm" :icon="X" @click="cancelEdit">{{ $t("common.actions.cancel") }}</UiButton>
+              <UiButton size="sm" :icon="Check" @click="saveEdit(row)">{{ $t("common.actions.save") }}</UiButton>
             </div>
-            <button
-              v-if="can('option-edit')"
-              @click="toggleActive(option)"
-              :class="[
-                'px-2.5 py-1 rounded-full text-xs font-semibold shrink-0',
-                option.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500',
-              ]"
-            >
-              {{ option.is_active ? "Active" : "Hidden" }}
+          </div>
+          <div v-else class="flex items-center gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-body font-medium text-ui-ink truncate">{{ row.label }}</p>
+              <p class="text-ui-cap text-ui-muted truncate font-mono">{{ row.value }}</p>
+            </div>
+            <button v-if="can('option-edit')" type="button" class="ui-press shrink-0" @click="toggleActive(row)">
+              <UiBadge :tone="row.is_active ? 'ok' : 'neutral'" dot>{{ row.is_active ? $t("common.labels.active") : $t("settings.options.hidden") }}</UiBadge>
             </button>
-            <button v-if="can('option-edit')" @click="startEdit(option)" class="text-gray-400 hover:text-[#0C51D9] shrink-0">
-              <Pencil class="w-4 h-4" />
-            </button>
-            <button v-if="can('option-delete')" @click="handleDelete(option)" class="text-gray-400 hover:text-red-600 shrink-0">
-              <Trash2 class="w-4 h-4" />
-            </button>
-          </template>
-        </div>
-        <div v-if="options.length === 0" class="text-center py-6 text-sm text-gray-400">
-          No options in this category yet.
-        </div>
-      </div>
-    </div>
+            <UiBadge v-else :tone="row.is_active ? 'ok' : 'neutral'" dot class="shrink-0">{{ row.is_active ? $t("common.labels.active") : $t("settings.options.hidden") }}</UiBadge>
+            <UiButton v-if="can('option-edit')" variant="ghost" size="sm" :icon="Pencil" :aria-label="$t('common.actions.edit')" @click="startEdit(row)" />
+            <UiButton v-if="can('option-delete')" variant="ghost" size="sm" :icon="Trash2" :aria-label="$t('common.actions.delete')" @click="handleDelete(row)" />
+          </div>
+        </template>
+
+        <template #empty>
+          <UiEmpty :icon="ListChecks" :title="$t('settings.options.empty')" compact />
+        </template>
+      </UiTable>
+    </section>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

@@ -1,0 +1,149 @@
+{
+  "common": {
+    "payroll": "Penggajian",
+    "regenerate": "Buat ulang",
+    "generateThr": "Buat THR",
+    "generatePayroll": "Buat Penggajian",
+    "monthlyPayroll": "Penggajian Bulanan",
+    "employeesCount": "{n} karyawan"
+  },
+  "status": {
+    "draft": "Draf",
+    "pending": "Menunggu",
+    "processing": "Diproses",
+    "approved": "Disetujui",
+    "paid": "Dibayar",
+    "cancelled": "Dibatalkan",
+    "rejected": "Ditolak"
+  },
+  "dashboard": {
+    "deleteConfirm": "Hapus periode {label} ini ({period})? Periode beserta seluruh detail karyawannya akan terhapus permanen.",
+    "deleteFailed": "Gagal menghapus penggajian.",
+    "regenerateConfirm": "Buat ulang {label} untuk {period}? Detail karyawan periode ini akan diganti dengan hasil hitung terbaru.",
+    "regenerateQueued": "Pembuatan ulang {label} sedang diproses di latar belakang. Silakan cek kembali sebentar lagi.",
+    "regenerateFailed": "Gagal membuat ulang {label}.",
+    "changeThisMonth": "{change}% bulan ini",
+    "columns": {
+      "employees": "Karyawan",
+      "processed": "Diproses pada",
+      "total": "Total gaji"
+    },
+    "title": "Penggajian",
+    "subtitle": "Periode penggajian bulanan dan THR, beserta total dan status persetujuan.",
+    "generateReports": "Buat Laporan",
+    "createNew": "Buat Penggajian Baru",
+    "stats": {
+      "totalAmount": "Total Penggajian",
+      "employeesPaid": "Karyawan Dibayar",
+      "thisMonth": "Bulan ini",
+      "pending": "Pembayaran Tertunda",
+      "needApproval": "Perlu persetujuan",
+      "averageSalary": "Rata-rata Gaji",
+      "perEmployee": "Per karyawan",
+      "finalized": "Final"
+    },
+    "hideSalary": "Sembunyikan gaji",
+    "showSalary": "Tampilkan gaji",
+    "periodsTitle": "Periode Penggajian Bulanan",
+    "periodsSubtitle": "Semua departemen · klik periode untuk melihat rincian karyawan",
+    "empty": {
+      "title": "Belum ada data penggajian",
+      "message": "Buat penggajian pertama untuk memulai"
+    }
+  },
+  "create": {
+    "existsNoPermission": "{label} untuk {period} sudah ada ({n} karyawan, status: {status}). Hanya Superadmin, Manager, atau Finance yang dapat membuatnya ulang.",
+    "existsConfirm": "{label} untuk {period} sudah ada ({n} karyawan, status: {status}). Membuat ulang akan MENGGANTI seluruh detail karyawannya dengan hasil hitung terbaru. Lanjutkan?",
+    "newConfirm": "Buat {label} baru untuk {period}? Ini periode baru tanpa data sebelumnya.",
+    "generate": "Buat",
+    "thrFull": "THR (Tunjangan Hari Raya)",
+    "subtitleThr": "Pilih bulan untuk membuat THR (Tunjangan Hari Raya) bagi karyawan yang memenuhi syarat",
+    "subtitle": "Pilih bulan gaji untuk membuat penggajian seluruh karyawan aktif",
+    "periodTitle": "Periode Penggajian",
+    "periodSubtitle": "Pilih jenis penggajian dan bulan gaji.",
+    "type": "Jenis Penggajian",
+    "salaryMonth": "Bulan Gaji",
+    "autoThrTitle": "Pembuatan Otomatis (THR)",
+    "autoThrBody": "THR dibuat untuk setiap karyawan dengan masa kerja minimal 1 bulan berturut-turut, prorata sesuai masa kerja (penuh pada 12+ bulan). Ini terpisah dari penggajian bulanan biasa -- keduanya bisa ada di bulan yang sama.",
+    "autoTitle": "Pembuatan Otomatis",
+    "autoBody": "Penggajian dibuat otomatis untuk seluruh karyawan aktif berdasarkan data kehadiran pada bulan yang dipilih. Gaji dihitung dari kehadiran, hari sakit, dan ketidakhadiran.",
+    "error": "Kesalahan",
+    "summaryTitle": "Ringkasan Penggajian",
+    "summarySubtitle": "Detail pembuatan",
+    "selectedMonth": "Bulan Terpilih:",
+    "generating": "Membuat..."
+  },
+  "detail": {
+    "attendanceDeduction": "Potongan Absensi",
+    "exportFailed": "Gagal mengekspor file Excel. Silakan coba lagi.",
+    "updated": "Detail penggajian berhasil diperbarui.",
+    "updateFailed": "Gagal memperbarui detail penggajian.",
+    "markedPaid": "Penggajian berhasil ditandai sudah dibayar!",
+    "markPaidFailed": "Gagal menandai penggajian sudah dibayar. Silakan coba lagi.",
+    "deleteDetailConfirm": "Hapus data gaji {name} untuk periode ini? Tindakan ini tidak bisa dibatalkan.",
+    "deleteDetailFailed": "Gagal menghapus detail penggajian.",
+    "deletePayrollConfirm": "Hapus seluruh periode {label} ini? Periode beserta seluruh detail karyawannya akan terhapus permanen.",
+    "regenerateConfirm": "Buat ulang periode {label} ini? Seluruh detail karyawan akan diganti dengan hasil hitung terbaru.",
+    "allPositions": "Semua Jabatan",
+    "columns": {
+      "position": "Jabatan"
+    },
+    "bankAccount": "Rekening Bank",
+    "monthsOfService": "Masa Kerja (Bulan)",
+    "attendance": "Kehadiran",
+    "grossThr": "THR Bruto",
+    "basicSalary": "Gaji Pokok",
+    "basic": "Gaji pokok",
+    "deductions": "Potongan",
+    "netSalary": "Gaji Bersih",
+    "subtitle": "Rincian lengkap penggajian per karyawan",
+    "regenerating": "Membuat ulang...",
+    "deletePayroll": "Hapus Penggajian",
+    "markAsPaid": "Tandai Sudah Dibayar",
+    "stats": {
+      "totalEmployees": "Total Karyawan",
+      "allDepartments": "Semua departemen",
+      "totalPayroll": "Total Penggajian",
+      "thisPeriod": "Periode ini",
+      "processedOn": "Diproses Pada"
+    },
+    "employeeDetails": "Detail Karyawan",
+    "employeesInPeriod": "{n} karyawan pada periode ini",
+    "searchEmployees": "Cari karyawan...",
+    "notApplicableHint": "Tidak berlaku -- dibayar sebagai persentase anggaran proyek, bukan rumus berbasis kehadiran",
+    "showAmountsHint": "Klik Tampilkan nominal untuk melihat rinciannya",
+    "percentOfProject": "{pct}% dari {project}",
+    "project": "proyek",
+    "empty": {
+      "title": "Karyawan tidak ditemukan",
+      "message": "Coba kata kunci atau filter jabatan lain"
+    },
+    "paymentMode": "Mode Pembayaran",
+    "earnings": "Pendapatan",
+    "grossSalary": "Gaji Bruto",
+    "totalDeductions": "Total Potongan",
+    "netTakeHome": "Gaji Bersih (Take Home)",
+    "notesLabel": "Catatan:",
+    "markPaid": {
+      "title": "Tandai Penggajian Sudah Dibayar",
+      "message": "Konfirmasi untuk menandai penggajian ini sudah dibayar. Status akan diperbarui dan tanggal pembayaran dicatat.",
+      "paymentDate": "Tanggal Pembayaran",
+      "processing": "Memproses...",
+      "confirm": "Konfirmasi Pembayaran"
+    },
+    "edit": {
+      "title": "Ubah Penggajian — {name}",
+      "description": "Timpa angka hasil otomatis karyawan ini bila kondisi sebenarnya berbeda -- mis. nominal tetap manual, atau bagian dari sebuah proyek.",
+      "fixedAmount": "Nominal Tetap (Rp)",
+      "percentOfProject": "% dari Proyek",
+      "finalSalary": "Gaji Akhir (Take-home)",
+      "totalDeduction": "Total Potongan",
+      "loadingProjects": "Memuat proyek...",
+      "selectProject": "Pilih proyek",
+      "percentage": "Persentase (%)",
+      "estimated": "Estimasi pembayaran: {amount}",
+      "recalculated": "Dihitung ulang dari anggaran proyek saat ini ketika disimpan.",
+      "notesPlaceholder": "Alasan penyesuaian (opsional)..."
+    }
+  }
+}

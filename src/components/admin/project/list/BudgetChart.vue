@@ -4,8 +4,13 @@ const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 import { WalletIcon, Eye, EyeOff, ChevronDown } from "lucide-vue-next";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
+import { uiColor } from "@/utils/uiColor";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
+import { localeTag } from "@/i18n";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   compact: { type: Boolean, default: false },
@@ -27,7 +32,11 @@ const currentYear = new Date().getFullYear();
 const selectedYear = ref(currentYear);
 
 const MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const MONTH_LABELS = computed(() =>
+  MONTHS.map((m) =>
+    new Date(2000, Number(m) - 1, 1).toLocaleDateString(localeTag(), { month: "short" })
+  )
+);
 
 const availableYears = computed(() => {
   const years = new Set(budgetByMonth.value.map((item) => Number(item.month.split("-")[0])));
@@ -54,7 +63,7 @@ const yearlySeriesEntries = computed(() => {
 });
 
 const chartCategories = computed(() =>
-  viewMode.value === "monthly" ? MONTH_LABELS : yearlySeriesEntries.value.map(([y]) => y)
+  viewMode.value === "monthly" ? MONTH_LABELS.value : yearlySeriesEntries.value.map(([y]) => y)
 );
 
 const chartSeriesData = computed(() =>
@@ -68,34 +77,29 @@ const chartOptions = computed(() => ({
     type: "bar",
     height: props.compact ? 220 : 280,
     toolbar: { show: false },
-    animations: { enabled: true, easing: "easeinout", speed: 500 },
+    animations: { enabled: false },
+    fontFamily: "inherit",
   },
   plotOptions: {
-    bar: { borderRadius: 6, columnWidth: "45%" },
+    bar: { borderRadius: 4, borderRadiusApplication: "end", columnWidth: "45%" },
   },
   dataLabels: { enabled: false },
-  colors: ["#0C51D9"],
-  fill: {
-    type: "gradient",
-    gradient: {
-      shade: "light",
-      type: "vertical",
-      shadeIntensity: 0.3,
-      gradientToColors: ["#6F96E3"],
-      stops: [0, 100],
-    },
-  },
+  colors: [uiColor("accent")],
   grid: {
-    borderColor: "#f1f1f1",
+    borderColor: uiColor("line"),
     padding: { top: 10, right: 10, bottom: 0, left: 10 },
   },
   xaxis: {
     categories: chartCategories.value,
+    axisBorder: { show: false },
+    axisTicks: { show: false },
+    labels: { style: { colors: uiColor("muted"), fontSize: "11px" } },
   },
   yaxis: {
     min: 0,
     labels: {
       formatter: (val) => formatRupiahCompact(val),
+      style: { colors: uiColor("muted"), fontSize: "11px" },
     },
   },
   tooltip: {
@@ -105,29 +109,26 @@ const chartOptions = computed(() => ({
   },
 }));
 
-const chartSeries = computed(() => [{ name: "Budget", data: chartSeriesData.value }]);
+const chartSeries = computed(() => [{ name: t("projects.charts.budgetSeries"), data: chartSeriesData.value }]);
 </script>
 
 <template>
   <div
-    class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5 hover:shadow-md transition-shadow duration-300"
+    class="h-full bg-ui-surface border border-ui-line rounded-ui-card p-5"
   >
-    <div class="flex flex-col gap-3 mb-4">
+    <div class="flex flex-col gap-3 mb-3">
       <div class="flex items-start gap-3">
-        <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
-          <WalletIcon class="w-4 h-4 text-blue-600" />
-        </div>
         <div class="flex-1 min-w-0">
-          <h3 class="text-brand-dark text-base font-bold">Project Budget</h3>
+          <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.charts.budgetTitle") }}</h3>
           <Skeleton v-if="loadingStatistics" width="140px" height="14px" rounded="4px" class="mt-1" />
-          <p v-else class="text-brand-light text-xs flex items-center flex-wrap gap-1.5">
-            Total budget across all projects:
-            <span class="text-brand-dark font-semibold">{{ showAmount ? formatRupiah(totalBudget) : "Rp ••••••••" }}</span>
+          <p v-else class="text-ui-cap text-ui-muted flex items-center flex-wrap gap-1.5 mt-0.5">
+            {{ $t("projects.charts.budgetTotal") }}
+            <span class="text-ui-ink font-medium tabular-nums">{{ showAmount ? formatRupiah(totalBudget) : "Rp ••••••••" }}</span>
             <button
               type="button"
               @click="showAmount = !showAmount"
-              :aria-label="showAmount ? 'Hide amount' : 'Show amount'"
-              class="text-gray-400 hover:text-gray-600 transition-colors"
+              :aria-label="showAmount ? $t('projects.charts.hideAmount') : $t('projects.charts.showAmount')"
+              class="text-ui-faint hover:text-ui-ink transition-colors"
             >
               <EyeOff v-if="showAmount" class="w-3.5 h-3.5" />
               <Eye v-else class="w-3.5 h-3.5" />
@@ -137,34 +138,34 @@ const chartSeries = computed(() => [{ name: "Budget", data: chartSeriesData.valu
       </div>
 
       <div class="flex items-center flex-wrap gap-2">
-        <div class="flex items-center bg-gray-100 rounded-[10px] p-1">
+        <div class="flex items-center bg-ui-subtle border border-ui-line rounded-ui-control p-0.5" role="tablist">
           <button
             type="button"
             @click="viewMode = 'monthly'"
-            :class="viewMode === 'monthly' ? 'bg-white text-brand-dark shadow-sm' : 'text-gray-500'"
-            class="px-3 py-1.5 rounded-[8px] text-xs font-semibold transition-all"
+            :class="viewMode === 'monthly' ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
+            class="h-7 px-3 rounded-[6px] text-ui-cap font-medium transition-colors"
           >
-            Monthly
+            {{ $t("projects.charts.monthly") }}
           </button>
           <button
             type="button"
             @click="viewMode = 'yearly'"
-            :class="viewMode === 'yearly' ? 'bg-white text-brand-dark shadow-sm' : 'text-gray-500'"
-            class="px-3 py-1.5 rounded-[8px] text-xs font-semibold transition-all"
+            :class="viewMode === 'yearly' ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
+            class="h-7 px-3 rounded-[6px] text-ui-cap font-medium transition-colors"
           >
-            Yearly
+            {{ $t("projects.charts.yearly") }}
           </button>
         </div>
 
         <div v-if="viewMode === 'monthly'" class="relative">
           <select
             v-model.number="selectedYear"
-            class="select-soft"
+            class="h-8 pl-3 pr-8 appearance-none bg-ui-surface border border-ui-line-strong rounded-ui-control text-ui-cap font-medium text-ui-ink focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
           >
             <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
           </select>
           <ChevronDown
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ui-faint pointer-events-none"
           />
         </div>
       </div>
@@ -173,8 +174,8 @@ const chartSeries = computed(() => [{ name: "Budget", data: chartSeriesData.valu
     <div class="relative w-full" :style="{ height: (compact ? 220 : 280) + 'px' }">
       <Skeleton v-if="loadingStatistics" width="100%" height="100%" rounded="12px" />
       <div v-else-if="!hasData" class="flex flex-col items-center justify-center h-full text-center">
-        <WalletIcon class="w-10 h-10 text-gray-300 mb-2" />
-        <p class="text-sm text-gray-400">No budget data for this {{ viewMode === "monthly" ? "year" : "period" }} yet</p>
+        <span class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mb-3"><WalletIcon class="w-5 h-5" /></span>
+        <p class="text-ui-small text-ui-muted">{{ viewMode === "monthly" ? $t("projects.charts.budgetEmptyYear") : $t("projects.charts.budgetEmptyPeriod") }}</p>
       </div>
       <VueApexCharts
         v-else

@@ -28,12 +28,12 @@ onBeforeUnmount(() => clearTimeout(timer));
   <button
     type="button"
     @click.stop="copy"
-    class="flex justify-center items-center border border-[#DCDEDD] bg-white rounded-lg hover:border-violet-400 hover:ring-2 hover:ring-violet-400/30 transition-all shrink-0"
-    :class="size === 'md' ? 'p-2.5' : 'p-1.5'"
-    :title="copied ? 'Copied' : 'Copy key'"
-    :aria-label="copied ? 'Copied' : 'Copy key'"
+    class="inline-flex justify-center items-center rounded-ui-control border border-ui-line bg-ui-surface text-ui-muted hover:text-ui-ink hover:bg-ui-subtle transition-colors shrink-0"
+    :class="size === 'md' ? 'w-9 h-9' : 'w-7 h-7'"
+    :title="copied ? $t('common.actions.copied') : $t('licenses.copyKey')"
+    :aria-label="copied ? $t('common.actions.copied') : $t('licenses.copyKey')"
   >
-    <Check v-if="copied" :class="size === 'md' ? 'w-5 h-5' : 'w-3.5 h-3.5'" class="text-success" />
-    <Copy v-else :class="size === 'md' ? 'w-5 h-5' : 'w-3.5 h-3.5'" class="text-gray-600" />
+    <Check v-if="copied" :class="size === 'md' ? 'w-4 h-4' : 'w-3.5 h-3.5'" class="text-ui-ok" />
+    <Copy v-else :class="size === 'md' ? 'w-4 h-4' : 'w-3.5 h-3.5'" />
   </button>
 </template>

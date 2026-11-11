@@ -2,11 +2,9 @@
 import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
-  ShieldCheck,
   Save,
   Eye,
   EyeOff,
-  AlertTriangle,
   ArrowLeft,
   Key,
   Globe,
@@ -16,8 +14,11 @@ import {
   IdCard,
   RotateCw,
 } from "lucide-vue-next";
-import Alert from "@/components/common/Alert.vue";
+import { UiPageHeader, UiButton, UiCard, UiInput, UiAlert, UiSwitch, UiSpinner } from "@/components/ui";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -54,12 +55,12 @@ const submit = async () => {
   success.value = "";
 
   if (!form.value.label_password || !form.value.username_email) {
-    error.value = "Password Label and Username / Email are required.";
+    error.value = t("credentials.form.editRequired");
     return;
   }
 
   if (rotatePassword.value && !form.value.password) {
-    error.value = "New password is required when rotation is enabled.";
+    error.value = t("credentials.form.newPasswordRequired");
     return;
   }
 
@@ -77,7 +78,7 @@ const submit = async () => {
     // 🔥 updateAccount SUDAH fetch ulang di store
     await store.updateAccount(route.params.id, payload);
 
-    success.value = "Credential updated successfully.";
+    success.value = t("credentials.form.updateSuccess");
 
     // reset field sensitif
     form.value.password = "";
@@ -90,7 +91,7 @@ const submit = async () => {
       });
     }, 1200);
   } catch (e) {
-    error.value = e?.message || "Failed to update credential.";
+    error.value = e?.message || t("credentials.form.updateFailed");
   } finally {
     submitting.value = false;
   }
@@ -106,7 +107,7 @@ const loadData = async () => {
   try {
     await store.fetchAccount(route.params.id);
   } catch {
-    error.value = "Credential data not found.";
+    error.value = t("credentials.form.notFound");
   } finally {
     loading.value = false;
   }
@@ -132,231 +133,132 @@ watch(
 );
 </script>
 
-
 <template>
-  <div class="max-w-4xl mx-auto">
-    <!-- Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex items-center gap-3">
-        <button
-          @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-violet-400 transition-all"
-          aria-label="Back"
-        >
-          <ArrowLeft class="w-5 h-5 text-gray-600" />
-        </button>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <form @submit.prevent="submit" class="space-y-5">
+      <UiPageHeader :title="$t('credentials.form.editTitle')" :subtitle="$t('credentials.form.editSubtitle')">
+        <template #eyebrow>
+          <button
+            type="button"
+            @click="router.back()"
+            class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
+            :aria-label="$t('common.actions.back')"
+          >
+            <ArrowLeft class="w-4 h-4" />
+            {{ $t("common.actions.back") }}
+          </button>
+        </template>
+        <template v-if="!loading" #actions>
+          <div class="hidden sm:flex items-center gap-2">
+            <UiButton variant="secondary" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
+            <UiButton type="submit" :icon="Save" :loading="submitting">
+              {{ submitting ? $t("credentials.form.updating") : $t("credentials.form.updateCredential") }}
+            </UiButton>
+          </div>
+        </template>
+      </UiPageHeader>
 
-        <div
-          class="w-12 h-12 bg-violet-50 rounded-[12px] flex items-center justify-center"
-        >
-          <ShieldCheck class="w-6 h-6 text-violet-600" />
-        </div>
-
-        <div>
-          <h1 class="text-brand-dark text-xl font-bold">
-            Edit Account Credential
-          </h1>
-          <p class="text-brand-light text-sm">
-            Update credential metadata atau rotasi password
-          </p>
-        </div>
+      <div v-if="error || success" class="space-y-3">
+        <Transition name="ui-fade">
+          <UiAlert v-if="error" tone="bad" :title="error" />
+        </Transition>
+        <Transition name="ui-fade">
+          <UiAlert v-if="success" tone="ok" :title="success" />
+        </Transition>
       </div>
-    </div>
 
-    <div class="mb-6">
-      <Transition name="fade">
-        <Alert
-          v-if="error"
-          type="danger"
-          :title="error"
-          message=""
-          :show="!!error"
-          @close="error = ''"
-        />
-      </Transition>
-    </div>
+      <!-- Loading -->
+      <div v-if="loading" class="bg-ui-surface border border-ui-line rounded-ui-card">
+        <UiSpinner :label="$t('credentials.form.loading')" />
+      </div>
 
-    <div class="mb-6">
-      <Transition name="fade">
-        <Alert
-          v-if="success"
-          type="success"
-          :title="success"
-          message=""
-          :show="!!success"
-        />
-      </Transition>
-    </div>
-
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center gap-3 py-20 text-gray-500">
-      <span class="w-5 h-5 border-2 border-gray-300 border-t-violet-500 rounded-full animate-spin"></span>
-      Loading credential data...
-    </div>
-
-    <!-- Form -->
-    <form v-if="!loading" @submit.prevent="submit" class="space-y-6">
-      <!-- Account Detail -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <IdCard class="w-4.5 h-4.5 text-violet-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Detail Akun</h4>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Password Label *</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
-                <Tag class="w-5 h-5 text-gray-400" />
+      <template v-if="!loading">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start ui-stagger">
+          <!-- Account Detail -->
+          <UiCard>
+            <template #header>
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><IdCard class="w-4 h-4" /></span>
+                <h3 class="text-ui-h2 text-ui-ink">{{ $t("credentials.form.accountDetail") }}</h3>
               </div>
-              <input
-                v-model="form.label_password"
-                type="text"
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Username / Email *</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
-                <User class="w-5 h-5 text-gray-400" />
-              </div>
-              <input
+            </template>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+              <UiInput class="md:col-span-2" v-model="form.label_password" :label="$t('credentials.form.labelRequired')" :icon="Tag" />
+              <UiInput
                 v-model="form.username_email"
-                type="text"
-                placeholder="e.g. admin@company.com / admin.erp"
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
+                :label="$t('credentials.form.usernameRequired')"
+                mono
+                :icon="User"
+                :placeholder="$t('credentials.form.usernamePlaceholder')"
               />
-            </div>
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Website (Optional)</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
-                <Globe class="w-5 h-5 text-gray-400" />
-              </div>
-              <input
+              <UiInput
                 v-model="form.website"
                 type="url"
+                :label="$t('credentials.form.websiteOptional')"
+                mono
+                :icon="Globe"
                 placeholder="https://example.com"
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-semibold"
               />
             </div>
-          </div>
-        </div>
-      </div>
+          </UiCard>
 
-      <!-- Rotate Password -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <RotateCw class="w-4.5 h-4.5 text-violet-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Password Rotation</h4>
-        </div>
+          <!-- Rotate Password -->
+          <UiCard>
+            <template #header>
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><RotateCw class="w-4 h-4" /></span>
+                <h3 class="text-ui-h2 text-ui-ink">{{ $t("credentials.form.rotation") }}</h3>
+              </div>
+            </template>
+            <UiSwitch v-model="rotatePassword" :label="$t('credentials.form.rotate')" />
 
-        <label class="flex items-center gap-2 font-semibold cursor-pointer">
-          <input
-            type="checkbox"
-            v-model="rotatePassword"
-            class="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
-          />
-          Rotate Password
-        </label>
+            <div v-if="rotatePassword" class="space-y-3 mt-4">
+              <UiAlert tone="warn" :message="$t('credentials.form.rotateWarning')" />
 
-        <div v-if="rotatePassword" class="space-y-3 mt-4">
-          <div
-            class="flex items-start gap-3 p-4 rounded-[12px] bg-yellow-50 border border-yellow-300"
-          >
-            <AlertTriangle class="w-5 h-5 text-yellow-600 mt-0.5" />
-            <p class="text-sm text-yellow-800">
-              Password lama akan digantikan. Pastikan sistem target sudah
-              diperbarui.
-            </p>
-          </div>
-
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center">
-              <Key class="w-5 h-5 text-gray-400" />
+              <div class="relative">
+                <Key class="absolute left-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
+                <input
+                  v-model="form.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  :placeholder="$t('credentials.form.newPassword')"
+                  :aria-label="$t('credentials.form.newPassword')"
+                  class="w-full h-[38px] pl-9 pr-10 bg-ui-surface font-mono text-ui-small text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+                />
+                <button
+                  type="button"
+                  @click="togglePassword"
+                  class="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:text-ui-ink hover:bg-ui-hover"
+                  :aria-label="showPassword ? $t('common.a11y.hidePassword') : $t('common.a11y.showPassword')"
+                  :aria-pressed="showPassword"
+                >
+                  <Eye v-if="!showPassword" class="w-4 h-4" />
+                  <EyeOff v-else class="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <input
-              v-model="form.password"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="New password"
-              class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all font-mono"
-            />
-            <button
-              type="button"
-              @click="togglePassword"
-              class="absolute right-4 top-1/2 -translate-y-1/2"
-            >
-              <Eye v-if="!showPassword" class="w-5 h-5 text-gray-500" />
-              <EyeOff v-else class="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-        </div>
-      </div>
+          </UiCard>
 
-      <!-- Notes -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-gray-100 rounded-[10px] flex items-center justify-center shrink-0">
-            <FileText class="w-4.5 h-4.5 text-gray-500" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Catatan</h4>
+          <!-- Notes -->
+          <UiCard class="lg:col-span-2">
+            <template #header>
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><FileText class="w-4 h-4" /></span>
+                <h3 class="text-ui-h2 text-ui-ink">{{ $t("common.labels.notes") }}</h3>
+              </div>
+            </template>
+            <UiInput v-model="form.notes" :rows="4" :label="$t('credentials.form.notesOptional')" :icon="FileText" />
+          </UiCard>
         </div>
 
-        <label class="block text-brand-dark text-sm font-semibold mb-1.5">Notes (Optional)</label>
-        <div class="relative">
-          <div class="absolute top-3 left-4">
-            <FileText class="w-5 h-5 text-gray-400" />
-          </div>
-          <textarea
-            v-model="form.notes"
-            rows="4"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all resize-none"
-          ></textarea>
+        <!-- Actions (phones) -->
+        <div class="sm:hidden grid grid-cols-2 gap-2">
+          <UiButton variant="secondary" size="lg" block @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
+          <UiButton type="submit" size="lg" block :icon="Save" :loading="submitting">
+            {{ submitting ? $t("credentials.form.updating") : $t("credentials.form.updateCredential") }}
+          </UiButton>
         </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex flex-col sm:flex-row gap-3">
-        <button
-          type="button"
-          @click="router.back()"
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:bg-violet-50/30 transition-all px-6 py-3 font-semibold"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="submit"
-          :disabled="submitting"
-          class="w-full sm:w-auto btn-primary rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] text-brand-white font-semibold px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
-        >
-          <Save class="w-4 h-4" />
-          {{ submitting ? "Updating..." : "Update Credential" }}
-        </button>
-      </div>
+      </template>
     </form>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>

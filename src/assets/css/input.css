@@ -2,10 +2,119 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Pointer on everything clickable. Tailwind's reset leaves buttons with the
+   default arrow; this restores the hand cursor app-wide (native controls
+   and ARIA widgets). Disabled controls show not-allowed instead. Clickable
+   non-interactive elements (a div/tr with @click) still add
+   `cursor-pointer` themselves. */
+@layer base {
+  button,
+  a[href],
+  summary,
+  select,
+  label[for],
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]),
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"],
+  input[type="color"],
+  input[type="range"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"],
+  [role="button"],
+  [role="tab"],
+  [role="link"],
+  [role="menuitem"],
+  [role="option"],
+  [role="switch"],
+  [role="checkbox"],
+  [role="radio"] {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  input:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+
+/* Redesign tokens (HRIS+ v4.0, palette "B · Navy + Blue"), as RGB channels
+   so Tailwind's ui-* colours (tailwind.config.js) accept opacity
+   modifiers. Dark mode (stage 9) only has to redefine these variables. */
+:root {
+    --ui-bg: 245 247 250;          /* #F5F7FA page background */
+    --ui-surface: 255 255 255;     /* #FFFFFF cards, inputs */
+    --ui-subtle: 240 243 247;      /* #F0F3F7 quiet fills */
+    --ui-hover: 234 238 244;       /* #EAEEF4 row / item hover */
+    --ui-line: 227 232 239;        /* #E3E8EF borders, dividers */
+    --ui-line-strong: 205 213 224; /* #CDD5E0 input borders */
+    --ui-ink: 15 27 45;            /* #0F1B2D headings, primary buttons */
+    --ui-text: 52 64 84;           /* #344054 body text */
+    --ui-muted: 102 112 133;       /* #667085 secondary text */
+    --ui-faint: 152 162 179;       /* #98A2B3 placeholders, row numbers */
+    --ui-accent: 31 91 216;        /* #1F5BD8 focus, links, selection */
+    --ui-accent-soft: 234 240 252; /* #EAF0FC */
+    --ui-ok: 6 118 71;             /* #067647 */
+    --ui-ok-soft: 236 253 243;     /* #ECFDF3 */
+    --ui-warn: 181 71 8;           /* #B54708 */
+    --ui-warn-soft: 255 250 235;   /* #FFFAEB */
+    --ui-bad: 180 35 24;           /* #B42318 */
+    --ui-bad-soft: 254 243 242;    /* #FEF3F2 */
+    --ui-info: 23 92 211;          /* #175CD3 */
+    --ui-info-soft: 239 248 255;   /* #EFF8FF */
+    --ui-ink-fill: 15 27 45;       /* = ink; fills paired with white text */
+    --ui-shimmer: 255 255 255 / 0.65; /* skeleton sweep */
+    --ui-scrim: 15 27 45;          /* behind dialogs, drawers, photo hovers */
+    --ui-brand: 15 27 45;          /* fixed navy brand panel (sign-in) */
+    color-scheme: light;
+}
+
+/* Dark appearance (Settings → Appearance, or the OS when set to System).
+   index.html / useTheme set data-theme on <html> before the app mounts.
+   Same navy family, lifted surfaces; status colours brightened so they
+   stay readable on dark backgrounds. */
+:root[data-theme="dark"] {
+    --ui-bg: 11 16 24;             /* #0B1018 */
+    --ui-surface: 18 24 35;        /* #121823 */
+    --ui-subtle: 24 32 45;         /* #18202D */
+    --ui-hover: 30 39 54;          /* #1E2736 */
+    --ui-line: 37 47 64;           /* #252F40 */
+    --ui-line-strong: 54 66 86;    /* #364256 */
+    --ui-ink: 237 241 247;         /* #EDF1F7 headings */
+    --ui-text: 200 208 220;        /* #C8D0DC */
+    --ui-muted: 146 157 175;       /* #929DAF */
+    --ui-faint: 104 116 136;       /* #687488 */
+    --ui-accent: 102 148 255;      /* #6694FF */
+    --ui-accent-soft: 26 39 66;    /* #1A2742 */
+    --ui-ok: 76 201 132;           /* #4CC984 */
+    --ui-ok-soft: 18 44 33;        /* #122C21 */
+    --ui-warn: 240 167 70;         /* #F0A746 */
+    --ui-warn-soft: 48 34 15;      /* #30220F */
+    --ui-bad: 248 113 106;         /* #F8716A */
+    --ui-bad-soft: 52 23 23;       /* #341717 */
+    --ui-info: 96 165 250;         /* #60A5FA */
+    --ui-info-soft: 17 34 58;      /* #11223A */
+    --ui-ink-fill: 46 98 214;      /* #2E62D6 primary fill */
+    --ui-shimmer: 255 255 255 / 0.06;
+    --ui-scrim: 0 0 0;
+    color-scheme: dark;
+}
+
+/* The navy company mark disappears on dark surfaces: show it in white.
+   Exports (canvas) draw the original file, so they are unaffected. */
+:root[data-theme="dark"] img[src*="jcd-only-color"] {
+    filter: brightness(0) invert(1);
+}
 
 html {
-    font-family: "Plus Jakarta Sans", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #0C1C3C;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Condensed display face for the ID Card's name -- self-hosted (not a
@@ -30,130 +139,92 @@ html {
     font-display: swap;
 }
 
+/* ------------------------------------------------------------------------
+   Legacy utility classes, re-pointed at the HRIS+ v4.0 tokens.
+   Pages that are not redesigned yet still use these names; mapping them to
+   the tokens keeps every page on one palette (and ready for dark mode)
+   until each page moves to the src/components/ui building blocks.
+   ------------------------------------------------------------------------ */
+
+/* Was the blue gradient on primary buttons and hero bands: now the solid
+   ink used by UiButton primary. */
 .blue-gradient {
-    background: linear-gradient(265.5deg, #0C51D9 5.45%, #6F96E3 52%, #0C51D9 100.36%);
+    background: rgb(var(--ui-ink));
+    transition: background-color var(--ui-dur-fast) var(--ui-ease-out);
 }
-
-/* Same dark navy identity as .main-card's hero gradient, reoriented
-   vertically for a tall side panel instead of a wide card. */
-.sidebar-gradient {
-    background: linear-gradient(180deg, #040724 0%, #0C1448 50%, #040724 100%);
+.blue-gradient:hover {
+    background: rgb(var(--ui-ink) / 0.9);
 }
-
 .blue-btn-shadow {
-    box-shadow: 2px 2px 1px 0px #6197FF8C inset;
-    box-shadow: -2px 2px 1px 0px #6197FF inset;
+    box-shadow: none;
 }
 
-/* Unified text (non-icon-only) View/Edit action buttons -- same shape,
-   soft pastel color per action so they read consistently across every
-   list/table/detail page instead of the mix of gradient/outline styles
-   that existed before. White base + colored border/text (rather than a
-   flat pastel fill) so they sit closer to the app's other outline
-   buttons and read as a professional, understated action, with the
-   pastel fill reserved for the hover/active state. */
+/* View / Edit text actions: one quiet outline button, like UiButton
+   secondary. */
 .btn-view-soft,
 .btn-edit-soft {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 38px;
+    height: 36px;
     padding: 0 14px;
-    border-radius: 8px;
-    font-weight: 600;
+    border-radius: var(--ui-radius-control, 8px);
+    font-weight: 500;
     font-size: 0.8125rem;
-    letter-spacing: 0.01em;
-    background-color: #fff;
-    border-width: 1px;
-    border-style: solid;
-    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: rgb(var(--ui-surface));
+    color: rgb(var(--ui-ink));
+    border: 1px solid rgb(var(--ui-line-strong));
+    transition: background-color var(--ui-dur-fast) var(--ui-ease-out), border-color var(--ui-dur-fast) var(--ui-ease-out);
 }
-
-.btn-view-soft {
-    color: #1D4ED8;
-    border-color: #BFDBFE;
-}
-
-.btn-view-soft:hover {
-    background-color: #EFF6FF;
-    border-color: #93C5FD;
-    box-shadow: 0 1px 2px 0 rgba(29, 78, 216, 0.08);
-}
-
-.btn-view-soft:active {
-    background-color: #DBEAFE;
-}
-
-.btn-edit-soft {
-    color: #B45309;
-    border-color: #FDE68A;
-}
-
+.btn-view-soft:hover,
 .btn-edit-soft:hover {
-    background-color: #FFFBEB;
-    border-color: #FCD34D;
-    box-shadow: 0 1px 2px 0 rgba(180, 83, 9, 0.08);
+    background-color: rgb(var(--ui-subtle));
 }
-
+.btn-view-soft:active,
 .btn-edit-soft:active {
-    background-color: #FEF3C7;
+    transform: scale(0.98);
 }
 
-/* Unified dropdown style for every plain <select> in the app -- white
-   base with a soft blue tint on hover/focus (instead of the harsh
-   hover:border-2 solid-blue treatment several pages used individually),
-   so every dropdown reads as one calm, professional family. Always pair
-   with a wrapping `position: relative` element and an absolutely
-   positioned chevron icon (`pointer-events-none`) since this hides the
-   native arrow via appearance:none. */
+/* Plain <select> in older pages. Pair with a relative wrapper and an
+   absolutely positioned chevron (appearance:none hides the native arrow). */
 .select-soft {
     display: block;
     width: 100%;
-    background-color: #fff;
-    border: 1px solid #DCDEDD;
-    border-radius: 8px;
-    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    height: 36px;
+    background-color: rgb(var(--ui-surface));
+    border: 1px solid rgb(var(--ui-line-strong));
+    border-radius: var(--ui-radius-control, 8px);
+    padding: 0 2rem 0 0.75rem;
     font-size: 0.8125rem;
     font-weight: 500;
-    color: #0C1C3C;
+    color: rgb(var(--ui-ink));
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
     cursor: pointer;
-    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color var(--ui-dur-fast) var(--ui-ease-out), box-shadow var(--ui-dur-fast) var(--ui-ease-out);
 }
-
 .select-soft:hover {
-    border-color: #93C5FD;
-    background-color: #F8FAFC;
+    border-color: rgb(var(--ui-muted) / 0.6);
 }
-
 .select-soft:focus {
     outline: none;
-    border-color: #60A5FA;
-    background-color: #EFF6FF;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    border-color: rgb(var(--ui-accent));
+    box-shadow: 0 0 0 3px rgb(var(--ui-accent) / 0.18);
 }
-
 .select-soft:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background-color: #F9FAFB;
+    background-color: rgb(var(--ui-subtle));
 }
-
-/* Extra left clearance for a `.select-soft` that also has a leading icon
-   (e.g. Filter/Building/Briefcase) inside its wrapper -- declared after
-   `.select-soft` so this longhand wins over that rule's shorthand
-   `padding` at equal specificity. */
+/* Extra left room when the select has a leading icon. */
 .select-soft-icon-pl {
     padding-left: 2.5rem;
 }
 
-/* Compact status select that reads as a colored badge (e.g. task cards on
-   MyTasks) -- pairs with a status color utility class supplied by the
-   caller for bg/text (background/text stay whatever that class sets; only
-   sizing/shape/appearance-reset live here so it never fights that color). */
+/* Compact status select that reads as a badge; the caller supplies the
+   colour classes. */
 .status-select-badge {
     display: inline-block;
     width: auto;
@@ -164,180 +235,63 @@ html {
     border-radius: 6px;
     padding: 0.125rem 1.375rem 0.125rem 0.5rem;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
-    transition: filter 0.2s ease, box-shadow 0.2s ease;
+    transition: filter var(--ui-dur-fast) ease, box-shadow var(--ui-dur-fast) ease;
 }
-
 .status-select-badge:hover {
     filter: brightness(0.97);
 }
-
 .status-select-badge:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(12, 81, 217, 0.3);
+    box-shadow: 0 0 0 2px rgb(var(--ui-accent) / 0.3);
 }
-
 .status-select-badge:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-/* Typography styles */
-.text-brand-dark {
-    color: #0C1C3C;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-}
+/* Text colours */
+.text-brand-dark { color: rgb(var(--ui-ink)); }
+.text-brand-light { color: rgb(var(--ui-muted)); }
+.text-brand-white { color: #fff; }
+.text-brand-white-90 { color: rgb(255 255 255 / 0.9); }
+.text-brand-white-80 { color: rgb(255 255 255 / 0.8); }
+.text-brand-white-70 { color: rgb(255 255 255 / 0.7); }
+.text-success { color: rgb(var(--ui-ok)); }
+.text-danger { color: rgb(var(--ui-bad)); }
 
-.text-brand-light {
-    color: #6B7280;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-.text-brand-white {
-    color: #FFF;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-/* Shared read-only rendering for RichTextEditor output (v-html'd `body`
-   fields -- official memos, meeting notes, and any future document type).
-   A table saved from the editor can carry inline pixel column widths
-   (from manual column-resize) that add up past the card's width, so the
-   container itself needs to scroll horizontally rather than letting the
-   table blow out the page layout on both desktop and mobile. */
+/* Read-only rendering of RichTextEditor output (memos, meeting notes…).
+   Wide tables scroll inside the container instead of breaking the page. */
 .rich-text-content {
     overflow-x: auto;
 }
-
 .rich-text-content table {
     border-collapse: collapse;
     margin: 0.5rem 0;
     max-width: 100%;
 }
-
 .rich-text-content table td,
 .rich-text-content table th {
-    border: 1px solid #DCDEDD;
+    border: 1px solid rgb(var(--ui-line));
     padding: 0.375rem 0.5rem;
 }
-
 .rich-text-content img {
     max-width: 100%;
     height: auto;
 }
 
-.text-brand-white-90 {
-    color: rgba(255, 255, 255, 0.9);
-    font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-.text-brand-white-80 {
-    color: rgba(255, 255, 255, 0.8);
-    font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-.text-brand-white-70 {
-    color: rgba(255, 255, 255, 0.7);
-    font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-.text-success {
-    color: #059669;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-.text-danger {
-    color: #DC2626;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-/* Nudges a chevron left-right to hint that a tab bar can be swiped
-   horizontally on mobile. Paired with .scroll-fade-hint's edge gradient. */
+/* Nudges a chevron to hint that a tab bar scrolls sideways on phones. */
 @keyframes scroll-hint-nudge {
     0%, 100% { transform: translateX(0); }
     50% { transform: translateX(3px); }
 }
-
 .scroll-hint-nudge {
     animation: scroll-hint-nudge 1.2s ease-in-out infinite;
 }
 
-/* Button and link styles */
-.nav-link {
-    display: flex;
-    padding: 8px 12px;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 10px;
-    align-self: stretch;
-    background: transparent;
-}
-
-.nav-link:hover {
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.nav-link-active {
-    display: flex;
-    padding: 8px 12px 8px 9px;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 10px;
-    align-self: stretch;
-    background: rgba(76, 141, 255, 0.14);
-    border-left: 3px solid #4C8DFF;
-}
-
-/* Sidebar icon-rail collapse. The .is-collapsed class can be present at
-   any viewport width, but the rail only makes sense once the sidebar is
-   a persistent panel rather than a mobile overlay, so these rules are
-   scoped to the same breakpoint as Tailwind's `lg:` (1024px). */
-@media (min-width: 1024px) {
-    #sidebar.is-collapsed .nav-link,
-    #sidebar.is-collapsed .nav-link-active {
-        justify-content: center;
-        padding: 10px 0;
-        border-left: none;
-    }
-
-    #sidebar.is-collapsed .sidebar-brand-text,
-    #sidebar.is-collapsed .section-title,
-    #sidebar.is-collapsed .sidebar-quote,
-    #sidebar.is-collapsed .nav-label {
-        display: none;
-    }
-}
-
-/* Floating label shown for a collapsed nav-link on hover, teleported to
-   <body> so it isn't clipped by the sidebar's scrollable nav container. */
-.sidebar-tooltip {
-    position: fixed;
-    white-space: nowrap;
-    background: #0C1C3C;
-    color: #FFF;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 8px 14px;
-    border-radius: 8px;
-    transform: translateY(-50%);
-    pointer-events: none;
-    z-index: 60;
-}
-
-.btn-primary {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-secondary {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-}
-
+.btn-primary,
+.btn-secondary,
 .btn-details {
     display: flex;
     justify-content: center;
@@ -345,71 +299,28 @@ html {
     gap: 8px;
 }
 
-/* Card styles */
+/* Dark hero card (was a navy gradient): solid ink. */
 .main-card {
-    background: linear-gradient(266deg, #040724 5.45%, #0C1448 52%, #040724 100.36%);
-    box-shadow: -2px 2px 1px 0 #1A2570 inset, 2px 2px 1px 0 rgba(26, 37, 112, 0.55) inset;
+    background: rgb(var(--ui-ink));
 }
 
-/* Section headers (light text for the dark sidebar-gradient background) */
-.section-title {
-    color: rgba(255, 255, 255, 0.35);
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 11px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: normal;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-    padding-left: 12px;
-}
-
-/* Badge styles */
-.badge-expert {
-    background-color: #EBF8FF;
-    color: #1E40AF;
-}
-
-.badge-intermediate {
-    background-color: #EBF8FF;
-    color: #1E40AF;
-}
-
-.badge-beginner {
-    background-color: #EBF8FF;
-    color: #1E40AF;
-}
-
-.badge-active {
-    background-color: #EBF8FF;
-    color: #1E40AF;
-}
-
-.badge-growing {
-    background-color: #EBF8FF;
-    color: #1E40AF;
-}
-
-.badge-creative {
-    background-color: #EBF8FF;
-    color: #1E40AF;
-}
-
-.badge-high-performing {
-    background-color: #EBF8FF;
-    color: #1E40AF;
-}
-
+/* Tag badges: one quiet accent tint. */
+.badge-expert,
+.badge-intermediate,
+.badge-beginner,
+.badge-active,
+.badge-growing,
+.badge-creative,
+.badge-high-performing,
 .badge-247 {
-    background-color: #EBF8FF;
-    color: #1E40AF;
+    background-color: rgb(var(--ui-accent-soft));
+    color: rgb(var(--ui-accent));
 }
-/* Thin, quiet scrollbar for scrolling panels (License detail aside,
-   tracking timeline, recent activity). */
+
+/* Thin, quiet scrollbar for scrolling panels. */
 .scroll-soft {
   scrollbar-width: thin;
-  scrollbar-color: #D4D6E0 transparent;
+  scrollbar-color: rgb(var(--ui-line-strong)) transparent;
   scrollbar-gutter: stable;
   overscroll-behavior: contain;
 }
@@ -421,9 +332,98 @@ html {
   background: transparent;
 }
 .scroll-soft::-webkit-scrollbar-thumb {
-  background-color: #D4D6E0;
+  background-color: rgb(var(--ui-line-strong));
   border-radius: 999px;
 }
 .scroll-soft:hover::-webkit-scrollbar-thumb {
-  background-color: #A9ACBD;
+  background-color: rgb(var(--ui-faint));
+}
+
+/* ------------------------------------------------------------------------
+   Motion (HRIS+ v4.0 redesign)
+   Light by design: CSS only, transform + opacity only (no layout work),
+   120-240ms, one easing. Everything is switched off for people who ask
+   their device to reduce motion.
+   ------------------------------------------------------------------------ */
+:root {
+    --ui-ease-out: cubic-bezier(0.2, 0, 0, 1);
+    --ui-ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ui-dur-fast: 120ms;
+    --ui-dur-base: 180ms;
+    --ui-dur-slow: 240ms;
+}
+
+@keyframes ui-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes ui-scale-in { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes ui-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+
+/* Fill mode is "backwards", never "both": a transform animation that stays
+   filled after it ends makes the element a containing block, so fixed
+   overlays inside a page would be positioned against the page. */
+/* One-shot entrance animations */
+.ui-anim-fade { animation: ui-fade-in var(--ui-dur-base) var(--ui-ease-out) backwards; }
+.ui-anim-fade-up { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) backwards; }
+.ui-anim-scale { animation: ui-scale-in var(--ui-dur-base) var(--ui-ease-out) backwards; }
+/* Page content when a route opens (enter only: navigation is never held up) */
+.ui-page-enter { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) backwards; }
+
+/* Lists and card grids: children rise in one after another; only the
+   first 8 are staggered so long lists are not slowed down. */
+.ui-stagger > * { animation: ui-fade-up var(--ui-dur-slow) var(--ui-ease-out) backwards; animation-delay: 280ms; }
+.ui-stagger > :nth-child(1) { animation-delay: 0ms; }
+.ui-stagger > :nth-child(2) { animation-delay: 35ms; }
+.ui-stagger > :nth-child(3) { animation-delay: 70ms; }
+.ui-stagger > :nth-child(4) { animation-delay: 105ms; }
+.ui-stagger > :nth-child(5) { animation-delay: 140ms; }
+.ui-stagger > :nth-child(6) { animation-delay: 175ms; }
+.ui-stagger > :nth-child(7) { animation-delay: 210ms; }
+.ui-stagger > :nth-child(8) { animation-delay: 245ms; }
+
+/* Dialog panel: scales in on desktop, slides up as a sheet on phones */
+.ui-dialog { animation: ui-scale-in var(--ui-dur-base) var(--ui-ease-out) backwards; }
+@media (max-width: 639px) {
+    .ui-dialog { animation: ui-sheet-up var(--ui-dur-slow) var(--ui-ease-out) backwards; }
+}
+
+/* Drawer panel: slides in from the right on desktop, up as a sheet on phones */
+@keyframes ui-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ui-drawer { animation: ui-drawer-in var(--ui-dur-slow) var(--ui-ease-out) backwards; }
+@media (max-width: 639px) {
+    .ui-drawer { animation: ui-sheet-up var(--ui-dur-slow) var(--ui-ease-out) backwards; }
+}
+
+/* Vue <Transition name="ui-fade"> / "ui-pop" (menus, popovers) */
+.ui-fade-enter-active { transition: opacity var(--ui-dur-base) var(--ui-ease-out); }
+.ui-fade-leave-active { transition: opacity var(--ui-dur-fast) var(--ui-ease-in); }
+.ui-fade-enter-from, .ui-fade-leave-to { opacity: 0; }
+
+.ui-pop-enter-active { transition: opacity var(--ui-dur-fast) var(--ui-ease-out), transform var(--ui-dur-fast) var(--ui-ease-out); }
+.ui-pop-leave-active { transition: opacity var(--ui-dur-fast) var(--ui-ease-in), transform var(--ui-dur-fast) var(--ui-ease-in); }
+.ui-pop-enter-from, .ui-pop-leave-to { opacity: 0; transform: translateY(-4px) scale(0.98); }
+
+/* <TransitionGroup name="ui-list">: items fade in/out, the rest glide */
+.ui-list-enter-active, .ui-list-leave-active { transition: opacity var(--ui-dur-base) var(--ui-ease-out), transform var(--ui-dur-base) var(--ui-ease-out); }
+.ui-list-enter-from, .ui-list-leave-to { opacity: 0; transform: translateY(6px); }
+.ui-list-move { transition: transform var(--ui-dur-slow) var(--ui-ease-out); }
+
+/* Small feedback: press (buttons) and lift (clickable cards) */
+.ui-press {
+    transition: transform var(--ui-dur-fast) var(--ui-ease-out), background-color var(--ui-dur-fast) var(--ui-ease-out),
+        border-color var(--ui-dur-fast) var(--ui-ease-out), color var(--ui-dur-fast) var(--ui-ease-out), box-shadow var(--ui-dur-fast) var(--ui-ease-out);
+}
+.ui-press:active { transform: scale(0.98); }
+.ui-lift { transition: transform var(--ui-dur-base) var(--ui-ease-out), box-shadow var(--ui-dur-base) var(--ui-ease-out); }
+@media (hover: hover) {
+    .ui-lift:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgb(15 27 45 / 0.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

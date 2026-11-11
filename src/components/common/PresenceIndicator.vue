@@ -21,10 +21,10 @@ const others = computed(() => props.viewers.filter((v) => !v.is_self));
         :alt="viewer.name"
         size="w-7 h-7"
         icon-size="w-3.5 h-3.5"
-        class="ring-2 ring-white"
+        class="ring-2 ring-ui-surface"
       />
     </div>
-    <span class="text-xs text-brand-light flex items-center gap-1">
+    <span class="text-ui-cap text-ui-muted flex items-center gap-1">
       <component :is="others.some((v) => v.is_editing) ? Pencil : Eye" class="w-3.5 h-3.5" />
       {{ others.map((v) => v.name).join(", ") }}
       {{ others.some((v) => v.is_editing) ? "editing" : "viewing" }}

@@ -82,8 +82,11 @@ export const useMaintenanceStore = defineStore("maintenance", {
       await axiosInstance.delete(`/maintenance/contracts/${id}/share`);
     },
 
+    // Returns the updated month (totals + leftover choice).
     async setLeftoverAction(periodId, leftoverAction) {
-      await axiosInstance.put(`/maintenance/periods/${periodId}/leftover-action`, { leftover_action: leftoverAction });
+      const { data } = await axiosInstance.put(`/maintenance/periods/${periodId}/leftover-action`, { leftover_action: leftoverAction });
+      if (data?.data?.id) this.patchPeriod(data.data);
+      return data?.data;
     },
 
     async addAdjustment(periodId, payload) {
@@ -96,6 +99,64 @@ export const useMaintenanceStore = defineStore("maintenance", {
 
     async adjustBalance(contractId, payload) {
       await axiosInstance.post(`/maintenance/contracts/${contractId}/balance-adjustments`, payload);
+    },
+
+    // ----- Patching the open detail from responses (no double reloads) -----
+
+    // A month's totals changed: update it in the contract (periods list and
+    // current month) and in the open month, keeping the open month's logs
+    // and adjustments.
+    patchPeriod(fields) {
+      if (!fields?.id) return;
+      const { logs, adjustments, ...totals } = fields; // eslint-disable-line no-unused-vars
+      if (this.contract) {
+        const idx = this.contract.periods?.findIndex((p) => p.id === fields.id) ?? -1;
+        if (idx !== -1) this.contract.periods[idx] = { ...this.contract.periods[idx], ...totals };
+        if (this.contract.current_period?.id === fields.id) this.contract.current_period = { ...this.contract.current_period, ...totals };
+      }
+      if (this.period?.id === fields.id) this.period = { ...this.period, ...totals };
+    },
+
+    // Re-read only the contract (balance, features, months' totals) and
+    // carry the open month's totals over from it.
+    async refreshContract(id) {
+      const data = await this.fetchContract(id, { silent: true });
+      const fresh = this.period && data.periods?.find((p) => p.id === this.period.id);
+      if (fresh) this.period = { ...this.period, ...fresh };
+      return data;
+    },
+
+    // Re-read only the open month (its logs/adjustments) and carry its
+    // totals over to the contract.
+    async refreshPeriod(id) {
+      const data = await this.fetchPeriod(id, { silent: true });
+      this.patchPeriod(data);
+      return data;
+    },
+
+    // A saved work log of a month: put it in the open month's list.
+    upsertPeriodLog(log) {
+      if (!this.period?.logs) return;
+      const logs = this.period.logs.filter((l) => l.id !== log.id);
+      if (log.maintenance_period_id === this.period.id && !log.maintenance_feature_id) logs.push(log);
+      logs.sort((a, b) => String(b.work_date).localeCompare(String(a.work_date)) || b.id - a.id);
+      this.period = { ...this.period, logs };
+    },
+
+    removePeriodLog(id) {
+      if (this.period?.logs) this.period = { ...this.period, logs: this.period.logs.filter((l) => l.id !== id) };
+    },
+
+    // A saved feature (the API returns it without its logs).
+    upsertFeature(feature) {
+      if (!this.contract?.features) return;
+      const idx = this.contract.features.findIndex((f) => f.id === feature.id);
+      if (idx === -1) {
+        this.contract.features = [{ ...feature, logs: [] }, ...this.contract.features];
+        if (["proposed", "approved", "in_progress"].includes(feature.status)) this.contract.open_features = (this.contract.open_features || 0) + 1;
+      } else {
+        this.contract.features[idx] = { ...this.contract.features[idx], ...feature };
+      }
     },
 
     async saveLog(contractId, payload, id = null) {

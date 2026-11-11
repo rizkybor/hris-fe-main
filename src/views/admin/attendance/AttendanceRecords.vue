@@ -1,7 +1,9 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref, toRef } from "vue";
+import { useListState } from "@/composables/useListState";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
-import { Users, Search, Clock, ArrowLeft, ChevronDown, Pencil } from "lucide-vue-next";
+import { Users, Search, Clock, ArrowLeft, ChevronDown, Pencil, ClipboardList } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useAttendanceStore } from "@/stores/attendance";
 import { formatDateShort, formatTime as formatTimeUtil } from "@/utils/dateUtils.js";
@@ -12,17 +14,25 @@ import Avatar from "@/components/common/Avatar.vue";
 import AttendanceDetailModal from "@/components/admin/attendance/AttendanceDetailModal.vue";
 import EditAttendanceModal from "@/components/admin/attendance/EditAttendanceModal.vue";
 import { can } from "@/helpers/permissionHelper";
+import { UiPageHeader, UiTable, UiBadge, UiButton, UiInput, UiChips } from "@/components/ui";
 
+const { t, te } = useI18n();
 const router = useRouter();
 const store = useAttendanceStore();
 const { attendances, meta, loading } = storeToRefs(store);
 
-const search = ref("");
-const statusFilter = ref("");
-const startDate = ref("");
-const endDate = ref("");
+// Filters live in the URL (?status=absent&from=2026-11-12&to=2026-11-12),
+// so other pages (e.g. the attendance summary tiles) can link to a filtered
+// list. Not remembered per browser: a date range from an earlier visit
+// would be misleading.
+const list = useListState("attendance-records", { q: "", status: "", from: "", to: "", page: 1 }, { remember: false });
+const search = toRef(list, "q");
+const statusFilter = toRef(list, "status");
+const startDate = toRef(list, "from");
+const endDate = toRef(list, "to");
 
 const load = (page = 1) => {
+  list.page = page;
   store.fetchAllPaginated({
     search: search.value || undefined,
     status: statusFilter.value || undefined,
@@ -32,7 +42,7 @@ const load = (page = 1) => {
   });
 };
 
-onMounted(() => load());
+onMounted(() => load(list.page));
 
 const handleSearch = () => load(1);
 const handleFilterChange = () => load(1);
@@ -62,6 +72,25 @@ const onSaved = () => load(meta.value?.current_page || 1);
 const formatDate = (date) => (date ? formatDateShort(date) : "N/A");
 const formatTime = (time) => (time ? formatTimeUtil(time) : "-");
 
+// Presentation only: table columns, status chips and badge tones.
+const STATUS_OPTIONS = computed(() => [
+  { value: "", label: t("common.labels.allStatuses") },
+  ...["present", "late", "absent", "remote", "overtime", "sick_leave"].map((value) => ({ value, label: t(`attendance.status.${value}`) })),
+]);
+const STATUS_TONE = { present: "ok", late: "warn", absent: "bad", remote: "info", overtime: "accent", sick_leave: "bad" };
+const statusTone = (status) => STATUS_TONE[status] || "neutral";
+const statusLabel = (status) => (status && te(`attendance.status.${status}`) ? t(`attendance.status.${status}`) : capitalize(status) || "-");
+const columns = computed(() => [
+  { key: "employee", label: t("common.labels.employee") },
+  { key: "team", label: t("common.labels.team") },
+  { key: "date", label: t("common.labels.date") },
+  { key: "check_in", label: t("attendance.records.checkIn") },
+  { key: "check_out", label: t("attendance.records.checkOut") },
+  { key: "total_hours", label: t("attendance.records.totalHours"), align: "right" },
+  { key: "status", label: t("common.labels.status") },
+  ...(canEdit ? [{ key: "action", label: t("common.labels.actions"), align: "right" }] : []),
+]);
+
 const statusBadgeClass = (status) => {
   switch (status) {
     case "present":
@@ -83,151 +112,140 @@ const statusBadgeClass = (status) => {
 </script>
 
 <template>
-  <div>
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex items-center gap-3">
-      <button
-        @click="router.back()"
-        class="w-10 h-10 rounded-[12px] bg-white border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all shrink-0"
-        aria-label="Back"
-      >
-        <ArrowLeft class="w-5 h-5 text-gray-600" />
-      </button>
-      <div class="w-11 h-11 bg-green-50 rounded-[12px] flex items-center justify-center shrink-0">
-        <Users class="w-5 h-5 text-green-600" />
-      </div>
-      <div>
-        <h3 class="text-brand-dark text-lg font-bold">Attendance Records</h3>
-        <p class="text-brand-light text-sm">Full attendance history across the company</p>
-      </div>
-    </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('attendance.records.title')" :subtitle="$t('attendance.records.subtitle')" class="ui-anim-fade-up">
+      <template #eyebrow>
+        <button
+          type="button"
+          class="ui-press inline-flex items-center gap-1 mb-1.5 text-ui-small font-medium text-ui-accent hover:underline"
+          :aria-label="$t('common.actions.back')"
+          @click="router.back()"
+        >
+          <ArrowLeft class="w-4 h-4" />{{ $t("common.actions.back") }}
+        </button>
+      </template>
+    </UiPageHeader>
 
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex flex-col sm:flex-row gap-3 mb-4">
-        <div class="relative max-w-sm w-full">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search class="w-4 h-4 text-gray-400" />
-          </div>
-          <input
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+      <!-- Toolbar -->
+      <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line space-y-3">
+        <div class="flex flex-col md:flex-row md:items-center gap-2">
+          <UiInput
             v-model="search"
+            :icon="Search"
+            :placeholder="$t('attendance.searchEmployee')"
+            class="md:w-[280px]"
             @keyup.enter="handleSearch"
-            type="text"
-            placeholder="Search employee name..."
-            class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
           />
+          <div class="flex items-center gap-2 md:ml-auto">
+            <input
+              v-model="startDate"
+              type="date"
+              :aria-label="$t('common.labels.startDate')"
+              class="flex-1 md:flex-none min-w-0 h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+              @change="handleFilterChange"
+            />
+            <span class="text-ui-small text-ui-muted">{{ $t("attendance.records.to") }}</span>
+            <input
+              v-model="endDate"
+              type="date"
+              :aria-label="$t('common.labels.endDate')"
+              :min="startDate || undefined"
+              class="flex-1 md:flex-none min-w-0 h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+              @change="handleFilterChange"
+            />
+          </div>
         </div>
-        <div class="relative">
-          <select
-            v-model="statusFilter"
-            @change="handleFilterChange"
-            class="select-soft"
-          >
-            <option value="">All Statuses</option>
-            <option value="present">Present</option>
-            <option value="late">Late</option>
-            <option value="absent">Absent</option>
-            <option value="remote">Remote</option>
-            <option value="overtime">Overtime</option>
-            <option value="sick_leave">Sick</option>
-          </select>
-          <ChevronDown
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-          />
-        </div>
-        <div class="flex items-center gap-2">
-          <input
-            v-model="startDate"
-            @change="handleFilterChange"
-            type="date"
-            class="border border-[#DCDEDD] rounded-xl text-sm px-3 py-2 focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-          <span class="text-brand-light text-sm">to</span>
-          <input
-            v-model="endDate"
-            @change="handleFilterChange"
-            type="date"
-            :min="startDate || undefined"
-            class="border border-[#DCDEDD] rounded-xl text-sm px-3 py-2 focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
+        <UiChips v-model="statusFilter" :options="STATUS_OPTIONS" size="sm" @update:model-value="handleFilterChange" />
       </div>
 
-      <SkeletonTable v-if="loading" :rows="6" :cols="7" />
+      <UiTable
+        :columns="columns"
+        :rows="attendances"
+        :meta="meta"
+        :loading="loading"
+        :skeleton-rows="6"
+        clickable
+        @row-click="openDetail"
+      >
+        <template #cell-employee="{ row }">
+          <div class="flex items-center gap-3">
+            <Avatar :src="row.employee?.user?.profile_photo" :alt="row.employee?.user?.name" size="w-8 h-8" icon-size="w-4 h-4" />
+            <span class="font-medium text-ui-ink whitespace-nowrap">{{ row.employee?.user?.name || "-" }}</span>
+          </div>
+        </template>
+        <template #cell-team="{ row }">{{ row.employee?.job_information?.team?.name || "N/A" }}</template>
+        <template #cell-date="{ row }"><span class="whitespace-nowrap tabular-nums">{{ formatDate(row.date) }}</span></template>
+        <template #cell-check_in="{ row }">
+          <span class="inline-flex items-center gap-1 tabular-nums text-ui-ink"><Clock class="w-3.5 h-3.5 text-ui-faint" />{{ formatTime(row.check_in) }}</span>
+        </template>
+        <template #cell-check_out="{ row }">
+          <span class="inline-flex items-center gap-1 tabular-nums text-ui-ink"><Clock class="w-3.5 h-3.5 text-ui-faint" />{{ formatTime(row.check_out) }}</span>
+        </template>
+        <template #cell-total_hours="{ row }"><span class="tabular-nums">{{ row.total_hours || "-" }}</span></template>
+        <template #cell-status="{ row }">
+          <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
+        </template>
+        <template #cell-action="{ row }">
+          <UiButton
+            variant="secondary"
+            size="sm"
+            :icon="Pencil"
+            :aria-label="$t('attendance.records.editAria', { name: row.employee?.user?.name || '-' })"
+            @click.stop="openEdit(row)"
+          >{{ $t("common.actions.edit") }}</UiButton>
+        </template>
 
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
-              <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">Employee</th>
-              <th class="py-3 pr-4 font-semibold">Team</th>
-              <th class="py-3 pr-4 font-semibold">Date</th>
-              <th class="py-3 pr-4 font-semibold">Check-in</th>
-              <th class="py-3 pr-4 font-semibold">Check-out</th>
-              <th class="py-3 pr-4 font-semibold">Total Hours</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-              <th v-if="canEdit" class="py-3 font-semibold text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(attendance, index) in attendances"
-              :key="attendance.id"
-              @click="openDetail(attendance)"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4">
-                <div class="flex items-center gap-3">
-                  <Avatar
-                    :src="attendance.employee?.user?.profile_photo"
-                    :alt="attendance.employee?.user?.name"
-                    size="w-8 h-8"
-                    icon-size="w-4 h-4"
-                  />
-                  <span class="font-semibold text-brand-dark">{{ attendance.employee?.user?.name || "-" }}</span>
+        <!-- Phones: one card per record -->
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="w-5 pt-2 text-ui-cap text-ui-faint tabular-nums shrink-0">{{ number }}</span>
+            <Avatar :src="row.employee?.user?.profile_photo" :alt="row.employee?.user?.name" size="w-9 h-9" icon-size="w-4 h-4" />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-ui-h3 text-ui-ink truncate">{{ row.employee?.user?.name || "-" }}</p>
+                  <p class="text-ui-cap text-ui-muted truncate">
+                    {{ formatDate(row.date) }} · {{ row.employee?.job_information?.team?.name || "N/A" }}
+                  </p>
                 </div>
-              </td>
-              <td class="py-3 pr-4">{{ attendance.employee?.job_information?.team?.name || "N/A" }}</td>
-              <td class="py-3 pr-4 whitespace-nowrap">{{ formatDate(attendance.date) }}</td>
-              <td class="py-3 pr-4">
-                <div class="flex items-center gap-1">
-                  <Clock class="w-3.5 h-3.5 text-gray-400" />
-                  {{ formatTime(attendance.check_in) }}
-                </div>
-              </td>
-              <td class="py-3 pr-4">
-                <div class="flex items-center gap-1">
-                  <Clock class="w-3.5 h-3.5 text-gray-400" />
-                  {{ formatTime(attendance.check_out) }}
-                </div>
-              </td>
-              <td class="py-3 pr-4">{{ attendance.total_hours || "-" }}</td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="statusBadgeClass(attendance.status)">
-                  {{ attendance.status === "sick_leave" ? "Sick" : capitalize(attendance.status) || "-" }}
-                </span>
-              </td>
-              <td v-if="canEdit" class="py-3 text-right">
+                <UiBadge :tone="statusTone(row.status)" dot class="shrink-0">{{ statusLabel(row.status) }}</UiBadge>
+              </div>
+              <div class="flex items-center justify-between gap-2 mt-2">
+                <p v-if="!row.check_in && !row.check_out" class="text-ui-cap text-ui-faint">-</p>
+                <p v-else class="text-ui-cap text-ui-muted tabular-nums">
+                  <span class="text-ui-ink font-medium">{{ formatTime(row.check_in) }}</span> –
+                  <span class="text-ui-ink font-medium">{{ formatTime(row.check_out) }}</span>
+                  <span v-if="row.total_hours"> · {{ row.total_hours }}</span>
+                </p>
                 <button
+                  v-if="canEdit"
                   type="button"
-                  class="inline-flex items-center gap-1 px-2.5 h-8 rounded-[8px] border border-[#DCDEDD] text-xs font-semibold text-gray-700 hover:border-[#0C51D9] hover:text-[#0C51D9] transition-colors"
-                  :aria-label="`Edit attendance of ${attendance.employee?.user?.name || 'employee'}`"
-                  @click.stop="openEdit(attendance)"
+                  class="ui-press inline-flex items-center gap-1 text-ui-cap font-medium text-ui-accent"
+                  :aria-label="$t('attendance.records.editAria', { name: row.employee?.user?.name || '-' })"
+                  @click.stop="openEdit(row)"
                 >
-                  <Pencil class="w-3.5 h-3.5" />Edit
+                  <Pencil class="w-3.5 h-3.5" />{{ $t("common.actions.edit") }}
                 </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+          </div>
+        </template>
 
-        <div v-if="!loading && attendances.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">No Attendance records yet</p>
-        </div>
+        <template #empty>
+          <div class="flex flex-col items-center py-4">
+            <div class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mb-3">
+              <ClipboardList class="w-5 h-5" />
+            </div>
+            <p class="text-ui-body font-medium text-ui-ink">{{ $t("attendance.records.empty") }}</p>
+          </div>
+        </template>
+      </UiTable>
+
+      <div class="px-4 sm:px-5 pb-4">
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('attendance.records.itemLabel')" @page-change="load" />
       </div>
-
-      <Pagination :meta="meta" :loading="loading" item-label="records" @page-change="load" />
-    </div>
+    </section>
 
     <AttendanceDetailModal :show="showDetail" :attendance="selectedAttendance" @close="closeDetail" />
     <EditAttendanceModal :show="showEdit" :attendance="editing" @close="showEdit = false" @saved="onSaved" />

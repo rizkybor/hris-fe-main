@@ -4,6 +4,8 @@ import { useRoute, useRouter } from "vue-router";
 import { usePayrollStore } from "@/stores/payroll";
 import { useAuthStore } from "@/stores/auth";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiBadge, UiButton, UiEmpty } from "@/components/ui";
+import { localeTag } from "@/i18n";
 import {
   ArrowLeft,
   Download,
@@ -63,7 +65,7 @@ const formatCurrency = (value) => {
 };
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -71,7 +73,7 @@ const formatDate = (date) => {
 };
 
 const formatPeriod = (date) => {
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
   });
@@ -79,305 +81,200 @@ const formatPeriod = (date) => {
 </script>
 
 <template>
-  <div>
-    <!-- Header Actions -->
-    <div class="flex items-center justify-between mb-6 print:hidden">
-      <button
-        @click="router.back()"
-        class="flex items-center gap-2 px-4 py-2 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
-      >
-        <ArrowLeft class="w-5 h-5" />
-        <span class="text-brand-dark text-sm font-semibold hidden sm:inline">Back</span>
-      </button>
-
-      <div class="flex items-center gap-3">
+  <div class="sm:px-3 sm:py-3 ui-anim-fade-up">
+    <div class="max-w-[760px] mx-auto space-y-5">
+      <!-- Header + actions -->
+      <div class="print:hidden space-y-3">
         <button
-          @click="handlePrint"
-          class="flex items-center gap-2 px-4 py-2 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
+          type="button"
+          class="ui-press inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline"
+          @click="router.back()"
         >
-          <Printer class="w-5 h-5" />
-          <span class="font-semibold">Print</span>
+          <ArrowLeft class="w-4 h-4" />{{ $t("common.actions.back") }}
         </button>
-        <button
-          @click="handleDownload"
-          class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-[12px] hover:brightness-110 transition-all duration-300"
-        >
-          <Download class="w-5 h-5" />
-          <span class="font-semibold">Download PDF</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Payslip Content -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-8 max-w-4xl mx-auto">
-      <div v-if="loading" class="space-y-6">
-        <div class="flex items-start justify-between">
-          <Skeleton width="140px" height="28px" />
-          <Skeleton width="64px" height="64px" rounded="16px" />
-        </div>
-        <div class="grid grid-cols-2 gap-6">
-          <Skeleton height="80px" rounded="12px" />
-          <Skeleton height="80px" rounded="12px" />
-        </div>
-        <Skeleton height="120px" rounded="16px" />
-        <Skeleton height="100px" rounded="16px" />
-      </div>
-
-      <div v-else-if="payslip">
-        <!-- Header -->
-        <div class="border-b-2 border-gray-200 pb-6 mb-6">
-          <div class="flex items-start justify-between">
-            <div>
-              <div class="flex items-center gap-2 mb-2">
-                <h1 class="text-3xl font-extrabold text-brand-dark">
-                  {{ payslip.type === "thr" ? "THR Payslip" : "Payslip" }}
-                </h1>
-                <span
-                  v-if="payslip.type === 'thr'"
-                  class="px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full"
-                >THR</span>
-              </div>
-              <p class="text-gray-600">
-                {{ formatPeriod(payslip.period) }}
-                <span v-if="payslip.type === 'thr' && payslip.months_of_service != null">
-                  &middot; Masa kerja: {{ payslip.months_of_service }}/12 bulan
-                </span>
+        <div class="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
+          <div class="flex-1 min-w-0">
+            <template v-if="loading">
+              <Skeleton width="220px" height="28px" rounded="6px" />
+              <Skeleton width="160px" height="14px" class="mt-2" />
+            </template>
+            <template v-else-if="payslip">
+              <h1 class="text-ui-h1 text-ui-ink">
+                {{ payslip.type === "thr" ? $t("payslips.detail.thrPayslip") : $t("payslips.detail.payslip") }} · {{ formatPeriod(payslip.period) }}
+              </h1>
+              <p class="text-ui-small text-ui-muted mt-1">
+                {{ $t("payslips.detail.paymentDate") }} {{ formatDate(payslip.payment_date || payslip.created_at) }}
               </p>
-            </div>
-            <div class="text-right">
-              <div class="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px] flex items-center justify-center mb-2 ml-auto">
-                <Building class="w-8 h-8 text-white" />
-              </div>
-              <p class="text-sm font-semibold text-brand-dark">
-                {{ payslip.company_name || "JCD-HRIS+" }}
-              </p>
-              <p class="text-xs text-gray-600">
-                {{ payslip.company_address || "Indonesia" }}
-              </p>
-            </div>
+            </template>
+            <h1 v-else class="text-ui-h1 text-ui-ink">{{ $t("payslips.detail.payslip") }}</h1>
           </div>
-        </div>
-
-        <!-- Employee Information -->
-        <div class="grid grid-cols-2 gap-6 mb-8">
-          <div>
-            <h3 class="text-sm font-semibold text-gray-500 mb-4">
-              EMPLOYEE INFORMATION
-            </h3>
-            <div class="space-y-3">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 bg-blue-50 rounded-[12px] flex items-center justify-center"
-                >
-                  <FileText class="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500">Full Name</p>
-                  <p class="font-semibold text-brand-dark">
-                    {{ payslip.employee_name }}
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 bg-purple-50 rounded-[12px] flex items-center justify-center"
-                >
-                  <Building class="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500">Department</p>
-                  <p class="font-semibold text-brand-dark">
-                    {{ payslip.department }}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <UiButton variant="secondary" :icon="Printer" @click="handlePrint">{{ $t("common.actions.print") }}</UiButton>
+            <UiButton :icon="Download" @click="handleDownload">{{ $t("common.actions.downloadPdf") }}</UiButton>
           </div>
-
-          <div>
-            <h3 class="text-sm font-semibold text-gray-500 mb-4">
-              CONTACT INFORMATION
-            </h3>
-            <div class="space-y-3">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 bg-green-50 rounded-[12px] flex items-center justify-center"
-                >
-                  <Mail class="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500">Email</p>
-                  <p class="font-semibold text-brand-dark">
-                    {{ payslip.employee_email || authStore.user?.email }}
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 bg-orange-50 rounded-[12px] flex items-center justify-center"
-                >
-                  <Calendar class="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500">Payment Date</p>
-                  <p class="font-semibold text-brand-dark">
-                    {{ formatDate(payslip.payment_date || payslip.created_at) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Salary Breakdown -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <!-- Earnings -->
-          <div class="bg-green-50 rounded-[12px] p-6">
-            <div class="flex items-center gap-2 mb-4">
-              <TrendingUp class="w-5 h-5 text-green-600" />
-              <h3 class="text-lg font-bold text-green-900">Earnings</h3>
-            </div>
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-green-700">Basic Salary</span>
-                <span class="font-semibold text-green-900">
-                  {{ formatCurrency(payslip.basic_salary) }}
-                </span>
-              </div>
-              <div
-                v-if="payslip.attendance_deduction > 0"
-                class="flex items-center justify-between"
-              >
-                <span class="text-sm text-green-700">Attendance Deduction</span>
-                <span class="font-semibold text-green-900">
-                  - {{ formatCurrency(payslip.attendance_deduction) }}
-                </span>
-              </div>
-              <div
-                class="flex items-center justify-between pt-3 border-t-2 border-green-200"
-              >
-                <span class="text-sm font-bold text-green-900">Gross Salary</span>
-                <span class="text-lg font-extrabold text-green-900">
-                  {{ formatCurrency(payslip.gross_salary) }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Deductions -->
-          <div class="bg-red-50 rounded-[12px] p-6">
-            <div class="flex items-center gap-2 mb-4">
-              <TrendingDown class="w-5 h-5 text-red-600" />
-              <h3 class="text-lg font-bold text-red-900">Deductions</h3>
-            </div>
-            <div class="space-y-3">
-              <div
-                v-if="payslip.bpjs_kesehatan_employee > 0"
-                class="flex items-center justify-between"
-              >
-                <span class="text-sm text-red-700">BPJS Kesehatan</span>
-                <span class="font-semibold text-red-900">
-                  {{ formatCurrency(payslip.bpjs_kesehatan_employee) }}
-                </span>
-              </div>
-              <div
-                v-if="payslip.bpjs_jht_employee > 0"
-                class="flex items-center justify-between"
-              >
-                <span class="text-sm text-red-700">BPJS JHT</span>
-                <span class="font-semibold text-red-900">
-                  {{ formatCurrency(payslip.bpjs_jht_employee) }}
-                </span>
-              </div>
-              <div
-                v-if="payslip.bpjs_jp_employee > 0"
-                class="flex items-center justify-between"
-              >
-                <span class="text-sm text-red-700">BPJS JP</span>
-                <span class="font-semibold text-red-900">
-                  {{ formatCurrency(payslip.bpjs_jp_employee) }}
-                </span>
-              </div>
-              <div
-                v-if="payslip.pph21 > 0"
-                class="flex items-center justify-between"
-              >
-                <span class="text-sm text-red-700">PPh 21</span>
-                <span class="font-semibold text-red-900">
-                  {{ formatCurrency(payslip.pph21) }}
-                </span>
-              </div>
-              <div
-                class="flex items-center justify-between pt-3 border-t-2 border-red-200"
-              >
-                <span class="text-sm font-bold text-red-900">Total Deductions</span>
-                <span class="text-lg font-extrabold text-red-900">
-                  {{ formatCurrency(payslip.total_deductions) }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Net Salary -->
-        <div
-          class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[14px] p-6 text-white"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-white/80 text-sm font-medium mb-2">
-                NET SALARY (TAKE HOME)
-              </p>
-              <p class="text-4xl font-extrabold">
-                {{ formatCurrency(payslip.net_salary) }}
-              </p>
-            </div>
-            <div
-              class="w-16 h-16 bg-white/20 rounded-[14px] flex items-center justify-center backdrop-blur-sm"
-            >
-              <DollarSign class="w-8 h-8 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Notes -->
-        <div v-if="payslip.notes" class="mt-6 p-4 bg-gray-50 rounded-[12px]">
-          <p class="text-sm font-semibold text-gray-700 mb-2">Notes:</p>
-          <p class="text-sm text-gray-600">{{ payslip.notes }}</p>
-        </div>
-
-        <!-- Footer -->
-        <div class="mt-8 pt-6 border-t border-gray-200 text-center">
-          <p class="text-xs text-gray-500">
-            This is a computer-generated payslip and does not require a signature.
-          </p>
-          <p class="text-xs text-gray-500 mt-1">
-            For any queries, please contact the HR department.
-          </p>
         </div>
       </div>
 
-      <div v-else class="text-center py-12">
-        <p class="text-gray-500">Payslip not found</p>
+      <!-- Payslip document (this is what gets printed) -->
+      <div class="payslip-print md:bg-ui-surface md:border md:border-ui-line md:rounded-ui-card md:p-9 print:p-0">
+        <div v-if="loading" class="space-y-6">
+          <div class="flex items-center gap-3">
+            <Skeleton width="32px" height="32px" rounded="8px" />
+            <Skeleton width="180px" height="16px" />
+          </div>
+          <Skeleton height="64px" rounded="10px" />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Skeleton height="160px" rounded="10px" />
+            <Skeleton height="160px" rounded="10px" />
+          </div>
+          <Skeleton height="56px" rounded="12px" />
+        </div>
+
+        <div v-else-if="payslip" class="flex flex-col gap-6">
+          <!-- Company -->
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-ui-control bg-ui-ink text-white flex items-center justify-center shrink-0">
+              <Building class="w-[18px] h-[18px]" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="text-ui-h3 text-ui-ink">{{ payslip.company_name || "JCD-HRIS+" }}</p>
+                <UiBadge tone="ok" dot>{{ $t("payslips.paid") }}</UiBadge>
+                <UiBadge v-if="payslip.type === 'thr'" tone="accent">THR</UiBadge>
+              </div>
+              <p class="text-ui-cap text-ui-muted">{{ payslip.company_address || "Indonesia" }}</p>
+            </div>
+          </div>
+
+          <!-- Employee information -->
+          <dl class="bg-ui-surface border border-ui-line md:border-0 md:bg-ui-subtle rounded-ui-card px-4 py-3.5 grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-x-6 gap-y-3">
+            <div class="min-w-0">
+              <dt class="text-ui-cap text-ui-muted">{{ $t("payslips.detail.fullName") }}</dt>
+              <dd class="text-ui-small font-medium text-ui-ink truncate">{{ payslip.employee_name }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-ui-cap text-ui-muted">{{ $t("payslips.detail.department") }}</dt>
+              <dd class="text-ui-small font-medium text-ui-ink truncate">{{ payslip.department }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.email") }}</dt>
+              <dd class="text-ui-small font-medium text-ui-ink truncate">{{ payslip.employee_email || authStore.user?.email }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-ui-cap text-ui-muted">{{ $t("payslips.detail.paymentDate") }}</dt>
+              <dd class="text-ui-small font-medium text-ui-ink">{{ formatDate(payslip.payment_date || payslip.created_at) }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.period") }}</dt>
+              <dd class="text-ui-small font-medium text-ui-ink">{{ formatPeriod(payslip.period) }}</dd>
+            </div>
+            <div v-if="payslip.type === 'thr' && payslip.months_of_service != null" class="min-w-0">
+              <dt class="text-ui-cap text-ui-muted">{{ $t("payslips.detail.serviceLength") }}</dt>
+              <dd class="text-ui-small font-medium text-ui-ink tabular-nums">{{ $t("payslips.detail.serviceMonths", { n: payslip.months_of_service }) }}</dd>
+            </div>
+          </dl>
+
+          <!-- Take-home: first on phones (as in the app), last on wider screens -->
+          <div class="take-home order-first md:order-none md:hidden print:hidden bg-ui-ink text-white rounded-ui-card px-5 py-4">
+            <p class="text-ui-small text-white/70">{{ $t("payslips.detail.netSalary") }}</p>
+            <p class="text-ui-display tabular-nums mt-0.5">{{ formatCurrency(payslip.net_salary) }}</p>
+          </div>
+
+          <!-- Salary breakdown -->
+          <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 md:gap-8">
+            <section>
+              <h3 class="text-ui-over uppercase text-ui-muted md:normal-case md:text-ui-h3 md:text-ui-ink md:tracking-normal pb-2 md:border-b md:border-ui-line">{{ $t("payslips.detail.earnings") }}</h3>
+              <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 md:border-0 md:rounded-none md:px-0 divide-y divide-ui-line">
+                <div class="flex items-center justify-between gap-3 py-3 md:py-2.5">
+                  <span class="text-ui-small text-ui-muted">{{ $t("payslips.detail.basicSalary") }}</span>
+                  <span class="text-ui-small text-ui-ink tabular-nums text-right">{{ formatCurrency(payslip.basic_salary) }}</span>
+                </div>
+                <div v-if="payslip.attendance_deduction > 0" class="flex items-center justify-between gap-3 py-3 md:py-2.5">
+                  <span class="text-ui-small text-ui-muted">{{ $t("payslips.detail.attendanceDeduction") }}</span>
+                  <span class="text-ui-small text-ui-bad tabular-nums text-right">- {{ formatCurrency(payslip.attendance_deduction) }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-3 md:py-2.5">
+                  <span class="text-ui-small font-semibold text-ui-ink">{{ $t("payslips.detail.grossSalary") }}</span>
+                  <span class="text-ui-small font-semibold text-ui-ink tabular-nums text-right">{{ formatCurrency(payslip.gross_salary) }}</span>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h3 class="text-ui-over uppercase text-ui-muted md:normal-case md:text-ui-h3 md:text-ui-ink md:tracking-normal pb-2 md:border-b md:border-ui-line">{{ $t("payslips.detail.deductions") }}</h3>
+              <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 md:border-0 md:rounded-none md:px-0 divide-y divide-ui-line">
+                <div v-if="payslip.bpjs_kesehatan_employee > 0" class="flex items-center justify-between gap-3 py-3 md:py-2.5">
+                  <span class="text-ui-small text-ui-muted">BPJS Kesehatan</span>
+                  <span class="text-ui-small text-ui-bad tabular-nums text-right">{{ formatCurrency(payslip.bpjs_kesehatan_employee) }}</span>
+                </div>
+                <div v-if="payslip.bpjs_jht_employee > 0" class="flex items-center justify-between gap-3 py-3 md:py-2.5">
+                  <span class="text-ui-small text-ui-muted">BPJS JHT</span>
+                  <span class="text-ui-small text-ui-bad tabular-nums text-right">{{ formatCurrency(payslip.bpjs_jht_employee) }}</span>
+                </div>
+                <div v-if="payslip.bpjs_jp_employee > 0" class="flex items-center justify-between gap-3 py-3 md:py-2.5">
+                  <span class="text-ui-small text-ui-muted">BPJS JP</span>
+                  <span class="text-ui-small text-ui-bad tabular-nums text-right">{{ formatCurrency(payslip.bpjs_jp_employee) }}</span>
+                </div>
+                <div v-if="payslip.pph21 > 0" class="flex items-center justify-between gap-3 py-3 md:py-2.5">
+                  <span class="text-ui-small text-ui-muted">PPh 21</span>
+                  <span class="text-ui-small text-ui-bad tabular-nums text-right">{{ formatCurrency(payslip.pph21) }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-3 md:py-2.5">
+                  <span class="text-ui-small font-semibold text-ui-ink">{{ $t("payslips.list.totalDeductions") }}</span>
+                  <span class="text-ui-small font-semibold text-ui-bad tabular-nums text-right">{{ formatCurrency(payslip.total_deductions) }}</span>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Take-home (tablet / desktop / print) -->
+          <div class="take-home hidden md:flex print:flex items-center justify-between gap-4 bg-ui-ink text-white rounded-ui-card px-5 py-4">
+            <p class="text-ui-small text-white/70">{{ $t("payslips.detail.netSalary") }}</p>
+            <p class="text-ui-display tabular-nums text-right">{{ formatCurrency(payslip.net_salary) }}</p>
+          </div>
+
+          <!-- Notes -->
+          <div v-if="payslip.notes" class="bg-ui-surface border border-ui-line md:border-0 md:bg-ui-subtle rounded-ui-card px-4 py-3">
+            <p class="text-ui-small font-medium text-ui-ink mb-1">{{ $t("common.labels.notes") }}:</p>
+            <p class="text-ui-small text-ui-text">{{ payslip.notes }}</p>
+          </div>
+
+          <!-- Footer -->
+          <div class="md:pt-5 md:border-t md:border-ui-line text-center">
+            <p class="text-ui-cap text-ui-muted">{{ $t("payslips.detail.footerGenerated") }}</p>
+            <p class="text-ui-cap text-ui-muted mt-1">{{ $t("payslips.detail.footerContact") }}</p>
+          </div>
+        </div>
+
+        <UiEmpty v-else :icon="FileText" :title="$t('payslips.detail.notFound')" compact />
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style>
+/* Print only the payslip document. Scoped to pages that render one
+   (:has), so printing any other page is unaffected. */
 @media print {
-  body * {
+  body:has(.payslip-print) * {
     visibility: hidden;
   }
-  .bg-white,
-  .bg-white * {
+  body:has(.payslip-print) .payslip-print,
+  body:has(.payslip-print) .payslip-print * {
     visibility: visible;
   }
-  .bg-white {
+  .payslip-print {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+    border: none !important;
+  }
+  /* Keep the dark take-home band (and badges) when backgrounds are off. */
+  .payslip-print,
+  .payslip-print * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 </style>

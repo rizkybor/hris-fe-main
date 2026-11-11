@@ -1,0 +1,36 @@
+{
+  "title": "Analitik",
+  "subtitle": "Trafik dan perilaku pengunjung di setiap situs yang dipantau, dikelompokkan per kategori",
+  "addSource": "Tambah Sumber",
+  "stats": {
+    "sources": "Sumber",
+    "categories": "Kategori"
+  },
+  "search": "Cari nama sumber, kategori, atau situs...",
+  "empty": {
+    "noMatch": "Tidak ada sumber yang cocok",
+    "noMatchHint": "Coba nama, kategori, atau situs lain",
+    "title": "Belum ada sumber analitik",
+    "message": "Tambahkan embed PostHog, Google Analytics 4, atau Search Console untuk mulai memantau situs di sini.",
+    "addFirst": "Tambah sumber pertama"
+  },
+  "openInNewTab": "Buka di tab baru",
+  "clickToLoad": "Klik untuk memuat {type}",
+  "clickToLoadHint": "Embed dimuat saat dibutuhkan untuk menghemat kuota",
+  "delete": {
+    "confirm": "Hapus sumber analitik \"{name}\"? Tindakan ini tidak bisa dibatalkan.",
+    "failed": "Gagal menghapus sumber analitik."
+  },
+  "form": {
+    "addTitle": "Tambah Sumber Analitik",
+    "editTitle": "Ubah Sumber Analitik",
+    "description": "Sumber dengan Kategori yang sama dikelompokkan bersama di halaman Analitik.",
+    "namePlaceholder": "mis. Landing Page PostHog",
+    "websiteUrl": "URL Situs (opsional)",
+    "typePlaceholder": "Pilih jenis sumber",
+    "categoryPlaceholder": "mis. Landing Page Jendela Cakra Digital Analytics",
+    "embedUrl": "URL Embed",
+    "embedUrlPlaceholder": "https://us.posthog.com/embedded/... atau URL laporan Looker Studio /embed/",
+    "embedHint": "PostHog: gunakan tautan bagikan \"Embed\" miliknya. Google Analytics 4 / Search Console tidak punya tautan embed langsung -- hubungkan ke laporan Looker Studio, bagikan sebagai \"Siapa saja yang memiliki link\", lalu tempel URL Embed laporan tersebut di sini."
+  }
+}

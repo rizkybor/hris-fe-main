@@ -1,0 +1,29 @@
+{
+  "title": "Company About",
+  "subtitle": "Company profile shown across the system",
+  "logoAlt": "Company logo",
+  "vision": "Vision",
+  "mission": "Mission",
+  "branches": "Sub-companies / Branches",
+  "fields": {
+    "established": "Established",
+    "establishedDate": "Established date",
+    "npwp": "NPWP",
+    "legalNameOptional": "Legal name (optional)",
+    "npwpOptional": "NPWP (optional)",
+    "missionPerLine": "Mission (one per line)",
+    "missionPlaceholder": "Enter one mission per line",
+    "branchesPlaceholder": "Enter one branch per line"
+  },
+  "empty": {
+    "title": "No company data yet",
+    "message": "Add your company profile so it appears across the system."
+  },
+  "modal": {
+    "addTitle": "Add Company Information",
+    "editTitle": "Edit Company Information",
+    "identity": "Company identity",
+    "visionMission": "Vision & Mission",
+    "contact": "Contact & Location"
+  }
+}

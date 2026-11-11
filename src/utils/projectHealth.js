@@ -25,6 +25,8 @@ export const RISK_THRESHOLDS = {
   BEHIND_PROGRESS_GAP: 10,
 };
 
+import { t as translate } from "@/i18n";
+
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
 /**
@@ -55,8 +57,12 @@ export const getProjectHealth = (project) => {
   if (daysRemaining < 0 && actualProgress < 100) {
     return {
       level: "overdue",
-      label: "Overdue",
-      message: `Deadline passed ${Math.abs(daysRemaining)} day${Math.abs(daysRemaining) === 1 ? "" : "s"} ago and the project is only ${actualProgress}% complete.`,
+      label: translate("projects.health.overdue"),
+      message: translate(
+        "projects.health.overdueMessage",
+        { n: Math.abs(daysRemaining), progress: actualProgress },
+        Math.abs(daysRemaining)
+      ),
       daysRemaining,
       expectedProgress,
       actualProgress,
@@ -66,8 +72,12 @@ export const getProjectHealth = (project) => {
   if (daysRemaining <= t.CRITICAL_DAYS_LEFT && actualProgress < t.CRITICAL_MIN_PROGRESS) {
     return {
       level: "critical",
-      label: "Critical",
-      message: `Only ${daysRemaining} day${daysRemaining === 1 ? "" : "s"} left until the deadline, but progress is just ${actualProgress}%.`,
+      label: translate("projects.health.critical"),
+      message: translate(
+        "projects.health.criticalMessage",
+        { n: daysRemaining, progress: actualProgress },
+        daysRemaining
+      ),
       daysRemaining,
       expectedProgress,
       actualProgress,
@@ -80,8 +90,12 @@ export const getProjectHealth = (project) => {
   ) {
     return {
       level: "at-risk",
-      label: "At Risk",
-      message: `At today's pace the project should be around ${expectedProgress}% done, but it's at ${actualProgress}% with ${daysRemaining} day${daysRemaining === 1 ? "" : "s"} remaining.`,
+      label: translate("projects.health.atRisk"),
+      message: translate(
+        "projects.health.atRiskMessage",
+        { n: daysRemaining, expected: expectedProgress, progress: actualProgress },
+        daysRemaining
+      ),
       daysRemaining,
       expectedProgress,
       actualProgress,
@@ -91,8 +105,11 @@ export const getProjectHealth = (project) => {
   if (progressGap >= t.BEHIND_PROGRESS_GAP) {
     return {
       level: "behind",
-      label: "Behind Schedule",
-      message: `Progress (${actualProgress}%) is slightly behind the expected pace (${expectedProgress}%) for this point in the timeline.`,
+      label: translate("projects.health.behind"),
+      message: translate("projects.health.behindMessage", {
+        progress: actualProgress,
+        expected: expectedProgress,
+      }),
       daysRemaining,
       expectedProgress,
       actualProgress,
@@ -101,8 +118,11 @@ export const getProjectHealth = (project) => {
 
   return {
     level: "on-track",
-    label: "On Track",
-    message: `Progress (${actualProgress}%) is keeping pace with the timeline (expected ${expectedProgress}%).`,
+    label: translate("projects.health.onTrack"),
+    message: translate("projects.health.onTrackMessage", {
+      progress: actualProgress,
+      expected: expectedProgress,
+    }),
     daysRemaining,
     expectedProgress,
     actualProgress,

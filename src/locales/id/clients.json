@@ -1,0 +1,113 @@
+{
+  "list": {
+    "title": "Semua Klien",
+    "subtitle": "Lihat dan kelola semua informasi klien",
+    "add": "Tambah Klien",
+    "searchPlaceholder": "Cari klien...",
+    "allTypes": "Semua Tipe",
+    "allFields": "Semua Bidang",
+    "columns": {
+      "pic": "PIC",
+      "rating": "Rating"
+    },
+    "unnamed": "Klien tanpa nama",
+    "empty": "Klien tidak ditemukan",
+    "deleteConfirm": "Hapus klien \"{name}\"? Tindakan ini tidak dapat dibatalkan.",
+    "deleteFailed": "Gagal menghapus klien."
+  },
+  "stats": {
+    "total": "Total Klien",
+    "totalHint": "Klien terdaftar",
+    "byType": "Klien per Tipe",
+    "byField": "Klien per Bidang",
+    "scrollMore": "Gulir untuk melihat lainnya"
+  },
+  "fields": {
+    "name": "Nama Klien",
+    "type": "Tipe Klien",
+    "field": "Bidang Klien",
+    "picName": "Nama PIC",
+    "picPhone": "Telepon PIC",
+    "npwp": "NPWP",
+    "siup": "Nomor SIUP",
+    "nib": "Nomor NIB",
+    "fieldShort": "Bidang"
+  },
+  "form": {
+    "createTitle": "Tambah Klien",
+    "createSubtitle": "Daftarkan klien atau perusahaan mitra baru",
+    "editTitle": "Ubah Klien",
+    "editSubtitle": "Perbarui informasi klien",
+    "save": "Simpan Klien",
+    "sections": {
+      "company": "Informasi Perusahaan",
+      "pic": "Kontak PIC (Person in Charge)",
+      "legal": "Legalitas (Opsional)",
+      "legalHint": "Kosongkan jika client merupakan perorangan, bukan badan usaha terdaftar.",
+      "additional": "Detail Tambahan"
+    },
+    "placeholders": {
+      "name": "mis. PT. Sumber Teknologi",
+      "type": "mis. Teknologi, Logistik",
+      "field": "mis. Pengembangan Perangkat Lunak",
+      "picName": "Nama narahubung",
+      "address": "Alamat klien",
+      "notes": "Catatan tambahan tentang klien ini...",
+      "siup": "mis. SIUP-123/2020",
+      "nib": "mis. 1234567890123"
+    },
+    "summary": "Ringkasan",
+    "newClient": "Klien baru",
+    "clientFallback": "Klien",
+    "requiredFields": "Kolom wajib",
+    "requiredCount": "{done} dari {total}",
+    "required": "Nama Klien, Nama PIC, dan Telepon PIC wajib diisi.",
+    "saved": "Klien berhasil disimpan.",
+    "saveFailed": "Gagal menyimpan klien.",
+    "updated": "Klien berhasil diperbarui.",
+    "updateFailed": "Gagal memperbarui klien.",
+    "notFound": "Klien tidak ditemukan.",
+    "loadFailed": "Gagal memuat data klien."
+  },
+  "detail": {
+    "title": "Detail Klien",
+    "readOnly": "Informasi klien (hanya baca)",
+    "loading": "Memuat detail klien...",
+    "loadFailed": "Gagal memuat detail klien.",
+    "tabs": {
+      "overview": "Ringkasan",
+      "evaluations": "Rating & Evaluasi",
+      "projects": "Proyek"
+    },
+    "legal": "Legalitas",
+    "legalHint": "Opsional — kosong jika klien perorangan",
+    "projectsCount": "Proyek",
+    "ratingSummary": "{avg}/5 dari {n} evaluasi",
+    "noEvaluations": "Belum ada evaluasi",
+    "viewEvaluations": "Rating & Evaluasi →",
+    "addEvaluation": "Tambah Evaluasi",
+    "noEvaluationsForClient": "Belum ada evaluasi untuk klien ini",
+    "by": "oleh {name}",
+    "deleteEvaluation": "Hapus evaluasi",
+    "projectsHint": "Opsional — proyek yang dikontrak melalui klien ini",
+    "noProjects": "Belum ada proyek terkait",
+    "projectStatus": {
+      "active": "Aktif",
+      "completed": "Selesai",
+      "cancelled": "Dibatalkan",
+      "on-hold": "Ditunda",
+      "overdue": "Terlambat"
+    },
+    "evaluationModal": {
+      "title": "Tambah Evaluasi Klien",
+      "rating": "Rating",
+      "date": "Tanggal Evaluasi",
+      "notes": "Catatan (Opsional)",
+      "notesPlaceholder": "Kualitas kerja, ketepatan waktu, dll.",
+      "save": "Simpan Evaluasi"
+    },
+    "saveEvaluationFailed": "Gagal menyimpan evaluasi.",
+    "deleteEvaluationConfirm": "Hapus evaluasi ini? Tindakan ini tidak dapat dibatalkan.",
+    "deleteEvaluationFailed": "Gagal menghapus evaluasi."
+  }
+}

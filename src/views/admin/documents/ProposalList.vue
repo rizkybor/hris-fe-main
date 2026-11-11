@@ -1,18 +1,21 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
-import { FileText, Plus, Search, Eye, Pencil, Copy, Trash2, ChevronDown, X, Loader2, Layers, Share2 } from "lucide-vue-next";
+import { FileText, Plus, Search, SearchX, Eye, Pencil, Copy, Trash2, Layers, Share2, ArrowLeft } from "lucide-vue-next";
+import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiChips, UiTable, UiEmpty, UiModal, UiSpinner } from "@/components/ui";
 import ShareProposalModal from "@/components/admin/documents/ShareProposalModal.vue";
 import { useProposalStore } from "@/stores/proposal";
 import { useClientStore } from "@/stores/client";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
-import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import { PROPOSAL_STATUSES, proposalStatus } from "@/utils/proposalStatus";
 
+const { t } = useI18n();
 const router = useRouter();
 const store = useProposalStore();
 const clientStore = useClientStore();
@@ -35,7 +38,7 @@ const onSearchInput = () => {
 };
 
 const formatDate = (value) =>
-  value ? new Date(value).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-";
+  value ? new Date(value).toLocaleDateString(localeTag(), { day: "numeric", month: "long", year: "numeric" }) : "-";
 
 // ===== New proposal =====
 const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -69,7 +72,7 @@ const createProposal = async () => {
     router.push({ name: "admin.proposals.edit", params: { id: created.id } });
   } catch (error) {
     if (error?.response?.status === 422) formErrors.value = error.response.data.errors ?? {};
-    else await alertModal.alert(errorMessage(error, "Proposal gagal dibuat."), { type: "danger" });
+    else await alertModal.alert(errorMessage(error, t("documents.proposal.list.errors.create")), { type: "danger" });
   }
 };
 
@@ -81,15 +84,15 @@ const viewPdf = async (proposal) => {
   try {
     await store.viewPdf(proposal.id);
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "PDF gagal dibuat."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.errors.pdf")), { type: "danger" });
   } finally {
     busyId.value = null;
   }
 };
 
 const duplicate = async (proposal) => {
-  const ok = await alertModal.confirm(`Buat salinan dari "${proposal.title}"? Salinan dibuat sebagai Draft dengan tanggal hari ini.`, {
-    confirmText: "Duplikat",
+  const ok = await alertModal.confirm(t("documents.proposal.list.duplicateConfirm", { title: proposal.title }), {
+    confirmText: t("common.actions.duplicate"),
   });
   if (!ok) return;
   busyId.value = `dup-${proposal.id}`;
@@ -97,16 +100,16 @@ const duplicate = async (proposal) => {
     const copy = await store.duplicateProposal(proposal.id);
     router.push({ name: "admin.proposals.edit", params: { id: copy.id } });
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Proposal gagal diduplikat."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.list.errors.duplicate")), { type: "danger" });
   } finally {
     busyId.value = null;
   }
 };
 
 const handleDelete = async (proposal) => {
-  const ok = await alertModal.confirm(`Hapus proposal "${proposal.title}"? Tindakan ini tidak bisa dibatalkan.`, {
+  const ok = await alertModal.confirm(t("documents.proposal.list.deleteConfirm", { title: proposal.title }), {
     type: "danger",
-    confirmText: "Hapus",
+    confirmText: t("common.actions.delete"),
   });
   if (!ok) return;
   try {
@@ -114,13 +117,34 @@ const handleDelete = async (proposal) => {
     const page = proposals.value.length === 0 && meta.value.current_page > 1 ? meta.value.current_page - 1 : meta.value.current_page;
     await fetchPage(page);
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Proposal gagal dihapus."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.list.errors.delete")), { type: "danger" });
   }
 };
 
 const canCreate = computed(() => can("proposal-create"));
 
 const sharingId = ref(null);
+
+// ===== Presentation only =====
+const STATUS_TONE = { draft: "neutral", sent: "info", accepted: "ok", rejected: "bad" };
+const STATUS_OPTIONS = computed(() => [
+  { value: "", label: t("common.labels.allStatuses") },
+  ...PROPOSAL_STATUSES.map((s) => ({ value: s.value, label: s.label })),
+]);
+const clientOptions = computed(() => clients.value.map((c) => ({ value: c.id, label: c.name })));
+const COLUMNS = computed(() => [
+  { key: "title", label: t("documents.proposal.list.columns.proposal") },
+  { key: "proposal_date", label: t("common.labels.date") },
+  { key: "letter_number", label: t("documents.proposal.list.columns.letterNumber") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "updated_at", label: t("common.labels.updatedAt") },
+  { key: "actions", label: t("common.labels.actions"), align: "right" },
+]);
+const iconBtn =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus disabled:opacity-50";
+const iconBtnDanger =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus";
+
 // Reflect a status change (e.g. Draft -> Terkirim after emailing) in the row.
 const onShared = (updated) => {
   const row = proposals.value.find((p) => p.id === updated.id);
@@ -129,252 +153,233 @@ const onShared = (updated) => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <!-- Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-5">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-9 h-9 bg-violet-50 rounded-[12px] flex items-center justify-center shrink-0">
-            <FileText class="w-6 h-6 text-violet-600" />
-          </div>
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-base font-bold">Proposal Penawaran</h3>
-            <p class="text-brand-light text-xs font-normal">
-              Susun proposal penawaran dari template standar JCD, edit per bagian, lalu unduh sebagai PDF
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader
+      :title="$t('documents.hub.links.proposal.title')"
+      :subtitle="$t('documents.proposal.list.subtitle')"
+    >
+      <template #eyebrow>
+        <router-link :to="{ name: 'admin.documents.dashboard' }" class="inline-flex items-center gap-1 text-ui-small text-ui-accent hover:underline mb-1.5">
+          <ArrowLeft class="w-3.5 h-3.5" />
+          {{ $t("documents.shared.documents") }}
+        </router-link>
+      </template>
+      <template #actions>
+        <UiButton v-if="canCreate" :icon="Plus" class="w-full sm:w-auto" @click="openCreate">{{ $t("documents.proposal.list.create") }}</UiButton>
+      </template>
+    </UiPageHeader>
+
+    <div class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden">
+      <div class="p-3 sm:p-4 border-b border-ui-line flex flex-col lg:flex-row lg:items-center gap-3">
+        <UiInput
+          v-model="search"
+          :icon="Search"
+          :placeholder="$t('documents.proposal.list.searchPlaceholder')"
+          class="lg:max-w-sm w-full"
+          @input="onSearchInput"
+        />
+        <UiChips
+          :model-value="statusFilter"
+          :options="STATUS_OPTIONS"
+          @update:model-value="(v) => { statusFilter = v; fetchPage(1); }"
+        />
+      </div>
+
+      <UiTable
+        :columns="COLUMNS"
+        :rows="proposals"
+        :meta="meta"
+        :loading="loading"
+      >
+        <template #cell-title="{ row }">
+          <div class="min-w-[220px] max-w-[380px] py-2">
+            <RouterLink
+              v-if="can('proposal-edit')"
+              :to="{ name: 'admin.proposals.edit', params: { id: row.id } }"
+              class="block font-medium text-ui-ink hover:text-ui-accent truncate transition-colors"
+              :title="row.title"
+            >{{ row.title }}</RouterLink>
+            <p v-else class="font-medium text-ui-ink truncate" :title="row.title">{{ row.title }}</p>
+            <p class="text-ui-cap text-ui-muted truncate">{{ row.client_name }}</p>
+            <p class="text-ui-cap text-ui-faint inline-flex items-center gap-1 mt-0.5 tabular-nums">
+              <Layers class="w-3.5 h-3.5" /> {{ $t("documents.proposal.list.sectionCount", { n: row.section_count }, row.section_count) }}
             </p>
           </div>
-        </div>
-
-        <button
-          v-if="canCreate"
-          type="button"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center justify-center gap-1.5 w-full sm:w-auto"
-          @click="openCreate"
-        >
-          <Plus class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Proposal Baru</span>
-        </button>
-      </div>
-
-      <div class="flex flex-col sm:flex-row gap-2.5">
-        <div class="relative flex-1">
-          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <Search class="h-5 w-5 text-gray-400" />
+        </template>
+        <template #cell-proposal_date="{ row }">
+          <span class="whitespace-nowrap tabular-nums">{{ formatDate(row.proposal_date) }}</span>
+        </template>
+        <template #cell-letter_number="{ row }">
+          <span class="whitespace-nowrap font-mono text-ui-cap">{{ row.letter_number || "-" }}</span>
+        </template>
+        <template #cell-status="{ row }">
+          <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot>{{ proposalStatus(row.status).label }}</UiBadge>
+        </template>
+        <template #cell-updated_at="{ row }">
+          <div class="whitespace-nowrap">
+            <p class="tabular-nums">{{ formatDate(row.updated_at) }}</p>
+            <p v-if="row.updater?.name" class="text-ui-cap text-ui-muted">{{ $t("documents.proposal.list.byName", { name: row.updater.name }) }}</p>
           </div>
-          <input
-            v-model="search"
-            type="text"
-            class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-            placeholder="Cari judul, klien, atau nomor surat..."
-            @input="onSearchInput"
-          />
-        </div>
-        <div class="relative">
-          <select v-model="statusFilter" class="select-soft" @change="fetchPage(1)">
-            <option value="">Semua Status</option>
-            <option v-for="s in PROPOSAL_STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
-          </select>
-          <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-      </div>
-    </div>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="inline-flex items-center justify-end gap-0.5" @click.stop>
+            <button
+              type="button"
+              :class="iconBtn"
+              :title="$t('documents.shared.viewPdf')"
+              :aria-label="$t('documents.shared.viewPdf')"
+              :disabled="busyId === `pdf-${row.id}`"
+              @click="viewPdf(row)"
+            >
+              <UiSpinner v-if="busyId === `pdf-${row.id}`" size="16px" :center="false" />
+              <Eye v-else class="w-4 h-4" />
+            </button>
+            <button
+              v-if="can('proposal-edit')"
+              type="button"
+              :class="iconBtn"
+              :title="$t('documents.proposal.list.shareHint')"
+              :aria-label="$t('common.actions.share')"
+              @click="sharingId = row.id"
+            >
+              <Share2 class="w-4 h-4" />
+            </button>
+            <RouterLink
+              v-if="can('proposal-edit')"
+              :to="{ name: 'admin.proposals.edit', params: { id: row.id } }"
+              :class="iconBtn"
+              :title="$t('common.actions.edit')"
+              :aria-label="$t('common.actions.edit')"
+            >
+              <Pencil class="w-4 h-4" />
+            </RouterLink>
+            <button
+              v-if="canCreate"
+              type="button"
+              :class="iconBtn"
+              :title="$t('common.actions.duplicate')"
+              :aria-label="$t('common.actions.duplicate')"
+              :disabled="busyId === `dup-${row.id}`"
+              @click="duplicate(row)"
+            >
+              <Copy class="w-4 h-4" />
+            </button>
+            <button
+              v-if="can('proposal-delete')"
+              type="button"
+              :class="iconBtnDanger"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('common.actions.delete')"
+              @click="handleDelete(row)"
+            >
+              <Trash2 class="w-4 h-4" />
+            </button>
+          </div>
+        </template>
 
-    <!-- Table -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-      <SkeletonTable v-if="loading" />
-
-      <div v-else-if="proposals.length === 0" class="text-center py-12">
-        <FileText class="w-10 h-10 text-gray-300 mx-auto mb-2.5" />
-        <p class="text-brand-dark text-sm font-semibold">{{ search || statusFilter ? "Tidak ada proposal yang cocok" : "Belum ada proposal" }}</p>
-        <p v-if="!search && !statusFilter" class="text-brand-light text-xs mt-1">Buat proposal pertama Anda dari template standar JCD.</p>
-      </div>
-
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
-              <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">Proposal</th>
-              <th class="py-3 pr-4 font-semibold">Tanggal</th>
-              <th class="py-3 pr-4 font-semibold">Nomor Surat</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold">Terakhir Diubah</th>
-              <th class="py-3 font-semibold text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(proposal, index) in proposals" :key="proposal.id" class="border-b border-[#F1F1F1] hover:bg-gray-50">
-              <td class="py-3 pr-4 text-brand-light align-top">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4 align-top" style="min-width: 240px; max-width: 380px">
+        <!-- Phones: one card per proposal -->
+        <template #mobile="{ row, number }">
+          <div class="px-4 py-3.5 flex items-start gap-3">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 shrink-0 pt-0.5">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
                 <RouterLink
                   v-if="can('proposal-edit')"
-                  :to="{ name: 'admin.proposals.edit', params: { id: proposal.id } }"
-                  class="font-semibold text-brand-dark hover:text-[#0C51D9] transition-colors"
+                  :to="{ name: 'admin.proposals.edit', params: { id: row.id } }"
+                  class="text-ui-body font-medium text-ui-ink break-words"
+                >{{ row.title }}</RouterLink>
+                <p v-else class="text-ui-body font-medium text-ui-ink break-words">{{ row.title }}</p>
+                <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot class="shrink-0">{{ proposalStatus(row.status).label }}</UiBadge>
+              </div>
+              <p class="text-ui-small text-ui-muted mt-0.5 truncate">{{ row.client_name }}</p>
+              <p class="text-ui-cap text-ui-faint mt-1 tabular-nums">
+                {{ formatDate(row.proposal_date) }} · {{ $t("documents.proposal.list.sectionCount", { n: row.section_count }, row.section_count) }}
+              </p>
+              <div class="flex items-center gap-0.5 mt-2 -ml-2" @click.stop>
+                <button type="button" :class="iconBtn" :aria-label="$t('documents.shared.viewPdf')" :disabled="busyId === `pdf-${row.id}`" @click="viewPdf(row)">
+                  <UiSpinner v-if="busyId === `pdf-${row.id}`" size="16px" :center="false" />
+                  <Eye v-else class="w-4 h-4" />
+                </button>
+                <button v-if="can('proposal-edit')" type="button" :class="iconBtn" :aria-label="$t('common.actions.share')" @click="sharingId = row.id">
+                  <Share2 class="w-4 h-4" />
+                </button>
+                <button
+                  v-if="canCreate"
+                  type="button"
+                  :class="iconBtn"
+                  :aria-label="$t('common.actions.duplicate')"
+                  :disabled="busyId === `dup-${row.id}`"
+                  @click="duplicate(row)"
                 >
-                  {{ proposal.title }}
-                </RouterLink>
-                <p v-else class="font-semibold text-brand-dark">{{ proposal.title }}</p>
-                <p class="text-brand-light text-xs mt-0.5">{{ proposal.client_name }}</p>
-                <p class="text-gray-400 text-xs mt-0.5 inline-flex items-center gap-1">
-                  <Layers class="w-3.5 h-3.5" /> {{ proposal.section_count }} bagian
-                </p>
-              </td>
-              <td class="py-3 pr-4 align-top whitespace-nowrap text-brand-dark">{{ formatDate(proposal.proposal_date) }}</td>
-              <td class="py-3 pr-4 align-top whitespace-nowrap text-brand-dark">{{ proposal.letter_number || "-" }}</td>
-              <td class="py-3 pr-4 align-top">
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap" :class="proposalStatus(proposal.status).class">
-                  {{ proposalStatus(proposal.status).label }}
-                </span>
-              </td>
-              <td class="py-3 pr-4 align-top whitespace-nowrap">
-                <p class="text-brand-dark">{{ formatDate(proposal.updated_at) }}</p>
-                <p v-if="proposal.updater?.name" class="text-brand-light text-xs">oleh {{ proposal.updater.name }}</p>
-              </td>
-              <td class="py-3 align-top">
-                <div class="flex items-center justify-end gap-1.5">
-                  <button
-                    type="button"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-1.5 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all disabled:opacity-50"
-                    title="Lihat PDF"
-                    :disabled="busyId === `pdf-${proposal.id}`"
-                    @click="viewPdf(proposal)"
-                  >
-                    <Loader2 v-if="busyId === `pdf-${proposal.id}`" class="w-4 h-4 text-gray-600 animate-spin" />
-                    <Eye v-else class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button
-                    v-if="can('proposal-edit')"
-                    type="button"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-1.5 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
-                    title="Bagikan (link, email, WhatsApp)"
-                    @click="sharingId = proposal.id"
-                  >
-                    <Share2 class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <RouterLink
-                    v-if="can('proposal-edit')"
-                    :to="{ name: 'admin.proposals.edit', params: { id: proposal.id } }"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-1.5 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
-                    title="Edit"
-                  >
-                    <Pencil class="w-4 h-4 text-gray-600" />
-                  </RouterLink>
-                  <button
-                    v-if="canCreate"
-                    type="button"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-1.5 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all disabled:opacity-50"
-                    title="Duplikat"
-                    :disabled="busyId === `dup-${proposal.id}`"
-                    @click="duplicate(proposal)"
-                  >
-                    <Copy class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button
-                    v-if="can('proposal-delete')"
-                    type="button"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-1.5 hover:border-red-500 hover:ring-2 hover:ring-red-500/30 hover:bg-red-50 group transition-all"
-                    title="Hapus"
-                    @click="handleDelete(proposal)"
-                  >
-                    <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                  <Copy class="w-4 h-4" />
+                </button>
+                <button v-if="can('proposal-delete')" type="button" :class="iconBtnDanger" :aria-label="$t('common.actions.delete')" @click="handleDelete(row)">
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
 
-      <div v-if="!loading && proposals.length > 0" class="pt-3.5 border-t border-[#DCDEDD] mt-4">
-        <Pagination :meta="meta" :loading="loading" item-label="proposals" @page-change="fetchPage" />
+        <template #empty>
+          <UiEmpty v-if="search || statusFilter" :icon="SearchX" :title="$t('documents.proposal.list.noMatchTitle')" compact />
+          <UiEmpty v-else :icon="FileText" :title="$t('documents.proposal.list.emptyTitle')" :message="$t('documents.proposal.list.emptyMessage')" compact>
+            <UiButton v-if="canCreate" variant="secondary" size="sm" :icon="Plus" @click="openCreate">{{ $t("documents.proposal.list.create") }}</UiButton>
+          </UiEmpty>
+        </template>
+      </UiTable>
+
+      <div v-if="!loading && proposals.length > 0" class="px-3 sm:px-4 pb-4 border-t border-ui-line">
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('documents.proposal.list.itemLabel')" @page-change="fetchPage" />
       </div>
     </div>
 
     <ShareProposalModal v-if="sharingId" :proposal-id="sharingId" @close="sharingId = null" @updated="onShared" />
 
     <!-- New proposal modal -->
-    <div
-      v-if="showCreate"
-      class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[90] flex items-center justify-center p-3.5"
-      @click.self="showCreate = false"
+    <UiModal
+      v-model:open="showCreate"
+      :title="$t('documents.proposal.list.create')"
+      :description="$t('documents.proposal.create.description')"
     >
-      <form class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg overflow-hidden" @submit.prevent="createProposal">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Proposal Baru</h3>
-            <p class="text-brand-light text-sm">Isi data utama. Isi proposal dimulai dari template standar JCD.</p>
-          </div>
-          <button type="button" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100" @click="showCreate = false">
-            <X class="w-5 h-5" />
-          </button>
-        </div>
-
-        <div class="p-5 space-y-3.5">
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Judul Proyek <span class="text-red-500">*</span></label>
-            <input v-model="form.title" type="text" class="pp-input" placeholder="cth. Sistem Manajemen Order" required />
-            <p v-if="formErrors.title" class="text-red-500 text-xs mt-1">{{ formErrors.title[0] }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Pilih dari Data Klien</label>
-            <select v-model="form.client_id" class="pp-input" @change="onClientPicked">
-              <option value="">— Klien baru / prospek (ketik di bawah) —</option>
-              <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Nama Klien <span class="text-red-500">*</span></label>
-            <input v-model="form.client_name" type="text" class="pp-input" placeholder="cth. PT Misael Berkat Abadi" required />
-            <p v-if="formErrors.client_name" class="text-red-500 text-xs mt-1">{{ formErrors.client_name[0] }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Ditujukan Kepada</label>
-            <input v-model="form.recipient" type="text" class="pp-input" placeholder="cth. Bapak Hendri" />
-            <p class="text-gray-400 text-xs mt-1">Dipakai untuk salam pembuka di bagian Pendahuluan.</p>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-              <label class="block text-sm font-semibold text-brand-dark mb-1">Tanggal <span class="text-red-500">*</span></label>
-              <input v-model="form.proposal_date" type="date" class="pp-input" required />
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-brand-dark mb-1">Nomor Surat (SPH)</label>
-              <input v-model="form.letter_number" type="text" class="pp-input" placeholder="cth. 002/E/SPH-JCD/BD/X/2026" />
-            </div>
-          </div>
-        </div>
-
-        <div class="p-5 border-t border-[#DCDEDD] flex justify-end gap-2.5">
-          <button type="button" class="rounded-[8px] border border-[#DCDEDD] px-4 py-2.5 text-sm font-semibold text-brand-dark hover:bg-gray-50" @click="showCreate = false">
-            Batal
-          </button>
-          <button
-            type="submit"
-            :disabled="saving"
-            class="btn-primary rounded-[8px] border border-[#2151A0] blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-1.5 disabled:opacity-60"
-          >
-            <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
-            <span class="text-brand-white text-sm font-semibold">Buat & Mulai Edit</span>
-          </button>
-        </div>
+      <form id="proposal-create-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="createProposal">
+        <UiInput
+          v-model="form.title"
+          :label="$t('documents.proposal.create.title')"
+          required
+          :placeholder="$t('documents.proposal.create.titlePlaceholder')"
+          :error="formErrors.title?.[0] || ''"
+          class="sm:col-span-2"
+        />
+        <UiSelect
+          v-model="form.client_id"
+          :label="$t('documents.proposal.create.pickClient')"
+          :options="[{ value: '', label: $t('documents.proposal.create.newClient') }, ...clientOptions]"
+          class="sm:col-span-2"
+          @change="onClientPicked"
+        />
+        <UiInput
+          v-model="form.client_name"
+          :label="$t('documents.shared.clientName')"
+          required
+          :placeholder="$t('documents.proposal.create.clientPlaceholder')"
+          :error="formErrors.client_name?.[0] || ''"
+          class="sm:col-span-2"
+        />
+        <UiInput
+          v-model="form.recipient"
+          :label="$t('documents.proposal.create.recipient')"
+          :placeholder="$t('documents.proposal.create.recipientPlaceholder')"
+          :hint="$t('documents.proposal.create.recipientHint')"
+          class="sm:col-span-2"
+        />
+        <UiInput v-model="form.proposal_date" type="date" :label="$t('common.labels.date')" required />
+        <UiInput v-model="form.letter_number" :label="$t('documents.proposal.create.letterNumber')" :placeholder="$t('documents.proposal.create.letterNumberPlaceholder')" />
       </form>
-    </div>
+      <template #footer>
+        <UiButton variant="ghost" @click="showCreate = false">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="proposal-create-form" :loading="saving">{{ $t("documents.proposal.create.submit") }}</UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>
-
-<style scoped>
-.pp-input {
-  width: 100%;
-  border: 1px solid #dcdedd;
-  border-radius: 10px;
-  padding: 9px 12px;
-  font-size: 14px;
-  color: #0f172a;
-  background: #ffffff;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.pp-input:focus {
-  border-color: #0c51d9;
-}
-</style>

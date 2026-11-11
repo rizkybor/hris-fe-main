@@ -1,0 +1,96 @@
+{
+  "title": "Kehadiran Saya",
+  "subtitle": "Pantau kehadiran harian dan kelola pengajuan cuti",
+  "requestLeave": "Ajukan Cuti",
+  "status": {
+    "present": "Hadir",
+    "absent": "Tidak Hadir",
+    "sick_leave": "Cuti Sakit",
+    "weekend": "Akhir Pekan",
+    "pending": "Menunggu",
+    "approved": "Disetujui",
+    "rejected": "Ditolak"
+  },
+  "leaveTypes": {
+    "annual_leave": "Cuti Tahunan",
+    "sick_leave": "Cuti Sakit",
+    "personal_leave": "Cuti Pribadi",
+    "emergency_leave": "Cuti Darurat",
+    "maternity_leave": "Cuti Melahirkan",
+    "paternity_leave": "Cuti Ayah",
+    "compassionate_leave": "Cuti Duka"
+  },
+  "stats": {
+    "thisMonth": "Bulan Ini",
+    "daysPresent": "Hari hadir",
+    "leaveBalance": "Sisa Cuti",
+    "ofDays": "dari {n} hari",
+    "daysRemaining": "Hari tersisa",
+    "pendingRequests": "Pengajuan Menunggu",
+    "awaitingApproval": "Menunggu persetujuan",
+    "averageHours": "Rata-rata Jam",
+    "hours": "{n} jam",
+    "dailyAverage": "Rata-rata harian"
+  },
+  "recent": {
+    "title": "Kehadiran Terbaru",
+    "subtitle": "7 hari terakhir",
+    "checkIn": "Masuk",
+    "checkOut": "Pulang",
+    "totalHours": "Total Jam",
+    "noData": "Tidak ada data kehadiran",
+    "working": "Sedang Bekerja",
+    "empty": "Belum ada data kehadiran"
+  },
+  "balance": {
+    "title": "Sisa Cuti Tahunan {year}"
+  },
+  "requests": {
+    "title": "Pengajuan Cuti Saya",
+    "subtitle": "Pengajuan terbaru",
+    "requested": "Diajukan {date}",
+    "empty": "Belum ada pengajuan cuti"
+  },
+  "form": {
+    "title": "Ajukan Cuti Baru",
+    "description": "Kirim pengajuan cuti untuk disetujui",
+    "leaveType": "Jenis Cuti",
+    "leaveTypePlaceholder": "Pilih jenis cuti",
+    "startDate": "Tanggal Mulai",
+    "endDate": "Tanggal Selesai",
+    "halfDay": "Cuti Setengah Hari",
+    "totalDays": "Total Hari",
+    "excludingWeekends": "Tidak termasuk akhir pekan",
+    "reason": "Alasan Cuti",
+    "reasonPlaceholder": "Jelaskan alasan pengajuan cuti Anda...",
+    "emergencyContact": "Kontak Darurat (Opsional)",
+    "emergencyContactPlaceholder": "Nomor telepon kontak darurat",
+    "attachment": "Lampiran (Surat Keterangan Dokter, dll.)",
+    "attachmentRequiredHint": "Wajib diunggah untuk cuti sakit lebih dari 1 hari.",
+    "attachmentHint": "Format: JPG, PNG, atau PDF, maks. 5MB.",
+    "submit": "Kirim Pengajuan",
+    "errors": {
+      "startTomorrow": "Tanggal mulai paling cepat besok.",
+      "endAfterStart": "Tanggal selesai harus setelah tanggal mulai.",
+      "attachmentRequired": "Lampiran surat keterangan dokter wajib diunggah untuk cuti sakit lebih dari 1 hari.",
+      "submitFailed": "Gagal mengirim pengajuan cuti. Silakan coba lagi."
+    }
+  },
+  "details": {
+    "title": "Detail Pengajuan Cuti",
+    "description": "Informasi lengkap pengajuan cuti ini",
+    "totalDuration": "Total Durasi",
+    "halfDay": "Setengah Hari",
+    "workingDays": "Hari kerja (tidak termasuk akhir pekan)",
+    "submitted": "Tanggal Pengajuan",
+    "attachment": "Lampiran",
+    "viewAttachment": "Lihat Lampiran"
+  },
+  "success": {
+    "title": "Pengajuan Terkirim!",
+    "message": "Pengajuan cuti Anda berhasil dikirim",
+    "duration": "Durasi",
+    "notice": "Anda akan menerima notifikasi setelah pengajuan ditinjau oleh manajer.",
+    "gotIt": "Mengerti"
+  }
+}

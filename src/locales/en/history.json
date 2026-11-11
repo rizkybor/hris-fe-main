@@ -1,0 +1,54 @@
+{
+  "title": "Activity Log",
+  "subtitle": "Every create, update, delete and sign-in across the system.",
+  "stats": {
+    "total": "Total Activities",
+    "totalHint": "All-time system events",
+    "todayHint": "Events today",
+    "thisWeek": "This Week",
+    "thisWeekHint": "Since Monday",
+    "categories": "Categories"
+  },
+  "filters": {
+    "allCategories": "All Categories",
+    "search": "Search activity...",
+    "dateFrom": "From date",
+    "dateTo": "To date"
+  },
+  "list": {
+    "title": "All Activity",
+    "empty": "No activity found",
+    "activity": "Activity",
+    "when": "When",
+    "system": "System",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+    "before": "Before",
+    "after": "After",
+    "totalActivities": "{n} total activity | {n} total activities"
+  },
+  "events": {
+    "created": "Created",
+    "updated": "Updated",
+    "deleted": "Deleted",
+    "login": "Login",
+    "loginFailed": "Failed Login",
+    "logout": "Logout",
+    "roleCreated": "Role Created",
+    "roleUpdated": "Role Updated",
+    "roleDeleted": "Role Deleted",
+    "backupDownloaded": "Backup Downloaded"
+  },
+  "deleteRow": {
+    "confirm": "Delete this activity log entry? This is a permanent hard delete and cannot be undone.",
+    "failed": "Failed to delete activity log entry."
+  },
+  "deleteRange": {
+    "title": "Delete by Date Range",
+    "submit": "Delete Range",
+    "warning": "This permanently deletes every activity log entry created in this range. There is no soft-delete/undo for log entries.",
+    "confirm": "Delete every activity log entry between {start} and {end}? This is a permanent hard delete and cannot be undone.",
+    "deleted": "{n} activity log entry deleted. | {n} activity log entries deleted.",
+    "failed": "Failed to delete entries in this range."
+  }
+}

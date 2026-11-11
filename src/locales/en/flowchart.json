@@ -1,0 +1,111 @@
+{
+  "title": "Flowchart",
+  "subtitle": "Design process flows with standard flowchart symbols and export them as JPG or PDF",
+  "new": "New Flowchart",
+  "counts": {
+    "shapes": "{n} shape | {n} shapes",
+    "connectors": "{n} connector | {n} connectors"
+  },
+  "list": {
+    "search": "Search by name or description...",
+    "count": "{n} flowchart | {n} flowcharts",
+    "noMatch": "No flowcharts match your search",
+    "empty": "No flowcharts yet",
+    "emptyHint": "Create your first flowchart to map out a process.",
+    "open": "Open {name}",
+    "by": "by {name}",
+    "itemLabel": "flowcharts",
+    "deleteConfirm": "Delete flowchart \"{name}\"? This action cannot be undone.",
+    "deleteFailed": "Failed to delete flowchart."
+  },
+  "editor": {
+    "untitled": "Untitled Flowchart",
+    "backToList": "Back to list",
+    "namePlaceholder": "Flowchart name",
+    "unsaved": "Unsaved changes",
+    "readOnly": "Read only",
+    "notSaved": "Not saved yet",
+    "lastSaved": "Last saved {at}",
+    "lastSavedBy": "Last saved {at} by {name}",
+    "descriptionPlaceholder": "Add a short description (optional)",
+    "preparedFor": "Prepared for:",
+    "preparedForPlaceholder": "e.g. PT Misael Berkat Abadi (optional)",
+    "loading": "Loading flowchart",
+    "emptyReadonly": "This flowchart is empty",
+    "emptyTitle": "Start your flowchart",
+    "emptyHint": "Click or drag a shape from the left panel",
+    "loadFailed": "Flowchart could not be loaded.",
+    "saveFailed": "Flowchart could not be saved.",
+    "nameRequired": "Please give the flowchart a name.",
+    "leaveConfirm": "You have unsaved changes. Leave without saving?",
+    "leave": "Leave"
+  },
+  "tools": {
+    "undo": "Undo",
+    "redo": "Redo",
+    "snap": "Snap to grid",
+    "fit": "Fit to screen"
+  },
+  "export": {
+    "paper": "Paper · A4",
+    "portrait": "Portrait",
+    "landscape": "Landscape",
+    "jpg": "Export as JPG",
+    "pdf": "Export as PDF",
+    "failed": "Export failed."
+  },
+  "palette": {
+    "title": "Shapes · drag in",
+    "shapeHint": "{shape} — click or drag onto the canvas",
+    "help": "Drag from a shape's edge dot to another shape to connect them. Double-click a shape or line to edit its text."
+  },
+  "shapes": {
+    "terminator": "Start / End",
+    "process": "Process",
+    "decision": "Decision",
+    "io": "Input / Output",
+    "document": "Document",
+    "database": "Database",
+    "subprocess": "Predefined Process",
+    "preparation": "Preparation",
+    "connector": "Connector",
+    "note": "Note",
+    "text": "Text"
+  },
+  "inspector": {
+    "shape": "Shape",
+    "text": "Text",
+    "fontSize": "Font size",
+    "bold": "Bold",
+    "textColor": "Text color",
+    "color": "Color",
+    "colorPreset": "Colour preset {n}",
+    "fill": "Fill",
+    "border": "Border",
+    "deleteShape": "Delete shape",
+    "connector": "Connector",
+    "connectorLabel": "Connector Label",
+    "connectorLabelPlaceholder": "e.g. Yes / No",
+    "lineType": "Line Type",
+    "lines": {
+      "smoothstep": "Rounded elbow",
+      "step": "Sharp elbow",
+      "straight": "Straight",
+      "curved": "Curved"
+    },
+    "arrow": "Arrow",
+    "arrows": {
+      "end": "One way →",
+      "both": "Both ways ↔",
+      "none": "No arrow"
+    },
+    "style": "Style",
+    "dashed": "Dashed",
+    "animated": "Animated flow",
+    "deleteConnector": "Delete connector",
+    "properties": "Properties",
+    "propertiesHint": "Select a shape or connector to change its text, colors, and style.",
+    "shortcuts": "Shortcuts",
+    "multiSelect": "Multi-select"
+  }
+}

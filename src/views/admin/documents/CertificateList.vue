@@ -1,13 +1,16 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
-import { Award, Plus, Download, Trash2, Search, Layers, CalendarDays, Settings, ArrowLeft, ChevronDown } from "lucide-vue-next";
+import { Award, Plus, Download, Trash2, Search, SearchX, Layers, CalendarDays, Settings, ArrowLeft } from "lucide-vue-next";
 import { useCertificateStore } from "@/stores/certificate";
 import { can } from "@/helpers/permissionHelper";
-import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
+import { UiPageHeader, UiButton, UiInput, UiChips, UiTable, UiBadge, UiEmpty, UiStat, UiConfirmDialog } from "@/components/ui";
 import { useAlertModalStore } from "@/stores/alertModal";
 
+const { t } = useI18n();
 const store = useCertificateStore();
 const alertModal = useAlertModalStore();
 const { certificates, meta, statistics, loading } = storeToRefs(store);
@@ -55,198 +58,152 @@ const handleDelete = async () => {
   certificateToDelete.value = null;
 };
 
+// Presentation only: type chips, table columns, icon button style.
+const TYPE_OPTIONS = computed(() => [
+  { value: "", label: t("documents.certificate.list.allTypes") },
+  { value: "individual", label: t("documents.certificate.types.individual") },
+  { value: "batch", label: t("documents.certificate.types.batch") },
+]);
+const COLUMNS = computed(() => [
+  { key: "certificate_number", label: t("documents.certificate.list.columns.number") },
+  { key: "title", label: t("documents.certificate.list.columns.title") },
+  { key: "recipient_name", label: t("documents.certificate.list.columns.recipient") },
+  { key: "created_at", label: t("common.labels.date") },
+  { key: "creator", label: t("common.labels.createdBy") },
+  { key: "actions", label: "", align: "right" },
+]);
+const iconBtn =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink disabled:opacity-50 focus:outline-none focus-visible:shadow-ui-focus";
+
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "short", day: "numeric" }) : "-";
 </script>
 
+
 <template>
-  <div>
-    <div class="bg-white p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-3">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('documents.certificate.list.title')" :subtitle="$t('documents.certificate.list.subtitle')" class="ui-anim-fade-up">
+      <template #eyebrow>
         <router-link
           :to="{ name: 'admin.documents.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Documents"
-          title="Back to Documents"
+          class="ui-press inline-flex items-center gap-1 mb-1.5 text-ui-small font-medium text-ui-accent hover:underline"
+          :aria-label="$t('documents.shared.backToDocuments')"
+          :title="$t('documents.shared.backToDocuments')"
         >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+          <ArrowLeft class="w-4 h-4" />{{ $t("documents.shared.documents") }}
         </router-link>
-        <div class="w-11 h-11 bg-amber-50 rounded-[12px] flex items-center justify-center">
-          <Award class="w-5 h-5 text-amber-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Certificate</h3>
-          <p class="text-brand-light text-sm">History of issued certificates</p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <router-link
+      </template>
+      <template #actions>
+        <UiButton
           v-if="can('certificate-menu')"
+          variant="secondary"
+          :icon="Settings"
           :to="{ name: 'admin.settings.certificate-settings' }"
-          class="p-3 rounded-lg border border-[#DCDEDD] text-brand-dark hover:bg-gray-50"
-          title="Settings & Templates"
-        >
-          <Settings class="w-4 h-4" />
-        </router-link>
-        <router-link
-          v-if="can('certificate-create')"
-          :to="{ name: 'admin.certificates.create' }"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
-        >
-          <Plus class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Generate Certificate</span>
-        </router-link>
-      </div>
+          :title="$t('documents.certificate.list.settings')"
+          :aria-label="$t('documents.certificate.list.settings')"
+          class="!px-2.5"
+        />
+        <UiButton v-if="can('certificate-create')" :to="{ name: 'admin.certificates.create' }" :icon="Plus" class="flex-1 sm:flex-none">{{ $t("documents.certificate.list.generate") }}</UiButton>
+      </template>
+    </UiPageHeader>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 ui-stagger">
+      <UiStat :label="$t('documents.certificate.list.stats.total')" :value="statistics.total_certificates" :icon="Award" />
+      <UiStat :label="$t('documents.certificate.list.stats.batches')" :value="statistics.total_batches" :icon="Layers" />
+      <UiStat :label="$t('documents.certificate.list.stats.thisMonth')" :value="statistics.this_month" :icon="CalendarDays" />
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 flex items-center justify-between">
-        <div>
-          <p class="text-brand-dark text-sm font-medium">Total Certificates</p>
-          <p class="text-brand-dark text-2xl font-extrabold leading-tight my-1">{{ statistics.total_certificates }}</p>
-        </div>
-        <div class="w-11 h-11 bg-amber-50 rounded-[12px] flex items-center justify-center">
-          <Award class="w-5 h-5 text-amber-600" />
-        </div>
-      </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 flex items-center justify-between">
-        <div>
-          <p class="text-brand-dark text-sm font-medium">Total Bulk Batches</p>
-          <p class="text-brand-dark text-2xl font-extrabold leading-tight my-1">{{ statistics.total_batches }}</p>
-        </div>
-        <div class="w-11 h-11 bg-indigo-50 rounded-[12px] flex items-center justify-center">
-          <Layers class="w-5 h-5 text-indigo-600" />
-        </div>
-      </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 flex items-center justify-between">
-        <div>
-          <p class="text-brand-dark text-sm font-medium">This Month</p>
-          <p class="text-brand-dark text-2xl font-extrabold leading-tight my-1">{{ statistics.this_month }}</p>
-        </div>
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <CalendarDays class="w-5 h-5 text-blue-600" />
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex flex-col sm:flex-row gap-3 mb-4">
-        <div class="relative max-w-sm w-full">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search class="w-4 h-4 text-gray-400" />
-          </div>
-          <input
-            v-model="search"
-            @keyup.enter="handleSearch"
-            type="text"
-            placeholder="Search certificate number, title, recipient..."
-            class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <div class="relative">
-          <select
-            v-model="typeFilter"
-            @change="handleFilterChange"
-            class="select-soft"
-          >
-            <option value="">All Types</option>
-            <option value="individual">Individual</option>
-            <option value="batch">Batch</option>
-          </select>
-          <ChevronDown
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-          />
-        </div>
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+      <!-- Toolbar -->
+      <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line flex flex-col md:flex-row md:items-center gap-3">
+        <UiInput
+          v-model="search"
+          :icon="Search"
+          :placeholder="$t('documents.certificate.list.searchPlaceholder')"
+          class="md:w-[340px]"
+          @keyup.enter="handleSearch"
+        />
+        <UiChips v-model="typeFilter" :options="TYPE_OPTIONS" @update:model-value="handleFilterChange" />
       </div>
 
-      <SkeletonTable v-if="loading" :rows="6" :cols="7" />
-
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
-              <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">Certificate No.</th>
-              <th class="py-3 pr-4 font-semibold">Title</th>
-              <th class="py-3 pr-4 font-semibold">Recipient</th>
-              <th class="py-3 pr-4 font-semibold">Date</th>
-              <th class="py-3 pr-4 font-semibold">Created By</th>
-              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(certificate, index) in certificates"
-              :key="certificate.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
+      <UiTable :columns="COLUMNS" :rows="certificates" :meta="meta" :loading="loading" :skeleton-rows="6">
+        <template #cell-certificate_number="{ row }">
+          <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
+            <span class="font-mono text-ui-cap text-ui-ink">{{ row.certificate_number }}</span>
+            <UiBadge v-if="row.batch_id" tone="info">BATCH</UiBadge>
+          </span>
+        </template>
+        <template #cell-title="{ row }">
+          <span class="block max-w-[300px] truncate text-ui-ink" :title="row.title">{{ row.title }}</span>
+        </template>
+        <template #cell-created_at="{ row }">
+          <span class="tabular-nums whitespace-nowrap">{{ formatDate(row.created_at) }}</span>
+        </template>
+        <template #cell-creator="{ row }">{{ row.creator || "-" }}</template>
+        <template #cell-actions="{ row }">
+          <div class="inline-flex items-center gap-0.5">
+            <button type="button" :class="iconBtn" :disabled="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.certificate_number })" @click="handleDownload(row)">
+              <Download class="w-4 h-4" />
+            </button>
+            <button
+              v-if="can('certificate-delete')"
+              type="button"
+              :class="[iconBtn, 'hover:!bg-ui-bad-soft hover:!text-ui-bad']"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('documents.shared.deleteItem', { number: row.certificate_number })"
+              @click="confirmDelete(row)"
             >
-              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4 font-mono text-xs">
-                {{ certificate.certificate_number }}
-                <span v-if="certificate.batch_id" class="ml-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 text-[10px] font-semibold align-middle">
-                  BATCH
-                </span>
-              </td>
-              <td class="py-3 pr-4">{{ certificate.title }}</td>
-              <td class="py-3 pr-4">{{ certificate.recipient_name }}</td>
-              <td class="py-3 pr-4">{{ formatDate(certificate.created_at) }}</td>
-              <td class="py-3 pr-4">{{ certificate.creator || "-" }}</td>
-              <td class="py-3 pr-4">
-                <div class="flex items-center justify-end gap-1">
-                  <button
-                    @click="handleDownload(certificate)"
-                    :disabled="downloadingId === certificate.id"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
-                    title="Download PDF"
-                  >
-                    <Download class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button
-                    v-if="can('certificate-delete')"
-                    @click="confirmDelete(certificate)"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Delete"
-                  >
-                    <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div v-if="!loading && certificates.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">No Certificates yet</p>
-        </div>
-      </div>
-
-      <Pagination :meta="meta" :loading="loading" item-label="certificates" @page-change="load" />
-    </div>
-
-    <Transition name="fade">
-      <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
-        <div class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <h3 class="text-xl font-bold text-brand-dark mb-2">Delete Certificate?</h3>
-          <p class="text-gray-500 text-sm mb-6">
-            "{{ certificateToDelete?.certificate_number }}" will be permanently deleted along with its PDF file.
-          </p>
-          <div class="grid grid-cols-2 gap-3">
-            <button @click="isDeleteModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
-              Cancel
-            </button>
-            <button @click="handleDelete" class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600">
-              Yes, Delete
+              <Trash2 class="w-4 h-4" />
             </button>
           </div>
-        </div>
+        </template>
+
+        <!-- Phones: one card per certificate -->
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="w-5 pt-0.5 text-ui-cap text-ui-faint tabular-nums shrink-0">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <p class="font-mono text-ui-cap text-ui-muted truncate">{{ row.certificate_number }}</p>
+                <UiBadge v-if="row.batch_id" tone="info" class="shrink-0">BATCH</UiBadge>
+              </div>
+              <p class="text-ui-body font-medium text-ui-ink mt-0.5 break-words">{{ row.recipient_name }}</p>
+              <p class="text-ui-cap text-ui-muted mt-0.5 break-words">{{ row.title }}</p>
+              <p class="text-ui-cap text-ui-muted mt-0.5">
+                <span class="tabular-nums">{{ formatDate(row.created_at) }}</span> · {{ row.creator || "-" }}
+              </p>
+            </div>
+            <div class="flex flex-col items-center gap-1 shrink-0 -mr-1.5 -mt-1">
+              <button type="button" :class="iconBtn" class="!w-9 !h-9" :disabled="downloadingId === row.id" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.certificate_number })" @click="handleDownload(row)">
+                <Download class="w-4 h-4" />
+              </button>
+              <button v-if="can('certificate-delete')" type="button" :class="iconBtn" class="!w-9 !h-9" :aria-label="$t('documents.shared.deleteItem', { number: row.certificate_number })" @click="confirmDelete(row)">
+                <Trash2 class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <template #empty>
+          <UiEmpty v-if="search || typeFilter" :icon="SearchX" :title="$t('documents.certificate.list.noMatchTitle')" :message="$t('documents.certificate.list.noMatchMessage')" compact />
+          <UiEmpty v-else :icon="Award" :title="$t('documents.certificate.list.emptyTitle')" compact>
+            <UiButton v-if="can('certificate-create')" variant="secondary" size="sm" :icon="Plus" :to="{ name: 'admin.certificates.create' }">{{ $t("documents.certificate.list.generate") }}</UiButton>
+          </UiEmpty>
+        </template>
+      </UiTable>
+
+      <div class="px-4 sm:px-5 pb-4">
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('documents.certificate.list.itemLabel')" @page-change="load" />
       </div>
-    </Transition>
+    </section>
+
+    <UiConfirmDialog
+      v-model:open="isDeleteModalOpen"
+      type="danger"
+      :title="$t('documents.certificate.list.deleteTitle')"
+      :message="$t('documents.certificate.list.deleteMessage', { number: certificateToDelete?.certificate_number })"
+      :confirm-text="$t('documents.shared.yesDelete')"
+      @confirm="handleDelete"
+    />
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-</style>

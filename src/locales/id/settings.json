@@ -1,0 +1,547 @@
+{
+  "backToSettings": "Kembali ke Pengaturan",
+  "settings": "Pengaturan",
+  "saveFailed": "Gagal menyimpan pengaturan.",
+  "lastChangedBy": "Terakhir diubah oleh {name}",
+  "dashboard": {
+    "title": "Pengaturan",
+    "subtitle": "Akses, data master, konfigurasi, dan pemeliharaan sistem.",
+    "categories": {
+      "access": {
+        "title": "Akses & Keamanan",
+        "description": "Atur siapa yang bisa masuk dan apa yang bisa dilakukan"
+      },
+      "masterData": {
+        "title": "Data Master",
+        "description": "Daftar referensi yang dipakai di formulir aplikasi"
+      },
+      "configuration": {
+        "title": "Konfigurasi",
+        "description": "Pengaturan format dan template untuk dokumen yang dibuat"
+      },
+      "system": {
+        "title": "Sistem",
+        "description": "Pemeliharaan database"
+      },
+      "personal": {
+        "title": "Pribadi",
+        "description": "Pengaturan akun Anda sendiri"
+      }
+    },
+    "links": {
+      "roles": {
+        "title": "Peran & Hak Akses",
+        "description": "Kelola peran pengguna dan atur akses ke setiap modul"
+      },
+      "staffPermissions": {
+        "title": "Hak Akses Akun Staf",
+        "description": "Beri hak akses tambahan ke akun Staf tertentu di luar peran Staf"
+      },
+      "credentials": {
+        "title": "Akun & Kredensial",
+        "description": "Kelola kredensial akun perusahaan yang tersimpan"
+      },
+      "dropdownOptions": {
+        "title": "Opsi Dropdown",
+        "description": "Kelola pilihan Jenis Kepegawaian, Status PTKP, Nama Bank, dan Bahasa Pilihan"
+      },
+      "documentCodes": {
+        "title": "Kode Surat & Divisi",
+        "description": "Kelola daftar referensi kode surat dan kode divisi"
+      },
+      "bankAccounts": {
+        "title": "Rekening Bank",
+        "description": "Kelola pilihan Nama Bank dan Nomor Rekening di bagian Pembayaran & Pajak Invoice"
+      },
+      "sdmFields": {
+        "title": "Bidang SDM",
+        "description": "Kelola daftar peran/bidang untuk Sumber Daya SDM di Biaya operasional"
+      },
+      "certificate": {
+        "title": "Konfigurasi Sertifikat",
+        "description": "Kelola format penomoran dan template latar sertifikat"
+      },
+      "greetings": {
+        "title": "Ucapan Kalender",
+        "description": "Kelola hari libur, ulang tahun, rapat, dan ucapan berbasis tanggal lain di dasbor"
+      },
+      "clientScreening": {
+        "title": "Screening Klien",
+        "description": "Katalog layanan (sinkron dari Rate Card) dan kuesioner kebutuhan klien"
+      },
+      "documents": {
+        "title": "Pengaturan Dokumen",
+        "description": "Tampilkan nama penanda tangan dengan atau tanpa gelar akademik di PDF"
+      },
+      "attendance": {
+        "title": "Pengaturan Kehadiran",
+        "description": "Atur apakah staf bisa Absen masuk/pulang di hari Sabtu & Minggu"
+      },
+      "payroll": {
+        "title": "Pengaturan Penggajian",
+        "description": "Atur cara Penggajian dibuat otomatis"
+      },
+      "backup": {
+        "title": "Cadangan Database",
+        "description": "Buat dan kelola cadangan SQL lengkap dari database"
+      },
+      "profile": {
+        "title": "Profil Saya",
+        "description": "Perbarui informasi profil pribadi Anda"
+      }
+    }
+  },
+  "backup": {
+    "title": "Cadangan Database",
+    "subtitle": "Riwayat cadangan SQL lengkap dari semua tabel database",
+    "create": "Buat Cadangan Baru",
+    "creating": "Membuat cadangan...",
+    "createFailed": "Gagal membuat cadangan.",
+    "listTitle": "Cadangan",
+    "count": "{n} cadangan",
+    "searchPlaceholder": "Cari nama file cadangan...",
+    "columns": {
+      "file": "File Cadangan",
+      "size": "Ukuran",
+      "createdBy": "Dibuat Oleh",
+      "type": "Jenis",
+      "date": "Tanggal"
+    },
+    "automatic": "Otomatis",
+    "manual": "Manual",
+    "downloadSql": "Unduh SQL",
+    "restoreFromBackup": "Pulihkan database dari cadangan ini",
+    "restore": "Pulihkan",
+    "emptyTitle": "Belum ada cadangan",
+    "emptyMessage": "Klik \"Buat Cadangan Baru\" untuk membuat cadangan database pertama.",
+    "itemLabel": "cadangan",
+    "restoreConfirm": {
+      "title": "Pulihkan Database",
+      "message": "Tindakan ini akan MENGGANTI SECARA PERMANEN semua data saat ini dengan isi \"{file}\" ({date}). Cadangan pengaman dari kondisi saat ini dibuat otomatis terlebih dahulu, tetapi tindakan ini tidak bisa dibatalkan dari layar ini, dan Anda mungkin akan keluar setelahnya. Yakin ingin melanjutkan?",
+      "confirm": "Ya, Pulihkan"
+    },
+    "restoreDone": {
+      "title": "Pemulihan Selesai",
+      "message": "Database berhasil dipulihkan. Halaman akan dimuat ulang."
+    },
+    "deleteConfirm": {
+      "title": "Hapus Cadangan?",
+      "message": "\"{file}\" akan dihapus permanen dari server dan tidak bisa dikembalikan.",
+      "confirm": "Ya, Hapus"
+    }
+  },
+  "documents": {
+    "title": "Pengaturan Dokumen",
+    "subtitle": "Cara dokumen PDF dicetak",
+    "signatoryName": "Nama Penanda Tangan",
+    "signatoryHint": "Berlaku untuk setiap blok tanda tangan: Surat, BAST, Memo resmi, Purchase Order, Kwitansi, Proposal, Sertifikat, dan Raport Staf. Nama pengguna HRIS mengikuti pilihan gelar di Profil Saya masing-masing; pengaturan ini untuk nama lain (mis. klien atau pihak luar).",
+    "withDegree": {
+      "title": "Nama dengan gelar",
+      "description": "Mencetak nama penanda tangan persis seperti yang diketik di dokumen."
+    },
+    "nameOnly": {
+      "title": "Nama saja",
+      "description": "Menghapus gelar sebelum nama (Dr., Ir., Prof., ...) dan gelar setelah koma."
+    },
+    "saved": "Pengaturan dokumen disimpan. Berlaku untuk PDF yang dibuat mulai sekarang."
+  },
+  "sdmFields": {
+    "title": "Bidang SDM",
+    "subtitle": "Daftar bidang/peran yang bisa dipilih saat menambah Sumber Daya SDM di Biaya operasional",
+    "listTitle": "Bidang",
+    "count": "{n} bidang",
+    "fieldName": "Nama Bidang",
+    "fieldNameColumn": "Nama bidang",
+    "placeholder": "mis. Backend Developer",
+    "addFailed": "Gagal menambah bidang.",
+    "deleteConfirm": "Hapus bidang \"{name}\"?",
+    "deleteFailed": "Gagal menghapus bidang. Mungkin masih dipakai oleh Sumber Daya SDM.",
+    "deleteAria": "Hapus bidang",
+    "empty": "Belum ada bidang SDM"
+  },
+  "payroll": {
+    "title": "Pengaturan Penggajian",
+    "subtitle": "Atur cara Penggajian dibuat otomatis",
+    "generationTitle": "Pembuatan penggajian",
+    "generationHint": "Siapa saja yang disertakan saat Penggajian dibuat.",
+    "exemption": "Pengecualian Kehadiran",
+    "exemptionBefore": "Secara default, pembuatan Penggajian mengharuskan karyawan memiliki minimal satu catatan kehadiran di bulan tersebut; jika tidak, karyawan tidak disertakan. Jika diaktifkan, karyawan",
+    "exemptionRoles": "Manager, Finance, dan Operational Director",
+    "exemptionAfter": "tetap disertakan walau tanpa catatan kehadiran -- dianggap hadir penuh, tanpa potongan. Karyawan lain tetap membutuhkan catatan kehadiran apa pun pengaturan ini.",
+    "saved": "Pengaturan penggajian berhasil disimpan."
+  },
+  "greetings": {
+    "title": "Ucapan Kalender",
+    "subtitle": "Hari libur, ulang tahun, rapat, dan pengingat lain yang tampil di dasbor",
+    "add": "Tambah Ucapan",
+    "edit": "Ubah Ucapan",
+    "listTitle": "Ucapan",
+    "count": "{n} ucapan",
+    "types": {
+      "holiday": "Hari Libur",
+      "birthday": "Ulang Tahun",
+      "meeting": "Rapat / Acara",
+      "custom": "Kustom"
+    },
+    "allRoles": "Semua Peran",
+    "columns": {
+      "greeting": "Ucapan",
+      "date": "Tanggal",
+      "type": "Jenis",
+      "audience": "Penerima"
+    },
+    "everyYear": "(setiap tahun)",
+    "editAria": "Ubah ucapan",
+    "deleteAria": "Hapus ucapan",
+    "empty": "Belum ada ucapan yang diatur.",
+    "itemLabel": "ucapan",
+    "deleteConfirm": "Hapus \"{title}\"?",
+    "saveFailed": "Gagal menyimpan ucapan.",
+    "deleteFailed": "Gagal menghapus ucapan.",
+    "form": {
+      "title": "Judul",
+      "titlePlaceholder": "mis. Hari Kemerdekaan, Ulang Tahun Aldy, Sprint Review",
+      "message": "Pesan Ucapan",
+      "messagePlaceholder": "mis. Dirgahayu Republik Indonesia! 🇮🇩",
+      "date": "Tanggal",
+      "type": "Jenis",
+      "recurring": "Berulang setiap tahun",
+      "recurringHint": "Gunakan untuk hari libur dan ulang tahun -- hanya tanggal dan bulan yang dipakai, tahun di atas diabaikan. Biarkan nonaktif untuk tanggal sekali saja, seperti rapat tertentu.",
+      "audience": "Penerima",
+      "active": "Aktif"
+    }
+  },
+  "certificate": {
+    "title": "Konfigurasi Sertifikat",
+    "subtitle": "Pengaturan format penomoran otomatis dan template latar sertifikat",
+    "numberingTitle": "Penomoran Sertifikat",
+    "numberingHint": "Nomor otomatis yang dicetak di setiap sertifikat.",
+    "companyCode": "Kode Perusahaan",
+    "companyCodePlaceholder": "mis. JCD",
+    "numberFormat": "Format Nomor",
+    "exampleResult": "Contoh hasil:",
+    "saveSettings": "Simpan Pengaturan",
+    "saved": "Pengaturan sertifikat berhasil disimpan.",
+    "saveFailed": "Gagal menyimpan pengaturan.",
+    "templateTitle": "Template Latar",
+    "templateHint": "Tanpa template khusus, sertifikat memakai template premium bawaan sistem. Unggah gambar untuk memakai latar sendiri. (panduan ukuran: 297 X 210 mm)",
+    "templateName": "Nama Template",
+    "templateNamePlaceholder": "mis. Template Premium Gold",
+    "backgroundImage": "Gambar Latar (JPEG/PNG/WEBP, maks. 5MB)",
+    "uploading": "Mengunggah...",
+    "uploadTemplate": "Unggah Template",
+    "templateRequired": "Nama template dan file latar wajib diisi.",
+    "uploadFailed": "Gagal mengunggah template.",
+    "templateColumn": "Template",
+    "deleteTemplateAria": "Hapus template",
+    "deleteTemplateConfirm": "Hapus template \"{name}\"?",
+    "emptyTitle": "Belum ada template kustom.",
+    "emptyMessage": "Sertifikat akan memakai template bawaan."
+  },
+  "attendance": {
+    "title": "Pengaturan Kehadiran",
+    "subtitle": "Atur apakah staf bisa Absen masuk/pulang di hari Sabtu & Minggu",
+    "weekendTitle": "Kehadiran akhir pekan",
+    "weekendHint": "Absen masuk/pulang hari Sabtu & Minggu.",
+    "allowWeekend": "Izinkan Absen di Akhir Pekan",
+    "weekendBefore": "Secara default, Absen masuk/pulang dinonaktifkan setiap Sabtu & Minggu karena bukan hari kerja terjadwal. Jika diaktifkan, staf bisa absen di akhir pekan -- otomatis dicatat sebagai",
+    "weekendOvertime": "lembur",
+    "weekendAfter": ", tidak dihitung ke tingkat kehadiran reguler.",
+    "saved": "Pengaturan kehadiran berhasil disimpan.",
+    "officeTitle": "Lokasi & Radius Kantor",
+    "officeBefore": "Karyawan dengan Lokasi Kerja",
+    "officeWord": "Kantor",
+    "officeAfter": "harus Absen masuk dalam radius ini dari koordinat kantor di bawah. Karyawan Remote/Hybrid tidak pernah dicek.",
+    "latitude": "Lintang",
+    "longitude": "Bujur",
+    "radius": "Radius (meter)",
+    "useCurrentLocation": "Gunakan Lokasi Saya Saat Ini",
+    "saveLocation": "Simpan Lokasi",
+    "locationSaved": "Lokasi kantor berhasil disimpan.",
+    "locationFailed": "Gagal menyimpan lokasi kantor."
+  },
+  "bankAccounts": {
+    "title": "Rekening Bank",
+    "subtitle": "Pilihan nama bank dan nomor rekening di bagian Pembayaran & Pajak Invoice",
+    "addTitle": "Tambah rekening bank",
+    "addHint": "Tampil di dropdown Nama Bank pada formulir Invoice.",
+    "bankName": "Nama Bank",
+    "bankNamePlaceholder": "mis. BCA - Jendela Cakra Digital",
+    "bankCode": "Kode Bank (opsional)",
+    "bankCodePlaceholder": "mis. 014",
+    "swiftCode": "Kode Swift (opsional)",
+    "swiftCodePlaceholder": "mis. CENAIDJA",
+    "accountNumber": "Nomor Rekening",
+    "accountNumberPlaceholder": "mis. 1234567890",
+    "addButton": "Tambah Rekening Bank",
+    "listTitle": "Rekening",
+    "count": "{n} rekening bank",
+    "columns": {
+      "bank": "Bank",
+      "accountNumber": "Nomor rekening",
+      "swift": "SWIFT"
+    },
+    "deleteAria": "Hapus rekening bank",
+    "deleteConfirm": "Hapus rekening bank ini?",
+    "addFailed": "Gagal menambah rekening bank.",
+    "empty": "Belum ada rekening bank",
+    "itemLabel": "rekening bank"
+  },
+  "options": {
+    "title": "Opsi Dropdown",
+    "subtitle": "Tambah atau hapus nilai yang bisa dipilih di formulir Buat/Ubah Karyawan",
+    "categories": {
+      "employmentType": "Jenis Kepegawaian",
+      "ptkpStatus": "Status PTKP (PPh21)",
+      "bankName": "Nama Bank",
+      "preferredLanguage": "Bahasa Pilihan",
+      "subscriptionServiceType": "Jenis Layanan Langganan"
+    },
+    "columns": {
+      "label": "Label",
+      "value": "Nilai"
+    },
+    "valuePlaceholder": "Nilai (mis. gopay)",
+    "labelPlaceholder": "Label (mis. GoPay)",
+    "hidden": "Disembunyikan",
+    "clickToHide": "Klik untuk menyembunyikan",
+    "clickToActivate": "Klik untuk mengaktifkan",
+    "required": "Nilai dan label wajib diisi.",
+    "addFailed": "Gagal menambah opsi.",
+    "updateFailed": "Gagal memperbarui opsi.",
+    "deleteFailed": "Gagal menghapus opsi.",
+    "deleteConfirm": "Hapus \"{label}\"? Karyawan yang sudah memakai nilai ini tetap menyimpannya, tetapi nilai ini tidak bisa dipilih lagi.",
+    "empty": "Belum ada opsi di kategori ini."
+  },
+  "documentCodes": {
+    "title": "Kode Surat & Divisi",
+    "subtitle": "Kode referensi untuk penomoran Surat",
+    "code": "Kode",
+    "count": "{n} kode",
+    "letter": {
+      "title": "Kode Surat",
+      "codePlaceholder": "mis. SPK",
+      "namePlaceholder": "mis. Surat Perintah Kerja",
+      "empty": "Belum ada kode surat",
+      "itemLabel": "kode surat",
+      "deleteConfirm": "Hapus kode surat ini?",
+      "addFailed": "Gagal menambah kode surat."
+    },
+    "division": {
+      "title": "Kode Divisi",
+      "codePlaceholder": "mis. BD",
+      "namePlaceholder": "mis. Business Development",
+      "empty": "Belum ada kode divisi",
+      "itemLabel": "kode divisi",
+      "deleteConfirm": "Hapus kode divisi ini?",
+      "addFailed": "Gagal menambah kode divisi."
+    }
+  },
+  "roles": {
+    "title": "Peran & Hak Akses",
+    "subtitle": "Atur modul dan aksi yang bisa diakses setiap peran",
+    "add": "Tambah Peran",
+    "addNew": "Tambah Peran Baru",
+    "edit": "Ubah Peran",
+    "listTitle": "Peran",
+    "summary": "{roles} peran · {permissions} hak akses tersedia",
+    "columns": {
+      "role": "Peran",
+      "users": "Pengguna",
+      "permissions": "Hak Akses",
+      "modules": "Modul"
+    },
+    "systemRole": "Peran sistem",
+    "customRole": "Peran kustom",
+    "permissionCount": "{n} hak akses",
+    "moduleCount": "{n} modul",
+    "userCount": "{n} pengguna",
+    "more": "+{n} lainnya",
+    "noPermissions": "Belum ada hak akses",
+    "editAria": "Ubah peran",
+    "deleteAria": "Hapus peran",
+    "cannotDelete": "Peran sistem — tidak bisa dihapus",
+    "empty": "Peran tidak ditemukan",
+    "selectedOf": "{selected} dari {total} hak akses dipilih",
+    "roleName": "Nama Peran",
+    "roleNamePlaceholder": "mis. supervisor",
+    "permissions": "Hak Akses",
+    "clearAll": "Hapus semua",
+    "module": "Modul",
+    "other": "Lainnya",
+    "noMatch": "Tidak ada modul yang cocok dengan \"{query}\"",
+    "checkForm": "Periksa kembali formulir.",
+    "save": "Simpan Peran",
+    "deleteConfirm": {
+      "title": "Hapus Peran?",
+      "message": "Yakin ingin menghapus \"{name}\"? Tindakan ini tidak bisa dibatalkan.",
+      "confirm": "Ya, Hapus"
+    }
+  },
+  "staff": {
+    "title": "Hak Akses Akun Staf",
+    "subtitle": "Beri hak akses tambahan ke akun Staf tertentu, di luar yang sudah diberikan peran Staf ke semua orang",
+    "listTitle": "Akun staf",
+    "count": "{n} akun",
+    "searchPlaceholder": "Cari staf berdasarkan nama atau email...",
+    "columns": {
+      "staff": "Staf",
+      "extra": "Hak akses tambahan"
+    },
+    "extraCount": "{n} hak akses tambahan",
+    "roleOnly": "Hanya hak akses peran",
+    "empty": "Akun Staf tidak ditemukan",
+    "inherited": "Diwarisi dari peran Staf",
+    "noInherited": "Peran Staf tidak memberikan hak akses apa pun.",
+    "extraTitle": "Hak akses tambahan untuk akun ini",
+    "selected": "{n} dipilih",
+    "allInherited": "Akun ini sudah memiliki semua hak akses melalui peran Staf.",
+    "error": "Terjadi kesalahan.",
+    "save": "Simpan Hak Akses"
+  },
+  "permissions": {
+    "searchPlaceholder": "Cari modul atau aksi...",
+    "sections": {
+      "general": "Umum",
+      "myWorkspace": "Ruang Kerja Saya",
+      "administration": "Administrasi",
+      "finance": "Keuangan",
+      "tools": "Alat",
+      "company": "Perusahaan",
+      "insights": "Wawasan",
+      "other": "Lainnya"
+    },
+    "modules": {
+      "dashboard": "Dasbor",
+      "widget": "Widget Dasbor",
+      "profile": "Profil Saya",
+      "team": "Tim",
+      "employee": "Karyawan",
+      "performanceReview": "Penilaian Kinerja",
+      "project": "Proyek",
+      "projectExpense": "Buku Kas Proyek",
+      "projectCalculator": "Kalkulator Proyek",
+      "task": "Tugas",
+      "staffTask": "Tugas Staf",
+      "staffRaport": "Raport Staf",
+      "attendance": "Kehadiran",
+      "attendanceSetting": "Pengaturan Kehadiran",
+      "leaveRequest": "Pengajuan Cuti",
+      "payroll": "Penggajian",
+      "payslip": "Slip Gaji",
+      "companyAbout": "Tentang Perusahaan",
+      "companyFinance": "Biaya Operasional",
+      "companyCashBook": "Buku Kas Perusahaan",
+      "fixedCost": "Biaya Tetap",
+      "infrastructureTool": "Alat Infrastruktur",
+      "sdmResource": "Sumber Daya SDM",
+      "sdmField": "Bidang SDM",
+      "credentialAccount": "Akun Kredensial",
+      "licenseManager": "Manajer Lisensi",
+      "licenseRelease": "Versi Lisensi",
+      "filesCompany": "File Dokumen",
+      "report": "Laporan",
+      "role": "Peran & Hak Akses",
+      "option": "Opsi Dropdown",
+      "staffPermission": "Hak Akses Akun Staf",
+      "purchaseOrder": "Purchase Order",
+      "invoice": "Invoice",
+      "paymentReceipt": "Kwitansi",
+      "letter": "Surat",
+      "documentLetter": "Memo Resmi",
+      "meetingNote": "Notulen Rapat",
+      "certificate": "Sertifikat",
+      "clients": "Klien",
+      "subscription": "Langganan",
+      "maintenance": "Maintenance",
+      "screening": "Screening Klien",
+      "backup": "Cadangan Database",
+      "history": "Riwayat",
+      "serverStorage": "Daftar Server",
+      "announcement": "Pengumuman",
+      "asset": "Aset Perusahaan",
+      "greeting": "Ucapan Kalender",
+      "analytics": "Analitik",
+      "proposal": "Proposal",
+      "flowchart": "Flowchart",
+      "document": "Pengaturan Dokumen"
+    },
+    "actions": {
+      "menu": "Akses Menu",
+      "menuShort": "Menu",
+      "list": "Daftar",
+      "view": "Lihat",
+      "create": "Buat",
+      "edit": "Ubah",
+      "delete": "Hapus",
+      "export": "Ekspor",
+      "process": "Proses",
+      "approve": "Setujui",
+      "statistic": "Statistik",
+      "statistics": "Statistik",
+      "checkIn": "Absen Masuk",
+      "checkOut": "Absen Pulang",
+      "lastAttendance": "Kehadiran Terakhir",
+      "myAttendances": "Kehadiran Saya",
+      "myStatistics": "Statistik Saya",
+      "myRequests": "Pengajuan Saya",
+      "acknowledge": "Konfirmasi Baca",
+      "adjust": "Sesuaikan",
+      "assign": "Tugaskan",
+      "attachmentCreate": "Buat Lampiran",
+      "attachmentDelete": "Hapus Lampiran",
+      "attachmentEdit": "Ubah Lampiran",
+      "attachmentList": "Daftar Lampiran",
+      "download": "Unduh",
+      "employeeStatistics": "Statistik Karyawan",
+      "evaluationCreate": "Buat Evaluasi",
+      "evaluationDelete": "Hapus Evaluasi",
+      "evaluationList": "Daftar Evaluasi",
+      "generateInvoice": "Buat Invoice",
+      "keyMetrics": "Metrik Utama",
+      "latestEmployees": "Karyawan Terbaru",
+      "latestTeams": "Tim Terbaru",
+      "log": "Log",
+      "maintenance": "Maintenance",
+      "maintenanceCreate": "Buat Maintenance",
+      "maintenanceDelete": "Hapus Maintenance",
+      "maintenanceList": "Daftar Maintenance",
+      "manage": "Kelola",
+      "myAssets": "Aset Saya",
+      "myReviews": "Penilaian Saya",
+      "pendingLeaveRequests": "Pengajuan Cuti Menunggu",
+      "pin": "Sematkan",
+      "projectBudget": "Anggaran Proyek",
+      "projectRealized": "Realisasi Proyek",
+      "projectsAtRisk": "Proyek Berisiko",
+      "quickLinks": "Tautan Cepat",
+      "recentActivity": "Aktivitas Terbaru",
+      "restore": "Pulihkan",
+      "searchSection": "Bagian Pencarian",
+      "settings": "Pengaturan",
+      "settingEdit": "Ubah Pengaturan",
+      "share": "Bagikan",
+      "stickyNotes": "Catatan Tempel",
+      "subscriptions": "Langganan",
+      "systemSettingsLinks": "Tautan Pengaturan Sistem",
+      "systemStats": "Statistik Sistem",
+      "taskList": "Daftar Tugas",
+      "taskListCreate": "Buat Daftar Tugas",
+      "taskListDelete": "Hapus Daftar Tugas",
+      "taskListEdit": "Ubah Daftar Tugas",
+      "taskPaymentCreate": "Buat Pembayaran Tugas",
+      "taskPaymentDelete": "Hapus Pembayaran Tugas",
+      "taskPaymentEdit": "Ubah Pembayaran Tugas",
+      "taskPaymentList": "Daftar Pembayaran Tugas",
+      "taskPivotCreate": "Buat Pivot Tugas",
+      "taskPivotDelete": "Hapus Pivot Tugas",
+      "taskPivotEdit": "Ubah Pivot Tugas",
+      "taskPivotList": "Daftar Pivot Tugas",
+      "taskScopeCreate": "Buat Lingkup Tugas",
+      "taskScopeDelete": "Hapus Lingkup Tugas",
+      "taskScopeEdit": "Ubah Lingkup Tugas",
+      "taskScopeList": "Daftar Lingkup Tugas",
+      "upcomingTasks": "Tugas Mendatang"
+    }
+  }
+}

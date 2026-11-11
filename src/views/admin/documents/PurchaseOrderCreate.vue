@@ -1,10 +1,13 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { Plus, Trash2, ShoppingCart, Info, Package, Wallet, FileSignature, ChevronDown } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+import { Plus, Trash2, ArrowLeft, Check } from "lucide-vue-next";
+import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader, UiSelect } from "@/components/ui";
 import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 
+const { t } = useI18n();
 const store = usePurchaseOrderStore();
 const router = useRouter();
 const route = useRoute();
@@ -66,7 +69,7 @@ onMounted(async () => {
     form.value.client_signatory_title = order.client_signatory_title || "";
     form.value.use_signature = !!order.use_signature;
   } catch (error) {
-    errorMessage.value = "Failed to load purchase order.";
+    errorMessage.value = t("documents.purchaseOrder.form.errors.load");
   }
 });
 
@@ -82,197 +85,185 @@ const handleSubmit = async () => {
     router.push({ name: "admin.purchase-orders.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : `Failed to ${isEditMode.value ? "update" : "create"} Purchase Order.`);
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t(isEditMode.value ? "documents.purchaseOrder.form.errors.update" : "documents.purchaseOrder.form.errors.create"));
   } finally {
     submitting.value = false;
   }
 };
+
+// Presentation only.
+const field =
+  "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
+const lbl = "block text-ui-small font-medium text-ui-ink mb-1.5";
+const miniLbl = "block text-ui-cap text-ui-muted mb-1";
+const rp = (n) => `Rp ${(Number(n) || 0).toLocaleString("id-ID")}`;
+const typeOptions = computed(() => [
+  { value: "E", label: t("documents.purchaseOrder.types.E") },
+  { value: "I", label: t("documents.purchaseOrder.types.I") },
+]);
+const termsTotal = computed(() => form.value.payment_terms.reduce((sum, t) => sum + (Number(t.amount) || 0), 0));
 </script>
 
 <template>
-  <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <ShoppingCart class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">{{ isEditMode ? "Edit Purchase Order" : "Create New Purchase Order" }}</h3>
-          <p class="text-brand-light text-sm">{{ isEditMode ? existingPoNumber : "PO number will be generated automatically when saved" }}</p>
-        </div>
-      </div>
-    </div>
-
-    <form @submit.prevent="handleSubmit" class="space-y-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center gap-2 mb-4">
-          <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
-            <Info class="w-4 h-4 text-blue-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">General Information</h4>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Type <span class="text-red-600">*</span></label>
-            <div class="relative w-full">
-              <select v-model="form.type" class="select-soft">
-                <option value="E">External (E)</option>
-                <option value="I">Internal (I)</option>
-              </select>
-              <ChevronDown
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-              />
-            </div>
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date <span class="text-red-600">*</span></label>
-            <input v-model="form.date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Title / Subject <span class="text-red-600">*</span></label>
-            <input v-model="form.title" type="text" required placeholder="e.g. Purchase of Smart Locker" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Name <span class="text-red-600">*</span></label>
-            <input v-model="form.client_name" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Address</label>
-            <textarea v-model="form.client_address" rows="2" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Phone</label>
-            <input v-model="form.client_phone" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">WhatsApp</label>
-            <input v-model="form.client_wa" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-indigo-50 rounded-[9px] flex items-center justify-center shrink-0">
-              <Package class="w-4 h-4 text-indigo-600" />
-            </div>
-            <h4 class="text-brand-dark font-bold">Order Details (Items)</h4>
-          </div>
-          <button type="button" @click="addItem" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
-            <Plus class="w-4 h-4" /> Add Item
-          </button>
-        </div>
-        <div v-for="(item, i) in form.items" :key="i" class="border border-[#DCDEDD] rounded-xl p-4 mb-3">
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div class="md:col-span-2">
-              <label class="text-xs text-gray-500 mb-1 block">Description <span class="text-red-600">*</span></label>
-              <input v-model="item.description" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            </div>
-            <div>
-              <label class="text-xs text-gray-500 mb-1 block">Quantity <span class="text-red-600">*</span></label>
-              <input v-model="item.qty" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            </div>
-            <div>
-              <label class="text-xs text-gray-500 mb-1 block">Price (Rp) <span class="text-red-600">*</span></label>
-              <input v-model.number="item.price" type="number" min="0" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            </div>
-            <div class="md:col-span-4">
-              <label class="text-xs text-gray-500 mb-1 block">Specification (one line per point)</label>
-              <textarea v-model="item.specification" rows="3" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm resize-none"></textarea>
-            </div>
-          </div>
-          <button
-            v-if="form.items.length > 1"
-            type="button"
-            @click="removeItem(i)"
-            class="mt-2 text-red-500 text-xs font-semibold flex items-center gap-1"
-          >
-            <Trash2 class="w-3.5 h-3.5" /> Remove Item
-          </button>
-        </div>
-        <div class="text-right font-bold text-brand-dark">
-          Total: Rp {{ totalPreview().toLocaleString("id-ID") }}
-        </div>
-      </div>
-
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-emerald-50 rounded-[9px] flex items-center justify-center shrink-0">
-              <Wallet class="w-4 h-4 text-emerald-600" />
-            </div>
-            <h4 class="text-brand-dark font-bold">Payment Schema (optional)</h4>
-          </div>
-          <button type="button" @click="addTerm" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
-            <Plus class="w-4 h-4" /> Add Term
-          </button>
-        </div>
-        <div v-for="(term, i) in form.payment_terms" :key="i" class="border border-[#DCDEDD] rounded-xl p-4 mb-3">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <input v-model="term.termin" type="text" placeholder="e.g. DP (50%)" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            <input v-model.number="term.amount" type="number" min="0" placeholder="Amount (Rp)" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            <input v-model="term.description" type="text" placeholder="Description" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-          </div>
-          <button type="button" @click="removeTerm(i)" class="mt-2 text-red-500 text-xs font-semibold flex items-center gap-1">
-            <Trash2 class="w-3.5 h-3.5" /> Remove Term
-          </button>
-        </div>
-      </div>
-
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center gap-2 mb-4">
-          <div class="w-8 h-8 bg-orange-50 rounded-[9px] flex items-center justify-center shrink-0">
-            <FileSignature class="w-4 h-4 text-orange-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Terms & Signatures</h4>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Warranty (months)</label>
-            <input v-model.number="form.warranty_months" type="number" min="0" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Replacement Time (working days)</label>
-            <input v-model.number="form.replacement_days" type="number" min="0" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Buyer Signatory (Name)</label>
-            <input v-model="form.buyer_signatory_name" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Position</label>
-            <input v-model="form.buyer_signatory_title" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Signatory (Name)</label>
-            <input v-model="form.client_signatory_name" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Position</label>
-            <input v-model="form.client_signatory_title" type="text" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <SignatureToggle v-model="form.use_signature" class="md:col-span-2" hint="Stamps the buyer signatory's signature onto the PDF." />
-        </div>
-      </div>
-
-      <p v-if="errorMessage" class="text-red-500 text-sm">{{ errorMessage }}</p>
-
-      <div class="flex items-center gap-3">
-        <button
-          type="submit"
-          :disabled="submitting"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
-        >
-          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : (isEditMode ? "Update Purchase Order" : "Save Purchase Order") }}</span>
-        </button>
-        <router-link
-          :to="{ name: 'admin.purchase-orders.dashboard' }"
-          class="px-6 py-3 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50"
-        >
-          Cancel
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="isEditMode ? $t('documents.purchaseOrder.form.editTitle') : $t('documents.purchaseOrder.form.createTitle')">
+      <template #eyebrow>
+        <router-link :to="{ name: 'admin.purchase-orders.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1">
+          <ArrowLeft class="w-4 h-4" />{{ $t("documents.purchaseOrder.list.title") }}
         </router-link>
+      </template>
+      <template #subtitle>
+        <span :class="isEditMode ? 'font-mono' : ''">{{ isEditMode ? existingPoNumber : $t("documents.purchaseOrder.form.autoNumber") }}</span>
+      </template>
+      <template #actions>
+        <div class="hidden sm:flex items-center gap-2">
+          <UiButton variant="secondary" :to="{ name: 'admin.purchase-orders.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
+          <UiButton type="submit" form="po-form" :icon="Check" :loading="submitting">
+            {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.purchaseOrder.form.update") : $t("documents.purchaseOrder.form.save")) }}
+          </UiButton>
+        </div>
+      </template>
+    </UiPageHeader>
+
+    <form id="po-form" @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start">
+      <div class="lg:col-span-2 space-y-4 sm:space-y-5 min-w-0 ui-stagger">
+        <UiCard :title="$t('documents.shared.generalInfo')">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UiSelect v-model="form.type" :options="typeOptions" :label="$t('common.labels.type')" required />
+            <UiInput v-model="form.date" type="date" :label="$t('common.labels.date')" required />
+            <UiInput v-model="form.title" :label="$t('documents.purchaseOrder.fields.titleSubject')" required :placeholder="$t('documents.purchaseOrder.form.titlePlaceholder')" class="md:col-span-2" />
+            <UiInput v-model="form.client_name" :label="$t('documents.shared.clientName')" required class="md:col-span-2" />
+            <UiInput v-model="form.client_address" :rows="2" :label="$t('common.labels.address')" class="md:col-span-2" />
+            <UiInput v-model="form.client_phone" :label="$t('common.labels.phone')" />
+            <UiInput v-model="form.client_wa" label="WhatsApp" />
+          </div>
+        </UiCard>
+
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+          <header class="flex items-center gap-3 px-5 sm:px-6 pt-[18px] pb-3.5">
+            <h3 class="flex-1 text-ui-h2 text-ui-ink">{{ $t("documents.purchaseOrder.form.itemsTitle") }}</h3>
+            <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("documents.shared.itemCount", { n: form.items.length }, form.items.length) }}</span>
+          </header>
+          <ul class="divide-y divide-ui-line border-t border-ui-line">
+            <li v-for="(item, i) in form.items" :key="i" class="flex items-start gap-3 px-5 sm:px-6 py-4">
+              <span class="pt-7 text-ui-cap text-ui-faint tabular-nums w-5 shrink-0">{{ i + 1 }}</span>
+              <div class="flex-1 min-w-0 grid grid-cols-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-3">
+                <div class="col-span-2 md:col-span-1">
+                  <label :class="miniLbl" :for="`po-desc-${i}`">{{ $t("common.labels.description") }} <span class="text-ui-bad">*</span></label>
+                  <input :id="`po-desc-${i}`" v-model="item.description" type="text" required :class="field" />
+                </div>
+                <div>
+                  <label :class="miniLbl" :for="`po-qty-${i}`">{{ $t("documents.shared.quantity") }} <span class="text-ui-bad">*</span></label>
+                  <input :id="`po-qty-${i}`" v-model="item.qty" type="text" required :class="field" />
+                </div>
+                <div>
+                  <label :class="miniLbl" :for="`po-price-${i}`">{{ $t("documents.shared.priceRp") }} <span class="text-ui-bad">*</span></label>
+                  <input :id="`po-price-${i}`" v-model.number="item.price" type="number" min="0" required :class="[field, 'text-right tabular-nums']" />
+                </div>
+                <div class="col-span-2 md:col-span-3">
+                  <label :class="miniLbl" :for="`po-spec-${i}`">{{ $t("documents.purchaseOrder.form.specification") }}</label>
+                  <textarea
+                    :id="`po-spec-${i}`"
+                    v-model="item.specification"
+                    rows="3"
+                    class="w-full px-3 py-2 bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control resize-y focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+                  ></textarea>
+                </div>
+              </div>
+              <div class="w-8 shrink-0 pt-6">
+                <button
+                  v-if="form.items.length > 1"
+                  type="button"
+                  @click="removeItem(i)"
+                  class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:text-ui-bad hover:bg-ui-bad-soft"
+                  :title="$t('documents.shared.removeLine')"
+                  :aria-label="$t('documents.shared.removeLine')"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+            </li>
+          </ul>
+          <div class="flex items-center justify-between gap-3 px-3 sm:px-4 py-2 border-t border-ui-line">
+            <UiButton variant="ghost" size="sm" :icon="Plus" @click="addItem">{{ $t("documents.shared.addItem") }}</UiButton>
+            <p class="pr-2 text-ui-small text-ui-muted">{{ $t("common.labels.total") }}: <span class="text-ui-ink font-medium tabular-nums">{{ rp(totalPreview()) }}</span></p>
+          </div>
+        </section>
+
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+          <header class="flex items-center gap-3 px-5 sm:px-6 pt-[18px] pb-3.5">
+            <h3 class="flex-1 text-ui-h2 text-ui-ink">{{ $t("documents.purchaseOrder.form.paymentSchema") }}</h3>
+          </header>
+          <div v-if="form.payment_terms.length" class="hidden md:grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)_32px] gap-3 px-5 sm:px-6 h-9 items-center border-y border-ui-line bg-ui-subtle/50 text-ui-cap font-medium text-ui-muted">
+            <span>{{ $t("documents.purchaseOrder.form.term") }}</span>
+            <span class="text-right">{{ $t("documents.shared.amountRp") }}</span>
+            <span>{{ $t("common.labels.description") }}</span>
+            <span></span>
+          </div>
+          <ul class="divide-y divide-ui-line border-t border-ui-line md:border-t-0">
+            <li
+              v-for="(term, i) in form.payment_terms"
+              :key="i"
+              class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_32px] md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)_32px] gap-x-3 gap-y-2 px-5 sm:px-6 py-3 items-center"
+            >
+              <input v-model="term.termin" type="text" :placeholder="$t('documents.purchaseOrder.form.termPlaceholder')" :aria-label="$t('documents.purchaseOrder.form.term')" :class="field" />
+              <input v-model.number="term.amount" type="number" min="0" :placeholder="$t('documents.shared.amountRp')" :aria-label="$t('documents.shared.amountRp')" :class="[field, 'text-right tabular-nums']" />
+              <input v-model="term.description" type="text" :placeholder="$t('common.labels.description')" :aria-label="$t('common.labels.description')" :class="[field, 'col-span-2 md:col-span-1 row-start-2 md:row-start-auto']" />
+              <button
+                type="button"
+                @click="removeTerm(i)"
+                class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:text-ui-bad hover:bg-ui-bad-soft col-start-3 row-start-1 md:col-start-auto md:row-start-auto"
+                :title="$t('documents.purchaseOrder.form.removeTerm')"
+                :aria-label="$t('documents.purchaseOrder.form.removeTerm')"
+              >
+                <Trash2 class="w-4 h-4" />
+              </button>
+            </li>
+          </ul>
+          <div class="px-3 sm:px-4 py-2 border-t border-ui-line">
+            <UiButton variant="ghost" size="sm" :icon="Plus" @click="addTerm">{{ $t("documents.purchaseOrder.form.addTerm") }}</UiButton>
+          </div>
+        </section>
+
+        <UiCard :title="$t('documents.purchaseOrder.form.termsSignatures')">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label :class="lbl" for="po-warranty">{{ $t("documents.purchaseOrder.form.warranty") }}</label>
+              <input id="po-warranty" v-model.number="form.warranty_months" type="number" min="0" :class="[field, 'tabular-nums']" />
+            </div>
+            <div>
+              <label :class="lbl" for="po-replace">{{ $t("documents.purchaseOrder.form.replacement") }}</label>
+              <input id="po-replace" v-model.number="form.replacement_days" type="number" min="0" :class="[field, 'tabular-nums']" />
+            </div>
+            <UiInput v-model="form.buyer_signatory_name" :label="$t('documents.purchaseOrder.form.buyerSignatory')" />
+            <UiInput v-model="form.buyer_signatory_title" :label="$t('documents.shared.position')" />
+            <UiInput v-model="form.client_signatory_name" :label="$t('documents.purchaseOrder.form.clientSignatory')" />
+            <UiInput v-model="form.client_signatory_title" :label="$t('documents.shared.position')" />
+            <SignatureToggle v-model="form.use_signature" class="md:col-span-2" :hint="$t('documents.purchaseOrder.form.signatureHint')" />
+          </div>
+        </UiCard>
       </div>
+
+      <aside class="lg:sticky lg:top-4 space-y-4 min-w-0">
+        <UiCard :title="$t('documents.shared.summary')">
+          <dl class="text-ui-small space-y-2.5">
+            <div class="flex justify-between gap-3"><dt class="text-ui-muted">{{ $t("common.labels.type") }}</dt><dd class="text-ui-ink">{{ form.type === "I" ? $t("documents.purchaseOrder.types.I") : $t("documents.purchaseOrder.types.E") }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-ui-muted">{{ $t("documents.shared.items") }}</dt><dd class="text-ui-ink tabular-nums">{{ form.items.length }}</dd></div>
+            <div v-if="form.payment_terms.length" class="flex justify-between gap-3"><dt class="text-ui-muted">{{ $t("documents.purchaseOrder.form.paymentTermsCount", { n: form.payment_terms.length }) }}</dt><dd class="text-ui-ink tabular-nums">{{ rp(termsTotal) }}</dd></div>
+            <div class="flex items-baseline justify-between gap-3 pt-3 mt-1 border-t border-ui-line">
+              <dt class="text-ui-body font-medium text-ui-ink">{{ $t("common.labels.total") }}</dt>
+              <dd class="text-ui-h2 text-ui-ink tabular-nums">{{ rp(totalPreview()) }}</dd>
+            </div>
+          </dl>
+          <UiAlert v-if="errorMessage" tone="bad" :title="errorMessage" class="mt-4" />
+          <div class="mt-5 grid gap-2">
+            <UiButton type="submit" size="lg" block :icon="Check" :loading="submitting">
+              {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.purchaseOrder.form.update") : $t("documents.purchaseOrder.form.save")) }}
+            </UiButton>
+            <UiButton variant="secondary" block :to="{ name: 'admin.purchase-orders.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
+          </div>
+        </UiCard>
+      </aside>
     </form>
   </div>
 </template>

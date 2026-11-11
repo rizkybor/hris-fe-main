@@ -37,17 +37,17 @@ const style = computed(() => ({
   <img
     v-if="product?.icon_url && !failed"
     :src="product.icon_url"
-    :alt="`${product.name} icon`"
+    :alt="$t('licenses.productIcon.named', { name: product.name })"
     :style="style"
-    class="object-cover shrink-0 bg-white ring-1 ring-black/5"
+    class="object-cover shrink-0 bg-ui-surface ring-1 ring-ui-line"
     loading="lazy"
     @error="failed = true"
   />
   <span
     v-else
     :style="style"
-    class="inline-flex items-center justify-center shrink-0 bg-violet-100 text-violet-700 font-bold leading-none select-none"
-    :aria-label="product?.name ? `${product.name} icon` : 'Product icon'"
+    class="inline-flex items-center justify-center shrink-0 bg-ui-ink text-white font-semibold leading-none select-none"
+    :aria-label="product?.name ? $t('licenses.productIcon.named', { name: product.name }) : $t('licenses.productIcon.generic')"
     role="img"
   >
     {{ initials }}

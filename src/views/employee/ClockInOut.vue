@@ -11,14 +11,10 @@ import {
   Info,
   Globe,
   Building,
-  Loader2,
   AlertCircle,
-  UserCheck,
   CheckCircle2,
   Circle,
   Timer,
-  CalendarOff,
-  Zap,
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
 import { useAttendanceSettingStore } from "@/stores/attendanceSetting";
@@ -26,6 +22,11 @@ import { useAuthStore } from "@/stores/auth";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
 import { haversineDistanceMeters } from "@/utils/attendanceUtils";
+import { UiAlert, UiBadge, UiButton, UiPageHeader, UiSpinner } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const attendanceStore = useAttendanceStore();
 const alertModal = useAlertModalStore();
@@ -65,8 +66,11 @@ const currentStream = ref(null);
 const capturedPhotoData = ref(null);
 const currentLocation = ref(null);
 const locationStatus = ref("default");
-const locationName = ref("Location not detected");
-const locationAddress = ref("Click 'Get Location' to detect your current position");
+// Location title/subtitle are kept as message keys (with params) so they
+// follow the language switch; a reverse-geocoded address is shown as-is.
+const locationName = ref({ key: "clock.location.notDetected" });
+const locationAddress = ref({ key: "clock.location.notDetectedHint" });
+const showLocationText = (entry) => (entry?.key ? t(entry.key, entry.params || {}) : entry?.text || "");
 const locationCoords = ref("");
 const isGettingLocation = ref(false);
 
@@ -114,7 +118,7 @@ const elapsedWorkMinutes = computed(() => {
 const workingHours = computed(() => {
   const hours = Math.floor(elapsedWorkMinutes.value / 60);
   const minutes = elapsedWorkMinutes.value % 60;
-  return `${hours}h ${minutes}m`;
+  return t("clock.duration.hm", { h: hours, m: minutes });
 });
 
 const remainingUntilCheckOut = computed(() => {
@@ -122,7 +126,7 @@ const remainingUntilCheckOut = computed(() => {
   if (remaining <= 0) return null;
   const hours = Math.floor(remaining / 60);
   const minutes = remaining % 60;
-  return `${hours}h ${minutes}m`;
+  return t("clock.duration.hm", { h: hours, m: minutes });
 });
 
 const canCheckIn = computed(() => {
@@ -145,13 +149,13 @@ const lateInfo = computed(() => {
   const minutes = todayAttendance.value.late_minutes;
   const hours = Math.floor(minutes / 60);
   const remaining = minutes % 60;
-  const duration = hours > 0 ? `${hours}h ${remaining}m` : `${remaining}m`;
-  return `Terlambat ${duration} (batas jam masuk 09:00 WIB)`;
+  const duration = hours > 0 ? t("clock.duration.hm", { h: hours, m: remaining }) : t("clock.duration.m", { m: remaining });
+  return t("clock.late.notice", { duration });
 });
 
 const checkInTime = computed(() => {
   if (!todayAttendance.value?.check_in) return "--:--";
-  return new Date(todayAttendance.value.check_in).toLocaleTimeString("id-ID", {
+  return new Date(todayAttendance.value.check_in).toLocaleTimeString(localeTag(), {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
@@ -160,7 +164,7 @@ const checkInTime = computed(() => {
 
 const checkOutTime = computed(() => {
   if (!todayAttendance.value?.check_out) return "--:--";
-  return new Date(todayAttendance.value.check_out).toLocaleTimeString("id-ID", {
+  return new Date(todayAttendance.value.check_out).toLocaleTimeString(localeTag(), {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
@@ -169,21 +173,40 @@ const checkOutTime = computed(() => {
 
 const attendanceStatus = computed(() => {
   if (!todayAttendance.value) {
-    return { text: "Not Clocked In", class: "bg-red-100 text-red-700" };
+    return { key: "notClockedIn", class: "bg-red-100 text-red-700" };
   }
   if (todayAttendance.value.status === "overtime") {
-    return { text: "Overtime (Lembur)", class: "bg-purple-100 text-purple-700" };
+    return { key: "overtime", class: "bg-purple-100 text-purple-700" };
   }
   if (todayAttendance.value.check_in && !todayAttendance.value.check_out) {
     return todayAttendance.value.status === "late"
-      ? { text: "Clocked In (Late)", class: "bg-amber-100 text-amber-700" }
-      : { text: "Clocked In", class: "bg-green-100 text-green-700" };
+      ? { key: "clockedInLate", class: "bg-amber-100 text-amber-700" }
+      : { key: "clockedIn", class: "bg-green-100 text-green-700" };
   }
   if (todayAttendance.value.check_in && todayAttendance.value.check_out) {
-    return { text: "Completed", class: "bg-blue-100 text-blue-700" };
+    return { key: "completed", class: "bg-blue-100 text-blue-700" };
   }
-  return { text: "Not Clocked In", class: "bg-red-100 text-red-700" };
+  return { key: "notClockedIn", class: "bg-red-100 text-red-700" };
 });
+
+// Presentation only: badge tone per status label, and the live clock split
+// into hours:minutes and the (muted) seconds.
+const STATUS_TONE = {
+  notClockedIn: "neutral",
+  overtime: "accent",
+  clockedInLate: "warn",
+  clockedIn: "ok",
+  completed: "info",
+};
+const attendanceStatusTone = computed(() => STATUS_TONE[attendanceStatus.value.key] || "neutral");
+const clockMain = computed(() => currentTime.value.slice(0, 5));
+const clockSeconds = computed(() => currentTime.value.slice(5));
+const LOCATION_TONE = {
+  loading: "bg-ui-warn-soft text-ui-warn",
+  success: "bg-ui-ok-soft text-ui-ok",
+  error: "bg-ui-bad-soft text-ui-bad",
+  default: "bg-ui-subtle text-ui-muted",
+};
 
 // Clock functions
 const updateClock = () => {
@@ -203,26 +226,18 @@ const updateClock = () => {
     day: "numeric",
   };
 
-  currentTime.value = now.toLocaleTimeString("id-ID", timeOptions);
-  currentDate.value = now.toLocaleDateString("id-ID", dateOptions);
+  currentTime.value = now.toLocaleTimeString(localeTag(), timeOptions);
+  currentDate.value = now.toLocaleDateString(localeTag(), dateOptions);
 };
 
 // Location functions
 const getCurrentLocation = async () => {
   if (!navigator.geolocation) {
-    updateLocationDisplay(
-      "error",
-      "Geolocation not supported",
-      "Your browser does not support location services"
-    );
+    updateLocationDisplay("error", { key: "clock.location.unsupported" }, { key: "clock.location.unsupportedHint" });
     return;
   }
 
-  updateLocationDisplay(
-    "loading",
-    "Getting location...",
-    "Please wait while we detect your position"
-  );
+  updateLocationDisplay("loading", { key: "clock.location.getting" }, { key: "clock.location.gettingHint" });
   isGettingLocation.value = true;
 
   const options = {
@@ -243,8 +258,8 @@ const getCurrentLocation = async () => {
 
       updateLocationDisplay(
         "success",
-        "Location detected",
-        `Accuracy: ±${Math.round(coords.accuracy)}m`
+        { key: "clock.location.detected" },
+        { key: "clock.location.accuracy", params: { m: Math.round(coords.accuracy) } }
       );
 
       locationCoords.value = `Lat: ${coords.latitude.toFixed(6)}, Lng: ${coords.longitude.toFixed(6)}`;
@@ -259,23 +274,23 @@ const getCurrentLocation = async () => {
       isGettingLocation.value = false;
     },
     (error) => {
-      let errorMessage = "";
+      let errorKey = "";
       switch (error.code) {
         case error.PERMISSION_DENIED:
-          errorMessage = "Location access denied. Please enable location permissions.";
+          errorKey = "clock.location.errors.denied";
           break;
         case error.POSITION_UNAVAILABLE:
-          errorMessage = "Location information unavailable.";
+          errorKey = "clock.location.errors.unavailable";
           break;
         case error.TIMEOUT:
-          errorMessage = "Location request timed out. Please try again.";
+          errorKey = "clock.location.errors.timeout";
           break;
         default:
-          errorMessage = "An unknown error occurred while retrieving location.";
+          errorKey = "clock.location.errors.unknown";
           break;
       }
 
-      updateLocationDisplay("error", "Location failed", errorMessage);
+      updateLocationDisplay("error", { key: "clock.location.failed" }, { key: errorKey });
       isGettingLocation.value = false;
     },
     options
@@ -297,7 +312,7 @@ const reverseGeocode = async (lat, lng) => {
     if (data && data.display_name) {
       const parts = data.display_name.split(",");
       const shortAddress = parts.slice(0, 3).join(",").trim();
-      locationAddress.value = shortAddress;
+      locationAddress.value = { text: shortAddress };
     }
   } catch (error) {
     console.error("Reverse geocoding failed:", error);
@@ -319,7 +334,7 @@ const startCamera = async () => {
     video.srcObject = stream;
   } catch (error) {
     console.error("Error accessing camera:", error);
-    await alertModal.alert("Unable to access camera. Please check permissions and try again.", {
+    await alertModal.alert(t("clock.camera.error"), {
       type: "danger",
     });
   }
@@ -354,12 +369,12 @@ const retakePhoto = () => {
 // Attendance actions
 const handleCheckIn = async () => {
   if (!currentLocation.value) {
-    await alertModal.alert("Please get your current location first!", { type: "warning" });
+    await alertModal.alert(t("clock.alerts.needLocation"), { type: "warning" });
     return;
   }
 
   if (!capturedPhotoData.value) {
-    await alertModal.alert("Please take a photo before clocking in.", { type: "warning" });
+    await alertModal.alert(t("clock.alerts.needPhotoIn"), { type: "warning" });
     return;
   }
 
@@ -371,29 +386,29 @@ const handleCheckIn = async () => {
     });
 
     if (attendance?.status === "overtime") {
-      await alertModal.alert("Clocked in for overtime (lembur) -- today is a weekend.", { type: "success" });
+      await alertModal.alert(t("clock.alerts.overtimeIn"), { type: "success" });
     } else if (attendance?.status === "late" && attendance?.late_minutes) {
-      await alertModal.alert(`Clocked in, but you're late by ${attendance.late_minutes} minute(s) (cut-off is 09:00 WIB).`, { type: "warning" });
+      await alertModal.alert(t("clock.alerts.lateIn", { n: attendance.late_minutes }, attendance.late_minutes), { type: "warning" });
     } else {
-      await alertModal.alert("Successfully clocked in!", { type: "success" });
+      await alertModal.alert(t("clock.alerts.successIn"), { type: "success" });
     }
     resetForNextAction();
     await fetchTodayAttendance();
   } catch (error) {
     console.error("Check in failed:", error);
-    const message = error?.response?.data?.message || "Failed to check in. Please try again.";
+    const message = error?.response?.data?.message || t("clock.alerts.failedIn");
     await alertModal.alert(message, { type: "danger" });
   }
 };
 
 const handleCheckOut = async () => {
   if (!currentLocation.value) {
-    await alertModal.alert("Please get your current location first!", { type: "warning" });
+    await alertModal.alert(t("clock.alerts.needLocation"), { type: "warning" });
     return;
   }
 
   if (!capturedPhotoData.value) {
-    await alertModal.alert("Please take a photo before clocking out.", { type: "warning" });
+    await alertModal.alert(t("clock.alerts.needPhotoOut"), { type: "warning" });
     return;
   }
 
@@ -404,12 +419,12 @@ const handleCheckOut = async () => {
       check_out_photo: capturedPhotoData.value,
     });
 
-    await alertModal.alert("Successfully clocked out!", { type: "success" });
+    await alertModal.alert(t("clock.alerts.successOut"), { type: "success" });
     resetForNextAction();
     await fetchTodayAttendance();
   } catch (error) {
     console.error("Check out failed:", error);
-    const message = error?.response?.data?.message || "Failed to check out. Please try again.";
+    const message = error?.response?.data?.message || t("clock.alerts.failedOut");
     await alertModal.alert(message, { type: "danger" });
   }
 };
@@ -417,11 +432,7 @@ const handleCheckOut = async () => {
 const resetForNextAction = () => {
   retakePhoto();
   currentLocation.value = null;
-  updateLocationDisplay(
-    "default",
-    "Location not detected",
-    "Please get location again for next attendance action"
-  );
+  updateLocationDisplay("default", { key: "clock.location.notDetected" }, { key: "clock.location.againHint" });
   locationCoords.value = "";
 };
 
@@ -442,137 +453,125 @@ onUnmounted(() => {
 });
 </script>
 
+
 <template>
-  <div class="p-3 sm:p-5">
-    <!-- Hero: Live Clock + Today's Status -->
-    <div class="main-card rounded-[14px] mb-4 sm:mb-6 p-5 sm:p-8 relative overflow-hidden">
-      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center gap-6 sm:gap-8">
-        <!-- Live Clock -->
-        <div class="flex-1 text-center lg:text-left">
-          <div class="flex items-center justify-center lg:justify-start gap-2 mb-3">
-            <div class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-[10px] flex items-center justify-center shrink-0">
-              <Clock class="w-4 h-4 text-white" />
-            </div>
-            <p class="text-brand-white-70 text-xs sm:text-sm font-semibold uppercase tracking-wide">
-              Live Clock &middot; Jakarta
-            </p>
-          </div>
-          <div class="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tabular-nums leading-none mb-2 break-all">
-            {{ currentTime }}
-          </div>
-          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-x-2 gap-y-1 text-brand-white-80">
-            <span class="text-sm sm:text-lg font-medium">{{ currentDate }}</span>
-            <span class="text-brand-white-70 text-sm hidden sm:inline">&bull;</span>
-            <span class="flex items-center gap-1 text-xs sm:text-sm">
-              <Globe class="w-3.5 h-3.5" /> GMT+7
-            </span>
-          </div>
+  <!-- Bottom padding below lg: main's own bottom padding (room for the tab
+       bar) is lost once the page overflows its h-full wrapper. -->
+  <div class="p-1 sm:p-3 lg:p-5 space-y-4 sm:space-y-5">
+    <UiPageHeader :title="$t('clock.title')" class="ui-anim-fade-up">
+      <template #subtitle>
+        {{ currentDate }}
+        <span class="inline-flex items-center gap-1 ml-1.5 text-ui-faint"><Globe class="w-3.5 h-3.5" /> GMT+7</span>
+      </template>
+      <template #actions>
+        <UiBadge :tone="attendanceStatusTone" dot>{{ $t(`clock.status.${attendanceStatus.key}`) }}</UiBadge>
+      </template>
+    </UiPageHeader>
+
+    <div
+      class="ui-anim-fade-up bg-ui-surface border border-ui-line rounded-ui-card p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-4 sm:gap-6"
+    >
+      <!-- Camera -->
+      <div
+        class="relative bg-ui-ink rounded-[10px] overflow-hidden aspect-[4/3] sm:aspect-video lg:aspect-auto lg:min-h-[460px]"
+      >
+        <video
+          id="webcamPreview"
+          :class="{ hidden: !currentStream || capturedPhotoData }"
+          class="absolute inset-0 w-full h-full object-cover"
+          autoplay
+          muted
+          playsinline
+        ></video>
+        <canvas id="photoCanvas" class="hidden"></canvas>
+
+        <img
+          v-if="capturedPhotoData"
+          :src="capturedPhotoData"
+          class="absolute inset-0 w-full h-full object-cover"
+          :alt="$t('clock.camera.capturedAlt')"
+        />
+
+        <!-- Face guide -->
+        <div
+          v-if="!capturedPhotoData"
+          class="absolute inset-0 flex flex-col items-center justify-center gap-4 pb-12 pointer-events-none"
+        >
+          <div
+            class="w-[38%] max-w-[180px] aspect-[3/4] rounded-[50%] border-2 border-dashed border-white/40"
+            aria-hidden="true"
+          ></div>
+          <p v-if="!currentStream" class="text-ui-small text-white/70 text-center px-4 flex items-center gap-1.5">
+            <Camera class="w-4 h-4 shrink-0" /> {{ $t("clock.camera.previewHint") }}
+          </p>
         </div>
 
-        <!-- Today's Status -->
-        <div class="w-full lg:w-auto lg:min-w-[320px]">
-          <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <p class="text-brand-white-70 text-xs sm:text-sm font-semibold uppercase tracking-wide">
-              Today's Status
-            </p>
-            <span
-              :class="attendanceStatus.class"
-              class="px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold whitespace-nowrap"
-            >
-              {{ attendanceStatus.text }}
-            </span>
-          </div>
-          <div class="grid grid-cols-3 gap-2 sm:gap-3">
-            <div class="bg-white/10 backdrop-blur-sm rounded-[12px] p-2.5 sm:p-3 text-center">
-              <p class="text-brand-white-70 text-[10px] sm:text-xs font-medium mb-1">Clock In</p>
-              <p class="text-white text-sm sm:text-lg font-bold tabular-nums">{{ checkInTime }}</p>
-            </div>
-            <div class="bg-white/10 backdrop-blur-sm rounded-[12px] p-2.5 sm:p-3 text-center">
-              <p class="text-brand-white-70 text-[10px] sm:text-xs font-medium mb-1">Clock Out</p>
-              <p class="text-white text-sm sm:text-lg font-bold tabular-nums">{{ checkOutTime }}</p>
-            </div>
-            <div class="bg-white/10 backdrop-blur-sm rounded-[12px] p-2.5 sm:p-3 text-center">
-              <p class="text-brand-white-70 text-[10px] sm:text-xs font-medium mb-1">Worked</p>
-              <p class="text-white text-sm sm:text-lg font-bold tabular-nums">{{ workingHours }}</p>
-            </div>
-          </div>
+        <div v-if="capturedPhotoData" class="absolute top-3 left-3">
+          <UiBadge tone="ok" dot>{{ $t("clock.camera.captured") }}</UiBadge>
+        </div>
+
+        <!-- Camera controls -->
+        <div class="absolute inset-x-0 bottom-0 p-3 sm:p-4 flex justify-center">
+          <UiButton v-if="!capturedPhotoData && !currentStream" variant="secondary" :icon="Video" @click="startCamera">
+            {{ $t("clock.camera.start") }}
+          </UiButton>
+          <UiButton v-else-if="!capturedPhotoData && currentStream" variant="secondary" size="lg" :icon="Camera" @click="capturePhoto">
+            {{ $t("clock.camera.take") }}
+          </UiButton>
+          <UiButton v-else variant="secondary" :icon="RotateCcw" @click="retakePhoto">{{ $t("clock.camera.retake") }}</UiButton>
         </div>
       </div>
-    </div>
 
-    <!-- Location and Actions Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 items-start">
-      <!-- Location and Camera -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-6"
-      >
-        <div class="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-6">
-          <div
-            class="w-7 h-7 sm:w-9 sm:h-9 bg-blue-600 rounded-full flex items-center justify-center shrink-0 text-white text-xs sm:text-sm font-bold"
-          >
-            1
-          </div>
-          <div
-            class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-50 rounded-[12px] flex items-center justify-center shrink-0"
-          >
-            <MapPin class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
-          </div>
+      <!-- Details + action -->
+      <div class="flex flex-col gap-4 min-w-0">
+        <!-- Live clock -->
+        <div class="flex items-end justify-between gap-3">
           <div class="min-w-0">
-            <h3 class="text-brand-dark text-base sm:text-base font-bold truncate">Location & Photo</h3>
-            <p class="text-brand-light text-xs sm:text-sm truncate">Verify where you're working from</p>
+            <p class="text-ui-over uppercase text-ui-faint flex items-center gap-1.5">
+              <Clock class="w-3.5 h-3.5" /> {{ $t("clock.liveClock") }} &middot; Jakarta
+            </p>
+            <p class="text-ui-display text-ui-ink tabular-nums mt-1">
+              {{ clockMain }}<span class="text-ui-faint">{{ clockSeconds }}</span>
+            </p>
           </div>
         </div>
 
-        <!-- Location Info -->
-        <div class="mb-6">
-          <!-- Current Location Display -->
-          <div
-            :class="{
-              'bg-yellow-50': locationStatus === 'loading',
-              'bg-green-50': locationStatus === 'success',
-              'bg-red-50': locationStatus === 'error',
-              'bg-white': locationStatus === 'default',
-            }"
-            class="p-3 sm:p-4 rounded-[12px] border border-[#DCDEDD] mb-3"
-          >
-            <div class="flex items-start sm:items-center gap-3">
-              <Loader2
-                v-if="locationStatus === 'loading'"
-                class="w-5 h-5 text-yellow-600 animate-spin shrink-0 mt-0.5 sm:mt-0"
-              />
-              <MapPin
-                v-else-if="locationStatus === 'success'"
-                class="w-5 h-5 text-green-600 shrink-0 mt-0.5 sm:mt-0"
-              />
-              <AlertCircle
-                v-else-if="locationStatus === 'error'"
-                class="w-5 h-5 text-red-600 shrink-0 mt-0.5 sm:mt-0"
-              />
-              <MapPin v-else class="w-5 h-5 text-gray-600 shrink-0 mt-0.5 sm:mt-0" />
-
-              <div class="flex-1 min-w-0">
-                <p class="text-brand-dark text-sm sm:text-base font-semibold break-words">
-                  {{ locationName }}
-                </p>
-                <p class="text-brand-light text-xs sm:text-sm break-words">{{ locationAddress }}</p>
-                <p v-if="locationCoords" class="text-brand-light text-[11px] sm:text-xs mt-1 break-words">
-                  {{ locationCoords }}
-                </p>
-              </div>
+        <!-- Today's status -->
+        <div>
+          <p class="text-ui-over uppercase text-ui-faint mb-2">{{ $t("clock.todayStatus") }}</p>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-ui-subtle rounded-ui-control px-3 py-2.5 min-w-0">
+              <p class="text-ui-cap text-ui-muted">{{ $t("clock.clockIn") }}</p>
+              <p class="text-ui-h3 text-ui-ink tabular-nums mt-0.5 truncate">{{ checkInTime }}</p>
+            </div>
+            <div class="bg-ui-subtle rounded-ui-control px-3 py-2.5 min-w-0">
+              <p class="text-ui-cap text-ui-muted">{{ $t("clock.clockOut") }}</p>
+              <p class="text-ui-h3 text-ui-ink tabular-nums mt-0.5 truncate">{{ checkOutTime }}</p>
+            </div>
+            <div class="bg-ui-subtle rounded-ui-control px-3 py-2.5 min-w-0">
+              <p class="text-ui-cap text-ui-muted">{{ $t("clock.worked") }}</p>
+              <p class="text-ui-h3 text-ui-ink tabular-nums mt-0.5 truncate">{{ workingHours }}</p>
             </div>
           </div>
+        </div>
 
-          <!-- Get Location Button -->
-          <button
-            @click="getCurrentLocation"
-            :disabled="isGettingLocation"
-            class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-3 disabled:opacity-50 mb-3 disabled:cursor-not-allowed"
-          >
-            <MapPin class="w-4 h-4 text-brand-white shrink-0" />
-            <span class="text-brand-white text-sm font-semibold text-center">
-              {{ isGettingLocation ? "Getting Location..." : currentLocation ? "Refresh Location" : "Get Current Location" }}
-            </span>
-          </button>
+        <!-- Location -->
+        <div class="border border-ui-line rounded-ui-card p-3.5 sm:p-4 space-y-3">
+          <div class="flex items-start gap-3">
+            <div
+              class="w-9 h-9 rounded-ui-control flex items-center justify-center shrink-0"
+              :class="LOCATION_TONE[locationStatus] || LOCATION_TONE.default"
+            >
+              <UiSpinner v-if="locationStatus === 'loading'" size="16px" :center="false" />
+              <AlertCircle v-else-if="locationStatus === 'error'" class="w-[18px] h-[18px]" />
+              <MapPin v-else class="w-[18px] h-[18px]" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-h3 text-ui-ink break-words">{{ showLocationText(locationName) }}</p>
+              <p class="text-ui-small text-ui-muted break-words">{{ showLocationText(locationAddress) }}</p>
+              <p v-if="locationCoords" class="text-ui-cap text-ui-faint font-mono mt-1 break-words">{{ locationCoords }}</p>
+            </div>
+          </div>
 
           <!-- Office Location Reference -- only meaningful for Work
                Location = Office employees, who are the only ones actually
@@ -580,232 +579,119 @@ onUnmounted(() => {
                guardOfficeGeofence()). -->
           <div
             v-if="isOfficeWorker && hasOfficeCoordinates"
-            class="p-3 sm:p-4 rounded-[12px] border border-[#DCDEDD]"
-            :class="{
-              'bg-green-50': isWithinOfficeRadius === true,
-              'bg-red-50': isWithinOfficeRadius === false,
-              'bg-white': isWithinOfficeRadius === null,
-            }"
+            class="flex items-start gap-3 pt-3 border-t border-ui-line"
           >
-            <div class="flex items-start sm:items-center gap-3">
-              <Building class="w-5 h-5 text-blue-600 shrink-0 mt-0.5 sm:mt-0" />
-              <div class="min-w-0">
-                <p class="text-brand-dark text-sm sm:text-base font-semibold">
-                  Office Radius: {{ attendanceSetting.office_radius_meters ?? 150 }}m
-                </p>
-                <p v-if="distanceFromOffice !== null" class="text-xs sm:text-sm break-words" :class="isWithinOfficeRadius ? 'text-green-700' : 'text-red-700'">
-                  You're {{ distanceFromOffice }}m from the office --
-                  {{ isWithinOfficeRadius ? "within range" : "outside the allowed radius" }}
-                </p>
-                <p v-else class="text-brand-light text-xs sm:text-sm break-words">
-                  Get your location to check distance from the office
-                </p>
-              </div>
+            <div class="w-9 h-9 rounded-ui-control bg-ui-accent-soft text-ui-accent flex items-center justify-center shrink-0">
+              <Building class="w-[18px] h-[18px]" />
             </div>
-          </div>
-        </div>
-
-        <!-- Webcam Section -->
-        <div class="space-y-3 sm:space-y-4">
-          <div class="relative">
-            <video
-              id="webcamPreview"
-              :class="{ hidden: !currentStream || capturedPhotoData }"
-              class="w-full h-40 sm:h-48 bg-gray-100 rounded-[12px] object-cover"
-              autoplay
-              muted
-            ></video>
-            <canvas id="photoCanvas" class="hidden"></canvas>
-
-            <div
-              v-if="!currentStream && !capturedPhotoData"
-              class="w-full h-40 sm:h-48 bg-gray-100 rounded-[12px] flex items-center justify-center border-2 border-dashed border-gray-300"
-            >
-              <div class="text-center px-4">
-                <Camera class="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
-                <p class="text-gray-500 text-xs sm:text-sm">
-                  Camera preview will appear here
-                </p>
-              </div>
-            </div>
-
-            <img
-              v-if="capturedPhotoData"
-              :src="capturedPhotoData"
-              class="w-full h-40 sm:h-48 rounded-[12px] object-cover"
-              alt="Captured photo"
-            />
-          </div>
-
-          <!-- Camera Controls -->
-          <div v-if="!capturedPhotoData" class="flex flex-col sm:flex-row gap-3">
-            <button
-              v-if="!currentStream"
-              @click="startCamera"
-              class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Video class="w-4 h-4 text-brand-white" />
-              <span class="text-brand-white text-sm font-semibold"
-                >Start Camera</span
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-h3 text-ui-ink">{{ $t("clock.office.radius", { m: attendanceSetting.office_radius_meters ?? 150 }) }}</p>
+              <p
+                v-if="distanceFromOffice !== null"
+                class="text-ui-small break-words"
+                :class="isWithinOfficeRadius ? 'text-ui-ok' : 'text-ui-bad'"
               >
-            </button>
-            <button
-              v-if="currentStream"
-              @click="capturePhoto"
-              class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Camera class="w-4 h-4 text-white" />
-              <span class="text-white text-sm font-semibold">Take Photo</span>
-            </button>
+                {{ $t("clock.office.distance", { m: distanceFromOffice }) }} --
+                {{ isWithinOfficeRadius ? $t("clock.office.withinRange") : $t("clock.office.outsideRange") }}
+              </p>
+              <p v-else class="text-ui-small text-ui-muted break-words">
+                {{ $t("clock.office.getLocationHint") }}
+              </p>
+            </div>
           </div>
 
-          <button
-            v-if="capturedPhotoData"
-            @click="retakePhoto"
-            class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-4 sm:py-4 flex items-center justify-center gap-2"
-          >
-            <RotateCcw class="w-4 h-4 text-gray-600" />
-            <span class="text-brand-dark text-sm font-semibold"
-              >Retake Photo</span
-            >
-          </button>
-        </div>
-      </div>
-
-      <!-- Clock In/Out Action -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-4 sm:p-8"
-      >
-        <div class="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-6">
-          <div
-            class="w-7 h-7 sm:w-9 sm:h-9 bg-blue-600 rounded-full flex items-center justify-center shrink-0 text-white text-xs sm:text-sm font-bold"
-          >
-            2
-          </div>
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-base sm:text-base font-bold truncate">Confirm & Submit</h3>
-            <p class="text-brand-light text-xs sm:text-sm truncate">Review readiness, then clock in or out</p>
-          </div>
+          <UiButton variant="secondary" block :icon="MapPin" :loading="isGettingLocation" @click="getCurrentLocation">
+            {{ isGettingLocation ? $t("clock.location.gettingButton") : currentLocation ? $t("clock.location.refresh") : $t("clock.location.get") }}
+          </UiButton>
         </div>
 
         <!-- Readiness Checklist -->
-        <div class="space-y-2 mb-6 bg-white">
-          <div
-            class="flex items-center gap-2.5 px-4 py-2.5 rounded-[10px] border"
-            :class="currentLocation ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-[#DCDEDD]'"
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <li
+            class="flex items-center gap-2.5 px-3 py-2.5 rounded-ui-control border"
+            :class="currentLocation ? 'bg-ui-ok-soft border-ui-ok/20' : 'bg-ui-surface border-ui-line'"
           >
-            <CheckCircle2 v-if="currentLocation" class="w-5 h-5 text-green-600 shrink-0" />
-            <Circle v-else class="w-5 h-5 text-gray-300 shrink-0" />
-            <span
-              class="text-sm font-semibold"
-              :class="currentLocation ? 'text-green-700' : 'text-brand-light'"
-            >
-              Location detected
+            <CheckCircle2 v-if="currentLocation" class="w-[18px] h-[18px] text-ui-ok shrink-0" />
+            <Circle v-else class="w-[18px] h-[18px] text-ui-faint shrink-0" />
+            <span class="text-ui-small font-medium" :class="currentLocation ? 'text-ui-ok' : 'text-ui-muted'">
+              {{ $t("clock.location.detected") }}
             </span>
-          </div>
-          <div
-            class="flex items-center gap-2.5 px-4 py-2.5 rounded-[10px] border"
-            :class="capturedPhotoData ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-[#DCDEDD]'"
+          </li>
+          <li
+            class="flex items-center gap-2.5 px-3 py-2.5 rounded-ui-control border"
+            :class="capturedPhotoData ? 'bg-ui-ok-soft border-ui-ok/20' : 'bg-ui-surface border-ui-line'"
           >
-            <CheckCircle2 v-if="capturedPhotoData" class="w-5 h-5 text-green-600 shrink-0" />
-            <Circle v-else class="w-5 h-5 text-gray-300 shrink-0" />
-            <span
-              class="text-sm font-semibold"
-              :class="capturedPhotoData ? 'text-green-700' : 'text-brand-light'"
-            >
-              Photo captured
-              <span v-if="!capturedPhotoData" class="font-normal text-red-500">(required)</span>
+            <CheckCircle2 v-if="capturedPhotoData" class="w-[18px] h-[18px] text-ui-ok shrink-0" />
+            <Circle v-else class="w-[18px] h-[18px] text-ui-faint shrink-0" />
+            <span class="text-ui-small font-medium" :class="capturedPhotoData ? 'text-ui-ok' : 'text-ui-muted'">
+              {{ $t("clock.camera.captured") }}
+              <span v-if="!capturedPhotoData" class="font-normal text-ui-bad">{{ $t("clock.requiredTag") }}</span>
             </span>
-          </div>
-        </div>
+          </li>
+        </ul>
 
         <!-- Weekend blocked notice -->
-        <div
-          v-if="weekendCheckInBlocked && !isCheckedIn"
-          class="flex items-start gap-2.5 px-4 py-3 rounded-[10px] border border-red-100 bg-red-50 mb-4"
-        >
-          <CalendarOff class="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-          <p class="text-red-700 text-xs sm:text-sm">
-            Clock In tidak tersedia hari ini (Sabtu/Minggu). Hubungi Superadmin/Manager di menu Settings jika Anda perlu masuk lembur.
-          </p>
-        </div>
+        <UiAlert v-if="weekendCheckInBlocked && !isCheckedIn" tone="bad">
+          {{ $t("clock.weekend.blocked") }}
+        </UiAlert>
 
         <!-- Overtime notice (weekend, but allowed) -->
-        <div
-          v-else-if="isWeekend && !isCheckedIn"
-          class="flex items-start gap-2.5 px-4 py-3 rounded-[10px] border border-purple-100 bg-purple-50 mb-4"
-        >
-          <Zap class="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
-          <p class="text-purple-700 text-xs sm:text-sm">
-            Hari ini Sabtu/Minggu -- clock in akan tercatat sebagai lembur (overtime).
-          </p>
-        </div>
+        <UiAlert v-else-if="isWeekend && !isCheckedIn" tone="info">
+          {{ $t("clock.weekend.overtime") }}
+        </UiAlert>
 
         <!-- Late arrival notice -->
-        <div
-          v-if="lateInfo"
-          class="flex items-start gap-2.5 px-4 py-3 rounded-[10px] border border-amber-100 bg-amber-50 mb-4"
-        >
-          <Timer class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <p class="text-amber-700 text-xs sm:text-sm">{{ lateInfo }}</p>
-        </div>
+        <UiAlert v-if="lateInfo" tone="warn">{{ lateInfo }}</UiAlert>
 
-        <!-- Icon + Prompt -->
-        <div class="text-center mb-6">
-          <div
-            class="w-12 h-12 sm:w-16 sm:h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
-          >
-            <LogIn v-if="!isCheckedIn" class="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
-            <LogOut v-else class="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+        <!-- Action: sticks just above the tab bar on phones so it stays in
+             thumb reach (sticky offsets count from main's bottom padding,
+             which already clears the tab bar). -->
+        <div
+          class="mt-auto sticky -bottom-4 lg:static z-10 -mx-3 sm:mx-0 px-3 sm:px-0 pt-3 pb-1 lg:pt-1 bg-ui-surface border-t border-ui-line lg:border-0 space-y-3"
+        >
+          <div class="flex items-baseline justify-between gap-3">
+            <h2 class="text-ui-h2 text-ui-ink">
+              {{ isCheckedIn ? $t("clock.ready.out") : $t("clock.ready.in") }}
+            </h2>
+            <p class="hidden sm:block text-ui-small text-ui-muted text-right">
+              {{ isCheckedIn ? $t("clock.ready.outHint") : $t("clock.ready.inHint") }}
+            </p>
           </div>
-          <h4 class="text-brand-dark text-base sm:text-xl font-bold mb-1.5 sm:mb-2">
-            {{ isCheckedIn ? "Ready to Clock Out?" : "Ready to Clock In?" }}
-          </h4>
-          <p class="text-brand-light text-sm sm:text-base px-2">
-            {{
-              isCheckedIn
-                ? "Mark your departure with location"
-                : "Mark your attendance with location"
-            }}
+
+          <UiButton
+            v-if="!isCheckedIn"
+            size="lg"
+            block
+            class="h-[52px]"
+            :icon="LogIn"
+            :loading="loading"
+            :disabled="!canCheckIn"
+            @click="handleCheckIn"
+          >
+            {{ loading ? $t("clock.processing") : $t("clock.clockIn") }}
+          </UiButton>
+          <UiButton
+            v-else
+            size="lg"
+            block
+            class="h-[52px]"
+            :icon="LogOut"
+            :loading="loading"
+            :disabled="!canCheckOut"
+            @click="handleCheckOut"
+          >
+            {{ loading ? $t("clock.processing") : $t("clock.clockOut") }}
+          </UiButton>
+
+          <p v-if="isCheckedIn && remainingUntilCheckOut" class="text-ui-small text-ui-warn text-center flex items-center justify-center gap-1.5">
+            <Timer class="w-4 h-4 shrink-0" />
+            {{ $t("clock.checkOutAvailableIn", { duration: remainingUntilCheckOut }) }}
+          </p>
+          <p class="text-ui-cap text-ui-muted text-center flex items-center justify-center gap-1.5">
+            <Info class="w-3.5 h-3.5 shrink-0" />
+            {{ $t("clock.footerHint") }}
           </p>
         </div>
-
-        <button
-          v-if="!isCheckedIn"
-          @click="handleCheckIn"
-          :disabled="!canCheckIn || loading"
-          class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <LogIn class="w-5 h-5 sm:w-6 sm:h-6 text-white shrink-0" />
-          <span class="text-white text-base sm:text-lg font-bold">
-            {{ loading ? "Processing..." : "Clock In" }}
-          </span>
-        </button>
-
-        <button
-          v-else
-          @click="handleCheckOut"
-          :disabled="!canCheckOut || loading"
-          class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <LogOut class="w-5 h-5 sm:w-6 sm:h-6 text-white shrink-0" />
-          <span class="text-white text-base sm:text-lg font-bold">
-            {{ loading ? "Processing..." : "Clock Out" }}
-          </span>
-        </button>
-
-        <p
-          v-if="isCheckedIn && remainingUntilCheckOut"
-          class="text-amber-600 text-xs sm:text-sm mt-3 text-center px-2 font-medium"
-        >
-          <Timer class="w-4 h-4 inline mr-1 -mt-0.5" />
-          Clock Out available in {{ remainingUntilCheckOut }} (min. 8 hours worked)
-        </p>
-
-        <p class="text-brand-light text-xs sm:text-sm mt-4 text-center px-2">
-          <Info class="w-4 h-4 inline mr-1 -mt-0.5" />
-          Please get your location and take a photo before clocking in/out
-        </p>
       </div>
     </div>
   </div>

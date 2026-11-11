@@ -6,18 +6,31 @@ import {
   Key,
   Lock,
   Trash2,
-  AlertTriangle,
   Eye,
   Copy,
   Check,
   Pencil,
   Search,
-  X,
+  Plus,
+  Globe,
+  FileText,
 } from "lucide-vue-next";
-import Alert from "@/components/common/Alert.vue";
-import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
-import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import {
+  UiPageHeader,
+  UiStat,
+  UiButton,
+  UiBadge,
+  UiInput,
+  UiTable,
+  UiEmpty,
+  UiAlert,
+  UiConfirmDialog,
+} from "@/components/ui";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const passwordStore = useAccountPasswordStore();
 const { accounts, statistics, loading, success } = storeToRefs(passwordStore);
@@ -84,8 +97,29 @@ const copyPassword = (account) => {
   }, 1500);
 };
 
+// Presentation only: table columns and the small tallies on the tiles.
+const columns = computed(() => [
+  { key: "label", label: t("credentials.columns.credential") },
+  { key: "username", label: t("credentials.fields.usernameEmail") },
+  { key: "password", label: t("credentials.fields.password") },
+  { key: "tags", label: t("credentials.columns.info") },
+  { key: "updated", label: t("credentials.columns.updated"), class: "hidden 2xl:table-cell" }, // shown on the detail page too
+  { key: "actions", label: "", align: "right", width: 168 },
+]);
+// Quiet icon button (view / edit / copy / delete).
+const iconBtn =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted transition-colors hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus";
+const withWebsite = computed(() => accounts.value.filter((a) => a.website).length);
+const withNotes = computed(() => accounts.value.filter((a) => a.notes).length);
+const deleteMessage = computed(
+  () =>
+    t("credentials.delete.message", {
+      name: accountToDelete.value?.label_password || accountToDelete.value?.label || "",
+    })
+);
+
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -94,327 +128,184 @@ const formatDate = (date) => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <!-- ================= STATS LAYOUT ================= -->
-    <div class="gap-4 mb-6">
-      <!-- Main Card (vault identity: violet accent over the dark navy hero) -->
-      <div
-        class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-5"
-      >
-        <!-- Faint lock lattice watermark for the vault feel -->
-        <div class="absolute inset-0 opacity-[0.06] pointer-events-none">
-          <Lock class="absolute -right-4 -top-4 w-32 h-32 text-violet-300" stroke-width="1" />
-          <Lock class="absolute right-16 bottom-0 w-16 h-16 text-violet-300" stroke-width="1" />
-        </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('credentials.title')" :subtitle="$t('credentials.subtitle')">
+      <template #actions>
+        <UiButton :to="{ name: 'admin.account-password.create' }" :icon="Plus">{{ $t("credentials.create") }}</UiButton>
+      </template>
+    </UiPageHeader>
 
-        <div class="flex flex-col justify-center h-full relative z-10">
-          <div class="flex items-center gap-2 mb-3">
-            <div
-              class="flex items-center gap-1.5 px-3 py-1 bg-violet-500/20 border border-violet-400/30 rounded-full backdrop-blur-sm"
-            >
-              <ShieldCheck class="w-3 h-3 text-violet-300" />
-              <span class="text-violet-200 text-xs font-semibold">
-                Credential Vault
-              </span>
-            </div>
-          </div>
-
-          <div
-            class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
-          >
-            <div class="flex-1 min-w-0 pr-2">
-              <p class="text-brand-white-90 text-sm font-medium">
-                Stored Accounts
-              </p>
-              <Skeleton v-if="loading" dark width="90px" height="3rem" rounded="8px" class="my-4" />
-              <p
-                v-else
-                class="text-brand-white text-3xl lg:text-3xl font-extrabold leading-none my-4"
-              >
-                {{ statistics.total_accounts }}
-              </p>
-              <p class="text-brand-white-80 text-sm font-normal">
-                Internal systems & services
-              </p>
-            </div>
-            <div
-              class="w-16 h-16 bg-violet-500/20 border border-violet-400/20 rounded-[14px] flex items-center justify-center"
-            >
-              <Key class="w-8 h-8 text-violet-300" />
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2 mt-auto">
-            <Lock class="w-3 h-3 text-violet-300/70" />
-            <span class="text-brand-white-70 text-xs"> Restricted Access </span>
-          </div>
-        </div>
-      </div>
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 ui-stagger">
+      <UiStat
+        class="col-span-2 lg:col-span-1"
+        :label="$t('credentials.stats.stored')"
+        :value="statistics.total_accounts"
+        :hint="$t('credentials.stats.storedHint')"
+        :icon="Key"
+        :loading="loading"
+      />
+      <UiStat :label="$t('credentials.hasWebsite')" :value="withWebsite" :icon="Globe" :loading="loading" />
+      <UiStat :label="$t('credentials.hasNotes')" :value="withNotes" :icon="FileText" :loading="loading" />
     </div>
 
-    <div class="mb-6">
-      <Transition name="fade">
-        <Alert
-          v-if="success"
-          type="success"
-          :title="success"
-          :show="!!success"
-        />
-      </Transition>
-    </div>
+    <Transition name="ui-fade">
+      <UiAlert v-if="success" tone="ok" :title="success" />
+    </Transition>
 
     <!-- ================= ACCOUNT LIST ================= -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-      <div
-        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
-      >
-        <h3 class="text-brand-dark text-base font-bold">Accounts</h3>
-
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-          <!-- SEARCH -->
-          <div class="relative w-full sm:w-auto flex-1 sm:flex-none">
-            <div
-              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10"
-            >
-              <Search class="w-4 h-4 text-violet-400" />
-            </div>
-
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search by name or email..."
-              class="relative w-full sm:w-64 pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all"
-            />
-          </div>
-
-          <router-link
-            :to="{ name: 'admin.account-password.create' }"
-            class="rounded-lg border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 px-4 py-3 flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)]"
-          >
-            <span class="text-brand-white text-sm font-semibold">
-              Create Credential
-            </span>
-          </router-link>
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 px-4 sm:px-5 py-3.5 border-b border-ui-line">
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("credentials.accounts") }}</h3>
+          <UiBadge v-if="!loading" tone="neutral">{{ filteredAccounts.length }}</UiBadge>
         </div>
+        <UiInput
+          v-model="searchQuery"
+          class="w-full sm:w-72"
+          :icon="Search"
+          :placeholder="$t('credentials.searchPlaceholder')"
+        />
       </div>
 
-      <SkeletonList v-if="loading" :rows="4" />
-
-      <div v-else class="space-y-4">
-        <div
-          v-for="account in filteredAccounts"
-          :key="account.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:shadow-sm transition-all"
-        >
-          <div
-            class="w-16 h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden"
-          >
-            <!-- ICON -->
-            <div
-              class="w-12 h-12 sm:w-16 sm:h-16 relative flex items-center justify-center rounded-lg sm:rounded-[12px] overflow-hidden bg-gradient-to-br from-violet-600 to-indigo-700"
+      <UiTable :columns="columns" :rows="filteredAccounts" :loading="loading" :skeleton-rows="4">
+        <template #cell-label="{ row }">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-8 h-8 shrink-0 rounded-ui-control bg-ui-subtle text-ui-muted inline-flex items-center justify-center">
+              <Key class="w-4 h-4" />
+            </span>
+            <span class="text-ui-body font-medium text-ui-ink truncate">{{ row.label_password || row.label }}</span>
+          </div>
+        </template>
+        <template #cell-username="{ row }">
+          <span class="font-mono text-ui-small text-ui-text whitespace-nowrap">{{ row.username_email || row.username }}</span>
+        </template>
+        <template #cell-password>
+          <span class="inline-flex items-center gap-1.5 font-mono text-ui-small tracking-widest text-ui-muted whitespace-nowrap">
+            <Lock class="w-3.5 h-3.5 text-ui-faint" />••••••••
+          </span>
+        </template>
+        <template #cell-tags="{ row }">
+          <div class="flex items-center gap-1.5 whitespace-nowrap">
+            <UiBadge v-if="row.website" tone="ok">{{ $t("credentials.hasWebsite") }}</UiBadge>
+            <UiBadge v-if="row.notes" tone="warn">{{ $t("credentials.hasNotes") }}</UiBadge>
+            <span v-if="!row.website && !row.notes" class="text-ui-faint">—</span>
+          </div>
+        </template>
+        <template #cell-updated="{ row }">
+          <span class="text-ui-small text-ui-muted whitespace-nowrap">{{ formatDate(row.updated_at) }}</span>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-0.5">
+            <router-link
+              :to="{ name: 'admin.account-password.detail', params: { id: row.id } }"
+              :class="iconBtn"
+              :title="$t('credentials.actions.view')"
+              :aria-label="$t('credentials.actions.view')"
             >
-              <Key class="w-6 h-6 sm:w-8 sm:h-8 text-white relative z-10" />
-              <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center border border-violet-100">
-                <Lock class="w-2.5 h-2.5 text-violet-600" />
+              <Eye class="w-4 h-4" />
+            </router-link>
+            <router-link
+              :to="{ name: 'admin.account-password.edit', params: { id: row.id } }"
+              :class="iconBtn"
+              :title="$t('credentials.actions.edit')"
+              :aria-label="$t('credentials.actions.edit')"
+            >
+              <Pencil class="w-4 h-4" />
+            </router-link>
+            <button type="button" @click="copyPassword(row)" :class="iconBtn" :title="$t('credentials.actions.copyPassword')" :aria-label="$t('credentials.actions.copyPassword')">
+              <Check v-if="copiedId === row.id" class="w-4 h-4 text-ui-ok" />
+              <Copy v-else class="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              @click="confirmDelete(row)"
+              :class="[iconBtn, 'hover:!bg-ui-bad-soft hover:!text-ui-bad']"
+              :title="$t('credentials.actions.delete')"
+              :aria-label="$t('credentials.actions.delete')"
+            >
+              <Trash2 class="w-4 h-4" />
+            </button>
+          </div>
+        </template>
+
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-body font-medium text-ui-ink truncate">{{ row.label_password || row.label }}</p>
+              <p class="font-mono text-ui-small text-ui-text break-all mt-0.5">{{ row.username_email || row.username }}</p>
+              <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                <span class="inline-flex items-center gap-1 font-mono text-ui-cap tracking-widest text-ui-muted">
+                  <Lock class="w-3 h-3 text-ui-faint" />••••••••
+                </span>
+                <UiBadge v-if="row.website" tone="ok">{{ $t("credentials.hasWebsite") }}</UiBadge>
+                <UiBadge v-if="row.notes" tone="warn">{{ $t("credentials.hasNotes") }}</UiBadge>
+              </div>
+              <p class="text-ui-cap text-ui-muted mt-1.5">{{ $t("credentials.updatedOn", { date: formatDate(row.updated_at) }) }}</p>
+              <div class="flex items-center gap-1 mt-2 -ml-1.5">
+                <router-link
+                  :to="{ name: 'admin.account-password.detail', params: { id: row.id } }"
+                  :class="iconBtn"
+                  :title="$t('credentials.actions.view')"
+                  :aria-label="$t('credentials.actions.view')"
+                >
+                  <Eye class="w-4 h-4" />
+                </router-link>
+                <router-link
+                  :to="{ name: 'admin.account-password.edit', params: { id: row.id } }"
+                  :class="iconBtn"
+                  :title="$t('credentials.actions.edit')"
+                  :aria-label="$t('credentials.actions.edit')"
+                >
+                  <Pencil class="w-4 h-4" />
+                </router-link>
+                <button type="button" @click="copyPassword(row)" :class="iconBtn" :title="$t('credentials.actions.copyPassword')" :aria-label="$t('credentials.actions.copyPassword')">
+                  <Check v-if="copiedId === row.id" class="w-4 h-4 text-ui-ok" />
+                  <Copy v-else class="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  @click="confirmDelete(row)"
+                  :class="[iconBtn, 'hover:!bg-ui-bad-soft hover:!text-ui-bad']"
+                  :title="$t('credentials.actions.delete')"
+                  :aria-label="$t('credentials.actions.delete')"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
+        </template>
 
-          <div class="flex-1">
-            <p class="text-brand-dark text-sm font-bold">
-              {{ account.label_password || account.label }}
-            </p>
+        <template #empty>
+          <UiEmpty
+            v-if="accounts.length === 0"
+            compact
+            :icon="ShieldCheck"
+:title="$t('credentials.empty.title')"
+            :message="$t('credentials.empty.message')"
+          />
+          <UiEmpty
+            v-else
+            compact
+            :icon="Search"
+:title="$t('common.states.noResults')"
+            :message="$t('credentials.noResultsFor', { query: searchQuery })"
+          />
+        </template>
+      </UiTable>
+    </section>
 
-            <p class="text-brand-dark text-sm font-mono">
-              {{ account.username_email || account.username }}
-            </p>
-
-            <div class="flex items-center gap-2 mt-1">
-              <span
-                v-if="account.website"
-                class="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold"
-              >
-                Has Website
-              </span>
-
-              <span
-                v-if="account.notes"
-                class="text-xs px-2 py-1 rounded-md bg-yellow-50 text-yellow-700 font-semibold"
-              >
-                Has Notes
-              </span>
-            </div>
-
-            <p class="text-brand-light text-xs mt-1">
-              Updated on {{ formatDate(account.updated_at) }}
-            </p>
-          </div>
-
-          <div
-            class="hidden sm:flex items-center gap-1.5 font-mono tracking-widest text-violet-700 text-xs bg-violet-50 border border-violet-100 rounded-md px-2.5 py-1.5"
-          >
-            <Lock class="w-3 h-3 text-violet-400" />
-            ••••••••
-          </div>
-          <div
-            class="grid grid-cols-4 sm:flex items-center gap-2 w-full sm:w-auto"
-          >
-            <router-link
-              :to="{
-                name: 'admin.account-password.detail',
-                params: { id: account.id },
-              }"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-violet-400 hover:ring-2 hover:ring-violet-400/30 transition-all"
-              title="View Credential"
-              aria-label="View Credential"
-            >
-              <Eye class="w-4 h-4 text-gray-600" />
-            </router-link>
-
-            <router-link
-              :to="{
-                name: 'admin.account-password.edit',
-                params: { id: account.id },
-              }"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-violet-400 hover:ring-2 hover:ring-violet-400/30 transition-all"
-              title="Edit Credential"
-              aria-label="Edit Credential"
-            >
-              <Pencil class="w-4 h-4 text-gray-600" />
-            </router-link>
-
-            <button
-              @click="copyPassword(account)"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-violet-400 hover:ring-2 hover:ring-violet-400/30 transition-all"
-              title="Copy Password"
-              aria-label="Copy Password"
-            >
-              <Check v-if="copiedId === account.id" class="w-4 h-4 text-success" />
-              <Copy v-else class="w-4 h-4 text-gray-600" />
-            </button>
-
-            <button
-              @click="confirmDelete(account)"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:border-red-500 hover:ring-2 hover:ring-red-500/30 hover:bg-red-50 group transition-all"
-              title="Delete Credential"
-              aria-label="Delete Credential"
-            >
-              <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-            </button>
-          </div>
-        </div>
-
-        <div
-          v-if="!loading && filteredAccounts.length === 0"
-          class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
-        >
-          <Search class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p class="text-lg font-semibold">No results found</p>
-          <p class="text-sm text-gray-400">
-            Try searching with a different keyword for "{{ searchQuery }}"
-          </p>
-        </div>
-
-        <div
-          v-if="!loading && accounts.length === 0"
-          class="text-center py-12 text-gray-500"
-        >
-          <p class="text-lg font-semibold">No account data found</p>
-          <p class="text-sm">No stored credentials available</p>
-        </div>
-      </div>
-    </div>
+    <!-- MODAL -->
+    <UiConfirmDialog
+      v-model:open="isDeleteModalOpen"
+      type="danger"
+      :title="$t('credentials.delete.title')"
+      :message="deleteMessage"
+      :cancel-text="$t('common.actions.cancel')"
+      :confirm-text="isDeleting ? $t('common.actions.deleting') : $t('credentials.delete.confirm')"
+      :loading="isDeleting"
+      @confirm="handleDelete"
+    />
   </div>
-
-  <!-- MODAL  -->
-  <Transition name="fade">
-    <div
-      v-if="isDeleteModalOpen"
-      class="fixed inset-0 z-[99] flex items-center justify-center p-4"
-    >
-      <div
-        class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"
-        @click="isDeleteModalOpen = false"
-      ></div>
-
-      <div
-        class="bg-white rounded-[14px] p-6 w-full max-w-sm relative z-10 shadow-2xl transform transition-all"
-      >
-        <button
-          @click="isDeleteModalOpen = false"
-          class="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
-          aria-label="Close"
-        >
-          <X class="w-5 h-5" />
-        </button>
-
-        <div class="text-center">
-          <div
-            class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4"
-          >
-            <AlertTriangle class="w-8 h-8 text-red-500" />
-          </div>
-
-          <h3 class="text-xl font-bold text-brand-dark mb-2">
-            Delete Credential?
-          </h3>
-          <p class="text-gray-500 text-sm mb-6">
-            Are you sure you want to delete
-            <span class="font-bold text-brand-dark"
-              >"{{
-                accountToDelete?.label_password || accountToDelete?.label
-              }}"</span
-            >? This action cannot be undone.
-          </p>
-
-          <div class="grid grid-cols-2 gap-3">
-            <button
-              @click="isDeleteModalOpen = false"
-              class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50 transition"
-            >
-              Cancel
-            </button>
-            <button
-              @click="handleDelete"
-              :disabled="isDeleting"
-              class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <Trash2 v-if="!isDeleting" class="w-4 h-4" />
-              {{ isDeleting ? "Deleting..." : "Yes, Delete" }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </Transition>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-/* Animasi Scale untuk Modal Content */
-.fade-enter-active .bg-white {
-  animation: modal-in 0.3s ease-out;
-}
-.fade-leave-active .bg-white {
-  animation: modal-in 0.2s ease-in reverse;
-}
-
-@keyframes modal-in {
-  0% {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-</style>

@@ -43,7 +43,9 @@ axios.interceptors.response.use(
             // imports axiosInstance from this file.
             const { useAuthStore } = await import('@/stores/auth')
             useAuthStore().$reset()
-            router.push({ name: 'login' })
+            // Full reload (not router.push): drops all cached store data of
+            // the expired session before someone signs in again.
+            window.location.assign(router.resolve({ name: 'login' }).href)
         }
 
         return Promise.reject(error)

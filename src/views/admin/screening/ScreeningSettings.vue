@@ -5,13 +5,25 @@ import {
 } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useToastStore } from "@/stores/toast";
+import { useListState } from "@/composables/useListState";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
 import { formatRupiah } from "@/utils/formatUtils";
 import { PRICE_UNIT, PRICING_MODE } from "@/utils/screening";
+import { UiPageHeader, UiButton, UiBadge, UiTable, UiEmpty, UiModal, UiSelect, UiSwitch } from "@/components/ui";
+import Spinner from "@/components/common/skeleton/Spinner.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 // Settings > Client Screening: the service catalog (synced from the Rate
 // Card in Notion) and the questionnaire the website and the team use.
 const alertModal = useAlertModalStore();
-const tab = ref("catalog");
+// The tab is in the URL so a reload or a link opens the same one.
+const view = useListState("screening-settings", { tab: "catalog" }, { remember: false });
+const tab = computed({ get: () => view.tab, set: (value) => (view.tab = value) });
+const toast = useToastStore();
 
 // ===== Catalog =====
 const items = ref([]);
@@ -40,20 +52,20 @@ const sync = async () => {
     syncMessage.value = data.message;
     await loadCatalog();
   } catch (e) {
-    syncMessage.value = e?.response?.data?.message || "Sync failed.";
+    syncMessage.value = e?.response?.data?.message || t("screening.settings.syncFailed");
   } finally {
     syncing.value = false;
   }
 };
 
 const priceText = (i) => {
-  if (i.availability !== "available") return "Not available yet";
-  if (i.pricing_mode === "by_quote") return "By quote";
+  if (i.availability !== "available") return t("screening.settings.price.notAvailable");
+  if (i.pricing_mode === "by_quote") return t("screening.settings.price.byQuote");
   if (i.pricing_mode === "hourly") {
     const h = Number(i.default_hours || 0);
-    return hourlyRate.value ? `${formatRupiah(h * hourlyRate.value)} (${h} h)` : `${h} h × rate`;
+    return hourlyRate.value ? t("screening.settings.price.hourly", { price: formatRupiah(h * hourlyRate.value), h }) : t("screening.settings.price.hoursTimesRate", { h });
   }
-  return i.price_from !== null ? `From ${formatRupiah(i.price_from)}${PRICE_UNIT[i.price_unit]}` : "-";
+  return i.price_from !== null ? t("screening.settings.price.from", { price: formatRupiah(i.price_from), unit: PRICE_UNIT[i.price_unit] }) : "-";
 };
 
 const editing = ref(null);
@@ -64,15 +76,31 @@ const openItem = (i) => {
   itemErrors.value = {};
   editing.value = i ? { ...i, price_from: i.price_from !== null ? Number(i.price_from) : null, default_hours: i.default_hours !== null ? Number(i.default_hours) : null } : blankItem();
 };
+// Same order as the API: sort_order, then name.
+const byOrder = (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || String(a.name).localeCompare(String(b.name));
+const upsertItem = (item, oldCode = null) => {
+  const idx = items.value.findIndex((i) => i.id === item.id);
+  const next = [...items.value];
+  if (idx === -1) next.push(item);
+  else next[idx] = { ...next[idx], ...item };
+  items.value = next.sort(byOrder);
+  // The questionnaire's "adds item" pickers list the catalog by code.
+  const codes = { ...itemCodes.value };
+  if (oldCode && oldCode !== item.code) delete codes[oldCode];
+  codes[item.code] = item.name;
+  itemCodes.value = codes;
+};
 const saveItem = async () => {
   savingItem.value = true;
   itemErrors.value = {};
   try {
     const payload = { ...editing.value };
-    if (payload.id) await axiosInstance.put(`/service-catalog/${payload.id}`, payload);
-    else await axiosInstance.post("/service-catalog", payload);
+    const { data } = payload.id ? await axiosInstance.put(`/service-catalog/${payload.id}`, payload) : await axiosInstance.post("/service-catalog", payload);
+    // The response is the saved item: put it in the list instead of
+    // reloading the whole catalog.
+    upsertItem(data.data || payload, payload.id ? items.value.find((i) => i.id === payload.id)?.code : null);
     editing.value = null;
-    await loadCatalog();
+    toast.success(payload.id ? t("screening.settings.toast.itemSaved") : t("screening.settings.toast.itemAdded"));
   } catch (e) {
     itemErrors.value = e?.response?.data?.errors || {};
   } finally {
@@ -80,9 +108,18 @@ const saveItem = async () => {
   }
 };
 const deleteItem = async (i) => {
-  if (!(await alertModal.confirm(`Delete "${i.name}" from the catalog? Questions that recommend it will skip it.`, { type: "danger", confirmText: "Delete" }))) return;
-  await axiosInstance.delete(`/service-catalog/${i.id}`);
-  await loadCatalog();
+  if (!(await alertModal.confirm(t("screening.settings.deleteItemConfirm", { name: i.name }), { type: "danger", confirmText: t("common.actions.delete") }))) return;
+  try {
+    await axiosInstance.delete(`/service-catalog/${i.id}`);
+  } catch (e) {
+    toast.error(t("common.toast.error"), e?.response?.data?.message || "");
+    return;
+  }
+  items.value = items.value.filter((x) => x.id !== i.id);
+  const codes = { ...itemCodes.value };
+  delete codes[i.code];
+  itemCodes.value = codes;
+  toast.success(t("screening.settings.toast.itemDeleted"));
 };
 
 // ===== Questionnaire =====
@@ -113,6 +150,7 @@ onMounted(() => {
 });
 
 const dirty = () => (templateDirty.value = true);
+useUnsavedGuard(() => templateDirty.value);
 const needsOptions = computed(() => definition.value?.sections?.flatMap((s) => s.questions).find((q) => q.key === "needs")?.options || []);
 const slug = (text, prefix) => (text || prefix).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 30) || prefix;
 const uniqueKey = (base) => {
@@ -171,11 +209,11 @@ const setPrimaryHours = (o, hours) => {
 };
 const extraRules = (o) => {
   const parts = [];
-  if ((o.add || []).length > 1) parts.push(`+${o.add.length - 1} item`);
-  if (o.replace?.length) parts.push("upgrade rule");
-  if (o.flags?.length) parts.push("team note");
-  if (o.tags?.length) parts.push(`system: ${o.tags.join(", ")}`);
-  if (o.min !== undefined || o.max !== undefined) parts.push("budget range");
+  if ((o.add || []).length > 1) parts.push(t("screening.settings.rules.plusItems", { n: o.add.length - 1 }));
+  if (o.replace?.length) parts.push(t("screening.settings.rules.upgrade"));
+  if (o.flags?.length) parts.push(t("screening.settings.rules.teamNote"));
+  if (o.tags?.length) parts.push(t("screening.settings.rules.system", { list: o.tags.join(", ") }));
+  if (o.min !== undefined || o.max !== undefined) parts.push(t("screening.settings.rules.budgetRange"));
   return parts;
 };
 
@@ -200,7 +238,7 @@ const toggleJson = () => {
     templateError.value = "";
     dirty();
   } catch (e) {
-    templateError.value = `Invalid JSON: ${e.message}`;
+    templateError.value = t("screening.settings.invalidJson", { error: e.message });
   }
 };
 
@@ -210,7 +248,7 @@ const saveTemplate = async () => {
     try {
       definition.value = JSON.parse(jsonText.value);
     } catch (e) {
-      templateError.value = `Invalid JSON: ${e.message}`;
+      templateError.value = t("screening.settings.invalidJson", { error: e.message });
       return;
     }
   }
@@ -222,214 +260,309 @@ const saveTemplate = async () => {
     await loadTemplate();
   } catch (e) {
     const d = e?.response?.data;
-    templateError.value = d?.errors ? "Fill in every section title, question and option label in both languages." : d?.message || "Failed to save.";
+    templateError.value = d?.errors ? t("screening.settings.fillBothLanguages") : d?.message || t("screening.settings.saveFailed");
   } finally {
     savingTemplate.value = false;
   }
 };
 const resetTemplate = async () => {
-  if (!(await alertModal.confirm("Restore the built-in questionnaire? Your changes to the questions are replaced. Existing screenings are not affected.", { confirmText: "Restore" }))) return;
+  if (!(await alertModal.confirm(t("screening.settings.restoreConfirm"), { confirmText: t("screening.settings.restoreAction") }))) return;
   await axiosInstance.post("/screening-template/reset");
   await loadTemplate();
 };
 
-const formatDate = (d) => (d ? new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "never");
-const TYPES = { single: "Single choice", multi: "Checklist", boolean: "Yes / No", text: "Short text", textarea: "Long text", number: "Number" };
+const formatDate = (d) => (d ? new Date(d).toLocaleString(localeTag(), { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : t("screening.settings.never"));
+const TYPES = computed(() =>
+  Object.fromEntries(["single", "multi", "boolean", "text", "textarea", "number"].map((k) => [k, t(`screening.settings.types.${k}`)]))
+);
+
+// Presentation only: table columns, select options, field styles.
+const catalogColumns = computed(() => [
+  { key: "name", label: t("screening.settings.columns.service") },
+  { key: "category", label: t("common.labels.category") },
+  { key: "pricing_mode", label: t("screening.settings.columns.pricing") },
+  { key: "price", label: t("screening.settings.columns.price"), align: "right" },
+  { key: "duration_text", label: t("screening.settings.columns.duration") },
+  { key: "actions", label: "", align: "right", width: 96 },
+]);
+const pricingOptions = computed(() => Object.entries(PRICING_MODE).map(([value, label]) => ({ value, label })));
+const billedOptions = computed(() => ["once", "month", "year"].map((value) => ({ value, label: t(`screening.settings.billed.${value}`) })));
+const availabilityOptions = computed(() => ["available", "preparation"].map((value) => ({ value, label: t(`screening.settings.availability.${value}`) })));
+const field = "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
+const cell = "h-8 px-2 bg-ui-surface text-ui-small text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus disabled:bg-ui-subtle disabled:text-ui-faint";
+const iconBtn = "ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink shrink-0 disabled:opacity-40";
+const iconBtnBad = "ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad shrink-0";
+const label = "block text-ui-small font-medium text-ui-ink mb-1.5";
 </script>
 
 <template>
-  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
-    <div class="flex items-center gap-3 mb-4">
-      <RouterLink :to="{ name: 'admin.screening.dashboard' }" class="w-9 h-9 rounded-[10px] bg-white border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]" aria-label="Back">
-        <ArrowLeft class="w-4 h-4 text-gray-600" />
-      </RouterLink>
-      <div class="inline-grid grid-cols-2 bg-gray-100 rounded-[10px] p-1">
-        <button v-for="t in [{ k: 'catalog', l: 'Service Catalog' }, { k: 'template', l: 'Questionnaire' }]" :key="t.k" type="button" class="px-4 py-1.5 rounded-[8px] text-sm font-semibold" :class="tab === t.k ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-light'" @click="tab = t.k">{{ t.l }}</button>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('screening.settings.title')" :subtitle="$t('screening.settings.subtitle')">
+      <template #eyebrow>
+        <RouterLink :to="{ name: 'admin.screening.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" :aria-label="$t('common.actions.back')">
+          <ArrowLeft class="w-4 h-4" /> {{ $t("screening.settings.back") }}
+        </RouterLink>
+      </template>
+      <template #actions>
+        <template v-if="tab === 'catalog'">
+          <UiButton variant="secondary" :icon="RefreshCw" :loading="syncing" :disabled="syncing" @click="sync">{{ $t("screening.settings.sync") }}</UiButton>
+          <UiButton :icon="Plus" @click="openItem(null)">{{ $t("screening.settings.addItem") }}</UiButton>
+        </template>
+        <template v-else>
+          <UiButton variant="ghost" :icon="RotateCcw" @click="resetTemplate">{{ $t("screening.settings.restore") }}</UiButton>
+          <UiButton variant="secondary" :icon="Braces" @click="toggleJson">{{ jsonMode ? $t("screening.settings.backToEditor") : $t("screening.settings.advanced") }}</UiButton>
+          <UiButton :icon="Save" :loading="savingTemplate" :disabled="(!templateDirty && !jsonMode) || savingTemplate" @click="saveTemplate">{{ $t("screening.settings.saveQuestionnaire") }}</UiButton>
+        </template>
+      </template>
+    </UiPageHeader>
+
+    <!-- Tabs -->
+    <div class="overflow-x-auto [scrollbar-width:none] sm:border-b sm:border-ui-line">
+      <div class="flex items-center gap-1.5 sm:gap-6 min-w-max" role="tablist">
+        <button
+          v-for="t in [{ k: 'catalog', l: $t('screening.settings.tabs.catalog') }, { k: 'template', l: $t('screening.settings.tabs.template') }]"
+          :key="t.k"
+          type="button"
+          role="tab"
+          :aria-selected="tab === t.k"
+          :class="[
+            'ui-press shrink-0 inline-flex items-center gap-2 whitespace-nowrap font-medium focus:outline-none focus-visible:shadow-ui-focus',
+            'h-8 px-3 rounded-full border text-ui-small',
+            'sm:h-auto sm:px-0.5 sm:pt-1 sm:pb-3 sm:rounded-none sm:border-0 sm:border-b-2 sm:-mb-px sm:text-ui-body',
+            tab === t.k
+              ? 'bg-ui-ink text-white border-ui-ink sm:bg-transparent sm:text-ui-ink sm:border-ui-ink'
+              : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover sm:bg-transparent sm:text-ui-muted sm:border-transparent sm:hover:bg-transparent sm:hover:text-ui-ink',
+          ]"
+          @click="tab = t.k"
+        >{{ t.l }}</button>
       </div>
     </div>
 
     <!-- ===== Catalog ===== -->
-    <div v-if="tab === 'catalog'" class="space-y-3">
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div class="text-xs text-brand-light space-y-0.5">
-          <p><strong class="text-brand-dark">Rate Card sync:</strong> last {{ formatDate(lastSynced) }} — updates names, prices, durations and availability from the Notion Rate Card.</p>
-          <p><strong class="text-brand-dark">Hourly rate:</strong> {{ hourlyRate ? `${formatRupiah(hourlyRate)} / hour` : "not set" }} (from Project Calculator → Team Rate Setup), used for hourly items.</p>
-          <p v-if="syncMessage" class="text-[#0C51D9] font-semibold">{{ syncMessage }}</p>
+    <div v-if="tab === 'catalog'" class="space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 ui-stagger">
+        <div class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0">
+          <p class="text-ui-small text-ui-muted flex items-center gap-2"><RefreshCw class="w-4 h-4 text-ui-faint" /> {{ $t("screening.settings.syncTitle") }}</p>
+          <p class="text-ui-h3 text-ui-ink mt-1.5">{{ $t("screening.settings.lastSynced", { date: formatDate(lastSynced) }) }}</p>
+          <p class="text-ui-cap text-ui-muted mt-1">{{ $t("screening.settings.syncHint") }}</p>
+          <p v-if="syncMessage" class="text-ui-cap text-ui-accent font-medium mt-1.5">{{ syncMessage }}</p>
         </div>
-        <div class="flex gap-2 shrink-0">
-          <button type="button" class="rounded-[8px] border border-[#DCDEDD] bg-white px-3 py-2 text-xs font-semibold flex items-center gap-1.5 hover:border-[#0C51D9] disabled:opacity-50" :disabled="syncing" @click="sync">
-            <Loader2 v-if="syncing" class="w-3.5 h-3.5 animate-spin" /><RefreshCw v-else class="w-3.5 h-3.5" /> Sync from Rate Card
-          </button>
-          <button type="button" class="blue-gradient border border-[#2151A0] rounded-[8px] px-3 py-2 text-xs font-semibold text-white flex items-center gap-1.5" @click="openItem(null)">
-            <Plus class="w-3.5 h-3.5" /> Add item
-          </button>
+        <div class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0">
+          <p class="text-ui-small text-ui-muted">{{ $t("screening.settings.hourlyRate") }}</p>
+          <p class="text-ui-h3 mt-1.5 tabular-nums" :class="hourlyRate ? 'text-ui-ink' : 'text-ui-warn'">{{ hourlyRate ? $t("screening.settings.perHour", { amount: formatRupiah(hourlyRate) }) : $t("screening.settings.notSet") }}</p>
+          <p class="text-ui-cap text-ui-muted mt-1">{{ $t("screening.settings.hourlyRateHint") }}</p>
         </div>
       </div>
 
-      <div v-if="loadingCatalog" class="text-sm text-brand-light py-6 text-center">Loading…</div>
-      <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] overflow-x-auto">
-        <table class="min-w-[760px] w-full text-sm">
-          <thead class="bg-slate-50 text-left text-brand-light text-xs">
-            <tr>
-              <th class="py-2.5 px-4">Service</th>
-              <th class="py-2.5 pr-3">Category</th>
-              <th class="py-2.5 pr-3">Pricing</th>
-              <th class="py-2.5 pr-3">Price</th>
-              <th class="py-2.5 pr-3">Duration</th>
-              <th class="py-2.5 pr-3 w-20"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="i in items" :key="i.id" class="border-t border-[#F1F1F1]" :class="{ 'opacity-50': !i.is_active }">
-              <td class="py-2.5 px-4">
-                <p class="font-semibold text-brand-dark">{{ i.name }}</p>
-                <p class="text-[11px] text-gray-400">{{ i.code }}<template v-if="i.rate_card_ref"> · Rate Card</template><template v-if="!i.is_active"> · inactive</template></p>
-              </td>
-              <td class="py-2.5 pr-3 text-xs">{{ i.category }}</td>
-              <td class="py-2.5 pr-3 text-xs">{{ PRICING_MODE[i.pricing_mode] }}</td>
-              <td class="py-2.5 pr-3 text-xs whitespace-nowrap" :class="{ 'text-amber-700': i.availability !== 'available' }">{{ priceText(i) }}</td>
-              <td class="py-2.5 pr-3 text-xs">{{ i.duration_text || "-" }}</td>
-              <td class="py-2.5 pr-3 text-right whitespace-nowrap">
-                <button type="button" class="w-7 h-7 rounded-full hover:bg-gray-100 inline-flex items-center justify-center" aria-label="Edit" @click="openItem(i)"><Pencil class="w-3.5 h-3.5 text-gray-500" /></button>
-                <button type="button" class="w-7 h-7 rounded-full hover:bg-red-50 inline-flex items-center justify-center" aria-label="Delete" @click="deleteItem(i)"><Trash2 class="w-3.5 h-3.5 text-gray-500" /></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+        <UiTable :columns="catalogColumns" :rows="items" :loading="loadingCatalog" :skeleton-rows="5">
+          <template #cell-name="{ row }">
+            <div :class="{ 'opacity-50': !row.is_active }">
+              <p class="text-ui-body font-medium text-ui-ink">{{ row.name }}</p>
+              <p class="text-ui-cap text-ui-muted"><span class="font-mono">{{ row.code }}</span><template v-if="row.rate_card_ref">{{ $t("screening.settings.rateCard") }}</template><template v-if="!row.is_active">{{ $t("screening.settings.inactive") }}</template></p>
+            </div>
+          </template>
+          <template #cell-category="{ row }">
+            <span :class="{ 'opacity-50': !row.is_active }">{{ row.category }}</span>
+          </template>
+          <template #cell-pricing_mode="{ row }">
+            <span class="text-ui-muted" :class="{ 'opacity-50': !row.is_active }">{{ PRICING_MODE[row.pricing_mode] }}</span>
+          </template>
+          <template #cell-price="{ row }">
+            <UiBadge v-if="row.availability !== 'available'" tone="warn" :class="{ 'opacity-50': !row.is_active }">{{ priceText(row) }}</UiBadge>
+            <span v-else class="whitespace-nowrap tabular-nums text-ui-ink" :class="{ 'opacity-50': !row.is_active }">{{ priceText(row) }}</span>
+          </template>
+          <template #cell-duration_text="{ row }">
+            <span :class="{ 'opacity-50': !row.is_active }">{{ row.duration_text || "-" }}</span>
+          </template>
+          <template #cell-actions="{ row }">
+            <div class="flex items-center justify-end gap-0.5">
+              <button type="button" :class="iconBtn" :aria-label="$t('common.actions.edit')" @click="openItem(row)"><Pencil class="w-4 h-4" /></button>
+              <button type="button" :class="iconBtnBad" :aria-label="$t('common.actions.delete')" @click="deleteItem(row)"><Trash2 class="w-4 h-4" /></button>
+            </div>
+          </template>
+
+          <template #mobile="{ row, number }">
+            <div class="flex items-start gap-3 px-4 py-3.5">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
+              <div class="flex-1 min-w-0" :class="{ 'opacity-50': !row.is_active }">
+                <p class="text-ui-body font-medium text-ui-ink">{{ row.name }}</p>
+                <p class="text-ui-cap text-ui-muted"><span class="font-mono">{{ row.code }}</span> · {{ row.category }}<template v-if="!row.is_active">{{ $t("screening.settings.inactive") }}</template></p>
+                <p class="text-ui-cap text-ui-muted mt-1">{{ PRICING_MODE[row.pricing_mode] }}<template v-if="row.duration_text"> · {{ row.duration_text }}</template></p>
+                <p class="text-ui-small font-medium tabular-nums mt-1" :class="row.availability !== 'available' ? 'text-ui-warn' : 'text-ui-ink'">{{ priceText(row) }}</p>
+              </div>
+              <div class="flex items-center gap-0.5 -mr-1.5 shrink-0">
+                <button type="button" :class="iconBtn" :aria-label="$t('common.actions.edit')" @click="openItem(row)"><Pencil class="w-4 h-4" /></button>
+                <button type="button" :class="iconBtnBad" :aria-label="$t('common.actions.delete')" @click="deleteItem(row)"><Trash2 class="w-4 h-4" /></button>
+              </div>
+            </div>
+          </template>
+        </UiTable>
+      </section>
     </div>
 
     <!-- ===== Questionnaire ===== -->
-    <div v-else class="space-y-3">
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <p class="text-xs text-brand-light max-w-2xl">
-          Used by the website form (Indonesian & English) and by the team. Each answer option can recommend a catalog item. Changes apply to new screenings; existing ones keep the questions they were answered on.
-        </p>
-        <div class="flex flex-wrap gap-2 shrink-0">
-          <button type="button" class="rounded-[8px] border border-[#DCDEDD] bg-white px-3 py-2 text-xs font-semibold flex items-center gap-1.5" @click="resetTemplate"><RotateCcw class="w-3.5 h-3.5" /> Restore default</button>
-          <button type="button" class="rounded-[8px] border border-[#DCDEDD] bg-white px-3 py-2 text-xs font-semibold flex items-center gap-1.5" @click="toggleJson"><Braces class="w-3.5 h-3.5" /> {{ jsonMode ? "Back to editor" : "Advanced (JSON)" }}</button>
-          <button type="button" class="blue-gradient border border-[#2151A0] rounded-[8px] px-3 py-2 text-xs font-semibold text-white flex items-center gap-1.5 disabled:opacity-50" :disabled="(!templateDirty && !jsonMode) || savingTemplate" @click="saveTemplate">
-            <Loader2 v-if="savingTemplate" class="w-3.5 h-3.5 animate-spin" /><Save v-else class="w-3.5 h-3.5" /> Save questionnaire
-          </button>
-        </div>
-      </div>
-      <p v-if="templateError" class="text-xs text-red-500">{{ templateError }}</p>
+    <div v-else class="space-y-4">
+      <p class="text-ui-small text-ui-muted">
+        {{ $t("screening.settings.intro") }}
+      </p>
+      <div v-if="templateError" class="bg-ui-bad-soft border border-ui-bad/20 rounded-ui-control px-3.5 py-2.5 text-ui-small text-ui-bad" role="alert">{{ templateError }}</div>
 
-      <div v-if="loadingTemplate" class="text-sm text-brand-light py-6 text-center">Loading…</div>
+      <div v-if="loadingTemplate" class="bg-ui-surface border border-ui-line rounded-ui-card"><Spinner :label="$t('screening.settings.loading')" /></div>
 
-      <textarea v-else-if="jsonMode" v-model="jsonText" rows="28" spellcheck="false" class="w-full font-mono text-xs border border-[#DCDEDD] rounded-[12px] p-3 focus:outline-none focus:border-[#0C51D9]"></textarea>
+      <textarea
+        v-else-if="jsonMode"
+        v-model="jsonText"
+        rows="28"
+        spellcheck="false"
+        :aria-label="$t('screening.settings.json')"
+        class="w-full font-mono text-ui-cap text-ui-ink bg-ui-surface border border-ui-line-strong rounded-ui-card p-4 focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+      ></textarea>
 
       <template v-else-if="definition">
-        <div v-for="(section, si) in definition.sections" :key="section.key" class="bg-white border border-[#DCDEDD] rounded-[14px]">
-          <div class="flex items-center gap-2 p-3.5">
-            <button type="button" class="flex-1 min-w-0 text-left flex items-center gap-2" @click="openSection = openSection === section.key ? null : section.key">
-              <component :is="openSection === section.key ? ChevronUp : ChevronDown" class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-sm font-bold text-brand-dark truncate">{{ si + 1 }}. {{ section.title.id || "(untitled)" }}</span>
-              <span class="text-[11px] text-gray-400 shrink-0">{{ section.questions.length }} question(s)</span>
-              <span v-if="section.show_if" class="text-[11px] text-[#0C51D9] shrink-0 hidden sm:inline">conditional</span>
+        <section
+          v-for="(section, si) in definition.sections"
+          :key="section.key"
+          class="bg-ui-surface border rounded-ui-card min-w-0 transition-colors"
+          :class="openSection === section.key ? 'border-ui-line-strong' : 'border-ui-line'"
+        >
+          <div class="flex items-center gap-2 px-4 sm:px-5 py-3.5">
+            <button type="button" class="flex-1 min-w-0 text-left flex items-center gap-3" :aria-expanded="openSection === section.key" @click="openSection = openSection === section.key ? null : section.key">
+              <component :is="openSection === section.key ? ChevronUp : ChevronDown" class="w-4 h-4 text-ui-faint shrink-0" />
+              <span class="text-ui-over uppercase text-ui-muted shrink-0">{{ $t("screening.sectionN", { n: si + 1 }) }}</span>
+              <span class="text-ui-h3 text-ui-ink truncate">{{ section.title.id || $t("screening.settings.untitled") }}</span>
+              <span class="text-ui-cap text-ui-faint shrink-0 tabular-nums hidden sm:inline">{{ $t("screening.settings.questionCount", { n: section.questions.length }, section.questions.length) }}</span>
+              <UiBadge v-if="section.show_if" tone="accent" class="hidden sm:inline-flex shrink-0">{{ $t("screening.settings.conditional") }}</UiBadge>
             </button>
-            <button type="button" class="w-7 h-7 rounded-full hover:bg-gray-100 flex items-center justify-center" aria-label="Move up" @click="move(definition.sections, si, -1)"><ArrowUp class="w-3.5 h-3.5 text-gray-500" /></button>
-            <button type="button" class="w-7 h-7 rounded-full hover:bg-gray-100 flex items-center justify-center" aria-label="Move down" @click="move(definition.sections, si, 1)"><ArrowDown class="w-3.5 h-3.5 text-gray-500" /></button>
-            <button v-if="section.key !== 'needs'" type="button" class="w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center" aria-label="Delete section" @click="remove(definition.sections, si)"><Trash2 class="w-3.5 h-3.5 text-gray-500" /></button>
+            <button type="button" :class="iconBtn" :aria-label="$t('screening.settings.moveUp')" :disabled="si === 0" @click="move(definition.sections, si, -1)"><ArrowUp class="w-4 h-4" /></button>
+            <button type="button" :class="iconBtn" :aria-label="$t('screening.settings.moveDown')" :disabled="si === definition.sections.length - 1" @click="move(definition.sections, si, 1)"><ArrowDown class="w-4 h-4" /></button>
+            <button v-if="section.key !== 'needs'" type="button" :class="iconBtnBad" :aria-label="$t('screening.settings.deleteSection')" @click="remove(definition.sections, si)"><Trash2 class="w-4 h-4" /></button>
           </div>
 
-          <div v-if="openSection === section.key" class="border-t border-[#EEF1F5] p-3.5 space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input v-model="section.title.id" placeholder="Judul bagian (ID)" class="border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5 text-sm" @input="dirty" />
-              <input v-model="section.title.en" placeholder="Section title (EN)" class="border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5 text-sm" @input="dirty" />
+          <div v-if="openSection === section.key" class="border-t border-ui-line px-4 sm:px-5 py-4 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label :for="`st-id-${section.key}`" :class="label">{{ $t("screening.settings.sectionTitleId") }}</label>
+                <input :id="`st-id-${section.key}`" v-model="section.title.id" :placeholder="$t('screening.settings.sectionTitleId')" :class="field" @input="dirty" />
+              </div>
+              <div>
+                <label :for="`st-en-${section.key}`" :class="label">{{ $t("screening.settings.sectionTitleEn") }}</label>
+                <input :id="`st-en-${section.key}`" v-model="section.title.en" :placeholder="$t('screening.settings.sectionTitleEn')" :class="field" @input="dirty" />
+              </div>
             </div>
-            <div v-if="section.key !== 'needs'" class="text-xs">
-              <p class="text-brand-light mb-1">Show this section only when the client picks (leave empty to always show):</p>
+            <div v-if="section.key !== 'needs'">
+              <p class="text-ui-cap text-ui-muted mb-1.5">{{ $t("screening.settings.showIf") }}</p>
               <div class="flex flex-wrap gap-1.5">
                 <button
                   v-for="o in needsOptions"
                   :key="o.value"
                   type="button"
-                  class="px-2 py-1 rounded-full border"
-                  :class="sectionNeeds(section).includes(o.value) ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9] font-semibold' : 'border-[#DCDEDD]'"
+                  :aria-pressed="sectionNeeds(section).includes(o.value)"
+                  class="ui-press h-7 px-2.5 rounded-full border text-ui-cap font-medium"
+                  :class="sectionNeeds(section).includes(o.value) ? 'bg-ui-ink text-white border-ui-ink' : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover'"
                   @click="toggleSectionNeed(section, o.value)"
                 >{{ o.label.id }}</button>
               </div>
             </div>
 
-            <div v-for="(q, qi) in section.questions" :key="q.key" class="border border-[#EEF1F5] rounded-[10px] p-3 space-y-2 bg-slate-50/50">
+            <div v-for="(q, qi) in section.questions" :key="q.key" class="border border-ui-line rounded-ui-card p-3 sm:p-4 space-y-3 bg-ui-subtle/40">
               <div class="flex flex-wrap items-center gap-2">
-                <select v-model="q.type" class="border border-[#DCDEDD] rounded-[6px] px-1.5 py-1 text-xs bg-white" :disabled="q.key === 'needs'" @change="onType(q)">
-                  <option v-for="(label, t) in TYPES" :key="t" :value="t">{{ label }}</option>
-                </select>
-                <label class="text-xs flex items-center gap-1"><input v-model="q.required" type="checkbox" class="accent-[#0C51D9]" @change="dirty" /> Required</label>
-                <span class="text-[11px] text-gray-400">key: {{ q.key }}</span>
-                <span v-if="q.show_if" class="text-[11px] text-[#0C51D9]">conditional</span>
+                <div class="relative">
+                  <select v-model="q.type" :aria-label="$t('common.labels.type')" :class="[cell, 'pr-7 appearance-none']" :disabled="q.key === 'needs'" @change="onType(q)">
+                    <option v-for="(lbl, t) in TYPES" :key="t" :value="t">{{ lbl }}</option>
+                  </select>
+                  <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ui-faint pointer-events-none" />
+                </div>
+                <label class="text-ui-small text-ui-text flex items-center gap-1.5"><input v-model="q.required" type="checkbox" class="accent-ui-ink" @change="dirty" /> {{ $t("screening.settings.required") }}</label>
+                <span class="text-ui-cap text-ui-faint font-mono">key: {{ q.key }}</span>
+                <UiBadge v-if="q.show_if" tone="accent">{{ $t("screening.settings.conditional") }}</UiBadge>
                 <span class="flex-1"></span>
-                <button type="button" class="w-6 h-6 rounded-full hover:bg-gray-100 flex items-center justify-center" aria-label="Move up" @click="move(section.questions, qi, -1)"><ArrowUp class="w-3 h-3 text-gray-500" /></button>
-                <button type="button" class="w-6 h-6 rounded-full hover:bg-gray-100 flex items-center justify-center" aria-label="Move down" @click="move(section.questions, qi, 1)"><ArrowDown class="w-3 h-3 text-gray-500" /></button>
-                <button v-if="q.key !== 'needs'" type="button" class="w-6 h-6 rounded-full hover:bg-red-50 flex items-center justify-center" aria-label="Delete question" @click="remove(section.questions, qi)"><Trash2 class="w-3 h-3 text-gray-500" /></button>
+                <button type="button" :class="iconBtn" :aria-label="$t('screening.settings.moveUp')" :disabled="qi === 0" @click="move(section.questions, qi, -1)"><ArrowUp class="w-3.5 h-3.5" /></button>
+                <button type="button" :class="iconBtn" :aria-label="$t('screening.settings.moveDown')" :disabled="qi === section.questions.length - 1" @click="move(section.questions, qi, 1)"><ArrowDown class="w-3.5 h-3.5" /></button>
+                <button v-if="q.key !== 'needs'" type="button" :class="iconBtnBad" :aria-label="$t('screening.settings.deleteQuestion')" @click="remove(section.questions, qi)"><Trash2 class="w-3.5 h-3.5" /></button>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input v-model="q.label.id" placeholder="Pertanyaan (ID)" class="border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5 text-sm bg-white" @input="dirty" />
-                <input v-model="q.label.en" placeholder="Question (EN)" class="border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5 text-sm bg-white" @input="dirty" />
+                <input v-model="q.label.id" :placeholder="$t('screening.settings.questionId')" :aria-label="$t('screening.settings.questionId')" :class="field" @input="dirty" />
+                <input v-model="q.label.en" :placeholder="$t('screening.settings.questionEn')" :aria-label="$t('screening.settings.questionEn')" :class="field" @input="dirty" />
               </div>
 
-              <div v-if="hasOptions(q)" class="space-y-1.5">
-                <div v-for="(o, oi) in q.options" :key="oi" class="grid grid-cols-1 lg:grid-cols-[1fr_1fr_180px_70px_auto] gap-1.5 items-center">
-                  <input v-model="o.label.id" placeholder="Opsi (ID)" class="border border-[#DCDEDD] rounded-[6px] px-2 py-1 text-xs bg-white" @input="dirty" />
-                  <input v-model="o.label.en" placeholder="Option (EN)" class="border border-[#DCDEDD] rounded-[6px] px-2 py-1 text-xs bg-white" @input="dirty" />
-                  <select :value="primaryAdd(o)?.item || ''" class="border border-[#DCDEDD] rounded-[6px] px-1.5 py-1 text-xs bg-white" title="Recommend this service" @change="setPrimaryItem(o, $event.target.value)">
-                    <option value="">No recommendation</option>
+              <div v-if="hasOptions(q)" class="space-y-2">
+                <div class="hidden lg:grid grid-cols-[1fr_1fr_200px_80px_92px] gap-2 text-ui-cap text-ui-muted px-0.5">
+                  <span>{{ $t("screening.settings.optionId") }}</span><span>{{ $t("screening.settings.optionEn") }}</span><span>{{ $t("screening.settings.recommendService") }}</span><span>{{ $t("screening.settings.extraHours") }}</span><span>{{ $t("screening.settings.points") }}</span>
+                </div>
+                <div v-for="(o, oi) in q.options" :key="oi" class="grid grid-cols-2 lg:grid-cols-[1fr_1fr_200px_80px_92px] gap-2 items-center pb-2 lg:pb-0 border-b border-ui-line lg:border-0 last:border-0">
+                  <input v-model="o.label.id" :placeholder="$t('screening.settings.optionId')" :aria-label="$t('screening.settings.optionId')" :class="[cell, 'w-full']" @input="dirty" />
+                  <input v-model="o.label.en" :placeholder="$t('screening.settings.optionEn')" :aria-label="$t('screening.settings.optionEn')" :class="[cell, 'w-full']" @input="dirty" />
+                  <select :value="primaryAdd(o)?.item || ''" :class="[cell, 'w-full px-1.5 col-span-2 lg:col-span-1']" :title="$t('screening.settings.recommendService')" :aria-label="$t('screening.settings.recommendService')" @change="setPrimaryItem(o, $event.target.value)">
+                    <option value="">{{ $t("screening.settings.noRecommendation") }}</option>
                     <option v-for="(name, code) in itemCodes" :key="code" :value="code">{{ name }}</option>
                   </select>
-                  <input :value="primaryAdd(o)?.hours ?? ''" :disabled="!primaryAdd(o)" type="number" min="0" placeholder="hours" class="border border-[#DCDEDD] rounded-[6px] px-1.5 py-1 text-xs bg-white disabled:bg-gray-50" title="Extra hours (hourly items)" @input="setPrimaryHours(o, $event.target.value)" />
+                  <input :value="primaryAdd(o)?.hours ?? ''" :disabled="!primaryAdd(o)" type="number" min="0" :placeholder="$t('screening.settings.hoursPlaceholder')" :class="[cell, 'w-full tabular-nums']" :title="$t('screening.settings.extraHoursTitle')" :aria-label="$t('screening.settings.extraHours')" @input="setPrimaryHours(o, $event.target.value)" />
                   <div class="flex items-center gap-1">
-                    <input v-model.number="o.points" type="number" min="0" placeholder="pts" class="w-14 border border-[#DCDEDD] rounded-[6px] px-1.5 py-1 text-xs bg-white" title="Complexity points" @input="dirty" />
-                    <button type="button" class="w-6 h-6 rounded-full hover:bg-red-50 flex items-center justify-center" aria-label="Delete option" @click="remove(q.options, oi)"><X class="w-3 h-3 text-gray-500" /></button>
+                    <input v-model.number="o.points" type="number" min="0" :placeholder="$t('screening.settings.pointsPlaceholder')" :class="[cell, 'w-full min-w-0 tabular-nums']" :title="$t('screening.settings.complexityPoints')" :aria-label="$t('screening.settings.complexityPoints')" @input="dirty" />
+                    <button type="button" :class="iconBtnBad" :aria-label="$t('screening.settings.deleteOption')" @click="remove(q.options, oi)"><X class="w-3.5 h-3.5" /></button>
                   </div>
-                  <p v-if="extraRules(o).length" class="lg:col-span-5 text-[10px] text-gray-400 -mt-1">Also: {{ extraRules(o).join(" · ") }} (edit in Advanced)</p>
+                  <p v-if="extraRules(o).length" class="col-span-2 lg:col-span-5 text-ui-cap text-ui-faint -mt-1">{{ $t("screening.settings.also", { list: extraRules(o).join(" · ") }) }}</p>
                 </div>
-                <button type="button" class="text-xs font-semibold text-[#0C51D9] flex items-center gap-1" @click="addOption(q)"><Plus class="w-3 h-3" /> Add option</button>
+                <button type="button" class="ui-press inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-dashed border-ui-line-strong text-ui-cap font-medium text-ui-accent hover:bg-ui-accent-soft" @click="addOption(q)"><Plus class="w-3.5 h-3.5" /> {{ $t("screening.settings.addOption") }}</button>
               </div>
             </div>
-            <button type="button" class="text-xs font-semibold text-[#0C51D9] flex items-center gap-1" @click="addQuestion(section)"><Plus class="w-3.5 h-3.5" /> Add question</button>
+            <UiButton variant="ghost" size="sm" :icon="Plus" @click="addQuestion(section)">{{ $t("screening.settings.addQuestion") }}</UiButton>
           </div>
-        </div>
-        <button type="button" class="rounded-[10px] border border-dashed border-[#DCDEDD] w-full py-3 text-sm font-semibold text-brand-light hover:border-[#0C51D9] hover:text-[#0C51D9] flex items-center justify-center gap-1.5" @click="addSection">
-          <Plus class="w-4 h-4" /> Add section
+        </section>
+        <button
+          type="button"
+          class="ui-press w-full h-12 rounded-ui-card border border-dashed border-ui-line-strong text-ui-small font-medium text-ui-muted hover:bg-ui-surface hover:text-ui-ink flex items-center justify-center gap-1.5"
+          @click="addSection"
+        >
+          <Plus class="w-4 h-4" /> {{ $t("screening.settings.addSection") }}
         </button>
       </template>
     </div>
 
     <!-- Catalog item modal -->
-    <div v-if="editing" class="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" @click.self="editing = null">
-      <form class="bg-white w-full sm:max-w-xl rounded-t-[16px] sm:rounded-[14px] border border-[#DCDEDD] max-h-[92vh] overflow-y-auto" @submit.prevent="saveItem">
-        <div class="p-4 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-base font-bold text-brand-dark">{{ editing.id ? "Edit service" : "Add service" }}</h3>
-          <button type="button" class="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center" aria-label="Close" @click="editing = null"><X class="w-5 h-5 text-gray-500" /></button>
+    <UiModal :open="!!editing" :title="editing?.id ? $t('screening.settings.modal.editTitle') : $t('screening.settings.modal.addTitle')" @update:open="(v) => !v && (editing = null)">
+      <form v-if="editing" id="catalog-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="saveItem">
+        <div class="sm:col-span-2">
+          <label for="ci-name" :class="label">{{ $t("common.labels.name") }}</label>
+          <input id="ci-name" v-model="editing.name" required maxlength="255" :class="field" />
         </div>
-        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <label class="sm:col-span-2"><span class="block text-xs font-semibold mb-1">Name</span><input v-model="editing.name" required maxlength="255" class="w-full border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5" /></label>
-          <label><span class="block text-xs font-semibold mb-1">Code</span><input v-model="editing.code" required maxlength="60" pattern="[a-z0-9-]+" class="w-full border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5" /><span v-if="itemErrors.code" class="text-xs text-red-500">{{ itemErrors.code[0] }}</span></label>
-          <label><span class="block text-xs font-semibold mb-1">Category</span><input v-model="editing.category" required maxlength="60" class="w-full border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5" /></label>
-          <label class="sm:col-span-2"><span class="block text-xs font-semibold mb-1">Description</span><textarea v-model="editing.description" rows="2" maxlength="2000" class="w-full border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5"></textarea></label>
-          <label><span class="block text-xs font-semibold mb-1">Pricing</span>
-            <select v-model="editing.pricing_mode" class="select-soft"><option v-for="(l, k) in PRICING_MODE" :key="k" :value="k">{{ l }}</option></select>
-          </label>
-          <label><span class="block text-xs font-semibold mb-1">Billed</span>
-            <select v-model="editing.price_unit" class="select-soft"><option value="once">Once</option><option value="month">Monthly</option><option value="year">Yearly</option></select>
-          </label>
-          <label v-if="editing.pricing_mode === 'rate_card'"><span class="block text-xs font-semibold mb-1">Price from (Rp)</span><input v-model.number="editing.price_from" type="number" min="0" class="w-full border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5" /></label>
-          <label v-if="editing.pricing_mode === 'hourly'"><span class="block text-xs font-semibold mb-1">Default hours</span><input v-model.number="editing.default_hours" type="number" min="0" class="w-full border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5" /></label>
-          <label><span class="block text-xs font-semibold mb-1">Duration</span><input v-model="editing.duration_text" maxlength="100" placeholder="e.g. 2-3 minggu" class="w-full border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5" /></label>
-          <label><span class="block text-xs font-semibold mb-1">Availability</span>
-            <select v-model="editing.availability" class="select-soft"><option value="available">Available</option><option value="preparation">In preparation</option></select>
-          </label>
-          <label class="flex items-center gap-2 text-xs"><input v-model="editing.is_active" type="checkbox" class="accent-[#0C51D9]" /> Active (used for recommendations)</label>
+        <div>
+          <label for="ci-code" :class="label">{{ $t("screening.settings.modal.code") }}</label>
+          <input id="ci-code" v-model="editing.code" required maxlength="60" pattern="[a-z0-9-]+" :class="[field, 'font-mono text-ui-small']" />
+          <p v-if="itemErrors.code" class="text-ui-cap text-ui-bad mt-1.5">{{ itemErrors.code[0] }}</p>
         </div>
-        <div class="p-4 border-t border-[#DCDEDD] grid grid-cols-2 gap-2">
-          <button type="button" class="rounded-[10px] border border-[#DCDEDD] px-4 py-2 text-sm font-semibold" @click="editing = null">Cancel</button>
-          <button type="submit" :disabled="savingItem" class="blue-gradient border border-[#2151A0] rounded-[10px] px-4 py-2 text-sm font-semibold text-white flex items-center justify-center gap-1.5 disabled:opacity-60">
-            <Loader2 v-if="savingItem" class="w-4 h-4 animate-spin" /> Save
-          </button>
+        <div>
+          <label for="ci-category" :class="label">{{ $t("common.labels.category") }}</label>
+          <input id="ci-category" v-model="editing.category" required maxlength="60" :class="field" />
+        </div>
+        <div class="sm:col-span-2">
+          <label for="ci-desc" :class="label">{{ $t("common.labels.description") }}</label>
+          <textarea id="ci-desc" v-model="editing.description" rows="2" maxlength="2000" :class="[field, 'h-auto py-2.5 resize-y']"></textarea>
+        </div>
+        <UiSelect v-model="editing.pricing_mode" :label="$t('screening.settings.modal.pricing')" :options="pricingOptions" />
+        <UiSelect v-model="editing.price_unit" :label="$t('screening.settings.billed.label')" :options="billedOptions" />
+        <div v-if="editing.pricing_mode === 'rate_card'">
+          <label for="ci-price" :class="label">{{ $t("screening.settings.modal.priceFrom") }}</label>
+          <input id="ci-price" v-model.number="editing.price_from" type="number" min="0" :class="[field, 'tabular-nums']" />
+        </div>
+        <div v-if="editing.pricing_mode === 'hourly'">
+          <label for="ci-hours" :class="label">{{ $t("screening.settings.modal.defaultHours") }}</label>
+          <input id="ci-hours" v-model.number="editing.default_hours" type="number" min="0" :class="[field, 'tabular-nums']" />
+        </div>
+        <div>
+          <label for="ci-duration" :class="label">{{ $t("screening.settings.modal.duration") }}</label>
+          <input id="ci-duration" v-model="editing.duration_text" maxlength="100" :placeholder="$t('screening.settings.modal.durationPlaceholder')" :class="field" />
+        </div>
+        <UiSelect v-model="editing.availability" :label="$t('screening.settings.availability.label')" :options="availabilityOptions" />
+        <div class="sm:col-span-2 border border-ui-line rounded-ui-control px-3.5 py-3">
+          <UiSwitch v-model="editing.is_active" :label="$t('screening.settings.modal.active')" />
         </div>
       </form>
-    </div>
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="editing = null">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="catalog-item-form" class="flex-1 sm:flex-none" :loading="savingItem" :disabled="savingItem">{{ $t("common.actions.save") }}</UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>

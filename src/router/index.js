@@ -77,6 +77,10 @@ const router = createRouter({
           component: AdminDashboard,
 
         },
+        // Redesign UI kit: every base component in one page, development only.
+        ...(import.meta.env.DEV
+          ? [{ path: 'ui-kit', name: 'admin.ui-kit', component: () => import('@/views/dev/UiKit.vue') }]
+          : []),
         ...teamRoutes,
         ...employeeRoutes,
         ...projectRoutes,

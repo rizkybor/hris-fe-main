@@ -19,7 +19,9 @@ export default [
         component: ProjectCreate
     },
     {
-        path: '/admin/projects/:id',
+        // Own path so a reload of the edit page stays on edit (it used to
+        // share /admin/projects/:id with the detail route).
+        path: '/admin/projects/:id/edit',
         name: 'admin.projects.edit',
         component: ProjectEdit
     }

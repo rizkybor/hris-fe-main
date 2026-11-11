@@ -1,4 +1,5 @@
 <script setup>
+// Card grid placeholder: avatar + title, a progress line and a footer.
 import Skeleton from "./Skeleton.vue";
 
 defineProps({
@@ -8,20 +9,22 @@ defineProps({
 </script>
 
 <template>
-  <div class="grid gap-6" :class="cols">
-    <div
-      v-for="i in count"
-      :key="i"
-      class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-4"
-    >
-      <Skeleton width="100%" height="120px" rounded="16px" />
-      <Skeleton width="70%" height="18px" />
-      <Skeleton width="50%" height="12px" />
-      <div class="flex items-center gap-3 pt-2">
-        <Skeleton width="32px" height="32px" rounded="9999px" />
-        <Skeleton width="40%" height="12px" />
+  <div class="grid gap-4 sm:gap-5" :class="cols" role="status" :aria-label="$t('common.a11y.loading')">
+    <div v-for="i in count" :key="i" class="bg-ui-surface border border-ui-line rounded-ui-card p-[18px] space-y-4">
+      <div class="flex items-center gap-3">
+        <Skeleton width="40px" height="40px" rounded="10px" />
+        <div class="flex-1 space-y-2">
+          <Skeleton width="60%" height="13px" />
+          <Skeleton width="40%" height="10px" />
+        </div>
       </div>
-      <Skeleton width="100%" height="8px" rounded="9999px" />
+      <Skeleton width="100%" height="4px" rounded="9999px" />
+      <div class="flex items-center gap-2 pt-1">
+        <Skeleton width="24px" height="24px" rounded="9999px" />
+        <Skeleton width="24px" height="24px" rounded="9999px" />
+        <div class="flex-1"></div>
+        <Skeleton width="64px" height="10px" />
+      </div>
     </div>
   </div>
 </template>

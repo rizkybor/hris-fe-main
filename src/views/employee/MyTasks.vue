@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { useRouter, useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { debounce } from "lodash-es";
 import { useTaskStore } from "@/stores/task";
 import { useStaffTaskStore } from "@/stores/staffTask";
 import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
@@ -11,59 +12,70 @@ import {
   Folder,
   ListChecks,
   SearchX,
-  ChevronDown,
   ChevronRight,
   ClipboardList,
-  X,
   AlertTriangle,
   CalendarClock,
   CalendarRange,
   CircleDot,
   CheckCircle2,
   Inbox,
+  ExternalLink,
+  User,
 } from "lucide-vue-next";
-import Skeleton from "@/components/common/skeleton/Skeleton.vue";
-import { getPriorityColor } from "@/utils/styleHelpers";
+import { UiBadge, UiButton, UiChips, UiDrawer, UiEmpty, UiInput, UiPageHeader, UiSelect, UiStat, UiStatusSelect } from "@/components/ui";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import StaffTaskComments from "@/components/admin/documents/StaffTaskComments.vue";
+import TaskComments from "@/components/admin/project/detail/TaskComments.vue";
 import MyTasksRecap from "@/components/employee/MyTasksRecap.vue";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
+import { optimistic } from "@/utils/optimistic";
+import { useI18n } from "vue-i18n";
 
-const router = useRouter();
+const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 
 // Two sources in one list: Project Tasks (from a project's board) and
 // Assigned Tasks (daily tasks handed out via Business Documents > Staff
 // Tasks). Both are shown together, grouped by how urgent they are.
 const taskStore = useTaskStore();
-const { myTasks, loading } = storeToRefs(taskStore);
 const staffTaskStore = useStaffTaskStore();
-const { myStaffTasks, loading: staffTasksLoading } = storeToRefs(staffTaskStore);
+const { myStaffTasks } = storeToRefs(staffTaskStore);
+// This page's own cached result (the dashboard widget and profile load
+// smaller lists into taskStore.myTasks).
+const MY_TASKS_KEY = "200:true";
+const myProjectTasks = computed(() => taskStore.myTasksCache[MY_TASKS_KEY] ?? []);
+
+// Shows what the stores already hold right away and refreshes quietly.
+const { loading: initialLoading, refreshing } = useStaleFetch(
+  () => Promise.all([taskStore.fetchMyTasks(200, true), staffTaskStore.fetchMyStaffTasks()]),
+  { key: () => "my-tasks-page", hasData: () => Boolean(taskStore.myTasksCache[MY_TASKS_KEY]) }
+);
 
 // Same 5 statuses/labels as the Kanban board's columns (TaskBoard.vue);
 // Assigned Tasks only use To Do / In Progress / Done.
-const STATUS_OPTIONS = [
-  { value: "todo", label: "To Do" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "review", label: "Review" },
-  { value: "done", label: "Done" },
-  { value: "cancelled", label: "Cancelled" },
-];
-const STAFF_TASK_STATUS_OPTIONS = STATUS_OPTIONS.filter((o) => ["todo", "in_progress", "done"].includes(o.value));
+const STATUS_TONE = { todo: "neutral", in_progress: "warn", review: "info", done: "ok", cancelled: "neutral" };
+const STATUS_OPTIONS = computed(() =>
+  ["todo", "in_progress", "review", "done", "cancelled"].map((value) => ({ value, label: t(`myTasks.status.${value}`), tone: STATUS_TONE[value] }))
+);
+const STAFF_TASK_STATUS_OPTIONS = computed(() =>
+  STATUS_OPTIONS.value.filter((o) => ["todo", "in_progress", "done"].includes(o.value))
+);
+const statusOptionsFor = (item) => (item.source === "assigned" ? STAFF_TASK_STATUS_OPTIONS.value : STATUS_OPTIONS.value);
 
-const STATUS_CLASS = {
-  todo: "bg-gray-100 text-gray-600",
-  in_progress: "bg-[#FEF3C7] text-[#D97706]",
-  review: "bg-[#EBF8FF] text-[#1E40AF]",
-  done: "bg-[#F0FDF4] text-[#166534]",
-  cancelled: "bg-slate-100 text-slate-600",
-};
+// Presentation only: status -> dot colour.
 const STATUS_DOT = {
-  todo: "bg-gray-400",
-  in_progress: "bg-amber-500",
-  review: "bg-blue-500",
-  done: "bg-green-500",
-  cancelled: "bg-slate-400",
+  todo: "bg-ui-faint",
+  in_progress: "bg-ui-warn",
+  review: "bg-ui-info",
+  done: "bg-ui-ok",
+  cancelled: "bg-ui-line-strong",
 };
+const PRIORITY_TONE = { urgent: "bad", high: "warn", medium: "info", low: "neutral" };
 const PRIORITY_RANK = { urgent: 0, high: 1, medium: 2, low: 3 };
+const priorityLabel = (p) => (["urgent", "high", "medium", "low"].includes(p) ? t(`myTasks.priority.${p}`) : p);
 
 // Card previews show plain text -- raw HTML inside a clamped line looks broken.
 const stripHtml = (html) =>
@@ -78,32 +90,32 @@ const today = localDate();
 const inAWeek = localDate(new Date(Date.now() + 7 * 86400000));
 
 const items = computed(() => [
-  ...myTasks.value.map((t) => ({
-    uid: `p-${t.id}`,
+  ...myProjectTasks.value.map((task) => ({
+    uid: `p-${task.id}`,
     source: "project",
-    id: t.id,
-    title: t.name,
-    description: stripHtml(t.description),
-    status: t.status,
-    due: t.due_date ? String(t.due_date).slice(0, 10) : null,
-    projectId: t.project?.id ?? null,
-    projectName: t.project?.name ?? "No Project",
-    priority: t.priority,
-    raw: t,
+    id: task.id,
+    title: task.name,
+    description: stripHtml(task.description),
+    status: task.status,
+    due: task.due_date ? String(task.due_date).slice(0, 10) : null,
+    projectId: task.project?.id ?? task.project_id ?? null,
+    projectName: task.project?.name ?? t("myTasks.noProject"),
+    priority: task.priority,
+    raw: task,
   })),
-  ...myStaffTasks.value.map((t) => ({
-    uid: `a-${t.id}`,
+  ...myStaffTasks.value.map((task) => ({
+    uid: `a-${task.id}`,
     source: "assigned",
-    id: t.id,
-    title: t.title,
-    description: stripHtml(t.description),
-    status: t.my_assignment?.status ?? "todo",
-    due: t.due_date ? String(t.due_date).slice(0, 10) : null,
+    id: task.id,
+    title: task.title,
+    description: stripHtml(task.description),
+    status: task.my_assignment?.status ?? "todo",
+    due: task.due_date ? String(task.due_date).slice(0, 10) : null,
     projectId: null,
     projectName: null,
     priority: null,
-    creatorName: t.creator?.name,
-    raw: t,
+    creatorName: task.creator?.name,
+    raw: task,
   })),
 ]);
 
@@ -117,20 +129,30 @@ const bucketOf = (item) => {
   return "later";
 };
 
+// Group labels come from myTasks.buckets.<key>.
 const BUCKETS = [
-  { key: "overdue", label: "Overdue", icon: AlertTriangle, tone: "text-red-600" },
-  { key: "today", label: "Due today", icon: CalendarClock, tone: "text-amber-600" },
-  { key: "week", label: "Next 7 days", icon: CalendarRange, tone: "text-[#0C51D9]" },
-  { key: "later", label: "Later", icon: Calendar, tone: "text-brand-light" },
-  { key: "nodate", label: "No due date", icon: CircleDot, tone: "text-brand-light" },
-  { key: "completed", label: "Completed", icon: CheckCircle2, tone: "text-green-600" },
+  { key: "overdue", icon: AlertTriangle, tone: "text-ui-bad" },
+  { key: "today", icon: CalendarClock, tone: "text-ui-warn" },
+  { key: "week", icon: CalendarRange, tone: "text-ui-accent" },
+  { key: "later", icon: Calendar, tone: "text-ui-muted" },
+  { key: "nodate", icon: CircleDot, tone: "text-ui-muted" },
+  { key: "completed", icon: CheckCircle2, tone: "text-ui-ok" },
 ];
 
-// ----- Filters -----
-const sourceTab = ref("all");
-const searchQuery = ref("");
-const statusFilter = ref("");
-const projectFilter = ref("");
+// ----- Filters (URL + remembered per browser) -----
+// `due` is set by the summary tiles: overdue | today | week | open | completed.
+const list = useListState("my-tasks", { source: "all", q: "", status: "", project: "", due: "" });
+
+// Search typed into its own box, applied ~300ms after typing stops.
+const searchInput = ref(list.q);
+const applySearch = debounce((value) => (list.q = value), 300);
+watch(searchInput, (value) => applySearch(value));
+watch(
+  () => list.q,
+  (value) => {
+    if (value !== searchInput.value) searchInput.value = value;
+  }
+);
 
 const projects = computed(() => {
   const map = new Map();
@@ -144,27 +166,41 @@ const counts = computed(() => ({
   project: items.value.filter((i) => i.source === "project").length,
 }));
 
+const matchesDue = (item) => {
+  if (!list.due) return true;
+  if (list.due === "open") return !isClosed(item);
+  return bucketOf(item) === list.due;
+};
+
 const filtered = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase();
+  const q = list.q.trim().toLowerCase();
   return items.value.filter((i) => {
-    if (sourceTab.value !== "all" && i.source !== sourceTab.value) return false;
-    if (statusFilter.value && i.status !== statusFilter.value) return false;
-    if (projectFilter.value && (i.source !== "project" || String(i.projectId) !== projectFilter.value)) return false;
+    if (list.source !== "all" && i.source !== list.source) return false;
+    if (list.status && i.status !== list.status) return false;
+    if (list.project && (i.source !== "project" || String(i.projectId) !== list.project)) return false;
+    if (!matchesDue(i)) return false;
     if (q && ![i.title, i.description, i.projectName, i.creatorName].some((v) => v?.toLowerCase().includes(q))) return false;
     return true;
   });
 });
 
-const hasActiveFilters = computed(() => Boolean(searchQuery.value || statusFilter.value || projectFilter.value));
+const hasActiveFilters = computed(() => Boolean(list.q || list.status || list.project || list.due));
 const clearFilters = () => {
-  searchQuery.value = "";
-  statusFilter.value = "";
-  projectFilter.value = "";
+  searchInput.value = "";
+  list.q = "";
+  list.status = "";
+  list.project = "";
+  list.due = "";
+};
+const showAll = () => {
+  clearFilters();
+  list.source = "all";
 };
 
 const groups = computed(() =>
   BUCKETS.map((b) => ({
     ...b,
+    label: t(`myTasks.buckets.${b.key}`),
     items: filtered.value
       .filter((i) => bucketOf(i) === b.key)
       .sort(
@@ -175,384 +211,395 @@ const groups = computed(() =>
   })).filter((g) => g.items.length)
 );
 
-// Summary across everything (ignores filters) -- the "how am I doing" row.
+// Summary across everything (ignores filters); a tile filters the list.
 const summary = computed(() => {
   const by = (key) => items.value.filter((i) => bucketOf(i) === key).length;
   return [
-    { key: "overdue", label: "Overdue", short: "Overdue", value: by("overdue"), icon: AlertTriangle, class: "text-red-600 bg-red-50" },
-    { key: "today", label: "Due today", short: "Today", value: by("today"), icon: CalendarClock, class: "text-amber-600 bg-amber-50" },
-    { key: "week", label: "Next 7 days", short: "7 days", value: by("week"), icon: CalendarRange, class: "text-[#0C51D9] bg-blue-50" },
-    { key: "open", label: "Open", short: "Open", value: items.value.filter((i) => !isClosed(i)).length, icon: ListChecks, class: "text-indigo-600 bg-indigo-50" },
-    { key: "completed", label: "Completed", short: "Done", value: by("completed"), icon: CheckCircle2, class: "text-green-600 bg-green-50" },
+    { key: "overdue", label: t("myTasks.buckets.overdue"), value: by("overdue"), icon: AlertTriangle, tone: "bad" },
+    { key: "today", label: t("myTasks.buckets.today"), value: by("today"), icon: CalendarClock, tone: "warn" },
+    { key: "week", label: t("myTasks.buckets.week"), value: by("week"), icon: CalendarRange, tone: "" },
+    { key: "open", label: t("myTasks.summary.open"), value: items.value.filter((i) => !isClosed(i)).length, icon: ListChecks, tone: "" },
+    { key: "completed", label: t("myTasks.buckets.completed"), value: by("completed"), icon: CheckCircle2, tone: "" },
   ];
 });
-
-const showCompleted = ref(false);
-const initialLoading = computed(
-  () => (loading.value || staffTasksLoading.value) && items.value.length === 0
-);
-
-// ----- Actions -----
-const updatingUid = ref(null);
-const changeStatus = async (item, event) => {
-  const newStatus = event.target.value;
-  if (newStatus === item.status) return;
-  updatingUid.value = item.uid;
-  try {
-    if (item.source === "assigned") {
-      await staffTaskStore.updateMyStatus(item.id, newStatus);
-    } else {
-      await taskStore.updateTask(item.id, { status: newStatus });
-      await taskStore.fetchMyTasks(200, true);
-    }
-  } catch (error) {
-    console.error("Failed to update task status:", error);
-  } finally {
-    updatingUid.value = null;
-  }
+const toggleDue = (key) => {
+  list.due = list.due === key ? "" : key;
+  if (key === "completed" && list.due) showCompleted.value = true;
 };
 
-const openItem = (item) => {
-  if (item.source === "assigned") return openStaffTaskDetail(item.raw);
-  if (!item.projectId) return;
-  router.push({ name: "admin.projects.detail", params: { id: item.projectId }, query: { task: item.id } });
+// Presentation only: source tabs as filter chips with counts.
+const sourceTabs = computed(() => [
+  { value: "all", label: t("common.labels.all"), count: counts.value.all },
+  { value: "assigned", label: t("myTasks.source.assigned"), count: counts.value.assigned },
+  { value: "project", label: t("common.labels.project"), count: counts.value.project },
+]);
+
+const showCompleted = ref(list.due === "completed");
+
+// ----- Status: instant, undone with an error toast if the save fails -----
+const changeStatus = (item, value) => {
+  if (!value || value === item.status) return;
+  if (item.source === "assigned") {
+    const task = item.raw;
+    return optimistic({
+      apply: () => {
+        const before = task.my_assignment;
+        task.my_assignment = { ...(before || {}), status: value };
+        return () => (task.my_assignment = before);
+      },
+      request: () => staffTaskStore.updateMyStatus(item.id, value),
+    });
+  }
+  const before = item.status;
+  return optimistic({
+    apply: () => {
+      taskStore.patchMyTasks(item.id, { status: value });
+      return () => taskStore.patchMyTasks(item.id, { status: before });
+    },
+    request: () => taskStore.updateTask(item.id, { status: value }),
+  });
 };
 
 const dueLabel = (item) => {
-  if (!item.due) return "No due date";
-  if (item.due === today) return "Today";
+  if (!item.due) return t("myTasks.buckets.nodate");
+  if (item.due === today) return t("common.labels.today");
   return formatDate(item.due);
 };
 
-// ----- Assigned task detail (with comments) -----
-const detailStaffTask = ref(null);
-const showStaffTaskDetail = ref(false);
-const openStaffTaskDetail = (task) => {
-  detailStaffTask.value = task;
-  showStaffTaskDetail.value = true;
+// ----- Detail drawer (both sources), with prev/next through the list -----
+const openUid = ref(null);
+const drawerOpen = computed({
+  get: () => Boolean(openUid.value && current.value),
+  set: (value) => {
+    if (!value) closeDetail();
+  },
+});
+const current = computed(() => items.value.find((i) => i.uid === openUid.value) || null);
+
+// What is on screen, top to bottom (collapsed Completed group excluded).
+const visibleList = computed(() => groups.value.flatMap((g) => (g.key === "completed" && !showCompleted.value ? [] : g.items)));
+const currentIndex = computed(() => visibleList.value.findIndex((i) => i.uid === openUid.value));
+// Where the open item was, so prev/next still work after it leaves the
+// list (e.g. marked done while Completed is collapsed).
+const lastIndex = ref(0);
+watch(currentIndex, (i) => {
+  if (i !== -1) lastIndex.value = i;
+});
+const hasPrev = computed(() => (currentIndex.value === -1 ? lastIndex.value > 0 : currentIndex.value > 0));
+const hasNext = computed(() =>
+  currentIndex.value === -1 ? lastIndex.value < visibleList.value.length : currentIndex.value < visibleList.value.length - 1
+);
+const goPrev = () => {
+  const i = currentIndex.value === -1 ? lastIndex.value - 1 : currentIndex.value - 1;
+  if (visibleList.value[i]) openUid.value = visibleList.value[i].uid;
 };
-const closeStaffTaskDetail = () => {
-  showStaffTaskDetail.value = false;
-  detailStaffTask.value = null;
+const goNext = () => {
+  const i = currentIndex.value === -1 ? lastIndex.value : currentIndex.value + 1;
+  if (visibleList.value[i]) openUid.value = visibleList.value[i].uid;
 };
-const handleStaffTaskStatusChange = async (task, event) => {
-  const newStatus = event.target.value;
-  if (newStatus === task.my_assignment?.status) return;
-  try {
-    await staffTaskStore.updateMyStatus(task.id, newStatus);
-  } catch (error) {
-    console.error("Failed to update task status:", error);
+
+const openItem = (item) => {
+  openUid.value = item.uid;
+};
+const closeDetail = () => {
+  openUid.value = null;
+  // A notification deep link has done its job once the task is closed.
+  if (route.query.staff_task || route.query.comment) {
+    const { staff_task: _s, comment: _c, ...rest } = route.query;
+    router.replace({ query: rest }).catch(() => {});
   }
 };
+
+const fullPageLink = computed(() =>
+  current.value?.source === "project" && current.value.projectId
+    ? { name: "admin.projects.detail", params: { id: current.value.projectId }, query: { task: current.value.id } }
+    : null
+);
 
 const staffTaskCommentAssignees = computed(() => {
-  if (!detailStaffTask.value) return [];
-  const list = (detailStaffTask.value.assignees || []).map((a) => ({ id: a.employee_id, name: a.name }));
-  const creatorEmployeeId = detailStaffTask.value.creator?.employee_profile?.id;
-  if (creatorEmployeeId && !list.some((a) => a.id === creatorEmployeeId)) {
-    list.push({ id: creatorEmployeeId, name: detailStaffTask.value.creator?.name });
+  const task = current.value?.source === "assigned" ? current.value.raw : null;
+  if (!task) return [];
+  const people = (task.assignees || []).map((a) => ({ id: a.employee_id, name: a.name }));
+  const creatorEmployeeId = task.creator?.employee_profile?.id;
+  if (creatorEmployeeId && !people.some((a) => a.id === creatorEmployeeId)) {
+    people.push({ id: creatorEmployeeId, name: task.creator?.name });
   }
-  return list;
+  return people;
 });
 
-onMounted(async () => {
-  taskStore.fetchMyTasks(200, true);
-  await staffTaskStore.fetchMyStaffTasks();
+// Deep link from a StaffTaskAssigned/StaffTaskCommentMention notification
+// (?staff_task=<id>, optionally &comment=<id>): open that task as soon as it
+// is in the list -- from the cache right away, or after the refresh.
+let deepLinkDone = false;
+watch(
+  myStaffTasks,
+  (tasks) => {
+    const targetId = route.query.staff_task ? Number(route.query.staff_task) : null;
+    if (deepLinkDone || !targetId) return;
+    if (tasks.some((task) => task.id === targetId)) {
+      deepLinkDone = true;
+      openUid.value = `a-${targetId}`;
+    }
+  },
+  { immediate: true }
+);
 
-  // Deep-link from a StaffTaskAssigned/StaffTaskCommentMention notification
-  // (?staff_task=<id>, optionally &comment=<id>) -- open that task straight away.
-  const targetId = route.query.staff_task ? Number(route.query.staff_task) : null;
-  if (targetId) {
-    const task = myStaffTasks.value.find((t) => t.id === targetId);
-    if (task) openStaffTaskDetail(task);
-  }
-});
+// ?task=<id> (e.g. from My Profile for users without project access):
+// open that project task in the drawer once the list has it, then drop
+// only the `task` key from the URL.
+let taskLinkDone = false;
+watch(
+  myProjectTasks,
+  (tasks) => {
+    const targetId = route.query.task ? Number(route.query.task) : null;
+    if (taskLinkDone || !targetId) return;
+    if (tasks.some((task) => task.id === targetId)) {
+      taskLinkDone = true;
+      openUid.value = `p-${targetId}`;
+      const { task: _t, ...rest } = route.query;
+      router.replace({ query: rest }).catch(() => {});
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
-  <!-- The admin layout already pads the page, so phones get little extra. -->
-  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
-    <!-- Header + summary -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3 sm:p-5 mb-4">
-      <div class="flex items-center gap-3 mb-3 sm:mb-4">
-        <div class="w-10 h-10 bg-orange-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <ListChecks class="w-5 h-5 text-orange-600" />
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-brand-dark text-base font-bold">Task Collection (Assigned/Project)</h3>
-          <p class="text-brand-light text-xs">Your project tasks and the tasks your supervisor assigned you, sorted by what's due first.</p>
-        </div>
-      </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('myTasks.title')" :subtitle="$t('myTasks.subtitle')" />
 
-      <!-- Five across at every width: compact number-over-label tiles on
-           phones, icon tiles from sm up. -->
-      <div class="grid grid-cols-5 gap-1.5 sm:gap-2.5">
-        <div
-          v-for="s in summary"
-          :key="s.key"
-          class="bg-white border border-[#DCDEDD] rounded-[10px] sm:rounded-[12px] px-1 py-2 sm:px-3.5 sm:py-3 flex flex-col sm:flex-row items-center sm:items-center gap-0.5 sm:gap-3 text-center sm:text-left min-w-0"
-        >
-          <div class="hidden sm:flex w-9 h-9 rounded-[10px] items-center justify-center shrink-0" :class="s.class">
-            <component :is="s.icon" class="w-4 h-4" />
-          </div>
-          <div class="min-w-0 w-full sm:w-auto flex flex-col-reverse sm:flex-col">
-            <p class="text-brand-light text-[10px] sm:text-xs font-medium truncate">
-              <span class="sm:hidden">{{ s.short }}</span><span class="hidden sm:inline">{{ s.label }}</span>
-            </p>
-            <Skeleton v-if="initialLoading" width="24px" height="20px" rounded="4px" class="mx-auto sm:mx-0" />
-            <p v-else class="text-lg sm:text-xl font-extrabold leading-tight" :class="s.key === 'overdue' && s.value ? 'text-red-600' : 'text-brand-dark'">{{ s.value }}</p>
-          </div>
-        </div>
-      </div>
+    <!-- Summary: scrolls sideways on phones, five across on desktop. A tile filters the list. -->
+    <div class="flex gap-3 overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] lg:grid lg:grid-cols-5 ui-stagger">
+      <UiStat
+        v-for="s in summary"
+        :key="s.key"
+        class="w-[150px] shrink-0 lg:w-auto"
+        :label="s.label"
+        :value="s.value"
+        :icon="s.icon"
+        :tone="s.value ? s.tone : ''"
+        :loading="initialLoading"
+        selectable
+        :active="list.due === s.key"
+        @select="toggleDue(s.key)"
+      />
     </div>
 
     <MyTasksRecap :items="items" :loading="initialLoading" />
 
     <!-- Toolbar -->
-    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5 sm:gap-3 mb-4">
-      <div class="grid grid-cols-3 sm:flex bg-gray-100 rounded-[10px] p-1 shrink-0 w-full sm:w-auto sm:self-start">
-        <button
-          v-for="t in [
-            { key: 'all', label: 'All', icon: ListChecks },
-            { key: 'assigned', label: 'Assigned', icon: ClipboardList },
-            { key: 'project', label: 'Project', icon: Folder },
-          ]"
-          :key="t.key"
-          type="button"
-          class="px-2 sm:px-3 py-1.5 rounded-[8px] text-[13px] sm:text-sm font-semibold inline-flex items-center justify-center gap-1 sm:gap-1.5 transition-colors min-w-0"
-          :class="sourceTab === t.key ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-light hover:text-brand-dark'"
-          @click="sourceTab = t.key"
-        >
-          <component :is="t.icon" class="w-4 h-4 shrink-0 hidden sm:block" />
-          <span class="truncate">{{ t.label }}</span>
-          <span class="text-[11px] sm:text-xs font-semibold px-1.5 rounded-full shrink-0" :class="sourceTab === t.key ? 'bg-blue-50 text-[#0C51D9]' : 'bg-gray-200 text-gray-500'">{{ counts[t.key] }}</span>
-        </button>
+    <div class="bg-ui-surface border border-ui-line rounded-ui-card p-3 sm:p-4 flex flex-col xl:flex-row xl:items-center gap-3">
+      <div class="overflow-x-auto [scrollbar-width:none] -mx-1 px-1 shrink-0">
+        <UiChips v-model="list.source" :options="sourceTabs" />
       </div>
-
-      <div class="relative flex-1 min-w-0">
-        <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search tasks, projects or who assigned it..."
-          class="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:outline-none transition-colors font-medium"
+      <UiInput v-model="searchInput" :icon="Search" :placeholder="$t('myTasks.searchPlaceholder')" class="flex-1" />
+      <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 shrink-0">
+        <UiSelect
+          v-if="list.source !== 'assigned' && projects.length"
+          v-model="list.project"
+          :options="[{ value: '', label: $t('myTasks.allProjects') }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))]"
+          class="sm:w-[180px]"
+          :aria-label="$t('common.labels.project')"
         />
-      </div>
-
-      <div class="grid grid-cols-2 sm:flex items-center gap-2">
-        <div v-if="sourceTab !== 'assigned' && projects.length" class="relative min-w-0">
-          <select v-model="projectFilter" class="select-soft w-full sm:max-w-[180px]">
-            <option value="">All Projects</option>
-            <option v-for="p in projects" :key="p.id ?? 'none'" :value="String(p.id)">{{ p.name }}</option>
-          </select>
-          <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-        <div class="relative min-w-0" :class="{ 'col-span-2': sourceTab === 'assigned' || !projects.length }">
-          <select v-model="statusFilter" class="select-soft w-full">
-            <option value="">All Status</option>
-            <option v-for="opt in STATUS_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-          </select>
-          <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-        <button
-          v-if="hasActiveFilters"
-          type="button"
-          @click="clearFilters"
-          class="col-span-2 sm:col-span-1 px-3 py-2 sm:py-2.5 rounded-[10px] text-xs font-semibold text-gray-500 hover:text-[#0C51D9] hover:bg-gray-50 transition-colors shrink-0"
-        >
-          Clear filters
-        </button>
+        <UiSelect
+          v-model="list.status"
+          :options="[{ value: '', label: $t('common.labels.allStatuses') }, ...STATUS_OPTIONS]"
+          :class="list.source === 'assigned' || !projects.length ? 'col-span-2 sm:w-[160px]' : 'sm:w-[160px]'"
+          :aria-label="$t('common.labels.status')"
+        />
+        <UiButton v-if="hasActiveFilters" variant="ghost" size="sm" class="col-span-2 sm:col-span-1" @click="clearFilters">
+          {{ $t("common.actions.clearFilters") }}
+        </UiButton>
       </div>
     </div>
+
+    <p v-if="refreshing" class="text-ui-cap text-ui-muted -mt-2" role="status">{{ $t("myTasks.refreshing") }}</p>
 
     <!-- Loading -->
-    <div v-if="initialLoading" class="space-y-3">
-      <Skeleton v-for="i in 4" :key="i" height="72px" rounded="12px" />
-    </div>
+    <SkeletonList v-if="initialLoading" :rows="4" />
 
     <!-- Empty -->
-    <div
-      v-else-if="!groups.length"
-      class="flex flex-col items-center justify-center text-center py-14 rounded-[14px] border border-dashed border-[#DCDEDD] bg-gray-50/60"
-    >
-      <template v-if="hasActiveFilters || sourceTab !== 'all'">
-        <SearchX class="w-10 h-10 text-gray-300 mb-3" />
-        <h4 class="text-brand-dark text-sm font-semibold mb-1">No tasks match your filters</h4>
-        <p class="text-brand-light text-xs mb-4">Try another search, status, project or tab</p>
-        <button
-          type="button"
-          @click="clearFilters(), (sourceTab = 'all')"
-          class="px-4 py-2 rounded-[8px] border border-[#DCDEDD] text-xs font-semibold text-brand-dark hover:border-[#0C51D9] hover:bg-white transition-colors"
-        >
-          Show all tasks
-        </button>
-      </template>
-      <template v-else>
-        <Inbox class="w-10 h-10 text-gray-300 mb-3" />
-        <h4 class="text-brand-dark text-sm font-semibold mb-1">No tasks yet</h4>
-        <p class="text-brand-light text-xs">Tasks from your projects and from your supervisor will show up here.</p>
-      </template>
+    <div v-else-if="!groups.length" class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty
+        v-if="hasActiveFilters || list.source !== 'all'"
+        :icon="SearchX"
+        :title="$t('myTasks.empty.filteredTitle')"
+        :message="$t('myTasks.empty.filteredMessage')"
+      >
+        <UiButton variant="secondary" size="sm" @click="showAll">{{ $t("myTasks.empty.showAll") }}</UiButton>
+      </UiEmpty>
+      <UiEmpty v-else :icon="Inbox" :title="$t('myTasks.empty.title')" :message="$t('myTasks.empty.message')" />
     </div>
 
     <!-- Grouped by urgency -->
-    <div v-else class="space-y-4">
-      <section v-for="group in groups" :key="group.key" class="bg-white border border-[#DCDEDD] rounded-[14px] overflow-hidden">
+    <div v-else class="space-y-4 ui-stagger" :class="{ 'opacity-60 transition-opacity': refreshing }">
+      <section v-for="group in groups" :key="group.key" class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden">
         <button
           type="button"
-          class="w-full flex items-center gap-2 px-3 sm:px-4 py-3 bg-slate-50 border-b border-[#EEF1F5] text-left"
-          :class="{ 'cursor-pointer hover:bg-slate-100': group.key === 'completed', 'cursor-default': group.key !== 'completed', '!border-b-0': group.key === 'completed' && !showCompleted }"
+          class="w-full flex items-center gap-2 px-4 h-12 text-left border-b border-ui-line"
+          :class="{
+            'cursor-pointer hover:bg-ui-hover': group.key === 'completed',
+            'cursor-default': group.key !== 'completed',
+            '!border-b-0': group.key === 'completed' && !showCompleted,
+          }"
+          :aria-expanded="group.key === 'completed' ? showCompleted : undefined"
           @click="group.key === 'completed' && (showCompleted = !showCompleted)"
         >
           <component :is="group.icon" class="w-4 h-4 shrink-0" :class="group.tone" />
-          <h4 class="text-brand-dark text-sm font-bold">{{ group.label }}</h4>
-          <span class="text-xs font-semibold text-gray-500 bg-white border border-[#EEF1F5] rounded-full px-2">{{ group.items.length }}</span>
+          <h2 class="text-ui-h3 text-ui-ink">{{ group.label }}</h2>
+          <span class="text-ui-cap text-ui-muted tabular-nums">{{ group.items.length }}</span>
           <ChevronRight
             v-if="group.key === 'completed'"
-            class="w-4 h-4 text-gray-400 ml-auto transition-transform"
+            class="w-4 h-4 text-ui-faint ml-auto transition-transform duration-ui-base"
             :class="{ 'rotate-90': showCompleted }"
           />
         </button>
 
-        <ul v-if="group.key !== 'completed' || showCompleted" class="divide-y divide-[#F1F1F1]">
+        <ul v-if="group.key !== 'completed' || showCompleted" class="divide-y divide-ui-line">
           <li
             v-for="item in group.items"
             :key="item.uid"
-            class="px-3 sm:px-4 py-3 flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2 hover:bg-slate-50 transition-colors"
-            :class="item.source === 'project' && !item.projectId ? 'cursor-default' : 'cursor-pointer'"
+            class="px-4 py-3.5 flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2 transition-colors cursor-pointer hover:bg-ui-hover/60 active:bg-ui-hover"
+            :class="{ 'bg-ui-hover/60': item.uid === openUid }"
+            tabindex="0"
             @click="openItem(item)"
+            @keydown.enter.self="openItem(item)"
           >
-            <span class="mt-1.5 w-2 h-2 rounded-full shrink-0" :class="STATUS_DOT[item.status] || 'bg-gray-300'"></span>
+            <span class="mt-[7px] w-2 h-2 rounded-full shrink-0" :class="STATUS_DOT[item.status] || 'bg-ui-faint'" aria-hidden="true"></span>
 
             <div class="flex-1 min-w-0 basis-[calc(100%-1.25rem)] sm:basis-auto">
-              <p class="text-brand-dark text-sm font-semibold leading-snug break-words" :class="{ 'line-through text-gray-400': isClosed(item) }">
+              <p class="text-ui-body font-medium leading-snug break-words" :class="isClosed(item) ? 'line-through text-ui-faint' : 'text-ui-ink'">
                 {{ item.title }}
               </p>
-              <p v-if="item.description" class="text-brand-light text-xs mt-0.5 line-clamp-1">{{ item.description }}</p>
-              <div class="flex items-center gap-1.5 flex-wrap mt-1.5 text-xs">
-                <span
-                  v-if="item.source === 'project'"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-medium max-w-full sm:max-w-[220px]"
-                >
+              <p v-if="item.description" class="text-ui-cap text-ui-muted mt-0.5 line-clamp-1">{{ item.description }}</p>
+              <div class="flex items-center gap-1.5 flex-wrap mt-2">
+                <UiBadge v-if="item.source === 'project'" tone="outline" class="max-w-full sm:max-w-[240px]">
                   <Folder class="w-3 h-3 shrink-0" /><span class="truncate">{{ item.projectName }}</span>
-                </span>
-                <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-medium max-w-full sm:max-w-[220px]">
-                  <ClipboardList class="w-3 h-3 shrink-0" /><span class="truncate">Assigned{{ item.creatorName ? ` by ${item.creatorName}` : "" }}</span>
-                </span>
-                <span v-if="item.priority" :class="getPriorityColor(item.priority)" class="px-2 py-0.5 rounded-md font-semibold capitalize">
-                  {{ item.priority }}
-                </span>
-                <span
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium"
-                  :class="group.key === 'overdue' ? 'bg-red-50 text-red-600' : group.key === 'today' ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-500'"
-                >
+                </UiBadge>
+                <UiBadge v-else tone="neutral" class="max-w-full sm:max-w-[240px]">
+                  <ClipboardList class="w-3 h-3 shrink-0" /><span class="truncate">{{ item.creatorName ? $t("myTasks.assignedBy", { name: item.creatorName }) : $t("myTasks.source.assigned") }}</span>
+                </UiBadge>
+                <UiBadge v-if="item.priority" :tone="PRIORITY_TONE[item.priority] || 'neutral'" class="capitalize">
+                  {{ priorityLabel(item.priority) }}
+                </UiBadge>
+                <UiBadge :tone="group.key === 'overdue' ? 'bad' : group.key === 'today' ? 'warn' : 'outline'">
                   <AlertTriangle v-if="group.key === 'overdue'" class="w-3 h-3" />
                   <Calendar v-else class="w-3 h-3" />
                   {{ dueLabel(item) }}
-                </span>
+                </UiBadge>
               </div>
             </div>
 
-            <!-- Status: compact colored select, doubles as the status badge.
+            <!-- Status: the badge is the control (instant, undone on error).
                  Below the title on phones so the title keeps the full width. -->
-            <div class="relative inline-block shrink-0 ml-5 sm:ml-0" @click.stop>
-              <select
-                :value="item.status"
-                :disabled="updatingUid === item.uid"
-                :class="STATUS_CLASS[item.status]"
-                class="status-select-badge"
-                :aria-label="`Status of ${item.title}`"
-                @change="changeStatus(item, $event)"
-              >
-                <option v-for="opt in item.source === 'assigned' ? STAFF_TASK_STATUS_OPTIONS : STATUS_OPTIONS" :key="opt.value" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
-              <ChevronDown class="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-current opacity-60 pointer-events-none" />
+            <div class="shrink-0 ml-5 sm:ml-0 min-h-[32px] flex items-center" @click.stop>
+              <UiStatusSelect
+                :model-value="item.status"
+                :options="statusOptionsFor(item)"
+                :label="$t('myTasks.statusOf', { title: item.title })"
+                @change="(value) => changeStatus(item, value)"
+              />
             </div>
           </li>
         </ul>
       </section>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- ASSIGNED TASK DETAIL MODAL -->
-    <!-- ========================================================= -->
-    <div
-      v-if="showStaffTaskDetail"
-      class="fixed inset-0 backdrop-blur-sm bg-black/20 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-      @click.self="closeStaffTaskDetail"
+    <!-- Detail drawer: project and assigned tasks, J/K or arrows to move through the list -->
+    <UiDrawer
+      v-model:open="drawerOpen"
+      :title="current?.title || ''"
+      size="lg"
+      :has-prev="hasPrev"
+      :has-next="hasNext"
+      :to="fullPageLink"
+      @prev="goPrev"
+      @next="goNext"
     >
-      <div
-        class="bg-white rounded-t-[16px] sm:rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[88vh] sm:max-h-[90vh] overflow-y-auto"
-      >
-        <!-- Modal Header -->
-        <div
-          class="p-4 sm:p-5 border-b border-[#DCDEDD] flex items-start justify-between gap-3 sticky top-0 bg-white z-10"
-        >
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-base font-bold break-words">
-              {{ detailStaffTask?.title }}
-            </h3>
-
-            <p class="text-brand-light text-xs mt-0.5">
-              Due {{ formatDate(detailStaffTask?.due_date) }} • by
-              {{ detailStaffTask?.creator?.name }}
-            </p>
-          </div>
-
-          <button
-            @click="closeStaffTaskDetail"
-            class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] shrink-0"
-          >
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
+      <template #header>
+        <div v-if="current" class="min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink break-words">{{ current.title }}</h2>
+          <p class="text-ui-small text-ui-muted mt-0.5 flex items-center gap-1.5 min-w-0">
+            <template v-if="current.source === 'project'">
+              <Folder class="w-3.5 h-3.5 shrink-0" /><span class="truncate">{{ current.projectName }}</span>
+            </template>
+            <template v-else>
+              <ClipboardList class="w-3.5 h-3.5 shrink-0" />
+              <span class="truncate">{{ current.creatorName ? $t("myTasks.assignedBy", { name: current.creatorName }) : $t("myTasks.source.assigned") }}</span>
+            </template>
+          </p>
         </div>
+      </template>
 
-        <!-- Modal Body -->
-        <div class="p-4 sm:p-5 space-y-5">
-          <!-- Description -->
-          <div
-            v-if="detailStaffTask?.description"
-            class="rich-text-content text-sm text-brand-dark leading-relaxed"
-            v-html="detailStaffTask.description"
-          ></div>
-
-          <!-- Status -->
+      <div v-if="current" class="space-y-5">
+        <!-- Key facts -->
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-3">
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1.5 block">
-              Your Status
-            </label>
-
-            <div class="relative">
-              <select
-                :value="detailStaffTask?.my_assignment?.status"
-                @change="handleStaffTaskStatusChange(detailStaffTask, $event)"
-                class="select-soft"
-              >
-                <option
-                  v-for="opt in STAFF_TASK_STATUS_OPTIONS"
-                  :key="opt.value"
-                  :value="opt.value"
-                >
-                  {{ opt.label }}
-                </option>
-              </select>
-
-              <ChevronDown
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+            <dt class="text-ui-cap text-ui-muted mb-1">{{ current.source === "assigned" ? $t("myTasks.detail.yourStatus") : $t("common.labels.status") }}</dt>
+            <dd>
+              <UiStatusSelect
+                :model-value="current.status"
+                :options="statusOptionsFor(current)"
+                :label="$t('myTasks.statusOf', { title: current.title })"
+                @change="(value) => changeStatus(current, value)"
               />
-            </div>
+            </dd>
           </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted mb-1">{{ $t("myTasks.detail.due") }}</dt>
+            <dd class="flex items-center gap-1.5 text-ui-small tabular-nums" :class="bucketOf(current) === 'overdue' ? 'text-ui-bad font-medium' : 'text-ui-ink'">
+              <AlertTriangle v-if="bucketOf(current) === 'overdue'" class="w-3.5 h-3.5" />
+              <Calendar v-else class="w-3.5 h-3.5 text-ui-faint" />
+              {{ dueLabel(current) }}
+            </dd>
+          </div>
+          <div v-if="current.priority">
+            <dt class="text-ui-cap text-ui-muted mb-1">{{ $t("myTasks.detail.priority") }}</dt>
+            <dd>
+              <UiBadge :tone="PRIORITY_TONE[current.priority] || 'neutral'" dot>{{ priorityLabel(current.priority) }}</UiBadge>
+            </dd>
+          </div>
+          <div v-if="current.source === 'project' && current.raw.type">
+            <dt class="text-ui-cap text-ui-muted mb-1">{{ $t("myTasks.detail.type") }}</dt>
+            <dd class="text-ui-small text-ui-ink">{{ current.raw.type }}</dd>
+          </div>
+          <div v-if="current.source === 'assigned' && current.creatorName">
+            <dt class="text-ui-cap text-ui-muted mb-1">{{ $t("myTasks.detail.assignedByLabel") }}</dt>
+            <dd class="flex items-center gap-1.5 text-ui-small text-ui-ink"><User class="w-3.5 h-3.5 text-ui-faint" />{{ current.creatorName }}</dd>
+          </div>
+        </dl>
 
-          <!-- Comments -->
-          <StaffTaskComments
-            :staff-task-id="detailStaffTask.id"
-            :assignees="staffTaskCommentAssignees"
-            :can-comment="true"
-          />
+        <!-- Description -->
+        <div>
+          <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("common.labels.description") }}</h3>
+          <div
+            v-if="current.source === 'assigned' && current.raw.description"
+            class="rich-text-content text-ui-body text-ui-text"
+            v-html="current.raw.description"
+          ></div>
+          <p v-else-if="current.source === 'project' && current.raw.description" class="text-ui-body text-ui-text leading-relaxed whitespace-pre-line break-words">
+            {{ current.raw.description }}
+          </p>
+          <p v-else class="text-ui-small text-ui-faint">{{ $t("myTasks.detail.noDescription") }}</p>
         </div>
+
+        <!-- Comments -->
+        <TaskComments
+          v-if="current.source === 'project'"
+          :key="current.uid"
+          :task-id="current.id"
+          :project-id="current.projectId ?? ''"
+          :can-comment="current.raw.can_comment !== false"
+        />
+        <StaffTaskComments v-else :key="current.uid" :staff-task-id="current.id" :assignees="staffTaskCommentAssignees" :can-comment="true" />
       </div>
-    </div>
+
+      <template v-if="fullPageLink" #footer>
+        <UiButton variant="secondary" :icon="ExternalLink" :to="fullPageLink" class="w-full sm:w-auto">
+          {{ $t("myTasks.detail.openInProject") }}
+        </UiButton>
+      </template>
+    </UiDrawer>
   </div>
 </template>
 
@@ -573,33 +620,36 @@ onMounted(async () => {
   margin-bottom: 0.75rem;
 }
 .rich-text-content :deep(h1) {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 600;
   margin: 0.5rem 0;
 }
 .rich-text-content :deep(h2) {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 17px;
+  line-height: 26px;
+  font-weight: 600;
   margin: 0.5rem 0;
 }
 .rich-text-content :deep(h3) {
-  font-size: 1.1rem;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 600;
   margin: 0.5rem 0;
 }
 .rich-text-content :deep(blockquote) {
-  border-left: 3px solid #0c51d9;
+  border-left: 3px solid rgb(var(--ui-line-strong));
   padding-left: 0.75rem;
-  color: #6b7280;
+  color: rgb(var(--ui-muted));
   margin: 0.5rem 0;
 }
 .rich-text-content :deep(a) {
-  color: #0c51d9;
+  color: rgb(var(--ui-accent));
   text-decoration: underline;
 }
 .rich-text-content :deep(hr) {
   border: none;
-  border-top: 1px solid #dcdedd;
+  border-top: 1px solid rgb(var(--ui-line));
   margin: 0.75rem 0;
 }
 </style>

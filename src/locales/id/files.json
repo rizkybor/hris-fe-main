@@ -1,0 +1,80 @@
+{
+  "title": "File Dokumen",
+  "subtitle": "Penyimpanan dokumen perusahaan",
+  "listTitle": "Arsip File",
+  "totalFiles": "{n} file",
+  "searchPlaceholder": "Cari arsip...",
+  "uploadedOn": "Diunggah {date}",
+  "noResultsFor": "Coba kata kunci lain untuk \"{query}\"",
+  "itemLabel": "file",
+  "stats": {
+    "total": "Total File Arsip",
+    "totalHint": "Arsip Aman",
+    "lastUpload": "Unggahan Terakhir",
+    "lastUploadHint": "Arsip terbaru"
+  },
+  "empty": {
+    "title": "Belum ada file arsip",
+    "message": "Unggah dokumen pertama untuk memulai"
+  },
+  "actions": {
+    "download": "Unduh File",
+    "view": "Lihat File",
+    "edit": "Ubah File",
+    "delete": "Hapus File"
+  },
+  "delete": {
+    "title": "Hapus File?",
+    "message": "Yakin ingin menghapus \"{name}\"? Tindakan ini tidak bisa dibatalkan.",
+    "confirm": "Ya, Hapus"
+  },
+  "create": {
+    "title": "Unggah File Dokumen",
+    "subtitle": "Simpan dokumen tetap perusahaan"
+  },
+  "form": {
+    "infoSection": "Informasi File",
+    "fileSection": "File",
+    "nameRequiredLabel": "Nama File *",
+    "namePlaceholder": "mis. Template NDA Perusahaan, Kebijakan HR 2026",
+    "nameRequired": "Nama file wajib diisi.",
+    "descriptionOptional": "Deskripsi (Opsional)",
+    "descriptionPlaceholder": "Catatan tambahan tentang file ini...",
+    "uploadFile": "Unggah File",
+    "uploading": "Mengunggah...",
+    "chooseFile": "Klik untuk memilih file",
+    "dragDrop": "atau seret dan lepas",
+    "fileRequired": "File wajib diisi.",
+    "nameAndFileRequired": "Nama File dan File wajib diisi.",
+    "uploadSuccess": "File berhasil diunggah.",
+    "uploadFailed": "Gagal mengunggah file.",
+    "replacementRequired": "Unggah file pengganti sebelum menghapus file lama."
+  },
+  "detail": {
+    "title": "Detail File Dokumen",
+    "subtitle": "Informasi file (hanya baca)",
+    "loading": "Memuat detail arsip...",
+    "loadFailed": "Gagal memuat detail arsip.",
+    "noDescription": "Tidak ada deskripsi",
+    "fileType": "Tipe File",
+    "fileSize": "Ukuran File",
+    "uploadDate": "Tanggal Unggah",
+    "preview": "Pratinjau",
+    "noPreview": "Pratinjau tidak tersedia",
+    "notAvailable": "Data arsip tidak tersedia."
+  },
+  "edit": {
+    "title": "Ubah File Dokumen",
+    "subtitle": "Perbarui metadata file atau ganti dokumen terlampir",
+    "loading": "Memuat data arsip...",
+    "notFound": "Arsip tidak ditemukan.",
+    "loadFailed": "Gagal memuat arsip.",
+    "namePlaceholder": "Masukkan nama file",
+    "descriptionPlaceholder": "Masukkan deskripsi",
+    "filePreview": "Pratinjau File",
+    "replaceFile": "Ganti File (Opsional)",
+    "chooseNewFile": "Klik untuk memilih file baru",
+    "updateSuccess": "File berhasil diperbarui.",
+    "updateFailed": "Gagal memperbarui file."
+  }
+}

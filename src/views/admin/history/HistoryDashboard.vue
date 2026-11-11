@@ -8,20 +8,23 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  User,
   Activity,
   CalendarDays,
   Tag,
   Trash2,
   CalendarRange,
-  X,
 } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { useActivityLogStore } from "@/stores/activityLog";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { hasAnyRole } from "@/helpers/permissionHelper";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
-import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
+import Avatar from "@/components/common/Avatar.vue";
+import { UiPageHeader, UiButton, UiInput, UiSelect, UiStat, UiBadge, UiEmpty, UiModal, UiAlert, rowNumber } from "@/components/ui";
 
+const { t } = useI18n();
 const store = useActivityLogStore();
 const alertModal = useAlertModalStore();
 const { activities, categories, statistics, meta, loading, loadingStatistics } =
@@ -40,38 +43,39 @@ const dateTo = ref("");
 const perPage = ref(20);
 const expandedId = ref(null);
 
-const categoryColors = {
-  Security: "bg-red-50 text-red-700",
-  "User Management": "bg-red-50 text-red-700",
-  Employee: "bg-blue-50 text-blue-700",
-  Attendance: "bg-green-50 text-green-700",
-  "Leave Request": "bg-yellow-50 text-yellow-700",
-  Payroll: "bg-purple-50 text-purple-700",
-  Project: "bg-indigo-50 text-indigo-700",
-  Team: "bg-teal-50 text-teal-700",
-  Company: "bg-orange-50 text-orange-700",
-  Finance: "bg-emerald-50 text-emerald-700",
-  "Document Files": "bg-cyan-50 text-cyan-700",
-  "Business Documents": "bg-sky-50 text-sky-700",
-  Client: "bg-pink-50 text-pink-700",
+// Category is a plain label (outline badge); the event carries the tone,
+// always next to its word.
+const EVENT_TONES = {
+  created: "ok",
+  updated: "info",
+  deleted: "bad",
+  login_failed: "bad",
+  role_created: "ok",
+  role_updated: "info",
+  role_deleted: "bad",
+  backup_downloaded: "warn",
+};
+const eventTone = (event) => EVENT_TONES[event] || "neutral";
+
+const categoryOptions = computed(() => [
+  { value: "", label: t("history.filters.allCategories") },
+  ...categories.value.map((c) => ({ value: c, label: c })),
+]);
+
+const EVENT_KEYS = {
+  created: "created",
+  updated: "updated",
+  deleted: "deleted",
+  login: "login",
+  login_failed: "loginFailed",
+  logout: "logout",
+  role_created: "roleCreated",
+  role_updated: "roleUpdated",
+  role_deleted: "roleDeleted",
+  backup_downloaded: "backupDownloaded",
 };
 
-const categoryClass = (category) => categoryColors[category] || "bg-gray-100 text-gray-700";
-
-const eventLabels = {
-  created: "Created",
-  updated: "Updated",
-  deleted: "Deleted",
-  login: "Login",
-  login_failed: "Failed Login",
-  logout: "Logout",
-  role_created: "Role Created",
-  role_updated: "Role Updated",
-  role_deleted: "Role Deleted",
-  backup_downloaded: "Backup Downloaded",
-};
-
-const eventLabel = (event) => eventLabels[event] || event || "-";
+const eventLabel = (event) => (EVENT_KEYS[event] ? t(`history.events.${EVENT_KEYS[event]}`) : event || "-");
 
 const fetchData = async (page = 1) => {
   await store.fetchActivities({
@@ -87,14 +91,14 @@ const fetchData = async (page = 1) => {
 const handlePageChange = (page) => fetchData(page);
 
 const handleDeleteRow = async (activity) => {
-  if (!(await alertModal.confirm("Delete this activity log entry? This is a permanent hard delete and cannot be undone.", { type: "danger", confirmText: "Delete" }))) return;
+  if (!(await alertModal.confirm(t("history.deleteRow.confirm"), { type: "danger", confirmText: t("common.actions.delete") }))) return;
 
   deletingRowId.value = activity.id;
   try {
     await store.deleteRow(activity.id);
     await fetchData(meta.value.current_page);
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Failed to delete activity log entry.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || t("history.deleteRow.failed"), { type: "danger" });
   } finally {
     deletingRowId.value = null;
   }
@@ -121,8 +125,8 @@ const handleDeleteRange = async () => {
 
   if (
     !(await alertModal.confirm(
-      `Delete every activity log entry between ${deleteRangeStart.value} and ${deleteRangeEnd.value}? This is a permanent hard delete and cannot be undone.`,
-      { type: "danger", confirmText: "Delete Range" }
+      t("history.deleteRange.confirm", { start: deleteRangeStart.value, end: deleteRangeEnd.value }),
+      { type: "danger", confirmText: t("history.deleteRange.submit") }
     ))
   )
     return;
@@ -133,9 +137,9 @@ const handleDeleteRange = async () => {
     showDeleteRangeModal.value = false;
     await store.fetchStatistics();
     await fetchData(1);
-    await alertModal.alert(`${result?.deleted ?? 0} activity log entr${result?.deleted === 1 ? "y" : "ies"} deleted.`, { type: "success" });
+    await alertModal.alert(t("history.deleteRange.deleted", { n: result?.deleted ?? 0 }, result?.deleted ?? 0), { type: "success" });
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Failed to delete entries in this range.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || t("history.deleteRange.failed"), { type: "danger" });
   } finally {
     deletingRange.value = false;
   }
@@ -152,7 +156,7 @@ const hasProperties = (properties) => {
 };
 
 const formatDate = (date) =>
-  new Date(date).toLocaleString("id-ID", {
+  new Date(date).toLocaleString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -170,307 +174,209 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <!-- Hero + Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div
-        class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-5"
-      >
-        <div class="flex flex-col justify-center h-full relative z-10">
-          <div class="flex items-center gap-2 mb-3">
-            <div class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
-              <History class="w-3 h-3 text-white" />
-              <span class="text-brand-white text-xs font-semibold">Activity Log</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex-1 min-w-0 pr-2">
-              <p class="text-brand-white-90 text-sm font-medium">Total Activities</p>
-              <Skeleton v-if="loadingStatistics" dark width="90px" height="3rem" rounded="8px" class="my-4" />
-              <p v-else class="text-brand-white text-3xl lg:text-3xl font-extrabold leading-none my-4">
-                {{ statistics.total }}
-              </p>
-              <p class="text-brand-white-80 text-sm font-normal">All-time system events</p>
-            </div>
-            <div class="w-16 h-16 bg-white rounded-[14px] flex items-center justify-center flex-shrink-0">
-              <Activity class="w-8 h-8 text-brand-primary" />
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('history.title')" :subtitle="$t('history.subtitle')">
+      <template #actions>
+        <UiButton v-if="canDeleteHistory" variant="danger" :icon="CalendarRange" @click="openDeleteRangeModal">
+          {{ $t("history.deleteRange.title") }}
+        </UiButton>
+      </template>
+    </UiPageHeader>
 
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Today</p>
-            <Skeleton v-if="loadingStatistics" width="50px" height="1.75rem" rounded="6px" class="my-2" />
-            <p v-else class="text-brand-dark text-3xl font-extrabold leading-tight my-2">
-              {{ statistics.today }}
-            </p>
-            <p class="text-success text-sm font-medium">Events today</p>
-          </div>
-          <div class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
-            <CalendarDays class="w-6 h-6 text-green-600" />
-          </div>
+    <!-- Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 ui-stagger">
+      <UiStat :label="$t('history.stats.total')" :value="statistics.total" :icon="Activity" :hint="$t('history.stats.totalHint')" :loading="loadingStatistics" />
+      <UiStat :label="$t('common.labels.today')" :value="statistics.today" :icon="CalendarDays" :hint="$t('history.stats.todayHint')" :loading="loadingStatistics" />
+      <UiStat :label="$t('history.stats.thisWeek')" :value="statistics.this_week" :icon="Clock" :hint="$t('history.stats.thisWeekHint')" :loading="loadingStatistics" />
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0">
+        <div class="flex items-center gap-2 mb-2">
+          <Tag class="w-4 h-4 text-ui-faint shrink-0" />
+          <p class="text-ui-small text-ui-muted">{{ $t("history.stats.categories") }}</p>
         </div>
-      </div>
-
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">This Week</p>
-            <Skeleton v-if="loadingStatistics" width="50px" height="1.75rem" rounded="6px" class="my-2" />
-            <p v-else class="text-brand-dark text-3xl font-extrabold leading-tight my-2">
-              {{ statistics.this_week }}
-            </p>
-            <p class="text-brand-light text-sm font-medium">Since Monday</p>
-          </div>
-          <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
-            <Clock class="w-6 h-6 text-blue-600" />
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-brand-dark text-sm font-medium">Categories</p>
-          <div class="w-10 h-10 bg-purple-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
-            <Tag class="w-5 h-5 text-purple-600" />
-          </div>
-        </div>
-        <div v-if="loadingStatistics" class="space-y-1">
+        <div v-if="loadingStatistics" class="space-y-1.5">
           <Skeleton width="100%" height="12px" />
           <Skeleton width="80%" height="12px" />
         </div>
-        <div v-else class="space-y-1 max-h-24 overflow-y-auto">
-          <div
-            v-for="c in statistics.by_category"
-            :key="c.log_name"
-            class="flex items-center justify-between text-xs"
-          >
-            <span class="text-brand-light truncate">{{ c.log_name }}</span>
-            <span class="text-brand-dark font-semibold">{{ c.total }}</span>
+        <div v-else class="space-y-1 max-h-[72px] overflow-y-auto pr-1">
+          <div v-for="c in statistics.by_category" :key="c.log_name" class="flex items-center justify-between gap-2 text-ui-cap">
+            <span class="text-ui-muted truncate">{{ c.log_name }}</span>
+            <span class="text-ui-ink font-medium tabular-nums">{{ c.total }}</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Filters + List -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-        <div class="flex items-center gap-3">
-          <h3 class="text-brand-dark text-base font-bold">All Activity</h3>
-          <button
-            v-if="canDeleteHistory"
-            @click="openDeleteRangeModal"
-            class="rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-all duration-300 px-3 py-2 flex items-center gap-1.5"
-          >
-            <CalendarRange class="w-3.5 h-3.5" />
-            <span class="text-xs font-semibold">Delete by Date Range</span>
-          </button>
-        </div>
-
-        <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 flex-wrap">
-          <div class="relative w-full md:w-56">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-              <Search class="w-4 h-4 text-blue-400" />
-            </div>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search activity..."
-              class="relative w-full pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
-              @input="debouncedSearch"
-            />
-          </div>
-
-          <div class="relative w-full md:w-auto">
-            <select
-              v-model="categoryFilter"
-              class="select-soft"
-              @change="fetchData(1)"
-            >
-              <option value="">All Categories</option>
-              <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
-            </select>
-            <ChevronDown
-              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-            />
-          </div>
-
-          <input
-            v-model="dateFrom"
-            type="date"
-            class="w-full md:w-auto h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base md:text-sm appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+      <div class="px-4 sm:px-5 py-3.5 flex flex-col lg:flex-row lg:items-center gap-3 border-b border-ui-line">
+        <h2 class="text-ui-h2 text-ui-ink shrink-0">{{ $t("history.list.title") }}</h2>
+        <div class="grid grid-cols-2 md:flex md:items-center gap-2 lg:ml-auto">
+          <UiInput
+            v-model="searchQuery"
+            :icon="Search"
+            :placeholder="$t('history.filters.search')"
+            class="col-span-2 md:w-[240px]"
+            @input="debouncedSearch"
+          />
+          <UiSelect
+            v-model="categoryFilter"
+            :options="categoryOptions"
+            class="col-span-2 md:w-[180px]"
+            :aria-label="$t('common.labels.category')"
             @change="fetchData(1)"
           />
-          <input
-            v-model="dateTo"
-            type="date"
-            class="w-full md:w-auto h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base md:text-sm appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none transition-all"
-            @change="fetchData(1)"
-          />
+          <UiInput v-model="dateFrom" type="date" class="md:w-[150px]" :aria-label="$t('history.filters.dateFrom')" @change="fetchData(1)" />
+          <UiInput v-model="dateTo" type="date" class="md:w-[150px]" :aria-label="$t('history.filters.dateTo')" @change="fetchData(1)" />
         </div>
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="space-y-3">
-        <Skeleton v-for="i in 6" :key="i" height="64px" rounded="16px" />
+      <div v-if="loading" class="p-4 sm:p-5">
+        <SkeletonList :rows="6" />
       </div>
 
       <!-- Empty -->
-      <div
-        v-else-if="activities.length === 0"
-        class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]"
-      >
-        <History class="bg-white w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p class="text-lg font-semibold">No activity found</p>
-        <p class="text-sm text-gray-400">Try adjusting your search or filters</p>
-      </div>
+      <UiEmpty v-else-if="activities.length === 0" :icon="History" :title="$t('history.list.empty')" :message="$t('common.states.noResultsHint')" />
 
       <!-- List -->
-      <div v-else class="space-y-3">
-        <div
-          v-for="activity in activities"
-          :key="activity.id"
-          class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] transition-all duration-300"
-        >
-          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-            <div class="flex items-start gap-3 min-w-0">
-              <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
-                <User class="w-5 h-5 text-blue-600" />
-              </div>
-              <div class="min-w-0">
-                <div class="flex items-center gap-2 flex-wrap mb-1">
-                  <span class="text-brand-dark text-sm font-semibold">
-                    {{ activity.causer?.name || "System" }}
-                  </span>
-                  <span
-                    :class="categoryClass(activity.category)"
-                    class="px-2 py-0.5 rounded-md text-xs font-semibold"
-                  >
-                    {{ activity.category }}
-                  </span>
-                  <span class="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
-                    {{ eventLabel(activity.event) }}
-                  </span>
-                </div>
-                <p class="text-brand-light text-sm">
-                  {{ activity.description }}
-                  <span v-if="activity.subject_type" class="text-gray-400">
-                    &middot; {{ activity.subject_type }}
-                    <template v-if="activity.subject_id">#{{ activity.subject_id }}</template>
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0 pl-[52px] sm:pl-0">
-              <span class="text-xs text-gray-400 whitespace-nowrap">{{ formatDate(activity.created_at) }}</span>
-              <button
-                v-if="hasProperties(activity.properties)"
-                @click="toggleExpand(activity.id)"
-                class="w-8 h-8 rounded-lg border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] transition-all shrink-0"
-                :aria-label="expandedId === activity.id ? 'Hide details' : 'Show details'"
-              >
-                <ChevronUp v-if="expandedId === activity.id" class="w-4 h-4 text-gray-600" />
-                <ChevronDown v-else class="w-4 h-4 text-gray-600" />
-              </button>
-              <button
-                v-if="canDeleteHistory"
-                @click="handleDeleteRow(activity)"
-                :disabled="deletingRowId === activity.id"
-                title="Delete"
-                class="w-8 h-8 rounded-lg border border-[#DCDEDD] flex items-center justify-center hover:border-red-400 hover:bg-red-50 group/delete transition-all shrink-0 disabled:opacity-50"
-              >
-                <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-              </button>
-            </div>
-          </div>
-
-          <div
-            v-if="expandedId === activity.id && hasProperties(activity.properties)"
-            class="mt-3 pt-3 border-t border-[#DCDEDD] grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            <div v-if="activity.properties.old">
-              <p class="text-xs font-semibold text-gray-500 mb-1">Before</p>
-              <pre class="text-xs bg-red-50 text-red-800 rounded-lg p-3 overflow-x-auto">{{ JSON.stringify(activity.properties.old, null, 2) }}</pre>
-            </div>
-            <div v-if="activity.properties.attributes">
-              <p class="text-xs font-semibold text-gray-500 mb-1">After</p>
-              <pre class="text-xs bg-green-50 text-green-800 rounded-lg p-3 overflow-x-auto">{{ JSON.stringify(activity.properties.attributes, null, 2) }}</pre>
-            </div>
-            <div v-if="!activity.properties.old && !activity.properties.attributes" class="md:col-span-2">
-              <pre class="text-xs bg-gray-50 text-gray-700 rounded-lg p-3 overflow-x-auto">{{ JSON.stringify(activity.properties, null, 2) }}</pre>
-            </div>
-          </div>
+      <template v-else>
+        <!-- Column heads (desktop) -->
+        <div class="hidden md:grid hist-grid items-center gap-4 px-4 sm:px-5 h-10 border-b border-ui-line text-ui-cap font-medium text-ui-muted">
+          <span>#</span>
+          <span>{{ $t("history.list.activity") }}</span>
+          <span>{{ $t("common.labels.category") }}</span>
+          <span>{{ $t("history.list.when") }}</span>
+          <span class="sr-only">{{ $t("common.labels.actions") }}</span>
         </div>
-      </div>
+
+        <ul class="divide-y divide-ui-line ui-stagger">
+          <li v-for="(activity, index) in activities" :key="activity.id" class="px-4 sm:px-5 py-3.5 hover:bg-ui-subtle/60 transition-colors">
+            <div class="md:grid hist-grid md:items-center gap-4 flex items-start">
+              <span class="hidden md:block text-ui-cap text-ui-faint tabular-nums">{{ rowNumber(index, meta) }}</span>
+
+              <!-- Actor + description -->
+              <div class="flex items-start md:items-center gap-3 min-w-0 flex-1">
+                <Avatar :alt="activity.causer?.name || $t('history.list.system')" size="w-8 h-8" icon-size="w-4 h-4" class="shrink-0 mt-0.5 md:mt-0 text-ui-cap" />
+                <div class="min-w-0 flex-1">
+                  <p class="text-ui-small text-ui-text">
+                    <span class="font-medium text-ui-ink">{{ activity.causer?.name || $t("history.list.system") }}</span>
+                    {{ activity.description }}
+                    <span v-if="activity.subject_type" class="text-ui-faint">
+                      &middot; {{ activity.subject_type }}<template v-if="activity.subject_id"> #{{ activity.subject_id }}</template>
+                    </span>
+                  </p>
+                  <!-- Phones: meta line under the text -->
+                  <div class="md:hidden flex flex-wrap items-center gap-1.5 mt-1.5">
+                    <span class="text-ui-cap text-ui-faint tabular-nums">#{{ rowNumber(index, meta) }}</span>
+                    <UiBadge tone="outline">{{ activity.category }}</UiBadge>
+                    <UiBadge :tone="eventTone(activity.event)" dot>{{ eventLabel(activity.event) }}</UiBadge>
+                    <span class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(activity.created_at) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hidden md:flex flex-wrap items-center gap-1.5 min-w-0">
+                <UiBadge tone="outline">{{ activity.category }}</UiBadge>
+                <UiBadge :tone="eventTone(activity.event)" dot>{{ eventLabel(activity.event) }}</UiBadge>
+              </div>
+
+              <span class="hidden md:block text-ui-cap text-ui-muted tabular-nums whitespace-nowrap">{{ formatDate(activity.created_at) }}</span>
+
+              <div class="flex items-center justify-end gap-0.5 shrink-0">
+                <button
+                  v-if="hasProperties(activity.properties)"
+                  type="button"
+                  class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted transition-colors hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
+                  :aria-label="expandedId === activity.id ? $t('history.list.hideDetails') : $t('history.list.showDetails')"
+                  :aria-expanded="expandedId === activity.id"
+                  @click="toggleExpand(activity.id)"
+                >
+                  <ChevronUp v-if="expandedId === activity.id" class="w-4 h-4" />
+                  <ChevronDown v-else class="w-4 h-4" />
+                </button>
+                <button
+                  v-if="canDeleteHistory"
+                  type="button"
+                  :title="$t('common.actions.delete')"
+                  :aria-label="$t('common.actions.delete')"
+                  :disabled="deletingRowId === activity.id"
+                  class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted transition-colors hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus disabled:opacity-50"
+                  @click="handleDeleteRow(activity)"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <Transition name="ui-fade">
+              <div
+                v-if="expandedId === activity.id && hasProperties(activity.properties)"
+                class="mt-3 md:ml-[60px] grid grid-cols-1 md:grid-cols-2 gap-3"
+              >
+                <div v-if="activity.properties.old" class="min-w-0">
+                  <p class="text-ui-over uppercase text-ui-muted mb-1">{{ $t("history.list.before") }}</p>
+                  <pre class="text-ui-cap font-mono bg-ui-bad-soft text-ui-bad border border-ui-bad/15 rounded-ui-control p-3 overflow-x-auto">{{ JSON.stringify(activity.properties.old, null, 2) }}</pre>
+                </div>
+                <div v-if="activity.properties.attributes" class="min-w-0">
+                  <p class="text-ui-over uppercase text-ui-muted mb-1">{{ $t("history.list.after") }}</p>
+                  <pre class="text-ui-cap font-mono bg-ui-ok-soft text-ui-ok border border-ui-ok/15 rounded-ui-control p-3 overflow-x-auto">{{ JSON.stringify(activity.properties.attributes, null, 2) }}</pre>
+                </div>
+                <div v-if="!activity.properties.old && !activity.properties.attributes" class="md:col-span-2 min-w-0">
+                  <pre class="text-ui-cap font-mono bg-ui-subtle text-ui-text border border-ui-line rounded-ui-control p-3 overflow-x-auto">{{ JSON.stringify(activity.properties, null, 2) }}</pre>
+                </div>
+              </div>
+            </Transition>
+          </li>
+        </ul>
+      </template>
 
       <!-- Pagination -->
       <div
         v-if="!loading && activities.length > 0"
-        class="flex items-center justify-between mt-6 pt-4 border-t border-[#DCDEDD]"
+        class="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-t border-ui-line"
       >
-        <span class="text-sm text-brand-light">
-          Page {{ meta.current_page }} of {{ meta.last_page }}
-          <span class="hidden sm:inline">&middot; {{ meta.total }} total activities</span>
+        <span class="text-ui-small text-ui-muted tabular-nums">
+          {{ $t("common.pagination.page", { page: meta.current_page, last: meta.last_page }) }}
+          <span class="hidden sm:inline">&middot; {{ $t("history.list.totalActivities", { n: meta.total }, meta.total) }}</span>
         </span>
         <div class="flex gap-2">
-          <button
-            @click="handlePageChange(meta.current_page - 1)"
-            :disabled="meta.current_page === 1"
-            class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Prev
-          </button>
-          <button
-            @click="handlePageChange(meta.current_page + 1)"
-            :disabled="meta.current_page === meta.last_page"
-            class="px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
+          <UiButton variant="secondary" size="sm" :disabled="meta.current_page === 1" @click="handlePageChange(meta.current_page - 1)">
+            {{ $t("common.pagination.previous") }}
+          </UiButton>
+          <UiButton variant="secondary" size="sm" :disabled="meta.current_page === meta.last_page" @click="handlePageChange(meta.current_page + 1)">
+            {{ $t("common.pagination.next") }}
+          </UiButton>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Delete by Date Range Modal -->
-    <div v-if="showDeleteRangeModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeDeleteRangeModal">
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-brand-dark text-lg font-bold">Delete by Date Range</h3>
-          <button @click="closeDeleteRangeModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
-        <div class="p-5 space-y-4">
-          <p class="text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
-            This permanently deletes every activity log entry created in this range. There is no soft-delete/undo for log entries.
-          </p>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Start Date</label>
-            <input v-model="deleteRangeStart" type="date" class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">End Date</label>
-            <input v-model="deleteRangeEnd" type="date" class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-        </div>
-        <div class="p-5 border-t border-[#DCDEDD] flex justify-end gap-3">
-          <button type="button" @click="closeDeleteRangeModal" class="px-4 py-2.5 border border-[#DCDEDD] rounded-[10px] text-sm font-semibold hover:border-[#0C51D9] transition-colors">
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="handleDeleteRange"
-            :disabled="deletingRange || !deleteRangeStart || !deleteRangeEnd"
-            class="rounded-[8px] border border-red-600 bg-red-600 hover:brightness-110 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {{ deletingRange ? "Deleting..." : "Delete Range" }}
-          </button>
-        </div>
+    <UiModal v-model:open="showDeleteRangeModal" :title="$t('history.deleteRange.title')" size="sm" @close="closeDeleteRangeModal">
+      <div class="space-y-4">
+        <UiAlert
+          tone="bad"
+          :message="$t('history.deleteRange.warning')"
+        />
+        <UiInput v-model="deleteRangeStart" type="date" :label="$t('common.labels.startDate')" />
+        <UiInput v-model="deleteRangeEnd" type="date" :label="$t('common.labels.endDate')" />
       </div>
-    </div>
+      <template #footer>
+        <UiButton variant="secondary" @click="closeDeleteRangeModal">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton
+          variant="destructive"
+          :loading="deletingRange"
+          :disabled="deletingRange || !deleteRangeStart || !deleteRangeEnd"
+          @click="handleDeleteRange"
+        >
+          {{ deletingRange ? $t("common.actions.deleting") : $t("history.deleteRange.submit") }}
+        </UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>
+
+<style scoped>
+.hist-grid {
+  grid-template-columns: 28px minmax(0, 1fr) minmax(0, 220px) 180px 72px;
+}
+</style>

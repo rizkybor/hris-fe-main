@@ -1,72 +1,24 @@
 <script setup lang="ts">
-import { X, AlertCircle } from "lucide-vue-next";
+// Employee wizard: "check your data" notice when validation fails.
+import UiConfirmDialog from "@/components/ui/UiConfirmDialog.vue";
 
 interface Props {
   show: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const emit = defineEmits(["close"]);
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition
-      enter-active-class="transition-opacity duration-300"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-300"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="show"
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3.5"
-        @click="emit('close')"
-      >
-        <Transition
-          enter-active-class="transition-all duration-300"
-          enter-from-class="opacity-0 scale-95"
-          enter-to-class="opacity-100 scale-100"
-          leave-active-class="transition-all duration-300"
-          leave-from-class="opacity-100 scale-100"
-          leave-to-class="opacity-0 scale-95"
-        >
-          <div
-            v-if="show"
-            @click.stop
-            class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md overflow-hidden"
-          >
-            <!-- Modal Content -->
-            <div class="p-5 sm:p-6 text-center">
-              <div class="flex justify-center mb-3.5">
-                <div
-                  class="w-10 h-10 sm:w-16 sm:h-16 bg-red-50 rounded-full flex items-center justify-center"
-                >
-                  <AlertCircle class="w-7 h-7 sm:w-8 sm:h-8 text-red-600" />
-                </div>
-              </div>
-
-              <h3 class="text-brand-dark text-sm sm:text-base font-bold mb-1.5">
-                Oops! Something's Not Right
-              </h3>
-              <p class="text-brand-light text-sm sm:text-sm font-normal mb-5">
-                Please check your data again and make sure all required fields are filled correctly.
-              </p>
-
-              <button
-                type="button"
-                @click="emit('close')"
-                class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-red-600 transition-all duration-300 bg-gradient-to-r from-red-500 to-red-600 shadow-lg px-3.5 py-2 sm:px-5 sm:py-2.5"
-              >
-                <span class="text-white text-sm sm:text-sm font-semibold">
-                  OK, I'll Fix It
-                </span>
-              </button>
-            </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
+  <UiConfirmDialog
+    :open="show"
+    mode="alert"
+    type="danger"
+    :title="$t('employees.errorModal.title')"
+    :message="$t('employees.errorModal.message')"
+    :confirm-text="$t('employees.errorModal.confirm')"
+    @confirm="emit('close')"
+    @cancel="emit('close')"
+  />
 </template>

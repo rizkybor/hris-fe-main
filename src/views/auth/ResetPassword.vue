@@ -2,11 +2,13 @@
 import { useAuthStore } from "@/stores/auth";
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter, RouterLink } from "vue-router";
-import Alert from "@/components/common/Alert.vue";
-import Input from "@/components/common/form/Input.vue";
-import { Lock, ArrowLeft } from "lucide-vue-next";
+import { UiAlert, UiButton, UiInput } from "@/components/ui";
+import { Lock, ArrowLeft, KeyRound } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import LoadingOverlay from "@/components/common/LoadingOverlay.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const authStore = useAuthStore();
 const { loading, success } = storeToRefs(authStore);
@@ -38,90 +40,56 @@ const handleSubmit = async () => {
     }, 2000);
   } catch (e: any) {
     const data = e?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to reset password.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t("auth.reset.failedFallback"));
   }
 };
 </script>
 
 <template>
-  <LoadingOverlay :show="loading" text="Resetting password..." />
+  <LoadingOverlay :show="loading" :text="$t('auth.reset.resettingOverlay')" />
 
-  <div
-    class="w-full lg:w-1/2 flex items-center justify-center"
-    style="padding: 20px"
-  >
-    <div class="w-full max-w-md space-y-8">
-      <div>
-        <h1 class="text-brand-dark text-xl font-bold">Reset Password</h1>
-        <p class="text-brand-dark text-sm font-normal mt-1">
-          Masukkan password baru untuk akun kamu.
-        </p>
-      </div>
-
-      <Alert
-        type="success"
-        title="Success"
-        :message="success"
-        :show="!!success"
-      />
-
-      <Alert
-        type="danger"
-        title="Failed to Reset Password"
-        :message="errorMessage ?? ''"
-        :show="!!errorMessage"
-      />
-
-      <form class="space-y-6" @submit.prevent="handleSubmit" v-if="!success">
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          v-model="form.password"
-          label="New Password"
-          placeholder="Enter new password"
-          :required="true"
-        >
-          <template #icon>
-            <Lock class="h-5 w-5 text-gray-400" />
-          </template>
-        </Input>
-        <p class="text-xs text-gray-400 -mt-4">
-          Min. 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol. Tidak boleh password yang pernah bocor di data breach.
-        </p>
-
-        <Input
-          id="password_confirmation"
-          name="password_confirmation"
-          type="password"
-          v-model="form.password_confirmation"
-          label="Confirm New Password"
-          placeholder="Re-enter new password"
-          :required="true"
-        >
-          <template #icon>
-            <Lock class="h-5 w-5 text-gray-400" />
-          </template>
-        </Input>
-
-        <button
-          type="submit"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2 w-full justify-center bg-gradient-to-l from-[#0c51d9] via-[#6f96e3] to-[#0c51d9] shadow-[inset_-2px_2px_1px_0_#6197ff,inset_2px_2px_1px_0_rgba(97,151,255,0.55)] text-white font-plus-jakarta-sans text-[14px] font-semibold cursor-pointer"
-          :disabled="loading"
-        >
-          {{ loading ? "Resetting..." : "Reset Password" }}
-        </button>
-      </form>
-
-      <div class="text-center">
-        <RouterLink
-          :to="{ name: 'login' }"
-          class="inline-flex items-center gap-2 text-[#3b82f6] font-plus-jakarta-sans text-[14px] font-semibold hover:brightness-110 transition-all duration-300"
-        >
-          <ArrowLeft class="w-4 h-4" />
-          Back to Login
-        </RouterLink>
-      </div>
+  <div class="space-y-7">
+    <div>
+      <span class="w-11 h-11 rounded-[12px] border border-ui-line bg-ui-surface inline-flex items-center justify-center text-ui-ink mb-5">
+        <KeyRound class="w-5 h-5" />
+      </span>
+      <h1 class="text-ui-display text-ui-ink">{{ $t("auth.reset.title") }}</h1>
+      <p class="text-ui-body text-ui-muted mt-1.5">{{ $t("auth.reset.subtitle") }}</p>
     </div>
+
+    <UiAlert v-if="success" tone="ok" :title="$t('auth.reset.successTitle')" :message="success" />
+    <UiAlert v-if="errorMessage" tone="bad" :title="$t('auth.reset.failedTitle')" :message="errorMessage ?? ''" />
+
+    <form class="space-y-5" @submit.prevent="handleSubmit" v-if="!success">
+      <UiInput
+        id="password"
+        name="password"
+        type="password"
+        v-model="form.password"
+        :label="$t('auth.reset.newPassword')"
+        :placeholder="$t('auth.reset.newPasswordPlaceholder')"
+        autocomplete="new-password"
+        required
+        :icon="Lock"
+        :hint="$t('auth.reset.hint')"
+      />
+      <UiInput
+        id="password_confirmation"
+        name="password_confirmation"
+        type="password"
+        v-model="form.password_confirmation"
+        :label="$t('auth.reset.confirm')"
+        :placeholder="$t('auth.reset.confirmPlaceholder')"
+        autocomplete="new-password"
+        required
+        :icon="Lock"
+      />
+      <UiButton type="submit" size="lg" block :loading="loading">{{ loading ? $t("auth.reset.resetting") : $t("auth.reset.submit") }}</UiButton>
+    </form>
+
+    <RouterLink :to="{ name: 'login' }" class="inline-flex items-center gap-1.5 text-ui-small font-medium text-ui-accent hover:underline">
+      <ArrowLeft class="w-4 h-4" />
+      {{ $t("auth.backToLogin") }}
+    </RouterLink>
   </div>
 </template>

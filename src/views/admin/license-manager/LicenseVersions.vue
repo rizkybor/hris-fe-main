@@ -6,6 +6,7 @@
 // -download (installer).
 import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
 import { debounce } from "lodash-es";
 import {
   Plus,
@@ -27,9 +28,13 @@ import {
   Link2,
   FileText,
   CalendarCheck,
+  Tag,
+  Infinity as InfinityIcon,
+  Layers,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiBadge, UiChips, UiEmpty, UiInput, UiModal, UiStat } from "@/components/ui";
 import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
 import LicenseProductGate from "@/components/admin/license-manager/LicenseProductGate.vue";
 import ReleaseFormModal from "@/components/admin/license-manager/ReleaseFormModal.vue";
@@ -44,7 +49,7 @@ import {
   RELEASE_STATUS_CHIP,
   KIND_BADGES,
   KIND_CHIP,
-  PUBLISH_NEEDS_FILE,
+  publishNeedsFileMessage,
   releasePlatformLabel,
   changeCountsLine,
   groupChanges,
@@ -53,6 +58,7 @@ import {
   needsFile,
 } from "@/components/admin/license-manager/releaseHelpers";
 
+const { t } = useI18n();
 const store = useLicenseManagerStore();
 const { code: productCode, product, productName, state: productState } = useLicenseProduct();
 const { releases, releasesInfo, releasesLoading } = storeToRefs(store);
@@ -74,7 +80,7 @@ const load = async () => {
   try {
     await store.fetchReleases(filters.value);
   } catch (err) {
-    error.value = errorMessage(err, "Failed to load the versions.");
+    error.value = errorMessage(err, t("licenses.versions.loadFailed"));
   } finally {
     loadedOnce.value = true;
   }
@@ -126,7 +132,8 @@ const areas = computed(() => {
   return [...set];
 });
 const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.value[id] });
-const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+// "3 devices" / "1 license" (word: device | license).
+const plural = (n, word) => t(`licenses.versions.count.${word}`, { n }, n);
 const canPublish = (release) => !needsFile(release) || !!release.file;
 
 const replaceRelease = (updated) => {
@@ -149,7 +156,7 @@ const onSaved = (saved) => {
   const wasEdit = !!editing.value;
   showForm.value = false;
   editing.value = null;
-  flash(wasEdit ? `Version ${saved.version} saved.` : `Version ${saved.version} added.`);
+  flash(wasEdit ? t("licenses.versions.saved", { version: saved.version }) : t("licenses.versions.added", { version: saved.version }));
   load();
 };
 // A failed installer upload may still have saved the version.
@@ -171,20 +178,20 @@ const openPublish = (release) => {
 };
 const confirmPublish = async () => {
   if (!publishDate.value) {
-    publishError.value = "Pick the release date.";
+    publishError.value = t("licenses.versions.pickDate");
     return;
   }
   publishSaving.value = true;
   publishError.value = "";
   try {
     const updated = await store.updateRelease(publishing.value.id, { status: "published", released_at: publishDate.value });
-    flash(`Version ${updated.version} published.`);
+    flash(t("licenses.versions.published", { version: updated.version }));
     publishing.value = null;
     load();
   } catch (err) {
     const errors = validationErrors(err);
     const first = Object.values(errors).flat()[0];
-    publishError.value = first || errorMessage(err, "Failed to publish the version.");
+    publishError.value = first || errorMessage(err, t("licenses.versions.publishFailed"));
   } finally {
     publishSaving.value = false;
   }
@@ -193,157 +200,153 @@ const confirmPublish = async () => {
 /* ---------- Delete ---------- */
 const handleDelete = async (release) => {
   const ok = await alertModal.confirm(
-    `Delete version ${release.version}${release.file ? " and its installer" : ""}? This action cannot be undone.`,
-    { title: "Delete Version", type: "danger", confirmText: "Delete" }
+    release.file
+      ? t("licenses.versions.deleteConfirmFile", { version: release.version })
+      : t("licenses.versions.deleteConfirm", { version: release.version }),
+    { title: t("licenses.versions.deleteTitle"), type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
   try {
     await store.deleteRelease(release.id);
-    flash(`Version ${release.version} deleted.`);
+    flash(t("licenses.versions.deleted", { version: release.version }));
     load();
   } catch (err) {
-    await alertModal.alert(errorMessage(err, "Failed to delete the version."), { type: "danger" });
+    await alertModal.alert(errorMessage(err, t("licenses.versions.deleteFailed")), { type: "danger" });
   }
 };
 
-const primaryBtn =
-  "rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 px-4 py-2.5 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] text-white text-sm font-semibold";
-const secondaryBtn =
-  "rounded-[12px] border border-[#DCDEDD] bg-white hover:border-violet-400 hover:bg-violet-50/40 transition-all duration-300 px-4 py-2.5 inline-flex items-center justify-center gap-2 text-sm font-semibold text-brand-dark shadow-sm";
-const iconBtn =
-  "flex justify-center items-center w-8 h-8 border border-[#DCDEDD] bg-white rounded-lg hover:border-violet-400 hover:ring-2 hover:ring-violet-400/30 transition-all disabled:opacity-40 disabled:hover:ring-0 disabled:hover:border-[#DCDEDD]";
-const pill = (active) =>
-  active ? "bg-white text-brand-dark shadow-sm" : "text-brand-light hover:text-brand-dark";
+/* ---------- Presentation ---------- */
+const STATUS_FILTERS = computed(() => [
+  { value: "", label: t("common.labels.all") },
+  { value: "published", label: t("licenses.releases.status.published") },
+  { value: "draft", label: t("licenses.releases.status.draft") },
+]);
+const PLATFORM_FILTERS = computed(() => [
+  { value: "", label: t("licenses.dashboard.allPlatforms") },
+  { value: "mac", label: "Mac" },
+  { value: "ipad", label: "iPad" },
+]);
+const devicesReporting = computed(() => versionsInUse.value.reduce((sum, item) => sum + (Number(item.devices) || 0), 0));
+// The publish modal's open state follows `publishing`.
+const onPublishOpenChange = (value) => {
+  if (!value && !publishSaving.value) publishing.value = null;
+};
 </script>
 
 <template>
-  <div class="px-4 py-4">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <LicenseProductGate :state="productState" :code="productCode" :product-name="productName">
-      <Transition name="fade">
+      <div class="space-y-5">
         <Alert v-if="success" type="success" :title="success" message="" :show="!!success" @close="success = ''" />
-      </Transition>
-      <Transition name="fade">
         <Alert v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
-      </Transition>
 
-      <div class="space-y-6">
         <!-- Header -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div class="flex items-center gap-3.5 min-w-0">
-            <ProductIcon :product="product" :size="48" class="shadow-sm" />
-            <div class="min-w-0">
-              <h1 class="text-brand-dark text-xl font-bold leading-tight truncate">{{ productName }} Versions</h1>
-              <p class="text-brand-light text-sm mt-0.5">
-                Current version on sale:
-                <span class="font-mono font-semibold text-brand-dark">{{ latestVersion || "—" }}</span>
-                <span class="text-gray-300 mx-1">·</span>
-                Lifetime licenses sold now cover
-                <span class="font-semibold text-brand-dark">{{ productName }} {{ currentMajor ?? "—" }}.x</span>
-              </p>
+        <UiPageHeader :title="$t('licenses.versions.title', { product: productName })">
+          <template #eyebrow>
+            <div class="flex items-center gap-2 mb-2">
+              <ProductIcon :product="product" :size="24" />
+              <RouterLink :to="{ name: 'admin.license-manager.overview' }" class="text-ui-small text-ui-muted hover:text-ui-ink">{{ $t("licenses.title") }}</RouterLink>
+              <span class="text-ui-faint">/</span>
+              <span class="text-ui-small text-ui-ink font-medium truncate">{{ productName }}</span>
             </div>
-          </div>
-
-          <div class="flex items-center gap-2.5 w-full md:w-auto">
-            <RouterLink
+          </template>
+          <template #subtitle>
+            {{ $t("licenses.versions.onSale") }}:
+            <span class="font-mono font-medium text-ui-ink">{{ latestVersion || "—" }}</span>
+            <span class="text-ui-faint mx-1">·</span>
+            {{ $t("licenses.versions.lifetimeCoverNow") }}
+            <span class="font-medium text-ui-ink">{{ productName }} {{ currentMajor ?? "—" }}.x</span>
+          </template>
+          <template #actions>
+            <UiButton
               v-if="canListLicenses"
+              variant="secondary"
+              :icon="KeyRound"
               :to="{ name: 'admin.license-manager.licenses.dashboard', params: { product: productCode } }"
-              :class="[secondaryBtn, 'flex-1 md:flex-none']"
+              class="flex-1 sm:flex-none"
             >
-              <KeyRound class="w-4 h-4 text-gray-500" />
-              Licenses
-            </RouterLink>
-            <button v-if="canCreate" type="button" @click="openCreate" :class="[primaryBtn, 'flex-1 md:flex-none']">
-              <Plus class="w-4 h-4" />
-              New version
-            </button>
-          </div>
+              {{ $t("licenses.licenses") }}
+            </UiButton>
+            <UiButton v-if="canCreate" :icon="Plus" class="flex-1 sm:flex-none" @click="openCreate">{{ $t("licenses.versions.new") }}</UiButton>
+          </template>
+        </UiPageHeader>
+
+        <!-- KPI tiles -->
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 ui-stagger">
+          <UiStat :label="$t('licenses.versions.onSale')" :value="latestVersion || '—'" :icon="Tag" :loading="!loadedOnce" />
+          <UiStat :label="$t('licenses.versions.lifetimeCover')" :value="`${currentMajor ?? '—'}.x`" :icon="InfinityIcon" :loading="!loadedOnce" />
+          <UiStat :label="$t('licenses.dashboard.versions')" :value="sortedReleases.length" :icon="Layers" :loading="!loadedOnce" />
+          <UiStat :label="$t('licenses.versions.devicesReporting')" :value="plural(devicesReporting, 'device')" :hint="$t('licenses.versions.asReported')" :icon="Monitor" :loading="!loadedOnce" />
         </div>
 
         <!-- Versions in use -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[16px] shadow-sm px-5 py-4">
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2">
-              <Monitor class="w-4 h-4 text-violet-500" />
-              <h2 class="text-sm font-bold text-brand-dark">Versions in use</h2>
+              <Monitor class="w-4 h-4 text-ui-faint" />
+              <h2 class="text-ui-h3 text-ui-ink">{{ $t("licenses.versions.inUse") }}</h2>
             </div>
-            <span class="text-xs text-brand-light">As reported by the apps</span>
+            <span class="text-ui-cap text-ui-muted">{{ $t("licenses.versions.asReported") }}</span>
           </div>
           <div v-if="!loadedOnce" class="flex flex-wrap gap-2">
-            <Skeleton v-for="i in 3" :key="i" width="160px" height="30px" rounded="999px" />
+            <Skeleton v-for="i in 3" :key="i" width="160px" height="30px" rounded="8px" />
           </div>
-          <p v-else-if="!versionsInUse.length" class="text-xs text-brand-light">No device has reported a version yet.</p>
+          <p v-else-if="!versionsInUse.length" class="text-ui-cap text-ui-muted">{{ $t("licenses.versions.noneReported") }}</p>
           <div v-else class="flex flex-wrap gap-2">
             <span
               v-for="item in versionsInUse"
               :key="`${item.version}-${item.platform}`"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#DCDEDD] bg-slate-50 text-xs"
+              class="inline-flex items-center gap-1.5 h-8 px-3 rounded-ui-control border border-ui-line bg-ui-subtle/60 text-ui-cap"
             >
-              <component :is="isIpadPlatform(item.platform) ? Tablet : Laptop" class="w-3.5 h-3.5 text-gray-500" />
-              <span class="font-mono font-bold text-brand-dark">{{ item.version }}</span>
-              <span class="text-gray-300">·</span>
-              <span class="text-brand-light">{{ platformLabel(item.platform) }}</span>
-              <span class="text-gray-300">·</span>
-              <span class="font-semibold text-brand-dark tabular-nums">{{ plural(item.devices ?? 0, "device") }}</span>
+              <component :is="isIpadPlatform(item.platform) ? Tablet : Laptop" class="w-3.5 h-3.5 text-ui-faint" />
+              <span class="font-mono font-medium text-ui-ink">{{ item.version }}</span>
+              <span class="text-ui-faint">·</span>
+              <span class="text-ui-muted">{{ platformLabel(item.platform) }}</span>
+              <span class="text-ui-faint">·</span>
+              <span class="font-medium text-ui-ink tabular-nums">{{ plural(item.devices ?? 0, "device") }}</span>
             </span>
           </div>
-        </div>
+        </section>
 
         <!-- Filters + list -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[16px] shadow-sm">
-          <div class="p-4 sm:p-5 border-b border-[#F1F1F1] flex flex-col lg:flex-row lg:items-center gap-3">
-            <div class="relative flex-1 min-w-0">
-              <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-gray-400 pointer-events-none" />
-              <input
-                v-model="filters.search"
-                type="text"
-                placeholder="Search version, title or change..."
-                class="w-full pl-11 pr-9 py-2.5 text-sm border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-all duration-300 font-medium"
-              />
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+          <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line flex flex-col lg:flex-row lg:items-center gap-3">
+            <div class="relative lg:w-[300px] shrink-0">
+              <UiInput v-model="filters.search" :icon="Search" :placeholder="$t('licenses.versions.searchPlaceholder')" :aria-label="$t('licenses.versions.searchLabel')" />
               <button
                 v-if="filters.search"
                 type="button"
                 @click="filters.search = ''"
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-gray-100"
-                aria-label="Clear search"
+                class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink"
+                :aria-label="$t('licenses.dashboard.clearSearch')"
               >
-                <X class="w-3.5 h-3.5 text-gray-400" />
+                <X class="w-3.5 h-3.5" />
               </button>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <div class="flex items-center gap-1 p-0.5 rounded-full bg-slate-100" role="group" aria-label="Filter by status">
+            <div class="flex items-center gap-2 min-w-0 overflow-x-auto [scrollbar-width:none]">
+              <UiChips v-model="filters.status" :options="STATUS_FILTERS" class="shrink-0" :aria-label="$t('licenses.dashboard.filterStatus')" />
+              <div class="inline-flex items-center p-0.5 rounded-ui-control bg-ui-subtle shrink-0" role="tablist" :aria-label="$t('licenses.dashboard.filterPlatform')">
                 <button
-                  v-for="opt in [{ value: '', label: 'All' }, { value: 'published', label: 'Published' }, { value: 'draft', label: 'Draft' }]"
+                  v-for="opt in PLATFORM_FILTERS"
                   :key="opt.value || 'all'"
                   type="button"
-                  @click="filters.status = opt.value"
-                  class="px-3 py-1 rounded-full text-xs font-semibold transition-all"
-                  :class="pill(filters.status === opt.value)"
-                  :aria-pressed="filters.status === opt.value"
-                >
-                  {{ opt.label }}
-                </button>
-              </div>
-              <div class="flex items-center gap-1 p-0.5 rounded-full bg-slate-100" role="group" aria-label="Filter by platform">
-                <button
-                  v-for="opt in [{ value: '', label: 'All platforms' }, { value: 'mac', label: 'Mac' }, { value: 'ipad', label: 'iPad' }]"
-                  :key="opt.value || 'all'"
-                  type="button"
+                  role="tab"
                   @click="filters.platform = opt.value"
-                  class="px-3 py-1 rounded-full text-xs font-semibold transition-all"
-                  :class="pill(filters.platform === opt.value)"
-                  :aria-pressed="filters.platform === opt.value"
+                  class="h-7 px-3 rounded-[6px] text-ui-small font-medium whitespace-nowrap transition-colors"
+                  :class="filters.platform === opt.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
+                  :aria-selected="filters.platform === opt.value"
                 >
                   {{ opt.label }}
                 </button>
               </div>
-              <button v-if="hasFilters" type="button" @click="clearFilters" class="text-xs font-semibold text-violet-600 hover:text-violet-700 px-1">
-                Clear filters
-              </button>
             </div>
+            <button v-if="hasFilters" type="button" @click="clearFilters" class="lg:ml-auto self-start lg:self-auto text-ui-cap font-medium text-ui-accent hover:underline">
+              {{ $t("common.actions.clearFilters") }}
+            </button>
           </div>
 
           <!-- Loading -->
-          <div v-if="!loadedOnce" class="divide-y divide-[#F1F1F1]">
+          <div v-if="!loadedOnce" class="divide-y divide-ui-line">
             <div v-for="i in 4" :key="i" class="px-5 py-4 space-y-2">
               <Skeleton width="30%" height="14px" />
               <Skeleton width="55%" height="10px" />
@@ -352,141 +355,137 @@ const pill = (active) =>
           </div>
 
           <!-- Empty -->
-          <div v-else-if="!sortedReleases.length" class="text-center px-6 py-16">
-            <div class="relative w-20 h-20 mx-auto mb-5">
-              <div class="absolute inset-0 rounded-[24px] bg-gradient-to-br from-violet-100 to-indigo-50 rotate-6"></div>
-              <div class="absolute inset-0 rounded-[24px] bg-white border border-[#DCDEDD] shadow-sm flex items-center justify-center">
-                <component :is="hasFilters ? SearchX : History" class="w-9 h-9 text-violet-500" />
-              </div>
-            </div>
-            <h3 class="text-brand-dark text-base font-bold mb-1">{{ hasFilters ? "No matching versions" : "No versions yet" }}</h3>
-            <p class="text-brand-light text-sm mb-5">
-              {{ hasFilters ? "Try another search term or clear the filters." : `Add the first ${productName} version and its release notes.` }}
-            </p>
-            <button v-if="hasFilters" type="button" @click="clearFilters" :class="secondaryBtn">
-              <X class="w-4 h-4" /> Clear filters
-            </button>
-            <button v-else-if="canCreate" type="button" @click="openCreate" :class="primaryBtn">
-              <Plus class="w-4 h-4" /> New version
-            </button>
-          </div>
+          <UiEmpty
+            v-else-if="!sortedReleases.length"
+            :icon="hasFilters ? SearchX : History"
+            :title="hasFilters ? $t('licenses.versions.emptyFilteredTitle') : $t('licenses.versions.emptyTitle')"
+            :message="hasFilters ? $t('licenses.dashboard.emptyFilteredMessage') : $t('licenses.versions.emptyMessage', { product: productName })"
+          >
+            <UiButton v-if="hasFilters" variant="secondary" :icon="X" @click="clearFilters">{{ $t("common.actions.clearFilters") }}</UiButton>
+            <UiButton v-else-if="canCreate" :icon="Plus" @click="openCreate">{{ $t("licenses.versions.new") }}</UiButton>
+          </UiEmpty>
 
-          <!-- Timeline -->
-          <ol v-else class="divide-y divide-[#F1F1F1]" :class="{ 'opacity-60': releasesLoading }">
-            <li v-for="release in sortedReleases" :key="release.id" class="px-4 sm:px-5 py-4">
-              <div class="flex flex-col md:flex-row md:items-start gap-3">
-                <div class="flex-1 min-w-0">
-                  <div class="flex flex-wrap items-center gap-1.5">
-                    <span class="font-mono text-base font-bold text-brand-dark mr-1">{{ release.version }}</span>
-                    <span v-if="release.build !== null && release.build !== undefined" class="text-[11px] text-brand-light font-mono mr-1">
-                      ({{ release.build }})
-                    </span>
-                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="KIND_CHIP[release.kind] || 'bg-gray-100 text-gray-600'">
-                      {{ KIND_BADGES[release.kind] || release.kind_label }}
-                    </span>
-                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="RELEASE_STATUS_CHIP[release.status]">
-                      {{ release.status === "published" ? "Published" : "Draft" }}
-                    </span>
-                    <span v-if="release.is_critical" class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600">
-                      <AlertTriangle class="w-3 h-3" /> Critical
-                    </span>
-                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="platformChipClass(release.platforms)">
-                      {{ releasePlatformLabel(release.platforms) }}
-                    </span>
-                    <span class="inline-flex items-center gap-1 text-xs text-brand-light ml-1">
-                      <CalendarDays class="w-3.5 h-3.5" />
-                      {{ release.released_at ? formatReleaseDate(release.released_at) : "Unreleased" }}
-                    </span>
-                  </div>
-                  <p v-if="release.title" class="text-sm font-semibold text-brand-dark mt-1.5">{{ release.title }}</p>
-
-                  <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-brand-light">
-                    <span v-if="changeCountsLine(release.change_counts)">{{ changeCountsLine(release.change_counts) }}</span>
-                    <span v-else class="text-gray-400">No changes listed</span>
-                    <span class="tabular-nums">Covers {{ plural(release.licenses_covered ?? 0, "license") }}</span>
-                    <span v-if="release.licenses_needing_upgrade > 0" class="tabular-nums font-semibold text-amber-700">
-                      {{ release.licenses_needing_upgrade }} Lifetime license{{ release.licenses_needing_upgrade === 1 ? " needs" : "s need" }} an upgrade
-                    </span>
-                    <span class="tabular-nums">{{ plural(release.devices_on_version ?? 0, "device") }} on this version</span>
-                  </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="flex items-center gap-1.5 shrink-0">
-                  <button
-                    v-if="canEdit && release.status === 'draft'"
-                    type="button"
-                    @click="openPublish(release)"
-                    :disabled="!canPublish(release)"
-                    :title="canPublish(release) ? 'Publish version' : PUBLISH_NEEDS_FILE"
-                    class="inline-flex items-center gap-1.5 h-8 px-3 border border-emerald-200 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold hover:border-emerald-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-emerald-200"
-                  >
-                    <Send class="w-3.5 h-3.5" /> Publish
-                  </button>
-                  <button v-if="canEdit" type="button" @click="openEdit(release)" :class="iconBtn" title="Edit version" aria-label="Edit version">
-                    <Pencil class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button
-                    v-if="canDelete"
-                    type="button"
-                    @click="handleDelete(release)"
-                    :class="iconBtn"
-                    class="hover:bg-red-50 group/del"
-                    title="Delete version"
-                    aria-label="Delete version"
-                  >
-                    <Trash2 class="w-4 h-4 text-gray-600 group-hover/del:text-red-600" />
-                  </button>
-                </div>
-              </div>
-
-              <p
-                v-if="canEdit && release.status === 'draft' && !canPublish(release)"
-                class="text-[11px] text-amber-700 mt-1.5"
-              >
-                {{ PUBLISH_NEEDS_FILE }}
-              </p>
-
-              <!-- Installer -->
-              <ReleaseInstaller :release="release" class="mt-3" @updated="replaceRelease" />
-
-              <!-- Changes -->
-              <button
-                v-if="release.changes?.length || release.notes || release.download_url"
-                type="button"
-                @click="toggle(release.id)"
-                class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-800"
-                :aria-expanded="!!expanded[release.id]"
-              >
-                <component :is="expanded[release.id] ? ChevronDown : ChevronRight" class="w-3.5 h-3.5" />
-                {{ expanded[release.id] ? "Hide changes" : "Show changes" }}
-              </button>
-              <div v-if="expanded[release.id]" class="mt-2 space-y-3">
-                <div v-for="group in groupChanges(release.changes)" :key="group.value">
-                  <p class="text-[11px] font-bold uppercase tracking-wide text-brand-light mb-1.5">{{ group.label }}</p>
-                  <ul class="space-y-1">
-                    <li v-for="(change, i) in group.items" :key="i" class="flex items-start gap-2 text-sm text-brand-dark">
-                      <span class="mt-0.5 shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md" :class="group.chip">{{ group.label }}</span>
-                      <span class="min-w-0">
-                        <span v-if="change.area" class="text-xs font-semibold text-brand-light mr-1">{{ change.area }}:</span>{{ change.text }}
+          <!-- Numbered release list (newest first) -->
+          <ol v-else class="divide-y divide-ui-line ui-stagger transition-opacity" :class="{ 'opacity-60': releasesLoading }">
+            <li v-for="(release, index) in sortedReleases" :key="release.id" class="flex gap-3 px-4 sm:px-5 py-4">
+              <span class="w-6 pt-1 text-ui-cap text-ui-faint tabular-nums shrink-0">{{ index + 1 }}</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-col md:flex-row md:items-start gap-3">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <span class="font-mono text-ui-h3 text-ui-ink mr-0.5">{{ release.version }}</span>
+                      <span v-if="release.build !== null && release.build !== undefined" class="text-ui-cap text-ui-muted font-mono mr-1">
+                        ({{ release.build }})
                       </span>
-                    </li>
-                  </ul>
+                      <span class="inline-flex items-center h-[22px] px-2 rounded-md text-ui-cap font-medium" :class="KIND_CHIP[release.kind] || 'bg-ui-subtle text-ui-text'">
+                        {{ KIND_BADGES[release.kind] || release.kind_label }}
+                      </span>
+                      <UiBadge :tone="release.status === 'published' ? 'ok' : 'neutral'" dot>
+                        {{ release.status === "published" ? $t("licenses.releases.status.published") : $t("licenses.releases.status.draft") }}
+                      </UiBadge>
+                      <UiBadge v-if="release.is_critical" tone="bad"><AlertTriangle class="w-3 h-3" /> {{ $t("licenses.versions.critical") }}</UiBadge>
+                      <span class="inline-flex items-center h-[22px] px-2 rounded-md text-ui-cap font-medium" :class="platformChipClass(release.platforms)">
+                        {{ releasePlatformLabel(release.platforms) }}
+                      </span>
+                      <span class="inline-flex items-center gap-1 text-ui-cap text-ui-muted ml-1">
+                        <CalendarDays class="w-3.5 h-3.5" />
+                        {{ release.released_at ? formatReleaseDate(release.released_at) : $t("licenses.versions.unreleased") }}
+                      </span>
+                    </div>
+                    <p v-if="release.title" class="text-ui-small font-medium text-ui-ink mt-1.5">{{ release.title }}</p>
+
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-ui-cap text-ui-muted">
+                      <span v-if="changeCountsLine(release.change_counts)">{{ changeCountsLine(release.change_counts) }}</span>
+                      <span v-else class="text-ui-faint">{{ $t("licenses.versions.noChanges") }}</span>
+                      <span class="tabular-nums">{{ $t("licenses.versions.covers", { count: plural(release.licenses_covered ?? 0, "license") }) }}</span>
+                      <span v-if="release.licenses_needing_upgrade > 0" class="tabular-nums font-medium text-ui-warn">
+                        {{ $t("licenses.versions.needUpgrade", { n: release.licenses_needing_upgrade }, release.licenses_needing_upgrade) }}
+                      </span>
+                      <span class="tabular-nums">{{ $t("licenses.versions.onThisVersion", { count: plural(release.devices_on_version ?? 0, "device") }) }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Actions -->
+                  <div class="flex items-center gap-1 shrink-0">
+                    <UiButton
+                      v-if="canEdit && release.status === 'draft'"
+                      variant="secondary"
+                      size="sm"
+                      :icon="Send"
+                      :disabled="!canPublish(release)"
+                      :title="canPublish(release) ? $t('licenses.versions.publishVersion') : publishNeedsFileMessage()"
+                      @click="openPublish(release)"
+                    >
+                      {{ $t("licenses.versions.publish") }}
+                    </UiButton>
+                    <button
+                      v-if="canEdit"
+                      type="button"
+                      @click="openEdit(release)"
+                      class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-subtle hover:text-ui-ink"
+                      :title="$t('licenses.versions.editVersion')"
+                      :aria-label="$t('licenses.versions.editVersion')"
+                    >
+                      <Pencil class="w-4 h-4" />
+                    </button>
+                    <button
+                      v-if="canDelete"
+                      type="button"
+                      @click="handleDelete(release)"
+                      class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
+                      :title="$t('licenses.versions.deleteVersion')"
+                      :aria-label="$t('licenses.versions.deleteVersion')"
+                    >
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div v-if="release.download_url || release.notes" class="space-y-1.5 text-xs text-brand-light border-t border-[#F1F1F1] pt-2">
-                  <p v-if="release.download_url" class="flex items-center gap-1.5 min-w-0">
-                    <Link2 class="w-3.5 h-3.5 shrink-0" />
-                    <a :href="release.download_url" target="_blank" rel="noopener noreferrer" class="text-violet-700 hover:underline truncate">{{ release.download_url }}</a>
-                  </p>
-                  <p v-if="release.notes" class="flex items-start gap-1.5">
-                    <FileText class="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    <span class="whitespace-pre-line"><span class="font-semibold">Internal:</span> {{ release.notes }}</span>
-                  </p>
+
+                <p v-if="canEdit && release.status === 'draft' && !canPublish(release)" class="text-ui-cap text-ui-warn mt-1.5">
+                  {{ publishNeedsFileMessage() }}
+                </p>
+
+                <!-- Installer -->
+                <ReleaseInstaller :release="release" class="mt-3" @updated="replaceRelease" />
+
+                <!-- Changes -->
+                <button
+                  v-if="release.changes?.length || release.notes || release.download_url"
+                  type="button"
+                  @click="toggle(release.id)"
+                  class="mt-3 inline-flex items-center gap-1 text-ui-cap font-medium text-ui-accent hover:underline"
+                  :aria-expanded="!!expanded[release.id]"
+                >
+                  <component :is="expanded[release.id] ? ChevronDown : ChevronRight" class="w-3.5 h-3.5" />
+                  {{ expanded[release.id] ? $t("licenses.timeline.hideChanges") : $t("licenses.timeline.showChanges") }}
+                </button>
+                <div v-if="expanded[release.id]" class="mt-2 space-y-3 ui-anim-fade-up">
+                  <div v-for="group in groupChanges(release.changes)" :key="group.value">
+                    <p class="text-ui-over uppercase text-ui-muted mb-1.5">{{ group.label }}</p>
+                    <ul class="space-y-1">
+                      <li v-for="(change, i) in group.items" :key="i" class="flex items-start gap-2 text-ui-small text-ui-text">
+                        <span class="mt-px shrink-0 inline-flex items-center h-5 px-1.5 rounded-md text-ui-cap font-medium" :class="group.chip">{{ group.label }}</span>
+                        <span class="min-w-0">
+                          <span v-if="change.area" class="text-ui-cap font-medium text-ui-muted mr-1">{{ change.area }}:</span>{{ change.text }}
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div v-if="release.download_url || release.notes" class="space-y-1.5 text-ui-cap text-ui-muted border-t border-ui-line pt-2">
+                    <p v-if="release.download_url" class="flex items-center gap-1.5 min-w-0">
+                      <Link2 class="w-3.5 h-3.5 shrink-0" />
+                      <a :href="release.download_url" target="_blank" rel="noopener noreferrer" class="text-ui-accent hover:underline truncate">{{ release.download_url }}</a>
+                    </p>
+                    <p v-if="release.notes" class="flex items-start gap-1.5">
+                      <FileText class="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      <span class="whitespace-pre-line"><span class="font-medium text-ui-text">{{ $t("licenses.versions.internal") }}</span> {{ release.notes }}</span>
+                    </p>
+                  </div>
                 </div>
               </div>
             </li>
           </ol>
-        </div>
+        </section>
       </div>
 
       <ReleaseFormModal
@@ -499,76 +498,36 @@ const pill = (active) =>
       />
 
       <!-- Publish: pick the release date -->
-      <Teleport to="body">
-        <div
-          v-if="publishing"
-          class="fixed inset-0 backdrop-blur-sm bg-black/30 z-50 flex items-center justify-center p-4"
-          @click.self="!publishSaving && (publishing = null)"
-        >
-          <form
-            novalidate
-            @submit.prevent="confirmPublish"
-            class="bg-white rounded-[16px] border border-[#DCDEDD] w-full max-w-md overflow-hidden"
-            role="dialog"
-            aria-modal="true"
-            :aria-label="`Publish version ${publishing.version}`"
-          >
-            <div class="flex items-center gap-3 px-6 py-4 border-b border-[#DCDEDD]">
-              <div class="w-10 h-10 bg-emerald-50 rounded-[12px] flex items-center justify-center">
-                <CalendarCheck class="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <h3 class="text-brand-dark text-lg font-bold leading-tight">Publish {{ productName }} {{ publishing.version }}</h3>
-                <p class="text-xs text-brand-light">The apps will see it in their version history.</p>
-              </div>
-            </div>
-            <div class="px-6 py-5">
-              <label for="publish-date" class="block text-brand-dark text-sm font-semibold mb-1.5">
-                Release Date <span class="text-red-500">*</span>
-              </label>
-              <div>
-                <input
-                  id="publish-date"
-                  v-model="publishDate"
-                  type="date"
-                  class="w-full px-4 py-3 border rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 font-semibold bg-white"
-                  :class="publishError ? 'border-red-500' : 'border-[#DCDEDD]'"
-                />
-              </div>
-              <p v-if="publishError" class="text-xs text-red-600 mt-1.5">{{ publishError }}</p>
-            </div>
-            <div class="flex justify-end gap-3 px-6 py-4 border-t border-[#DCDEDD] bg-slate-50">
-              <button
-                type="button"
-                @click="publishing = null"
-                :disabled="publishSaving"
-                class="border border-[#DCDEDD] bg-white rounded-[12px] px-5 py-2.5 text-sm font-semibold text-brand-dark hover:border-violet-400"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                :disabled="publishSaving"
-                class="rounded-[12px] border border-violet-800 bg-gradient-to-r from-violet-600 to-indigo-700 px-5 py-2.5 flex items-center gap-2 disabled:opacity-50"
-              >
-                <Send class="w-4 h-4 text-white" />
-                <span class="text-white text-sm font-semibold">{{ publishSaving ? "Publishing..." : "Publish" }}</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      </Teleport>
+      <UiModal
+        :open="!!publishing"
+        size="sm"
+        :persistent="publishSaving"
+        :title="publishing ? $t('licenses.versions.publishTitle', { product: productName, version: publishing.version }) : ''"
+        :description="$t('licenses.versions.publishDescription')"
+        @update:open="onPublishOpenChange"
+      >
+        <form id="publish-form" novalidate @submit.prevent="confirmPublish" :aria-label="publishing ? $t('licenses.versions.publishAria', { version: publishing.version }) : undefined">
+          <label for="publish-date" class="block text-ui-small font-medium text-ui-ink mb-1.5">
+            {{ $t("licenses.releaseForm.releaseDate") }} <span class="text-ui-bad">*</span>
+          </label>
+          <div class="relative">
+            <input
+              id="publish-date"
+              v-model="publishDate"
+              type="date"
+              class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink border rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+              :class="publishError ? 'border-ui-bad/50' : 'border-ui-line-strong'"
+            />
+          </div>
+          <p v-if="publishError" class="text-ui-cap text-ui-bad mt-1.5">{{ publishError }}</p>
+        </form>
+        <template #footer>
+          <UiButton variant="secondary" :disabled="publishSaving" class="flex-1 sm:flex-none" @click="publishing = null">{{ $t("common.actions.cancel") }}</UiButton>
+          <UiButton type="submit" form="publish-form" :icon="Send" :loading="publishSaving" class="flex-1 sm:flex-none">
+            {{ publishSaving ? $t("licenses.versions.publishing") : $t("licenses.versions.publish") }}
+          </UiButton>
+        </template>
+      </UiModal>
     </LicenseProductGate>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

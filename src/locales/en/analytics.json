@@ -1,0 +1,36 @@
+{
+  "title": "Analytics",
+  "subtitle": "Website traffic and behavior across every tracked site, grouped by category",
+  "addSource": "Add Source",
+  "stats": {
+    "sources": "Sources",
+    "categories": "Categories"
+  },
+  "search": "Search by source name, category, or website...",
+  "empty": {
+    "noMatch": "No sources match your search",
+    "noMatchHint": "Try a different name, category, or website",
+    "title": "No analytics sources yet",
+    "message": "Add a PostHog, Google Analytics 4, or Search Console embed to start monitoring a website here.",
+    "addFirst": "Add your first source"
+  },
+  "openInNewTab": "Open in new tab",
+  "clickToLoad": "Click to load {type}",
+  "clickToLoadHint": "Loads the embed on demand to save bandwidth",
+  "delete": {
+    "confirm": "Delete analytics source \"{name}\"? This action cannot be undone.",
+    "failed": "Failed to delete analytics source."
+  },
+  "form": {
+    "addTitle": "Add Analytics Source",
+    "editTitle": "Edit Analytics Source",
+    "description": "Sources sharing the same Category are grouped together on the Analytics page.",
+    "namePlaceholder": "e.g. Landing Page PostHog",
+    "websiteUrl": "Website URL (optional)",
+    "typePlaceholder": "Select a source type",
+    "categoryPlaceholder": "e.g. Landing Page Jendela Cakra Digital Analytics",
+    "embedUrl": "Embed URL",
+    "embedUrlPlaceholder": "https://us.posthog.com/embedded/... or a Looker Studio /embed/ report URL",
+    "embedHint": "PostHog: use its own \"Embed\" share link. Google Analytics 4 / Search Console don't offer a direct embed link -- connect them to a Looker Studio report instead, share it as \"Anyone with the link\", and paste that report's Embed URL here."
+  }
+}

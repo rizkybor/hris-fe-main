@@ -3,11 +3,13 @@
 // endpoint is missing or failing it shows a quiet "Not available yet"
 // state (no toast).
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { Activity, PlugZap, RefreshCw, Inbox, Loader2 } from "lucide-vue-next";
+import { Activity, PlugZap, RefreshCw, Inbox } from "lucide-vue-next";
 import { useLoadOnScroll } from "@/components/admin/license-manager/useLoadOnScroll";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
+import { UiEmpty, UiSpinner } from "@/components/ui";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 import {
   eventLabel,
@@ -23,6 +25,7 @@ const props = defineProps({
   limit: { type: Number, default: 10 },
 });
 
+const { t } = useI18n();
 const store = useLicenseManagerStore();
 const router = useRouter();
 
@@ -67,7 +70,7 @@ defineExpose({ reload: load });
 
 // Who / where: the admin for admin actions, else the device.
 const actor = (e) => {
-  if (e.admin?.name) return `by ${e.admin.name}`;
+  if (e.admin?.name) return t("licenses.activity.byAdmin", { name: e.admin.name });
   const parts = [e.device_name, e.platform ? platformLabel(e.platform) : null].filter(Boolean);
   return parts.join(" · ");
 };
@@ -81,32 +84,30 @@ const open = (e) => {
 </script>
 
 <template>
-  <section class="bg-white border border-[#DCDEDD] rounded-[16px] shadow-sm flex flex-col min-w-0">
-    <header class="flex items-center justify-between gap-3 px-5 pt-5 pb-4 border-b border-[#F1F1F1]">
+  <section class="bg-ui-surface border border-ui-line rounded-ui-card flex flex-col min-w-0 overflow-hidden">
+    <header class="flex items-center justify-between gap-3 px-5 pt-4 pb-3 border-b border-ui-line">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-9 h-9 rounded-[10px] bg-violet-50 text-violet-600 ring-1 ring-violet-100 flex items-center justify-center shrink-0">
-          <Activity class="w-[18px] h-[18px]" />
-        </div>
+        <Activity class="w-4 h-4 text-ui-faint shrink-0" />
         <div class="min-w-0">
-          <h4 class="text-brand-dark text-sm font-bold">Recent activity</h4>
-          <p class="text-xs text-brand-light">Latest events across all products</p>
+          <h4 class="text-ui-h2 text-ui-ink">{{ $t("licenses.activity.title") }}</h4>
+          <p class="text-ui-cap text-ui-muted">{{ $t("licenses.activity.subtitle") }}</p>
         </div>
       </div>
       <button
         v-if="state === 'ready'"
         type="button"
         @click="load"
-        class="p-2 rounded-lg border border-[#DCDEDD] hover:border-violet-400 hover:bg-violet-50/40 transition-all"
-        title="Refresh"
-        aria-label="Refresh activity"
+        class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
+        :title="$t('common.actions.refresh')"
+        :aria-label="$t('licenses.activity.refresh')"
       >
-        <RefreshCw class="w-3.5 h-3.5 text-gray-500" />
+        <RefreshCw class="w-3.5 h-3.5" />
       </button>
     </header>
 
     <div v-if="state === 'loading'" class="p-5 space-y-4">
       <div v-for="i in 5" :key="i" class="flex items-center gap-3">
-        <Skeleton width="32px" height="32px" rounded="999px" />
+        <Skeleton width="28px" height="28px" rounded="999px" />
         <div class="flex-1 space-y-1.5">
           <Skeleton width="60%" height="12px" />
           <Skeleton width="40%" height="10px" />
@@ -115,56 +116,51 @@ const open = (e) => {
       </div>
     </div>
 
-    <div v-else-if="state === 'unavailable'" class="flex-1 flex flex-col items-center justify-center text-center px-6 py-10">
-      <PlugZap class="w-8 h-8 text-gray-300 mb-2.5" />
-      <p class="text-sm font-semibold text-brand-dark">Not available yet</p>
-      <p class="text-xs text-brand-light mb-3">This panel will fill in once the server supports it.</p>
-      <button type="button" @click="load" class="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-700">
-        <RefreshCw class="w-3.5 h-3.5" /> Try again
+    <UiEmpty v-else-if="state === 'unavailable'" :icon="PlugZap" 
+      :title="$t('licenses.panel.unavailableTitle')"
+      :message="$t('licenses.panel.unavailableMessage')"
+      compact
+    >
+      <button type="button" @click="load" class="inline-flex items-center gap-1.5 text-ui-small font-medium text-ui-accent hover:underline">
+        <RefreshCw class="w-3.5 h-3.5" /> {{ $t("common.actions.retry") }}
       </button>
-    </div>
+    </UiEmpty>
 
-    <div v-else-if="!items.length" class="flex-1 flex flex-col items-center justify-center text-center px-6 py-10">
-      <div class="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3">
-        <Inbox class="w-6 h-6 text-gray-400" />
-      </div>
-      <p class="text-sm font-semibold text-brand-dark">No activity yet</p>
-      <p class="text-xs text-brand-light">Activations and admin changes will show up here.</p>
-    </div>
+    <UiEmpty v-else-if="!items.length" :icon="Inbox" :title="$t('licenses.activity.emptyTitle')" :message="$t('licenses.activity.emptyMessage')" compact />
 
     <div v-else ref="scroller" class="max-h-[460px] overflow-y-auto scroll-soft">
-    <ul class="divide-y divide-[#F1F1F1]">
+    <ul class="divide-y divide-ui-line">
       <li v-for="e in items" :key="e.id">
         <component
           :is="canOpen(e) ? 'button' : 'div'"
           :type="canOpen(e) ? 'button' : undefined"
           @click="open(e)"
           class="w-full flex items-center gap-3 px-5 py-3 text-left"
-          :class="canOpen(e) ? 'hover:bg-violet-50/40 transition-colors' : ''"
+          :class="canOpen(e) ? 'hover:bg-ui-hover transition-colors' : ''"
         >
-          <div class="w-8 h-8 rounded-full ring-1 flex items-center justify-center shrink-0" :class="eventToneClass(e)">
-            <component :is="eventIcon(e)" class="w-4 h-4" />
+          <div class="w-7 h-7 rounded-full ring-1 flex items-center justify-center shrink-0" :class="eventToneClass(e)">
+            <component :is="eventIcon(e)" class="w-3.5 h-3.5" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-brand-dark truncate">{{ eventLabel(e) }}</p>
-            <p class="text-xs text-brand-light truncate">
+            <p class="text-ui-small font-medium text-ui-ink truncate">{{ eventLabel(e) }}</p>
+            <p class="text-ui-cap text-ui-muted truncate">
               {{ e.license?.licensee_name || e.license?.key || "-" }}<template v-if="actor(e)"> · {{ actor(e) }}</template>
             </p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <span class="text-[11px] text-brand-light whitespace-nowrap" :title="formatDateTime(e.created_at)">
+            <span class="text-ui-cap text-ui-muted whitespace-nowrap" :title="formatDateTime(e.created_at)">
               {{ relativeTime(e.created_at) }}
             </span>
-            <ProductIcon v-if="e.product" :product="e.product" :size="22" :title="e.product.name" />
+            <ProductIcon v-if="e.product" :product="e.product" :size="20" :title="e.product.name" />
           </div>
         </component>
       </li>
     </ul>
       <div ref="sentinel" class="h-px"></div>
-      <p v-if="loadingMore" class="flex items-center justify-center gap-2 py-3 text-xs text-brand-light">
-        <Loader2 class="w-3.5 h-3.5 animate-spin" /> Loading more...
-      </p>
-      <p v-else-if="!hasMore && items.length > limit" class="py-3 text-center text-[11px] text-gray-400">That's all the activity</p>
+      <div v-if="loadingMore" class="py-3">
+        <UiSpinner size="16px" :label="$t('licenses.activity.loadingMore')" :center="false" class="justify-center" />
+      </div>
+      <p v-else-if="!hasMore && items.length > limit" class="py-3 text-center text-ui-cap text-ui-faint">{{ $t("licenses.activity.end") }}</p>
     </div>
   </section>
 </template>

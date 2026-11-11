@@ -1,11 +1,14 @@
 <script setup>
 import { onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { CalendarClock, ArrowLeft, MapPinned } from "lucide-vue-next";
 import { useAttendanceSettingStore } from "@/stores/attendanceSetting";
 import { RouterLink } from "vue-router";
 import HolidayManager from "@/components/admin/attendance/HolidayManager.vue";
+import { UiAlert, UiButton, UiPageHeader, UiSkeleton, UiSwitch } from "@/components/ui";
 
+const { t } = useI18n();
 const store = useAttendanceSettingStore();
 const { setting, loading } = storeToRefs(store);
 
@@ -47,9 +50,9 @@ const handleToggle = async () => {
   saving.value = true;
   try {
     await store.updateSetting({ allow_weekend_check_in: !setting.value.allow_weekend_check_in });
-    successMessage.value = "Attendance setting saved successfully.";
+    successMessage.value = t("settings.attendance.saved");
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to save setting.";
+    errorMessage.value = error?.response?.data?.message || t("settings.saveFailed");
   } finally {
     saving.value = false;
   }
@@ -65,9 +68,9 @@ const handleGeofenceSave = async () => {
       office_longitude: geofenceForm.value.office_longitude,
       office_radius_meters: geofenceForm.value.office_radius_meters,
     });
-    geofenceSuccess.value = "Office location saved successfully.";
+    geofenceSuccess.value = t("settings.attendance.locationSaved");
   } catch (error) {
-    geofenceError.value = error?.response?.data?.message || "Failed to save office location.";
+    geofenceError.value = error?.response?.data?.message || t("settings.attendance.locationFailed");
   } finally {
     geofenceSaving.value = false;
   }
@@ -86,127 +89,101 @@ const useCurrentLocation = () => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="flex items-center gap-3 mb-5">
-      <RouterLink
-        :to="{ name: 'admin.settings.dashboard' }"
-        class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] shrink-0"
-      >
-        <ArrowLeft class="w-4 h-4 text-gray-600" />
-      </RouterLink>
-      <div class="w-11 h-11 bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0">
-        <CalendarClock class="w-5 h-5 text-indigo-600" />
-      </div>
-      <div>
-        <h3 class="text-brand-dark text-lg font-bold">Attendance Settings</h3>
-        <p class="text-brand-light text-sm">Control whether staff can Clock In/Out on Saturday & Sunday</p>
-      </div>
-    </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('settings.attendance.title')" :subtitle="$t('settings.attendance.subtitle')">
+      <template #eyebrow>
+        <RouterLink :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" :aria-label="$t('settings.backToSettings')" :title="$t('settings.backToSettings')">
+          <ArrowLeft class="w-4 h-4" /> {{ $t("settings.settings") }}
+        </RouterLink>
+      </template>
+    </UiPageHeader>
 
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 max-w-xl">
-      <div v-if="loading" class="text-brand-light text-sm">Loading...</div>
-      <div v-else class="flex items-start justify-between gap-4">
+    <!-- Weekend clock in/out -->
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card ui-anim-fade-up">
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-4 lg:gap-10 p-4 sm:p-5 lg:p-6">
         <div>
-          <p class="text-brand-dark text-sm font-semibold mb-1">Allow Weekend Clock In/Out</p>
-          <p class="text-brand-light text-xs">
-            By default, Clock In/Out is disabled every Saturday & Sunday since those aren't scheduled work
-            days. Turning this on lets staff clock in on weekends -- it's automatically recorded as
-            <strong>overtime (lembur)</strong>, not counted toward their regular attendance rate.
-          </p>
-          <p v-if="setting.updated_by?.name" class="text-gray-400 text-xs mt-2">
-            Last changed by {{ setting.updated_by.name }}
-          </p>
+          <div class="flex items-center gap-2">
+            <CalendarClock class="w-4 h-4 text-ui-muted" />
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("settings.attendance.weekendTitle") }}</h2>
+          </div>
+          <p class="text-ui-small text-ui-muted mt-1">{{ $t("settings.attendance.weekendHint") }}</p>
         </div>
-        <button
-          type="button"
-          @click="handleToggle"
-          :disabled="saving"
-          class="shrink-0 w-12 h-7 rounded-full transition-colors duration-200 relative disabled:opacity-50"
-          :class="setting.allow_weekend_check_in ? 'bg-[#0C51D9]' : 'bg-gray-300'"
-        >
-          <span
-            class="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform duration-200"
-            :class="setting.allow_weekend_check_in ? 'translate-x-[22px]' : 'translate-x-0.5'"
-          ></span>
-        </button>
-      </div>
-
-      <p v-if="errorMessage" class="text-red-500 text-sm mt-4">{{ errorMessage }}</p>
-      <p v-if="successMessage" class="text-green-600 text-sm mt-4">{{ successMessage }}</p>
-    </div>
-
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 max-w-xl mt-5">
-      <div class="flex items-center gap-2 mb-3">
-        <MapPinned class="w-4 h-4 text-indigo-600" />
-        <p class="text-brand-dark text-sm font-semibold">Office Location & Radius</p>
-      </div>
-      <p class="text-brand-light text-xs mb-4">
-        Employees whose Work Location is set to <strong>Office</strong> must Clock In within this radius of
-        the office coordinates below. Remote/Hybrid employees are never checked against this.
-      </p>
-
-      <div v-if="loading" class="text-brand-light text-sm">Loading...</div>
-      <div v-else class="space-y-3">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-brand-dark text-xs font-medium mb-1 block">Latitude</label>
-            <input
-              v-model="geofenceForm.office_latitude"
-              type="number"
-              step="0.00000001"
-              placeholder="-6.34660080"
-              class="w-full border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm focus:outline-none focus:border-[#0C51D9]"
-            />
+        <div>
+          <UiSkeleton v-if="loading" height="64px" />
+          <div v-else class="rounded-ui-card border border-ui-line px-4 py-3.5">
+            <div class="flex items-start gap-4">
+              <div class="flex-1 min-w-0">
+                <p class="text-ui-body font-medium text-ui-ink">{{ $t("settings.attendance.allowWeekend") }}</p>
+                <p class="text-ui-small text-ui-muted mt-0.5">
+                  {{ $t("settings.attendance.weekendBefore") }}
+                  <strong class="text-ui-text font-medium">{{ $t("settings.attendance.weekendOvertime") }}</strong>{{ $t("settings.attendance.weekendAfter") }}
+                </p>
+                <p v-if="setting.updated_by?.name" class="text-ui-cap text-ui-faint mt-2">
+                  {{ $t("settings.lastChangedBy", { name: setting.updated_by.name }) }}
+                </p>
+              </div>
+              <UiSwitch
+                class="mt-0.5"
+                :model-value="!!setting.allow_weekend_check_in"
+                :disabled="saving"
+                :aria-label="$t('settings.attendance.allowWeekend')"
+                @update:model-value="handleToggle"
+              />
+            </div>
           </div>
-          <div>
-            <label class="text-brand-dark text-xs font-medium mb-1 block">Longitude</label>
-            <input
-              v-model="geofenceForm.office_longitude"
-              type="number"
-              step="0.00000001"
-              placeholder="106.76173940"
-              class="w-full border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm focus:outline-none focus:border-[#0C51D9]"
-            />
+
+          <UiAlert v-if="errorMessage" tone="bad" :message="errorMessage" class="mt-3" />
+          <UiAlert v-if="successMessage" tone="ok" :message="successMessage" class="mt-3" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Office geofence -->
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card ui-anim-fade-up">
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-4 lg:gap-10 p-4 sm:p-5 lg:p-6">
+        <div>
+          <div class="flex items-center gap-2">
+            <MapPinned class="w-4 h-4 text-ui-muted" />
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("settings.attendance.officeTitle") }}</h2>
           </div>
+          <p class="text-ui-small text-ui-muted mt-1">
+            {{ $t("settings.attendance.officeBefore") }} <strong class="text-ui-text font-medium">{{ $t("settings.attendance.officeWord") }}</strong>
+            {{ $t("settings.attendance.officeAfter") }}
+          </p>
         </div>
 
         <div>
-          <label class="text-brand-dark text-xs font-medium mb-1 block">Radius (meters)</label>
-          <input
-            v-model="geofenceForm.office_radius_meters"
-            type="number"
-            step="1"
-            min="10"
-            max="5000"
-            placeholder="150"
-            class="w-full border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm focus:outline-none focus:border-[#0C51D9]"
-          />
-        </div>
+          <UiSkeleton v-if="loading" height="140px" />
+          <div v-else class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="office-latitude" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("settings.attendance.latitude") }}</label>
+                <input id="office-latitude" v-model="geofenceForm.office_latitude" type="number" step="0.00000001" placeholder="-6.34660080" class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus tabular-nums" />
+              </div>
+              <div>
+                <label for="office-longitude" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("settings.attendance.longitude") }}</label>
+                <input id="office-longitude" v-model="geofenceForm.office_longitude" type="number" step="0.00000001" placeholder="106.76173940" class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus tabular-nums" />
+              </div>
+            </div>
 
-        <div class="flex items-center gap-3 pt-1">
-          <button
-            type="button"
-            @click="handleGeofenceSave"
-            :disabled="geofenceSaving"
-            class="btn-secondary rounded-[10px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2 disabled:opacity-50"
-          >
-            <span class="text-brand-white text-xs font-semibold">
-              {{ geofenceSaving ? "Saving..." : "Save Location" }}
-            </span>
-          </button>
-          <button
-            type="button"
-            @click="useCurrentLocation"
-            class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] px-4 py-2 text-brand-dark text-xs font-medium"
-          >
-            Use My Current Location
-          </button>
-        </div>
+            <div class="sm:max-w-[240px]">
+              <label for="office-radius" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("settings.attendance.radius") }}</label>
+              <input id="office-radius" v-model="geofenceForm.office_radius_meters" type="number" step="1" min="10" max="5000" placeholder="150" class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus tabular-nums" />
+            </div>
 
-        <p v-if="geofenceError" class="text-red-500 text-sm mt-2">{{ geofenceError }}</p>
-        <p v-if="geofenceSuccess" class="text-green-600 text-sm mt-2">{{ geofenceSuccess }}</p>
+            <div class="flex flex-col-reverse sm:flex-row sm:items-center gap-2 pt-1">
+              <UiButton variant="secondary" :icon="MapPinned" @click="useCurrentLocation">{{ $t("settings.attendance.useCurrentLocation") }}</UiButton>
+              <UiButton :loading="geofenceSaving" :disabled="geofenceSaving" @click="handleGeofenceSave">
+                {{ geofenceSaving ? $t("common.actions.saving") : $t("settings.attendance.saveLocation") }}
+              </UiButton>
+            </div>
+
+            <UiAlert v-if="geofenceError" tone="bad" :message="geofenceError" />
+            <UiAlert v-if="geofenceSuccess" tone="ok" :message="geofenceSuccess" />
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
 
     <HolidayManager />
   </div>

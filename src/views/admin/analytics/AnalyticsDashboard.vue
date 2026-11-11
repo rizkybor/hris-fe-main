@@ -13,14 +13,18 @@ import {
   ExternalLink,
   Globe,
   PlayCircle,
+  Layers,
 } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
 import { useAnalyticsSourceStore } from "@/stores/analyticsSource";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiInput, UiEmpty, UiStat } from "@/components/ui";
 import AnalyticsSourceFormModal from "@/components/admin/analytics/AnalyticsSourceFormModal.vue";
 
+const { t } = useI18n();
 const store = useAnalyticsSourceStore();
 const { categories, loading, error, success } = storeToRefs(store);
 const alertModal = useAlertModalStore();
@@ -36,11 +40,14 @@ watch(
   debounce(() => fetchData(), 300)
 );
 
+// Categorical source-type marks, in the shared order: accent, ink, ok.
 const TYPE_ICON_BG = {
-  posthog: "bg-orange-50 text-orange-600",
-  google_analytics_4: "bg-blue-50 text-blue-600",
-  google_search_console: "bg-green-50 text-green-600",
+  posthog: "bg-ui-accent-soft text-ui-accent",
+  google_analytics_4: "bg-ui-subtle text-ui-ink",
+  google_search_console: "bg-ui-ok-soft text-ui-ok",
 };
+const ICON_BTN =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted transition-colors hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus";
 
 const categorySuggestions = computed(() => categories.value.map((c) => c.category));
 const totalSources = computed(() => categories.value.reduce((sum, c) => sum + c.sources.length, 0));
@@ -105,72 +112,48 @@ const handleSubmit = async ({ mode, id, payload }) => {
 };
 
 const handleDelete = async (source) => {
-  const ok = await alertModal.confirm(`Delete analytics source "${source.name}"? This action cannot be undone.`, {
+  const ok = await alertModal.confirm(t("analytics.delete.confirm", { name: source.name }), {
     type: "danger",
-    confirmText: "Delete",
+    confirmText: t("common.actions.delete"),
   });
   if (!ok) return;
 
   try {
     await store.deleteSource(source.id);
   } catch (err) {
-    await alertModal.alert("Failed to delete analytics source.", { type: "danger" });
+    await alertModal.alert(t("analytics.delete.failed"), { type: "danger" });
   }
 };
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <!-- Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-5">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-9 h-9 bg-violet-50 rounded-[12px] flex items-center justify-center shrink-0">
-            <LineChart class="w-6 h-6 text-violet-600" />
-          </div>
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-base font-bold">Analytics</h3>
-            <p class="text-brand-light text-xs font-normal">
-              Website traffic and behavior across every tracked site, grouped by category
-            </p>
-          </div>
-        </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('analytics.title')" :subtitle="$t('analytics.subtitle')">
+      <template #actions>
+        <UiButton v-if="can('analytics-create')" :icon="Plus" @click="openAdd">{{ $t("analytics.addSource") }}</UiButton>
+      </template>
+    </UiPageHeader>
 
-        <div v-if="can('analytics-create')" class="flex items-center gap-3.5">
-          <button
-            type="button"
-            @click="openAdd"
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center justify-center gap-1.5 w-full sm:w-auto"
-          >
-            <Plus class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">Add Source</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="relative">
-        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-          <Search class="h-5 w-5 text-gray-400" />
-        </div>
-        <input
-          type="text"
-          v-model="search"
-          class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-          placeholder="Search by source name, category, or website..."
-        />
-      </div>
+    <div class="grid grid-cols-2 gap-3 ui-stagger">
+      <UiStat :label="$t('analytics.stats.sources')" :value="totalSources" :icon="LineChart" :loading="loading" />
+      <UiStat :label="$t('analytics.stats.categories')" :value="categories.length" :icon="Layers" :loading="loading" />
     </div>
 
     <Alert type="success" :title="success" :show="!!success" @close="store.clearMessages()" />
     <Alert type="error" :title="typeof error === 'string' ? error : ''" :show="!!error && typeof error === 'string'" @close="store.clearMessages()" />
 
+    <!-- Toolbar -->
+    <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 sm:px-5 py-3.5">
+      <UiInput v-model="search" :icon="Search" :placeholder="$t('analytics.search')" class="w-full md:max-w-[420px]" />
+    </div>
+
     <!-- Loading -->
     <div v-if="loading" class="space-y-5">
-      <div v-for="i in 2" :key="i" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
+      <div v-for="i in 2" :key="i" class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5">
         <Skeleton width="240px" height="20px" class="mb-4" />
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div v-for="j in 2" :key="j" class="border border-[#DCDEDD] rounded-[12px] overflow-hidden">
-            <div class="flex items-center gap-2.5 p-3.5 bg-slate-50 border-b border-[#DCDEDD]">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div v-for="j in 2" :key="j" class="border border-ui-line rounded-ui-card overflow-hidden">
+            <div class="flex items-center gap-2.5 p-3.5 border-b border-ui-line">
               <Skeleton width="32px" height="32px" rounded="8px" />
               <div class="flex-1 min-w-0">
                 <Skeleton width="140px" height="14px" class="mb-1.5" />
@@ -184,66 +167,55 @@ const handleDelete = async (source) => {
     </div>
 
     <!-- Empty state -->
-    <div
-      v-else-if="totalSources === 0"
-      class="flex flex-col items-center justify-center text-center py-16 rounded-[14px] border border-dashed border-[#DCDEDD] bg-gray-50/60"
-    >
-      <template v-if="search">
-        <SearchX class="w-10 h-10 text-gray-300 mb-3" />
-        <h4 class="text-brand-dark text-sm font-semibold mb-1">No sources match your search</h4>
-        <p class="text-brand-light text-xs">Try a different name, category, or website</p>
-      </template>
-      <template v-else>
-        <FolderOpen class="w-10 h-10 text-gray-300 mb-3" />
-        <h4 class="text-brand-dark text-sm font-semibold mb-1">No analytics sources yet</h4>
-        <p class="text-brand-light text-xs mb-4">
-          Add a PostHog, Google Analytics 4, or Search Console embed to start monitoring a website here.
-        </p>
-        <button
-          v-if="can('analytics-create')"
-          type="button"
-          @click="openAdd"
-          class="px-4 py-2.5 rounded-[8px] border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:border-[#0C51D9] hover:bg-white transition-colors duration-200"
-        >
-          Add your first source
-        </button>
-      </template>
+    <div v-else-if="totalSources === 0" class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty v-if="search" :icon="SearchX" :title="$t('analytics.empty.noMatch')" :message="$t('analytics.empty.noMatchHint')" />
+      <UiEmpty
+        v-else
+        :icon="FolderOpen"
+        :title="$t('analytics.empty.title')"
+        :message="$t('analytics.empty.message')"
+      >
+        <UiButton v-if="can('analytics-create')" variant="secondary" :icon="Plus" @click="openAdd">{{ $t("analytics.empty.addFirst") }}</UiButton>
+      </UiEmpty>
     </div>
 
     <!-- Categories -->
     <div v-else class="space-y-5">
-      <div
+      <section
         v-for="group in categories"
         :key="group.category"
-        class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5"
+        class="bg-ui-surface border border-ui-line rounded-ui-card p-3 sm:p-5 ui-anim-fade-up"
       >
-        <h3 class="text-brand-dark text-base font-bold mb-4">{{ group.category }}</h3>
+        <div class="flex items-center gap-2 mb-4">
+          <h2 class="text-ui-h2 text-ui-ink min-w-0 truncate">{{ group.category }}</h2>
+          <span class="text-ui-cap text-ui-faint tabular-nums shrink-0">{{ group.sources.length }}</span>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <article
             v-for="source in group.sources"
             :key="source.id"
-            class="border border-[#DCDEDD] rounded-[12px] overflow-hidden"
+            class="border border-ui-line rounded-ui-card overflow-hidden min-w-0"
           >
-            <div class="flex items-center justify-between gap-3 p-3.5 bg-slate-50 border-b border-[#DCDEDD]">
+            <div class="flex items-center justify-between gap-3 px-3.5 py-3 border-b border-ui-line">
               <div class="flex items-center gap-2.5 min-w-0">
                 <div
-                  class="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
-                  :class="TYPE_ICON_BG[source.type] || 'bg-gray-100 text-gray-600'"
+                  class="w-8 h-8 rounded-ui-control flex items-center justify-center shrink-0"
+                  :class="TYPE_ICON_BG[source.type] || 'bg-ui-subtle text-ui-muted'"
                 >
                   <LineChart class="w-4 h-4" />
                 </div>
                 <div class="min-w-0">
-                  <p class="text-brand-dark text-sm font-semibold truncate">{{ source.name }}</p>
-                  <div class="flex items-center gap-1.5 text-xs text-brand-light">
-                    <span>{{ source.type_label }}</span>
+                  <p class="text-ui-h3 text-ui-ink truncate">{{ source.name }}</p>
+                  <div class="flex items-center gap-1.5 text-ui-cap text-ui-muted min-w-0">
+                    <span class="shrink-0">{{ source.type_label }}</span>
                     <template v-if="source.website_url">
-                      <span>&middot;</span>
+                      <span class="shrink-0">&middot;</span>
                       <a
                         :href="source.website_url"
                         target="_blank"
                         rel="noopener"
-                        class="inline-flex items-center gap-1 hover:text-[#0C51D9] hover:underline truncate"
+                        class="inline-flex items-center gap-1 min-w-0 text-ui-accent hover:underline"
                       >
                         <Globe class="w-3 h-3 shrink-0" />
                         <span class="truncate">{{ source.website_url }}</span>
@@ -253,33 +225,22 @@ const handleDelete = async (source) => {
                 </div>
               </div>
 
-              <div class="flex items-center gap-1.5 shrink-0">
-                <a
-                  :href="source.embed_url"
-                  target="_blank"
-                  rel="noopener"
-                  title="Open in new tab"
-                  class="w-8 h-8 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:bg-white transition-all duration-300"
-                >
-                  <ExternalLink class="w-3.5 h-3.5 text-gray-600" />
+              <div class="flex items-center gap-0.5 shrink-0">
+                <a :href="source.embed_url" target="_blank" rel="noopener" :title="$t('analytics.openInNewTab')" :aria-label="$t('analytics.openInNewTab')" :class="ICON_BTN">
+                  <ExternalLink class="w-4 h-4" />
                 </a>
-                <button
-                  v-if="can('analytics-edit')"
-                  type="button"
-                  @click="openEdit(source)"
-                  title="Edit"
-                  class="w-8 h-8 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:bg-white transition-all duration-300"
-                >
-                  <Edit class="w-3.5 h-3.5 text-gray-600" />
+                <button v-if="can('analytics-edit')" type="button" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" :class="ICON_BTN" @click="openEdit(source)">
+                  <Edit class="w-4 h-4" />
                 </button>
                 <button
                   v-if="can('analytics-delete')"
                   type="button"
+                  :title="$t('common.actions.delete')"
+                  :aria-label="$t('common.actions.delete')"
+                  :class="[ICON_BTN, 'hover:!text-ui-bad hover:!bg-ui-bad-soft']"
                   @click="handleDelete(source)"
-                  title="Delete"
-                  class="w-8 h-8 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-red-400 hover:bg-red-50 group/delete transition-all duration-300"
                 >
-                  <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
+                  <Trash2 class="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -292,12 +253,14 @@ const handleDelete = async (source) => {
             <button
               v-if="!isLoaded(source.id)"
               type="button"
+              class="flex flex-col items-center justify-center gap-2 w-full h-[520px] sm:h-[620px] lg:h-[720px] bg-ui-subtle hover:bg-ui-hover transition-colors text-ui-muted hover:text-ui-accent"
               @click="loadSource(source.id)"
-              class="flex flex-col items-center justify-center gap-2 w-full h-[520px] sm:h-[620px] lg:h-[720px] bg-slate-50 hover:bg-slate-100 transition-colors duration-200 text-gray-500 hover:text-[#0C51D9]"
             >
-              <PlayCircle class="w-8 h-8" />
-              <span class="text-sm font-semibold">Click to load {{ source.type_label }}</span>
-              <span class="text-xs text-gray-400">Loads the embed on demand to save bandwidth</span>
+              <span class="w-12 h-12 rounded-full bg-ui-surface border border-ui-line flex items-center justify-center">
+                <PlayCircle class="w-6 h-6" />
+              </span>
+              <span class="text-ui-small font-medium text-ui-ink">{{ $t("analytics.clickToLoad", { type: source.type_label }) }}</span>
+              <span class="text-ui-cap text-ui-faint">{{ $t("analytics.clickToLoadHint") }}</span>
             </button>
 
             <!-- No padding on the iframe itself: it shrinks the embedded
@@ -315,11 +278,11 @@ const handleDelete = async (source) => {
               allowfullscreen
               sandbox="allow-scripts allow-same-origin allow-popups"
               :title="source.name"
-              class="block w-full h-[520px] sm:h-[620px] lg:h-[720px] border-none bg-white"
+              class="block w-full h-[520px] sm:h-[620px] lg:h-[720px] border-none bg-ui-surface"
             ></iframe>
-          </div>
+          </article>
         </div>
-      </div>
+      </section>
     </div>
 
     <AnalyticsSourceFormModal

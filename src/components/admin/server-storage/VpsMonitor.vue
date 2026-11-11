@@ -1,14 +1,14 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { usePolling } from "@/composables/usePolling";
+import { useListState } from "@/composables/useListState";
 import { storeToRefs } from "pinia";
 import {
   Server,
   Plus,
   RefreshCw,
-  X,
   Copy,
   Check,
-  Loader2,
   Terminal,
   Pencil,
   Trash2,
@@ -18,26 +18,32 @@ import {
   Cpu,
   ChevronRight,
   Globe,
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  X,
 } from "lucide-vue-next";
+import { UiStat, UiButton, UiBadge, UiModal, UiAlert, UiEmpty, UiSpinner, UiDrawer } from "@/components/ui";
 import VpsReportDetails from "@/components/admin/server-storage/VpsReportDetails.vue";
 import { useServerMonitorStore } from "@/stores/serverMonitor";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
-import { formatBytes, usageLevel, STATUS, timeAgo, sslState, copyText } from "@/utils/serverMetrics";
+import { formatBytes, STATUS, timeAgo, sslState, copyText } from "@/utils/serverMetrics";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const store = useServerMonitorStore();
 const alertModal = useAlertModalStore();
 const { servers, loading, loaded, error } = storeToRefs(store);
 const canManage = computed(() => can("server-storage-manage"));
 
-// Agents report every 5 minutes; refresh the cards every minute while open.
-let timer;
-onMounted(() => {
-  store.fetchServers();
-  timer = setInterval(() => store.fetchServers({ silent: true }), 60000);
-});
-onBeforeUnmount(() => clearInterval(timer));
+// Agents report every 5 minutes; refresh the cards every minute while the
+// page is open and the browser tab visible (a missed tick runs on return).
+// A revisit shows the list the store already has and refreshes it quietly.
+onMounted(() => store.fetchServers({ silent: loaded.value }));
+usePolling(() => store.fetchServers({ silent: true }), 60000);
 
 // Re-render "x menit lalu" labels between refreshes.
 const now = ref(Date.now());
@@ -49,16 +55,36 @@ const ago = (value) => (now.value, timeAgo(value));
 const sslWarnings = (server) => (server.report?.sites || []).filter((site) => site.ssl && sslState(site).days < 14).length;
 const siteCount = (server) => (server.report?.sites || []).filter((site) => !site.unlinked).length;
 
+const needsAttention = (s) =>
+  s.status === "offline" ||
+  (s.report && (s.report.disk?.used_percent >= 90 || s.report.memory?.used_percent >= 90)) ||
+  sslWarnings(s) > 0;
+
 const summary = computed(() => ({
   total: servers.value.length,
   online: servers.value.filter((s) => s.status === "online").length,
-  attention: servers.value.filter(
-    (s) =>
-      s.status === "offline" ||
-      (s.report && (s.report.disk.used_percent >= 90 || s.report.memory.used_percent >= 90)) ||
-      sslWarnings(s) > 0
-  ).length,
+  attention: servers.value.filter(needsAttention).length,
 }));
+
+// Filter from the summary tiles (in the URL + remembered): "" | attention | online.
+const list = useListState("servers", { show: "" });
+const toggleShow = (value) => (list.show = list.show === value ? "" : value);
+
+// Attention first (offline, then the fullest disk/RAM), then by name.
+const severity = (s) => {
+  if (s.status === "offline") return 3;
+  const peak = Math.max(s.report?.disk?.used_percent ?? 0, s.report?.memory?.used_percent ?? 0);
+  if (peak >= 90) return 2 + peak / 1000;
+  if (sslWarnings(s) > 0) return 1.5;
+  if (s.status === "pending" || !s.report) return 1;
+  return 0;
+};
+const visibleServers = computed(() =>
+  servers.value
+    .filter((s) => (list.show === "attention" ? needsAttention(s) : list.show === "online" ? s.status === "online" : true))
+    .slice()
+    .sort((a, b) => severity(b) - severity(a) || String(a.name).localeCompare(String(b.name)))
+);
 
 const cpuPercent = (server) => server.report?.cpu?.usage_percent ?? null;
 
@@ -90,7 +116,6 @@ const submitForm = async () => {
   try {
     if (editing.value) {
       await store.updateServer(editing.value.id, payload);
-      if (detail.value?.id === editing.value.id) detail.value = servers.value.find((s) => s.id === editing.value.id);
     } else {
       const result = await store.addServer(payload);
       showInstall(result, false);
@@ -98,7 +123,7 @@ const submitForm = async () => {
     formOpen.value = false;
   } catch (e) {
     if (e?.response?.status === 422) formErrors.value = e.response.data.errors ?? {};
-    else await alertModal.alert(errorMessage(e, "VPS gagal disimpan."), { type: "danger" });
+    else await alertModal.alert(errorMessage(e, t("servers.errors.save")), { type: "danger" });
   } finally {
     saving.value = false;
   }
@@ -118,298 +143,321 @@ const copy = async (text, key) => {
 
 const regenerate = async (server) => {
   const ok = await alertModal.confirm(
-    `Buat token baru untuk "${server.name}"? Token lama langsung berhenti berlaku, jadi agen di VPS ini harus dipasang ulang dengan perintah baru.`,
-    { type: "warning", confirmText: "Buat token baru" }
+    t("servers.confirm.regenerate", { name: server.name }),
+    { type: "warning", confirmText: t("servers.actions.regenerate") }
   );
   if (!ok) return;
   try {
     showInstall(await store.regenerateToken(server.id), true);
   } catch (e) {
-    await alertModal.alert(errorMessage(e, "Token gagal dibuat ulang."), { type: "danger" });
+    await alertModal.alert(errorMessage(e, t("servers.errors.regenerate")), { type: "danger" });
   }
 };
 
 const remove = async (server) => {
   const ok = await alertModal.confirm(
-    `Hapus "${server.name}" dari pemantauan? Laporan dari VPS ini tidak akan diterima lagi. Untuk membersihkan agen di VPS, jalankan: sudo /usr/local/bin/hris-server-agent --uninstall`,
-    { type: "danger", confirmText: "Hapus" }
+    t("servers.confirm.remove", { name: server.name, command: "sudo /usr/local/bin/hris-server-agent --uninstall" }),
+    { type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
   try {
     await store.removeServer(server.id);
-    detail.value = null;
+    if (detailId.value === server.id) detailId.value = null;
   } catch (e) {
-    await alertModal.alert(errorMessage(e, "VPS gagal dihapus."), { type: "danger" });
+    await alertModal.alert(errorMessage(e, t("servers.errors.remove")), { type: "danger" });
   }
 };
 
+// ===== Presentation helpers (tokens) =====
+const STATUS_TONE = { online: "ok", offline: "bad", pending: "warn" };
+// Same thresholds as usageLevel() in utils/serverMetrics: 90%+ critical,
+// 75-90% attention, below that fine; no value -> neutral.
+const usageTone = (pct) => (pct === null || pct === undefined ? "neutral" : pct >= 90 ? "bad" : pct >= 75 ? "warn" : "ok");
+const TONE_BAR = { ok: "bg-ui-ok", warn: "bg-ui-warn", bad: "bg-ui-bad", neutral: "bg-ui-faint" };
+const TONE_TEXT = { ok: "text-ui-ink", warn: "text-ui-warn", bad: "text-ui-bad", neutral: "text-ui-muted" };
+const field =
+  "w-full bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control px-3 transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
+
 // ===== Detail =====
-const detail = ref(null);
-const openDetail = (server) => (detail.value = server);
+// Keep only the id: the drawer always shows the store's current server, so
+// polling and edits update an open detail too.
+const detailId = ref(null);
+const detail = computed(() => servers.value.find((s) => s.id === detailId.value) || null);
+const detailOpen = computed({
+  get: () => !!detail.value,
+  set: (v) => {
+    if (!v) detailId.value = null;
+  },
+});
+const openDetail = (server) => (detailId.value = server.id);
+const detailIndex = computed(() => visibleServers.value.findIndex((s) => s.id === detailId.value));
+const step = (delta) => {
+  const next = visibleServers.value[detailIndex.value + delta];
+  if (next) detailId.value = next.id;
+};
 </script>
 
 <template>
-  <div>
-    <!-- Toolbar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-      <div class="flex flex-wrap items-center gap-2 text-sm">
-        <span class="px-2.5 py-1 rounded-lg bg-white border border-[#DCDEDD] text-brand-dark"><strong>{{ summary.total }}</strong> VPS</span>
-        <span class="px-2.5 py-1 rounded-lg bg-green-50 text-green-700"><strong>{{ summary.online }}</strong> online</span>
-        <span v-if="summary.attention" class="px-2.5 py-1 rounded-lg bg-red-50 text-red-600"><strong>{{ summary.attention }}</strong> perlu perhatian</span>
-      </div>
-      <div class="grid grid-cols-2 sm:flex gap-2">
-        <button
-          type="button"
-          class="rounded-[8px] border border-[#DCDEDD] bg-white hover:border-[#0C51D9] px-3.5 py-2 flex items-center justify-center gap-1.5 disabled:opacity-50"
-          :disabled="loading"
-          @click="store.fetchServers()"
-        >
-          <RefreshCw class="w-4 h-4 text-brand-dark" :class="{ 'animate-spin': loading }" />
-          <span class="text-brand-dark text-sm font-semibold">Refresh</span>
-        </button>
-        <button
-          v-if="canManage"
-          type="button"
-          class="btn-primary rounded-[8px] border border-[#2151A0] blue-gradient blue-btn-shadow px-3.5 py-2 flex items-center justify-center gap-1.5"
-          @click="openAdd"
-        >
-          <Plus class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Tambah VPS</span>
-        </button>
-      </div>
+  <div class="space-y-5">
+    <!-- Summary -->
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 ui-stagger">
+      <UiStat label="VPS" :value="summary.total" :icon="Server" :loading="loading && !loaded" :selectable="!!list.show" @select="list.show = ''" />
+      <UiStat
+        :label="$t('servers.status.online')"
+        :value="summary.online"
+        :icon="Activity"
+        tone="ok"
+        :loading="loading && !loaded"
+        selectable
+        :active="list.show === 'online'"
+        @select="toggleShow('online')"
+      />
+      <UiStat
+        class="col-span-2 lg:col-span-1"
+        :label="$t('servers.stats.attention')"
+        :value="summary.attention"
+        :icon="AlertTriangle"
+        :tone="summary.attention ? 'bad' : ''"
+        :hint="list.show === 'attention' ? $t('servers.filter.showingAttention') : summary.attention ? $t('servers.filter.tapToFilter') : ''"
+        :loading="loading && !loaded"
+        selectable
+        :active="list.show === 'attention'"
+        @select="toggleShow('attention')"
+      />
     </div>
 
-    <div v-if="error" class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-[12px] p-3.5 mb-4">{{ error }}</div>
-
-    <div v-if="loading && !loaded" class="py-16 flex justify-center"><Loader2 class="w-6 h-6 text-[#0C51D9] animate-spin" /></div>
-
-    <!-- Empty -->
-    <div v-else-if="loaded && servers.length === 0" class="bg-white border border-dashed border-[#DCDEDD] rounded-[14px] p-10 text-center">
-      <Server class="w-10 h-10 text-gray-300 mx-auto mb-2.5" />
-      <p class="text-brand-dark text-sm font-semibold">Belum ada VPS yang dipantau</p>
-      <p class="text-brand-light text-xs mt-1 max-w-md mx-auto">
-        Tambahkan VPS, lalu jalankan perintah instalasi yang diberikan di VPS tersebut. Agen akan melaporkan disk, RAM, dan CPU setiap 5 menit.
-      </p>
-      <button v-if="canManage" type="button" class="mt-4 text-sm font-semibold text-[#0C51D9] hover:underline" @click="openAdd">+ Tambah VPS pertama</button>
-    </div>
-
-    <!-- Cards -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      <button
-        v-for="server in servers"
-        :key="server.id"
-        type="button"
-        class="text-left bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-4 hover:border-[#0C51D9] hover:shadow-sm transition-all min-w-0"
-        @click="openDetail(server)"
-      >
-        <div class="flex items-start justify-between gap-2 mb-3">
-          <div class="min-w-0">
-            <p class="text-brand-dark text-base font-bold truncate">{{ server.name }}</p>
-            <p class="text-brand-light text-xs truncate">{{ server.ip_address || "IP belum diisi" }}</p>
-            <p v-if="server.report?.os" class="text-brand-light text-xs truncate">{{ server.report.os }}</p>
-          </div>
-          <span class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1" :class="STATUS[server.status].class">
-            <span class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: STATUS[server.status].dot }"></span>
-            {{ STATUS[server.status].label }}
-          </span>
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+      <!-- Toolbar -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 px-4 sm:px-5 py-3.5 border-b border-ui-line">
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <h3 class="text-ui-h3 text-ui-ink">VPS</h3>
+          <UiBadge tone="neutral">{{ summary.total }}</UiBadge>
+          <UiBadge tone="ok" dot>{{ $t("servers.toolbar.online", { n: summary.online }) }}</UiBadge>
+          <UiBadge v-if="summary.attention" tone="bad" dot>{{ $t("servers.toolbar.attention", { n: summary.attention }) }}</UiBadge>
+          <button
+            v-if="list.show"
+            type="button"
+            class="ui-press inline-flex items-center gap-1 h-6 px-2 rounded-full border border-ui-accent text-ui-cap font-medium text-ui-accent hover:bg-ui-hover"
+            @click="list.show = ''"
+          >
+            {{ list.show === "attention" ? $t("servers.filter.attention") : $t("servers.status.online") }}
+            <X class="w-3 h-3" aria-hidden="true" /><span class="sr-only">{{ $t("servers.filter.clear") }}</span>
+          </button>
         </div>
+        <div class="grid grid-cols-2 sm:flex gap-2">
+          <UiButton variant="secondary" :icon="RefreshCw" :loading="loading" @click="store.fetchServers()">{{ $t("common.actions.refresh") }}</UiButton>
+          <UiButton v-if="canManage" :icon="Plus" @click="openAdd">{{ $t("servers.add") }}</UiButton>
+        </div>
+      </div>
 
-        <template v-if="server.report">
-          <div class="space-y-2.5">
-            <div v-for="m in [
-              { key: 'disk', label: 'Disk', icon: HardDrive, pct: server.report.disk.used_percent, text: `${formatBytes(server.report.disk.used)} / ${formatBytes(server.report.disk.total)}` },
-              { key: 'ram', label: 'RAM', icon: MemoryStick, pct: server.report.memory.used_percent, text: `${formatBytes(server.report.memory.used)} / ${formatBytes(server.report.memory.total)}` },
-              { key: 'cpu', label: 'CPU', icon: Cpu, pct: cpuPercent(server), text: `${server.report.cpu.cores} core · load ${server.report.cpu.load1}` },
-            ]" :key="m.key">
-              <div class="flex items-center justify-between text-xs mb-1">
-                <span class="inline-flex items-center gap-1 text-brand-light font-medium"><component :is="m.icon" class="w-3.5 h-3.5" /> {{ m.label }}</span>
-                <span class="text-brand-light">{{ m.text }} · <strong :class="usageLevel(m.pct).text">{{ m.pct ?? "-" }}%</strong></span>
+      <div class="p-4 sm:p-5">
+        <UiAlert v-if="error" tone="bad" :title="error" class="mb-4" />
+
+        <UiSpinner v-if="loading && !loaded" />
+
+        <!-- Empty -->
+        <UiEmpty
+          v-else-if="loaded && servers.length === 0"
+          :icon="Server"
+:title="$t('servers.empty.title')"
+          :message="$t('servers.empty.message')"
+        >
+          <UiButton v-if="canManage" variant="secondary" :icon="Plus" @click="openAdd">{{ $t("servers.empty.addFirst") }}</UiButton>
+        </UiEmpty>
+
+        <!-- Filter matches nothing -->
+        <UiEmpty
+          v-else-if="loaded && visibleServers.length === 0"
+          compact
+          :icon="list.show === 'attention' ? CheckCircle2 : Server"
+          :title="list.show === 'attention' ? $t('servers.filter.noneNeedAttention') : $t('servers.filter.noneMatch')"
+        >
+          <UiButton variant="secondary" size="sm" @click="list.show = ''">{{ $t("servers.filter.showAll") }}</UiButton>
+        </UiEmpty>
+
+        <!-- Cards (attention first) -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 ui-stagger">
+          <button
+            v-for="server in visibleServers"
+            :key="server.id"
+            type="button"
+            class="ui-lift flex flex-col text-left bg-ui-surface border rounded-ui-card p-4 hover:border-ui-line-strong focus:outline-none focus-visible:shadow-ui-focus min-w-0"
+            :class="needsAttention(server) ? 'border-ui-bad/40' : 'border-ui-line'"
+            @click="openDetail(server)"
+          >
+            <div class="w-full flex items-start justify-between gap-2 mb-3.5">
+              <div class="min-w-0">
+                <p class="text-ui-h3 text-ui-ink truncate">{{ server.name }}</p>
+                <p class="font-mono text-ui-cap text-ui-muted truncate mt-0.5">{{ server.ip_address || $t("servers.noIp") }}</p>
+                <p v-if="server.report?.os" class="text-ui-cap text-ui-muted truncate">{{ server.report.os }}</p>
               </div>
-              <div class="w-full bg-gray-100 rounded-full overflow-hidden" style="height: 7px">
-                <div class="h-full rounded-full" :style="{ width: `${Math.min(m.pct || 0, 100)}%`, backgroundColor: usageLevel(m.pct).color }"></div>
-              </div>
+              <UiBadge :tone="STATUS_TONE[server.status]" dot class="whitespace-nowrap">{{ STATUS[server.status].label }}</UiBadge>
             </div>
-          </div>
-        </template>
-        <p v-else class="text-xs text-brand-light bg-amber-50/60 rounded-lg p-2.5">
-          Belum ada laporan. Jalankan perintah instalasi agen di VPS ini.
-        </p>
 
-        <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-[#F1F1F1] text-xs text-brand-light">
-          <span>
-            Laporan terakhir: {{ ago(server.last_report_at) }}
-            <template v-if="server.report?.sites"> · <Globe class="w-3 h-3 inline -mt-0.5" /> {{ siteCount(server) }} website</template>
-            <span v-if="sslWarnings(server)" class="text-red-600 font-semibold"> · {{ sslWarnings(server) }} SSL hampir habis</span>
-          </span>
-          <ChevronRight class="w-4 h-4 shrink-0" />
+            <template v-if="server.report">
+              <div class="w-full space-y-2.5 mb-3.5">
+                <div v-for="m in [
+                  { key: 'disk', label: 'Disk', icon: HardDrive, pct: server.report.disk.used_percent, text: `${formatBytes(server.report.disk.used)} / ${formatBytes(server.report.disk.total)}` },
+                  { key: 'ram', label: 'RAM', icon: MemoryStick, pct: server.report.memory.used_percent, text: `${formatBytes(server.report.memory.used)} / ${formatBytes(server.report.memory.total)}` },
+                  { key: 'cpu', label: 'CPU', icon: Cpu, pct: cpuPercent(server), text: $t('servers.metrics.coresLoad', { cores: server.report.cpu.cores, load: server.report.cpu.load1 }) },
+                ]" :key="m.key">
+                  <div class="flex items-center justify-between gap-2 text-ui-cap mb-1">
+                    <span class="inline-flex items-center gap-1 text-ui-muted font-medium"><component :is="m.icon" class="w-3.5 h-3.5" /> {{ m.label }}</span>
+                    <span class="text-ui-muted tabular-nums truncate">{{ m.text }} · <strong class="font-semibold" :class="TONE_TEXT[usageTone(m.pct)]">{{ m.pct ?? "-" }}%</strong></span>
+                  </div>
+                  <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
+                    <div class="h-full rounded-full" :class="TONE_BAR[usageTone(m.pct)]" :style="{ width: `${Math.min(m.pct || 0, 100)}%` }"></div>
+                  </div>
+                </div>
+              </div>
+            </template>
+            <p v-else class="mb-3.5 text-ui-cap text-ui-warn bg-ui-warn-soft rounded-ui-control p-2.5">
+              {{ $t("servers.card.noReport") }}
+            </p>
+
+            <div class="w-full flex items-center justify-between gap-2 mt-auto pt-3 border-t border-ui-line text-ui-cap text-ui-muted">
+              <span>
+                {{ $t("servers.card.lastReport", { time: ago(server.last_report_at) }) }}
+                <template v-if="server.report?.sites"> · <Globe class="w-3 h-3 inline -mt-0.5" /> {{ $t("servers.card.websites", { n: siteCount(server) }, siteCount(server)) }}</template>
+                <span v-if="sslWarnings(server)" class="text-ui-bad font-medium"> · {{ $t("servers.card.sslExpiring", { n: sslWarnings(server) }) }}</span>
+              </span>
+              <ChevronRight class="w-4 h-4 shrink-0 text-ui-faint" />
+            </div>
+          </button>
         </div>
-      </button>
-    </div>
+      </div>
+    </section>
 
     <!-- Add / edit modal -->
-    <div v-if="formOpen" class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[95] flex items-center justify-center p-3.5" @click.self="formOpen = false">
-      <form class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-md overflow-hidden" @submit.prevent="submitForm">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-brand-dark text-base font-bold">{{ editing ? "Ubah VPS" : "Tambah VPS" }}</h3>
-          <button type="button" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100" @click="formOpen = false"><X class="w-5 h-5" /></button>
+    <UiModal v-model:open="formOpen" :title="editing ? $t('servers.edit') : $t('servers.add')" size="sm" :z-index="120">
+      <form id="vps-form" class="space-y-4" @submit.prevent="submitForm">
+        <div>
+          <label for="vps-name" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("servers.form.name") }} <span class="text-ui-bad">*</span></label>
+          <input id="vps-name" v-model="form.name" :class="[field, 'h-[38px]']" maxlength="100" :placeholder="$t('servers.form.namePlaceholder')" required />
+          <p v-if="formErrors.name" class="text-ui-bad text-ui-cap mt-1.5">{{ formErrors.name[0] }}</p>
         </div>
-        <div class="p-5 space-y-3.5">
-          <div>
-            <label class="vm-label">Nama VPS <span class="text-red-500">*</span></label>
-            <input v-model="form.name" class="vm-input" maxlength="100" placeholder="cth. VPS Produksi HRIS" required />
-            <p v-if="formErrors.name" class="text-red-500 text-xs mt-1">{{ formErrors.name[0] }}</p>
-          </div>
-          <div>
-            <label class="vm-label">IP Address</label>
-            <input v-model="form.ip_address" class="vm-input" maxlength="64" placeholder="cth. 103.10.20.30" />
-          </div>
-          <div>
-            <label class="vm-label">Keterangan</label>
-            <textarea v-model="form.description" class="vm-input" rows="2" maxlength="500" placeholder="cth. Hosting website klien, provider IDCloudHost"></textarea>
-          </div>
-          <p v-if="!editing" class="text-xs text-brand-light">Setelah disimpan, Anda akan mendapat perintah instalasi agen untuk dijalankan di VPS ini.</p>
+        <div>
+          <label for="vps-ip" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("servers.form.ip") }}</label>
+          <input id="vps-ip" v-model="form.ip_address" :class="[field, 'h-[38px] font-mono text-ui-small']" maxlength="64" :placeholder="$t('servers.form.ipPlaceholder')" />
         </div>
-        <div class="p-5 border-t border-[#DCDEDD] flex justify-end gap-2.5">
-          <button type="button" class="rounded-[8px] border border-[#DCDEDD] px-4 py-2 text-sm font-semibold text-brand-dark hover:bg-gray-50" @click="formOpen = false">Batal</button>
-          <button type="submit" :disabled="saving" class="btn-primary rounded-[8px] border border-[#2151A0] blue-gradient blue-btn-shadow px-4 py-2 flex items-center gap-1.5 disabled:opacity-60">
-            <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
-            <span class="text-brand-white text-sm font-semibold">{{ editing ? "Simpan" : "Simpan & Lihat Perintah" }}</span>
-          </button>
+        <div>
+          <label for="vps-desc" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("servers.form.description") }}</label>
+          <textarea id="vps-desc" v-model="form.description" :class="[field, 'py-2.5 resize-y']" rows="2" maxlength="500" :placeholder="$t('servers.form.descriptionPlaceholder')"></textarea>
         </div>
+        <p v-if="!editing" class="text-ui-cap text-ui-muted">{{ $t("servers.form.afterSaveHint") }}</p>
       </form>
-    </div>
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="formOpen = false">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="vps-form" class="flex-1 sm:flex-none" :loading="saving">{{ editing ? $t("common.actions.save") : $t("servers.form.saveAndShow") }}</UiButton>
+      </template>
+    </UiModal>
 
-    <!-- Install command modal -->
-    <div v-if="install" class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[95] flex items-center justify-center p-3.5">
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Pasang Agen di {{ install.server.name }}</h3>
-            <p class="text-brand-light text-sm">{{ install.regenerated ? "Token baru dibuat. Pasang ulang agen dengan perintah di bawah." : "VPS ditambahkan. Pasang agen dengan perintah di bawah." }}</p>
-          </div>
-          <button type="button" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100" @click="install = null"><X class="w-5 h-5" /></button>
-        </div>
-        <div class="p-5 space-y-4 overflow-y-auto text-sm text-brand-dark">
-          <ol class="space-y-1.5 list-decimal pl-5">
-            <li>Masuk ke VPS lewat SSH dengan user yang punya akses <code>sudo</code>.</li>
-            <li>Salin dan jalankan perintah berikut (sekali saja):</li>
-          </ol>
-          <div class="relative">
-            <pre class="bg-slate-900 text-slate-100 text-xs rounded-[10px] p-3.5 pr-24 whitespace-pre-wrap break-all">{{ install.install_command }}</pre>
-            <button type="button" class="absolute top-2 right-2 rounded-md bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-2.5 py-1.5 inline-flex items-center gap-1" @click="copy(install.install_command, 'install')">
-              <Check v-if="copied === 'install'" class="w-3.5 h-3.5" /><Copy v-else class="w-3.5 h-3.5" />
-              {{ copied === "install" ? "Tersalin" : "Salin" }}
-            </button>
-          </div>
-          <ol start="3" class="space-y-1.5 list-decimal pl-5">
-            <li>Tunggu sampai muncul <em>"Selesai"</em>. Laporan pertama bisa memakan 1–2 menit karena ukuran folder diukur dulu.</li>
-            <li>Kartu VPS ini akan berubah menjadi <strong>Online</strong>, lalu diperbarui otomatis setiap 5 menit.</li>
-          </ol>
-          <div class="bg-amber-50 border border-amber-200 rounded-[10px] p-3 text-xs text-amber-800">
-            Perintah ini berisi token rahasia VPS ini dan <strong>hanya ditampilkan sekali</strong>. Jangan dibagikan. Kalau hilang, gunakan
-            <strong>Buat token baru</strong> di rincian VPS.
-          </div>
-          <div class="text-xs text-brand-light">
-            Persyaratan: Ubuntu dengan <code>python3</code>, <code>curl</code>, dan <code>cron</code> (semuanya bawaan Ubuntu). Untuk mencopot agen:
-            <code class="text-brand-dark">{{ install.uninstall_command }}</code>
-          </div>
-        </div>
-        <div class="p-5 border-t border-[#DCDEDD] flex justify-end">
-          <button type="button" class="btn-primary rounded-[8px] border border-[#2151A0] blue-gradient blue-btn-shadow px-4 py-2" @click="install = null">
-            <span class="text-brand-white text-sm font-semibold">Selesai</span>
+    <!-- Install command modal (shown once: only "Selesai" closes it) -->
+    <UiModal
+      :open="!!install"
+      persistent
+      size="lg"
+      :z-index="130"
+      :title="install ? $t('servers.install.title', { name: install.server.name }) : ''"
+      :description="install ? (install.regenerated ? $t('servers.install.descRegenerated') : $t('servers.install.descAdded')) : ''"
+    >
+      <div v-if="install" class="space-y-4 text-ui-small text-ui-text">
+        <ol class="space-y-1.5 list-decimal pl-5">
+          <i18n-t keypath="servers.install.step1" tag="li" scope="global">
+            <template #sudo><code class="font-mono text-ui-cap text-ui-ink">sudo</code></template>
+          </i18n-t>
+          <li>{{ $t("servers.install.step2") }}</li>
+        </ol>
+        <div class="relative">
+          <pre class="bg-ui-ink text-white font-mono text-ui-cap rounded-ui-control p-3.5 pr-24 whitespace-pre-wrap break-all">{{ install.install_command }}</pre>
+          <button
+            type="button"
+            class="absolute top-2 right-2 rounded-[6px] bg-white/10 hover:bg-white/20 text-white text-ui-cap font-medium px-2.5 py-1.5 inline-flex items-center gap-1"
+            @click="copy(install.install_command, 'install')"
+          >
+            <Check v-if="copied === 'install'" class="w-3.5 h-3.5" /><Copy v-else class="w-3.5 h-3.5" />
+            {{ copied === "install" ? $t("common.actions.copied") : $t("common.actions.copy") }}
           </button>
         </div>
+        <ol start="3" class="space-y-1.5 list-decimal pl-5">
+          <i18n-t keypath="servers.install.step3" tag="li" scope="global">
+            <template #done><em>"{{ $t("servers.install.doneWord") }}"</em></template>
+          </i18n-t>
+          <i18n-t keypath="servers.install.step4" tag="li" scope="global">
+            <template #online><strong>{{ $t("servers.status.online") }}</strong></template>
+          </i18n-t>
+        </ol>
+        <UiAlert tone="warn">
+          <i18n-t keypath="servers.install.secretWarning" tag="span" scope="global">
+            <template #once><strong>{{ $t("servers.install.shownOnce") }}</strong></template>
+            <template #regenerate><strong>{{ $t("servers.actions.regenerate") }}</strong></template>
+          </i18n-t>
+        </UiAlert>
+        <div class="text-ui-cap text-ui-muted">
+          <i18n-t keypath="servers.install.requirements" tag="span" scope="global">
+            <template #python><code class="font-mono text-ui-ink">python3</code></template>
+            <template #curl><code class="font-mono text-ui-ink">curl</code></template>
+            <template #cron><code class="font-mono text-ui-ink">cron</code></template>
+          </i18n-t>{{ " " }}
+          <code class="font-mono text-ui-ink break-all">{{ install.uninstall_command }}</code>
+        </div>
       </div>
-    </div>
+      <template #footer>
+        <UiButton class="flex-1 sm:flex-none" @click="install = null">{{ $t("common.actions.done") }}</UiButton>
+      </template>
+    </UiModal>
 
-    <!-- Detail modal -->
-    <div v-if="detail" class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[90] flex items-center justify-center p-3.5" @click.self="detail = null">
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div class="p-4 sm:p-5 border-b border-[#DCDEDD] flex items-start justify-between gap-3">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <h3 class="text-brand-dark text-base font-bold truncate">{{ detail.name }}</h3>
-              <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="STATUS[detail.status].class">{{ STATUS[detail.status].label }}</span>
-            </div>
-            <p class="text-brand-light text-xs mt-0.5">
-              {{ detail.ip_address || "IP belum diisi" }}<template v-if="detail.report?.hostname"> · {{ detail.report.hostname }}</template>
-            </p>
-            <p v-if="detail.description" class="text-brand-light text-xs mt-1">{{ detail.description }}</p>
+    <!-- Detail drawer: follows the store, so polling/edits keep it current -->
+    <UiDrawer
+      v-model:open="detailOpen"
+      size="lg"
+      :title="detail?.name || ''"
+      :has-prev="detailIndex > 0"
+      :has-next="detailIndex > -1 && detailIndex < visibleServers.length - 1"
+      @prev="step(-1)"
+      @next="step(1)"
+    >
+      <template #header>
+        <div v-if="detail" class="min-w-0">
+          <div class="flex items-center gap-2 min-w-0">
+            <h2 class="text-ui-h2 text-ui-ink truncate">{{ detail.name }}</h2>
+            <UiBadge :tone="STATUS_TONE[detail.status]" dot class="shrink-0">{{ STATUS[detail.status].label }}</UiBadge>
           </div>
-          <button type="button" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 shrink-0" @click="detail = null"><X class="w-5 h-5" /></button>
+          <p class="text-ui-cap text-ui-muted mt-0.5">
+            <span class="font-mono">{{ detail.ip_address || $t("servers.noIp") }}</span><template v-if="detail.report?.hostname"> · <span class="font-mono">{{ detail.report.hostname }}</span></template>
+            · {{ $t("servers.card.lastReport", { time: ago(detail.last_report_at) }) }}
+          </p>
+          <p v-if="detail.description" class="text-ui-cap text-ui-muted mt-1">{{ detail.description }}</p>
         </div>
+      </template>
 
-        <div class="p-5 overflow-y-auto space-y-5">
-          <template v-if="detail.report">
-            <VpsReportDetails :server="detail" />
-          </template>
-          <div v-else class="bg-amber-50 border border-amber-200 rounded-[10px] p-4 text-sm text-amber-800">
-            VPS ini belum pernah melapor. Pasang agen dengan perintah instalasi yang diberikan saat VPS ditambahkan.
-            <template v-if="canManage"> Kalau perintahnya hilang, gunakan <strong>Buat token baru</strong> di bawah.</template>
-          </div>
-        </div>
+      <div v-if="detail" class="space-y-5">
+        <template v-if="detail.report">
+          <VpsReportDetails :server="detail" />
+        </template>
+        <UiAlert v-else tone="warn">
+          {{ $t("servers.detail.neverReported") }}
+          <template v-if="canManage"> <i18n-t keypath="servers.detail.lostCommand" tag="span" scope="global"><template #regenerate><strong>{{ $t("servers.actions.regenerate") }}</strong></template></i18n-t></template>
+        </UiAlert>
+      </div>
 
-        <div v-if="canManage" class="p-4 border-t border-[#DCDEDD] flex flex-wrap gap-2 justify-between">
+      <template v-if="canManage && detail" #footer>
+        <div class="flex flex-wrap gap-2 justify-between w-full">
           <div class="flex flex-wrap gap-2">
-            <button type="button" class="vm-btn" @click="openEdit(detail)"><Pencil class="w-4 h-4" /> Ubah</button>
-            <button type="button" class="vm-btn" @click="regenerate(detail)"><KeyRound class="w-4 h-4" /> Buat token baru</button>
-            <button type="button" class="vm-btn" @click="copy('sudo /usr/local/bin/hris-server-agent --uninstall', 'uninstall')">
-              <Check v-if="copied === 'uninstall'" class="w-4 h-4 text-green-600" /><Terminal v-else class="w-4 h-4" />
-              {{ copied === "uninstall" ? "Tersalin" : "Salin perintah copot agen" }}
-            </button>
+            <UiButton variant="secondary" size="sm" :icon="Pencil" @click="openEdit(detail)">{{ $t("common.actions.edit") }}</UiButton>
+            <UiButton variant="secondary" size="sm" :icon="KeyRound" @click="regenerate(detail)">{{ $t("servers.actions.regenerate") }}</UiButton>
+            <UiButton
+              variant="secondary"
+              size="sm"
+              :icon="copied === 'uninstall' ? Check : Terminal"
+              @click="copy('sudo /usr/local/bin/hris-server-agent --uninstall', 'uninstall')"
+            >
+              {{ copied === "uninstall" ? $t("common.actions.copied") : $t("servers.actions.copyUninstall") }}
+            </UiButton>
           </div>
-          <button type="button" class="vm-btn vm-btn--danger" @click="remove(detail)"><Trash2 class="w-4 h-4" /> Hapus</button>
+          <UiButton variant="danger" size="sm" :icon="Trash2" @click="remove(detail)">{{ $t("common.actions.delete") }}</UiButton>
         </div>
-      </div>
-    </div>
+      </template>
+    </UiDrawer>
   </div>
 </template>
-
-<style scoped>
-.vm-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 4px;
-}
-.vm-input {
-  width: 100%;
-  border: 1px solid #dcdedd;
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 14px;
-  color: #0f172a;
-  outline: none;
-}
-.vm-input:focus {
-  border-color: #0c51d9;
-}
-.vm-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid #dcdedd;
-  border-radius: 9px;
-  padding: 7px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-  background: #ffffff;
-}
-.vm-btn:hover {
-  border-color: #0c51d9;
-}
-.vm-btn--danger {
-  color: #dc2626;
-  border-color: #fecaca;
-}
-.vm-btn--danger:hover {
-  background: #fef2f2;
-  border-color: #fca5a5;
-}
-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-}
-</style>

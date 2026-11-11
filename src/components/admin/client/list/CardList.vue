@@ -2,6 +2,7 @@
 import { Mail, Phone, Star, User, Briefcase, Edit, Trash2 } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 import { useRouter } from "vue-router";
+import { UiBadge } from "@/components/ui";
 
 const router = useRouter();
 
@@ -28,66 +29,44 @@ const goToDetail = () => {
 </script>
 
 <template>
-  <!-- Client Row -->
-  <div
-    class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 hover:border-[#0C51D9] transition-all duration-300 cursor-pointer"
-    @click="goToDetail"
-  >
-    <div class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 flex-wrap mb-1.5">
-          <span v-if="number" class="text-gray-400 text-xs font-semibold shrink-0">{{ number }}.</span>
-          <h4 class="text-brand-dark text-sm font-bold truncate">{{ data?.name || "Unnamed Client" }}</h4>
-          <span
-            v-if="data?.type"
-            class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#F0FDF4] text-[#166534]"
-          >
-            {{ data.type }}
-          </span>
-          <span
-            v-if="data?.average_rating"
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF]"
-          >
-            <Star class="w-3 h-3" fill="currentColor" />
-            {{ data.average_rating }}
-          </span>
-        </div>
-        <div class="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
-          <span v-if="data?.field" class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-medium">
-            <Briefcase class="w-3 h-3" /> {{ data.field }}
-          </span>
-          <span class="inline-flex items-center gap-1">
-            <User class="w-3 h-3" /> {{ data?.pic_name || "-" }}
-          </span>
-          <span class="inline-flex items-center gap-1">
-            <Phone class="w-3 h-3" /> {{ data?.pic_phone || "-" }}
-          </span>
-          <span class="inline-flex items-center gap-1">
-            <Mail class="w-3 h-3" /> {{ data?.email || "-" }}
-          </span>
-        </div>
+  <!-- Client row card (phones): number, name, type/field, PIC, actions -->
+  <div class="flex items-start gap-3 px-4 py-3.5 cursor-pointer active:bg-ui-hover" @click.stop="goToDetail">
+    <span v-if="number" class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
+    <div class="flex-1 min-w-0">
+      <p class="text-ui-body font-medium text-ui-ink truncate">{{ data?.name || $t("clients.list.unnamed") }}</p>
+      <p class="text-ui-cap text-ui-muted mt-0.5 truncate">
+        {{ data?.pic_name || "-" }}<template v-if="data?.pic_phone"> · {{ data.pic_phone }}</template>
+      </p>
+      <p v-if="data?.email" class="text-ui-cap text-ui-faint truncate">{{ data.email }}</p>
+      <div v-if="data?.type || data?.field || data?.average_rating" class="flex flex-wrap items-center gap-1.5 mt-2">
+        <UiBadge v-if="data?.type" tone="neutral">{{ data.type }}</UiBadge>
+        <UiBadge v-if="data?.field" tone="outline">{{ data.field }}</UiBadge>
+        <UiBadge v-if="data?.average_rating" tone="warn">
+          <Star class="w-3 h-3" fill="currentColor" />{{ data.average_rating }}
+        </UiBadge>
       </div>
-
-      <div class="flex items-center gap-1.5 shrink-0" @click.stop>
-        <button
-          v-if="can('clients-edit')"
-          type="button"
-          @click="goToEdit"
-          title="Edit"
-          class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300"
-        >
-          <Edit class="w-3.5 h-3.5 text-gray-600" />
-        </button>
-        <button
-          type="button"
-          v-if="can('clients-delete')"
-          @click="emit('delete', data)"
-          class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] rounded-[8px] hover:border-red-400 hover:bg-red-50 group/delete transition-all duration-300"
-          title="Delete"
-        >
-          <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-        </button>
-      </div>
+    </div>
+    <div class="flex items-center gap-0.5 shrink-0 -mr-1.5" @click.stop>
+      <button
+        v-if="can('clients-edit')"
+        type="button"
+        :title="$t('common.actions.edit')"
+        :aria-label="$t('common.actions.edit')"
+        class="ui-press w-9 h-9 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
+        @click="goToEdit"
+      >
+        <Edit class="w-4 h-4" />
+      </button>
+      <button
+        v-if="can('clients-delete')"
+        type="button"
+        :title="$t('common.actions.delete')"
+        :aria-label="$t('common.actions.delete')"
+        class="ui-press w-9 h-9 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
+        @click="emit('delete', data)"
+      >
+        <Trash2 class="w-4 h-4" />
+      </button>
     </div>
   </div>
 </template>

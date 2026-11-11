@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Input, TextArea } from "@/components/common/form";
+import { UiInput, UiButton } from "@/components/ui";
 import {
   User,
   Mail,
@@ -56,411 +56,300 @@ const deletePhoto = () => {
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-5 items-start p-5">
-    <!-- Profile Photo Card -->
-    <div class="w-full lg:w-80">
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
-        <div class="flex items-center gap-2.5 mb-5">
-          <div
-            class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
-          >
-            <Camera class="w-6 h-6 text-purple-600" />
+  <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-5 items-start">
+    <!-- Profile Photo Card (top on small screens, right column on wide) -->
+    <section class="xl:col-start-2 xl:row-start-1 xl:sticky xl:top-0 bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 ui-anim-fade-up">
+        <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+          <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line bg-ui-surface text-ui-text flex items-center justify-center">
+            <Camera class="w-4 h-4" />
+          </span>
+          <div class="min-w-0">
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.photo.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.photo.subtitle") }}</p>
           </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Profile Photo</h3>
-            <p class="text-brand-light text-sm font-normal">Upload employee photo</p>
-          </div>
-        </div>
-
-        <div class="flex flex-col items-center">
-          <!-- Photo Placeholder -->
+        </header>
+      <div class="flex flex-row xl:flex-col items-center gap-5 xl:gap-4 xl:text-center">
+        <!-- Photo / placeholder -->
+        <div class="relative w-24 h-24 shrink-0">
           <div
             v-if="!form.profile_photo_url"
-            class="w-32 h-32 bg-gray-100 border-2 border-dashed border-[#DCDEDD] rounded-full flex items-center justify-center mb-3.5"
+            class="w-24 h-24 rounded-full bg-ui-subtle border border-dashed border-ui-line-strong flex items-center justify-center"
           >
-            <Camera class="w-7 h-7 text-gray-400" />
+            <Camera class="w-6 h-6 text-ui-faint" />
           </div>
-
-          <!-- Selected Photo Container -->
-          <div v-else class="mb-3.5">
-            <div class="relative w-32 h-32">
-              <img
-                :src="form.profile_photo_url"
-                alt="Profile"
-                class="w-32 h-32 rounded-full object-cover border-2 border-[#DCDEDD]"
-              />
-              <button
-                type="button"
-                @click="deletePhoto"
-                class="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center"
-              >
-                <X class="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-2.5 items-center">
-            <input
-              type="file"
-              accept="image/*"
-              class="hidden"
-              ref="profilePhotoInput"
-              @change="handlePhotoSelect"
+          <template v-else>
+            <img
+              :src="form.profile_photo_url"
+              :alt="$t('employees.form.photo.alt')"
+              class="w-24 h-24 rounded-full object-cover border border-ui-line"
             />
             <button
               type="button"
-              @click="profilePhotoInput?.click()"
-              class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center gap-1.5"
+              @click="deletePhoto"
+              class="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-ui-surface border border-ui-line-strong text-ui-bad hover:bg-ui-bad-soft flex items-center justify-center focus:outline-none focus-visible:shadow-ui-focus"
+              :aria-label="$t('employees.form.photo.remove')"
             >
-              <FolderOpen class="w-4 h-4 text-gray-600" />
-              <span class="text-brand-dark text-sm sm:text-sm font-semibold">Browse Photo</span>
+              <X class="w-3.5 h-3.5" />
             </button>
-            <p class="text-brand-light text-xs text-center">
-              JPG, PNG up to 2MB<br />Recommended: 400x400px
-            </p>
-          </div>
+          </template>
+        </div>
+
+        <div class="flex flex-col gap-2 items-start xl:items-center min-w-0">
+          <input
+            type="file"
+            accept="image/*"
+            class="hidden"
+            ref="profilePhotoInput"
+            @change="handlePhotoSelect"
+          />
+          <UiButton variant="secondary" :icon="FolderOpen" @click="profilePhotoInput?.click()">
+            {{ $t("employees.form.photo.browse") }}
+          </UiButton>
+          <p class="text-ui-cap text-ui-muted">
+            {{ $t("employees.form.photo.rules") }}<br />{{ $t("employees.form.photo.recommended") }}
+          </p>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Form Section -->
-    <div class="flex-1">
+    <div class="xl:col-start-1 xl:row-start-1 min-w-0 space-y-5 ui-stagger">
       <!-- Account Credentials Section -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-5">
-        <div class="flex items-center gap-2.5 mb-5">
-          <div
-            class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
-          >
-            <Lock class="w-6 h-6 text-purple-600" />
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+        <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+          <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line bg-ui-surface text-ui-text flex items-center justify-center">
+            <Lock class="w-4 h-4" />
+          </span>
+          <div class="min-w-0">
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.account.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.account.subtitle") }}</p>
           </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Account Credentials</h3>
-            <p class="text-brand-light text-sm font-normal">
-              Login information and account details
-            </p>
-          </div>
+        </header>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+          <UiInput
+            id="name"
+            name="name"
+            type="text"
+            v-model="form.name"
+            :label="$t('employees.form.fields.fullName')"
+            :placeholder="$t('employees.form.fields.fullNamePlaceholder')"
+            :icon="User"
+            :error="errors?.name?.join(', ')"
+            required
+          />
+          <UiInput
+            id="email"
+            name="email"
+            type="email"
+            v-model="form.email"
+            :label="$t('employees.form.fields.email')"
+            placeholder="employee@company.com"
+            :icon="Mail"
+            :error="errors?.email?.join(', ')"
+            required
+          />
+          <UiInput
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="new-password"
+            v-model="form.password"
+            :label="isEditing ? $t('employees.form.fields.newPassword') : $t('employees.form.fields.password')"
+            :placeholder="isEditing ? $t('employees.form.fields.passwordKeepPlaceholder') : $t('employees.form.fields.passwordPlaceholder')"
+            :icon="Lock"
+            :error="errors?.password?.join(', ')"
+            :hint="$t('employees.form.fields.passwordHint')"
+            :required="!isEditing"
+          />
+          <UiInput
+            id="password_confirmation"
+            name="password_confirmation"
+            type="password"
+            autocomplete="new-password"
+            v-model="form.password_confirmation"
+            :label="isEditing ? $t('employees.form.fields.confirmNewPassword') : $t('employees.form.fields.confirmPassword')"
+            :placeholder="$t('employees.form.fields.confirmPasswordPlaceholder')"
+            :icon="Lock"
+            :error="errors?.password_confirmation?.join(', ')"
+            :required="!isEditing"
+          />
+          <UiInput
+            id="identity_number"
+            name="identity_number"
+            type="text"
+            v-model="form.identity_number"
+            :label="$t('employees.form.fields.identityNumber')"
+            :placeholder="$t('employees.form.fields.identityNumberPlaceholder')"
+            :icon="Hash"
+            :error="errors?.identity_number?.join(', ')"
+            required
+          />
+          <UiInput
+            id="npwp"
+            name="npwp"
+            type="text"
+            v-model="form.npwp"
+            :label="$t('employees.form.fields.npwp')"
+            placeholder="00.000.000.0-000.000"
+            :icon="Hash"
+            :error="errors?.npwp?.join(', ')"
+          />
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="mb-3.5">
-            <Input
-              id="name"
-              name="name"
-              type="text"
-              v-model="form.name"
-              label="Full Name"
-              placeholder="Enter full name"
-              :error="errors?.name?.join(', ')"
-              required
-            >
-              <template #icon>
-                <User class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
-
-          <div class="mb-3.5">
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              v-model="form.email"
-              label="Email Address"
-              placeholder="employee@company.com"
-              :error="errors?.email?.join(', ')"
-              required
-            >
-              <template #icon>
-                <Mail class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
-
-          <div class="mb-3.5">
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              v-model="form.password"
-              :label="isEditing ? 'New Password (optional)' : 'Password *'"
-              :placeholder="isEditing ? 'Leave blank to keep current password' : 'Enter password'"
-              :error="errors?.password?.join(', ')"
-              :required="!isEditing"
-            >
-              <template #icon>
-                <Lock class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-            <p class="text-xs text-gray-400 mt-1">
-              Min. 8 characters, a mix of upper/lowercase letters, numbers, and symbols. Must not be a password exposed in a known data breach.
-            </p>
-          </div>
-
-          <div class="mb-3.5">
-            <Input
-              id="password_confirmation"
-              name="password_confirmation"
-              type="password"
-              v-model="form.password_confirmation"
-              :label="isEditing ? 'Confirm New Password' : 'Confirm Password *'"
-              placeholder="Confirm password"
-              :error="errors?.password_confirmation?.join(', ')"
-              :required="!isEditing"
-            >
-              <template #icon>
-                <Lock class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
-
-          <div class="mb-3.5">
-            <Input
-              id="identity_number"
-              name="identity_number"
-              type="text"
-              v-model="form.identity_number"
-              label="Identity Number (NIK/KTP)"
-              placeholder="Enter identity number"
-              :error="errors?.identity_number?.join(', ')"
-              required
-            >
-              <template #icon>
-                <Hash class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
-
-          <div class="mb-3.5">
-            <Input
-              id="npwp"
-              name="npwp"
-              type="text"
-              v-model="form.npwp"
-              label="NPWP (optional)"
-              placeholder="00.000.000.0-000.000"
-              :error="errors?.npwp?.join(', ')"
-            >
-              <template #icon>
-                <Hash class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
-        </div>
-      </div>
+      </section>
 
       <!-- Personal Information Section -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
-        <div class="flex items-center gap-2.5 mb-5">
-          <div
-            class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
-          >
-            <User class="w-6 h-6 text-blue-600" />
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+        <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+          <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line bg-ui-surface text-ui-text flex items-center justify-center">
+            <User class="w-4 h-4" />
+          </span>
+          <div class="min-w-0">
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.personal.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.personal.subtitle") }}</p>
           </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Personal Information</h3>
-            <p class="text-brand-light text-sm font-normal">
-              Basic employee details and contact information
-            </p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="mb-3.5">
-            <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              v-model="form.phone"
-              label="Phone Number"
-              placeholder="+62 812-3456-7890"
-              :error="errors?.phone?.join(', ')"
-              required
-            >
-              <template #icon>
-                <Phone class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
-
-          <div class="mb-3.5">
-            <Input
-              id="date_of_birth"
-              name="date_of_birth"
-              type="date"
-              v-model="form.date_of_birth"
-              label="Date of Birth"
-              :error="errors?.date_of_birth?.join(', ')"
-              required
-            >
-              <template #icon>
-                <Calendar class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
-
-          <div class="mb-3.5">
-            <Input
-              id="hobby"
-              name="hobby"
-              type="text"
-              v-model="form.hobby"
-              label="Hobby"
-              placeholder="e.g. Reading, Swimming, Gaming"
-              :error="errors?.hobby?.join(', ')"
-            >
-              <template #icon>
-                <Heart class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
-
-          <div class="mb-3.5">
-            <Input
-              id="place_of_birth"
-              name="place_of_birth"
-              type="text"
-              v-model="form.place_of_birth"
-              label="Place of Birth"
-              placeholder="e.g. Jakarta, Indonesia"
-              :error="errors?.place_of_birth?.join(', ')"
-              required
-            >
-              <template #icon>
-                <MapPin class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-          </div>
+        </header>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+          <UiInput
+            id="phone"
+            name="phone"
+            type="tel"
+            v-model="form.phone"
+            :label="$t('employees.form.fields.phone')"
+            placeholder="+62 812-3456-7890"
+            :icon="Phone"
+            :error="errors?.phone?.join(', ')"
+            required
+          />
+          <UiInput
+            id="date_of_birth"
+            name="date_of_birth"
+            type="date"
+            v-model="form.date_of_birth"
+            :label="$t('employees.form.fields.dateOfBirth')"
+            :icon="Calendar"
+            :error="errors?.date_of_birth?.join(', ')"
+            required
+          />
+          <UiInput
+            id="hobby"
+            name="hobby"
+            type="text"
+            v-model="form.hobby"
+            :label="$t('employees.form.fields.hobby')"
+            :placeholder="$t('employees.form.fields.hobbyPlaceholder')"
+            :icon="Heart"
+            :error="errors?.hobby?.join(', ')"
+          />
+          <UiInput
+            id="place_of_birth"
+            name="place_of_birth"
+            type="text"
+            v-model="form.place_of_birth"
+            :label="$t('employees.form.fields.placeOfBirth')"
+            :placeholder="$t('employees.form.fields.placeOfBirthPlaceholder')"
+            :icon="MapPin"
+            :error="errors?.place_of_birth?.join(', ')"
+            required
+          />
 
           <!-- Gender (Full Width) -->
-          <div class="md:col-span-2 mb-3.5">
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Gender<span class="text-red-600 ml-1">*</span></label>
-            <div class="flex flex-col sm:flex-row gap-3.5">
-              <!-- Male Option -->
-              <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
-              >
-                <div class="flex items-center gap-2.5">
-                  <div
-                    class="w-10 h-10 bg-blue-50 rounded-[12px] flex items-center justify-center"
-                  >
-                    <User class="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div class="flex flex-col">
-                    <p class="text-brand-dark text-sm font-semibold">Male</p>
-                  </div>
-                </div>
-                <div
-                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-1.5 px-2.5 gap-1.5"
-                >
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="male"
-                    class="hidden"
-                    v-model="form.gender"
-                  />
-                  <div
-                    class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                  ></div>
-                  <p
-                    class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                  ></p>
-                </div>
-              </label>
-
-              <!-- Female Option -->
-              <label
-                class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] bg-white border border-[#DCDEDD] p-3.5 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
-              >
-                <div class="flex items-center gap-2.5">
-                  <div
-                    class="w-10 h-10 bg-pink-50 rounded-[12px] flex items-center justify-center"
-                  >
-                    <User class="w-5 h-5 text-pink-600" />
-                  </div>
-                  <div class="flex flex-col">
-                    <p class="text-brand-dark text-sm font-semibold">Female</p>
-                  </div>
-                </div>
-                <div
-                  class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-1.5 px-2.5 gap-1.5"
-                >
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="female"
-                    class="hidden"
-                    v-model="form.gender"
-                  />
-                  <div
-                    class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                  ></div>
-                  <p
-                    class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                  ></p>
-                </div>
-              </label>
+          <fieldset class="md:col-span-2 min-w-0">
+            <legend class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("employees.form.fields.gender") }}<span class="text-ui-bad"> *</span></legend>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label
+              class="group relative flex items-center justify-between gap-3 w-full min-h-[56px] rounded-ui-card bg-ui-surface border border-ui-line-strong px-3.5 py-3 cursor-pointer transition-colors duration-ui-base hover:bg-ui-subtle has-[:checked]:border-ui-accent has-[:checked]:bg-ui-accent-soft/40 has-[:focus-visible]:shadow-ui-focus"
+            >
+              <span class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-ui-control bg-ui-subtle text-ui-text flex items-center justify-center">
+                  <User class="w-4 h-4" />
+                </span>
+                <span class="text-ui-body font-medium text-ui-ink">{{ $t("employees.enums.gender.male") }}</span>
+              </span>
+              <span class="flex items-center gap-1.5 h-7 shrink-0 rounded-full border border-ui-line px-2.5 bg-ui-surface">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="male"
+                  class="sr-only"
+                  v-model="form.gender"
+                />
+                <span
+                  class="flex size-4 rounded-full border border-ui-line-strong group-has-[:checked]:border-[5px] group-has-[:checked]:border-ui-accent transition-all duration-ui-base"
+                ></span>
+                <span class="text-ui-cap font-medium text-ui-muted group-has-[:checked]:text-ui-accent">
+                  {{ form.gender === "male" ? $t("employees.form.selected") : $t("employees.form.select") }}
+                </span>
+              </span>
+            </label>
+            <label
+              class="group relative flex items-center justify-between gap-3 w-full min-h-[56px] rounded-ui-card bg-ui-surface border border-ui-line-strong px-3.5 py-3 cursor-pointer transition-colors duration-ui-base hover:bg-ui-subtle has-[:checked]:border-ui-accent has-[:checked]:bg-ui-accent-soft/40 has-[:focus-visible]:shadow-ui-focus"
+            >
+              <span class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-ui-control bg-ui-subtle text-ui-text flex items-center justify-center">
+                  <User class="w-4 h-4" />
+                </span>
+                <span class="text-ui-body font-medium text-ui-ink">{{ $t("employees.enums.gender.female") }}</span>
+              </span>
+              <span class="flex items-center gap-1.5 h-7 shrink-0 rounded-full border border-ui-line px-2.5 bg-ui-surface">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="female"
+                  class="sr-only"
+                  v-model="form.gender"
+                />
+                <span
+                  class="flex size-4 rounded-full border border-ui-line-strong group-has-[:checked]:border-[5px] group-has-[:checked]:border-ui-accent transition-all duration-ui-base"
+                ></span>
+                <span class="text-ui-cap font-medium text-ui-muted group-has-[:checked]:text-ui-accent">
+                  {{ form.gender === "female" ? $t("employees.form.selected") : $t("employees.form.select") }}
+                </span>
+              </span>
+            </label>
             </div>
-          </div>
+            <p v-if="errors?.gender" class="text-ui-cap text-ui-bad mt-1.5">{{ errors?.gender?.join(', ') }}</p>
+          </fieldset>
 
           <!-- Address -->
-          <div class="mb-3.5">
-            <TextArea
-              id="address"
-              name="address"
-              v-model="form.address"
-              label="Address"
-              placeholder="Enter full address"
-              :error="errors?.address?.join(', ')"
-              rows="5"
-              required
-            >
-              <template #icon>
-                <MapPin class="h-5 w-5 text-gray-400" />
-              </template>
-            </TextArea>
-          </div>
+          <UiInput
+            id="address"
+            name="address"
+            v-model="form.address"
+            :label="$t('employees.form.fields.address')"
+            :placeholder="$t('employees.form.fields.addressPlaceholder')"
+            :icon="MapPin"
+            :error="errors?.address?.join(', ')"
+            :rows="5"
+            required
+          />
 
           <!-- City and Post Code -->
-          <div class="mb-3.5">
-            <!-- City -->
-            <div class="mb-3.5">
-              <Input
-                id="city"
-                name="city"
-                type="text"
-                v-model="form.city"
-                label="City"
-                placeholder="e.g. Jakarta"
-                :error="errors?.city?.join(', ')"
-                required
-              >
-                <template #icon>
-                  <Building2 class="h-5 w-5 text-gray-400" />
-                </template>
-              </Input>
-            </div>
-
-            <!-- Postal Code -->
-            <div class="mb-3.5">
-              <Input
-                id="postal_code"
-                name="postal_code"
-                type="text"
-                v-model="form.postal_code"
-                label="Postal Code"
-                placeholder="e.g. 12345"
-                :error="errors?.postal_code?.join(', ')"
-                required
-              >
-                <template #icon>
-                  <Hash class="h-5 w-5 text-gray-400" />
-                </template>
-              </Input>
-            </div>
+          <div class="space-y-4 min-w-0">
+          <UiInput
+            id="city"
+            name="city"
+            type="text"
+            v-model="form.city"
+            :label="$t('employees.form.fields.city')"
+            :placeholder="$t('employees.form.fields.cityPlaceholder')"
+            :icon="Building2"
+            :error="errors?.city?.join(', ')"
+            required
+          />
+          <UiInput
+            id="postal_code"
+            name="postal_code"
+            type="text"
+            v-model="form.postal_code"
+            :label="$t('employees.form.fields.postalCode')"
+            :placeholder="$t('employees.form.fields.postalCodePlaceholder')"
+            :icon="Hash"
+            :error="errors?.postal_code?.join(', ')"
+            required
+          />
           </div>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>

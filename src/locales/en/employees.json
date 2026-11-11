@@ -1,0 +1,546 @@
+{
+  "enums": {
+    "jobStatus": {
+      "active": "Active",
+      "on_leave": "On Leave",
+      "resigned": "Resigned",
+      "terminated": "Terminated"
+    },
+    "employmentType": {
+      "full_time": "Full-time",
+      "part_time": "Part-time",
+      "contract": "Contract",
+      "intern": "Intern"
+    },
+    "workLocation": {
+      "office": "Office",
+      "remote": "Remote",
+      "hybrid": "Hybrid"
+    },
+    "skillLevel": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "expert": "Expert"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "accountType": {
+      "savings": "Savings Account",
+      "checking": "Checking Account",
+      "current": "Current Account"
+    },
+    "teamStatus": {
+      "active": "Active",
+      "forming": "Forming",
+      "planning": "Planning",
+      "dormant": "Dormant"
+    },
+    "language": {
+      "en": "English",
+      "id": "Indonesian",
+      "es": "Spanish",
+      "fr": "French"
+    }
+  },
+  "list": {
+    "title": "All Employees",
+    "subtitle": "Showing {from} - {to} of {total} employees",
+    "importCsv": "Import CSV",
+    "addEmployee": "Add Employee",
+    "alertsTitle": "{n} employee's contract/probation ends within 30 days | {n} employees' contracts/probation end within 30 days",
+    "probationEnds": "Probation ends in {n} day | Probation ends in {n} days",
+    "contractEnds": "Contract ends in {n} day | Contract ends in {n} days",
+    "searchPlaceholder": "Search employees by name, department, role...",
+    "allTypes": "All Types",
+    "allStatus": "All Status",
+    "empty": "No employees found"
+  },
+  "card": {
+    "loginDisabled": "Login Disabled",
+    "yearsExperience": "{n} year experience | {n} years experience"
+  },
+  "stats": {
+    "totalEmployees": "Total Employees",
+    "addedThisMonth": "+{n} this month",
+    "activeEmployees": "Active Employees",
+    "thisWeek": "{n} this week",
+    "newHires": "New Hires",
+    "thisMonth": "This month",
+    "averageSalary": "Average Salary",
+    "showSalary": "Show salary",
+    "hideSalary": "Hide salary",
+    "companyAverage": "Company average",
+    "onLeave": "On Leave",
+    "fromLastWeek": "{n} from last week"
+  },
+  "success": {
+    "title": "Added Successfully!",
+    "message": "The new employee has been successfully added to your system.",
+    "viewAll": "View All Employees",
+    "addAnother": "Add Another Employee",
+    "totalEmployees": "Total Employees",
+    "addedThisMonth": "Added This Month"
+  },
+  "wizard": {
+    "addTitle": "Add New Employee",
+    "editTitle": "Edit Employee",
+    "stepOf": "Step {current} of {total}",
+    "stepCounter": "{current} of {total}",
+    "stepsLabel": "Steps",
+    "companyLogo": "Company Logo",
+    "steps": {
+      "personal": {
+        "title": "Personal Information",
+        "hint": "Basic employee details and contact info"
+      },
+      "job": {
+        "title": "Job Information",
+        "hint": "Role, department, and employment details"
+      },
+      "emergency": {
+        "title": "Emergency Contact",
+        "hint": "Person to contact in case of emergency"
+      },
+      "review": {
+        "title": "Review & Submit",
+        "hint": "Review all information before submitting"
+      }
+    },
+    "create": {
+      "ready": "Ready to add this employee?",
+      "reviewHint": "Review and confirm all information before submitting",
+      "personalHint": "Fill in the personal information",
+      "jobHint": "Fill in the job information",
+      "emergencyHint": "Fill in the emergency contact information",
+      "submit": "Add Employee",
+      "submitting": "Adding..."
+    },
+    "edit": {
+      "ready": "Ready to update this employee?",
+      "reviewHint": "Review and confirm all information before updating",
+      "personalHint": "Update the personal information",
+      "jobHint": "Update the job information",
+      "emergencyHint": "Update the emergency contact information",
+      "submit": "Update Employee",
+      "submitting": "Updating..."
+    },
+    "next": "Next: {step}",
+    "nextSteps": {
+      "job": "Job Info",
+      "emergency": "Emergency Contact",
+      "review": "Review"
+    }
+  },
+  "errorModal": {
+    "title": "Oops! Something's Not Right",
+    "message": "Please check your data again and make sure all required fields are filled correctly.",
+    "confirm": "OK, I'll Fix It"
+  },
+  "form": {
+    "select": "Select",
+    "selected": "Selected",
+    "membersCount": "{n} member | {n} members",
+    "photo": {
+      "title": "Profile Photo",
+      "subtitle": "Upload employee photo",
+      "alt": "Profile",
+      "remove": "Remove photo",
+      "browse": "Browse Photo",
+      "rules": "JPG, PNG up to 2MB",
+      "recommended": "Recommended: 400x400px"
+    },
+    "account": {
+      "title": "Account Credentials",
+      "subtitle": "Login information and account details"
+    },
+    "personal": {
+      "title": "Personal Information",
+      "subtitle": "Basic employee details and contact information"
+    },
+    "fields": {
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Enter full name",
+      "email": "Email Address",
+      "password": "Password",
+      "newPassword": "New Password (optional)",
+      "passwordPlaceholder": "Enter password",
+      "passwordKeepPlaceholder": "Leave blank to keep current password",
+      "passwordHint": "Min. 8 characters, a mix of upper/lowercase letters, numbers, and symbols. Must not be a password exposed in a known data breach.",
+      "confirmPassword": "Confirm Password",
+      "confirmNewPassword": "Confirm New Password",
+      "confirmPasswordPlaceholder": "Confirm password",
+      "identityNumber": "Identity Number (NIK/KTP)",
+      "identityNumberPlaceholder": "Enter identity number",
+      "npwp": "NPWP (optional)",
+      "phone": "Phone Number",
+      "dateOfBirth": "Date of Birth",
+      "hobby": "Hobby",
+      "hobbyPlaceholder": "e.g. Reading, Swimming, Gaming",
+      "placeOfBirth": "Place of Birth",
+      "placeOfBirthPlaceholder": "e.g. Jakarta, Indonesia",
+      "gender": "Gender",
+      "address": "Address",
+      "addressPlaceholder": "Enter full address",
+      "city": "City",
+      "cityPlaceholder": "e.g. Jakarta",
+      "postalCode": "Postal Code",
+      "postalCodePlaceholder": "e.g. 12345",
+      "jobTitle": "Job Title",
+      "jobTitlePlaceholder": "e.g. Senior Developer",
+      "role": "Role",
+      "rolePlaceholder": "Select role",
+      "team": "Team",
+      "teamPlaceholder": "Select team",
+      "removeTeam": "Remove team",
+      "yearsExperience": "Years of Experience",
+      "yearsExperiencePlaceholder": "e.g. 3",
+      "status": "Status",
+      "statusPlaceholder": "Select status",
+      "employmentType": "Employment Type",
+      "employmentTypePlaceholder": "Select employment type",
+      "workLocation": "Work Location",
+      "workLocationPlaceholder": "Select work location",
+      "startDate": "Start Date",
+      "monthlySalary": "Monthly Salary (optional)",
+      "ptkpStatus": "PTKP Status (for PPh21 Tax)",
+      "ptkpStatusPlaceholder": "Select PTKP status",
+      "annualLeaveQuota": "Annual Leave Quota (days)",
+      "probationEndDate": "Probation End Date (optional)",
+      "contractEndDate": "Contract End Date (optional)",
+      "skillLevel": "Skill Level",
+      "bankName": "Bank Name (optional)",
+      "bankNamePlaceholder": "Select bank",
+      "accountNumber": "Account Number (optional)",
+      "accountNumberPlaceholder": "e.g. 1234567890",
+      "accountNumberHint": "Enter only numbers (8-20 digits)",
+      "accountHolder": "Account Holder Name (optional)",
+      "accountHolderPlaceholder": "e.g. Andy Saputra",
+      "accountHolderHint": "Name should match the bank account holder exactly",
+      "bankBranch": "Bank Branch (optional)",
+      "bankBranchPlaceholder": "e.g. Jakarta Pusat",
+      "accountType": "Account Type (optional)",
+      "accountTypePlaceholder": "Select account type",
+      "contactName": "Full Name (optional)",
+      "contactNamePlaceholder": "Emergency contact name",
+      "relationship": "Relationship (optional)",
+      "relationshipPlaceholder": "e.g., Spouse, Parent, Sibling",
+      "contactPhone": "Phone Number (optional)",
+      "preferredLanguage": "Preferred Language",
+      "preferredLanguagePlaceholder": "Select language",
+      "additionalNotes": "Additional Notes",
+      "additionalNotesPlaceholder": "Any additional information about the employee..."
+    },
+    "job": {
+      "title": "Job Information",
+      "subtitle": "Role, department, and employment details"
+    },
+    "bank": {
+      "title": "Bank Information",
+      "subtitle": "Optional -- employee banking details for payroll processing. Can be left blank for interns/students without a payroll account yet."
+    },
+    "teamModal": {
+      "title": "Select Team",
+      "description": "Choose the team for this employee",
+      "search": "Search teams...",
+      "empty": "No teams found",
+      "emptyHint": "Try adjusting your search terms"
+    },
+    "emergency": {
+      "title": "Emergency Contact",
+      "subtitle": "Optional -- person to contact in case of emergency. Leave blank if not available yet."
+    },
+    "additional": {
+      "title": "Additional Information",
+      "subtitle": "Optional details and preferences"
+    },
+    "documents": {
+      "title": "Documents",
+      "subtitle": "Optional -- PDF, PNG, or JPEG, up to 2MB each. Uploaded once the employee is created.",
+      "choose": "Choose Files",
+      "rules": "PDF, PNG, or JPEG up to 2MB each",
+      "namePlaceholder": "Document name (required)",
+      "remove": "Remove document"
+    }
+  },
+  "review": {
+    "title": "Review Employee Information",
+    "subtitle": "Please review all information before submitting",
+    "profilePhoto": "Profile Photo",
+    "personal": {
+      "title": "Personal Information",
+      "subtitle": "Employee basic details"
+    },
+    "job": {
+      "title": "Job Information",
+      "subtitle": "Position and employment details"
+    },
+    "bank": {
+      "title": "Bank Information",
+      "subtitle": "Banking details for payroll"
+    },
+    "emergency": {
+      "title": "Emergency Contact",
+      "subtitle": "Person to contact in emergency"
+    },
+    "fullName": "Full Name",
+    "email": "Email Address",
+    "identityNumber": "Identity Number",
+    "phone": "Phone Number",
+    "accountHolder": "Account Holder Name",
+    "bankBranch": "Bank Branch",
+    "relationship": "Relationship",
+    "years": "{n} year | {n} years"
+  },
+  "tips": {
+    "formTips": "Form Tips",
+    "job": {
+      "subtitle": "Job Information Guidelines",
+      "items": {
+        "jobTitle": {
+          "title": "Choose clear job title",
+          "text": "Use standard industry job titles"
+        },
+        "department": {
+          "title": "Verify department assignment",
+          "text": "Choose the correct department for the role"
+        },
+        "startDate": {
+          "title": "Set realistic start date",
+          "text": "Allow time for onboarding preparations"
+        },
+        "employmentType": {
+          "title": "Review employment type",
+          "text": "Ensure it matches the job requirements"
+        },
+        "skillLevel": {
+          "title": "Select appropriate skill level",
+          "text": "Match with employee's experience level"
+        }
+      }
+    },
+    "emergency": {
+      "subtitle": "Emergency Contact Guidelines",
+      "items": {
+        "reliable": {
+          "title": "Choose reliable contact",
+          "text": "Select someone who is easily reachable"
+        },
+        "verify": {
+          "title": "Verify contact information",
+          "text": "Double-check phone numbers and email"
+        },
+        "relationship": {
+          "title": "Include relationship details",
+          "text": "Specify how they're related to the employee"
+        },
+        "multiple": {
+          "title": "Consider multiple contacts",
+          "text": "Primary and secondary emergency contacts"
+        },
+        "review": {
+          "title": "Review all form data",
+          "text": "Final check before submitting the form"
+        }
+      }
+    }
+  },
+  "files": {
+    "title": "Documents",
+    "subtitle": "Optional -- PDF, PNG, or JPEG, up to 2MB each",
+    "uploadFile": "Upload File",
+    "uploading": "Uploading...",
+    "notAllowed": "\"{name}\" is not allowed. Only PDF, PNG, or JPEG files up to 2MB are supported.",
+    "nameRequired": "Please give every file a name.",
+    "uploadFailed": "Failed to upload file(s).",
+    "empty": "No files uploaded yet",
+    "emptyHint": "Optional -- upload ID scans, certificates, or other supporting documents.",
+    "uploadedBy": "by {name}",
+    "deleteTitle": "Delete File?",
+    "deleteMessage": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+    "confirmDelete": "Yes, Delete",
+    "nameModalTitle": "Name your file(s)",
+    "nameModalDescription": "Give each file a name so it's easy to recognize in the list.",
+    "namePlaceholder": "e.g. KTP, Ijazah, Sertifikat..."
+  },
+  "detail": {
+    "loading": "Loading employee data...",
+    "loginDisabled": "Login Disabled",
+    "joined": "Joined {date}",
+    "shareProfile": "Share Profile",
+    "editProfile": "Edit Profile",
+    "stats": {
+      "tasksCompleted": "Tasks Completed",
+      "thisMonth": "This month",
+      "attendanceRate": "Attendance Rate",
+      "aboveAverage": "Above average",
+      "belowAverage": "Below average",
+      "projects": "Projects",
+      "activeProjects": "Active projects",
+      "performance": "Performance",
+      "excellent": "Excellent rating",
+      "good": "Good rating",
+      "needsImprovement": "Needs improvement"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "employment": "Employment & Bank",
+      "emergency": "Emergency Contact",
+      "documents": "Documents",
+      "performance": "Performance",
+      "offboarding": "Offboarding"
+    },
+    "sections": {
+      "team": {
+        "title": "Team Information",
+        "subtitle": "Current team and reporting structure"
+      },
+      "contact": {
+        "title": "Contact Details",
+        "subtitle": "How to reach this employee"
+      },
+      "personal": {
+        "title": "Personal Information",
+        "subtitle": "Birth and personal details"
+      },
+      "address": {
+        "title": "Address Information",
+        "subtitle": "Location and postal details"
+      },
+      "employment": {
+        "title": "Employment Details",
+        "subtitle": "Work arrangement and compensation"
+      },
+      "bank": {
+        "title": "Bank Information",
+        "subtitle": "Banking details for payroll"
+      },
+      "admin": {
+        "title": "Administrative Information",
+        "subtitle": "System details and preferences"
+      },
+      "emergency": {
+        "title": "Emergency Contact",
+        "subtitle": "Person to contact in emergency"
+      }
+    },
+    "fields": {
+      "team": "Team",
+      "teamMembers": "Team Members",
+      "membersCount": "{n} member | {n} members",
+      "teamStatus": "Team Status",
+      "identityNumber": "Identity Number",
+      "dateOfBirth": "Date of Birth",
+      "placeOfBirth": "Place of Birth",
+      "gender": "Gender",
+      "hobby": "Hobby",
+      "postCode": "Post Code",
+      "yearsExperience": "Years of Experience",
+      "years": "{n} year | {n} years",
+      "employmentType": "Employment Type",
+      "startDate": "Start Date",
+      "monthlySalary": "Monthly Salary",
+      "bankName": "Bank Name",
+      "accountNumber": "Account Number",
+      "accountHolder": "Account Holder",
+      "accountType": "Account Type",
+      "employeeId": "Employee ID",
+      "preferredLanguage": "Preferred Language",
+      "additionalNotes": "Additional Notes",
+      "contactName": "Contact Name",
+      "relationship": "Relationship"
+    },
+    "noEmergencyContact": "No emergency contact information",
+    "reviews": {
+      "title": "Performance Reviews",
+      "subtitle": "Employee performance review history",
+      "create": "Create Review",
+      "empty": "No performance reviews yet.",
+      "ratingOf": "{rating} of 5",
+      "strengths": "Strengths:",
+      "improvements": "Areas for Improvement:",
+      "by": "By {name}",
+      "acknowledged": "Read by employee",
+      "awaiting": "Awaiting employee read",
+      "saveFailed": "Failed to save the review.",
+      "modalTitle": "Create Performance Review",
+      "period": "Period",
+      "periodPlaceholder": "e.g. Q1 2026",
+      "periodStart": "Period Start",
+      "periodEnd": "Period End",
+      "overallRating": "Overall Rating (1-5)",
+      "strengthsLabel": "Strengths",
+      "improvementsLabel": "Areas for Improvement",
+      "goalsLabel": "Goals for Next Period",
+      "save": "Save Review"
+    },
+    "warnings": {
+      "title": "Warning Letter History",
+      "subtitle": "SP1 / SP2 / SP3 previously issued",
+      "empty": "No warning letter history."
+    },
+    "offboarding": {
+      "title": "Resignation / Termination",
+      "subtitle": "Process employee offboarding",
+      "start": "Start Resignation/Termination Process",
+      "resignation": "Resignation",
+      "termination": "Termination",
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "reason": "Reason: {reason}",
+      "submittedOn": "Submission Date: {date}",
+      "lastWorkingDay": "Last Working Day: {date}",
+      "assetsToReturn": "Assets to be Returned:",
+      "noAssets": "No assets need to be returned.",
+      "complete": "Complete Offboarding",
+      "confirmComplete": "Mark offboarding process as complete?",
+      "completeFailed": "Failed to complete offboarding process.",
+      "processFailed": "Failed to process resignation/termination.",
+      "modalTitle": "Resignation / Termination Process",
+      "typeLabel": "Type",
+      "reasonLabel": "Reason",
+      "submissionDate": "Submission Date",
+      "lastWorkingDayLabel": "Last Working Day",
+      "processing": "Processing...",
+      "process": "Process"
+    },
+    "account": {
+      "title": "Account Login Access",
+      "active": "Active",
+      "deactivated": "Deactivated",
+      "canLogin": "This account can currently log in.",
+      "cannotLogin": "This account is deactivated and cannot log in.",
+      "processing": "Processing...",
+      "deactivate": "Deactivate Account",
+      "activate": "Activate Account",
+      "superadminOnly": "Only Superadmin can change this account's status.",
+      "confirmDeactivate": "Deactivate {name}'s account? They will be immediately logged out and unable to log in until reactivated.",
+      "confirmActivate": "Activate {name}'s account? They will be able to log in again.",
+      "deactivateShort": "Deactivate",
+      "activateShort": "Activate",
+      "deactivateFailed": "Failed to deactivate account.",
+      "activateFailed": "Failed to activate account.",
+      "deactivatedOk": "Account deactivated successfully.",
+      "activatedOk": "Account activated successfully."
+    },
+    "danger": {
+      "title": "Danger Zone",
+      "subtitle": "Irreversible and destructive actions",
+      "deleteTitle": "Delete Employee Profile",
+      "deleteText": "Permanently remove this employee and all associated data. This action cannot be undone.",
+      "backup": "Backup Data",
+      "delete": "Delete Employee",
+      "deleteConfirm": "Are you sure you want to delete '{name}'? This action cannot be undone."
+    },
+    "share": {
+      "copied": "Profile link copied to clipboard!"
+    },
+    "backup": {
+      "confirm": "Create backup for {name}? This will download all employee data.",
+      "confirmText": "Create Backup",
+      "soon": "Backup feature will be implemented soon."
+    }
+  }
+}

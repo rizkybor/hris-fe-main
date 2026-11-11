@@ -27,70 +27,70 @@ const goTo = (name) => {
 // per role (manager/hr/finance/employee) without hardcoding role names.
 const allActions = [
   {
-    label: "Add Employee",
+    labelKey: "dashboard.quickActions.addEmployee",
     icon: UserPlusIcon,
     route: "admin.employees.create",
     permission: "employee-create",
     variant: "primary",
   },
   {
-    label: "Create New Team",
+    labelKey: "dashboard.quickActions.createTeam",
     icon: UsersIcon,
     route: "admin.team.create",
     permission: "team-create",
     variant: "default",
   },
   {
-    label: "Process Payroll",
+    labelKey: "dashboard.quickActions.processPayroll",
     icon: BanknoteIcon,
     route: "admin.payroll.create",
     permission: "payroll-create",
     variant: "default",
   },
   {
-    label: "View Attendance",
+    labelKey: "dashboard.quickActions.viewAttendance",
     icon: CalendarPlusIcon,
     route: "admin.attendances",
     permission: "attendance-list",
     variant: "default",
   },
   {
-    label: "Operational Cost",
+    labelKey: "dashboard.quickActions.operationalCost",
     icon: WalletIcon,
     route: "admin.company-finance.dashboard",
     permission: "company-finance-create",
     variant: "default",
   },
   {
-    label: "Add Client",
+    labelKey: "dashboard.quickActions.addClient",
     icon: Building2Icon,
     route: "admin.clients.create",
     permission: "clients-create",
     variant: "default",
   },
   {
-    label: "Clock In / Out",
+    labelKey: "dashboard.quickActions.clockInOut",
     icon: ClockIcon,
     route: "employee.attendance.clock",
     permission: () => canOneOf(["attendance-check-in", "attendance-check-out"]),
     variant: "primary",
   },
   {
-    label: "Request Leave",
+    labelKey: "dashboard.quickActions.requestLeave",
     icon: CalendarClockIcon,
     route: "employee.attendance.my-attendances",
     permission: "leave-request-create",
     variant: "default",
   },
   {
-    label: "My Tasks",
+    labelKey: "dashboard.quickActions.myTasks",
     icon: ListChecksIcon,
     route: "employee.tasks",
     permission: "task-list",
     variant: "default",
   },
   {
-    label: "My Payslips",
+    labelKey: "dashboard.quickActions.myPayslips",
     icon: ReceiptIcon,
     route: "employee.payslips",
     permission: "payslip-view",
@@ -108,52 +108,21 @@ const visibleActions = computed(() => {
 </script>
 
 <template>
-  <div
-    class="lg:row-span-2 bg-slate-50 border border-[#DCDEDD] rounded-[14px]
-           hover:border-[#0C51D9] hover:border-2
-           transition-all duration-300 p-5"
-  >
-    <div class="flex items-center gap-2 mb-4">
-      <div class="w-8 h-8 bg-blue-50 rounded-[10px] flex items-center justify-center">
-        <ZapIcon class="w-4 h-4 text-blue-600" />
-      </div>
-      <h3 class="text-brand-dark text-base font-bold">Quick Actions</h3>
-    </div>
-
-    <div class="space-y-3">
+  <div class="lg:row-span-2 bg-ui-surface border border-ui-line rounded-ui-card p-4 flex flex-col">
+    <h3 class="text-ui-h3 text-ui-ink px-1 mb-3">{{ $t("dashboard.quickActions.title") }}</h3>
+    <div class="space-y-1.5">
       <button
         v-for="action in visibleActions"
-        :key="action.label"
+        :key="action.labelKey"
         type="button"
         @click="goTo(action.route)"
-        :class="
-          action.variant === 'primary'
-            ? 'border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow'
-            : 'border border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white'
-        "
-        class="bg-white btn-secondary w-full text-left rounded-[12px] transition-all duration-300 px-4 py-3 inline-flex items-center gap-3"
+        class="ui-press w-full h-10 px-3 rounded-ui-control inline-flex items-center gap-2.5 text-ui-small font-medium text-left border"
+        :class="action.variant === 'primary' ? 'bg-ui-ink text-white border-ui-ink hover:bg-ui-ink/90' : 'bg-ui-surface text-ui-ink border-ui-line hover:bg-ui-hover'"
       >
-        <div
-          :class="action.variant === 'primary' ? 'bg-white/20' : 'bg-gray-100'"
-          class="w-8 h-8 rounded-[9px] flex items-center justify-center flex-shrink-0"
-        >
-          <component
-            :is="action.icon"
-            class="w-4 h-4"
-            :class="action.variant === 'primary' ? 'text-white' : 'text-gray-600'"
-          />
-        </div>
-        <span
-          :class="action.variant === 'primary' ? 'text-brand-white' : 'text-brand-dark'"
-          class="text-sm font-semibold"
-        >
-          {{ action.label }}
-        </span>
+        <component :is="action.icon" class="w-4 h-4 shrink-0" :class="action.variant === 'primary' ? 'text-white/80' : 'text-ui-faint'" />
+        <span class="truncate">{{ $t(action.labelKey) }}</span>
       </button>
-
-      <p v-if="visibleActions.length === 0" class="text-center text-sm text-gray-400 py-6">
-        No quick actions available
-      </p>
+      <p v-if="visibleActions.length === 0" class="text-center text-ui-small text-ui-muted py-6">{{ $t("dashboard.quickActions.empty") }}</p>
     </div>
   </div>
 </template>

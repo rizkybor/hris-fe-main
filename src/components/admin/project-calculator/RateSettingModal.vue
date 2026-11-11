@@ -1,9 +1,13 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { X, Users2Icon, Loader2, WalletIcon, LayersIcon, ServerIcon, ClockIcon } from "lucide-vue-next";
+import { WalletIcon, LayersIcon, ServerIcon, ClockIcon } from "lucide-vue-next";
+import { UiModal, UiButton, UiAlert, UiBadge, UiSpinner } from "@/components/ui";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { storeToRefs } from "pinia";
 import { formatRupiah } from "@/utils/formatUtils";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const emit = defineEmits(["close", "saved"]);
 const store = useProjectCalculatorStore();
@@ -27,7 +31,7 @@ onMounted(async () => {
   try {
     options.value = await store.fetchRateSettingOptions();
   } catch (error) {
-    errorMessage.value = "Gagal memuat daftar item Operational Cost.";
+    errorMessage.value = t("calculator.rateModal.loadFailed");
   } finally {
     loadingStatistics.value = false;
   }
@@ -89,174 +93,105 @@ const submit = async () => {
   } catch (error) {
     const data = error?.response?.data;
     errorMessage.value =
-      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal menyimpan rate setup.");
+      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t("calculator.rateModal.saveFailed"));
   }
 };
+
+// Presentation only: native number field (keeps v-model.number) in the field style.
+const fieldClass =
+  "w-full h-[38px] px-3 text-right tabular-nums bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
+const pickers = computed(() => [
+  { key: "fixed", title: t("calculator.rateModal.fixedCost"), icon: WalletIcon, items: fixedCostItems.value, list: form.value.selected_fixed_cost_ids, name: "financial_items", amount: (i) => formatRupiah(i.actual), empty: t("calculator.rateModal.emptyFixed") },
+  { key: "sdm", title: t("calculator.rateModal.sdm"), icon: LayersIcon, items: sdmResourceItems.value, list: form.value.selected_sdm_resource_ids, name: "sdm_component", amount: (i) => formatRupiah(i.actual), hours: true, empty: t("calculator.rateModal.emptySdm") },
+  { key: "infra", title: t("calculator.rateModal.infra"), icon: ServerIcon, items: infrastructureItems.value, list: form.value.selected_infrastructure_tool_ids, name: "tech_stack_component", amount: (i) => t("calculator.rateModal.perMonth", { amount: formatRupiah(i.monthly_fee) }), empty: t("calculator.rateModal.emptyInfra") },
+]);
 </script>
 
 <template>
-  <div class="fixed inset-0 backdrop-blur-sm bg-black/30 z-[90] flex items-center justify-center p-3.5" @click.self="emit('close')">
-    <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-      <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between flex-shrink-0">
-        <div class="flex items-center gap-2.5">
-          <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-            <Users2Icon class="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Team Rate Setup</h3>
-            <p class="text-brand-light text-sm">Select items from Operational Cost to build the team cost</p>
-          </div>
-        </div>
-        <button @click="emit('close')" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors">
-          <X class="w-5 h-5" />
-        </button>
+  <UiModal
+    :open="true"
+    size="lg"
+    :title="$t('calculator.dashboard.teamRate.title')"
+    :description="$t('calculator.rateModal.description')"
+    @close="emit('close')"
+  >
+    <div class="space-y-5">
+      <UiAlert v-if="errorMessage" tone="bad">{{ errorMessage }}</UiAlert>
+
+      <div v-if="loadingStatistics" class="flex items-center justify-center gap-2 py-6 text-ui-small text-ui-muted">
+        <UiSpinner size="16px" :center="false" /> {{ $t("calculator.rateModal.loading") }}
       </div>
 
-      <div class="p-5 space-y-5 overflow-y-auto">
-        <p v-if="errorMessage" class="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5">
-          {{ errorMessage }}
-        </p>
-
-        <div v-if="loadingStatistics" class="text-center py-6 text-sm text-gray-400">Memuat data Operational Cost...</div>
-
-        <template v-else>
-          <!-- Fixed Cost picker -->
-          <div>
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <WalletIcon class="w-4 h-4 text-blue-600" />
-              <h4 class="text-brand-dark text-sm font-bold">Fixed Cost</h4>
-            </div>
-            <div class="border border-[#DCDEDD] rounded-[12px] divide-y divide-[#F1F1F1] max-h-40 overflow-y-auto">
-              <label
-                v-for="item in fixedCostItems"
-                :key="item.id"
-                class="flex items-center justify-between gap-2.5 px-2.5 py-2 cursor-pointer hover:bg-gray-50"
-              >
-                <span class="flex items-center gap-1.5 min-w-0">
-                  <input
-                    type="checkbox"
-                    :checked="form.selected_fixed_cost_ids.includes(item.id)"
-                    @change="toggle(form.selected_fixed_cost_ids, item.id)"
-                    class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] flex-shrink-0"
-                  />
-                  <span class="text-sm text-brand-dark font-medium truncate">{{ item.financial_items }}</span>
-                  <span v-if="item.status === 'inactive'" class="text-[10px] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 flex-shrink-0" title="Tidak Digunakan di Operational Cost (tetap bisa dipilih)">Tidak Digunakan</span>
-                </span>
-                <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.actual) }}</span>
-              </label>
-              <p v-if="fixedCostItems.length === 0" class="text-center py-3.5 text-xs text-gray-400">No Fixed Cost items yet</p>
-            </div>
+      <template v-else>
+        <div v-for="picker in pickers" :key="picker.key">
+          <div class="flex items-center gap-1.5 mb-2">
+            <component :is="picker.icon" class="w-4 h-4 text-ui-faint" />
+            <h3 class="text-ui-h3 text-ui-ink">{{ picker.title }}</h3>
+            <span class="text-ui-cap text-ui-faint tabular-nums">{{ picker.list.length }}/{{ picker.items.length }}</span>
           </div>
-
-          <!-- SDM Resource picker -->
-          <div>
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <LayersIcon class="w-4 h-4 text-violet-600" />
-              <h4 class="text-brand-dark text-sm font-bold">SDM Resource</h4>
-            </div>
-            <div class="border border-[#DCDEDD] rounded-[12px] divide-y divide-[#F1F1F1] max-h-40 overflow-y-auto">
-              <label
-                v-for="item in sdmResourceItems"
-                :key="item.id"
-                class="flex items-center justify-between gap-2.5 px-2.5 py-2 cursor-pointer hover:bg-gray-50"
-              >
-                <span class="flex items-center gap-1.5 min-w-0">
-                  <input
-                    type="checkbox"
-                    :checked="form.selected_sdm_resource_ids.includes(item.id)"
-                    @change="toggle(form.selected_sdm_resource_ids, item.id)"
-                    class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] flex-shrink-0"
-                  />
-                  <span class="text-sm text-brand-dark font-medium truncate">{{ item.sdm_component }}</span>
-                  <span v-if="item.productive_hours_per_month" class="text-xs text-gray-400 flex-shrink-0">({{ item.productive_hours_per_month }} jam/bln)</span>
-                  <span v-if="item.status === 'inactive'" class="text-[10px] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 flex-shrink-0" title="Tidak Digunakan di Operational Cost (tetap bisa dipilih)">Tidak Digunakan</span>
-                </span>
-                <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.actual) }}</span>
-              </label>
-              <p v-if="sdmResourceItems.length === 0" class="text-center py-3.5 text-xs text-gray-400">No SDM Resource yet</p>
-            </div>
-          </div>
-
-          <!-- Infrastructure Tools picker -->
-          <div>
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <ServerIcon class="w-4 h-4 text-orange-600" />
-              <h4 class="text-brand-dark text-sm font-bold">Infrastructure Tools</h4>
-            </div>
-            <div class="border border-[#DCDEDD] rounded-[12px] divide-y divide-[#F1F1F1] max-h-40 overflow-y-auto">
-              <label
-                v-for="item in infrastructureItems"
-                :key="item.id"
-                class="flex items-center justify-between gap-2.5 px-2.5 py-2 cursor-pointer hover:bg-gray-50"
-              >
-                <span class="flex items-center gap-1.5 min-w-0">
-                  <input
-                    type="checkbox"
-                    :checked="form.selected_infrastructure_tool_ids.includes(item.id)"
-                    @change="toggle(form.selected_infrastructure_tool_ids, item.id)"
-                    class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] flex-shrink-0"
-                  />
-                  <span class="text-sm text-brand-dark font-medium truncate">{{ item.tech_stack_component }}</span>
-                  <span v-if="item.status === 'inactive'" class="text-[10px] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 flex-shrink-0" title="Tidak Digunakan di Operational Cost (tetap bisa dipilih)">Tidak Digunakan</span>
-                </span>
-                <span class="text-xs text-gray-500 flex-shrink-0">{{ formatRupiah(item.monthly_fee) }}/bln</span>
-              </label>
-              <p v-if="infrastructureItems.length === 0" class="text-center py-3.5 text-xs text-gray-400">No Infrastructure Tool yet</p>
-            </div>
-          </div>
-        </template>
-
-        <div class="grid grid-cols-2 gap-3.5 pt-1.5 border-t border-[#F1F1F1]">
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Multiplier Margin Jual</label>
-            <input v-model.number="form.margin_multiplier" type="number" min="1" step="0.1" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">PM Overhead Default (%)</label>
-            <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
-          </div>
-          <div class="col-span-2">
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Default Infrastructure Setup Cost (Rp)</label>
-            <input v-model.number="form.default_infra_setup_cost" type="number" min="0" class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+          <div class="border border-ui-line rounded-ui-card divide-y divide-ui-line max-h-40 overflow-y-auto">
+            <label
+              v-for="item in picker.items"
+              :key="item.id"
+              class="flex items-center justify-between gap-3 px-3 py-2 cursor-pointer hover:bg-ui-hover"
+            >
+              <span class="flex items-center gap-2 min-w-0">
+                <input
+                  type="checkbox"
+                  :checked="picker.list.includes(item.id)"
+                  @change="toggle(picker.list, item.id)"
+                  class="w-4 h-4 rounded border-ui-line-strong text-ui-accent focus:ring-ui-accent shrink-0"
+                />
+                <span class="text-ui-small text-ui-ink font-medium truncate">{{ item[picker.name] }}</span>
+                <span v-if="picker.hours && item.productive_hours_per_month" class="text-ui-cap text-ui-faint shrink-0 tabular-nums">({{ $t("calculator.rateModal.hoursPerMonth", { n: item.productive_hours_per_month }) }})</span>
+                <UiBadge v-if="item.status === 'inactive'" class="shrink-0" :title="$t('calculator.rateModal.notUsedHint')">{{ $t("calculator.rateModal.notUsed") }}</UiBadge>
+              </span>
+              <span class="text-ui-cap text-ui-muted tabular-nums shrink-0">{{ picker.amount(item) }}</span>
+            </label>
+            <p v-if="picker.items.length === 0" class="text-center py-3.5 text-ui-cap text-ui-faint">{{ picker.empty }}</p>
           </div>
         </div>
+      </template>
 
-        <!-- Live preview -->
-        <div class="grid grid-cols-2 gap-3.5 pt-1.5 border-t border-[#F1F1F1]">
-          <div class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-            <p class="text-xs text-gray-500 font-medium">Total Team Operational Cost / Month</p>
-            <p class="text-brand-dark text-sm font-bold mt-1">{{ formatRupiah(previewTeamMonthlyCost) }}</p>
-          </div>
-          <div class="p-2.5 rounded-[12px] bg-gray-50 border border-[#F1F1F1]">
-            <p class="text-xs text-gray-500 font-medium flex items-center gap-1">
-              <ClockIcon class="w-3 h-3" /> Total Jam Produktif Tim / Bulan
-            </p>
-            <p class="text-brand-dark text-sm font-bold mt-1">{{ previewProductiveHours }} jam &middot; {{ previewTeamSize }} orang</p>
-          </div>
-          <div class="p-2.5 rounded-[12px] bg-blue-50 border border-blue-100">
-            <p class="text-xs text-blue-600 font-medium">Rate Cost / Jam (preview)</p>
-            <p class="text-blue-900 text-sm font-bold mt-1">{{ formatRupiah(previewRateCost) }}</p>
-          </div>
-          <div class="p-2.5 rounded-[12px] bg-indigo-50 border border-indigo-100">
-            <p class="text-xs text-indigo-600 font-medium">Rate Jual / Jam (preview)</p>
-            <p class="text-indigo-900 text-sm font-bold mt-1">{{ formatRupiah(previewRateSell) }}</p>
-          </div>
+      <div class="grid grid-cols-2 gap-3 pt-4 border-t border-ui-line">
+        <label class="block">
+          <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.rateModal.margin") }}</span>
+          <input v-model.number="form.margin_multiplier" type="number" min="1" step="0.1" :class="fieldClass" />
+        </label>
+        <label class="block">
+          <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.rateModal.pmOverhead") }}</span>
+          <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" :class="fieldClass" />
+        </label>
+        <label class="block col-span-2">
+          <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.rateModal.infraSetup") }}</span>
+          <input v-model.number="form.default_infra_setup_cost" type="number" min="0" :class="fieldClass" />
+        </label>
+      </div>
+
+      <!-- Live preview -->
+      <dl class="grid grid-cols-2 gap-px bg-ui-line border border-ui-line rounded-ui-card overflow-hidden">
+        <div class="bg-ui-subtle px-3.5 py-3 min-w-0">
+          <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.rateModal.previewCost") }}</dt>
+          <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5 truncate">{{ formatRupiah(previewTeamMonthlyCost) }}</dd>
         </div>
-      </div>
-
-      <div class="p-5 border-t border-[#DCDEDD] flex gap-2.5 justify-end flex-shrink-0">
-        <button @click="emit('close')" :disabled="saving" class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 transition-all px-5 py-2.5">
-          <span class="text-brand-dark text-sm font-semibold">Cancel</span>
-        </button>
-        <button
-          @click="submit"
-          :disabled="saving"
-          class="rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all blue-gradient blue-btn-shadow px-5 py-2.5 flex items-center gap-1.5 disabled:opacity-50"
-        >
-          <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
-          <span class="text-brand-white text-sm font-semibold">{{ saving ? "Saving..." : "Save Rate Setup" }}</span>
-        </button>
-      </div>
+        <div class="bg-ui-subtle px-3.5 py-3 min-w-0">
+          <dt class="text-ui-cap text-ui-muted flex items-center gap-1"><ClockIcon class="w-3 h-3" /> {{ $t("calculator.rateModal.previewHours") }}</dt>
+          <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5">{{ $t("calculator.rateModal.previewHoursValue", { hours: previewProductiveHours, people: previewTeamSize }) }}</dd>
+        </div>
+        <div class="bg-ui-subtle px-3.5 py-3 min-w-0">
+          <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.rateModal.previewRateCost") }}</dt>
+          <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5 truncate">{{ formatRupiah(previewRateCost) }}</dd>
+        </div>
+        <div class="bg-ui-subtle px-3.5 py-3 min-w-0">
+          <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.rateModal.previewRateSell") }}</dt>
+          <dd class="text-ui-body font-semibold text-ui-accent tabular-nums mt-0.5 truncate">{{ formatRupiah(previewRateSell) }}</dd>
+        </div>
+      </dl>
     </div>
-  </div>
+
+    <template #footer>
+      <UiButton variant="secondary" :disabled="saving" @click="emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
+      <UiButton :loading="saving" @click="submit">{{ saving ? $t("common.actions.saving") : $t("calculator.rateModal.save") }}</UiButton>
+    </template>
+  </UiModal>
 </template>

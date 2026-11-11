@@ -1,11 +1,15 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Briefcase, Save, ArrowLeft, User, Phone, Mail, MapPin, Tag, Layers, FileText, Building2, ScrollText } from "lucide-vue-next";
+import { Briefcase, Save, ArrowLeft, User, Phone, Mail, MapPin, Tag, Layers, FileText, Building2, ScrollText, CheckCircle2, Circle, AlertCircle } from "lucide-vue-next";
+import { UiPageHeader, UiButton, UiInput, UiBadge, UiEmpty } from "@/components/ui";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useClientStore } from "@/stores/client";
 import { errorMessage } from "@/helpers/errorHelper";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -35,7 +39,7 @@ const loadClient = async () => {
   try {
     const client = await clientsStore.fetchClientById(route.params.id);
     if (!client) {
-      loadError.value = "Client not found.";
+      loadError.value = t("clients.form.notFound");
       return;
     }
     form.value = {
@@ -52,7 +56,7 @@ const loadClient = async () => {
       notes: client.notes || "",
     };
   } catch (err) {
-    loadError.value = "Failed to load client data.";
+    loadError.value = t("clients.form.loadFailed");
   } finally {
     initialLoading.value = false;
   }
@@ -77,314 +81,232 @@ const submit = async () => {
   success.value = "";
 
   if (!form.value.name || !form.value.pic_name || !form.value.pic_phone) {
-    error.value = "Client Name, PIC Name, and PIC Phone are required.";
+    error.value = t("clients.form.required");
     return;
   }
 
   submitting.value = true;
   try {
     await clientsStore.updateClient(route.params.id, form.value);
-    success.value = "Client updated successfully.";
+    success.value = t("clients.form.updated");
 
     setTimeout(() => {
       router.push({ name: "admin.clients.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = errorMessage(err, "Failed to update client.");
+    error.value = errorMessage(err, t("clients.form.updateFailed"));
   } finally {
     submitting.value = false;
   }
 };
+
+// Presentation only: live summary + required-field checklist for the side panel.
+const fieldClass =
+  "w-full h-[38px] pl-9 pr-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
+const requiredChecks = computed(() => [
+  { label: t("clients.fields.name"), done: !!form.value.name },
+  { label: t("clients.fields.picName"), done: !!form.value.pic_name },
+  { label: t("clients.fields.picPhone"), done: !!form.value.pic_phone },
+]);
+const requiredDone = computed(() => requiredChecks.value.filter((c) => c.done).length);
+const initials = computed(() =>
+  (form.value.name || "").replace(/^(PT|CV)\.?\s+/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "—"
+);
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto">
-    <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 mb-5">
-      <div class="flex items-center gap-2.5">
-        <button
-          @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
-          aria-label="Back"
-        >
-          <ArrowLeft class="w-5 h-5 text-gray-600" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('clients.form.editTitle')" :subtitle="$t('clients.form.editSubtitle')">
+      <template #eyebrow>
+        <button type="button" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" :aria-label="$t('common.actions.back')" @click="router.back()">
+          <ArrowLeft class="w-4 h-4" /> {{ $t("common.actions.back") }}
         </button>
-
-        <div class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <Briefcase class="w-6 h-6 text-blue-600" />
+      </template>
+      <template #actions>
+        <div v-if="!initialLoading && !loadError" class="hidden sm:flex items-center gap-2">
+          <UiButton variant="secondary" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
+          <UiButton type="submit" form="client-form" :icon="Save" :loading="submitting" :disabled="submitting">
+            {{ submitting ? $t("common.actions.saving") : $t("common.actions.saveChanges") }}
+          </UiButton>
         </div>
+      </template>
+    </UiPageHeader>
 
-        <div>
-          <h1 class="text-brand-dark text-base font-bold">Edit Client</h1>
-          <p class="text-brand-light text-sm">Update client information</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="mb-5">
-      <Transition name="fade">
-        <Alert
-          v-if="error"
-          type="danger"
-          :title="error"
-          message=""
-          :show="!!error"
-          @close="error = ''"
-        />
-      </Transition>
-      <Transition name="fade">
-        <Alert v-if="success" type="success" :title="success" message="" :show="!!success" />
-      </Transition>
-    </div>
+    <Transition name="ui-fade">
+      <Alert v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
+    </Transition>
+    <Transition name="ui-fade">
+      <Alert v-if="success" type="success" :title="success" message="" :show="!!success" />
+    </Transition>
 
     <!-- Loading -->
-    <div v-if="initialLoading" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3.5">
-      <Skeleton width="200px" height="20px" />
-      <Skeleton height="48px" rounded="16px" />
-      <Skeleton height="48px" rounded="16px" />
-      <Skeleton height="90px" rounded="16px" />
+    <div v-if="initialLoading" class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+      <div class="lg:col-span-2 bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 space-y-4">
+        <Skeleton width="200px" height="20px" />
+        <Skeleton height="38px" rounded="8px" />
+        <Skeleton height="38px" rounded="8px" />
+        <Skeleton height="90px" rounded="8px" />
+      </div>
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5 space-y-3">
+        <Skeleton width="120px" height="16px" />
+        <Skeleton height="60px" rounded="8px" />
+      </div>
     </div>
 
     <!-- Load error -->
-    <div v-else-if="loadError" class="text-center py-20 text-red-600">{{ loadError }}</div>
+    <div v-else-if="loadError" class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty :icon="AlertCircle" :title="loadError" />
+    </div>
 
     <!-- Form -->
-    <form v-else @submit.prevent="submit" class="space-y-5">
-      <!-- Company Information -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center gap-1.5 mb-4">
-          <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <Building2 class="w-4.5 h-4.5 text-blue-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Informasi Perusahaan</h4>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="md:col-span-2">
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Client Name *</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Briefcase class="w-5 h-5 text-gray-400" />
+    <form v-else id="client-form" class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start" @submit.prevent="submit">
+      <div class="lg:col-span-2 space-y-5 ui-stagger min-w-0">
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+            <header class="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-ui-line">
+              <div class="w-9 h-9 rounded-ui-control border border-ui-line bg-ui-surface text-ui-muted flex items-center justify-center shrink-0">
+                <Building2 class="w-4 h-4" />
               </div>
-              <input
-                v-model="form.name"
-                type="text"
-                class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Client Type</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Tag class="w-5 h-5 text-gray-400" />
+              <div class="min-w-0">
+                <h2 class="text-ui-h3 text-ui-ink">{{ $t("clients.form.sections.company") }}</h2>
               </div>
-              <input
-                v-model="form.type"
-                type="text"
-                list="client-type-options"
-                autocomplete="off"
-                class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-              />
-              <datalist id="client-type-options">
-                <option v-for="opt in clientTypeOptions" :key="opt" :value="opt" />
-              </datalist>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Client Field</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Layers class="w-5 h-5 text-gray-400" />
+            </header>
+            <div class="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <UiInput v-model="form.name" :label="$t('clients.fields.name') + ' *'" :icon="Briefcase" class="md:col-span-2" />
+              <div class="min-w-0">
+                <label :for="'client-type-options-input'" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("clients.fields.type") }}</label>
+                <div class="relative">
+                  <Tag class="absolute left-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
+                  <input
+                    id="client-type-options-input"
+                    v-model="form.type"
+                    type="text"
+                    list="client-type-options"
+                    autocomplete="off"
+                    :class="fieldClass"
+                  />
+                  <datalist id="client-type-options">
+                    <option v-for="opt in clientTypeOptions" :key="opt" :value="opt" />
+                  </datalist>
+                </div>
               </div>
-              <input
-                v-model="form.field"
-                type="text"
-                list="client-field-options"
-                autocomplete="off"
-                class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-              />
-              <datalist id="client-field-options">
-                <option v-for="opt in clientFieldOptions" :key="opt" :value="opt" />
-              </datalist>
+              <div class="min-w-0">
+                <label :for="'client-field-options-input'" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("clients.fields.field") }}</label>
+                <div class="relative">
+                  <Layers class="absolute left-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
+                  <input
+                    id="client-field-options-input"
+                    v-model="form.field"
+                    type="text"
+                    list="client-field-options"
+                    autocomplete="off"
+                    :class="fieldClass"
+                  />
+                  <datalist id="client-field-options">
+                    <option v-for="opt in clientFieldOptions" :key="opt" :value="opt" />
+                  </datalist>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </section>
+
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+            <header class="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-ui-line">
+              <div class="w-9 h-9 rounded-ui-control border border-ui-line bg-ui-surface text-ui-muted flex items-center justify-center shrink-0">
+                <User class="w-4 h-4" />
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-ui-h3 text-ui-ink">{{ $t("clients.form.sections.pic") }}</h2>
+              </div>
+            </header>
+            <div class="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <UiInput v-model="form.pic_name" :label="$t('clients.fields.picName') + ' *'" :icon="User" />
+              <UiInput v-model="form.pic_phone" :label="$t('clients.fields.picPhone') + ' *'" :icon="Phone" />
+              <UiInput v-model="form.email" :label="$t('common.labels.email')" type="email" :icon="Mail" class="md:col-span-2" />
+            </div>
+          </section>
+
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+            <header class="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-ui-line">
+              <div class="w-9 h-9 rounded-ui-control border border-ui-line bg-ui-surface text-ui-muted flex items-center justify-center shrink-0">
+                <ScrollText class="w-4 h-4" />
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-ui-h3 text-ui-ink">{{ $t("clients.form.sections.legal") }}</h2>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("clients.form.sections.legalHint") }}</p>
+              </div>
+            </header>
+            <div class="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <UiInput v-model="form.npwp" :label="$t('clients.fields.npwp')" placeholder="00.000.000.0-000.000" mono />
+              <UiInput v-model="form.siup_number" :label="$t('clients.fields.siup')" :placeholder="$t('clients.form.placeholders.siup')" />
+              <UiInput v-model="form.nib_number" :label="$t('clients.fields.nib')" :placeholder="$t('clients.form.placeholders.nib')" />
+            </div>
+          </section>
+
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+            <header class="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-ui-line">
+              <div class="w-9 h-9 rounded-ui-control border border-ui-line bg-ui-surface text-ui-muted flex items-center justify-center shrink-0">
+                <MapPin class="w-4 h-4" />
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-ui-h3 text-ui-ink">{{ $t("clients.form.sections.additional") }}</h2>
+              </div>
+            </header>
+            <div class="p-5 sm:p-6 grid grid-cols-1 gap-4">
+              <UiInput v-model="form.address" :label="$t('common.labels.address')" :icon="MapPin" />
+              <UiInput v-model="form.notes" :label="$t('common.labels.notes')" :rows="4" />
+            </div>
+          </section>
       </div>
 
-      <!-- PIC / Contact -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center gap-1.5 mb-4">
-          <div class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <User class="w-4.5 h-4.5 text-emerald-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Kontak PIC (Person in Charge)</h4>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">PIC Name *</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <User class="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                v-model="form.pic_name"
-                type="text"
-                class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-              />
+      <!-- Side panel: live summary + required fields -->
+      <aside class="space-y-4 lg:sticky lg:top-4 min-w-0">
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+          <div class="flex items-center gap-3 pb-4 border-b border-ui-line">
+            <div class="w-10 h-10 rounded-full bg-ui-accent-soft text-ui-accent text-ui-small font-semibold flex items-center justify-center shrink-0">{{ initials }}</div>
+            <div class="min-w-0">
+              <p class="text-ui-cap text-ui-muted">{{ $t("clients.form.summary") }}</p>
+              <p class="text-ui-h3 text-ui-ink truncate">{{ form.name || $t("clients.form.clientFallback") }}</p>
             </div>
           </div>
-
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">PIC Phone *</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Phone class="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                v-model="form.pic_phone"
-                type="text"
-                class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-              />
+          <dl class="divide-y divide-ui-line text-ui-small">
+            <div v-for="row in [
+              { label: $t('clients.fields.type'), value: form.type },
+              { label: $t('clients.fields.field'), value: form.field },
+              { label: $t('clients.fields.picName'), value: form.pic_name },
+              { label: $t('clients.fields.picPhone'), value: form.pic_phone },
+              { label: $t('common.labels.email'), value: form.email },
+            ]" :key="row.label" class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="text-ui-muted shrink-0">{{ row.label }}</dt>
+              <dd class="text-ui-ink truncate text-right">{{ row.value || "—" }}</dd>
             </div>
-          </div>
+          </dl>
+        </section>
 
-          <div class="md:col-span-2">
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Email</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Mail class="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                v-model="form.email"
-                type="email"
-                class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-              />
-            </div>
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="text-ui-h3 text-ui-ink">{{ $t("clients.form.requiredFields") }}</h3>
+            <UiBadge :tone="requiredDone === requiredChecks.length ? 'ok' : 'warn'">{{ $t("clients.form.requiredCount", { done: requiredDone, total: requiredChecks.length }) }}</UiBadge>
           </div>
+          <div class="h-1 rounded-full bg-ui-subtle mt-3 overflow-hidden">
+            <div class="h-full bg-ui-ink transition-all duration-ui-base" :style="{ width: `${(requiredDone / requiredChecks.length) * 100}%` }"></div>
+          </div>
+          <ul class="mt-3 space-y-1.5">
+            <li v-for="c in requiredChecks" :key="c.label" class="flex items-center gap-2 text-ui-small" :class="c.done ? 'text-ui-ink' : 'text-ui-faint'">
+              <CheckCircle2 v-if="c.done" class="w-4 h-4 text-ui-ok" />
+              <Circle v-else class="w-4 h-4" />
+              {{ c.label }}
+            </li>
+          </ul>
+        </section>
+
+        <!-- Actions (always visible on phones; repeats the header on desktop) -->
+        <div class="flex flex-col gap-2">
+          <UiButton type="submit" size="lg" block :icon="Save" :loading="submitting" :disabled="submitting">
+            {{ submitting ? $t("common.actions.saving") : $t("common.actions.saveChanges") }}
+          </UiButton>
+          <UiButton variant="secondary" size="lg" block class="sm:hidden" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
         </div>
-      </div>
-
-      <!-- Legalitas (optional -- client may be an individual, not a company) -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center gap-1.5 mb-1">
-          <div class="w-9 h-9 bg-purple-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <ScrollText class="w-4.5 h-4.5 text-purple-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Legalitas (Opsional)</h4>
-        </div>
-        <p class="text-brand-light text-xs mb-4 ml-11">
-          Kosongkan jika client merupakan perorangan, bukan badan usaha terdaftar.
-        </p>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">NPWP</label>
-            <input
-              v-model="form.npwp"
-              type="text"
-              placeholder="00.000.000.0-000.000"
-              class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-            />
-          </div>
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Nomor SIUP</label>
-            <input
-              v-model="form.siup_number"
-              type="text"
-              placeholder="e.g. SIUP-123/2020"
-              class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-            />
-          </div>
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Nomor NIB</label>
-            <input
-              v-model="form.nib_number"
-              type="text"
-              placeholder="e.g. 1234567890123"
-              class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Additional Details -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center gap-1.5 mb-4">
-          <div class="w-9 h-9 bg-orange-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <MapPin class="w-4.5 h-4.5 text-orange-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Detail Tambahan</h4>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4">
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Address</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <MapPin class="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                v-model="form.address"
-                type="text"
-                class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1">Notes</label>
-            <div class="relative">
-              <div class="absolute top-3 left-4 pointer-events-none">
-                <FileText class="w-5 h-5 text-gray-400" />
-              </div>
-              <textarea
-                v-model="form.notes"
-                rows="4"
-                class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
-              ></textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex flex-col sm:flex-row gap-2.5">
-        <button
-          type="button"
-          @click="router.back()"
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-5 py-2.5 text-brand-dark font-semibold"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="submit"
-          :disabled="submitting"
-          class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow px-5 py-2.5 flex items-center justify-center gap-1.5 disabled:opacity-50 transition-all"
-        >
-          <Save class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">
-            {{ submitting ? "Saving..." : "Save Changes" }}
-          </span>
-        </button>
-      </div>
+      </aside>
     </form>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>

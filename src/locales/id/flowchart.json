@@ -1,0 +1,111 @@
+{
+  "title": "Flowchart",
+  "subtitle": "Rancang alur proses dengan simbol flowchart standar lalu ekspor sebagai JPG atau PDF",
+  "new": "Flowchart Baru",
+  "counts": {
+    "shapes": "{n} bentuk",
+    "connectors": "{n} konektor"
+  },
+  "list": {
+    "search": "Cari nama atau deskripsi...",
+    "count": "{n} flowchart",
+    "noMatch": "Tidak ada flowchart yang cocok",
+    "empty": "Belum ada flowchart",
+    "emptyHint": "Buat flowchart pertama untuk memetakan sebuah proses.",
+    "open": "Buka {name}",
+    "by": "oleh {name}",
+    "itemLabel": "flowchart",
+    "deleteConfirm": "Hapus flowchart \"{name}\"? Tindakan ini tidak bisa dibatalkan.",
+    "deleteFailed": "Gagal menghapus flowchart."
+  },
+  "editor": {
+    "untitled": "Flowchart Tanpa Judul",
+    "backToList": "Kembali ke daftar",
+    "namePlaceholder": "Nama flowchart",
+    "unsaved": "Ada perubahan belum disimpan",
+    "readOnly": "Hanya baca",
+    "notSaved": "Belum disimpan",
+    "lastSaved": "Terakhir disimpan {at}",
+    "lastSavedBy": "Terakhir disimpan {at} oleh {name}",
+    "descriptionPlaceholder": "Tambahkan deskripsi singkat (opsional)",
+    "preparedFor": "Disiapkan untuk:",
+    "preparedForPlaceholder": "cth. PT Misael Berkat Abadi (opsional)",
+    "loading": "Memuat flowchart",
+    "emptyReadonly": "Flowchart ini masih kosong",
+    "emptyTitle": "Mulai flowchart",
+    "emptyHint": "Klik atau seret bentuk dari panel kiri",
+    "loadFailed": "Flowchart tidak bisa dimuat.",
+    "saveFailed": "Flowchart tidak bisa disimpan.",
+    "nameRequired": "Beri nama flowchart terlebih dahulu.",
+    "leaveConfirm": "Ada perubahan yang belum disimpan. Tinggalkan tanpa menyimpan?",
+    "leave": "Tinggalkan"
+  },
+  "tools": {
+    "undo": "Urungkan",
+    "redo": "Ulangi",
+    "snap": "Tempel ke grid",
+    "fit": "Sesuaikan ke layar"
+  },
+  "export": {
+    "paper": "Kertas · A4",
+    "portrait": "Potret",
+    "landscape": "Lanskap",
+    "jpg": "Ekspor sebagai JPG",
+    "pdf": "Ekspor sebagai PDF",
+    "failed": "Ekspor gagal."
+  },
+  "palette": {
+    "title": "Bentuk · seret masuk",
+    "shapeHint": "{shape} — klik atau seret ke kanvas",
+    "help": "Seret dari titik tepi sebuah bentuk ke bentuk lain untuk menghubungkannya. Klik dua kali bentuk atau garis untuk mengubah teksnya."
+  },
+  "shapes": {
+    "terminator": "Mulai / Selesai",
+    "process": "Proses",
+    "decision": "Keputusan",
+    "io": "Input / Output",
+    "document": "Dokumen",
+    "database": "Database",
+    "subprocess": "Proses Terdefinisi",
+    "preparation": "Persiapan",
+    "connector": "Konektor",
+    "note": "Catatan",
+    "text": "Teks"
+  },
+  "inspector": {
+    "shape": "Bentuk",
+    "text": "Teks",
+    "fontSize": "Ukuran huruf",
+    "bold": "Tebal",
+    "textColor": "Warna teks",
+    "color": "Warna",
+    "colorPreset": "Preset warna {n}",
+    "fill": "Isi",
+    "border": "Garis tepi",
+    "deleteShape": "Hapus bentuk",
+    "connector": "Konektor",
+    "connectorLabel": "Label Konektor",
+    "connectorLabelPlaceholder": "cth. Ya / Tidak",
+    "lineType": "Jenis Garis",
+    "lines": {
+      "smoothstep": "Siku membulat",
+      "step": "Siku tajam",
+      "straight": "Lurus",
+      "curved": "Melengkung"
+    },
+    "arrow": "Panah",
+    "arrows": {
+      "end": "Satu arah →",
+      "both": "Dua arah ↔",
+      "none": "Tanpa panah"
+    },
+    "style": "Gaya",
+    "dashed": "Putus-putus",
+    "animated": "Alur beranimasi",
+    "deleteConnector": "Hapus konektor",
+    "properties": "Properti",
+    "propertiesHint": "Pilih bentuk atau konektor untuk mengubah teks, warna, dan gayanya.",
+    "shortcuts": "Pintasan",
+    "multiSelect": "Pilih banyak"
+  }
+}

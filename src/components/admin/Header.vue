@@ -1,13 +1,15 @@
 <script setup>
 import {
   ChevronDownIcon,
+  ChevronRight,
   UserIcon,
   ClockIcon,
   ReceiptIcon,
   SettingsIcon,
   LogOutIcon,
-  MenuIcon,
 } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+import LanguageSwitch from "@/components/admin/LanguageSwitch.vue";
 import ConfirmActionModal from "@/components/common/ConfirmationModal.vue";
 import NotificationBell from "@/components/admin/NotificationBell.vue";
 import Avatar from "@/components/common/Avatar.vue";
@@ -18,6 +20,7 @@ import { useRoute, RouterLink } from "vue-router";
 import { join } from "lodash-es";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 
+const { t, te } = useI18n();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 const { logout } = authStore;
@@ -93,6 +96,14 @@ const titles = {
   "admin.attendances": {
     title: "Attendance Summary",
     subtitle: "Review clock in/out records",
+  },
+  "admin.attendances.records": {
+    title: "Attendance Records",
+    subtitle: "Every clock in/out across the company",
+  },
+  "admin.leave-requests.dashboard": {
+    title: "Leave Requests",
+    subtitle: "Review and approve leave applications",
   },
   "admin.projects": {
     title: "Project Lists",
@@ -413,6 +424,18 @@ const titles = {
     title: "Payslip Details",
     subtitle: "See payroll breakdown",
   },
+  "admin.analytics.dashboard": { title: "Analytics", subtitle: "Usage and trends across the system" },
+  "admin.invoices.edit": { title: "Edit Invoice", subtitle: "Update the invoice details" },
+  "admin.payment-receipts.edit": { title: "Edit Payment Receipt", subtitle: "Update the receipt details" },
+  "admin.purchase-orders.edit": { title: "Edit Purchase Order", subtitle: "Update the purchase order" },
+  "admin.letters.edit": { title: "Edit Letter", subtitle: "Update the letter details" },
+  "admin.settings.staff-permissions": { title: "Staff Account Permissions", subtitle: "Extra permissions per staff account" },
+  "admin.settings.dropdown-options": { title: "Dropdown Options", subtitle: "Options used across forms" },
+  "admin.settings.bank-accounts": { title: "Bank Accounts", subtitle: "Company bank accounts" },
+  "admin.settings.greetings": { title: "Greetings", subtitle: "Dashboard greetings and occasions" },
+  "admin.settings.attendance": { title: "Attendance Settings", subtitle: "Working hours, holidays and rules" },
+  "admin.settings.payroll": { title: "Payroll Settings", subtitle: "Payroll components and rules" },
+  "admin.settings.documents": { title: "Document Settings", subtitle: "Numbering, templates and letterheads" },
 };
 
 // License pages are per product: the title carries the product name.
@@ -431,12 +454,37 @@ const pageInfo = computed(() => {
   if (licensePage) {
     const code = String(route.params.product || "");
     const productName = licenseStore.productByCode(code)?.name || code.toUpperCase();
-    return { title: `${productName} · ${licensePage[0]}`, subtitle: licensePage[1] };
+    const licenseKey = { "admin.license-manager.licenses.dashboard": "licenses", "admin.license-manager.licenses.create": "create", "admin.license-manager.licenses.detail": "detail", "admin.license-manager.licenses.edit": "edit", "admin.license-manager.versions": "versions" }[name];
+    const label = licenseKey ? t(`nav.licensePages.${licenseKey}`) : licensePage[0];
+    return { title: `${productName} · ${label}`, subtitle: licensePage[1] };
   }
-  return titles[name] || titles["admin.dashboard"];
+  const entry = titles[name] || titles["admin.dashboard"];
+  const key = `nav.pages.${(titles[name] ? name : "admin.dashboard").replace(/\./g, "_")}`;
+  return { title: te(key) ? t(key) : entry.title, subtitle: entry.subtitle };
 });
 
 const pageTitle = computed(() => pageInfo.value.title);
+
+
+
+// Breadcrumb section, named like the sidebar groups. First matching
+// route-name prefix wins; the dashboard has no section.
+const SECTION_RULES = [
+  ["licenseManager", ["admin.license-manager"]],
+  ["settings", ["admin.settings"]],
+  ["general", ["employee.attendance.clock", "employee.attendance.my-attendances", "employee.payslips"]],
+  ["myWorkspace", ["employee.profile", "employee.team", "employee.tasks", "admin.staff-tasks", "admin.screening", "admin.projects", "admin.subscriptions", "admin.maintenance", "admin.server-storage", "admin.attendances", "admin.leave-requests"]],
+  ["administration", ["admin.employee", "admin.team", "admin.clients", "admin.documents", "admin.purchase-orders", "admin.invoices", "admin.payment-receipts", "admin.letters", "admin.certificates", "admin.official-memos", "admin.meeting-notes", "admin.proposals", "admin.orgchart"]],
+  ["finance", ["admin.company-finance", "admin.company-cash-book", "admin.payroll", "admin.report"]],
+  ["tools", ["admin.project-calculator", "admin.flowchart"]],
+  ["company", ["admin.company-about", "admin.assets", "admin.files-company", "admin.account-password", "admin.announcements"]],
+  ["insights", ["admin.analytics", "admin.history"]],
+];
+const pageSection = computed(() => {
+  const name = route.name?.toString() || "";
+  const key = SECTION_RULES.find(([, prefixes]) => prefixes.some((p) => name.startsWith(p)))?.[0];
+  return key ? t(`nav.sections.${key}`) : "";
+});
 const pageSubtitle = computed(() => pageInfo.value.subtitle);
 
 const handleLogout = () => {
@@ -454,127 +502,89 @@ const confirmLogout = async () => {
 </script>
 
 <template>
-  <header
-    class="page-header bg-white border-b border-[#DCDEDD] px-3 sm:px-5 py-2.5 sm:py-3"
-  >
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3 sm:gap-4">
-        <button
-          class="lg:hidden w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
-          @click="emit('toggle-sidebar')"
+  <header class="page-header h-14 shrink-0 flex items-center gap-3 px-4 sm:px-6 bg-ui-bg border-b border-ui-line font-sans">
+    <!-- Breadcrumb: the page itself carries the big title and description
+         (UiPageHeader), so the bar only says where you are. On phones it
+         reads as an app bar title. -->
+    <nav :aria-label="t('common.a11y.breadcrumb')" class="flex-1 min-w-0 flex items-center gap-1.5">
+      <template v-if="pageSection">
+        <span class="hidden sm:inline text-ui-small text-ui-muted truncate shrink-0 max-w-[40%]">{{ pageSection }}</span>
+        <ChevronRight class="hidden sm:block w-3.5 h-3.5 text-ui-faint shrink-0" aria-hidden="true" />
+      </template>
+      <h2 class="text-ui-h3 sm:text-ui-small sm:font-medium text-ui-ink truncate" aria-current="page">{{ pageTitle }}</h2>
+    </nav>
+
+    <div class="flex items-center gap-1">
+      <LanguageSwitch />
+      <NotificationBell />
+      <RouterLink
+        :to="{ name: 'admin.settings.dashboard' }"
+        class="hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
+        :aria-label="t('common.a11y.settings')"
+      >
+        <SettingsIcon class="w-[18px] h-[18px]" />
+      </RouterLink>
+    </div>
+
+    <div class="hidden sm:block w-px h-6 bg-ui-line mx-1"></div>
+
+    <!-- User menu -->
+    <div ref="profileMenuRef" class="relative z-50">
+      <button
+        type="button"
+        class="flex items-center gap-2.5 rounded-[10px] py-1 pl-1 pr-1.5 hover:bg-ui-hover transition-colors focus:outline-none focus-visible:shadow-ui-focus"
+        aria-haspopup="true"
+        :aria-expanded="isOpen"
+        @click="isOpen = !isOpen"
+      >
+        <Avatar :src="user?.profile_photo" :alt="user?.name" size="w-8 h-8" />
+        <div class="hidden md:block text-left max-w-[160px]">
+          <p class="text-ui-small font-medium text-ui-ink leading-tight truncate">{{ user?.name }}</p>
+          <p class="text-ui-cap text-ui-muted leading-tight mt-0.5 truncate capitalize">{{ join(user?.roles, ", ") }}</p>
+        </div>
+        <ChevronDownIcon class="w-4 h-4 text-ui-faint shrink-0 transition-transform duration-ui-fast" :class="{ 'rotate-180': isOpen }" />
+      </button>
+
+      <Transition name="ui-pop">
+        <div
+          v-if="isOpen"
+          role="menu"
+          class="absolute right-0 top-full mt-2 w-60 bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay p-1.5 origin-top-right"
         >
-          <MenuIcon class="w-[18px] h-[18px]" />
-        </button>
-        <div>
-          <h2 class="text-brand-dark text-base sm:text-lg font-bold leading-tight">
-            {{ pageTitle }}
-          </h2>
-          <p class="hidden sm:block text-brand-light text-xs font-normal mt-0.5">
-            {{ pageSubtitle }}
-          </p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <!-- Action Buttons -->
-        <div class="hidden sm:flex items-center gap-1">
-          <NotificationBell />
+          <div class="px-2.5 py-2.5 mb-1 border-b border-ui-line">
+            <p class="text-ui-small font-semibold text-ui-ink truncate">{{ user?.name }}</p>
+            <p class="text-ui-cap text-ui-muted truncate">{{ user?.email }}</p>
+            <p class="text-ui-cap text-ui-faint mt-0.5 truncate capitalize">{{ join(user?.roles, ", ") }}</p>
+          </div>
           <RouterLink
-            :to="{ name: 'admin.settings.dashboard' }"
-            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
+            :to="{ name: 'employee.profile' }"
+            role="menuitem"
+            class="flex items-center gap-2.5 h-9 px-2.5 rounded-ui-control text-ui-small text-ui-text hover:bg-ui-hover hover:text-ui-ink transition-colors"
+            @click="isOpen = false"
           >
-            <SettingsIcon class="w-[18px] h-[18px]" />
+            <UserIcon class="w-4 h-4 text-ui-muted" />
+            {{ t("common.user.profile") }}
           </RouterLink>
-        </div>
-
-        <!-- Divider -->
-        <div class="hidden sm:block w-px h-6 bg-[#DCDEDD] mx-2"></div>
-
-        <!-- User Profile -->
-        <div ref="profileMenuRef" class="relative z-50">
+          <div class="h-px bg-ui-line my-1"></div>
           <button
             type="button"
-            class="flex items-center gap-2 sm:gap-2.5 rounded-full hover:bg-gray-50 transition-colors duration-150 py-1 pr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0C51D9] focus-visible:ring-offset-1"
-            aria-haspopup="true"
-            :aria-expanded="isOpen"
-            @click="isOpen = !isOpen"
+            role="menuitem"
+            class="w-full flex items-center gap-2.5 h-9 px-2.5 rounded-ui-control text-ui-small text-ui-bad hover:bg-ui-bad-soft transition-colors text-left"
+            @click="isOpen = false; handleLogout()"
           >
-            <Avatar :src="user?.profile_photo" :alt="user?.name" size="w-8 h-8 sm:w-9 sm:h-9" />
-            <div class="hidden md:block text-left">
-              <p class="text-brand-dark text-sm font-semibold leading-tight">
-                {{ user?.name }}
-              </p>
-              <p class="text-gray-400 text-xs font-medium leading-tight mt-0.5">
-                {{ join(user?.roles, ", ").toUpperCase() }}
-              </p>
-            </div>
-            <ChevronDownIcon
-              class="w-4 h-4 text-gray-400 shrink-0 transition-transform duration-150"
-              :class="{ 'rotate-180': isOpen }"
-            />
+            <LogOutIcon class="w-4 h-4" />
+            {{ t("common.actions.signOut") }}
           </button>
-
-          <!-- Dropdown Menu -->
-          <Transition name="menu-pop">
-            <div
-              v-if="isOpen"
-              role="menu"
-              class="absolute right-0 top-full mt-2 w-56 bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg py-2 origin-top-right"
-            >
-              <div class="px-4 py-3 border-b border-[#DCDEDD]">
-                <p class="text-sm font-semibold text-gray-900 truncate">
-                  {{ user?.name }}
-                </p>
-                <p class="text-xs text-gray-500 truncate">{{ user?.email }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">
-                  {{ join(user?.roles, ", ").toUpperCase() }}
-                </p>
-              </div>
-
-              <div class="py-1">
-                <RouterLink
-                  :to="{ name: 'employee.profile.edit' }"
-                  role="menuitem"
-                  class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                  @click="isOpen = false"
-                >
-                  <UserIcon class="w-4 h-4 text-gray-400" />
-                  Profil Pengguna
-                </RouterLink>
-                <RouterLink
-                  :to="{ name: 'admin.settings.dashboard' }"
-                  role="menuitem"
-                  class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                  @click="isOpen = false"
-                >
-                  <SettingsIcon class="w-4 h-4 text-gray-400" />
-                  Pengaturan Sistem
-                </RouterLink>
-              </div>
-
-              <div class="border-t border-[#DCDEDD] py-1">
-                <button
-                  type="button"
-                  role="menuitem"
-                  @click="isOpen = false; handleLogout()"
-                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer text-left"
-                >
-                  <LogOutIcon class="w-4 h-4" />
-                  Keluar
-                </button>
-              </div>
-            </div>
-          </Transition>
         </div>
-      </div>
+      </Transition>
     </div>
 
     <ConfirmActionModal
       :show="showLogoutModal"
-      title="Keluar dari Sistem"
-      message="Anda yakin ingin keluar? Semua sesi aktif akan dihentikan."
-      confirm-text="Keluar"
-      cancel-text="Batal"
+      :title="t('common.user.signOutTitle')"
+      :message="t('common.user.signOutMessage')"
+      :confirm-text="t('common.actions.signOut')"
+      :cancel-text="t('common.actions.cancel')"
       type="danger"
       :loading="logoutLoading"
       @cancel="showLogoutModal = false"
@@ -582,15 +592,3 @@ const confirmLogout = async () => {
     />
   </header>
 </template>
-
-<style scoped>
-.menu-pop-enter-active,
-.menu-pop-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.menu-pop-enter-from,
-.menu-pop-leave-to {
-  opacity: 0;
-  transform: scale(0.96) translateY(-4px);
-}
-</style>

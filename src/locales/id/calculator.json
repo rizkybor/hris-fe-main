@@ -1,0 +1,228 @@
+{
+  "scenario": {
+    "all": "Semua Skenario",
+    "feature": "Fitur Baru",
+    "build": "Bangun dari Nol",
+    "landingPage": "Landing Page"
+  },
+  "vat": {
+    "including": "termasuk PPN",
+    "excluding": "belum termasuk PPN"
+  },
+  "lp": {
+    "serverDedicated": "Server Dedicated",
+    "serverShared": "Server Shared",
+    "designDedicated": "Desain Dedicated",
+    "designTemplate": "Desain Template"
+  },
+  "dashboard": {
+    "title": "Kalkulator Proyek",
+    "subtitle": "Estimasi biaya pengembangan yang konsisten.",
+    "createNew": "Buat Estimasi Baru",
+    "stats": {
+      "total": "Total Estimasi",
+      "thisMonth": "{n} bulan ini",
+      "totalValue": "Total Nilai Estimasi",
+      "allHistory": "seluruh riwayat",
+      "average": "Nilai Rata-rata",
+      "perEstimate": "/ estimasi",
+      "scenario": "Skenario",
+      "byScenario": "rincian per skenario",
+      "features": "Fitur",
+      "builds": "Build",
+      "landingPages": "Landing Page"
+    },
+    "teamRate": {
+      "title": "Pengaturan Rate Tim",
+      "subtitle": "Biaya dasar & rate/jam.",
+      "config": "Atur Rate",
+      "teamFee": "Biaya Tim / Bulan",
+      "teamHours": "Tim & Jam Produktif",
+      "teamHoursValue": "{people} orang · {hours} jam/bulan",
+      "rateCost": "Rate Biaya / Jam",
+      "rateSell": "Rate Jual / Jam ({x}x)"
+    },
+    "lpRate": {
+      "title": "Pengaturan Rate Landing Page",
+      "subtitle": "Untuk skenario Landing Page",
+      "config": "Atur Landing Page"
+    },
+    "history": "Riwayat Estimasi",
+    "searchPlaceholder": "Cari nama estimasi atau klien...",
+    "columns": {
+      "estimate": "Estimasi",
+      "scenario": "Skenario",
+      "duration": "Durasi",
+      "feeRef": "Fee Ref"
+    },
+    "weeksEstimated": "estimasi {n} minggu",
+    "weeks": "{n} minggu",
+    "months": "{n} bulan",
+    "deleteConfirm": "Hapus estimasi \"{name}\"? Tindakan ini tidak bisa dibatalkan.",
+    "deleteFailed": "Gagal menghapus estimasi.",
+    "empty": {
+      "title": "Belum ada estimasi",
+      "message": "Buat estimasi proyek pertama untuk mulai membangun riwayat penawaran."
+    },
+    "itemLabel": "estimasi"
+  },
+  "lpModal": {
+    "description": "Atur harga paket untuk skenario Landing Page",
+    "saveFailed": "Gagal menyimpan konfigurasi Landing Page.",
+    "server": "Server",
+    "design": "Desain",
+    "dedicated": "Dedicated (Rp)",
+    "shared": "Shared (Rp)",
+    "template": "Template (Rp)",
+    "save": "Simpan Konfigurasi"
+  },
+  "rateModal": {
+    "description": "Pilih item dari Biaya Operasional untuk menyusun biaya tim",
+    "loadFailed": "Gagal memuat daftar item Biaya Operasional.",
+    "saveFailed": "Gagal menyimpan pengaturan rate.",
+    "loading": "Memuat data Biaya Operasional...",
+    "fixedCost": "Biaya Tetap",
+    "sdm": "Sumber Daya SDM",
+    "infra": "Tools Infrastruktur",
+    "emptyFixed": "Belum ada item Biaya Tetap",
+    "emptySdm": "Belum ada Sumber Daya SDM",
+    "emptyInfra": "Belum ada Tools Infrastruktur",
+    "perMonth": "{amount}/bln",
+    "hoursPerMonth": "{n} jam/bln",
+    "notUsed": "Tidak Digunakan",
+    "notUsedHint": "Tidak Digunakan di Biaya Operasional (tetap bisa dipilih)",
+    "margin": "Multiplier Margin Jual",
+    "pmOverhead": "PM Overhead Default (%)",
+    "infraSetup": "Biaya Setup Infrastruktur Default (Rp)",
+    "previewCost": "Total Biaya Operasional Tim / Bulan",
+    "previewHours": "Total Jam Produktif Tim / Bulan",
+    "previewHoursValue": "{hours} jam · {people} orang",
+    "previewRateCost": "Rate Biaya / Jam (preview)",
+    "previewRateSell": "Rate Jual / Jam (preview)",
+    "save": "Simpan Pengaturan Rate"
+  },
+  "detail": {
+    "title": "Detail Estimasi",
+    "subtitle": "Ringkasan estimasi biaya proyek",
+    "scenario": {
+      "feature": "Estimasi Fitur Baru",
+      "build": "Estimasi Bangun dari Nol",
+      "landingPage": "Estimasi Landing Page"
+    },
+    "print": "Cetak / PDF",
+    "notFound": "Estimasi tidak ditemukan.",
+    "notFoundHint": "Mungkin sudah dihapus.",
+    "monthly": "Bulanan",
+    "annual": "Tahunan"
+  },
+  "fee": {
+    "title": "Fee Marketing / Sales B2B-B2C",
+    "hint": "Hanya referensi, tidak ditambahkan ke total"
+  },
+  "form": {
+    "editTitle": "Ubah Estimasi",
+    "subtitle": "Isi detail di bawah, total akan dihitung otomatis",
+    "saveEstimate": "Simpan Estimasi",
+    "replaceConfirm": "Ganti item saat ini dengan item dari \"{name}\"? Tindakan ini tidak bisa dibatalkan.",
+    "requiredError": "Nama estimasi dan nama setiap item wajib diisi.",
+    "saveFailed": "Gagal menyimpan estimasi.",
+    "scenarioDesc": {
+      "feature": "Menambah fitur pada sistem yang sudah ada",
+      "build": "Membangun aplikasi baru, per modul",
+      "landingPage": "Paket Server, Desain, dan Development"
+    },
+    "details": "Detail estimasi",
+    "name": "Nama Proyek",
+    "namePlaceholder": "contoh: Penambahan Fitur Monitoring WA",
+    "clientName": "Nama Klien (Opsional)",
+    "clientPlaceholder": "contoh: PT. Nama Klien",
+    "featureList": "Daftar Fitur",
+    "moduleList": "Daftar Modul",
+    "loadPrevious": "Ambil dari Estimasi Sebelumnya",
+    "addFeature": "Tambah Fitur",
+    "addModule": "Tambah Modul",
+    "complexityHint": "Faktor Kompleksitas: Sederhana = 1.0 · Sedang = 1.3–1.5 · Kompleks = 1.8–2.2. Buffer risiko umumnya 15–20%.",
+    "featureName": "Nama fitur",
+    "moduleName": "Nama modul",
+    "hours": {
+      "analysis": "Jam Analisis",
+      "development": "Jam Development",
+      "testing": "Jam Testing",
+      "deployment": "Jam Deployment",
+      "estimated": "Estimasi Jam"
+    },
+    "complexity": "Faktor Kompleksitas",
+    "bufferPercent": "Buffer Risiko %",
+    "finalPrice": "Harga Akhir",
+    "subtotal": "Subtotal",
+    "hoursUsed": "{n} jam terpakai",
+    "lp": {
+      "title": "Konfigurasi Landing Page",
+      "dedicated": "Dedicated",
+      "shared": "Shared",
+      "template": "Template",
+      "development": "Development",
+      "estimatedHours": "Estimasi Waktu Akhir (jam)",
+      "rateDeveloper": "Rate Developer (Rp/jam)",
+      "developerCount": "Jumlah Developer",
+      "developmentCost": "Biaya Development",
+      "additional": "Item Tambahan",
+      "additionalOptional": "Item Tambahan (Opsional)",
+      "addItem": "Tambah Item",
+      "noAdditional": "Belum ada item tambahan -- opsional, misalnya domain, integrasi pihak ketiga, atau revisi tambahan.",
+      "qty": "Jumlah",
+      "price": "Harga (Rp)",
+      "itemPlaceholder": "mis. Domain .com (1 tahun)",
+      "additionalTotal": "Total Item Tambahan",
+      "marginPercent": "Margin Jual (%)",
+      "marginAmount": "Nilai Margin"
+    },
+    "overhead": {
+      "title": "Overhead proyek",
+      "pmPercent": "PM Overhead (%)",
+      "infraSetup": "Biaya Setup Infrastruktur (Rp)"
+    },
+    "tax": {
+      "title": "Pajak & catatan",
+      "includePpn": "Termasuk PPN",
+      "ppnPercent": "PPN %",
+      "includePph": "Termasuk PPh (dipotong klien)",
+      "includePphHint": "PPh dipotong oleh klien dari pembayaran -- mengurangi yang diterima, bukan menambah tagihan.",
+      "pphType": "Jenis PPh",
+      "pphTypePlaceholder": "Pilih jenis PPh...",
+      "pphRate": "Tarif PPh (%)"
+    },
+    "notes": "Catatan (Opsional)",
+    "notesPlaceholder": "Catatan tambahan untuk estimasi ini...",
+    "summary": {
+      "title": "Ringkasan",
+      "rateSell": "Rate Jual / Jam",
+      "buffer": "Buffer Risiko",
+      "pmOverhead": "PM Overhead",
+      "infraSetup": "Biaya Setup Infrastruktur",
+      "margin": "Margin Jual",
+      "total": "Total Estimasi",
+      "totalPpn": "Total + PPN",
+      "netReceived": "Diterima Bersih",
+      "afterPph": "Setelah dipotong PPh oleh klien"
+    },
+    "duration": {
+      "label": "Estimasi Durasi",
+      "hours": "{n} jam",
+      "developers": "{n} developer",
+      "hoursPerMonth": "{n} jam/bulan"
+    },
+    "allocated": {
+      "label": "Developer dialokasikan",
+      "hint": "Orang yang benar-benar mengerjakan proyek ini, dari {team} orang di Pengaturan Rate Tim (≈ {hours} jam/orang/bulan). Hanya memengaruhi durasi, bukan harga."
+    },
+    "reference": {
+      "description": "Gunakan daftar item dari estimasi tersimpan sebagai titik awal",
+      "search": "Cari nama estimasi atau klien...",
+      "empty": "Belum ada estimasi tersimpan.",
+      "noClient": "Tanpa klien",
+      "package": "Paket",
+      "items": "{n} item"
+    }
+  }
+}

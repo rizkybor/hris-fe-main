@@ -3,6 +3,12 @@ import { axiosInstance } from '@/plugins/axios';
 import { handleError } from "@/helpers/errorHelper";
 import { toRequestBody } from "@/helpers/formDataHelper";
 
+// One /projects/statistics request shared by every widget that asks for it
+// at the same time (Projects page: KPI tiles + two charts; dashboard).
+let statisticsRequest = null;
+let statisticsLoaded = false;
+const STATISTICS_MAX_AGE = 30 * 1000;
+
 export const useProjectStore = defineStore("project", {
     state: () => ({
         projects: [],
@@ -27,6 +33,10 @@ export const useProjectStore = defineStore("project", {
             per_page: 10,
             total: 0
         },
+        // Who filled `projects` last ("list" = the Projects page); other
+        // pages load it with their own params (e.g. row_per_page 100).
+        projectsSource: null,
+        statisticsFetchedAt: 0,
         loading: false,
         loadingStatistics: false,
         error: null,
@@ -48,7 +58,7 @@ export const useProjectStore = defineStore("project", {
             }
         },
 
-        async fetchProjectsPaginated(params) {
+        async fetchProjectsPaginated(params, { source = null } = {}) {
             this.loading = true;
 
             try {
@@ -56,6 +66,7 @@ export const useProjectStore = defineStore("project", {
 
                 this.projects = response.data.data.data;
                 this.meta = response.data.data.meta;
+                this.projectsSource = source;
             } catch (error) {
                 this.error = handleError(error);
             } finally {
@@ -99,6 +110,8 @@ export const useProjectStore = defineStore("project", {
                 const response = await axiosInstance.post('projects', toRequestBody(payload));
 
                 this.success = response.data.message;
+                this.statisticsFetchedAt = 0;
+                return response.data.data;
             } catch (error) {
                 this.error = handleError(error);
             } finally {
@@ -116,6 +129,8 @@ export const useProjectStore = defineStore("project", {
                 }));
 
                 this.success = response.data.message;
+                this.statisticsFetchedAt = 0;
+                return response.data.data;
             } catch (error) {
                 this.error = handleError(error);
             } finally {
@@ -149,6 +164,7 @@ export const useProjectStore = defineStore("project", {
 
                 this.success = response.data.message;
                 this.projects = this.projects.filter((p) => p.id !== id);
+                this.statisticsFetchedAt = 0;
             } catch (error) {
                 this.error = handleError(error);
                 throw error;
@@ -157,19 +173,30 @@ export const useProjectStore = defineStore("project", {
             }
         },
 
-        async fetchStatistics() {
-            this.loadingStatistics = true;
+        // Concurrent callers share one request; data younger than 30s is
+        // reused unless `force`. `loadingStatistics` is only set while there
+        // is nothing to show yet, so a refresh never flashes skeletons.
+        async fetchStatistics({ force = false } = {}) {
+            if (statisticsRequest) return statisticsRequest;
+            if (!force && Date.now() - this.statisticsFetchedAt < STATISTICS_MAX_AGE) return;
+            if (!statisticsLoaded) this.loadingStatistics = true;
             this.error = null;
 
-            try {
-                const response = await axiosInstance.get('/projects/statistics');
+            statisticsRequest = (async () => {
+                try {
+                    const response = await axiosInstance.get('/projects/statistics');
 
-                this.statistics = response.data.data;
-            } catch (error) {
-                this.error = handleError(error);
-            } finally {
-                this.loadingStatistics = false;
-            }
+                    this.statistics = response.data.data;
+                    this.statisticsFetchedAt = Date.now();
+                    statisticsLoaded = true;
+                } catch (error) {
+                    this.error = handleError(error);
+                } finally {
+                    this.loadingStatistics = false;
+                    statisticsRequest = null;
+                }
+            })();
+            return statisticsRequest;
         },
 
         async downloadProgressReport(id, name) {

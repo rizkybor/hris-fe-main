@@ -1,99 +1,119 @@
 <script setup>
-import { ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, NotebookPen, ChevronRight, FileText } from "lucide-vue-next";
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import { ShoppingCart, Receipt, FileCheck2, Mail, Award, FileSignature, NotebookPen, ChevronRight, FileText, FolderOpen } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
+import { UiEmpty, UiPageHeader } from "@/components/ui";
 
-const links = [
+const { t } = useI18n();
+
+const links = computed(() => [
   {
     to: { name: "admin.proposals.dashboard" },
     icon: FileText,
-    title: "Proposal Penawaran",
-    description: "Write sales proposals from the JCD template and export them as PDF",
+    title: t("documents.hub.links.proposal.title"),
+    description: t("documents.hub.links.proposal.description"),
     permission: "proposal-menu",
-    iconBg: "bg-violet-50",
-    iconColor: "text-violet-600",
+    group: "billing",
   },
   {
     to: { name: "admin.letters.dashboard" },
     icon: Mail,
-    title: "Letters",
-    description: "Create and manage internal and external company letters",
+    title: t("documents.hub.links.letter.title"),
+    description: t("documents.hub.links.letter.description"),
     permission: "letter-menu",
+    group: "office",
   },
   {
     to: { name: "admin.invoices.dashboard" },
     icon: Receipt,
-    title: "Invoice",
-    description: "Create and manage client invoices",
+    title: t("documents.hub.links.invoice.title"),
+    description: t("documents.hub.links.invoice.description"),
     permission: "invoice-menu",
+    group: "billing",
   },
   {
     to: { name: "admin.payment-receipts.dashboard" },
     icon: FileCheck2,
-    title: "Payment Receipt",
-    description: "Create and manage payment receipts",
+    title: t("documents.hub.links.receipt.title"),
+    description: t("documents.hub.links.receipt.description"),
     permission: "payment-receipt-menu",
+    group: "billing",
   },
   {
     to: { name: "admin.purchase-orders.dashboard" },
     icon: ShoppingCart,
-    title: "Purchase Order",
-    description: "Create and manage Purchase Orders (PO) for clients",
+    title: t("documents.hub.links.purchaseOrder.title"),
+    description: t("documents.hub.links.purchaseOrder.description"),
     permission: "purchase-order-menu",
+    group: "billing",
   },
   {
     to: { name: "admin.official-memos.dashboard" },
     icon: FileSignature,
-    title: "Official Memo",
-    description: "Internal memos with a Finance Manager approval workflow",
+    title: t("documents.hub.links.memo.title"),
+    description: t("documents.hub.links.memo.description"),
     permission: "document-letter-menu",
-    iconBg: "bg-indigo-50",
-    iconColor: "text-indigo-600",
+    group: "office",
   },
   {
     to: { name: "admin.meeting-notes.dashboard" },
     icon: NotebookPen,
-    title: "Meeting Note",
-    description: "Internal & external meeting recaps, managed together by the management team",
+    title: t("documents.hub.links.meetingNote.title"),
+    description: t("documents.hub.links.meetingNote.description"),
     permission: "meeting-note-menu",
-    iconBg: "bg-teal-50",
-    iconColor: "text-teal-600",
+    group: "office",
   },
   {
     to: { name: "admin.certificates.dashboard" },
     icon: Award,
-    title: "Certificate",
-    description: "Generate dynamic certificates, single or in bulk",
+    title: t("documents.hub.links.certificate.title"),
+    description: t("documents.hub.links.certificate.description"),
     permission: "certificate-menu",
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
+    group: "office",
   },
-];
+]);
+
+// Presentation only: the same links, shown in two labelled groups.
+const groups = computed(() => [
+  { key: "billing", label: t("documents.hub.groups.billing") },
+  { key: "office", label: t("documents.hub.groups.office") },
+]);
+const visibleIn = (key) => links.value.filter((l) => l.group === key && can(l.permission));
+const hasAny = () => links.value.some((l) => can(l.permission));
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <template v-for="link in links" :key="link.title">
-        <router-link
-          v-if="can(link.permission)"
-          :to="link.to"
-          class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5 flex flex-col gap-3 hover:border-[#0C51D9] hover:shadow-sm transition-all"
-        >
-          <div
-            class="w-12 h-12 rounded-[12px] flex items-center justify-center"
-            :class="link.iconBg || 'bg-blue-50'"
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('documents.hub.title')" :subtitle="$t('documents.hub.subtitle')" />
+
+    <template v-for="group in groups" :key="group.key">
+      <section v-if="visibleIn(group.key).length" class="space-y-2.5">
+        <h2 class="text-ui-over uppercase text-ui-muted px-0.5">{{ group.label }}</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 ui-stagger">
+          <router-link
+            v-for="link in visibleIn(group.key)"
+            :key="link.permission"
+            :to="link.to"
+            class="ui-lift group flex items-start gap-3.5 bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 hover:border-ui-line-strong focus:outline-none focus-visible:shadow-ui-focus"
           >
-            <component :is="link.icon" class="w-6 h-6" :class="link.iconColor || 'text-[#0C51D9]'" />
-          </div>
-          <div class="flex-1">
-            <p class="text-brand-dark text-base font-bold flex items-center justify-between">
-              {{ link.title }}
-              <ChevronRight class="w-4 h-4 text-gray-400" />
-            </p>
-            <p class="text-brand-light text-xs mt-1">{{ link.description }}</p>
-          </div>
-        </router-link>
-      </template>
+            <span class="w-10 h-10 shrink-0 rounded-ui-control bg-ui-subtle text-ui-ink flex items-center justify-center">
+              <component :is="link.icon" class="w-5 h-5" />
+            </span>
+            <span class="flex-1 min-w-0">
+              <span class="flex items-center justify-between gap-2">
+                <span class="text-ui-h3 text-ui-ink">{{ link.title }}</span>
+                <ChevronRight class="w-4 h-4 text-ui-faint shrink-0 transition-transform group-hover:translate-x-0.5" />
+              </span>
+              <span class="block text-ui-small text-ui-muted mt-1">{{ link.description }}</span>
+            </span>
+          </router-link>
+        </div>
+      </section>
+    </template>
+
+    <div v-if="!hasAny()" class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty :icon="FolderOpen" :title="$t('documents.hub.emptyTitle')" :message="$t('documents.hub.emptyMessage')" />
     </div>
   </div>
 </template>

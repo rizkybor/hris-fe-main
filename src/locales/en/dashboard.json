@@ -1,0 +1,265 @@
+{
+  "welcome": {
+    "greeting": {
+      "morning": "Good morning, {name}",
+      "afternoon": "Good afternoon, {name}",
+      "evening": "Good evening, {name}",
+      "night": "Good evening, {name}"
+    },
+    "fallbackName": "there",
+    "subtitle": {
+      "superadmin": "Here's your system configuration overview.",
+      "manager": "Here's how the company is doing today.",
+      "operational_director": "Here's your operations & workforce snapshot.",
+      "hr": "Here's your people & workforce snapshot.",
+      "finance": "Here's your payroll & finance snapshot.",
+      "staff": "Here's your personal work overview.",
+      "default": "Here's what's happening today."
+    },
+    "roles": {
+      "superadmin": "Super Admin",
+      "manager": "Manager",
+      "operational_director": "Operational Director",
+      "hr": "HR",
+      "finance": "Finance Manager",
+      "staff": "Staff"
+    },
+    "clockInOut": "Clock in / out",
+    "announcements": "Announcements",
+    "new": "New",
+    "pinned": "Pinned"
+  },
+  "widgets": {
+    "keyMetrics": "Key Metrics",
+    "projectBudget": "Project Budget",
+    "projectRealized": "Project Realized",
+    "search": "Search",
+    "stickyNotes": "Sticky Notes",
+    "projectsAtRisk": "Projects at Risk",
+    "latestEmployees": "Latest Employees",
+    "latestTeams": "Latest Teams",
+    "quickAccess": "Quick Access",
+    "systemSettings": "System Settings",
+    "pendingLeaveRequests": "Pending Leave Requests",
+    "myOverview": "My Overview",
+    "systemStats": "System Stats",
+    "recentActivity": "Recent Activity",
+    "upcomingTasks": "Upcoming Tasks",
+    "subscriptions": "Subscriptions",
+    "maintenance": "Maintenance"
+  },
+  "layout": {
+    "loadError": "Couldn't load your dashboard widgets.",
+    "editing": "Editing dashboard layout",
+    "editingHint": "Drag widgets to reorder · changes are saved for you only",
+    "reset": "Reset",
+    "resetTitle": "Reset Layout",
+    "resetConfirm": "Reset your dashboard back to the default widget order and sizes?",
+    "empty": "No widgets available for your role yet.",
+    "sizeOf": "Size of {name}",
+    "dragToReorder": "Drag to reorder: {name}",
+    "sizes": {
+      "small": "Small (1/3 width)",
+      "medium": "Medium (1/2 width)",
+      "large": "Large (full width)"
+    },
+    "saving": "Saving layout…",
+    "saved": "Layout saved",
+    "saveError": "Couldn't save layout"
+  },
+  "quickLinks": {
+    "empty": "No quick links available.",
+    "employees": "Employees",
+    "teams": "Our Teams",
+    "projects": "Projects",
+    "attendance": "Attendance",
+    "leaveRequests": "Leave Requests",
+    "announcements": "Announcements",
+    "payroll": "Payroll",
+    "companyFinance": "Company Finance",
+    "invoices": "Invoices",
+    "purchaseOrders": "Purchase Orders",
+    "reports": "Reports",
+    "roles": "Roles & Permissions",
+    "staffPermissions": "Staff Account Permissions",
+    "dropdownOptions": "Dropdown Options",
+    "backup": "Backup Database"
+  },
+  "myOverview": {
+    "attendanceRate": "Attendance Rate",
+    "thisMonth": "This Month",
+    "thisMonthHint": "This month",
+    "daysOf": "{present} of {total} days",
+    "onTime": "{n}% On Time",
+    "greatPerformance": "Great Performance",
+    "hoursWorked": "Hours Worked",
+    "hoursValue": "{n}h",
+    "leaveBalance": "Leave Balance",
+    "daysRemaining": "Days remaining",
+    "tasksDone": "Tasks Done",
+    "yesterday": "+{n} yesterday",
+    "activeProjects": "Active Projects",
+    "assignedLeading": "Assigned to you · Leading: {n}",
+    "recentActivities": "Recent Activities",
+    "empty": "No recent activity",
+    "read": "Read",
+    "unread": "Unread",
+    "notification": "Notification"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "empty": "No quick actions available",
+    "addEmployee": "Add Employee",
+    "createTeam": "Create New Team",
+    "processPayroll": "Process Payroll",
+    "viewAttendance": "View Attendance",
+    "operationalCost": "Operational Cost",
+    "addClient": "Add Client",
+    "clockInOut": "Clock In / Out",
+    "requestLeave": "Request Leave",
+    "myTasks": "My Tasks",
+    "myPayslips": "My Payslips"
+  },
+  "latestEmployees": {
+    "empty": "No employees found",
+    "unknown": "Unknown",
+    "noJobTitle": "N/A"
+  },
+  "latestTeams": {
+    "empty": "No teams found",
+    "members": "{n} member | {n} members"
+  },
+  "maintenance": {
+    "subtitle": "Quota used this month",
+    "loadError": "Couldn't load maintenance data.",
+    "empty": "No active maintenance contracts yet.",
+    "usedThisMonth": "Used this month",
+    "ofPercent": "of {total} · {percent}%",
+    "overQuota": "Over quota",
+    "ofContracts": "of {n} contracts",
+    "devBalance": "Dev. balance",
+    "expiring": "{hours} expiring",
+    "over": "{hours} over",
+    "hoursPerMonth": "Hours used per month (all contracts)",
+    "hoursUsed": "Hours used",
+    "tooltipUsed": "{hours} used",
+    "tooltipQuota": "of {hours} quota"
+  },
+  "leaveRequests": {
+    "awaiting": "{n} awaiting your review",
+    "empty": "No pending leave requests.",
+    "unknown": "Unknown",
+    "leave": "Leave",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    }
+  },
+  "projectsAtRisk": {
+    "subtitle": "Behind schedule or close to deadline",
+    "empty": "No active projects are at risk right now",
+    "progress": "{actual}% · expected {expected}%",
+    "daysLeft": "{n}d left",
+    "daysOverdue": "{n}d overdue"
+  },
+  "recentActivity": {
+    "subtitle": "Latest changes across the system",
+    "empty": "No activity recorded yet.",
+    "system": "System"
+  },
+  "search": {
+    "subtitle": "Employees, projects, tasks and teams",
+    "placeholder": "Search employees, tasks, reports, projects...",
+    "clear": "Clear search",
+    "allDepartments": "All Departments",
+    "searching": "Searching...",
+    "noResults": "No results found for \"{query}\"",
+    "employees": "Employees",
+    "projects": "Projects",
+    "tasks": "Tasks",
+    "teams": "Teams"
+  },
+  "stickyNotes": {
+    "subtitle": "Pinned meeting notes",
+    "empty": "No pinned notes",
+    "emptyHint": "Pin an important note from Business Documents so it shows up here.",
+    "noNotes": "No notes."
+  },
+  "keyMetrics": {
+    "profile": {
+      "business": "Business overview",
+      "finance": "Finance overview",
+      "people": "People overview"
+    },
+    "overview": "Overview",
+    "loadError": "Couldn't load key metrics.",
+    "empty": "No metrics available for your role.",
+    "points": "{n} pts"
+  },
+  "subscriptions": {
+    "subtitle": "Expected billing over the next 12 months",
+    "loadError": "Couldn't load subscriptions.",
+    "empty": "No active subscriptions yet.",
+    "active": "Active",
+    "postponed": "{n} postponed",
+    "perMonth": "Per month",
+    "perMonthHint": "Yearly subscriptions counted as 1/12 per month",
+    "dueIn30": "Due in 30 days",
+    "projected": "Projected billing per month",
+    "yearTotal": "12-month total",
+    "dueSoon": "Due soon",
+    "overdue": "Overdue",
+    "expectedBilling": "Expected billing",
+    "countDue": "{n} subscription due | {n} subscriptions due"
+  },
+  "systemStats": {
+    "roles": "System Roles",
+    "rolesHint": "Configured roles",
+    "permissions": "Permissions",
+    "permissionsHint": "Across all modules",
+    "staffAccounts": "Staff Accounts",
+    "staffHint": "{n} with extra permissions",
+    "activityToday": "Activity Today",
+    "thisWeek": "{n} this week"
+  },
+  "upcomingTasks": {
+    "open": "{n} open",
+    "empty": "No upcoming tasks",
+    "noDueDate": "No due date",
+    "projectTask": "Project task",
+    "assignedTask": "Assigned task",
+    "assignedBy": "Assigned by {name}",
+    "noProject": "No Project",
+    "task": "Task",
+    "priority": "{p} priority",
+    "status": {
+      "todo": "To do",
+      "in_progress": "In progress",
+      "review": "Review",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    }
+  },
+  "spt": {
+    "title": "Open Coretax - File your annual tax return (SPT Tahunan) now",
+    "deadline": "The deadline for filing the individual annual income tax return (SPT Tahunan PPh Orang Pribadi) is",
+    "daysLeft": "({n} day left) | ({n} days left)",
+    "today": "(today)",
+    "penalty": "Late filing is subject to a fine.",
+    "open": "Open Coretax"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications yet",
+    "fallbackTitle": "Notification"
+  }
+}

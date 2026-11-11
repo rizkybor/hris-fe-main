@@ -5,18 +5,13 @@ import Pagination from "@/components/admin/team/Pagination.vue";
 import { useTeamStore } from "@/stores/team";
 import { useOptionStore } from "@/stores/option";
 import { storeToRefs } from "pinia";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash-es";
-import {
-  Upload,
-  Users,
-  SearchIcon,
-  CheckCircleIcon,
-  ChevronDownIcon,
-  BuildingIcon,
-} from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+import { Upload, Plus, SearchIcon, Users2 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import { UiPageHeader, UiButton, UiInput, UiChips, UiSelect, UiEmpty } from "@/components/ui";
 
 const teamStore = useTeamStore();
 const { teams, meta, loading, success } = storeToRefs(teamStore);
@@ -68,138 +63,74 @@ const handlePerPageChange = (perPage) => {
   serverOptions.value.page = 1;
   fetchData();
 };
+
+// Presentation-only option lists for the filter controls.
+const { t } = useI18n();
+const statusOptions = computed(() => [
+  { value: "", label: t("common.labels.allStatuses") },
+  { value: "active", label: t("teams.status.active") },
+  { value: "forming", label: t("teams.status.forming") },
+  { value: "planning", label: t("teams.status.planning") },
+  { value: "dormant", label: t("teams.status.dormant") },
+]);
+const departmentOptions = computed(() => [
+  { value: "", label: t("teams.list.allDepartments") },
+  ...(departments.value || []).map((d) => ({ value: d.value, label: d.label })),
+]);
 </script>
 
 <template>
-  <div class="px-4 py-4">
-  <Statistic />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('teams.list.title')">
+      <template #subtitle>
+        {{ $t("common.pagination.showingItems", { from: meta.from, to: meta.to, total: meta.total, items: $t("teams.list.itemLabel") }) }}
+      </template>
+      <template #actions>
+        <UiButton variant="secondary" :icon="Upload" class="flex-1 sm:flex-none">{{ $t("teams.list.importCsv") }}</UiButton>
+        <UiButton :icon="Plus" :to="{ name: 'admin.team.create' }" class="flex-1 sm:flex-none">{{ $t("teams.list.addTeam") }}</UiButton>
+      </template>
+    </UiPageHeader>
 
-  <Alert type="success" :title="success" :show="success" @close="teamStore.clearMessages()" />
+    <Statistic />
 
-  <!-- Team List Section -->
-  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5 sm:p-4">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-5">
-      <div>
-        <h3 class="text-brand-dark text-base font-bold">All Teams</h3>
-        <p class="text-brand-light text-sm font-normal mt-1">
-          Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} teams
-        </p>
-      </div>
-      <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
-        <button
-          class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center gap-1.5 w-full sm:w-auto"
-        >
-          <Upload class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark text-sm font-semibold">Import CSV</span>
-        </button>
-        <RouterLink
-          :to="{ name: 'admin.team.create' }"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-1.5 w-full sm:w-auto"
-        >
-          <Users class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Add Team</span>
-        </RouterLink>
-      </div>
-    </div>
+    <Alert type="success" :title="success" :show="success" @close="teamStore.clearMessages()" />
 
-      <!-- Search Section -->
-  <div class="bg-slate-50 mb-5">
-    <div
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3.5"
-    >
-      <!-- Search Bar -->
-      <div class="flex-1 relative">
-        <div
-          class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-        >
-          <SearchIcon class="h-5 w-5 text-gray-400" />
-        </div>
-        <input
-          type="text"
-          class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-          placeholder="Search teams by name, lead, status..."
+    <!-- Team List Section -->
+    <section class="space-y-4">
+      <!-- Toolbar -->
+      <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+        <UiInput
           v-model="filters.search"
+          :icon="SearchIcon"
+          :placeholder="$t('teams.list.searchPlaceholder')"
+          class="lg:w-80"
         />
+        <UiChips v-model="filters.status" :options="statusOptions" class="flex-1" />
+        <UiSelect v-model="filters.department" :options="departmentOptions" class="lg:w-56" />
       </div>
 
-      <!-- Filter Buttons -->
-      <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full sm:w-auto">
-        <!-- Status Filter -->
-        <div class="relative w-full sm:w-auto">
-          <div
-            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-          >
-            <CheckCircleIcon class="h-4 w-4 text-gray-400" />
-          </div>
-          <select
-            class="select-soft select-soft-icon-pl"
-            v-model="filters.status"
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="forming">Forming</option>
-            <option value="planning">Planning</option>
-            <option value="dormant">Dormant</option>
-          </select>
-          <div
-            class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none"
-          >
-            <ChevronDownIcon class="h-4 w-4 text-gray-400" />
-          </div>
-        </div>
+      <!-- Teams Grid -->
+      <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 xl:grid-cols-3" />
 
-        <!-- Department Filter -->
-        <div class="relative w-full sm:w-auto">
-          <div
-            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-          >
-            <BuildingIcon class="h-4 w-4 text-gray-400" />
-          </div>
-          <select
-            class="select-soft select-soft-icon-pl"
-            v-model="filters.department"
-          >
-            <option value="">All Departments</option>
-            <option
-              v-for="dept in departments"
-              :key="dept.value"
-              :value="dept.value"
-            >
-              {{ dept.label }}
-            </option>
-          </select>
-          <div
-            class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none"
-          >
-            <ChevronDownIcon class="h-4 w-4 text-gray-400" />
-          </div>
-        </div>
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 ui-stagger"
+        v-else-if="teams.length > 0"
+      >
+        <CardList v-for="team in teams" :key="team.id" :data="team" />
       </div>
-    </div>
+
+      <!-- Empty State -->
+      <div v-else class="bg-ui-surface border border-ui-line rounded-ui-card">
+        <UiEmpty :icon="Users2" :title="$t('teams.list.empty')" />
+      </div>
+
+      <!-- Pagination -->
+      <Pagination
+        :meta="meta"
+        :loading="loading"
+        @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange"
+      />
+    </section>
   </div>
-
-    <!-- Teams Grid -->
-    <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
-
-    <div
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3.5 mb-5"
-      v-else-if="teams.length > 0"
-    >
-      <CardList v-for="team in teams" :key="team.id" :data="team" />
-    </div>
-
-    <!-- Empty State -->
-    <div v-else class="text-center py-6">
-      <p class="text-gray-500 text-sm">No teams found</p>
-    </div>
-
-    <!-- Pagination -->
-    <Pagination
-      :meta="meta"
-      :loading="loading"
-      @page-change="handlePageChange"
-      @per-page-change="handlePerPageChange"
-    />
-  </div>
-    </div>
 </template>

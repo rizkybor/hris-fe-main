@@ -30,6 +30,7 @@ import {
 } from "lucide-vue-next";
 
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   modelValue: { type: String, default: "" },
@@ -45,6 +46,7 @@ const props = defineProps({
   insertFlowchart: { type: Function, default: null },
 });
 const emit = defineEmits(["update:modelValue"]);
+const { t } = useI18n();
 
 const editorRef = ref(null);
 const linkPopoverOpen = ref(false);
@@ -58,13 +60,13 @@ const rowColorPopoverOpen = ref(false);
 let savedSelection = null;
 
 const CELL_COLORS = [
-  { label: "Tanpa Warna", value: "" },
-  { label: "Abu-abu", value: "#f3f4f6" },
-  { label: "Merah", value: "#fee2e2" },
-  { label: "Kuning", value: "#fef9c3" },
-  { label: "Hijau", value: "#dcfce7" },
-  { label: "Biru", value: "#dbeafe" },
-  { label: "Ungu", value: "#ede9fe" },
+  { label: "editor.colors.none", value: "" },
+  { label: "editor.colors.gray", value: "#f3f4f6" },
+  { label: "editor.colors.red", value: "#fee2e2" },
+  { label: "editor.colors.yellow", value: "#fef9c3" },
+  { label: "editor.colors.green", value: "#dcfce7" },
+  { label: "editor.colors.blue", value: "#dbeafe" },
+  { label: "editor.colors.purple", value: "#ede9fe" },
 ];
 
 onMounted(() => {
@@ -119,7 +121,7 @@ const IMAGE_SIZES = [
   { label: "S", value: 40 },
   { label: "M", value: 60 },
   { label: "L", value: 80 },
-  { label: "Full", value: 100 },
+  { label: "editor.image.full", value: 100 },
 ];
 
 const selectImage = (img) => {
@@ -324,7 +326,7 @@ const onImageSelected = async (event) => {
     document.execCommand("insertImage", false, url);
     onInput();
   } catch (error) {
-    await useAlertModalStore().alert(error?.message || "Gambar gagal diunggah.", { type: "danger" });
+    await useAlertModalStore().alert(error?.message || t("editor.image.uploadFailed"), { type: "danger" });
   } finally {
     uploadingImage.value = false;
   }
@@ -546,75 +548,75 @@ const onResizeMouseUp = () => {
 
 const TOOLBAR_GROUPS = [
   [
-    { command: "undo", icon: Undo2, title: "Undo" },
-    { command: "redo", icon: Redo2, title: "Redo" },
+    { command: "undo", icon: Undo2, title: "editor.toolbar.undo" },
+    { command: "redo", icon: Redo2, title: "editor.toolbar.redo" },
   ],
   [
-    { command: "bold", icon: Bold, title: "Bold" },
-    { command: "italic", icon: Italic, title: "Italic" },
-    { command: "underline", icon: Underline, title: "Underline" },
-    { command: "strikeThrough", icon: Strikethrough, title: "Strikethrough" },
+    { command: "bold", icon: Bold, title: "editor.toolbar.bold" },
+    { command: "italic", icon: Italic, title: "editor.toolbar.italic" },
+    { command: "underline", icon: Underline, title: "editor.toolbar.underline" },
+    { command: "strikeThrough", icon: Strikethrough, title: "editor.toolbar.strikethrough" },
   ],
   [
-    { command: "insertUnorderedList", icon: List, title: "Bullet List" },
-    { command: "insertOrderedList", icon: ListOrdered, title: "Numbered List" },
-    { command: "formatBlock", value: "<blockquote>", icon: Quote, title: "Quote" },
+    { command: "insertUnorderedList", icon: List, title: "editor.toolbar.bulletList" },
+    { command: "insertOrderedList", icon: ListOrdered, title: "editor.toolbar.numberedList" },
+    { command: "formatBlock", value: "<blockquote>", icon: Quote, title: "editor.toolbar.quote" },
   ],
   [
-    { command: "justifyLeft", icon: AlignLeft, title: "Align Left" },
-    { command: "justifyCenter", icon: AlignCenter, title: "Align Center" },
-    { command: "justifyRight", icon: AlignRight, title: "Align Right" },
-    { command: "justifyFull", icon: AlignJustify, title: "Justify" },
+    { command: "justifyLeft", icon: AlignLeft, title: "editor.toolbar.alignLeft" },
+    { command: "justifyCenter", icon: AlignCenter, title: "editor.toolbar.alignCenter" },
+    { command: "justifyRight", icon: AlignRight, title: "editor.toolbar.alignRight" },
+    { command: "justifyFull", icon: AlignJustify, title: "editor.toolbar.justify" },
   ],
   [
-    { command: "unlink", icon: Link2Off, title: "Remove Link" },
-    { command: "insertHorizontalRule", icon: Minus, title: "Horizontal Line" },
-    { command: "removeFormat", icon: Eraser, title: "Clear Formatting" },
+    { command: "unlink", icon: Link2Off, title: "editor.toolbar.removeLink" },
+    { command: "insertHorizontalRule", icon: Minus, title: "editor.toolbar.horizontalLine" },
+    { command: "removeFormat", icon: Eraser, title: "editor.toolbar.clearFormatting" },
   ],
 ];
 
 const FORMAT_OPTIONS = [
-  { label: "Normal Text", value: "<p>" },
-  { label: "Title", value: "<h1>" },
-  { label: "Subtitle", value: "<h2>" },
-  { label: "Heading", value: "<h3>" },
-  { label: "Sub Heading", value: "<h4>" },
+  { label: "editor.format.normal", value: "<p>" },
+  { label: "editor.format.title", value: "<h1>" },
+  { label: "editor.format.subtitle", value: "<h2>" },
+  { label: "editor.format.heading", value: "<h3>" },
+  { label: "editor.format.subHeading", value: "<h4>" },
 ];
 </script>
 
 <template>
-  <div class="border border-[#DCDEDD] rounded-xl overflow-hidden" :class="{ 'opacity-60': disabled }">
-    <div v-if="!disabled" class="flex flex-wrap items-center gap-1 border-b border-[#DCDEDD] bg-gray-50 px-2 py-1.5">
+  <div class="border border-ui-line rounded-ui-card overflow-hidden" :class="{ 'opacity-60': disabled }">
+    <div v-if="!disabled" class="flex flex-wrap items-center gap-1 border-b border-ui-line bg-ui-subtle px-2 py-1.5">
       <select
         @change="setFormatBlock($event.target.value)"
-        class="text-xs border border-[#DCDEDD] rounded-md px-1.5 py-1 bg-white text-gray-600 cursor-pointer transition-colors hover:border-[#93C5FD] hover:bg-blue-50 focus:outline-none focus:ring-1 focus:ring-[#60A5FA] focus:border-[#60A5FA] mr-1"
-        title="Format Teks"
+        class="text-ui-cap border border-ui-line rounded-md px-1.5 py-1 bg-ui-surface text-ui-text cursor-pointer transition-colors hover:border-ui-line-strong focus:outline-none focus:ring-1 focus:ring-ui-accent focus:border-ui-accent mr-1"
+        :title="t('editor.format.label')"
       >
-        <option v-for="opt in FORMAT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        <option v-for="opt in FORMAT_OPTIONS" :key="opt.value" :value="opt.value">{{ t(opt.label) }}</option>
       </select>
 
       <template v-for="(group, gi) in TOOLBAR_GROUPS" :key="gi">
-        <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+        <span class="w-px h-5 bg-ui-line mx-0.5" />
         <button
           v-for="btn in group"
           :key="btn.command"
           type="button"
-          :title="btn.title"
+          :title="t(btn.title)"
           @mousedown.prevent="exec(btn.command, btn.value)"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
         >
           <component :is="btn.icon" class="w-4 h-4" />
         </button>
       </template>
 
       <template v-if="uploadImage">
-        <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+        <span class="w-px h-5 bg-ui-line mx-0.5" />
         <button
           type="button"
-          title="Insert Image"
+          :title="t('editor.toolbar.insertImage')"
           :disabled="uploadingImage"
           @mousedown.prevent="openImagePicker"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors disabled:opacity-50"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors disabled:opacity-50"
         >
           <Loader2 v-if="uploadingImage" class="w-4 h-4 animate-spin" />
           <ImagePlus v-else class="w-4 h-4" />
@@ -624,28 +626,28 @@ const FORMAT_OPTIONS = [
       <button
         v-if="insertFlowchart"
         type="button"
-        title="Insert Flowchart"
+        :title="t('editor.toolbar.insertFlowchart')"
         :disabled="insertingFlowchart"
         @mousedown.prevent="pickFlowchart"
-        class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors disabled:opacity-50"
+        class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors disabled:opacity-50"
       >
         <Workflow class="w-4 h-4" />
       </button>
 
-      <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+      <span class="w-px h-5 bg-ui-line mx-0.5" />
       <div class="relative">
         <button
           type="button"
-          title="Insert Link"
+          :title="t('editor.toolbar.insertLink')"
           @mousedown.prevent="openLinkPopover"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
         >
           <Link2 class="w-4 h-4" />
         </button>
 
         <div
           v-if="linkPopoverOpen"
-          class="absolute z-10 top-full left-0 mt-1 bg-white border border-[#DCDEDD] rounded-lg shadow-lg p-2 flex items-center gap-1.5 w-64"
+          class="absolute z-10 top-full left-0 mt-1 bg-ui-surface border border-ui-line rounded-ui-control shadow-ui-overlay p-2 flex items-center gap-1.5 w-64"
         >
           <input
             v-model="linkUrl"
@@ -654,35 +656,35 @@ const FORMAT_OPTIONS = [
             type="text"
             placeholder="https://..."
             autofocus
-            class="flex-1 min-w-0 px-2 py-1 border border-[#DCDEDD] rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-[#0C51D9]"
+            class="flex-1 min-w-0 px-2 py-1 border border-ui-line rounded-md text-ui-cap focus:outline-none focus:ring-1 focus:ring-ui-accent"
           />
           <button
             type="button"
             @mousedown.prevent="confirmLink"
-            class="shrink-0 px-2 py-1 rounded-md bg-[#0C51D9] text-white text-xs font-semibold"
+            class="shrink-0 px-2 py-1 rounded-md bg-ui-ink text-white text-ui-cap font-semibold"
           >
             OK
           </button>
         </div>
       </div>
 
-      <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+      <span class="w-px h-5 bg-ui-line mx-0.5" />
       <div class="relative">
         <button
           type="button"
-          title="Insert Table"
+          :title="t('editor.toolbar.insertTable')"
           @mousedown.prevent="openTablePopover"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
         >
           <Table class="w-4 h-4" />
         </button>
 
         <div
           v-if="tablePopoverOpen"
-          class="absolute z-10 top-full left-0 mt-1 bg-white border border-[#DCDEDD] rounded-lg shadow-lg p-3 w-44"
+          class="absolute z-10 top-full left-0 mt-1 bg-ui-surface border border-ui-line rounded-ui-control shadow-ui-overlay p-3 w-44"
         >
           <div class="flex items-center gap-2 mb-2">
-            <label class="text-xs text-gray-500 w-12 shrink-0">Baris</label>
+            <label class="text-ui-cap text-ui-muted w-12 shrink-0">{{ t("editor.table.rows") }}</label>
             <input
               v-model.number="tableRows"
               @keydown.enter.prevent="confirmInsertTable"
@@ -690,11 +692,11 @@ const FORMAT_OPTIONS = [
               type="number"
               min="1"
               max="20"
-              class="flex-1 min-w-0 px-2 py-1 border border-[#DCDEDD] rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-[#0C51D9]"
+              class="flex-1 min-w-0 px-2 py-1 border border-ui-line rounded-md text-ui-cap focus:outline-none focus:ring-1 focus:ring-ui-accent"
             />
           </div>
           <div class="flex items-center gap-2 mb-2.5">
-            <label class="text-xs text-gray-500 w-12 shrink-0">Kolom</label>
+            <label class="text-ui-cap text-ui-muted w-12 shrink-0">{{ t("editor.table.cols") }}</label>
             <input
               v-model.number="tableCols"
               @keydown.enter.prevent="confirmInsertTable"
@@ -702,13 +704,13 @@ const FORMAT_OPTIONS = [
               type="number"
               min="1"
               max="10"
-              class="flex-1 min-w-0 px-2 py-1 border border-[#DCDEDD] rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-[#0C51D9]"
+              class="flex-1 min-w-0 px-2 py-1 border border-ui-line rounded-md text-ui-cap focus:outline-none focus:ring-1 focus:ring-ui-accent"
             />
           </div>
           <button
             type="button"
             @mousedown.prevent="confirmInsertTable"
-            class="w-full px-2 py-1.5 rounded-md bg-[#0C51D9] text-white text-xs font-semibold"
+            class="w-full px-2 py-1.5 rounded-md bg-ui-ink text-white text-ui-cap font-semibold"
           >
             Sisipkan Tabel
           </button>
@@ -716,44 +718,44 @@ const FORMAT_OPTIONS = [
       </div>
 
       <template v-if="inTable">
-        <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+        <span class="w-px h-5 bg-ui-line mx-0.5" />
         <button
           type="button"
-          title="Add Row Below"
+          :title="t('editor.table.addRowBelow')"
           @mousedown.prevent="addRow"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
         >
           <Rows3 class="w-4 h-4" />
         </button>
         <button
           type="button"
-          title="Delete Current Row"
+          :title="t('editor.table.deleteRow')"
           @mousedown.prevent="deleteRow"
-          class="p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-bad-soft text-ui-bad transition-colors"
         >
           <Rows3 class="w-4 h-4" />
         </button>
         <button
           type="button"
-          title="Add Column Right"
+          :title="t('editor.table.addColRight')"
           @mousedown.prevent="addColumn"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
         >
           <Columns3 class="w-4 h-4" />
         </button>
         <button
           type="button"
-          title="Delete Current Column"
+          :title="t('editor.table.deleteCol')"
           @mousedown.prevent="deleteColumn"
-          class="p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-bad-soft text-ui-bad transition-colors"
         >
           <Columns3 class="w-4 h-4" />
         </button>
         <button
           type="button"
-          title="Delete Table"
+          :title="t('editor.table.deleteTable')"
           @mousedown.prevent="deleteTable"
-          class="p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-bad-soft text-ui-bad transition-colors"
         >
           <Trash2 class="w-4 h-4" />
         </button>
@@ -761,24 +763,24 @@ const FORMAT_OPTIONS = [
         <div class="relative">
           <button
             type="button"
-            title="Column Color"
+            :title="t('editor.table.columnColor')"
             @mousedown.prevent="openColorPopover"
-            class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+            class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
           >
             <Palette class="w-4 h-4" />
           </button>
 
           <div
             v-if="colorPopoverOpen"
-            class="absolute z-10 top-full left-0 mt-1 bg-white border border-[#DCDEDD] rounded-lg shadow-lg p-2 flex items-center gap-1.5"
+            class="absolute z-10 top-full left-0 mt-1 bg-ui-surface border border-ui-line rounded-ui-control shadow-ui-overlay p-2 flex items-center gap-1.5"
           >
             <button
               v-for="color in CELL_COLORS"
               :key="color.value || 'none'"
               type="button"
-              :title="color.label"
+              :title="t(color.label)"
               @mousedown.prevent="applyColumnColor(color.value)"
-              class="w-6 h-6 rounded-md border border-[#DCDEDD] transition-transform hover:scale-110"
+              class="w-6 h-6 rounded-md border border-ui-line transition-transform hover:scale-110"
               :class="{ 'bg-white bg-[linear-gradient(135deg,transparent_45%,#ef4444_45%,#ef4444_55%,transparent_55%)]': !color.value }"
               :style="color.value ? { backgroundColor: color.value } : {}"
             ></button>
@@ -788,24 +790,24 @@ const FORMAT_OPTIONS = [
         <div class="relative">
           <button
             type="button"
-            title="Row Color"
+            :title="t('editor.table.rowColor')"
             @mousedown.prevent="openRowColorPopover"
-            class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+            class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
           >
             <PaintBucket class="w-4 h-4" />
           </button>
 
           <div
             v-if="rowColorPopoverOpen"
-            class="absolute z-10 top-full left-0 mt-1 bg-white border border-[#DCDEDD] rounded-lg shadow-lg p-2 flex items-center gap-1.5"
+            class="absolute z-10 top-full left-0 mt-1 bg-ui-surface border border-ui-line rounded-ui-control shadow-ui-overlay p-2 flex items-center gap-1.5"
           >
             <button
               v-for="color in CELL_COLORS"
               :key="color.value || 'none'"
               type="button"
-              :title="color.label"
+              :title="t(color.label)"
               @mousedown.prevent="applyRowColor(color.value)"
-              class="w-6 h-6 rounded-md border border-[#DCDEDD] transition-transform hover:scale-110"
+              class="w-6 h-6 rounded-md border border-ui-line transition-transform hover:scale-110"
               :class="{ 'bg-white bg-[linear-gradient(135deg,transparent_45%,#ef4444_45%,#ef4444_55%,transparent_55%)]': !color.value }"
               :style="color.value ? { backgroundColor: color.value } : {}"
             ></button>
@@ -816,20 +818,20 @@ const FORMAT_OPTIONS = [
 
     <div
       v-if="selectedImage && !disabled"
-      class="flex flex-wrap items-center gap-2 border-b border-[#DCDEDD] bg-blue-50 px-2.5 py-1.5 text-xs text-brand-dark"
+      class="flex flex-wrap items-center gap-2 border-b border-ui-line bg-ui-accent-soft px-2.5 py-1.5 text-ui-cap text-ui-ink"
     >
-      <span class="font-semibold">Gambar:</span>
-      <div class="inline-flex rounded-md border border-[#DCDEDD] bg-white overflow-hidden">
+      <span class="font-semibold">{{ t("editor.image.label") }}</span>
+      <div class="inline-flex rounded-md border border-ui-line bg-ui-surface overflow-hidden">
         <button
           v-for="size in IMAGE_SIZES"
           :key="size.value"
           type="button"
           class="px-2 py-1 font-semibold transition-colors"
-          :class="imageWidth === size.value ? 'bg-[#0C51D9] text-white' : 'text-gray-600 hover:bg-gray-100'"
-          :title="`Lebar ${size.value}%`"
+          :class="imageWidth === size.value ? 'bg-ui-ink text-white' : 'text-ui-text hover:bg-ui-hover'"
+          :title="t('editor.image.width', { n: size.value })"
           @mousedown.prevent="setImageWidth(size.value)"
         >
-          {{ size.label }}
+          {{ size.label.includes(".") ? t(size.label) : size.label }}
         </button>
       </div>
       <input
@@ -838,33 +840,33 @@ const FORMAT_OPTIONS = [
         max="100"
         step="5"
         :value="imageWidth"
-        class="w-28 accent-[#0C51D9]"
-        title="Atur lebar"
+        class="w-28 accent-[rgb(var(--ui-ink))]"
+        :title="t('editor.image.setWidth')"
         @input="setImageWidth(Number($event.target.value))"
       />
       <span class="w-9 tabular-nums">{{ imageWidth }}%</span>
-      <span class="w-px h-5 bg-[#DCDEDD]" />
+      <span class="w-px h-5 bg-ui-line" />
       <div class="inline-flex gap-0.5">
         <button
           v-for="opt in [
-            { value: 'left', icon: AlignLeft, title: 'Rata kiri' },
-            { value: 'center', icon: AlignCenter, title: 'Tengah' },
-            { value: 'right', icon: AlignRight, title: 'Rata kanan' },
+            { value: 'left', icon: AlignLeft, title: 'editor.image.alignLeft' },
+            { value: 'center', icon: AlignCenter, title: 'editor.image.center' },
+            { value: 'right', icon: AlignRight, title: 'editor.image.alignRight' },
           ]"
           :key="opt.value"
           type="button"
           class="p-1 rounded-md transition-colors"
-          :class="imageAlign === opt.value ? 'bg-white text-[#0C51D9] shadow-sm' : 'text-gray-600 hover:bg-white'"
-          :title="opt.title"
+          :class="imageAlign === opt.value ? 'bg-ui-ink text-white' : 'text-ui-text hover:bg-ui-hover'"
+          :title="t(opt.title)"
           @mousedown.prevent="setImageAlign(opt.value)"
         >
           <component :is="opt.icon" class="w-4 h-4" />
         </button>
       </div>
-      <button type="button" class="ml-auto p-1 rounded-md text-gray-600 hover:bg-red-50 hover:text-red-600" title="Hapus gambar" @mousedown.prevent="removeSelectedImage">
+      <button type="button" class="ml-auto p-1 rounded-md text-ui-text hover:bg-ui-bad-soft hover:text-ui-bad" :title="t('editor.image.remove')" @mousedown.prevent="removeSelectedImage">
         <Trash2 class="w-4 h-4" />
       </button>
-      <button type="button" class="px-1.5 py-0.5 rounded-md text-gray-500 hover:bg-white" title="Selesai" @mousedown.prevent="deselectImage">Selesai</button>
+      <button type="button" class="px-1.5 py-0.5 rounded-md text-ui-muted hover:bg-ui-surface" :title="t('editor.image.done')" @mousedown.prevent="deselectImage">{{ t("editor.image.done") }}</button>
     </div>
 
     <div
@@ -875,16 +877,25 @@ const FORMAT_OPTIONS = [
       @mousemove="onEditorMouseMove"
       @mousedown="onEditorMouseDown"
       @mouseleave="editorRef.style.cursor = ''"
-      class="rich-text-editor px-3 py-2.5 text-sm min-h-[180px] max-h-[400px] overflow-y-auto focus:outline-none"
+      class="rich-text-editor px-3 py-2.5 text-ui-small min-h-[180px] max-h-[400px] overflow-y-auto focus:outline-none"
       :data-placeholder="placeholder"
     ></div>
   </div>
 </template>
 
 <style scoped>
+/* Content styles mirror the exported PDF on purpose (headings, quotes,
+   links, tables) -- only the editor chrome follows the UI tokens. */
+/* The editable area is the document itself (it mirrors the PDF), so in
+   dark mode it stays a white sheet with dark text, like a page. */
+:global(:root[data-theme="dark"]) .rich-text-editor {
+  background: #fff;
+  color: #1f2937;
+  caret-color: #1f2937;
+}
 .rich-text-editor:empty::before {
   content: attr(data-placeholder);
-  color: #9ca3af;
+  color: rgb(var(--ui-faint));
 }
 /* Indentation is left to the Align/Indent controls (and Tab) instead of
    being auto-applied to every paragraph -- matches the PDF, where
@@ -948,7 +959,7 @@ const FORMAT_OPTIONS = [
   cursor: pointer;
 }
 .rich-text-editor :deep(img.rte-img-selected) {
-  outline: 2px solid #0c51d9;
+  outline: 2px solid rgb(var(--ui-accent));
   outline-offset: 2px;
 }
 .rich-text-editor :deep(table) {

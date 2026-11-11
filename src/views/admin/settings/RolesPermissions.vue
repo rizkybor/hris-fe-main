@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref, computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import {
   ShieldCheck,
@@ -18,7 +19,7 @@ import {
 import Alert from "@/components/common/Alert.vue";
 import { useRoleStore } from "@/stores/role";
 import { getRoleLabel } from "@/utils/badgeUtils";
-import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import { UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiModal, UiPageHeader, UiTable } from "@/components/ui";
 
 const SYSTEM_ROLES = ["superadmin", "manager", "operational_director", "hr", "finance", "staff"];
 const ROLE_COLORS = {
@@ -30,6 +31,30 @@ const ROLE_COLORS = {
   staff: { bg: "bg-blue-100", text: "text-blue-700" },
 };
 const DEFAULT_COLOR = { bg: "bg-gray-100", text: "text-gray-700" };
+
+const { t, te } = useI18n();
+
+// Display labels for the API's permission groups. The API sends English
+// module/section/action labels; these map them to the current language by
+// module key / action suffix, falling back to the API text for anything new.
+// Permission names (what gets saved) are never translated.
+const camelKey = (value) => String(value).replace(/[-_ ]+([a-z0-9])/gi, (_, c) => c.toUpperCase());
+const translated = (key, fallback) => (te(key) ? t(key) : fallback);
+const moduleLabel = (group) => translated(`settings.permissions.modules.${camelKey(group.key)}`, group.label);
+const sectionLabel = (section) => {
+  const key = camelKey(section.charAt(0).toLowerCase() + section.slice(1));
+  return translated(`settings.permissions.sections.${key}`, section);
+};
+const actionLabel = (group, perm) => {
+  const suffix = perm.name.startsWith(`${group.key}-`) ? perm.name.slice(group.key.length + 1) : perm.name;
+  return translated(`settings.permissions.actions.${camelKey(suffix)}`, perm.action);
+};
+const matchesQuery = (group, perm, query) =>
+  group.label.toLowerCase().includes(query) ||
+  moduleLabel(group).toLowerCase().includes(query) ||
+  perm.action.toLowerCase().includes(query) ||
+  actionLabel(group, perm).toLowerCase().includes(query) ||
+  perm.name.toLowerCase().includes(query);
 
 const roleStore = useRoleStore();
 const { roles, permissionGroups, loading, error, success } = storeToRefs(roleStore);
@@ -58,7 +83,7 @@ const permissionMeta = computed(() => {
   const map = new Map();
   for (const group of permissionGroups.value) {
     for (const perm of group.permissions) {
-      map.set(perm.name, { moduleLabel: group.label, action: perm.action });
+      map.set(perm.name, { group });
     }
   }
   return map;
@@ -81,7 +106,7 @@ const roleModuleSummary = (role) => {
   const modules = new Set();
   for (const perm of role.permissions) {
     const meta = permissionMeta.value.get(perm.name);
-    if (meta) modules.add(meta.moduleLabel);
+    if (meta) modules.add(moduleLabel(meta.group));
   }
   return Array.from(modules).sort();
 };
@@ -115,12 +140,7 @@ const filteredGroups = computed(() => {
   const query = permissionSearch.value.trim().toLowerCase();
   if (!query) return permissionGroups.value;
 
-  return permissionGroups.value.filter((group) => {
-    if (group.label.toLowerCase().includes(query)) return true;
-    return group.permissions.some(
-      (p) => p.action.toLowerCase().includes(query) || p.name.toLowerCase().includes(query)
-    );
-  });
+  return permissionGroups.value.filter((group) => group.permissions.some((p) => matchesQuery(group, p, query)));
 });
 
 // filteredGroups already arrives ordered by section then label (backend
@@ -198,6 +218,40 @@ function confirmDelete(role) {
   isDeleteModalOpen.value = true;
 }
 
+// Presentation only: the permission matrix lays common actions out as
+// columns; anything else lands in the "Other" column.
+// `label` is the API's action text (used for matching); the display text
+// comes from the i18n keys.
+const MATRIX_ACTIONS = [
+  { label: "Menu Access", key: "menu", shortKey: "menuShort" },
+  { label: "List", key: "list", shortKey: "list" },
+  { label: "View", key: "view", shortKey: "view" },
+  { label: "Create", key: "create", shortKey: "create" },
+  { label: "Edit", key: "edit", shortKey: "edit" },
+  { label: "Delete", key: "delete", shortKey: "delete" },
+];
+const MATRIX_LABELS = MATRIX_ACTIONS.map((a) => a.label);
+const matrixColumns = computed(() =>
+  MATRIX_ACTIONS.filter((a) => permissionGroups.value.some((g) => g.permissions.some((p) => p.action === a.label))).map((a) => ({
+    ...a,
+    name: t(`settings.permissions.actions.${a.key}`),
+    short: t(`settings.permissions.actions.${a.shortKey}`),
+  }))
+);
+const permByAction = (group, label) => group.permissions.find((p) => p.action === label);
+const otherPerms = (group) => group.permissions.filter((p) => !MATRIX_LABELS.includes(p.action));
+const groupState = (group) => {
+  const n = selectedInGroup(group);
+  return n === 0 ? "none" : n === group.permissions.length ? "all" : "some";
+};
+const roleColumns = computed(() => [
+  { key: "role", label: t("settings.roles.columns.role") },
+  { key: "users", label: t("settings.roles.columns.users"), align: "right", width: 90 },
+  { key: "coverage", label: t("settings.roles.columns.permissions"), width: 220 },
+  { key: "modules", label: t("settings.roles.columns.modules") },
+  { key: "actions", label: "", align: "right", width: 110 },
+]);
+
 async function handleDelete() {
   if (!roleToDelete.value) return;
   isDeleting.value = true;
@@ -214,348 +268,251 @@ async function handleDelete() {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div
-      class="bg-white mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div class="flex items-center gap-3">
-        <router-link
-          :to="{ name: 'admin.settings.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Settings"
-          title="Back to Settings"
-        >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('settings.roles.title')" :subtitle="$t('settings.roles.subtitle')">
+      <template #eyebrow>
+        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" :aria-label="$t('settings.backToSettings')" :title="$t('settings.backToSettings')">
+          <ArrowLeft class="w-4 h-4" /> {{ $t("settings.settings") }}
         </router-link>
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <ShieldCheck class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Roles & Permissions</h3>
-          <p class="text-brand-light text-sm">
-            Control which modules and actions each role can access
-          </p>
+      </template>
+      <template #actions>
+        <UiButton :icon="Plus" @click="openCreateForm">{{ $t("settings.roles.add") }}</UiButton>
+      </template>
+    </UiPageHeader>
+
+    <Alert v-if="success" type="success" :title="success" :show="!!success" />
+
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+      <div class="px-4 sm:px-5 pt-4 pb-3 border-b border-ui-line flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t("settings.roles.listTitle") }}</h2>
+          <p class="text-ui-cap text-ui-muted tabular-nums">{{ $t("settings.roles.summary", { roles: visibleRoles.length, permissions: totalPermissionCount }) }}</p>
         </div>
       </div>
 
-      <button
-        @click="openCreateForm"
-        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
-      >
-        <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Add Role</span>
-      </button>
-    </div>
-
-    <Transition name="fade">
-      <Alert v-if="success" type="success" :title="success" :show="!!success" />
-    </Transition>
-
-    <SkeletonCardGrid v-if="loading" :count="4" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
-
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div
-        v-for="role in visibleRoles"
-        :key="role.id"
-        class="bg-white border border-[#DCDEDD] rounded-[12px] p-5 hover:border-[#0C51D9] hover:shadow-sm transition-all"
-      >
-        <div class="flex items-start justify-between mb-4">
+      <UiTable :columns="roleColumns" :rows="visibleRoles" :loading="loading" :skeleton-rows="4">
+        <template #cell-role="{ row }">
           <div class="flex items-center gap-3 min-w-0">
-            <div
-              class="w-11 h-11 rounded-[12px] flex items-center justify-center shrink-0 font-bold text-sm"
-              :class="[roleColor(role).bg, roleColor(role).text]"
-            >
-              {{ roleInitials(role) }}
-            </div>
+            <span class="w-9 h-9 rounded-ui-control bg-ui-subtle text-ui-text text-ui-cap font-semibold flex items-center justify-center shrink-0">{{ roleInitials(row) }}</span>
             <div class="min-w-0">
-              <div class="flex items-center gap-1.5">
-                <p class="text-brand-dark text-base font-bold truncate">
-                  {{ roleLabel(role) }}
-                </p>
-                <Lock v-if="isSystemRole(role)" class="w-3 h-3 text-gray-400 shrink-0" />
-              </div>
-              <div class="flex items-center gap-1 text-brand-light text-xs mt-0.5">
-                <Users class="w-3 h-3" />
-                <span>{{ role.users_count }} user{{ role.users_count === 1 ? "" : "s" }}</span>
-              </div>
+              <p class="flex items-center gap-1.5 text-ui-body font-medium text-ui-ink truncate">
+                {{ roleLabel(row) }}
+                <Lock v-if="isSystemRole(row)" class="w-3 h-3 text-ui-faint shrink-0" />
+              </p>
+              <p class="text-ui-cap text-ui-muted">{{ isSystemRole(row) ? $t("settings.roles.systemRole") : $t("settings.roles.customRole") }}</p>
             </div>
           </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button
-              @click="openEditForm(role)"
-              title="Edit role"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:ring-2 hover:ring-[#0C51D9]"
-            >
-              <Pencil class="w-4 h-4 text-gray-600" />
-            </button>
-            <button
-              v-if="!isSystemRole(role)"
-              @click="confirmDelete(role)"
-              title="Delete role"
-              class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-            >
-              <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-            </button>
-            <span
-              v-else
-              title="System role — cannot be deleted"
-              class="flex justify-center items-center border border-[#F1F1F1] rounded-xl p-2 opacity-40 cursor-not-allowed"
-            >
-              <Trash2 class="w-4 h-4 text-gray-400" />
+        </template>
+        <template #cell-users="{ row }">
+          <span class="tabular-nums text-ui-ink">{{ row.users_count }}</span>
+        </template>
+        <template #cell-coverage="{ row }">
+          <div class="min-w-[160px]">
+            <div class="flex items-center justify-between text-ui-cap mb-1">
+              <span class="text-ui-muted tabular-nums">{{ $t("settings.roles.permissionCount", { n: row.permissions.length }, row.permissions.length) }} · {{ $t("settings.roles.moduleCount", { n: roleModuleSummary(row).length }, roleModuleSummary(row).length) }}</span>
+              <span class="text-ui-ink font-medium tabular-nums">{{ roleCoverage(row) }}%</span>
+            </div>
+            <div class="w-full bg-ui-subtle rounded-full h-1.5">
+              <div class="h-1.5 rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${roleCoverage(row)}%` }"></div>
+            </div>
+          </div>
+        </template>
+        <template #cell-modules="{ row }">
+          <div class="flex flex-wrap gap-1">
+            <UiBadge v-for="mod in roleModuleSummary(row).slice(0, 3)" :key="mod">{{ mod }}</UiBadge>
+            <UiBadge v-if="roleModuleSummary(row).length > 3" tone="outline">{{ $t("settings.roles.more", { n: roleModuleSummary(row).length - 3 }) }}</UiBadge>
+            <span v-if="roleModuleSummary(row).length === 0" class="text-ui-cap text-ui-faint italic">{{ $t("settings.roles.noPermissions") }}</span>
+          </div>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-1">
+            <UiButton variant="ghost" size="sm" :icon="Pencil" :title="$t('settings.roles.editAria')" :aria-label="$t('settings.roles.editAria')" @click="openEditForm(row)" />
+            <UiButton v-if="!isSystemRole(row)" variant="ghost" size="sm" :icon="Trash2" :title="$t('settings.roles.deleteAria')" :aria-label="$t('settings.roles.deleteAria')" class="hover:text-ui-bad" @click="confirmDelete(row)" />
+            <span v-else :title="$t('settings.roles.cannotDelete')" class="w-8 h-8 inline-flex items-center justify-center text-ui-faint opacity-40 cursor-not-allowed">
+              <Trash2 class="w-4 h-4" />
             </span>
           </div>
-        </div>
+        </template>
 
-        <div class="mb-3">
-          <div class="flex items-center justify-between text-xs mb-1.5">
-            <span class="text-brand-light">
-              {{ role.permissions.length }} permission{{ role.permissions.length === 1 ? "" : "s" }}
-              · {{ roleModuleSummary(role).length }} modules
-            </span>
-            <span class="text-brand-dark font-semibold">{{ roleCoverage(role) }}%</span>
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-2.5">{{ number }}</span>
+            <span class="w-9 h-9 rounded-ui-control bg-ui-subtle text-ui-text text-ui-cap font-semibold flex items-center justify-center shrink-0">{{ roleInitials(row) }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="flex items-center gap-1.5 text-ui-body font-medium text-ui-ink truncate">
+                {{ roleLabel(row) }}
+                <Lock v-if="isSystemRole(row)" class="w-3 h-3 text-ui-faint shrink-0" />
+              </p>
+              <p class="text-ui-cap text-ui-muted tabular-nums flex items-center gap-1">
+                <Users class="w-3 h-3" />{{ $t("settings.roles.userCount", { n: row.users_count }, row.users_count) }} · {{ $t("settings.roles.permissionCount", { n: row.permissions.length }, row.permissions.length) }} · {{ roleCoverage(row) }}%
+              </p>
+              <div class="w-full bg-ui-subtle rounded-full h-1 mt-2">
+                <div class="h-1 rounded-full bg-ui-ink" :style="{ width: `${roleCoverage(row)}%` }"></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-0.5 shrink-0">
+              <UiButton variant="ghost" size="sm" :icon="Pencil" :aria-label="$t('settings.roles.editAria')" @click="openEditForm(row)" />
+              <UiButton v-if="!isSystemRole(row)" variant="ghost" size="sm" :icon="Trash2" :aria-label="$t('settings.roles.deleteAria')" @click="confirmDelete(row)" />
+            </div>
           </div>
-          <div class="w-full bg-gray-100 rounded-full h-1.5">
-            <div
-              class="h-1.5 rounded-full bg-[#0C51D9] transition-all duration-300"
-              :style="{ width: `${roleCoverage(role)}%` }"
-            ></div>
-          </div>
-        </div>
+        </template>
 
-        <div class="flex flex-wrap gap-1">
-          <span
-            v-for="mod in roleModuleSummary(role).slice(0, 5)"
-            :key="mod"
-            class="text-xs px-2 py-1 rounded-md bg-blue-50 text-[#0C51D9] font-medium"
-          >
-            {{ mod }}
-          </span>
-          <span
-            v-if="roleModuleSummary(role).length > 5"
-            class="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-500 font-medium"
-          >
-            +{{ roleModuleSummary(role).length - 5 }} more
-          </span>
-          <span
-            v-if="roleModuleSummary(role).length === 0"
-            class="text-xs px-2 py-1 rounded-md bg-gray-50 text-gray-400 font-medium italic"
-          >
-            No permissions granted
-          </span>
-        </div>
-      </div>
-
-      <div
-        v-if="!loading && visibleRoles.length === 0"
-        class="col-span-full text-center py-12 text-gray-500"
-      >
-        <p class="text-lg font-semibold">No roles found</p>
-      </div>
-    </div>
+        <template #empty>
+          <UiEmpty :icon="ShieldCheck" :title="$t('settings.roles.empty')" compact />
+        </template>
+      </UiTable>
+    </section>
 
     <!-- FORM MODAL -->
-    <Transition name="fade">
-      <div v-if="isFormOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="closeForm"></div>
+    <UiModal
+      v-model:open="isFormOpen"
+      size="lg"
+      :title="form.id ? $t('settings.roles.edit') : $t('settings.roles.addNew')"
+      :description="$t('settings.roles.selectedOf', { selected: form.permissions.length, total: totalPermissionCount })"
+    >
+      <div class="space-y-5">
+        <UiInput
+          v-model="form.name"
+          :label="$t('settings.roles.roleName')"
+          required
+          :placeholder="$t('settings.roles.roleNamePlaceholder')"
+          :disabled="!!(form.id && SYSTEM_ROLES.includes(form.name))"
+        />
 
-        <div
-          class="bg-white rounded-[14px] w-full max-w-3xl relative z-10 shadow-2xl max-h-[90vh] flex flex-col"
-        >
-          <!-- Modal Header -->
-          <div class="flex items-start justify-between p-6 border-b border-[#F1F1F1] shrink-0">
-            <div>
-              <h3 class="text-xl font-bold text-brand-dark">
-                {{ form.id ? "Edit Role" : "Add New Role" }}
-              </h3>
-              <p class="text-brand-light text-sm mt-0.5">
-                {{ form.permissions.length }} of {{ totalPermissionCount }} permissions selected
-              </p>
+        <div>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+            <p class="flex-1 text-ui-small font-medium text-ui-ink">{{ $t("settings.roles.permissions") }}</p>
+            <div class="flex items-center gap-1">
+              <UiButton variant="ghost" size="sm" :icon="CheckSquare" @click="selectAll">{{ $t("common.actions.selectAll") }}</UiButton>
+              <UiButton variant="ghost" size="sm" :icon="Square" @click="clearAll">{{ $t("settings.roles.clearAll") }}</UiButton>
             </div>
-            <button @click="closeForm" class="text-gray-400 hover:text-gray-600 shrink-0">
-              <X class="w-5 h-5" />
-            </button>
           </div>
 
-          <!-- Modal Body (scrollable) -->
-          <div class="flex-1 overflow-y-auto p-6 space-y-5">
-            <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Role Name</label>
-              <input
-                v-model="form.name"
-                type="text"
-                required
-                placeholder="e.g. supervisor"
-                :disabled="form.id && SYSTEM_ROLES.includes(form.name)"
-                class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none disabled:bg-gray-50 disabled:text-gray-400"
-              />
-            </div>
+          <UiInput v-model="permissionSearch" :icon="Search" :placeholder="$t('settings.permissions.searchPlaceholder')" class="mb-4" />
 
-            <div>
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between mb-3">
-                <label class="text-sm font-semibold text-brand-dark">Permissions</label>
-                <div class="flex items-center gap-3">
-                  <button type="button" @click="selectAll" class="text-xs text-[#0C51D9] font-semibold hover:underline">
-                    Select all
-                  </button>
-                  <span class="text-gray-300">|</span>
-                  <button type="button" @click="clearAll" class="text-xs text-gray-500 font-semibold hover:underline">
-                    Clear all
-                  </button>
-                </div>
-              </div>
-
-              <div class="relative mb-3">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search class="w-4 h-4 text-gray-400" />
-                </div>
-                <input
-                  v-model="permissionSearch"
-                  type="text"
-                  placeholder="Search modules or actions..."
-                  class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-                />
-              </div>
-
-              <div class="space-y-5">
-                <div v-for="section in sectionedGroups" :key="section.section">
-                  <p class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
-                    {{ section.section }}
-                  </p>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div
-                      v-for="group in section.groups"
-                      :key="group.key"
-                      class="border border-[#DCDEDD] rounded-xl p-3"
-                    >
-                      <button
-                        type="button"
-                        @click="toggleGroup(group)"
-                        class="w-full flex items-center justify-between mb-2 group/header"
-                      >
-                        <span class="flex items-center gap-1.5 text-sm font-semibold text-brand-dark">
-                          <CheckSquare
-                            v-if="selectedInGroup(group) === group.permissions.length"
-                            class="w-4 h-4 text-[#0C51D9]"
-                          />
-                          <Square v-else class="w-4 h-4 text-gray-300 group-hover/header:text-gray-400" />
-                          {{ group.label }}
-                        </span>
-                        <span class="text-xs text-gray-400 font-medium">
-                          {{ selectedInGroup(group) }}/{{ group.permissions.length }}
-                        </span>
-                      </button>
-                      <div class="flex flex-wrap gap-1.5">
-                        <label
-                          v-for="perm in group.permissions"
-                          :key="perm.id"
-                          class="flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border cursor-pointer transition-colors"
-                          :class="
-                            form.permissions.includes(perm.name)
-                              ? 'bg-blue-50 border-[#0C51D9] text-[#0C51D9]'
-                              : 'border-[#DCDEDD] text-brand-dark hover:border-gray-400'
-                          "
-                        >
-                          <input
-                            type="checkbox"
-                            class="hidden"
-                            :checked="form.permissions.includes(perm.name)"
-                            @change="togglePermission(perm.name)"
-                          />
-                          {{ perm.action }}
-                        </label>
-                      </div>
+          <!-- Desktop: module x action matrix -->
+          <div v-if="filteredGroups.length" class="hidden sm:block border border-ui-line rounded-ui-card">
+            <table class="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th class="sticky -top-5 z-10 bg-ui-surface w-10 pl-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line rounded-tl-ui-card">#</th>
+                  <th class="sticky -top-5 z-10 bg-ui-surface px-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line">{{ $t("settings.roles.module") }}</th>
+                  <th v-for="col in matrixColumns" :key="col.label" class="sticky -top-5 z-10 bg-ui-surface px-2 h-10 text-center text-ui-cap font-medium text-ui-muted border-b border-ui-line w-[60px]">{{ col.short }}</th>
+                  <th class="sticky -top-5 z-10 bg-ui-surface px-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line rounded-tr-ui-card">{{ $t("settings.roles.other") }}</th>
+                </tr>
+              </thead>
+              <tbody v-for="(section, sIndex) in sectionedGroups" :key="section.section">
+                <tr>
+                  <th :colspan="matrixColumns.length + 3" class="px-3 pt-3 pb-1.5 text-left text-ui-over uppercase tracking-wider text-ui-faint bg-ui-subtle/60 border-b border-ui-line">
+                    {{ sectionLabel(section.section) }}
+                  </th>
+                </tr>
+                <tr v-for="(group, gIndex) in section.groups" :key="group.key" class="hover:bg-ui-subtle/60 transition-colors">
+                  <td class="pl-3 h-11 text-ui-cap text-ui-faint tabular-nums border-b border-ui-line">
+                    {{ sectionedGroups.slice(0, sIndex).reduce((n, s) => n + s.groups.length, 0) + gIndex + 1 }}
+                  </td>
+                  <td class="px-3 h-11 border-b border-ui-line">
+                    <label class="flex items-center gap-2 text-ui-small font-medium text-ui-ink">
+                      <input
+                        type="checkbox"
+                        class="w-4 h-4 accent-[rgb(var(--ui-ink))]"
+                        :checked="groupState(group) === 'all'"
+                        :indeterminate.prop="groupState(group) === 'some'"
+                        @change="toggleGroup(group)"
+                      />
+                      <span class="flex-1 min-w-0 truncate">{{ moduleLabel(group) }}</span>
+                      <span class="text-ui-cap text-ui-faint font-normal tabular-nums">{{ selectedInGroup(group) }}/{{ group.permissions.length }}</span>
+                    </label>
+                  </td>
+                  <td v-for="col in matrixColumns" :key="col.label" class="px-2 h-11 text-center border-b border-ui-line">
+                    <input
+                      v-if="permByAction(group, col.label)"
+                      type="checkbox"
+                      class="w-4 h-4 align-middle accent-[rgb(var(--ui-ink))]"
+                      :aria-label="`${moduleLabel(group)}: ${col.name}`"
+                      :checked="form.permissions.includes(permByAction(group, col.label).name)"
+                      @change="togglePermission(permByAction(group, col.label).name)"
+                    />
+                    <span v-else class="text-ui-line-strong" aria-hidden="true">–</span>
+                  </td>
+                  <td class="px-3 py-2 border-b border-ui-line">
+                    <div class="flex flex-wrap gap-x-3 gap-y-1">
+                      <label v-for="perm in otherPerms(group)" :key="perm.id" class="inline-flex items-center gap-1.5 text-ui-cap text-ui-text whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          class="w-3.5 h-3.5 accent-[rgb(var(--ui-ink))]"
+                          :checked="form.permissions.includes(perm.name)"
+                          @change="togglePermission(perm.name)"
+                        />
+                        {{ actionLabel(group, perm) }}
+                      </label>
                     </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Phones: stacked module cards -->
+          <div v-if="filteredGroups.length" class="sm:hidden space-y-4">
+            <div v-for="section in sectionedGroups" :key="section.section">
+              <p class="text-ui-over uppercase tracking-wider text-ui-faint mb-2">{{ sectionLabel(section.section) }}</p>
+              <div class="space-y-2">
+                <div v-for="group in section.groups" :key="group.key" class="border border-ui-line rounded-ui-card">
+                  <label class="flex items-center gap-2.5 px-3 py-2.5 border-b border-ui-line">
+                    <input
+                      type="checkbox"
+                      class="w-4 h-4 accent-[rgb(var(--ui-ink))]"
+                      :checked="groupState(group) === 'all'"
+                      :indeterminate.prop="groupState(group) === 'some'"
+                      @change="toggleGroup(group)"
+                    />
+                    <span class="flex-1 min-w-0 text-ui-body font-medium text-ui-ink truncate">{{ moduleLabel(group) }}</span>
+                    <span class="text-ui-cap text-ui-faint tabular-nums">{{ selectedInGroup(group) }}/{{ group.permissions.length }}</span>
+                  </label>
+                  <div class="grid grid-cols-2 gap-x-3 gap-y-2 px-3 py-2.5">
+                    <label v-for="perm in group.permissions" :key="perm.id" class="flex items-center gap-2 text-ui-small text-ui-text">
+                      <input
+                        type="checkbox"
+                        class="w-4 h-4 accent-[rgb(var(--ui-ink))]"
+                        :checked="form.permissions.includes(perm.name)"
+                        @change="togglePermission(perm.name)"
+                      />
+                      <span class="truncate">{{ actionLabel(group, perm) }}</span>
+                    </label>
                   </div>
                 </div>
-
-                <div v-if="filteredGroups.length === 0" class="text-center py-8 text-sm text-gray-400">
-                  No modules match "{{ permissionSearch }}"
-                </div>
               </div>
             </div>
-
-            <p v-if="error" class="text-red-500 text-sm">
-              {{ typeof error === "string" ? error : "Please check the form." }}
-            </p>
           </div>
 
-          <!-- Modal Footer -->
-          <div class="grid grid-cols-2 gap-3 p-6 border-t border-[#F1F1F1] shrink-0">
-            <button
-              type="button"
-              @click="closeForm"
-              class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50 transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              @click="handleSubmit"
-              :disabled="isSaving || !form.name"
-              class="px-4 py-3 rounded-xl bg-[#0C51D9] text-white font-semibold hover:brightness-110 transition disabled:opacity-50"
-            >
-              {{ isSaving ? "Saving..." : "Save Role" }}
-            </button>
-          </div>
+          <p v-if="filteredGroups.length === 0" class="text-center py-8 text-ui-small text-ui-muted">
+            {{ $t("settings.roles.noMatch", { query: permissionSearch }) }}
+          </p>
         </div>
+
+        <p v-if="error" class="text-ui-small text-ui-bad">
+          {{ typeof error === "string" ? error : $t("settings.roles.checkForm") }}
+        </p>
       </div>
-    </Transition>
+
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="closeForm">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton class="flex-1 sm:flex-none" :loading="isSaving" :disabled="isSaving || !form.name" @click="handleSubmit">
+          {{ isSaving ? $t("common.actions.saving") : $t("settings.roles.save") }}
+        </UiButton>
+      </template>
+    </UiModal>
 
     <!-- DELETE MODAL -->
-    <Transition name="fade">
-      <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
-
-        <div class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <button
-            @click="isDeleteModalOpen = false"
-            class="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
-          >
-            <X class="w-5 h-5" />
-          </button>
-
-          <div class="text-center">
-            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle class="w-8 h-8 text-red-500" />
-            </div>
-
-            <h3 class="text-xl font-bold text-brand-dark mb-2">Delete Role?</h3>
-            <p class="text-gray-500 text-sm mb-6">
-              Are you sure you want to delete
-              <span class="font-bold text-brand-dark">"{{ roleToDelete?.name }}"</span>? This
-              action cannot be undone.
-            </p>
-
-            <div class="grid grid-cols-2 gap-3">
-              <button
-                @click="isDeleteModalOpen = false"
-                class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                @click="handleDelete"
-                :disabled="isDeleting"
-                class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <Trash2 v-if="!isDeleting" class="w-4 h-4" />
-                {{ isDeleting ? "Deleting..." : "Yes, Delete" }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <UiConfirmDialog
+      v-model:open="isDeleteModalOpen"
+      :title="$t('settings.roles.deleteConfirm.title')"
+      :message="$t('settings.roles.deleteConfirm.message', { name: roleToDelete?.name })"
+      :confirm-text="isDeleting ? $t('common.actions.deleting') : $t('settings.roles.deleteConfirm.confirm')"
+      :loading="isDeleting"
+      @confirm="handleDelete"
+      @cancel="isDeleteModalOpen = false"
+    />
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

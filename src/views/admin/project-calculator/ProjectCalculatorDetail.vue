@@ -2,7 +2,6 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
-  CalculatorIcon,
   ArrowLeft,
   Pencil,
   PrinterIcon,
@@ -17,6 +16,11 @@ import { formatRupiah } from "@/utils/formatUtils";
 import { calculateMarketingFee } from "@/utils/marketingFee";
 import { formatToClientTimezone } from "@/helpers/format";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiBadge, UiChips, UiEmpty } from "@/components/ui";
+import { rowNumber } from "@/components/ui/table";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -61,10 +65,23 @@ const pphTypeLabel = computed(
 );
 
 const scenarioMeta = {
-  feature: { label: "New Feature Estimate", class: "bg-blue-50 text-blue-700 border-blue-100" },
-  build: { label: "Build from Scratch Estimate", class: "bg-violet-50 text-violet-700 border-violet-100" },
-  landing_page: { label: "Landing Page Estimate", class: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+  feature: { label: "New Feature Estimate", tone: "accent" },
+  build: { label: "Build from Scratch Estimate", tone: "info" },
+  landing_page: { label: "Landing Page Estimate", tone: "outline" },
 };
+
+// Page chrome (the quote document above keeps its own wording).
+const scenarioTitle = computed(() => ({
+  feature: t("calculator.detail.scenario.feature"),
+  build: t("calculator.detail.scenario.build"),
+  landing_page: t("calculator.detail.scenario.landingPage"),
+}));
+
+// Presentation only.
+const infraPeriodOptions = computed(() => [
+  { value: "monthly", label: t("calculator.detail.monthly") },
+  { value: "annual", label: t("calculator.detail.annual") },
+]);
 
 const landingPageItem = computed(() => (calc.value?.scenario === "landing_page" ? calc.value.items?.[0] : null));
 
@@ -78,295 +95,306 @@ const printQuote = () => window.print();
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto">
-    <!-- Header (hidden on print) -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 mb-5 print:hidden">
-      <div class="flex items-center justify-between gap-2.5 flex-wrap">
-        <div class="flex items-center gap-2.5">
-          <button
-            @click="router.push({ name: 'admin.project-calculator.dashboard' })"
-            class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-blue-400 transition-all"
-          >
-            <ArrowLeft class="w-5 h-5 text-gray-600" />
-          </button>
-          <div class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center">
-            <CalculatorIcon class="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <h1 class="text-brand-dark text-base font-bold">Estimate Detail</h1>
-            <p class="text-brand-light text-sm">Project cost estimate summary</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button
-            @click="printQuote"
-            class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-3.5 py-2 inline-flex items-center gap-1.5"
-          >
-            <PrinterIcon class="w-4 h-4 text-gray-600" />
-            <span class="text-brand-dark text-sm font-semibold">Cetak / PDF</span>
-          </button>
-          <RouterLink
-            v-if="can('project-calculator-edit')"
-            :to="{ name: 'admin.project-calculator.edit', params: { id: route.params.id } }"
-            class="rounded-[10px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all blue-gradient blue-btn-shadow px-3.5 py-2 inline-flex items-center gap-1.5"
-          >
-            <Pencil class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">Edit</span>
-          </RouterLink>
-        </div>
-      </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader
+      class="print:hidden"
+      :title="calc?.name || $t('calculator.detail.title')"
+      :subtitle="calc ? `${$t('calculator.detail.title')} · ${scenarioTitle[calc.scenario]}` : $t('calculator.detail.subtitle')"
+    >
+      <template #eyebrow>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
+          :aria-label="$t('common.actions.back')"
+          @click="router.push({ name: 'admin.project-calculator.dashboard' })"
+        >
+          <ArrowLeft class="w-4 h-4" /> {{ $t("calculator.dashboard.title") }}
+        </button>
+      </template>
+      <template #actions>
+        <UiButton variant="secondary" :icon="PrinterIcon" @click="printQuote">{{ $t("calculator.detail.print") }}</UiButton>
+        <UiButton
+          v-if="can('project-calculator-edit')"
+          :icon="Pencil"
+          :to="{ name: 'admin.project-calculator.edit', params: { id: route.params.id } }"
+        >
+          {{ $t("common.actions.edit") }}
+        </UiButton>
+      </template>
+    </UiPageHeader>
+
+    <div v-if="loading" class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
+      <Skeleton height="420px" rounded="12px" />
+      <Skeleton height="300px" rounded="12px" />
     </div>
 
-    <div v-if="loading" class="space-y-3.5">
-      <Skeleton height="140px" rounded="14px" />
-      <Skeleton height="300px" rounded="14px" />
-    </div>
+    <section v-else-if="!calc" class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty :title="$t('calculator.detail.notFound')" :message="$t('calculator.detail.notFoundHint')" />
+    </section>
 
     <!-- Printable quote document -->
-    <div v-else-if="calc" id="quote-document" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 print:border-0 print:rounded-none">
-      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3.5 pb-5 border-b border-[#DCDEDD]">
-        <div>
-          <p class="text-brand-light text-xs font-semibold uppercase tracking-wide mb-1">PT. Jendela Cakra Digital</p>
-          <h2 class="text-brand-dark text-lg font-extrabold">{{ calc.name }}</h2>
-          <span class="inline-block mt-1.5 px-2 py-1 rounded-md text-xs font-semibold border" :class="scenarioMeta[calc.scenario].class">
-            {{ scenarioMeta[calc.scenario].label }}
-          </span>
-        </div>
-        <div class="text-left sm:text-right space-y-1 text-sm">
-          <p v-if="calc.client_name" class="flex items-center gap-1 sm:justify-end text-brand-dark font-semibold">
-            <UserIcon class="w-3.5 h-3.5 text-gray-400" /> {{ calc.client_name }}
-          </p>
-          <p class="flex items-center gap-1 sm:justify-end text-gray-500">
-            <CalendarIcon class="w-3.5 h-3.5" /> {{ formatToClientTimezone(calc.created_at, "dd MMM yyyy") }}
-          </p>
-          <p v-if="calc.creator?.name" class="text-gray-400 text-xs">Dibuat oleh {{ calc.creator.name }}</p>
-        </div>
-      </div>
-
-      <!-- Items table -->
-      <div v-if="calc.scenario !== 'landing_page'" class="overflow-x-auto mt-5">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="text-left text-gray-400 text-xs uppercase tracking-wide border-b border-[#F1F1F1]">
-              <th class="py-1.5 pr-3.5">{{ calc.scenario === "feature" ? "Feature" : "Module" }}</th>
-              <th class="py-1.5 pr-3.5 text-right">Jam Dasar</th>
-              <th class="py-1.5 pr-3.5 text-right">Faktor</th>
-              <th class="py-1.5 pr-3.5 text-right">Jam Terpakai</th>
-              <th class="py-1.5 pr-3.5 text-right">Subtotal</th>
-              <th class="py-1.5 pr-3.5 text-right">Buffer</th>
-              <th class="py-1.5 text-right">Final Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(item, idx) in calc.items" :key="idx" class="border-b border-[#F8F8F8]">
-              <td class="py-2.5 pr-3.5 font-semibold text-brand-dark">{{ item.name }}</td>
-              <td class="py-2.5 pr-3.5 text-right text-gray-600">
-                {{ (item.base_hours ?? item.estimated_hours ?? 0).toFixed(1) }}h
-              </td>
-              <td class="py-2.5 pr-3.5 text-right text-gray-600">{{ item.complexity_factor }}x</td>
-              <td class="py-2.5 pr-3.5 text-right text-gray-600">{{ item.total_hours_used.toFixed(1) }}h</td>
-              <td class="py-2.5 pr-3.5 text-right text-gray-600">{{ formatRupiah(item.subtotal) }}</td>
-              <td class="py-2.5 pr-3.5 text-right text-gray-600">{{ item.buffer_percent }}%</td>
-              <td class="py-2.5 text-right font-bold text-brand-dark">{{ formatRupiah(item.final_price) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Landing Page breakdown table -->
-      <div v-else-if="landingPageItem" class="overflow-x-auto mt-5">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="text-left text-gray-400 text-xs uppercase tracking-wide border-b border-[#F1F1F1]">
-              <th class="py-1.5 pr-3.5">Component</th>
-              <th class="py-1.5 pr-3.5">Choice</th>
-              <th class="py-1.5 text-right">Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="border-b border-[#F8F8F8]">
-              <td class="py-2.5 pr-3.5 font-semibold text-brand-dark">Server</td>
-              <td class="py-2.5 pr-3.5 text-gray-600 capitalize">{{ landingPageItem.server_type }}</td>
-              <td class="py-2.5 text-right font-bold text-brand-dark">{{ formatRupiah(landingPageItem.server_cost) }}</td>
-            </tr>
-            <tr class="border-b border-[#F8F8F8]">
-              <td class="py-2.5 pr-3.5 font-semibold text-brand-dark">Design</td>
-              <td class="py-2.5 pr-3.5 text-gray-600 capitalize">{{ landingPageItem.design_type }}</td>
-              <td class="py-2.5 text-right font-bold text-brand-dark">{{ formatRupiah(landingPageItem.design_cost) }}</td>
-            </tr>
-            <tr class="border-b border-[#F8F8F8]">
-              <td class="py-2.5 pr-3.5 font-semibold text-brand-dark">Development</td>
-              <td class="py-2.5 pr-3.5 text-gray-600">
-                {{ landingPageItem.estimated_hours }}h &times; {{ formatRupiah(landingPageItem.rate_developer) }} &times; {{ landingPageItem.developer_count }} dev
-              </td>
-              <td class="py-2.5 text-right font-bold text-brand-dark">{{ formatRupiah(landingPageItem.development_cost) }}</td>
-            </tr>
-            <tr v-for="(item, idx) in landingPageItem.additional_items" :key="idx" class="border-b border-[#F8F8F8]">
-              <td class="py-2.5 pr-3.5 font-semibold text-brand-dark">{{ item.description }}</td>
-              <td class="py-2.5 pr-3.5 text-gray-600">{{ item.amount }} &times; {{ formatRupiah(item.price) }}</td>
-              <td class="py-2.5 text-right font-bold text-brand-dark">{{ formatRupiah(item.subtotal) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Totals -->
-      <div class="flex justify-end mt-5">
-        <div class="w-full sm:w-80 space-y-1.5 text-sm">
-          <div class="flex items-center justify-between">
-            <span class="text-gray-500">Subtotal</span>
-            <span class="text-brand-dark font-medium">{{ formatRupiah(calc.subtotal) }}</span>
-          </div>
-          <div v-if="calc.scenario !== 'landing_page'" class="flex items-center justify-between">
-            <span class="text-gray-500">Buffer Risiko</span>
-            <span class="text-brand-dark font-medium">{{ formatRupiah(calc.buffer_total) }}</span>
-          </div>
-          <div v-if="calc.scenario === 'build'" class="flex items-center justify-between">
-            <span class="text-gray-500">PM Overhead ({{ calc.pm_overhead_percent }}%)</span>
-            <span class="text-brand-dark font-medium">{{ formatRupiah(calc.pm_overhead_total) }}</span>
-          </div>
-          <div v-if="calc.scenario === 'build'" class="flex items-center justify-between">
-            <span class="text-gray-500">Infrastructure Setup</span>
-            <span class="text-brand-dark font-medium">{{ formatRupiah(calc.infra_setup_cost) }}</span>
-          </div>
-          <div v-if="calc.scenario === 'landing_page'" class="flex items-center justify-between">
-            <span class="text-gray-500">Margin Jual ({{ calc.margin_percent }}%)</span>
-            <span class="text-brand-dark font-medium">{{ formatRupiah(calc.margin_total) }}</span>
-          </div>
-          <div class="flex items-center justify-between pt-1.5 border-t border-[#F1F1F1]">
-            <span class="text-brand-dark font-bold">Total Estimate</span>
-            <span class="text-brand-dark font-bold">{{ formatRupiah(calc.grand_total) }}</span>
-          </div>
-          <div v-if="calc.include_ppn" class="flex items-center justify-between">
-            <span class="text-gray-500">PPN ({{ calc.ppn_percent }}%)</span>
-            <span class="text-gray-500">{{ formatRupiah(calc.total_with_ppn - calc.grand_total) }}</span>
-          </div>
-          <div v-if="calc.include_ppn" class="flex items-center justify-between pt-1.5 border-t border-[#F1F1F1]">
-            <span class="text-indigo-700 text-sm font-extrabold">Total + PPN</span>
-            <span class="text-indigo-700 text-base font-extrabold">{{ formatRupiah(calc.total_with_ppn) }}</span>
-          </div>
-          <div v-else class="flex items-center justify-between pt-1">
-            <span class="text-brand-dark text-sm font-extrabold">Grand Total</span>
-            <span class="text-brand-dark text-base font-extrabold">{{ formatRupiah(displayTotal) }}</span>
-          </div>
-
-          <template v-if="calc.include_pph">
-            <div class="flex items-center justify-between pt-1.5 border-t border-[#F1F1F1]">
-              <span class="text-red-500">{{ pphTypeLabel }} ({{ calc.pph_percent }}%)</span>
-              <span class="text-red-500">-{{ formatRupiah(calc.pph_amount) }}</span>
+    <div v-else id="quote-document" class="space-y-5">
+      <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
+        <!-- Main document -->
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden print:border-0">
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b border-ui-line">
+            <div class="min-w-0">
+              <p class="text-ui-over uppercase text-ui-muted mb-1">PT. Jendela Cakra Digital</p>
+              <h2 class="text-ui-h2 text-ui-ink">{{ calc.name }}</h2>
+              <UiBadge class="mt-1.5" :tone="scenarioMeta[calc.scenario].tone">{{ scenarioMeta[calc.scenario].label }}</UiBadge>
             </div>
-            <div class="flex items-center justify-between pt-1">
-              <span class="text-green-700 text-sm font-extrabold">Diterima Bersih</span>
-              <span class="text-green-700 text-base font-extrabold">{{ formatRupiah(calc.net_received) }}</span>
+            <div class="text-left sm:text-right space-y-1 text-ui-small shrink-0">
+              <p v-if="calc.client_name" class="flex items-center gap-1.5 sm:justify-end text-ui-ink font-medium">
+                <UserIcon class="w-3.5 h-3.5 text-ui-faint" /> {{ calc.client_name }}
+              </p>
+              <p class="flex items-center gap-1.5 sm:justify-end text-ui-muted tabular-nums">
+                <CalendarIcon class="w-3.5 h-3.5 text-ui-faint" /> {{ formatToClientTimezone(calc.created_at, "dd MMM yyyy") }}
+              </p>
+              <p v-if="calc.creator?.name" class="text-ui-cap text-ui-faint">Dibuat oleh {{ calc.creator.name }}</p>
             </div>
-            <p class="text-gray-400 text-xs">Dipotong PPh oleh klien sesuai peraturan perpajakan yang berlaku</p>
+          </div>
+
+          <!-- Items table -->
+          <template v-if="calc.scenario !== 'landing_page'">
+          <!-- Phones: stacked rows -->
+          <ul class="md:hidden divide-y divide-ui-line">
+            <li v-for="(item, idx) in calc.items" :key="`m-${idx}`" class="flex items-start gap-3 px-5 py-3">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-4 pt-0.5">{{ rowNumber(idx) }}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-ui-small font-medium text-ui-ink">{{ item.name }}</p>
+                <p class="text-ui-cap text-ui-muted tabular-nums mt-0.5">
+                  {{ (item.base_hours ?? item.estimated_hours ?? 0).toFixed(1) }}h &times; {{ item.complexity_factor }}x = {{ item.total_hours_used.toFixed(1) }}h &middot; Buffer {{ item.buffer_percent }}%
+                </p>
+              </div>
+              <p class="text-ui-small font-semibold text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(item.final_price) }}</p>
+            </li>
+          </ul>
+          <div class="hidden md:block overflow-x-auto">
+            <table class="w-full border-collapse">
+              <thead>
+                <tr class="text-ui-cap font-medium text-ui-muted">
+                  <th class="w-11 pl-5 sm:pl-6 pr-0 h-10 text-left font-medium border-b border-ui-line">#</th>
+                  <th class="px-3 h-10 text-left font-medium border-b border-ui-line">{{ calc.scenario === "feature" ? "Feature" : "Module" }}</th>
+                  <th class="px-3 h-10 text-right font-medium border-b border-ui-line whitespace-nowrap">Jam Dasar</th>
+                  <th class="px-3 h-10 text-right font-medium border-b border-ui-line">Faktor</th>
+                  <th class="px-3 h-10 text-right font-medium border-b border-ui-line whitespace-nowrap">Jam Terpakai</th>
+                  <th class="px-3 h-10 text-right font-medium border-b border-ui-line">Subtotal</th>
+                  <th class="px-3 h-10 text-right font-medium border-b border-ui-line">Buffer</th>
+                  <th class="pl-3 pr-5 sm:pr-6 h-10 text-right font-medium border-b border-ui-line whitespace-nowrap">Final Price</th>
+                </tr>
+              </thead>
+              <tbody class="text-ui-small text-ui-text tabular-nums">
+                <tr v-for="(item, idx) in calc.items" :key="idx" class="border-b border-ui-line last:border-b-0">
+                  <td class="pl-5 sm:pl-6 pr-0 py-3 text-ui-cap text-ui-faint">{{ rowNumber(idx) }}</td>
+                  <td class="px-3 py-3 font-medium text-ui-ink min-w-[140px]">{{ item.name }}</td>
+                  <td class="px-3 py-3 text-right">{{ (item.base_hours ?? item.estimated_hours ?? 0).toFixed(1) }}h</td>
+                  <td class="px-3 py-3 text-right">{{ item.complexity_factor }}x</td>
+                  <td class="px-3 py-3 text-right">{{ item.total_hours_used.toFixed(1) }}h</td>
+                  <td class="px-3 py-3 text-right whitespace-nowrap">{{ formatRupiah(item.subtotal) }}</td>
+                  <td class="px-3 py-3 text-right">{{ item.buffer_percent }}%</td>
+                  <td class="pl-3 pr-5 sm:pr-6 py-3 text-right font-semibold text-ui-ink whitespace-nowrap">{{ formatRupiah(item.final_price) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           </template>
 
-          <div class="flex items-center justify-between mt-1.5 p-2.5 rounded-[12px] bg-purple-50 border border-purple-100 text-xs">
-            <span class="text-purple-800 font-medium">
-              Fee Marketing / B2B-B2C Sales
-              <span class="block text-purple-500 font-normal">Reference only, not added to total</span>
-            </span>
-            <span class="text-purple-800 font-bold text-right shrink-0 ml-2">
-              {{ marketingFee.percent }}%
-              <span class="block font-normal">{{ formatRupiah(marketingFee.amount) }}</span>
-            </span>
+          <!-- Landing Page breakdown table -->
+          <div v-else-if="landingPageItem" class="overflow-x-auto">
+            <table class="w-full border-collapse">
+              <thead>
+                <tr class="text-ui-cap font-medium text-ui-muted">
+                  <th class="w-11 pl-5 sm:pl-6 pr-0 h-10 text-left font-medium border-b border-ui-line">#</th>
+                  <th class="px-3 h-10 text-left font-medium border-b border-ui-line">Component</th>
+                  <th class="px-3 h-10 text-left font-medium border-b border-ui-line">Choice</th>
+                  <th class="pl-3 pr-5 sm:pr-6 h-10 text-right font-medium border-b border-ui-line">Price</th>
+                </tr>
+              </thead>
+              <tbody class="text-ui-small text-ui-text">
+                <tr class="border-b border-ui-line">
+                  <td class="pl-5 sm:pl-6 pr-0 py-3 text-ui-cap text-ui-faint tabular-nums">1</td>
+                  <td class="px-3 py-3 font-medium text-ui-ink">Server</td>
+                  <td class="px-3 py-3 capitalize">{{ landingPageItem.server_type }}</td>
+                  <td class="pl-3 pr-5 sm:pr-6 py-3 text-right font-semibold text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(landingPageItem.server_cost) }}</td>
+                </tr>
+                <tr class="border-b border-ui-line">
+                  <td class="pl-5 sm:pl-6 pr-0 py-3 text-ui-cap text-ui-faint tabular-nums">2</td>
+                  <td class="px-3 py-3 font-medium text-ui-ink">Design</td>
+                  <td class="px-3 py-3 capitalize">{{ landingPageItem.design_type }}</td>
+                  <td class="pl-3 pr-5 sm:pr-6 py-3 text-right font-semibold text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(landingPageItem.design_cost) }}</td>
+                </tr>
+                <tr class="border-b border-ui-line last:border-b-0">
+                  <td class="pl-5 sm:pl-6 pr-0 py-3 text-ui-cap text-ui-faint tabular-nums">3</td>
+                  <td class="px-3 py-3 font-medium text-ui-ink">Development</td>
+                  <td class="px-3 py-3 tabular-nums">
+                    {{ landingPageItem.estimated_hours }}h &times; {{ formatRupiah(landingPageItem.rate_developer) }} &times; {{ landingPageItem.developer_count }} dev
+                  </td>
+                  <td class="pl-3 pr-5 sm:pr-6 py-3 text-right font-semibold text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(landingPageItem.development_cost) }}</td>
+                </tr>
+                <tr v-for="(item, idx) in landingPageItem.additional_items" :key="idx" class="border-b border-ui-line last:border-b-0">
+                  <td class="pl-5 sm:pl-6 pr-0 py-3 text-ui-cap text-ui-faint tabular-nums">{{ idx + 4 }}</td>
+                  <td class="px-3 py-3 font-medium text-ui-ink">{{ item.description }}</td>
+                  <td class="px-3 py-3 tabular-nums">{{ item.amount }} &times; {{ formatRupiah(item.price) }}</td>
+                  <td class="pl-3 pr-5 sm:pr-6 py-3 text-right font-semibold text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(item.subtotal) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
 
-      <div class="mt-5 flex items-center gap-1.5 p-2.5 rounded-[12px] bg-blue-50 border border-blue-100 text-sm w-fit">
-        <ClockIcon class="w-4 h-4 text-blue-600 flex-shrink-0" />
-        <span class="text-blue-800">Estimated duration: <strong>{{ calc.estimated_duration_weeks ?? "-" }} weeks</strong><template v-if="calc.estimated_duration_weeks"> (&asymp; {{ (calc.estimated_duration_weeks / 4.33).toFixed(1).replace(".", ",") }} months)</template><template v-if="calc.allocated_developers"> &middot; {{ calc.allocated_developers }} developer{{ calc.allocated_developers > 1 ? "s" : "" }}</template></span>
-      </div>
+          <div class="px-5 sm:px-6 py-4 border-t border-ui-line space-y-4">
+            <div class="flex items-start gap-2 text-ui-small text-ui-text">
+              <ClockIcon class="w-4 h-4 text-ui-faint shrink-0 mt-px" />
+              <span>Estimated duration: <strong class="font-semibold text-ui-ink tabular-nums">{{ calc.estimated_duration_weeks ?? "-" }} weeks</strong><template v-if="calc.estimated_duration_weeks"> (&asymp; {{ (calc.estimated_duration_weeks / 4.33).toFixed(1).replace(".", ",") }} months)</template><template v-if="calc.allocated_developers"> &middot; {{ calc.allocated_developers }} developer{{ calc.allocated_developers > 1 ? "s" : "" }}</template></span>
+            </div>
 
-      <div v-if="calc.notes" class="mt-5 pt-5 border-t border-[#F1F1F1]">
-        <p class="text-xs font-semibold text-gray-400 uppercase mb-1">Catatan</p>
-        <p class="text-brand-dark text-sm whitespace-pre-line">{{ calc.notes }}</p>
+            <div v-if="calc.notes">
+              <p class="text-ui-over uppercase text-ui-muted mb-1">Catatan</p>
+              <p class="text-ui-small text-ui-ink whitespace-pre-line">{{ calc.notes }}</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Totals -->
+        <aside class="space-y-4 xl:sticky xl:top-4">
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4">
+            <h2 class="text-ui-h3 text-ui-ink mb-3">Summary</h2>
+            <dl class="space-y-2 text-ui-small">
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-ui-muted">Subtotal</dt>
+                <dd class="text-ui-ink tabular-nums">{{ formatRupiah(calc.subtotal) }}</dd>
+              </div>
+              <div v-if="calc.scenario !== 'landing_page'" class="flex items-center justify-between gap-3">
+                <dt class="text-ui-muted">Buffer Risiko</dt>
+                <dd class="text-ui-ink tabular-nums">{{ formatRupiah(calc.buffer_total) }}</dd>
+              </div>
+              <div v-if="calc.scenario === 'build'" class="flex items-center justify-between gap-3">
+                <dt class="text-ui-muted">PM Overhead ({{ calc.pm_overhead_percent }}%)</dt>
+                <dd class="text-ui-ink tabular-nums">{{ formatRupiah(calc.pm_overhead_total) }}</dd>
+              </div>
+              <div v-if="calc.scenario === 'build'" class="flex items-center justify-between gap-3">
+                <dt class="text-ui-muted">Infrastructure Setup</dt>
+                <dd class="text-ui-ink tabular-nums">{{ formatRupiah(calc.infra_setup_cost) }}</dd>
+              </div>
+              <div v-if="calc.scenario === 'landing_page'" class="flex items-center justify-between gap-3">
+                <dt class="text-ui-muted">Margin Jual ({{ calc.margin_percent }}%)</dt>
+                <dd class="text-ui-ink tabular-nums">{{ formatRupiah(calc.margin_total) }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-3 pt-2 border-t border-ui-line">
+                <dt class="text-ui-ink font-medium">Total Estimate</dt>
+                <dd class="text-ui-ink font-medium tabular-nums">{{ formatRupiah(calc.grand_total) }}</dd>
+              </div>
+              <div v-if="calc.include_ppn" class="flex items-center justify-between gap-3">
+                <dt class="text-ui-muted">PPN ({{ calc.ppn_percent }}%)</dt>
+                <dd class="text-ui-muted tabular-nums">{{ formatRupiah(calc.total_with_ppn - calc.grand_total) }}</dd>
+              </div>
+            </dl>
+            <div class="flex items-baseline justify-between gap-3 mt-3 pt-3 border-t border-ui-line">
+              <span class="text-ui-h3 text-ui-ink">{{ calc.include_ppn ? "Total + PPN" : "Grand Total" }}</span>
+              <span class="text-ui-h2 text-ui-ink tabular-nums">{{ formatRupiah(calc.include_ppn ? calc.total_with_ppn : displayTotal) }}</span>
+            </div>
+
+            <template v-if="calc.include_pph">
+              <dl class="space-y-2 text-ui-small mt-3 pt-3 border-t border-ui-line">
+                <div class="flex items-center justify-between gap-3">
+                  <dt class="text-ui-bad">{{ pphTypeLabel }} ({{ calc.pph_percent }}%)</dt>
+                  <dd class="text-ui-bad tabular-nums">-{{ formatRupiah(calc.pph_amount) }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                  <dt class="text-ui-ok font-semibold">Diterima Bersih</dt>
+                  <dd class="text-ui-ok font-semibold text-ui-body tabular-nums">{{ formatRupiah(calc.net_received) }}</dd>
+                </div>
+              </dl>
+              <p class="text-ui-cap text-ui-faint mt-1.5">Dipotong PPh oleh klien sesuai peraturan perpajakan yang berlaku</p>
+            </template>
+          </section>
+
+          <section class="bg-ui-subtle border border-ui-line rounded-ui-card px-5 py-3.5 flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-ui-small font-medium text-ui-ink">Fee Marketing / B2B-B2C Sales</p>
+              <p class="text-ui-cap text-ui-muted">Reference only, not added to total</p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-ui-small font-semibold text-ui-ink tabular-nums">{{ marketingFee.percent }}%</p>
+              <p class="text-ui-cap text-ui-muted tabular-nums">{{ formatRupiah(marketingFee.amount) }}</p>
+            </div>
+          </section>
+        </aside>
       </div>
 
       <!-- Team Rate Setup snapshot -- frozen as it stood when this estimate
            was saved, not the live/shared setting (which may have changed
            since). Older estimates saved before this existed simply won't
            have one. -->
-      <div v-if="calc.rate_setting_snapshot && calc.scenario !== 'landing_page'" class="mt-5 pt-5 border-t border-[#F1F1F1]">
-        <p class="text-xs font-semibold text-gray-400 uppercase mb-2.5">Team Rate Setup</p>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3.5 text-sm">
-          <div class="p-2.5 rounded-[10px] bg-gray-50 border border-[#F1F1F1]">
-            <p class="text-gray-400 text-xs">Team Size</p>
-            <p class="text-brand-dark font-bold">{{ calc.rate_setting_snapshot.team_size }} orang</p>
-          </div>
-          <div class="p-2.5 rounded-[10px] bg-gray-50 border border-[#F1F1F1]">
-            <p class="text-gray-400 text-xs">Biaya Tim / Bulan</p>
-            <p class="text-brand-dark font-bold">{{ formatRupiah(calc.rate_setting_snapshot.team_monthly_cost) }}</p>
-          </div>
-          <div class="p-2.5 rounded-[10px] bg-gray-50 border border-[#F1F1F1]">
-            <p class="text-gray-400 text-xs">Jam Produktif / Bulan</p>
-            <p class="text-brand-dark font-bold">{{ calc.rate_setting_snapshot.total_productive_hours_per_month }}h</p>
-          </div>
-          <div class="p-2.5 rounded-[10px] bg-gray-50 border border-[#F1F1F1]">
-            <p class="text-gray-400 text-xs">Margin</p>
-            <p class="text-brand-dark font-bold">{{ calc.rate_setting_snapshot.margin_multiplier }}x</p>
-          </div>
+      <section
+        v-if="calc.rate_setting_snapshot && calc.scenario !== 'landing_page'"
+        class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden print:border-0"
+      >
+        <div class="px-5 sm:px-6 pt-4 pb-3 border-b border-ui-line">
+          <h2 class="text-ui-h3 text-ui-ink">Team Rate Setup</h2>
+          <p class="text-ui-cap text-ui-muted">Snapshot saved with this estimate</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-sm">
-          <div v-if="calc.rate_setting_snapshot.sdm_resources?.length">
-            <p class="text-brand-dark font-semibold mb-1">SDM Resources</p>
-            <ul class="space-y-1">
-              <li v-for="r in calc.rate_setting_snapshot.sdm_resources" :key="r.id" class="flex items-center justify-between text-gray-600">
-                <span>{{ r.name }}<span v-if="r.field" class="text-gray-400"> ({{ r.field }})</span></span>
-                <span class="text-brand-dark font-medium">{{ formatRupiah(r.actual) }}</span>
+        <dl class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-ui-line border-b border-ui-line">
+          <div class="bg-ui-surface px-5 sm:px-6 py-3">
+            <dt class="text-ui-cap text-ui-muted">Team Size</dt>
+            <dd class="text-ui-body font-medium text-ui-ink tabular-nums">{{ calc.rate_setting_snapshot.team_size }} orang</dd>
+          </div>
+          <div class="bg-ui-surface px-5 sm:px-6 py-3 min-w-0">
+            <dt class="text-ui-cap text-ui-muted">Biaya Tim / Bulan</dt>
+            <dd class="text-ui-body font-medium text-ui-ink tabular-nums truncate">{{ formatRupiah(calc.rate_setting_snapshot.team_monthly_cost) }}</dd>
+          </div>
+          <div class="bg-ui-surface px-5 sm:px-6 py-3">
+            <dt class="text-ui-cap text-ui-muted">Jam Produktif / Bulan</dt>
+            <dd class="text-ui-body font-medium text-ui-ink tabular-nums">{{ calc.rate_setting_snapshot.total_productive_hours_per_month }}h</dd>
+          </div>
+          <div class="bg-ui-surface px-5 sm:px-6 py-3">
+            <dt class="text-ui-cap text-ui-muted">Margin</dt>
+            <dd class="text-ui-body font-medium text-ui-ink tabular-nums">{{ calc.rate_setting_snapshot.margin_multiplier }}x</dd>
+          </div>
+        </dl>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 px-5 sm:px-6 py-4 text-ui-small">
+          <div v-if="calc.rate_setting_snapshot.sdm_resources?.length" class="min-w-0">
+            <p class="text-ui-h3 text-ui-ink mb-2">SDM Resources</p>
+            <ul class="space-y-1.5">
+              <li v-for="r in calc.rate_setting_snapshot.sdm_resources" :key="r.id" class="flex items-center justify-between gap-3 text-ui-text">
+                <span class="min-w-0 truncate">{{ r.name }}<span v-if="r.field" class="text-ui-faint"> ({{ r.field }})</span></span>
+                <span class="text-ui-ink tabular-nums shrink-0">{{ formatRupiah(r.actual) }}</span>
               </li>
             </ul>
           </div>
-          <div v-if="calc.rate_setting_snapshot.fixed_costs?.length">
-            <p class="text-brand-dark font-semibold mb-1">Fixed Costs</p>
-            <ul class="space-y-1">
-              <li v-for="f in calc.rate_setting_snapshot.fixed_costs" :key="f.id" class="flex items-center justify-between text-gray-600">
-                <span>{{ f.name }}</span>
-                <span class="text-brand-dark font-medium">{{ formatRupiah(f.actual) }}</span>
+          <div v-if="calc.rate_setting_snapshot.fixed_costs?.length" class="min-w-0">
+            <p class="text-ui-h3 text-ui-ink mb-2">Fixed Costs</p>
+            <ul class="space-y-1.5">
+              <li v-for="f in calc.rate_setting_snapshot.fixed_costs" :key="f.id" class="flex items-center justify-between gap-3 text-ui-text">
+                <span class="min-w-0 truncate">{{ f.name }}</span>
+                <span class="text-ui-ink tabular-nums shrink-0">{{ formatRupiah(f.actual) }}</span>
               </li>
             </ul>
           </div>
-          <div v-if="calc.rate_setting_snapshot.infrastructure_tools?.length">
-            <div class="flex items-center justify-between gap-2 mb-1">
-              <p class="text-brand-dark font-semibold">Infrastructure Tools</p>
-              <div class="inline-flex rounded-[8px] border border-[#DCDEDD] bg-gray-50 text-xs font-semibold" style="padding: 2px">
-                <button
-                  v-for="option in [
-                    { value: 'monthly', label: 'Bulanan' },
-                    { value: 'annual', label: 'Tahunan' },
-                  ]"
-                  :key="option.value"
-                  type="button"
-                  class="px-2 py-0.5 rounded-[6px] transition-colors"
-                  :class="infraPeriod === option.value ? 'bg-white text-[#0C51D9] shadow-sm' : 'text-gray-500 hover:text-gray-700'"
-                  @click="infraPeriod = option.value"
-                >
-                  {{ option.label }}
-                </button>
-              </div>
+          <div v-if="calc.rate_setting_snapshot.infrastructure_tools?.length" class="min-w-0">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <p class="text-ui-h3 text-ui-ink">Infrastructure Tools</p>
+              <UiChips v-model="infraPeriod" :options="infraPeriodOptions" size="sm" class="!mx-0 !px-0 print:hidden" />
             </div>
-            <ul class="space-y-1">
-              <li v-for="t in calc.rate_setting_snapshot.infrastructure_tools" :key="t.id" class="flex items-center justify-between text-gray-600">
-                <span>{{ t.name }}<span v-if="t.vendor" class="text-gray-400"> ({{ t.vendor }})</span></span>
+            <ul class="space-y-1.5">
+              <li v-for="t in calc.rate_setting_snapshot.infrastructure_tools" :key="t.id" class="flex items-center justify-between gap-3 text-ui-text">
+                <span class="min-w-0 truncate">{{ t.name }}<span v-if="t.vendor" class="text-ui-faint"> ({{ t.vendor }})</span></span>
                 <span
-                  class="text-brand-dark font-medium"
+                  class="text-ui-ink tabular-nums shrink-0"
                   :title="infraFee(t).estimated ? (infraPeriod === 'annual' ? 'Estimasi: biaya bulanan × 12' : 'Estimasi: biaya tahunan ÷ 12') : ''"
                 >
-                  {{ formatRupiah(infraFee(t).amount) }}{{ infraUnit }}<span v-if="infraFee(t).estimated" class="text-gray-400 font-normal"> est.</span>
+                  {{ formatRupiah(infraFee(t).amount) }}{{ infraUnit }}<span v-if="infraFee(t).estimated" class="text-ui-faint"> est.</span>
                 </span>
               </li>
-              <li class="flex items-center justify-between border-t border-[#F1F1F1] pt-1 mt-1">
-                <span class="text-brand-dark font-semibold">Total</span>
-                <span class="text-brand-dark font-bold">{{ formatRupiah(infraTotal) }}{{ infraUnit }}</span>
+              <li class="flex items-center justify-between gap-3 border-t border-ui-line pt-1.5 mt-1.5">
+                <span class="text-ui-ink font-medium">Total</span>
+                <span class="text-ui-ink font-semibold tabular-nums">{{ formatRupiah(infraTotal) }}{{ infraUnit }}</span>
               </li>
             </ul>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>

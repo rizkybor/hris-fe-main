@@ -1,0 +1,8 @@
+{
+  "notFound": {
+    "title": "Halaman tidak ditemukan",
+    "message": "Alamat yang Anda buka tidak tersedia, sudah dipindahkan, atau Anda tidak memiliki akses.",
+    "back": "Kembali",
+    "toDashboard": "Ke Dasbor"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "paid": "Paid",
+  "list": {
+    "title": "My Payslips",
+    "subtitle": "Your monthly and THR payslips, with PDF download.",
+    "totalPayslips": "Total Payslips",
+    "totalEarnings": "Total Earnings",
+    "totalDeductions": "Total Deductions",
+    "thisYear": "This year",
+    "allPayslips": "All Payslips",
+    "itemLabel": "payslips",
+    "searchPlaceholder": "Search payslips by month or year...",
+    "perPageOption": "{n} / page",
+    "netSalary": "Net salary",
+    "monthly": "Monthly",
+    "empty": "No payslips found",
+    "emptyHint": "Your payslips will appear here once they are processed"
+  },
+  "detail": {
+    "payslip": "Payslip",
+    "thrPayslip": "THR Payslip",
+    "paymentDate": "Payment Date",
+    "fullName": "Full Name",
+    "department": "Department",
+    "serviceLength": "Length of service",
+    "serviceMonths": "{n}/12 months",
+    "netSalary": "Net Salary (Take Home)",
+    "earnings": "Earnings",
+    "basicSalary": "Basic Salary",
+    "attendanceDeduction": "Attendance Deduction",
+    "grossSalary": "Gross Salary",
+    "deductions": "Deductions",
+    "footerGenerated": "This is a computer-generated payslip and does not require a signature.",
+    "footerContact": "For any queries, please contact the HR department.",
+    "notFound": "Payslip not found"
+  }
+}

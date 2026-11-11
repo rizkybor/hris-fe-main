@@ -1,10 +1,16 @@
 <script setup>
 import { UserPlus, TrendingUp } from "lucide-vue-next";
-import { onMounted, ref, watch, defineAsyncComponent } from "vue";
+import { computed, onMounted, ref, watch, defineAsyncComponent } from "vue";
+import { useI18n } from "vue-i18n";
 import { useTeamStore } from "@/stores/team";
 import { storeToRefs } from "pinia";
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
-import Spinner from "@/components/common/skeleton/Spinner.vue";
+import { UiSpinner } from "@/components/ui";
+import { uiColor, uiChartBase } from "@/utils/uiColor";
+
+// Token-driven chart look (grid, axis labels) shared by both charts.
+const base = uiChartBase();
+const axisLabels = { style: base.axisLabel };
 
 const props = defineProps({
   team: {
@@ -13,113 +19,97 @@ const props = defineProps({
   },
 });
 
+const { t } = useI18n();
 const teamStore = useTeamStore();
 const { teamChartData, loadingTeamChart } = storeToRefs(teamStore);
 const { fetchTeamChartData } = teamStore;
 
 const memberGrowthOptions = ref({
   chart: {
+    ...base.chart,
     type: "bar",
     height: 250,
-    toolbar: {
-      show: false,
-    },
   },
   plotOptions: {
     bar: {
-      borderRadius: 8,
-      columnWidth: "50%",
+      borderRadius: 4,
+      borderRadiusApplication: "end",
+      columnWidth: "40%",
     },
   },
-  colors: ["#10B981"],
-  dataLabels: {
-    enabled: false,
-  },
+  colors: [uiColor("accent")],
+  dataLabels: base.dataLabels,
   xaxis: {
     categories: [],
+    labels: axisLabels,
+    axisBorder: { show: false },
+    axisTicks: { show: false },
   },
   yaxis: {
     labels: {
+      ...axisLabels,
       formatter: (value) => Math.floor(value),
     },
   },
-  grid: {
-    borderColor: "#e7e7e7",
-    strokeDashArray: 4,
-  },
+  grid: base.grid,
 });
 
-const memberGrowthSeries = ref([
-  {
-    name: "New Members",
-    data: [],
-  },
+// Series data is copied in by updateCharts(); the name follows the language.
+const memberGrowthData = ref([]);
+const memberGrowthSeries = computed(() => [
+  { name: t("teams.detail.chart.newMembers"), data: memberGrowthData.value },
 ]);
 
 const taskGrowthOptions = ref({
   chart: {
+    ...base.chart,
     type: "line",
     height: 250,
-    toolbar: {
-      show: false,
-    },
   },
   stroke: {
     curve: "smooth",
-    width: 3,
+    width: 2,
   },
-  colors: ["#3B82F6"],
-  dataLabels: {
-    enabled: false,
-  },
+  colors: [uiColor("ink")],
+  dataLabels: base.dataLabels,
   xaxis: {
     categories: [],
+    labels: axisLabels,
+    axisBorder: { show: false },
+    axisTicks: { show: false },
   },
   yaxis: {
     labels: {
+      ...axisLabels,
       formatter: (value) => Math.floor(value),
     },
   },
-  grid: {
-    borderColor: "#e7e7e7",
-    strokeDashArray: 4,
-  },
+  grid: base.grid,
   markers: {
-    size: 5,
-    colors: ["#3B82F6"],
-    strokeWidth: 0,
+    size: 4,
+    colors: [uiColor("surface")],
+    strokeColors: uiColor("ink"),
+    strokeWidth: 2,
     hover: {
-      size: 7,
+      size: 6,
     },
   },
 });
 
-const taskGrowthSeries = ref([
-  {
-    name: "Tasks Assigned",
-    data: [],
-  },
+const taskGrowthData = ref([]);
+const taskGrowthSeries = computed(() => [
+  { name: t("teams.detail.chart.tasksAssigned"), data: taskGrowthData.value },
 ]);
 
 const updateCharts = () => {
   if (teamChartData.value.months.length > 0) {
     // Update member growth chart
     memberGrowthOptions.value.xaxis.categories = teamChartData.value.months;
-    memberGrowthSeries.value = [
-      {
-        name: "New Members",
-        data: teamChartData.value.member_growth,
-      },
-    ];
+    memberGrowthData.value = teamChartData.value.member_growth;
 
     // Update task growth chart
     taskGrowthOptions.value.xaxis.categories = teamChartData.value.months;
-    taskGrowthSeries.value = [
-      {
-        name: "Tasks Assigned",
-        data: teamChartData.value.task_growth,
-      },
-    ];
+    taskGrowthData.value = teamChartData.value.task_growth;
   }
 };
 
@@ -146,19 +136,15 @@ watch(teamChartData, () => {
 </script>
 
 <template>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
     <!-- Team Growth Chart (Employee Joining) -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
-      <div class="flex items-center gap-2.5 mb-5">
-        <div
-          class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
-        >
-          <UserPlus class="w-6 h-6 text-green-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-sm font-bold">Team Growth</h3>
-          <p class="text-brand-light text-sm">
-            New members joining over past 4 months
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+      <div class="flex items-start gap-3 mb-4">
+        <UserPlus class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
+        <div class="min-w-0">
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("teams.detail.chart.teamGrowth") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">
+            {{ $t("teams.detail.chart.teamGrowthHint") }}
           </p>
         </div>
       </div>
@@ -166,7 +152,7 @@ watch(teamChartData, () => {
       <!-- Chart Container -->
       <div class="relative">
         <div v-if="loadingTeamChart" class="flex items-center justify-center" style="height: 250px">
-          <Spinner :center="false" />
+          <UiSpinner :center="false" />
         </div>
         <VueApexCharts
           v-else
@@ -176,20 +162,16 @@ watch(teamChartData, () => {
           :series="memberGrowthSeries"
         />
       </div>
-    </div>
+    </section>
 
     <!-- Tasks Growth Chart -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
-      <div class="flex items-center gap-2.5 mb-5">
-        <div
-          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
-        >
-          <TrendingUp class="w-6 h-6 text-blue-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-sm font-bold">Tasks Growth</h3>
-          <p class="text-brand-light text-sm">
-            Tasks assigned to team over past 4 months
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+      <div class="flex items-start gap-3 mb-4">
+        <TrendingUp class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
+        <div class="min-w-0">
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("teams.detail.chart.tasksGrowth") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">
+            {{ $t("teams.detail.chart.tasksGrowthHint") }}
           </p>
         </div>
       </div>
@@ -197,7 +179,7 @@ watch(teamChartData, () => {
       <!-- Chart Container -->
       <div class="relative">
         <div v-if="loadingTeamChart" class="flex items-center justify-center" style="height: 250px">
-          <Spinner :center="false" />
+          <UiSpinner :center="false" />
         </div>
         <VueApexCharts
           v-else
@@ -207,6 +189,6 @@ watch(teamChartData, () => {
           :series="taskGrowthSeries"
         />
       </div>
-    </div>
+    </section>
   </div>
 </template>

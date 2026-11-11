@@ -1,0 +1,685 @@
+{
+  "certificate": {
+    "generate": {
+      "subtitle": "Certificate number is generated automatically, supports bulk generation",
+      "back": "Back to Certificates",
+      "infoTitle": "Certificate Information",
+      "numberingTitle": "Numbering & Template",
+      "recipientsTitle": "Recipients",
+      "fields": {
+        "title": "Certificate Title",
+        "titlePlaceholder": "e.g. Advanced React Training Certificate",
+        "description": "Description (optional)",
+        "descriptionPlaceholder": "Description of achievement / program",
+        "startDate": "Start Date (optional)",
+        "endDate": "End Date (optional)",
+        "signatoryName": "Signatory Name",
+        "signatoryTitle": "Signatory Position",
+        "categoryCode": "Category Code",
+        "categoryPlaceholder": "e.g. TRAINING",
+        "programCode": "Program Code",
+        "programPlaceholder": "e.g. REACT101",
+        "template": "Background Template"
+      },
+      "defaultTemplate": "Default Premium (system default)",
+      "bulkPaste": "Bulk Paste",
+      "recipientsHint": "Add more than 1 recipient for bulk generation — the result is automatically bundled into a .zip file containing a PDF per recipient, no duplicate numbers.",
+      "pasteLabel": "Paste name list (one name per line)",
+      "applyPaste": "Apply to Recipient List",
+      "recipientName": "Recipient name",
+      "removeRecipient": "Remove recipient {n}",
+      "addRecipient": "Add Recipient",
+      "nextNumber": "Next certificate number",
+      "calculating": "Calculating number...",
+      "previewHint": "Fill in Category Code and Program Code to preview the certificate number.",
+      "mode": "Mode",
+      "bulkActive": "Bulk mode active ({n} recipients)",
+      "single": "Single",
+      "submitting": "Generating Certificate...",
+      "submitBulk": "Bulk Generate (.zip)",
+      "successBulk": "Successfully generated {n} certificates, downloaded as {filename}.",
+      "successSingle": "Certificate successfully generated and downloaded as {filename}.",
+      "errors": {
+        "noRecipient": "At least 1 recipient is required.",
+        "failed": "Failed to generate certificate."
+      }
+    },
+    "types": {
+      "individual": "Individual",
+      "batch": "Batch"
+    },
+    "list": {
+      "title": "Certificate",
+      "subtitle": "History of issued certificates",
+      "settings": "Settings & Templates",
+      "generate": "Generate Certificate",
+      "allTypes": "All Types",
+      "columns": {
+        "number": "Certificate No.",
+        "title": "Title",
+        "recipient": "Recipient"
+      },
+      "stats": {
+        "total": "Total Certificates",
+        "batches": "Total Bulk Batches",
+        "thisMonth": "This Month"
+      },
+      "searchPlaceholder": "Search certificate number, title, recipient...",
+      "noMatchTitle": "No certificates match your filters",
+      "noMatchMessage": "Try another number, title, recipient or type.",
+      "emptyTitle": "No Certificates yet",
+      "itemLabel": "certificates",
+      "deleteTitle": "Delete Certificate?",
+      "deleteMessage": "\"{number}\" will be permanently deleted along with its PDF file."
+    }
+  },
+  "comments": {
+    "title": "Comments",
+    "empty": "No comments yet. Start the conversation.",
+    "reply": "Reply",
+    "delete": "Delete comment",
+    "replyingTo": "Replying to",
+    "notEligible": "Only employees checked in as Internal Attendees can comment or mention others here.",
+    "cancelReply": "Cancel reply",
+    "placeholder": "Write a comment... use {'@'} to mention someone",
+    "insertEmoji": "Insert emoji",
+    "comment": "Comment",
+    "deleteConfirm": "Delete this comment?"
+  },
+  "hub": {
+    "title": "Business Documents",
+    "subtitle": "Invoices, receipts, purchase orders, letters and other company documents, exported as PDF.",
+    "groups": {
+      "billing": "Billing & sales",
+      "office": "Letters & records"
+    },
+    "emptyTitle": "No documents available",
+    "emptyMessage": "You don't have access to any document type yet.",
+    "links": {
+      "proposal": {
+        "title": "Sales Proposal",
+        "description": "Write sales proposals from the JCD template and export them as PDF"
+      },
+      "letter": {
+        "title": "Letters",
+        "description": "Create and manage internal and external company letters"
+      },
+      "invoice": {
+        "title": "Invoice",
+        "description": "Create and manage client invoices"
+      },
+      "receipt": {
+        "title": "Payment Receipt",
+        "description": "Create and manage payment receipts"
+      },
+      "purchaseOrder": {
+        "title": "Purchase Order",
+        "description": "Create and manage Purchase Orders (PO) for clients"
+      },
+      "memo": {
+        "title": "Official Memo",
+        "description": "Internal memos with a Finance Manager approval workflow"
+      },
+      "meetingNote": {
+        "title": "Meeting Note",
+        "description": "Internal & external meeting recaps, managed together by the management team"
+      },
+      "certificate": {
+        "title": "Certificate",
+        "description": "Generate dynamic certificates, single or in bulk"
+      }
+    }
+  },
+  "shared": {
+    "clientInfo": "Client Information",
+    "numberingAuto": "Automatic",
+    "numberingManual": "Manual",
+    "manualNumberHint": "Used exactly as entered — must be unique.",
+    "qty": "Qty",
+    "rate": "Rate",
+    "totalRp": "Total (Rp)",
+    "bankName": "Bank Name",
+    "selectBank": "Select a bank",
+    "noBankAccounts": "No bank accounts configured yet. Add one in Settings → Bank Accounts.",
+    "accountNumber": "Account Number",
+    "pph23Type": "PPh 23 Type",
+    "backToDocuments": "Back to Documents",
+    "documents": "Documents",
+    "number": "Number",
+    "viewPdf": "View PDF",
+    "viewDetail": "View detail",
+    "viewItem": "View {number}",
+    "viewPdfItem": "View PDF {number}",
+    "downloadPdfItem": "Download PDF {number}",
+    "editItem": "Edit {number}",
+    "deleteItem": "Delete {number}",
+    "cancelItem": "Cancel {number}",
+    "yesDelete": "Yes, Delete",
+    "deleteMessage": "\"{number}\" will be permanently deleted.",
+    "status": {
+      "draft": "Draft",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled",
+      "paid": "Paid",
+      "unpaid": "Unpaid"
+    },
+    "autoNumberPlaceholder": "Leave blank to auto-generate",
+    "removeItem": "Remove {name}",
+    "reviewFields": "Please review the fields you've filled in.",
+    "downloading": "Downloading...",
+    "rejecting": "Rejecting...",
+    "removeAttachment": "Remove attachment",
+    "generalInfo": "General Information",
+    "clientName": "Client Name",
+    "itemCount": "{n} item | {n} items",
+    "items": "Items",
+    "quantity": "Quantity",
+    "priceRp": "Price (Rp)",
+    "amountRp": "Amount (Rp)",
+    "removeLine": "Remove item",
+    "addItem": "Add Item",
+    "position": "Position",
+    "summary": "Summary",
+    "selectSignatory": "- Select signatory -"
+  },
+  "invoice": {
+    "form": {
+      "editTitle": "Edit Invoice",
+      "manualNumber": "Invoice number will be used exactly as entered",
+      "autoNumber": "Invoice number will be generated automatically when saved",
+      "save": "Save Invoice",
+      "update": "Update Invoice",
+      "projectLink": "Project Link (Optional)",
+      "projectHint": "Link this invoice to a project so it shows up on that project's page.",
+      "noProject": "No project",
+      "numbering": "Invoice Numbering",
+      "clientCode": "Client Code",
+      "clientCodePlaceholder": "e.g. ZACO",
+      "clientCodeHint": "A short code only (no \"/\") — combined with the date and sequence, e.g. INV/JCD-ZACO/1805/26.001",
+      "invoiceNumber": "Invoice Number",
+      "invoiceNumberPlaceholder": "e.g. INV/JCD-FASTTRACK/1805/26.001",
+      "emailOptional": "Email (optional)",
+      "npwp": "Client NPWP (optional)",
+      "fakturPajak": "Faktur Pajak Number (optional)",
+      "itemsTitle": "Billing Items",
+      "qtyPlaceholder": "Qty (e.g. 1 year)",
+      "paymentTax": "Payment & Tax",
+      "vatPercent": "VAT (%)",
+      "adminFeeRp": "Admin Fee (Rp)",
+      "icannFeeRp": "ICANN Fee (Rp) (optional)",
+      "icannHint": "Pass-through registrar fee, e.g. for a domain -- not part of VAT.",
+      "terms": "Terms & Conditions",
+      "pph23Switch": "Subject to PPh 23 withholding?",
+      "pph23Description": "Informational only — adds a note to the PDF that the client is expected to withhold PPh 23 on payment. Does not change Total Amount Due; the actual withholding is recorded later on the Payment Receipt.",
+      "estimatedWithholding": "Estimated withholding:",
+      "vatLine": "VAT ({pct}%)",
+      "adminFee": "Admin Fee",
+      "icannFee": "ICANN Fee",
+      "pph23Note": "PPh 23 note on PDF · est. withholding",
+      "errors": {
+        "load": "Failed to load invoice.",
+        "create": "Failed to create Invoice.",
+        "update": "Failed to update Invoice."
+      }
+    },
+    "list": {
+      "title": "Invoice",
+      "subtitle": "Manage client invoices",
+      "create": "Create Invoice",
+      "searchPlaceholder": "Search invoice number, client...",
+      "columns": {
+        "number": "Invoice No. / Payment Receipt No.",
+        "client": "Client / Project"
+      },
+      "markPaid": "Mark as Paid",
+      "cancelInvoice": "Cancel invoice",
+      "cancelConfirm": "Cancel Invoice \"{number}\"?",
+      "receiptPrefix": "Receipt:",
+      "emptyTitle": "No Invoices yet",
+      "itemLabel": "invoices",
+      "deleteTitle": "Delete Invoice?"
+    }
+  },
+  "letter": {
+    "fields": {
+      "subject": "Subject",
+      "division": "Division",
+      "letterCode": "Letter Code",
+      "divisionCode": "Division Code",
+      "body": "Letter Content"
+    },
+    "form": {
+      "editTitle": "Edit Letter",
+      "autoNumber": "Letter number will be generated automatically when saved",
+      "back": "Back to Letters",
+      "manageCodes": "Manage Letter Codes",
+      "save": "Save Letter",
+      "update": "Update Letter",
+      "templatePrimary": "Primary",
+      "templateSecondary": "Secondary",
+      "noEmployee": "Not addressed to a specific employee",
+      "secondParty": "Second Party",
+      "classification": "Letter Classification",
+      "classificationLocked": "Letter Code, Division Code, Type, and Date are locked after creation -- they're baked into the already-issued letter number.",
+      "selectLetterCode": "Select letter code",
+      "selectDivisionCode": "Select division code",
+      "templateApplied": "A reference template has been auto-filled into Letter Content, please adjust as needed.",
+      "to": "To (optional)",
+      "toPlaceholder": "e.g. All Employees\nPT. Jendela Cakra Digital",
+      "toHidden": "The Secondary template's Surat Keterangan-style layout doesn't address a specific recipient, so this field is hidden.",
+      "relatedEmployee": "Related Employee",
+      "relatedEmployeeOptional": "Related Employee (optional)",
+      "employeeRequiredHint": "Required for warning letters so it's recorded in the employee's history.",
+      "bodyPlaceholder": "Dear Sir/Madam, ...",
+      "signatoryFirst": "Signatory Name (First Party)",
+      "signatureHint": "Stamps the first party's signature onto the PDF.",
+      "itemTable": "Add Item Table",
+      "itemTableHint": "For BAST (handed-over goods) or Offer Letters (offered items/services). Leave price blank if not relevant (e.g. BAST).",
+      "priceOptional": "Price (Rp, optional)",
+      "specPlaceholder": "Notes / specification",
+      "twoParty": "Two-Party Signature (Second Party)",
+      "twoPartyHint": "For BAST or NDA signed by both parties. If unchecked, the letter only uses the company's signature.",
+      "secondPartyName": "Company/Second Party Name",
+      "signatoryName": "Signatory Name",
+      "letterhead": "Letterhead Template",
+      "errors": {
+        "load": "Failed to load letter.",
+        "bodyRequired": "Letter content is required.",
+        "create": "Failed to create Letter.",
+        "update": "Failed to update Letter."
+      }
+    },
+    "list": {
+      "title": "Letters",
+      "subtitle": "Register of internal and external company letters",
+      "create": "Create Letter",
+      "searchPlaceholder": "Search letter number, subject...",
+      "columns": {
+        "number": "Letter No."
+      },
+      "cancelLetter": "Cancel letter",
+      "cancelConfirm": "Cancel Letter \"{number}\"? The number stays recorded and is labeled CANCELLED.",
+      "noMatchTitle": "No letters match your filters",
+      "noMatchMessage": "Try another number, subject or status.",
+      "emptyTitle": "No Letters yet",
+      "itemLabel": "letters",
+      "deleteTitle": "Delete Letter?",
+      "deleteMessage": "\"{number}\" will be permanently deleted from the system. For an already-issued letter, it's better to use \"Cancel\" so the number stays recorded in the register."
+    }
+  },
+  "memo": {
+    "list": {
+      "title": "Official Memo",
+      "subtitle": "Internal memos with a Finance Manager approval workflow",
+      "create": "Create Official Memo",
+      "searchPlaceholder": "Search number, subject...",
+      "noMatchTitle": "No memos match your filters",
+      "noMatchMessage": "Try another number, subject or status.",
+      "emptyTitle": "No Official Memo yet",
+      "itemLabel": "memos",
+      "deleteConfirm": "Delete Official Memo \"{number}\"? This action cannot be undone."
+    },
+    "fields": {
+      "number": "Memo Number",
+      "date": "Document Date",
+      "subject": "Subject",
+      "subjectTitle": "Subject / Title",
+      "body": "Memo Content",
+      "attachments": "Attachments",
+      "sender": "Sender",
+      "recipient": "Recipient"
+    },
+    "form": {
+      "editTitle": "Edit Official Memo",
+      "subtitle": "The Official Memo will be saved as Draft until you submit it for approval.",
+      "saveDraft": "Save as Draft",
+      "memoCard": "Memo",
+      "subjectPlaceholder": "e.g. Q3 Operational Budget Request",
+      "bodyPlaceholder": "Dear ...",
+      "signatureHint": "Stamps the sender's signature onto the PDF.",
+      "addAttachment": "Add Attachment (PDF, DOC, PNG, JPG — max 5MB)",
+      "routing": "Routing",
+      "attachmentCount": "{n} attachment | {n} attachments"
+    },
+    "detail": {
+      "back": "Back to Official Memos",
+      "submitConfirm": "Submit this Official Memo for Finance Manager approval?",
+      "approveConfirm": "Approve this Official Memo?",
+      "rejectionReason": "Rejection Reason",
+      "details": "Details",
+      "activity": "Activity",
+      "submitted": "Submitted:",
+      "approvedBy": "Approved by {name}",
+      "rejectedBy": "Rejected by {name}",
+      "rejectTitle": "Reject Official Memo?",
+      "rejectDescription": "Provide a rejection reason so the author knows what needs to be fixed.",
+      "rejectPlaceholder": "Example: Budget doesn't match the Q3 allocation..."
+    }
+  },
+  "receipt": {
+    "list": {
+      "title": "Payment Receipt",
+      "subtitle": "Manage payment receipts",
+      "create": "Create Receipt",
+      "searchPlaceholder": "Search receipt number, recipient...",
+      "columns": {
+        "number": "Receipt No."
+      },
+      "cancelReceipt": "Cancel receipt",
+      "cancelConfirm": "Cancel Payment Receipt \"{number}\"?",
+      "emptyTitle": "No Payment Receipts yet",
+      "itemLabel": "receipts",
+      "deleteTitle": "Delete Payment Receipt?"
+    },
+    "fields": {
+      "receivedFrom": "Received From"
+    },
+    "form": {
+      "createTitle": "Create Payment Receipt",
+      "editTitle": "Edit Payment Receipt",
+      "manualNumber": "Receipt number will be used exactly as entered",
+      "autoNumber": "Receipt number will be generated automatically when saved",
+      "save": "Save Payment Receipt",
+      "update": "Update Payment Receipt",
+      "paymentDetails": "Payment Details",
+      "relatedInvoice": "Related Invoice (optional)",
+      "noInvoice": "- Not related to an invoice -",
+      "numbering": "Receipt Numbering",
+      "clientCodeHint": "A short code only (no \"/\") — used in the receipt number, e.g. RCP/JCD-ZACO/...",
+      "receiptNumber": "Receipt Number",
+      "receiptNumberPlaceholder": "e.g. RCP/JCD-FASTTRACK/1805/26.001",
+      "receivedFromPlaceholder": "e.g. Mr. Zakaria - Zaco Law Firm",
+      "grossAmountRp": "Gross Amount (Rp)",
+      "grossAmount": "Gross Amount",
+      "paymentStatus": "Payment Status",
+      "partial": "Partial",
+      "pph23Switch": "PPh 23 withheld?",
+      "pph23Description": "Check this if the client withholds PPh 23 on payment (e.g. engineering/IT services). The amount above is recalculated automatically as the net amount received.",
+      "pph23Amount": "PPh 23 Amount",
+      "netAmount": "Net Amount Received",
+      "descriptionSignatory": "Description & Signatory",
+      "forPaymentOf": "For Payment Of",
+      "printedAs": "Printed as:",
+      "printedAsHint": "— the invoice number is added automatically.",
+      "recipientName": "Recipient Name (Signatory)",
+      "signatureHint": "Stamps the recipient's signature onto the PDF.",
+      "errors": {
+        "load": "Failed to load payment receipt.",
+        "create": "Failed to create Payment Receipt.",
+        "update": "Failed to update Payment Receipt."
+      }
+    }
+  },
+  "purchaseOrder": {
+    "list": {
+      "title": "Purchase Order",
+      "subtitle": "Manage Purchase Order (PO) Documents",
+      "create": "Create New PO",
+      "searchPlaceholder": "Search PO number, client, title...",
+      "columns": {
+        "number": "PO No."
+      },
+      "cancelPo": "Cancel PO",
+      "cancelConfirm": "Cancel PO \"{number}\"? The number stays recorded and cannot be reused.",
+      "emptyTitle": "No purchase orders found.",
+      "itemLabel": "POs",
+      "deleteTitle": "Delete Purchase Order?"
+    },
+    "types": {
+      "E": "External (E)",
+      "I": "Internal (I)"
+    },
+    "fields": {
+      "title": "Title",
+      "titleSubject": "Title / Subject"
+    },
+    "form": {
+      "createTitle": "Create New Purchase Order",
+      "editTitle": "Edit Purchase Order",
+      "autoNumber": "PO number will be generated automatically when saved",
+      "save": "Save Purchase Order",
+      "update": "Update Purchase Order",
+      "titlePlaceholder": "e.g. Purchase of Smart Locker",
+      "itemsTitle": "Order Details (Items)",
+      "specification": "Specification (one line per point)",
+      "paymentSchema": "Payment Schema (optional)",
+      "term": "Term",
+      "termPlaceholder": "e.g. DP (50%)",
+      "removeTerm": "Remove term",
+      "addTerm": "Add Term",
+      "termsSignatures": "Terms & Signatures",
+      "warranty": "Warranty (months)",
+      "replacement": "Replacement Time (working days)",
+      "buyerSignatory": "Buyer Signatory (Name)",
+      "clientSignatory": "Client Signatory (Name)",
+      "signatureHint": "Stamps the buyer signatory's signature onto the PDF.",
+      "paymentTermsCount": "Payment terms ({n})",
+      "errors": {
+        "load": "Failed to load purchase order.",
+        "create": "Failed to create Purchase Order.",
+        "update": "Failed to update Purchase Order."
+      }
+    }
+  },
+  "meetingNote": {
+    "types": {
+      "internal": "Internal",
+      "external": "External"
+    },
+    "list": {
+      "title": "Meeting Note",
+      "subtitle": "Internal & external meeting recaps, managed together by Manager/Operational Director/HR/Finance Manager",
+      "create": "Create Meeting Note",
+      "searchPlaceholder": "Search number, title...",
+      "allTypes": "All Types",
+      "columns": {
+        "meetingTime": "Meeting Time"
+      },
+      "pinned": "Pinned to Dashboard",
+      "pinnedBadge": "Pinned",
+      "pin": "Pin to Dashboard",
+      "unpin": "Unpin from Dashboard",
+      "noMatchTitle": "No Meeting Note matches",
+      "noMatchMessage": "Try another keyword or type.",
+      "emptyTitle": "No Meeting Note yet",
+      "itemLabel": "notes",
+      "deleteConfirm": "Delete Meeting Note \"{number}\"? This action cannot be undone."
+    },
+    "fields": {
+      "number": "Document Number",
+      "type": "Meeting Type",
+      "dateTime": "Meeting Date & Time",
+      "title": "Title",
+      "titleSubject": "Meeting Title / Subject",
+      "internalAttendees": "Internal Attendees",
+      "externalAttendees": "External Attendees",
+      "body": "Notes Content",
+      "actionItems": "Action Items"
+    },
+    "form": {
+      "editTitle": "Edit Meeting Note",
+      "subtitle": "Meeting notes can be managed together by Manager, Operational Director, HR, and Finance Manager.",
+      "titlePlaceholder": "e.g. Weekly Operations Sync",
+      "selected": "{n} selected",
+      "searchAttendees": "Search attendees...",
+      "noStaff": "No staff data yet.",
+      "noAttendeeMatch": "No attendees match \"{q}\".",
+      "removeAttendee": "Remove attendee",
+      "organization": "Organization",
+      "addExternal": "Add external attendee",
+      "bodyPlaceholder": "Meeting discussion summary...",
+      "actionPlaceholder": "Action item description",
+      "assignee": "Assignee",
+      "noActionItems": "No action items yet."
+    },
+    "detail": {
+      "pdfFailed": "Couldn't create the PDF. Please try again in a moment.",
+      "back": "Back to Meeting Notes",
+      "downloadHint": "Download this Meeting Note as a PDF",
+      "pinHint": "Pinning also adds this note to every Internal Attendee's dashboard",
+      "unpin": "Unpin",
+      "noBody": "No notes yet.",
+      "open": "Open",
+      "assignee": "Assignee: {name}",
+      "meeting": "Meeting",
+      "dateTime": "Date & time",
+      "lastEditedBy": "Last edited by:"
+    }
+  },
+  "proposal": {
+    "status": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "rejected": "Rejected"
+    },
+    "errors": {
+      "pdf": "Couldn't create the PDF."
+    },
+    "list": {
+      "subtitle": "Build sales proposals from the standard JCD template, edit section by section, then download as PDF",
+      "create": "New Proposal",
+      "searchPlaceholder": "Search title, client, or letter number...",
+      "columns": {
+        "proposal": "Proposal",
+        "letterNumber": "Letter No."
+      },
+      "sectionCount": "{n} section | {n} sections",
+      "byName": "by {name}",
+      "shareHint": "Share (link, email, WhatsApp)",
+      "noMatchTitle": "No proposals match",
+      "emptyTitle": "No proposals yet",
+      "emptyMessage": "Create your first proposal from the standard JCD template.",
+      "itemLabel": "proposals",
+      "duplicateConfirm": "Make a copy of \"{title}\"? The copy is created as a Draft dated today.",
+      "deleteConfirm": "Delete proposal \"{title}\"? This action cannot be undone.",
+      "errors": {
+        "create": "Couldn't create the proposal.",
+        "duplicate": "Couldn't duplicate the proposal.",
+        "delete": "Couldn't delete the proposal."
+      }
+    },
+    "create": {
+      "description": "Fill in the main details. The proposal content starts from the standard JCD template.",
+      "title": "Project Title",
+      "titlePlaceholder": "e.g. Order Management System",
+      "pickClient": "Pick from Client Data",
+      "newClient": "— New client / prospect (type below) —",
+      "clientPlaceholder": "e.g. PT Misael Berkat Abadi",
+      "recipient": "Addressed To",
+      "recipientPlaceholder": "e.g. Mr. Hendri",
+      "recipientHint": "Used for the opening greeting in the Introduction section.",
+      "letterNumber": "Letter Number (SPH)",
+      "letterNumberPlaceholder": "e.g. 002/E/SPH-JCD/BD/X/2026",
+      "submit": "Create & Start Editing"
+    },
+    "editor": {
+      "loading": "Loading proposal...",
+      "backToList": "Back to list",
+      "untitled": "Untitled",
+      "untitledLower": "untitled",
+      "unsaved": "Unsaved",
+      "statusTitle": "Proposal status",
+      "shareHint": "Share via link, email, or WhatsApp",
+      "viewPdfHint": "View PDF in a new tab",
+      "saveHint": "Save (Ctrl+S)",
+      "savedAt": "Saved {at}",
+      "savedAtBy": "Saved {at} by {name}",
+      "outline": "Sections",
+      "addSectionEnd": "Add section at the end",
+      "bracketHint": "Text in [square brackets] is guidance from the template. Replace it before the proposal is sent.",
+      "docInfo": "Document Information",
+      "cover": "Cover Image",
+      "replace": "Replace",
+      "removeCover": "Remove cover",
+      "uploadCover": "Upload cover image (optional, JPG/PNG/WebP, max 5 MB)",
+      "newClient": "— New client / prospect —",
+      "letterNumber": "Attached Letter Number (SPH)",
+      "showSignature": "Show signature (if available for the signatory name)",
+      "newPage": "New page",
+      "sectionNumberHint": "Section number in the PDF",
+      "unnumberedHint": "Untitled sections are not numbered",
+      "sectionTitlePlaceholder": "Section title (leave blank for an unnumbered block)",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "pageBreak": "Start this section on a new page",
+      "duplicateSection": "Duplicate section",
+      "removeSection": "Delete section",
+      "sectionPlaceholder": "Write this section's content...",
+      "addSectionHere": "Add section here",
+      "noSections": "This proposal has no sections yet",
+      "addFirstSection": "Add first section",
+      "removeSectionConfirm": "Delete section \"{title}\"?",
+      "leaveConfirm": "There are unsaved changes. Leave the page without saving?",
+      "leave": "Leave",
+      "errors": {
+        "open": "The proposal couldn't be opened.",
+        "imageTooLarge": "Maximum image size is 5 MB.",
+        "coverUpload": "Couldn't upload the cover image.",
+        "save": "Couldn't save the proposal."
+      }
+    },
+    "share": {
+      "title": "Share Proposal",
+      "linkTitle": "Proposal Link",
+      "notShared": "Not shared yet",
+      "openLink": "Open link",
+      "validLabel": "Valid:",
+      "until": "until {date}",
+      "noExpiryLower": "no expiry",
+      "viewed": "Viewed {n}×",
+      "lastViewed": "last {at}",
+      "renew": "Renew validity",
+      "disable": "Disable",
+      "createLink": "Create Link",
+      "linkIntro": "Create a link so the client can open and download the proposal PDF without signing in. The link always shows the latest saved version.",
+      "noExpiry": "No expiry",
+      "days": "{n} days",
+      "validNoExpiry": "Valid with no expiry",
+      "validDays": "Valid for {n} days",
+      "viaEmail": "Send via Email",
+      "viaWhatsApp": "Send via WhatsApp",
+      "recipientName": "Recipient Name",
+      "recipientEmail": "Recipient Email",
+      "emailPlaceholder": "name{'@'}company.com",
+      "cc": "CC (optional)",
+      "ccPlaceholder": "separate with commas, max 5 addresses",
+      "extraMessage": "Additional message (optional)",
+      "extraMessagePlaceholder": "Shown inside the email, below the opening greeting.",
+      "emailNote": "The email is sent on behalf of PT Jendela Cakra Digital and client replies go to {email}.",
+      "emailAutoLink": "A proposal link is created automatically.",
+      "emailStatusNote": "The proposal status will change to Sent.",
+      "sendEmail": "Send Email",
+      "waNumber": "WhatsApp Number",
+      "waPlaceholder": "e.g. 0812 3456 7890",
+      "waHint": "Leave blank to pick the contact yourself in WhatsApp.",
+      "message": "Message",
+      "resetTemplate": "Reset to template",
+      "linkPlaceholderNote": "{token} is replaced automatically with the proposal link when sent.",
+      "openWhatsApp": "Open WhatsApp",
+      "emailSent": "Proposal sent to {to}.",
+      "disableConfirm": "Disable this link? Anyone who already has the link won't be able to open it anymore. Creating a link again later will produce a new address.",
+      "errors": {
+        "load": "The proposal couldn't be loaded.",
+        "createLink": "Couldn't create the link.",
+        "disable": "Couldn't disable the link.",
+        "email": "Couldn't send the email."
+      }
+    }
+  },
+  "flowchartPicker": {
+    "title": "Insert Flowchart",
+    "description": "Pick a flowchart from the Flowchart menu. Changes to the flowchart also show up in the proposal PDF.",
+    "searchPlaceholder": "Search flowchart name...",
+    "noMatch": "No flowcharts match",
+    "empty": "No flowcharts yet",
+    "emptyMessage": "Create a flowchart in Tools → Flowchart first.",
+    "insertItem": "Insert {name}",
+    "noPreviewHint": "No preview yet. Open this flowchart in the Flowchart menu and save it again.",
+    "noPreview": "No preview yet — save it again in the Flowchart menu",
+    "shapes": "{n} shape | {n} shapes",
+    "loadError": "The flowchart list couldn't be loaded."
+  }
+}

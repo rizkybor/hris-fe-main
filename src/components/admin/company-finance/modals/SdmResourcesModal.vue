@@ -1,7 +1,7 @@
 <script setup>
-import BaseInput from "@/components/common/form/Input.vue";
-import BaseSelect from "@/components/common/form/Select.vue";
 import UsageStatusFields from "./UsageStatusFields.vue";
+import { UiModal, UiInput, UiSelect, UiButton } from "@/components/ui";
+import { useI18n } from "vue-i18n";
 import { reactive, watch, computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useSdmFieldStore } from "@/stores/sdmField";
@@ -28,6 +28,7 @@ onMounted(() => {
 
 const fieldOptions = computed(() => fields.value.map((f) => ({ value: f.id, label: f.name })));
 
+const { t } = useI18n();
 const emit = defineEmits(["submit", "close"]);
 
 const form = reactive({
@@ -106,13 +107,13 @@ const actualModel = computed({
 const validate = () => {
   let valid = true;
 
-  errors.sdm_field_id = form.sdm_field_id ? "" : "Bidang is required";
+  errors.sdm_field_id = form.sdm_field_id ? "" : t("finance.modals.validation.fieldRequired");
   errors.productive_hours_per_month =
-    form.productive_hours_per_month !== "" ? "" : "Jam Produktif / Bulan is required";
+    form.productive_hours_per_month !== "" ? "" : t("finance.modals.validation.hoursRequired");
   // Expired is required while the item is in use (mirrors the API rule).
-  errors.status = form.status ? "" : "Status wajib dipilih";
+  errors.status = form.status ? "" : t("finance.modals.validation.statusRequired");
   errors.expired_date =
-    form.status === "active" && !form.expired_date ? "Expired wajib diisi untuk item yang Digunakan" : "";
+    form.status === "active" && !form.expired_date ? t("finance.modals.validation.expiredRequired") : "";
 
   Object.values(errors).forEach((e) => {
     if (e) valid = false;
@@ -136,103 +137,69 @@ const submit = () => {
 </script>
 
 <template>
-  <div
-    v-if="show"
-    class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+  <UiModal
+    :open="show"
+    :title="$t(`finance.modals.sdm.title.${props.mode}`)"
+    :description="$t(`finance.modals.sdm.description.${props.mode}`)"
+    size="lg"
+    @update:open="(v) => !v && $emit('close')"
   >
-    <div
-      class="bg-slate-50 rounded-[14px] w-full max-w-md max-h-[90vh] overflow-y-auto p-6 shadow-xl"
-    >
-      <h3 class="text-xl font-bold">
-        {{
-          props.mode === "add"
-            ? "Add SDM Resource"
-            : props.mode === "edit"
-            ? "Edit SDM Resource"
-            : "SDM Resource Detail"
-        }}
-      </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <UiSelect
+        id="sdm_field_id"
+        :label="$t('finance.modals.fields.field')"
+        :placeholder="$t('finance.modals.fields.fieldPlaceholder')"
+        v-model="form.sdm_field_id"
+        :options="fieldOptions"
+        :required="props.mode !== 'view'"
+        :disabled="props.mode === 'view'"
+        :error="errors.sdm_field_id"
+      />
 
-      <h6 class="text-sm text-gray-400 italic mb-4">
-        {{
-          props.mode === "add"
-            ? "add a team member as an SDM resource record."
-            : props.mode === "edit"
-            ? "modify the sdm resource details."
-            : "details of the selected sdm resource."
-        }}
-      </h6>
+      <UiInput
+        id="productive_hours_per_month"
+        :label="$t('finance.modals.fields.hours')"
+        :placeholder="$t('finance.modals.fields.hoursPlaceholder')"
+        v-model="form.productive_hours_per_month"
+        :readonly="props.mode === 'view'"
+        :required="props.mode !== 'view'"
+        type="number"
+        :error="errors.productive_hours_per_month"
+      />
 
-      <div class="space-y-4">
-        <div>
-          <BaseSelect
-            id="sdm_field_id"
-            label="Bidang"
-            placeholder="Select bidang / role"
-            v-model="form.sdm_field_id"
-            :options="fieldOptions"
-            :required="props.mode !== 'view'"
-            :readonly="props.mode === 'view'"
-          />
-          <p v-if="errors.sdm_field_id" class="text-red-500 text-sm mt-1">
-            {{ errors.sdm_field_id }}
-          </p>
-        </div>
+      <UiInput
+        id="actual"
+        :label="$t('finance.modals.fields.actual')"
+        :placeholder="$t('finance.modals.fields.actualPlaceholder')"
+        v-model="actualModel"
+        :readonly="props.mode === 'view'"
+        class="[&_input]:tabular-nums"
+      />
 
-        <div>
-          <BaseInput
-            id="productive_hours_per_month"
-            label="Jam Produktif / Bulan"
-            placeholder="cth. 120"
-            v-model="form.productive_hours_per_month"
-            :readonly="props.mode === 'view'"
-            :required="props.mode !== 'view'"
-            type="number"
-          />
-          <p v-if="errors.productive_hours_per_month" class="text-red-500 text-sm mt-1">
-            {{ errors.productive_hours_per_month }}
-          </p>
-        </div>
+      <UsageStatusFields
+        v-model:status="form.status"
+        v-model:expired-date="form.expired_date"
+        :readonly="props.mode === 'view'"
+        :errors="errors"
+      />
 
-        <BaseInput
-          id="actual"
-          label="Actual (Rp.)"
-          placeholder="add price actual item"
-          v-model="actualModel"
-          :readonly="props.mode === 'view'"
-          only-number
-        />
-
-        <UsageStatusFields
-          v-model:status="form.status"
-          v-model:expired-date="form.expired_date"
-          :readonly="props.mode === 'view'"
-          :errors="errors"
-        />
-
-        <BaseInput
-          id="notes"
-          label="Notes"
-          placeholder="add notes item"
-          v-model="form.notes"
-          :readonly="props.mode === 'view'"
-        />
-      </div>
-
-      <div class="flex justify-end gap-3 mt-6">
-        <button class="bg-white px-4 py-2 border rounded-lg" @click="$emit('close')">
-          {{ props.mode === "view" ? "Close" : "Cancel" }}
-        </button>
-
-        <button
-          v-if="props.mode !== 'view'"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg"
-          @click="submit"
-          :disabled="loading"
-        >
-          Save
-        </button>
-      </div>
+      <UiInput
+        id="notes"
+        :label="$t('common.labels.notes')"
+        :placeholder="$t('finance.modals.fields.notesPlaceholder')"
+        v-model="form.notes"
+        :readonly="props.mode === 'view'"
+        class="sm:col-span-2"
+      />
     </div>
-  </div>
+
+    <template #footer>
+      <UiButton variant="secondary" @click="$emit('close')">
+        {{ props.mode === "view" ? $t("common.actions.close") : $t("common.actions.cancel") }}
+      </UiButton>
+      <UiButton v-if="props.mode !== 'view'" :loading="loading" :disabled="loading" @click="submit">
+        {{ $t("common.actions.save") }}
+      </UiButton>
+    </template>
+  </UiModal>
 </template>
