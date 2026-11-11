@@ -25,7 +25,6 @@ import {
   Infinity as InfinityIcon,
   KeyRound,
   X,
-  Monitor,
   Clock,
   PieChart,
   History,
@@ -243,9 +242,41 @@ const periodBarClass = (license) => {
   return "bg-violet-500";
 };
 
-const devicePercent = (license) =>
-  license.max_devices ? Math.min(100, ((license.devices_used ?? 0) / license.max_devices) * 100) : 0;
-const devicesFull = (license) => (license.devices_used ?? 0) >= license.max_devices;
+
+// A Mac + iPad bundle is one row: one "lane" per platform (Mac first),
+// each with its key, keys and devices. A single license has one lane.
+const lanes = (license) =>
+  [
+    {
+      id: license.id,
+      platform: license.platform,
+      platform_label: licensePlatformLabel(license),
+      plan: license.plan,
+      key: license.key,
+      keys_summary: license.keys_summary,
+      devices_used: license.devices_used ?? 0,
+      max_devices: license.max_devices,
+    },
+    ...(license.bundle || []).map((b) => ({
+      id: b.id,
+      platform: b.platform,
+      platform_label: b.platform_label,
+      plan: b.plan,
+      key: b.key,
+      keys_summary: b.keys_summary,
+      devices_used: b.devices_used ?? 0,
+      max_devices: b.max_devices ?? license.max_devices,
+    })),
+  ].sort((a, b) => (a.platform === "mac" ? -1 : b.platform === "mac" ? 1 : 0));
+// One plan for every lane (the usual case), else null (shown per lane).
+const commonPlan = (license) => {
+  const plans = [...new Set(lanes(license).map((l) => l.plan))];
+  return plans.length === 1 ? plans[0] : null;
+};
+const platformsText = (license) => lanes(license).map((l) => l.platform_label).join(" + ");
+const laneUsed = (lane) => (lane.keys_summary ? lane.keys_summary.in_use + lane.keys_summary.used : null);
+const lanePercent = (lane) => (lane.max_devices ? Math.min(100, Math.round((lane.devices_used / lane.max_devices) * 100)) : 0);
+const laneFull = (lane) => lane.devices_used >= lane.max_devices;
 
 const lastActivity = (license) => license.last_activity_at || license.last_activated_at;
 
@@ -255,7 +286,9 @@ const toggleActive = async (license, value) => {
   togglingId.value = license.id;
   error.value = "";
   try {
-    // Partial update: only is_active is sent.
+    // Partial update: only is_active is sent. A bundle row switches every
+    // license of the bundle (the row's own last, so its data is fresh).
+    for (const sibling of license.bundle || []) await store.setActive(sibling.id, value);
     await store.setActive(license.id, value);
     flash(`License ${value ? "activated" : "deactivated"}.`);
     store.fetchSummary();
@@ -267,13 +300,17 @@ const toggleActive = async (license, value) => {
 };
 
 const handleDelete = async (license) => {
+  const keys = lanes(license).map((l) => `${l.key} (${l.platform_label})`);
   const ok = await alertModal.confirm(
-    `Delete license ${license.key} for "${license.licensee_name}"? Devices using it will lose access. This action cannot be undone.`,
-    { title: "Delete License", type: "danger", confirmText: "Delete" }
+    keys.length > 1
+      ? `Delete the Mac + iPad licenses ${keys.join(" and ")} for "${license.licensee_name}"? Devices using them will lose access. This action cannot be undone.`
+      : `Delete license ${license.key} for "${license.licensee_name}"? Devices using it will lose access. This action cannot be undone.`,
+    { title: keys.length > 1 ? "Delete Licenses" : "Delete License", type: "danger", confirmText: "Delete" }
   );
   if (!ok) return;
 
   try {
+    for (const sibling of license.bundle || []) await store.deleteLicense(sibling.id);
     await store.deleteLicense(license.id);
     flash("License deleted.");
     store.fetchSummary();
@@ -538,11 +575,10 @@ const statusBadge = (license) =>
                 <thead>
                   <tr class="text-left">
                     <th :class="th">Licensee</th>
-                    <th :class="[th, 'w-[104px]']">Plan</th>
-                    <th :class="[th, 'w-[212px]']">License key</th>
+                    <th :class="[th, 'w-[118px]']">Plan</th>
+                    <th :class="[th, 'w-[300px]']">License key &middot; devices</th>
                     <th :class="[th, 'w-[152px]']">Active period</th>
                     <th :class="[th, 'w-[108px]']">Remaining</th>
-                    <th :class="[th, 'w-[76px]']">Devices</th>
                     <th :class="[th, 'w-[104px]']">Status</th>
                     <th :class="[th, 'hidden 2xl:table-cell w-[112px]']">Last activity</th>
                     <th :class="[th, 'text-right w-[100px]']"><span class="sr-only">Actions</span></th>
@@ -594,29 +630,49 @@ const statusBadge = (license) =>
 
                     <!-- Plan -->
                     <td class="py-3.5 px-3">
-                      <!-- Platform over plan: both fit the narrow column -->
-                      <div class="flex flex-col items-start gap-1">
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" :class="platformChipClass(license.platform)">
-                          {{ licensePlatformLabel(license) }}
+                      <!-- The plan, the platform(s) under it -->
+                      <div v-if="commonPlan(license)" class="flex flex-col items-start gap-1">
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" :class="planChipClass(commonPlan(license))">
+                          {{ planLabel({ plan: commonPlan(license) }) }}
                         </span>
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" :class="planChipClass(license.plan)">
-                          {{ planLabel(license) }}
+                        <span class="text-[11px] font-medium text-brand-light whitespace-nowrap">{{ platformsText(license) }}</span>
+                      </div>
+                      <!-- A bundle whose licenses have different plans -->
+                      <div v-else class="flex flex-col items-start gap-1">
+                        <span
+                          v-for="lane in lanes(license)"
+                          :key="lane.id"
+                          class="text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                          :class="planChipClass(lane.plan)"
+                        >
+                          {{ lane.platform_label }} &middot; {{ planLabel({ plan: lane.plan }) }}
                         </span>
                       </div>
                     </td>
 
                     <!-- Key -->
                     <td class="py-3.5 px-3">
-                      <div class="flex items-center gap-2">
-                        <span class="font-mono text-[11px] font-semibold whitespace-nowrap text-brand-dark">
-                          {{ maskKey(license.key) }}
-                        </span>
-                        <CopyKeyButton :value="license.key" class="opacity-60 group-hover:opacity-100" />
+                      <!-- One lane per platform: key on top, devices under it -->
+                      <div class="space-y-2.5">
+                        <div v-for="lane in lanes(license)" :key="lane.id" class="min-w-0">
+                          <div class="flex items-center gap-2">
+                            <span
+                              class="w-[34px] shrink-0 text-center text-[9px] font-bold uppercase tracking-wider py-0.5 rounded"
+                              :class="platformChipClass(lane.platform)"
+                            >{{ lane.platform === "ipad" ? "iPad" : "Mac" }}</span>
+                            <span class="font-mono text-[11px] font-semibold whitespace-nowrap text-brand-dark">{{ maskKey(lane.key) }}</span>
+                            <CopyKeyButton :value="lane.key" class="opacity-60 group-hover:opacity-100" />
+                          </div>
+                          <div class="flex items-center gap-2 mt-1 pl-[42px]">
+                            <div class="w-14 h-1 rounded-full bg-gray-100 overflow-hidden shrink-0">
+                              <div class="h-full rounded-full" :class="laneFull(lane) ? 'bg-amber-500' : 'bg-sky-500'" :style="{ width: `${lanePercent(lane)}%` }"></div>
+                            </div>
+                            <span class="text-[11px] text-brand-light whitespace-nowrap tabular-nums">
+                              <span class="font-semibold" :class="laneFull(lane) ? 'text-amber-600' : 'text-brand-dark'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> devices<template v-if="lane.keys_summary"> &middot; {{ lane.keys_summary.total }} keys, {{ laneUsed(lane) }} used</template>
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <p v-if="license.keys_summary" class="text-[11px] text-brand-light mt-0.5 whitespace-nowrap tabular-nums" title="One key per device">
-                        {{ license.keys_summary.total }} keys &middot;
-                        <span class="font-semibold text-brand-dark">{{ license.keys_summary.in_use + license.keys_summary.used }} used</span>
-                      </p>
                     </td>
 
                     <!-- Period -->
@@ -648,22 +704,6 @@ const statusBadge = (license) =>
                       >
                         {{ remainingText(license) }}
                       </span>
-                    </td>
-
-                    <!-- Devices -->
-                    <td class="py-3.5 px-3 whitespace-nowrap">
-                      <div class="w-[52px]">
-                        <p class="text-xs font-semibold tabular-nums" :class="devicesFull(license) ? 'text-amber-600' : 'text-brand-dark'">
-                          {{ license.devices_used ?? 0 }} <span class="text-brand-light font-normal">/ {{ license.max_devices }}</span>
-                        </p>
-                        <div class="mt-1.5 h-1 w-full rounded-full bg-gray-100 overflow-hidden">
-                          <div
-                            class="h-full rounded-full"
-                            :class="devicesFull(license) ? 'bg-amber-500' : 'bg-sky-500'"
-                            :style="{ width: `${devicePercent(license)}%` }"
-                          ></div>
-                        </div>
-                      </div>
                     </td>
 
                     <!-- Status: switch with license-manager-edit, else a badge -->
@@ -748,8 +788,17 @@ const statusBadge = (license) =>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-1.5 mt-2">
-                      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="platformChipClass(license.platform)">{{ licensePlatformLabel(license) }}</span>
-                      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="planChipClass(license.plan)">{{ planLabel(license) }}</span>
+                      <template v-if="commonPlan(license)">
+                        <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="planChipClass(commonPlan(license))">{{ planLabel({ plan: commonPlan(license) }) }}</span>
+                        <span class="text-[11px] font-medium text-brand-light">{{ platformsText(license) }}</span>
+                      </template>
+                      <span
+                        v-else
+                        v-for="lane in lanes(license)"
+                        :key="lane.id"
+                        class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                        :class="planChipClass(lane.plan)"
+                      >{{ lane.platform_label }} &middot; {{ planLabel({ plan: lane.plan }) }}</span>
                       <span v-if="isOrganization(license)" class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-700">
                         Org · {{ organizationTypeLabel(license.organization_type) }}
                       </span>
@@ -758,14 +807,16 @@ const statusBadge = (license) =>
                       </span>
                     </div>
 
-                    <div class="flex items-center gap-2 mt-2.5">
-                      <span class="font-mono text-xs font-semibold text-brand-dark truncate">{{ maskKey(license.key) }}</span>
-                      <CopyKeyButton :value="license.key" />
+                    <div v-for="lane in lanes(license)" :key="lane.id" class="mt-2.5">
+                      <div class="flex items-center gap-2">
+                        <span class="w-[34px] shrink-0 text-center text-[9px] font-bold uppercase tracking-wider py-0.5 rounded" :class="platformChipClass(lane.platform)">{{ lane.platform === "ipad" ? "iPad" : "Mac" }}</span>
+                        <span class="font-mono text-xs font-semibold text-brand-dark truncate">{{ maskKey(lane.key) }}</span>
+                        <CopyKeyButton :value="lane.key" />
+                      </div>
+                      <p class="text-[11px] text-brand-light mt-0.5 pl-[42px] tabular-nums">
+                        <span class="font-semibold" :class="laneFull(lane) ? 'text-amber-600' : 'text-brand-dark'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> devices<template v-if="lane.keys_summary"> &middot; {{ lane.keys_summary.total }} keys, {{ laneUsed(lane) }} used</template>
+                      </p>
                     </div>
-                    <p v-if="license.keys_summary" class="text-[11px] text-brand-light mt-0.5 tabular-nums">
-                      {{ license.keys_summary.total }} keys, one per device &middot;
-                      <span class="font-semibold text-brand-dark">{{ license.keys_summary.in_use + license.keys_summary.used }} used</span>
-                    </p>
 
                     <div v-if="!isLifetimeLicense(license)" class="mt-2.5">
                       <div class="flex items-center justify-between text-[11px] text-brand-light">
@@ -778,9 +829,6 @@ const statusBadge = (license) =>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5 text-[11px] text-brand-light">
-                      <span class="inline-flex items-center gap-1 tabular-nums" :class="devicesFull(license) ? 'text-amber-600 font-semibold' : ''">
-                        <Monitor class="w-3.5 h-3.5" /> {{ license.devices_used ?? 0 }} / {{ license.max_devices }}
-                      </span>
                       <span class="inline-flex items-center gap-1">
                         <Clock class="w-3.5 h-3.5" /> {{ lastActivity(license) ? relativeTime(lastActivity(license)) : "Never" }}
                       </span>

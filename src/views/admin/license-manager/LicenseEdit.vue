@@ -8,16 +8,19 @@ import { useLicenseProduct, onProductReady } from "@/components/admin/license-ma
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import LicenseForm from "@/components/admin/license-manager/LicenseForm.vue";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
+import { useAlertModalStore } from "@/stores/alertModal";
 import { errorMessage } from "@/helpers/errorHelper";
 import {
   licenseToForm,
   validateLicenseForm,
   validationErrors,
+  planLabel,
 } from "@/components/admin/license-manager/licenseHelpers";
 
 const route = useRoute();
 const router = useRouter();
 const store = useLicenseManagerStore();
+const alertModal = useAlertModalStore();
 const { code: productCode, product, productName, state: productState } = useLicenseProduct();
 
 const license = ref(null);
@@ -57,10 +60,24 @@ const submit = async () => {
     return;
   }
 
+  // A new plan gets a new key: the current key(s) stop working.
+  const planChanged = form.value.plan !== license.value.plan;
+  if (planChanged) {
+    const devices = license.value.devices_used ?? 0;
+    const ok = await alertModal.confirm(
+      `Change the plan from ${planLabel(license.value)} to ${planLabel({ plan: form.value.plan })}? A new license key is generated; ` +
+        `the current key${license.value.key_mode === "per_device" ? "s" : ""} stop working` +
+        (devices ? ` and ${devices} device(s) are signed out and must activate again with the new key` : "") +
+        ". Send the licensee the new certificate.",
+      { title: "New License Key", type: "warning", confirmText: "Change plan" }
+    );
+    if (!ok) return;
+  }
+
   saving.value = true;
   try {
     await store.updateLicense(license.value.id, form.value);
-    success.value = "License updated successfully.";
+    success.value = planChanged ? "Plan changed. A new license key was generated." : "License updated successfully.";
     setTimeout(goToDetail, 1000);
   } catch (err) {
     errors.value = validationErrors(err);
@@ -93,8 +110,9 @@ const submit = async () => {
         :is-edit="true"
         :product="product"
         :title="`Edit ${productName} License`"
-        subtitle="The license key cannot be changed"
+        subtitle="Changing the plan generates a new license key"
         :license-key="license.key"
+        :original-plan="license.plan"
         submit-label="Save Changes"
         @submit="submit"
         @cancel="goToDetail"

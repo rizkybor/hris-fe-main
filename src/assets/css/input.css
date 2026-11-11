@@ -405,3 +405,25 @@ html {
     background-color: #EBF8FF;
     color: #1E40AF;
 }
+/* Thin, quiet scrollbar for scrolling panels (License detail aside,
+   tracking timeline, recent activity). */
+.scroll-soft {
+  scrollbar-width: thin;
+  scrollbar-color: #D4D6E0 transparent;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+.scroll-soft::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scroll-soft::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-soft::-webkit-scrollbar-thumb {
+  background-color: #D4D6E0;
+  border-radius: 999px;
+}
+.scroll-soft:hover::-webkit-scrollbar-thumb {
+  background-color: #A9ACBD;
+}
