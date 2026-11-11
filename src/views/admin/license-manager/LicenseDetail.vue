@@ -581,7 +581,8 @@ const isMac = (platform) => /mac/i.test(platform || "");
         </div>
 
         <!-- ===================== Right: 4 columns, sticky ===================== -->
-        <aside class="lg:col-span-4 lg:sticky lg:top-3 space-y-5 min-w-0">
+        <!-- Sticky on lg; scrolls on its own when taller than the screen. -->
+        <aside class="lg:col-span-4 lg:sticky lg:top-3 lg:max-h-[calc(100vh-6.5rem)] lg:overflow-y-auto scroll-soft lg:-mr-2 lg:pr-1 space-y-5 min-w-0">
           <!-- License terms -->
           <div class="bg-white border border-[#DCDEDD] rounded-[16px] overflow-hidden">
             <div class="flex items-center gap-2.5 px-5 py-4 border-b border-[#DCDEDD] bg-gradient-to-br from-violet-50 to-white">

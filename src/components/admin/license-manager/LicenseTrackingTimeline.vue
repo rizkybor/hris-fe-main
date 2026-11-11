@@ -1,9 +1,9 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { Activity, ChevronDown, ChevronRight, Globe, UserCog, Laptop } from "lucide-vue-next";
+import { Activity, ChevronDown, ChevronRight, Globe, UserCog, Laptop, Loader2 } from "lucide-vue-next";
 import { eventIcon } from "@/components/admin/license-manager/licenseEventIcons";
-import Pagination from "@/components/common/Pagination.vue";
+import { useLoadOnScroll } from "@/components/admin/license-manager/useLoadOnScroll";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 import {
@@ -23,12 +23,20 @@ const props = defineProps({
 });
 
 const store = useLicenseManagerStore();
-const { events, eventsMeta, eventsLoading } = storeToRefs(store);
+const { eventsMeta } = storeToRefs(store);
 
+// Load on scroll: the first PER_PAGE events, more as the list scrolls.
+const PER_PAGE = 10;
 const filter = ref("");
-const page = ref(1);
-const perPage = ref(15);
+const page = ref(0);
+const lastPage = ref(1);
+const events = ref([]);
+const loading = ref(false);
+const loadingMore = ref(false);
 const expanded = ref({});
+const scroller = ref(null);
+const sentinel = ref(null);
+const hasMore = computed(() => page.value < lastPage.value);
 
 // Filter options grouped as Admin / App / Denied.
 const filterGroups = computed(() => {
@@ -39,24 +47,45 @@ const filterGroups = computed(() => {
   return groups;
 });
 
-const load = () =>
-  store.fetchEvents(props.licenseId, { event: filter.value, page: page.value, per_page: perPage.value }).catch(() => {});
+// A token per request so a slow page of an old filter is dropped.
+let requestId = 0;
+const fetchPage = async (next) => {
+  const id = ++requestId;
+  const items = await store.fetchEvents(props.licenseId, { event: filter.value, page: next, per_page: PER_PAGE });
+  if (id !== requestId) return;
+  events.value = next === 1 ? items : [...events.value, ...items.filter((e) => !events.value.some((x) => x.id === e.id))];
+  page.value = next;
+  lastPage.value = eventsMeta.value?.last_page ?? next;
+};
+
+// From the top (first load, filter change, reload after an action).
+const load = async () => {
+  loading.value = true;
+  try {
+    await fetchPage(1);
+    scroller.value?.scrollTo?.({ top: 0 });
+  } catch {
+    // The store keeps the error; the list stays as it was.
+  } finally {
+    loading.value = false;
+  }
+};
+
+const loadMore = async () => {
+  loadingMore.value = true;
+  try {
+    await fetchPage(page.value + 1);
+  } catch {
+    // Scrolling again retries.
+  } finally {
+    loadingMore.value = false;
+  }
+};
+
+useLoadOnScroll(scroller, sentinel, loadMore, () => hasMore.value && !loading.value && !loadingMore.value);
 
 onMounted(load);
-watch(filter, () => {
-  page.value = 1;
-  load();
-});
-
-const onPage = (p) => {
-  page.value = p;
-  load();
-};
-const onPerPage = (n) => {
-  perPage.value = n;
-  page.value = 1;
-  load();
-};
+watch(filter, load);
 
 defineExpose({ reload: load });
 
@@ -120,7 +149,7 @@ const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.va
       </div>
     </div>
 
-    <div v-if="eventsLoading && !events.length" class="space-y-3">
+    <div v-if="loading && !events.length" class="space-y-3">
       <Skeleton v-for="i in 4" :key="i" height="56px" rounded="12px" />
     </div>
 
@@ -130,7 +159,8 @@ const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.va
       <p class="text-xs text-brand-light">Admin changes, device activity and denied attempts appear here.</p>
     </div>
 
-    <ol v-else class="relative" :class="{ 'opacity-60': eventsLoading }">
+    <div v-else ref="scroller" class="max-h-[620px] overflow-y-auto scroll-soft -mr-3 pr-2">
+    <ol class="relative" :class="{ 'opacity-60': loading }">
       <li v-for="(event, index) in events" :key="event.id" class="relative flex gap-4 pb-5 last:pb-0">
         <!-- Rail -->
         <span
@@ -209,15 +239,13 @@ const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.va
         </div>
       </li>
     </ol>
-
-    <Pagination
-      v-if="eventsMeta.total > 0"
-      :meta="eventsMeta"
-      :loading="eventsLoading"
-      item-label="events"
-      :show-per-page="true"
-      @page-change="onPage"
-      @per-page-change="onPerPage"
-    />
+      <div ref="sentinel" class="h-px"></div>
+      <p v-if="loadingMore" class="flex items-center justify-center gap-2 py-3 text-xs text-brand-light">
+        <Loader2 class="w-3.5 h-3.5 animate-spin" /> Loading more events...
+      </p>
+      <p v-else-if="!hasMore && events.length > PER_PAGE" class="py-3 text-center text-[11px] text-gray-400">
+        All {{ events.length }} events loaded
+      </p>
+    </div>
   </div>
 </template>
