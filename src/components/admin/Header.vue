@@ -558,7 +558,7 @@ const confirmLogout = async () => {
             <p class="text-ui-cap text-ui-faint mt-0.5 truncate capitalize">{{ join(user?.roles, ", ") }}</p>
           </div>
           <RouterLink
-            :to="{ name: 'employee.profile.edit' }"
+            :to="{ name: 'employee.profile' }"
             role="menuitem"
             class="flex items-center gap-2.5 h-9 px-2.5 rounded-ui-control text-ui-small text-ui-text hover:bg-ui-hover hover:text-ui-ink transition-colors"
             @click="isOpen = false"

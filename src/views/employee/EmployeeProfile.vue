@@ -76,9 +76,14 @@ const profileNotFound = ref(false);
 // truncates by pixel width, not by the same character count as the PDF).
 const idCardUcwords = (str: string) => (str || "").replace(/(^|\s)\S/g, (c: string) => c.toUpperCase());
 const idCardStrLimit = (str: string, limit: number, end = "...") => (str.length > limit ? str.slice(0, limit) + end : str);
-const idCardJobTitle = computed(() => idCardStrLimit(idCardUcwords(profile.value?.job_information?.job_title || "-"), 28));
-const idCardPhone = computed(() => idCardStrLimit(profile.value?.phone || "-", 24));
-const idCardEmail = computed(() => idCardStrLimit(profile.value?.user?.email || "-", 26));
+const idCardJobTitle = computed(() => idCardStrLimit(idCardUcwords(profile.value?.job_information?.job_title || "-"), 32));
+const idCardPhone = computed(() => idCardStrLimit(profile.value?.phone || "-", 26));
+const idCardEmail = computed(() => idCardStrLimit(profile.value?.user?.email || "-", 30));
+// Profile photo printed on the card, if the user has one.
+const idCardPhoto = computed(() => profile.value?.user?.profile_photo || "");
+// Same rule as id-card.blade.php: no photo -> nothing drawn, name moves up.
+const idCardNameTop = computed(() => (idCardPhoto.value && !idCardPhotoFailed.value ? 139 : 90));
+const idCardPhotoFailed = ref(false);
 
 // Mirrors the PHP line-splitting in id-card.blade.php exactly, so the ID
 // card preview breaks the name onto the same two lines, at the same
@@ -90,7 +95,7 @@ const idCardEmail = computed(() => idCardStrLimit(profile.value?.user?.email || 
 // name words; everything after that -- including the trailing degree --
 // goes to line 2. A name of two words or fewer (with or without a degree)
 // fits entirely on line 1.
-const ID_CARD_NAME_MAX_CHARS = 25;
+const ID_CARD_NAME_MAX_CHARS = 28; // = $maxChars in id-card.blade.php
 const idCardNameLines = computed(() => {
   const name = (profile.value?.user?.name ?? "-").trim();
   const words = name.split(/\s+/).filter(Boolean);
@@ -541,72 +546,95 @@ onMounted(() => {
 
     <!-- ID Card Tab -->
     <div v-show="activeTab === 'idcard'" class="mb-6 ui-anim-fade-up">
-      <UiCard title="Digital ID Card" subtitle="Preview and download your employee ID card">
-        <template #actions>
-          <UiButton :icon="Download" :loading="downloadingIdCard" class="hidden sm:inline-flex" @click="downloadIdCard">
+      <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
+        <!-- Stage: both sides at true size (54 x 85.6 mm). The card
+             coordinates are the pt values of id-card.blade.php, so the
+             preview and the PDF line up exactly. -->
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden">
+          <header class="flex items-start gap-3 px-5 pt-[18px] pb-3.5 border-b border-ui-line">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-ui-h2 text-ui-ink">Digital ID Card</h3>
+              <p class="text-ui-cap text-ui-muted mt-0.5">Front and back at true size — 54 × 85.6 mm, as printed</p>
+            </div>
+          </header>
+          <div class="bg-ui-subtle/60 px-4 py-8 overflow-x-auto">
+            <div class="flex flex-col sm:flex-row items-center sm:items-start justify-center gap-6 sm:gap-12 sm:min-w-max mx-auto">
+              <figure class="text-center">
+                <div class="idcard relative overflow-hidden shadow-ui-overlay">
+                  <img src="/images/idcard-front-bg.png" alt="" class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+
+                  <img
+                    v-if="idCardPhoto && !idCardPhotoFailed"
+                    :src="idCardPhoto"
+                    alt=""
+                    class="absolute object-cover"
+                    style="top: 62pt; left: 14pt; width: 56pt; height: 67pt; border: 1.5pt solid #fff; border-radius: 6pt"
+                    @error="idCardPhotoFailed = true"
+                  />
+
+                  <p class="idcard-name" :style="{ top: `${idCardNameTop}pt` }">{{ idCardNameLines.line1 }}</p>
+                  <p v-if="idCardNameLines.line2 !== ''" class="idcard-name" :style="{ top: `${idCardNameTop + 16}pt` }">{{ idCardNameLines.line2 }}</p>
+                  <p class="idcard-job" :style="{ top: `${idCardNameTop + (idCardNameLines.line2 !== '' ? 36 : 20)}pt` }">{{ idCardJobTitle }}</p>
+
+                  <div class="idcard-row" style="top: 204pt"><span class="idcard-label">Employee ID</span><span class="idcard-value idcard-mono">{{ profile?.code }}</span></div>
+                  <div class="idcard-row" style="top: 216pt"><span class="idcard-label">Phone</span><span class="idcard-value">{{ idCardPhone }}</span></div>
+                  <div class="idcard-row" style="top: 228pt"><span class="idcard-label">Email</span><span class="idcard-value">{{ idCardEmail }}</span></div>
+                </div>
+                <figcaption class="text-ui-over uppercase text-ui-muted mt-3">Front</figcaption>
+              </figure>
+
+              <figure class="text-center">
+                <div class="idcard relative overflow-hidden shadow-ui-overlay">
+                  <img src="/images/idcard-back-bg.png" alt="" class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+                </div>
+                <figcaption class="text-ui-over uppercase text-ui-muted mt-3">Back</figcaption>
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <!-- Details and download -->
+        <aside class="space-y-5 xl:sticky xl:top-0">
+          <UiCard title="On the card" subtitle="Taken from your profile">
+            <dl class="divide-y divide-ui-line -my-1">
+              <div class="flex items-center justify-between gap-3 py-2.5">
+                <dt class="text-ui-small text-ui-muted">Photo</dt>
+                <dd class="text-ui-small text-right">
+                  <UiBadge v-if="idCardPhoto && !idCardPhotoFailed" tone="ok" dot>Profile photo</UiBadge>
+                  <UiBadge v-else tone="neutral">No photo</UiBadge>
+                </dd>
+              </div>
+              <div class="flex items-center justify-between gap-3 py-2.5">
+                <dt class="text-ui-small text-ui-muted">Employee ID</dt>
+                <dd class="text-ui-small font-medium text-ui-ink font-mono">{{ profile?.code || "-" }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-3 py-2.5">
+                <dt class="text-ui-small text-ui-muted shrink-0">Job title</dt>
+                <dd class="text-ui-small font-medium text-ui-ink truncate">{{ idCardJobTitle }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-3 py-2.5">
+                <dt class="text-ui-small text-ui-muted shrink-0">Phone</dt>
+                <dd class="text-ui-small font-medium text-ui-ink truncate">{{ idCardPhone }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-3 py-2.5">
+                <dt class="text-ui-small text-ui-muted shrink-0">Email</dt>
+                <dd class="text-ui-small font-medium text-ui-ink truncate">{{ idCardEmail }}</dd>
+              </div>
+            </dl>
+            <p class="text-ui-cap text-ui-muted mt-4">
+              {{ idCardPhoto && !idCardPhotoFailed ? "Want a different photo?" : "No profile photo yet — the card is printed without one." }}
+              <RouterLink :to="{ name: 'employee.profile.edit' }" class="font-medium text-ui-accent hover:underline">
+                {{ idCardPhoto && !idCardPhotoFailed ? "Change it in Edit Profile" : "Add one in Edit Profile" }}
+              </RouterLink>
+            </p>
+          </UiCard>
+
+          <UiButton :icon="Download" :loading="downloadingIdCard" block size="lg" @click="downloadIdCard">
             {{ downloadingIdCard ? "Preparing..." : "Download PDF" }}
           </UiButton>
-        </template>
-
-        <!-- Card Preview: positions/colours below mirror the printed PDF
-             artwork exactly, so they stay as-is (not theme tokens). -->
-        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-center pt-2" style="gap: 3rem;">
-          <div class="text-center">
-            <p class="text-ui-over uppercase text-ui-muted mb-2">Front</p>
-            <!-- Card, front: the design team's own background artwork,
-                 with the employee's name/title/id/contact overlaid. -->
-            <div class="relative rounded-[3px] overflow-hidden shadow-ui-overlay" style="width: 54mm; height: 85.6mm;">
-              <img src="/images/idcard-front-bg.png" class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
-
-              <div
-                class="absolute text-white font-bold text-left whitespace-nowrap overflow-hidden"
-                style="top: 31.75mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 4mm; line-height: 1;"
-              >
-                {{ idCardNameLines.line1 }}
-              </div>
-              <div
-                v-if="idCardNameLines.line2 !== ''"
-                class="absolute text-white font-bold text-left whitespace-nowrap overflow-hidden"
-                style="top: 38.1mm; left: 4.94mm; right: 4.23mm; font-family: 'Anton', 'Helvetica', sans-serif; font-size: 4mm; line-height: 1;"
-              >
-                {{ idCardNameLines.line2 }}
-              </div>
-
-              <div class="absolute bg-white" style="top: 52.92mm; left: 4.94mm; width: 8.47mm; height: 0.71mm;"></div>
-              <p class="absolute text-white text-left whitespace-nowrap overflow-hidden" style="top: 55.04mm; left: 4.94mm; right: 4.94mm; font-size: 3.18mm; font-family: 'Helvetica', 'Arial', sans-serif;">
-                {{ idCardJobTitle }}
-              </p>
-
-              <!-- Contact panel (background already part of the artwork) -->
-              <span class="absolute text-left font-bold text-[#1a1a2e]" style="top: 73.31mm; left: 4.94mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">Employee Id</span>
-              <span class="absolute text-left text-[#1a1a2e]" style="top: 73.31mm; left: 18.35mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">:</span>
-              <span class="absolute text-left text-[#1a1a2e] whitespace-nowrap overflow-hidden" style="top: 73.31mm; left: 20.46mm; right: 2.12mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">{{ profile?.code }}</span>
-
-              <span class="absolute text-left font-bold text-[#1a1a2e]" style="top: 76.49mm; left: 4.94mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">Phone</span>
-              <span class="absolute text-left text-[#1a1a2e]" style="top: 76.49mm; left: 18.35mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">:</span>
-              <span class="absolute text-left text-[#1a1a2e] whitespace-nowrap overflow-hidden" style="top: 76.49mm; left: 20.46mm; right: 2.12mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">{{ idCardPhone }}</span>
-
-              <span class="absolute text-left font-bold text-[#1a1a2e]" style="top: 79.66mm; left: 4.94mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">Email</span>
-              <span class="absolute text-left text-[#1a1a2e]" style="top: 79.66mm; left: 18.35mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">:</span>
-              <span class="absolute text-left text-[#1a1a2e] whitespace-nowrap overflow-hidden" style="top: 79.66mm; left: 20.46mm; right: 2.12mm; font-size: 1.94mm; font-family: 'Helvetica', 'Arial', sans-serif;">{{ idCardEmail }}</span>
-            </div>
-          </div>
-
-          <div class="text-center">
-            <p class="text-ui-over uppercase text-ui-muted mb-2">Back</p>
-            <!-- Card, back: the design team's own artwork, unchanged. -->
-            <div class="relative rounded-[3px] overflow-hidden shadow-ui-overlay" style="width: 54mm; height: 85.6mm;">
-              <img src="/images/idcard-back-bg.png" class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
-            </div>
-          </div>
-        </div>
-        <p class="text-ui-cap text-ui-muted text-center mt-6">
-          Shown at true size &mdash; 54mm &times; 85.6mm each side, the same portrait badge size used for physical printing.
-        </p>
-        <UiButton :icon="Download" :loading="downloadingIdCard" block size="lg" class="sm:hidden mt-5" @click="downloadIdCard">
-          {{ downloadingIdCard ? "Preparing..." : "Download PDF" }}
-        </UiButton>
-      </UiCard>
+          <p class="text-ui-cap text-ui-muted text-center -mt-2">Print at 100% on card stock, then cut along the edge.</p>
+        </aside>
+      </div>
     </div>
   </div>
 
@@ -620,3 +648,69 @@ onMounted(() => {
   </div>
   </div>
 </template>
+
+<style scoped>
+/* ID card preview: pt values copied from id-card.blade.php. */
+.idcard {
+  width: 153.07pt;
+  height: 242.69pt;
+  border-radius: 3pt;
+}
+.idcard-name {
+  position: absolute;
+  left: 14pt;
+  right: 12pt;
+  margin: 0;
+  font-family: "Anton", "Helvetica", sans-serif;
+  font-size: 13pt;
+  line-height: 1;
+  color: #fff;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.idcard-job {
+  position: absolute;
+  left: 14pt;
+  right: 14pt;
+  margin: 0;
+  font-family: "Helvetica", "Arial", sans-serif;
+  font-size: 8pt;
+  line-height: 1.2;
+  color: #c9d3ee;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.idcard-row {
+  position: absolute;
+  left: 14pt;
+  right: 10pt;
+  height: 9pt;
+  font-family: "Helvetica", "Arial", sans-serif;
+  text-align: left;
+}
+.idcard-label {
+  position: absolute;
+  left: 0;
+  width: 44pt;
+  font-size: 5pt;
+  letter-spacing: 0.4pt;
+  text-transform: uppercase;
+  color: #667085;
+}
+.idcard-value {
+  position: absolute;
+  left: 47pt;
+  right: 0;
+  font-size: 6pt;
+  color: #0f1b2d;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.idcard-mono {
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 700;
+  font-size: 6.5pt;
+}
+</style>

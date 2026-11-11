@@ -35,6 +35,14 @@ const ICON = { sm: "w-3.5 h-3.5", md: "w-4 h-4", lg: "w-[18px] h-[18px]" };
 
 const tag = computed(() => (props.to ? RouterLink : props.href ? "a" : "button"));
 const inactive = computed(() => props.disabled || props.loading);
+// Only the attributes the rendered element understands. Passing
+// href="undefined" to a RouterLink used to wipe the href it renders, which
+// left an <a> without href: no pointer cursor, no open-in-new-tab.
+const linkAttrs = computed(() => {
+  if (tag.value === RouterLink) return { to: props.to };
+  if (tag.value === "a") return { href: props.href };
+  return { type: props.type, disabled: inactive.value };
+});
 const classes = computed(() => [
   "ui-press inline-flex items-center justify-center font-medium whitespace-nowrap border",
   "focus:outline-none focus-visible:shadow-ui-focus",
@@ -48,10 +56,7 @@ const classes = computed(() => [
 <template>
   <component
     :is="tag"
-    :to="to || undefined"
-    :href="href || undefined"
-    :type="tag === 'button' ? type : undefined"
-    :disabled="tag === 'button' ? inactive : undefined"
+    v-bind="linkAttrs"
     :aria-disabled="inactive || undefined"
     :aria-busy="loading || undefined"
     :class="classes"
