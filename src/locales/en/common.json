@@ -180,5 +180,10 @@
     "monthDays": "{months} and {days}",
     "invalid": "Invalid dates",
     "na": "N/A"
+  },
+  "signature": {
+    "label": "Use signature",
+    "hint": "Stamps the signatory's signature onto the PDF.",
+    "availableFor": "Available for {names}, with or without degrees."
   }
 }

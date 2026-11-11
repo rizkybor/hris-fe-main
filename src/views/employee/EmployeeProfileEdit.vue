@@ -29,7 +29,8 @@ import {
 
   IdCard,
 } from "lucide-vue-next";
-import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader, UiSelect } from "@/components/ui";
+import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader, UiSelect, UiSwitch } from "@/components/ui";
+import { displayName } from "@/utils/personName";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -44,6 +45,7 @@ const { preferredLanguages } = storeToRefs(optionStore);
 
 const form = ref({
   name: "",
+  show_degree: false,
   password: "",
   password_confirmation: "",
   profile_photo: null,
@@ -86,7 +88,10 @@ const init = async () => {
   if (!user.value) {
     await checkAuth();
   }
-  form.value.name = user.value?.name || "";
+  // The form edits the full name (titles/degrees included); `name` from the
+  // API is only how it is shown.
+  form.value.name = user.value?.full_name || user.value?.name || "";
+  form.value.show_degree = !!user.value?.show_degree;
   form.value.profile_photo_url = user.value?.profile_photo || "";
   form.value.profile_photo = null;
 
@@ -136,6 +141,8 @@ const handlePhotoSelect = (e) => {
     form.value.profile_photo_url = tempPreviewURL;
   }
 };
+
+const namePreview = computed(() => displayName(form.value.name, form.value.show_degree));
 
 const addContact = () => contacts.value.push(blankContact());
 const removeContact = (index) => contacts.value.splice(index, 1);
@@ -238,6 +245,7 @@ const handleSubmit = async () => {
               :placeholder="$t('profile.edit.account.namePlaceholder')"
               :icon="UserIcon"
               :error="fieldError('name')"
+              :hint="$t('profile.edit.account.nameHint')"
               required
             />
             <UiInput
@@ -249,6 +257,12 @@ const handleSubmit = async () => {
               disabled
               :hint="$t('profile.edit.account.emailHint')"
             />
+            <div class="md:col-span-2 rounded-ui-control border border-ui-line px-4 py-3">
+              <UiSwitch v-model="form.show_degree" :label="$t('profile.edit.account.showDegree')" :description="$t('profile.edit.account.showDegreeHint')" />
+              <p class="text-ui-cap text-ui-muted mt-2">
+                {{ $t("profile.edit.account.shownAs") }} <span class="font-medium text-ui-ink">{{ namePreview || "—" }}</span>
+              </p>
+            </div>
           </div>
         </UiCard>
 

@@ -1,9 +1,28 @@
 {
   "enums": {
-    "gender": { "male": "Male", "female": "Female" },
-    "workLocation": { "office": "Office", "remote": "Remote", "hybrid": "Hybrid" },
-    "jobStatus": { "active": "Active", "on_leave": "On leave", "resigned": "Resigned", "terminated": "Terminated" },
-    "teamStatus": { "active": "Active", "inactive": "Inactive", "archived": "Archived", "forming": "Forming", "planning": "Planning", "dormant": "Dormant" }
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "workLocation": {
+      "office": "Office",
+      "remote": "Remote",
+      "hybrid": "Hybrid"
+    },
+    "jobStatus": {
+      "active": "Active",
+      "on_leave": "On leave",
+      "resigned": "Resigned",
+      "terminated": "Terminated"
+    },
+    "teamStatus": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "archived": "Archived",
+      "forming": "Forming",
+      "planning": "Planning",
+      "dormant": "Dormant"
+    }
   },
   "fields": {
     "fullName": "Full Name",
@@ -47,9 +66,18 @@
       "performance": "Performance",
       "excellentRating": "Excellent rating"
     },
-    "personal": { "title": "Personal Information", "subtitle": "Your contact and profile details" },
-    "location": { "title": "Location Details", "subtitle": "Address and location information" },
-    "employment": { "title": "Employment Details", "subtitle": "Work and compensation information" },
+    "personal": {
+      "title": "Personal Information",
+      "subtitle": "Your contact and profile details"
+    },
+    "location": {
+      "title": "Location Details",
+      "subtitle": "Address and location information"
+    },
+    "employment": {
+      "title": "Employment Details",
+      "subtitle": "Work and compensation information"
+    },
     "team": {
       "title": "My Team",
       "subtitle": "Team information",
@@ -125,7 +153,11 @@
       "subtitle": "Your sign-in name and email",
       "namePlaceholder": "Enter full name",
       "email": "Email Address",
-      "emailHint": "Email cannot be changed. Contact HR if this needs to be updated."
+      "emailHint": "Email cannot be changed. Contact HR if this needs to be updated.",
+      "nameHint": "Full name, with titles and degrees if you have them (e.g. Budi Santoso, S.Kom.).",
+      "showDegree": "Show my titles and degrees",
+      "showDegreeHint": "Everywhere your name appears in HRIS and on documents you sign.",
+      "shownAs": "Shown as:"
     },
     "personal": {
       "title": "Personal Details",

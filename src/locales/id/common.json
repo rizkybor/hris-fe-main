@@ -180,5 +180,10 @@
     "monthDays": "{months} {days}",
     "invalid": "Tanggal tidak valid",
     "na": "-"
+  },
+  "signature": {
+    "label": "Gunakan tanda tangan (TTD)",
+    "hint": "Menambahkan tanda tangan penanda tangan ke PDF.",
+    "availableFor": "Tersedia untuk {names}, dengan atau tanpa gelar."
   }
 }

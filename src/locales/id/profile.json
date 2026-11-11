@@ -1,9 +1,28 @@
 {
   "enums": {
-    "gender": { "male": "Laki-laki", "female": "Perempuan" },
-    "workLocation": { "office": "Kantor", "remote": "Remote", "hybrid": "Hybrid" },
-    "jobStatus": { "active": "Aktif", "on_leave": "Sedang cuti", "resigned": "Mengundurkan diri", "terminated": "Diberhentikan" },
-    "teamStatus": { "active": "Aktif", "inactive": "Nonaktif", "archived": "Diarsipkan", "forming": "Dibentuk", "planning": "Perencanaan", "dormant": "Tidak aktif" }
+    "gender": {
+      "male": "Laki-laki",
+      "female": "Perempuan"
+    },
+    "workLocation": {
+      "office": "Kantor",
+      "remote": "Remote",
+      "hybrid": "Hybrid"
+    },
+    "jobStatus": {
+      "active": "Aktif",
+      "on_leave": "Sedang cuti",
+      "resigned": "Mengundurkan diri",
+      "terminated": "Diberhentikan"
+    },
+    "teamStatus": {
+      "active": "Aktif",
+      "inactive": "Nonaktif",
+      "archived": "Diarsipkan",
+      "forming": "Dibentuk",
+      "planning": "Perencanaan",
+      "dormant": "Tidak aktif"
+    }
   },
   "fields": {
     "fullName": "Nama Lengkap",
@@ -47,9 +66,18 @@
       "performance": "Kinerja",
       "excellentRating": "Penilaian sangat baik"
     },
-    "personal": { "title": "Informasi Pribadi", "subtitle": "Detail kontak dan profil Anda" },
-    "location": { "title": "Detail Lokasi", "subtitle": "Alamat dan informasi lokasi" },
-    "employment": { "title": "Detail Kepegawaian", "subtitle": "Informasi pekerjaan dan kompensasi" },
+    "personal": {
+      "title": "Informasi Pribadi",
+      "subtitle": "Detail kontak dan profil Anda"
+    },
+    "location": {
+      "title": "Detail Lokasi",
+      "subtitle": "Alamat dan informasi lokasi"
+    },
+    "employment": {
+      "title": "Detail Kepegawaian",
+      "subtitle": "Informasi pekerjaan dan kompensasi"
+    },
     "team": {
       "title": "Tim Saya",
       "subtitle": "Informasi tim",
@@ -125,7 +153,11 @@
       "subtitle": "Nama dan email untuk masuk",
       "namePlaceholder": "Masukkan nama lengkap",
       "email": "Alamat Email",
-      "emailHint": "Email tidak dapat diubah. Hubungi HR jika perlu diperbarui."
+      "emailHint": "Email tidak dapat diubah. Hubungi HR jika perlu diperbarui.",
+      "nameHint": "Nama lengkap, beserta gelar jika ada (mis. Budi Santoso, S.Kom.).",
+      "showDegree": "Tampilkan gelar saya",
+      "showDegreeHint": "Di semua tempat nama Anda tampil di HRIS dan di dokumen yang Anda tanda tangani.",
+      "shownAs": "Tampil sebagai:"
     },
     "personal": {
       "title": "Data Pribadi",

@@ -7,28 +7,88 @@
     "title": "Pengaturan",
     "subtitle": "Akses, data master, konfigurasi, dan pemeliharaan sistem.",
     "categories": {
-      "access": { "title": "Akses & Keamanan", "description": "Atur siapa yang bisa masuk dan apa yang bisa dilakukan" },
-      "masterData": { "title": "Data Master", "description": "Daftar referensi yang dipakai di formulir aplikasi" },
-      "configuration": { "title": "Konfigurasi", "description": "Pengaturan format dan template untuk dokumen yang dibuat" },
-      "system": { "title": "Sistem", "description": "Pemeliharaan database" },
-      "personal": { "title": "Pribadi", "description": "Pengaturan akun Anda sendiri" }
+      "access": {
+        "title": "Akses & Keamanan",
+        "description": "Atur siapa yang bisa masuk dan apa yang bisa dilakukan"
+      },
+      "masterData": {
+        "title": "Data Master",
+        "description": "Daftar referensi yang dipakai di formulir aplikasi"
+      },
+      "configuration": {
+        "title": "Konfigurasi",
+        "description": "Pengaturan format dan template untuk dokumen yang dibuat"
+      },
+      "system": {
+        "title": "Sistem",
+        "description": "Pemeliharaan database"
+      },
+      "personal": {
+        "title": "Pribadi",
+        "description": "Pengaturan akun Anda sendiri"
+      }
     },
     "links": {
-      "roles": { "title": "Peran & Hak Akses", "description": "Kelola peran pengguna dan atur akses ke setiap modul" },
-      "staffPermissions": { "title": "Hak Akses Akun Staf", "description": "Beri hak akses tambahan ke akun Staf tertentu di luar peran Staf" },
-      "credentials": { "title": "Akun & Kredensial", "description": "Kelola kredensial akun perusahaan yang tersimpan" },
-      "dropdownOptions": { "title": "Opsi Dropdown", "description": "Kelola pilihan Jenis Kepegawaian, Status PTKP, Nama Bank, dan Bahasa Pilihan" },
-      "documentCodes": { "title": "Kode Surat & Divisi", "description": "Kelola daftar referensi kode surat dan kode divisi" },
-      "bankAccounts": { "title": "Rekening Bank", "description": "Kelola pilihan Nama Bank dan Nomor Rekening di bagian Pembayaran & Pajak Invoice" },
-      "sdmFields": { "title": "Bidang SDM", "description": "Kelola daftar peran/bidang untuk Sumber Daya SDM di Biaya operasional" },
-      "certificate": { "title": "Konfigurasi Sertifikat", "description": "Kelola format penomoran dan template latar sertifikat" },
-      "greetings": { "title": "Ucapan Kalender", "description": "Kelola hari libur, ulang tahun, rapat, dan ucapan berbasis tanggal lain di dasbor" },
-      "clientScreening": { "title": "Screening Klien", "description": "Katalog layanan (sinkron dari Rate Card) dan kuesioner kebutuhan klien" },
-      "documents": { "title": "Pengaturan Dokumen", "description": "Tampilkan nama penanda tangan dengan atau tanpa gelar akademik di PDF" },
-      "attendance": { "title": "Pengaturan Kehadiran", "description": "Atur apakah staf bisa Absen masuk/pulang di hari Sabtu & Minggu" },
-      "payroll": { "title": "Pengaturan Penggajian", "description": "Atur cara Penggajian dibuat otomatis" },
-      "backup": { "title": "Cadangan Database", "description": "Buat dan kelola cadangan SQL lengkap dari database" },
-      "profile": { "title": "Profil Saya", "description": "Perbarui informasi profil pribadi Anda" }
+      "roles": {
+        "title": "Peran & Hak Akses",
+        "description": "Kelola peran pengguna dan atur akses ke setiap modul"
+      },
+      "staffPermissions": {
+        "title": "Hak Akses Akun Staf",
+        "description": "Beri hak akses tambahan ke akun Staf tertentu di luar peran Staf"
+      },
+      "credentials": {
+        "title": "Akun & Kredensial",
+        "description": "Kelola kredensial akun perusahaan yang tersimpan"
+      },
+      "dropdownOptions": {
+        "title": "Opsi Dropdown",
+        "description": "Kelola pilihan Jenis Kepegawaian, Status PTKP, Nama Bank, dan Bahasa Pilihan"
+      },
+      "documentCodes": {
+        "title": "Kode Surat & Divisi",
+        "description": "Kelola daftar referensi kode surat dan kode divisi"
+      },
+      "bankAccounts": {
+        "title": "Rekening Bank",
+        "description": "Kelola pilihan Nama Bank dan Nomor Rekening di bagian Pembayaran & Pajak Invoice"
+      },
+      "sdmFields": {
+        "title": "Bidang SDM",
+        "description": "Kelola daftar peran/bidang untuk Sumber Daya SDM di Biaya operasional"
+      },
+      "certificate": {
+        "title": "Konfigurasi Sertifikat",
+        "description": "Kelola format penomoran dan template latar sertifikat"
+      },
+      "greetings": {
+        "title": "Ucapan Kalender",
+        "description": "Kelola hari libur, ulang tahun, rapat, dan ucapan berbasis tanggal lain di dasbor"
+      },
+      "clientScreening": {
+        "title": "Screening Klien",
+        "description": "Katalog layanan (sinkron dari Rate Card) dan kuesioner kebutuhan klien"
+      },
+      "documents": {
+        "title": "Pengaturan Dokumen",
+        "description": "Tampilkan nama penanda tangan dengan atau tanpa gelar akademik di PDF"
+      },
+      "attendance": {
+        "title": "Pengaturan Kehadiran",
+        "description": "Atur apakah staf bisa Absen masuk/pulang di hari Sabtu & Minggu"
+      },
+      "payroll": {
+        "title": "Pengaturan Penggajian",
+        "description": "Atur cara Penggajian dibuat otomatis"
+      },
+      "backup": {
+        "title": "Cadangan Database",
+        "description": "Buat dan kelola cadangan SQL lengkap dari database"
+      },
+      "profile": {
+        "title": "Profil Saya",
+        "description": "Perbarui informasi profil pribadi Anda"
+      }
     }
   },
   "backup": {
@@ -74,7 +134,7 @@
     "title": "Pengaturan Dokumen",
     "subtitle": "Cara dokumen PDF dicetak",
     "signatoryName": "Nama Penanda Tangan",
-    "signatoryHint": "Berlaku untuk setiap blok tanda tangan: Surat, BAST, Memo resmi, Purchase Order, Kwitansi, Proposal, Sertifikat, dan Raport Staf.",
+    "signatoryHint": "Berlaku untuk setiap blok tanda tangan: Surat, BAST, Memo resmi, Purchase Order, Kwitansi, Proposal, Sertifikat, dan Raport Staf. Nama pengguna HRIS mengikuti pilihan gelar di Profil Saya masing-masing; pengaturan ini untuk nama lain (mis. klien atau pihak luar).",
     "withDegree": {
       "title": "Nama dengan gelar",
       "description": "Mencetak nama penanda tangan persis seperti yang diketik di dokumen."

@@ -96,10 +96,11 @@ const hideTooltip = () => {
 // a section defaults to expanded when its key is absent from storage.
 const SECTION_KEYS = ["overview", "myWorkspace", "people", "company", "licenseManager", "finance", "tools", "insights"];
 
-// First login (nothing in storage yet) shows only General expanded, every
-// other section starts collapsed -- a returning user's own choice (once
-// they've toggled anything) always wins over this default.
-const defaultCollapsed = (key) => key !== "overview";
+// Every sign-in starts with General, My Workspace and Administration open
+// and the rest collapsed (the login clears the saved state); sections the
+// user opens or closes during the session stay that way.
+const DEFAULT_OPEN = ["overview", "myWorkspace", "people"];
+const defaultCollapsed = (key) => !DEFAULT_OPEN.includes(key);
 
 const loadCollapsedSections = () => {
   try {

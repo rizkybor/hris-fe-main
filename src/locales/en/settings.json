@@ -7,28 +7,88 @@
     "title": "Settings",
     "subtitle": "Access, master data, configuration and system maintenance.",
     "categories": {
-      "access": { "title": "Access & Security", "description": "Control who can sign in and what they can do" },
-      "masterData": { "title": "Master Data", "description": "Reference lists used throughout the app's forms" },
-      "configuration": { "title": "Configuration", "description": "Format and template settings for generated documents" },
-      "system": { "title": "System", "description": "Database maintenance" },
-      "personal": { "title": "Personal", "description": "Your own account settings" }
+      "access": {
+        "title": "Access & Security",
+        "description": "Control who can sign in and what they can do"
+      },
+      "masterData": {
+        "title": "Master Data",
+        "description": "Reference lists used throughout the app's forms"
+      },
+      "configuration": {
+        "title": "Configuration",
+        "description": "Format and template settings for generated documents"
+      },
+      "system": {
+        "title": "System",
+        "description": "Database maintenance"
+      },
+      "personal": {
+        "title": "Personal",
+        "description": "Your own account settings"
+      }
     },
     "links": {
-      "roles": { "title": "Roles & Permissions", "description": "Manage user roles and control access to each module" },
-      "staffPermissions": { "title": "Staff Account Permissions", "description": "Grant extra permissions to individual Staff accounts on top of the Staff role" },
-      "credentials": { "title": "Account & Credentials", "description": "Manage stored company account credentials" },
-      "dropdownOptions": { "title": "Dropdown Options", "description": "Manage Employment Type, PTKP Status, Bank Name, and Preferred Language choices" },
-      "documentCodes": { "title": "Letter & Division Codes", "description": "Manage the letter code and division code reference lists" },
-      "bankAccounts": { "title": "Bank Accounts", "description": "Manage the Bank Name and Account Number choices used in Invoice's Payment & Tax section" },
-      "sdmFields": { "title": "SDM Field", "description": "Manage the role/field list used by SDM Resource in Operational Cost" },
-      "certificate": { "title": "Certificate Configuration", "description": "Manage the certificate numbering format and background templates" },
-      "greetings": { "title": "Calendar Greetings", "description": "Manage holidays, birthdays, meetings, and other date-based greetings shown on the dashboard" },
-      "clientScreening": { "title": "Client Screening", "description": "Service catalog (synced from the Rate Card) and the client needs questionnaire" },
-      "documents": { "title": "Document Settings", "description": "Show signatory names with or without academic degrees on generated PDFs" },
-      "attendance": { "title": "Attendance Settings", "description": "Control whether staff can Clock In/Out on Saturday & Sunday" },
-      "payroll": { "title": "Payroll Settings", "description": "Control how Payroll is automatically generated" },
-      "backup": { "title": "Backup Database", "description": "Generate and manage full SQL backups of the database" },
-      "profile": { "title": "My Profile", "description": "Update your personal profile information" }
+      "roles": {
+        "title": "Roles & Permissions",
+        "description": "Manage user roles and control access to each module"
+      },
+      "staffPermissions": {
+        "title": "Staff Account Permissions",
+        "description": "Grant extra permissions to individual Staff accounts on top of the Staff role"
+      },
+      "credentials": {
+        "title": "Account & Credentials",
+        "description": "Manage stored company account credentials"
+      },
+      "dropdownOptions": {
+        "title": "Dropdown Options",
+        "description": "Manage Employment Type, PTKP Status, Bank Name, and Preferred Language choices"
+      },
+      "documentCodes": {
+        "title": "Letter & Division Codes",
+        "description": "Manage the letter code and division code reference lists"
+      },
+      "bankAccounts": {
+        "title": "Bank Accounts",
+        "description": "Manage the Bank Name and Account Number choices used in Invoice's Payment & Tax section"
+      },
+      "sdmFields": {
+        "title": "SDM Field",
+        "description": "Manage the role/field list used by SDM Resource in Operational Cost"
+      },
+      "certificate": {
+        "title": "Certificate Configuration",
+        "description": "Manage the certificate numbering format and background templates"
+      },
+      "greetings": {
+        "title": "Calendar Greetings",
+        "description": "Manage holidays, birthdays, meetings, and other date-based greetings shown on the dashboard"
+      },
+      "clientScreening": {
+        "title": "Client Screening",
+        "description": "Service catalog (synced from the Rate Card) and the client needs questionnaire"
+      },
+      "documents": {
+        "title": "Document Settings",
+        "description": "Show signatory names with or without academic degrees on generated PDFs"
+      },
+      "attendance": {
+        "title": "Attendance Settings",
+        "description": "Control whether staff can Clock In/Out on Saturday & Sunday"
+      },
+      "payroll": {
+        "title": "Payroll Settings",
+        "description": "Control how Payroll is automatically generated"
+      },
+      "backup": {
+        "title": "Backup Database",
+        "description": "Generate and manage full SQL backups of the database"
+      },
+      "profile": {
+        "title": "My Profile",
+        "description": "Update your personal profile information"
+      }
     }
   },
   "backup": {
@@ -74,7 +134,7 @@
     "title": "Document Settings",
     "subtitle": "How generated PDF documents are printed",
     "signatoryName": "Signatory Name",
-    "signatoryHint": "Applies to every signature block: Letters, BAST, Official Memo, Purchase Order, Payment Receipt, Proposal, Certificate and Staff Raport.",
+    "signatoryHint": "Applies to every signature block: Letters, BAST, Official Memo, Purchase Order, Payment Receipt, Proposal, Certificate and Staff Raport. Names of HRIS users follow each person's own degree choice in My Profile; this setting covers other names (e.g. clients or outside parties).",
     "withDegree": {
       "title": "Name with degree",
       "description": "Prints the signatory name exactly as typed on the document."

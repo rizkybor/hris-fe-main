@@ -21,13 +21,13 @@ const options = computed(() => [
     value: true,
     title: t("settings.documents.withDegree.title"),
     description: t("settings.documents.withDegree.description"),
-    example: "Rizky Ajie Kurniawan, S.Kom",
+    example: "Budi Santoso, S.H.",
   },
   {
     value: false,
     title: t("settings.documents.nameOnly.title"),
     description: t("settings.documents.nameOnly.description"),
-    example: "Rizky Ajie Kurniawan",
+    example: "Budi Santoso",
   },
 ]);
 

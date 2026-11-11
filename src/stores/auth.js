@@ -53,6 +53,9 @@ export const useAuthStore = defineStore("auth", {
 
                 this.success = response.data.message
 
+                // Each sign-in starts the sidebar from its default open sections
+                // (see Sidebar.vue); changes made during the session are kept.
+                try { localStorage.removeItem('sidebar-collapsed-sections') } catch { /* storage unavailable */ }
                 router.push({ name: 'admin.dashboard' })
             } catch (error) {
                 this.error = handleError(error)

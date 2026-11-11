@@ -8,6 +8,7 @@ import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader, UiSelect, UiSwitch } 
 import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import { SIGNATORIES } from "@/utils/signatories";
+import { bareName } from "@/utils/personName";
 import { useInvoiceStore } from "@/stores/invoice";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 
@@ -125,11 +126,13 @@ const invoiceOptions = computed(() =>
 
 // Older receipts may carry a free-typed name from before this was a
 // dropdown -- keep it selectable so editing doesn't drop it.
-const signatoryOptions = computed(() =>
-  form.value.recipient_name && !SIGNATORIES.includes(form.value.recipient_name)
-    ? [form.value.recipient_name, ...SIGNATORIES]
-    : SIGNATORIES
-);
+// A saved name with degrees ("Aldi PP, S.Ikom") stands in for its plain
+// entry instead of showing twice.
+const signatoryOptions = computed(() => {
+  const current = form.value.recipient_name;
+  if (!current || SIGNATORIES.includes(current)) return SIGNATORIES;
+  return [current, ...SIGNATORIES.filter((n) => bareName(n).toLowerCase() !== bareName(current).toLowerCase())];
+});
 
 // The printed receipt adds "berdasarkan Invoice No. ..." for a linked
 // invoice by itself, so the suggestion only describes what's being paid

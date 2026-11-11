@@ -92,7 +92,8 @@ const loadEmployeeData = async () => {
 
     if (employee) {
       // Step 1 - Personal Information
-      step1Data.value.name = employee.user?.name || "";
+      // Full name with titles/degrees (the API's `name` is only how it shows).
+      step1Data.value.name = employee.user?.full_name || employee.user?.name || "";
       step1Data.value.email = employee.user?.email || "";
       step1Data.value.identity_number = employee.identity_number || "";
       step1Data.value.npwp = employee.npwp || "";
