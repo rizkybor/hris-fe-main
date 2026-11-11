@@ -5,7 +5,6 @@
 // bottom bar carries the primary button. The parent owns submission.
 import { computed, nextTick, ref, watch } from "vue";
 import {
-  ArrowLeft,
   IdCard,
   User,
   Users,
@@ -19,24 +18,22 @@ import {
   Receipt,
   Contact,
   CalendarClock,
-  CalendarRange,
   Infinity as InfinityIcon,
-  MonitorSmartphone,
   FileText,
-  Save,
   Power,
-  BadgeCheck,
   KeyRound,
   Minus,
   Plus,
-  CheckCircle2,
   Circle,
-  ListChecks,
   Laptop,
   Tablet,
   Lock,
   Layers,
+  Check,
+  ShieldCheck,
+  ChevronDown,
 } from "lucide-vue-next";
+import { UiPageHeader, UiButton } from "@/components/ui";
 import LicenseStatusSwitch from "@/components/admin/license-manager/LicenseStatusSwitch.vue";
 import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
 import LicenseFormField from "@/components/admin/license-manager/LicenseFormField.vue";
@@ -49,7 +46,6 @@ import {
   platformsOf,
   planGroupsFor,
   planAllowedOn,
-  platformChipClass,
   ORGANIZATION_TYPE_OPTIONS,
   KEY_MODE_OPTIONS,
   requiredFields,
@@ -61,7 +57,6 @@ import {
   otherCategoryFields,
   isRequiredField,
   planType,
-  planChipClass,
   durationOptionsFor,
   defaultDurationFor,
   planDefaultMaxDevices,
@@ -233,104 +228,99 @@ const allDone = computed(() => doneCount.value === checklist.value.length);
 
 const display = (value) => (value === null || value === undefined || String(value).trim() === "" ? "—" : value);
 
+// Token field style; also used by LicenseLocationFields (inputs + textarea).
 const inputClass = (field, withIcon = true) => [
-  "w-full pr-4 py-3 border rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold bg-white",
-  withIcon ? "pl-12" : "pl-4",
-  fieldError(field) ? "border-red-500" : "border-[#DCDEDD]",
+  "w-full pr-3 py-2 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border rounded-ui-control transition-shadow",
+  "focus:outline-none focus:border-ui-accent focus:shadow-ui-focus disabled:bg-ui-subtle disabled:text-ui-muted",
+  withIcon ? "pl-9" : "pl-3",
+  fieldError(field) ? "border-ui-bad/50" : "border-ui-line-strong",
 ];
 
-const card = "bg-white border border-[#DCDEDD] rounded-[16px] p-5 sm:p-6";
-const cardHeader = "flex items-center gap-2.5 mb-5";
-const cardIcon = "w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0";
-const primaryBtn =
-  "btn-primary rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] px-5 py-2.5 flex items-center justify-center gap-2 disabled:opacity-50";
-const secondaryBtn =
-  "border border-[#DCDEDD] bg-white rounded-[12px] hover:border-violet-400 hover:bg-violet-50/30 transition-all duration-300 px-5 py-2.5 text-sm text-brand-dark font-semibold";
+// Presentation only: section cards and the selectable option cards.
+const optionCard = (selected) => [
+  "relative flex text-left rounded-ui-card border bg-ui-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+  selected ? "border-ui-ink ring-1 ring-ui-ink" : "border-ui-line hover:border-ui-line-strong hover:bg-ui-subtle/60",
+];
+const sections = {
+  plan: { icon: ShieldCheck, title: "Platform & plan", subtitle: "The platform is part of the key and cannot change later." },
+  licensee: { icon: IdCard, title: "Licensee", subtitle: "Shown on the certificate." },
+  location: { icon: MapPin, title: "Location", subtitle: "Indonesian addresses use the region list." },
+  organization: { icon: Building2, title: "Organization", subtitle: "Shown on the certificate." },
+  contact: { icon: Contact, title: "Contact Person", subtitle: "Receives the certificate and renewal reminders." },
+  address: { icon: MapPin, title: "Address", subtitle: "Indonesian addresses use the region list." },
+  terms: { icon: CalendarClock, title: "License Terms", subtitle: "Duration, devices and how keys are handed out." },
+  notes: { icon: FileText, title: "Notes", subtitle: "Internal only, not on the certificate." },
+};
 </script>
 
 <template>
-  <form ref="formEl" novalidate @submit.prevent="emit('submit')">
-    <!-- ===================== Header row ===================== -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[16px] px-4 py-4 sm:px-5 mb-5">
-      <div class="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          @click="emit('cancel')"
-          class="bg-white w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-violet-400 transition-all shrink-0"
-          aria-label="Back"
-        >
-          <ArrowLeft class="w-5 h-5 text-gray-600" />
-        </button>
-        <ProductIcon :product="product" :size="40" />
-        <div class="flex-1 min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-brand-dark text-xl font-bold">{{ title }}</h1>
-            <span
-              v-if="licenseKey"
-              class="inline-flex items-center gap-1.5 bg-slate-50 border border-[#DCDEDD] rounded-[10px] pl-3 pr-1 py-0.5"
-            >
-              <span class="font-mono text-xs font-bold tracking-wider text-brand-dark">{{ licenseKey }}</span>
-              <CopyKeyButton :value="licenseKey" />
-            </span>
-          </div>
-          <p v-if="subtitle" class="text-brand-light text-sm">{{ subtitle }}</p>
-        </div>
-        <div class="hidden sm:flex items-center gap-2">
-          <button type="button" @click="emit('cancel')" :class="secondaryBtn">Cancel</button>
-          <button type="submit" :disabled="loading" :class="primaryBtn">
-            <Save class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">{{ loading ? "Saving..." : submitLabel }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
+  <form ref="formEl" novalidate class="space-y-5" @submit.prevent="emit('submit')">
+    <!-- ===================== Header ===================== -->
+    <UiPageHeader :title="title" class="ui-anim-fade-up">
+      <template #subtitle>
+        <span class="flex flex-wrap items-center gap-2">
+          <span v-if="subtitle">{{ subtitle }}</span>
+          <span v-if="licenseKey" class="inline-flex items-center gap-1 bg-ui-subtle border border-ui-line rounded-ui-control pl-2.5 pr-0.5 py-0.5">
+            <span class="font-mono text-ui-cap font-medium tracking-wide text-ui-ink">{{ licenseKey }}</span>
+            <CopyKeyButton :value="licenseKey" class="!w-6 !h-6 !border-0 !bg-transparent" />
+          </span>
+        </span>
+      </template>
+      <template #actions>
+        <UiButton variant="secondary" @click="emit('cancel')">Cancel</UiButton>
+        <UiButton type="submit" :icon="Check" :loading="loading">{{ loading ? "Saving..." : submitLabel }}</UiButton>
+      </template>
+    </UiPageHeader>
 
     <slot name="alerts" />
 
     <!-- ===================== Body ===================== -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
       <!-- Form sections -->
-      <div class="lg:col-span-8 space-y-5 min-w-0">
-        <!-- 1. Plan -->
-        <section data-field="plan" :class="card">
-          <div :class="cardHeader">
-            <div :class="cardIcon"><BadgeCheck class="w-[18px] h-[18px] text-violet-600" /></div>
-            <h4 class="text-brand-dark font-bold">Plan <span class="text-red-500">*</span></h4>
+      <div class="lg:col-span-8 space-y-5 min-w-0 ui-stagger">
+        <!-- 1. Platform & plan -->
+        <section data-field="plan" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+          <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+            <div class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center shrink-0">
+              <component :is="sections.plan.icon" class="w-4 h-4 text-ui-muted" />
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-ui-h2 text-ui-ink">{{ sections.plan.title }} <span class="text-ui-bad">*</span></h3>
+              <p class="text-ui-cap text-ui-muted">{{ sections.plan.subtitle }}</p>
+            </div>
           </div>
 
-          <!-- Platform: Mac or iPad, fixed after create -->
+          <!-- Platform: Mac, iPad or both; fixed after create -->
           <div data-field="platform" class="mb-4">
-            <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light mb-2">Platform</p>
-            <div class="grid gap-3" :class="isEdit ? 'grid-cols-2 sm:max-w-md' : 'grid-cols-1 sm:grid-cols-3'">
+            <div class="flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="radiogroup" aria-label="Platform">
               <button
                 v-for="option in platformChoices"
                 :key="option.value"
                 type="button"
+                role="radio"
+                :aria-checked="form.platform === option.value"
                 :disabled="isEdit && form.platform !== option.value"
+                :title="option.note"
                 @click="selectPlatform(option.value)"
-                class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-[12px] border-2 bg-white text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                :class="form.platform === option.value ? 'border-violet-500 ring-2 ring-violet-500/20 bg-violet-50/40' : 'border-[#DCDEDD] hover:border-violet-300'"
-                :aria-pressed="form.platform === option.value"
+                class="flex-1 h-9 inline-flex items-center justify-center gap-2 rounded-ui-control text-ui-small font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                :class="form.platform === option.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
               >
-                <component :is="platformIcon(option.value)" class="w-[18px] h-[18px] text-violet-600 shrink-0" />
-                <span class="flex-1 min-w-0">
-                  <span class="block text-sm font-bold text-brand-dark">{{ option.label }}</span>
-                  <span class="block text-xs text-brand-light">{{ option.note }}</span>
-                </span>
-                <Lock v-if="isEdit && form.platform === option.value" class="w-4 h-4 text-brand-light shrink-0" />
-                <CheckCircle2 v-else-if="form.platform === option.value" class="w-[18px] h-[18px] text-violet-600 shrink-0" />
+                <component :is="platformIcon(option.value)" class="w-4 h-4 shrink-0" />
+                {{ option.label }}
+                <Lock v-if="isEdit && form.platform === option.value" class="w-3.5 h-3.5 text-ui-muted shrink-0" />
               </button>
             </div>
-            <p v-if="isEdit" class="text-xs text-brand-light mt-2">The platform is part of the key, so it cannot be changed.</p>
-            <p v-if="fieldError('platform')" class="text-xs text-red-600 mt-2">{{ fieldError("platform") }}</p>
+            <p class="text-ui-cap text-ui-muted mt-2">
+              <template v-if="isEdit">The platform is part of the key, so it cannot be changed.</template>
+              <template v-else-if="platformInfo">{{ platformInfo.label }}: {{ platformInfo.note }}</template>
+            </p>
+            <p v-if="fieldError('platform')" class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("platform") }}</p>
           </div>
 
           <!-- Group labels above their cards (md and up) -->
           <div class="hidden md:grid gap-3 mb-2" :class="individualCount === 3 ? 'grid-cols-4' : 'grid-cols-3'">
-            <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light" :class="individualCount === 3 ? 'col-span-3' : 'col-span-2'">
-              Individual
-            </p>
-            <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light">Organization</p>
+            <p class="text-ui-over uppercase text-ui-muted" :class="individualCount === 3 ? 'col-span-3' : 'col-span-2'">Individual</p>
+            <p class="text-ui-over uppercase text-ui-muted">Organization</p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" :class="individualCount === 3 ? 'md:grid-cols-4' : 'md:grid-cols-3'">
             <template v-for="group in planGroups" :key="group.label">
@@ -339,26 +329,21 @@ const secondaryBtn =
                 :key="plan.value"
                 type="button"
                 @click="selectPlan(plan.value)"
-                class="relative flex flex-col items-start gap-2 p-4 rounded-[12px] border-2 bg-white text-left transition-all h-full"
-                :class="form.plan === plan.value ? 'border-violet-500 ring-2 ring-violet-500/20 bg-violet-50/40' : 'border-[#DCDEDD] hover:border-violet-300'"
+                :class="[optionCard(form.plan === plan.value), 'flex-col items-start gap-1 p-3.5 h-full']"
                 :aria-pressed="form.plan === plan.value"
               >
-                <div class="flex items-center gap-2 w-full">
-                  <component :is="plan.category === 'organization' ? Building2 : User" class="w-[18px] h-[18px] text-violet-600 shrink-0" />
-                  <p class="text-sm font-bold text-brand-dark flex-1">{{ plan.label }}</p>
-                  <CheckCircle2 v-if="form.plan === plan.value" class="w-[18px] h-[18px] text-violet-600 shrink-0" />
-                </div>
-                <p class="text-xs text-brand-light leading-snug">{{ plan.note }}</p>
+                <span class="flex items-center gap-2 w-full">
+                  <span class="text-ui-h3 text-ui-ink flex-1">{{ plan.label }}</span>
+                  <Check v-if="form.plan === plan.value" class="w-4 h-4 text-ui-ink shrink-0" />
+                </span>
+                <span class="text-ui-cap text-ui-muted leading-snug">{{ plan.note }}</span>
               </button>
             </template>
           </div>
-          <p v-if="fieldError('plan')" class="text-xs text-red-600 mt-2">{{ fieldError("plan") }}</p>
-          <div
-            v-if="planChanged"
-            class="mt-3 flex items-start gap-2.5 p-3 rounded-[12px] border border-amber-200 bg-amber-50 text-amber-800"
-          >
+          <p v-if="fieldError('plan')" class="text-ui-cap text-ui-bad mt-2">{{ fieldError("plan") }}</p>
+          <div v-if="planChanged" class="mt-3 flex items-start gap-2.5 p-3 rounded-ui-card border border-ui-warn/20 bg-ui-warn-soft text-ui-warn">
             <KeyRound class="w-4 h-4 shrink-0 mt-0.5" />
-            <p class="text-xs leading-relaxed">
+            <p class="text-ui-cap">
               <span class="font-semibold">A new license key will be generated.</span>
               The current key{{ perDevice ? "s" : "" }} stop working and every device has to activate again with the new key.
               Send the licensee the new certificate after saving.
@@ -368,12 +353,17 @@ const secondaryBtn =
 
         <!-- 2-3. Individual: Licensee + Location -->
         <template v-if="!isOrganization">
-          <section :class="card">
-            <div :class="cardHeader">
-              <div :class="cardIcon"><IdCard class="w-[18px] h-[18px] text-violet-600" /></div>
-              <h4 class="text-brand-dark font-bold">Licensee</h4>
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+            <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+              <div class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center shrink-0">
+                <component :is="sections.licensee.icon" class="w-4 h-4 text-ui-muted" />
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-ui-h2 text-ui-ink">{{ sections.licensee.title }}</h3>
+                <p class="text-ui-cap text-ui-muted">{{ sections.licensee.subtitle }}</p>
+              </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5">
               <LicenseFormField field="licensee_name" label="Full Name" :required="required('licensee_name')" :error="fieldError('licensee_name')" :icon="User" v-slot="{ id }">
                 <input :id="id" v-model="form.licensee_name" type="text" autocomplete="name" placeholder="e.g. Jane Orienteer" :class="inputClass('licensee_name')" />
               </LicenseFormField>
@@ -392,10 +382,15 @@ const secondaryBtn =
             </div>
           </section>
 
-          <section :class="card">
-            <div :class="cardHeader">
-              <div :class="cardIcon"><MapPin class="w-[18px] h-[18px] text-violet-600" /></div>
-              <h4 class="text-brand-dark font-bold">Location</h4>
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+            <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+              <div class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center shrink-0">
+                <component :is="sections.location.icon" class="w-4 h-4 text-ui-muted" />
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-ui-h2 text-ui-ink">{{ sections.location.title }}</h3>
+                <p class="text-ui-cap text-ui-muted">{{ sections.location.subtitle }}</p>
+              </div>
             </div>
             <LicenseLocationFields v-model="form" :category="category" :errors="errors" :input-class="inputClass" />
           </section>
@@ -403,44 +398,30 @@ const secondaryBtn =
 
         <!-- 2-3. Organization: Organization + Contact person + Address -->
         <template v-else>
-          <section :class="card">
-            <div :class="cardHeader">
-              <div :class="cardIcon"><Building2 class="w-[18px] h-[18px] text-violet-600" /></div>
-              <h4 class="text-brand-dark font-bold">Organization</h4>
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+            <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+              <div class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center shrink-0">
+                <component :is="sections.organization.icon" class="w-4 h-4 text-ui-muted" />
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-ui-h2 text-ui-ink">{{ sections.organization.title }}</h3>
+                <p class="text-ui-cap text-ui-muted">{{ sections.organization.subtitle }}</p>
+              </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <LicenseFormField field="licensee_name" label="Organization Name" :required="required('licensee_name')" :error="fieldError('licensee_name')" :icon="Building2" wide v-slot="{ id }">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-5">
+              <LicenseFormField field="licensee_name" label="Organization Name" :required="required('licensee_name')" :error="fieldError('licensee_name')" :icon="Building2" class="md:col-span-3" v-slot="{ id }">
                 <input :id="id" v-model="form.licensee_name" type="text" autocomplete="organization" placeholder="e.g. Jakarta Orienteering Club" :class="inputClass('licensee_name')" />
               </LicenseFormField>
 
-              <div data-field="organization_type" class="md:col-span-2">
-                <p class="block text-brand-dark text-sm font-semibold mb-1.5">
-                  Type <span v-if="required('organization_type')" class="text-red-500">*</span>
-                </p>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    v-for="opt in ORGANIZATION_TYPE_OPTIONS"
-                    :key="opt.value"
-                    type="button"
-                    @click="form.organization_type = opt.value"
-                    class="px-4 py-2.5 rounded-[12px] border-2 text-sm font-semibold bg-white transition-all"
-                    :class="
-                      form.organization_type === opt.value
-                        ? 'border-violet-500 ring-2 ring-violet-500/20 text-violet-700'
-                        : fieldError('organization_type')
-                          ? 'border-red-300 text-brand-dark'
-                          : 'border-[#DCDEDD] text-brand-dark hover:border-violet-300'
-                    "
-                    :aria-pressed="form.organization_type === opt.value"
-                  >
-                    {{ opt.label }}
-                  </button>
-                </div>
-                <p v-if="fieldError('organization_type')" class="text-xs text-red-600 mt-1.5">{{ fieldError("organization_type") }}</p>
-              </div>
-
+              <LicenseFormField field="organization_type" label="Type" :required="required('organization_type')" :error="fieldError('organization_type')" v-slot="{ id }">
+                <select :id="id" v-model="form.organization_type" :class="[inputClass('organization_type', false), 'appearance-none pr-9', form.organization_type ? '' : 'text-ui-faint']">
+                  <option value="" disabled>Choose a type</option>
+                  <option v-for="opt in ORGANIZATION_TYPE_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                </select>
+                <ChevronDown class="absolute right-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
+              </LicenseFormField>
               <LicenseFormField field="member_count" label="Member Count" :required="required('member_count')" :error="fieldError('member_count')" :icon="Users" v-slot="{ id }">
-                <input :id="id" v-model.number="form.member_count" type="number" min="1" step="1" placeholder="e.g. 120" :class="inputClass('member_count')" />
+                <input :id="id" v-model.number="form.member_count" type="number" min="1" step="1" placeholder="e.g. 120" :class="[inputClass('member_count'), 'tabular-nums']" />
               </LicenseFormField>
               <LicenseFormField field="website" label="Website" :required="required('website')" :error="fieldError('website')" :icon="Link2" v-slot="{ id }">
                 <input :id="id" v-model="form.website" type="url" placeholder="https://example.org" :class="inputClass('website')" />
@@ -451,12 +432,17 @@ const secondaryBtn =
             </div>
           </section>
 
-          <section :class="card">
-            <div :class="cardHeader">
-              <div :class="cardIcon"><Contact class="w-[18px] h-[18px] text-violet-600" /></div>
-              <h4 class="text-brand-dark font-bold">Contact Person</h4>
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+            <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+              <div class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center shrink-0">
+                <component :is="sections.contact.icon" class="w-4 h-4 text-ui-muted" />
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-ui-h2 text-ui-ink">{{ sections.contact.title }}</h3>
+                <p class="text-ui-cap text-ui-muted">{{ sections.contact.subtitle }}</p>
+              </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5">
               <LicenseFormField field="contact_name" label="Name" :required="required('contact_name')" :error="fieldError('contact_name')" :icon="User" v-slot="{ id }">
                 <input :id="id" v-model="form.contact_name" type="text" autocomplete="name" placeholder="e.g. Budi Santoso" :class="inputClass('contact_name')" />
               </LicenseFormField>
@@ -472,60 +458,66 @@ const secondaryBtn =
             </div>
           </section>
 
-          <section :class="card">
-            <div :class="cardHeader">
-              <div :class="cardIcon"><MapPin class="w-[18px] h-[18px] text-violet-600" /></div>
-              <h4 class="text-brand-dark font-bold">Address</h4>
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+            <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+              <div class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center shrink-0">
+                <component :is="sections.address.icon" class="w-4 h-4 text-ui-muted" />
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-ui-h2 text-ui-ink">{{ sections.address.title }}</h3>
+                <p class="text-ui-cap text-ui-muted">{{ sections.address.subtitle }}</p>
+              </div>
             </div>
             <LicenseLocationFields v-model="form" :category="category" :errors="errors" :input-class="inputClass" />
           </section>
         </template>
 
         <!-- 4. License terms -->
-        <section :class="card">
-          <div :class="cardHeader">
-            <div :class="cardIcon"><CalendarClock class="w-[18px] h-[18px] text-violet-600" /></div>
-            <h4 class="text-brand-dark font-bold">License Terms</h4>
-          </div>
-
-          <div
-            v-if="isLifetimePlan"
-            data-field="type"
-            class="flex items-center gap-3 p-4 mb-5 rounded-[12px] border border-violet-200 bg-violet-50/60"
-          >
-            <InfinityIcon class="w-5 h-5 text-violet-600 shrink-0" />
-            <div>
-              <p class="text-sm font-bold text-brand-dark">Lifetime &middot; never expires</p>
-              <p class="text-xs text-brand-light">One-time payment; no duration or expiry date.</p>
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+          <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+            <div class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center shrink-0">
+              <component :is="sections.terms.icon" class="w-4 h-4 text-ui-muted" />
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-ui-h2 text-ui-ink">{{ sections.terms.title }}</h3>
+              <p class="text-ui-cap text-ui-muted">{{ sections.terms.subtitle }}</p>
             </div>
           </div>
 
-          <div v-if="isLifetimePlan" class="mb-5 max-w-xs">
-            <LicenseFormField
-              field="updates_major"
-              label="Covers Major Version"
-              :error="fieldError('updates_major')"
-              hint="Lifetime covers one major version and its updates; raise it after a paid upgrade."
-              v-slot="{ id }"
-            >
-              <input
-                :id="id"
-                v-model.number="form.updates_major"
-                type="number"
-                min="1"
-                max="99"
-                step="1"
-                :placeholder="product?.current_major ? String(product.current_major) : '1'"
-                :class="inputClass('updates_major', false)"
-              />
-            </LicenseFormField>
+          <div v-if="isLifetimePlan" data-field="type" class="flex items-center gap-3 p-3.5 mb-5 rounded-ui-card border border-ui-accent/20 bg-ui-accent-soft">
+            <InfinityIcon class="w-5 h-5 text-ui-accent shrink-0" />
+            <div>
+              <p class="text-ui-h3 text-ui-ink">Lifetime &middot; never expires</p>
+              <p class="text-ui-cap text-ui-muted">One-time payment; no duration or expiry date.</p>
+            </div>
           </div>
 
-          <div v-else data-field="duration" class="mb-5">
-            <p class="block text-brand-dark text-sm font-semibold mb-1.5">Duration <span class="text-red-500">*</span></p>
-            <div class="flex flex-wrap items-center gap-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5 mb-5">
+            <div v-if="isLifetimePlan">
+              <LicenseFormField
+                field="updates_major"
+                label="Covers Major Version"
+                :error="fieldError('updates_major')"
+                hint="Lifetime covers one major version and its updates; raise it after a paid upgrade."
+                v-slot="{ id }"
+              >
+                <input
+                  :id="id"
+                  v-model.number="form.updates_major"
+                  type="number"
+                  min="1"
+                  max="99"
+                  step="1"
+                  :placeholder="product?.current_major ? String(product.current_major) : '1'"
+                  :class="[inputClass('updates_major', false), 'tabular-nums']"
+                />
+              </LicenseFormField>
+            </div>
+
+            <div v-else data-field="duration" class="min-w-0">
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Duration <span class="text-ui-bad">*</span></p>
               <!-- Segmented control: the plan's main presets -->
-              <div class="inline-flex p-1 bg-slate-100 border border-[#DCDEDD] rounded-[12px]" role="radiogroup" aria-label="Duration">
+              <div class="flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="radiogroup" aria-label="Duration">
                 <button
                   v-for="opt in durations.primary"
                   :key="opt.value"
@@ -533,95 +525,66 @@ const secondaryBtn =
                   role="radio"
                   :aria-checked="form.duration === opt.value"
                   @click="form.duration = opt.value"
-                  class="px-4 py-2 rounded-[9px] text-sm font-semibold transition-all"
-                  :class="form.duration === opt.value ? 'bg-white text-violet-700 shadow-sm ring-1 ring-violet-200' : 'text-brand-light hover:text-brand-dark'"
+                  class="flex-1 h-8 px-3 rounded-ui-control text-ui-small font-medium whitespace-nowrap transition-colors"
+                  :class="form.duration === opt.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
                 >
                   {{ opt.label }}
                 </button>
               </div>
-              <div v-if="durations.secondary.length" class="flex items-center gap-1.5">
-                <span class="text-xs text-brand-light">or</span>
+              <div v-if="durations.secondary.length" class="flex items-center gap-1.5 mt-2">
+                <span class="text-ui-cap text-ui-muted">or</span>
                 <button
                   v-for="opt in durations.secondary"
                   :key="opt.value"
                   type="button"
                   @click="form.duration = opt.value"
-                  class="px-3 py-1.5 rounded-full border text-xs font-semibold transition-all"
-                  :class="form.duration === opt.value ? 'bg-violet-600 border-violet-600 text-white' : 'bg-white border-[#DCDEDD] text-brand-light hover:border-violet-400'"
+                  class="h-7 px-2.5 rounded-full border text-ui-cap font-medium transition-colors"
+                  :class="form.duration === opt.value ? 'bg-ui-ink border-ui-ink text-white' : 'bg-ui-surface border-ui-line text-ui-text hover:bg-ui-hover'"
+                  :aria-pressed="form.duration === opt.value"
                 >
                   {{ opt.label }}
                 </button>
               </div>
-            </div>
 
-            <p v-if="period.end && form.duration !== 'custom'" class="text-xs text-brand-light mt-2">
-              {{ isEdit ? "New expiry" : "Expires" }} on approximately
-              <span class="font-semibold text-brand-dark">{{ period.end }}</span> (counted from today).
-            </p>
+              <p v-if="period.end && form.duration !== 'custom'" class="text-ui-cap text-ui-muted mt-2">
+                {{ isEdit ? "New expiry" : "Expires" }} on approximately
+                <span class="font-medium text-ui-ink">{{ period.end }}</span> (counted from today).
+              </p>
 
-            <div v-if="form.duration === 'custom'" data-field="expires_at" class="mt-4 max-w-xs">
-              <label for="license-expires_at" class="block text-brand-dark text-sm font-semibold mb-1.5">
-                Expiry Date <span class="text-red-500">*</span>
-              </label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <CalendarClock class="w-5 h-5 text-gray-400" />
+              <div v-if="form.duration === 'custom'" data-field="expires_at" class="mt-3">
+                <label for="license-expires_at" class="block text-ui-small font-medium text-ui-ink mb-1.5">
+                  Expiry Date <span class="text-ui-bad">*</span>
+                </label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <CalendarClock class="w-4 h-4 text-ui-faint" />
+                  </div>
+                  <input
+                    id="license-expires_at"
+                    v-model="form.expires_at"
+                    type="date"
+                    :min="isEdit ? undefined : minCustomDate"
+                    :class="inputClass('expires_at')"
+                  />
                 </div>
-                <input
-                  id="license-expires_at"
-                  v-model="form.expires_at"
-                  type="date"
-                  :min="isEdit ? undefined : minCustomDate"
-                  :class="inputClass('expires_at')"
-                />
               </div>
+              <p v-if="fieldError('duration')" class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("duration") }}</p>
+              <p v-if="fieldError('expires_at')" class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("expires_at") }}</p>
             </div>
-            <p v-if="fieldError('duration')" class="text-xs text-red-600 mt-1.5">{{ fieldError("duration") }}</p>
-            <p v-if="fieldError('expires_at')" class="text-xs text-red-600 mt-1.5">{{ fieldError("expires_at") }}</p>
-          </div>
-          <p v-if="fieldError('type')" class="text-xs text-red-600 -mt-3 mb-5">{{ fieldError("type") }}</p>
 
-          <!-- Key mode: one key per device or one shared key -->
-          <div data-field="key_mode" class="mb-5">
-            <p class="block text-brand-dark text-sm font-semibold mb-1.5">Keys</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                v-for="option in KEY_MODE_OPTIONS"
-                :key="option.value"
-                type="button"
-                :disabled="isEdit && form.key_mode !== option.value"
-                @click="selectKeyMode(option.value)"
-                class="flex items-start gap-2.5 px-3.5 py-3 rounded-[12px] border-2 bg-white text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                :class="form.key_mode === option.value ? 'border-violet-500 ring-2 ring-violet-500/20 bg-violet-50/40' : 'border-[#DCDEDD] hover:border-violet-300'"
-                :aria-pressed="form.key_mode === option.value"
-              >
-                <component :is="keyModeIcon(option.value)" class="w-[18px] h-[18px] text-violet-600 shrink-0 mt-0.5" />
-                <span class="flex-1 min-w-0">
-                  <span class="block text-sm font-bold text-brand-dark">{{ option.label }}</span>
-                  <span class="block text-xs text-brand-light leading-snug">{{ option.note }}</span>
-                </span>
-                <Lock v-if="isEdit && form.key_mode === option.value" class="w-4 h-4 text-brand-light shrink-0" />
-                <CheckCircle2 v-else-if="form.key_mode === option.value" class="w-[18px] h-[18px] text-violet-600 shrink-0" />
-              </button>
-            </div>
-            <p v-if="isEdit" class="text-xs text-brand-light mt-2">The key mode is set when the license is created.</p>
-            <p v-if="fieldError('key_mode')" class="text-xs text-red-600 mt-2">{{ fieldError("key_mode") }}</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div data-field="max_devices">
-              <label for="license-max_devices" class="block text-brand-dark text-sm font-semibold mb-1.5">
-                Max Devices <span class="text-red-500">*</span>
+              <label for="license-max_devices" class="block text-ui-small font-medium text-ui-ink mb-1.5">
+                Max Devices <span class="text-ui-bad">*</span>
               </label>
               <div
-                class="inline-flex items-center border rounded-[12px] bg-white overflow-hidden"
-                :class="fieldError('max_devices') ? 'border-red-500' : 'border-[#DCDEDD]'"
+                class="inline-flex items-center border rounded-ui-control bg-ui-surface overflow-hidden"
+                :class="fieldError('max_devices') ? 'border-ui-bad/50' : 'border-ui-line-strong'"
               >
                 <button
                   type="button"
                   @click="stepDevices(-1)"
                   :disabled="Number(form.max_devices) <= 1"
-                  class="w-11 h-12 flex items-center justify-center text-gray-600 hover:bg-violet-50 disabled:opacity-40"
+                  class="w-10 h-[38px] flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink disabled:opacity-40"
                   aria-label="One device fewer"
                 >
                   <Minus class="w-4 h-4" />
@@ -633,19 +596,19 @@ const secondaryBtn =
                   min="1"
                   max="100"
                   step="1"
-                  class="w-16 h-12 text-center font-bold text-brand-dark border-x border-[#DCDEDD] focus:outline-none focus:ring-1 focus:ring-violet-500 [appearance:textfield]"
+                  class="w-14 h-[38px] text-center text-ui-body font-semibold text-ui-ink tabular-nums bg-ui-surface border-x border-ui-line focus:outline-none focus:shadow-ui-focus [appearance:textfield]"
                 />
                 <button
                   type="button"
                   @click="stepDevices(1)"
                   :disabled="Number(form.max_devices) >= 100"
-                  class="w-11 h-12 flex items-center justify-center text-gray-600 hover:bg-violet-50 disabled:opacity-40"
+                  class="w-10 h-[38px] flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink disabled:opacity-40"
                   aria-label="One device more"
                 >
                   <Plus class="w-4 h-4" />
                 </button>
               </div>
-              <p v-if="!fieldError('max_devices')" class="text-xs text-brand-light mt-1.5">
+              <p v-if="!fieldError('max_devices')" class="text-ui-cap text-ui-muted mt-1.5">
                 {{
                   perDevice
                     ? isEdit
@@ -654,191 +617,171 @@ const secondaryBtn =
                     : "Devices that can use this key at once."
                 }}
               </p>
-              <p v-else class="text-xs text-red-600 mt-1.5">{{ fieldError("max_devices") }}</p>
+              <p v-else class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("max_devices") }}</p>
             </div>
+          </div>
+          <p v-if="fieldError('type')" class="text-ui-cap text-ui-bad -mt-3 mb-5">{{ fieldError("type") }}</p>
 
-            <div data-field="is_active">
-              <p class="block text-brand-dark text-sm font-semibold mb-1.5">Status</p>
-              <div class="flex items-center justify-between gap-4 p-3 bg-white border border-[#DCDEDD] rounded-[12px]">
-                <div class="flex items-center gap-3">
-                  <Power class="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p class="text-sm font-semibold text-brand-dark">{{ form.is_active ? "Active" : "Inactive" }}</p>
-                    <p class="text-xs text-brand-light">Inactive keys are rejected on the next check.</p>
-                  </div>
-                </div>
-                <LicenseStatusSwitch v-model="form.is_active" />
+          <!-- Key mode: one key per device or one shared key -->
+          <div data-field="key_mode" class="mb-4">
+            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Keys</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                v-for="option in KEY_MODE_OPTIONS"
+                :key="option.value"
+                type="button"
+                :disabled="isEdit && form.key_mode !== option.value"
+                @click="selectKeyMode(option.value)"
+                :class="[optionCard(form.key_mode === option.value), 'items-start gap-3 px-3.5 py-3']"
+                :aria-pressed="form.key_mode === option.value"
+              >
+                <component :is="keyModeIcon(option.value)" class="w-4 h-4 text-ui-muted shrink-0 mt-0.5" />
+                <span class="flex-1 min-w-0">
+                  <span class="block text-ui-h3 text-ui-ink">{{ option.label }}</span>
+                  <span class="block text-ui-cap text-ui-muted">{{ option.note }}</span>
+                </span>
+                <Lock v-if="isEdit && form.key_mode === option.value" class="w-4 h-4 text-ui-muted shrink-0" />
+                <Check v-else-if="form.key_mode === option.value" class="w-4 h-4 text-ui-ink shrink-0" />
+              </button>
+            </div>
+            <p v-if="isEdit" class="text-ui-cap text-ui-muted mt-2">The key mode is set when the license is created.</p>
+            <p v-if="fieldError('key_mode')" class="text-ui-cap text-ui-bad mt-2">{{ fieldError("key_mode") }}</p>
+          </div>
+
+          <div data-field="is_active" class="flex items-center justify-between gap-4 px-3.5 py-3 border border-ui-line rounded-ui-card">
+            <div class="flex items-center gap-3 min-w-0">
+              <Power class="w-4 h-4 text-ui-muted shrink-0" />
+              <div class="min-w-0">
+                <p class="text-ui-h3 text-ui-ink">{{ form.is_active ? "Active" : "Inactive" }}</p>
+                <p class="text-ui-cap text-ui-muted">Inactive keys are rejected on the next check.</p>
               </div>
             </div>
+            <LicenseStatusSwitch v-model="form.is_active" :label="null" />
           </div>
         </section>
 
         <!-- 5. Notes -->
-        <section :class="card">
-          <div :class="cardHeader">
-            <div class="w-9 h-9 bg-gray-100 rounded-[10px] flex items-center justify-center shrink-0">
-              <FileText class="w-[18px] h-[18px] text-gray-500" />
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+          <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+            <div class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center shrink-0">
+              <component :is="sections.notes.icon" class="w-4 h-4 text-ui-muted" />
             </div>
-            <h4 class="text-brand-dark font-bold">Notes</h4>
+            <div class="min-w-0">
+              <h3 class="text-ui-h2 text-ui-ink">{{ sections.notes.title }}</h3>
+              <p class="text-ui-cap text-ui-muted">{{ sections.notes.subtitle }}</p>
+            </div>
           </div>
-          <LicenseFormField field="notes" label="Internal Notes" :error="fieldError('notes')" :icon="FileText" v-slot="{ id }">
+          <LicenseFormField field="notes" label="Internal Notes" :error="fieldError('notes')" v-slot="{ id }">
             <textarea
               :id="id"
               v-model="form.notes"
               rows="3"
               placeholder="Invoice number, event, payment..."
-              :class="[inputClass('notes'), 'font-normal resize-none']"
+              :class="[inputClass('notes', false), 'resize-y']"
             ></textarea>
           </LicenseFormField>
         </section>
       </div>
 
-      <!-- ===================== License summary (sticky on lg) ===================== -->
-      <aside class="lg:col-span-4 lg:sticky lg:top-3 min-w-0">
-        <div class="bg-white border border-[#DCDEDD] rounded-[16px] overflow-hidden">
-          <div class="flex items-center gap-3 px-5 py-4 bg-gradient-to-br from-violet-50 to-white border-b border-[#DCDEDD]">
-            <ProductIcon :product="product" :size="40" />
+      <!-- ===================== Summary (sticky on lg) ===================== -->
+      <aside class="lg:col-span-4 lg:sticky lg:top-3 space-y-5 min-w-0 ui-anim-fade-up">
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card px-5 pt-5 pb-4 min-w-0">
+          <div class="flex items-center gap-3 mb-2">
+            <ProductIcon :product="product" :size="32" />
             <div class="min-w-0">
-              <p class="text-xs text-brand-light">License summary</p>
-              <p class="text-brand-dark font-bold truncate">{{ product?.name || "—" }}</p>
+              <p class="text-ui-cap text-ui-muted">Summary</p>
+              <p class="text-ui-h3 text-ui-ink truncate">{{ product?.name || "—" }}</p>
             </div>
           </div>
 
-          <dl class="px-5 py-4 space-y-3.5 text-sm">
-            <div class="flex items-center justify-between gap-3">
-              <dt class="text-brand-light">Platform</dt>
-              <dd>
-                <span v-if="platformInfo" class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="platformChipClass(form.platform)">
-                  {{ platformInfo.label }}
-                </span>
+          <dl class="divide-y divide-ui-line text-ui-small">
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="text-ui-muted">Platform</dt>
+              <dd class="text-ui-ink">{{ platformInfo?.label || "—" }}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="text-ui-muted">Plan</dt>
+              <dd class="text-ui-ink text-right">
+                {{ planInfo?.label || "—" }}<span v-if="!isOrganization" class="text-ui-muted"> &middot; {{ categoryLabel({ plan: form.plan }) }}</span>
               </dd>
             </div>
-            <div class="flex items-center justify-between gap-3">
-              <dt class="text-brand-light">Plan</dt>
-              <dd class="flex items-center gap-1.5 min-w-0">
-                <span v-if="planInfo" class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="planChipClass(form.plan)">
-                  {{ planInfo.label }}
-                </span>
-                <span v-if="!isOrganization" class="text-xs text-brand-light">{{ categoryLabel({ plan: form.plan }) }}</span>
+            <div class="flex items-start justify-between gap-3 py-2.5">
+              <dt class="text-ui-muted shrink-0">{{ isOrganization ? "Organization" : "Licensee" }}</dt>
+              <dd class="text-right min-w-0 break-words" :class="form.licensee_name ? 'text-ui-ink' : 'text-ui-faint'">{{ display(form.licensee_name) }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3 py-2.5">
+              <dt class="text-ui-muted shrink-0">Email</dt>
+              <dd class="text-right min-w-0 break-all" :class="form.licensee_email ? 'text-ui-ink' : 'text-ui-faint'">{{ display(form.licensee_email) }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3 py-2.5">
+              <dt class="text-ui-muted shrink-0">Phone</dt>
+              <dd class="text-right min-w-0" :class="form.phone ? 'text-ui-ink' : 'text-ui-faint'">{{ display(form.phone) }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3 py-2.5">
+              <dt class="text-ui-muted shrink-0">Address</dt>
+              <dd class="text-right min-w-0 break-words" :class="fullAddress ? 'text-ui-ink' : 'text-ui-faint'">{{ display(fullAddress) }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3 py-2.5">
+              <dt class="text-ui-muted shrink-0">Active period</dt>
+              <dd v-if="period.lifetime" class="text-ui-ink text-right">Lifetime &middot; never expires</dd>
+              <dd v-else class="text-ui-ink text-right tabular-nums">
+                {{ period.start }} &rarr;
+                <template v-if="period.end">{{ period.end }}</template>
+                <span v-else class="text-ui-faint">pick a date</span>
+                <span v-if="period.days !== null" class="block text-ui-cap text-ui-muted">{{ period.days }} days</span>
               </dd>
             </div>
-            <div class="flex items-start justify-between gap-3">
-              <dt class="text-brand-light shrink-0">{{ isOrganization ? "Organization" : "Licensee" }}</dt>
-              <dd class="text-right font-semibold min-w-0 break-words" :class="form.licensee_name ? 'text-brand-dark' : 'text-gray-300'">
-                {{ display(form.licensee_name) }}
-              </dd>
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="text-ui-muted">Max devices</dt>
+              <dd class="text-ui-ink tabular-nums">{{ display(form.max_devices) }}</dd>
             </div>
-            <div class="flex items-start justify-between gap-3">
-              <dt class="text-brand-light shrink-0">Email</dt>
-              <dd class="text-right min-w-0 break-all" :class="form.licensee_email ? 'text-brand-dark' : 'text-gray-300'">
-                {{ display(form.licensee_email) }}
-              </dd>
-            </div>
-            <div class="flex items-start justify-between gap-3">
-              <dt class="text-brand-light shrink-0">Phone</dt>
-              <dd class="text-right min-w-0" :class="form.phone ? 'text-brand-dark' : 'text-gray-300'">{{ display(form.phone) }}</dd>
-            </div>
-            <div class="flex items-start justify-between gap-3">
-              <dt class="text-brand-light shrink-0">Address</dt>
-              <dd class="text-right min-w-0 break-words" :class="fullAddress ? 'text-brand-dark' : 'text-gray-300'">{{ display(fullAddress) }}</dd>
-            </div>
-
-            <div class="pt-3.5 border-t border-[#F1F1F1]">
-              <dt class="flex items-center gap-1.5 text-brand-light mb-1.5"><CalendarRange class="w-4 h-4" /> Active period</dt>
-              <dd v-if="period.lifetime" class="flex items-center gap-1.5 font-semibold text-violet-700">
-                <InfinityIcon class="w-4 h-4" /> Lifetime &middot; never expires
-              </dd>
-              <dd v-else class="text-brand-dark">
-                <span class="font-semibold">{{ period.start }}</span>
-                <span class="text-gray-400 mx-1">&rarr;</span>
-                <span v-if="period.end" class="font-semibold">{{ period.end }}</span>
-                <span v-else class="text-gray-300">pick a date</span>
-                <span v-if="period.days !== null" class="block text-xs text-brand-light mt-0.5">{{ period.days }} days</span>
-              </dd>
-            </div>
-            <div class="flex items-center justify-between gap-3">
-              <dt class="flex items-center gap-1.5 text-brand-light"><MonitorSmartphone class="w-4 h-4" /> Max devices</dt>
-              <dd class="font-semibold text-brand-dark">{{ display(form.max_devices) }}</dd>
-            </div>
-            <div class="flex items-center justify-between gap-3">
-              <dt class="flex items-center gap-1.5 text-brand-light"><KeyRound class="w-4 h-4" /> Keys</dt>
-              <dd class="font-semibold text-brand-dark text-right">
-                {{ perDevice ? `${display(form.max_devices)} · one per device` : "One shared key" }}
-              </dd>
-            </div>
-            <div class="pt-3.5 border-t border-[#F1F1F1]">
-              <dt class="flex items-center gap-1.5 text-brand-light mb-1.5">
-                <KeyRound class="w-4 h-4" />
-                {{ licenseKey ? (perDevice ? "Key 1" : "Key") : keyPreviews.length > 1 ? "Key previews (2 platforms)" : perDevice ? "Key 1 preview" : "Key preview" }}
-              </dt>
-              <dd class="space-y-1.5">
-                <p
-                  v-for="preview in keyPreviews"
-                  :key="preview"
-                  class="font-mono text-xs font-bold tracking-wider text-brand-dark bg-slate-50 border border-dashed border-[#DCDEDD] rounded-[10px] px-3 py-2 break-all"
-                >
-                  {{ preview }}
-                </p>
-                <p v-if="perDevice && !licenseKey && Number(form.max_devices) > 1" class="text-[11px] text-brand-light">
-                  + {{ Number(form.max_devices) - 1 }} more key(s){{ keyPreviews.length > 1 ? " per platform" : "" }} with the same number.
-                </p>
-              </dd>
-            </div>
-
-            <!-- Required fields -->
-            <div class="pt-3.5 border-t border-[#F1F1F1]">
-              <dt class="flex items-center justify-between gap-2 mb-2">
-                <span class="flex items-center gap-1.5 text-brand-light"><ListChecks class="w-4 h-4" /> Required fields</span>
-                <span
-                  class="text-xs font-semibold px-2 py-0.5 rounded-full"
-                  :class="allDone ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'"
-                >
-                  {{ doneCount }} of {{ checklist.length }} complete
-                </span>
-              </dt>
-              <dd>
-                <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-2.5">
-                  <div
-                    class="h-full rounded-full transition-all duration-300"
-                    :class="allDone ? 'bg-emerald-500' : 'bg-amber-400'"
-                    :style="{ width: `${(doneCount / checklist.length) * 100}%` }"
-                  ></div>
-                </div>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-x-3 gap-y-1">
-                  <li v-for="item in checklist" :key="item.field" class="flex items-center gap-1.5 text-xs">
-                    <CheckCircle2 v-if="item.done" class="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <Circle v-else class="w-3.5 h-3.5 text-gray-300 shrink-0" />
-                    <span :class="item.done ? 'text-brand-dark' : 'text-brand-light'">{{ item.label }}</span>
-                  </li>
-                </ul>
-              </dd>
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="text-ui-muted">Keys</dt>
+              <dd class="text-ui-ink text-right">{{ perDevice ? `${display(form.max_devices)}, one per device` : "One shared key" }}</dd>
             </div>
           </dl>
 
-          <div class="hidden lg:flex flex-col gap-2 px-5 pb-5">
-            <button type="submit" :disabled="loading" :class="[primaryBtn, 'w-full py-3']">
-              <Save class="w-4 h-4 text-white" />
-              <span class="text-brand-white text-sm font-semibold">{{ loading ? "Saving..." : submitLabel }}</span>
-            </button>
-            <button type="button" @click="emit('cancel')" :class="[secondaryBtn, 'w-full']">Cancel</button>
+          <div class="pt-3 border-t border-ui-line">
+            <p class="text-ui-over uppercase text-ui-muted mb-1.5">
+              {{ licenseKey ? (perDevice ? "Key 1" : "Key") : keyPreviews.length > 1 ? "Key previews (2 platforms)" : perDevice ? "Key 1 preview" : "Key preview" }}
+            </p>
+            <div class="space-y-1.5">
+              <p
+                v-for="preview in keyPreviews"
+                :key="preview"
+                class="font-mono text-ui-cap font-medium tracking-wide text-ui-ink bg-ui-subtle border border-dashed border-ui-line-strong rounded-ui-control px-3 py-2 break-all"
+              >
+                {{ preview }}
+              </p>
+            </div>
+            <p v-if="perDevice && !licenseKey && Number(form.max_devices) > 1" class="text-ui-cap text-ui-muted mt-1.5">
+              + {{ Number(form.max_devices) - 1 }} more key(s){{ keyPreviews.length > 1 ? " per platform" : "" }} with the same number.
+            </p>
           </div>
-        </div>
-      </aside>
-    </div>
+        </section>
 
-    <!-- Sticky bottom bar below lg -->
-    <div class="lg:hidden sticky bottom-0 z-20 -mx-3 mt-5 px-3 py-3 bg-white/95 backdrop-blur border-t border-[#DCDEDD] flex items-center gap-3">
-      <span
-        class="text-xs font-semibold px-2 py-1 rounded-full shrink-0"
-        :class="allDone ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'"
-      >
-        {{ doneCount }}/{{ checklist.length }}
-      </span>
-      <button type="button" @click="emit('cancel')" :class="[secondaryBtn, 'hidden sm:block']">Cancel</button>
-      <button type="submit" :disabled="loading" :class="[primaryBtn, 'flex-1 py-3']">
-        <Save class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">{{ loading ? "Saving..." : submitLabel }}</span>
-      </button>
+        <!-- Required fields -->
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 min-w-0">
+          <div class="flex items-center justify-between gap-2 mb-2.5">
+            <h3 class="text-ui-h3 text-ui-ink">Required fields</h3>
+            <span class="text-ui-cap font-medium px-2 py-0.5 rounded-full tabular-nums" :class="allDone ? 'bg-ui-ok-soft text-ui-ok' : 'bg-ui-warn-soft text-ui-warn'">
+              {{ doneCount }} of {{ checklist.length }}
+            </span>
+          </div>
+          <div class="h-1 w-full bg-ui-subtle rounded-full overflow-hidden mb-3" role="progressbar" :aria-valuenow="doneCount" aria-valuemin="0" :aria-valuemax="checklist.length" aria-label="Required fields complete">
+            <div class="h-full rounded-full transition-all duration-ui-slow" :class="allDone ? 'bg-ui-ok' : 'bg-ui-ink'" :style="{ width: `${(doneCount / checklist.length) * 100}%` }"></div>
+          </div>
+          <ul class="grid grid-cols-2 gap-x-3 gap-y-1.5">
+            <li v-for="item in checklist" :key="item.field" class="flex items-center gap-1.5 text-ui-cap min-w-0">
+              <Check v-if="item.done" class="w-3.5 h-3.5 text-ui-ok shrink-0" />
+              <Circle v-else class="w-3.5 h-3.5 text-ui-line-strong shrink-0" />
+              <span class="truncate" :class="item.done ? 'text-ui-text' : 'text-ui-faint'">{{ item.label }}</span>
+            </li>
+          </ul>
+        </section>
+
+        <UiButton type="submit" size="lg" block :icon="Check" :loading="loading">{{ loading ? "Saving..." : submitLabel }}</UiButton>
+      </aside>
     </div>
   </form>
 </template>

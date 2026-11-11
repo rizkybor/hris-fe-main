@@ -23,6 +23,7 @@ import {
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiBadge, UiEmpty } from "@/components/ui";
 import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
 import LicenseProductFormModal from "@/components/admin/license-manager/LicenseProductFormModal.vue";
 import LicenseKpiCard from "@/components/admin/license-manager/LicenseKpiCard.vue";
@@ -104,10 +105,10 @@ const kpis = computed(() => [
 ]);
 
 const stats = (p) => [
-  { key: "active", label: "Active", value: p.active ?? 0, dot: "bg-emerald-500" },
-  { key: "expiring_soon", label: "Expiring", value: p.expiring_soon ?? 0, dot: "bg-amber-500" },
-  { key: "expired", label: "Expired", value: p.expired ?? 0, dot: "bg-red-500" },
-  { key: "inactive", label: "Inactive", value: p.inactive ?? 0, dot: "bg-gray-400" },
+  { key: "active", label: "Active", value: p.active ?? 0, dot: "bg-ui-ok" },
+  { key: "expiring_soon", label: "Expiring", value: p.expiring_soon ?? 0, dot: "bg-ui-warn" },
+  { key: "expired", label: "Expired", value: p.expired ?? 0, dot: "bg-ui-bad" },
+  { key: "inactive", label: "Inactive", value: p.inactive ?? 0, dot: "bg-ui-faint" },
 ];
 // Status share bar, used when the overview has no per-plan counts.
 const statusShare = (p) => {
@@ -166,38 +167,24 @@ const remove = async (product) => {
   }
 };
 
-const primaryBtn =
-  "rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 px-4 py-2.5 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] text-white text-sm font-semibold";
-const secondaryBtn =
-  "rounded-[12px] border border-[#DCDEDD] bg-white hover:border-violet-400 hover:bg-violet-50/40 transition-all duration-300 px-4 py-2.5 inline-flex items-center justify-center gap-2 text-sm font-semibold text-brand-dark";
 const menuItem =
-  "w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
+  "w-full flex items-center gap-2.5 px-2.5 h-9 text-ui-small text-left rounded-[6px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
 </script>
 
 <template>
-  <div class="px-4 py-4 space-y-6">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <Alert v-if="success" type="success" :title="success" message="" :show="!!success" @close="success = ''" />
     <Alert v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
 
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center shrink-0 shadow-sm">
-          <KeyRound class="w-6 h-6 text-white" />
-        </div>
-        <div>
-          <h1 class="text-brand-dark text-xl font-bold leading-tight">License Manager</h1>
-          <p class="text-brand-light text-sm mt-0.5">Licenses for all your apps</p>
-        </div>
-      </div>
-      <button v-if="canCreateProduct" type="button" @click="openAdd" :class="[primaryBtn, 'w-full md:w-auto']">
-        <Plus class="w-4 h-4" />
-        Add Product
-      </button>
-    </div>
+    <UiPageHeader title="License Manager" subtitle="Licenses for all your apps">
+      <template #actions>
+        <UiButton v-if="canCreateProduct" :icon="Plus" class="w-full sm:w-auto" @click="openAdd">Add Product</UiButton>
+      </template>
+    </UiPageHeader>
 
     <!-- KPI row (all products) -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 ui-stagger">
       <LicenseKpiCard
         v-for="kpi in kpis"
         :key="kpi.key"
@@ -213,15 +200,15 @@ const menuItem =
 
     <!-- Products -->
     <section>
-      <div class="flex items-center justify-between gap-3 mb-4">
-        <h2 class="text-base font-bold text-brand-dark">Products</h2>
-        <span v-if="!loading" class="text-xs text-brand-light tabular-nums">{{ products.length }} product{{ products.length === 1 ? "" : "s" }}</span>
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 class="text-ui-h2 text-ui-ink">Products</h2>
+        <span v-if="!loading" class="text-ui-cap text-ui-muted tabular-nums">{{ products.length }} product{{ products.length === 1 ? "" : "s" }}</span>
       </div>
 
-      <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
-        <div v-for="i in 3" :key="i" class="bg-white border border-[#DCDEDD] rounded-[16px] p-5 space-y-4">
+      <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
+        <div v-for="i in 3" :key="i" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 space-y-4">
           <div class="flex items-center gap-3">
-            <Skeleton width="56px" height="56px" rounded="13px" />
+            <Skeleton width="48px" height="48px" rounded="11px" />
             <div class="flex-1 space-y-2">
               <Skeleton width="45%" height="14px" />
               <Skeleton width="30%" height="10px" />
@@ -229,32 +216,32 @@ const menuItem =
           </div>
           <Skeleton height="36px" />
           <Skeleton height="6px" rounded="999px" />
-          <Skeleton height="38px" rounded="12px" />
+          <Skeleton height="36px" rounded="8px" />
         </div>
       </div>
 
-      <div v-else-if="products.length || canCreateProduct" class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+      <div v-else-if="products.length || canCreateProduct" class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3 ui-stagger">
         <article
           v-for="p in products"
           :key="p.code"
-          class="relative flex flex-col border rounded-[16px] shadow-sm transition-all duration-200"
+          class="relative flex flex-col border rounded-ui-card transition-colors"
           :class="[
-            p.is_active ? 'bg-white border-[#DCDEDD] hover:shadow-md hover:border-violet-300' : 'bg-gray-50 border-[#E5E7EB]',
+            p.is_active ? 'bg-ui-surface border-ui-line hover:border-ui-line-strong' : 'bg-ui-subtle border-ui-line',
             menuCode === p.code ? 'z-20' : '',
           ]"
         >
           <div class="p-5 flex-1" :class="{ 'opacity-60 grayscale': !p.is_active }">
             <!-- Identity -->
             <div class="flex items-start gap-3.5" :class="{ 'pr-10': hasProductMenu }">
-              <ProductIcon :product="p" :size="56" class="shadow-sm" />
-              <div class="flex-1 min-w-0 pt-0.5">
+              <ProductIcon :product="p" :size="48" />
+              <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                  <h3 class="text-brand-dark text-base font-bold truncate">{{ p.name }}</h3>
-                  <span v-if="!p.is_active" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 shrink-0">Inactive</span>
+                  <h3 class="text-ui-h2 text-ui-ink truncate">{{ p.name }}</h3>
+                  <UiBadge v-if="!p.is_active" tone="neutral" class="shrink-0">Inactive</UiBadge>
                 </div>
                 <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-                  <span class="text-[11px] font-mono font-semibold text-brand-light bg-gray-50 border border-[#EEEEEE] rounded px-1.5 py-0.5">{{ p.code }}</span>
-                  <span class="text-[11px] font-mono font-semibold text-violet-700 bg-violet-50 rounded px-1.5 py-0.5">{{ keyExample(p.key_prefix) }}</span>
+                  <span class="text-ui-cap font-mono text-ui-muted bg-ui-subtle border border-ui-line rounded-md px-1.5 py-px">{{ p.code }}</span>
+                  <span class="text-ui-cap font-mono text-ui-accent bg-ui-accent-soft rounded-md px-1.5 py-px">{{ keyExample(p.key_prefix) }}</span>
                 </div>
               </div>
             </div>
@@ -262,14 +249,14 @@ const menuItem =
             <!-- Counts -->
             <div class="mt-5 flex items-end justify-between gap-3">
               <div>
-                <p class="text-3xl font-bold text-brand-dark leading-none tabular-nums">{{ p.total ?? 0 }}</p>
-                <p class="text-xs text-brand-light mt-1">license{{ p.total === 1 ? "" : "s" }}</p>
+                <p class="text-ui-display text-ui-ink tabular-nums">{{ p.total ?? 0 }}</p>
+                <p class="text-ui-cap text-ui-muted">license{{ p.total === 1 ? "" : "s" }}</p>
               </div>
               <div class="flex flex-wrap justify-end gap-x-3 gap-y-1">
-                <span v-for="s in stats(p)" :key="s.key" class="inline-flex items-center gap-1.5 text-xs" :title="s.label">
+                <span v-for="s in stats(p)" :key="s.key" class="inline-flex items-center gap-1.5 text-ui-cap" :title="s.label">
                   <span class="w-1.5 h-1.5 rounded-full" :class="s.dot"></span>
-                  <span class="text-brand-light">{{ s.label }}</span>
-                  <span class="font-semibold text-brand-dark tabular-nums">{{ s.value }}</span>
+                  <span class="text-ui-muted">{{ s.label }}</span>
+                  <span class="font-medium text-ui-ink tabular-nums">{{ s.value }}</span>
                 </span>
               </div>
             </div>
@@ -277,7 +264,7 @@ const menuItem =
             <!-- Per-plan bar (status share when the API has no plan counts) -->
             <div class="mt-4">
               <PlanDistributionBar v-if="p.by_plan" :counts="p.by_plan" :height="6" :legend="false" />
-              <div v-else class="flex w-full h-1.5 overflow-hidden rounded-full bg-gray-100 gap-px" role="img" aria-label="Licenses by status">
+              <div v-else class="flex w-full h-1.5 overflow-hidden rounded-full bg-ui-subtle gap-px" role="img" aria-label="Licenses by status">
                 <template v-for="s in statusShare(p)" :key="s.key">
                   <div v-if="s.value" class="h-full" :class="s.dot" :style="{ width: `${s.pct}%` }" :title="`${s.label}: ${s.value}`"></div>
                 </template>
@@ -286,16 +273,12 @@ const menuItem =
           </div>
 
           <!-- Actions -->
-          <div class="px-5 pb-5 flex items-center gap-2.5">
-            <RouterLink v-if="p.is_active" :to="dashboardRoute(p)" :class="[primaryBtn, 'flex-1 !py-2']">
-              Open licenses
-              <ArrowRight class="w-4 h-4" />
-            </RouterLink>
-            <span v-else class="flex-1 text-xs text-brand-light py-2">Switch it on to manage its licenses.</span>
-            <RouterLink v-if="p.is_active && canCreateLicense" :to="createRoute(p)" :class="[secondaryBtn, '!py-2']" title="Create license">
-              <Plus class="w-4 h-4 text-violet-600" />
+          <div class="px-5 pb-5 flex items-center gap-2">
+            <UiButton v-if="p.is_active" :to="dashboardRoute(p)" :icon-right="ArrowRight" class="flex-1">Open licenses</UiButton>
+            <span v-else class="flex-1 text-ui-cap text-ui-muted py-2">Switch it on to manage its licenses.</span>
+            <UiButton v-if="p.is_active && canCreateLicense" variant="secondary" :icon="Plus" :to="createRoute(p)" title="Create license">
               <span class="hidden sm:inline">Create license</span>
-            </RouterLink>
+            </UiButton>
           </div>
 
           <!-- ⋯ menu -->
@@ -304,35 +287,29 @@ const menuItem =
               type="button"
               @click="toggleMenu(p.code)"
               :disabled="busyCode === p.code"
-              class="w-8 h-8 flex items-center justify-center rounded-lg border border-transparent hover:border-[#DCDEDD] hover:bg-white transition-all disabled:opacity-40"
-              :class="{ 'border-[#DCDEDD] bg-white': menuCode === p.code }"
+              class="w-8 h-8 flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors disabled:opacity-40"
+              :class="{ 'bg-ui-hover text-ui-ink': menuCode === p.code }"
               aria-label="Product actions"
               :aria-expanded="menuCode === p.code"
             >
-              <MoreHorizontal class="w-4 h-4 text-gray-600" />
+              <MoreHorizontal class="w-4 h-4" />
             </button>
-            <Transition name="menu">
+            <Transition name="ui-pop">
               <div
                 v-if="menuCode === p.code"
-                class="absolute right-0 mt-1.5 w-52 bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg p-1.5 z-30"
+                class="absolute right-0 mt-1 w-52 bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay p-1 z-30"
                 role="menu"
               >
-                <button v-if="canEditProduct" type="button" role="menuitem" @click="openEdit(p)" :class="[menuItem, 'text-brand-dark hover:bg-gray-50']">
-                  <Pencil class="w-4 h-4 text-gray-500" /> Edit
+                <button v-if="canEditProduct" type="button" role="menuitem" @click="openEdit(p)" :class="[menuItem, 'text-ui-ink hover:bg-ui-hover']">
+                  <Pencil class="w-4 h-4 text-ui-muted" /> Edit
                 </button>
-                <button
-                  v-if="canEditProduct"
-                  type="button"
-                  role="menuitem"
-                  @click="toggleActive(p)"
-                  :class="[menuItem, 'text-brand-dark hover:bg-gray-50']"
-                >
-                  <PowerOff v-if="p.is_active" class="w-4 h-4 text-amber-600" />
-                  <Power v-else class="w-4 h-4 text-emerald-600" />
+                <button v-if="canEditProduct" type="button" role="menuitem" @click="toggleActive(p)" :class="[menuItem, 'text-ui-ink hover:bg-ui-hover']">
+                  <PowerOff v-if="p.is_active" class="w-4 h-4 text-ui-warn" />
+                  <Power v-else class="w-4 h-4 text-ui-ok" />
                   {{ p.is_active ? "Deactivate" : "Activate" }}
                 </button>
                 <template v-if="canDeleteProduct">
-                  <div v-if="canEditProduct" class="my-1 border-t border-[#F1F1F1]"></div>
+                  <div v-if="canEditProduct" class="my-1 border-t border-ui-line"></div>
                   <!-- Wrapper keeps the tooltip working while the button is disabled -->
                   <span class="block" :title="p.licenses_count > 0 ? 'Products with licenses cannot be deleted. Deactivate it instead.' : ''">
                     <button
@@ -340,7 +317,7 @@ const menuItem =
                       role="menuitem"
                       @click="remove(p)"
                       :disabled="p.licenses_count > 0"
-                      :class="[menuItem, 'text-red-600 hover:bg-red-50 disabled:hover:bg-transparent']"
+                      :class="[menuItem, 'text-ui-bad hover:bg-ui-bad-soft disabled:hover:bg-transparent']"
                     >
                       <Trash2 class="w-4 h-4" /> Delete
                     </button>
@@ -356,25 +333,23 @@ const menuItem =
           v-if="canCreateProduct"
           type="button"
           @click="openAdd"
-          class="group min-h-[220px] flex flex-col items-center justify-center gap-3 rounded-[16px] border-2 border-dashed border-[#DCDEDD] text-brand-light hover:border-violet-400 hover:bg-violet-50/40 hover:text-violet-700 transition-all"
+          class="group min-h-[220px] flex flex-col items-center justify-center gap-2 rounded-ui-card border border-dashed border-ui-line-strong text-ui-muted hover:bg-ui-surface hover:text-ui-ink transition-colors"
         >
-          <span class="w-12 h-12 rounded-full bg-white border border-[#DCDEDD] flex items-center justify-center shadow-sm group-hover:border-violet-300 transition-colors">
+          <span class="w-10 h-10 rounded-full bg-ui-surface border border-ui-line flex items-center justify-center group-hover:border-ui-line-strong transition-colors">
             <Plus class="w-5 h-5" />
           </span>
-          <span class="text-sm font-semibold">Add product</span>
-          <span class="text-xs text-brand-light">Register another app for license keys</span>
+          <span class="text-ui-small font-medium text-ui-ink">Add product</span>
+          <span class="text-ui-cap text-ui-muted">Register another app for license keys</span>
         </button>
       </div>
 
-      <div v-else class="text-center py-14 bg-white rounded-[16px] border border-dashed border-[#DCDEDD]">
-        <Package class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p class="text-sm font-semibold text-brand-dark">No products yet</p>
-        <p class="text-xs text-brand-light">Products appear here once they are added.</p>
+      <div v-else class="bg-ui-surface border border-dashed border-ui-line-strong rounded-ui-card">
+        <UiEmpty :icon="Package" title="No products yet" message="Products appear here once they are added." />
       </div>
     </section>
 
     <!-- Panels (license-manager-view) -->
-    <div v-if="canView" class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+    <div v-if="canView" class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
       <ExpiringList :days="30" :limit="10" />
       <RecentActivity :limit="10" />
     </div>
@@ -388,15 +363,3 @@ const menuItem =
     />
   </div>
 </template>
-
-<style scoped>
-.menu-enter-active,
-.menu-leave-active {
-  transition: opacity 0.12s ease, transform 0.12s ease;
-}
-.menu-enter-from,
-.menu-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-</style>

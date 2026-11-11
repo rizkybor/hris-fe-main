@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
-  CalculatorIcon,
   ArrowLeft,
   PlusIcon,
   Trash2,
@@ -10,13 +9,10 @@ import {
   PuzzleIcon,
   Globe,
   InfoIcon,
-  Loader2,
   SaveIcon,
   ClockIcon,
   History,
-  X,
   Search,
-  ChevronDown,
 } from "lucide-vue-next";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { useAlertModalStore } from "@/stores/alertModal";
@@ -26,6 +22,7 @@ import { formatRupiah } from "@/utils/formatUtils";
 import { calculateMarketingFee } from "@/utils/marketingFee";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiSwitch, UiModal, UiEmpty } from "@/components/ui";
 
 const route = useRoute();
 const router = useRouter();
@@ -480,6 +477,32 @@ const canSave = computed(() => {
   return form.value.items.every((item) => item.name && item.name.trim().length > 0);
 });
 
+// ---- Presentation-only helpers (no calculation logic) ----
+const scenarioCards = [
+  { value: "feature", label: "New Feature", desc: "Adding features to the existing system", icon: PuzzleIcon },
+  { value: "build", label: "Build from Scratch", desc: "Building a new application, per module", icon: Layers3Icon },
+  { value: "landing_page", label: "Landing Page", desc: "Server, Design, and Development package", icon: Globe },
+];
+const scenarioLabel = (s) => (s === "feature" ? "New Feature" : s === "build" ? "Build from Scratch" : "Landing Page");
+const pphOptions = computed(() =>
+  pphTypes.value.map((type) => ({
+    value: type.value,
+    label: `${type.label}${type.default_rate !== null ? ` (${type.default_rate}%)` : ""}`,
+  }))
+);
+const noSpin = "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+const cellInput =
+  noSpin +
+  " w-full h-8 px-2 text-right tabular-nums text-ui-small text-ui-ink bg-ui-surface border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
+const cellText =
+  "w-full h-8 px-2.5 text-ui-small font-medium text-ui-ink placeholder:text-ui-faint placeholder:font-normal bg-ui-surface border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
+const fieldInput =
+  "w-full h-[38px] px-3 text-right tabular-nums text-ui-body text-ui-ink bg-ui-surface border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus disabled:bg-ui-subtle disabled:text-ui-muted";
+const fieldLabel = "block text-ui-small font-medium text-ui-ink mb-1.5";
+const cellLabel = "block text-ui-cap text-ui-muted mb-1";
+const iconBtn =
+  "ui-press w-8 h-8 shrink-0 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:bg-ui-bad-soft hover:text-ui-bad disabled:opacity-30 disabled:pointer-events-none";
+
 const submit = async () => {
   errorMessage.value = "";
   if (!canSave.value) {
@@ -502,675 +525,615 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto">
-    <!-- Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 mb-5">
-      <div class="flex items-center gap-2.5">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader
+      :title="isEditing ? 'Edit Estimate' : 'Create New Estimate'"
+      subtitle="Fill in the details below, the total will be calculated automatically"
+    >
+      <template #eyebrow>
         <button
+          type="button"
+          class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
+          aria-label="Back"
           @click="router.back()"
-          class="bg-white w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-blue-400 transition-all flex-shrink-0"
         >
-          <ArrowLeft class="w-5 h-5 text-gray-600" />
+          <ArrowLeft class="w-4 h-4" /> Back
         </button>
-        <div class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center flex-shrink-0">
-          <CalculatorIcon class="w-6 h-6 text-blue-600" />
-        </div>
-        <div>
-          <h1 class="text-brand-dark text-base font-bold">
-            {{ isEditing ? "Edit Estimate" : "Create New Estimate" }}
-          </h1>
-          <p class="text-brand-light text-xs">Fill in the details below, the total will be calculated automatically</p>
-        </div>
-      </div>
-    </div>
+      </template>
+      <template #actions>
+        <UiButton variant="secondary" @click="router.back()">Cancel</UiButton>
+        <UiButton :icon="SaveIcon" :loading="saving" :disabled="!canSave" @click="submit">
+          {{ saving ? "Saving..." : isEditing ? "Save Changes" : "Save Estimate" }}
+        </UiButton>
+      </template>
+    </UiPageHeader>
 
     <Alert type="danger" :title="errorMessage" message="" :show="!!errorMessage" @close="errorMessage = ''" />
 
-    <div v-if="loadingCalculation || loadingRateSetting || loadingLandingPageRateSetting" class="space-y-3.5 mt-3.5">
-      <Skeleton height="120px" rounded="14px" />
-      <Skeleton height="300px" rounded="14px" />
+    <div
+      v-if="loadingCalculation || loadingRateSetting || loadingLandingPageRateSetting"
+      class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5"
+    >
+      <div class="space-y-5">
+        <Skeleton height="180px" rounded="12px" />
+        <Skeleton height="320px" rounded="12px" />
+      </div>
+      <Skeleton height="420px" rounded="12px" />
     </div>
 
-    <div v-else class="grid grid-cols-1 xl:grid-cols-3 gap-5 mt-5">
+    <div v-else class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
       <!-- Main form -->
-      <div class="xl:col-span-2 space-y-5">
+      <div class="space-y-5 min-w-0">
         <!-- Basic info -->
-        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 space-y-3.5">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-              <label class="block text-sm font-semibold text-brand-dark mb-1">Project Name Example <span class="text-red-500">*</span></label>
-              <input
-                v-model="form.name"
-                type="text"
-                placeholder="example: Added WA Monitoring Featured"
-                class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-brand-dark mb-1">Client Name (Optional)</label>
-              <input
-                v-model="form.client_name"
-                type="text"
-                placeholder="example: PT. Client Name"
-                class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-              />
-            </div>
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card px-4 sm:px-6 py-5 space-y-5">
+          <h2 class="text-ui-h2 text-ui-ink">Estimate details</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <UiInput v-model="form.name" label="Project Name Example" required placeholder="example: Added WA Monitoring Featured" />
+            <UiInput v-model="form.client_name" label="Client Name (Optional)" placeholder="example: PT. Client Name" />
           </div>
 
           <!-- Scenario toggle -->
           <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1.5">Scenario</label>
+            <p :class="fieldLabel">Scenario</p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <button
+                v-for="card in scenarioCards"
+                :key="card.value"
                 type="button"
-                @click="switchScenario('feature')"
-                class="flex items-center gap-2.5 p-3.5 rounded-[12px] border-2 text-left transition-all"
+                :aria-pressed="form.scenario === card.value"
+                class="ui-press flex items-start gap-3 p-3.5 rounded-ui-card border text-left transition-colors"
                 :class="
-                  form.scenario === 'feature'
-                    ? 'border-[#0C51D9] bg-blue-50'
-                    : 'border-[#DCDEDD] hover:border-blue-200 bg-white'
+                  form.scenario === card.value
+                    ? 'border-ui-accent bg-ui-accent-soft shadow-ui-focus'
+                    : 'border-ui-line bg-ui-surface hover:bg-ui-hover'
                 "
+                @click="switchScenario(card.value)"
               >
-                <div class="w-10 h-10 bg-blue-100 rounded-[10px] flex items-center justify-center flex-shrink-0">
-                  <PuzzleIcon class="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p class="text-brand-dark text-sm font-bold">New Feature</p>
-                  <p class="text-brand-light text-xs">Adding features to the existing system</p>
-                </div>
-              </button>
-              <button
-                type="button"
-                @click="switchScenario('build')"
-                class="flex items-center gap-2.5 p-3.5 rounded-[12px] border-2 text-left transition-all"
-                :class="
-                  form.scenario === 'build'
-                    ? 'border-violet-500 bg-violet-50'
-                    : 'border-[#DCDEDD] hover:border-violet-200 bg-white'
-                "
-              >
-                <div class="w-10 h-10 bg-violet-100 rounded-[10px] flex items-center justify-center flex-shrink-0">
-                  <Layers3Icon class="w-5 h-5 text-violet-600" />
-                </div>
-                <div>
-                  <p class="text-brand-dark text-sm font-bold">Build from Scratch</p>
-                  <p class="text-brand-light text-xs">Building a new application, per module</p>
-                </div>
-              </button>
-              <button
-                type="button"
-                @click="switchScenario('landing_page')"
-                class="flex items-center gap-2.5 p-3.5 rounded-[12px] border-2 text-left transition-all"
-                :class="
-                  form.scenario === 'landing_page'
-                    ? 'border-emerald-500 bg-emerald-50'
-                    : 'border-[#DCDEDD] hover:border-emerald-200 bg-white'
-                "
-              >
-                <div class="w-10 h-10 bg-emerald-100 rounded-[10px] flex items-center justify-center flex-shrink-0">
-                  <Globe class="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p class="text-brand-dark text-sm font-bold">Landing Page</p>
-                  <p class="text-brand-light text-xs">Server, Design, and Development package</p>
-                </div>
+                <span
+                  class="w-9 h-9 rounded-ui-control flex items-center justify-center shrink-0"
+                  :class="form.scenario === card.value ? 'bg-ui-surface text-ui-accent' : 'bg-ui-subtle text-ui-muted'"
+                >
+                  <component :is="card.icon" class="w-[18px] h-[18px]" />
+                </span>
+                <span class="min-w-0">
+                  <span class="block text-ui-h3 text-ui-ink">{{ card.label }}</span>
+                  <span class="block text-ui-cap text-ui-muted mt-0.5">{{ card.desc }}</span>
+                </span>
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
         <!-- Items -->
-        <div v-if="form.scenario !== 'landing_page'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+        <section v-if="form.scenario !== 'landing_page'" class="bg-ui-surface border border-ui-line rounded-ui-card">
           <!-- Sentinel: a 1px marker just above the sticky header. The
                IntersectionObserver watching it flips isHeaderStuck the
                instant it scrolls out of view, i.e. exactly when the header
                below actually becomes pinned. -->
-          <div ref="stickySentinel" style="height: 1px; margin-bottom: -1px"></div>
+          <div ref="stickySentinel" class="h-px -mb-px"></div>
 
           <!-- Sticky so "Add Feature/Module" stays reachable while scrolling
-               through a long item list, instead of having to scroll back up
-               every time. top/margin offsets are inline styles, not
-               Tailwind utilities -- negative-value utility classes here
-               (-top-3, -mt-6, -mx-6, and their arbitrary-value equivalents)
-               were silently not being generated by this project's Tailwind
-               build for reasons that didn't reproduce anywhere else in the
-               codebase, so inline style sidesteps that entirely. The -12px
-               top offset cancels out <main>'s own p-2.5 page padding (see
-               Admin.vue layout) so this specific header sits flush against
-               the navbar with zero gap once pinned, rather than floating
-               below it. Gains a soft shadow/blur/accent bar only once
-               actually pinned (isHeaderStuck), so it doesn't look
-               "elevated" while still sitting flush in its normal spot. -->
-          <div class="sticky z-10 px-5 pt-5 pb-1.5 border-b transition-all duration-300 ease-out" :style="stickyHeaderStyle">
-            <div
-              class="absolute inset-x-0 top-0 h-[3px] transition-opacity duration-300"
-              :style="{ background: 'linear-gradient(to right, #0C51D9, #6366F1)', opacity: isHeaderStuck ? 1 : 0 }"
-            ></div>
-            <div class="flex items-center justify-between mb-1.5">
-              <div class="flex items-center gap-1.5">
-                <h3 class="text-brand-dark text-sm font-bold">
-                  {{ form.scenario === "feature" ? "Feature List" : "Module List" }}
-                </h3>
-                <span class="px-1.5 py-0.5 rounded-full bg-blue-50 text-[#0C51D9] text-xs font-bold tabular-nums">
-                  {{ form.items.length }}
-                </span>
+               through a long item list. Gains a soft shadow only once
+               actually pinned (isHeaderStuck). -->
+          <div
+            class="sticky top-0 z-10 bg-ui-surface border-b border-ui-line px-4 sm:px-6 pt-4 pb-3 transition-shadow duration-ui-base"
+            :class="isHeaderStuck ? 'shadow-ui-raised' : 'rounded-t-ui-card'"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <h2 class="text-ui-h2 text-ui-ink">{{ form.scenario === "feature" ? "Feature List" : "Module List" }}</h2>
+                <UiBadge class="tabular-nums">{{ form.items.length }}</UiBadge>
               </div>
               <div class="flex items-center gap-1.5">
-                <button
-                  v-if="!isEditing"
-                  type="button"
-                  @click="openReferenceModal"
-                  class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-2.5 py-1 inline-flex items-center gap-1"
-                >
-                  <History class="w-3.5 h-3.5 text-gray-600" />
-                  <span class="text-brand-dark text-xs font-semibold">Load from Previous Estimate</span>
-                </button>
-                <button
-                  type="button"
-                  @click="addItem"
-                  class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all px-2.5 py-1 inline-flex items-center gap-1"
-                >
-                  <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
-                  <span class="text-brand-dark text-xs font-semibold">{{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}</span>
-                </button>
+                <UiButton v-if="!isEditing" variant="secondary" size="sm" :icon="History" @click="openReferenceModal">
+                  Load from Previous Estimate
+                </UiButton>
+                <UiButton variant="secondary" size="sm" :icon="PlusIcon" @click="addItem">
+                  {{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}
+                </UiButton>
               </div>
             </div>
-            <p class="flex items-center gap-1 text-xs mb-2.5 text-gray-400 pb-1.5">
-              <InfoIcon class="w-3.5 h-3.5" />
+            <p class="flex items-start gap-1.5 text-ui-cap text-ui-muted mt-2">
+              <InfoIcon class="w-3.5 h-3.5 shrink-0 mt-px" />
               Complexity Factor: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Typical risk buffer 15&ndash;20%.
             </p>
           </div>
 
-          <div class="space-y-3.5 mt-3.5">
-            <div
-              v-for="(item, index) in form.items"
-              :key="index"
-              class="p-3.5 border border-[#DCDEDD] rounded-[12px] space-y-2.5 bg-slate-50"
-            >
-              <div class="flex items-center gap-1.5">
+          <!-- Desktop: editable line table -->
+          <div class="hidden md:block overflow-x-auto">
+            <table class="w-full border-collapse table-fixed min-w-[620px]">
+              <colgroup>
+                <col class="w-10" />
+                <col />
+                <template v-if="form.scenario === 'feature'">
+                  <col class="w-[74px]" /><col class="w-[74px]" /><col class="w-[74px]" /><col class="w-[74px]" />
+                </template>
+                <col v-else class="w-[110px]" />
+                <col class="w-[68px]" />
+                <col class="w-[64px]" />
+                <col class="w-[120px]" />
+                <col class="w-11" />
+              </colgroup>
+              <thead>
+                <tr class="text-ui-cap font-medium text-ui-muted align-bottom">
+                  <th class="pl-5 pr-0 py-2.5 text-left font-medium border-b border-ui-line">#</th>
+                  <th class="px-2 py-2.5 text-left font-medium border-b border-ui-line">
+                    {{ form.scenario === "feature" ? "Feature name" : "Module name" }}
+                  </th>
+                  <template v-if="form.scenario === 'feature'">
+                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Analysis Hours</th>
+                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Development Hours</th>
+                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Testing Hours</th>
+                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Deployment Hours</th>
+                  </template>
+                  <th v-else class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Estimated Hours</th>
+                  <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Complexity Factor</th>
+                  <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Buffer Risk %</th>
+                  <th class="px-2 py-2.5 text-right font-medium border-b border-ui-line">Final Price</th>
+                  <th class="pr-3 py-2.5 border-b border-ui-line"><span class="sr-only">Remove</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in form.items" :key="index" class="border-b border-ui-line last:border-b-0 hover:bg-ui-subtle/60">
+                  <td class="pl-5 pr-0 py-2.5 text-ui-cap text-ui-faint tabular-nums">{{ index + 1 }}</td>
+                  <td class="px-2 py-2.5">
+                    <input
+                      v-model="item.name"
+                      type="text"
+                      :placeholder="form.scenario === 'feature' ? 'Feature name' : 'Module name'"
+                      :aria-label="form.scenario === 'feature' ? 'Feature name' : 'Module name'"
+                      :class="cellText"
+                    />
+                  </td>
+                  <template v-if="form.scenario === 'feature'">
+                    <td class="px-1 py-2.5"><input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" aria-label="Analysis Hours" :class="cellInput" /></td>
+                    <td class="px-1 py-2.5"><input v-model.number="item.dev_hours" type="number" min="0" step="0.5" aria-label="Development Hours" :class="cellInput" /></td>
+                    <td class="px-1 py-2.5"><input v-model.number="item.testing_hours" type="number" min="0" step="0.5" aria-label="Testing Hours" :class="cellInput" /></td>
+                    <td class="px-1 py-2.5"><input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" aria-label="Deployment Hours" :class="cellInput" /></td>
+                  </template>
+                  <td v-else class="px-1 py-2.5">
+                    <input v-model.number="item.estimated_hours" type="number" min="0" step="0.5" aria-label="Estimated Hours" :class="cellInput" />
+                  </td>
+                  <td class="px-1 py-2.5"><input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" aria-label="Complexity Factor" :class="cellInput" /></td>
+                  <td class="px-1 py-2.5"><input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" aria-label="Buffer Risk %" :class="cellInput" /></td>
+                  <td class="px-2 py-2 text-right tabular-nums whitespace-nowrap">
+                    <span class="block text-ui-small font-semibold text-ui-ink">{{ formatRupiah(computedItems[index]?.finalPrice ?? 0) }}</span>
+                    <span class="block text-ui-cap text-ui-muted">{{ computedItems[index]?.totalHoursUsed.toFixed(1) }}h</span>
+                  </td>
+                  <td class="pr-3 py-2.5 text-right">
+                    <button
+                      type="button"
+                      :class="iconBtn"
+                      :disabled="form.items.length === 1"
+                      aria-label="Remove"
+                      title="Remove"
+                      @click="removeItem(index)"
+                    >
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Phones: stacked item cards -->
+          <ul class="md:hidden divide-y divide-ui-line">
+            <li v-for="(item, index) in form.items" :key="index" class="px-4 py-4 space-y-3">
+              <div class="flex items-center gap-2">
+                <span class="text-ui-cap text-ui-faint tabular-nums w-5">{{ index + 1 }}</span>
                 <input
                   v-model="item.name"
                   type="text"
                   :placeholder="form.scenario === 'feature' ? 'Feature name' : 'Module name'"
-                  class="flex-1 px-2.5 py-1.5 border border-[#DCDEDD] rounded-xl text-sm font-semibold focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+                  :aria-label="form.scenario === 'feature' ? 'Feature name' : 'Module name'"
+                  :class="[cellText, 'h-[38px] flex-1']"
                 />
                 <button
                   type="button"
-                  @click="removeItem(index)"
+                  :class="iconBtn"
                   :disabled="form.items.length === 1"
-                  class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl border border-[#DCDEDD] hover:border-red-400 hover:bg-red-50 group transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  aria-label="Remove"
+                  @click="removeItem(index)"
                 >
-                  <Trash2 class="w-4 h-4 text-gray-500 group-hover:text-red-600" />
+                  <Trash2 class="w-4 h-4" />
                 </button>
               </div>
+              <div class="grid grid-cols-2 gap-2.5 pl-7">
+                <template v-if="form.scenario === 'feature'">
+                  <label><span :class="cellLabel">Analysis Hours</span><input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
+                  <label><span :class="cellLabel">Development Hours</span><input v-model.number="item.dev_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
+                  <label><span :class="cellLabel">Testing Hours</span><input v-model.number="item.testing_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
+                  <label><span :class="cellLabel">Deployment Hours</span><input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
+                </template>
+                <label v-else class="col-span-2">
+                  <span :class="cellLabel">Estimated Hours</span>
+                  <input v-model.number="item.estimated_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" />
+                </label>
+                <label><span :class="cellLabel">Complexity Factor</span><input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" :class="[cellInput, 'h-[38px]']" /></label>
+                <label><span :class="cellLabel">Buffer Risk %</span><input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" :class="[cellInput, 'h-[38px]']" /></label>
+              </div>
+              <div class="flex items-center justify-between pl-7 text-ui-small">
+                <span class="text-ui-muted tabular-nums">{{ computedItems[index]?.totalHoursUsed.toFixed(1) }} usage history</span>
+                <span class="text-ui-ink font-semibold tabular-nums">{{ formatRupiah(computedItems[index]?.finalPrice ?? 0) }}</span>
+              </div>
+            </li>
+          </ul>
 
-              <div v-if="form.scenario === 'feature'" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <div>
-                  <label class="block text-xs text-gray-500 mb-1">Analysis Hours</label>
-                  <input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-                </div>
-                <div>
-                  <label class="block text-xs text-gray-500 mb-1">Development Hours</label>
-                  <input v-model.number="item.dev_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-                </div>
-                <div>
-                  <label class="block text-xs text-gray-500 mb-1">Testing Hours</label>
-                  <input v-model.number="item.testing_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-                </div>
-                <div>
-                  <label class="block text-xs text-gray-500 mb-1">Deployment Hours</label>
-                  <input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-                </div>
-              </div>
-              <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <div>
-                  <label class="block text-xs text-gray-500 mb-1">Estimated Hours</label>
-                  <input v-model.number="item.estimated_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label class="block text-xs text-gray-500 mb-1">Complexity Factor</label>
-                  <input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-                </div>
-                <div>
-                  <label class="block text-xs text-gray-500 mb-1">Buffer Risk %</label>
-                  <input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between pt-2.5 border-t border-[#F1F1F1] text-sm">
-                <span class="text-gray-500">
-                  {{ computedItems[index]?.totalHoursUsed.toFixed(1) }} usage history
-                </span>
-                <span class="text-brand-dark font-bold">{{ formatRupiah(computedItems[index]?.finalPrice ?? 0) }}</span>
-              </div>
-            </div>
+          <div class="border-t border-ui-line px-3 sm:px-4 py-2">
+            <UiButton variant="ghost" size="sm" :icon="PlusIcon" @click="addItem">
+              {{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}
+            </UiButton>
           </div>
-        </div>
+        </section>
 
         <!-- Landing Page Configuration -->
-        <div v-if="form.scenario === 'landing_page'" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 space-y-5">
-          <div class="flex items-center gap-1.5">
-            <div class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center shrink-0">
-              <Globe class="w-4.5 h-4.5 text-emerald-600" />
-            </div>
-            <h3 class="text-brand-dark text-sm font-bold">Landing Page Configuration</h3>
+        <section v-if="form.scenario === 'landing_page'" class="bg-ui-surface border border-ui-line rounded-ui-card">
+          <div class="px-4 sm:px-6 pt-5 pb-4 border-b border-ui-line">
+            <h2 class="text-ui-h2 text-ui-ink">Landing Page Configuration</h2>
           </div>
 
-          <!-- Server -->
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1.5">Server</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                @click="form.server_type = 'dedicated'"
-                class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
-                :class="form.server_type === 'dedicated' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200 bg-white'"
-              >
-                <span class="text-sm font-semibold text-brand-dark">Dedicated</span>
-                <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.server_dedicated_price) }}</span>
-              </button>
-              <button
-                type="button"
-                @click="form.server_type = 'shared'"
-                class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
-                :class="form.server_type === 'shared' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200 bg-white'"
-              >
-                <span class="text-sm font-semibold text-brand-dark">Shared</span>
-                <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.server_shared_price) }}</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Design -->
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1.5">Design</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                @click="form.design_type = 'dedicated'"
-                class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
-                :class="form.design_type === 'dedicated' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200 bg-white'"
-              >
-                <span class="text-sm font-semibold text-brand-dark">Dedicated</span>
-                <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.design_dedicated_price) }}</span>
-              </button>
-              <button
-                type="button"
-                @click="form.design_type = 'template'"
-                class="flex items-center justify-between p-3 rounded-[10px] border-2 text-left transition-all"
-                :class="form.design_type === 'template' ? 'border-emerald-500 bg-emerald-50' : 'border-[#DCDEDD] hover:border-emerald-200 bg-white'"
-              >
-                <span class="text-sm font-semibold text-brand-dark">Template</span>
-                <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(landingPageRateSetting.design_template_price) }}</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Development -->
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1.5">Development</label>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div class="px-4 sm:px-6 py-5 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <!-- Server -->
               <div>
-                <label class="block text-xs text-gray-500 mb-1">Estimate Final Time (hours)</label>
-                <input v-model.number="form.estimated_hours" type="number" min="0" step="0.5" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                <p :class="fieldLabel">Server</p>
+                <div class="grid grid-cols-2 gap-2.5">
+                  <button
+                    v-for="opt in [
+                      { value: 'dedicated', label: 'Dedicated', price: landingPageRateSetting.server_dedicated_price },
+                      { value: 'shared', label: 'Shared', price: landingPageRateSetting.server_shared_price },
+                    ]"
+                    :key="opt.value"
+                    type="button"
+                    :aria-pressed="form.server_type === opt.value"
+                    class="ui-press flex flex-col items-start gap-0.5 p-3 rounded-ui-control border text-left transition-colors"
+                    :class="form.server_type === opt.value ? 'border-ui-accent bg-ui-accent-soft shadow-ui-focus' : 'border-ui-line bg-ui-surface hover:bg-ui-hover'"
+                    @click="form.server_type = opt.value"
+                  >
+                    <span class="text-ui-small font-medium text-ui-ink">{{ opt.label }}</span>
+                    <span class="text-ui-small tabular-nums" :class="form.server_type === opt.value ? 'text-ui-accent' : 'text-ui-muted'">{{ formatRupiah(opt.price) }}</span>
+                  </button>
+                </div>
               </div>
+
+              <!-- Design -->
               <div>
-                <label class="block text-xs text-gray-500 mb-1">Rate Developer (Rp/jam)</label>
-                <input v-model.number="form.rate_developer" type="number" min="0" step="1000" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-              </div>
-              <div>
-                <label class="block text-xs text-gray-500 mb-1">Jumlah Developer</label>
-                <input v-model.number="form.developer_count" type="number" min="1" step="1" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
+                <p :class="fieldLabel">Design</p>
+                <div class="grid grid-cols-2 gap-2.5">
+                  <button
+                    v-for="opt in [
+                      { value: 'dedicated', label: 'Dedicated', price: landingPageRateSetting.design_dedicated_price },
+                      { value: 'template', label: 'Template', price: landingPageRateSetting.design_template_price },
+                    ]"
+                    :key="opt.value"
+                    type="button"
+                    :aria-pressed="form.design_type === opt.value"
+                    class="ui-press flex flex-col items-start gap-0.5 p-3 rounded-ui-control border text-left transition-colors"
+                    :class="form.design_type === opt.value ? 'border-ui-accent bg-ui-accent-soft shadow-ui-focus' : 'border-ui-line bg-ui-surface hover:bg-ui-hover'"
+                    @click="form.design_type = opt.value"
+                  >
+                    <span class="text-ui-small font-medium text-ui-ink">{{ opt.label }}</span>
+                    <span class="text-ui-small tabular-nums" :class="form.design_type === opt.value ? 'text-ui-accent' : 'text-ui-muted'">{{ formatRupiah(opt.price) }}</span>
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="flex items-center justify-between pt-2.5 mt-2.5 border-t border-[#F1F1F1] text-sm">
-              <span class="text-gray-500">Development Cost</span>
-              <span class="text-brand-dark font-bold">{{ formatRupiah(landingPageDevelopmentCost) }}</span>
-            </div>
-          </div>
 
-          <!-- Additional Items (optional) -->
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-sm font-semibold text-brand-dark">Additional Items (Optional)</label>
-              <button
-                type="button"
-                @click="addAdditionalItem"
-                class="bg-white border border-[#DCDEDD] rounded-[10px] hover:border-emerald-500 hover:border-2 transition-all px-2.5 py-1 inline-flex items-center gap-1"
-              >
-                <PlusIcon class="w-3.5 h-3.5 text-gray-600" />
-                <span class="text-brand-dark text-xs font-semibold">Add Item</span>
-              </button>
+            <!-- Development -->
+            <div>
+              <p class="text-ui-h3 text-ui-ink mb-2.5">Development</p>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label class="block">
+                  <span :class="fieldLabel">Estimate Final Time (hours)</span>
+                  <input v-model.number="form.estimated_hours" type="number" min="0" step="0.5" :class="fieldInput" />
+                </label>
+                <label class="block">
+                  <span :class="fieldLabel">Rate Developer (Rp/jam)</span>
+                  <input v-model.number="form.rate_developer" type="number" min="0" step="1000" :class="fieldInput" />
+                </label>
+                <label class="block">
+                  <span :class="fieldLabel">Jumlah Developer</span>
+                  <input v-model.number="form.developer_count" type="number" min="1" step="1" :class="fieldInput" />
+                </label>
+              </div>
+              <div class="flex items-center justify-between mt-3 pt-3 border-t border-ui-line text-ui-small">
+                <span class="text-ui-muted">Development Cost</span>
+                <span class="text-ui-ink font-semibold tabular-nums">{{ formatRupiah(landingPageDevelopmentCost) }}</span>
+              </div>
             </div>
 
-            <div v-if="form.additional_items.length === 0" class="text-xs text-gray-400 border border-dashed border-[#DCDEDD] rounded-[10px] py-3.5 text-center">
-              No additional items -- optional extras like domain, third-party integration, or extra revisions.
-            </div>
+            <!-- Additional Items (optional) -->
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2.5">
+                <p class="text-ui-h3 text-ui-ink">Additional Items (Optional)</p>
+                <UiButton variant="secondary" size="sm" :icon="PlusIcon" @click="addAdditionalItem">Add Item</UiButton>
+              </div>
 
-            <div v-else class="space-y-2.5">
               <div
-                v-for="(item, index) in form.additional_items"
-                :key="index"
-                class="bg-white p-2.5 border border-[#DCDEDD] rounded-[10px] grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2.5 items-end"
+                v-if="form.additional_items.length === 0"
+                class="text-ui-cap text-ui-muted border border-dashed border-ui-line-strong rounded-ui-control py-4 px-3 text-center"
               >
-                <div>
-                  <label class="block text-xs text-gray-500 mb-1">Description</label>
-                  <input v-model="item.description" type="text" placeholder="e.g. Domain .com (1 year)" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-                </div>
-                <div class="w-full sm:w-24">
-                  <label class="block text-xs text-gray-500 mb-1">Amount</label>
-                  <input v-model.number="item.amount" type="number" min="0" step="1" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-                </div>
-                <div class="w-full sm:w-36">
-                  <label class="block text-xs text-gray-500 mb-1">Price (Rp)</label>
-                  <input v-model.number="item.price" type="number" min="0" step="1000" class="w-full px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-                </div>
-                <button
-                  type="button"
-                  @click="removeAdditionalItem(index)"
-                  class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl border border-[#DCDEDD] hover:border-red-400 hover:bg-red-50 group transition-all"
-                >
-                  <Trash2 class="w-4 h-4 text-gray-500 group-hover:text-red-600" />
-                </button>
+                No additional items -- optional extras like domain, third-party integration, or extra revisions.
               </div>
-              <div class="flex items-center justify-between pt-1 text-sm">
-                <span class="text-gray-500">Additional Items Total</span>
-                <span class="text-brand-dark font-bold">{{ formatRupiah(landingPageAdditionalItemsTotal) }}</span>
-              </div>
-            </div>
-          </div>
 
-          <!-- Margin -->
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1.5">Margin Jual</label>
-            <div class="flex items-center gap-2.5">
-              <input v-model.number="form.margin_percent" type="number" min="0" step="1" class="w-32 px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] outline-none" />
-              <span class="text-sm text-gray-500">%</span>
-              <span class="ml-auto text-sm text-gray-500">
-                Margin Amount: <strong class="text-brand-dark">{{ formatRupiah(landingPageMarginTotal) }}</strong>
-              </span>
+              <div v-else class="border border-ui-line rounded-ui-control overflow-hidden">
+                <div class="hidden sm:grid grid-cols-[28px_minmax(0,1fr)_88px_150px_120px_32px] gap-2 items-center px-3 h-9 bg-ui-subtle text-ui-cap font-medium text-ui-muted border-b border-ui-line">
+                  <span>#</span><span>Description</span><span class="text-right">Amount</span><span class="text-right">Price (Rp)</span><span class="text-right">Subtotal</span><span></span>
+                </div>
+                <div
+                  v-for="(item, index) in form.additional_items"
+                  :key="index"
+                  class="grid grid-cols-[28px_minmax(0,1fr)_32px] sm:grid-cols-[28px_minmax(0,1fr)_88px_150px_120px_32px] gap-2 items-center px-3 py-2.5 border-b border-ui-line last:border-b-0"
+                >
+                  <span class="text-ui-cap text-ui-faint tabular-nums">{{ index + 1 }}</span>
+                  <input v-model="item.description" type="text" placeholder="e.g. Domain .com (1 year)" aria-label="Description" :class="cellText" />
+                  <button type="button" :class="[iconBtn, 'sm:order-last']" aria-label="Remove" title="Remove" @click="removeAdditionalItem(index)">
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                  <label class="col-start-2 sm:col-start-auto">
+                    <span class="sm:sr-only text-ui-cap text-ui-muted">Amount</span>
+                    <input v-model.number="item.amount" type="number" min="0" step="1" :class="cellInput" />
+                  </label>
+                  <label class="col-start-2 sm:col-start-auto">
+                    <span class="sm:sr-only text-ui-cap text-ui-muted">Price (Rp)</span>
+                    <input v-model.number="item.price" type="number" min="0" step="1000" :class="cellInput" />
+                  </label>
+                  <span class="col-start-2 sm:col-start-auto text-right text-ui-small font-medium text-ui-ink tabular-nums whitespace-nowrap">
+                    {{ formatRupiah(Number(item.amount || 0) * Number(item.price || 0)) }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between px-3 py-2.5 bg-ui-subtle text-ui-small border-t border-ui-line">
+                  <span class="text-ui-muted">Additional Items Total</span>
+                  <span class="text-ui-ink font-semibold tabular-nums">{{ formatRupiah(landingPageAdditionalItemsTotal) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Margin -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+              <label class="block">
+                <span :class="fieldLabel">Margin Jual (%)</span>
+                <input v-model.number="form.margin_percent" type="number" min="0" step="1" :class="fieldInput" />
+              </label>
+              <p class="flex items-center justify-between sm:justify-end gap-2 h-[38px] text-ui-small text-ui-muted">
+                Margin Amount: <strong class="text-ui-ink font-semibold tabular-nums">{{ formatRupiah(landingPageMarginTotal) }}</strong>
+              </p>
             </div>
           </div>
-        </div>
+        </section>
 
         <!-- Build-only extra fields -->
-        <div v-if="form.scenario === 'build'" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">PM Overhead (%)</label>
-            <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
+        <section v-if="form.scenario === 'build'" class="bg-ui-surface border border-ui-line rounded-ui-card px-4 sm:px-6 py-5">
+          <h2 class="text-ui-h2 text-ui-ink mb-4">Project overhead</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label class="block">
+              <span :class="fieldLabel">PM Overhead (%)</span>
+              <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" :class="fieldInput" />
+            </label>
+            <label class="block">
+              <span :class="fieldLabel">Infrastructure Setup Cost (Rp)</span>
+              <input v-model.number="form.infra_setup_cost" type="number" min="0" :class="fieldInput" />
+            </label>
           </div>
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Infrastructure Setup Cost (Rp)</label>
-            <input v-model.number="form.infra_setup_cost" type="number" min="0" class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none" />
-          </div>
-        </div>
+        </section>
 
         <!-- Tax + Notes -->
-        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 space-y-3.5">
-          <label class="flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" v-model="form.include_ppn" class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]" />
-            <span class="text-sm font-semibold text-brand-dark">Include PPN</span>
-            <input
-              v-if="form.include_ppn"
-              v-model.number="form.ppn_percent"
-              type="number"
-              min="0"
-              max="100"
-              step="0.5"
-              class="w-16 px-1.5 py-1 border border-[#DCDEDD] rounded-lg text-sm ml-1"
-              @click.stop
-            />
-            <span v-if="form.include_ppn" class="text-sm text-gray-500">%</span>
-          </label>
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card px-4 sm:px-6 py-5 space-y-4">
+          <h2 class="text-ui-h2 text-ui-ink">Tax &amp; notes</h2>
 
-          <div class="pt-1 border-t border-[#F1F1F1]">
-            <label class="flex items-center gap-1.5 cursor-pointer pt-2.5">
-              <input type="checkbox" v-model="form.include_pph" class="w-4 h-4 rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9]" />
-              <span class="text-sm font-semibold text-brand-dark">Include PPh (dipotong klien)</span>
-            </label>
-            <p class="flex items-center gap-1 text-xs text-gray-400 mt-1 ml-5">
-              <InfoIcon class="w-3.5 h-3.5 shrink-0" />
-              PPh dipotong oleh klien dari pembayaran -- mengurangi yang diterima, bukan menambah tagihan.
-            </p>
-
-            <div v-if="form.include_pph" class="mt-2.5 ml-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <label class="block text-xs text-gray-500 mb-1">Jenis PPh</label>
-                <div class="relative">
-                  <select
-                    v-model="form.pph_type"
-                    @change="handlePphTypeChange"
-                    class="select-soft"
-                  >
-                    <option value="" disabled>Pilih jenis PPh...</option>
-                    <option v-for="type in pphTypes" :key="type.value" :value="type.value">
-                      {{ type.label }}{{ type.default_rate !== null ? ` (${type.default_rate}%)` : "" }}
-                    </option>
-                  </select>
-                  <ChevronDown
-                    class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-                  />
-                </div>
+          <div class="border border-ui-line rounded-ui-control divide-y divide-ui-line">
+            <div class="px-4 py-3">
+              <div class="flex items-center justify-between gap-3">
+                <UiSwitch v-model="form.include_ppn" label="Include PPN" class="flex-1" />
               </div>
-              <div>
-                <label class="block text-xs text-gray-500 mb-1">Tarif PPh (%)</label>
-                <input
-                  v-model.number="form.pph_percent"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                  :disabled="form.pph_type !== 'custom' && form.pph_type !== ''"
-                  class="w-full px-2.5 py-1.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none disabled:bg-gray-50 disabled:text-gray-500"
+              <div v-if="form.include_ppn" class="flex items-center gap-2 mt-3">
+                <span class="w-24"><input v-model.number="form.ppn_percent" type="number" min="0" max="100" step="0.5" aria-label="PPN %" :class="fieldInput" /></span>
+                <span class="text-ui-small text-ui-muted">%</span>
+              </div>
+            </div>
+
+            <div class="px-4 py-3">
+              <UiSwitch
+                v-model="form.include_pph"
+                label="Include PPh (dipotong klien)"
+                description="PPh dipotong oleh klien dari pembayaran -- mengurangi yang diterima, bukan menambah tagihan."
+              />
+              <div v-if="form.include_pph" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <UiSelect
+                  v-model="form.pph_type"
+                  label="Jenis PPh"
+                  placeholder="Pilih jenis PPh..."
+                  :options="pphOptions"
+                  @update:model-value="handlePphTypeChange"
                 />
+                <label class="block">
+                  <span :class="fieldLabel">Tarif PPh (%)</span>
+                  <input
+                    v-model.number="form.pph_percent"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    :disabled="form.pph_type !== 'custom' && form.pph_type !== ''"
+                    :class="fieldInput"
+                  />
+                </label>
               </div>
             </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-1">Notes (Optional)</label>
-            <textarea
-              v-model="form.notes"
-              rows="3"
-              placeholder="Additional notes for this estimate..."
-              class="w-full px-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none resize-none"
-            ></textarea>
-          </div>
-        </div>
+          <UiInput v-model="form.notes" label="Notes (Optional)" :rows="3" placeholder="Additional notes for this estimate..." />
+        </section>
       </div>
 
       <!-- Summary sidebar -->
-      <div class="xl:col-span-1">
-        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sticky top-6 space-y-3.5">
-          <h3 class="text-brand-dark text-sm font-bold">Summary</h3>
-
-          <div v-if="form.scenario !== 'landing_page'" class="p-2.5 rounded-[12px] bg-white border border-[#F1F1F1] flex items-center justify-between text-sm">
-            <span class="text-gray-500">Rate Sell / Hour</span>
-            <span class="font-semibold text-brand-dark">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</span>
+      <aside class="space-y-4 xl:sticky xl:top-4">
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <h2 class="text-ui-h3 text-ui-ink">Summary</h2>
+            <UiBadge tone="outline">{{ scenarioLabel(form.scenario) }}</UiBadge>
           </div>
 
-          <div class="space-y-1.5 text-sm">
+          <dl class="space-y-2 text-ui-small">
+            <div v-if="form.scenario !== 'landing_page'" class="flex items-center justify-between gap-3 pb-2 border-b border-ui-line">
+              <dt class="text-ui-muted">Rate Sell / Hour</dt>
+              <dd class="text-ui-ink font-medium tabular-nums">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</dd>
+            </div>
             <template v-if="form.scenario === 'landing_page'">
-              <div class="flex items-center justify-between">
-                <span class="text-gray-500">Server ({{ form.server_type === "dedicated" ? "Dedicated" : "Shared" }})</span>
-                <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageServerCost) }}</span>
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-ui-muted">Server ({{ form.server_type === "dedicated" ? "Dedicated" : "Shared" }})</dt>
+                <dd class="text-ui-ink tabular-nums">{{ formatRupiah(landingPageServerCost) }}</dd>
               </div>
-              <div class="flex items-center justify-between">
-                <span class="text-gray-500">Design ({{ form.design_type === "dedicated" ? "Dedicated" : "Template" }})</span>
-                <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageDesignCost) }}</span>
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-ui-muted">Design ({{ form.design_type === "dedicated" ? "Dedicated" : "Template" }})</dt>
+                <dd class="text-ui-ink tabular-nums">{{ formatRupiah(landingPageDesignCost) }}</dd>
               </div>
-              <div class="flex items-center justify-between">
-                <span class="text-gray-500">Development</span>
-                <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageDevelopmentCost) }}</span>
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-ui-muted">Development</dt>
+                <dd class="text-ui-ink tabular-nums">{{ formatRupiah(landingPageDevelopmentCost) }}</dd>
               </div>
-              <div v-if="form.additional_items.length > 0" class="flex items-center justify-between">
-                <span class="text-gray-500">Additional Items ({{ form.additional_items.length }})</span>
-                <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageAdditionalItemsTotal) }}</span>
+              <div v-if="form.additional_items.length > 0" class="flex items-center justify-between gap-3">
+                <dt class="text-ui-muted">Additional Items ({{ form.additional_items.length }})</dt>
+                <dd class="text-ui-ink tabular-nums">{{ formatRupiah(landingPageAdditionalItemsTotal) }}</dd>
               </div>
             </template>
-            <div class="flex items-center justify-between">
-              <span class="text-gray-500">Subtotal</span>
-              <span class="text-brand-dark font-medium">{{ formatRupiah(subtotalSum) }}</span>
+            <div class="flex items-center justify-between gap-3">
+              <dt class="text-ui-muted">Subtotal</dt>
+              <dd class="text-ui-ink tabular-nums">{{ formatRupiah(subtotalSum) }}</dd>
             </div>
-            <div v-if="form.scenario !== 'landing_page'" class="flex items-center justify-between">
-              <span class="text-gray-500">Buffer Risk</span>
-              <span class="text-brand-dark font-medium">{{ formatRupiah(bufferSum) }}</span>
+            <div v-if="form.scenario !== 'landing_page'" class="flex items-center justify-between gap-3">
+              <dt class="text-ui-muted">Buffer Risk</dt>
+              <dd class="text-ui-ink tabular-nums">{{ formatRupiah(bufferSum) }}</dd>
             </div>
-            <div v-if="form.scenario === 'build'" class="flex items-center justify-between">
-              <span class="text-gray-500">PM Overhead</span>
-              <span class="text-brand-dark font-medium">{{ formatRupiah(pmOverheadTotal) }}</span>
+            <div v-if="form.scenario === 'build'" class="flex items-center justify-between gap-3">
+              <dt class="text-ui-muted">PM Overhead</dt>
+              <dd class="text-ui-ink tabular-nums">{{ formatRupiah(pmOverheadTotal) }}</dd>
             </div>
-            <div v-if="form.scenario === 'build'" class="flex items-center justify-between">
-              <span class="text-gray-500">Infrastructure Setup Cost</span>
-              <span class="text-brand-dark font-medium">{{ formatRupiah(form.infra_setup_cost) }}</span>
+            <div v-if="form.scenario === 'build'" class="flex items-center justify-between gap-3">
+              <dt class="text-ui-muted">Infrastructure Setup Cost</dt>
+              <dd class="text-ui-ink tabular-nums">{{ formatRupiah(form.infra_setup_cost) }}</dd>
             </div>
-            <div v-if="form.scenario === 'landing_page'" class="flex items-center justify-between">
-              <span class="text-gray-500">Margin Jual ({{ form.margin_percent }}%)</span>
-              <span class="text-brand-dark font-medium">{{ formatRupiah(landingPageMarginTotal) }}</span>
+            <div v-if="form.scenario === 'landing_page'" class="flex items-center justify-between gap-3">
+              <dt class="text-ui-muted">Margin Jual ({{ form.margin_percent }}%)</dt>
+              <dd class="text-ui-ink tabular-nums">{{ formatRupiah(landingPageMarginTotal) }}</dd>
+            </div>
+          </dl>
+
+          <div class="mt-3 pt-3 border-t border-ui-line space-y-1.5">
+            <div class="flex items-baseline justify-between gap-3">
+              <span class="text-ui-h3 text-ui-ink">Estimate Total</span>
+              <span class="text-ui-h2 text-ui-ink tabular-nums">{{ formatRupiah(grandTotal) }}</span>
+            </div>
+            <div v-if="form.include_ppn" class="flex items-center justify-between gap-3 text-ui-cap text-ui-muted">
+              <span>+ PPN {{ form.ppn_percent }}%</span>
+              <span class="tabular-nums">{{ formatRupiah(ppnAmount) }}</span>
+            </div>
+            <div v-if="form.include_ppn" class="flex items-baseline justify-between gap-3">
+              <span class="text-ui-h3 text-ui-ink">Total + PPN</span>
+              <span class="text-ui-h2 text-ui-ink tabular-nums">{{ formatRupiah(totalWithPpn) }}</span>
             </div>
           </div>
 
-          <div class="pt-2.5 border-t border-[#F1F1F1]">
-            <div class="flex items-center justify-between">
-              <span class="text-brand-dark text-sm font-bold">Estimate Total</span>
-              <span class="text-brand-dark text-base font-extrabold">{{ formatRupiah(grandTotal) }}</span>
+          <div v-if="form.include_pph" class="mt-3 pt-3 border-t border-ui-line space-y-1.5">
+            <div class="flex items-center justify-between gap-3 text-ui-cap text-ui-bad">
+              <span>- PPh {{ form.pph_percent }}%</span>
+              <span class="tabular-nums">{{ formatRupiah(pphAmount) }}</span>
             </div>
-            <div v-if="form.include_ppn" class="flex items-center justify-between mt-1.5">
-              <span class="text-gray-500 text-xs">+ PPN {{ form.ppn_percent }}%</span>
-              <span class="text-gray-500 text-xs">{{ formatRupiah(ppnAmount) }}</span>
+            <div class="flex items-baseline justify-between gap-3">
+              <span class="text-ui-h3 text-ui-ok">Diterima Bersih</span>
+              <span class="text-ui-h3 text-ui-ok tabular-nums">{{ formatRupiah(netReceived) }}</span>
             </div>
-            <div v-if="form.include_ppn" class="flex items-center justify-between mt-1">
-              <span class="text-indigo-700 text-sm font-bold">Total + PPN</span>
-              <span class="text-indigo-700 text-base font-extrabold">{{ formatRupiah(totalWithPpn) }}</span>
-            </div>
+            <p class="text-ui-cap text-ui-faint">Setelah dipotong PPh oleh klien</p>
           </div>
 
-          <div v-if="form.include_pph" class="pt-2.5 border-t border-[#F1F1F1]">
-            <div class="flex items-center justify-between">
-              <span class="text-red-500 text-xs">- PPh {{ form.pph_percent }}%</span>
-              <span class="text-red-500 text-xs">{{ formatRupiah(pphAmount) }}</span>
-            </div>
-            <div class="flex items-center justify-between mt-1">
-              <span class="text-green-700 text-sm font-bold">Diterima Bersih</span>
-              <span class="text-green-700 text-base font-extrabold">{{ formatRupiah(netReceived) }}</span>
-            </div>
-            <p class="text-gray-400 text-xs mt-1">Setelah dipotong PPh oleh klien</p>
-          </div>
+          <UiButton class="mt-4 hidden xl:flex" block :icon="SaveIcon" :loading="saving" :disabled="!canSave" @click="submit">
+            {{ saving ? "Saving..." : isEditing ? "Save Changes" : "Save Estimate" }}
+          </UiButton>
+        </section>
 
-          <div class="flex items-center justify-between p-2.5 rounded-[12px] bg-purple-50 border border-purple-100 text-xs">
-            <span class="text-purple-800 font-medium">
-              Fee Marketing / B2B-B2C Sales
-              <span class="block text-purple-500 font-normal">Reference only, not added to total</span>
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 space-y-3">
+          <div class="flex items-start gap-2 text-ui-small">
+            <ClockIcon class="w-4 h-4 text-ui-faint shrink-0 mt-px" />
+            <span v-if="form.scenario === 'landing_page'" class="text-ui-text">
+              Estimate Duration: <strong class="font-semibold text-ui-ink tabular-nums">{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
+              <span class="block text-ui-cap text-ui-muted tabular-nums">
+                ({{ totalHoursSum.toFixed(1) }} hours &middot; {{ form.developer_count }} developer{{ form.developer_count > 1 ? "s" : "" }})
+              </span>
             </span>
-            <span class="text-purple-800 font-bold text-right shrink-0 ml-2">
-              {{ marketingFee.percent }}%
-              <span class="block font-normal">{{ formatRupiah(marketingFee.amount) }}</span>
-            </span>
-          </div>
-
-          <div class="flex items-center gap-1.5 p-2.5 rounded-[12px] bg-blue-50 border border-blue-100 text-xs">
-            <ClockIcon class="w-4 h-4 text-blue-600 flex-shrink-0" />
-            <span v-if="form.scenario === 'landing_page'" class="text-blue-800">
-              Estimate Duration: <strong>{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
-              ({{ totalHoursSum.toFixed(1) }} hours &middot; {{ form.developer_count }} developer{{ form.developer_count > 1 ? "s" : "" }})
-            </span>
-            <span v-else class="text-blue-800">
-              Estimate Duration: <strong>{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
+            <span v-else class="text-ui-text">
+              Estimate Duration: <strong class="font-semibold text-ui-ink tabular-nums">{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
               <template v-if="estimatedDurationMonths"> (&asymp; {{ estimatedDurationMonths }} months)</template>
-              <span class="block text-blue-600">
+              <span class="block text-ui-cap text-ui-muted tabular-nums">
                 {{ totalHoursSum.toFixed(1) }} hours &middot; {{ form.allocated_developers }} developer{{ form.allocated_developers > 1 ? "s" : "" }}
                 &middot; {{ Math.round(allocatedCapacityPerMonth) }} hours/month
               </span>
             </span>
           </div>
 
-          <div v-if="form.scenario !== 'landing_page'" class="p-2.5 rounded-[12px] bg-white border border-[#DCDEDD] text-xs">
-            <label class="flex items-center justify-between gap-2 text-brand-dark font-semibold">
+          <div v-if="form.scenario !== 'landing_page'" class="pt-3 border-t border-ui-line">
+            <label class="flex items-center justify-between gap-3 text-ui-small font-medium text-ui-ink">
               Developer dialokasikan
-              <input
-                v-model.number="form.allocated_developers"
-                type="number"
-                min="1"
-                :max="Math.max(1, rateSetting.team_size || 1)"
-                step="1"
-                class="w-16 px-2 py-1 border border-[#DCDEDD] rounded-lg text-sm text-right focus:border-[#0C51D9] outline-none"
-              />
+              <span class="w-16 shrink-0">
+                <input
+                  v-model.number="form.allocated_developers"
+                  type="number"
+                  min="1"
+                  :max="Math.max(1, rateSetting.team_size || 1)"
+                  step="1"
+                  :class="cellInput"
+                />
+              </span>
             </label>
-            <p class="text-gray-400 mt-1 leading-snug">
+            <p class="text-ui-cap text-ui-muted mt-1.5">
               Orang yang benar-benar mengerjakan proyek ini, dari {{ rateSetting.team_size || 0 }} orang di Team Rate Setup
               (&asymp; {{ Math.round(hoursPerPerson) }} jam/orang/bulan). Hanya memengaruhi durasi, bukan harga.
             </p>
           </div>
+        </section>
 
-          <button
-            type="button"
-            @click="submit"
-            :disabled="saving || !canSave"
-            class="w-full rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all blue-gradient blue-btn-shadow px-5 py-2.5 flex items-center justify-center gap-1.5 disabled:opacity-50"
-          >
-            <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
-            <SaveIcon v-else class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">
-              {{ saving ? "Saving..." : isEditing ? "Save Changes" : "Save Estimate" }}
-            </span>
-          </button>
-        </div>
-      </div>
+        <section class="bg-ui-subtle border border-ui-line rounded-ui-card px-5 py-3.5 flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-ui-small font-medium text-ui-ink">Fee Marketing / B2B-B2C Sales</p>
+            <p class="text-ui-cap text-ui-muted">Reference only, not added to total</p>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="text-ui-small font-semibold text-ui-ink tabular-nums">{{ marketingFee.percent }}%</p>
+            <p class="text-ui-cap text-ui-muted tabular-nums">{{ formatRupiah(marketingFee.amount) }}</p>
+          </div>
+        </section>
+
+        <UiButton class="xl:hidden" size="lg" block :icon="SaveIcon" :loading="saving" :disabled="!canSave" @click="submit">
+          {{ saving ? "Saving..." : isEditing ? "Save Changes" : "Save Estimate" }}
+        </UiButton>
+      </aside>
     </div>
 
     <!-- Load from Previous Estimate modal -->
-    <div v-if="referenceModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-3.5">
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-        <div class="p-4 border-b border-[#DCDEDD] flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center">
-              <History class="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-sm font-bold">Load from Previous Estimate</h3>
-              <p class="text-brand-light text-xs">Reuse a saved estimate's item list as a starting point</p>
-            </div>
-          </div>
-          <button type="button" @click="referenceModal = false" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors">
-            <X class="w-5 h-5" />
-          </button>
-        </div>
+    <UiModal
+      v-model:open="referenceModal"
+      size="lg"
+      title="Load from Previous Estimate"
+      description="Reuse a saved estimate's item list as a starting point"
+    >
+      <UiInput v-model="referenceSearch" :icon="Search" placeholder="Search by estimate or client name..." class="mb-3" />
 
-        <div class="p-3.5 border-b border-[#DCDEDD]">
-          <div class="relative">
-            <Search class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              v-model="referenceSearch"
-              type="text"
-              placeholder="Search by estimate or client name..."
-              class="w-full pl-7 pr-2.5 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-            />
-          </div>
-        </div>
-
-        <div class="p-3.5 overflow-y-auto space-y-1.5">
-          <div v-if="loadingReferences" class="space-y-1.5">
-            <Skeleton height="64px" rounded="12px" />
-            <Skeleton height="64px" rounded="12px" />
-            <Skeleton height="64px" rounded="12px" />
-          </div>
-          <p v-else-if="filteredReferences.length === 0" class="text-center text-sm text-gray-400 py-6">
-            No saved estimates found.
-          </p>
+      <div v-if="loadingReferences" class="space-y-2">
+        <Skeleton v-for="i in 3" :key="i" height="60px" rounded="10px" />
+      </div>
+      <UiEmpty v-else-if="filteredReferences.length === 0" compact :icon="History" title="No saved estimates found." />
+      <ul v-else class="border border-ui-line rounded-ui-control divide-y divide-ui-line overflow-hidden">
+        <li v-for="(reference, index) in filteredReferences" :key="reference.id">
           <button
-            v-for="reference in filteredReferences"
-            :key="reference.id"
             type="button"
             :disabled="applyingReference"
+            class="w-full text-left px-3.5 py-3 flex items-center gap-3 hover:bg-ui-hover transition-colors disabled:opacity-50"
             @click="applyReference(reference)"
-            class="w-full text-left border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all p-3.5 flex items-center justify-between gap-2.5 disabled:opacity-50"
           >
-            <div class="min-w-0">
-              <p class="text-brand-dark text-sm font-bold truncate">{{ reference.name }}</p>
-              <p class="text-brand-light text-xs truncate">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 shrink-0">{{ index + 1 }}</span>
+            <span class="flex-1 min-w-0">
+              <span class="block text-ui-small font-medium text-ui-ink truncate">{{ reference.name }}</span>
+              <span class="block text-ui-cap text-ui-muted truncate">
                 {{ reference.client_name || "No client" }} &middot;
                 {{
                   reference.scenario === "feature"
@@ -1180,12 +1143,12 @@ const submit = async () => {
                       : "Landing Page"
                 }} &middot;
                 {{ reference.scenario === "landing_page" ? "Package" : `${reference.items?.length ?? 0} items` }}
-              </p>
-            </div>
-            <span class="text-brand-dark text-sm font-semibold whitespace-nowrap">{{ formatRupiah(reference.grand_total) }}</span>
+              </span>
+            </span>
+            <span class="text-ui-small font-medium text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(reference.grand_total) }}</span>
           </button>
-        </div>
-      </div>
-    </div>
+        </li>
+      </ul>
+    </UiModal>
   </div>
 </template>

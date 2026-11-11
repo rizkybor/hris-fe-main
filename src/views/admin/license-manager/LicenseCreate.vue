@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
-import { ArrowLeft, CheckCircle2, Eye, Plus, FileDown } from "lucide-vue-next";
+import { ChevronLeft, CheckCircle2, Eye, Plus, Download } from "lucide-vue-next";
+import { UiPageHeader, UiButton } from "@/components/ui";
 import { can } from "@/helpers/permissionHelper";
 import Alert from "@/components/common/Alert.vue";
 import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
@@ -97,68 +98,61 @@ const createAnother = () => {
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <LicenseProductGate :state="productState" :code="productCode" :product-name="productName">
       <!-- Generated key -->
       <div v-if="created" class="space-y-5">
-        <div class="bg-white border border-[#DCDEDD] rounded-[16px] px-5 py-4 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            @click="toDashboard"
-            class="bg-white w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-violet-400 transition-all"
-            aria-label="Back"
-          >
-            <ArrowLeft class="w-5 h-5 text-gray-600" />
-          </button>
-          <ProductIcon :product="product" :size="40" />
-          <div>
-            <h1 class="text-brand-dark text-xl font-bold">Create {{ productName }} License</h1>
-            <p class="text-brand-light text-sm">The license key has been generated</p>
-          </div>
-        </div>
+        <UiPageHeader :title="`Create ${productName} License`" subtitle="The license key has been generated" class="ui-anim-fade-up">
+          <template #eyebrow>
+            <button type="button" @click="toDashboard" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1.5">
+              <ChevronLeft class="w-4 h-4" /> {{ productName }} &middot; Licenses
+            </button>
+          </template>
+        </UiPageHeader>
 
-        <div class="relative overflow-hidden bg-gradient-to-br from-[#1e1147] via-[#150c33] to-[#0f0a24] rounded-[16px] px-5 py-10 sm:py-14">
-          <div class="absolute -top-16 -right-16 w-64 h-64 bg-violet-500/20 rounded-full blur-3xl"></div>
-          <div class="absolute -bottom-20 -left-16 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl"></div>
-          <div class="relative z-10 flex flex-col items-center text-center">
-            <div class="w-14 h-14 rounded-full bg-emerald-400/15 flex items-center justify-center mb-4">
-              <CheckCircle2 class="w-8 h-8 text-emerald-400" />
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-8 sm:px-8 sm:py-10 ui-anim-fade-up">
+          <div class="flex flex-col items-center text-center">
+            <div class="w-12 h-12 rounded-full bg-ui-ok-soft flex items-center justify-center mb-3">
+              <CheckCircle2 class="w-6 h-6 text-ui-ok" />
             </div>
-            <p class="text-white text-lg font-bold">License created for {{ created.licensee_name }}</p>
-            <div class="flex flex-wrap items-center justify-center gap-2 mt-2 mb-8">
-              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/10 text-white">{{ productName }}</span>
-              <span class="text-xs font-semibold px-2.5 py-1 rounded-full" :class="planChipClass(created.plan, true)">
+            <p class="text-ui-h1 text-ui-ink">License created for {{ created.licensee_name }}</p>
+            <div class="flex flex-wrap items-center justify-center gap-2 mt-2 mb-7">
+              <ProductIcon :product="product" :size="20" />
+              <span class="text-ui-small text-ui-muted">{{ productName }}</span>
+              <span class="text-ui-cap font-medium px-2 py-0.5 rounded-full" :class="planChipClass(created.plan)">
                 {{ planLabel(created) }} &middot; {{ categoryLabel(created) }}
               </span>
             </div>
 
-            <div v-for="license in createdKeys" :key="license.id" class="flex flex-col items-center max-w-full mb-5 last:mb-0">
-              <p class="text-violet-200 text-xs font-semibold uppercase tracking-wider mb-3">
-                {{ createdKeys.length > 1 ? `${license.platform_label} License Key` : "License Key" }}<template v-if="perDevice && license.keys?.length"> &middot; key 1 of {{ license.keys.length }}</template>
-              </p>
-              <div class="flex items-center gap-3 bg-white rounded-[16px] pl-5 pr-3 py-4 shadow-lg max-w-full">
-                <span class="font-mono text-xl sm:text-3xl lg:text-4xl font-bold tracking-wider text-brand-dark break-all select-all">
-                  {{ license.key }}
-                </span>
-                <CopyKeyButton :value="license.key" size="md" />
-              </div>
-              <div v-if="perDevice && otherKeys(license).length" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl w-full">
-                <div
-                  v-for="k in otherKeys(license).slice(0, MAX_SHOWN_KEYS - 1)"
-                  :key="k.position"
-                  class="flex items-center gap-2 bg-white rounded-[10px] pl-3 pr-1 py-1"
-                >
-                  <span class="text-brand-light text-[11px] tabular-nums w-5 text-left">{{ k.position }}</span>
-                  <span class="font-mono text-xs font-bold tracking-wider text-brand-dark flex-1 text-left select-all">{{ k.key }}</span>
-                  <CopyKeyButton :value="k.key" />
+            <div class="w-full max-w-3xl space-y-5">
+              <div v-for="license in createdKeys" :key="license.id" class="flex flex-col items-center max-w-full">
+                <p class="text-ui-over uppercase text-ui-muted mb-2">
+                  {{ createdKeys.length > 1 ? `${license.platform_label} License Key` : "License Key" }}<template v-if="perDevice && license.keys?.length"> &middot; key 1 of {{ license.keys.length }}</template>
+                </p>
+                <div class="flex items-center gap-3 bg-ui-subtle border border-ui-line rounded-ui-card pl-5 pr-2 py-3 max-w-full">
+                  <span class="font-mono text-ui-h1 sm:text-ui-display font-semibold tracking-wider text-ui-ink break-all select-all">
+                    {{ license.key }}
+                  </span>
+                  <CopyKeyButton :value="license.key" size="md" />
                 </div>
+                <div v-if="perDevice && otherKeys(license).length" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+                  <div
+                    v-for="k in otherKeys(license).slice(0, MAX_SHOWN_KEYS - 1)"
+                    :key="k.position"
+                    class="flex items-center gap-2 bg-ui-surface border border-ui-line rounded-ui-control pl-3 pr-1 py-1"
+                  >
+                    <span class="text-ui-cap text-ui-faint tabular-nums w-5 text-left">{{ k.position }}</span>
+                    <span class="font-mono text-ui-cap font-medium tracking-wide text-ui-ink flex-1 text-left select-all">{{ k.key }}</span>
+                    <CopyKeyButton :value="k.key" class="!border-0" />
+                  </div>
+                </div>
+                <p v-if="perDevice && otherKeys(license).length > MAX_SHOWN_KEYS - 1" class="text-ui-cap text-ui-muted mt-2">
+                  + {{ otherKeys(license).length - (MAX_SHOWN_KEYS - 1) }} more keys on the license page and the certificate.
+                </p>
               </div>
-              <p v-if="perDevice && otherKeys(license).length > MAX_SHOWN_KEYS - 1" class="text-violet-200/80 text-xs mt-2">
-                + {{ otherKeys(license).length - (MAX_SHOWN_KEYS - 1) }} more keys on the license page and the certificate.
-              </p>
             </div>
 
-            <p class="text-violet-200/80 text-sm mt-5 max-w-xl">
+            <p class="text-ui-small text-ui-muted mt-6 max-w-xl">
               <template v-if="createdKeys.length > 1">
                 Send both keys to the licensee: the Mac key activates {{ productName }} {{ planLabel(created) }} on a Mac, the iPad key on an iPad.
               </template>
@@ -175,37 +169,26 @@ const createAnother = () => {
               <template v-else>Up to {{ created.max_devices }} device(s){{ createdKeys.length > 1 ? " per key" : "" }}.</template>
             </p>
 
-            <button
-              v-if="can('license-manager-view')"
-              type="button"
-              @click="downloadPdf"
-              :disabled="downloading"
-              class="mt-8 w-full sm:w-auto rounded-[14px] bg-[#F2821F] hover:brightness-110 transition-all px-8 py-4 flex items-center justify-center gap-2.5 text-white text-base font-bold shadow-lg disabled:opacity-60"
-            >
-              <FileDown class="w-5 h-5" />
+            <UiButton v-if="can('license-manager-view')" size="lg" :icon="Download" :loading="downloading" class="mt-6 w-full sm:w-auto" @click="downloadPdf">
               {{ downloading ? "Preparing PDF..." : createdKeys.length > 1 ? "Download License PDF (Mac + iPad)" : "Download License PDF" }}
-            </button>
-            <p v-if="downloadError" class="text-red-300 text-xs mt-2">{{ downloadError }}</p>
+            </UiButton>
+            <p v-if="downloadError" class="text-ui-cap text-ui-bad mt-2">{{ downloadError }}</p>
 
-            <div class="flex flex-col sm:flex-row gap-3 mt-5 w-full sm:w-auto">
-              <button
-                type="button"
-                @click="createAnother"
-                class="w-full sm:w-auto border border-white/25 bg-white/5 rounded-[12px] hover:bg-white/10 transition-all duration-300 px-6 py-3 text-white font-semibold flex items-center justify-center gap-2"
-              >
-                <Plus class="w-4 h-4" /> Create Another
-              </button>
-              <button
+            <div class="flex flex-col sm:flex-row gap-2 mt-3 w-full sm:w-auto">
+              <UiButton variant="secondary" size="lg" :icon="Plus" class="w-full sm:w-auto" @click="createAnother">Create Another</UiButton>
+              <UiButton
                 v-if="can('license-manager-view')"
-                type="button"
+                variant="secondary"
+                size="lg"
+                :icon="Eye"
+                class="w-full sm:w-auto"
                 @click="router.push({ name: 'admin.license-manager.licenses.detail', params: { product: productCode, id: created.id } })"
-                class="w-full sm:w-auto rounded-[12px] bg-white hover:bg-violet-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2 text-violet-700 font-semibold"
               >
-                <Eye class="w-4 h-4" /> View License
-              </button>
+                View License
+              </UiButton>
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
       <LicenseForm
@@ -221,26 +204,11 @@ const createAnother = () => {
         @cancel="toDashboard"
       >
         <template #alerts>
-          <Transition name="fade">
-            <div v-if="error" class="mb-5">
-              <Alert type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
-            </div>
+          <Transition name="ui-fade">
+            <Alert class="!mb-0" v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
           </Transition>
         </template>
       </LicenseForm>
     </LicenseProductGate>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>

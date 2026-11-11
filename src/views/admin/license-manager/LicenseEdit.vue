@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ArrowLeft } from "lucide-vue-next";
+import { ArrowLeft, FileX } from "lucide-vue-next";
+import { UiButton, UiEmpty } from "@/components/ui";
 import Alert from "@/components/common/Alert.vue";
 import LicenseProductGate from "@/components/admin/license-manager/LicenseProductGate.vue";
 import { useLicenseProduct, onProductReady } from "@/components/admin/license-manager/useLicenseProduct";
@@ -89,16 +90,16 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <LicenseProductGate :state="productState" :code="productCode" :product-name="productName">
       <div v-if="loadingPage" class="space-y-5">
-        <Skeleton height="72px" rounded="16px" />
+        <Skeleton width="40%" height="30px" rounded="8px" />
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div class="lg:col-span-8 space-y-5">
-            <Skeleton height="160px" rounded="16px" />
-            <Skeleton height="220px" rounded="16px" />
+            <Skeleton height="220px" rounded="12px" />
+            <Skeleton height="260px" rounded="12px" />
           </div>
-          <div class="lg:col-span-4"><Skeleton height="420px" rounded="16px" /></div>
+          <div class="lg:col-span-4"><Skeleton height="420px" rounded="12px" /></div>
         </div>
       </div>
 
@@ -118,38 +119,18 @@ const submit = async () => {
         @cancel="goToDetail"
       >
         <template #alerts>
-          <Transition name="fade">
-            <div v-if="error" class="mb-5">
-              <Alert type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
-            </div>
+          <Transition name="ui-fade">
+            <Alert class="!mb-0" v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
           </Transition>
-          <Transition name="fade">
-            <div v-if="success" class="mb-5">
-              <Alert type="success" :title="success" message="" :show="!!success" />
-            </div>
+          <Transition name="ui-fade">
+            <Alert class="!mb-0" v-if="success" type="success" :title="success" message="" :show="!!success" />
           </Transition>
         </template>
       </LicenseForm>
 
-      <div v-else class="bg-white border border-[#DCDEDD] rounded-[16px] p-6">
-        <Alert v-if="error" type="danger" :title="error" message="" :show="!!error" />
-        <button type="button" @click="goToDetail" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-violet-700">
-          <ArrowLeft class="w-4 h-4" /> Back
-        </button>
-      </div>
+      <UiEmpty v-else :icon="FileX" title="License not available" :message="error" class="bg-ui-surface border border-ui-line rounded-ui-card">
+        <UiButton variant="secondary" :icon="ArrowLeft" @click="goToDetail">Back</UiButton>
+      </UiEmpty>
     </LicenseProductGate>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>

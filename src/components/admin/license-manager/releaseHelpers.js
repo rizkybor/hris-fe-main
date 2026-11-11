@@ -16,8 +16,8 @@ export const RELEASE_STATUS_OPTIONS = [
 ];
 
 export const RELEASE_STATUS_CHIP = {
-  published: "bg-emerald-50 text-emerald-700",
-  draft: "bg-gray-100 text-gray-600",
+  published: "bg-ui-ok-soft text-ui-ok",
+  draft: "bg-ui-subtle text-ui-text",
 };
 
 // Same names as the API's kind_label.
@@ -25,15 +25,15 @@ export const KIND_LABELS = { major: "Major version", minor: "Feature update", pa
 // Shorter badge text for the list.
 export const KIND_BADGES = { major: "Major", minor: "Feature update", patch: "Bug fix" };
 export const KIND_CHIP = {
-  major: "bg-violet-50 text-violet-700",
-  minor: "bg-indigo-50 text-indigo-700",
-  patch: "bg-amber-50 text-amber-700",
+  major: "bg-ui-ink text-white",
+  minor: "bg-ui-accent-soft text-ui-accent",
+  patch: "bg-ui-subtle text-ui-text",
 };
 
 export const CHANGE_TYPES = [
-  { value: "feature", label: "New", countLabel: "new", chip: "bg-emerald-50 text-emerald-700" },
-  { value: "improvement", label: "Improved", countLabel: "improved", chip: "bg-sky-50 text-sky-700" },
-  { value: "fix", label: "Fixed", countLabel: "fixed", chip: "bg-amber-50 text-amber-700" },
+  { value: "feature", label: "New", countLabel: "new", chip: "bg-ui-ok-soft text-ui-ok" },
+  { value: "improvement", label: "Improved", countLabel: "improved", chip: "bg-ui-info-soft text-ui-info" },
+  { value: "fix", label: "Fixed", countLabel: "fixed", chip: "bg-ui-subtle text-ui-text" },
 ];
 
 export const VERSION_RE = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;

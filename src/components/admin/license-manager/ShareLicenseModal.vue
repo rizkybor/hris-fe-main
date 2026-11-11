@@ -3,7 +3,8 @@
 // WhatsApp (a 7-day download link in a prefilled message). A Mac + iPad
 // bundle shares one certificate holding both keys.
 import { computed, ref, watch } from "vue";
-import { X, Mail, MessageCircle, Loader2, Send, ExternalLink, Info } from "lucide-vue-next";
+import { Mail, MessageCircle, Send, ExternalLink, Info } from "lucide-vue-next";
+import { UiModal, UiSelect, UiInput, UiButton } from "@/components/ui";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { errorMessage } from "@/helpers/errorHelper";
@@ -143,115 +144,104 @@ const openWhatsApp = async () => {
   }
 };
 
-const input =
-  "w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none";
+const tabs = [
+  { key: "email", label: "Email", icon: Mail },
+  { key: "whatsapp", label: "WhatsApp", icon: MessageCircle },
+];
+const keySelectOptions = computed(() => [
+  { value: null, label: `Licensee · all keys (${props.license.licensee_name})` },
+  ...keyOptions.value.map((k) => ({ value: k.id, label: keyOptionLabel(k) })),
+]);
 </script>
 
 <template>
-  <div class="fixed inset-0 z-[99] flex items-center justify-center p-5">
-    <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="emit('close')"></div>
-    <div class="relative z-10 bg-white rounded-[16px] w-full max-w-lg shadow-2xl max-h-[92vh] overflow-y-auto">
-      <div class="flex items-start justify-between gap-3 px-6 pt-5 pb-3">
-        <div class="min-w-0">
-          <h3 class="text-base font-bold text-brand-dark">Share License Certificate</h3>
-          <p class="text-xs text-brand-light mt-0.5 truncate">
-            {{ license.licensee_name }} · {{ selectedKey ? selectedKey.key : keys.map((k) => k.key).join(" + ") }}
-          </p>
-        </div>
-        <button type="button" @click="emit('close')" class="text-gray-400 hover:text-gray-600 shrink-0" aria-label="Close"><X class="w-5 h-5" /></button>
-      </div>
-
+  <UiModal
+    :open="true"
+    title="Share License Certificate"
+    :description="`${license.licensee_name} · ${selectedKey ? selectedKey.key : keys.map((k) => k.key).join(' + ')}`"
+    size="md"
+    @close="emit('close')"
+  >
+    <div class="space-y-4">
       <!-- One key per device: the whole license or one key -->
-      <div v-if="keyOptions.length" class="px-6 pb-3">
-        <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Certificate for</label>
-        <select v-model="keyId" :class="input">
-          <option :value="null">Licensee · all keys ({{ license.licensee_name }})</option>
-          <option v-for="k in keyOptions" :key="k.id" :value="k.id">{{ keyOptionLabel(k) }}</option>
-        </select>
-        <p class="text-[11px] text-brand-light mt-1">
-          {{ selectedKey ? "A certificate with only this key, e.g. for the member who uses it." : "One certificate with every key, for the licensee." }}
-        </p>
-      </div>
+      <UiSelect
+        v-if="keyOptions.length"
+        v-model="keyId"
+        label="Certificate for"
+        :options="keySelectOptions"
+        :hint="selectedKey ? 'A certificate with only this key, e.g. for the member who uses it.' : 'One certificate with every key, for the licensee.'"
+      />
 
-      <div class="px-6 flex gap-1 border-b border-[#EEF0F2]">
+      <div class="flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="tablist" aria-label="Share by">
         <button
-          v-for="t in [{ key: 'email', label: 'Email', icon: Mail }, { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle }]"
+          v-for="t in tabs"
           :key="t.key"
           type="button"
+          role="tab"
+          :aria-selected="tab === t.key"
           @click="tab = t.key"
-          class="px-3.5 py-2.5 -mb-px border-b-2 text-sm font-semibold inline-flex items-center gap-2"
-          :class="tab === t.key ? 'border-[#0C51D9] text-[#0C51D9]' : 'border-transparent text-gray-500 hover:text-brand-dark'"
+          class="flex-1 h-8 inline-flex items-center justify-center gap-2 rounded-ui-control text-ui-small font-medium transition-colors"
+          :class="tab === t.key ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
         >
           <component :is="t.icon" class="w-4 h-4" /> {{ t.label }}
         </button>
       </div>
 
       <!-- Email: the PDF goes as an attachment -->
-      <form v-if="tab === 'email'" class="px-6 py-5 space-y-4" @submit.prevent="sendEmail">
+      <form v-if="tab === 'email'" id="share-email-form" class="space-y-4" @submit.prevent="sendEmail">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs font-semibold text-brand-dark mb-1.5 block">To <span class="text-red-500">*</span></label>
-            <input v-model="email.to" type="email" placeholder="name@example.com" :class="input" />
-          </div>
-          <div>
-            <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Recipient name</label>
-            <input v-model="email.recipient_name" type="text" placeholder="e.g. Jane" :class="input" />
-          </div>
+          <UiInput v-model="email.to" label="To" required type="email" placeholder="name@example.com" autocomplete="email" />
+          <UiInput v-model="email.recipient_name" label="Recipient name" placeholder="e.g. Jane" />
         </div>
-        <div>
-          <label class="text-xs font-semibold text-brand-dark mb-1.5 block">CC <span class="text-gray-400 font-normal">(optional, comma separated)</span></label>
-          <input v-model="email.cc" type="text" placeholder="finance@example.com" :class="input" />
-        </div>
-        <div>
-          <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Personal message <span class="text-gray-400 font-normal">(optional)</span></label>
-          <textarea v-model="email.message" rows="3" placeholder="Added above the license details" :class="[input, 'resize-none']"></textarea>
-        </div>
-        <p class="text-[11px] text-gray-500 flex items-start gap-1.5">
+        <UiInput v-model="email.cc" label="CC" hint="Optional, comma separated" placeholder="finance@example.com" />
+        <UiInput v-model="email.message" label="Personal message" :rows="3" placeholder="Added above the license details" hint="Optional" />
+        <p class="text-ui-cap text-ui-muted flex items-start gap-1.5">
           <Info class="w-3.5 h-3.5 shrink-0 mt-px" />
-          <template v-if="selectedKey">The certificate PDF of key {{ selectedKey.position }} is attached, with that key, plan and validity in the email.</template>
-          <template v-else>The certificate PDF is attached{{ isBundle ? " (one PDF with the Mac and iPad keys)" : "" }}, with the key{{ isBundle || perDevice ? "s" : "" }}, plan and validity in the email.</template> Replies go to the company inbox.
+          <span>
+            <template v-if="selectedKey">The certificate PDF of key {{ selectedKey.position }} is attached, with that key, plan and validity in the email.</template>
+            <template v-else>The certificate PDF is attached{{ isBundle ? " (one PDF with the Mac and iPad keys)" : "" }}, with the key{{ isBundle || perDevice ? "s" : "" }}, plan and validity in the email.</template> Replies go to the company inbox.
+          </span>
         </p>
-        <button
-          type="submit"
-          :disabled="busy === 'email' || !emailValid"
-          class="w-full rounded-[12px] bg-[#0C51D9] hover:brightness-110 transition-all px-4 py-3 flex items-center justify-center gap-2 text-white text-sm font-bold disabled:opacity-50"
-        >
-          <Loader2 v-if="busy === 'email'" class="w-4 h-4 animate-spin" />
-          <Send v-else class="w-4 h-4" />
-          {{ busy === "email" ? "Sending..." : "Send Email" }}
-        </button>
       </form>
 
       <!-- WhatsApp: a prefilled message with a 7-day download link -->
-      <form v-else class="px-6 py-5 space-y-4" @submit.prevent="openWhatsApp">
+      <form v-else id="share-wa-form" class="space-y-4" @submit.prevent="openWhatsApp">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs font-semibold text-brand-dark mb-1.5 block">WhatsApp number</label>
-            <input v-model="wa.phone" type="tel" placeholder="0812 3456 7890" :class="input" />
-          </div>
-          <div>
-            <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Recipient name</label>
-            <input v-model="wa.recipient_name" type="text" placeholder="e.g. Jane" :class="input" />
-          </div>
+          <UiInput v-model="wa.phone" label="WhatsApp number" type="tel" placeholder="0812 3456 7890" autocomplete="tel" />
+          <UiInput v-model="wa.recipient_name" label="Recipient name" placeholder="e.g. Jane" />
         </div>
         <div>
-          <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Message</label>
-          <textarea v-model="wa.message" rows="11" :class="[input, 'resize-none text-[13px] leading-relaxed']" @input="waEdited = true"></textarea>
-          <p class="text-[11px] text-gray-500 mt-1">
+          <label for="share-wa-message" class="block text-ui-small font-medium text-ui-ink mb-1.5">Message</label>
+          <textarea
+            id="share-wa-message"
+            v-model="wa.message"
+            rows="11"
+            class="w-full px-3 py-2.5 bg-ui-surface text-ui-small text-ui-ink border border-ui-line-strong rounded-ui-control resize-y focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+            @input="waEdited = true"
+          ></textarea>
+          <p class="text-ui-cap text-ui-muted mt-1.5">
             <span class="font-mono">{link}</span> becomes a download link to the certificate PDF, valid for 7 days.
           </p>
         </div>
-        <p v-if="!waNumber" class="text-[11px] text-amber-700">No number: WhatsApp opens so you can choose the chat.</p>
-        <button
-          type="submit"
-          :disabled="busy === 'whatsapp'"
-          class="w-full rounded-[12px] bg-[#25D366] hover:brightness-105 transition-all px-4 py-3 flex items-center justify-center gap-2 text-white text-sm font-bold disabled:opacity-50"
-        >
-          <Loader2 v-if="busy === 'whatsapp'" class="w-4 h-4 animate-spin" />
-          <ExternalLink v-else class="w-4 h-4" />
-          {{ busy === "whatsapp" ? "Preparing link..." : "Open WhatsApp" }}
-        </button>
+        <p v-if="!waNumber" class="text-ui-cap text-ui-warn">No number: WhatsApp opens so you can choose the chat.</p>
       </form>
     </div>
-  </div>
+
+    <template #footer>
+      <UiButton variant="secondary" @click="emit('close')">Cancel</UiButton>
+      <UiButton
+        v-if="tab === 'email'"
+        type="submit"
+        form="share-email-form"
+        :icon="Send"
+        :loading="busy === 'email'"
+        :disabled="!emailValid"
+      >
+        {{ busy === "email" ? "Sending..." : "Send Email" }}
+      </UiButton>
+      <UiButton v-else type="submit" form="share-wa-form" :icon="ExternalLink" :loading="busy === 'whatsapp'">
+        {{ busy === "whatsapp" ? "Preparing link..." : "Open WhatsApp" }}
+      </UiButton>
+    </template>
+  </UiModal>
 </template>

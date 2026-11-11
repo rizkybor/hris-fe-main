@@ -1,10 +1,11 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { Activity, ChevronDown, ChevronRight, Globe, UserCog, Laptop, Loader2 } from "lucide-vue-next";
+import { Activity, ChevronDown, ChevronRight, Globe, UserCog, Laptop } from "lucide-vue-next";
 import { eventIcon } from "@/components/admin/license-manager/licenseEventIcons";
 import { useLoadOnScroll } from "@/components/admin/license-manager/useLoadOnScroll";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiEmpty, UiSpinner } from "@/components/ui";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 import {
   EVENT_TYPES,
@@ -133,123 +134,118 @@ const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.va
 </script>
 
 <template>
-  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
-      <div class="flex items-center gap-2 flex-1">
-        <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <Activity class="w-[18px] h-[18px] text-violet-600" />
-        </div>
-        <h4 class="text-brand-dark font-bold">Tracking</h4>
-        <span class="text-xs text-brand-light">({{ eventsMeta.total ?? 0 }})</span>
+  <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3 px-5 pt-5 sm:px-6 pb-3">
+      <div class="flex items-baseline gap-2 flex-1">
+        <h3 class="text-ui-h2 text-ui-ink">Activity</h3>
+        <span class="text-ui-small text-ui-muted tabular-nums">{{ eventsMeta.total ?? 0 }}</span>
       </div>
-      <div class="relative w-full sm:w-64">
-        <select v-model="filter" class="select-soft" aria-label="Filter by event type">
+      <div class="relative w-full sm:w-56">
+        <select
+          v-model="filter"
+          class="w-full h-9 pl-3 pr-8 appearance-none bg-ui-surface text-ui-small text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+          aria-label="Filter by event type"
+        >
           <option value="">All events</option>
           <optgroup v-for="(options, group) in filterGroups" :key="group" :label="group">
             <option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </optgroup>
         </select>
-        <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+        <ChevronDown class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-faint pointer-events-none" />
       </div>
     </div>
 
-    <div v-if="loading && !events.length" class="space-y-3">
-      <Skeleton v-for="i in 4" :key="i" height="56px" rounded="12px" />
+    <div v-if="loading && !events.length" class="px-5 sm:px-6 pb-5 space-y-3">
+      <Skeleton v-for="i in 4" :key="i" height="48px" rounded="8px" />
     </div>
 
-    <div v-else-if="!events.length" class="text-center py-10 bg-white rounded-[12px] border border-dashed border-[#DCDEDD]">
-      <Activity class="w-9 h-9 text-gray-300 mx-auto mb-3" />
-      <p class="text-sm font-semibold text-brand-dark">No events {{ filter ? "of this type" : "yet" }}</p>
-      <p class="text-xs text-brand-light">Admin changes, device activity and denied attempts appear here.</p>
-    </div>
+    <UiEmpty
+      v-else-if="!events.length"
+      compact
+      :icon="Activity"
+      :title="`No events ${filter ? 'of this type' : 'yet'}`"
+      message="Admin changes, device activity and denied attempts appear here."
+      class="pb-6"
+    />
 
-    <div v-else ref="scroller" class="max-h-[620px] overflow-y-auto scroll-soft -mr-3 pr-2">
-    <ol class="relative" :class="{ 'opacity-60': loading }">
-      <li v-for="(event, index) in events" :key="event.id" class="relative flex gap-4 pb-5 last:pb-0">
-        <!-- Rail -->
-        <span
-          v-if="index < events.length - 1"
-          class="absolute left-[17px] top-10 bottom-0 w-px bg-[#DCDEDD]"
-          aria-hidden="true"
-        ></span>
-        <div class="w-9 h-9 rounded-full ring-4 flex items-center justify-center shrink-0 z-10" :class="eventToneClass(event)">
-          <component :is="eventIcon(event)" class="w-4 h-4" />
-        </div>
+    <div v-else ref="scroller" class="max-h-[620px] overflow-y-auto scroll-soft px-5 sm:px-6 pb-3">
+      <ol class="divide-y divide-ui-line border-t border-ui-line" :class="{ 'opacity-60': loading }">
+        <li v-for="event in events" :key="event.id" class="flex gap-3.5 py-3.5">
+          <div class="w-8 h-8 rounded-ui-control ring-1 flex items-center justify-center shrink-0" :class="eventToneClass(event)">
+            <component :is="eventIcon(event)" class="w-4 h-4" />
+          </div>
 
-        <div
-          class="flex-1 min-w-0 bg-white border rounded-[12px] px-4 py-3"
-          :class="isDenied(event) ? 'border-red-200' : 'border-[#DCDEDD]'"
-        >
-          <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-            <div class="min-w-0">
-              <p class="text-sm font-semibold" :class="isDenied(event) ? 'text-red-700' : 'text-brand-dark'">
-                {{ eventLabel(event) }}
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-0.5">
+              <div class="min-w-0">
+                <p class="text-ui-body font-medium" :class="isDenied(event) ? 'text-ui-bad' : 'text-ui-ink'">
+                  {{ eventLabel(event) }}
+                </p>
+                <p v-if="summaryLine(event)" class="text-ui-cap text-ui-muted mt-0.5 break-words">{{ summaryLine(event) }}</p>
+              </div>
+              <p class="text-ui-cap text-ui-muted whitespace-nowrap tabular-nums" :title="formatDateTime(event.created_at)">
+                {{ relativeTime(event.created_at) }}
+                <span class="text-ui-faint">&middot; {{ formatDateTime(event.created_at) }}</span>
               </p>
-              <p v-if="summaryLine(event)" class="text-xs text-brand-light mt-0.5 break-words">{{ summaryLine(event) }}</p>
             </div>
-            <p class="text-xs text-brand-light whitespace-nowrap" :title="formatDateTime(event.created_at)">
-              {{ relativeTime(event.created_at) }}
-              <span class="text-gray-400">&middot; {{ formatDateTime(event.created_at) }}</span>
-            </p>
-          </div>
 
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-brand-light">
-            <span v-if="event.device_id" class="inline-flex items-center gap-1 min-w-0" :title="event.device_id">
-              <Laptop class="w-3.5 h-3.5 shrink-0" />
-              <span class="truncate max-w-[220px]">
-                {{ event.device_name || event.device_id }}
-                <template v-if="event.platform"> &middot; {{ platformLabel(event.platform) }}</template>
-                <template v-if="event.app_version"> &middot; v{{ event.app_version }}</template>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-ui-cap text-ui-muted">
+              <span v-if="event.device_id" class="inline-flex items-center gap-1 min-w-0" :title="event.device_id">
+                <Laptop class="w-3.5 h-3.5 shrink-0" />
+                <span class="truncate max-w-[220px]">
+                  {{ event.device_name || event.device_id }}
+                  <template v-if="event.platform"> &middot; {{ platformLabel(event.platform) }}</template>
+                  <template v-if="event.app_version"> &middot; v{{ event.app_version }}</template>
+                </span>
               </span>
-            </span>
-            <span v-if="event.user_name || event.user_id" class="inline-flex items-center gap-1">
-              <UserCog class="w-3.5 h-3.5" /> {{ event.user_name || `User #${event.user_id}` }}
-            </span>
-            <span v-if="event.ip" class="inline-flex items-center gap-1 font-mono">
-              <Globe class="w-3.5 h-3.5" /> {{ event.ip }}
-            </span>
-          </div>
-
-          <!-- Field changes (updated) -->
-          <template v-if="hasChanges(event)">
-            <button
-              type="button"
-              @click="toggle(event.id)"
-              class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-800"
-              :aria-expanded="!!expanded[event.id]"
-            >
-              <component :is="expanded[event.id] ? ChevronDown : ChevronRight" class="w-3.5 h-3.5" />
-              {{ expanded[event.id] ? "Hide changes" : "Show changes" }}
-            </button>
-            <div v-if="expanded[event.id]" class="mt-2 overflow-x-auto">
-              <table class="min-w-full text-xs">
-                <thead>
-                  <tr class="text-left text-brand-light">
-                    <th class="py-1 pr-4 font-semibold">Field</th>
-                    <th class="py-1 pr-4 font-semibold">Old</th>
-                    <th class="py-1 font-semibold">New</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(change, field) in event.meta.changes" :key="field" class="border-t border-[#F1F1F1] align-top">
-                    <td class="py-1.5 pr-4 font-semibold text-brand-dark whitespace-nowrap">{{ FIELD_LABELS[field] || field }}</td>
-                    <td class="py-1.5 pr-4 text-red-600 line-through decoration-red-300 break-words">{{ formatValue(field, change.old) }}</td>
-                    <td class="py-1.5 text-emerald-700 break-words">{{ formatValue(field, change.new) }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <span v-if="event.user_name || event.user_id" class="inline-flex items-center gap-1">
+                <UserCog class="w-3.5 h-3.5" /> {{ event.user_name || `User #${event.user_id}` }}
+              </span>
+              <span v-if="event.ip" class="inline-flex items-center gap-1 font-mono">
+                <Globe class="w-3.5 h-3.5" /> {{ event.ip }}
+              </span>
             </div>
-          </template>
-        </div>
-      </li>
-    </ol>
+
+            <!-- Field changes (updated) -->
+            <template v-if="hasChanges(event)">
+              <button
+                type="button"
+                @click="toggle(event.id)"
+                class="mt-1.5 inline-flex items-center gap-1 text-ui-cap font-medium text-ui-accent hover:underline"
+                :aria-expanded="!!expanded[event.id]"
+              >
+                <component :is="expanded[event.id] ? ChevronDown : ChevronRight" class="w-3.5 h-3.5" />
+                {{ expanded[event.id] ? "Hide changes" : "Show changes" }}
+              </button>
+              <div v-if="expanded[event.id]" class="mt-2 overflow-x-auto border border-ui-line rounded-ui-control">
+                <table class="min-w-full text-ui-cap">
+                  <thead class="bg-ui-subtle">
+                    <tr class="text-left text-ui-muted">
+                      <th class="py-1.5 px-3 font-medium">Field</th>
+                      <th class="py-1.5 px-3 font-medium">Old</th>
+                      <th class="py-1.5 px-3 font-medium">New</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(change, field) in event.meta.changes" :key="field" class="border-t border-ui-line align-top">
+                      <td class="py-1.5 px-3 font-medium text-ui-ink whitespace-nowrap">{{ FIELD_LABELS[field] || field }}</td>
+                      <td class="py-1.5 px-3 text-ui-muted line-through break-words">{{ formatValue(field, change.old) }}</td>
+                      <td class="py-1.5 px-3 text-ui-ink break-words">{{ formatValue(field, change.new) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+          </div>
+        </li>
+      </ol>
       <div ref="sentinel" class="h-px"></div>
-      <p v-if="loadingMore" class="flex items-center justify-center gap-2 py-3 text-xs text-brand-light">
-        <Loader2 class="w-3.5 h-3.5 animate-spin" /> Loading more events...
+      <p v-if="loadingMore" class="flex items-center justify-center gap-2 py-3 text-ui-cap text-ui-muted">
+        <UiSpinner size="14px" :center="false" label="Loading more events..." />
       </p>
-      <p v-else-if="!hasMore && events.length > PER_PAGE" class="py-3 text-center text-[11px] text-gray-400">
+      <p v-else-if="!hasMore && events.length > PER_PAGE" class="py-3 text-center text-ui-cap text-ui-faint">
         All {{ events.length }} events loaded
       </p>
     </div>
-  </div>
+  </section>
 </template>

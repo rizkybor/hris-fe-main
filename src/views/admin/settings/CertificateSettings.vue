@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { Award, Save, Upload, Trash2, ImageIcon, Info, ArrowLeft } from "lucide-vue-next";
 import { useCertificateStore } from "@/stores/certificate";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { UiAlert, UiButton, UiEmpty, UiInput, UiPageHeader, UiTable } from "@/components/ui";
 
 const store = useCertificateStore();
 const alertModal = useAlertModalStore();
@@ -81,6 +82,12 @@ const handleUploadTemplate = async () => {
   }
 };
 
+// Presentation only.
+const templateColumns = [
+  { key: "name", label: "Template" },
+  { key: "actions", label: "", align: "right", width: 64 },
+];
+
 const handleDeleteTemplate = async (template) => {
   if (!(await alertModal.confirm(`Delete template "${template.name}"?`))) return;
   await store.deleteTemplate(template.id);
@@ -88,122 +95,127 @@ const handleDeleteTemplate = async (template) => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="bg-white mb-5">
-      <div class="flex items-center gap-3">
-        <router-link
-          :to="{ name: 'admin.settings.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Settings"
-          title="Back to Settings"
-        >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Certificate Configuration" subtitle="Automatic numbering format and certificate background template settings">
+      <template #eyebrow>
+        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" aria-label="Back to Settings" title="Back to Settings">
+          <ArrowLeft class="w-4 h-4" /> Settings
         </router-link>
-        <div class="w-11 h-11 bg-amber-50 rounded-[12px] flex items-center justify-center">
-          <Award class="w-5 h-5 text-amber-600" />
-        </div>
+      </template>
+    </UiPageHeader>
+
+    <!-- Numbering -->
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card ui-anim-fade-up">
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-4 lg:gap-10 p-4 sm:p-5 lg:p-6">
         <div>
-          <h3 class="text-brand-dark text-lg font-bold">Certificate Configuration</h3>
-          <p class="text-brand-light text-sm">Automatic numbering format and certificate background template settings</p>
+          <div class="flex items-center gap-2">
+            <Award class="w-4 h-4 text-ui-muted" />
+            <h2 class="text-ui-h2 text-ui-ink">Certificate Numbering</h2>
+          </div>
+          <p class="text-ui-small text-ui-muted mt-1">The automatic number printed on every certificate.</p>
         </div>
-      </div>
-    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4"> Certificate Numbering</h4>
-
-        <form @submit.prevent="handleSaveSettings" class="space-y-4">
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Company Code</label>
-            <input v-model="form.company_code" type="text" required maxlength="20" placeholder="e.g. JCD" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
+        <form @submit.prevent="handleSaveSettings" class="space-y-4 min-w-0">
+          <div class="sm:max-w-[240px]">
+            <label for="cert-company-code" class="block text-ui-small font-medium text-ui-ink mb-1.5">Company Code<span class="text-ui-bad"> *</span></label>
+            <input id="cert-company-code" v-model="form.company_code" type="text" required maxlength="20" placeholder="e.g. JCD" class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus uppercase" />
           </div>
           <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Number Format</label>
-            <input v-model="form.number_format" type="text" required placeholder="{company}/{category}/{program}/{year}/{month_roman}/{sequence}" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm font-mono" />
+            <UiInput v-model="form.number_format" label="Number Format" required mono placeholder="{company}/{category}/{program}/{year}/{month_roman}/{sequence}" />
             <div class="flex flex-wrap gap-1.5 mt-2">
               <button
                 v-for="token in tokens"
                 :key="token"
                 type="button"
                 @click="insertToken(token)"
-                class="px-2 py-1 rounded-md bg-blue-50 text-[#0C51D9] text-xs font-mono font-semibold hover:bg-blue-100"
+                class="ui-press h-7 px-2 rounded-md border border-ui-line bg-ui-subtle text-ui-text text-ui-cap font-mono hover:bg-ui-hover hover:text-ui-ink"
               >
                 {{ token }}
               </button>
             </div>
           </div>
 
-          <div class="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 flex items-start gap-2">
-            <Info class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div class="text-sm text-amber-800">
-              Example result: <span class="font-mono font-bold">{{ previewFormat }}</span>
-            </div>
+          <UiAlert tone="info">
+            Example result: <span class="font-mono font-semibold text-ui-ink break-all">{{ previewFormat }}</span>
+          </UiAlert>
+
+          <UiAlert v-if="settingsError" tone="bad" :message="settingsError" />
+          <UiAlert v-if="settingsSuccess" tone="ok" :message="settingsSuccess" />
+
+          <div class="flex justify-end">
+            <UiButton type="submit" :icon="Save" :loading="savingSettings" :disabled="savingSettings">
+              {{ savingSettings ? "Saving..." : "Save Settings" }}
+            </UiButton>
           </div>
-
-          <p v-if="settingsError" class="text-red-500 text-sm">{{ settingsError }}</p>
-          <p v-if="settingsSuccess" class="text-green-600 text-sm font-semibold">{{ settingsSuccess }}</p>
-
-          <button
-            type="submit"
-            :disabled="savingSettings"
-            class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-5 py-2.5 flex items-center gap-2 disabled:opacity-50"
-          >
-            <Save class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">{{ savingSettings ? "Saving..." : "Save Settings" }}</span>
-          </button>
         </form>
       </div>
+    </section>
 
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Template Background</h4>
-        <p class="text-xs text-gray-400 mb-4">
-          Without a specific template, certificates use the default premium template provided by the system.
-          Upload an image to use your own background. (size guide : 297 X 210 mm)
-        </p>
-
-        <div class="border border-dashed border-[#DCDEDD] rounded-xl p-4 mb-4">
-          <div class="mb-3">
-            <label class="text-xs text-gray-500 mb-1 block">Template Name</label>
-            <input v-model="newTemplate.name" type="text" placeholder="e.g. Premium Gold Template" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
+    <!-- Templates -->
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card ui-anim-fade-up">
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-4 lg:gap-10 p-4 sm:p-5 lg:p-6">
+        <div>
+          <div class="flex items-center gap-2">
+            <ImageIcon class="w-4 h-4 text-ui-muted" />
+            <h2 class="text-ui-h2 text-ui-ink">Template Background</h2>
           </div>
-          <div class="mb-3">
-            <label class="text-xs text-gray-500 mb-1 block">Background Image (JPEG/PNG/WEBP, max 5MB)</label>
-            <input id="template-file-input" @change="onFileChange" type="file" accept="image/jpeg,image/png,image/jpg,image/webp" class="w-full text-sm" />
-          </div>
-          <p v-if="templateError" class="text-red-500 text-xs mb-2">{{ templateError }}</p>
-          <button
-            type="button"
-            @click="handleUploadTemplate"
-            :disabled="uploadingTemplate"
-            class="px-4 py-2 rounded-lg bg-[#0C51D9] text-white text-sm font-semibold flex items-center gap-2 disabled:opacity-50"
-          >
-            <Upload class="w-4 h-4" /> {{ uploadingTemplate ? "Uploading..." : "Upload Template" }}
-          </button>
+          <p class="text-ui-small text-ui-muted mt-1">
+            Without a specific template, certificates use the default premium template provided by the system.
+            Upload an image to use your own background. (size guide : 297 X 210 mm)
+          </p>
         </div>
 
-        <div class="space-y-2">
-          <div v-for="template in templates" :key="template.id" class="flex items-center justify-between p-3 border border-[#DCDEDD] rounded-lg">
-            <div class="flex items-center gap-3 min-w-0">
-              <img
-                v-if="template.background_url"
-                :src="template.background_url"
-                class="w-12 h-9 object-cover rounded-md border border-[#DCDEDD] shrink-0"
+        <div class="space-y-4 min-w-0">
+          <div class="border border-dashed border-ui-line-strong rounded-ui-card p-4 space-y-3">
+            <UiInput v-model="newTemplate.name" label="Template Name" placeholder="e.g. Premium Gold Template" />
+            <div>
+              <label for="template-file-input" class="block text-ui-small font-medium text-ui-ink mb-1.5">Background Image (JPEG/PNG/WEBP, max 5MB)</label>
+              <input
+                id="template-file-input"
+                @change="onFileChange"
+                type="file"
+                accept="image/jpeg,image/png,image/jpg,image/webp"
+                class="block w-full text-ui-small text-ui-muted file:mr-3 file:h-[34px] file:px-3 file:rounded-ui-control file:border file:border-solid file:border-ui-line-strong file:bg-ui-surface file:text-ui-small file:font-medium file:text-ui-ink hover:file:bg-ui-hover file:cursor-pointer"
               />
-              <div v-else class="w-12 h-9 rounded-md bg-gray-100 flex items-center justify-center shrink-0">
-                <ImageIcon class="w-4 h-4 text-gray-400" />
-              </div>
-              <span class="font-semibold text-brand-dark text-sm truncate">{{ template.name }}</span>
             </div>
-            <button @click="handleDeleteTemplate(template)" class="text-gray-400 hover:text-red-600 shrink-0">
-              <Trash2 class="w-4 h-4" />
-            </button>
+            <p v-if="templateError" class="text-ui-cap text-ui-bad">{{ templateError }}</p>
+            <UiButton :icon="Upload" :loading="uploadingTemplate" :disabled="uploadingTemplate" @click="handleUploadTemplate">
+              {{ uploadingTemplate ? "Uploading..." : "Upload Template" }}
+            </UiButton>
           </div>
-          <div v-if="templates.length === 0" class="text-center py-6 text-sm text-gray-400">
-            No custom templates available. Certificates will use the default template.
+
+          <div class="border border-ui-line rounded-ui-card overflow-hidden">
+            <UiTable :columns="templateColumns" :rows="templates">
+              <template #cell-name="{ row }">
+                <div class="flex items-center gap-3 min-w-0">
+                  <img v-if="row.background_url" :src="row.background_url" :alt="row.name" class="w-12 h-9 object-cover rounded-md border border-ui-line shrink-0" />
+                  <div v-else class="w-12 h-9 rounded-md bg-ui-subtle flex items-center justify-center shrink-0">
+                    <ImageIcon class="w-4 h-4 text-ui-faint" />
+                  </div>
+                  <span class="font-medium text-ui-ink truncate">{{ row.name }}</span>
+                </div>
+              </template>
+              <template #cell-actions="{ row }">
+                <UiButton variant="ghost" size="sm" :icon="Trash2" aria-label="Delete template" @click="handleDeleteTemplate(row)" />
+              </template>
+              <template #mobile="{ row, number }">
+                <div class="flex items-center gap-3 px-3 py-2.5">
+                  <span class="text-ui-cap text-ui-faint tabular-nums w-5">{{ number }}</span>
+                  <img v-if="row.background_url" :src="row.background_url" :alt="row.name" class="w-12 h-9 object-cover rounded-md border border-ui-line shrink-0" />
+                  <div v-else class="w-12 h-9 rounded-md bg-ui-subtle flex items-center justify-center shrink-0">
+                    <ImageIcon class="w-4 h-4 text-ui-faint" />
+                  </div>
+                  <span class="flex-1 min-w-0 text-ui-small font-medium text-ui-ink truncate">{{ row.name }}</span>
+                  <UiButton variant="ghost" size="sm" :icon="Trash2" aria-label="Delete template" @click="handleDeleteTemplate(row)" />
+                </div>
+              </template>
+              <template #empty>
+                <UiEmpty :icon="ImageIcon" title="No custom templates available." message="Certificates will use the default template." compact />
+              </template>
+            </UiTable>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>

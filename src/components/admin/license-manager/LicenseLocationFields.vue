@@ -4,7 +4,7 @@
 // Village selects (stored as codes, names filled in), other countries free
 // text. Then postal code and street address.
 import { computed, onMounted, ref, watch } from "vue";
-import { Globe, MapPin, Map as MapIcon, Building, Home, Mail as MailIcon, Hash } from "lucide-vue-next";
+import { Globe, MapPin, Map as MapIcon, Building, Home, Mail as MailIcon } from "lucide-vue-next";
 import LicenseFormField from "@/components/admin/license-manager/LicenseFormField.vue";
 import SearchSelect from "@/components/admin/license-manager/SearchSelect.vue";
 import { COUNTRY_OPTIONS } from "@/components/admin/license-manager/countries";
@@ -96,8 +96,8 @@ watch(
 </script>
 
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-    <LicenseFormField field="country" label="Country" :required="required('country')" :error="fieldError('country')" wide v-slot="{ id }">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5">
+    <LicenseFormField field="country" label="Country" :required="required('country')"   :error="fieldError('country')" v-slot="{ id }">
       <SearchSelect
         :id="id"
         v-model="form.country"
@@ -166,7 +166,7 @@ watch(
           @change="(o) => pick('village', o)"
         />
       </LicenseFormField>
-      <p v-if="loadError" class="md:col-span-2 text-xs text-red-600 -mt-2">{{ loadError }}</p>
+      <p v-if="loadError" class="md:col-span-2 text-ui-cap text-ui-bad -mt-2">{{ loadError }}</p>
     </template>
 
     <!-- Other countries: free text -->
@@ -195,14 +195,14 @@ watch(
       />
     </LicenseFormField>
 
-    <LicenseFormField field="address" label="Street Address" :required="required('address')" :error="fieldError('address')" :icon="Hash" wide v-slot="{ id }">
+    <LicenseFormField field="address" label="Street Address" :required="required('address')" :error="fieldError('address')" wide v-slot="{ id }">
       <textarea
         :id="id"
         v-model="form.address"
         rows="2"
         autocomplete="street-address"
         placeholder="Street, number, building, RT/RW"
-        :class="[inputClass('address'), 'font-normal resize-none']"
+        :class="[inputClass('address', false), 'resize-y']"
       ></textarea>
     </LicenseFormField>
   </div>

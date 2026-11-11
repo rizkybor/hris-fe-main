@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { Users2Icon, Plus, Trash2, ArrowLeft } from "lucide-vue-next";
 import { useSdmFieldStore } from "@/stores/sdmField";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { UiButton, UiEmpty, UiInput, UiPageHeader, UiTable } from "@/components/ui";
 
 const store = useSdmFieldStore();
 const alertModal = useAlertModalStore();
@@ -13,6 +14,12 @@ const newField = ref("");
 const errorMessage = ref("");
 
 onMounted(() => store.fetchFields());
+
+// Presentation only.
+const fieldColumns = [
+  { key: "name", label: "Field name" },
+  { key: "actions", label: "", align: "right", width: 64 },
+];
 
 const handleAdd = async () => {
   errorMessage.value = "";
@@ -37,63 +44,47 @@ const handleDelete = async (field) => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="bg-white mb-5">
-      <div class="flex items-center gap-3">
-        <router-link
-          :to="{ name: 'admin.settings.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Settings"
-          title="Back to Settings"
-        >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="SDM Field" subtitle="List of fields/roles selectable when adding an SDM Resource in Operational Cost">
+      <template #eyebrow>
+        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" aria-label="Back to Settings" title="Back to Settings">
+          <ArrowLeft class="w-4 h-4" /> Settings
         </router-link>
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <Users2Icon class="w-5 h-5 text-[#0C51D9]" />
+      </template>
+    </UiPageHeader>
+
+    <p v-if="errorMessage" class="text-ui-small text-ui-bad">{{ errorMessage }}</p>
+
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+      <div class="px-4 sm:px-5 pt-4 pb-4 border-b border-ui-line flex flex-col md:flex-row md:items-end gap-3">
+        <div class="flex-1 min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink">Fields</h2>
+          <p class="text-ui-cap text-ui-muted tabular-nums">{{ fields.length }} fields</p>
         </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">SDM Field</h3>
-          <p class="text-brand-light text-sm">
-            List of fields/roles selectable when adding an SDM Resource in Operational Cost
-          </p>
-        </div>
+        <form @submit.prevent="handleAdd" class="flex items-end gap-2 md:w-[420px]">
+          <UiInput v-model="newField" label="Field Name" placeholder="e.g. Backend Developer" class="flex-1" />
+          <UiButton type="submit" :icon="Plus">Add</UiButton>
+        </form>
       </div>
-    </div>
 
-    <p v-if="errorMessage" class="text-red-500 text-sm mb-4">{{ errorMessage }}</p>
-
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 max-w-lg">
-      <form @submit.prevent="handleAdd" class="flex items-end gap-2 mb-4">
-        <div class="flex-1">
-          <label class="text-xs text-gray-500 mb-1 block">Field Name</label>
-          <input
-            v-model="newField"
-            type="text"
-            placeholder="e.g. Backend Developer"
-            class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <button type="submit" class="p-2 bg-[#0C51D9] text-white rounded-lg shrink-0">
-          <Plus class="w-4 h-4" />
-        </button>
-      </form>
-
-      <div v-if="loading" class="text-center py-6 text-sm text-gray-400">Loading...</div>
-      <div v-else class="space-y-2">
-        <div
-          v-for="field in fields"
-          :key="field.id"
-          class="flex items-center justify-between p-3 border border-[#DCDEDD] rounded-lg"
-        >
-          <span class="text-brand-dark text-sm font-semibold">{{ field.name }}</span>
-          <button @click="handleDelete(field)" class="text-gray-400 hover:text-red-600">
-            <Trash2 class="w-4 h-4" />
-          </button>
-        </div>
-        <div v-if="fields.length === 0" class="text-center py-6 text-sm text-gray-400">
-          No SDM fields yet
-        </div>
-      </div>
-    </div>
+      <UiTable :columns="fieldColumns" :rows="fields" :loading="loading" :skeleton-rows="4">
+        <template #cell-name="{ row }">
+          <span class="text-ui-ink font-medium">{{ row.name }}</span>
+        </template>
+        <template #cell-actions="{ row }">
+          <UiButton variant="ghost" size="sm" :icon="Trash2" aria-label="Delete field" @click="handleDelete(row)" />
+        </template>
+        <template #mobile="{ row, number }">
+          <div class="flex items-center gap-3 px-4 py-3">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5">{{ number }}</span>
+            <span class="flex-1 min-w-0 text-ui-body font-medium text-ui-ink truncate">{{ row.name }}</span>
+            <UiButton variant="ghost" size="sm" :icon="Trash2" aria-label="Delete field" @click="handleDelete(row)" />
+          </div>
+        </template>
+        <template #empty>
+          <UiEmpty :icon="Users2Icon" title="No SDM fields yet" compact />
+        </template>
+      </UiTable>
+    </section>
   </div>
 </template>

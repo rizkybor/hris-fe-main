@@ -39,14 +39,14 @@ const style = computed(() => ({
     :src="product.icon_url"
     :alt="`${product.name} icon`"
     :style="style"
-    class="object-cover shrink-0 bg-white ring-1 ring-black/5"
+    class="object-cover shrink-0 bg-ui-surface ring-1 ring-ui-line"
     loading="lazy"
     @error="failed = true"
   />
   <span
     v-else
     :style="style"
-    class="inline-flex items-center justify-center shrink-0 bg-violet-100 text-violet-700 font-bold leading-none select-none"
+    class="inline-flex items-center justify-center shrink-0 bg-ui-ink text-white font-semibold leading-none select-none"
     :aria-label="product?.name ? `${product.name} icon` : 'Product icon'"
     role="img"
   >

@@ -3,6 +3,7 @@ import { computed, inject, nextTick, ref } from "vue";
 import { Handle, Position, useVueFlow } from "@vue-flow/core";
 import { NodeResizer } from "@vue-flow/node-resizer";
 import { SHAPES } from "./flowchartShapes";
+import { uiColor } from "@/utils/uiColor";
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -11,6 +12,8 @@ const props = defineProps({
   dimensions: { type: Object, default: () => ({ width: 0, height: 0 }) },
 });
 
+// Selection chrome follows the accent token; the shape keeps its own colours.
+const accent = uiColor("accent");
 const readonly = inject("flowchartReadonly", ref(false));
 const { updateNodeData } = useVueFlow();
 
@@ -75,7 +78,7 @@ const handles = [
       :is-visible="selected"
       :min-width="40"
       :min-height="30"
-      color="#0C51D9"
+      :color="accent"
     />
 
     <svg class="fc-shape" :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`">
@@ -130,7 +133,7 @@ const handles = [
 }
 
 .fc-node--selected .fc-shape {
-  filter: drop-shadow(0 0 0.5px #0c51d9) drop-shadow(0 4px 10px rgba(12, 81, 217, 0.18));
+  filter: drop-shadow(0 0 0.5px rgb(var(--ui-accent))) drop-shadow(0 4px 10px rgb(var(--ui-accent) / 0.18));
 }
 
 .fc-label {
@@ -156,7 +159,7 @@ const handles = [
   resize: none;
   border: none;
   outline: none;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgb(var(--ui-surface) / 0.85);
   border-radius: 4px;
   text-align: center;
   font-family: inherit;
@@ -167,8 +170,8 @@ const handles = [
 .fc-handle {
   width: 9px;
   height: 9px;
-  background: #ffffff;
-  border: 2px solid #0c51d9;
+  background: rgb(var(--ui-surface));
+  border: 2px solid rgb(var(--ui-accent));
   opacity: 0;
   transition: opacity 0.15s;
 }

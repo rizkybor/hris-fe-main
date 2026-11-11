@@ -7,6 +7,7 @@ import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiPageHeader, UiTable } from "@/components/ui";
 
 const store = useBackupStore();
 const alertModal = useAlertModalStore();
@@ -68,6 +69,16 @@ const handleDelete = async () => {
   backupToDelete.value = null;
 };
 
+// Presentation only.
+const backupColumns = [
+  { key: "filename", label: "File Backup" },
+  { key: "size_bytes", label: "Ukuran", align: "right", width: 110 },
+  { key: "creator", label: "Dibuat Oleh" },
+  { key: "is_automatic", label: "Type", width: 120 },
+  { key: "created_at", label: "Date", width: 180 },
+  { key: "actions", label: "Aksi", align: "right", width: 130 },
+];
+
 const formatSize = (bytes) => {
   if (!bytes) return "0 KB";
   const kb = bytes / 1024;
@@ -82,157 +93,114 @@ const formatDate = (date) =>
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="bg-white mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-3">
-        <router-link
-          :to="{ name: 'admin.settings.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Settings"
-          title="Back to Settings"
-        >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Backup Database" subtitle="Full SQL backup history of all database tables">
+      <template #eyebrow>
+        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" aria-label="Back to Settings" title="Back to Settings">
+          <ArrowLeft class="w-4 h-4" /> Settings
         </router-link>
-        <div class="w-11 h-11 bg-red-50 rounded-[12px] flex items-center justify-center">
-          <DatabaseBackup class="w-5 h-5 text-red-600" />
+      </template>
+      <template #actions>
+        <UiButton v-if="can('backup-create')" :icon="Plus" :loading="creating" :disabled="creating" @click="handleCreate">
+          {{ creating ? "Creating Backup..." : "Create New Backup" }}
+        </UiButton>
+      </template>
+    </UiPageHeader>
+
+    <p v-if="error" class="text-ui-small text-ui-bad">{{ typeof error === "string" ? error : "Failed to create backup." }}</p>
+
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+      <div class="px-4 sm:px-5 pt-4 pb-3 flex flex-col md:flex-row md:items-center gap-3 border-b border-ui-line">
+        <div class="flex-1 min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink">Backups</h2>
+          <p class="text-ui-cap text-ui-muted tabular-nums">{{ meta?.total ?? backups.length }} backups</p>
         </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Backup Database</h3>
-          <p class="text-brand-light text-sm">Full SQL backup history of all database tables</p>
-        </div>
+        <UiInput v-model="search" :icon="Search" placeholder="Search backup file name..." class="md:w-[300px]" @keyup.enter="handleSearch" />
       </div>
 
-      <button
-        v-if="can('backup-create')"
-        type="button"
-        @click="handleCreate"
-        :disabled="creating"
-        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2 disabled:opacity-50"
-      >
-        <Loader2 v-if="creating" class="w-4 h-4 animate-spin text-white" />
-        <Plus v-else class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">{{ creating ? "Creating Backup..." : "Create New Backup" }}</span>
-      </button>
-    </div>
-
-    <p v-if="error" class="text-red-500 text-sm mb-4">{{ typeof error === "string" ? error : "Failed to create backup." }}</p>
-
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="relative mb-4 max-w-sm">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search class="w-4 h-4 text-gray-400" />
-        </div>
-        <input
-          v-model="search"
-          @keyup.enter="handleSearch"
-          type="text"
-          placeholder="Search backup file name..."
-          class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        />
-      </div>
-
-      <SkeletonTable v-if="loading" :rows="6" :cols="5" />
-
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
-              <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">File Backup</th>
-              <th class="py-3 pr-4 font-semibold">Ukuran</th>
-              <th class="py-3 pr-4 font-semibold">Dibuat Oleh</th>
-              <th class="py-3 pr-4 font-semibold">Type</th>
-              <th class="py-3 pr-4 font-semibold">Date</th>
-              <th class="py-3 pr-4 font-semibold text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(backup, index) in backups" :key="backup.id" class="border-b border-[#F1F1F1] hover:bg-gray-50">
-              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4">
-                <div class="flex items-center gap-2">
-                  <HardDrive class="w-4 h-4 text-gray-400 shrink-0" />
-                  <span class="font-mono text-xs">{{ backup.filename }}</span>
-                </div>
-              </td>
-              <td class="py-3 pr-4">{{ formatSize(backup.size_bytes) }}</td>
-              <td class="py-3 pr-4">{{ backup.creator || "-" }}</td>
-              <td class="py-3 pr-4">
-                <span
-                  class="text-xs font-semibold px-2 py-1 rounded-full"
-                  :class="backup.is_automatic ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-600'"
-                >
-                  {{ backup.is_automatic ? "Automatic" : "Manual" }}
-                </span>
-              </td>
-              <td class="py-3 pr-4">{{ formatDate(backup.created_at) }}</td>
-              <td class="py-3 pr-4">
-                <div class="flex items-center justify-end gap-1">
-                  <button
-                    v-if="can('backup-list')"
-                    @click="handleDownload(backup)"
-                    :disabled="downloadingId === backup.id"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
-                    title="Download SQL"
-                  >
-                    <Download class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button
-                    v-if="can('backup-restore')"
-                    @click="handleRestore(backup)"
-                    :disabled="restoringId === backup.id"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-orange-500 hover:bg-orange-50 disabled:opacity-50 group"
-                    title="Restore database from this backup"
-                  >
-                    <Loader2 v-if="restoringId === backup.id" class="w-4 h-4 text-orange-600 animate-spin" />
-                    <RotateCcw v-else class="w-4 h-4 text-gray-600 group-hover:text-orange-600" />
-                  </button>
-                  <button
-                    v-if="can('backup-delete')"
-                    @click="confirmDelete(backup)"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Delete"
-                  >
-                    <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div v-if="!loading && backups.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">No Backups yet</p>
-          <p class="text-sm text-gray-400 mt-1">Click "Create New Backup" to create the first database backup.</p>
-        </div>
-      </div>
-
-      <Pagination :meta="meta" :loading="loading" item-label="backup" @page-change="load" />
-    </div>
-
-    <Transition name="fade">
-      <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
-        <div class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <h3 class="text-xl font-bold text-brand-dark mb-2">Delete Backup?</h3>
-          <p class="text-gray-500 text-sm mb-6">
-            "{{ backupToDelete?.filename }}" will be permanently deleted from the server and cannot be recovered.
-          </p>
-          <div class="grid grid-cols-2 gap-3">
-            <button @click="isDeleteModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
-              Cancel
-            </button>
-            <button @click="handleDelete" class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600">
-              Yes, Delete
-            </button>
+      <UiTable :columns="backupColumns" :rows="backups" :meta="meta" :loading="loading" :skeleton-rows="6">
+        <template #cell-filename="{ row }">
+          <div class="flex items-center gap-2 min-w-0">
+            <HardDrive class="w-4 h-4 text-ui-faint shrink-0" />
+            <span class="font-mono text-ui-cap text-ui-ink truncate">{{ row.filename }}</span>
           </div>
-        </div>
+        </template>
+        <template #cell-size_bytes="{ row }">
+          <span class="tabular-nums">{{ formatSize(row.size_bytes) }}</span>
+        </template>
+        <template #cell-creator="{ row }">{{ row.creator || "-" }}</template>
+        <template #cell-is_automatic="{ row }">
+          <UiBadge :tone="row.is_automatic ? 'info' : 'neutral'">{{ row.is_automatic ? "Automatic" : "Manual" }}</UiBadge>
+        </template>
+        <template #cell-created_at="{ row }">
+          <span class="tabular-nums text-ui-muted whitespace-nowrap">{{ formatDate(row.created_at) }}</span>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-1">
+            <UiButton
+              v-if="can('backup-list')"
+              variant="ghost"
+              size="sm"
+              :icon="Download"
+              :loading="downloadingId === row.id"
+              :disabled="downloadingId === row.id"
+              title="Download SQL"
+              aria-label="Download SQL"
+              @click="handleDownload(row)"
+            />
+            <UiButton
+              v-if="can('backup-restore')"
+              variant="ghost"
+              size="sm"
+              :icon="RotateCcw"
+              :loading="restoringId === row.id"
+              :disabled="restoringId === row.id"
+              title="Restore database from this backup"
+              aria-label="Restore database from this backup"
+              @click="handleRestore(row)"
+            />
+            <UiButton v-if="can('backup-delete')" variant="ghost" size="sm" :icon="Trash2" title="Delete" aria-label="Delete" @click="confirmDelete(row)" />
+          </div>
+        </template>
+
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-mono text-ui-cap text-ui-ink break-all">{{ row.filename }}</p>
+              <p class="text-ui-cap text-ui-muted tabular-nums mt-1">
+                {{ formatSize(row.size_bytes) }} · {{ formatDate(row.created_at) }}
+              </p>
+              <div class="flex items-center gap-1.5 mt-1.5">
+                <UiBadge :tone="row.is_automatic ? 'info' : 'neutral'">{{ row.is_automatic ? "Automatic" : "Manual" }}</UiBadge>
+                <span class="text-ui-cap text-ui-muted truncate">{{ row.creator || "-" }}</span>
+              </div>
+            </div>
+            <div class="flex flex-col items-center gap-0.5 shrink-0">
+              <UiButton v-if="can('backup-list')" variant="ghost" size="sm" :icon="Download" :loading="downloadingId === row.id" :disabled="downloadingId === row.id" aria-label="Download SQL" @click="handleDownload(row)" />
+              <UiButton v-if="can('backup-restore')" variant="ghost" size="sm" :icon="RotateCcw" :loading="restoringId === row.id" :disabled="restoringId === row.id" aria-label="Restore" @click="handleRestore(row)" />
+              <UiButton v-if="can('backup-delete')" variant="ghost" size="sm" :icon="Trash2" aria-label="Delete" @click="confirmDelete(row)" />
+            </div>
+          </div>
+        </template>
+
+        <template #empty>
+          <UiEmpty :icon="DatabaseBackup" title="No Backups yet" message='Click "Create New Backup" to create the first database backup.' compact />
+        </template>
+      </UiTable>
+
+      <div v-if="meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
+        <Pagination :meta="meta" :loading="loading" item-label="backup" @page-change="load" />
       </div>
-    </Transition>
+    </section>
+
+    <UiConfirmDialog
+      v-model:open="isDeleteModalOpen"
+      title="Delete Backup?"
+      :message="`&quot;${backupToDelete?.filename}&quot; will be permanently deleted from the server and cannot be recovered.`"
+      confirm-text="Yes, Delete"
+      @confirm="handleDelete"
+      @cancel="isDeleteModalOpen = false"
+    />
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-</style>

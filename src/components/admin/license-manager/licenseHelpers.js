@@ -83,9 +83,9 @@ export const planGroupsFor = (platform) =>
   );
 
 export const PLATFORM_CHIP = {
-  mac: "bg-slate-100 text-slate-700",
-  ipad: "bg-sky-50 text-sky-700",
-  both: "bg-indigo-50 text-indigo-700",
+  mac: "bg-ui-subtle text-ui-text",
+  ipad: "bg-ui-accent-soft text-ui-accent",
+  both: "bg-ui-surface text-ui-ink border border-ui-line",
 };
 
 export const platformChipClass = (platform) => PLATFORM_CHIP[normalizePlatform(platform)];
@@ -106,33 +106,36 @@ export const categoryLabel = (license) => CATEGORY_LABELS[planCategory(license)]
 export const planDefaultMaxDevices = (plan) => planOption(plan)?.defaultMaxDevices ?? 2;
 
 // Chip colours: light (tables, forms) and dark (the key hero panels).
+// Plans are identities, not states, so they stay off the ok/warn/bad
+// colours and differ by lightness instead: Trial grey, Professional
+// accent, Lifetime ink, Organization outlined.
 const PLAN_CHIP = {
-  trial: "bg-amber-50 text-amber-700",
-  professional: "bg-indigo-50 text-indigo-700",
-  lifetime: "bg-fuchsia-50 text-fuchsia-700",
-  organization: "bg-teal-50 text-teal-700",
+  trial: "bg-ui-subtle text-ui-text",
+  professional: "bg-ui-accent-soft text-ui-accent",
+  lifetime: "bg-ui-ink text-white",
+  organization: "bg-ui-surface text-ui-ink border border-ui-line-strong",
 };
 
 const PLAN_CHIP_DARK = {
-  trial: "bg-amber-400/20 text-amber-200",
-  professional: "bg-indigo-400/20 text-indigo-200",
-  lifetime: "bg-fuchsia-400/20 text-fuchsia-200",
-  organization: "bg-teal-400/20 text-teal-200",
+  trial: "bg-white/10 text-white/80",
+  professional: "bg-white/15 text-white",
+  lifetime: "bg-white text-ui-ink",
+  organization: "bg-transparent text-white border border-white/30",
 };
 
 export const planChipClass = (plan, dark = false) =>
   (dark ? PLAN_CHIP_DARK : PLAN_CHIP)[normalizePlan(plan)] ||
-  (dark ? "bg-white/10 text-white/80" : "bg-gray-100 text-gray-600");
+  (dark ? "bg-white/10 text-white/80" : "bg-ui-subtle text-ui-text");
 
 // Solid plan colours (same hues as the chips) for bars and legend dots.
 const PLAN_BAR = {
-  trial: "bg-amber-400",
-  professional: "bg-indigo-500",
-  lifetime: "bg-fuchsia-500",
-  organization: "bg-teal-500",
+  trial: "bg-ui-faint",
+  professional: "bg-ui-accent",
+  lifetime: "bg-ui-ink",
+  organization: "bg-ui-accent/40",
 };
 
-export const planBarClass = (plan) => PLAN_BAR[normalizePlan(plan)] || "bg-gray-300";
+export const planBarClass = (plan) => PLAN_BAR[normalizePlan(plan)] || "bg-ui-line-strong";
 
 // The license type follows the plan: only the Lifetime plan is lifetime,
 // every other plan (trial, professional, organization) is a term license.
@@ -478,11 +481,11 @@ export const remainingLabel = (days) => {
 
 // Badge colour for the remaining-days column.
 export const remainingBadgeClass = (license) => {
-  if (isLifetimeLicense(license)) return "bg-violet-50 text-violet-700";
-  if (license.status === "expired" || license.remaining_days === 0) return "bg-red-50 text-red-600";
-  if (license.status === "expiring_soon") return "bg-amber-50 text-amber-700";
-  if (license.status === "inactive") return "bg-gray-100 text-gray-500";
-  return "bg-emerald-50 text-emerald-700";
+  if (isLifetimeLicense(license)) return "bg-ui-accent-soft text-ui-accent";
+  if (license.status === "expired" || license.remaining_days === 0) return "bg-ui-bad-soft text-ui-bad";
+  if (license.status === "expiring_soon") return "bg-ui-warn-soft text-ui-warn";
+  if (license.status === "inactive") return "bg-ui-subtle text-ui-muted";
+  return "bg-ui-ok-soft text-ui-ok";
 };
 
 export const formatDuration = (days) => {
@@ -558,22 +561,26 @@ export const certificateKeyOptions = (license) => {
 
 // Per-device key status: label + dot/text classes.
 export const KEY_STATUS = {
-  available: { label: "Available", dot: "bg-emerald-500", text: "text-emerald-700", chip: "bg-emerald-50 text-emerald-700" },
-  in_use: { label: "In use", dot: "bg-blue-500", text: "text-blue-700", chip: "bg-blue-50 text-blue-700" },
-  used: { label: "Used", dot: "bg-gray-400", text: "text-gray-500", chip: "bg-gray-100 text-gray-500" },
+  available: { label: "Available", dot: "bg-ui-ok", text: "text-ui-ok", chip: "bg-ui-ok-soft text-ui-ok" },
+  in_use: { label: "In use", dot: "bg-ui-accent", text: "text-ui-accent", chip: "bg-ui-accent-soft text-ui-accent" },
+  used: { label: "Used", dot: "bg-ui-faint", text: "text-ui-muted", chip: "bg-ui-subtle text-ui-muted" },
 };
 
+// Activity icon tints: quiet by default; only events that carry a state
+// (created/activated = ok, expiring = warn, revoked/deleted = bad, keys = accent)
+// get a colour.
+const QUIET = "bg-ui-subtle text-ui-muted ring-ui-line";
 export const EVENT_TONE_CLASS = {
-  violet: "bg-violet-50 text-violet-600 ring-violet-100",
-  blue: "bg-blue-50 text-blue-600 ring-blue-100",
-  emerald: "bg-emerald-50 text-emerald-600 ring-emerald-100",
-  gray: "bg-gray-100 text-gray-500 ring-gray-200",
-  indigo: "bg-indigo-50 text-indigo-600 ring-indigo-100",
-  fuchsia: "bg-fuchsia-50 text-fuchsia-600 ring-fuchsia-100",
-  amber: "bg-amber-50 text-amber-600 ring-amber-100",
-  red: "bg-red-50 text-red-600 ring-red-100",
-  teal: "bg-teal-50 text-teal-600 ring-teal-100",
-  sky: "bg-sky-50 text-sky-600 ring-sky-100",
+  violet: "bg-ui-accent-soft text-ui-accent ring-ui-accent/15",
+  blue: "bg-ui-accent-soft text-ui-accent ring-ui-accent/15",
+  indigo: QUIET,
+  fuchsia: QUIET,
+  teal: QUIET,
+  sky: QUIET,
+  gray: QUIET,
+  emerald: "bg-ui-ok-soft text-ui-ok ring-ui-ok/15",
+  amber: "bg-ui-warn-soft text-ui-warn ring-ui-warn/15",
+  red: "bg-ui-bad-soft text-ui-bad ring-ui-bad/15",
 };
 
 export const eventLabel = (event) => EVENT_TYPES[event?.event]?.label || event?.label || event?.event || "-";

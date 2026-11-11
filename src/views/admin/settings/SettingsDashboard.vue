@@ -24,6 +24,7 @@ import {
   FileSignature,
 } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
+import { UiPageHeader } from "@/components/ui";
 
 const categories = [
   {
@@ -107,8 +108,6 @@ const categories = [
         title: "Calendar Greetings",
         description: "Manage holidays, birthdays, meetings, and other date-based greetings shown on the dashboard",
         permission: "greeting-menu",
-        iconBg: "bg-pink-50",
-        iconColor: "text-pink-600",
       },
       {
         to: { name: "admin.settings.client-screening" },
@@ -116,8 +115,6 @@ const categories = [
         title: "Client Screening",
         description: "Service catalog (synced from the Rate Card) and the client needs questionnaire",
         permission: "screening-settings",
-        iconBg: "bg-teal-50",
-        iconColor: "text-teal-600",
       },
       {
         to: { name: "admin.settings.documents" },
@@ -132,8 +129,6 @@ const categories = [
         title: "Attendance Settings",
         description: "Control whether staff can Clock In/Out on Saturday & Sunday",
         permission: "attendance-setting-edit",
-        iconBg: "bg-indigo-50",
-        iconColor: "text-indigo-600",
       },
       {
         to: { name: "admin.settings.payroll" },
@@ -141,8 +136,6 @@ const categories = [
         title: "Payroll Settings",
         description: "Control how Payroll is automatically generated",
         permission: "payroll-setting-edit",
-        iconBg: "bg-green-50",
-        iconColor: "text-green-600",
       },
     ],
   },
@@ -157,8 +150,6 @@ const categories = [
         title: "Backup Database",
         description: "Generate and manage full SQL backups of the database",
         permission: "backup-list",
-        iconBg: "bg-red-50",
-        iconColor: "text-red-600",
       },
     ],
   },
@@ -189,36 +180,49 @@ const visibleCategories = computed(() =>
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div v-for="category in visibleCategories" :key="category.title" class="mb-8 last:mb-0">
-      <div class="flex items-center gap-2 mb-3 px-1">
-        <component :is="category.icon" class="w-4 h-4 text-gray-400" />
-        <h3 class="text-brand-dark text-sm font-bold uppercase tracking-wide">
-          {{ category.title }}
-        </h3>
-        <span class="text-brand-light text-xs">&mdash; {{ category.description }}</span>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Settings" subtitle="Access, master data, configuration and system maintenance." />
+
+    <section v-for="category in visibleCategories" :key="category.title" class="space-y-2.5 ui-anim-fade-up">
+      <div class="flex items-baseline gap-2 flex-wrap px-1">
+        <h2 class="text-ui-over uppercase tracking-wider text-ui-muted">{{ category.title }}</h2>
+        <span class="hidden sm:inline text-ui-cap text-ui-faint">{{ category.description }}</span>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Phones: grouped list -->
+      <div class="sm:hidden bg-ui-surface border border-ui-line rounded-ui-card divide-y divide-ui-line overflow-hidden">
         <router-link
           v-for="link in category.links"
           :key="link.title"
           :to="link.to"
-          class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5 flex items-start gap-4 hover:border-[#0C51D9] hover:shadow-sm transition-all"
+          class="ui-press flex items-center gap-3 px-4 py-3.5 active:bg-ui-hover"
         >
-          <div
-            class="w-12 h-12 rounded-[12px] flex items-center justify-center shrink-0"
-            :class="link.iconBg || 'bg-blue-50'"
-          >
-            <component :is="link.icon" class="w-6 h-6" :class="link.iconColor || 'text-[#0C51D9]'" />
-          </div>
-          <div class="flex-1">
-            <p class="text-brand-dark text-base font-bold">{{ link.title }}</p>
-            <p class="text-brand-light text-sm mt-1">{{ link.description }}</p>
-          </div>
-          <ChevronRight class="w-5 h-5 text-gray-400 shrink-0 mt-1" />
+          <span class="w-8 h-8 rounded-ui-control bg-ui-subtle text-ui-text flex items-center justify-center shrink-0">
+            <component :is="link.icon" class="w-4 h-4" />
+          </span>
+          <span class="flex-1 min-w-0 text-ui-body text-ui-ink truncate">{{ link.title }}</span>
+          <ChevronRight class="w-4 h-4 text-ui-faint shrink-0" />
         </router-link>
       </div>
-    </div>
+
+      <!-- Tablet / desktop: card grid -->
+      <div class="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-3 ui-stagger">
+        <router-link
+          v-for="link in category.links"
+          :key="link.title"
+          :to="link.to"
+          class="ui-lift group bg-ui-surface border border-ui-line rounded-ui-card p-4 flex items-start gap-3.5 hover:border-ui-line-strong"
+        >
+          <span class="w-10 h-10 rounded-ui-control bg-ui-subtle text-ui-text flex items-center justify-center shrink-0">
+            <component :is="link.icon" class="w-5 h-5" />
+          </span>
+          <span class="flex-1 min-w-0">
+            <span class="block text-ui-body font-medium text-ui-ink">{{ link.title }}</span>
+            <span class="block text-ui-small text-ui-muted mt-0.5 line-clamp-2">{{ link.description }}</span>
+          </span>
+          <ChevronRight class="w-4 h-4 text-ui-faint shrink-0 mt-0.5 transition-transform group-hover:translate-x-0.5" />
+        </router-link>
+      </div>
+    </section>
   </div>
 </template>

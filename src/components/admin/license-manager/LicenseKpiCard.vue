@@ -16,12 +16,13 @@ const props = defineProps({
 
 defineEmits(["select"]);
 
+// Value colour by tone; the tile itself stays neutral like UiStat.
 const TONES = {
-  violet: { icon: "bg-violet-50 text-violet-600 ring-violet-100", ring: "border-violet-500 ring-violet-500/15", bar: "bg-violet-500" },
-  emerald: { icon: "bg-emerald-50 text-emerald-600 ring-emerald-100", ring: "border-emerald-500 ring-emerald-500/15", bar: "bg-emerald-500" },
-  amber: { icon: "bg-amber-50 text-amber-600 ring-amber-100", ring: "border-amber-500 ring-amber-500/15", bar: "bg-amber-500" },
-  red: { icon: "bg-red-50 text-red-600 ring-red-100", ring: "border-red-500 ring-red-500/15", bar: "bg-red-500" },
-  gray: { icon: "bg-gray-100 text-gray-500 ring-gray-200", ring: "border-gray-400 ring-gray-400/20", bar: "bg-gray-400" },
+  violet: { value: "text-ui-ink" },
+  emerald: { value: "text-ui-ok" },
+  amber: { value: "text-ui-warn" },
+  red: { value: "text-ui-bad" },
+  gray: { value: "text-ui-muted" },
 };
 
 const tone = () => TONES[props.tone] || TONES.violet;
@@ -33,22 +34,19 @@ const tone = () => TONES[props.tone] || TONES.violet;
     :type="clickable ? 'button' : undefined"
     :aria-pressed="clickable ? active : undefined"
     @click="clickable && $emit('select')"
-    class="relative overflow-hidden flex items-center gap-3.5 p-4 bg-white border rounded-[16px] text-left shadow-sm transition-all duration-200 min-w-0"
+    class="relative block w-full bg-ui-surface border rounded-ui-card px-5 py-4 text-left min-w-0 transition-colors"
     :class="[
-      active ? ['ring-4', tone().ring] : 'border-[#DCDEDD]',
-      clickable ? 'hover:shadow-md hover:-translate-y-px focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-500/20' : '',
-      clickable && !active ? 'hover:border-violet-300' : '',
+      active ? 'border-ui-ink ring-1 ring-ui-ink' : 'border-ui-line',
+      clickable ? 'ui-lift hover:border-ui-line-strong focus:outline-none focus-visible:shadow-ui-focus' : '',
     ]"
   >
-    <span v-if="active" class="absolute left-0 top-3 bottom-3 w-1 rounded-r-full" :class="tone().bar"></span>
-    <div class="w-11 h-11 rounded-[12px] ring-1 flex items-center justify-center shrink-0" :class="tone().icon">
-      <component :is="icon" class="w-5 h-5" />
+    <div class="flex items-center gap-2 min-w-0">
+      <component :is="icon" class="w-4 h-4 text-ui-faint shrink-0" />
+      <p class="text-ui-small text-ui-muted truncate" :title="label">{{ label }}</p>
+      <span v-if="active" class="ml-auto w-1.5 h-1.5 rounded-full bg-ui-ink shrink-0" aria-hidden="true"></span>
     </div>
-    <div class="min-w-0 flex-1">
-      <p class="text-xs font-semibold text-brand-light truncate" :title="label">{{ label }}</p>
-      <Skeleton v-if="loading" width="56px" height="26px" rounded="6px" class="mt-1" />
-      <p v-else class="text-2xl font-bold text-brand-dark leading-tight tabular-nums">{{ value ?? "–" }}</p>
-      <p v-if="caption" class="text-[11px] text-brand-light truncate" :title="caption">{{ caption }}</p>
-    </div>
+    <Skeleton v-if="loading" width="56px" height="28px" rounded="6px" class="mt-2" />
+    <p v-else class="text-ui-h1 tabular-nums mt-1.5" :class="tone().value">{{ value ?? "–" }}</p>
+    <p v-if="caption" class="text-ui-cap text-ui-muted mt-1 truncate" :title="caption">{{ caption }}</p>
   </component>
 </template>

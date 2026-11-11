@@ -5,6 +5,7 @@ import { Tags, Plus, Trash2, FileText, Building2Icon, ArrowLeft } from "lucide-v
 import { useLetterStore } from "@/stores/letter";
 import { useAlertModalStore } from "@/stores/alertModal";
 import Pagination from "@/components/common/Pagination.vue";
+import { UiButton, UiEmpty, UiInput, UiPageHeader, UiTable } from "@/components/ui";
 
 const PER_PAGE = 10;
 
@@ -36,6 +37,13 @@ const paginate = (items, page) => ({
 
 const paginatedLetterCodes = computed(() => paginate(letterCodes.value, letterCodePage.value));
 const paginatedDivisionCodes = computed(() => paginate(divisionCodes.value, divisionCodePage.value));
+
+// Presentation only.
+const codeColumns = [
+  { key: "code", label: "Code", width: 110 },
+  { key: "name", label: "Name" },
+  { key: "actions", label: "", align: "right", width: 64 },
+];
 
 onMounted(async () => {
   await Promise.all([store.fetchLetterCodes(), store.fetchDivisionCodes()]);
@@ -93,113 +101,106 @@ const handleDeleteDivisionCode = async (id) => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="bg-white mb-5">
-      <div class="flex items-center gap-3">
-        <router-link
-          :to="{ name: 'admin.settings.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Settings"
-          title="Back to Settings"
-        >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Letter & Division Codes" subtitle="Reference codes used in Letters numbering">
+      <template #eyebrow>
+        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" aria-label="Back to Settings" title="Back to Settings">
+          <ArrowLeft class="w-4 h-4" /> Settings
         </router-link>
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <Tags class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Letter & Division Codes</h3>
-          <p class="text-brand-light text-sm">Reference codes used in Letters numbering</p>
-        </div>
-      </div>
-    </div>
+      </template>
+    </UiPageHeader>
 
-    <p v-if="errorMessage" class="text-red-500 text-sm mb-4">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="text-ui-small text-ui-bad">{{ errorMessage }}</p>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center gap-2 mb-4">
-          <FileText class="w-5 h-5 text-[#0C51D9]" />
-          <h4 class="text-brand-dark font-bold">Letter Code</h4>
-        </div>
-
-        <form @submit.prevent="handleAddLetterCode" class="flex items-end gap-2 mb-4">
-          <div class="flex-1">
-            <label class="text-xs text-gray-500 mb-1 block">Code</label>
-            <input v-model="newLetterCode.code" type="text" placeholder="e.g. SPK" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm uppercase" />
-          </div>
-          <div class="flex-1">
-            <label class="text-xs text-gray-500 mb-1 block">Name</label>
-            <input v-model="newLetterCode.name" type="text" placeholder="e.g. Work Order Letter" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-          </div>
-          <button type="submit" class="p-2 bg-[#0C51D9] text-white rounded-lg shrink-0">
-            <Plus class="w-4 h-4" />
-          </button>
-        </form>
-
-        <div class="space-y-2">
-          <div v-for="code in paginatedLetterCodes.items" :key="code.id" class="flex items-center justify-between p-3 border border-[#DCDEDD] rounded-lg">
-            <div>
-              <span class="font-mono font-bold text-brand-dark text-sm">{{ code.code }}</span>
-              <span class="text-brand-light text-sm ml-2">{{ code.name }}</span>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+        <div class="px-4 sm:px-5 pt-4 pb-4 border-b border-ui-line">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-ui-control bg-ui-subtle text-ui-text flex items-center justify-center shrink-0"><FileText class="w-4 h-4" /></span>
+            <div class="min-w-0">
+              <h2 class="text-ui-h2 text-ui-ink">Letter Code</h2>
+              <p class="text-ui-cap text-ui-muted tabular-nums">{{ letterCodes.length }} codes</p>
             </div>
-            <button @click="handleDeleteLetterCode(code.id)" class="text-gray-400 hover:text-red-600">
-              <Trash2 class="w-4 h-4" />
-            </button>
           </div>
-          <div v-if="letterCodes.length === 0" class="text-center py-6 text-sm text-gray-400">
-            No letter codes yet
-          </div>
+          <form @submit.prevent="handleAddLetterCode" class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)_auto] items-end gap-2 mt-4">
+            <UiInput v-model="newLetterCode.code" label="Code" placeholder="e.g. SPK" mono class="[&_input]:uppercase" />
+            <UiInput v-model="newLetterCode.name" label="Name" placeholder="e.g. Work Order Letter" />
+            <UiButton type="submit" :icon="Plus" aria-label="Add">Add</UiButton>
+          </form>
         </div>
 
-        <Pagination
-          :meta="paginatedLetterCodes.meta"
-          item-label="letter codes"
-          @page-change="(page) => (letterCodePage = page)"
-        />
-      </div>
-
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center gap-2 mb-4">
-          <Building2Icon class="w-5 h-5 text-[#0C51D9]" />
-          <h4 class="text-brand-dark font-bold">Division Code</h4>
-        </div>
-
-        <form @submit.prevent="handleAddDivisionCode" class="flex items-end gap-2 mb-4">
-          <div class="flex-1">
-            <label class="text-xs text-gray-500 mb-1 block">Code</label>
-            <input v-model="newDivisionCode.code" type="text" placeholder="e.g. BD" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm uppercase" />
-          </div>
-          <div class="flex-1">
-            <label class="text-xs text-gray-500 mb-1 block">Name</label>
-            <input v-model="newDivisionCode.name" type="text" placeholder="e.g. Business Development" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-          </div>
-          <button type="submit" class="p-2 bg-[#0C51D9] text-white rounded-lg shrink-0">
-            <Plus class="w-4 h-4" />
-          </button>
-        </form>
-
-        <div class="space-y-2">
-          <div v-for="code in paginatedDivisionCodes.items" :key="code.id" class="flex items-center justify-between p-3 border border-[#DCDEDD] rounded-lg">
-            <div>
-              <span class="font-mono font-bold text-brand-dark text-sm">{{ code.code }}</span>
-              <span class="text-brand-light text-sm ml-2">{{ code.name }}</span>
+        <UiTable :columns="codeColumns" :rows="paginatedLetterCodes.items" :meta="paginatedLetterCodes.meta">
+          <template #cell-code="{ row }">
+            <code class="font-mono text-ui-small font-semibold text-ui-ink">{{ row.code }}</code>
+          </template>
+          <template #cell-actions="{ row }">
+            <UiButton variant="ghost" size="sm" :icon="Trash2" aria-label="Delete" @click="handleDeleteLetterCode(row.id)" />
+          </template>
+          <template #mobile="{ row, number }">
+            <div class="flex items-center gap-3 px-4 py-3">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-5">{{ number }}</span>
+              <code class="font-mono text-ui-small font-semibold text-ui-ink w-14 shrink-0">{{ row.code }}</code>
+              <span class="flex-1 min-w-0 text-ui-small text-ui-text truncate">{{ row.name }}</span>
+              <UiButton variant="ghost" size="sm" :icon="Trash2" aria-label="Delete" @click="handleDeleteLetterCode(row.id)" />
             </div>
-            <button @click="handleDeleteDivisionCode(code.id)" class="text-gray-400 hover:text-red-600">
-              <Trash2 class="w-4 h-4" />
-            </button>
+          </template>
+          <template #empty>
+            <UiEmpty :icon="FileText" title="No letter codes yet" compact />
+          </template>
+        </UiTable>
+
+        <div v-if="paginatedLetterCodes.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
+          <Pagination
+            :meta="paginatedLetterCodes.meta"
+            item-label="letter codes"
+            @page-change="(page) => (letterCodePage = page)"
+          />
+        </div>
+      </section>
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+        <div class="px-4 sm:px-5 pt-4 pb-4 border-b border-ui-line">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-ui-control bg-ui-subtle text-ui-text flex items-center justify-center shrink-0"><Building2Icon class="w-4 h-4" /></span>
+            <div class="min-w-0">
+              <h2 class="text-ui-h2 text-ui-ink">Division Code</h2>
+              <p class="text-ui-cap text-ui-muted tabular-nums">{{ divisionCodes.length }} codes</p>
+            </div>
           </div>
-          <div v-if="divisionCodes.length === 0" class="text-center py-6 text-sm text-gray-400">
-            No division codes yet
-          </div>
+          <form @submit.prevent="handleAddDivisionCode" class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)_auto] items-end gap-2 mt-4">
+            <UiInput v-model="newDivisionCode.code" label="Code" placeholder="e.g. BD" mono class="[&_input]:uppercase" />
+            <UiInput v-model="newDivisionCode.name" label="Name" placeholder="e.g. Business Development" />
+            <UiButton type="submit" :icon="Plus" aria-label="Add">Add</UiButton>
+          </form>
         </div>
 
-        <Pagination
-          :meta="paginatedDivisionCodes.meta"
-          item-label="division codes"
-          @page-change="(page) => (divisionCodePage = page)"
-        />
-      </div>
+        <UiTable :columns="codeColumns" :rows="paginatedDivisionCodes.items" :meta="paginatedDivisionCodes.meta">
+          <template #cell-code="{ row }">
+            <code class="font-mono text-ui-small font-semibold text-ui-ink">{{ row.code }}</code>
+          </template>
+          <template #cell-actions="{ row }">
+            <UiButton variant="ghost" size="sm" :icon="Trash2" aria-label="Delete" @click="handleDeleteDivisionCode(row.id)" />
+          </template>
+          <template #mobile="{ row, number }">
+            <div class="flex items-center gap-3 px-4 py-3">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-5">{{ number }}</span>
+              <code class="font-mono text-ui-small font-semibold text-ui-ink w-14 shrink-0">{{ row.code }}</code>
+              <span class="flex-1 min-w-0 text-ui-small text-ui-text truncate">{{ row.name }}</span>
+              <UiButton variant="ghost" size="sm" :icon="Trash2" aria-label="Delete" @click="handleDeleteDivisionCode(row.id)" />
+            </div>
+          </template>
+          <template #empty>
+            <UiEmpty :icon="Building2Icon" title="No division codes yet" compact />
+          </template>
+        </UiTable>
+
+        <div v-if="paginatedDivisionCodes.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
+          <Pagination
+            :meta="paginatedDivisionCodes.meta"
+            item-label="division codes"
+            @page-change="(page) => (divisionCodePage = page)"
+          />
+        </div>
+      </section>
     </div>
   </div>
 </template>

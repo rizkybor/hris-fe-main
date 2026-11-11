@@ -28,10 +28,15 @@ import {
   Clock,
   PieChart,
   History,
+  SlidersHorizontal,
+  Laptop,
+  Tablet,
+  Check,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiBadge, UiChips, UiEmpty, UiInput, UiSelect, UiModal, firstRowNumber } from "@/components/ui";
 import CopyKeyButton from "@/components/admin/license-manager/CopyKeyButton.vue";
 import LicenseStatusSwitch from "@/components/admin/license-manager/LicenseStatusSwitch.vue";
 import LicenseKpiCard from "@/components/admin/license-manager/LicenseKpiCard.vue";
@@ -60,6 +65,7 @@ import {
   remainingBadgeClass,
   relativeTime,
   maskLicenseKey,
+  remainingLabel,
 } from "@/components/admin/license-manager/licenseHelpers";
 
 const router = useRouter();
@@ -205,25 +211,12 @@ const openLicense = (license) => {
 // "OC02-••••-••••-••••-0001": first and last group visible.
 const maskKey = maskLicenseKey;
 
-const AVATAR_TONES = [
-  "bg-violet-100 text-violet-700",
-  "bg-indigo-100 text-indigo-700",
-  "bg-sky-100 text-sky-700",
-  "bg-teal-100 text-teal-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-fuchsia-100 text-fuchsia-700",
-];
 const initials = (name) => {
   const words = String(name || "?").trim().split(/\s+/).filter(Boolean);
   return ((words[0]?.[0] || "?") + (words.length > 1 ? words[words.length - 1][0] : "")).toUpperCase();
 };
-const avatarTone = (name) => {
-  let hash = 0;
-  for (const ch of String(name || "")) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  return AVATAR_TONES[hash % AVATAR_TONES.length];
-};
+// One quiet avatar tone (the redesign keeps avatars neutral).
+const avatarTone = () => "bg-ui-accent-soft text-ui-accent";
 
 const isOrganization = (license) => planCategory(license) === "organization";
 
@@ -236,10 +229,10 @@ const remainingText = (license) => {
 
 const elapsed = (license) => Math.min(100, Math.max(0, Number(license.elapsed_percent ?? 0)));
 const periodBarClass = (license) => {
-  if (license.status === "expired") return "bg-red-500";
-  if (license.status === "expiring_soon") return "bg-amber-500";
-  if (license.status === "inactive") return "bg-gray-400";
-  return "bg-violet-500";
+  if (license.status === "expired") return "bg-ui-bad";
+  if (license.status === "expiring_soon") return "bg-ui-warn";
+  if (license.status === "inactive") return "bg-ui-faint";
+  return "bg-ui-ink";
 };
 
 
@@ -323,74 +316,93 @@ const handleDelete = async (license) => {
   }
 };
 
-const primaryBtn =
-  "rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 px-4 py-2.5 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] text-white text-sm font-semibold";
-const secondaryBtn =
-  "rounded-[12px] border border-[#DCDEDD] bg-white hover:border-violet-400 hover:bg-violet-50/40 transition-all duration-300 px-4 py-2.5 inline-flex items-center justify-center gap-2 text-sm font-semibold text-brand-dark shadow-sm";
-const iconBtn =
-  "flex justify-center items-center w-8 h-8 border border-[#DCDEDD] bg-white rounded-lg hover:border-violet-400 hover:ring-2 hover:ring-violet-400/30 transition-all";
-const th =
-  "sticky top-0 z-10 bg-gray-50 py-3 px-3 text-[11px] font-semibold uppercase tracking-wide text-brand-light whitespace-nowrap border-b border-[#DCDEDD]";
-const statusBadge = (license) =>
-  license.is_active ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500";
+/* ---------- Presentation ---------- */
+
+// Status of the period (active / expiring / expired / inactive) as a badge.
+const STATUS_TONE = { active: "ok", expiring_soon: "warn", expired: "bad", inactive: "neutral" };
+const STATUS_SHORT = { active: "Active", expiring_soon: "Expiring", expired: "Expired", inactive: "Inactive" };
+const statusKey = (license) => (STATUS_TONE[license.status] ? license.status : license.is_active ? "active" : "inactive");
+const statusTone = (license) => STATUS_TONE[statusKey(license)];
+const statusText = (license) => STATUS_SHORT[statusKey(license)];
+const statusCaption = (license) => {
+  if (!license.is_active) return "Switched off";
+  if (isLifetimeLicense(license)) return "Lifetime";
+  return remainingLabel(license.remaining_days);
+};
+
+// Phones: "OC31-•••••0002" (first and last group).
+const shortKey = (key) => {
+  const parts = String(key || "").split("-");
+  return parts.length > 2 ? `${parts[0]}-•••••${parts[parts.length - 1]}` : maskKey(key);
+};
+const platformIcon = (platform) => (platform === "ipad" ? Tablet : Laptop);
+const PLATFORM_FILTERS = [{ value: "", label: "All platforms" }, ...PLATFORM_OPTIONS];
+const planChipOptions = computed(() => [
+  { value: "", label: "All", count: summary.value?.total ?? undefined },
+  ...PLAN_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label, count: summary.value?.by_plan?.[opt.value] ?? undefined })),
+]);
+const setPlan = (value) => (value ? filterByPlan(value) : (filters.value.plan = ""));
+const statusSelectOptions = [{ value: "", label: "All statuses" }, ...STATUS_OPTIONS];
+const startNumber = computed(() => firstRowNumber(paginationMeta.value));
+
+// Phones: the filters live in a bottom sheet.
+const showFilters = ref(false);
+const activeFilterCount = computed(() => [filters.value.status, filters.value.plan, filters.value.platform].filter(Boolean).length);
 </script>
 
 <template>
-  <div class="px-4 py-4">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <LicenseProductGate :state="productState" :code="productCode" :product-name="productName">
-      <Transition name="fade">
+      <div class="space-y-5">
         <Alert v-if="success" type="success" :title="success" message="" :show="!!success" @close="success = ''" />
-      </Transition>
-      <Transition name="fade">
         <Alert v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
-      </Transition>
 
-      <div class="space-y-6">
         <!-- Header -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div class="flex items-center gap-3.5 min-w-0">
-            <ProductIcon :product="product" :size="48" class="shadow-sm" />
-            <div class="min-w-0">
-              <h1 class="text-brand-dark text-xl font-bold leading-tight truncate">{{ productName }} Licenses</h1>
-              <p class="text-brand-light text-sm flex items-center gap-1.5 flex-wrap mt-0.5">
-                <span
-                  v-if="product?.key_prefix"
-                  class="inline-flex items-center gap-1 font-mono text-xs font-semibold text-brand-dark bg-white border border-[#DCDEDD] rounded-md px-1.5 py-0.5"
-                >
-                  <KeyRound class="w-3 h-3 text-violet-500" />{{ product.key_prefix }}
-                </span>
-                <span v-if="product?.key_prefix" class="text-gray-300">·</span>
-                <span class="tabular-nums">{{ totalLicenses }} license{{ totalLicenses === 1 ? "" : "s" }}</span>
-              </p>
+        <UiPageHeader :title="`${productName} Licenses`">
+          <template #eyebrow>
+            <div class="flex items-center gap-2 mb-2">
+              <ProductIcon :product="product" :size="24" />
+              <RouterLink :to="{ name: 'admin.license-manager.overview' }" class="text-ui-small text-ui-muted hover:text-ui-ink">License Manager</RouterLink>
+              <span class="text-ui-faint">/</span>
+              <span class="text-ui-small text-ui-ink font-medium truncate">{{ productName }}</span>
             </div>
-          </div>
-
-          <div class="flex items-center gap-2.5 w-full md:w-auto">
-            <RouterLink :to="{ name: 'admin.license-manager.overview' }" :class="[secondaryBtn, 'flex-1 md:flex-none']">
-              <LayoutGrid class="w-4 h-4 text-gray-500" />
-              Overview
-            </RouterLink>
-            <RouterLink
+          </template>
+          <template #subtitle>
+            <span class="inline-flex items-center gap-1.5 flex-wrap">
+              <span
+                v-if="product?.key_prefix"
+                class="inline-flex items-center gap-1 font-mono text-ui-cap font-medium text-ui-ink bg-ui-surface border border-ui-line rounded-md px-1.5 py-px"
+              >
+                <KeyRound class="w-3 h-3 text-ui-faint" />{{ product.key_prefix }}
+              </span>
+              <span v-if="product?.key_prefix" class="text-ui-faint">·</span>
+              <span class="tabular-nums">{{ totalLicenses }} license{{ totalLicenses === 1 ? "" : "s" }}</span>
+            </span>
+          </template>
+          <template #actions>
+            <UiButton variant="secondary" :icon="LayoutGrid" :to="{ name: 'admin.license-manager.overview' }" class="flex-1 sm:flex-none">Overview</UiButton>
+            <UiButton
               v-if="canSeeVersions"
+              variant="secondary"
+              :icon="History"
               :to="{ name: 'admin.license-manager.versions', params: { product: productCode } }"
-              :class="[secondaryBtn, 'flex-1 md:flex-none']"
+              class="flex-1 sm:flex-none"
             >
-              <History class="w-4 h-4 text-gray-500" />
               Versions
-            </RouterLink>
-            <RouterLink
+            </UiButton>
+            <UiButton
               v-if="canCreate"
+              :icon="Plus"
               :to="{ name: 'admin.license-manager.licenses.create', params: { product: productCode } }"
-              :class="[primaryBtn, 'flex-1 md:flex-none']"
+              class="w-full sm:w-auto"
             >
-              <Plus class="w-4 h-4" />
               Create License
-            </RouterLink>
-          </div>
-        </div>
+            </UiButton>
+          </template>
+        </UiPageHeader>
 
-        <!-- KPI row -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4">
+        <!-- KPI row: a tile filters the table by that status -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 ui-stagger">
           <LicenseKpiCard
             v-for="kpi in kpis"
             :key="kpi.key || 'total'"
@@ -407,14 +419,14 @@ const statusBadge = (license) =>
           />
         </div>
 
-        <!-- Plan distribution -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[16px] shadow-sm px-5 py-4">
+        <!-- Plan distribution (legend filters by plan) -->
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2">
-              <PieChart class="w-4 h-4 text-violet-500" />
-              <h2 class="text-sm font-bold text-brand-dark">Plan distribution</h2>
+              <PieChart class="w-4 h-4 text-ui-faint" />
+              <h2 class="text-ui-h3 text-ui-ink">Plan distribution</h2>
             </div>
-            <span v-if="summary?.by_plan" class="text-xs text-brand-light tabular-nums">{{ summary.total ?? 0 }} total</span>
+            <span v-if="summary?.by_plan" class="text-ui-cap text-ui-muted tabular-nums">{{ summary.total ?? 0 }} total</span>
           </div>
           <Skeleton v-if="summaryLoading" height="8px" rounded="999px" />
           <PlanDistributionBar
@@ -424,201 +436,154 @@ const statusBadge = (license) =>
             selectable
             @select="filterByPlan"
           />
-          <p v-else class="text-xs text-brand-light">No plan data yet.</p>
-        </div>
+          <p v-else class="text-ui-cap text-ui-muted">No plan data yet.</p>
+        </section>
 
         <!-- Toolbar + table -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[16px] shadow-sm">
-          <div class="p-4 sm:p-5 space-y-4 border-b border-[#F1F1F1]">
-            <div class="flex flex-col lg:flex-row lg:items-center gap-3">
-              <div class="relative flex-1 min-w-0">
-                <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-gray-400 pointer-events-none" />
-                <input
-                  v-model="filters.search"
-                  type="text"
-                  placeholder="Search key, name or email..."
-                  class="w-full pl-11 pr-9 py-2.5 text-sm border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-all duration-300 font-medium"
-                />
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+          <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line space-y-3">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-2">
+              <div class="flex items-center gap-2 lg:w-[280px] shrink-0">
+                <div class="relative flex-1 min-w-0">
+                  <UiInput v-model="filters.search" :icon="Search" placeholder="Search key, name or email..." aria-label="Search licenses" />
+                  <button
+                    v-if="filters.search"
+                    type="button"
+                    @click="filters.search = ''"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink"
+                    aria-label="Clear search"
+                  >
+                    <X class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <!-- Phones: filters in a bottom sheet -->
                 <button
-                  v-if="filters.search"
                   type="button"
-                  @click="filters.search = ''"
-                  class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-gray-100"
-                  aria-label="Clear search"
+                  @click="showFilters = true"
+                  class="md:hidden relative shrink-0 w-[38px] h-[38px] inline-flex items-center justify-center rounded-ui-control border border-ui-line-strong bg-ui-surface text-ui-ink"
+                  aria-label="Filters"
                 >
-                  <X class="w-3.5 h-3.5 text-gray-400" />
+                  <SlidersHorizontal class="w-4 h-4" />
+                  <span
+                    v-if="activeFilterCount"
+                    class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-ui-ink text-white text-ui-cap leading-[18px] text-center tabular-nums"
+                  >{{ activeFilterCount }}</span>
                 </button>
               </div>
-              <div class="grid grid-cols-2 gap-3 lg:flex lg:items-center">
-                <div class="relative lg:w-44">
-                  <select v-model="filters.status" class="select-soft !rounded-[12px] !py-2.5" aria-label="Filter by status">
-                    <option value="">All statuses</option>
-                    <option v-for="opt in STATUS_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-                  </select>
-                  <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+
+              <div class="hidden md:flex items-center gap-2 flex-1 min-w-0">
+                <div class="inline-flex items-center p-0.5 rounded-ui-control bg-ui-subtle shrink-0" role="tablist" aria-label="Filter by platform">
+                  <button
+                    v-for="opt in PLATFORM_FILTERS"
+                    :key="opt.value || 'all'"
+                    type="button"
+                    role="tab"
+                    @click="filters.platform = opt.value"
+                    class="h-[34px] px-3 rounded-[6px] text-ui-small font-medium whitespace-nowrap transition-colors"
+                    :class="filters.platform === opt.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
+                    :aria-selected="filters.platform === opt.value"
+                  >
+                    {{ opt.label }}
+                  </button>
                 </div>
-                <div class="relative lg:w-44">
-                  <select v-model="filters.sort" class="select-soft !rounded-[12px] !py-2.5" aria-label="Sort">
-                    <option v-for="opt in SORTS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-                  </select>
-                  <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                </div>
+                <div class="flex-1"></div>
+                <UiSelect v-model="filters.status" :options="statusSelectOptions" class="w-40" aria-label="Filter by status" />
+                <UiSelect v-model="filters.sort" :options="SORTS" class="w-40" aria-label="Sort" />
               </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div class="flex flex-wrap items-center gap-1.5">
-              <div class="flex items-center gap-1 p-0.5 rounded-full bg-slate-100" role="group" aria-label="Filter by platform">
-                <button
-                  v-for="opt in [{ value: '', label: 'All platforms' }, ...PLATFORM_OPTIONS]"
-                  :key="opt.value || 'all'"
-                  type="button"
-                  @click="filters.platform = opt.value"
-                  class="px-3 py-1 rounded-full text-xs font-semibold transition-all"
-                  :class="filters.platform === opt.value ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-light hover:text-brand-dark'"
-                  :aria-pressed="filters.platform === opt.value"
-                >
-                  {{ opt.label }}
-                </button>
-              </div>
-              <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by plan">
-                <button
-                  type="button"
-                  @click="filters.plan = ''"
-                  class="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
-                  :class="!filters.plan ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-brand-dark border-[#DCDEDD] hover:border-violet-300'"
-                  :aria-pressed="!filters.plan"
-                >
-                  All
-                </button>
-                <button
-                  v-for="opt in PLAN_OPTIONS"
-                  :key="opt.value"
-                  type="button"
-                  @click="filterByPlan(opt.value)"
-                  class="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all inline-flex items-center gap-1.5"
-                  :class="
-                    filters.plan === opt.value
-                      ? [planChipClass(opt.value), 'border-current']
-                      : 'bg-white text-brand-dark border-[#DCDEDD] hover:border-violet-300'
-                  "
-                  :aria-pressed="filters.plan === opt.value"
-                >
-                  {{ opt.label }}
-                  <span v-if="summary?.by_plan" class="tabular-nums opacity-60">{{ summary.by_plan[opt.value] ?? 0 }}</span>
-                </button>
-              </div>
-              </div>
-              <div class="flex items-center gap-3 text-xs text-brand-light shrink-0">
-                <button v-if="hasFilters" type="button" @click="clearFilters" class="font-semibold text-violet-600 hover:text-violet-700">
-                  Clear filters
-                </button>
+            <div class="flex items-center gap-3">
+              <!-- Plan chips (scroll sideways on phones) -->
+              <UiChips :model-value="filters.plan" :options="planChipOptions" size="sm" class="flex-1 min-w-0" aria-label="Filter by plan" @update:model-value="setPlan" />
+              <div class="hidden sm:flex items-center gap-3 text-ui-cap text-ui-muted shrink-0">
+                <button v-if="hasFilters" type="button" @click="clearFilters" class="font-medium text-ui-accent hover:underline">Clear filters</button>
                 <span class="tabular-nums">
-                  <span class="font-semibold text-brand-dark">{{ meta.total ?? 0 }}</span>
+                  <span class="font-medium text-ui-ink">{{ meta.total ?? 0 }}</span>
                   result{{ meta.total === 1 ? "" : "s" }}
                 </span>
               </div>
             </div>
+            <div class="sm:hidden flex items-center justify-between gap-3 text-ui-cap text-ui-muted">
+              <span class="tabular-nums">
+                <span class="font-medium text-ui-ink">{{ meta.total ?? 0 }}</span>
+                result{{ meta.total === 1 ? "" : "s" }}
+              </span>
+              <button v-if="hasFilters" type="button" @click="clearFilters" class="font-medium text-ui-accent hover:underline">Clear filters</button>
+            </div>
           </div>
 
           <!-- Loading (first load) -->
-          <div v-if="!loadedOnce || (loading && !licenses.length)" class="divide-y divide-[#F1F1F1]">
+          <div v-if="!loadedOnce || (loading && !licenses.length)" class="divide-y divide-ui-line">
             <div v-for="i in 6" :key="i" class="flex items-center gap-4 px-5 py-4">
-              <Skeleton width="36px" height="36px" rounded="999px" />
+              <Skeleton width="16px" height="10px" class="hidden md:block" />
+              <Skeleton width="32px" height="32px" rounded="999px" />
               <div class="flex-1 space-y-2">
                 <Skeleton width="30%" height="12px" />
                 <Skeleton width="20%" height="10px" />
               </div>
-              <Skeleton width="80px" height="20px" rounded="999px" class="hidden md:block" />
-              <Skeleton width="140px" height="12px" class="hidden md:block" />
-              <Skeleton width="60px" height="20px" rounded="999px" />
+              <Skeleton width="80px" height="20px" rounded="6px" class="hidden md:block" />
+              <Skeleton width="160px" height="12px" class="hidden md:block" />
+              <Skeleton width="60px" height="20px" rounded="6px" />
             </div>
           </div>
 
           <!-- Empty -->
-          <div v-else-if="!licenses.length" class="text-center px-6 py-16">
-            <div class="relative w-20 h-20 mx-auto mb-5">
-              <div class="absolute inset-0 rounded-[24px] bg-gradient-to-br from-violet-100 to-indigo-50 rotate-6"></div>
-              <div class="absolute inset-0 rounded-[24px] bg-white border border-[#DCDEDD] shadow-sm flex items-center justify-center">
-                <component :is="hasFilters ? SearchX : KeyRound" class="w-9 h-9 text-violet-500" />
-              </div>
-            </div>
-            <h3 class="text-brand-dark text-base font-bold mb-1">
-              {{ hasFilters ? "No matching licenses" : "No licenses yet" }}
-            </h3>
-            <p class="text-brand-light text-sm mb-5">
-              {{ hasFilters ? "Try another search term or clear the filters." : `Create the first ${productName} license to get started.` }}
-            </p>
-            <button v-if="hasFilters" type="button" @click="clearFilters" :class="secondaryBtn">
-              <X class="w-4 h-4" /> Clear filters
-            </button>
-            <RouterLink
+          <UiEmpty
+            v-else-if="!licenses.length"
+            :icon="hasFilters ? SearchX : KeyRound"
+            :title="hasFilters ? 'No matching licenses' : 'No licenses yet'"
+            :message="hasFilters ? 'Try another search term or clear the filters.' : `Create the first ${productName} license to get started.`"
+          >
+            <UiButton v-if="hasFilters" variant="secondary" :icon="X" @click="clearFilters">Clear filters</UiButton>
+            <UiButton
               v-else-if="canCreate"
+              :icon="Plus"
               :to="{ name: 'admin.license-manager.licenses.create', params: { product: productCode } }"
-              :class="primaryBtn"
             >
-              <Plus class="w-4 h-4" /> Create License
-            </RouterLink>
-          </div>
+              Create License
+            </UiButton>
+          </UiEmpty>
 
           <template v-else>
-            <!-- Table (md and up). Sticky headers need a non-scrolling
-                 wrapper, so it only scrolls sideways below xl. -->
-            <div
-              class="hidden md:block overflow-x-auto xl:overflow-x-visible transition-opacity"
-              :class="{ 'opacity-60 pointer-events-none': loading }"
-            >
-              <!-- Fixed layout: the columns have set widths and the licensee
-                   column takes the rest (truncated), so the table fits the
-                   content width from xl (no horizontal scroll at >= 1280px). -->
-              <table class="w-full min-w-[980px] table-fixed text-sm">
+            <!-- Table (md and up). Fixed layout: the licensee column takes
+                 the rest (truncated); scrolls sideways below xl. -->
+            <div class="hidden md:block overflow-x-auto transition-opacity" :class="{ 'opacity-60 pointer-events-none': loading }">
+              <table class="w-full min-w-[960px] table-fixed border-collapse">
                 <thead>
                   <tr class="text-left">
-                    <th :class="th">Licensee</th>
-                    <th :class="[th, 'w-[118px]']">Plan</th>
-                    <th :class="[th, 'w-[300px]']">License key &middot; devices</th>
-                    <th :class="[th, 'w-[152px]']">Active period</th>
-                    <th :class="[th, 'w-[108px]']">Remaining</th>
-                    <th :class="[th, 'w-[104px]']">Status</th>
-                    <th :class="[th, 'hidden 2xl:table-cell w-[112px]']">Last activity</th>
-                    <th :class="[th, 'text-right w-[100px]']"><span class="sr-only">Actions</span></th>
+                    <th class="w-11 pl-5 pr-0 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">#</th>
+                    <th class="px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">Licensee</th>
+                    <th class="w-[108px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">Plan</th>
+                    <th class="w-[300px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line whitespace-nowrap">License key &middot; devices</th>
+                    <th class="w-[196px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line whitespace-nowrap">Active period</th>
+                    <th class="w-[108px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">Status</th>
+                    <th class="hidden 2xl:table-cell w-[112px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line whitespace-nowrap">Last activity</th>
+                    <th class="w-[150px] pl-2 pr-4 h-10 border-b border-ui-line"><span class="sr-only">Actions</span></th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-[#F1F1F1]">
+                <tbody class="ui-stagger">
                   <tr
-                    v-for="license in licenses"
+                    v-for="(license, index) in licenses"
                     :key="license.id"
-                    class="group transition-colors hover:bg-violet-50/30"
+                    class="group align-middle transition-colors hover:bg-ui-hover"
                     :class="{ 'cursor-pointer': canView }"
                     @click="openLicense(license)"
                   >
+                    <td class="pl-5 pr-0 py-3.5 text-ui-cap text-ui-faint tabular-nums border-b border-ui-line group-last:border-b-0">{{ startNumber + index }}</td>
+
                     <!-- Licensee -->
-                    <td class="py-3.5 px-3">
+                    <td class="px-3 py-3.5 border-b border-ui-line group-last:border-b-0">
                       <div class="flex items-center gap-3 min-w-0">
-                        <span
-                          class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                          :class="avatarTone(license.licensee_name)"
-                        >
+                        <span class="w-8 h-8 rounded-full flex items-center justify-center text-ui-cap font-semibold shrink-0" :class="avatarTone(license.licensee_name)">
                           {{ initials(license.licensee_name) }}
                         </span>
                         <div class="min-w-0 flex-1">
                           <div class="flex items-center gap-1.5 min-w-0">
-                            <p
-                              class="font-semibold text-brand-dark truncate min-w-0 transition-colors"
-                              :class="{ 'group-hover:text-violet-700': canView }"
-                            >
-                              {{ license.licensee_name }}
-                            </p>
-                            <span
-                              v-if="isOrganization(license)"
-                              class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-700 whitespace-nowrap shrink-0"
-                            >
-                              Org · {{ organizationTypeLabel(license.organization_type) }}
-                            </span>
+                            <p class="text-ui-small font-semibold text-ui-ink truncate min-w-0">{{ license.licensee_name }}</p>
                           </div>
-                          <p class="text-xs text-brand-light truncate">{{ license.licensee_email || "-" }}</p>
+                          <p class="text-ui-cap text-ui-muted truncate">{{ license.licensee_email || "-" }}</p>
                           <!-- Last activity folds under the name below 2xl -->
-                          <p class="2xl:hidden text-[11px] text-gray-400 truncate">
+                          <p class="2xl:hidden text-ui-cap text-ui-faint truncate">
                             <template v-if="lastActivity(license)">
                               Active <span :title="formatDateTime(lastActivity(license))">{{ relativeTime(lastActivity(license)) }}</span>
                             </template>
@@ -628,47 +593,48 @@ const statusBadge = (license) =>
                       </div>
                     </td>
 
-                    <!-- Plan -->
-                    <td class="py-3.5 px-3">
-                      <!-- The plan, the platform(s) under it -->
+                    <!-- Plan: the plan, the platform(s) under it -->
+                    <td class="px-3 py-3.5 border-b border-ui-line group-last:border-b-0">
                       <div v-if="commonPlan(license)" class="flex flex-col items-start gap-1">
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" :class="planChipClass(commonPlan(license))">
+                        <span class="inline-flex items-center h-[22px] px-2 rounded-md text-ui-cap font-medium whitespace-nowrap" :class="planChipClass(commonPlan(license))">
                           {{ planLabel({ plan: commonPlan(license) }) }}
                         </span>
-                        <span class="text-[11px] font-medium text-brand-light whitespace-nowrap">{{ platformsText(license) }}</span>
+                        <span class="text-ui-cap text-ui-muted whitespace-nowrap">{{ platformsText(license) }}</span>
+                        <span v-if="isOrganization(license)" class="text-ui-cap text-ui-faint whitespace-nowrap truncate max-w-full">Org · {{ organizationTypeLabel(license.organization_type) }}</span>
                       </div>
                       <!-- A bundle whose licenses have different plans -->
                       <div v-else class="flex flex-col items-start gap-1">
                         <span
                           v-for="lane in lanes(license)"
                           :key="lane.id"
-                          class="text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                          class="inline-flex items-center h-[22px] px-2 rounded-md text-ui-cap font-medium whitespace-nowrap"
                           :class="planChipClass(lane.plan)"
                         >
                           {{ lane.platform_label }} &middot; {{ planLabel({ plan: lane.plan }) }}
                         </span>
+                        <span v-if="isOrganization(license)" class="text-ui-cap text-ui-faint whitespace-nowrap truncate max-w-full">Org · {{ organizationTypeLabel(license.organization_type) }}</span>
                       </div>
                     </td>
 
-                    <!-- Key -->
-                    <td class="py-3.5 px-3">
-                      <!-- One lane per platform: key on top, devices under it -->
+                    <!-- Key: one lane per platform, key on top, devices under it -->
+                    <td class="px-3 py-3.5 border-b border-ui-line group-last:border-b-0">
                       <div class="space-y-2.5">
                         <div v-for="lane in lanes(license)" :key="lane.id" class="min-w-0">
                           <div class="flex items-center gap-2">
                             <span
-                              class="w-[34px] shrink-0 text-center text-[9px] font-bold uppercase tracking-wider py-0.5 rounded"
-                              :class="platformChipClass(lane.platform)"
-                            >{{ lane.platform === "ipad" ? "iPad" : "Mac" }}</span>
-                            <span class="font-mono text-[11px] font-semibold whitespace-nowrap text-brand-dark">{{ maskKey(lane.key) }}</span>
+                              class="w-[52px] shrink-0 inline-flex items-center justify-center gap-1 h-5 rounded-md border border-ui-line bg-ui-surface text-ui-cap text-ui-text"
+                            >
+                              <component :is="platformIcon(lane.platform)" class="w-3 h-3 text-ui-faint" />{{ lane.platform === "ipad" ? "iPad" : "Mac" }}
+                            </span>
+                            <span class="font-mono text-ui-cap font-medium whitespace-nowrap text-ui-ink">{{ maskKey(lane.key) }}</span>
                             <CopyKeyButton :value="lane.key" class="opacity-60 group-hover:opacity-100" />
                           </div>
-                          <div class="flex items-center gap-2 mt-1 pl-[42px]">
-                            <div class="w-14 h-1 rounded-full bg-gray-100 overflow-hidden shrink-0">
-                              <div class="h-full rounded-full" :class="laneFull(lane) ? 'bg-amber-500' : 'bg-sky-500'" :style="{ width: `${lanePercent(lane)}%` }"></div>
+                          <div class="flex items-center gap-1.5 mt-1 pl-[60px]">
+                            <div class="w-8 h-1 rounded-full bg-ui-subtle overflow-hidden shrink-0">
+                              <div class="h-full rounded-full" :class="laneFull(lane) ? 'bg-ui-warn' : 'bg-ui-ink'" :style="{ width: `${lanePercent(lane)}%` }"></div>
                             </div>
-                            <span class="text-[11px] text-brand-light whitespace-nowrap tabular-nums">
-                              <span class="font-semibold" :class="laneFull(lane) ? 'text-amber-600' : 'text-brand-dark'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> devices<template v-if="lane.keys_summary"> &middot; {{ lane.keys_summary.total }} keys, {{ laneUsed(lane) }} used</template>
+                            <span class="text-ui-cap text-ui-muted whitespace-nowrap tabular-nums">
+                              <span class="font-medium" :class="laneFull(lane) ? 'text-ui-warn' : 'text-ui-ink'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> devices<template v-if="lane.keys_summary"> &middot; {{ lane.keys_summary.total }} keys, {{ laneUsed(lane) }} used</template>
                             </span>
                           </div>
                         </div>
@@ -676,77 +642,83 @@ const statusBadge = (license) =>
                     </td>
 
                     <!-- Period -->
-                    <td class="py-3.5 px-3">
+                    <td class="px-3 py-3.5 border-b border-ui-line group-last:border-b-0">
                       <div v-if="isLifetimeLicense(license)" class="whitespace-nowrap">
-                        <p class="text-[11px] text-brand-dark">{{ formatDate(license.starts_at || license.created_at) }}</p>
-                        <p class="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 mt-0.5">
-                          <InfinityIcon class="w-3.5 h-3.5" /> Lifetime
-                        </p>
+                        <p class="text-ui-small text-ui-text">Since {{ formatDate(license.starts_at || license.created_at) }}</p>
+                        <p class="inline-flex items-center gap-1 text-ui-cap text-ui-muted mt-0.5"><InfinityIcon class="w-3.5 h-3.5" /> Lifetime</p>
                       </div>
                       <div v-else class="w-full">
-                        <p class="flex items-center gap-1 text-[11px] text-brand-dark whitespace-nowrap">
+                        <p class="flex items-center gap-1 text-ui-small text-ui-text whitespace-nowrap tabular-nums">
                           {{ formatDate(license.starts_at || license.created_at) }}
-                          <ArrowRight class="w-3 h-3 text-gray-400" />
-                          <span :class="license.status === 'expired' ? 'text-red-600 font-semibold' : ''">{{ formatDate(license.expires_at) }}</span>
+                          <ArrowRight class="w-3 h-3 text-ui-faint shrink-0" />
+                          <span :class="license.status === 'expired' ? 'text-ui-bad font-medium' : ''">{{ formatDate(license.expires_at) }}</span>
                         </p>
-                        <div class="mt-1.5 h-1 w-full rounded-full bg-gray-100 overflow-hidden" :title="`${elapsed(license)}% of the period used`">
+                        <div class="mt-1.5 h-1 w-full rounded-full bg-ui-subtle overflow-hidden" :title="`${elapsed(license)}% of the period used`">
                           <div class="h-full rounded-full transition-all" :class="periodBarClass(license)" :style="{ width: `${elapsed(license)}%` }"></div>
                         </div>
                       </div>
                     </td>
 
-                    <!-- Remaining -->
-                    <td class="py-3.5 px-3 whitespace-nowrap">
-                      <span
-                        class="text-xs font-semibold px-2 py-1 rounded-full tabular-nums"
-                        :class="remainingBadgeClass(license)"
+                    <!-- Status + remaining -->
+                    <td class="px-3 py-3.5 border-b border-ui-line group-last:border-b-0">
+                      <UiBadge :tone="statusTone(license)" dot>{{ statusText(license) }}</UiBadge>
+                      <p
+                        class="text-ui-cap text-ui-muted mt-1 whitespace-nowrap tabular-nums"
                         :title="isLifetimeLicense(license) ? 'No end date' : `${elapsed(license)}% of the period used`"
                       >
-                        {{ remainingText(license) }}
-                      </span>
-                    </td>
-
-                    <!-- Status: switch with license-manager-edit, else a badge -->
-                    <td class="py-3.5 px-3">
-                      <LicenseStatusSwitch
-                        v-if="canEdit"
-                        :model-value="!!license.is_active"
-                        :disabled="togglingId === license.id"
-                        @update:model-value="(value) => toggleActive(license, value)"
-                      />
-                      <span v-else class="text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap" :class="statusBadge(license)">
-                        {{ license.is_active ? "Active" : "Inactive" }}
-                      </span>
+                        {{ statusCaption(license) }}
+                      </p>
                     </td>
 
                     <!-- Last activity -->
-                    <td class="py-3.5 px-3 whitespace-nowrap text-xs text-brand-light hidden 2xl:table-cell">
+                    <td class="hidden 2xl:table-cell px-3 py-3.5 whitespace-nowrap text-ui-cap text-ui-muted border-b border-ui-line group-last:border-b-0">
                       <span v-if="lastActivity(license)" :title="formatDateTime(lastActivity(license))">{{ relativeTime(lastActivity(license)) }}</span>
-                      <span v-else class="text-gray-400">Never</span>
+                      <span v-else class="text-ui-faint">Never</span>
                     </td>
 
-                    <!-- Actions (revealed on hover from lg) -->
-                    <td class="py-3.5 px-3">
-                      <div
-                        class="flex items-center justify-end gap-1.5 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
-                      >
-                        <RouterLink v-if="canView" :to="detailRoute(license)" @click.stop :class="iconBtn" title="View license" aria-label="View license">
-                          <Eye class="w-4 h-4 text-gray-600" />
-                        </RouterLink>
-                        <RouterLink v-if="canEdit" :to="editRoute(license)" @click.stop :class="iconBtn" title="Edit license" aria-label="Edit license">
-                          <Pencil class="w-4 h-4 text-gray-600" />
-                        </RouterLink>
-                        <button
-                          v-if="canDelete"
-                          type="button"
-                          @click.stop="handleDelete(license)"
-                          :class="iconBtn"
-                          class="hover:bg-red-50 group/del"
-                          title="Delete license"
-                          aria-label="Delete license"
-                        >
-                          <Trash2 class="w-4 h-4 text-gray-600 group-hover/del:text-red-600" />
-                        </button>
+                    <!-- On/off switch (license-manager-edit) + actions (revealed on hover from lg) -->
+                    <td class="pl-2 pr-4 py-3.5 border-b border-ui-line group-last:border-b-0">
+                      <div class="flex items-center justify-end gap-1">
+                        <LicenseStatusSwitch
+                          v-if="canEdit"
+                          :model-value="!!license.is_active"
+                          :disabled="togglingId === license.id"
+                          :label="null"
+                          class="mr-1"
+                          @update:model-value="(value) => toggleActive(license, value)"
+                        />
+                        <div class="flex items-center gap-0.5 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                          <RouterLink
+                            v-if="canView"
+                            :to="detailRoute(license)"
+                            @click.stop
+                            class="w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-subtle hover:text-ui-ink"
+                            title="View license"
+                            aria-label="View license"
+                          >
+                            <Eye class="w-4 h-4" />
+                          </RouterLink>
+                          <RouterLink
+                            v-if="canEdit"
+                            :to="editRoute(license)"
+                            @click.stop
+                            class="w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-subtle hover:text-ui-ink"
+                            title="Edit license"
+                            aria-label="Edit license"
+                          >
+                            <Pencil class="w-4 h-4" />
+                          </RouterLink>
+                          <button
+                            v-if="canDelete"
+                            type="button"
+                            @click.stop="handleDelete(license)"
+                            class="w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
+                            title="Delete license"
+                            aria-label="Delete license"
+                          >
+                            <Trash2 class="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -755,94 +727,83 @@ const statusBadge = (license) =>
             </div>
 
             <!-- Stacked cards (below md) -->
-            <ul class="md:hidden divide-y divide-[#F1F1F1]" :class="{ 'opacity-60': loading }">
+            <ul class="md:hidden divide-y divide-ui-line ui-stagger" :class="{ 'opacity-60': loading }">
               <li
-                v-for="license in licenses"
+                v-for="(license, index) in licenses"
                 :key="license.id"
-                class="p-4"
-                :class="{ 'cursor-pointer active:bg-violet-50/40': canView }"
+                class="px-3.5 py-3.5"
+                :class="{ 'cursor-pointer active:bg-ui-hover': canView }"
                 @click="openLicense(license)"
               >
-                <div class="flex items-start gap-3">
-                  <span
-                    class="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                    :class="avatarTone(license.licensee_name)"
-                  >
+                <div class="flex items-start gap-2.5">
+                  <span class="w-8 h-8 rounded-full flex items-center justify-center text-ui-cap font-semibold shrink-0" :class="avatarTone(license.licensee_name)">
                     {{ initials(license.licensee_name) }}
                   </span>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-start justify-between gap-2">
                       <div class="min-w-0">
-                        <p class="font-semibold text-brand-dark truncate">{{ license.licensee_name }}</p>
-                        <p class="text-xs text-brand-light truncate">{{ license.licensee_email || "-" }}</p>
+                        <p class="text-ui-body font-semibold text-ui-ink truncate">
+                          <span class="text-ui-cap font-normal text-ui-faint tabular-nums mr-1">{{ startNumber + index }}.</span>{{ license.licensee_name }}
+                        </p>
+                        <p class="text-ui-cap text-ui-muted truncate">
+                          <template v-if="commonPlan(license)">{{ planLabel({ plan: commonPlan(license) }) }}</template>
+                          <template v-else>{{ lanes(license).map((l) => `${l.platform_label} ${planLabel({ plan: l.plan })}`).join(" + ") }}</template>
+                          · {{ statusCaption(license) }}
+                        </p>
                       </div>
-                      <LicenseStatusSwitch
-                        v-if="canEdit"
-                        :model-value="!!license.is_active"
-                        :disabled="togglingId === license.id"
-                        @update:model-value="(value) => toggleActive(license, value)"
-                      />
-                      <span v-else class="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0" :class="statusBadge(license)">
-                        {{ license.is_active ? "Active" : "Inactive" }}
-                      </span>
+                      <UiBadge :tone="statusTone(license)" dot class="shrink-0">{{ statusText(license) }}</UiBadge>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-1.5 mt-2">
-                      <template v-if="commonPlan(license)">
-                        <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="planChipClass(commonPlan(license))">{{ planLabel({ plan: commonPlan(license) }) }}</span>
-                        <span class="text-[11px] font-medium text-brand-light">{{ platformsText(license) }}</span>
-                      </template>
-                      <span
-                        v-else
-                        v-for="lane in lanes(license)"
-                        :key="lane.id"
-                        class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                        :class="planChipClass(lane.plan)"
-                      >{{ lane.platform_label }} &middot; {{ planLabel({ plan: lane.plan }) }}</span>
-                      <span v-if="isOrganization(license)" class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-700">
-                        Org · {{ organizationTypeLabel(license.organization_type) }}
-                      </span>
-                      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full tabular-nums" :class="remainingBadgeClass(license)">
-                        {{ remainingText(license) }}
-                      </span>
+                    <div v-if="isOrganization(license)" class="mt-2">
+                      <UiBadge tone="outline">Org · {{ organizationTypeLabel(license.organization_type) }}</UiBadge>
                     </div>
 
-                    <div v-for="lane in lanes(license)" :key="lane.id" class="mt-2.5">
-                      <div class="flex items-center gap-2">
-                        <span class="w-[34px] shrink-0 text-center text-[9px] font-bold uppercase tracking-wider py-0.5 rounded" :class="platformChipClass(lane.platform)">{{ lane.platform === "ipad" ? "iPad" : "Mac" }}</span>
-                        <span class="font-mono text-xs font-semibold text-brand-dark truncate">{{ maskKey(lane.key) }}</span>
-                        <CopyKeyButton :value="lane.key" />
+                    <div class="mt-2.5 pt-2.5 border-t border-ui-line space-y-1.5">
+                      <div v-for="lane in lanes(license)" :key="lane.id" class="min-w-0">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                          <span class="shrink-0 inline-flex items-center gap-1 h-5 px-1.5 rounded-md border border-ui-line bg-ui-surface text-ui-cap text-ui-text">
+                            <component :is="platformIcon(lane.platform)" class="w-3 h-3 text-ui-faint" />{{ lane.platform === "ipad" ? "iPad" : "Mac" }}
+                          </span>
+                          <span class="font-mono text-ui-cap font-medium text-ui-ink whitespace-nowrap shrink-0" :title="maskKey(lane.key)">{{ shortKey(lane.key) }}</span>
+                          <CopyKeyButton :value="lane.key" />
+                          <span class="ml-auto min-w-0 truncate text-ui-cap text-ui-muted whitespace-nowrap tabular-nums">
+                            <span :class="laneFull(lane) ? 'text-ui-warn font-medium' : 'text-ui-ink font-medium'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> devices
+                          </span>
+                        </div>
+                        <p v-if="lane.keys_summary" class="text-ui-cap text-ui-faint pl-[54px] tabular-nums">
+                          {{ lane.keys_summary.total }} keys, {{ laneUsed(lane) }} used
+                        </p>
                       </div>
-                      <p class="text-[11px] text-brand-light mt-0.5 pl-[42px] tabular-nums">
-                        <span class="font-semibold" :class="laneFull(lane) ? 'text-amber-600' : 'text-brand-dark'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> devices<template v-if="lane.keys_summary"> &middot; {{ lane.keys_summary.total }} keys, {{ laneUsed(lane) }} used</template>
-                      </p>
                     </div>
 
                     <div v-if="!isLifetimeLicense(license)" class="mt-2.5">
-                      <div class="flex items-center justify-between text-[11px] text-brand-light">
+                      <div class="flex items-center justify-between text-ui-cap text-ui-muted tabular-nums">
                         <span>{{ formatDate(license.starts_at || license.created_at) }}</span>
-                        <span :class="license.status === 'expired' ? 'text-red-600 font-semibold' : ''">{{ formatDate(license.expires_at) }}</span>
+                        <span :class="license.status === 'expired' ? 'text-ui-bad font-medium' : ''">{{ formatDate(license.expires_at) }}</span>
                       </div>
-                      <div class="mt-1 h-1 w-full rounded-full bg-gray-100 overflow-hidden">
+                      <div class="mt-1 h-1 w-full rounded-full bg-ui-subtle overflow-hidden">
                         <div class="h-full rounded-full" :class="periodBarClass(license)" :style="{ width: `${elapsed(license)}%` }"></div>
                       </div>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5 text-[11px] text-brand-light">
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5 text-ui-cap text-ui-muted">
                       <span class="inline-flex items-center gap-1">
                         <Clock class="w-3.5 h-3.5" /> {{ lastActivity(license) ? relativeTime(lastActivity(license)) : "Never" }}
                       </span>
-                      <span v-if="isLifetimeLicense(license)" class="inline-flex items-center gap-1 text-violet-700 font-semibold">
+                      <span v-if="isLifetimeLicense(license)" class="inline-flex items-center gap-1 text-ui-ink font-medium">
                         <InfinityIcon class="w-3.5 h-3.5" /> Lifetime
                       </span>
-                      <RouterLink
-                        v-if="canEdit"
-                        :to="editRoute(license)"
-                        @click.stop
-                        class="ml-auto inline-flex items-center gap-1 font-semibold text-violet-600"
-                      >
-                        <Pencil class="w-3.5 h-3.5" /> Edit
-                      </RouterLink>
+                      <div class="ml-auto flex items-center gap-3">
+                        <LicenseStatusSwitch
+                          v-if="canEdit"
+                          :model-value="!!license.is_active"
+                          :disabled="togglingId === license.id"
+                          @update:model-value="(value) => toggleActive(license, value)"
+                        />
+                        <RouterLink v-if="canEdit" :to="editRoute(license)" @click.stop class="inline-flex items-center gap-1 font-medium text-ui-accent">
+                          <Pencil class="w-3.5 h-3.5" /> Edit
+                        </RouterLink>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -850,7 +811,7 @@ const statusBadge = (license) =>
             </ul>
           </template>
 
-          <div v-if="loadedOnce && (meta.total ?? 0) > 0" class="px-4 sm:px-5 pb-4 border-t border-[#F1F1F1]">
+          <div v-if="loadedOnce && (meta.total ?? 0) > 0" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
             <Pagination
               :meta="paginationMeta"
               :loading="loading"
@@ -860,25 +821,79 @@ const statusBadge = (license) =>
               @per-page-change="handlePerPageChange"
             />
           </div>
-        </div>
+        </section>
       </div>
+
+      <!-- Phones: filter sheet -->
+      <UiModal v-model:open="showFilters" title="Filter">
+        <template #header>
+          <div class="flex-1 flex items-center gap-3 min-w-0">
+            <button type="button" class="text-ui-small font-medium text-ui-accent" @click="clearFilters">Reset</button>
+            <h2 class="flex-1 text-center text-ui-h2 text-ui-ink">Filter</h2>
+          </div>
+        </template>
+        <div class="space-y-5">
+          <div>
+            <p class="text-ui-over uppercase text-ui-muted mb-2">Platform</p>
+            <div class="grid grid-cols-3 p-0.5 rounded-ui-control bg-ui-subtle" role="tablist" aria-label="Filter by platform">
+              <button
+                v-for="opt in PLATFORM_FILTERS"
+                :key="opt.value || 'all'"
+                type="button"
+                role="tab"
+                @click="filters.platform = opt.value"
+                class="h-9 rounded-[6px] text-ui-small font-medium transition-colors"
+                :class="filters.platform === opt.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted'"
+                :aria-selected="filters.platform === opt.value"
+              >
+                {{ opt.value ? opt.label : "All" }}
+              </button>
+            </div>
+          </div>
+          <div>
+            <p class="text-ui-over uppercase text-ui-muted mb-2">Plan</p>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="opt in planChipOptions"
+                :key="opt.value || 'all'"
+                type="button"
+                @click="setPlan(opt.value)"
+                class="h-8 px-3 rounded-full border text-ui-small font-medium"
+                :class="filters.plan === opt.value ? 'bg-ui-ink text-white border-ui-ink' : 'bg-ui-surface text-ui-text border-ui-line'"
+                :aria-pressed="filters.plan === opt.value"
+              >
+                {{ opt.label }}
+              </button>
+            </div>
+          </div>
+          <div>
+            <p class="text-ui-over uppercase text-ui-muted mb-2">Status</p>
+            <div class="border border-ui-line rounded-ui-card divide-y divide-ui-line overflow-hidden" role="radiogroup" aria-label="Filter by status">
+              <button
+                v-for="opt in statusSelectOptions"
+                :key="opt.value || 'all'"
+                type="button"
+                role="radio"
+                :aria-checked="filters.status === opt.value"
+                @click="filters.status = opt.value"
+                class="w-full flex items-center justify-between h-11 px-4 text-left text-ui-body text-ui-ink hover:bg-ui-hover"
+              >
+                {{ opt.label }}
+                <Check v-if="filters.status === opt.value" class="w-4 h-4 text-ui-accent" />
+              </button>
+            </div>
+          </div>
+          <div>
+            <p class="text-ui-over uppercase text-ui-muted mb-2">Sort</p>
+            <UiSelect v-model="filters.sort" :options="SORTS" aria-label="Sort" />
+          </div>
+        </div>
+        <template #footer>
+          <UiButton block size="lg" :loading="loading" @click="showFilters = false">
+            Show {{ meta.total ?? 0 }} license{{ meta.total === 1 ? "" : "s" }}
+          </UiButton>
+        </template>
+      </UiModal>
     </LicenseProductGate>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-thead th:first-child {
-  border-top-left-radius: 16px;
-}
-thead th:last-child {
-  border-top-right-radius: 16px;
-}
-</style>
