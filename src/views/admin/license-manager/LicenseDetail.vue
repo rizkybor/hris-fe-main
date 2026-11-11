@@ -81,7 +81,24 @@ const toggling = ref(false);
 const releasingId = ref(null);
 
 const license = computed(() => store.currentLicense);
-const activations = computed(() => license.value?.activations || []);
+// Mac + iPad: the devices of both licenses, each tagged with its license.
+const activations = computed(() => {
+  const own = (license.value?.activations || []).map((a) => ({ ...a, license_id: a.license_id ?? license.value.id }));
+  const siblings = (license.value?.bundle || []).flatMap((b) => (b.activations || []).map((a) => ({ ...a, license_id: a.license_id ?? b.id })));
+  return [...own, ...siblings];
+});
+const isBundle = computed(() => (license.value?.bundle || []).length > 0);
+const totalMaxDevices = computed(() =>
+  (license.value?.max_devices || 0) + (license.value?.bundle || []).reduce((sum, b) => sum + (b.max_devices || 0), 0)
+);
+// The license (this one or its bundle sibling) a device belongs to.
+const activationOwner = (activation) =>
+  activation.license_id === license.value?.id
+    ? { platform: license.value.platform, label: licensePlatformLabel(license.value) }
+    : (() => {
+        const b = (license.value?.bundle || []).find((x) => x.id === activation.license_id);
+        return { platform: b?.platform, label: b?.platform_label || "" };
+      })();
 const devicesUsed = computed(() => license.value?.devices_used ?? activations.value.length);
 const expired = computed(() => isExpired(license.value));
 const isOrganization = computed(() => planCategory(license.value) === "organization");
@@ -198,18 +215,28 @@ const keyMeta = computed(() => {
 // One key per device: every key with its status (available / in use on a
 // device / used: its device was released, the key never works again).
 const perDevice = computed(() => license.value?.key_mode === "per_device");
-const deviceKeys = computed(() => license.value?.keys || []);
-const keysSummary = computed(() => {
-  const s = license.value?.keys_summary;
-  if (s) return s;
-  const keys = deviceKeys.value;
-  return {
-    total: keys.length,
-    available: keys.filter((k) => k.status === "available").length,
-    in_use: keys.filter((k) => k.status === "in_use").length,
-    used: keys.filter((k) => k.status === "used").length,
-  };
+const summarize = (keys) => ({
+  total: keys.length,
+  available: keys.filter((k) => k.status === "available").length,
+  in_use: keys.filter((k) => k.status === "in_use").length,
+  used: keys.filter((k) => k.status === "used").length,
 });
+// The keys per platform: this license, plus the iPad (or Mac) license of a
+// Mac + iPad bundle, Mac first.
+const keyGroups = computed(() => {
+  const l = license.value;
+  if (!l) return [];
+  return [
+    { licenseId: l.id, platform: l.platform, label: licensePlatformLabel(l), keys: l.keys || [] },
+    ...(l.bundle || [])
+      .filter((b) => Array.isArray(b.keys))
+      .map((b) => ({ licenseId: b.id, platform: b.platform, label: b.platform_label, keys: b.keys })),
+  ]
+    .sort((a, b) => (a.platform === "mac" ? -1 : b.platform === "mac" ? 1 : 0))
+    .map((g) => ({ ...g, summary: summarize(g.keys) }));
+});
+const deviceKeys = computed(() => keyGroups.value.flatMap((g) => g.keys));
+const keysSummary = computed(() => summarize(deviceKeys.value));
 const keyFilter = ref("all");
 const keyFilters = computed(() => [
   { value: "all", label: "All", count: keysSummary.value.total },
@@ -217,9 +244,8 @@ const keyFilters = computed(() => [
   { value: "in_use", label: "In use", count: keysSummary.value.in_use },
   { value: "used", label: "Used", count: keysSummary.value.used },
 ]);
-const filteredKeys = computed(() =>
-  keyFilter.value === "all" ? deviceKeys.value : deviceKeys.value.filter((k) => k.status === keyFilter.value)
-);
+const filterKeys = (keys) => (keyFilter.value === "all" ? keys : keys.filter((k) => k.status === keyFilter.value));
+const filteredKeys = computed(() => filterKeys(keyGroups.value[0]?.keys || []));
 const keyOfActivation = (activation) => deviceKeys.value.find((k) => k.id === activation.license_key_id) || null;
 const keyStatusOf = (key) => KEY_STATUS[key.status] || KEY_STATUS.available;
 const segmentWidth = (count) => (keysSummary.value.total ? `${(count / keysSummary.value.total) * 100}%` : "0%");
@@ -298,7 +324,11 @@ const releaseDevice = async (activation) => {
 
   releasingId.value = activation.id;
   try {
-    await store.releaseActivation(license.value.id, activation.id);
+    // An iPad device of a Mac + iPad license is released on the iPad license.
+    await store.releaseActivation(activation.license_id || license.value.id, activation.id);
+    // Reload: a released per-device key turns "used", and an iPad device
+    // lives on the bundle's other license.
+    if (perDevice.value || isBundle.value) await store.fetchLicense(license.value.id);
     flash("Device released.");
     timeline.value?.reload();
   } catch (err) {
@@ -472,7 +502,75 @@ const isMac = (platform) => /mac/i.test(platform || "");
               </button>
             </div>
 
-            <div class="overflow-x-auto -mx-1">
+            <!-- Mac + iPad: one list per platform, side by side -->
+            <div v-if="keyGroups.length > 1" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <div v-for="group in keyGroups" :key="group.licenseId" class="border border-[#DCDEDD] rounded-[12px] overflow-hidden min-w-0">
+                <div class="flex items-center gap-2 px-3.5 py-2.5 bg-slate-50 border-b border-[#DCDEDD]">
+                  <span class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="platformChipClass(group.platform)">{{ group.label }}</span>
+                  <span class="text-xs text-brand-light">keys</span>
+                  <span class="ml-auto text-xs font-semibold text-brand-dark tabular-nums">
+                    {{ group.summary.in_use + group.summary.used }} / {{ group.summary.total }} used
+                  </span>
+                </div>
+                <ul>
+                  <li
+                    v-for="key in filterKeys(group.keys)"
+                    :key="key.id"
+                    class="flex items-start gap-2.5 px-3.5 py-2.5 border-b border-[#F1F1F1] last:border-0"
+                  >
+                    <span class="text-xs text-brand-light tabular-nums w-5 pt-0.5 shrink-0">{{ key.position }}</span>
+                    <div class="flex-1 min-w-0">
+                      <!-- Key on the first line, status + device under it -->
+                      <div class="flex items-center gap-1">
+                        <span
+                          class="font-mono text-[11px] font-bold whitespace-nowrap"
+                          :class="key.status === 'used' ? 'text-gray-400 line-through' : 'text-brand-dark'"
+                        >{{ key.key }}</span>
+                        <CopyKeyButton v-if="key.status !== 'used'" :value="key.key" />
+                      </div>
+                      <div class="flex items-center gap-1.5 mt-1 min-w-0">
+                        <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-px rounded-full shrink-0" :class="keyStatusOf(key).chip">
+                          <span class="w-1.5 h-1.5 rounded-full" :class="keyStatusOf(key).dot"></span>
+                          {{ keyStatusOf(key).label }}
+                        </span>
+                        <span v-if="key.device_id || key.device_name" class="text-[11px] text-brand-light truncate" :title="key.device_id">
+                          <template v-if="key.status === 'used'">was </template>{{ key.device_name || "Unnamed device" }}
+                          <template v-if="key.status === 'used' && key.used_at"> &middot; {{ formatDate(key.used_at) }}</template>
+                          <template v-else-if="key.activated_at"> &middot; {{ formatDate(key.activated_at) }}</template>
+                        </span>
+                      </div>
+                    </div>
+                    <template v-if="can('license-manager-view') && key.status !== 'used'">
+                      <button
+                        type="button"
+                        @click="downloadPdf(certKeyOptions.find((k) => k.id === key.id))"
+                        :disabled="downloading"
+                        class="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-[#DCDEDD] hover:border-[#F2821F] hover:bg-orange-50 transition-all disabled:opacity-50 shrink-0"
+                        :title="`Download the certificate of ${group.label} key ${key.position}`"
+                        :aria-label="`Download the certificate of ${group.label} key ${key.position}`"
+                      >
+                        <FileDown class="w-3.5 h-3.5" :class="downloadingKeyId === key.id ? 'text-[#F2821F] animate-pulse' : 'text-gray-600'" />
+                      </button>
+                      <button
+                        type="button"
+                        @click="openShare('email', key.id)"
+                        class="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-[#DCDEDD] hover:border-violet-400 hover:bg-violet-50 transition-all shrink-0"
+                        :title="`Share the certificate of ${group.label} key ${key.position}`"
+                        :aria-label="`Share the certificate of ${group.label} key ${key.position}`"
+                      >
+                        <Share2 class="w-3.5 h-3.5 text-gray-600" />
+                      </button>
+                    </template>
+                    <span v-else-if="can('license-manager-view')" class="w-[60px] shrink-0"></span>
+                  </li>
+                  <li v-if="!filterKeys(group.keys).length" class="px-3.5 py-5 text-center text-xs text-brand-light">
+                    No {{ keyFilter === "in_use" ? "keys in use" : `${keyFilter} keys` }}.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div v-else class="overflow-x-auto -mx-1">
               <table class="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr class="text-left text-[11px] uppercase tracking-wider text-brand-light border-b border-[#DCDEDD]">
@@ -710,7 +808,7 @@ const isMac = (platform) => /mac/i.test(platform || "");
             <div class="flex items-center gap-2.5 mb-4">
               <MonitorSmartphone class="w-[18px] h-[18px] text-violet-600" />
               <h4 class="text-brand-dark font-bold flex-1">Devices</h4>
-              <span class="text-xs font-semibold text-brand-light tabular-nums">{{ activations.length }} / {{ license.max_devices }}</span>
+              <span class="text-xs font-semibold text-brand-light tabular-nums">{{ activations.length }} / {{ totalMaxDevices }}</span>
             </div>
 
             <ul v-if="activations.length" class="space-y-2.5">
@@ -724,6 +822,11 @@ const isMac = (platform) => /mac/i.test(platform || "");
                       Key {{ keyOfActivation(activation).position }} &middot; {{ keyOfActivation(activation).key }}
                     </p>
                     <p class="text-xs text-brand-light">
+                      <span
+                        v-if="isBundle"
+                        class="text-[10px] font-semibold px-1.5 py-px rounded-full mr-1"
+                        :class="platformChipClass(activationOwner(activation).platform)"
+                      >{{ activationOwner(activation).label }}</span>
                       {{ platformLabel(activation.platform) }}<template v-if="activation.app_version"> &middot; v{{ activation.app_version }}</template>
                     </p>
                     <p class="font-mono text-[10px] text-gray-400 truncate" :title="activation.device_id">{{ activation.device_id }}</p>
