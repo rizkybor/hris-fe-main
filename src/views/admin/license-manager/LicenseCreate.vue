@@ -61,11 +61,17 @@ const submit = async () => {
 const createdKeys = computed(() =>
   created.value
     ? [
-        { id: created.value.id, key: created.value.key, platform: created.value.platform, platform_label: created.value.platform_label },
+        { id: created.value.id, key: created.value.key, platform: created.value.platform, platform_label: created.value.platform_label, keys: created.value.keys },
         ...(created.value.bundle || []),
       ]
     : []
 );
+
+// One key per device: keys 2..N under the main key (the first 10; the
+// rest are on the detail page and the certificate).
+const perDevice = computed(() => created.value?.key_mode === "per_device");
+const MAX_SHOWN_KEYS = 10;
+const otherKeys = (license) => (license.keys || []).filter((k) => k.position > 1);
 
 const downloading = ref(false);
 const downloadError = ref("");
@@ -128,7 +134,7 @@ const createAnother = () => {
 
             <div v-for="license in createdKeys" :key="license.id" class="flex flex-col items-center max-w-full mb-5 last:mb-0">
               <p class="text-violet-200 text-xs font-semibold uppercase tracking-wider mb-3">
-                {{ createdKeys.length > 1 ? `${license.platform_label} License Key` : "License Key" }}
+                {{ createdKeys.length > 1 ? `${license.platform_label} License Key` : "License Key" }}<template v-if="perDevice && license.keys?.length"> &middot; key 1 of {{ license.keys.length }}</template>
               </p>
               <div class="flex items-center gap-3 bg-white rounded-[16px] pl-5 pr-3 py-4 shadow-lg max-w-full">
                 <span class="font-mono text-xl sm:text-3xl lg:text-4xl font-bold tracking-wider text-brand-dark break-all select-all">
@@ -136,6 +142,20 @@ const createAnother = () => {
                 </span>
                 <CopyKeyButton :value="license.key" size="md" />
               </div>
+              <div v-if="perDevice && otherKeys(license).length" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl w-full">
+                <div
+                  v-for="k in otherKeys(license).slice(0, MAX_SHOWN_KEYS - 1)"
+                  :key="k.position"
+                  class="flex items-center gap-2 bg-white rounded-[10px] pl-3 pr-1 py-1"
+                >
+                  <span class="text-brand-light text-[11px] tabular-nums w-5 text-left">{{ k.position }}</span>
+                  <span class="font-mono text-xs font-bold tracking-wider text-brand-dark flex-1 text-left select-all">{{ k.key }}</span>
+                  <CopyKeyButton :value="k.key" />
+                </div>
+              </div>
+              <p v-if="perDevice && otherKeys(license).length > MAX_SHOWN_KEYS - 1" class="text-violet-200/80 text-xs mt-2">
+                + {{ otherKeys(license).length - (MAX_SHOWN_KEYS - 1) }} more keys on the license page and the certificate.
+              </p>
             </div>
 
             <p class="text-violet-200/80 text-sm mt-5 max-w-xl">
@@ -149,7 +169,10 @@ const createAnother = () => {
                 Valid until {{ formatDate(created.expires_at) }}.
               </template>
               <template v-else>Lifetime license, never expires.</template>
-              Up to {{ created.max_devices }} device(s){{ createdKeys.length > 1 ? " per key" : "" }}.
+              <template v-if="perDevice">
+                {{ created.max_devices }} unique key(s){{ createdKeys.length > 1 ? " per platform" : "" }}, one per device; a released key can't be used again.
+              </template>
+              <template v-else>Up to {{ created.max_devices }} device(s){{ createdKeys.length > 1 ? " per key" : "" }}.</template>
             </p>
 
             <button
