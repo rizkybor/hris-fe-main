@@ -1005,6 +1005,10 @@ button:disabled,
   margin: 1rem;
 }
 
+.m-auto {
+  margin: auto;
+}
+
 .\!mx-0 {
   margin-left: 0px !important;
   margin-right: 0px !important;
@@ -1102,6 +1106,10 @@ button:disabled,
   margin-top: 0.5rem !important;
 }
 
+.-mb-\[6px\] {
+  margin-bottom: -6px;
+}
+
 .-mb-px {
   margin-bottom: -1px;
 }
@@ -1116,6 +1124,10 @@ button:disabled,
 
 .-ml-2 {
   margin-left: -0.5rem;
+}
+
+.-ml-\[52px\] {
+  margin-left: -52px;
 }
 
 .-mr-1 {
@@ -1144,6 +1156,10 @@ button:disabled,
 
 .-mt-3 {
   margin-top: -0.75rem;
+}
+
+.-mt-\[30px\] {
+  margin-top: -30px;
 }
 
 .mb-0\.5 {
@@ -1284,6 +1300,10 @@ button:disabled,
 
 .mt-\[7px\] {
   margin-top: 7px;
+}
+
+.mt-\[9px\] {
+  margin-top: 9px;
 }
 
 .mt-auto {
@@ -1509,6 +1529,10 @@ button:disabled,
 
 .h-\[24px\] {
   height: 24px;
+}
+
+.h-\[275px\] {
+  height: 275px;
 }
 
 .h-\[2px\] {
@@ -1935,6 +1959,10 @@ button:disabled,
   width: 300px;
 }
 
+.w-\[305px\] {
+  width: 305px;
+}
+
 .w-\[30px\] {
   width: 30px;
 }
@@ -1957,6 +1985,10 @@ button:disabled,
 
 .w-\[60px\] {
   width: 60px;
+}
+
+.w-\[62\%\] {
+  width: 62%;
 }
 
 .w-\[64px\] {
@@ -4319,8 +4351,8 @@ button:disabled,
   font-size: 10px;
 }
 
-.text-\[34px\] {
-  font-size: 34px;
+.text-\[32px\] {
+  font-size: 32px;
 }
 
 .text-\[72px\] {
@@ -4433,8 +4465,8 @@ button:disabled,
   line-height: 18px;
 }
 
-.leading-\[44px\] {
-  line-height: 44px;
+.leading-\[42px\] {
+  line-height: 42px;
 }
 
 .leading-\[80px\] {
@@ -4463,6 +4495,10 @@ button:disabled,
 
 .tracking-\[-0\.04em\] {
   letter-spacing: -0.04em;
+}
+
+.tracking-\[0\.08em\] {
+  letter-spacing: 0.08em;
 }
 
 .tracking-normal {
@@ -4807,6 +4843,10 @@ button:disabled,
   color: rgb(255 255 255 / 0.5);
 }
 
+.text-white\/55 {
+  color: rgb(255 255 255 / 0.55);
+}
+
 .text-white\/60 {
   color: rgb(255 255 255 / 0.6);
 }
@@ -4900,6 +4940,10 @@ button:disabled,
 
 .opacity-80 {
   opacity: 0.8;
+}
+
+.opacity-90 {
+  opacity: 0.9;
 }
 
 .shadow {
@@ -5084,6 +5128,11 @@ button:disabled,
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 
+.brightness-0 {
+  --tw-brightness: brightness(0);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+
 .drop-shadow {
   --tw-drop-shadow: drop-shadow(0 1px 2px rgb(0 0 0 / 0.1)) drop-shadow(0 1px 1px rgb(0 0 0 / 0.06));
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
@@ -5091,6 +5140,11 @@ button:disabled,
 
 .grayscale {
   --tw-grayscale: grayscale(100%);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+
+.invert {
+  --tw-invert: invert(100%);
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 
@@ -5224,6 +5278,10 @@ button:disabled,
 
 .\[scrollbar-width\:none\] {
   scrollbar-width: none;
+}
+
+.\[text-wrap\:balance\] {
+  text-wrap: balance;
 }
 
 /* Pointer on everything clickable. Tailwind's reset leaves buttons with the
@@ -8092,6 +8150,18 @@ html {
     grid-row-start: 1;
   }
 
+  .xl\:-mb-\[10px\] {
+    margin-bottom: -10px;
+  }
+
+  .xl\:-ml-\[58px\] {
+    margin-left: -58px;
+  }
+
+  .xl\:-mt-\[34px\] {
+    margin-top: -34px;
+  }
+
   .xl\:block {
     display: block;
   }
@@ -8106,6 +8176,14 @@ html {
 
   .xl\:hidden {
     display: none;
+  }
+
+  .xl\:h-\[320px\] {
+    height: 320px;
+  }
+
+  .xl\:w-\[356px\] {
+    width: 356px;
   }
 
   .xl\:grid-cols-1 {

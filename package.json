@@ -29,6 +29,7 @@
     "luxon": "^3.7.2",
     "pinia": "^3.0.3",
     "sortablejs": "^1.15.6",
+    "three": "0.186.1",
     "vue": "^3.5.18",
     "vue-draggable-next": "^2.3.0",
     "vue-i18n": "11.4.15",

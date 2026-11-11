@@ -44,7 +44,6 @@ const handleSubmit = async () => {
   <div class="space-y-7">
     <div>
       <h1 class="text-ui-display text-ui-ink">{{ $t("auth.login.title") }}</h1>
-      <p class="text-ui-body text-ui-muted mt-1.5">{{ $t("auth.login.subtitle") }}</p>
     </div>
 
     <UiAlert
