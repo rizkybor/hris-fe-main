@@ -8,12 +8,15 @@ import { useLicenseManagerStore } from "@/stores/licenseManager";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { errorMessage } from "@/helpers/errorHelper";
 import { normalizeWhatsAppNumber } from "@/utils/proposalShareMessage";
-import { planLabel } from "@/components/admin/license-manager/licenseHelpers";
+import { planLabel, certificateKeyOptions } from "@/components/admin/license-manager/licenseHelpers";
 
 const props = defineProps({
   license: { type: Object, required: true },
   productName: { type: String, default: "" },
   initialTab: { type: String, default: "email" },
+  // One key per device: share the certificate of this key only (null = the
+  // whole license, every key).
+  initialKeyId: { type: Number, default: null },
 });
 const emit = defineEmits(["close", "shared"]);
 
@@ -32,6 +35,11 @@ const keys = computed(() =>
 const isBundle = computed(() => keys.value.length > 1);
 const perDevice = computed(() => props.license.key_mode === "per_device");
 const MAX_LISTED_KEYS = 10;
+// "Certificate for": the licensee (all keys) or one key.
+const keyOptions = computed(() => certificateKeyOptions(props.license));
+const keyId = ref(keyOptions.value.some((k) => k.id === props.initialKeyId) ? props.initialKeyId : null);
+const selectedKey = computed(() => keyOptions.value.find((k) => k.id === keyId.value) || null);
+const keyOptionLabel = (k) => `${isBundle.value ? `${k.platform_label} ` : ""}Key ${k.position} of ${k.total} · ${k.key}${k.status === "in_use" ? " (in use)" : ""}`;
 const contactName = computed(() => props.license.contact_name || props.license.licensee_name || "");
 
 const email = ref({ to: props.license.licensee_email || "", recipient_name: contactName.value, cc: "", message: "" });
@@ -41,7 +49,10 @@ let waEdited = false;
 const buildMessage = () => {
   const name = wa.value.recipient_name.trim();
   const lines = [name ? `Dear ${name},` : "Dear Sir/Madam,", "", `Thank you for choosing ${product.value}. Here is your ${product.value} ${planLabel(props.license)} license.`, ""];
-  if (perDevice.value) {
+  if (selectedKey.value) {
+    lines.push(`License key (key ${selectedKey.value.position} of ${selectedKey.value.total}): *${selectedKey.value.key}*`);
+    lines.push(`This key works on one ${selectedKey.value.platform_label || "Mac"} only; once its device is released, it cannot be used again.`);
+  } else if (perDevice.value) {
     // One key per device: list the keys (up to 10 per platform), otherwise
     // point to the certificate's Device Keys page.
     for (const license of keys.value) {
@@ -67,7 +78,7 @@ const buildMessage = () => {
     LINK_PLACEHOLDER,
     "(The link is valid for 7 days.)",
     "",
-    `To activate, open ${product.value}, open License from the plan chip next to the app name, then paste ${perDevice.value ? "one key per device" : "the key"}. Please keep ${perDevice.value ? "the keys" : "the key"} private.`,
+    `To activate, open ${product.value}, open License from the plan chip next to the app name, then paste ${perDevice.value && !selectedKey.value ? "one key per device" : "the key"}. Please keep ${perDevice.value && !selectedKey.value ? "the keys" : "the key"} private.`,
     "",
     "Kind regards,",
     "PT Jendela Cakra Digital"
@@ -79,6 +90,11 @@ const refreshMessage = () => {
 };
 refreshMessage();
 watch(() => wa.value.recipient_name, refreshMessage);
+// Another key (or the whole license): the message is rebuilt.
+watch(keyId, () => {
+  waEdited = false;
+  refreshMessage();
+});
 
 const waNumber = computed(() => normalizeWhatsAppNumber(wa.value.phone));
 const emailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.to.trim()));
@@ -95,6 +111,7 @@ const sendEmail = async () => {
       cc,
       recipient_name: email.value.recipient_name.trim() || null,
       message: email.value.message.trim() || null,
+      key_id: keyId.value || undefined,
     });
     emit("shared", "email");
     await alertModal.alert(`The certificate was sent to ${email.value.to.trim()}.`, { type: "success" });
@@ -111,7 +128,7 @@ const openWhatsApp = async () => {
   const win = window.open("", "_blank");
   busy.value = "whatsapp";
   try {
-    const { url } = await store.createCertificateShareLink(props.license.id, wa.value.phone.trim() || null);
+    const { url } = await store.createCertificateShareLink(props.license.id, wa.value.phone.trim() || null, keyId.value);
     const text = wa.value.message.includes(LINK_PLACEHOLDER) ? wa.value.message.replace(LINK_PLACEHOLDER, url) : `${wa.value.message}\n\n${url}`;
     const target = `https://wa.me/${waNumber.value}?text=${encodeURIComponent(text)}`;
     if (win) win.location.href = target;
@@ -138,10 +155,22 @@ const input =
         <div class="min-w-0">
           <h3 class="text-base font-bold text-brand-dark">Share License Certificate</h3>
           <p class="text-xs text-brand-light mt-0.5 truncate">
-            {{ license.licensee_name }} · {{ keys.map((k) => k.key).join(" + ") }}
+            {{ license.licensee_name }} · {{ selectedKey ? selectedKey.key : keys.map((k) => k.key).join(" + ") }}
           </p>
         </div>
         <button type="button" @click="emit('close')" class="text-gray-400 hover:text-gray-600 shrink-0" aria-label="Close"><X class="w-5 h-5" /></button>
+      </div>
+
+      <!-- One key per device: the whole license or one key -->
+      <div v-if="keyOptions.length" class="px-6 pb-3">
+        <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Certificate for</label>
+        <select v-model="keyId" :class="input">
+          <option :value="null">Licensee · all keys ({{ license.licensee_name }})</option>
+          <option v-for="k in keyOptions" :key="k.id" :value="k.id">{{ keyOptionLabel(k) }}</option>
+        </select>
+        <p class="text-[11px] text-brand-light mt-1">
+          {{ selectedKey ? "A certificate with only this key, e.g. for the member who uses it." : "One certificate with every key, for the licensee." }}
+        </p>
       </div>
 
       <div class="px-6 flex gap-1 border-b border-[#EEF0F2]">
@@ -179,7 +208,8 @@ const input =
         </div>
         <p class="text-[11px] text-gray-500 flex items-start gap-1.5">
           <Info class="w-3.5 h-3.5 shrink-0 mt-px" />
-          The certificate PDF is attached{{ isBundle ? " (one PDF with the Mac and iPad keys)" : "" }}, with the key{{ isBundle ? "s" : "" }}, plan and validity in the email. Replies go to the company inbox.
+          <template v-if="selectedKey">The certificate PDF of key {{ selectedKey.position }} is attached, with that key, plan and validity in the email.</template>
+          <template v-else>The certificate PDF is attached{{ isBundle ? " (one PDF with the Mac and iPad keys)" : "" }}, with the key{{ isBundle || perDevice ? "s" : "" }}, plan and validity in the email.</template> Replies go to the company inbox.
         </p>
         <button
           type="submit"

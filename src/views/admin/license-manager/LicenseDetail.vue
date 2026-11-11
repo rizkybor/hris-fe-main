@@ -33,6 +33,7 @@ import {
   ArrowRight,
   MessageCircle,
   KeyRound,
+  Share2,
 } from "lucide-vue-next";
 import ShareLicenseModal from "@/components/admin/license-manager/ShareLicenseModal.vue";
 import LicensePeriodCard from "@/components/admin/license-manager/LicensePeriodCard.vue";
@@ -62,6 +63,7 @@ import {
   categoryLabel,
   planCategory,
   KEY_STATUS,
+  certificateKeyOptions,
 } from "@/components/admin/license-manager/licenseHelpers";
 
 const route = useRoute();
@@ -164,6 +166,18 @@ const reference = computed(() => {
 
 // Share the certificate by email (PDF attached) or WhatsApp (7-day link).
 const shareTab = ref(null);
+// One key per device: the certificate of the whole license (null) or of
+// one key, for Download / Email / WhatsApp.
+const certKeyOptions = computed(() => certificateKeyOptions(license.value));
+const certKeyId = ref(null);
+const certKey = computed(() => certKeyOptions.value.find((k) => k.id === certKeyId.value) || null);
+const certKeyLabel = (k) =>
+  `${license.value?.bundle?.length ? `${k.platform_label} ` : ""}Key ${k.position} · ${k.key}${k.status === "in_use" ? " (in use)" : ""}`;
+const shareKeyId = ref(null);
+const openShare = (tab, keyId = certKeyId.value) => {
+  shareKeyId.value = keyId;
+  shareTab.value = tab;
+};
 const onShared = () => timeline.value?.reload();
 
 // Key card: status as a dot + word, the rest as one neutral line.
@@ -211,21 +225,27 @@ const keyStatusOf = (key) => KEY_STATUS[key.status] || KEY_STATUS.available;
 const segmentWidth = (count) => (keysSummary.value.total ? `${(count / keysSummary.value.total) * 100}%` : "0%");
 
 const downloading = ref(false);
-const downloadPdf = async () => {
+const downloadingKeyId = ref(null);
+const downloadPdf = async (key = certKey.value) => {
   downloading.value = true;
+  downloadingKeyId.value = key?.id ?? null;
   error.value = "";
   try {
-    // A Mac + iPad bundle shares one PDF with both keys (Mac first).
-    const keys = [license.value, ...(license.value.bundle || [])]
-      .sort((a, b) => (a.platform === "mac" ? -1 : b.platform === "mac" ? 1 : 0))
-      .map((l) => l.key)
-      .join("_");
-    await store.downloadCertificate(license.value.id, `${productName.value}-License-${keys}.pdf`);
+    // A Mac + iPad bundle shares one PDF with both keys (Mac first); one
+    // key gets a certificate of its own.
+    const keys = key
+      ? key.key
+      : [license.value, ...(license.value.bundle || [])]
+          .sort((a, b) => (a.platform === "mac" ? -1 : b.platform === "mac" ? 1 : 0))
+          .map((l) => l.key)
+          .join("_");
+    await store.downloadCertificate(license.value.id, `${productName.value}-License-${keys}.pdf`, key?.id ?? null);
     timeline.value?.reload();
   } catch (err) {
     error.value = errorMessage(err, "Failed to download the license PDF.");
   } finally {
     downloading.value = false;
+    downloadingKeyId.value = null;
   }
 };
 
@@ -453,13 +473,14 @@ const isMac = (platform) => /mac/i.test(platform || "");
             </div>
 
             <div class="overflow-x-auto -mx-1">
-              <table class="w-full text-sm min-w-[560px]">
+              <table class="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr class="text-left text-[11px] uppercase tracking-wider text-brand-light border-b border-[#DCDEDD]">
                     <th class="font-semibold py-2 px-1 w-10">#</th>
                     <th class="font-semibold py-2 px-1">Key</th>
                     <th class="font-semibold py-2 px-1">Status</th>
                     <th class="font-semibold py-2 px-1">Device</th>
+                    <th v-if="can('license-manager-view')" class="font-semibold py-2 px-1 text-right">Certificate</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -493,9 +514,33 @@ const isMac = (platform) => /mac/i.test(platform || "");
                       </template>
                       <span v-else class="text-xs text-gray-300">—</span>
                     </td>
+                    <td v-if="can('license-manager-view')" class="py-2 px-1 text-right whitespace-nowrap">
+                      <template v-if="key.status !== 'used'">
+                        <button
+                          type="button"
+                          @click="downloadPdf(certKeyOptions.find((k) => k.id === key.id))"
+                          :disabled="downloading"
+                          class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#DCDEDD] hover:border-[#F2821F] hover:bg-orange-50 transition-all disabled:opacity-50"
+                          :title="`Download the certificate of key ${key.position}`"
+                          :aria-label="`Download the certificate of key ${key.position}`"
+                        >
+                          <FileDown class="w-4 h-4" :class="downloadingKeyId === key.id ? 'text-[#F2821F] animate-pulse' : 'text-gray-600'" />
+                        </button>
+                        <button
+                          type="button"
+                          @click="openShare('email', key.id)"
+                          class="inline-flex items-center justify-center w-8 h-8 ml-1 rounded-lg border border-[#DCDEDD] hover:border-violet-400 hover:bg-violet-50 transition-all"
+                          :title="`Share the certificate of key ${key.position}`"
+                          :aria-label="`Share the certificate of key ${key.position}`"
+                        >
+                          <Share2 class="w-4 h-4 text-gray-600" />
+                        </button>
+                      </template>
+                      <span v-else class="text-[11px] text-gray-300" title="A used key gets no certificate">—</span>
+                    </td>
                   </tr>
                   <tr v-if="!filteredKeys.length">
-                    <td colspan="4" class="py-6 text-center text-xs text-brand-light">No {{ keyFilter === "in_use" ? "keys in use" : `${keyFilter} keys` }}.</td>
+                    <td :colspan="can('license-manager-view') ? 5 : 4" class="py-6 text-center text-xs text-brand-light">No {{ keyFilter === "in_use" ? "keys in use" : `${keyFilter} keys` }}.</td>
                   </tr>
                 </tbody>
               </table>
@@ -614,20 +659,34 @@ const isMac = (platform) => /mac/i.test(platform || "");
               </div>
             </dl>
             <div v-if="can('license-manager-view')" class="px-5 pb-5">
+              <div v-if="certKeyOptions.length" class="mb-3">
+                <label for="cert-key" class="text-[11px] font-semibold uppercase tracking-wider text-brand-light mb-1.5 block">Certificate for</label>
+                <select
+                  id="cert-key"
+                  v-model="certKeyId"
+                  class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm font-semibold text-brand-dark bg-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none"
+                >
+                  <option :value="null">Licensee · all keys</option>
+                  <option v-for="k in certKeyOptions" :key="k.id" :value="k.id">{{ certKeyLabel(k) }}</option>
+                </select>
+                <p class="text-[11px] text-brand-light mt-1">
+                  {{ certKey ? "A certificate with only this key, e.g. for the member who uses it." : "One certificate with every key, for the licensee." }}
+                </p>
+              </div>
               <button
                 type="button"
-                @click="downloadPdf"
+                @click="downloadPdf()"
                 :disabled="downloading"
                 class="w-full rounded-[12px] bg-[#F2821F] hover:brightness-110 transition-all px-4 py-3 flex items-center justify-center gap-2 text-white text-sm font-bold disabled:opacity-60"
               >
                 <FileDown class="w-4 h-4" />
-                {{ downloading ? "Preparing PDF..." : "Download License PDF" }}
+                {{ downloading && downloadingKeyId === (certKey?.id ?? null) ? "Preparing PDF..." : certKey ? `Download Key ${certKey.position} PDF` : "Download License PDF" }}
               </button>
               <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light mt-3 mb-1.5">Share certificate</p>
               <div class="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  @click="shareTab = 'email'"
+                  @click="openShare('email')"
                   class="rounded-[12px] border border-[#DCDEDD] hover:border-[#0C51D9] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold whitespace-nowrap"
                   title="Share the certificate by email"
                 >
@@ -635,7 +694,7 @@ const isMac = (platform) => /mac/i.test(platform || "");
                 </button>
                 <button
                   type="button"
-                  @click="shareTab = 'whatsapp'"
+                  @click="openShare('whatsapp')"
                   class="rounded-[12px] border border-[#DCDEDD] hover:border-[#25D366] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold whitespace-nowrap"
                   title="Share the certificate via WhatsApp"
                 >
@@ -700,6 +759,7 @@ const isMac = (platform) => /mac/i.test(platform || "");
       :license="license"
       :product-name="productName"
       :initial-tab="shareTab"
+      :initial-key-id="shareKeyId"
       @shared="onShared"
       @close="shareTab = null"
     />
