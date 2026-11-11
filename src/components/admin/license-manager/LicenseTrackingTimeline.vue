@@ -105,7 +105,11 @@ const summaryLine = (event) => {
     return `${meta.old_expires_at ? formatDate(meta.old_expires_at) : "No end date"} → ${meta.new_expires_at ? formatDate(meta.new_expires_at) : "No end date"}`;
   }
   if (event.event === "plan_changed") {
-    return `${planLabel({ plan: meta.old_plan })} → ${planLabel({ plan: meta.new_plan })}`;
+    const parts = [`${planLabel({ plan: meta.old_plan })} → ${planLabel({ plan: meta.new_plan })}`];
+    // Since a plan change replaces the key.
+    if (meta.new_key) parts.push(`new key ${meta.new_key}`);
+    if (meta.devices_signed_out) parts.push(`${meta.devices_signed_out} device(s) signed out`);
+    return parts.join(" · ");
   }
   if (event.event === "created" && meta.plan) {
     const parts = [planLabel({ plan: meta.plan })];

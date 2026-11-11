@@ -52,6 +52,7 @@ export const EVENT_ICONS = {
   denied_wrong_platform: MonitorX,
   denied_key_used: KeyRound,
   denied_key_in_use: KeySquare,
+  denied_key_replaced: KeyRound,
 };
 
 export const eventIcon = (event) => EVENT_ICONS[event?.event] || Activity;

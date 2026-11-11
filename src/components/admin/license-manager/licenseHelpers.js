@@ -531,6 +531,7 @@ export const EVENT_TYPES = {
   denied_wrong_platform: { label: "Denied: wrong platform", tone: "red", group: "Denied" },
   denied_key_used: { label: "Denied: key already used", tone: "red", group: "Denied" },
   denied_key_in_use: { label: "Denied: key in use on another device", tone: "red", group: "Denied" },
+  denied_key_replaced: { label: "Denied: old key (replaced after a plan change)", tone: "red", group: "Denied" },
 };
 
 // Key modes, offered on create only.
