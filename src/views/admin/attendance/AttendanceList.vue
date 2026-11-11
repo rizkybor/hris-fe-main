@@ -1,10 +1,25 @@
+<script>
+import { reactive } from "vue";
+// Kept for the whole session (module scope), so coming back to the summary
+// shows the last numbers at once and refreshes them quietly.
+const summaryCache = reactive({
+  owner: null,
+  loaded: false,
+  stats: null,
+  pending: [],
+  pendingTotal: 0,
+  latest: [],
+  today: [],
+});
+</script>
+
 <script setup>
-import { ref, onMounted } from "vue";
-import { RouterLink } from "vue-router";
+import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   TrendingUp,
   CheckCircle,
-  Star,
+  ArrowRight,
   XCircle,
   Clock,
   CalendarX,
@@ -17,23 +32,32 @@ import {
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
 import { useLeaveRequestStore } from "@/stores/leaveRequest";
-import {
-  getLeaveTypeBadgeClass,
-  getLeaveRequestStatusBadgeClass,
-} from "@/utils/styleHelpers.js";
+import { useAuthStore } from "@/stores/auth";
 import {
   formatDateShort,
   formatTime as formatTimeUtil,
 } from "@/utils/dateUtils.js";
 import { capitalize } from "@/utils/formatUtils.js";
 import { can } from "@/helpers/permissionHelper";
+import { useStaleFetch } from "@/composables/useStaleFetch";
+import { optimistic } from "@/utils/optimistic";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import Avatar from "@/components/common/Avatar.vue";
+import { UiPageHeader, UiStat, UiBadge, UiButton, UiEmpty, UiConfirmDialog, UiSpinner } from "@/components/ui";
+
+const { t, te } = useI18n();
+// Display labels for API values (the values themselves stay unchanged).
+const leaveTypeLabel = (type) => (type && te(`attendance.leaveType.${type.toLowerCase()}`) ? t(`attendance.leaveType.${type.toLowerCase()}`) : capitalize(type));
+const leaveStatusLabel = (status) => (status && te(`attendance.leaveStatus.${status.toLowerCase()}`) ? t(`attendance.leaveStatus.${status.toLowerCase()}`) : capitalize(status));
 
 const attendanceStore = useAttendanceStore();
 const leaveRequestStore = useLeaveRequestStore();
+const authStore = useAuthStore();
+const myUserId = computed(() => authStore.user?.id ?? null);
 
-const statistics = ref({
+const PENDING_LIMIT = 5;
+const RECENT_LIMIT = 5;
+const STAT_DEFAULTS = {
   present_today: 0,
   present_change: 0,
   absent_today: 0,
@@ -44,673 +68,333 @@ const statistics = ref({
   attendance_rate: 0,
   rate_change: 0,
   pending_requests: 0,
-});
-const leaveRequests = ref([]);
-const todayAttendances = ref([]);
-const loadingLeaveRequests = ref(false);
-const loadingAttendances = ref(false);
+};
 
-// Modal state
-const showApproveModalState = ref(false);
-const showRejectModalState = ref(false);
-const selectedLeaveRequest = ref(null);
-const processingAction = ref(false);
+const cache = summaryCache;
+const statistics = computed(() => ({ ...STAT_DEFAULTS, ...(cache.stats || {}) }));
 
 const loadStatistics = async () => {
   try {
-    const data = await attendanceStore.fetchAdminStatistics();
-    statistics.value = {
-      present_today: data?.present_today || 0,
-      present_change: data?.present_change || 0,
-      absent_today: data?.absent_today || 0,
-      absent_change: data?.absent_change || 0,
-      late_today: data?.late_today || 0,
-      on_leave_today: data?.on_leave_today || 0,
-      remote_today: data?.remote_today || 0,
-      attendance_rate: data?.attendance_rate || 0,
-      rate_change: data?.rate_change || 0,
-      pending_requests: data?.pending_requests || 0,
-    };
+    cache.stats = (await attendanceStore.fetchAdminStatistics()) || {};
   } catch (error) {
     console.error("Error loading statistics:", error);
-    // Keep the default values from the initial ref
+  }
+};
+const loadPending = async () => {
+  try {
+    const { items, total } = await leaveRequestStore.fetchPendingLeaveRequests(PENDING_LIMIT);
+    cache.pending = items;
+    cache.pendingTotal = total;
+  } catch (error) {
+    console.error("Error loading pending leave requests:", error);
   }
 };
 
-const loadLeaveRequests = async () => {
-  loadingLeaveRequests.value = true;
-  try {
-    leaveRequests.value = await leaveRequestStore.fetchLatestLeaveRequests(5);
-  } catch (error) {
-    console.error("Error loading leave requests:", error);
-  } finally {
-    loadingLeaveRequests.value = false;
+// Stats, pending requests (newest first, with the total), the latest
+// requests and today's check-ins -- all in parallel.
+const loadAll = async () => {
+  if (cache.owner !== myUserId.value) {
+    Object.assign(cache, { owner: myUserId.value, loaded: false, stats: null, pending: [], pendingTotal: 0, latest: [], today: [] });
   }
+  await Promise.all([
+    loadStatistics(),
+    loadPending(),
+    leaveRequestStore
+      .fetchLatestLeaveRequests(RECENT_LIMIT)
+      .then((rows) => (cache.latest = rows || []))
+      .catch((error) => console.error("Error loading leave requests:", error)),
+    attendanceStore
+      .fetchTodayAttendances(5)
+      .then((rows) => (cache.today = rows || []))
+      .catch((error) => console.error("Error loading attendances:", error)),
+  ]);
+  cache.loaded = true;
 };
 
-const loadTodayAttendances = async () => {
-  loadingAttendances.value = true;
-  try {
-    todayAttendances.value = await attendanceStore.fetchTodayAttendances(5);
-  } catch (error) {
-    console.error("Error loading attendances:", error);
-  } finally {
-    loadingAttendances.value = false;
-  }
-};
+// Revisits within a minute make no request; returning to the browser tab
+// refreshes quietly.
+const { loading, refreshing } = useStaleFetch(loadAll, {
+  key: () => ["ws-attendance-summary", myUserId.value],
+  hasData: () => cache.loaded && cache.owner === myUserId.value,
+  maxAge: 60_000,
+});
+const showSkeleton = computed(() => loading.value && !cache.loaded);
+
+// Pending first (actionable), then the most recent decisions.
+const pendingRequests = computed(() => cache.pending);
+const pendingTotal = computed(() => Math.max(cache.pendingTotal, cache.pending.length));
+const morePending = computed(() => Math.max(0, pendingTotal.value - cache.pending.length));
+const recentDecided = computed(() => {
+  const pendingIds = new Set(cache.pending.map((r) => r.id));
+  return cache.latest.filter((r) => r.status !== "pending" && !pendingIds.has(r.id)).slice(0, RECENT_LIMIT);
+});
+const todayAttendances = computed(() => cache.today);
+const canApprove = computed(() => can("leave-request-approve"));
+
+// Tiles open the matching filtered list (records/leave pages read these
+// query keys). Today's date in the browser's local time, YYYY-MM-DD.
+const todayIso = () => new Date().toLocaleDateString("en-CA");
+const recordsFor = (status) => ({ name: "admin.attendances.records", query: { status, from: todayIso(), to: todayIso() } });
 
 const formatDate = (date) => (date ? formatDateShort(date) : "N/A");
 const formatTime = (time) => (time ? formatTimeUtil(time) : "N/A");
 
-// Use shared helpers
+// Presentation only: status / leave type -> badge tone.
+const LEAVE_STATUS_TONE = { pending: "warn", approved: "ok", rejected: "bad" };
+const LEAVE_TYPE_TONE = { annual: "info", sick: "bad", personal: "accent", emergency: "warn", maternity: "accent" };
+const leaveStatusTone = (status) => LEAVE_STATUS_TONE[status?.toLowerCase()] || "neutral";
+const leaveTypeTone = (type) => LEAVE_TYPE_TONE[type?.toLowerCase()] || "neutral";
+const signed = (n) => `${n >= 0 ? "+" : ""}${n || 0}`;
 
-const showApproveModal = (request) => {
-  selectedLeaveRequest.value = request;
-  showApproveModalState.value = true;
+// ---- Approve (one click) / reject (confirm) -- both optimistic ----
+// The row leaves the pending list at once and shows under recent decisions;
+// a failed request puts it back (with an error toast). Afterwards the
+// counters refresh quietly, and the pending list too when more are waiting
+// than were shown.
+const busyIds = ref(new Set());
+const decide = async (request, action) => {
+  if (busyIds.value.has(request.id)) return;
+  busyIds.value.add(request.id);
+  const status = action === "approve" ? "approved" : "rejected";
+  const name = request.employee?.user?.name || "";
+  const { ok, result } = await optimistic({
+    apply: () => {
+      const before = { pending: [...cache.pending], latest: [...cache.latest], pendingTotal: cache.pendingTotal, stats: cache.stats && { ...cache.stats } };
+      cache.pending = cache.pending.filter((r) => r.id !== request.id);
+      cache.pendingTotal = Math.max(0, cache.pendingTotal - 1);
+      cache.latest = [{ ...request, status }, ...cache.latest.filter((r) => r.id !== request.id)];
+      if (cache.stats) cache.stats = { ...cache.stats, pending_requests: Math.max(0, (cache.stats.pending_requests || 0) - 1) };
+      return () => Object.assign(cache, before);
+    },
+    request: () =>
+      action === "approve" ? leaveRequestStore.approveLeaveRequest(request.id) : leaveRequestStore.rejectLeaveRequest(request.id),
+    success: t(action === "approve" ? "attendance.summary.approvedToast" : "attendance.summary.rejectedToast", { name }),
+  });
+  busyIds.value.delete(request.id);
+  if (!ok) return;
+  if (result?.id) cache.latest = cache.latest.map((r) => (r.id === result.id ? { ...r, ...result, employee: result.employee || r.employee } : r));
+  loadStatistics();
+  if (cache.pendingTotal > cache.pending.length) loadPending();
 };
+const approve = (request) => decide(request, "approve");
 
+const showRejectModalState = ref(false);
+const selectedLeaveRequest = ref(null);
 const showRejectModal = (request) => {
   selectedLeaveRequest.value = request;
   showRejectModalState.value = true;
 };
-
-const closeApproveModal = () => {
-  showApproveModalState.value = false;
-  selectedLeaveRequest.value = null;
-};
-
 const closeRejectModal = () => {
   showRejectModalState.value = false;
   selectedLeaveRequest.value = null;
 };
-
-const confirmApprove = async () => {
-  if (!selectedLeaveRequest.value) return;
-
-  processingAction.value = true;
-  try {
-    await leaveRequestStore.approveLeaveRequest(selectedLeaveRequest.value.id);
-
-    // Refresh data
-    await loadLeaveRequests();
-    await loadStatistics();
-
-    closeApproveModal();
-  } catch (error) {
-    console.error("Error approving leave request:", error);
-  } finally {
-    processingAction.value = false;
-  }
+const confirmReject = () => {
+  const request = selectedLeaveRequest.value;
+  closeRejectModal();
+  if (request) decide(request, "reject");
 };
-
-const confirmReject = async () => {
-  if (!selectedLeaveRequest.value) return;
-
-  processingAction.value = true;
-  try {
-    await leaveRequestStore.rejectLeaveRequest(selectedLeaveRequest.value.id);
-
-    // Refresh data
-    await loadLeaveRequests();
-    await loadStatistics();
-
-    closeRejectModal();
-  } catch (error) {
-    console.error("Error rejecting leave request:", error);
-  } finally {
-    processingAction.value = false;
-  }
-};
-
-onMounted(async () => {
-  await Promise.all([
-    loadStatistics(),
-    loadLeaveRequests(),
-    loadTodayAttendances(),
-  ]);
-});
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col overflow-hidden px-4 py-4">
-    <!-- Main Content Area -->
-    <!-- Stats Cards Layout -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
-      <!-- Total Present Today - Highlighted Card -->
-      <div
-        class="main-card rounded-[14px] border border-[#0B1042] relative overflow-hidden p-4"
-      >
-        <div class="flex flex-col justify-center h-full relative z-10">
-          <!-- Trending Badge -->
-          <div class="flex items-center gap-1.5 mb-2.5">
-            <div
-              class="flex items-center gap-1 px-2.5 py-1 bg-white/20 rounded-full backdrop-blur-sm"
-            >
-              <TrendingUp class="w-3 h-3 text-white" />
-              <span class="text-brand-white text-xs font-semibold"
-                >+{{ statistics.present_change || 0 }} from yesterday</span
-              >
-            </div>
-          </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('attendance.summary.title')" :subtitle="$t('attendance.summary.subtitle')" class="ui-anim-fade-up">
+      <template #actions>
+        <span v-if="refreshing" class="inline-flex items-center gap-1.5 text-ui-cap text-ui-muted" role="status">
+          <UiSpinner size="14px" />{{ $t("attendance.summary.refreshing") }}
+        </span>
+        <UiButton variant="secondary" :icon="CalendarClock" :to="{ name: 'admin.leave-requests.dashboard' }">{{ $t('attendance.leave.title') }}</UiButton>
+        <UiButton :icon="Users" :to="{ name: 'admin.attendances.records' }">{{ $t('attendance.records.title') }}</UiButton>
+      </template>
+    </UiPageHeader>
 
-          <div class="flex items-center justify-between mb-3.5">
-            <div>
-              <p class="text-brand-white-90 text-sm font-medium">
-                Present Today
-              </p>
-              <p
-                class="text-brand-white text-3xl font-bold leading-none my-3.5"
-              >
-                {{ statistics.present_today || 0 }}
-              </p>
-              <p class="text-brand-white-80 text-sm font-normal">
-                Active employees
-              </p>
-            </div>
-            <div
-              class="w-21 h-21 p-4 bg-white rounded-[14px] flex items-center justify-center"
-            >
-              <CheckCircle class="w-21 h-21 text-brand-primary" />
-            </div>
-          </div>
-
-          <!-- Additional Info -->
-          <div class="flex items-center gap-2.5 mt-auto">
-            <div class="flex items-center gap-1">
-              <div
-                class="w-2 h-2 bg-green-400 rounded-full animate-pulse"
-              ></div>
-              <span class="text-brand-white-70 text-xs font-normal"
-                >Real-time</span
-              >
-            </div>
-            <div class="flex items-center gap-1">
-              <Star class="w-3 h-3 text-white opacity-70" />
-              <span class="text-brand-white-70 text-xs font-normal"
-                >High Attendance</span
-              >
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stacked Cards Column -->
-      <div class="flex flex-col gap-3.5">
-        <!-- Absent Today -->
-        <div
-          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-brand-dark text-sm font-medium">Absent Today</p>
-              <p
-                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
-              >
-                {{ statistics.absent_today || 0 }}
-              </p>
-              <p class="text-danger text-xs font-medium">
-                {{ statistics.absent_change >= 0 ? "+" : ""
-                }}{{ statistics.absent_change || 0 }} from yesterday
-              </p>
-            </div>
-            <div
-              class="w-10 h-10 bg-red-50 rounded-[12px] flex items-center justify-center"
-            >
-              <XCircle class="w-5 h-5 text-red-600" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Late Arrivals -->
-        <div
-          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-brand-dark text-sm font-medium">Late Arrivals</p>
-              <p
-                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
-              >
-                {{ statistics.late_today || 0 }}
-              </p>
-              <p class="text-warning text-xs font-medium">After 9:00 AM</p>
-            </div>
-            <div
-              class="w-10 h-10 bg-orange-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Clock class="w-5 h-5 text-orange-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stacked Cards Column 2 -->
-      <div class="flex flex-col gap-3.5">
-        <!-- On Leave -->
-        <div
-          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-brand-dark text-sm font-medium">On Leave</p>
-              <p
-                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
-              >
-                {{ statistics.on_leave_today || 0 }}
-              </p>
-              <p class="text-brand-light text-xs font-medium">
-                Approved requests
-              </p>
-            </div>
-            <div
-              class="w-10 h-10 bg-yellow-50 rounded-[12px] flex items-center justify-center"
-            >
-              <CalendarX class="w-5 h-5 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Remote Workers -->
-        <div
-          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-brand-dark text-sm font-medium">Remote Workers</p>
-              <p
-                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
-              >
-                {{ statistics.remote_today || 0 }}
-              </p>
-              <p class="text-brand-light text-xs font-medium">
-                Working from home
-              </p>
-            </div>
-            <div
-              class="w-10 h-10 bg-purple-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Laptop class="w-5 h-5 text-purple-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stacked Cards Column 3 -->
-      <div class="flex flex-col gap-3.5">
-        <!-- Attendance Rate -->
-        <div
-          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-brand-dark text-sm font-medium">Attendance Rate</p>
-              <p
-                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
-              >
-                {{ statistics.attendance_rate || 0 }}%
-              </p>
-              <p class="text-success text-xs font-medium">
-                {{ statistics.rate_change >= 0 ? "+" : ""
-                }}{{ statistics.rate_change || 0 }}% from last week
-              </p>
-            </div>
-            <div
-              class="w-10 h-10 bg-blue-50 rounded-[12px] flex items-center justify-center"
-            >
-              <TrendingUp class="w-5 h-5 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Pending Requests -->
-        <div
-          class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3.5"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-brand-dark text-sm font-medium">
-                Pending Requests
-              </p>
-              <p
-                class="text-brand-dark text-lg font-extrabold leading-tight my-1"
-              >
-                {{ statistics.pending_requests || 0 }}
-              </p>
-              <p class="text-warning text-xs font-medium">Awaiting approval</p>
-            </div>
-            <div
-              class="w-10 h-10 bg-amber-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Clock4 class="w-5 h-5 text-amber-600" />
-            </div>
-          </div>
-        </div>
-      </div>
+    <!-- KPI tiles -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 ui-stagger">
+      <UiStat class="col-span-2" :label="$t('attendance.summary.stats.presentToday')" :value="statistics.present_today || 0" :icon="CheckCircle" tone="ok">
+        <template #hint>
+          <span class="tabular-nums">{{ $t("attendance.summary.stats.fromYesterday", { n: "+" + (statistics.present_change || 0) }) }}</span>
+          <span class="text-ui-faint"> · {{ $t("attendance.summary.stats.activeEmployees") }} · {{ $t("attendance.summary.stats.realTime") }}</span>
+        </template>
+      </UiStat>
+      <UiStat
+        :label="$t('attendance.summary.stats.absentToday')"
+        :value="statistics.absent_today || 0"
+        :icon="XCircle"
+        :tone="statistics.absent_today ? 'bad' : ''"
+        :hint="$t('attendance.summary.stats.fromYesterday', { n: signed(statistics.absent_change) })"
+        :to="recordsFor('absent')"
+      />
+      <UiStat
+        :label="$t('attendance.summary.stats.lateArrivals')"
+        :value="statistics.late_today || 0"
+        :icon="Clock"
+        :tone="statistics.late_today ? 'warn' : ''"
+        :hint="$t('attendance.summary.stats.after9')"
+        :to="recordsFor('late')"
+      />
+      <UiStat :label="$t('attendance.summary.stats.onLeave')" :value="statistics.on_leave_today || 0" :icon="CalendarX" :hint="$t('attendance.summary.stats.approvedRequests')" />
+      <UiStat :label="$t('attendance.summary.stats.remoteWorkers')" :value="statistics.remote_today || 0" :icon="Laptop" :hint="$t('attendance.summary.stats.workingFromHome')" />
+      <UiStat
+        :label="$t('attendance.summary.stats.attendanceRate')"
+        :value="`${statistics.attendance_rate || 0}%`"
+        :icon="TrendingUp"
+        :hint="$t('attendance.summary.stats.fromLastWeek', { n: signed(statistics.rate_change) + '%' })"
+      />
+      <UiStat
+        :label="$t('attendance.summary.stats.pendingRequests')"
+        :value="statistics.pending_requests || 0"
+        :icon="Clock4"
+        :tone="statistics.pending_requests ? 'warn' : ''"
+        :hint="$t('attendance.summary.stats.awaitingApproval')"
+        :to="{ name: 'admin.leave-requests.dashboard', query: { status: 'pending' } }"
+      />
     </div>
 
     <!-- Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-      <!-- Latest Leave Requests -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center justify-between mb-5">
-          <div class="flex items-center gap-2.5">
-            <div
-              class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
-            >
-              <CalendarClock class="w-6 h-6 text-orange-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-sm font-bold">
-                Latest Leave Requests
-              </h3>
-              <p class="text-brand-light text-sm">
-                Recent 5 leave applications
-              </p>
-            </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      <!-- Leave requests: pending first (actionable in place), then recent decisions -->
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+        <header class="flex items-center gap-3 px-4 sm:px-5 py-3.5 border-b border-ui-line">
+          <div class="flex-1 min-w-0">
+            <h2 class="text-ui-h2 text-ui-ink flex items-center gap-2">
+              {{ $t("attendance.summary.needsApproval") }}
+              <UiBadge v-if="pendingTotal" tone="warn">{{ pendingTotal }}</UiBadge>
+            </h2>
+            <p class="text-ui-cap text-ui-muted">{{ $t("attendance.summary.needsApprovalHint") }}</p>
           </div>
+          <UiButton variant="ghost" size="sm" :icon-right="ArrowRight" :to="{ name: 'admin.leave-requests.dashboard' }">{{ $t('common.actions.viewAll') }}</UiButton>
+        </header>
+
+        <div v-if="showSkeleton" class="p-4 sm:p-5"><SkeletonList :rows="3" /></div>
+        <template v-else>
+          <TransitionGroup tag="ul" name="ui-fade" class="divide-y divide-ui-line">
+            <li v-for="request in pendingRequests" :key="request.id" class="px-4 sm:px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <Avatar
+                  :src="request.employee?.user?.profile_photo"
+                  :alt="request.employee?.user?.name"
+                  size="w-9 h-9"
+                  icon-size="w-4 h-4"
+                />
+                <div class="flex-1 min-w-0">
+                  <p class="text-ui-h3 text-ui-ink truncate">{{ request.employee?.user?.name }}</p>
+                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                    <UiBadge :tone="leaveTypeTone(request.type)">{{ leaveTypeLabel(request.type) }}</UiBadge>
+                    <span class="text-ui-cap text-ui-muted tabular-nums">
+                      {{ formatDate(request.start_date) }} - {{ formatDate(request.end_date) }} ({{ $t("attendance.leave.days", { n: request.days }, Number(request.days) || 0) }})
+                    </span>
+                  </div>
+                  <p v-if="request.reason" class="text-ui-cap text-ui-muted mt-1 line-clamp-1" :title="request.reason">{{ request.reason }}</p>
+                </div>
+                <div v-if="canApprove" class="hidden sm:flex gap-1.5 shrink-0">
+                  <UiButton variant="secondary" size="sm" :icon="Check" :disabled="busyIds.has(request.id)" @click="approve(request)">{{ $t("common.actions.approve") }}</UiButton>
+                  <UiButton variant="danger" size="sm" :icon="X" :disabled="busyIds.has(request.id)" @click="showRejectModal(request)">{{ $t("common.actions.reject") }}</UiButton>
+                </div>
+                <UiBadge v-else :tone="leaveStatusTone(request.status)" dot class="shrink-0">{{ leaveStatusLabel(request.status) }}</UiBadge>
+              </div>
+              <!-- Phones: full-width tap targets under the row -->
+              <div v-if="canApprove" class="grid grid-cols-2 gap-2 mt-3 sm:hidden">
+                <UiButton variant="secondary" :icon="Check" :disabled="busyIds.has(request.id)" @click="approve(request)">{{ $t("common.actions.approve") }}</UiButton>
+                <UiButton variant="danger" :icon="X" :disabled="busyIds.has(request.id)" @click="showRejectModal(request)">{{ $t("common.actions.reject") }}</UiButton>
+              </div>
+            </li>
+          </TransitionGroup>
           <RouterLink
-            :to="{ name: 'admin.leave-requests.dashboard' }"
-            class="btn-secondary text-brand-dark text-sm font-semibold border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5"
+            v-if="morePending"
+            :to="{ name: 'admin.leave-requests.dashboard', query: { status: 'pending' } }"
+            class="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 border-t border-ui-line text-ui-small font-medium text-ui-accent hover:bg-ui-hover"
           >
-            View All
+            {{ $t("attendance.summary.morePending", { n: morePending }, morePending) }}
+            <ArrowRight class="w-4 h-4" />
           </RouterLink>
-        </div>
-
-        <SkeletonList v-if="loadingLeaveRequests" :rows="3" />
-        <div v-else class="space-y-3.5">
-          <div
-            v-for="request in leaveRequests"
-            :key="request.id"
-            class="flex items-center gap-3.5 p-3.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
-          >
-            <Avatar
-              :src="request.employee?.user?.profile_photo"
-              :alt="request.employee?.user?.name"
-              size="w-9 h-9"
-            />
-            <div class="flex-1">
-              <div class="flex items-center gap-1.5 mb-1.5">
-                <h4 class="text-brand-dark text-sm font-semibold">
-                  {{ request.employee?.user?.name }}
-                </h4>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span
-                  class="px-1.5 py-1 rounded-md text-xs font-semibold"
-                  :class="getLeaveTypeBadgeClass(request.type)"
-                >
-                  {{ capitalize(request.type) }}
-                </span>
-                <span class="text-brand-dark text-xs">
-                  {{ formatDate(request.start_date) }} -
-                  {{ formatDate(request.end_date) }} ({{ request.days }} days)
-                </span>
-              </div>
-            </div>
-            <div
-              v-if="
-                request.status === 'pending' && can('leave-request-approve')
-              "
-              class="flex flex-col gap-1.5"
-            >
-              <button
-                @click="showApproveModal(request)"
-                class="btn-secondary flex items-center justify-center gap-1.5 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5"
-              >
-                <Check class="w-4 h-4 text-green-600" />
-                <span class="text-brand-dark text-xs font-semibold"
-                  >Approve</span
-                >
-              </button>
-              <button
-                @click="showRejectModal(request)"
-                class="btn-secondary flex items-center justify-center gap-1.5 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5"
-              >
-                <X class="w-4 h-4 text-red-600" />
-                <span class="text-brand-dark text-xs font-semibold"
-                  >Reject</span
-                >
-              </button>
-            </div>
-            <div v-else>
-              <span
-                class="px-1.5 py-1 rounded-md text-xs font-semibold"
-                :class="getLeaveRequestStatusBadgeClass(request.status)"
-              >
-                {{ capitalize(request.status) }}
-              </span>
-            </div>
+          <div v-if="!pendingRequests.length" class="flex items-center gap-2.5 px-4 sm:px-5 py-3.5 text-ui-small text-ui-muted">
+            <CheckCircle class="w-4 h-4 text-ui-ok shrink-0" />{{ $t("attendance.summary.allCaughtUp") }}
           </div>
 
-          <!-- Empty State -->
-          <div
-            v-if="!loadingLeaveRequests && leaveRequests.length === 0"
-            class="text-center py-12"
-          >
-            <CalendarClock class="w-9 h-9 text-gray-400 mx-auto mb-3.5" />
-            <p class="text-gray-500 text-sm font-medium">
-              No leave requests found
-            </p>
-          </div>
-        </div>
-      </div>
+          <template v-if="recentDecided.length">
+            <p class="px-4 sm:px-5 pt-3 pb-1.5 border-t border-ui-line text-ui-over uppercase text-ui-muted">{{ $t("attendance.summary.recentDecisions") }}</p>
+            <ul class="divide-y divide-ui-line">
+              <li v-for="request in recentDecided" :key="request.id" class="flex items-center gap-3 px-4 sm:px-5 py-3">
+                <Avatar
+                  :src="request.employee?.user?.profile_photo"
+                  :alt="request.employee?.user?.name"
+                  size="w-8 h-8"
+                  icon-size="w-4 h-4"
+                />
+                <div class="flex-1 min-w-0">
+                  <p class="text-ui-body font-medium text-ui-ink truncate">{{ request.employee?.user?.name }}</p>
+                  <p class="text-ui-cap text-ui-muted truncate tabular-nums">
+                    {{ leaveTypeLabel(request.type) }} · {{ formatDate(request.start_date) }} - {{ formatDate(request.end_date) }}
+                  </p>
+                </div>
+                <UiBadge :tone="leaveStatusTone(request.status)" dot class="shrink-0">{{ leaveStatusLabel(request.status) }}</UiBadge>
+              </li>
+            </ul>
+          </template>
+        </template>
+      </section>
 
       <!-- Today's Attendance -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center justify-between mb-5">
-          <div class="flex items-center gap-2.5">
-            <div
-              class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Users class="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-sm font-bold">
-                Today's Attendance
-              </h3>
-              <p class="text-brand-light text-sm">Who's in the office today</p>
-            </div>
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+        <header class="flex items-center gap-3 px-4 sm:px-5 py-3.5 border-b border-ui-line">
+          <div class="flex-1 min-w-0">
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("attendance.summary.today") }}</h2>
+            <p class="text-ui-cap text-ui-muted">{{ $t("attendance.summary.todayHint") }}</p>
           </div>
-          <RouterLink
-            :to="{ name: 'admin.attendances.records' }"
-            class="btn-secondary text-brand-dark text-sm font-semibold border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5"
-          >
-            View All
-          </RouterLink>
-        </div>
+          <UiButton variant="ghost" size="sm" :icon-right="ArrowRight" :to="{ name: 'admin.attendances.records' }">{{ $t('common.actions.viewAll') }}</UiButton>
+        </header>
 
-        <SkeletonList v-if="loadingAttendances" :rows="3" />
-        <div v-else class="space-y-3.5">
-          <div
-            v-for="attendance in todayAttendances"
-            :key="attendance.id"
-            class="flex items-center gap-3.5 p-3.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
-          >
+        <div v-if="showSkeleton" class="p-4 sm:p-5"><SkeletonList :rows="3" /></div>
+        <ul v-else class="divide-y divide-ui-line ui-stagger">
+          <li v-for="attendance in todayAttendances" :key="attendance.id" class="flex items-center gap-3 px-4 sm:px-5 py-3.5">
             <Avatar
               :src="attendance.employee?.user?.profile_photo"
               :alt="attendance.employee?.user?.name"
               size="w-9 h-9"
+              icon-size="w-4 h-4"
             />
-            <div class="flex-1">
-              <div class="flex items-center gap-1.5 mb-1">
-                <h4 class="text-brand-dark text-sm font-semibold">
-                  {{ attendance.employee?.user?.name }}
-                </h4>
-              </div>
-              <p class="text-brand-light text-sm">
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-h3 text-ui-ink truncate">{{ attendance.employee?.user?.name }}</p>
+              <p class="text-ui-cap text-ui-muted truncate mt-0.5">
                 {{ attendance.employee?.job_information?.job_title }}
-              </p>
-              <p class="text-brand-light text-sm">
-                Team
-                {{ attendance.employee?.job_information?.team?.name || "N/A" }}
+                <span class="text-ui-faint">·</span>
+                {{ $t("attendance.summary.teamName", { name: attendance.employee?.job_information?.team?.name || "N/A" }) }}
               </p>
             </div>
-            <div class="flex items-center gap-2.5">
-              <span
-                class="px-1.5 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold"
-              >
-                Present
-              </span>
-              <div class="text-right">
-                <div
-                  class="flex items-center gap-1 text-brand-dark text-sm font-medium"
-                >
-                  <Clock class="w-4 h-4 text-gray-500" />
-                  {{ formatTime(attendance.check_in) }}
-                </div>
-                <p class="text-brand-light text-xs">Check-in time</p>
-              </div>
+            <div class="text-right shrink-0">
+              <p class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-ink tabular-nums">
+                <Clock class="w-3.5 h-3.5 text-ui-faint" />{{ formatTime(attendance.check_in) }}
+              </p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("attendance.summary.checkInTime") }}</p>
             </div>
-          </div>
+            <UiBadge tone="ok" dot class="shrink-0 hidden sm:inline-flex">{{ $t("attendance.status.present") }}</UiBadge>
+          </li>
 
           <!-- Empty State -->
-          <div
-            v-if="!loadingAttendances && todayAttendances.length === 0"
-            class="text-center py-12"
-          >
-            <Users class="w-9 h-9 text-gray-400 mx-auto mb-3.5" />
-            <p class="text-gray-500 text-sm font-medium">
-              No attendance records yet
-            </p>
-          </div>
-        </div>
-      </div>
+          <li v-if="todayAttendances.length === 0">
+            <UiEmpty compact :icon="Users" :title="$t('attendance.records.empty')" />
+          </li>
+        </ul>
+      </section>
     </div>
 
-    <!-- Approve Modal -->
-    <div
-      v-if="showApproveModalState"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      @click.self="closeApproveModal"
+    <!-- Reject keeps a confirm (approve is one click) -->
+    <UiConfirmDialog
+      v-model:open="showRejectModalState"
+      type="danger"
+      :title="$t('attendance.leave.rejectTitle')"
+      :message="$t('attendance.leave.rejectMessage')"
+      :confirm-text="$t('common.actions.reject')"
+      @cancel="closeRejectModal"
+      @confirm="confirmReject"
     >
-      <div class="bg-white rounded-[14px] p-6 max-w-md w-full mx-3.5">
-        <div class="flex items-center gap-3.5 mb-5">
-          <div
-            class="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center"
-          >
-            <Check class="w-6 h-6 text-green-600" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">
-              Approve Leave Request
-            </h3>
-            <p class="text-brand-light text-sm">
-              Confirm approval for this leave request
-            </p>
-          </div>
-        </div>
-
-        <div v-if="selectedLeaveRequest" class="mb-5 space-y-2.5">
-          <div class="border border-[#DCDEDD] rounded-[12px] p-3.5">
-            <p class="text-brand-dark text-sm font-semibold mb-1.5">
-              {{ selectedLeaveRequest.employee?.user?.name }}
-            </p>
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <span
-                class="px-1.5 py-1 rounded-md text-xs font-semibold"
-                :class="getLeaveTypeBadgeClass(selectedLeaveRequest.type)"
-              >
-                {{ capitalize(selectedLeaveRequest.type) }}
-              </span>
-            </div>
-            <p class="text-brand-dark text-sm">
-              {{ formatDate(selectedLeaveRequest.start_date) }} -
-              {{ formatDate(selectedLeaveRequest.end_date) }} ({{
-                selectedLeaveRequest.days
-              }}
-              days)
-            </p>
-            <p class="text-brand-light text-sm mt-1.5">
-              {{ selectedLeaveRequest.reason }}
-            </p>
-          </div>
-        </div>
-
-        <div class="flex gap-2.5">
-          <button
-            @click="closeApproveModal"
-            :disabled="processingAction"
-            class="flex-1 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-brand-dark text-sm font-semibold hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
-          >
-            Cancel
-          </button>
-          <button
-            @click="confirmApprove"
-            :disabled="processingAction"
-            class="flex-1 px-3.5 py-2.5 bg-green-600 text-white rounded-[12px] text-sm font-semibold hover:bg-green-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ processingAction ? "Approving..." : "Approve" }}
-          </button>
-        </div>
+      <div v-if="selectedLeaveRequest" class="border border-ui-line rounded-ui-card p-3.5 space-y-1.5">
+        <p class="text-ui-h3 text-ui-ink">{{ selectedLeaveRequest.employee?.user?.name }}</p>
+        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ leaveTypeLabel(selectedLeaveRequest.type) }}</UiBadge>
+        <p class="text-ui-small text-ui-text tabular-nums">
+          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ $t("attendance.leave.days", { n: selectedLeaveRequest.days }, Number(selectedLeaveRequest.days) || 0) }})
+        </p>
+        <p class="text-ui-small text-ui-muted">{{ selectedLeaveRequest.reason }}</p>
       </div>
-    </div>
-
-    <!-- Reject Modal -->
-    <div
-      v-if="showRejectModalState"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      @click.self="closeRejectModal"
-    >
-      <div class="bg-white rounded-[14px] p-6 max-w-md w-full mx-3.5">
-        <div class="flex items-center gap-3.5 mb-5">
-          <div
-            class="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center"
-          >
-            <X class="w-6 h-6 text-red-600" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">
-              Reject Leave Request
-            </h3>
-            <p class="text-brand-light text-sm">
-              Confirm rejection for this leave request
-            </p>
-          </div>
-        </div>
-
-        <div v-if="selectedLeaveRequest" class="mb-5 space-y-2.5">
-          <div class="border border-[#DCDEDD] rounded-[12px] p-3.5">
-            <p class="text-brand-dark text-sm font-semibold mb-1.5">
-              {{ selectedLeaveRequest.employee?.user?.name }}
-            </p>
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <span
-                class="px-1.5 py-1 rounded-md text-xs font-semibold"
-                :class="getLeaveTypeBadgeClass(selectedLeaveRequest.type)"
-              >
-                {{ selectedLeaveRequest.type }}
-              </span>
-            </div>
-            <p class="text-brand-dark text-sm">
-              {{ formatDate(selectedLeaveRequest.start_date) }} -
-              {{ formatDate(selectedLeaveRequest.end_date) }} ({{
-                selectedLeaveRequest.days
-              }}
-              days)
-            </p>
-            <p class="text-brand-light text-sm mt-1.5">
-              {{ selectedLeaveRequest.reason }}
-            </p>
-          </div>
-        </div>
-
-        <div class="flex gap-2.5">
-          <button
-            @click="closeRejectModal"
-            :disabled="processingAction"
-            class="flex-1 px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-brand-dark text-sm font-semibold hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
-          >
-            Cancel
-          </button>
-          <button
-            @click="confirmReject"
-            :disabled="processingAction"
-            class="flex-1 px-3.5 py-2.5 bg-red-600 text-white rounded-[12px] text-sm font-semibold hover:bg-red-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ processingAction ? "Rejecting..." : "Reject" }}
-          </button>
-        </div>
-      </div>
-    </div>
+    </UiConfirmDialog>
   </div>
 </template>

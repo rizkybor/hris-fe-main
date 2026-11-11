@@ -1,8 +1,8 @@
 <script setup>
-import { Building, Calendar, Edit, Share, Users } from "lucide-vue-next";
-import { RouterLink } from "vue-router";
+import { Building, Calendar, Edit, Share, Users, Users2 } from "lucide-vue-next";
 import { capitalize } from "lodash-es";
 import { formatToClientTimezone } from "@/helpers/format";
+import { UiBadge, UiButton } from "@/components/ui";
 
 const props = defineProps({
   team: {
@@ -12,80 +12,57 @@ const props = defineProps({
 });
 </script>
 <template>
-  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-5 p-3.5 sm:p-5">
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3.5 sm:gap-5">
-      <div class="flex items-center gap-3.5 min-w-0">
-        <div class="relative shrink-0">
-          <div
-            class="w-16 h-16 sm:w-32 sm:h-32 relative flex items-center justify-center rounded-full overflow-hidden"
-          >
-            <!-- Main blue background -->
-            <div
-              class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full"
-            ></div>
-            <!-- Lucide icon -->
-            <img
-              class="w-8 h-8 sm:w-12 sm:h-12 text-white relative z-10"
-              :src="team.icon"
-              alt="Team Icon"
-            />
-          </div>
-        </div>
+  <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+    <div class="flex items-center gap-4 min-w-0 flex-1">
+      <div
+        class="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-ui-accent-soft text-ui-accent flex items-center justify-center overflow-hidden"
+      >
+        <img
+          v-if="team.icon"
+          class="w-7 h-7 sm:w-8 sm:h-8 object-contain"
+          :src="team.icon"
+          :alt="$t('teams.form.icon.label')"
+        />
+        <Users2 v-else class="w-7 h-7" />
+      </div>
 
-        <!-- Team name shown next to the avatar on mobile only; on sm+ it moves
-        into the text column below alongside the department/date info. -->
-        <div class="flex items-center gap-2.5 flex-wrap min-w-0 sm:hidden">
-          <h1 class="text-brand-dark text-lg font-extrabold break-words min-w-0">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2.5 flex-wrap min-w-0">
+          <h1 class="text-ui-h1 text-ui-ink break-words min-w-0">
             {{ team.name }}
           </h1>
-          <span
-            class="px-2.5 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF]"
-            >Verified</span
-          >
+          <UiBadge tone="info" dot>{{ $t("teams.detail.verified") }}</UiBadge>
         </div>
-      </div>
-
-      <div class="flex-1 min-w-0">
-        <div class="hidden sm:flex items-center gap-3.5 mb-2.5 flex-wrap min-w-0">
-          <h1 class="text-brand-dark text-xl font-extrabold break-words min-w-0">
-            {{ team.name }}
-          </h1>
-          <span
-            class="px-2.5 py-1 rounded-md text-sm font-semibold bg-[#EBF8FF] text-[#1E40AF]"
-            >Verified</span
-          >
-        </div>
-        <div class="flex flex-col gap-1.5 text-sm text-gray-600">
-          <div class="flex items-center gap-1.5">
-            <Users class="w-4 h-4" />
-            <span>{{ team.members_count }}/{{ team.expected_size }} members</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <Building class="w-4 h-4" />
-            <span>{{ capitalize(team.department) }}</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <Calendar class="w-4 h-4" />
-            <span>{{ formatToClientTimezone(team.created_at) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex gap-2.5">
-        <RouterLink
-          :to="{ name: 'admin.team.edit', params: { id: team.id } }"
-          class="flex-1 sm:flex-none border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow rounded-[8px] px-3.5 sm:px-5 py-2 sm:py-2.5 flex items-center justify-center gap-1.5"
+        <div
+          class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-ui-small text-ui-muted"
         >
-          <Edit class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Edit Team</span>
-        </RouterLink>
-        <button
-          class="flex-1 sm:flex-none bg-white border border-[#DCDEDD] text-brand-dark py-2 sm:py-2.5 px-3.5 sm:px-5 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
-        >
-          <Share class="w-4 h-4" />
-          <span class="whitespace-nowrap">Share Team</span>
-        </button>
+          <span class="inline-flex items-center gap-1.5">
+            <Users class="w-3.5 h-3.5 text-ui-faint" />
+            <span class="tabular-nums">{{ $t("teams.detail.membersOf", { n: team.members_count, size: team.expected_size }) }}</span>
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <Building class="w-3.5 h-3.5 text-ui-faint" />
+            {{ team.department && $te(`orgchart.departments.${team.department}`) ? $t(`orgchart.departments.${team.department}`) : capitalize(team.department) }}
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <Calendar class="w-3.5 h-3.5 text-ui-faint" />
+            {{ formatToClientTimezone(team.created_at) }}
+          </span>
+        </div>
       </div>
+    </div>
+
+    <div class="flex gap-2 shrink-0">
+      <UiButton variant="secondary" :icon="Share" class="flex-1 sm:flex-none">
+        {{ $t("teams.detail.share") }}
+      </UiButton>
+      <UiButton
+        :icon="Edit"
+        :to="{ name: 'admin.team.edit', params: { id: team.id } }"
+        class="flex-1 sm:flex-none"
+      >
+        {{ $t("teams.detail.edit") }}
+      </UiButton>
     </div>
   </div>
 </template>

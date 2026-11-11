@@ -1,14 +1,16 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
-import { ShoppingCart, Plus, Download, FileText, Pencil, Ban, Trash2, Search, ArrowLeft, ChevronDown } from "lucide-vue-next";
+import { ShoppingCart, Plus, Download, FileText, Pencil, Ban, Trash2, Search, ArrowLeft, Wallet } from "lucide-vue-next";
 import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
-import { formatRupiah } from "@/utils/formatUtils";
+import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
-import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
-import Pagination from "@/components/common/Pagination.vue";
+import { UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiPageHeader, UiPagination, UiChips, UiTable } from "@/components/ui";
 import { useAlertModalStore } from "@/stores/alertModal";
 
+const { t } = useI18n();
 const store = usePurchaseOrderStore();
 const alertModal = useAlertModalStore();
 const { orders, meta, loading } = storeToRefs(store);
@@ -56,8 +58,8 @@ const handleViewPdf = async (order) => {
 const handleCancel = async (order) => {
   if (
     !(await alertModal.confirm(
-      `Cancel PO "${order.po_number}"? The number stays recorded and cannot be reused.`,
-      { type: "warning", confirmText: "Cancel" }
+      t("documents.purchaseOrder.list.cancelConfirm", { number: order.po_number }),
+      { type: "warning", confirmText: t("documents.purchaseOrder.list.cancelPo") }
     ))
   )
     return;
@@ -76,186 +78,141 @@ const handleDelete = async () => {
   orderToDelete.value = null;
 };
 
-const statusClass = (status) =>
-  status === "cancelled" ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700";
+// Presentation only: status -> badge tone (always shown with its label).
+const statusTone = (status) => (status === "cancelled" ? "neutral" : "ok");
+const statusLabel = (status) => (status === "cancelled" ? t("documents.shared.status.cancelled") : t("common.labels.active"));
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "short", day: "numeric" }) : "-";
+
+// Presentation only.
+const statusOptions = computed(() =>
+  [
+    { value: "", label: t("common.labels.all") },
+    { value: "active", label: t("common.labels.active") },
+    { value: "cancelled", label: t("documents.shared.status.cancelled") },
+  ].map((o) => ({ ...o, count: o.value === statusFilter.value && !loading.value ? meta.value.total : undefined }))
+);
+const onStatusChip = (value) => {
+  statusFilter.value = value;
+  handleFilterChange();
+};
+const activeSum = computed(() => orders.value.filter((r) => r.status !== "cancelled").reduce((sum, r) => sum + (Number(r.total) || 0), 0));
+const cancelledCount = computed(() => orders.value.filter((r) => r.status === "cancelled").length);
+const columns = computed(() => [
+  { key: "po_number", label: t("documents.purchaseOrder.list.columns.number") },
+  { key: "client_name", label: t("common.labels.client") },
+  { key: "title", label: t("documents.purchaseOrder.fields.title") },
+  { key: "date", label: t("common.labels.date") },
+  { key: "total", label: t("common.labels.total"), align: "right" },
+  { key: "status", label: t("common.labels.status") },
+  { key: "actions", label: "", align: "right" },
+]);
 </script>
 
 <template>
-  <div>
-    <div class="bg-white p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-3">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('documents.purchaseOrder.list.title')" :subtitle="$t('documents.purchaseOrder.list.subtitle')">
+      <template #eyebrow>
         <router-link
           :to="{ name: 'admin.documents.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Documents"
-          title="Back to Documents"
+          class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
+          :aria-label="$t('documents.shared.backToDocuments')"
+          :title="$t('documents.shared.backToDocuments')"
         >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+          <ArrowLeft class="w-4 h-4" />{{ $t("documents.shared.documents") }}
         </router-link>
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <ShoppingCart class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Purchase Order</h3>
-          <p class="text-brand-light text-sm">Manage Purchase Order (PO) Documents</p>
-        </div>
+      </template>
+      <template #actions>
+        <UiButton v-if="can('purchase-order-create')" :to="{ name: 'admin.purchase-orders.create' }" :icon="Plus">{{ $t("documents.purchaseOrder.list.create") }}</UiButton>
+      </template>
+    </UiPageHeader>
+
+
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+      <div class="px-4 sm:px-5 py-3.5 flex flex-col lg:flex-row lg:items-center gap-3 border-b border-ui-line">
+        <UiInput
+          v-model="search"
+          :icon="Search"
+          :placeholder="$t('documents.purchaseOrder.list.searchPlaceholder')"
+          class="w-full lg:w-[300px]"
+          @keyup.enter="handleSearch"
+        />
+        <UiChips :model-value="statusFilter" :options="statusOptions" @update:model-value="onStatusChip" />
       </div>
 
-      <router-link
-        v-if="can('purchase-order-create')"
-        :to="{ name: 'admin.purchase-orders.create' }"
-        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
-      >
-        <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Create New PO</span>
-      </router-link>
-    </div>
-
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex flex-col sm:flex-row gap-3 mb-4">
-        <div class="relative max-w-sm w-full">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search class="w-4 h-4 text-gray-400" />
+      <UiTable :columns="columns" :rows="orders" :meta="meta" :loading="loading" :skeleton-rows="6">
+        <template #cell-po_number="{ row }">
+          <span class="font-mono text-ui-cap text-ui-ink whitespace-nowrap">{{ row.po_number }}</span>
+        </template>
+        <template #cell-client_name="{ row }">
+          <span class="text-ui-body text-ui-ink">{{ row.client_name }}</span>
+        </template>
+        <template #cell-title="{ row }">
+          <span class="text-ui-small text-ui-text">{{ row.title }}</span>
+        </template>
+        <template #cell-date="{ row }">
+          <span class="text-ui-small text-ui-text tabular-nums whitespace-nowrap">{{ formatDate(row.date) }}</span>
+        </template>
+        <template #cell-total="{ row }">
+          <span class="text-ui-body font-medium text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(row.total) }}</span>
+        </template>
+        <template #cell-status="{ row }">
+          <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-0.5">
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="FileText" :loading="viewingId === row.id" :title="$t('documents.shared.viewPdf')" :aria-label="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('common.actions.downloadPdf')" @click="handleDownload(row)" />
+            <UiButton v-if="can('purchase-order-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.purchase-orders.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
+            <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" :title="$t('documents.purchaseOrder.list.cancelPo')" :aria-label="$t('documents.purchaseOrder.list.cancelPo')" @click="handleCancel(row)" />
+            <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
           </div>
-          <input
-            v-model="search"
-            @keyup.enter="handleSearch"
-            type="text"
-            placeholder="Search PO number, client, title..."
-            class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <div class="relative">
-          <select
-            v-model="statusFilter"
-            @change="handleFilterChange"
-            class="select-soft"
-          >
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <ChevronDown
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-          />
-        </div>
-      </div>
+        </template>
 
-      <SkeletonTable v-if="loading" :rows="6" :cols="8" />
-
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
-              <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">PO No.</th>
-              <th class="py-3 pr-4 font-semibold">Client</th>
-              <th class="py-3 pr-4 font-semibold">Title</th>
-              <th class="py-3 pr-4 font-semibold">Date</th>
-              <th class="py-3 pr-4 font-semibold">Total</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(order, index) in orders"
-              :key="order.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4 font-mono text-xs">{{ order.po_number }}</td>
-              <td class="py-3 pr-4">{{ order.client_name }}</td>
-              <td class="py-3 pr-4">{{ order.title }}</td>
-              <td class="py-3 pr-4">{{ formatDate(order.date) }}</td>
-              <td class="py-3 pr-4">{{ formatRupiah(order.total) }}</td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="statusClass(order.status)">
-                  {{ order.status === "cancelled" ? "Cancelled" : "Active" }}
-                </span>
-              </td>
-              <td class="py-3 pr-4">
-                <div class="flex items-center justify-end gap-1">
-                  <button
-                    @click="handleViewPdf(order)"
-                    :disabled="viewingId === order.id"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
-                    title="View PDF"
-                  >
-                    <FileText class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button
-                    @click="handleDownload(order)"
-                    :disabled="downloadingId === order.id"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
-                    title="Download PDF"
-                  >
-                    <Download class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <router-link
-                    v-if="can('purchase-order-edit')"
-                    :to="{ name: 'admin.purchase-orders.edit', params: { id: order.id } }"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
-                    title="Edit"
-                  >
-                    <Pencil class="w-4 h-4 text-gray-600" />
-                  </router-link>
-                  <button
-                    v-if="can('purchase-order-edit') && order.status !== 'cancelled'"
-                    @click="handleCancel(order)"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-orange-500 hover:bg-orange-50 group"
-                    title="Cancel"
-                  >
-                    <Ban class="w-4 h-4 text-gray-600 group-hover:text-orange-600" />
-                  </button>
-                  <button
-                    v-if="can('purchase-order-delete')"
-                    @click="confirmDelete(order)"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Delete"
-                  >
-                    <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-                  </button>
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-ui-body font-medium text-ui-ink truncate">{{ row.client_name }}</p>
+                  <p class="font-mono text-ui-cap text-ui-muted truncate">{{ row.po_number }}</p>
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div v-if="!loading && orders.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">No purchase orders found.</p>
-        </div>
-      </div>
-
-      <Pagination :meta="meta" :loading="loading" item-label="PO" @page-change="load" />
-    </div>
-
-    <Transition name="fade">
-      <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
-        <div class="bg-white rounded-[24px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <h3 class="text-xl font-bold text-brand-dark mb-2">Delete Purchase Order?</h3>
-          <p class="text-gray-500 text-sm mb-6">
-            "{{ orderToDelete?.po_number }}" will be permanently deleted. This action cannot be undone.
-          </p>
-          <div class="grid grid-cols-2 gap-3">
-            <button @click="isDeleteModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
-              Cancel
-            </button>
-            <button @click="handleDelete" class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600">
-              Yes, Delete
-            </button>
+                <p class="text-ui-body font-medium text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(row.total) }}</p>
+              </div>
+              <p v-if="row.title" class="mt-1 text-ui-cap text-ui-muted truncate">{{ row.title }}</p>
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
+                <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
+                <span class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(row.date) }}</span>
+              </div>
+              <div class="flex items-center gap-0.5 mt-2 -ml-2">
+                <UiButton variant="ghost" size="sm" :icon="FileText" :loading="viewingId === row.id" @click="handleViewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
+                <UiButton variant="ghost" size="sm" :icon="Download" :loading="downloadingId === row.id" @click="handleDownload(row)">PDF</UiButton>
+                <UiButton v-if="can('purchase-order-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.purchase-orders.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
+                <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" :title="$t('documents.purchaseOrder.list.cancelPo')" :aria-label="$t('documents.purchaseOrder.list.cancelPo')" @click="handleCancel(row)" />
+                <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </Transition>
+        </template>
+
+        <template #empty>
+          <UiEmpty :icon="ShoppingCart" :title="$t('documents.purchaseOrder.list.emptyTitle')" compact />
+        </template>
+      </UiTable>
+
+      <UiPagination v-if="meta.total" :meta="meta" :item-label="$t('documents.purchaseOrder.list.itemLabel')" :disabled="loading" @change="load" />
+    </section>
+
+    <UiConfirmDialog
+      :open="isDeleteModalOpen"
+      :title="$t('documents.purchaseOrder.list.deleteTitle')"
+      :message="$t('documents.shared.deleteMessage', { number: orderToDelete?.po_number })"
+      type="danger"
+      :confirm-text="$t('documents.shared.yesDelete')"
+      @cancel="isDeleteModalOpen = false"
+      @confirm="handleDelete"
+    />
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-</style>

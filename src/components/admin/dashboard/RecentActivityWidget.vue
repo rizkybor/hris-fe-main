@@ -1,10 +1,12 @@
 <script setup>
+import DashboardWidgetCard from "./DashboardWidgetCard.vue";
+import { UiEmpty } from "@/components/ui";
 import { onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useActivityLogStore } from "@/stores/activityLog";
 import { can } from "@/helpers/permissionHelper";
 import { getTimeAgo } from "@/utils/dateUtils";
-import { History, ShieldAlert } from "lucide-vue-next";
+import { History } from "lucide-vue-next";
 
 const activityLogStore = useActivityLogStore();
 const { activities } = storeToRefs(activityLogStore);
@@ -12,50 +14,35 @@ const { activities } = storeToRefs(activityLogStore);
 onMounted(() => {
   activityLogStore.fetchActivities({ row_per_page: 6 });
 });
+
+const initials = (name) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-gray-50 rounded-[12px] flex items-center justify-center shrink-0">
-          <History class="w-5 h-5 text-gray-500" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-base font-bold">Recent Activity</h3>
-          <p class="text-brand-light text-sm">Latest changes across the system</p>
-        </div>
-      </div>
-      <RouterLink
-        v-if="can('history-menu') || can('history-view')"
-        :to="{ name: 'admin.history.dashboard' }"
-        class="text-[#0C51D9] text-sm font-medium hover:underline shrink-0"
-      >
-        View All
-      </RouterLink>
-    </div>
-
-    <div v-if="activities.length === 0" class="text-center py-10 text-sm text-gray-400">
-      No activity recorded yet.
-    </div>
-    <div v-else class="space-y-3">
-      <div
-        v-for="activity in activities"
-        :key="activity.id"
-        class="flex items-start gap-3 border border-[#DCDEDD] rounded-[12px] p-3"
-      >
-        <div class="w-8 h-8 bg-red-50 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-          <ShieldAlert class="w-4 h-4 text-red-500" />
-        </div>
+  <DashboardWidgetCard
+    :title="$t('dashboard.widgets.recentActivity')"
+    :subtitle="$t('dashboard.recentActivity.subtitle')"
+    :to="can('history-menu') || can('history-view') ? { name: 'admin.history.dashboard' } : null"
+    flush
+  >
+    <UiEmpty v-if="activities.length === 0" :icon="History" :title="$t('dashboard.recentActivity.empty')" compact />
+    <ul v-else class="divide-y divide-ui-line">
+      <li v-for="activity in activities" :key="activity.id" class="flex items-start gap-3 px-5 py-3">
+        <span class="w-7 h-7 rounded-full bg-ui-accent-soft text-ui-accent text-[10px] font-semibold flex items-center justify-center shrink-0 mt-px">
+          {{ initials(activity.causer?.name || $t("dashboard.recentActivity.system")) }}
+        </span>
         <div class="flex-1 min-w-0">
-          <p class="text-brand-dark text-sm font-medium truncate">
-            {{ activity.description }}
-          </p>
-          <p class="text-brand-light text-xs mt-0.5">
-            {{ activity.causer?.name || "System" }} &middot; {{ getTimeAgo(activity.created_at) }}
-          </p>
+          <p class="text-ui-small text-ui-ink line-clamp-2">{{ activity.description }}</p>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ activity.causer?.name || $t("dashboard.recentActivity.system") }}</p>
         </div>
-      </div>
-    </div>
-  </div>
+        <span class="text-ui-cap text-ui-faint tabular-nums shrink-0 pt-0.5">{{ getTimeAgo(activity.created_at) }}</span>
+      </li>
+    </ul>
+  </DashboardWidgetCard>
 </template>

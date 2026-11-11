@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { Building, User, Briefcase, Phone, Check, Eye } from "lucide-vue-next";
+import { APP_VERSION_SHORT } from "@/utils/appVersion";
+import { Check } from "lucide-vue-next";
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 interface Props {
   currentStep?: number;
@@ -8,234 +13,83 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   currentStep: 1,
 });
+
+// Presentation only: the four wizard steps shown in the rail.
+const steps = computed(() =>
+  ["personal", "job", "emergency", "review"].map((key) => ({
+    key,
+    title: t(`employees.wizard.steps.${key}.title`),
+    hint: t(`employees.wizard.steps.${key}.hint`),
+  }))
+);
+
+const stateOf = (index: number) => {
+  const n = index + 1;
+  if (n < props.currentStep) return "done";
+  if (n === props.currentStep) return "current";
+  return "upcoming";
+};
 </script>
 
 <template>
-  <!-- Vertical Step Progress -->
-  <aside class="hidden lg:flex w-80 bg-white border-r border-[#DCDEDD] flex-col">
-    <!-- Logo Section -->
-    <div class="px-5 py-3.5 border-b border-[#DCDEDD]">
-      <div class="flex items-center gap-3.5">
-        <div class="w-10 h-10 relative flex items-center justify-center">
-          <!-- <div
-            class="w-10 h-10 absolute bg-gradient-to-br from-primary-100 to-primary-200 rounded-full"
-          ></div>
-          <div
-            class="w-10 h-10 absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full opacity-90"
-          ></div>
-          <Building class="w-5 h-5 text-white relative z-10" /> -->
-          <img
-            src="/images/jcd-only-color.png"
-            alt="Company Logo"
-            class="w-9 h-9 relative z-10 object-contain"
-          />
-        </div>
-        <div>
-          <h1 class="text-brand-dark text-sm font-bold">HRIS+
-            <span class="text-xs font-medium text-gray-400 ml-1"> v3.3 </span></h1>
-          <p class="text-brand-dark text-xs font-normal">Jendela Cakra Digital</p>
-        </div>
+  <!-- Vertical step rail (desktop) -->
+  <aside class="hidden lg:flex w-64 shrink-0 bg-ui-surface border-r border-ui-line flex-col">
+    <!-- Brand -->
+    <div class="h-[73px] px-5 flex items-center gap-3 border-b border-ui-line">
+      <img
+        src="/images/jcd-only-color.png"
+        :alt="$t('employees.wizard.companyLogo')"
+        class="w-8 h-8 object-contain shrink-0"
+      />
+      <div class="min-w-0">
+        <p class="flex items-center gap-1.5 text-ui-h3 text-ui-ink">
+          HRIS+
+          <span class="text-ui-cap font-normal px-1.5 rounded border border-ui-line text-ui-muted tabular-nums">v{{ APP_VERSION_SHORT }}</span>
+        </p>
+        <p class="text-ui-cap text-ui-muted truncate">Jendela Cakra Digital</p>
       </div>
     </div>
 
-    <!-- Step Progress -->
-    <div class="space-y-6 flex-1 mt-8 px-5">
-      <!-- Step 1 -->
-      <div class="flex items-center gap-3.5">
-        <div
-          :class="[
-            'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0',
-            currentStep > 1
-              ? 'bg-green-600 text-white'
-              : currentStep === 1
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-500',
-          ]"
-        >
-          <User class="w-6 h-6" v-if="currentStep <= 1" />
-          <Check class="w-6 h-6" v-else />
-        </div>
-        <div class="flex-1">
-          <h3
-            :class="[
-              'text-sm font-bold',
-              currentStep > 1
-                ? 'text-green-600'
-                : currentStep === 1
-                ? 'text-blue-600'
-                : 'text-gray-500',
-            ]"
+    <!-- Steps -->
+    <div class="flex-1 overflow-y-auto px-3 py-5">
+      <p class="px-2 mb-2 text-ui-over uppercase text-ui-faint">{{ $t("employees.wizard.stepsLabel") }}</p>
+      <ol class="space-y-0">
+        <li v-for="(step, index) in steps" :key="step.key" class="relative">
+          <!-- connector -->
+          <span
+            v-if="index < steps.length - 1"
+            aria-hidden="true"
+            class="absolute left-[25px] top-[42px] bottom-[-6px] w-px"
+            :class="stateOf(index) === 'done' ? 'bg-ui-ink' : 'bg-ui-line-strong'"
+          ></span>
+          <div
+            class="relative flex items-start gap-3 px-3 py-2.5 rounded-ui-control transition-colors duration-ui-base"
+            :class="stateOf(index) === 'current' ? 'bg-ui-subtle' : ''"
+            :aria-current="stateOf(index) === 'current' ? 'step' : undefined"
           >
-            Personal Information
-          </h3>
-          <p
-            :class="[
-              'text-sm font-medium mt-1',
-              currentStep > 1
-                ? 'text-green-600'
-                : currentStep === 1
-                ? 'text-blue-600'
-                : 'text-gray-500',
-            ]"
-          >
-            Basic employee details and contact info
-          </p>
-        </div>
-      </div>
-
-      <!-- Connector Line 1 -->
-      <div
-        :class="[
-          'ml-5 w-0.5 h-8',
-          currentStep > 1
-            ? 'bg-green-600'
-            : currentStep === 1
-            ? 'bg-blue-600'
-            : 'bg-gray-200',
-        ]"
-      ></div>
-
-      <!-- Step 2 -->
-      <div class="flex items-center gap-3.5">
-        <div
-          :class="[
-            'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0',
-            currentStep > 2
-              ? 'bg-green-600 text-white'
-              : currentStep === 2
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-500',
-          ]"
-        >
-          <Briefcase class="w-6 h-6" v-if="currentStep <= 2" />
-          <Check class="w-6 h-6" v-else />
-        </div>
-        <div class="flex-1">
-          <h3
-            :class="[
-              'text-sm font-bold',
-              currentStep > 2
-                ? 'text-green-600'
-                : currentStep === 2
-                ? 'text-blue-600'
-                : 'text-gray-500',
-            ]"
-          >
-            Job Information
-          </h3>
-          <p
-            :class="[
-              'text-sm font-medium mt-1',
-              currentStep > 2
-                ? 'text-green-600'
-                : currentStep === 2
-                ? 'text-blue-600'
-                : 'text-gray-500',
-            ]"
-          >
-            Role, department, and employment details
-          </p>
-        </div>
-      </div>
-
-      <!-- Connector Line 2 -->
-      <div
-        :class="[
-          'ml-5 w-0.5 h-8',
-          currentStep > 2
-            ? 'bg-green-600'
-            : currentStep === 2
-            ? 'bg-blue-600'
-            : 'bg-gray-200',
-        ]"
-      ></div>
-
-      <!-- Step 3 -->
-      <div class="flex items-center gap-3.5">
-        <div
-          :class="[
-            'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0',
-            currentStep > 3
-              ? 'bg-green-600 text-white'
-              : currentStep === 3
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-500',
-          ]"
-        >
-          <Phone class="w-6 h-6" v-if="currentStep <= 3" />
-          <Check class="w-6 h-6" v-else />
-        </div>
-        <div class="flex-1">
-          <h3
-            :class="[
-              'text-sm font-bold',
-              currentStep > 3
-                ? 'text-green-600'
-                : currentStep === 3
-                ? 'text-blue-600'
-                : 'text-gray-500',
-            ]"
-          >
-            Emergency Contact
-          </h3>
-          <p
-            :class="[
-              'text-sm font-medium mt-1',
-              currentStep > 3
-                ? 'text-green-600'
-                : currentStep === 3
-                ? 'text-blue-600'
-                : 'text-gray-500',
-            ]"
-          >
-            Person to contact in case of emergency
-          </p>
-        </div>
-      </div>
-
-      <!-- Connector Line 3 -->
-      <div
-        :class="[
-          'ml-5 w-0.5 h-8',
-          currentStep > 3
-            ? 'bg-green-600'
-            : currentStep === 3
-            ? 'bg-blue-600'
-            : 'bg-gray-200',
-        ]"
-      ></div>
-
-      <!-- Step 4 -->
-      <div class="flex items-center gap-3.5">
-        <div
-          :class="[
-            'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0',
-            currentStep === 4
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-500',
-          ]"
-        >
-          <Eye class="w-6 h-6" />
-        </div>
-        <div class="flex-1">
-          <h3
-            :class="[
-              'text-sm font-bold',
-              currentStep === 4 ? 'text-blue-600' : 'text-gray-500',
-            ]"
-          >
-            Review & Submit
-          </h3>
-          <p
-            :class="[
-              'text-sm font-medium mt-1',
-              currentStep === 4 ? 'text-blue-600' : 'text-gray-500',
-            ]"
-          >
-            Review all information before submitting
-          </p>
-        </div>
-      </div>
+            <span
+              class="w-7 h-7 rounded-full shrink-0 inline-flex items-center justify-center text-ui-cap font-semibold tabular-nums border transition-colors duration-ui-base"
+              :class="
+                stateOf(index) === 'upcoming'
+                  ? 'bg-ui-surface border-ui-line-strong text-ui-muted'
+                  : 'bg-ui-ink border-ui-ink text-white'
+              "
+            >
+              <Check v-if="stateOf(index) === 'done'" class="w-3.5 h-3.5" />
+              <template v-else>{{ index + 1 }}</template>
+            </span>
+            <div class="min-w-0 pt-0.5">
+              <p
+                class="text-ui-small font-medium"
+                :class="stateOf(index) === 'upcoming' ? 'text-ui-muted' : 'text-ui-ink'"
+              >
+                {{ step.title }}
+              </p>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ step.hint }}</p>
+            </div>
+          </div>
+        </li>
+      </ol>
     </div>
   </aside>
 </template>

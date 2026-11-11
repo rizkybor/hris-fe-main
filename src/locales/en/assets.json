@@ -1,0 +1,111 @@
+{
+  "title": "Company Assets",
+  "subtitle": "Manage and track assets loaned to employees",
+  "addAsset": "Add Asset",
+  "editAsset": "Edit Asset",
+  "empty": "No assets yet.",
+  "usedBy": "Used by {name}",
+  "nextMaintenance": "Next maintenance: {date}",
+  "stats": {
+    "total": "Total Assets",
+    "totalValue": "Total Asset Value"
+  },
+  "status": {
+    "available": "Available",
+    "assigned": "In Use",
+    "maintenance": "Maintenance",
+    "retired": "Retired",
+    "lost": "Lost"
+  },
+  "condition": {
+    "good": "Good",
+    "fair": "Fair",
+    "damaged": "Damaged"
+  },
+  "categories": {
+    "itHw": { "label": "Hardware / IT Equipment", "examples": "Laptop, desktop PC, monitor, server, router, switch" },
+    "itSw": { "label": "Software / Licenses", "examples": "OS licenses, enterprise SaaS, domains, SSL" },
+    "ofEq": { "label": "Office Equipment", "examples": "Printer, scanner, projector, air conditioner, TV display" },
+    "ofFn": { "label": "Office Furniture", "examples": "Desks, office chairs, filing cabinets, whiteboards" },
+    "mVeh": { "label": "Operational Vehicles", "examples": "Company cars, motorcycles" },
+    "mMisc": { "label": "Other Supporting Assets", "examples": "Cameras, drones, live streaming gear, smart locks" }
+  },
+  "filters": {
+    "allCategories": "All Categories",
+    "searchPlaceholder": "Search name, code, or serial number..."
+  },
+  "columns": {
+    "asset": "Asset",
+    "warranty": "Warranty",
+    "bookValue": "Book Value"
+  },
+  "warranty": {
+    "until": "Warranty until {date}",
+    "expired": "Warranty expired",
+    "ended": "Expired"
+  },
+  "actions": {
+    "viewDetail": "View detail & maintenance history",
+    "viewDetailShort": "View detail",
+    "assign": "Assign to employee",
+    "return": "Return"
+  },
+  "form": {
+    "code": "Asset Code",
+    "generateCode": "Generate next code for this category",
+    "codeFormat": "Format: JCD-{'{'}Category{'}'}-{'{'}Year{'}'}-{'{'}No.{'}'}",
+    "examples": "Examples: {examples}",
+    "name": "Asset Name",
+    "namePlaceholder": "e.g. MacBook Pro 14",
+    "serialNumber": "Serial Number",
+    "brand": "Brand",
+    "model": "Model",
+    "purchaseDate": "Purchase Date",
+    "purchasePriceRp": "Purchase Price (Rp)",
+    "warrantyUntil": "Warranty until",
+    "usefulLife": "Useful Life (months)",
+    "usefulLifePlaceholder": "e.g. 36",
+    "usefulLifeHint": "Used to calculate asset depreciation.",
+    "supplier": "Supplier",
+    "supplierNone": "-- Not specified --",
+    "addSupplier": "Add new supplier",
+    "supplierName": "Supplier name",
+    "condition": "Condition"
+  },
+  "assign": {
+    "title": "Assign Asset",
+    "selectEmployee": "Select employee",
+    "conditionAtHandover": "Condition at Handover",
+    "assign": "Assign",
+    "assigning": "Assigning..."
+  },
+  "detail": {
+    "purchasePrice": "Purchase Price",
+    "currentBookValue": "Current Book Value"
+  },
+  "maintenance": {
+    "history": "Maintenance History",
+    "addLog": "Add Log",
+    "serviceDate": "Service Date",
+    "nextSchedule": "Next Schedule",
+    "nextScheduleOn": "Next schedule: {date}",
+    "costRp": "Cost (Rp)",
+    "saveLog": "Save Log",
+    "empty": "No maintenance history yet",
+    "deleteLog": "Delete maintenance log"
+  },
+  "confirm": {
+    "delete": "Delete this asset?",
+    "return": "Mark \"{name}\" as returned?",
+    "deleteLog": "Delete this maintenance log?"
+  },
+  "errors": {
+    "addSupplier": "Failed to add supplier.",
+    "save": "Failed to save asset.",
+    "delete": "Failed to delete asset.",
+    "assign": "Failed to assign asset.",
+    "return": "Failed to process asset return.",
+    "saveLog": "Failed to save maintenance log.",
+    "deleteLog": "Failed to delete maintenance log."
+  }
+}

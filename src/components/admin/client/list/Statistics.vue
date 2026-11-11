@@ -4,6 +4,7 @@ const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 import { TrendingUp, Briefcase, Layers, Code } from "lucide-vue-next";
 import { useClientStore } from "@/stores/client";
 import { storeToRefs } from "pinia";
+import { UiStat } from "@/components/ui";
 
 /* ================= STORE ================= */
 const clientStore = useClientStore();
@@ -96,107 +97,38 @@ watch(
 </script>
 
 <template>
-  <div class="grid grid-cols-1 xl:grid-cols-3 gap-3.5 lg:gap-5 mb-5">
-    <!-- ================= TOTAL CLIENTS ================= -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
-      <div class="flex items-center justify-between mb-3.5">
-        <p class="text-brand-dark text-sm font-medium">Total Client</p>
-        <Briefcase class="w-6 h-6 text-blue-600" />
-      </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 ui-stagger">
+    <!-- Total clients -->
+    <UiStat
+      class="sm:col-span-2 xl:col-span-1"
+      :label="$t('clients.stats.total')"
+      :icon="Briefcase"
+      :value="totalClient"
+      :hint="$t('clients.stats.totalHint')"
+      :loading="loading && !statistics"
+    />
 
-      <p class="text-brand-dark text-xl font-extrabold">
-        {{ loading ? "-" : totalClient }}
-      </p>
-      <p class="text-success text-sm font-medium">Registered clients</p>
-    </div>
-
-    <!-- ================= BY TYPE ================= -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
-      <div class="flex items-center gap-1.5 mb-3.5">
-        <Layers class="w-5 h-5 text-purple-600" />
-        <p class="text-brand-dark text-sm font-medium">Client by Type</p>
-      </div>
-
-      <!-- LIST CONTAINER -->
-      <ul
-        class="space-y-1.5 max-h-[180px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-      >
-        <li
-          v-for="item in clientsByType"
-          :key="item.type"
-          class="flex justify-between items-center text-sm bg-gray-50 rounded-md px-2.5 py-1.5 hover:bg-gray-100 transition"
-        >
-          <span class="text-brand-dark truncate">
-            {{ item.type }}
-          </span>
-          <span class="font-semibold text-brand-dark">
-            {{ item.total }}
-          </span>
-        </li>
-      </ul>
-
-      <p v-if="!clientsByType.length" class="text-brand-light text-sm mt-1.5">
-        No data
-      </p>
-    </div>
-
-    <!-- ================= BY FIELD ================= -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4">
-      <div class="flex items-center gap-1.5 mb-3.5">
-        <Code class="w-5 h-5 text-green-600" />
-        <p class="text-brand-dark text-sm font-medium">Client by Field</p>
-      </div>
-
-      <!-- LIST CONTAINER -->
-      <ul
-        class="space-y-1.5 max-h-[180px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-      >
-        <li
-          v-for="item in clientsByField"
-          :key="item.field"
-          class="flex justify-between items-center text-sm bg-gray-50 rounded-md px-2.5 py-1.5 hover:bg-gray-100 transition"
-        >
-          <span class="text-brand-dark truncate">
-            {{ item.field }}
-          </span>
-          <span class="font-semibold text-brand-dark">
-            {{ item.total }}
-          </span>
-        </li>
-      </ul>
-
-      <p v-if="!clientsByField.length" class="text-brand-light text-sm mt-1.5">
-        No data
-      </p>
-
-      <!-- OPTIONAL: Scroll hint -->
-      <p v-if="clientsByField.length > 5" class="text-xs text-gray-400 mt-1.5">
-        Scroll to see more
-      </p>
-    </div>
-
-    <!-- ================= CHART (BY TYPE) ================= -->
-    <!-- <div
-      class="xl:col-span-3 bg-white border border-[#DCDEDD] rounded-[12px] p-3.5 sm:p-5"
+    <!-- By type / by field -->
+    <section
+      v-for="group in [
+        { title: $t('clients.stats.byType'), icon: Layers, rows: clientsByType, key: 'type' },
+        { title: $t('clients.stats.byField'), icon: Code, rows: clientsByField, key: 'field' },
+      ]"
+      :key="group.key"
+      class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0"
     >
-      <div class="flex items-center gap-2.5 mb-5">
-        <TrendingUp class="w-6 h-6 text-purple-600" />
-        <div>
-          <h3 class="text-brand-dark text-sm font-bold">
-            Client Statistics Chart
-          </h3>
-          <p class="text-brand-light text-sm">
-            Client distribution by type
-          </p>
-        </div>
+      <div class="flex items-center gap-2 mb-2">
+        <component :is="group.icon" class="w-4 h-4 text-ui-faint shrink-0" />
+        <p class="text-ui-small text-ui-muted truncate">{{ group.title }}</p>
       </div>
-
-      <VueApexCharts
-        type="area"
-        height="250"
-        :options="chartOptions"
-        :series="chartSeries"
-      />
-    </div> -->
+      <ul v-if="group.rows.length" class="max-h-[132px] overflow-y-auto -mx-1 px-1 divide-y divide-ui-line">
+        <li v-for="item in group.rows" :key="item[group.key]" class="flex items-center justify-between gap-3 py-1.5 text-ui-small">
+          <span class="text-ui-text truncate">{{ item[group.key] }}</span>
+          <span class="text-ui-ink font-medium tabular-nums">{{ item.total }}</span>
+        </li>
+      </ul>
+      <p v-else class="text-ui-small text-ui-faint py-1.5">{{ $t("common.states.noData") }}</p>
+      <p v-if="group.key === 'field' && clientsByField.length > 5" class="text-ui-cap text-ui-faint mt-1">{{ $t("clients.stats.scrollMore") }}</p>
+    </section>
   </div>
 </template>

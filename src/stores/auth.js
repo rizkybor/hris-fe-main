@@ -9,6 +9,9 @@ import router from "@/router";
 // request itself resolves faster -- otherwise it flashes for a few
 // milliseconds and the user can't tell it's actually there.
 const MIN_LOADING_MS = 900;
+// Sign-in shows the butterfly loader a little longer so it gets to beat its
+// wings a few times (ButterflyLoader.vue).
+const MIN_LOGIN_LOADING_MS = 1800;
 const withMinDuration = (promise, ms = MIN_LOADING_MS) => {
     const timer = new Promise((resolve) => setTimeout(resolve, ms));
     return Promise.allSettled([promise, timer]).then(([result]) => {
@@ -43,7 +46,7 @@ export const useAuthStore = defineStore("auth", {
             this.error = null
 
             try {
-                const response = await withMinDuration(axiosInstance.post('/login', credentials))
+                const response = await withMinDuration(axiosInstance.post('/login', credentials), MIN_LOGIN_LOADING_MS)
 
                 const token = response.data.data.token
 
@@ -53,6 +56,9 @@ export const useAuthStore = defineStore("auth", {
 
                 this.success = response.data.message
 
+                // Each sign-in starts the sidebar from its default open sections
+                // (see Sidebar.vue); changes made during the session are kept.
+                try { localStorage.removeItem('sidebar-collapsed-sections') } catch { /* storage unavailable */ }
                 router.push({ name: 'admin.dashboard' })
             } catch (error) {
                 this.error = handleError(error)
@@ -123,7 +129,10 @@ export const useAuthStore = defineStore("auth", {
                 this.user = null
                 this.error = null
 
-                router.push({ name: 'login' })
+                // Full reload into the login page: clears every cached store
+                // and in-memory cache, so the next person to sign in on this
+                // browser never sees the previous user's data.
+                window.location.assign(router.resolve({ name: 'login' }).href)
             } catch (error) {
                 this.error = handleError(error)
             } finally {

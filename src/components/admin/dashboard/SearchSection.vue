@@ -1,4 +1,6 @@
 <script setup>
+import DashboardWidgetCard from "./DashboardWidgetCard.vue";
+import { UiButton } from "@/components/ui";
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
@@ -76,145 +78,69 @@ const goToProjectFromTask = (projectId) => router.push({ name: "admin.projects.d
 </script>
 
 <template>
-  <!-- Search Section -->
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4">
-    <div
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
-    >
-      <!-- Search Bar -->
+  <DashboardWidgetCard :title="$t('dashboard.widgets.search')" :subtitle="$t('dashboard.search.subtitle')">
+    <div class="flex flex-col sm:flex-row gap-2">
       <div class="flex-1 relative">
-        <div
-          class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
-        >
-          <SearchIcon class="h-5 w-5 text-gray-400" />
-        </div>
+        <SearchIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-faint pointer-events-none" />
         <input
           v-model="query"
           type="text"
-          class="w-full pl-12 pr-10 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300"
-          placeholder="Search employees, tasks, reports, projects..."
+          class="w-full h-10 pl-9 pr-9 bg-ui-surface border border-ui-line-strong rounded-ui-control text-ui-body text-ui-ink placeholder:text-ui-faint focus:outline-none focus:border-ui-accent focus:shadow-ui-focus transition-shadow"
+          :placeholder="$t('dashboard.search.placeholder')"
           @keyup.enter="handleSearch"
         />
-        <button
-          v-if="query"
-          @click="clearSearch"
-          class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
-        >
-          <XIcon class="h-4 w-4" />
+        <button v-if="query" type="button" :aria-label="$t('dashboard.search.clear')" @click="clearSearch" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md flex items-center justify-center text-ui-faint hover:text-ui-ink hover:bg-ui-hover">
+          <XIcon class="w-3.5 h-3.5" />
         </button>
       </div>
-
-      <!-- Filter and Action Buttons -->
-      <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
-        <!-- Department Filter -->
-        <div class="relative w-full sm:w-auto">
-          <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
-          >
-            <BuildingIcon class="h-4 w-4 text-gray-400" />
-          </div>
-          <select
-            v-model="departmentFilter"
-            class="select-soft select-soft-icon-pl"
-          >
-            <option value="">All Departments</option>
-            <option v-for="dept in departments" :key="dept.value" :value="dept.value">
-              {{ dept.label }}
-            </option>
-          </select>
-          <div
-            class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
-          >
-            <ChevronDownIcon class="h-4 w-4 text-gray-400" />
-          </div>
-        </div>
-
-        <!-- Search Button -->
-        <button
-          @click="handleSearch"
-          :disabled="loading"
-          class="btn-primary w-full sm:w-auto rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center sm:justify-start gap-2 disabled:opacity-50"
-        >
-          <SearchIcon class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-base font-semibold">
-            {{ loading ? "Searching..." : "Search" }}
-          </span>
-        </button>
+      <div class="relative sm:w-48">
+        <BuildingIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-faint pointer-events-none" />
+        <select v-model="departmentFilter" class="w-full h-10 pl-9 pr-8 appearance-none bg-ui-surface border border-ui-line-strong rounded-ui-control text-ui-body text-ui-ink focus:outline-none focus:border-ui-accent focus:shadow-ui-focus">
+          <option value="">{{ $t("dashboard.search.allDepartments") }}</option>
+          <option v-for="dept in departments" :key="dept.value" :value="dept.value">{{ dept.label }}</option>
+        </select>
+        <ChevronDownIcon class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-faint pointer-events-none" />
       </div>
+      <UiButton :icon="SearchIcon" :loading="loading" @click="handleSearch">{{ loading ? $t("dashboard.search.searching") : $t("common.actions.search") }}</UiButton>
     </div>
 
-    <!-- Results -->
-    <div v-if="hasSearched" class="mt-4 pt-4 border-t border-[#F1F1F1]">
-      <Spinner v-if="loading" label="Searching..." />
-
-      <div v-else-if="!hasResults" class="text-center py-6 text-sm text-gray-400">
-        No results found for "{{ query }}"
-      </div>
+    <div v-if="hasSearched" class="mt-4 pt-4 border-t border-ui-line">
+      <Spinner v-if="loading" :label="$t('dashboard.search.searching')" />
+      <p v-else-if="!hasResults" class="text-center py-6 text-ui-small text-ui-muted">{{ $t("dashboard.search.noResults", { query }) }}</p>
 
       <div v-else class="space-y-4">
         <div v-if="filteredEmployees.length > 0">
-          <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Employees</p>
-          <div class="space-y-1">
-            <button
-              v-for="employee in filteredEmployees"
-              :key="'emp-' + employee.id"
-              @click="goToEmployee(employee.id)"
-              class="w-full text-left flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              <UserIcon class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-sm text-brand-dark font-medium">{{ employee.name }}</span>
-              <span class="text-xs text-gray-400">{{ employee.job_title }}</span>
-            </button>
-          </div>
+          <p class="text-ui-over uppercase text-ui-muted mb-1.5 px-2">{{ $t("dashboard.search.employees") }}</p>
+          <button v-for="employee in filteredEmployees" :key="'emp-' + employee.id" type="button" @click="goToEmployee(employee.id)" class="w-full text-left flex items-center gap-3 h-9 px-2 rounded-ui-control hover:bg-ui-hover">
+            <UserIcon class="w-4 h-4 text-ui-faint shrink-0" />
+            <span class="text-ui-small font-medium text-ui-ink truncate">{{ employee.name }}</span>
+            <span class="text-ui-cap text-ui-muted truncate">{{ employee.job_title }}</span>
+          </button>
         </div>
-
         <div v-if="results.projects.length > 0">
-          <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Projects</p>
-          <div class="space-y-1">
-            <button
-              v-for="project in results.projects"
-              :key="'proj-' + project.id"
-              @click="goToProject(project.id)"
-              class="w-full text-left flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              <FolderIcon class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-sm text-brand-dark font-medium">{{ project.name }}</span>
-              <span class="text-xs text-gray-400 capitalize">{{ project.status }}</span>
-            </button>
-          </div>
+          <p class="text-ui-over uppercase text-ui-muted mb-1.5 px-2">{{ $t("dashboard.search.projects") }}</p>
+          <button v-for="project in results.projects" :key="'proj-' + project.id" type="button" @click="goToProject(project.id)" class="w-full text-left flex items-center gap-3 h-9 px-2 rounded-ui-control hover:bg-ui-hover">
+            <FolderIcon class="w-4 h-4 text-ui-faint shrink-0" />
+            <span class="text-ui-small font-medium text-ui-ink truncate">{{ project.name }}</span>
+            <span class="text-ui-cap text-ui-muted capitalize">{{ project.status }}</span>
+          </button>
         </div>
-
         <div v-if="results.tasks.length > 0">
-          <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Tasks</p>
-          <div class="space-y-1">
-            <button
-              v-for="task in results.tasks"
-              :key="'task-' + task.id"
-              @click="goToProjectFromTask(task.project_id)"
-              class="w-full text-left flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              <ListChecksIcon class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-sm text-brand-dark font-medium">{{ task.name }}</span>
-              <span class="text-xs text-gray-400">{{ task.project_name }}</span>
-            </button>
-          </div>
+          <p class="text-ui-over uppercase text-ui-muted mb-1.5 px-2">{{ $t("dashboard.search.tasks") }}</p>
+          <button v-for="task in results.tasks" :key="'task-' + task.id" type="button" @click="goToProjectFromTask(task.project_id)" class="w-full text-left flex items-center gap-3 h-9 px-2 rounded-ui-control hover:bg-ui-hover">
+            <ListChecksIcon class="w-4 h-4 text-ui-faint shrink-0" />
+            <span class="text-ui-small font-medium text-ui-ink truncate">{{ task.name }}</span>
+            <span class="text-ui-cap text-ui-muted truncate">{{ task.project_name }}</span>
+          </button>
         </div>
-
         <div v-if="results.teams.length > 0">
-          <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Teams</p>
-          <div class="space-y-1">
-            <button
-              v-for="team in results.teams"
-              :key="'team-' + team.id"
-              @click="goToTeam(team.id)"
-              class="w-full text-left flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              <UsersIcon class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-sm text-brand-dark font-medium">{{ team.name }}</span>
-            </button>
-          </div>
+          <p class="text-ui-over uppercase text-ui-muted mb-1.5 px-2">{{ $t("dashboard.search.teams") }}</p>
+          <button v-for="team in results.teams" :key="'team-' + team.id" type="button" @click="goToTeam(team.id)" class="w-full text-left flex items-center gap-3 h-9 px-2 rounded-ui-control hover:bg-ui-hover">
+            <UsersIcon class="w-4 h-4 text-ui-faint shrink-0" />
+            <span class="text-ui-small font-medium text-ui-ink truncate">{{ team.name }}</span>
+          </button>
         </div>
       </div>
     </div>
-  </div>
+  </DashboardWidgetCard>
 </template>

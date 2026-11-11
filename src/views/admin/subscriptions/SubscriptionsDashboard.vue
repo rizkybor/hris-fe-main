@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { debounce } from "lodash-es";
 import {
@@ -11,80 +11,95 @@ import {
   Edit,
   Trash2,
   Receipt,
-  ChevronDown,
   Building2,
   FolderKanban,
   MailCheck,
+  CalendarClock,
 } from "lucide-vue-next";
 import { useSubscriptionStore } from "@/stores/subscription";
-import { useClientStore } from "@/stores/client";
-import { useProjectStore } from "@/stores/project";
-import { useBankAccountStore } from "@/stores/bankAccount";
-import { useProjectCalculatorStore } from "@/stores/projectCalculator";
-import { useConfigurableOptionStore } from "@/stores/configurableOption";
+import { useLookupStore } from "@/stores/lookups";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useToastStore } from "@/stores/toast";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
 import { formatDateLong as formatDate, formatDate as formatDateMedium } from "@/utils/dateUtils";
 import Alert from "@/components/common/Alert.vue";
-import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiChips, UiTable, UiEmpty } from "@/components/ui";
 import Pagination from "@/components/common/Pagination.vue";
 import SubscriptionFormModal from "@/components/admin/subscription/SubscriptionFormModal.vue";
 import SubscriptionsRecap from "@/components/admin/subscription/SubscriptionsRecap.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t, te } = useI18n();
 
 const store = useSubscriptionStore();
-const { subscriptions, meta, loading, error, success, generatingId } = storeToRefs(store);
-const clientStore = useClientStore();
-const { clients } = storeToRefs(clientStore);
-const projectStore = useProjectStore();
-const { projects } = storeToRefs(projectStore);
-const bankAccountStore = useBankAccountStore();
-const { bankAccounts } = storeToRefs(bankAccountStore);
-const calculatorStore = useProjectCalculatorStore();
-const { pphTypes } = storeToRefs(calculatorStore);
-const configurableOptionStore = useConfigurableOptionStore();
+const { subscriptions, meta, loading, error, generatingId } = storeToRefs(store);
+const lookups = useLookupStore();
 const alertModal = useAlertModalStore();
+const toast = useToastStore();
 
 // Configurable via Settings -> Dropdown Options (category
-// "subscription_service_type") instead of a fixed list -- copied out of
-// the shared configurableOption store's single `options` slot right after
-// fetching so it isn't clobbered if that store is used for another
-// category elsewhere.
-const serviceTypeOptions = ref([]);
+// "subscription_service_type"). The page needs it for the row labels and
+// the type filter; the modal's other pickers load when it opens.
+const SERVICE_TYPE_CATEGORY = "subscription_service_type";
+lookups.ensure("options", SERVICE_TYPE_CATEGORY).catch(() => {});
+const serviceTypeOptions = computed(() => lookups.optionsFor(SERVICE_TYPE_CATEGORY).filter((opt) => opt.is_active));
 const serviceTypeLabel = computed(() =>
   serviceTypeOptions.value.reduce((acc, opt) => ({ ...acc, [opt.value]: opt.label }), {})
 );
 
-const search = ref("");
-const statusFilter = ref("");
-const serviceTypeFilter = ref("");
+// Search, status (incl. the "due" / "overdue" views), type and page live
+// in the URL and are remembered; the list shows what the store has and
+// refreshes quietly.
+const list = useListState("subscriptions", { q: "", status: "", type: "", page: 1 });
+const search = ref(list.q);
+watch(search, debounce((v) => (list.q = v.trim()), 300));
+watch(() => list.q, (v) => v !== search.value.trim() && (search.value = v));
+const statusFilter = computed({ get: () => list.status, set: (v) => (list.status = v) });
+const serviceTypeFilter = computed({ get: () => list.type, set: (v) => (list.type = v) });
 
-const fetchData = (page = meta.value.current_page || 1) =>
-  store.fetchSubscriptions({
-    search: search.value || undefined,
-    status: statusFilter.value || undefined,
-    service_type: serviceTypeFilter.value || undefined,
-    page,
-  });
+// "Due in 30 days" / "Overdue" aren't API filters, but the API sorts by
+// next_due_date, so the first rows of the active list are exactly the ones
+// due soonest: fetch one large page of active rows and keep the due ones.
+const DUE_VIEWS = ["due", "overdue"];
+const dueView = computed(() => (DUE_VIEWS.includes(list.status) ? list.status : ""));
+const params = computed(() =>
+  dueView.value
+    ? { search: list.q || undefined, status: "active", service_type: list.type || undefined, page: 1, row_per_page: 100 }
+    : { search: list.q || undefined, status: list.status || undefined, service_type: list.type || undefined, page: list.page }
+);
+const { refreshing, refresh } = useStaleFetch(() => store.fetchSubscriptions(params.value), {
+  key: () => ["subscriptions-list", params.value],
+  hasData: () => subscriptions.value.length > 0,
+});
+const fetchData = (page = list.page) => {
+  if (page !== list.page) list.page = page;
+  else refresh({ force: true });
+};
 
-onMounted(async () => {
-  fetchData(1);
-  if (clients.value.length === 0) await clientStore.fetchAllClient();
-  if (projects.value.length === 0) await projectStore.fetchProjectsPaginated({ row_per_page: 100 });
-  if (bankAccounts.value.length === 0) await bankAccountStore.fetchBankAccounts();
-  if (pphTypes.value.length === 0) await calculatorStore.fetchPphTypes();
-  await configurableOptionStore.fetchByCategory("subscription_service_type");
-  serviceTypeOptions.value = configurableOptionStore.options.filter((opt) => opt.is_active);
+const daysUntil = (subscription) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(subscription.next_due_date);
+  due.setHours(0, 0, 0, 0);
+  return Math.round((due - today) / (1000 * 60 * 60 * 24));
+};
+const rows = computed(() => {
+  if (dueView.value === "overdue") return subscriptions.value.filter((s) => s.status === "active" && daysUntil(s) < 0);
+  if (dueView.value === "due") return subscriptions.value.filter((s) => s.status === "active" && daysUntil(s) <= 30);
+  return subscriptions.value;
 });
 
-// A filter change always starts back at page 1 -- otherwise a narrower
-// result set can leave the view on a page number that no longer exists.
-watch([search, statusFilter, serviceTypeFilter], debounce(() => fetchData(1), 300));
+// Counts for the due chips come from the recap above the list.
+const summary = ref(null);
 
-const STATUS_CLASS = {
-  active: "bg-green-50 text-green-700",
-  postponed: "bg-amber-50 text-amber-700",
-  cancelled: "bg-gray-100 text-gray-500",
+const STATUS_TONE = {
+  active: "ok",
+  postponed: "warn",
+  cancelled: "neutral",
 };
 
 // "cancelled" is still the stored value (matches the backend enum and
@@ -92,34 +107,25 @@ const STATUS_CLASS = {
 // dropped as a separate status since it behaved identically to
 // "cancelled"/Not Active everywhere (both just block invoice generation),
 // so keeping both only added confusion with no functional difference.
-const STATUS_LABEL = {
-  active: "Active",
-  postponed: "Postponed",
-  cancelled: "Not Active",
-};
+const STATUS_LABEL = computed(() => ({
+  active: t("subscriptions.status.active"),
+  postponed: t("subscriptions.status.postponed"),
+  cancelled: t("subscriptions.status.cancelled"),
+}));
+const cycleLabel = (cycle) => (te(`subscriptions.cycle.${cycle}`) ? t(`subscriptions.cycle.${cycle}`) : cycle);
 
 const dueBadge = (subscription) => {
   if (subscription.status !== "active") return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(subscription.next_due_date);
-  const diffDays = Math.round((due - today) / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return { label: `Overdue ${Math.abs(diffDays)}d`, class: "bg-red-50 text-red-600" };
-  if (diffDays <= 7) return { label: diffDays === 0 ? "Due today" : `Due in ${diffDays}d`, class: "bg-amber-50 text-amber-700" };
+  const diffDays = daysUntil(subscription);
+  if (diffDays < 0) return { label: t("subscriptions.list.overdueDays", { n: Math.abs(diffDays) }), tone: "bad" };
+  if (diffDays <= 7) return { label: diffDays === 0 ? t("subscriptions.list.dueToday") : t("subscriptions.list.dueInDays", { n: diffDays }), tone: "warn" };
   return null;
 };
 
 // H-30: highlights the whole card once a subscription is within 30 days
 // of (or past) its next due date -- a wider heads-up than dueBadge's 7-day
 // badge, which stays as-is for the tighter "about to renew" callout.
-const isNearDue = (subscription) => {
-  if (subscription.status !== "active") return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(subscription.next_due_date);
-  const diffDays = Math.round((due - today) / (1000 * 60 * 60 * 24));
-  return diffDays <= 30;
-};
+const isNearDue = (subscription) => subscription.status === "active" && daysUntil(subscription) <= 30;
 
 // The backend's daily H-30 job records which due date it already emailed
 // contact@ about; once that matches the current next_due_date, this cycle's
@@ -132,6 +138,25 @@ const reminderSent = (subscription) =>
 // Bumped after any change so the recap above the list reloads.
 const recapKey = ref(0);
 
+// Presentation only: filter options and table columns.
+const STATUS_CHIPS = computed(() => [
+  { value: "", label: t("common.labels.all") },
+  { value: "active", label: t("subscriptions.status.active") },
+  { value: "postponed", label: t("subscriptions.status.postponed") },
+  { value: "cancelled", label: t("subscriptions.status.cancelled") },
+  // From the recap: due in 30 days includes the overdue ones.
+  { value: "due", label: t("subscriptions.list.chips.dueSoon"), count: summary.value?.due_soon?.count },
+  { value: "overdue", label: t("subscriptions.list.chips.overdue"), count: summary.value?.overdue?.count },
+]);
+const typeFilterOptions = computed(() => [{ value: "", label: t("subscriptions.list.allTypes") }, ...serviceTypeOptions.value]);
+const COLUMNS = computed(() => [
+  { key: "name", label: t("subscriptions.list.columns.subscription") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "amount", label: t("common.labels.amount"), align: "right" },
+  { key: "next_due_date", label: t("subscriptions.list.columns.nextDue") },
+  { key: "actions", label: "", align: "right" },
+]);
+
 // ===== Add / Edit modal =====
 const showModal = ref(false);
 const modalMode = ref("add");
@@ -139,7 +164,12 @@ const editingSubscription = ref({});
 const modalLoading = ref(false);
 const formErrors = ref({});
 
+// The modal's pickers load the first time it opens (then come from the
+// shared cache), not with the page.
+const ensurePickers = () => lookups.ensureAll(["clients", "projects", "bankAccounts", "pphTypes"]).catch(() => {});
+
 const openAdd = () => {
+  ensurePickers();
   modalMode.value = "add";
   editingSubscription.value = {};
   formErrors.value = {};
@@ -147,6 +177,7 @@ const openAdd = () => {
 };
 
 const openEdit = (subscription) => {
+  ensurePickers();
   modalMode.value = "edit";
   editingSubscription.value = subscription;
   formErrors.value = {};
@@ -162,280 +193,261 @@ const handleSubmit = async ({ mode, id, payload }) => {
   formErrors.value = {};
   try {
     if (mode === "edit") {
+      // The store puts the saved row in place from the response.
       await store.updateSubscription(id, payload);
     } else {
       await store.createSubscription(payload);
       // A new row can land on any page once the list re-sorts by
       // next_due_date, so start back at page 1 rather than guessing.
-      await fetchData(1);
+      fetchData(1);
     }
+    store.clearMessages();
     recapKey.value++;
     showModal.value = false;
+    toast.success(mode === "edit" ? t("subscriptions.list.toast.updated") : t("subscriptions.list.toast.created"), payload.name);
   } catch (err) {
     formErrors.value = err?.response?.data?.errors || {};
+    store.clearMessages();
+    if (!err?.response?.data?.errors) toast.error(t("common.toast.error"), err?.response?.data?.message || "");
   } finally {
     modalLoading.value = false;
   }
 };
 
 const handleDelete = async (subscription) => {
-  const ok = await alertModal.confirm(`Delete subscription "${subscription.name}"? This action cannot be undone.`, {
+  const ok = await alertModal.confirm(t("subscriptions.list.deleteConfirm", { name: subscription.name }), {
     type: "danger",
-    confirmText: "Delete",
+    confirmText: t("common.actions.delete"),
   });
   if (!ok) return;
 
   try {
+    // Removes the row and lowers the total in the store.
     await store.deleteSubscription(subscription.id);
+    store.clearMessages();
     recapKey.value++;
+    toast.success(t("subscriptions.list.toast.deleted"), subscription.name);
+    // The last row of a later page: step back a page.
+    if (!subscriptions.value.length && list.page > 1 && !dueView.value) list.page -= 1;
   } catch (err) {
-    await alertModal.alert("Failed to delete subscription.", { type: "danger" });
+    store.clearMessages();
+    toast.error(t("subscriptions.list.deleteFailed"), err?.response?.data?.message || "");
   }
+};
+
+// The API returns the new invoice, not the subscription: the row follows
+// the same rule the backend applies (next due date moves one cycle on,
+// one more invoice), and the recap refreshes quietly.
+const advanceDueDate = (value, cycle) => {
+  const [y, m, d] = String(value).slice(0, 10).split("-").map(Number);
+  const next = new Date(Date.UTC(y, m - 1 + (cycle === "yearly" ? 12 : 1), d));
+  return next.toISOString().slice(0, 10);
 };
 
 const handleGenerateInvoice = async (subscription) => {
   const periodLabel = subscription.billing_cycle === "yearly"
     ? new Date(subscription.next_due_date).getFullYear()
-    : new Date(subscription.next_due_date).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    : new Date(subscription.next_due_date).toLocaleDateString(localeTag(), { month: "long", year: "numeric" });
 
-  let message = `Generate invoice for "${subscription.name}" — ${periodLabel}, ${formatRupiah(subscription.amount)}?`;
+  let message = t("subscriptions.list.generateConfirm", { name: subscription.name, period: periodLabel, amount: formatRupiah(subscription.amount) });
   if (subscription.duplicate_invoice_number) {
-    message += `\n\nNote: An invoice for this exact period (${periodLabel}) already exists (No. ${subscription.duplicate_invoice_number}). Please review it before generating another.`;
+    message += `\n\n${t("subscriptions.list.generateDuplicate", { period: periodLabel, number: subscription.duplicate_invoice_number })}`;
   }
 
-  const ok = await alertModal.confirm(message, { confirmText: "Generate" });
+  const ok = await alertModal.confirm(message, { confirmText: t("subscriptions.list.generateAction") });
   if (!ok) return;
 
   try {
-    await store.generateInvoice(subscription.id);
-    // next_due_date/last_invoiced_at/invoices_count all changed on the
-    // backend -- reload this page to reflect them on the row.
-    await fetchData();
+    const invoice = await store.generateInvoice(subscription.id);
+    store.clearMessages();
+    store.patchRow(subscription.id, {
+      next_due_date: advanceDueDate(subscription.next_due_date, subscription.billing_cycle),
+      last_invoiced_at: new Date().toISOString(),
+      invoices_count: (Number(subscription.invoices_count) || 0) + 1,
+      duplicate_invoice_number: null,
+    });
     recapKey.value++;
-    await alertModal.alert("Invoice generated successfully.", { type: "success" });
+    toast.success(t("subscriptions.list.generated"), invoice?.invoice_number ? t("subscriptions.list.toast.invoiceNumber", { number: invoice.invoice_number }) : "");
   } catch (err) {
-    await alertModal.alert(err?.response?.data?.message || "Failed to generate invoice.", { type: "danger" });
+    store.clearMessages();
+    toast.error(t("subscriptions.list.generateFailed"), err?.response?.data?.message || "");
   }
 };
+
+const onRowClick = (subscription) => can("subscription-edit") && openEdit(subscription);
 </script>
 
 <template>
-  <!-- The admin layout already pads the page, so phones get little extra. -->
-  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
-    <!-- Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-4 sm:mb-5">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-5">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-9 h-9 bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0">
-            <RefreshCw class="w-6 h-6 text-indigo-600" />
-          </div>
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-base font-bold">Subscriptions</h3>
-            <p class="text-brand-light text-xs font-normal">
-              Recurring billing -- maintenance, domain renewal, SaaS subscriptions
-            </p>
-          </div>
-        </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('subscriptions.list.title')" :subtitle="$t('subscriptions.list.subtitle')">
+      <template v-if="can('subscription-create')" #actions>
+        <UiButton :icon="Plus" class="w-full sm:w-auto" @click="openAdd">{{ $t("subscriptions.list.add") }}</UiButton>
+      </template>
+    </UiPageHeader>
 
-        <div v-if="can('subscription-create')" class="flex items-center gap-3.5">
-          <button
-            type="button"
-            @click="openAdd"
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center justify-center gap-1.5 w-full sm:w-auto"
-          >
-            <Plus class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">Add Subscription</span>
-          </button>
+    <SubscriptionsRecap :service-type-options="serviceTypeOptions" :refresh-key="recapKey" @loaded="summary = $event" />
+
+    <Alert type="danger" :title="typeof error === 'string' ? error : ''" :show="!!error && typeof error === 'string'" @close="store.clearMessages()" />
+
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+      <!-- Toolbar -->
+      <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line flex flex-col lg:flex-row lg:items-center gap-2.5 lg:gap-3">
+        <div class="flex flex-col sm:flex-row gap-2 lg:contents">
+          <UiInput v-model="search" :icon="Search" :placeholder="$t('subscriptions.list.searchPlaceholder')" class="flex-1 lg:flex-none lg:w-[300px]" :aria-label="$t('subscriptions.list.searchAria')" />
+          <UiSelect v-model="serviceTypeFilter" :options="typeFilterOptions" class="sm:w-[200px] lg:order-last lg:ml-auto" :aria-label="$t('subscriptions.list.serviceType')" />
         </div>
+        <UiChips v-model="statusFilter" :options="STATUS_CHIPS" class="min-w-0" />
       </div>
 
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
-        <div class="relative flex-1">
-          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <Search class="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            v-model="search"
-            class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-            placeholder="Search by name..."
-          />
-        </div>
-        <div class="grid grid-cols-2 sm:flex gap-2 sm:gap-3.5">
-        <div class="relative w-full sm:w-auto min-w-0">
-          <select v-model="serviceTypeFilter" class="select-soft w-full">
-            <option value="">All Types</option>
-            <option v-for="opt in serviceTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-          </select>
-          <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-        <div class="relative w-full sm:w-auto min-w-0">
-          <select v-model="statusFilter" class="select-soft w-full">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="postponed">Postponed</option>
-            <option value="cancelled">Not Active</option>
-          </select>
-          <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-        </div>
-      </div>
-    </div>
-
-    <SubscriptionsRecap :service-type-options="serviceTypeOptions" :refresh-key="recapKey" />
-
-    <Alert type="success" :title="success" :show="!!success" @close="store.clearMessages()" />
-    <Alert type="error" :title="typeof error === 'string' ? error : ''" :show="!!error && typeof error === 'string'" @close="store.clearMessages()" />
-
-    <!-- Loading -->
-    <div v-if="loading" class="space-y-3">
-      <Skeleton v-for="i in 4" :key="i" height="90px" rounded="12px" />
-    </div>
-
-    <!-- Empty state -->
-    <div
-      v-else-if="subscriptions.length === 0"
-      class="flex flex-col items-center justify-center text-center py-16 rounded-[14px] border border-dashed border-[#DCDEDD] bg-gray-50/60"
-    >
-      <template v-if="search || statusFilter || serviceTypeFilter">
-        <SearchX class="w-10 h-10 text-gray-300 mb-3" />
-        <h4 class="text-brand-dark text-sm font-semibold mb-1">No subscriptions match your filters</h4>
-        <p class="text-brand-light text-xs">Try a different name, type, or status</p>
-      </template>
-      <template v-else>
-        <Inbox class="w-10 h-10 text-gray-300 mb-3" />
-        <h4 class="text-brand-dark text-sm font-semibold mb-1">No subscriptions yet</h4>
-        <p class="text-brand-light text-xs mb-4">
-          Add a maintenance, domain renewal, or SaaS subscription to start tracking recurring billing here.
-        </p>
-        <button
-          v-if="can('subscription-create')"
-          type="button"
-          @click="openAdd"
-          class="px-4 py-2.5 rounded-[8px] border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:border-[#0C51D9] hover:bg-white transition-colors duration-200"
-        >
-          Add your first subscription
-        </button>
-      </template>
-    </div>
-
-    <!-- List -->
-    <div v-else class="space-y-3">
-      <div
-        v-for="(subscription, index) in subscriptions"
-        :key="subscription.id"
-        class="rounded-[14px] p-3.5 sm:p-4 hover:border-[#0C51D9] transition-all duration-300"
-        :class="isNearDue(subscription) ? 'bg-orange-100 border border-orange-500' : 'bg-white border border-[#DCDEDD]'"
+      <UiTable
+        :columns="COLUMNS"
+        :rows="rows"
+        :meta="dueView ? null : meta"
+        :loading="loading && !subscriptions.length"
+        :skeleton-rows="4"
+        :clickable="can('subscription-edit')"
+        :class="refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
+        @row-click="onRowClick"
       >
-        <div class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
-          <!-- Number, name, badges, services, client/project -->
-          <div class="flex items-start gap-2 flex-1 min-w-0">
-            <span class="text-gray-400 text-xs font-semibold shrink-0 tabular-nums leading-5">
-              {{ (meta.current_page - 1) * meta.per_page + index + 1 }}.
-            </span>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-start sm:items-center gap-x-2 gap-y-1 flex-wrap mb-1.5">
-                <h4 class="text-brand-dark text-sm font-bold leading-5 line-clamp-2 sm:line-clamp-1 break-words min-w-0" :title="subscription.name">
-                  {{ subscription.name }}
-                </h4>
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0" :class="STATUS_CLASS[subscription.status] || 'bg-gray-100 text-gray-500'">
-                  {{ STATUS_LABEL[subscription.status] || subscription.status }}
-                </span>
-                <span v-if="dueBadge(subscription)" class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0" :class="dueBadge(subscription).class">
-                  {{ dueBadge(subscription).label }}
-                </span>
-              </div>
-              <div class="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
-                <span
-                  v-for="service in subscription.services"
-                  :key="service.id"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-medium max-w-full truncate"
-                >
-                  {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
-                </span>
-                <span class="inline-flex items-center gap-1 min-w-0 max-w-full">
-                  <Building2 class="w-3 h-3 shrink-0" /> <span class="truncate">{{ subscription.client?.name || "-" }}</span>
-                </span>
-                <span v-if="subscription.project" class="inline-flex items-center gap-1 min-w-0 max-w-full">
-                  <FolderKanban class="w-3 h-3 shrink-0" /> <span class="truncate">{{ subscription.project.name }}</span>
-                </span>
-              </div>
+        <template #cell-name="{ row }">
+          <div class="min-w-0 max-w-[420px] py-2">
+            <p class="text-ui-ink font-medium truncate" :title="row.name">{{ row.name }}</p>
+            <div class="flex items-center gap-x-3 gap-y-1 flex-wrap mt-1 text-ui-cap text-ui-muted">
+              <span v-for="service in row.services" :key="service.id" class="inline-flex items-center px-1.5 h-5 rounded bg-ui-subtle text-ui-text max-w-full truncate">
+                {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
+              </span>
+              <span class="inline-flex items-center gap-1 min-w-0 max-w-full">
+                <Building2 class="w-3 h-3 shrink-0 text-ui-faint" /><span class="truncate">{{ row.client?.name || "-" }}</span>
+              </span>
+              <span v-if="row.project" class="inline-flex items-center gap-1 min-w-0 max-w-full">
+                <FolderKanban class="w-3 h-3 shrink-0 text-ui-faint" /><span class="truncate">{{ row.project.name }}</span>
+              </span>
             </div>
           </div>
+        </template>
+        <template #cell-status="{ row }">
+          <div class="flex flex-col items-start gap-1">
+            <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot>{{ STATUS_LABEL[row.status] || row.status }}</UiBadge>
+            <UiBadge v-if="dueBadge(row)" :tone="dueBadge(row).tone">{{ dueBadge(row).label }}</UiBadge>
+          </div>
+        </template>
+        <template #cell-amount="{ row }">
+          <p class="text-ui-ink font-medium tabular-nums whitespace-nowrap">{{ formatRupiah(row.amount) }}</p>
+          <p class="text-ui-cap text-ui-muted capitalize">{{ cycleLabel(row.billing_cycle) }}</p>
+        </template>
+        <template #cell-next_due_date="{ row }">
+          <p class="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-ink'">
+            <CalendarClock v-if="isNearDue(row)" class="w-3.5 h-3.5 shrink-0" />{{ formatDate(row.next_due_date) }}
+          </p>
+          <p
+            v-if="reminderSent(row)"
+            class="text-ui-cap text-ui-ok font-medium flex items-center gap-1"
+            :title="$t('subscriptions.list.reminderTitle', { date: formatDate(row.next_due_date) })"
+          >
+            <MailCheck class="w-3.5 h-3.5 shrink-0" /> {{ $t("subscriptions.list.reminderEmailed") }}
+          </p>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-1" @click.stop>
+            <UiButton
+              v-if="can('subscription-generate-invoice') && row.status === 'active'"
+              variant="secondary"
+              size="sm"
+              :icon="Receipt"
+              :loading="generatingId === row.id"
+              :title="$t('subscriptions.list.generateInvoice')"
+              :aria-label="$t('subscriptions.list.generateInvoice')"
+              @click="handleGenerateInvoice(row)"
+            />
+            <UiButton v-if="can('subscription-edit')" variant="ghost" size="sm" :icon="Edit" :title="$t('common.actions.edit')" :aria-label="$t('subscriptions.list.editSubscription')" @click="openEdit(row)" />
+            <UiButton v-if="can('subscription-delete')" variant="ghost" size="sm" :icon="Trash2" class="hover:!text-ui-bad" :title="$t('common.actions.delete')" :aria-label="$t('subscriptions.list.deleteSubscription')" @click="handleDelete(row)" />
+          </div>
+        </template>
 
-          <!-- Amount, next due and actions: one row on desktop; on phones the
-               figures sit side by side and the actions get their own row. -->
-          <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 shrink-0 pl-5 lg:pl-0">
-            <div class="grid grid-cols-2 gap-3 sm:flex sm:gap-6">
-              <div class="lg:text-right min-w-0">
-                <p class="text-brand-dark text-sm font-bold">{{ formatRupiah(subscription.amount) }}</p>
-                <p class="text-gray-400 text-xs capitalize">{{ subscription.billing_cycle }}</p>
+        <!-- Phones: stacked row cards -->
+        <template #mobile="{ row, number }">
+          <div class="px-4 py-3.5" :class="isNearDue(row) ? 'bg-ui-warn-soft/60' : ''">
+            <div class="flex items-start gap-3">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-ui-body font-medium text-ui-ink line-clamp-2 break-words">{{ row.name }}</p>
+                <p class="text-ui-cap text-ui-muted truncate mt-0.5">
+                  {{ row.client?.name || "-" }}<template v-if="row.project"> · {{ row.project.name }}</template>
+                </p>
+                <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
+                  <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot>{{ STATUS_LABEL[row.status] || row.status }}</UiBadge>
+                  <UiBadge v-if="dueBadge(row)" :tone="dueBadge(row).tone">{{ dueBadge(row).label }}</UiBadge>
+                  <span v-for="service in row.services" :key="service.id" class="inline-flex items-center px-1.5 h-5 rounded bg-ui-subtle text-ui-cap text-ui-text max-w-full truncate">
+                    {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
+                  </span>
+                </div>
               </div>
-              <div class="lg:text-right min-w-0">
-                <p class="text-brand-dark text-xs font-semibold">
-                  <span class="sm:hidden">{{ formatDateMedium(subscription.next_due_date) }}</span>
-                  <span class="hidden sm:inline">{{ formatDate(subscription.next_due_date) }}</span>
-                </p>
-                <p class="text-gray-400 text-xs">Next due</p>
-                <p
-                  v-if="reminderSent(subscription)"
-                  class="text-emerald-600 text-xs font-medium flex items-center gap-1 lg:justify-end"
-                  :title="`Reminder email sent for the ${formatDate(subscription.next_due_date)} due date`"
-                >
-                  <MailCheck class="w-3.5 h-3.5 shrink-0" /> Reminder emailed
-                </p>
+              <div class="text-right shrink-0">
+                <p class="text-ui-body font-medium text-ui-ink tabular-nums">{{ formatRupiah(row.amount) }}</p>
+                <p class="text-ui-cap text-ui-muted capitalize">{{ cycleLabel(row.billing_cycle) }}</p>
               </div>
             </div>
-
-            <div class="flex items-center justify-end gap-1.5 pt-3 sm:pt-0 border-t border-black/5 sm:border-0">
-              <button
-                v-if="can('subscription-generate-invoice') && subscription.status === 'active'"
-                type="button"
-                @click="handleGenerateInvoice(subscription)"
-                :disabled="generatingId === subscription.id"
-                title="Generate Invoice"
-                aria-label="Generate invoice"
-                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] bg-white rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 disabled:opacity-50"
-              >
-                <Receipt class="w-4 h-4 text-gray-600" />
-              </button>
-              <button
-                v-if="can('subscription-edit')"
-                type="button"
-                @click="openEdit(subscription)"
-                title="Edit"
-                aria-label="Edit subscription"
-                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] bg-white rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300"
-              >
-                <Edit class="w-3.5 h-3.5 text-gray-600" />
-              </button>
-              <button
-                v-if="can('subscription-delete')"
-                type="button"
-                @click="handleDelete(subscription)"
-                title="Delete"
-                aria-label="Delete subscription"
-                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] bg-white rounded-[8px] hover:border-red-400 hover:bg-red-50 group/delete transition-all duration-300"
-              >
-                <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-              </button>
+            <div class="flex items-center gap-2 mt-2.5 pl-8" @click.stop>
+              <div class="flex-1 min-w-0">
+                <p class="text-ui-cap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-muted'">{{ $t("subscriptions.list.nextDueOn", { date: formatDateMedium(row.next_due_date) }) }}</p>
+                <p v-if="reminderSent(row)" class="text-ui-cap text-ui-ok font-medium flex items-center gap-1">
+                  <MailCheck class="w-3.5 h-3.5 shrink-0" /> {{ $t("subscriptions.list.reminderEmailed") }}
+                </p>
+              </div>
+              <UiButton
+                v-if="can('subscription-generate-invoice') && row.status === 'active'"
+                variant="secondary"
+                size="sm"
+                :icon="Receipt"
+                :loading="generatingId === row.id"
+                :aria-label="$t('subscriptions.list.generateInvoice')"
+                @click="handleGenerateInvoice(row)"
+              />
+              <UiButton v-if="can('subscription-edit')" variant="secondary" size="sm" :icon="Edit" :aria-label="$t('subscriptions.list.editSubscription')" @click="openEdit(row)" />
+              <UiButton v-if="can('subscription-delete')" variant="danger" size="sm" :icon="Trash2" :aria-label="$t('subscriptions.list.deleteSubscription')" @click="handleDelete(row)" />
             </div>
           </div>
-        </div>
+        </template>
+
+        <template #empty>
+          <UiEmpty
+            v-if="list.isDirty"
+            :icon="SearchX"
+            :title="$t('subscriptions.list.emptyFilteredTitle')"
+            :message="dueView ? $t('subscriptions.list.emptyDueHint') : $t('subscriptions.list.emptyFilteredHint')"
+            compact
+          >
+            <UiButton variant="secondary" @click="(search = ''), list.reset()">{{ $t("subscriptions.list.clearFilters") }}</UiButton>
+          </UiEmpty>
+          <UiEmpty
+            v-else
+            :icon="Inbox"
+            :title="$t('subscriptions.list.emptyTitle')"
+            :message="$t('subscriptions.list.emptyHint')"
+            compact
+          >
+            <UiButton v-if="can('subscription-create')" variant="secondary" :icon="Plus" @click="openAdd">{{ $t("subscriptions.list.addFirst") }}</UiButton>
+          </UiEmpty>
+        </template>
+      </UiTable>
+
+      <p v-if="dueView && rows.length" class="px-4 sm:px-5 py-3 border-t border-ui-line text-ui-cap text-ui-muted">
+        {{ $t("subscriptions.list.dueCount", { n: rows.length }, rows.length) }}
+      </p>
+      <div v-else-if="!dueView && meta.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('subscriptions.list.itemLabel')" @page-change="fetchData" />
       </div>
-    </div>
-
-    <Pagination :meta="meta" :loading="loading" item-label="subscription" @page-change="fetchData" />
+    </section>
 
     <SubscriptionFormModal
       :show="showModal"
       :loading="modalLoading"
       :mode="modalMode"
       :data="editingSubscription"
-      :clients="clients"
-      :projects="projects"
-      :bank-accounts="bankAccounts"
-      :pph-types="pphTypes"
+      :clients="lookups.clients"
+      :projects="lookups.projects"
+      :bank-accounts="lookups.bankAccounts"
+      :pph-types="lookups.pphTypes"
       :service-type-options="serviceTypeOptions"
       :errors="formErrors"
       @submit="handleSubmit"

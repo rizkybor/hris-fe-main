@@ -42,13 +42,14 @@ onMounted(() => {
 <template>
   <div class="relative">
     <button
-      class="relative w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
+      class="relative w-9 h-9 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
+      :aria-label="$t('common.a11y.notifications')"
       @click="toggle"
     >
       <BellIcon class="w-[18px] h-[18px]" />
       <span
         v-if="unreadCount > 0"
-        class="absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center"
+        class="absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-ui-bad text-white text-[10px] font-semibold flex items-center justify-center ring-2 ring-ui-bg"
       >
         {{ unreadCount > 9 ? "9+" : unreadCount }}
       </span>
@@ -62,17 +63,17 @@ onMounted(() => {
 
     <div
       v-if="isOpen"
-      class="absolute right-0 top-full mt-2 w-80 bg-white border border-[#DCDEDD] rounded-[12px] shadow-md z-[9999] max-h-[70vh] overflow-y-auto"
+      class="ui-anim-scale absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-24px)] bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay z-[9999] max-h-[70vh] overflow-y-auto origin-top-right"
     >
-      <div class="px-4 py-3 border-b border-[#DCDEDD] flex items-center justify-between">
-        <p class="text-sm font-semibold text-gray-900">Notifications</p>
+      <div class="px-4 py-3 border-b border-ui-line flex items-center justify-between">
+        <p class="text-ui-small font-semibold text-ui-ink">{{ $t("dashboard.notifications.title") }}</p>
         <button
           v-if="unreadCount > 0"
           @click="handleMarkAllRead"
-          class="flex items-center gap-1 text-xs text-[#0C51D9] font-medium hover:underline"
+          class="flex items-center gap-1 text-ui-cap text-ui-accent font-medium hover:underline"
         >
           <CheckCheckIcon class="w-3.5 h-3.5" />
-          Mark all read
+          {{ $t("dashboard.notifications.markAllRead") }}
         </button>
       </div>
 
@@ -86,8 +87,8 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else-if="notifications.length === 0" class="p-6 text-center text-sm text-gray-400">
-        No notifications yet
+      <div v-else-if="notifications.length === 0" class="p-6 text-center text-ui-small text-ui-muted">
+        {{ $t("dashboard.notifications.empty") }}
       </div>
 
       <div v-else>
@@ -95,21 +96,21 @@ onMounted(() => {
           v-for="notification in notifications"
           :key="notification.id"
           @click="handleItemClick(notification)"
-          class="w-full text-left px-4 py-3 border-b border-[#F1F1F1] hover:bg-gray-50 transition-colors flex items-start gap-2"
-          :class="{ 'bg-blue-50/40': !notification.read_at }"
+          class="w-full text-left px-4 py-3 border-b border-ui-line last:border-b-0 hover:bg-ui-hover transition-colors flex items-start gap-2.5"
+          :class="{ 'bg-ui-accent-soft/50': !notification.read_at }"
         >
           <span
             class="w-2 h-2 rounded-full mt-1.5 shrink-0"
-            :class="notification.read_at ? 'bg-transparent' : 'bg-[#0C51D9]'"
+            :class="notification.read_at ? 'bg-transparent' : 'bg-ui-accent'"
           ></span>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-brand-dark truncate">
-              {{ notification.data?.title ?? "Notification" }}
+            <p class="text-ui-small font-medium text-ui-ink truncate">
+              {{ notification.data?.title ?? $t("dashboard.notifications.fallbackTitle") }}
             </p>
-            <p class="text-xs text-gray-500 line-clamp-2">
+            <p class="text-ui-cap text-ui-muted line-clamp-2">
               {{ notification.data?.message }}
             </p>
-            <p class="text-[11px] text-gray-400 mt-1">
+            <p class="text-ui-cap text-ui-faint mt-1">
               {{ getTimeAgo(notification.created_at) }}
             </p>
           </div>

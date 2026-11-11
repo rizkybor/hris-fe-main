@@ -1,0 +1,149 @@
+{
+  "common": {
+    "payroll": "Payroll",
+    "regenerate": "Regenerate",
+    "generateThr": "Generate THR",
+    "generatePayroll": "Generate Payroll",
+    "monthlyPayroll": "Monthly Payroll",
+    "employeesCount": "{n} employee | {n} employees"
+  },
+  "status": {
+    "draft": "Draft",
+    "pending": "Pending",
+    "processing": "Processing",
+    "approved": "Approved",
+    "paid": "Paid",
+    "cancelled": "Cancelled",
+    "rejected": "Rejected"
+  },
+  "dashboard": {
+    "deleteConfirm": "Delete this {label} period ({period})? This permanently removes it and all its employee details.",
+    "deleteFailed": "Failed to delete payroll.",
+    "regenerateConfirm": "Re-generate {label} for {period}? This replaces the existing employee details for this period with freshly computed ones.",
+    "regenerateQueued": "{label} regeneration is being processed in the background. Please check back shortly.",
+    "regenerateFailed": "Failed to regenerate {label}.",
+    "changeThisMonth": "{change}% this month",
+    "columns": {
+      "employees": "Employees",
+      "processed": "Processed on",
+      "total": "Total payroll"
+    },
+    "title": "Payroll",
+    "subtitle": "Monthly payroll and THR periods, with totals and approval status.",
+    "generateReports": "Generate Reports",
+    "createNew": "Create New Payroll",
+    "stats": {
+      "totalAmount": "Total Payroll Amount",
+      "employeesPaid": "Employees Paid",
+      "thisMonth": "This month",
+      "pending": "Pending Payments",
+      "needApproval": "Need approval",
+      "averageSalary": "Average Salary",
+      "perEmployee": "Per employee",
+      "finalized": "Finalized"
+    },
+    "hideSalary": "Hide salary",
+    "showSalary": "Show salary",
+    "periodsTitle": "Monthly Payroll Periods",
+    "periodsSubtitle": "All departments · click a period to open its employee breakdown",
+    "empty": {
+      "title": "No payroll data found",
+      "message": "Create your first payroll to get started"
+    }
+  },
+  "create": {
+    "existsNoPermission": "A {label} for {period} already exists ({n} employees, status: {status}). Only Superadmin, Manager, or Finance can regenerate it.",
+    "existsConfirm": "A {label} for {period} already exists ({n} employees, status: {status}). Generating again will REPLACE all its employee details with freshly computed ones. Continue?",
+    "newConfirm": "Generate a new {label} for {period}? This is a brand-new period with no existing data.",
+    "generate": "Generate",
+    "thrFull": "THR (Tunjangan Hari Raya)",
+    "subtitleThr": "Select the month to generate THR (Tunjangan Hari Raya) for eligible employees",
+    "subtitle": "Select the salary month to generate payroll for all active employees",
+    "periodTitle": "Payroll Period",
+    "periodSubtitle": "Choose the run type and the salary month.",
+    "type": "Payroll Type",
+    "salaryMonth": "Salary Month",
+    "autoThrTitle": "Automatic Generation (THR)",
+    "autoThrBody": "THR will be generated for every employee with at least 1 month of continuous service, prorated by tenure (full amount at 12+ months). This is a separate run from the regular monthly payroll -- both can exist for the same month.",
+    "autoTitle": "Automatic Generation",
+    "autoBody": "Payroll will be automatically generated for all active employees based on their attendance records for the selected month. Salaries will be calculated based on attendance, sick days, and absences.",
+    "error": "Error",
+    "summaryTitle": "Payroll Summary",
+    "summarySubtitle": "Generation details",
+    "selectedMonth": "Selected Month:",
+    "generating": "Generating..."
+  },
+  "detail": {
+    "attendanceDeduction": "Attendance deduction",
+    "exportFailed": "Failed to export Excel file. Please try again.",
+    "updated": "Payroll detail updated successfully.",
+    "updateFailed": "Failed to update payroll detail.",
+    "markedPaid": "Payroll marked as paid successfully!",
+    "markPaidFailed": "Failed to mark payroll as paid. Please try again.",
+    "deleteDetailConfirm": "Delete {name}'s payroll entry for this period? This cannot be undone.",
+    "deleteDetailFailed": "Failed to delete payroll detail.",
+    "deletePayrollConfirm": "Delete this entire {label} period? This permanently removes it and all its employee details.",
+    "regenerateConfirm": "Re-generate this {label} period? This replaces all existing employee details with freshly computed ones.",
+    "allPositions": "All Positions",
+    "columns": {
+      "position": "Job Position"
+    },
+    "bankAccount": "Bank Account",
+    "monthsOfService": "Months of Service",
+    "attendance": "Attendance",
+    "grossThr": "Gross THR",
+    "basicSalary": "Basic Salary",
+    "basic": "Basic",
+    "deductions": "Deductions",
+    "netSalary": "Net Salary",
+    "subtitle": "Complete payroll breakdown by employee",
+    "regenerating": "Regenerating...",
+    "deletePayroll": "Delete Payroll",
+    "markAsPaid": "Mark as Paid",
+    "stats": {
+      "totalEmployees": "Total Employees",
+      "allDepartments": "All departments",
+      "totalPayroll": "Total Payroll",
+      "thisPeriod": "This period",
+      "processedOn": "Processed On"
+    },
+    "employeeDetails": "Employee Details",
+    "employeesInPeriod": "{n} employee in this period | {n} employees in this period",
+    "searchEmployees": "Search employees...",
+    "notApplicableHint": "Not applicable -- paid as a percentage of a project's budget, not the attendance-based formula",
+    "showAmountsHint": "Click Show Amounts to see the breakdown",
+    "percentOfProject": "{pct}% of {project}",
+    "project": "project",
+    "empty": {
+      "title": "No employees found",
+      "message": "Try a different search or position filter"
+    },
+    "paymentMode": "Payment Mode",
+    "earnings": "Earnings",
+    "grossSalary": "Gross Salary",
+    "totalDeductions": "Total Deductions",
+    "netTakeHome": "Net Salary (Take Home)",
+    "notesLabel": "Notes:",
+    "markPaid": {
+      "title": "Mark Payroll as Paid",
+      "message": "Confirm that you want to mark this payroll as paid. This action will update the status and record the payment date.",
+      "paymentDate": "Payment Date",
+      "processing": "Processing...",
+      "confirm": "Confirm Payment"
+    },
+    "edit": {
+      "title": "Edit Payroll — {name}",
+      "description": "Override this employee's automatically generated figures when their actual situation differs -- e.g. a fixed manual amount, or a cut of a project instead.",
+      "fixedAmount": "Fixed Amount (Rp)",
+      "percentOfProject": "% of a Project",
+      "finalSalary": "Final Salary (Take-home)",
+      "totalDeduction": "Total Deduction",
+      "loadingProjects": "Loading projects...",
+      "selectProject": "Select a project",
+      "percentage": "Percentage (%)",
+      "estimated": "Estimated payout: {amount}",
+      "recalculated": "Recalculated from the project's current budget when you save.",
+      "notesPlaceholder": "Optional reason for this override..."
+    }
+  }
+}

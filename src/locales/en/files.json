@@ -1,0 +1,80 @@
+{
+  "title": "Document Files",
+  "subtitle": "Company document storage",
+  "listTitle": "File Archives",
+  "totalFiles": "{n} total file | {n} total files",
+  "searchPlaceholder": "Search archives...",
+  "uploadedOn": "Uploaded {date}",
+  "noResultsFor": "Try searching with a different keyword for \"{query}\"",
+  "itemLabel": "files",
+  "stats": {
+    "total": "Total Archived Files",
+    "totalHint": "Secure Archive",
+    "lastUpload": "Last Upload",
+    "lastUploadHint": "Latest archive"
+  },
+  "empty": {
+    "title": "No archived files found",
+    "message": "Upload your first document to get started"
+  },
+  "actions": {
+    "download": "Download File",
+    "view": "View File",
+    "edit": "Edit File",
+    "delete": "Delete File"
+  },
+  "delete": {
+    "title": "Delete File?",
+    "message": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+    "confirm": "Yes, Delete"
+  },
+  "create": {
+    "title": "Upload Document File",
+    "subtitle": "Store a permanent company document"
+  },
+  "form": {
+    "infoSection": "File Information",
+    "fileSection": "File",
+    "nameRequiredLabel": "File Name *",
+    "namePlaceholder": "e.g. Company NDA Template, HR Policy 2026",
+    "nameRequired": "File name is required.",
+    "descriptionOptional": "Description (Optional)",
+    "descriptionPlaceholder": "Additional notes about this file...",
+    "uploadFile": "Upload File",
+    "uploading": "Uploading...",
+    "chooseFile": "Click to choose a file",
+    "dragDrop": "or drag and drop",
+    "fileRequired": "File is required.",
+    "nameAndFileRequired": "File Name and File are required.",
+    "uploadSuccess": "File uploaded successfully.",
+    "uploadFailed": "Failed to upload file.",
+    "replacementRequired": "Upload a replacement file before removing the current one."
+  },
+  "detail": {
+    "title": "Document File Detail",
+    "subtitle": "File information (read-only)",
+    "loading": "Loading archive detail...",
+    "loadFailed": "Failed to load archive detail.",
+    "noDescription": "No description",
+    "fileType": "File Type",
+    "fileSize": "File Size",
+    "uploadDate": "Upload Date",
+    "preview": "Preview",
+    "noPreview": "No preview available",
+    "notAvailable": "Archive data not available."
+  },
+  "edit": {
+    "title": "Edit Document File",
+    "subtitle": "Update file metadata or replace the attached document",
+    "loading": "Loading archive data...",
+    "notFound": "Archive not found.",
+    "loadFailed": "Failed to load archive.",
+    "namePlaceholder": "Enter file name",
+    "descriptionPlaceholder": "Enter a description",
+    "filePreview": "File Preview",
+    "replaceFile": "Replace File (Optional)",
+    "chooseNewFile": "Click to choose a new file",
+    "updateSuccess": "File updated successfully.",
+    "updateFailed": "Failed to update file."
+  }
+}

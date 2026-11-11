@@ -12,8 +12,6 @@ import {
   Search,
   Download,
   CheckCircle,
-  X,
-  ChevronDown,
   Pencil,
   Eye,
   EyeOff,
@@ -24,10 +22,13 @@ import { debounce } from "lodash-es";
 import Pagination from "@/components/admin/payroll/Pagination.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import { can, hasAnyRole } from "@/helpers/permissionHelper";
-import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
-import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import { UiAlert, UiBadge, UiButton, UiInput, UiModal, UiPageHeader, UiSelect, UiStat, UiTable } from "@/components/ui";
 import Avatar from "@/components/common/Avatar.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -258,7 +259,7 @@ const deductionBreakdown = (emp) => {
   const attendanceDeduction =
     emp.deductions - emp.bpjs_kesehatan_employee - emp.bpjs_jht_employee - emp.bpjs_jp_employee - emp.pph21;
   return [
-    `Potongan Absensi: ${formatRupiah(Math.max(0, attendanceDeduction))}`,
+    `${t("payroll.detail.attendanceDeduction")}: ${formatRupiah(Math.max(0, attendanceDeduction))}`,
     `BPJS Kesehatan: ${formatRupiah(emp.bpjs_kesehatan_employee)}`,
     `BPJS JHT: ${formatRupiah(emp.bpjs_jht_employee)}`,
     `BPJS JP: ${formatRupiah(emp.bpjs_jp_employee)}`,
@@ -271,7 +272,7 @@ const exportExcel = async () => {
     await payrollStore.exportExcel(route.params.id);
   } catch (error) {
     console.error("Error exporting Excel:", error);
-    await alertModal.alert("Failed to export Excel file. Please try again.", { type: "danger" });
+    await alertModal.alert(t("payroll.detail.exportFailed"), { type: "danger" });
   }
 };
 
@@ -353,11 +354,11 @@ const handleSaveEdit = async () => {
     await fetchPayrollDetails(pagination.value.current_page);
     await fetchPayrollStatistics();
     closeEditModal();
-    await alertModal.alert("Payroll detail updated successfully.", { type: "success" });
+    await alertModal.alert(t("payroll.detail.updated"), { type: "success" });
   } catch (error) {
     console.error("Error updating payroll detail:", error);
     await alertModal.alert(
-      error?.response?.data?.message || "Failed to update payroll detail.",
+      error?.response?.data?.message || t("payroll.detail.updateFailed"),
       { type: "danger" }
     );
   } finally {
@@ -378,10 +379,10 @@ const handleMarkAsPaid = async () => {
     await fetchPayrollDetails(pagination.value.current_page);
 
     closeMarkAsPaidModal();
-    await alertModal.alert("Payroll marked as paid successfully!", { type: "success" });
+    await alertModal.alert(t("payroll.detail.markedPaid"), { type: "success" });
   } catch (error) {
     console.error("Error marking payroll as paid:", error);
-    await alertModal.alert("Failed to mark payroll as paid. Please try again.", { type: "danger" });
+    await alertModal.alert(t("payroll.detail.markPaidFailed"), { type: "danger" });
   } finally {
     markingAsPaid.value = false;
   }
@@ -389,8 +390,8 @@ const handleMarkAsPaid = async () => {
 
 const handleDeleteDetail = async (emp) => {
   const ok = await alertModal.confirm(
-    `Delete ${emp.name}'s payroll entry for this period? This cannot be undone.`,
-    { type: "danger", confirmText: "Delete" }
+    t("payroll.detail.deleteDetailConfirm", { name: emp.name }),
+    { type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
 
@@ -401,17 +402,17 @@ const handleDeleteDetail = async (emp) => {
   } catch (error) {
     console.error("Error deleting payroll detail:", error);
     await alertModal.alert(
-      error?.response?.data?.message || "Failed to delete payroll detail.",
+      error?.response?.data?.message || t("payroll.detail.deleteDetailFailed"),
       { type: "danger" }
     );
   }
 };
 
 const handleDeletePayroll = async () => {
-  const label = isThr.value ? "THR" : "Payroll";
+  const label = isThr.value ? "THR" : t("payroll.common.payroll");
   const ok = await alertModal.confirm(
-    `Delete this entire ${label} period? This permanently removes it and all its employee details.`,
-    { type: "danger", confirmText: "Delete" }
+    t("payroll.detail.deletePayrollConfirm", { label }),
+    { type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
 
@@ -421,7 +422,7 @@ const handleDeletePayroll = async () => {
   } catch (error) {
     console.error("Error deleting payroll:", error);
     await alertModal.alert(
-      error?.response?.data?.message || "Failed to delete payroll.",
+      error?.response?.data?.message || t("payroll.dashboard.deleteFailed"),
       { type: "danger" }
     );
   }
@@ -430,10 +431,10 @@ const handleDeletePayroll = async () => {
 const regenerating = ref(false);
 
 const handleRegenerate = async () => {
-  const label = isThr.value ? "THR" : "Payroll";
+  const label = isThr.value ? "THR" : t("payroll.common.payroll");
   const ok = await alertModal.confirm(
-    `Re-generate this ${label} period? This replaces all existing employee details with freshly computed ones.`,
-    { type: "warning", confirmText: "Regenerate" }
+    t("payroll.detail.regenerateConfirm", { label }),
+    { type: "warning", confirmText: t("payroll.common.regenerate") }
   );
   if (!ok) return;
 
@@ -448,7 +449,7 @@ const handleRegenerate = async () => {
       await payrollStore.generatePayroll(payload);
     }
     await alertModal.alert(
-      `${label} regeneration is being processed in the background. Please check back shortly.`,
+      t("payroll.dashboard.regenerateQueued", { label }),
       { type: "success" }
     );
     await fetchPayrollSummary();
@@ -457,562 +458,494 @@ const handleRegenerate = async () => {
   } catch (error) {
     console.error("Error regenerating payroll:", error);
     await alertModal.alert(
-      error?.response?.data?.message || `Failed to regenerate ${label}.`,
+      error?.response?.data?.message || t("payroll.dashboard.regenerateFailed", { label }),
       { type: "danger" }
     );
   } finally {
     regenerating.value = false;
   }
 };
+
+// ---- Presentation only -------------------------------------------------
+const STATUS_TONES = {
+  draft: "neutral",
+  pending: "warn",
+  processing: "warn",
+  approved: "info",
+  paid: "ok",
+  cancelled: "bad",
+};
+const statusOf = (status) =>
+  STATUS_TONES[status]
+    ? { tone: STATUS_TONES[status], label: t(`payroll.status.${status}`) }
+    : { tone: "neutral", label: status || t("payroll.status.pending") };
+
+const formatPeriod = (date) =>
+  date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "long" }) : "";
+
+const pageTitle = computed(() => {
+  const period = formatPeriod(payroll.value?.period || payroll.value?.salary_month);
+  return `${isThr.value ? "THR" : t("payroll.common.payroll")}${period ? ` · ${period}` : ""}`;
+});
+
+const processedOn = computed(() =>
+  payroll.value?.created_at
+    ? new Date(payroll.value.created_at).toLocaleDateString(localeTag(), { month: "short", day: "numeric" })
+    : "-"
+);
+const processedYear = computed(() =>
+  payroll.value?.created_at ? String(new Date(payroll.value.created_at).getFullYear()) : ""
+);
+
+const positionOptions = computed(() => [
+  { value: "", label: t("payroll.detail.allPositions") },
+  ...positions.value.map((p) => ({ value: p, label: p })),
+]);
+
+const projectOptions = computed(() =>
+  projectStore.projects.map((project) => ({
+    value: project.id,
+    label: `${project.name} — ${formatRupiah(project.budget)}`,
+  }))
+);
+
+const showActionsColumn = computed(() => canEditPayroll.value || canManagePayroll.value);
+const columns = computed(() => [
+  { key: "employee", label: t("common.labels.employee") },
+  { key: "position", label: t("payroll.detail.columns.position"), class: "hidden 2xl:table-cell" },
+  { key: "bank", label: t("payroll.detail.bankAccount") },
+  { key: "attendance", label: isThr.value ? t("payroll.detail.monthsOfService") : t("payroll.detail.attendance"), align: "center" },
+  { key: "basic_salary", label: isThr.value ? t("payroll.detail.grossThr") : t("payroll.detail.basicSalary"), align: "right" },
+  { key: "deductions", label: t("payroll.detail.deductions"), align: "right" },
+  { key: "net_salary", label: t("payroll.detail.netSalary"), align: "right" },
+  { key: "status", label: t("common.labels.status") },
+  ...(showActionsColumn.value ? [{ key: "actions", label: "", align: "right", width: 88 }] : []),
+]);
+
+const attendanceTone = (emp) => {
+  const pct = getAttendancePercentage(emp.attended_days, emp.total_work_days);
+  return pct >= 90 ? "text-ui-ok" : pct >= 80 ? "text-ui-warn" : "text-ui-bad";
+};
+
+// Per-employee breakdown sheet (same reading order as the employee payslip:
+// earnings, deductions, ink take-home band). Uses the same split as
+// deductionBreakdown() above.
+const showBreakdown = ref(false);
+const breakdownEmp = ref(null);
+const openBreakdown = (emp) => {
+  breakdownEmp.value = emp;
+  showBreakdown.value = true;
+};
+const breakdownDeductions = computed(() => {
+  const emp = breakdownEmp.value;
+  if (!emp) return [];
+  if (isThr.value) return [{ label: "PPh 21", value: emp.pph21 }];
+  const attendanceDeduction =
+    emp.deductions - emp.bpjs_kesehatan_employee - emp.bpjs_jht_employee - emp.bpjs_jp_employee - emp.pph21;
+  return [
+    { label: t("payroll.detail.attendanceDeduction"), value: Math.max(0, attendanceDeduction) },
+    { label: "BPJS Kesehatan", value: emp.bpjs_kesehatan_employee },
+    { label: "BPJS JHT", value: emp.bpjs_jht_employee },
+    { label: "BPJS JP", value: emp.bpjs_jp_employee },
+    { label: "PPh 21", value: emp.pph21 },
+  ];
+});
+const editFromBreakdown = (emp) => {
+  showBreakdown.value = false;
+  openEditModal(emp);
+};
+const deleteFromBreakdown = (emp) => {
+  showBreakdown.value = false;
+  handleDeleteDetail(emp);
+};
+
+// Native number inputs keep v-model.number / min / max / step; styled like UiInput.
+const fieldClass =
+  "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink tabular-nums border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
+const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
 </script>
 
+
 <template>
-  <div class="space-y-6">
-    <!-- Back Button -->
-    <div class="flex items-center justify-between">
-      <button @click="router.back()"
-        class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-2">
-        <ArrowLeft class="w-4 h-4 text-gray-600" />
-        <span class="text-brand-dark text-sm font-semibold hidden sm:inline">Back</span>
-      </button>
-
-      <button
-        type="button"
-        @click="showAmounts = !showAmounts"
-        class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2 flex items-center gap-2"
-      >
-        <Eye v-if="!showAmounts" class="w-4 h-4 text-gray-600" />
-        <EyeOff v-else class="w-4 h-4 text-gray-600" />
-        <span class="text-brand-dark text-sm font-semibold">
-          {{ showAmounts ? "Hide Amounts" : "Show Amounts" }}
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="pageTitle">
+      <template #eyebrow>
+        <button
+          type="button"
+          class="ui-press inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-2"
+          @click="router.back()"
+        >
+          <ArrowLeft class="w-4 h-4" />{{ $t("common.actions.back") }}
+        </button>
+      </template>
+      <template #subtitle>
+        <span class="inline-flex flex-wrap items-center gap-2">
+          <UiBadge v-if="payroll" :tone="statusOf(payroll.status).tone" dot>{{ statusOf(payroll.status).label }}</UiBadge>
+          <UiBadge v-if="isThr" tone="accent">THR</UiBadge>
+          <span>{{ $t('payroll.detail.subtitle') }}</span>
         </span>
-      </button>
+      </template>
+      <template #actions>
+        <UiButton variant="ghost" :icon="showAmounts ? EyeOff : Eye" @click="showAmounts = !showAmounts">
+          {{ showAmounts ? $t("common.actions.hideAmounts") : $t("common.actions.showAmounts") }}
+        </UiButton>
+        <UiButton v-if="canManagePayroll" variant="ghost" :icon="RefreshCw" :loading="regenerating" @click="handleRegenerate">
+          {{ regenerating ? $t('payroll.detail.regenerating') : $t("payroll.common.regenerate") }}
+        </UiButton>
+        <UiButton v-if="canManagePayroll" variant="danger" :icon="Trash2" @click="handleDeletePayroll">{{ $t('payroll.detail.deletePayroll') }}</UiButton>
+        <UiButton v-if="can('payroll-list')" variant="secondary" :icon="Download" @click="exportExcel">{{ $t("common.actions.exportExcel") }}</UiButton>
+        <UiButton
+          v-if="can('payroll-process') && payroll?.status !== 'paid'"
+          :icon="CheckCircle"
+          class="order-first sm:order-none w-full sm:w-auto"
+          @click="openMarkAsPaidModal"
+        >
+          {{ $t('payroll.detail.markAsPaid') }}
+        </UiButton>
+      </template>
+    </UiPageHeader>
+
+    <!-- Summary -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 ui-stagger">
+      <UiStat
+        :label="$t('payroll.detail.stats.totalEmployees')"
+        :icon="Users"
+        :loading="loading || loadingStatistics"
+        :value="payrollStatistics?.total_employees || 0"
+        :hint="$t('payroll.detail.stats.allDepartments')"
+      />
+      <UiStat
+        :label="$t('payroll.detail.stats.totalPayroll')"
+        :icon="DollarSign"
+        :loading="loading || loadingStatistics"
+        :value="maskRupiah(formatRupiahCompact(payrollStatistics?.total_amount || 0))"
+        :hint="$t('payroll.detail.stats.thisPeriod')"
+      />
+      <UiStat
+        :label="$t('payroll.dashboard.stats.averageSalary')"
+        :icon="Banknote"
+        :loading="loading || loadingStatistics"
+        :value="maskRupiah(formatRupiahCompact(payrollStatistics?.average_salary || 0))"
+        :hint="$t('payroll.dashboard.stats.perEmployee')"
+      />
+      <UiStat
+        :label="$t('payroll.detail.stats.processedOn')"
+        :icon="CalendarCheck"
+        :loading="loading || loadingStatistics"
+        :value="processedOn"
+        :hint="processedYear"
+      />
     </div>
 
-    <!-- Payroll Summary Cards -->
-    <SkeletonStatCards v-if="loading || loadingStatistics" :count="4" />
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- Total Employees Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Total Employees</p>
-            <p class="text-brand-dark text-base font-extrabold leading-tight my-2">
-              {{ loadingStatistics ? "..." : (payrollStatistics?.total_employees || 0) }}
-            </p>
-            <p class="text-success text-sm font-medium">All departments</p>
-          </div>
-          <div class="w-14 h-14 bg-blue-50 rounded-[12px] flex items-center justify-center">
-            <Users class="w-7 h-7 text-blue-600" />
-          </div>
+    <!-- Employee Details -->
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+      <div class="px-4 sm:px-5 pt-4 pb-3 flex flex-col md:flex-row md:items-center gap-3 border-b border-ui-line">
+        <div class="flex-1 min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t('payroll.detail.employeeDetails') }}</h2>
+          <p class="text-ui-cap text-ui-muted tabular-nums">
+            {{ $t('payroll.detail.employeesInPeriod', { n: pagination.total || 0 }, pagination.total || 0) }}
+          </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:flex md:items-center gap-2">
+          <UiInput v-model="searchQuery" :icon="Search" :placeholder="$t('payroll.detail.searchEmployees')" class="md:w-[260px]" />
+          <UiSelect v-model="departmentFilter" :options="positionOptions" class="md:w-[200px]" :aria-label="$t('payroll.detail.columns.position')" />
         </div>
       </div>
 
-      <!-- Total Payroll Amount Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Total Payroll</p>
-            <p class="text-brand-dark text-base font-extrabold leading-tight my-2">
-              {{ loadingStatistics ? "..." : maskRupiah(formatRupiahCompact(payrollStatistics?.total_amount || 0)) }}
-            </p>
-            <p class="text-success text-sm font-medium">This period</p>
-          </div>
-          <div class="w-14 h-14 bg-green-50 rounded-[12px] flex items-center justify-center">
-            <DollarSign class="w-7 h-7 text-green-600" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Average Salary Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Average Salary</p>
-            <p class="text-brand-dark text-base font-extrabold leading-tight my-2">
-              {{
-                loadingStatistics
-                  ? "..."
-                  : maskRupiah(formatRupiahCompact(payrollStatistics?.average_salary || 0))
-              }}
-            </p>
-            <p class="text-success text-sm font-medium">Per employee</p>
-          </div>
-          <div class="w-14 h-14 bg-purple-50 rounded-[12px] flex items-center justify-center">
-            <Banknote class="w-7 h-7 text-purple-600" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Processing Date Card -->
-      <div
-        class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Processed On</p>
-            <p class="text-brand-dark text-base font-extrabold leading-tight my-2">
-              {{
-                loading
-                  ? "..."
-                  : new Date(payroll?.created_at).toLocaleDateString("id-ID", {
-                    month: "short",
-                    day: "numeric",
-                  })
-              }}
-            </p>
-            <p class="text-brand-light text-sm font-medium">
-              {{ new Date(payroll?.created_at).getFullYear() }}
-            </p>
-          </div>
-          <div class="w-14 h-14 bg-orange-50 rounded-[12px] flex items-center justify-center">
-            <CalendarCheck class="w-7 h-7 text-orange-600" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Employee Details Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
-            <Users class="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="text-brand-dark text-base font-bold">Employee Details</h3>
-              <span
-                v-if="isThr"
-                class="px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-700"
-              >THR</span>
+      <UiTable
+        :columns="columns"
+        :rows="filteredEmployees"
+        :meta="pagination"
+        :loading="loadingDetails"
+        :skeleton-rows="6"
+        row-key="detail_id"
+        clickable
+        @row-click="openBreakdown"
+      >
+        <template #cell-employee="{ row }">
+          <div class="flex items-center gap-3 min-w-0">
+            <Avatar :src="row.profile_photo" :alt="row.name" size="w-8 h-8" />
+            <div class="min-w-0">
+              <p class="text-ui-small font-medium text-ui-ink truncate">{{ row.name }}</p>
+              <p class="text-ui-cap text-ui-muted truncate">{{ row.employee_id }} • {{ row.position }}</p>
             </div>
-            <p class="text-brand-light text-xs font-normal">
-              Complete payroll breakdown by employee
-            </p>
           </div>
-        </div>
-
-        <!-- Search and Filter -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div class="relative w-full sm:w-auto">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search class="h-4 w-4 text-gray-400" />
-            </div>
-            <input type="text" v-model="searchQuery" placeholder="Search employees..."
-              class="w-full sm:w-auto pl-10 pr-4 py-2 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300 text-sm" />
-          </div>
-
-          <div class="relative w-full sm:w-auto">
-            <select v-model="departmentFilter"
-              class="select-soft">
-              <option value="">All Positions</option>
-              <option v-for="position in positions" :key="position" :value="position">
-                {{ position }}
-              </option>
-            </select>
-            <ChevronDown
-              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+        </template>
+        <template #cell-position="{ row }">{{ row.position }}</template>
+        <template #cell-bank="{ row }">
+          <p class="text-ui-small text-ui-ink">{{ row.bank_name }}</p>
+          <p class="text-ui-cap text-ui-muted tabular-nums">{{ row.account_number }}</p>
+        </template>
+        <template #cell-attendance="{ row }">
+          <span v-if="isThr" class="font-medium text-ui-ink tabular-nums">{{ row.months_of_service ?? "-" }}/12</span>
+          <span v-else class="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
+            <span :class="['font-medium', attendanceTone(row)]">{{ getAttendancePercentage(row.attended_days, row.total_work_days) }}%</span>
+            <span class="text-ui-cap text-ui-muted">({{ row.attended_days }}/{{ row.total_work_days }})</span>
+          </span>
+        </template>
+        <template #cell-basic_salary="{ row }">
+          <span class="tabular-nums text-ui-text whitespace-nowrap">{{ maskRupiah(formatRupiah(row.basic_salary)) }}</span>
+        </template>
+        <template #cell-deductions="{ row }">
+          <span
+            v-if="row.payment_mode === 'project_percentage'"
+            class="text-ui-muted"
+            :title="$t('payroll.detail.notApplicableHint')"
+          >{{ $t("common.duration.na") }}</span>
+          <span
+            v-else
+            class="tabular-nums text-ui-bad whitespace-nowrap cursor-help underline decoration-dotted underline-offset-2"
+            :title="showAmounts ? deductionBreakdown(row) : $t('payroll.detail.showAmountsHint')"
+          >{{ maskRupiah(formatRupiah(row.deductions)) }}</span>
+        </template>
+        <template #cell-net_salary="{ row }">
+          <span class="block tabular-nums font-semibold text-ui-ink whitespace-nowrap">{{ maskRupiah(formatRupiah(row.net_salary)) }}</span>
+          <span v-if="row.payment_mode === 'project_percentage'" class="block text-ui-cap text-ui-accent mt-0.5">
+            {{ $t('payroll.detail.percentOfProject', { pct: row.project_percentage, project: row.source_project?.name || $t('payroll.detail.project') }) }}
+          </span>
+        </template>
+        <template #cell-status="{ row }">
+          <UiBadge :tone="row.status === 'paid' ? 'ok' : 'warn'" dot>{{ row.status === "paid" ? $t("payroll.status.paid") : $t("payroll.status.pending") }}</UiBadge>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-1">
+            <UiButton v-if="canEditPayroll" variant="ghost" size="sm" :icon="Pencil" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" @click.stop="openEditModal(row)" />
+            <UiButton
+              v-if="canManagePayroll"
+              variant="ghost"
+              size="sm"
+              :icon="Trash2"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('common.actions.delete')"
+              class="!text-ui-bad"
+              @click.stop="handleDeleteDetail(row)"
             />
           </div>
-        </div>
-      </div>
+        </template>
 
-      <!-- Employee Table -->
-      <SkeletonTable v-if="loadingDetails" :rows="6" :cols="canEditPayroll || canManagePayroll ? 10 : 9" />
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full">
-          <thead>
-            <tr class="border-b border-gray-200">
-              <th class="text-left py-3 px-4 font-semibold text-brand-dark text-sm">
-                No
-              </th>
-              <th class="text-left py-3 px-4 font-semibold text-brand-dark text-sm">
-                Employee
-              </th>
-              <th class="text-left py-3 px-4 font-semibold text-brand-dark text-sm">
-                Job Position
-              </th>
-              <th class="text-left py-3 px-4 font-semibold text-brand-dark text-sm">
-                Bank Account
-              </th>
-              <th class="text-center py-3 px-4 font-semibold text-brand-dark text-sm">
-                {{ isThr ? "Months of Service" : "Attendance" }}
-              </th>
-              <th class="text-right py-3 px-4 font-semibold text-brand-dark text-sm">
-                {{ isThr ? "Gross THR" : "Basic Salary" }}
-              </th>
-              <th class="text-right py-3 px-4 font-semibold text-brand-dark text-sm">
-                Deductions
-              </th>
-              <th class="text-right py-3 px-4 font-semibold text-brand-dark text-sm">
-                Net Salary
-              </th>
-              <th class="text-center py-3 px-4 font-semibold text-brand-dark text-sm">
-                Status
-              </th>
-              <th v-if="canEditPayroll || canManagePayroll" class="text-center py-3 px-4 font-semibold text-brand-dark text-sm">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(emp, index) in filteredEmployees" :key="emp.id"
-              class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200">
-              <td class="py-4 px-4 text-brand-light text-sm">{{ (pagination.current_page - 1) * pagination.per_page + index + 1 }}</td>
-              <td class="py-4 px-4">
-                <div class="flex items-center gap-3">
-                  <Avatar :src="emp.profile_photo" :alt="emp.name" size="w-10 h-10" />
-                  <div>
-                    <p class="text-brand-dark text-sm font-semibold">
-                      {{ emp.name }}
-                    </p>
-                    <p class="text-brand-light text-xs">
-                      {{ emp.employee_id }} • {{ emp.position }}
-                    </p>
-                  </div>
-                </div>
-              </td>
-              <td class="py-4 px-4">
-                <span class="text-brand-dark text-sm">{{
-                  emp.position
-                  }}</span>
-              </td>
-              <td class="py-4 px-4">
-                <div class="text-sm">
-                  <p class="text-brand-dark font-semibold">{{ emp.bank_name }}</p>
-                  <p class="text-brand-light text-xs">{{ emp.account_number }}</p>
-                </div>
-              </td>
-              <td v-if="isThr" class="py-4 px-4 text-center">
-                <span class="text-sm font-semibold text-brand-dark">{{ emp.months_of_service ?? "-" }}/12</span>
-              </td>
-              <td v-else class="py-4 px-4 text-center">
-                <div class="flex items-center justify-center gap-2">
-                  <span :class="[
-                    'text-sm font-semibold',
-                    getAttendancePercentage(
-                      emp.attended_days,
-                      emp.total_work_days
-                    ) >= 90
-                      ? 'text-green-600'
-                      : getAttendancePercentage(
-                        emp.attended_days,
-                        emp.total_work_days
-                      ) >= 80
-                        ? 'text-yellow-600'
-                        : 'text-red-600',
-                  ]">
-                    {{
-                      getAttendancePercentage(
-                        emp.attended_days,
-                        emp.total_work_days
-                      )
-                    }}%
-                  </span>
-                  <span class="text-xs text-brand-light">({{ emp.attended_days }}/{{ emp.total_work_days }})</span>
-                </div>
-              </td>
-              <td class="py-4 px-4 text-right">
-                <span class="text-brand-dark text-sm font-semibold">{{
-                  maskRupiah(formatRupiah(emp.basic_salary))
-                  }}</span>
-              </td>
-              <td class="py-4 px-4 text-right">
-                <span v-if="emp.payment_mode === 'project_percentage'" class="text-brand-light text-sm" title="Not applicable -- paid as a percentage of a project's budget, not the attendance-based formula">
-                  N/A
-                </span>
-                <span
-                  v-else
-                  class="text-red-600 text-sm font-semibold cursor-help underline decoration-dotted"
-                  :title="showAmounts ? deductionBreakdown(emp) : 'Click Show Amounts to see the breakdown'"
-                >{{
-                  maskRupiah(formatRupiah(emp.deductions))
-                  }}</span>
-              </td>
-              <td class="py-4 px-4 text-right">
-                <span class="text-green-600 text-sm font-bold">{{
-                  maskRupiah(formatRupiah(emp.net_salary))
-                  }}</span>
-                <span
-                  v-if="emp.payment_mode === 'project_percentage'"
-                  class="block text-[11px] text-purple-600 font-medium mt-0.5"
-                >
-                  {{ emp.project_percentage }}% of {{ emp.source_project?.name || "project" }}
-                </span>
-              </td>
-              <td class="py-4 px-4 text-center">
-                <span :class="[
-                  'px-2 py-1 rounded-full text-xs font-semibold',
-                  emp.status === 'paid'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-yellow-100 text-yellow-800',
-                ]">
-                  {{ emp.status === "paid" ? "Paid" : "Pending" }}
-                </span>
-              </td>
-              <td v-if="canEditPayroll || canManagePayroll" class="py-4 px-4 text-center">
-                <div class="flex items-center justify-center gap-1">
-                  <button
-                    v-if="canEditPayroll"
-                    @click="openEditModal(emp)"
-                    title="Edit"
-                    class="w-8 h-8 rounded-full inline-flex items-center justify-center hover:bg-blue-50 transition-colors"
-                  >
-                    <Pencil class="w-4 h-4 text-blue-600" />
-                  </button>
-                  <button
-                    v-if="canManagePayroll"
-                    @click="handleDeleteDetail(emp)"
-                    title="Delete"
-                    class="w-8 h-8 rounded-full inline-flex items-center justify-center hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 class="w-4 h-4 text-red-600" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <template #mobile="{ row, number }">
+          <div class="flex items-center gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5">{{ number }}</span>
+            <Avatar :src="row.profile_photo" :alt="row.name" size="w-9 h-9" />
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-body font-medium text-ui-ink truncate">{{ row.name }}</p>
+              <p class="text-ui-cap text-ui-muted truncate tabular-nums">
+                {{ isThr ? $t('payroll.detail.grossThr') : $t('payroll.detail.basic') }} {{ maskRupiah(formatRupiah(row.basic_salary)) }}
+              </p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-ui-body font-semibold text-ui-ink tabular-nums">{{ maskRupiah(formatRupiah(row.net_salary)) }}</p>
+              <UiBadge class="mt-1" :tone="row.status === 'paid' ? 'ok' : 'warn'" dot>{{ row.status === "paid" ? $t("payroll.status.paid") : $t("payroll.status.pending") }}</UiBadge>
+            </div>
+          </div>
+        </template>
 
-      <!-- Pagination -->
-      <div v-if="employees.length > 0" class="mt-6">
-        <Pagination :meta="pagination" :loading="loadingDetails" @page-change="handlePageChange"
-          @per-page-change="handlePerPageChange" />
-      </div>
-    </div>
+        <template #empty>
+          <div class="flex flex-col items-center py-4">
+            <div class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mb-3">
+              <Users class="w-5 h-5" />
+            </div>
+            <p class="text-ui-body font-medium text-ui-ink">{{ $t('payroll.detail.empty.title') }}</p>
+            <p class="text-ui-small text-ui-muted mt-1">{{ $t('payroll.detail.empty.message') }}</p>
+          </div>
+        </template>
+      </UiTable>
 
-    <!-- Action Buttons -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h3 class="text-brand-dark text-base font-bold">Export & Actions</h3>
-          <p class="text-brand-light text-xs font-normal mt-1">
-            Download reports and manage payroll data
+      <div v-if="employees.length > 0" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
+        <Pagination :meta="pagination" :loading="loadingDetails" @page-change="handlePageChange" @per-page-change="handlePerPageChange" />
+      </div>
+    </section>
+
+    <!-- Per-employee breakdown -->
+    <UiModal
+      v-model:open="showBreakdown"
+      :title="breakdownEmp?.name || ''"
+      :description="breakdownEmp ? `${breakdownEmp.employee_id} • ${breakdownEmp.position}` : ''"
+    >
+      <div v-if="breakdownEmp" class="space-y-5">
+        <dl class="bg-ui-subtle rounded-ui-card px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-3">
+          <div class="min-w-0">
+            <dt class="text-ui-cap text-ui-muted">{{ $t('payroll.detail.bankAccount') }}</dt>
+            <dd class="text-ui-small font-medium text-ui-ink truncate">{{ breakdownEmp.bank_name }}</dd>
+            <dd class="text-ui-cap text-ui-muted tabular-nums truncate">{{ breakdownEmp.account_number }}</dd>
+          </div>
+          <div class="min-w-0">
+            <dt class="text-ui-cap text-ui-muted">{{ isThr ? $t('payroll.detail.monthsOfService') : $t('payroll.detail.attendance') }}</dt>
+            <dd v-if="isThr" class="text-ui-small font-medium text-ui-ink tabular-nums">{{ breakdownEmp.months_of_service ?? "-" }}/12</dd>
+            <dd v-else class="text-ui-small font-medium tabular-nums">
+              <span :class="attendanceTone(breakdownEmp)">{{ getAttendancePercentage(breakdownEmp.attended_days, breakdownEmp.total_work_days) }}%</span>
+              <span class="text-ui-cap text-ui-muted"> ({{ breakdownEmp.attended_days }}/{{ breakdownEmp.total_work_days }})</span>
+            </dd>
+          </div>
+          <div class="min-w-0">
+            <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.status") }}</dt>
+            <dd class="mt-0.5">
+              <UiBadge :tone="breakdownEmp.status === 'paid' ? 'ok' : 'warn'" dot>{{ breakdownEmp.status === "paid" ? $t("payroll.status.paid") : $t("payroll.status.pending") }}</UiBadge>
+            </dd>
+          </div>
+          <div v-if="breakdownEmp.payment_mode === 'project_percentage'" class="min-w-0">
+            <dt class="text-ui-cap text-ui-muted">{{ $t('payroll.detail.paymentMode') }}</dt>
+            <dd class="text-ui-small font-medium text-ui-ink">
+              {{ $t('payroll.detail.percentOfProject', { pct: breakdownEmp.project_percentage, project: breakdownEmp.source_project?.name || $t('payroll.detail.project') }) }}
+            </dd>
+          </div>
+        </dl>
+
+        <section>
+          <h3 class="text-ui-over uppercase text-ui-muted pb-1">{{ $t('payroll.detail.earnings') }}</h3>
+          <div class="divide-y divide-ui-line">
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <span class="text-ui-small text-ui-muted">{{ isThr ? $t('payroll.detail.grossThr') : $t('payroll.detail.basicSalary') }}</span>
+              <span class="text-ui-small text-ui-ink tabular-nums text-right">{{ maskRupiah(formatRupiah(breakdownEmp.basic_salary)) }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <span class="text-ui-small font-semibold text-ui-ink">{{ $t('payroll.detail.grossSalary') }}</span>
+              <span class="text-ui-small font-semibold text-ui-ink tabular-nums text-right">{{ maskRupiah(formatRupiah(breakdownEmp.gross_salary)) }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 class="text-ui-over uppercase text-ui-muted pb-1">{{ $t('payroll.detail.deductions') }}</h3>
+          <p v-if="breakdownEmp.payment_mode === 'project_percentage'" class="text-ui-small text-ui-muted py-2.5">
+            {{ $t('payroll.detail.notApplicableHint') }}
           </p>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <button v-if="can('payroll-list')" @click="exportExcel"
-            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2">
-            <Download class="w-4 h-4 text-gray-600" />
-            <span class="text-brand-dark text-sm font-semibold">Export Excel</span>
-          </button>
-
-          <button v-if="can('payroll-process') && payroll?.status !== 'paid'" @click="openMarkAsPaidModal"
-            class="border border-green-600 bg-green-50 rounded-[12px] hover:bg-green-100 hover:border-green-700 transition-all duration-300 px-4 py-2 flex items-center gap-2">
-            <CheckCircle class="w-4 h-4 text-green-600" />
-            <span class="text-green-700 text-sm font-semibold">Mark as Paid</span>
-          </button>
-
-          <button v-if="canManagePayroll" @click="handleRegenerate" :disabled="regenerating"
-            class="border border-yellow-500 bg-yellow-50 rounded-[12px] hover:bg-yellow-100 hover:border-yellow-600 transition-all duration-300 px-4 py-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-            <RefreshCw class="w-4 h-4 text-yellow-700" />
-            <span class="text-yellow-700 text-sm font-semibold">
-              {{ regenerating ? "Regenerating..." : "Regenerate" }}
-            </span>
-          </button>
-
-          <button v-if="canManagePayroll" @click="handleDeletePayroll"
-            class="border border-red-600 bg-red-50 rounded-[12px] hover:bg-red-100 hover:border-red-700 transition-all duration-300 px-4 py-2 flex items-center gap-2">
-            <Trash2 class="w-4 h-4 text-red-600" />
-            <span class="text-red-700 text-sm font-semibold">Delete Payroll</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mark as Paid Modal -->
-    <Teleport to="body">
-      <div v-if="showMarkAsPaidModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
-        @click.self="closeMarkAsPaidModal" style="margin: 0; padding: 0">
-        <div class="bg-white rounded-[14px] p-6 max-w-md w-full mx-4">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-brand-dark text-xl font-bold">
-              Mark Payroll as Paid
-            </h3>
-            <button @click="closeMarkAsPaidModal" class="text-gray-400 hover:text-gray-600 transition-colors">
-              <X class="w-5 h-5" />
-            </button>
-          </div>
-
-          <div class="mb-6">
-            <p class="text-brand-light text-sm mb-4">
-              Confirm that you want to mark this payroll as paid. This action
-              will update the status and record the payment date.
-            </p>
-
-            <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-2">
-                Payment Date *
-              </label>
-              <input type="date" v-model="paymentDate" required
-                class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
+          <div v-else class="divide-y divide-ui-line">
+            <div v-for="line in breakdownDeductions" :key="line.label" class="flex items-center justify-between gap-3 py-2.5">
+              <span class="text-ui-small text-ui-muted">{{ line.label }}</span>
+              <span class="text-ui-small text-ui-bad tabular-nums text-right">{{ maskRupiah(formatRupiah(line.value)) }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <span class="text-ui-small font-semibold text-ui-ink">{{ $t('payroll.detail.totalDeductions') }}</span>
+              <span class="text-ui-small font-semibold text-ui-bad tabular-nums text-right">{{ maskRupiah(formatRupiah(breakdownEmp.deductions)) }}</span>
             </div>
           </div>
+        </section>
 
-          <div class="flex items-center gap-3">
-            <button @click="handleMarkAsPaid" :disabled="markingAsPaid"
-              class="flex-1 btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-              <CheckCircle class="w-4 h-4 text-white" />
-              <span class="text-brand-white text-sm font-semibold">
-                {{ markingAsPaid ? "Processing..." : "Confirm Payment" }}
-              </span>
-            </button>
-            <button @click="closeMarkAsPaidModal" :disabled="markingAsPaid"
-              class="flex-1 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-              <span class="text-brand-dark text-sm font-semibold">Cancel</span>
-            </button>
-          </div>
+        <div class="flex items-center justify-between gap-4 bg-ui-ink text-white rounded-ui-card px-5 py-4">
+          <p class="text-ui-small text-white/70">{{ $t('payroll.detail.netTakeHome') }}</p>
+          <p class="text-ui-h1 tabular-nums text-right">{{ maskRupiah(formatRupiah(breakdownEmp.net_salary)) }}</p>
+        </div>
+
+        <div v-if="breakdownEmp.notes" class="bg-ui-subtle rounded-ui-card px-4 py-3">
+          <p class="text-ui-small font-medium text-ui-ink mb-1">{{ $t('payroll.detail.notesLabel') }}</p>
+          <p class="text-ui-small text-ui-text">{{ breakdownEmp.notes }}</p>
         </div>
       </div>
-    </Teleport>
+      <template v-if="breakdownEmp && showActionsColumn" #footer>
+        <UiButton v-if="canManagePayroll" variant="danger" :icon="Trash2" class="mr-auto" @click="deleteFromBreakdown(breakdownEmp)">{{ $t("common.actions.delete") }}</UiButton>
+        <UiButton v-if="canEditPayroll" :icon="Pencil" @click="editFromBreakdown(breakdownEmp)">{{ $t("common.actions.edit") }}</UiButton>
+      </template>
+    </UiModal>
 
-    <!-- Edit Payroll Detail Modal -->
-    <Teleport to="body">
-      <div v-if="showEditModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
-        @click.self="closeEditModal" style="margin: 0; padding: 0">
-        <div class="bg-white rounded-[14px] p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-brand-dark text-xl font-bold">
-              Edit Payroll — {{ editingEmployee?.name }}
-            </h3>
-            <button @click="closeEditModal" class="text-gray-400 hover:text-gray-600 transition-colors">
-              <X class="w-5 h-5" />
+    <!-- Mark as Paid -->
+    <UiModal
+      v-model:open="showMarkAsPaidModal"
+      :title="$t('payroll.detail.markPaid.title')"
+      size="sm"
+      :persistent="markingAsPaid"
+      @close="closeMarkAsPaidModal"
+    >
+      <p class="text-ui-small text-ui-muted mb-4">
+        {{ $t('payroll.detail.markPaid.message') }}
+      </p>
+      <UiInput v-model="paymentDate" type="date" :label="$t('payroll.detail.markPaid.paymentDate')" required />
+      <template #footer>
+        <UiButton variant="secondary" :disabled="markingAsPaid" @click="closeMarkAsPaidModal">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton :icon="CheckCircle" :loading="markingAsPaid" @click="handleMarkAsPaid">
+          {{ markingAsPaid ? $t('payroll.detail.markPaid.processing') : $t('payroll.detail.markPaid.confirm') }}
+        </UiButton>
+      </template>
+    </UiModal>
+
+    <!-- Edit Payroll Detail -->
+    <UiModal
+      v-model:open="showEditModal"
+      :title="$t('payroll.detail.edit.title', { name: editingEmployee?.name || '' })"
+      :description="$t('payroll.detail.edit.description')"
+      :persistent="savingEdit"
+      @close="closeEditModal"
+    >
+      <div class="space-y-4">
+        <fieldset>
+          <legend :class="labelClass">{{ $t('payroll.detail.paymentMode') }}</legend>
+          <div class="grid grid-cols-2 gap-1 p-1 bg-ui-subtle rounded-ui-control" role="radiogroup">
+            <button
+              v-for="mode in [
+                { value: 'manual', label: $t('payroll.detail.edit.fixedAmount') },
+                { value: 'project_percentage', label: $t('payroll.detail.edit.percentOfProject') },
+              ]"
+              :key="mode.value"
+              type="button"
+              role="radio"
+              :aria-checked="editForm.payment_mode === mode.value"
+              :class="[
+                'ui-press h-8 rounded-[6px] text-ui-small font-medium transition-colors focus:outline-none focus-visible:shadow-ui-focus',
+                editForm.payment_mode === mode.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink',
+              ]"
+              @click="editForm.payment_mode = mode.value"
+            >
+              {{ mode.label }}
             </button>
           </div>
+        </fieldset>
 
-          <p class="text-brand-light text-sm mb-5">
-            Override this employee's automatically generated figures when their actual
-            situation differs -- e.g. a fixed manual amount, or a cut of a project instead.
-          </p>
-
-          <div class="space-y-4">
-            <!-- Payment Mode -->
+        <template v-if="editForm.payment_mode === 'manual'">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-2">Payment Mode</label>
-              <div class="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  @click="editForm.payment_mode = 'manual'"
-                  :class="[
-                    'px-4 py-2.5 rounded-[10px] border text-sm font-semibold transition-all',
-                    editForm.payment_mode === 'manual'
-                      ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9]'
-                      : 'border-[#DCDEDD] text-brand-light hover:border-[#0C51D9]',
-                  ]"
-                >
-                  Fixed Amount (Rp)
-                </button>
-                <button
-                  type="button"
-                  @click="editForm.payment_mode = 'project_percentage'"
-                  :class="[
-                    'px-4 py-2.5 rounded-[10px] border text-sm font-semibold transition-all',
-                    editForm.payment_mode === 'project_percentage'
-                      ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9]'
-                      : 'border-[#DCDEDD] text-brand-light hover:border-[#0C51D9]',
-                  ]"
-                >
-                  % of a Project
-                </button>
-              </div>
+              <label for="pd-final" :class="labelClass">{{ $t('payroll.detail.edit.finalSalary') }}</label>
+              <input id="pd-final" type="number" min="0" v-model.number="editForm.final_salary" :class="fieldClass" />
             </div>
-
-            <!-- Fixed Amount mode -->
-            <template v-if="editForm.payment_mode === 'manual'">
-              <div>
-                <label class="block text-brand-dark text-sm font-semibold mb-2">Final Salary (Take-home)</label>
-                <input type="number" min="0" v-model.number="editForm.final_salary"
-                  class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
-              </div>
-              <div>
-                <label class="block text-brand-dark text-sm font-semibold mb-2">Gross Salary</label>
-                <input type="number" min="0" v-model.number="editForm.gross_salary"
-                  class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-brand-dark text-sm font-semibold mb-2">BPJS Kesehatan</label>
-                  <input type="number" min="0" v-model.number="editForm.bpjs_kesehatan_employee"
-                    class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
-                </div>
-                <div>
-                  <label class="block text-brand-dark text-sm font-semibold mb-2">BPJS JHT</label>
-                  <input type="number" min="0" v-model.number="editForm.bpjs_jht_employee"
-                    class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
-                </div>
-                <div>
-                  <label class="block text-brand-dark text-sm font-semibold mb-2">BPJS JP</label>
-                  <input type="number" min="0" v-model.number="editForm.bpjs_jp_employee"
-                    class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
-                </div>
-                <div>
-                  <label class="block text-brand-dark text-sm font-semibold mb-2">PPh 21</label>
-                  <input type="number" min="0" v-model.number="editForm.pph21"
-                    class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
-                </div>
-              </div>
-              <div>
-                <label class="block text-brand-dark text-sm font-semibold mb-2">Total Deduction</label>
-                <input type="number" min="0" v-model.number="editForm.total_deduction"
-                  class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
-              </div>
-            </template>
-
-            <!-- Percentage of Project mode -->
-            <template v-else>
-              <div>
-                <label class="block text-brand-dark text-sm font-semibold mb-2">Project</label>
-                <select v-model="editForm.source_project_id" class="select-soft w-full">
-                  <option value="" disabled>{{ loadingProjects ? "Loading projects..." : "Select a project" }}</option>
-                  <option v-for="project in projectStore.projects" :key="project.id" :value="project.id">
-                    {{ project.name }} — {{ formatRupiah(project.budget) }}
-                  </option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-brand-dark text-sm font-semibold mb-2">Percentage (%)</label>
-                <input type="number" min="0" max="100" step="0.1" v-model.number="editForm.project_percentage"
-                  class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300" />
-              </div>
-              <div class="bg-purple-50 border border-purple-100 rounded-[12px] p-3">
-                <p class="text-purple-700 text-sm font-semibold">
-                  Estimated payout: {{ formatRupiah(projectPercentagePreview) }}
-                </p>
-                <p class="text-purple-600 text-xs mt-1">
-                  Recalculated from the project's current budget when you save.
-                </p>
-              </div>
-            </template>
-
             <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-2">Notes</label>
-              <textarea v-model="editForm.notes" rows="2"
-                class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:ring-2 focus:ring-blue-100 transition-all duration-300"
-                placeholder="Optional reason for this override..."></textarea>
+              <label for="pd-gross" :class="labelClass">{{ $t('payroll.detail.grossSalary') }}</label>
+              <input id="pd-gross" type="number" min="0" v-model.number="editForm.gross_salary" :class="fieldClass" />
+            </div>
+            <div>
+              <label for="pd-bpjs-kes" :class="labelClass">BPJS Kesehatan</label>
+              <input id="pd-bpjs-kes" type="number" min="0" v-model.number="editForm.bpjs_kesehatan_employee" :class="fieldClass" />
+            </div>
+            <div>
+              <label for="pd-bpjs-jht" :class="labelClass">BPJS JHT</label>
+              <input id="pd-bpjs-jht" type="number" min="0" v-model.number="editForm.bpjs_jht_employee" :class="fieldClass" />
+            </div>
+            <div>
+              <label for="pd-bpjs-jp" :class="labelClass">BPJS JP</label>
+              <input id="pd-bpjs-jp" type="number" min="0" v-model.number="editForm.bpjs_jp_employee" :class="fieldClass" />
+            </div>
+            <div>
+              <label for="pd-pph21" :class="labelClass">PPh 21</label>
+              <input id="pd-pph21" type="number" min="0" v-model.number="editForm.pph21" :class="fieldClass" />
+            </div>
+            <div class="sm:col-span-2">
+              <label for="pd-total-ded" :class="labelClass">{{ $t('payroll.detail.edit.totalDeduction') }}</label>
+              <input id="pd-total-ded" type="number" min="0" v-model.number="editForm.total_deduction" :class="fieldClass" />
             </div>
           </div>
+        </template>
 
-          <div class="flex items-center gap-3 mt-6">
-            <button @click="handleSaveEdit" :disabled="savingEdit"
-              class="flex-1 btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-              <span class="text-brand-white text-sm font-semibold">
-                {{ savingEdit ? "Saving..." : "Save Changes" }}
-              </span>
-            </button>
-            <button @click="closeEditModal" :disabled="savingEdit"
-              class="flex-1 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-              <span class="text-brand-dark text-sm font-semibold">Cancel</span>
-            </button>
+        <template v-else>
+          <UiSelect
+            v-model="editForm.source_project_id"
+            :label="$t('common.labels.project')"
+            :options="projectOptions"
+            :placeholder="loadingProjects ? $t('payroll.detail.edit.loadingProjects') : $t('payroll.detail.edit.selectProject')"
+          />
+          <div>
+            <label for="pd-pct" :class="labelClass">{{ $t('payroll.detail.edit.percentage') }}</label>
+            <input id="pd-pct" type="number" min="0" max="100" step="0.1" v-model.number="editForm.project_percentage" :class="fieldClass" />
           </div>
-        </div>
+          <UiAlert tone="info" :title="$t('payroll.detail.edit.estimated', { amount: formatRupiah(projectPercentagePreview) })">
+            {{ $t('payroll.detail.edit.recalculated') }}
+          </UiAlert>
+        </template>
+
+        <UiInput v-model="editForm.notes" :label="$t('common.labels.notes')" :rows="2" :placeholder="$t('payroll.detail.edit.notesPlaceholder')" />
       </div>
-    </Teleport>
+
+      <template #footer>
+        <UiButton variant="secondary" :disabled="savingEdit" @click="closeEditModal">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton :loading="savingEdit" @click="handleSaveEdit">{{ savingEdit ? $t("common.actions.saving") : $t("common.actions.saveChanges") }}</UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>

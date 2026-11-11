@@ -4,76 +4,77 @@ import { defineAsyncComponent } from "vue";
 // -- keys must match exactly, since the backend is the source of truth for
 // which widgets a user has permission to add to their dashboard, and this
 // registry is only responsible for turning an approved key into an actual
-// component + its display title/grid span.
+// component + its display title/grid span. `titleKey` is an i18n key,
+// rendered with $t() where the title is shown.
 export const DASHBOARD_WIDGET_REGISTRY = {
   key_metrics: {
-    title: "Key Metrics",
+    titleKey: "dashboard.widgets.keyMetrics",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/Statistics.vue")),
   },
   project_budget: {
-    title: "Project Budget",
+    titleKey: "dashboard.widgets.projectBudget",
     component: defineAsyncComponent(() => import("@/components/admin/project/list/BudgetChart.vue")),
     props: { compact: true },
   },
   project_realized: {
-    title: "Project Realized",
+    titleKey: "dashboard.widgets.projectRealized",
     component: defineAsyncComponent(() => import("@/components/admin/project/list/RealizedChart.vue")),
     props: { compact: true },
   },
   search_section: {
-    title: "Search",
+    titleKey: "dashboard.widgets.search",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/SearchSection.vue")),
   },
   sticky_notes: {
-    title: "Sticky Notes",
+    titleKey: "dashboard.widgets.stickyNotes",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/StickyNotesWidget.vue")),
   },
   projects_at_risk: {
-    title: "Projects at Risk",
+    titleKey: "dashboard.widgets.projectsAtRisk",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/ProjectsAtRisk.vue")),
   },
   latest_employees: {
-    title: "Latest Employees",
+    titleKey: "dashboard.widgets.latestEmployees",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/LatestEmployees.vue")),
   },
   latest_teams: {
-    title: "Latest Teams",
+    titleKey: "dashboard.widgets.latestTeams",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/LatestTeams.vue")),
   },
   quick_links: {
-    title: "Quick Access",
+    titleKey: "dashboard.widgets.quickAccess",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/DashboardQuickLinksWidget.vue")),
   },
   system_settings_links: {
-    title: "System Settings",
+    titleKey: "dashboard.widgets.systemSettings",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/SystemSettingsLinksWidget.vue")),
   },
   pending_leave_requests: {
-    title: "Pending Leave Requests",
+    titleKey: "dashboard.widgets.pendingLeaveRequests",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/PendingLeaveRequestsWidget.vue")),
   },
   employee_statistics: {
-    title: "My Overview",
+    titleKey: "dashboard.widgets.myOverview",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/EmployeeStatistics.vue")),
   },
   system_stats: {
-    title: "System Stats",
+    titleKey: "dashboard.widgets.systemStats",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/SystemStatsWidget.vue")),
   },
   recent_activity: {
-    title: "Recent Activity",
+    titleKey: "dashboard.widgets.recentActivity",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/RecentActivityWidget.vue")),
   },
   upcoming_tasks: {
-    title: "Upcoming Tasks",
+    titleKey: "dashboard.widgets.upcomingTasks",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/UpcomingTasksWidget.vue")),
   },
   subscriptions: {
-    title: "Subscriptions",
+    titleKey: "dashboard.widgets.subscriptions",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/SubscriptionsWidget.vue")),
   },
   maintenance: {
-    title: "Maintenance",
+    titleKey: "dashboard.widgets.maintenance",
     component: defineAsyncComponent(() => import("@/components/admin/dashboard/MaintenanceWidget.vue")),
   },
 };

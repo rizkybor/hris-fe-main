@@ -3,19 +3,20 @@
 // shows a search box and a filtered, keyboard-navigable list.
 // options: [{ value, label, hint? }].
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { ChevronDown, Search, Check, Loader2 } from "lucide-vue-next";
+import { ChevronDown, Search, Check } from "lucide-vue-next";
+import { UiSpinner } from "@/components/ui";
 
 const props = defineProps({
   modelValue: { type: [String, Number], default: "" },
   options: { type: Array, default: () => [] },
-  placeholder: { type: String, default: "Select..." },
-  searchPlaceholder: { type: String, default: "Search..." },
+  placeholder: { type: String, default: "" },
+  searchPlaceholder: { type: String, default: "" },
   disabled: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
   id: { type: String, default: undefined },
   icon: { type: [Object, Function], default: null },
-  emptyText: { type: String, default: "No matches" },
+  emptyText: { type: String, default: "" },
 });
 const emit = defineEmits(["update:modelValue", "change"]);
 
@@ -108,53 +109,55 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
       :disabled="disabled"
       :aria-expanded="open"
       aria-haspopup="listbox"
-      class="w-full flex items-center gap-2 pr-3 py-3 border rounded-[12px] bg-white text-left transition-all duration-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
-      :class="[icon ? 'pl-12' : 'pl-4', invalid ? 'border-red-500' : 'border-[#DCDEDD]']"
+      class="w-full h-[38px] flex items-center gap-2 pr-3 border rounded-ui-control bg-ui-surface text-left text-ui-body transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus disabled:bg-ui-subtle disabled:cursor-not-allowed"
+      :class="[icon ? 'pl-9' : 'pl-3', invalid ? 'border-ui-bad/50' : open ? 'border-ui-accent shadow-ui-focus' : 'border-ui-line-strong']"
     >
-      <component v-if="icon" :is="icon" class="absolute left-4 w-5 h-5 text-gray-400" />
-      <span class="flex-1 truncate" :class="selected ? 'font-semibold text-brand-dark' : 'text-gray-400'">
-        {{ selected ? selected.label : placeholder }}
+      <component v-if="icon" :is="icon" class="absolute left-3 w-4 h-4 text-ui-faint" />
+      <span class="flex-1 truncate" :class="selected ? 'text-ui-ink' : 'text-ui-faint'">
+        {{ selected ? selected.label : placeholder || $t("licenses.select.placeholder") }}
       </span>
-      <Loader2 v-if="loading" class="w-4 h-4 text-gray-400 animate-spin shrink-0" />
-      <ChevronDown v-else class="w-4 h-4 text-gray-400 shrink-0 transition-transform" :class="{ 'rotate-180': open }" />
+      <UiSpinner v-if="loading" size="14px" :center="false" />
+      <ChevronDown v-else class="w-4 h-4 text-ui-faint shrink-0 transition-transform" :class="{ 'rotate-180': open }" />
     </button>
 
-    <div
-      v-if="open"
-      class="absolute z-30 mt-1.5 w-full bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg overflow-hidden"
-    >
-      <div class="relative border-b border-[#F1F1F1]">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          ref="searchInput"
-          v-model="query"
-          type="text"
-          :placeholder="searchPlaceholder"
-          class="w-full pl-9 pr-3 py-2.5 text-sm focus:outline-none"
-          @keydown="onKey"
-          role="combobox"
-          aria-autocomplete="list"
-          :aria-expanded="open"
-        />
+    <Transition name="ui-pop">
+      <div
+        v-if="open"
+        class="absolute z-30 mt-1.5 w-full bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay overflow-hidden"
+      >
+        <div class="relative border-b border-ui-line">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-faint" />
+          <input
+            ref="searchInput"
+            v-model="query"
+            type="text"
+            :placeholder="searchPlaceholder || $t('licenses.select.searchPlaceholder')"
+            class="w-full pl-9 pr-3 py-2.5 bg-ui-surface text-ui-small text-ui-ink placeholder:text-ui-faint focus:outline-none"
+            @keydown="onKey"
+            role="combobox"
+            aria-autocomplete="list"
+            :aria-expanded="open"
+          />
+        </div>
+        <ul ref="listEl" class="max-h-64 overflow-y-auto scroll-soft p-1" role="listbox">
+          <li v-if="!filtered.length" class="px-3 py-2 text-ui-small text-ui-muted">{{ loading ? $t("common.states.loading") : emptyText || $t("licenses.select.noMatches") }}</li>
+          <li
+            v-for="(option, index) in filtered"
+            :key="option.value"
+            :data-index="index"
+            role="option"
+            :aria-selected="String(option.value) === String(modelValue)"
+            @mousedown.prevent="choose(option)"
+            @mouseenter="active = index"
+            class="flex items-center gap-2 px-2.5 py-2 rounded-ui-control text-ui-small cursor-pointer"
+            :class="index === active ? 'bg-ui-hover text-ui-ink' : 'text-ui-text'"
+          >
+            <span class="flex-1 truncate">{{ option.label }}</span>
+            <span v-if="option.hint" class="text-ui-cap font-mono text-ui-faint">{{ option.hint }}</span>
+            <Check v-if="String(option.value) === String(modelValue)" class="w-4 h-4 text-ui-accent shrink-0" />
+          </li>
+        </ul>
       </div>
-      <ul ref="listEl" class="max-h-64 overflow-y-auto py-1" role="listbox">
-        <li v-if="!filtered.length" class="px-3 py-2 text-sm text-brand-light">{{ loading ? "Loading..." : emptyText }}</li>
-        <li
-          v-for="(option, index) in filtered"
-          :key="option.value"
-          :data-index="index"
-          role="option"
-          :aria-selected="String(option.value) === String(modelValue)"
-          @mousedown.prevent="choose(option)"
-          @mouseenter="active = index"
-          class="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer"
-          :class="index === active ? 'bg-violet-50 text-violet-800' : 'text-brand-dark'"
-        >
-          <span class="flex-1 truncate">{{ option.label }}</span>
-          <span v-if="option.hint" class="text-[11px] font-mono text-gray-400">{{ option.hint }}</span>
-          <Check v-if="String(option.value) === String(modelValue)" class="w-4 h-4 text-violet-600 shrink-0" />
-        </li>
-      </ul>
-    </div>
+    </Transition>
   </div>
 </template>

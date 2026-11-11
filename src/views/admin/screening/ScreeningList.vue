@@ -1,33 +1,48 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { debounce } from "lodash-es";
-import { ClipboardCheck, Plus, Search, Inbox, X, Loader2, PenLine, Send, Settings2 } from "lucide-vue-next";
+import { ClipboardCheck, Plus, Search, SearchX, Inbox, X, Loader2, PenLine, Send, Settings2 } from "lucide-vue-next";
 import { useScreeningStore } from "@/stores/screening";
 import { can } from "@/helpers/permissionHelper";
 import { SCREENING_STATUS, SCREENING_SOURCE, COMPLEXITY } from "@/utils/screening";
 import Pagination from "@/components/common/Pagination.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiInput, UiChips, UiTable, UiBadge, UiEmpty, UiModal, UiStat } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
+
+const { t } = useI18n();
 
 const router = useRouter();
 const store = useScreeningStore();
 const { screenings, meta, statusCounts, loading, saving } = storeToRefs(store);
 
-const status = ref("");
-const search = ref("");
-const load = (page = 1) =>
-  store.fetchScreenings({ page, status: status.value || undefined, search: search.value.trim() || undefined, row_per_page: meta.value.per_page || 15 });
-onMounted(() => load());
-watch(status, () => load());
-watch(search, debounce(() => load(), 300));
+// Status, search and page live in the URL and are remembered, so coming
+// back from a screening restores the same view. The list shows what the
+// store already has and refreshes quietly.
+const list = useListState("screening", { q: "", status: "", page: 1 });
+const search = ref(list.q);
+watch(search, debounce((v) => (list.q = v.trim()), 300));
+watch(() => list.q, (v) => v !== search.value.trim() && (search.value = v));
+const params = computed(() => ({ page: list.page, status: list.status || undefined, search: list.q || undefined, row_per_page: 15 }));
+const { refreshing } = useStaleFetch(() => store.fetchScreenings(params.value), {
+  key: () => ["screening-list", params.value],
+  hasData: () => screenings.value.length > 0,
+});
+const status = computed({ get: () => list.status, set: (v) => (list.status = v) });
+const toggleStatus = (key) => (list.status = list.status === key ? "" : key);
+const load = (page = 1) => (list.page = page);
 
 const TABS = ["", "new", "in_review", "reviewed", "invited", "draft", "won", "lost"];
 const total = computed(() => Object.values(statusCounts.value || {}).reduce((a, b) => a + Number(b), 0));
-const tabLabel = (key) => (key ? SCREENING_STATUS[key].label : "All");
+const tabLabel = (key) => (key ? SCREENING_STATUS[key].label : t("common.labels.all"));
 const tabCount = (key) => (key ? Number(statusCounts.value?.[key] || 0) : total.value);
 
-const formatDate = (d) => (d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-");
+const formatDate = (d) => (d ? new Date(d).toLocaleDateString(localeTag(), { day: "numeric", month: "short", year: "numeric" }) : "-");
 const rowNo = (i) => (meta.value.current_page - 1) * meta.value.per_page + i + 1;
 const open = (s) => router.push({ name: "admin.screening.detail", params: { id: s.id } });
 
@@ -50,205 +65,155 @@ const create = async () => {
     errors.value = e?.response?.data?.errors || {};
   }
 };
+
+// Presentation only: badge tones, chips, table columns.
+const STATUS_TONE = { draft: "neutral", invited: "outline", new: "info", in_review: "warn", reviewed: "accent", won: "ok", lost: "bad" };
+const SIZE_TONE = { S: "ok", M: "info", L: "warn", XL: "bad" };
+const chipOptions = computed(() => TABS.map((key) => ({ value: key, label: tabLabel(key), count: tabCount(key) })));
+const columns = computed(() => [
+  { key: "client", label: t("common.labels.client") },
+  { key: "needs", label: t("screening.list.columns.needs") },
+  { key: "complexity", label: t("screening.list.columns.size") },
+  { key: "source", label: t("screening.list.columns.source") },
+  { key: "date", label: t("common.labels.date") },
+  { key: "status", label: t("common.labels.status") },
+]);
+const fieldClass = "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
 </script>
 
 <template>
-  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-4">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-9 h-9 bg-teal-50 rounded-[12px] flex items-center justify-center shrink-0">
-            <ClipboardCheck class="w-5 h-5 text-teal-600" />
-          </div>
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-base font-bold">Client Screening</h3>
-            <p class="text-brand-light text-xs">Needs questionnaires from the website, invite links and the team</p>
-          </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('screening.list.title')" :subtitle="$t('screening.list.subtitle')">
+      <template #actions>
+        <div class="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+          <UiButton v-if="can('screening-settings')" variant="secondary" :icon="Settings2" :to="{ name: 'admin.settings.client-screening' }">{{ $t("screening.list.catalog") }}</UiButton>
+          <UiButton v-if="can('screening-create')" :icon="Plus" @click="openNew">{{ $t("screening.list.new") }}</UiButton>
         </div>
-        <div class="flex gap-2">
-          <RouterLink
-            v-if="can('screening-settings')"
-            :to="{ name: 'admin.settings.client-screening' }"
-            class="rounded-[8px] border border-[#DCDEDD] hover:border-[#0C51D9] px-3 py-2.5 flex items-center justify-center gap-1.5 text-sm font-semibold text-brand-dark flex-1 sm:flex-none"
-          >
-            <Settings2 class="w-4 h-4" /> Catalog & Questions
-          </RouterLink>
-          <button
-            v-if="can('screening-create')"
-            type="button"
-            class="btn-primary rounded-[8px] border border-[#2151A0] blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center justify-center gap-1.5 flex-1 sm:flex-none"
-            @click="openNew"
-          >
-            <Plus class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">New Screening</span>
-          </button>
-        </div>
-      </div>
+      </template>
+    </UiPageHeader>
 
-      <div class="relative">
-        <Search class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Search code, name, company or email..."
-          class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm bg-white focus:outline-none focus:border-[#0C51D9]"
-        />
-      </div>
+    <!-- KPIs from the status counts -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 ui-stagger">
+      <UiStat :label="$t('common.labels.all')" :value="total" :icon="ClipboardCheck" :loading="loading && !screenings.length" selectable :active="!list.status" @select="list.status = ''" />
+      <UiStat :label="SCREENING_STATUS.new.label" :value="tabCount('new')" :tone="tabCount('new') ? 'accent' : ''" :loading="loading && !screenings.length" selectable :active="list.status === 'new'" @select="toggleStatus('new')" />
+      <UiStat :label="SCREENING_STATUS.in_review.label" :value="tabCount('in_review')" :tone="tabCount('in_review') ? 'warn' : ''" :loading="loading && !screenings.length" selectable :active="list.status === 'in_review'" @select="toggleStatus('in_review')" />
+      <UiStat :label="SCREENING_STATUS.won.label" :value="tabCount('won')" :tone="tabCount('won') ? 'ok' : ''" :loading="loading && !screenings.length" selectable :active="list.status === 'won'" @select="toggleStatus('won')" />
     </div>
 
-    <div class="flex gap-1.5 overflow-x-auto pb-2 mb-3 -mx-0.5 px-0.5">
-      <button
-        v-for="key in TABS"
-        :key="key || 'all'"
-        type="button"
-        class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
-        :class="status === key ? 'bg-[#0C51D9] border-[#0C51D9] text-white' : 'bg-white border-[#DCDEDD] text-brand-dark hover:border-[#0C51D9]'"
-        @click="status = key"
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+      <div class="px-4 sm:px-5 py-3.5 flex flex-col lg:flex-row lg:items-center gap-3 border-b border-ui-line">
+        <UiInput v-model="search" :icon="Search" :placeholder="$t('screening.list.searchPlaceholder')" class="lg:w-[320px] shrink-0" />
+        <UiChips v-model="status" :options="chipOptions" class="min-w-0" />
+      </div>
+
+      <UiTable
+        :columns="columns"
+        :rows="screenings"
+        :meta="meta"
+        :loading="loading && !screenings.length"
+        :skeleton-rows="4"
+        :class="refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
+        clickable
+        @row-click="open"
       >
-        {{ tabLabel(key) }}
-        <span class="ml-1 opacity-75">{{ tabCount(key) }}</span>
-      </button>
-    </div>
+        <template #cell-client="{ row }">
+          <p class="text-ui-body font-medium text-ui-ink truncate max-w-[260px]">{{ row.company || row.contact_name || $t("screening.unnamed") }}</p>
+          <p class="text-ui-cap text-ui-muted truncate max-w-[260px]"><span class="font-mono">{{ row.code }}</span><template v-if="row.company && row.contact_name"> · {{ row.contact_name }}</template></p>
+        </template>
+        <template #cell-needs="{ row }">
+          <span class="line-clamp-2 max-w-[280px] text-ui-small text-ui-text">{{ row.needs.join(", ") || "-" }}</span>
+        </template>
+        <template #cell-complexity="{ row }">
+          <UiBadge v-if="row.complexity" :tone="SIZE_TONE[row.complexity] || 'neutral'" :title="COMPLEXITY[row.complexity]?.label">{{ row.complexity }}</UiBadge>
+          <span v-else class="text-ui-faint">-</span>
+        </template>
+        <template #cell-source="{ row }">
+          <span class="text-ui-small text-ui-muted whitespace-nowrap">{{ SCREENING_SOURCE[row.source] }}</span>
+        </template>
+        <template #cell-date="{ row }">
+          <span class="text-ui-small whitespace-nowrap tabular-nums">{{ formatDate(row.submitted_at || row.created_at) }}</span>
+        </template>
+        <template #cell-status="{ row }">
+          <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot>{{ SCREENING_STATUS[row.status]?.label }}</UiBadge>
+        </template>
 
-    <div v-if="loading && !screenings.length" class="space-y-2">
-      <Skeleton v-for="i in 4" :key="i" height="64px" rounded="12px" />
-    </div>
-
-    <div v-else-if="!screenings.length" class="text-center py-14 rounded-[14px] border border-dashed border-[#DCDEDD] bg-gray-50/60">
-      <Inbox class="w-10 h-10 text-gray-300 mx-auto mb-2" />
-      <p class="text-sm font-semibold text-brand-dark">No screenings yet</p>
-      <p class="text-xs text-brand-light">Submissions from the website form appear here automatically.</p>
-    </div>
-
-    <template v-else>
-      <!-- Desktop table -->
-      <div class="hidden md:block bg-white border border-[#DCDEDD] rounded-[14px] overflow-hidden">
-        <table class="min-w-full text-sm">
-          <thead class="bg-slate-50 text-left text-brand-light">
-            <tr>
-              <th class="py-3 px-4 font-semibold w-12">No</th>
-              <th class="py-3 pr-4 font-semibold">Client</th>
-              <th class="py-3 pr-4 font-semibold">Needs</th>
-              <th class="py-3 pr-4 font-semibold">Size</th>
-              <th class="py-3 pr-4 font-semibold">Source</th>
-              <th class="py-3 pr-4 font-semibold">Date</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(s, i) in screenings" :key="s.id" class="border-t border-[#F1F1F1] hover:bg-gray-50 cursor-pointer" @click="open(s)">
-              <td class="py-3 px-4 text-brand-light">{{ rowNo(i) }}</td>
-              <td class="py-3 pr-4">
-                <p class="font-semibold text-brand-dark">{{ s.company || s.contact_name || "Unnamed" }}</p>
-                <p class="text-xs text-gray-400">{{ s.code }}<template v-if="s.company && s.contact_name"> · {{ s.contact_name }}</template></p>
-              </td>
-              <td class="py-3 pr-4 text-xs max-w-[280px]">
-                <span class="line-clamp-2">{{ s.needs.join(", ") || "-" }}</span>
-              </td>
-              <td class="py-3 pr-4">
-                <span v-if="s.complexity" class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="COMPLEXITY[s.complexity]?.class">{{ s.complexity }}</span>
-                <span v-else class="text-gray-300">-</span>
-              </td>
-              <td class="py-3 pr-4 text-xs text-brand-light whitespace-nowrap">{{ SCREENING_SOURCE[s.source] }}</td>
-              <td class="py-3 pr-4 text-xs whitespace-nowrap">{{ formatDate(s.submitted_at || s.created_at) }}</td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap" :class="SCREENING_STATUS[s.status]?.class">{{ SCREENING_STATUS[s.status]?.label }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Mobile cards -->
-      <div class="md:hidden space-y-2">
-        <button
-          v-for="(s, i) in screenings"
-          :key="s.id"
-          type="button"
-          class="w-full text-left bg-white border border-[#DCDEDD] rounded-[12px] p-3.5 hover:border-[#0C51D9]"
-          @click="open(s)"
-        >
-          <div class="flex items-start justify-between gap-2">
-            <div class="min-w-0">
-              <p class="text-sm font-semibold text-brand-dark truncate"><span class="text-gray-400 font-normal">{{ rowNo(i) }}.</span> {{ s.company || s.contact_name || "Unnamed" }}</p>
-              <p class="text-[11px] text-gray-400">{{ s.code }} · {{ formatDate(s.submitted_at || s.created_at) }} · {{ SCREENING_SOURCE[s.source] }}</p>
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-body font-medium text-ui-ink truncate">{{ row.company || row.contact_name || $t("screening.unnamed") }}</p>
+              <p class="text-ui-cap text-ui-muted truncate"><span class="font-mono">{{ row.code }}</span> · {{ formatDate(row.submitted_at || row.created_at) }} · {{ SCREENING_SOURCE[row.source] }}</p>
+              <p v-if="row.needs.length" class="text-ui-cap text-ui-text mt-1 line-clamp-2">{{ row.needs.join(", ") }}</p>
             </div>
-            <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold shrink-0" :class="SCREENING_STATUS[s.status]?.class">{{ SCREENING_STATUS[s.status]?.label }}</span>
+            <div class="flex flex-col items-end gap-1 shrink-0">
+              <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot>{{ SCREENING_STATUS[row.status]?.label }}</UiBadge>
+              <UiBadge v-if="row.complexity" :tone="SIZE_TONE[row.complexity] || 'neutral'">{{ row.complexity }}</UiBadge>
+            </div>
           </div>
-          <p v-if="s.needs.length" class="text-xs text-brand-light mt-1.5 line-clamp-2">{{ s.needs.join(", ") }}</p>
-        </button>
-      </div>
+        </template>
 
-      <Pagination :meta="meta" :loading="loading" item-label="screenings" @page-change="load" />
-    </template>
+        <template #empty>
+          <UiEmpty v-if="list.isDirty" :icon="SearchX" :title="$t('screening.list.emptyFilteredTitle')" :message="$t('screening.list.emptyFilteredHint')" compact>
+            <UiButton variant="secondary" @click="(search = ''), list.reset()">{{ $t("screening.list.clearFilters") }}</UiButton>
+          </UiEmpty>
+          <UiEmpty v-else :icon="Inbox" :title="$t('screening.list.emptyTitle')" :message="$t('screening.list.emptyHint')" compact />
+        </template>
+      </UiTable>
+
+      <div v-if="screenings.length" class="border-t border-ui-line px-4 sm:px-5 py-3">
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('screening.list.itemLabel')" @page-change="load" />
+      </div>
+    </section>
 
     <!-- New screening -->
-    <div v-if="showNew" class="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" @click.self="showNew = false">
-      <form class="bg-white w-full sm:max-w-lg rounded-t-[16px] sm:rounded-[14px] border border-[#DCDEDD] max-h-[92vh] overflow-y-auto" @submit.prevent="create">
-        <div class="p-4 sm:p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-brand-dark text-base font-bold">New Screening</h3>
-          <button type="button" class="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center" aria-label="Close" @click="showNew = false">
-            <X class="w-5 h-5 text-gray-500" />
-          </button>
+    <UiModal v-model:open="showNew" :title="$t('screening.list.new')">
+      <form id="screening-new-form" class="space-y-4" @submit.prevent="create">
+        <div class="grid grid-cols-2 gap-2" role="radiogroup">
+          <label
+            v-for="m in [
+              { key: 'internal', icon: PenLine, title: $t('screening.list.modal.fillNow'), text: $t('screening.list.modal.fillNowText') },
+              { key: 'invite', icon: Send, title: $t('screening.list.modal.sendToClient'), text: $t('screening.list.modal.sendToClientText') },
+            ]"
+            :key="m.key"
+            class="ui-press border rounded-ui-card p-3 cursor-pointer transition-colors has-[:focus-visible]:shadow-ui-focus"
+            :class="form.mode === m.key ? 'border-ui-ink bg-ui-subtle' : 'border-ui-line hover:bg-ui-hover'"
+          >
+            <input v-model="form.mode" type="radio" :value="m.key" class="sr-only" />
+            <component :is="m.icon" class="w-4 h-4 mb-1.5" :class="form.mode === m.key ? 'text-ui-ink' : 'text-ui-muted'" />
+            <p class="text-ui-small font-medium text-ui-ink">{{ m.title }}</p>
+            <p class="text-ui-cap text-ui-muted">{{ m.text }}</p>
+          </label>
         </div>
-        <div class="p-4 sm:p-5 space-y-4">
-          <div class="grid grid-cols-2 gap-2">
-            <label
-              v-for="m in [
-                { key: 'internal', icon: PenLine, title: 'Fill in now', text: 'The team fills it in, e.g. during a meeting' },
-                { key: 'invite', icon: Send, title: 'Send to client', text: 'Get a link the client fills in on the website' },
-              ]"
-              :key="m.key"
-              class="border rounded-[12px] p-3 cursor-pointer transition-colors"
-              :class="form.mode === m.key ? 'border-[#0C51D9] bg-blue-50/60' : 'border-[#DCDEDD] hover:border-[#0C51D9]'"
-            >
-              <input v-model="form.mode" type="radio" :value="m.key" class="sr-only" />
-              <component :is="m.icon" class="w-4 h-4 text-[#0C51D9] mb-1" />
-              <p class="text-sm font-semibold text-brand-dark">{{ m.title }}</p>
-              <p class="text-[11px] text-brand-light leading-snug">{{ m.text }}</p>
-            </label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="sn-contact" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("screening.list.modal.contactName") }}</label>
+            <input id="sn-contact" v-model="form.contact_name" type="text" maxlength="120" :class="fieldClass" />
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-brand-dark mb-1">Contact name</label>
-              <input v-model="form.contact_name" type="text" maxlength="120" class="w-full border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm focus:outline-none focus:border-[#0C51D9]" />
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-brand-dark mb-1">Company</label>
-              <input v-model="form.company" type="text" maxlength="150" class="w-full border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm focus:outline-none focus:border-[#0C51D9]" />
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-brand-dark mb-1">Email</label>
-              <input v-model="form.email" type="email" maxlength="150" class="w-full border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm focus:outline-none focus:border-[#0C51D9]" />
-              <p v-if="errors.email" class="text-xs text-red-500 mt-1">{{ errors.email[0] }}</p>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-brand-dark mb-1">Phone / WhatsApp</label>
-              <input v-model="form.phone" type="text" maxlength="40" class="w-full border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm focus:outline-none focus:border-[#0C51D9]" />
-            </div>
+          <div>
+            <label for="sn-company" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("screening.list.modal.company") }}</label>
+            <input id="sn-company" v-model="form.company" type="text" maxlength="150" :class="fieldClass" />
           </div>
-          <div v-if="form.mode === 'invite'">
-            <label class="block text-xs font-semibold text-brand-dark mb-1">Form language for the client</label>
-            <div class="flex gap-2">
-              <button
-                v-for="l in [{ k: 'id', t: 'Bahasa Indonesia' }, { k: 'en', t: 'English' }]"
-                :key="l.k"
-                type="button"
-                class="border rounded-[10px] px-3 py-1.5 text-sm"
-                :class="form.lang === l.k ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9] font-semibold' : 'border-[#DCDEDD]'"
-                @click="form.lang = l.k"
-              >{{ l.t }}</button>
-            </div>
+          <div>
+            <label for="sn-email" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("common.labels.email") }}</label>
+            <input id="sn-email" v-model="form.email" type="email" maxlength="150" :class="fieldClass" />
+            <p v-if="errors.email" class="text-ui-cap text-ui-bad mt-1.5">{{ errors.email[0] }}</p>
+          </div>
+          <div>
+            <label for="sn-phone" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("screening.list.modal.phone") }}</label>
+            <input id="sn-phone" v-model="form.phone" type="text" maxlength="40" :class="fieldClass" />
           </div>
         </div>
-        <div class="p-4 sm:p-5 border-t border-[#DCDEDD] grid grid-cols-2 gap-2.5">
-          <button type="button" class="rounded-[10px] border border-[#DCDEDD] px-4 py-2.5 text-sm font-semibold" @click="showNew = false">Cancel</button>
-          <button type="submit" :disabled="saving" class="blue-gradient blue-btn-shadow border border-[#2151A0] rounded-[10px] px-4 py-2.5 flex items-center justify-center gap-1.5 disabled:opacity-60">
-            <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
-            <span class="text-white text-sm font-semibold">{{ form.mode === "invite" ? "Create link" : "Start" }}</span>
-          </button>
+        <div v-if="form.mode === 'invite'">
+          <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("screening.list.modal.formLanguage") }}</p>
+          <UiChips v-model="form.lang" :options="[{ value: 'id', label: $t('screening.langId') }, { value: 'en', label: $t('screening.langEn') }]" />
         </div>
       </form>
-    </div>
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="showNew = false">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="screening-new-form" class="flex-1 sm:flex-none" :loading="saving" :disabled="saving">
+          {{ form.mode === "invite" ? $t("screening.list.modal.createLink") : $t("screening.list.modal.start") }}
+        </UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>

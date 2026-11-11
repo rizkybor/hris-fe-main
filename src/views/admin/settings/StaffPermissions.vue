@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import {
   UserCog,
@@ -16,7 +17,20 @@ import { useStaffPermissionStore } from "@/stores/staffPermission";
 import { useRoleStore } from "@/stores/role";
 import Alert from "@/components/common/Alert.vue";
 import Avatar from "@/components/common/Avatar.vue";
-import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import { UiBadge, UiButton, UiEmpty, UiInput, UiModal, UiPageHeader, UiSpinner, UiTable } from "@/components/ui";
+
+const { t, te } = useI18n();
+
+// Display labels for the API's permission groups (same mapping as Roles &
+// Permissions): module key / action suffix -> current language, falling
+// back to the API's English text. Permission names are never translated.
+const camelKey = (value) => String(value).replace(/[-_ ]+([a-z0-9])/gi, (_, c) => c.toUpperCase());
+const translated = (key, fallback) => (te(key) ? t(key) : fallback);
+const moduleLabel = (group) => translated(`settings.permissions.modules.${camelKey(group.key)}`, group.label);
+const actionLabel = (group, perm) => {
+  const suffix = perm.name.startsWith(`${group.key}-`) ? perm.name.slice(group.key.length + 1) : perm.name;
+  return translated(`settings.permissions.actions.${camelKey(suffix)}`, perm.action);
+};
 
 const staffStore = useStaffPermissionStore();
 const { staffAccounts, currentStaff, loading, saving, error, success } = storeToRefs(staffStore);
@@ -50,7 +64,7 @@ const permissionMeta = computed(() => {
   const map = new Map();
   for (const group of permissionGroups.value) {
     for (const perm of group.permissions) {
-      map.set(perm.name, { moduleLabel: group.label, action: perm.action });
+      map.set(perm.name, { group, perm });
     }
   }
   return map;
@@ -62,9 +76,9 @@ const rolePermissionsByModule = computed(() => {
   const grouped = new Map();
   for (const name of currentStaff.value?.role_permissions || []) {
     const meta = permissionMeta.value.get(name);
-    const label = meta?.moduleLabel || "Other";
+    const label = meta ? moduleLabel(meta.group) : t("settings.roles.other");
     if (!grouped.has(label)) grouped.set(label, []);
-    grouped.get(label).push(meta?.action || name);
+    grouped.get(label).push(meta ? actionLabel(meta.group, meta.perm) : name);
   }
   return Array.from(grouped.entries()).map(([label, actions]) => ({ label, actions }));
 });
@@ -81,7 +95,9 @@ const extraGroups = computed(() => {
         if (!query) return true;
         return (
           group.label.toLowerCase().includes(query) ||
+          moduleLabel(group).toLowerCase().includes(query) ||
           p.action.toLowerCase().includes(query) ||
+          actionLabel(group, p).toLowerCase().includes(query) ||
           p.name.toLowerCase().includes(query)
         );
       }),
@@ -124,6 +140,18 @@ const closeModal = () => {
   selectedEmployeeId.value = null;
 };
 
+// Presentation only.
+const staffColumns = computed(() => [
+  { key: "name", label: t("settings.staff.columns.staff") },
+  { key: "email", label: t("common.labels.email") },
+  { key: "extra", label: t("settings.staff.columns.extra") },
+  { key: "open", label: "", align: "right", width: 60 },
+]);
+const groupState = (group) => {
+  const n = selectedInGroup(group);
+  return n === 0 ? "none" : n === group.permissions.length ? "all" : "some";
+};
+
 const handleSave = async () => {
   try {
     await staffStore.updateStaffPermissions(selectedEmployeeId.value, formPermissions.value);
@@ -136,244 +164,167 @@ const handleSave = async () => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="bg-white mb-5">
-      <div class="flex items-center gap-3">
-        <router-link
-          :to="{ name: 'admin.settings.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Settings"
-          title="Back to Settings"
-        >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader
+      :title="$t('settings.staff.title')"
+      :subtitle="$t('settings.staff.subtitle')"
+    >
+      <template #eyebrow>
+        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" :aria-label="$t('settings.backToSettings')" :title="$t('settings.backToSettings')">
+          <ArrowLeft class="w-4 h-4" /> {{ $t("settings.settings") }}
         </router-link>
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <UserCog class="w-5 h-5 text-[#0C51D9]" />
+      </template>
+    </UiPageHeader>
+
+    <Alert v-if="success" type="success" :title="success" :show="!!success" />
+
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+      <div class="px-4 sm:px-5 pt-4 pb-3 flex flex-col md:flex-row md:items-center gap-3 border-b border-ui-line">
+        <div class="flex-1 min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t("settings.staff.listTitle") }}</h2>
+          <p class="text-ui-cap text-ui-muted tabular-nums">{{ $t("settings.staff.count", { n: staffAccounts.length }, staffAccounts.length) }}</p>
         </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Staff Account Permissions</h3>
-          <p class="text-brand-light text-sm">
-            Grant extra permissions to individual Staff accounts, on top of what the Staff role already gives everyone
-          </p>
-        </div>
+        <UiInput v-model="search" :icon="Search" :placeholder="$t('settings.staff.searchPlaceholder')" class="md:w-[300px]" />
       </div>
-    </div>
 
-    <Transition name="fade">
-      <Alert v-if="success" type="success" :title="success" :show="!!success" />
-    </Transition>
-
-    <div class="relative mb-6 max-w-md">
-      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Search class="w-4 h-4 text-gray-400" />
-      </div>
-      <input
-        v-model="search"
-        type="text"
-        placeholder="Search staff by name or email..."
-        class="w-full pl-9 pr-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none bg-white"
-      />
-    </div>
-
-    <SkeletonCardGrid v-if="loading && !isModalOpen" :count="6" cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" />
-
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <button
-        v-for="staff in staffAccounts"
-        :key="staff.employee_id"
-        @click="openStaffModal(staff)"
-        class="text-left bg-white border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] hover:shadow-sm transition-all"
+      <UiTable
+        :columns="staffColumns"
+        :rows="staffAccounts"
+        row-key="employee_id"
+        :loading="loading && !isModalOpen"
+        :skeleton-rows="6"
+        clickable
+        @row-click="openStaffModal"
       >
-        <div class="flex items-center gap-3 mb-3">
-          <Avatar :src="staff.profile_photo" :alt="staff.name" size="w-11 h-11" icon-size="w-5 h-5" />
-          <div class="min-w-0">
-            <p class="text-brand-dark text-sm font-bold truncate">{{ staff.name }}</p>
-            <p class="text-brand-light text-xs truncate">{{ staff.job_title || "-" }}</p>
+        <template #cell-name="{ row }">
+          <div class="flex items-center gap-3 min-w-0">
+            <Avatar :src="row.profile_photo" :alt="row.name" size="w-9 h-9" icon-size="w-4 h-4" />
+            <div class="min-w-0">
+              <p class="text-ui-body font-medium text-ui-ink truncate">{{ row.name }}</p>
+              <p class="text-ui-cap text-ui-muted truncate">{{ row.job_title || "-" }}</p>
+            </div>
           </div>
-        </div>
-        <p class="flex items-center gap-1.5 text-xs text-gray-400 truncate mb-2">
-          <Mail class="w-3 h-3 shrink-0" /> {{ staff.email }}
-        </p>
-        <span
-          v-if="staff.direct_permissions_count > 0"
-          class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-blue-50 text-[#0C51D9] font-semibold"
-        >
-          <ShieldCheck class="w-3 h-3" />
-          {{ staff.direct_permissions_count }} extra permission{{ staff.direct_permissions_count === 1 ? "" : "s" }}
-        </span>
-        <span v-else class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-gray-50 text-gray-400 font-medium">
-          Role permissions only
-        </span>
-      </button>
+        </template>
+        <template #cell-email="{ row }">
+          <span class="text-ui-muted truncate">{{ row.email }}</span>
+        </template>
+        <template #cell-extra="{ row }">
+          <UiBadge v-if="row.direct_permissions_count > 0" tone="accent">
+            <ShieldCheck class="w-3 h-3" />
+            {{ $t("settings.staff.extraCount", { n: row.direct_permissions_count }, row.direct_permissions_count) }}
+          </UiBadge>
+          <UiBadge v-else tone="neutral">{{ $t("settings.staff.roleOnly") }}</UiBadge>
+        </template>
+        <template #cell-open>
+          <UserCog class="w-4 h-4 text-ui-faint inline" />
+        </template>
 
-      <div v-if="!loading && staffAccounts.length === 0" class="col-span-full text-center py-12 text-gray-500">
-        <p class="text-lg font-semibold">No Staff accounts found</p>
-      </div>
-    </div>
+        <template #mobile="{ row, number }">
+          <div class="flex items-center gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5">{{ number }}</span>
+            <Avatar :src="row.profile_photo" :alt="row.name" size="w-10 h-10" icon-size="w-4 h-4" />
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-body font-medium text-ui-ink truncate">{{ row.name }}</p>
+              <p class="text-ui-cap text-ui-muted truncate flex items-center gap-1"><Mail class="w-3 h-3 shrink-0" />{{ row.email }}</p>
+              <div class="mt-1.5">
+                <UiBadge v-if="row.direct_permissions_count > 0" tone="accent">
+                  {{ $t("settings.staff.extraCount", { n: row.direct_permissions_count }, row.direct_permissions_count) }}
+                </UiBadge>
+                <UiBadge v-else tone="neutral">{{ $t("settings.staff.roleOnly") }}</UiBadge>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template #empty>
+          <UiEmpty :icon="UserCog" :title="$t('settings.staff.empty')" compact />
+        </template>
+      </UiTable>
+    </section>
 
     <!-- PERMISSIONS MODAL -->
-    <Transition name="fade">
-      <div v-if="isModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="closeModal"></div>
-
-        <div class="bg-white rounded-[14px] w-full max-w-3xl relative z-10 shadow-2xl max-h-[90vh] flex flex-col">
-          <!-- Modal Header -->
-          <div class="flex items-start justify-between p-4 sm:p-6 border-b border-[#F1F1F1] shrink-0">
-            <div class="flex items-center gap-3 min-w-0">
-              <Avatar
-                v-if="currentStaff"
-                :src="currentStaff.profile_photo"
-                :alt="currentStaff.name"
-                size="w-11 h-11"
-                icon-size="w-5 h-5"
-              />
-              <div class="min-w-0">
-                <h3 class="text-base sm:text-xl font-bold text-brand-dark truncate">
-                  {{ currentStaff?.name || "Loading..." }}
-                </h3>
-                <p class="text-brand-light text-xs sm:text-sm truncate">{{ currentStaff?.email }}</p>
-              </div>
-            </div>
-            <button @click="closeModal" class="text-gray-400 hover:text-gray-600 shrink-0">
-              <X class="w-5 h-5" />
-            </button>
-          </div>
-
-          <!-- Modal Body -->
-          <div v-if="loading" class="flex-1 flex items-center justify-center py-16">
-            <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-          <div v-else class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-            <!-- Role-inherited permissions (read-only) -->
-            <div>
-              <div class="flex items-center gap-2 mb-3">
-                <Lock class="w-4 h-4 text-gray-400" />
-                <label class="text-sm font-semibold text-brand-dark">
-                  Inherited from Staff role
-                </label>
-                <span class="text-xs text-gray-400">({{ currentStaff?.role_permissions?.length || 0 }})</span>
-              </div>
-              <div v-if="rolePermissionsByModule.length" class="flex flex-wrap gap-1.5">
-                <span
-                  v-for="group in rolePermissionsByModule"
-                  :key="group.label"
-                  :title="group.actions.join(', ')"
-                  class="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-500 font-medium"
-                >
-                  {{ group.label }} ({{ group.actions.length }})
-                </span>
-              </div>
-              <p v-else class="text-xs text-gray-400 italic">No permissions granted by the Staff role.</p>
-            </div>
-
-            <!-- Extra, account-specific permissions -->
-            <div>
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between mb-3">
-                <label class="text-sm font-semibold text-brand-dark">
-                  Extra permissions for this account
-                </label>
-                <span class="text-xs text-brand-light">{{ formPermissions.length }} selected</span>
-              </div>
-
-              <div class="relative mb-3">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search class="w-4 h-4 text-gray-400" />
-                </div>
-                <input
-                  v-model="permissionSearch"
-                  type="text"
-                  placeholder="Search modules or actions..."
-                  class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-                />
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div
-                  v-for="group in extraGroups"
-                  :key="group.key"
-                  class="border border-[#DCDEDD] rounded-xl p-3"
-                >
-                  <button
-                    type="button"
-                    @click="toggleGroup(group)"
-                    class="w-full flex items-center justify-between mb-2 group/header"
-                  >
-                    <span class="flex items-center gap-1.5 text-sm font-semibold text-brand-dark">
-                      <CheckSquare
-                        v-if="selectedInGroup(group) === group.permissions.length"
-                        class="w-4 h-4 text-[#0C51D9]"
-                      />
-                      <Square v-else class="w-4 h-4 text-gray-300 group-hover/header:text-gray-400" />
-                      {{ group.label }}
-                    </span>
-                    <span class="text-xs text-gray-400 font-medium">
-                      {{ selectedInGroup(group) }}/{{ group.permissions.length }}
-                    </span>
-                  </button>
-                  <div class="flex flex-wrap gap-1.5">
-                    <label
-                      v-for="perm in group.permissions"
-                      :key="perm.id"
-                      class="flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border cursor-pointer transition-colors"
-                      :class="
-                        formPermissions.includes(perm.name)
-                          ? 'bg-blue-50 border-[#0C51D9] text-[#0C51D9]'
-                          : 'border-[#DCDEDD] text-brand-dark hover:border-gray-400'
-                      "
-                    >
-                      <input
-                        type="checkbox"
-                        class="hidden"
-                        :checked="formPermissions.includes(perm.name)"
-                        @change="togglePermission(perm.name)"
-                      />
-                      {{ perm.action }}
-                    </label>
-                  </div>
-                </div>
-
-                <div v-if="extraGroups.length === 0" class="sm:col-span-2 text-center py-8 text-sm text-gray-400">
-                  {{ permissionSearch ? `No modules match "${permissionSearch}"` : "This account already has every permission via the Staff role." }}
-                </div>
-              </div>
-            </div>
-
-            <p v-if="error" class="text-red-500 text-sm">
-              {{ typeof error === "string" ? error : "Something went wrong." }}
-            </p>
-          </div>
-
-          <!-- Modal Footer -->
-          <div class="grid grid-cols-2 gap-3 p-4 sm:p-6 border-t border-[#F1F1F1] shrink-0">
-            <button
-              type="button"
-              @click="closeModal"
-              class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50 transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              @click="handleSave"
-              :disabled="saving || loading"
-              class="px-4 py-3 rounded-xl bg-[#0C51D9] text-white font-semibold hover:brightness-110 transition disabled:opacity-50"
-            >
-              {{ saving ? "Saving..." : "Save Permissions" }}
-            </button>
+    <UiModal :open="isModalOpen" size="lg" @update:open="(v) => !v && closeModal()">
+      <template #header>
+        <div class="flex items-center gap-3 min-w-0 flex-1">
+          <Avatar v-if="currentStaff" :src="currentStaff.profile_photo" :alt="currentStaff.name" size="w-10 h-10" icon-size="w-5 h-5" />
+          <div class="min-w-0">
+            <h2 class="text-ui-h2 text-ui-ink truncate">{{ currentStaff?.name || $t("common.states.loading") }}</h2>
+            <p class="text-ui-small text-ui-muted truncate">{{ currentStaff?.email }}</p>
           </div>
         </div>
+      </template>
+
+      <div v-if="loading" class="flex items-center justify-center py-16">
+        <UiSpinner />
       </div>
-    </Transition>
+      <div v-else class="space-y-6">
+        <!-- Role-inherited permissions (read-only) -->
+        <div>
+          <div class="flex items-center gap-2 mb-2.5">
+            <Lock class="w-4 h-4 text-ui-faint" />
+            <p class="text-ui-small font-medium text-ui-ink">{{ $t("settings.staff.inherited") }}</p>
+            <span class="text-ui-cap text-ui-faint tabular-nums">({{ currentStaff?.role_permissions?.length || 0 }})</span>
+          </div>
+          <div v-if="rolePermissionsByModule.length" class="flex flex-wrap gap-1.5">
+            <UiBadge v-for="group in rolePermissionsByModule" :key="group.label" :title="group.actions.join(', ')">
+              {{ group.label }} ({{ group.actions.length }})
+            </UiBadge>
+          </div>
+          <p v-else class="text-ui-cap text-ui-muted italic">{{ $t("settings.staff.noInherited") }}</p>
+        </div>
+
+        <!-- Extra, account-specific permissions -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <p class="flex-1 text-ui-small font-medium text-ui-ink">{{ $t("settings.staff.extraTitle") }}</p>
+            <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("settings.staff.selected", { n: formPermissions.length }) }}</span>
+          </div>
+
+          <UiInput v-model="permissionSearch" :icon="Search" :placeholder="$t('settings.permissions.searchPlaceholder')" class="mb-3" />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div v-for="group in extraGroups" :key="group.key" class="border border-ui-line rounded-ui-card">
+              <label class="flex items-center gap-2.5 px-3 py-2.5 border-b border-ui-line">
+                <input
+                  type="checkbox"
+                  class="w-4 h-4 accent-[rgb(var(--ui-ink))]"
+                  :checked="groupState(group) === 'all'"
+                  :indeterminate.prop="groupState(group) === 'some'"
+                  @change="toggleGroup(group)"
+                />
+                <span class="flex-1 min-w-0 text-ui-small font-medium text-ui-ink truncate">{{ moduleLabel(group) }}</span>
+                <span class="text-ui-cap text-ui-faint tabular-nums">{{ selectedInGroup(group) }}/{{ group.permissions.length }}</span>
+              </label>
+              <div class="grid grid-cols-2 gap-x-3 gap-y-2 px-3 py-2.5">
+                <label v-for="perm in group.permissions" :key="perm.id" class="flex items-center gap-2 text-ui-small text-ui-text">
+                  <input
+                    type="checkbox"
+                    class="w-4 h-4 accent-[rgb(var(--ui-ink))]"
+                    :checked="formPermissions.includes(perm.name)"
+                    @change="togglePermission(perm.name)"
+                  />
+                  <span class="truncate">{{ actionLabel(group, perm) }}</span>
+                </label>
+              </div>
+            </div>
+
+            <p v-if="extraGroups.length === 0" class="sm:col-span-2 text-center py-8 text-ui-small text-ui-muted">
+              {{ permissionSearch ? $t("settings.roles.noMatch", { query: permissionSearch }) : $t("settings.staff.allInherited") }}
+            </p>
+          </div>
+        </div>
+
+        <p v-if="error" class="text-ui-small text-ui-bad">
+          {{ typeof error === "string" ? error : $t("settings.staff.error") }}
+        </p>
+      </div>
+
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="closeModal">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton class="flex-1 sm:flex-none" :loading="saving" :disabled="saving || loading" @click="handleSave">
+          {{ saving ? $t("common.actions.saving") : $t("settings.staff.save") }}
+        </UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

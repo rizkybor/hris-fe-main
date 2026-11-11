@@ -4,6 +4,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useEmployeeStore } from "@/stores/employee";
 import { storeToRefs } from "pinia";
 import { ArrowRight, ArrowLeft, Save } from "lucide-vue-next";
+import { UiButton } from "@/components/ui";
 
 import Step1PersonalInfo from "@/components/admin/employee/create/steps/Step1PersonalInfo.vue";
 import Step2JobInfo from "@/components/admin/employee/create/steps/Step2JobInfo.vue";
@@ -91,7 +92,8 @@ const loadEmployeeData = async () => {
 
     if (employee) {
       // Step 1 - Personal Information
-      step1Data.value.name = employee.user?.name || "";
+      // Full name with titles/degrees (the API's `name` is only how it shows).
+      step1Data.value.name = employee.user?.full_name || employee.user?.name || "";
       step1Data.value.email = employee.user?.email || "";
       step1Data.value.identity_number = employee.identity_number || "";
       step1Data.value.npwp = employee.npwp || "";
@@ -261,117 +263,118 @@ onMounted(() => {
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-5">
-    <!-- Step 1: Personal Information -->
-    <Step1PersonalInfo
-      v-if="currentStep === 1"
-      v-model="step1Data"
-      :errors="error"
-      :is-editing="true"
-    />
+  <div class="p-4 sm:p-5 lg:p-6 ui-anim-fade-up">
+    <form @submit.prevent="handleSubmit" class="space-y-5">
+      <!-- Step 1: Personal Information -->
+      <Step1PersonalInfo
+        v-if="currentStep === 1"
+        v-model="step1Data"
+        :errors="error"
+        :is-editing="true"
+      />
 
-    <!-- Step 2: Job Information -->
-    <Step2JobInfo
-      v-if="currentStep === 2"
-      v-model="step2Data"
-      :errors="error"
-    />
+      <!-- Step 2: Job Information -->
+      <Step2JobInfo
+        v-if="currentStep === 2"
+        v-model="step2Data"
+        :errors="error"
+      />
 
-    <!-- Step 3: Emergency Contact -->
-    <Step3EmergencyContact
-      v-if="currentStep === 3"
-      v-model="step3Data"
-      :errors="error"
-      :is-editing="true"
-      :employee-id="route.params.id"
-    />
+      <!-- Step 3: Emergency Contact -->
+      <Step3EmergencyContact
+        v-if="currentStep === 3"
+        v-model="step3Data"
+        :errors="error"
+        :is-editing="true"
+        :employee-id="route.params.id"
+      />
 
-    <!-- Step 4: Preview -->
-    <Step4Preview
-      v-if="currentStep === 4"
-      :step1Data="step1Data"
-      :step2Data="step2Data"
-      :step3Data="step3Data"
-    />
+      <!-- Step 4: Preview -->
+      <Step4Preview
+        v-if="currentStep === 4"
+        :step1Data="step1Data"
+        :step2Data="step2Data"
+        :step3Data="step3Data"
+      />
 
-    <!-- Form Navigation -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5">
-        <div>
-          <p class="text-brand-dark text-sm font-medium">
-            {{
-              currentStep === 4
-                ? "Ready to update this employee?"
-                : `Step ${currentStep} of ${totalSteps}`
-            }}
-          </p>
-          <p class="text-brand-light text-xs font-normal mt-1">
-            {{
-              currentStep === 4
-                ? "Review and confirm all information before updating"
-                : currentStep === 1
-                ? "Update the personal information"
-                : currentStep === 2
-                ? "Update the job information"
-                : "Update the emergency contact information"
-            }}
-          </p>
-        </div>
-        <div class="flex items-center gap-1.5 sm:gap-2.5">
-          <button
-            v-if="currentStep > 1"
-            type="button"
-            @click="previousStep"
-            class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center justify-center gap-1.5"
-          >
-            <ArrowLeft class="w-4 h-4 text-gray-600" />
-            <span class="text-brand-dark text-sm sm:text-sm font-semibold"
-              >Previous</span
-            >
-          </button>
-          <button
-            v-else
-            type="button"
-            @click="router.push({ name: 'admin.employees' })"
-            class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center justify-center gap-1.5"
-          >
-            <span class="text-brand-dark text-sm sm:text-sm font-semibold">Cancel</span>
-          </button>
-
-          <button
-            v-if="currentStep < totalSteps"
-            type="button"
-            @click="nextStep"
-            class="flex-1 sm:flex-none btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center justify-center gap-1.5"
-          >
-            <span class="text-brand-white text-sm sm:text-sm font-semibold">
-              Next:
+      <!-- Form Navigation: a card on desktop, a bar pinned to the bottom on phones -->
+      <div
+        class="sticky bottom-0 z-10 -mx-4 sm:mx-0 sm:static bg-ui-surface border-t sm:border border-ui-line sm:rounded-ui-card px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:p-5"
+      >
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="hidden sm:block min-w-0">
+            <p class="text-ui-small font-medium text-ui-ink">
               {{
-                currentStep === 1
-                  ? "Job Info"
-                  : currentStep === 2
-                  ? "Emergency Contact"
-                  : "Review"
+                currentStep === 4
+                  ? $t("employees.wizard.edit.ready")
+                  : $t("employees.wizard.stepOf", { current: currentStep, total: totalSteps })
               }}
-            </span>
-            <ArrowRight class="w-4 h-4 text-white" />
-          </button>
-          <button
-            v-else
-            type="submit"
-            :disabled="loading"
-            class="flex-1 sm:flex-none btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2 sm:px-5 sm:py-2.5 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Save class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm sm:text-sm font-semibold">
-              {{ loading ? "Updating..." : "Update Employee" }}
-            </span>
-          </button>
+            </p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">
+              {{
+                currentStep === 4
+                  ? $t("employees.wizard.edit.reviewHint")
+                  : currentStep === 1
+                  ? $t("employees.wizard.edit.personalHint")
+                  : currentStep === 2
+                  ? $t("employees.wizard.edit.jobHint")
+                  : $t("employees.wizard.edit.emergencyHint")
+              }}
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <UiButton
+              v-if="currentStep > 1"
+              variant="secondary"
+              size="lg"
+              :icon="ArrowLeft"
+              :aria-label="$t('common.actions.previous')"
+              class="shrink-0 w-11 !px-0 sm:w-auto sm:!px-3.5 sm:h-9 sm:px-3.5 sm:text-ui-small"
+              @click="previousStep"
+            >
+              <span class="hidden sm:inline">{{ $t("common.actions.previous") }}</span>
+            </UiButton>
+            <UiButton
+              v-else
+              variant="secondary"
+              size="lg"
+              class="flex-1 sm:flex-none sm:h-9 sm:px-3.5 sm:text-ui-small"
+              @click="router.push({ name: 'admin.employees' })"
+            >
+              {{ $t("common.actions.cancel") }}
+            </UiButton>
+
+            <UiButton
+              v-if="currentStep < totalSteps"
+              size="lg"
+              :icon-right="ArrowRight"
+              class="flex-1 min-w-0 sm:flex-none sm:h-9 sm:px-3.5 sm:text-ui-small"
+              @click="nextStep"
+            >
+              {{
+                $t("employees.wizard.next", {
+                  step: $t(
+                    `employees.wizard.nextSteps.${currentStep === 1 ? "job" : currentStep === 2 ? "emergency" : "review"}`
+                  ),
+                })
+              }}
+            </UiButton>
+            <UiButton
+              v-else
+              type="submit"
+              size="lg"
+              :icon="Save"
+              :loading="loading"
+              class="flex-1 min-w-0 sm:flex-none sm:h-9 sm:px-3.5 sm:text-ui-small"
+            >
+              {{ loading ? $t("employees.wizard.edit.submitting") : $t("employees.wizard.edit.submit") }}
+            </UiButton>
+          </div>
         </div>
       </div>
-    </div>
-  </form>
+    </form>
 
-  <!-- Error Modal -->
-  <ErrorModal :show="showErrorModal" @close="closeErrorModal" />
+    <!-- Error Modal -->
+    <ErrorModal :show="showErrorModal" @close="closeErrorModal" />
+  </div>
 </template>

@@ -24,6 +24,10 @@ import ConfirmationModal from "@/components/common/ConfirmationModal.vue";
 import Header from "@/components/admin/team/detail/Header.vue";
 import Statistic from "@/components/admin/team/detail/Statistic.vue";
 import Chart from "@/components/admin/team/detail/Chart.vue";
+import { UiBadge, UiButton, UiEmpty } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -36,6 +40,14 @@ const { fetchTeam, deleteTeam } = teamStore;
 const team = ref({});
 const showDeleteModal = ref(false);
 const showAllMembers = ref(false);
+
+// Presentation-only: which tab of the detail page is showing. Panels use
+// v-show so the statistic/chart children mount (and fetch) exactly once.
+const activeTab = ref("overview");
+const tabs = computed(() => [
+  { key: "overview", label: t("teams.detail.tabs.overview") },
+  { key: "members", label: t("teams.detail.tabs.members"), count: (team.value.members || []).length },
+]);
 
 // The grid can get long for large teams, so only the first page is shown
 // until "View More" is clicked -- there's no separate members endpoint to
@@ -73,318 +85,258 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="px-4 py-4">
-  <Alert type="success" :title="success" :show="success" @close="teamStore.clearMessages()" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <Alert type="success" :title="success" :show="success" @close="teamStore.clearMessages()" />
 
-  <Header :team="team" />
+    <Header :team="team" />
 
-  <Statistic :team="team" />
-
-  <Chart :team="team" />
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-    <!-- Team Lead Information -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
-      <!-- Header Section -->
-      <div class="flex items-center justify-between mb-5">
-        <div class="flex items-center gap-2.5">
-          <div
-            class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
-          >
-            <Crown class="w-6 h-6 text-green-600" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-sm font-bold">Team Lead</h3>
-            <p class="text-brand-light text-sm">
-              Team leadership and management
-            </p>
-          </div>
-        </div>
-        <span
-          class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#F0FDF4] text-[#166534]"
-          >Active</span
-        >
-      </div>
-
-      <div class="flex flex-col gap-3.5" v-if="team.leader">
-        <!-- Team Lead Profile -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-3.5 mb-3.5">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3.5">
-              <div class="relative">
-                <Avatar
-                  :src="team.leader.profile_photo"
-                  :alt="team.leader.name"
-                  size="w-9 h-9"
-                  icon-size="w-6 h-6"
-                />
-                <div
-                  class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"
-                ></div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <h4 class="text-brand-dark text-sm font-bold truncate">
-                  {{ team.leader?.name }}
-                </h4>
-                <p class="text-brand-light text-sm">
-                  {{
-                    team.leader?.employee_profile?.job_information?.job_title
-                  }}
-                </p>
-              </div>
-            </div>
-            <span
-              class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF]"
-              >Team Lead</span
-            >
-          </div>
-        </div>
-
-        <!-- Contact Information -->
-        <div class="space-y-2.5">
-          <h5 class="text-brand-dark text-sm font-semibold mb-2.5">
-            Contact Information
-          </h5>
-          <div class="space-y-1.5">
-            <div
-              class="flex items-center gap-2.5 p-1.5 rounded-[8px] hover:bg-gray-50 transition-all duration-300"
-            >
-              <div
-                class="w-8 h-8 bg-blue-50 rounded-[8px] flex items-center justify-center"
-              >
-                <Mail class="w-4 h-4 text-blue-600" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-brand-light text-xs font-medium">
-                  Email Address
-                </p>
-                <p class="text-brand-dark text-sm font-semibold truncate">
-                  {{ team.leader.email }}
-                </p>
-              </div>
-            </div>
-            <div
-              class="flex items-center gap-2.5 p-1.5 rounded-[8px] hover:bg-gray-50 transition-all duration-300"
-            >
-              <div
-                class="w-8 h-8 bg-green-50 rounded-[8px] flex items-center justify-center"
-              >
-                <Phone class="w-4 h-4 text-green-600" />
-              </div>
-              <div class="flex-1">
-                <p class="text-brand-light text-xs font-medium">Phone Number</p>
-                <p class="text-brand-dark text-sm font-semibold">
-                  {{ team?.leader?.employee_profile?.phone }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="flex gap-1.5 mt-3.5 pt-3.5 border-t border-[#DCDEDD]">
-          <RouterLink
-            :to="{
-              name: 'admin.employees.detail',
-              params: { id: team.leader?.employee_profile?.id },
-            }"
-            class="w-full
-           bg-white
-           border border-[#DCDEDD]
-           rounded-[8px]
-           hover:border-[#0C51D9]
-           hover:bg-blue-100
-           transition-all duration-300
-           px-2.5 py-2.5
-           flex items-center justify-center gap-1.5"
-          >
-            <UserCheck class="w-5 h-5 text-brand-light" />
-            <span class="text-brand-dark text-sm font-semibold"
-              >View Profile</span
-            >
-          </RouterLink>
-        </div>
-      </div>
-
-      <div class="flex flex-1 items-center justify-center min-h-[250px]" v-else>
-        <div class="flex flex-col items-center justify-center">
-          <Crown class="w-9 h-9 text-gray-300 mb-3.5" />
-          <h3 class="text-brand-dark text-sm font-bold mb-1.5">
-            No Team Lead Assigned
-          </h3>
-          <p class="text-brand-light text-sm mb-3.5 text-center">
-            This team does not currently have a leader assigned.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Team Responsibilities -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5">
-      <div class="flex items-center gap-2.5 mb-5">
-        <div
-          class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
-        >
-          <ListCheck class="w-6 h-6 text-orange-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-sm font-bold">Team Responsibilities</h3>
-          <p class="text-brand-light text-sm">Key duties and objectives</p>
-        </div>
-      </div>
-      <div class="grid grid-cols-1 gap-3.5">
-        <div
-          class="flex items-start gap-2.5 p-3.5 bg-gray-50 rounded-[12px]"
-          v-for="responsibility in team.responsibilities"
-          :key="responsibility.id"
-        >
-          <div
-            class="w-8 h-8 min-w-[32px] bg-green-100 rounded-full flex items-center justify-center mt-1 flex-shrink-0"
-          >
-            <Check class="w-4 h-4 text-green-600" />
-          </div>
-          <span class="text-brand-dark text-sm font-medium">{{
-            responsibility
-          }}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Team Members Section -->
-  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-5 mb-5">
-    <div class="flex items-center justify-between mb-5">
-      <div class="flex items-center gap-2.5">
-        <div
-          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
-        >
-          <Users class="w-6 h-6 text-blue-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-sm font-bold">Team Members</h3>
-          <p class="text-brand-light text-sm">Current team composition</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-3.5" v-if="hasMoreMembers">
+    <!-- Tabs -->
+    <div class="border-b border-ui-line -mt-1">
+      <nav class="flex gap-6 overflow-x-auto [scrollbar-width:none]" role="tablist">
         <button
-          @click="showAllMembers = !showAllMembers"
-          class="bg-white border border-[#DCDEDD] text-brand-dark py-2.5 px-3.5 rounded-[8px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+          v-for="tab in tabs"
+          :key="tab.key"
+          type="button"
+          role="tab"
+          :aria-selected="activeTab === tab.key"
+          class="relative shrink-0 inline-flex items-center gap-1.5 pb-3 pt-1 text-ui-body font-medium whitespace-nowrap transition-colors"
+          :class="activeTab === tab.key ? 'text-ui-ink' : 'text-ui-muted hover:text-ui-ink'"
+          @click="activeTab = tab.key"
         >
-          <Eye class="w-4 h-4" />
-          <span class="text-sm font-semibold">{{ showAllMembers ? "View Less" : "View More" }}</span>
+          {{ tab.label }}
+          <span v-if="tab.count !== undefined" class="text-ui-cap tabular-nums text-ui-faint">{{ tab.count }}</span>
+          <span
+            v-if="activeTab === tab.key"
+            class="absolute left-0 right-0 -bottom-px h-0.5 rounded-full bg-ui-ink"
+          ></span>
         </button>
+      </nav>
+    </div>
+
+    <!-- Overview -->
+    <div v-show="activeTab === 'overview'" class="space-y-5">
+      <Statistic :team="team" />
+
+      <Chart :team="team" />
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start">
+        <!-- Team Responsibilities -->
+        <section class="lg:col-span-2 bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+          <div class="flex items-start gap-3 mb-4">
+            <ListCheck class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
+            <div>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("teams.form.responsibilities.title") }}</h3>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.detail.responsibilitiesSubtitle") }}</p>
+            </div>
+          </div>
+          <ul class="divide-y divide-ui-line">
+            <li
+              class="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+              v-for="responsibility in team.responsibilities"
+              :key="responsibility.id"
+            >
+              <span
+                class="w-5 h-5 shrink-0 mt-px rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center"
+              >
+                <Check class="w-3 h-3" />
+              </span>
+              <span class="text-ui-body text-ui-ink">{{ responsibility }}</span>
+            </li>
+          </ul>
+        </section>
+
+        <div class="space-y-4 sm:space-y-5">
+          <!-- Team Lead Information -->
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div class="flex items-start gap-3">
+                <Crown class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
+                <div>
+                  <h3 class="text-ui-h3 text-ui-ink">{{ $t("teams.form.lead.title") }}</h3>
+                  <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.detail.leadSubtitle") }}</p>
+                </div>
+              </div>
+              <UiBadge tone="ok" dot>{{ $t("common.labels.active") }}</UiBadge>
+            </div>
+
+            <div v-if="team.leader">
+              <!-- Team Lead Profile -->
+              <div class="flex items-center gap-3">
+                <div class="relative shrink-0">
+                  <Avatar
+                    :src="team.leader.profile_photo"
+                    :alt="team.leader.name"
+                    size="w-10 h-10"
+                    icon-size="w-5 h-5"
+                  />
+                  <span
+                    class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-ui-ok border-2 border-ui-surface rounded-full"
+                  ></span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-ui-h3 text-ui-ink truncate">{{ team.leader?.name }}</h4>
+                  <p class="text-ui-small text-ui-muted truncate">
+                    {{ team.leader?.employee_profile?.job_information?.job_title }}
+                  </p>
+                </div>
+                <UiBadge tone="accent" class="shrink-0">{{ $t("teams.form.lead.title") }}</UiBadge>
+              </div>
+
+              <!-- Contact Information -->
+              <h5 class="text-ui-over uppercase text-ui-faint mt-5 mb-1">{{ $t("teams.detail.contactInfo") }}</h5>
+              <dl class="divide-y divide-ui-line">
+                <div class="flex items-center gap-3 py-2.5">
+                  <Mail class="w-4 h-4 text-ui-faint shrink-0" />
+                  <div class="min-w-0 flex-1">
+                    <dt class="text-ui-cap text-ui-muted">{{ $t("teams.detail.emailAddress") }}</dt>
+                    <dd class="text-ui-body text-ui-ink truncate">{{ team.leader.email }}</dd>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 py-2.5">
+                  <Phone class="w-4 h-4 text-ui-faint shrink-0" />
+                  <div class="min-w-0 flex-1">
+                    <dt class="text-ui-cap text-ui-muted">{{ $t("teams.detail.phoneNumber") }}</dt>
+                    <dd class="text-ui-body text-ui-ink tabular-nums">{{ team?.leader?.employee_profile?.phone }}</dd>
+                  </div>
+                </div>
+              </dl>
+
+              <!-- Action Buttons -->
+              <UiButton
+                variant="secondary"
+                block
+                class="mt-3"
+                :icon="UserCheck"
+                :to="{
+                  name: 'admin.employees.detail',
+                  params: { id: team.leader?.employee_profile?.id },
+                }"
+              >
+                {{ $t("teams.detail.viewProfile") }}
+              </UiButton>
+            </div>
+
+            <UiEmpty
+              v-else
+              compact
+              :icon="Crown"
+              :title="$t('teams.detail.noLead')"
+              :message="$t('teams.detail.noLeadHint')"
+            />
+          </section>
+
+          <!-- Danger Zone -->
+          <section class="bg-ui-surface border border-ui-bad/30 rounded-ui-card p-5">
+            <div class="flex items-start gap-3 mb-3">
+              <AlertTriangle class="w-4 h-4 text-ui-bad mt-0.5 shrink-0" />
+              <div>
+                <h3 class="text-ui-h3 text-ui-bad">{{ $t("teams.detail.dangerZone") }}</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.detail.dangerZoneHint") }}</p>
+              </div>
+            </div>
+            <h4 class="text-ui-small font-medium text-ui-ink">{{ $t("teams.detail.disband") }}</h4>
+            <p class="text-ui-small text-ui-muted mt-0.5 mb-3.5">
+              {{ $t("teams.detail.disbandHint") }}
+            </p>
+            <UiButton variant="danger" :icon="Trash2" class="w-full sm:w-auto" @click="showDeleteModal = true">
+              {{ $t("teams.detail.disband") }}
+            </UiButton>
+          </section>
+        </div>
       </div>
     </div>
 
-    <!-- Members Grid -->
-    <div
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5"
-    >
-      <!-- Team Member Card -->
-      <div
-        class="bg-white relative border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
-        v-for="member in visibleMembers"
-        :key="member.id"
-      >
-        <span
-          v-if="isTeamLead(member)"
-          class="absolute top-3 right-3 px-1.5 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF] flex items-center gap-1"
+    <!-- Team Members -->
+    <section v-show="activeTab === 'members'" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div class="flex items-start gap-3">
+          <Users class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
+          <div>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("teams.detail.tabs.members") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.detail.membersSubtitle") }}</p>
+          </div>
+        </div>
+        <UiButton
+          v-if="hasMoreMembers"
+          variant="secondary"
+          size="sm"
+          :icon="Eye"
+          @click="showAllMembers = !showAllMembers"
         >
-          <Crown class="w-3 h-3" />
-          Team Lead
-        </span>
-        <div class="flex flex-col items-center mb-2.5">
-          <div class="relative">
+          {{ showAllMembers ? $t("teams.detail.viewLess") : $t("teams.detail.viewMore") }}
+        </UiButton>
+      </div>
+
+      <!-- Members Grid -->
+      <div
+        v-if="visibleMembers.length"
+        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4"
+      >
+        <!-- Team Member Card -->
+        <div
+          class="ui-lift bg-ui-surface border border-ui-line rounded-ui-card hover:border-ui-line-strong p-4 flex flex-col"
+          v-for="member in visibleMembers"
+          :key="member.id"
+        >
+          <div class="flex items-start gap-3">
             <Avatar
               :src="member.employee.user?.profile_photo"
               :alt="member.employee.user?.name"
-              size="w-[100px] h-[100px] mb-2.5"
-              icon-size="w-8 h-8"
+              size="w-10 h-10"
+              icon-size="w-5 h-5"
             />
+            <div class="flex-1 min-w-0">
+              <h4 class="text-ui-h3 text-ui-ink truncate">
+                {{ member.employee.user.name }}
+              </h4>
+              <p class="text-ui-small text-ui-muted truncate">
+                {{ member.employee.job_information.job_title }}
+              </p>
+              <UiBadge v-if="isTeamLead(member)" tone="accent" class="mt-1.5 gap-1">
+                <Crown class="w-3 h-3" />
+                {{ $t("teams.form.lead.title") }}
+              </UiBadge>
+            </div>
           </div>
-        </div>
-        <div class="text-center mb-2.5">
-          <h4 class="text-brand-dark text-sm font-bold">
-            {{ member.employee.user.name }}
-          </h4>
-          <p class="text-brand-light text-sm">
-            {{ member.employee.job_information.job_title }}
-          </p>
-        </div>
-        <div class="space-y-1 mb-2.5">
-          <div class="flex items-center gap-1.5 text-sm text-gray-500">
-            <Calendar class="w-4 h-4" />
-            <span>Joined {{ formatToClientTimezone(member.joined_at) }}</span>
+          <div class="space-y-1 mt-3 mb-4 text-ui-small text-ui-muted">
+            <div class="flex items-center gap-2">
+              <Calendar class="w-3.5 h-3.5 text-ui-faint shrink-0" />
+              <span>{{ $t("teams.detail.joined", { date: formatToClientTimezone(member.joined_at) }) }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <Clock class="w-3.5 h-3.5 text-ui-faint shrink-0" />
+              <span class="tabular-nums">{{ $t("teams.detail.experience", { n: member.employee.job_information.experience }, Number(member.employee.job_information.experience) || 0) }}</span>
+            </div>
           </div>
-          <div class="flex items-center gap-1.5 text-sm text-gray-500">
-            <Clock class="w-4 h-4" />
-            <span
-              >{{ member.employee.job_information.experience }} years
-              experience</span
-            >
-          </div>
+          <UiButton
+            variant="secondary"
+            size="sm"
+            block
+            class="mt-auto"
+            :icon="Eye"
+            :to="{
+              name: 'admin.employees.detail',
+              params: { id: member.employee.id },
+            }"
+          >
+            {{ $t("teams.detail.viewProfile") }}
+          </UiButton>
         </div>
-        <RouterLink
-          :to="{
-            name: 'admin.employees.detail',
-            params: { id: member.employee.id },
-          }"
-          class="w-full btn-view-soft"
-        >
-          <Eye class="w-5 h-5" />
-          <span>View Profile</span>
-        </RouterLink>
       </div>
-    </div>
+      <UiEmpty v-else compact :icon="Users" :title="$t('teams.detail.noMembers')" />
+    </section>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :show="showDeleteModal"
+      :title="$t('teams.detail.disband')"
+      :message="$t('teams.detail.disbandConfirm', { name: team.name })"
+      :confirmText="$t('teams.detail.disband')"
+      :cancelText="$t('common.actions.cancel')"
+      type="danger"
+      :loading="loading"
+      @confirm="handleDeleteTeam"
+      @cancel="showDeleteModal = false"
+    />
   </div>
-
-  <!-- Danger Zone -->
-  <div class="bg-white border border-[#FEE2E2] rounded-[12px] p-5">
-    <div class="flex items-center gap-2.5 mb-5">
-      <div
-        class="w-9 h-9 bg-red-50 rounded-[12px] flex items-center justify-center"
-      >
-        <AlertTriangle class="w-6 h-6 text-red-600" />
-      </div>
-      <div>
-        <h3 class="text-brand-dark text-sm font-bold">Danger Zone</h3>
-        <p class="text-brand-light text-sm">
-          Irreversible and destructive actions
-        </p>
-      </div>
-    </div>
-    <div
-      class="flex flex-col sm:flex-row gap-3.5 justify-between items-start sm:items-center p-3.5 bg-red-50 rounded-[12px]"
-    >
-      <div class="flex-1">
-        <h4 class="text-brand-dark text-sm font-bold mb-1">Disband Team</h4>
-        <p class="text-brand-light text-sm">
-          Permanently remove this team and reassign all members. This action
-          cannot be undone.
-        </p>
-      </div>
-      <button
-        @click="showDeleteModal = true"
-        class="btn-primary rounded-[8px] border border-[#A02121] hover:brightness-110 focus:ring-2 focus:ring-[#D90C0C] transition-all duration-300 bg-gradient-to-r from-red-500 to-red-600 shadow-lg px-5 py-2.5 flex items-center gap-1.5"
-      >
-        <Trash2 class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Disband Team</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Confirmation Modal -->
-  <ConfirmationModal
-    :show="showDeleteModal"
-    title="Disband Team"
-    :message="`Are you sure you want to disband '${team.name}'? This will permanently remove the team and reassign all members. This action cannot be undone.`"
-    confirmText="Disband Team"
-    cancelText="Cancel"
-    type="danger"
-    :loading="loading"
-    @confirm="handleDeleteTeam"
-    @cancel="showDeleteModal = false"
-  />
-
-</div>
 </template>

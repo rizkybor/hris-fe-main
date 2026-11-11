@@ -1,0 +1,55 @@
+{
+  "loading": "Memuat tim Anda...",
+  "refreshing": "Memperbarui…",
+  "noTeam": {
+    "title": "Belum tergabung dalam tim",
+    "message": "Anda belum menjadi anggota tim mana pun. Hubungi manajer atau HR jika menurut Anda ini keliru."
+  },
+  "capacity": {
+    "full": "Kapasitas penuh",
+    "nearlyFull": "Hampir penuh",
+    "growing": "Bertumbuh"
+  },
+  "stats": {
+    "openCount": "{n} berjalan",
+    "activeMembers": "Anggota Aktif",
+    "projectsAssigned": "Proyek Ditugaskan",
+    "activeProjects": "Proyek aktif",
+    "expectedSize": "Target Ukuran",
+    "teamCapacity": "Kapasitas tim",
+    "leader": "Pemimpin"
+  },
+  "tabs": {
+    "members": "Anggota",
+    "projects": "Proyek",
+    "description": "Deskripsi"
+  },
+  "projectStatus": { "draft": "Draf", "planning": "Perencanaan", "active": "Aktif", "on_hold": "Ditunda", "completed": "Selesai", "cancelled": "Dibatalkan" },
+  "memberStatus": {
+    "left": "Keluar",
+    "lead": "Ketua",
+    "active": "Aktif"
+  },
+  "members": {
+    "emailTo": "Kirim email ke {name}", "callTo": "Telepon {name}", "viewProfile": "Profil",
+    "title": "Anggota Tim",
+    "subtitle": "Komposisi tim saat ini",
+    "experience": "Pengalaman {n} tahun",
+    "empty": "Belum ada anggota tim",
+    "emptyHint": "Anggota tim akan tampil di sini"
+  },
+  "projects": {
+    "noClient": "Tanpa klien", "ends": "Selesai {date}", "noEndDate": "Tanpa tanggal selesai",
+    "title": "Proyek Tim",
+    "subtitle": "Proyek yang ditugaskan ke {name}",
+    "count": "{n} Proyek",
+    "empty": "Belum ada proyek",
+    "emptyHint": "Proyek yang ditugaskan ke tim Anda akan tampil di sini"
+  },
+  "description": {
+    "title": "Deskripsi Tim",
+    "subtitle": "Gambaran dan detail tim",
+    "empty": "Belum ada deskripsi",
+    "responsibilities": "Tanggung Jawab"
+  }
+}

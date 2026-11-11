@@ -1,0 +1,212 @@
+{
+  "enums": {
+    "gender": {
+      "male": "Laki-laki",
+      "female": "Perempuan"
+    },
+    "workLocation": {
+      "office": "Kantor",
+      "remote": "Remote",
+      "hybrid": "Hybrid"
+    },
+    "jobStatus": {
+      "active": "Aktif",
+      "on_leave": "Sedang cuti",
+      "resigned": "Mengundurkan diri",
+      "terminated": "Diberhentikan"
+    },
+    "teamStatus": {
+      "active": "Aktif",
+      "inactive": "Nonaktif",
+      "archived": "Diarsipkan",
+      "forming": "Dibentuk",
+      "planning": "Perencanaan",
+      "dormant": "Tidak aktif"
+    }
+  },
+  "fields": {
+    "fullName": "Nama Lengkap",
+    "dateOfBirth": "Tanggal Lahir",
+    "placeOfBirth": "Tempat Lahir",
+    "employeeId": "ID Karyawan",
+    "officeLocation": "Lokasi Kantor",
+    "hobbies": "Hobi",
+    "gender": "Jenis Kelamin",
+    "postCode": "Kode Pos",
+    "country": "Negara",
+    "jobTitle": "Jabatan",
+    "employmentType": "Jenis Kepegawaian",
+    "monthlySalary": "Gaji Bulanan",
+    "skillLevel": "Tingkat Keahlian",
+    "workLocation": "Lokasi Kerja",
+    "department": "Departemen",
+    "contactName": "Nama Kontak",
+    "relationship": "Hubungan",
+    "phoneNumber": "Nomor Telepon"
+  },
+  "view": {
+    "refreshing": "Memperbarui…",
+    "editProfile": "Ubah Profil",
+    "joined": "Bergabung {date}",
+    "tabs": {
+      "overview": "Ringkasan",
+      "employment": "Kepegawaian & Tim",
+      "emergency": "Kontak Darurat",
+      "tasks": "Tugas",
+      "more": "Aset & Penilaian",
+      "idcard": "Kartu ID"
+    },
+    "stats": {
+      "tasksCompleted": "Tugas Selesai",
+      "thisMonth": "Bulan ini",
+      "attendanceRate": "Tingkat Kehadiran",
+      "aboveAverage": "Di atas rata-rata",
+      "activeProjects": "Proyek Aktif",
+      "currentProjects": "Proyek berjalan",
+      "performance": "Kinerja",
+      "excellentRating": "Penilaian sangat baik"
+    },
+    "personal": {
+      "title": "Informasi Pribadi",
+      "subtitle": "Detail kontak dan profil Anda"
+    },
+    "location": {
+      "title": "Detail Lokasi",
+      "subtitle": "Alamat dan informasi lokasi"
+    },
+    "employment": {
+      "title": "Detail Kepegawaian",
+      "subtitle": "Informasi pekerjaan dan kompensasi"
+    },
+    "team": {
+      "title": "Tim Saya",
+      "subtitle": "Informasi tim",
+      "viewTeam": "Lihat Tim",
+      "members": "{n} anggota",
+      "lead": "Ketua Tim",
+      "size": "Ukuran Tim"
+    },
+    "emergency": {
+      "title": "Kontak Darurat",
+      "subtitle": "Orang yang dihubungi saat darurat",
+      "empty": "Belum ada kontak darurat"
+    },
+    "taskStatus": {
+      "todo": "To Do",
+      "in_progress": "Dikerjakan",
+      "review": "Menunggu",
+      "done": "Selesai"
+    },
+    "tasks": {
+      "open": "Buka tugas {name}",
+      "title": "Tugas Terbaru",
+      "subtitle": "Tugas yang baru ditugaskan",
+      "empty": "Belum ada tugas aktif",
+      "noDueDate": "Tanpa tenggat"
+    },
+    "assets": {
+      "title": "Aset Saya",
+      "subtitle": "Perangkat perusahaan yang dipinjamkan ke Anda",
+      "empty": "Belum ada aset & penilaian"
+    },
+    "reviews": {
+      "acknowledgedToast": "Penilaian ditandai sudah dibaca",
+      "title": "Penilaian Kinerja Saya",
+      "subtitle": "Masukan dan nilai dari penilai Anda",
+      "rating": "Nilai {n} dari 5",
+      "strengths": "Kelebihan",
+      "toImprove": "Perlu Ditingkatkan",
+      "goals": "Target",
+      "markRead": "Tandai Sudah Dibaca",
+      "acknowledged": "Sudah Dibaca"
+    },
+    "idCard": {
+      "title": "Kartu ID Digital",
+      "subtitle": "Depan dan belakang dalam ukuran asli — 54 × 85,6 mm, seperti dicetak",
+      "front": "Depan",
+      "back": "Belakang",
+      "onCard": "Isi kartu",
+      "onCardSubtitle": "Diambil dari profil Anda",
+      "photo": "Foto",
+      "profilePhoto": "Foto profil",
+      "noPhoto": "Tanpa foto",
+      "differentPhoto": "Ingin foto lain?",
+      "noPhotoHint": "Belum ada foto profil — kartu dicetak tanpa foto.",
+      "changeIt": "Ganti di Ubah Profil",
+      "addOne": "Tambahkan di Ubah Profil",
+      "preparing": "Menyiapkan...",
+      "printHint": "Cetak 100% pada kertas kartu, lalu potong mengikuti tepinya."
+    },
+    "notFound": {
+      "title": "Tidak ada profil",
+      "message": "Akun ini tidak memiliki profil karyawan -- hal ini wajar untuk akun sistem seperti Super Admin."
+    }
+  },
+  "edit": {
+    "subtitle": "Perbarui informasi pribadi Anda",
+    "myProfile": "Profil Saya",
+    "selectGender": "Pilih jenis kelamin",
+    "selectLanguage": "Pilih bahasa",
+    "cityPlaceholder": "mis. Bandung",
+    "account": {
+      "title": "Akun",
+      "subtitle": "Nama dan email untuk masuk",
+      "namePlaceholder": "Masukkan nama lengkap",
+      "email": "Alamat Email",
+      "emailHint": "Email tidak dapat diubah. Hubungi HR jika perlu diperbarui.",
+      "nameHint": "Nama lengkap, beserta gelar jika ada (mis. Budi Santoso, S.Kom.).",
+      "showDegree": "Tampilkan gelar saya",
+      "showDegreeHint": "Di semua tempat nama Anda tampil di HRIS dan di dokumen yang Anda tanda tangani.",
+      "shownAs": "Tampil sebagai:"
+    },
+    "personal": {
+      "title": "Data Pribadi",
+      "subtitle": "Nomor kontak, kelahiran, dan informasi pribadi",
+      "hobby": "Hobi",
+      "hobbyPlaceholder": "mis. Membaca, Orienteering"
+    },
+    "address": {
+      "subtitle": "Tempat tinggal Anda",
+      "street": "Alamat Jalan",
+      "streetPlaceholder": "Jalan, nomor, kecamatan"
+    },
+    "contacts": {
+      "title": "Kontak Darurat",
+      "subtitle": "Orang yang bisa dihubungi jika terjadi sesuatu",
+      "add": "Tambah kontak",
+      "empty": "Belum ada kontak darurat.",
+      "contactN": "Kontak {n}",
+      "remove": "Hapus kontak {n}",
+      "namePlaceholder": "Nama kontak",
+      "relationshipPlaceholder": "mis. Pasangan, Orang tua"
+    },
+    "preferences": {
+      "title": "Preferensi",
+      "subtitle": "Detail opsional",
+      "language": "Bahasa Pilihan",
+      "notes": "Catatan Tambahan",
+      "notesPlaceholder": "Hal yang perlu diketahui HR"
+    },
+    "password": {
+      "title": "Kata Sandi",
+      "subtitle": "Kosongkan untuk tetap memakai kata sandi saat ini",
+      "new": "Kata Sandi Baru",
+      "newPlaceholder": "Masukkan kata sandi baru (opsional)",
+      "hint": "Min. 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol. Tidak boleh password yang pernah bocor di data breach.",
+      "confirm": "Konfirmasi Kata Sandi",
+      "confirmPlaceholder": "Konfirmasi kata sandi baru"
+    },
+    "photo": {
+      "title": "Foto Profil",
+      "change": "Ganti foto profil",
+      "formats": "JPG, PNG maks. 2MB",
+      "recommended": "Disarankan: 400x400px"
+    },
+    "hr": {
+      "title": "Dikelola HR",
+      "subtitle": "Minta HR untuk mengubahnya",
+      "identityNumber": "Nomor Identitas",
+      "note": "Data jabatan, gaji, dan rekening bank juga dikelola HR."
+    }
+  }
+}

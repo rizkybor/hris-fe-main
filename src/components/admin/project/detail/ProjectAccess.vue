@@ -28,41 +28,40 @@ const links = computed(() => {
   return [...fixed, ...additional];
 });
 
+// Presentation only: one quiet icon tile for every link kind.
 const COLOR_CLASSES = {
-  blue: "bg-blue-50 text-blue-600 group-hover:bg-blue-100",
-  gray: "bg-gray-100 text-gray-600 group-hover:bg-gray-200",
-  pink: "bg-pink-50 text-pink-600 group-hover:bg-pink-100",
-  indigo: "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100",
+  blue: "bg-ui-accent-soft text-ui-accent",
+  gray: "bg-ui-subtle text-ui-text",
+  pink: "bg-ui-subtle text-ui-text",
+  indigo: "bg-ui-subtle text-ui-text",
 };
 </script>
 
 <template>
-  <div v-if="links.length > 0" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
-    <div class="flex items-center gap-3 mb-5">
-      <div class="w-9 h-9 sm:w-10 sm:h-10 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
-        <Link2 class="w-4 h-4 sm:w-5 sm:h-5 text-violet-600" />
-      </div>
-      <div>
-        <h3 class="text-brand-dark text-base sm:text-lg font-bold">Project Access</h3>
-        <p class="text-brand-light text-xs font-normal">Optional — quick links for this project</p>
-      </div>
+  <section v-if="links.length > 0" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+    <div class="mb-4">
+      <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.access.title") }}</h3>
+      <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.access.subtitle") }}</p>
     </div>
 
-    <div class="flex flex-wrap gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 ui-stagger">
       <a
         v-for="(link, index) in links"
         :key="index"
         :href="link.url"
         target="_blank"
         rel="noopener noreferrer"
-        class="bg-white group flex items-center gap-2.5 pl-3 pr-4 py-2.5 border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:shadow-sm transition-all max-w-full"
+        class="ui-press group flex items-center gap-3 px-3 py-2.5 bg-ui-surface border border-ui-line rounded-ui-control hover:border-ui-line-strong hover:bg-ui-subtle min-w-0"
       >
-        <div :class="['w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0 transition-colors', COLOR_CLASSES[link.color]]">
+        <span :class="['w-8 h-8 rounded-ui-control flex items-center justify-center shrink-0', COLOR_CLASSES[link.color]]">
           <component :is="link.icon" class="w-4 h-4" />
-        </div>
-        <span class="text-brand-dark text-sm font-semibold truncate max-w-[200px]">{{ link.name }}</span>
-        <ExternalLink class="w-3.5 h-3.5 text-gray-400 shrink-0" />
+        </span>
+        <span class="flex-1 min-w-0">
+          <span class="block text-ui-small font-medium text-ui-ink truncate">{{ link.name }}</span>
+          <span class="block text-ui-cap text-ui-muted truncate">{{ link.url }}</span>
+        </span>
+        <ExternalLink class="w-4 h-4 text-ui-faint group-hover:text-ui-accent shrink-0" />
       </a>
     </div>
-  </div>
+  </section>
 </template>

@@ -1,127 +1,64 @@
 <script setup>
-import { Check, Lightbulb, Users, Zap } from "lucide-vue-next";
+import { Check, ChevronRight, Lightbulb, Users, Zap } from "lucide-vue-next";
 
 defineEmits(["browse-employees"]);
+
+// Static copy for the tips card (keys under teams.tips.*).
+const tips = ["name", "lead", "goals", "growth"];
 </script>
 
 <template>
   <!-- Right Sidebar -->
-  <div class="w-full lg:w-80 flex-shrink-0 sticky top-6 hidden lg:block md:block">
+  <div class="hidden md:block space-y-4 sm:space-y-5 lg:sticky lg:top-5">
     <!-- Tips Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex items-center gap-2.5 mb-5">
-        <div
-          class="w-9 h-9 bg-yellow-50 rounded-[12px] flex items-center justify-center"
-        >
-          <Lightbulb class="w-6 h-6 text-yellow-600" />
-        </div>
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+      <div class="flex items-start gap-3 mb-4">
+        <Lightbulb class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
         <div>
-          <h3 class="text-brand-dark text-base font-bold">Team Creation Tips</h3>
-          <p class="text-brand-light text-sm font-normal">
-            Best practices for setting up teams
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("teams.tips.title") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">
+            {{ $t("teams.tips.subtitle") }}
           </p>
         </div>
       </div>
 
-      <div class="space-y-3.5">
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+      <ul class="space-y-3.5">
+        <li v-for="tip in tips" :key="tip" class="flex items-start gap-2.5">
+          <span
+            class="w-5 h-5 shrink-0 mt-px rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center"
           >
-            <Check class="w-3 h-3 text-green-600" />
+            <Check class="w-3 h-3" />
+          </span>
+          <div class="min-w-0">
+            <p class="text-ui-small font-medium text-ui-ink">{{ $t(`teams.tips.${tip}.title`) }}</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t(`teams.tips.${tip}.text`) }}</p>
           </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Choose a Clear Name
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Pick a descriptive name that reflects the team's purpose and
-              function.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
-          </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Select Right Lead
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Choose someone with leadership experience and domain expertise.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
-          </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Define Clear Goals
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Write a clear description of what the team will achieve.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
-          </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Plan for Growth
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Consider how the team will scale and evolve over time.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+        </li>
+      </ul>
+    </section>
 
     <!-- Quick Actions Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mt-5">
-      <div class="flex items-center gap-2.5 mb-5">
-        <div
-          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
-        >
-          <Zap class="w-6 h-6 text-blue-600" />
-        </div>
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+      <div class="flex items-start gap-3 mb-4">
+        <Zap class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
         <div>
-          <h3 class="text-brand-dark text-base font-bold">Quick Actions</h3>
-          <p class="text-brand-light text-sm font-normal">
-            Common team setup tasks
-          </p>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("teams.quickActions.title") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.quickActions.subtitle") }}</p>
         </div>
       </div>
 
-      <div class="space-y-2.5">
-        <button
-          type="button"
-          @click="$emit('browse-employees')"
-          class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2.5 text-left"
-        >
-          <Users class="w-5 h-5 text-gray-600" />
-          <div class="flex-1">
-            <h4 class="text-brand-dark text-sm font-semibold">
-              Browse Employees
-            </h4>
-            <p class="text-brand-light text-xs">Find potential team members</p>
-          </div>
-        </button>
-      </div>
-    </div>
+      <button
+        type="button"
+        @click="$emit('browse-employees')"
+        class="ui-press w-full border border-ui-line rounded-ui-control hover:bg-ui-hover hover:border-ui-line-strong transition-colors px-3.5 py-2.5 flex items-center gap-3 text-left focus:outline-none focus-visible:shadow-ui-focus"
+      >
+        <Users class="w-4 h-4 text-ui-muted shrink-0" />
+        <div class="flex-1 min-w-0">
+          <h4 class="text-ui-small font-medium text-ui-ink">{{ $t("teams.quickActions.browse") }}</h4>
+          <p class="text-ui-cap text-ui-muted">{{ $t("teams.quickActions.browseHint") }}</p>
+        </div>
+        <ChevronRight class="w-4 h-4 text-ui-faint shrink-0" />
+      </button>
+    </section>
   </div>
 </template>

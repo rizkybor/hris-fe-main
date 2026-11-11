@@ -1,0 +1,37 @@
+{
+  "title": "Pengumuman",
+  "subtitle": "Sebarkan informasi ke seluruh tim atau tim tertentu",
+  "create": "Buat Pengumuman",
+  "edit": "Ubah Pengumuman",
+  "detailTitle": "Detail Pengumuman",
+  "pinned": "Disematkan",
+  "by": "Oleh {name}",
+  "createdBy": "Dibuat oleh {name}",
+  "validUntilDate": "Berlaku s/d {date}",
+  "empty": "Belum ada pengumuman.",
+  "itemLabel": "pengumuman",
+  "audience": {
+    "all": "Semua Role",
+    "manager": "Manager",
+    "operationalDirector": "Operational Director",
+    "hr": "HR",
+    "finance": "Finance Manager",
+    "staff": "Staf"
+  },
+  "form": {
+    "title": "Judul",
+    "content": "Isi",
+    "audience": "Penerima",
+    "validUntilOptional": "Berlaku s/d (Opsional)",
+    "pinToTop": "Sematkan di Atas",
+    "pinExpired": "Pengumuman dengan tanggal berlaku yang sudah lewat tidak bisa disematkan."
+  },
+  "confirm": {
+    "delete": "Hapus pengumuman ini?"
+  },
+  "errors": {
+    "save": "Gagal menyimpan pengumuman.",
+    "delete": "Gagal menghapus pengumuman.",
+    "load": "Gagal memuat pengumuman."
+  }
+}

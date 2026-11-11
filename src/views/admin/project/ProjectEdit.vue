@@ -1,5 +1,4 @@
 <script setup>
-import { Input, Select, TextArea } from "@/components/common/form";
 import RightSidebar from "@/components/admin/employee/create/RightSidebar.vue";
 import Avatar from "@/components/common/Avatar.vue";
 import {
@@ -36,18 +35,48 @@ import {
   XCircle,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
-import { debounce } from "lodash-es";
 import { useProjectStore } from "@/stores/project";
 import { useTeamStore } from "@/stores/team";
-import { useEmployeeStore } from "@/stores/employee";
-import { useClientStore } from "@/stores/client";
+import { useLookupStore } from "@/stores/lookups";
+import { useToastStore } from "@/stores/toast";
+import { invalidate } from "@/composables/useStaleFetch";
 import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
-import { axiosInstance } from "@/plugins/axios";
 import router from "@/router";
 import { useRoute } from "vue-router";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
+import { UiPageHeader, UiButton, UiInput, UiSelect, UiModal, UiEmpty, UiBadge } from "@/components/ui";
+import { ArrowLeft, Save } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
+
+// Presentation-only option lists (same values as before).
+const TYPE_OPTIONS = computed(() => [
+  { value: "web_development", label: t("projects.types.webDevelopment") },
+  { value: "mobile_app", label: t("projects.types.mobileApp") },
+  { value: "design", label: t("projects.types.design") },
+  { value: "marketing", label: t("projects.types.marketing") },
+  { value: "research", label: t("projects.types.research") },
+  { value: "infrastructure", label: t("projects.types.infrastructure") },
+]);
+const PRIORITY_OPTIONS = computed(() => [
+  { value: "low", label: t("projects.priority.low"), icon: Minus },
+  { value: "medium", label: t("projects.priority.medium"), icon: Flag },
+  { value: "high", label: t("projects.priority.high"), icon: Zap },
+]);
+const STATUS_OPTIONS = computed(() => [
+  { value: "active", label: t("projects.status.active"), icon: PlayCircle },
+  { value: "planning", label: t("projects.status.planning"), icon: ClipboardList },
+  { value: "on_hold", label: t("projects.status.onHold"), icon: PauseCircle },
+  { value: "draft", label: t("projects.status.draft"), icon: FileText },
+  { value: "completed", label: t("projects.status.completed"), icon: CheckCircle2 },
+  { value: "cancelled", label: t("projects.status.cancelled"), icon: XCircle },
+]);
+// Native input look for fields UiInput can't take 1:1 (min, prefix, rows).
+const FIELD =
+  "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
 
 const route = useRoute();
 const id = route.params.id;
@@ -70,13 +99,11 @@ const teamStore = useTeamStore();
 const { teams } = storeToRefs(teamStore);
 const { fetchTeams } = teamStore;
 
-const employeeStore = useEmployeeStore();
-const { employees } = storeToRefs(employeeStore);
-const { fetchEmployees } = employeeStore;
-
-const clientsStore = useClientStore();
-const { clients } = storeToRefs(clientsStore);
-const clientOptions = computed(() => clients.value.map((client) => ({ value: client.id, label: client.name })));
+// Pickers come from the shared lookup cache (one request each, reused
+// across forms for a few minutes), loaded in parallel on mount.
+const lookups = useLookupStore();
+const toast = useToastStore();
+const clientOptions = computed(() => lookups.clients.map((client) => ({ value: client.id, label: client.name })));
 
 const form = ref({
   id: "",
@@ -147,10 +174,9 @@ watch(
   }
 );
 
-// Kept separate from employeeStore.employees (driven by the Project Leader
-// search modal's own limited/search-scoped fetches) so this full-roster
-// member picker doesn't fight it over the same shared state.
-const memberCandidates = ref([]);
+// The full employee roster (lookup cache) feeds both this member picker and
+// the Project Leader modal below, which filters it locally.
+const memberCandidates = computed(() => lookups.employees);
 const memberSearch = ref("");
 // The Project Leader shouldn't also be pickable as a Member -- they're
 // already the project's owner, so offering them again here would just be
@@ -235,9 +261,14 @@ const handleSubmit = async () => {
   delete payload.photo_url;
   if (!(form.value.photo instanceof File)) delete payload.photo;
   if (removePhoto.value && !(form.value.photo instanceof File)) payload.remove_photo = true;
+  projectStore.clearMessages();
   await updateProject(id, payload);
 
   if (success.value) {
+    toast.success(success.value);
+    projectStore.clearMessages();
+    invalidate("project-list");
+    lookups.invalidate("projects");
     router.back();
   }
 };
@@ -249,9 +280,9 @@ const handleProjectPhotoSelect = (e) => {
   photoError.value = "";
   if (!file) return;
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-    photoError.value = "Please choose a JPG, PNG or WebP image.";
+    photoError.value = t("projects.form.photoType");
   } else if (file.size > MAX_PHOTO_BYTES) {
-    photoError.value = "The photo must be 2MB or smaller.";
+    photoError.value = t("projects.form.photoSize");
   } else {
     if (form.value.photo_url?.startsWith("blob:")) URL.revokeObjectURL(form.value.photo_url);
     form.value.photo = file;
@@ -291,16 +322,7 @@ const handleRemoveLeader = () => {
 
 onMounted(async () => {
   try {
-    await fetchTeams();
-    await fetchEmployees({
-      limit: 6,
-    });
-    await clientsStore.fetchAllClient();
-
-    const { data } = await axiosInstance.get("employees");
-    memberCandidates.value = data.data;
-
-    await handleFetchProject();
+    await Promise.all([fetchTeams(), lookups.ensureAll(["clients", "employees"]).catch(() => {}), handleFetchProject()]);
   } finally {
     initialLoading.value = false;
   }
@@ -327,98 +349,84 @@ watch(
   }
 );
 
-watch(
-  searchLeader,
-  debounce(() => {
-    fetchEmployees({
-      limit: 6,
-      search: searchLeader.value,
-    });
-  }, 300),
-  { deep: true }
-);
+// Project Leader modal: the roster filtered locally (no request per keystroke).
+const employees = computed(() => {
+  const q = searchLeader.value.trim().toLowerCase();
+  const list = q
+    ? lookups.employees.filter((e) =>
+        [e.user?.name, e.user?.email, e.code, e.job_information?.job_title].some((v) => String(v ?? "").toLowerCase().includes(q))
+      )
+    : lookups.employees;
+  return list.slice(0, 12);
+});
 </script>
 
 <template>
-  <div class="px-4 py-4">
-  <div class="flex flex-col lg:flex-row gap-5 lg:pl-5 items-start">
-    <!-- Form Section -->
-    <div class="flex-1 w-full">
-      <div v-if="initialLoading" class="space-y-6">
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6 space-y-4">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('projects.form.editTitle')" :subtitle="$t('projects.form.editSubtitle')">
+      <template #eyebrow>
+        <button
+          type="button"
+          @click="router.back()"
+          class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
+        >
+          <ArrowLeft class="w-4 h-4" />
+          {{ $t("common.actions.back") }}
+        </button>
+      </template>
+      <template #actions>
+        <div class="hidden sm:flex items-center gap-2">
+          <UiButton variant="secondary" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
+          <UiButton type="submit" form="project-form" :icon="Save" :loading="loading" :disabled="initialLoading">{{ $t("projects.form.updateSubmit") }}</UiButton>
+        </div>
+      </template>
+    </UiPageHeader>
+
+    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-5 items-start">
+      <!-- Form Section -->
+      <div v-if="initialLoading" class="space-y-5 min-w-0">
+        <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 space-y-4">
           <Skeleton width="200px" height="20px" />
-          <Skeleton height="48px" rounded="16px" />
-          <Skeleton height="48px" rounded="16px" />
-          <Skeleton height="90px" rounded="16px" />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Skeleton height="38px" rounded="8px" />
+            <Skeleton height="38px" rounded="8px" />
+          </div>
+          <Skeleton height="38px" rounded="8px" />
+          <Skeleton height="90px" rounded="8px" />
         </div>
       </div>
-      <form class="space-y-6" @submit.prevent="handleSubmit" v-else>
-        <!-- Project Information Section -->
-        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-          <div class="flex items-center gap-3 mb-6">
-            <div
-              class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center"
-            >
-              <Briefcase class="w-5 h-5 text-blue-600" />
+      <form id="project-form" class="space-y-5 min-w-0 ui-stagger" @submit.prevent="handleSubmit" v-else>
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+          <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+            <span class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted shrink-0">
+              <Briefcase class="w-4 h-4" />
+            </span>
+            <div class="min-w-0">
+              <h2 class="text-ui-h2 text-ui-ink">{{ $t("projects.detail.info.title") }}</h2>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.infoSubtitle") }}</p>
             </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">
-                Project Information
-              </h3>
-              <p class="text-brand-light text-xs font-normal">
-                Basic project details and description
-              </p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          </header>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
             <!-- Project Photo -->
-            <div class="md:col-span-2 mb-4">
-              <label class="block text-brand-dark text-sm font-semibold mb-1"
-                >Project Photo (optional)</label
-              >
+            <div class="md:col-span-2">
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.photoOptional") }}</p>
               <div class="flex flex-col sm:flex-row items-start gap-4">
-                <div class="w-full sm:w-64 h-40">
-                  <!-- Photo Container with Default Background -->
-                  <div class="relative w-full sm:w-64 h-40">
-                    <!-- Default background -->
-                    <div
-                      class="w-full sm:w-64 h-40 absolute bg-white rounded-[12px] border-2 border-dashed border-[#DCDEDD]"
-                    ></div>
-
-                    <div
-                      class="w-full sm:w-64 h-40 relative z-10 flex items-center justify-center rounded-[12px] overflow-hidden"
-                    >
-                      <img
-                        :src="form.photo_url"
-                        alt="Project Photo"
-                        class="w-full sm:w-64 h-40 object-cover rounded-[12px]"
-                        v-if="form.photo_url"
-                      />
-                      <div
-                        v-else
-                        class="flex flex-col items-center justify-center text-gray-400"
-                      >
-                        <Image class="w-10 h-10 mb-2" />
-                        <span class="text-sm font-medium">Project Photo</span>
-                      </div>
-                    </div>
-
-                    <!-- Upload overlay (shown on hover) -->
-                    <div
-                      class="absolute inset-0 rounded-[12px] flex items-center justify-center transition-all duration-300 cursor-pointer z-20 group"
-                      @click="openPhotoPicker"
-                    >
-                      <div
-                        class="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 rounded-[12px] transition-opacity duration-300"
-                      ></div>
-                      <Upload
-                        class="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 relative z-10"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div class="flex flex-col gap-2">
+                <button
+                  type="button"
+                  class="group relative w-full sm:w-64 h-40 shrink-0 rounded-ui-card overflow-hidden border border-dashed border-ui-line-strong bg-ui-subtle flex items-center justify-center focus:outline-none focus-visible:shadow-ui-focus"
+                  :aria-label="$t('projects.form.selectPhotoLabel')"
+                  @click="openPhotoPicker"
+                >
+                  <img :src="form.photo_url" :alt="$t('projects.form.photo')" class="w-full h-full object-cover" v-if="form.photo_url" />
+                  <span v-else class="flex flex-col items-center justify-center text-ui-faint">
+                    <Image class="w-8 h-8 mb-2" />
+                    <span class="text-ui-small font-medium text-ui-muted">{{ $t("projects.form.photo") }}</span>
+                  </span>
+                  <span class="absolute inset-0 bg-ui-scrim/0 group-hover:bg-ui-scrim/30 transition-colors flex items-center justify-center">
+                    <Upload class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </span>
+                </button>
+                <div class="flex flex-col items-start gap-2">
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
@@ -426,488 +434,312 @@ watch(
                     ref="projectPhotoInput"
                     @change="handleProjectPhotoSelect"
                   />
-                  <button
-                    type="button"
-                    @click="openPhotoPicker"
-                    class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
-                  >
-                    <ImagePlus class="w-4 h-4 text-gray-600" />
-                    <span class="text-brand-dark text-sm font-semibold"
-                      >Select Photo</span
-                    >
-                  </button>
-                  <button
-                    type="button"
-                    class="bg-white hidden border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
-                  >
-                    <Eye class="w-4 h-4 text-gray-600" />
-                    <span class="text-brand-dark text-sm font-semibold"
-                      >Preview Photo</span
-                    >
-                  </button>
-                  <button
-                    v-if="form.photo_url"
-                    type="button"
-                    @click="handleRemovePhoto"
-                    class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center gap-2"
-                  >
-                    <X class="w-4 h-4 text-gray-600" />
-                    <span class="text-brand-dark text-sm font-semibold"
-                      >Remove Photo</span
-                    >
-                  </button>
-                  <p class="text-brand-light text-xs">
-                    JPG, PNG or WebP up to 2MB (recommended: 640x424px)
-                  </p>
-                  <p v-if="photoError" class="text-red-500 text-xs">{{ photoError }}</p>
-                  <p v-else-if="removePhoto" class="text-amber-600 text-xs">The photo will be removed when you save.</p>
+                  <UiButton variant="secondary" size="sm" :icon="ImagePlus" @click="openPhotoPicker">{{ $t("projects.form.selectPhoto") }}</UiButton>
+                  <UiButton v-if="form.photo_url" variant="secondary" size="sm" :icon="X" @click="handleRemovePhoto">{{ $t("projects.form.removePhoto") }}</UiButton>
+                  <p class="text-ui-cap text-ui-muted">{{ $t("projects.form.photoHint") }}</p>
+                  <p v-if="photoError" class="text-ui-cap text-ui-bad">{{ photoError }}</p>
+                  <p v-else-if="removePhoto" class="text-ui-cap text-ui-warn">{{ $t("projects.form.photoWillBeRemoved") }}</p>
                 </div>
               </div>
             </div>
 
             <!-- Project Name -->
-            <div class="md:col-span-2 mb-4">
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                v-model="form.name"
-                label="Project Name"
-                placeholder="Enter project name"
-                :required="true"
-                :error="error?.name?.join(', ')"
-              >
-                <template #icon>
-                  <Briefcase class="h-5 w-5 text-gray-400" />
-                </template>
-              </Input>
-            </div>
-
-            <!-- Priority -->
-            <div class="md:col-span-2 mb-4">
-              <label class="block text-brand-dark text-sm font-semibold mb-1"
-                >Priority *</label
-              >
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <!-- Low Priority -->
-                <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center"
-                    >
-                      <Minus class="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div class="flex flex-col">
-                      <p class="text-brand-dark text-sm font-semibold">Low</p>
-                    </div>
-                  </div>
-                  <div
-                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
-                  >
-                    <input
-                      type="radio"
-                      name="project_priority"
-                      value="low"
-                      class="hidden"
-                      v-model="form.priority"
-                    />
-                    <div
-                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                    ></div>
-                    <p
-                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                    ></p>
-                  </div>
-                </label>
-
-                <!-- Medium Priority -->
-                <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-9 h-9 bg-yellow-50 rounded-[10px] flex items-center justify-center"
-                    >
-                      <Flag class="w-5 h-5 text-yellow-600" />
-                    </div>
-                    <div class="flex flex-col">
-                      <p class="text-brand-dark text-sm font-semibold">
-                        Medium
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
-                  >
-                    <input
-                      type="radio"
-                      name="project_priority"
-                      value="medium"
-                      class="hidden"
-                      v-model="form.priority"
-                    />
-                    <div
-                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                    ></div>
-                    <p
-                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                    ></p>
-                  </div>
-                </label>
-
-                <!-- High Priority -->
-                <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-9 h-9 bg-red-50 rounded-[10px] flex items-center justify-center"
-                    >
-                      <Zap class="w-5 h-5 text-red-600" />
-                    </div>
-                    <div class="flex flex-col">
-                      <p class="text-brand-dark text-sm font-semibold">
-                        High
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
-                  >
-                    <input
-                      type="radio"
-                      name="project_priority"
-                      value="high"
-                      class="hidden"
-                      v-model="form.priority"
-                    />
-                    <div
-                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                    ></div>
-                    <p
-                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                    ></p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div
-              class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-5 mb-4"
-            >
-              <!-- Project Type -->
-              <div>
-                <Select
-                  id="type"
-                  name="type"
-                  v-model="form.type"
-                  label="Project Type"
-                  placeholder="Select project type"
-                  :options="[
-                    { value: 'web_development', label: 'Web Development' },
-                    { value: 'mobile_app', label: 'Mobile App' },
-                    { value: 'design', label: 'Design' },
-                    { value: 'marketing', label: 'Marketing' },
-                    { value: 'research', label: 'Research' },
-                    { value: 'infrastructure', label: 'Infrastructure' },
-                  ]"
-                  :required="true"
-                  :error="error?.type?.join(', ')"
-                >
-                  <template #icon>
-                    <Tag class="h-5 w-5 text-gray-400" />
-                  </template>
-                </Select>
-              </div>
-
-              <!-- Start Date -->
-              <div>
-                <Input
-                  id="start_date"
-                  name="start_date"
-                  type="date"
-                  v-model="form.start_date"
-                  label="Start Date"
-                  :required="true"
-                  :error="error?.start_date?.join(', ')"
-                >
-                  <template #icon>
-                    <Calendar class="h-5 w-5 text-gray-400" />
-                  </template>
-                </Input>
-              </div>
-
-              <!-- End Date -->
-              <div>
-                <Input
-                  id="end_date"
-                  name="end_date"
-                  type="date"
-                  v-model="form.end_date"
-                  label="End Date (optional)"
-                  :error="error?.end_date?.join(', ')"
-                >
-                  <template #icon>
-                    <Calendar class="h-5 w-5 text-gray-400" />
-                  </template>
-                </Input>
-              </div>
-            </div>
+            <UiInput
+              id="name"
+              name="name"
+              type="text"
+              v-model="form.name"
+              :label="$t('projects.form.name')"
+              :placeholder="$t('projects.form.namePlaceholder')"
+              :icon="Briefcase"
+              required :error="error?.name?.join(', ')"
+            />
 
             <!-- Client (optional) -->
-            <div class="md:col-span-2 mb-4">
-              <Select
-                id="client_id"
-                name="client_id"
-                v-model="form.client_id"
-                label="Client (optional)"
-                placeholder="No client"
-                :options="clientOptions"
-              >
-                <template #icon>
-                  <Building2 class="h-5 w-5 text-gray-400" />
-                </template>
-              </Select>
-              <p class="text-brand-light text-xs mt-1">Link this project to the client it's contracted through, if any.</p>
+            <UiSelect
+              id="client_id"
+              v-model="form.client_id"
+              :label="$t('projects.form.clientOptional')"
+              :options="[{ value: '', label: $t('projects.card.noClient') }, ...clientOptions]"
+              :hint="$t('projects.form.clientHint')"
+            />
+
+            <!-- Priority -->
+            <div class="md:col-span-2">
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.fields.priority") }} <span class="text-ui-bad">*</span></p>
+              <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                <label
+                  v-for="opt in PRIORITY_OPTIONS"
+                  :key="opt.value"
+                  class="group flex items-center gap-2 sm:gap-3 min-h-[48px] sm:min-h-[52px] rounded-ui-control border border-ui-line bg-ui-surface px-3 sm:px-3.5 py-2.5 cursor-pointer transition-colors hover:bg-ui-subtle has-[:checked]:border-ui-ink has-[:checked]:ring-1 has-[:checked]:ring-ui-ink has-[:focus-visible]:shadow-ui-focus"
+                >
+                  <input type="radio" name="project_priority" :value="opt.value" class="sr-only" v-model="form.priority" />
+                  <span class="w-8 h-8 rounded-ui-control bg-ui-subtle hidden sm:flex items-center justify-center text-ui-muted shrink-0">
+                    <component :is="opt.icon" class="w-4 h-4" />
+                  </span>
+                  <span class="flex-1 text-ui-small font-medium text-ui-ink">{{ opt.label }}</span>
+                  <Check class="w-4 h-4 text-ui-ink hidden group-has-[:checked]:block shrink-0" />
+                </label>
+              </div>
+            </div>
+
+            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-5">
+              <!-- Project Type -->
+              <UiSelect
+                id="type"
+                v-model="form.type"
+                :label="$t('projects.form.type')"
+                :placeholder="$t('projects.form.typePlaceholder')"
+                :options="TYPE_OPTIONS"
+                required :error="error?.type?.join(', ')"
+              />
+
+              <!-- Start Date -->
+              <UiInput
+                id="start_date"
+                name="start_date"
+                type="date"
+                v-model="form.start_date"
+                :label="$t('projects.fields.startDate')"
+                required :error="error?.start_date?.join(', ')"
+              />
+
+              <!-- End Date -->
+              <UiInput
+                id="end_date"
+                name="end_date"
+                type="date"
+                v-model="form.end_date"
+                :label="$t('projects.form.endDateOptional')" :error="error?.end_date?.join(', ')"
+              />
             </div>
 
             <!-- Project Description -->
             <div class="md:col-span-2">
-              <TextArea
+              <UiInput
                 id="description"
                 name="description"
                 v-model="form.description"
-                label="Project Description (optional)"
-                placeholder="Describe the project's objectives and scope..."
-                :rows="4"
-                :error="error?.description?.join(', ')"
-              >
-                <template #icon>
-                  <FileText class="h-5 w-5 text-gray-400" />
-                </template>
-              </TextArea>
+                :label="$t('projects.form.descriptionOptional')"
+                :placeholder="$t('projects.form.descriptionPlaceholder')"
+                :rows="4" :error="error?.description?.join(', ')"
+              />
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Project Access Section (optional quick links) -->
-        <div id="project-access-section" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 bg-violet-50 rounded-[10px] flex items-center justify-center">
-              <Link2 class="w-5 h-5 text-violet-600" />
+        <section id="project-access-section" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+          <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+            <span class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted shrink-0">
+              <Link2 class="w-4 h-4" />
+            </span>
+            <div class="min-w-0">
+              <h2 class="text-ui-h2 text-ui-ink">{{ $t("projects.access.title") }}</h2>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.accessSubtitle") }}</p>
             </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">Project Access</h3>
-              <p class="text-brand-light text-xs font-normal">Optional — quick links for this project (opens in a new tab)</p>
-            </div>
-          </div>
-
+          </header>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Input
+            <UiInput
               id="access_project_name"
               name="access_project_name"
               v-model="form.access_project_name"
-              label="Access Project Name (optional)"
-              placeholder="e.g. Staging Site"
+              :label="$t('projects.form.accessProjectName')"
+              :placeholder="$t('projects.form.accessProjectNamePlaceholder')"
             />
-            <Input
+            <UiInput
               id="access_project_url"
               name="access_project_url"
               type="url"
               v-model="form.access_project_url"
-              label="Access Project Link (optional)"
+              :label="$t('projects.form.accessProjectUrl')"
               placeholder="https://..."
             />
 
-            <Input
+            <UiInput
               id="access_github_name"
               name="access_github_name"
               v-model="form.access_github_name"
-              label="Access Github Name (optional)"
-              placeholder="e.g. Repository"
+              :label="$t('projects.form.accessGithubName')"
+              :placeholder="$t('projects.form.accessGithubNamePlaceholder')"
             />
-            <Input
+            <UiInput
               id="access_github_url"
               name="access_github_url"
               type="url"
               v-model="form.access_github_url"
-              label="Access Github Link (optional)"
+              :label="$t('projects.form.accessGithubUrl')"
               placeholder="https://github.com/..."
             />
 
-            <Input
+            <UiInput
               id="access_figma_name"
               name="access_figma_name"
               v-model="form.access_figma_name"
-              label="Access Figma Name (optional)"
-              placeholder="e.g. Design File"
+              :label="$t('projects.form.accessFigmaName')"
+              :placeholder="$t('projects.form.accessFigmaNamePlaceholder')"
             />
-            <Input
+            <UiInput
               id="access_figma_url"
               name="access_figma_url"
               type="url"
               v-model="form.access_figma_url"
-              label="Access Figma Link (optional)"
+              :label="$t('projects.form.accessFigmaUrl')"
               placeholder="https://figma.com/..."
             />
           </div>
 
-          <div class="mt-6">
+          <div class="mt-6 pt-5 border-t border-ui-line">
             <div class="flex items-center justify-between mb-3">
-              <label class="text-sm font-semibold text-brand-dark">Additional Access (optional)</label>
-              <button
-                type="button"
-                @click="addAdditionalAccess"
-                class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1"
-              >
-                <Plus class="w-4 h-4" /> Add Link
-              </button>
+              <p class="text-ui-small font-medium text-ui-ink">{{ $t("projects.form.additionalAccess") }}</p>
+              <UiButton variant="ghost" size="sm" :icon="Plus" class="text-ui-accent" @click="addAdditionalAccess">{{ $t("projects.form.addLink") }}</UiButton>
             </div>
             <div
               v-for="(item, i) in form.additional_access"
               :key="i"
-              class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 mb-3 items-start"
+              class="grid grid-cols-[1fr_auto] md:grid-cols-[1fr_1fr_auto] gap-3 mb-3 items-start"
             >
               <input
                 v-model="item.name"
                 type="text"
-                placeholder="Name (e.g. Postman Collection)"
-                class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm"
+                :placeholder="$t('projects.form.linkNamePlaceholder')"
+                :aria-label="$t('projects.form.linkName')"
+                :class="FIELD"
+                class="col-span-2 md:col-span-1"
               />
               <input
                 v-model="item.url"
                 type="url"
                 placeholder="https://..."
-                class="w-full px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm"
+                :aria-label="$t('projects.form.linkUrl')"
+                :class="FIELD"
               />
               <button
                 type="button"
                 @click="removeAdditionalAccess(i)"
-                class="text-red-500 shrink-0 p-2 justify-self-start"
+                class="ui-press w-[38px] h-[38px] inline-flex items-center justify-center rounded-ui-control border border-ui-line-strong text-ui-muted hover:text-ui-bad hover:border-ui-bad/30 hover:bg-ui-bad-soft"
+                :aria-label="$t('projects.form.removeLink')"
               >
                 <Trash2 class="w-4 h-4" />
               </button>
             </div>
-            <p v-if="form.additional_access.length === 0" class="text-xs text-gray-400">
-              No additional links added yet.
+            <p v-if="form.additional_access.length === 0" class="text-ui-cap text-ui-faint">
+              {{ $t("projects.form.noLinks") }}
             </p>
           </div>
-        </div>
+        </section>
 
-        <!-- Team Assignment Section -->
-        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-          <div class="flex items-center gap-3 mb-6">
-            <div
-              class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center"
-            >
-              <Users class="w-5 h-5 text-purple-600" />
+        <section id="team-assignment-section" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+          <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+            <span class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted shrink-0">
+              <Users class="w-4 h-4" />
+            </span>
+            <div class="min-w-0">
+              <h2 class="text-ui-h2 text-ui-ink">{{ $t("projects.form.teamAssignment") }}</h2>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.teamAssignmentSubtitle") }}</p>
             </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">Team Assignment</h3>
-              <p class="text-brand-light text-xs font-normal">
-                Assign a whole Team, or pick a leader and members individually
-              </p>
-            </div>
-          </div>
-
+          </header>
           <!-- Mode Toggle -->
           <div class="grid grid-cols-2 gap-3 mb-6">
             <button
               type="button"
               @click="setAssignmentMode('employee')"
-              class="bg-white rounded-[12px] border p-4 text-left transition-all duration-300"
-              :class="form.team_assignment_mode === 'employee' ? 'border-[#0C51D9] border-2 bg-blue-50/50' : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2'"
+              class="ui-press rounded-ui-control border p-3.5 sm:p-4 text-left transition-colors"
+              :class="form.team_assignment_mode === 'employee' ? 'border-ui-ink ring-1 ring-ui-ink bg-ui-surface' : 'border-ui-line bg-ui-surface hover:bg-ui-subtle'"
+              :aria-pressed="form.team_assignment_mode === 'employee'"
             >
-              <p class="text-brand-dark text-sm font-bold">By Employee</p>
-              <p class="text-brand-light text-xs mt-0.5">Pick a leader and members one by one</p>
+              <span class="flex items-center justify-between gap-2">
+                <span class="text-ui-small font-semibold text-ui-ink">{{ $t("projects.form.byEmployee") }}</span>
+                <Check v-if="form.team_assignment_mode === 'employee'" class="w-4 h-4 text-ui-ink shrink-0" />
+              </span>
+              <span class="block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.byEmployeeHint") }}</span>
             </button>
             <button
               type="button"
               @click="setAssignmentMode('team')"
-              class="bg-white rounded-[12px] border p-4 text-left transition-all duration-300"
-              :class="form.team_assignment_mode === 'team' ? 'border-[#0C51D9] border-2 bg-blue-50/50' : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2'"
+              class="ui-press rounded-ui-control border p-3.5 sm:p-4 text-left transition-colors"
+              :class="form.team_assignment_mode === 'team' ? 'border-ui-ink ring-1 ring-ui-ink bg-ui-surface' : 'border-ui-line bg-ui-surface hover:bg-ui-subtle'"
+              :aria-pressed="form.team_assignment_mode === 'team'"
             >
-              <p class="text-brand-dark text-sm font-bold">By Team</p>
-              <p class="text-brand-light text-xs mt-0.5">Leader and members come from a Team</p>
+              <span class="flex items-center justify-between gap-2">
+                <span class="text-ui-small font-semibold text-ui-ink">{{ $t("projects.form.byTeam") }}</span>
+                <Check v-if="form.team_assignment_mode === 'team'" class="w-4 h-4 text-ui-ink shrink-0" />
+              </span>
+              <span class="block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.byTeamHint") }}</span>
             </button>
           </div>
 
           <!-- By Team -->
-          <div v-if="form.team_assignment_mode === 'team'" class="space-y-4">
+          <div v-if="form.team_assignment_mode === 'team'" class="space-y-5">
             <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-3">Select a Team <span class="text-red-600">*</span></label>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <p class="block text-ui-small font-medium text-ui-ink mb-2">{{ $t("projects.form.selectTeam") }} <span class="text-ui-bad">*</span></p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label
-                  class="bg-white group team-card flex items-center justify-between w-full min-h-[70px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer hover:border-[#0C51D9] hover:border-2"
+                  class="group flex items-center gap-3 w-full min-h-[64px] rounded-ui-control border border-ui-line bg-ui-surface px-3.5 py-3 cursor-pointer transition-colors hover:bg-ui-subtle has-[:checked]:border-ui-ink has-[:checked]:ring-1 has-[:checked]:ring-ui-ink has-[:focus-visible]:shadow-ui-focus"
                   v-for="team in teams"
                   :key="team.id"
                 >
-                  <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 relative flex items-center justify-center rounded-[12px] overflow-hidden">
-                      <div class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"></div>
-                      <Code class="w-5 h-5 text-white relative z-10" />
-                    </div>
-                    <div class="flex flex-col">
-                      <p class="text-brand-dark text-sm font-semibold">{{ team.name }}</p>
-                      <p class="text-brand-light text-sm">{{ team.members_count }} members • {{ team.leader?.name || "No lead" }}</p>
-                    </div>
-                  </div>
-                  <input type="radio" name="team_id" :value="team.id" class="w-4 h-4 accent-[#0C51D9]" v-model="form.team_id" />
+                  <span class="w-10 h-10 rounded-[10px] bg-ui-subtle flex items-center justify-center text-ui-muted shrink-0">
+                    <Code class="w-4 h-4" />
+                  </span>
+                  <span class="flex-1 min-w-0">
+                    <span class="block text-ui-small font-medium text-ui-ink truncate">{{ team.name }}</span>
+                    <span class="block text-ui-cap text-ui-muted truncate">{{ $t("projects.form.teamMembers", { n: team.members_count }, team.members_count) }} • {{ team.leader?.name || $t("projects.form.noLead") }}</span>
+                  </span>
+                  <input type="radio" name="team_id" :value="team.id" class="w-4 h-4 accent-ui-ink shrink-0" v-model="form.team_id" />
                 </label>
               </div>
-              <p v-if="teams.length === 0" class="text-sm text-gray-400 italic py-2">No teams yet.</p>
+              <p v-if="teams.length === 0" class="text-ui-small text-ui-faint py-2">{{ $t("projects.form.noTeams") }}</p>
             </div>
 
             <!-- Preview of the selected Team's leader + members -->
-            <div v-if="selectedTeamDetail" class="border-t border-[#DCDEDD] pt-4">
-              <p class="text-brand-dark text-sm font-semibold mb-2">
-                Project Leader will be <span class="text-[#0C51D9]">{{ selectedTeamDetail.leader?.name || "unset (Team has no lead)" }}</span>
+            <div v-if="selectedTeamDetail" class="rounded-ui-control bg-ui-subtle border border-ui-line p-4">
+              <p class="text-ui-small font-medium text-ui-ink mb-1">
+                {{ $t("projects.form.leaderWillBe") }} <span class="text-ui-accent">{{ selectedTeamDetail.leader?.name || $t("projects.form.leaderUnset") }}</span>
               </p>
-              <p class="text-brand-light text-xs mb-2">Members ({{ selectedTeamDetail.members?.length || 0 }}) come directly from this Team:</p>
+              <p class="text-ui-cap text-ui-muted mb-2">{{ $t("projects.form.membersFromTeam", { n: selectedTeamDetail.members?.length || 0 }) }}</p>
               <div class="flex flex-wrap gap-1.5">
-                <span
-                  v-for="member in selectedTeamDetail.members"
-                  :key="member.id"
-                  class="px-2 py-1 rounded-md bg-blue-50 text-[#0C51D9] text-xs font-medium"
-                >
+                <UiBadge v-for="member in selectedTeamDetail.members" :key="member.id" tone="outline">
                   {{ member.employee?.user?.name }}
-                </span>
+                </UiBadge>
               </div>
             </div>
           </div>
 
           <!-- By Employee -->
-          <div v-else class="space-y-6">
+          <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
             <!-- Project Leader -->
-            <div>
-              <label class="block text-brand-dark text-sm font-semibold mb-1">Select Project Leader (optional)</label>
+            <div class="min-w-0">
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.selectLeaderOptional") }}</p>
               <button
                 type="button"
                 @click="leaderModal = true"
-                class="w-full bg-white border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-3 flex items-center gap-3 text-left"
+                class="w-full h-[38px] bg-ui-surface border border-ui-line-strong rounded-ui-control hover:bg-ui-subtle focus:outline-none focus-visible:border-ui-accent focus-visible:shadow-ui-focus transition-colors px-3 flex items-center gap-2.5 text-left"
               >
-                <UserCheck class="w-5 h-5 text-gray-400" />
-                <span class="text-[#0D2929] font-normal flex-1">
-                  {{ selectedLeader?.user?.name || "Select project leader" }}
+                <UserCheck class="w-4 h-4 text-ui-faint shrink-0" />
+                <span class="flex-1 truncate text-ui-body" :class="selectedLeader?.user?.name ? 'text-ui-ink' : 'text-ui-faint'">
+                  {{ selectedLeader?.user?.name || $t("projects.form.selectLeaderPlaceholder") }}
                 </span>
-                <ChevronDown class="w-4 h-4 text-gray-400" />
+                <ChevronDown class="w-4 h-4 text-ui-faint shrink-0" />
               </button>
 
-              <div class="mt-3 p-4 bg-gray-50 rounded-[12px] border border-[#DCDEDD]" v-if="selectedLeader">
+              <div class="mt-3 p-3.5 bg-ui-subtle rounded-ui-control border border-ui-line" v-if="selectedLeader">
                 <div class="flex items-center gap-3">
                   <Avatar
                     :src="selectedLeader?.user?.profile_photo"
                     :alt="selectedLeader?.user?.name"
-                    size="w-12 h-12"
-                    icon-size="w-5 h-5"
+                    size="w-10 h-10"
+                    icon-size="w-4 h-4"
                   />
-                  <div class="flex-1">
-                    <h4 class="text-brand-dark text-sm font-semibold">{{ selectedLeader?.user?.name }}</h4>
-                    <p class="text-brand-light text-sm">{{ selectedLeader?.job_information?.job_title }}</p>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-ui-small font-medium text-ui-ink truncate">{{ selectedLeader?.user?.name }}</p>
+                    <p class="text-ui-cap text-ui-muted truncate">{{ selectedLeader?.job_information?.job_title }}</p>
                   </div>
-                  <button type="button" @click="handleRemoveLeader" class="text-gray-400 hover:text-gray-600 transition-colors">
+                  <button
+                    type="button"
+                    @click="handleRemoveLeader"
+                    class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:text-ui-ink hover:bg-ui-hover"
+                    :aria-label="$t('projects.form.removeLeader')"
+                  >
                     <X class="w-4 h-4" />
                   </button>
                 </div>
@@ -915,461 +747,193 @@ watch(
             </div>
 
             <!-- Members -->
-            <div>
+            <div class="min-w-0">
               <div class="flex items-center justify-between mb-1.5">
-                <label class="text-sm font-semibold text-brand-dark block">Members (optional)</label>
-                <span v-if="form.member_employee_ids.length" class="text-xs text-[#0C51D9] font-semibold flex items-center gap-1">
+                <p class="text-ui-small font-medium text-ui-ink">{{ $t("projects.form.membersOptional") }}</p>
+                <span v-if="form.member_employee_ids.length" class="text-ui-cap text-ui-accent font-medium flex items-center gap-1 tabular-nums">
                   <Users class="w-3.5 h-3.5" />
-                  {{ form.member_employee_ids.length }} selected
+                  {{ $t("projects.form.selected", { n: form.member_employee_ids.length }) }}
                 </span>
               </div>
-              <div class="border border-[#DCDEDD] rounded-xl overflow-hidden">
-                <div v-if="selectableMemberCandidates.length > 8" class="relative border-b border-[#DCDEDD] bg-gray-50 p-2">
-                  <Search class="w-3.5 h-3.5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+              <div class="border border-ui-line-strong rounded-ui-control overflow-hidden">
+                <div v-if="selectableMemberCandidates.length > 8" class="relative border-b border-ui-line bg-ui-subtle p-2">
+                  <Search class="w-3.5 h-3.5 text-ui-faint absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     v-model="memberSearch"
                     type="text"
-                    placeholder="Search employees..."
-                    class="w-full pl-7 pr-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs bg-white focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+                    :placeholder="$t('projects.tasks.detail.searchEmployees')"
+                    :aria-label="$t('projects.form.searchEmployees')"
+                    class="w-full h-8 pl-7 pr-2 bg-ui-surface border border-ui-line-strong rounded-[7px] text-ui-small text-ui-ink placeholder:text-ui-faint focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
                   />
                 </div>
-                <div class="p-3 max-h-64 overflow-y-auto space-y-1">
+                <div class="p-1.5 max-h-64 overflow-y-auto">
                   <label
                     v-for="employee in filteredMemberCandidates"
                     :key="employee.id"
-                    class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50"
+                    class="flex items-center gap-2.5 text-ui-small text-ui-text px-2.5 py-2 rounded-[7px] cursor-pointer hover:bg-ui-hover"
                   >
                     <input
                       type="checkbox"
                       :checked="form.member_employee_ids.includes(employee.id)"
                       @change="toggleMember(employee.id)"
-                      class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] shrink-0"
+                      class="w-4 h-4 rounded accent-ui-ink shrink-0"
                     />
                     <span class="truncate">{{ employee.user?.name }}</span>
                   </label>
-                  <p v-if="selectableMemberCandidates.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
-                  <p v-else-if="filteredMemberCandidates.length === 0" class="text-sm text-gray-400 italic py-2">No employees match "{{ memberSearch }}".</p>
+                  <p v-if="selectableMemberCandidates.length === 0" class="text-ui-small text-ui-faint px-2.5 py-2">{{ $t("projects.form.noStaff") }}</p>
+                  <p v-else-if="filteredMemberCandidates.length === 0" class="text-ui-small text-ui-faint px-2.5 py-2">{{ $t("projects.form.noMatch", { q: memberSearch }) }}</p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Project Settings Section -->
-        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-          <div class="flex items-center gap-3 mb-6">
-            <div
-              class="w-10 h-10 bg-orange-50 rounded-[10px] flex items-center justify-center"
-            >
-              <Settings class="w-5 h-5 text-orange-600" />
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+          <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+            <span class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted shrink-0">
+              <Settings class="w-4 h-4" />
+            </span>
+            <div class="min-w-0">
+              <h2 class="text-ui-h2 text-ui-ink">{{ $t("projects.form.settings") }}</h2>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.settingsSubtitle") }}</p>
             </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">
-                Project Settings
-              </h3>
-              <p class="text-brand-light text-xs font-normal">
-                Configure project status, budget
-              </p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 gap-5">
+          </header>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             <!-- Budget -->
-            <div class="mb-4">
-              <Input
-                id="budget"
-                name="budget"
-                type="text"
-                v-model="form.budget"
-                label="Budget (optional)"
-                placeholder="100.000.000"
-                :error="error?.budget?.join(', ')"
-              >
-                <template #icon> Rp </template>
-              </Input>
+            <div class="min-w-0">
+              <label for="budget" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.budgetOptional") }}</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ui-small text-ui-muted pointer-events-none">Rp</span>
+                <input
+                  id="budget"
+                  name="budget"
+                  type="text"
+                  inputmode="numeric"
+                  v-model="form.budget"
+                  placeholder="100.000.000"
+                  :class="[FIELD, 'pl-9 text-right tabular-nums', error?.budget ? 'border-ui-bad/50' : '']"
+                />
+              </div>
+              <p v-if="error?.budget" class="text-ui-cap text-ui-bad mt-1.5">{{ error?.budget?.join(", ") }}</p>
             </div>
 
             <!-- Warranty & Retention Period -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
-              <Input
-                id="warranty_period_months"
-                name="warranty_period_months"
-                type="number"
-                min="0"
-                v-model="form.warranty_period_months"
-                label="Warranty Period (months, optional)"
-                placeholder="e.g. 12"
-                :error="error?.warranty_period_months?.join(', ')"
-              />
-              <Input
-                id="retention_period_months"
-                name="retention_period_months"
-                type="number"
-                min="0"
-                v-model="form.retention_period_months"
-                label="Retention Period (months, optional)"
-                placeholder="e.g. 6"
-                :error="error?.retention_period_months?.join(', ')"
-              />
-            </div>
+              <div class="min-w-0">
+                <label for="warranty_period_months" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.warrantyOptional") }}</label>
+                <input
+                  id="warranty_period_months"
+                  name="warranty_period_months"
+                  type="number"
+                  min="0"
+                  v-model="form.warranty_period_months"
+                  :placeholder="$t('projects.form.examplePlaceholder', { n: 12 })"
+                  :class="[FIELD, 'tabular-nums', error?.warranty_period_months ? 'border-ui-bad/50' : '']"
+                />
+                <p v-if="error?.warranty_period_months" class="text-ui-cap text-ui-bad mt-1.5">{{ error?.warranty_period_months?.join(", ") }}</p>
+              </div>
+              <div class="min-w-0">
+                <label for="retention_period_months" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.retentionOptional") }}</label>
+                <input
+                  id="retention_period_months"
+                  name="retention_period_months"
+                  type="number"
+                  min="0"
+                  v-model="form.retention_period_months"
+                  :placeholder="$t('projects.form.examplePlaceholder', { n: 6 })"
+                  :class="[FIELD, 'tabular-nums', error?.retention_period_months ? 'border-ui-bad/50' : '']"
+                />
+                <p v-if="error?.retention_period_months" class="text-ui-cap text-ui-bad mt-1.5">{{ error?.retention_period_months?.join(", ") }}</p>
+              </div>
 
             <!-- Initial Project Status (Full Width) -->
-            <div class="md:col-span-2 mb-4">
-              <label class="block text-brand-dark text-sm font-semibold mb-1"
-                >Initial Project Status <span class="text-red-600">*</span></label
-              >
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <!-- Active Option -->
+            <div class="md:col-span-3">
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.initialStatus") }} <span class="text-ui-bad">*</span></p>
+              <div class="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                 <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
+                  v-for="opt in STATUS_OPTIONS"
+                  :key="opt.value"
+                  class="group flex items-center gap-2 sm:gap-3 min-h-[48px] sm:min-h-[52px] rounded-ui-control border border-ui-line bg-ui-surface px-3 sm:px-3.5 py-2.5 cursor-pointer transition-colors hover:bg-ui-subtle has-[:checked]:border-ui-ink has-[:checked]:ring-1 has-[:checked]:ring-ui-ink has-[:focus-visible]:shadow-ui-focus"
                 >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-9 h-9 bg-green-50 rounded-[10px] flex items-center justify-center"
-                    >
-                      <PlayCircle class="w-5 h-5 text-green-600" />
-                    </div>
-                    <div class="flex flex-col">
-                      <p class="text-brand-dark text-sm font-semibold">
-                        Active
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
-                  >
-                    <input
-                      type="radio"
-                      name="project_status"
-                      value="active"
-                      class="hidden"
-                      v-model="form.status"
-                    />
-                    <div
-                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                    ></div>
-                    <p
-                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                    ></p>
-                  </div>
-                </label>
-
-                <!-- Planning Option -->
-                <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center"
-                    >
-                      <ClipboardList class="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div class="flex flex-col">
-                      <p class="text-brand-dark text-sm font-semibold">
-                        Planning
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
-                  >
-                    <input
-                      type="radio"
-                      name="project_status"
-                      value="planning"
-                      class="hidden"
-                      v-model="form.status"
-                    />
-                    <div
-                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                    ></div>
-                    <p
-                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                    ></p>
-                  </div>
-                </label>
-
-                <!-- On Hold Option -->
-                <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-9 h-9 bg-yellow-50 rounded-[10px] flex items-center justify-center"
-                    >
-                      <PauseCircle class="w-5 h-5 text-yellow-600" />
-                    </div>
-                    <div class="flex flex-col">
-                      <p class="text-brand-dark text-sm font-semibold">
-                        On Hold
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
-                  >
-                    <input
-                      type="radio"
-                      name="project_status"
-                      value="on_hold"
-                      class="hidden"
-                      v-model="form.status"
-                    />
-                    <div
-                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                    ></div>
-                    <p
-                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                    ></p>
-                  </div>
-                </label>
-
-                <!-- Draft Option -->
-                <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center"
-                    >
-                      <FileText class="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div class="flex flex-col">
-                      <p class="text-brand-dark text-sm font-semibold">
-                        Draft
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
-                  >
-                    <input
-                      type="radio"
-                      name="project_status"
-                      value="draft"
-                      class="hidden"
-                      v-model="form.status"
-                    />
-                    <div
-                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                    ></div>
-                    <p
-                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                    ></p>
-                  </div>
-                </label>
-
-                <!-- Completed Option -->
-                <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-9 h-9 bg-emerald-50 rounded-[10px] flex items-center justify-center"
-                    >
-                      <CheckCircle2 class="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div class="flex flex-col">
-                      <p class="text-brand-dark text-sm font-semibold">
-                        Completed
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
-                  >
-                    <input
-                      type="radio"
-                      name="project_status"
-                      value="completed"
-                      class="hidden"
-                      v-model="form.status"
-                    />
-                    <div
-                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                    ></div>
-                    <p
-                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                    ></p>
-                  </div>
-                </label>
-
-                <!-- Cancelled Option -->
-                <label
-                  class="group card flex items-center justify-between w-full min-h-[60px] rounded-[12px] border border-[#DCDEDD] p-4 has-[:checked]:ring-2 has-[:checked]:ring-[#0C51D9] has-[:checked]:ring-offset-2 transition-all duration-300 cursor-pointer"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-9 h-9 bg-red-50 rounded-[10px] flex items-center justify-center"
-                    >
-                      <XCircle class="w-5 h-5 text-red-600" />
-                    </div>
-                    <div class="flex flex-col">
-                      <p class="text-brand-dark text-sm font-semibold">
-                        Cancelled
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl border border-[#DCDEDD] py-2 px-3 gap-2"
-                  >
-                    <input
-                      type="radio"
-                      name="project_status"
-                      value="cancelled"
-                      class="hidden"
-                      v-model="form.status"
-                    />
-                    <div
-                      class="flex size-[18px] rounded-full shadow-sm border border-[#DCDEDD] group-has-[:checked]:border-[5px] group-has-[:checked]:border-[#0C51D9] transition-all duration-300"
-                    ></div>
-                    <p
-                      class="text-xs font-semibold after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                    ></p>
-                  </div>
+                  <input type="radio" name="project_status" :value="opt.value" class="sr-only" v-model="form.status" />
+                  <span class="w-8 h-8 rounded-ui-control bg-ui-subtle hidden sm:flex items-center justify-center text-ui-muted shrink-0">
+                    <component :is="opt.icon" class="w-4 h-4" />
+                  </span>
+                  <span class="flex-1 text-ui-small font-medium text-ui-ink">{{ opt.label }}</span>
+                  <Check class="w-4 h-4 text-ui-ink hidden group-has-[:checked]:block shrink-0" />
                 </label>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
         <!-- Project Inspect (optional, Project Leader-only) -->
-        <div v-if="isLeader" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center">
-              <ClipboardCheck class="w-5 h-5 text-purple-600" />
+        <section v-if="isLeader" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+          <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+            <span class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted shrink-0">
+              <ClipboardCheck class="w-4 h-4" />
+            </span>
+            <div class="min-w-0">
+              <h2 class="text-ui-h2 text-ui-ink">{{ $t("projects.inspect.title") }}</h2>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.inspectSubtitle") }}</p>
             </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">Project Inspect</h3>
-              <p class="text-brand-light text-xs font-normal">
-                Optional — visible only to you as the Project Leader on this form
-              </p>
-            </div>
-          </div>
-
-          <RichTextEditor class="bg-white" v-model="inspectNoteDraft" placeholder="Write your inspection notes here..." />
-        </div>
+          </header>
+          <RichTextEditor v-model="inspectNoteDraft" :placeholder="$t('projects.inspect.placeholder')" />
+        </section>
 
         <!-- Form Actions -->
-        <div class="flex items-center gap-3 sm:gap-4 pb-6">
-          <button
-            type="submit"
-            :disabled="loading"
-            class="flex-1 sm:flex-none btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2"
-          >
-            <span class="text-brand-white text-sm font-semibold"
-              >Update Project</span
-            >
-            <Plus class="w-4 h-4 text-white" />
-          </button>
-          <button
-            type="button"
-            onclick="window.history.back()"
-            class="flex-1 sm:flex-none border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2"
-          >
-            <span class="text-brand-dark text-sm font-semibold">Cancel</span>
-          </button>
+        <div class="flex items-center gap-3 sm:justify-end">
+          <UiButton variant="secondary" size="lg" class="flex-1 sm:flex-none" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
+          <UiButton type="submit" size="lg" class="flex-1 sm:flex-none" :icon="Save" :loading="loading">{{ $t("projects.form.updateSubmit") }}</UiButton>
         </div>
       </form>
+
+      <RightSidebar />
     </div>
 
-    <RightSidebar />
-  </div>
-
-  <!-- Project Leader Selection Modal -->
-  <div
-    class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center"
-    v-if="leaderModal"
-  >
-    <div
-      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
+    <!-- Project Leader Selection Modal -->
+    <UiModal
+      v-model:open="leaderModal"
+      size="lg"
+      :title="$t('projects.form.selectLeader')"
+      :description="$t('projects.form.selectLeaderDescription')"
     >
-      <!-- Modal Header -->
-      <div class="p-6 border-b border-[#DCDEDD]">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 bg-green-50 rounded-[10px] flex items-center justify-center"
-            >
-              <Crown class="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">
-                Select Project Leader
-              </h3>
-              <p class="text-brand-light text-xs font-normal">
-                Choose an employee to lead this project
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            @click="leaderModal = false"
-            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
-          >
-            <X class="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
-      </div>
+      <UiInput
+        v-model="searchLeader"
+        :icon="Search"
+        :placeholder="$t('projects.tasks.detail.searchEmployees')"
+        :aria-label="$t('projects.form.searchEmployees')"
+      />
 
-      <!-- Search Bar -->
-      <div class="p-6 border-b border-[#DCDEDD]">
-        <div class="relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
-          >
-            <Search class="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-            placeholder="Search employees..."
-            v-model="searchLeader"
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-4">
+        <button
+          type="button"
+          class="ui-press flex items-center gap-3 border border-ui-line rounded-ui-control hover:bg-ui-hover hover:border-ui-line-strong transition-colors p-3 text-left min-w-0"
+          v-for="employee in employees"
+          :key="employee.id"
+          @click="handleSelectLeader(employee)"
+        >
+          <Avatar
+            :src="employee.user?.profile_photo"
+            :alt="employee.user?.name"
+            size="w-10 h-10"
+            icon-size="w-4 h-4"
           />
-        </div>
+          <span class="flex-1 min-w-0">
+            <span class="block text-ui-small font-medium text-ui-ink truncate">{{ employee.user?.name }}</span>
+            <span class="block text-ui-cap text-ui-muted truncate">{{ employee.job_information?.job_title }}</span>
+          </span>
+          <Crown v-if="employee.id === form.project_leader_id" class="w-4 h-4 text-ui-warn shrink-0" />
+        </button>
       </div>
 
-      <!-- Employees List -->
-      <div class="p-6 overflow-y-auto max-h-96">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div
-            class="leader-card border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4 cursor-pointer"
-            v-for="employee in employees"
-            :key="employee.id"
-            @click="handleSelectLeader(employee)"
-          >
-            <div class="flex items-center gap-4">
-              <Avatar
-                :src="employee.user?.profile_photo"
-                :alt="employee.user?.name"
-                size="w-14 h-14"
-                icon-size="w-5 h-5"
-                rounded="rounded-[12px]"
-              />
-              <div class="flex-1">
-                <h4 class="text-brand-dark text-sm font-bold">
-                  {{ employee.user?.name }}
-                </h4>
-                <p class="text-brand-light text-xs font-normal">
-                  {{ employee.job_information?.job_title }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- No Results Message -->
-        <div class="text-center py-8" v-if="employees.length === 0">
-          <SearchX class="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <h4 class="text-brand-dark text-sm font-semibold mb-1">
-            No employees found
-          </h4>
-          <p class="text-brand-light text-sm">
-            Try adjusting your search terms
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
+      <!-- No Results Message -->
+      <UiEmpty
+        v-if="employees.length === 0"
+        compact
+        :icon="SearchX"
+        :title="$t('projects.tasks.detail.noEmployees')"
+        :message="$t('projects.form.noEmployeesHint')"
+      />
+    </UiModal>
   </div>
 </template>

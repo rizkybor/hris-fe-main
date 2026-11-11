@@ -1,14 +1,18 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
-import { FileCheck2, Wallet, ChevronDown } from "lucide-vue-next";
+import { ArrowLeft, Check } from "lucide-vue-next";
+import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader, UiSelect, UiSwitch } from "@/components/ui";
 import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import { SIGNATORIES } from "@/utils/signatories";
+import { bareName } from "@/utils/personName";
 import { useInvoiceStore } from "@/stores/invoice";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 
+const { t } = useI18n();
 const store = usePaymentReceiptStore();
 const invoiceStore = useInvoiceStore();
 const { invoices } = storeToRefs(invoiceStore);
@@ -78,7 +82,7 @@ onMounted(async () => {
         grossAmount.value = Number(receipt.amount);
       }
     } catch (error) {
-      errorMessage.value = "Failed to load payment receipt.";
+      errorMessage.value = t("documents.receipt.form.errors.load");
     }
   }
 });
@@ -122,11 +126,13 @@ const invoiceOptions = computed(() =>
 
 // Older receipts may carry a free-typed name from before this was a
 // dropdown -- keep it selectable so editing doesn't drop it.
-const signatoryOptions = computed(() =>
-  form.value.recipient_name && !SIGNATORIES.includes(form.value.recipient_name)
-    ? [form.value.recipient_name, ...SIGNATORIES]
-    : SIGNATORIES
-);
+// A saved name with degrees ("Aldi PP, S.Ikom") stands in for its plain
+// entry instead of showing twice.
+const signatoryOptions = computed(() => {
+  const current = form.value.recipient_name;
+  if (!current || SIGNATORIES.includes(current)) return SIGNATORIES;
+  return [current, ...SIGNATORIES.filter((n) => bareName(n).toLowerCase() !== bareName(current).toLowerCase())];
+});
 
 // The printed receipt adds "berdasarkan Invoice No. ..." for a linked
 // invoice by itself, so the suggestion only describes what's being paid
@@ -206,180 +212,172 @@ const handleSubmit = async () => {
     router.push({ name: "admin.payment-receipts.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : `Failed to ${isEditMode.value ? "update" : "create"} Payment Receipt.`);
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t(isEditMode.value ? "documents.receipt.form.errors.update" : "documents.receipt.form.errors.create"));
   } finally {
     submitting.value = false;
   }
 };
+
+// Presentation only.
+const field =
+  "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus read-only:bg-ui-subtle read-only:text-ui-muted";
+const lbl = "block text-ui-small font-medium text-ui-ink mb-1.5";
+const rp = (n) => `Rp ${(Number(n) || 0).toLocaleString("id-ID")}`;
+const invoiceSelectOptions = computed(() => [
+  { value: "", label: t("documents.receipt.form.noInvoice") },
+  ...invoiceOptions.value.map((i) => ({ value: i.id, label: `${i.invoice_number} - ${i.client_name}` })),
+]);
+const paymentStatusOptions = computed(() => [
+  { value: "paid", label: t("documents.shared.status.paid") },
+  { value: "partial", label: t("documents.receipt.form.partial") },
+]);
+const pphTypeOptions = computed(() => pphTypes.value.map((t) => ({ value: t.value, label: t.label })));
+const signatorySelectOptions = computed(() => [{ value: "", label: t("documents.shared.selectSignatory") }, ...signatoryOptions.value.map((n) => ({ value: n, label: n }))]);
+const onApplyPph23 = (value) => {
+  applyPph23.value = value;
+  toggleApplyPph23();
+};
 </script>
 
 <template>
-  <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <FileCheck2 class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">{{ isEditMode ? "Edit Payment Receipt" : "Create Payment Receipt" }}</h3>
-          <p class="text-brand-light text-sm">
-            {{ isEditMode ? existingReceiptNumber : (form.numbering_mode === "manual" ? "Receipt number will be used exactly as entered" : "Receipt number will be generated automatically when saved") }}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <form @submit.prevent="handleSubmit" class="space-y-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center gap-2 mb-4">
-          <div class="w-8 h-8 bg-emerald-50 rounded-[9px] flex items-center justify-center shrink-0">
-            <Wallet class="w-4 h-4 text-emerald-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Payment Details</h4>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Related Invoice (optional)</label>
-            <div class="relative w-full">
-              <select v-model="form.invoice_id" @change="handleInvoiceSelect" class="select-soft">
-                <option value="">- Not related to an invoice -</option>
-                <option v-for="invoice in invoiceOptions" :key="invoice.id" :value="invoice.id">
-                  {{ invoice.invoice_number }} - {{ invoice.client_name }}
-                </option>
-              </select>
-              <ChevronDown
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-              />
-            </div>
-          </div>
-          <template v-if="!isEditMode">
-            <div class="md:col-span-2">
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Receipt Numbering</label>
-              <div class="flex items-center gap-4">
-                <label class="flex items-center gap-2 text-sm text-brand-dark">
-                  <input type="radio" value="automatic" v-model="form.numbering_mode" />
-                  Automatic
-                </label>
-                <label class="flex items-center gap-2 text-sm text-brand-dark">
-                  <input type="radio" value="manual" v-model="form.numbering_mode" />
-                  Manual
-                </label>
-              </div>
-            </div>
-            <div v-if="form.numbering_mode === 'automatic'">
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code <span class="text-red-600">*</span></label>
-              <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
-              <p class="text-xs text-gray-400 mt-1">A short code only (no "/") — used in the receipt number, e.g. RCP/JCD-ZACO/...</p>
-            </div>
-            <div v-else>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Receipt Number <span class="text-red-600">*</span></label>
-              <input v-model="form.receipt_number" type="text" required placeholder="e.g. RCP/JCD-FASTTRACK/1805/26.001" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-              <p class="text-xs text-gray-400 mt-1">Used exactly as entered — must be unique.</p>
-            </div>
-          </template>
-          <div v-else>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Client Code <span class="text-red-600">*</span></label>
-            <input v-model="form.client_code" type="text" required placeholder="e.g. ZACO" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Date <span class="text-red-600">*</span></label>
-            <input v-model="form.date" type="date" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Received From <span class="text-red-600">*</span></label>
-            <input v-model="form.received_from" type="text" required placeholder="e.g. Mr. Zakaria - Zaco Law Firm" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">{{ applyPph23 ? "Gross Amount (Rp)" : "Amount (Rp)" }} <span class="text-red-600">*</span></label>
-            <input v-model.number="grossAmount" @input="recomputePph23" type="number" min="0" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Payment Status <span class="text-red-600">*</span></label>
-            <div class="relative w-full">
-              <select v-model="form.payment_status" class="select-soft">
-                <option value="paid">Paid</option>
-                <option value="partial">Partial</option>
-              </select>
-              <ChevronDown
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-              />
-            </div>
-          </div>
-          <div class="md:col-span-2">
-            <label class="flex items-center gap-2 text-sm font-semibold text-brand-dark">
-              <input type="checkbox" v-model="applyPph23" @change="toggleApplyPph23" />
-              Dipotong PPh 23?
-            </label>
-            <p class="text-xs text-gray-400 mt-1">
-              Centang jika klien memotong PPh 23 saat membayar (mis. jasa teknik/IT). Amount di atas akan otomatis dihitung ulang sebagai jumlah bersih yang diterima.
-            </p>
-          </div>
-          <template v-if="applyPph23">
-            <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 Type</label>
-              <div class="relative w-full">
-                <select v-model="form.pph23_type" @change="handlePph23TypeChange" class="select-soft">
-                  <option v-for="type in pphTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                </select>
-                <ChevronDown
-                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 (%)</label>
-              <input v-model.number="form.pph23_percent" @input="recomputePph23" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-            </div>
-            <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">PPh 23 Amount</label>
-              <input :value="form.pph23_amount" type="text" readonly class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm bg-gray-50 text-gray-500" />
-            </div>
-            <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Net Amount Received</label>
-              <input :value="form.amount" type="text" readonly class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm bg-gray-50 text-gray-500 font-semibold" />
-            </div>
-          </template>
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">For Payment Of <span class="text-red-600">*</span></label>
-            <textarea v-model="form.for_payment_of" rows="2" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
-            <p v-if="selectedInvoiceNumber" class="text-xs text-brand-light mt-1">
-              Printed as: <span class="text-brand-dark">{{ printedForPayment.text }}<template v-if="printedForPayment.appendInvoice"> berdasarkan Invoice No. <strong>{{ selectedInvoiceNumber }}</strong>.</template></span>
-              — the invoice number is added automatically.
-            </p>
-          </div>
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Recipient Name (Signatory)</label>
-            <div class="relative w-full">
-              <select v-model="form.recipient_name" class="select-soft">
-                <option value="">- Select signatory -</option>
-                <option v-for="name in signatoryOptions" :key="name" :value="name">{{ name }}</option>
-              </select>
-              <ChevronDown
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-              />
-            </div>
-          </div>
-          <SignatureToggle v-model="form.use_signature" class="md:col-span-2" hint="Stamps the recipient's signature onto the PDF." />
-        </div>
-      </div>
-
-      <p v-if="errorMessage" class="text-red-500 text-sm">{{ errorMessage }}</p>
-
-      <div class="flex items-center gap-3">
-        <button
-          type="submit"
-          :disabled="submitting"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
-        >
-          <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : (isEditMode ? "Update Payment Receipt" : "Save Payment Receipt") }}</span>
-        </button>
-        <router-link
-          :to="{ name: 'admin.payment-receipts.dashboard' }"
-          class="px-6 py-3 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50"
-        >
-          Cancel
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="isEditMode ? $t('documents.receipt.form.editTitle') : $t('documents.receipt.form.createTitle')">
+      <template #eyebrow>
+        <router-link :to="{ name: 'admin.payment-receipts.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1">
+          <ArrowLeft class="w-4 h-4" />{{ $t("documents.receipt.list.title") }}
         </router-link>
+      </template>
+      <template #subtitle>
+        <span :class="isEditMode ? 'font-mono' : ''">{{ isEditMode ? existingReceiptNumber : (form.numbering_mode === "manual" ? $t("documents.receipt.form.manualNumber") : $t("documents.receipt.form.autoNumber")) }}</span>
+      </template>
+      <template #actions>
+        <div class="hidden sm:flex items-center gap-2">
+          <UiButton variant="secondary" :to="{ name: 'admin.payment-receipts.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
+          <UiButton type="submit" form="receipt-form" :icon="Check" :loading="submitting">
+            {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.receipt.form.update") : $t("documents.receipt.form.save")) }}
+          </UiButton>
+        </div>
+      </template>
+    </UiPageHeader>
+
+    <form id="receipt-form" @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start">
+      <div class="lg:col-span-2 space-y-4 sm:space-y-5 min-w-0 ui-stagger">
+        <UiCard :title="$t('documents.receipt.form.paymentDetails')">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UiSelect
+              v-model="form.invoice_id"
+              :options="invoiceSelectOptions"
+              :label="$t('documents.receipt.form.relatedInvoice')"
+              class="md:col-span-2"
+              @change="handleInvoiceSelect"
+            />
+            <template v-if="!isEditMode">
+              <div class="md:col-span-2">
+                <p :class="lbl">{{ $t("documents.receipt.form.numbering") }}</p>
+                <div class="inline-flex p-0.5 rounded-ui-control bg-ui-subtle border border-ui-line" role="radiogroup">
+                  <label
+                    v-for="mode in [{ value: 'automatic', label: $t('documents.shared.numberingAuto') }, { value: 'manual', label: $t('documents.shared.numberingManual') }]"
+                    :key="mode.value"
+                    class="px-3 h-8 inline-flex items-center rounded-[6px] text-ui-small font-medium transition-colors"
+                    :class="form.numbering_mode === mode.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
+                  >
+                    <input type="radio" class="sr-only" :value="mode.value" v-model="form.numbering_mode" />
+                    {{ mode.label }}
+                  </label>
+                </div>
+              </div>
+              <UiInput
+                v-if="form.numbering_mode === 'automatic'"
+                v-model="form.client_code"
+                :label="$t('documents.invoice.form.clientCode')"
+                required
+                :placeholder="$t('documents.invoice.form.clientCodePlaceholder')"
+                class="[&_input]:uppercase"
+                :hint="$t('documents.receipt.form.clientCodeHint')"
+              />
+              <UiInput
+                v-else
+                v-model="form.receipt_number"
+                :label="$t('documents.receipt.form.receiptNumber')"
+                required
+                :placeholder="$t('documents.receipt.form.receiptNumberPlaceholder')"
+                :hint="$t('documents.shared.manualNumberHint')"
+              />
+            </template>
+            <UiInput v-else v-model="form.client_code" :label="$t('documents.invoice.form.clientCode')" required :placeholder="$t('documents.invoice.form.clientCodePlaceholder')" class="[&_input]:uppercase" />
+            <UiInput v-model="form.date" type="date" :label="$t('common.labels.date')" required />
+            <UiInput v-model="form.received_from" :label="$t('documents.receipt.fields.receivedFrom')" required :placeholder="$t('documents.receipt.form.receivedFromPlaceholder')" class="md:col-span-2" />
+            <div>
+              <label :class="lbl" for="rcp-amount">{{ applyPph23 ? $t("documents.receipt.form.grossAmountRp") : $t("documents.shared.amountRp") }}<span class="text-ui-bad"> *</span></label>
+              <input id="rcp-amount" v-model.number="grossAmount" @input="recomputePph23" type="number" min="0" required :class="[field, 'text-right tabular-nums']" />
+            </div>
+            <UiSelect v-model="form.payment_status" :options="paymentStatusOptions" :label="$t('documents.receipt.form.paymentStatus')" required />
+          </div>
+        </UiCard>
+
+        <UiCard title="PPh 23">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2 rounded-ui-control border border-ui-line p-3.5">
+              <UiSwitch
+                :model-value="applyPph23"
+                :label="$t('documents.receipt.form.pph23Switch')"
+                :description="$t('documents.receipt.form.pph23Description')"
+                @update:model-value="onApplyPph23"
+              />
+            </div>
+            <template v-if="applyPph23">
+              <UiSelect v-model="form.pph23_type" :options="pphTypeOptions" :label="$t('documents.shared.pph23Type')" @change="handlePph23TypeChange" />
+              <div>
+                <label :class="lbl" for="rcp-pph">PPh 23 (%)</label>
+                <input id="rcp-pph" v-model.number="form.pph23_percent" @input="recomputePph23" type="number" min="0" max="100" step="0.1" :class="[field, 'tabular-nums']" />
+              </div>
+              <div>
+                <label :class="lbl" for="rcp-pph-amt">{{ $t("documents.receipt.form.pph23Amount") }}</label>
+                <input id="rcp-pph-amt" :value="form.pph23_amount" type="text" readonly :class="[field, 'text-right tabular-nums']" />
+              </div>
+              <div>
+                <label :class="lbl" for="rcp-net">{{ $t("documents.receipt.form.netAmount") }}</label>
+                <input id="rcp-net" :value="form.amount" type="text" readonly :class="[field, 'text-right tabular-nums font-medium']" />
+              </div>
+            </template>
+          </div>
+        </UiCard>
+
+        <UiCard :title="$t('documents.receipt.form.descriptionSignatory')">
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <UiInput v-model="form.for_payment_of" :rows="2" :label="$t('documents.receipt.form.forPaymentOf')" required />
+              <p v-if="selectedInvoiceNumber" class="text-ui-cap text-ui-muted mt-1.5">
+                {{ $t("documents.receipt.form.printedAs") }} <span class="text-ui-ink">{{ printedForPayment.text }}<template v-if="printedForPayment.appendInvoice"> berdasarkan Invoice No. <strong class="font-medium">{{ selectedInvoiceNumber }}</strong>.</template></span>
+                {{ $t("documents.receipt.form.printedAsHint") }}
+              </p>
+            </div>
+            <UiSelect v-model="form.recipient_name" :options="signatorySelectOptions" :label="$t('documents.receipt.form.recipientName')" />
+            <SignatureToggle v-model="form.use_signature" :hint="$t('documents.receipt.form.signatureHint')" />
+          </div>
+        </UiCard>
       </div>
+
+      <aside class="lg:sticky lg:top-4 space-y-4 min-w-0">
+        <UiCard :title="$t('documents.shared.summary')">
+          <dl class="text-ui-small space-y-2.5">
+            <div v-if="selectedInvoiceNumber" class="flex justify-between gap-3"><dt class="text-ui-muted">{{ $t("documents.invoice.list.title") }}</dt><dd class="text-ui-ink font-mono text-ui-cap truncate">{{ selectedInvoiceNumber }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-ui-muted">{{ applyPph23 ? $t("documents.receipt.form.grossAmount") : $t("common.labels.amount") }}</dt><dd class="text-ui-ink tabular-nums">{{ rp(grossAmount) }}</dd></div>
+            <div v-if="applyPph23" class="flex justify-between gap-3"><dt class="text-ui-muted">PPh 23 ({{ form.pph23_percent || 0 }}%)</dt><dd class="text-ui-ink tabular-nums">− {{ rp(form.pph23_amount) }}</dd></div>
+            <div class="flex items-baseline justify-between gap-3 pt-3 mt-1 border-t border-ui-line">
+              <dt class="text-ui-body font-medium text-ui-ink">{{ applyPph23 ? $t("documents.receipt.form.netAmount") : $t("common.labels.total") }}</dt>
+              <dd class="text-ui-h2 text-ui-ink tabular-nums">{{ rp(applyPph23 ? form.amount : grossAmount) }}</dd>
+            </div>
+          </dl>
+          <UiAlert v-if="errorMessage" tone="bad" :title="errorMessage" class="mt-4" />
+          <div class="mt-5 grid gap-2">
+            <UiButton type="submit" size="lg" block :icon="Check" :loading="submitting">
+              {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.receipt.form.update") : $t("documents.receipt.form.save")) }}
+            </UiButton>
+            <UiButton variant="secondary" block :to="{ name: 'admin.payment-receipts.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
+          </div>
+        </UiCard>
+      </aside>
     </form>
   </div>
 </template>

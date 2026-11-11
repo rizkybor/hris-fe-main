@@ -12,6 +12,12 @@ import {
 } from "lucide-vue-next";
 import { useProjectDocumentStore } from "@/stores/projectDocument";
 import { can } from "@/helpers/permissionHelper";
+import { UiButton, UiConfirmDialog, UiEmpty, UiInput, UiModal } from "@/components/ui";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   projectId: {
@@ -59,11 +65,11 @@ const handleUpload = async () => {
   formError.value = "";
 
   if (!form.value.document_name) {
-    formError.value = "Document name is required.";
+    formError.value = t("projects.documents.nameRequired");
     return;
   }
   if (!form.value.file) {
-    formError.value = "Please choose a file to upload.";
+    formError.value = t("projects.documents.fileRequired");
     return;
   }
 
@@ -80,7 +86,7 @@ const handleUpload = async () => {
     formError.value =
       typeof documentStore.error === "string"
         ? documentStore.error
-        : "Failed to upload document.";
+        : t("projects.documents.uploadFailed");
   }
 };
 
@@ -105,7 +111,7 @@ const handleDelete = async () => {
 
 const formatDate = (date) => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -118,258 +124,129 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full flex flex-col">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5 shrink-0">
-      <div class="flex items-center gap-3">
-        <div
-          class="w-9 h-9 sm:w-10 sm:h-10 bg-teal-50 rounded-[10px] flex items-center justify-center shrink-0"
-        >
-          <FileText class="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-base sm:text-lg font-bold">Project Documents</h3>
-          <p class="text-brand-light text-xs font-normal">
-            Optional supporting documents (proposals, client files, etc.)
-          </p>
-        </div>
+  <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 h-full flex flex-col">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4 shrink-0">
+      <div class="min-w-0">
+        <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.documents.title") }}</h3>
+        <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.documents.subtitle") }}</p>
       </div>
 
-      <button
-        v-if="can('project-edit')"
-        @click="openUploadModal"
-        class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center justify-center gap-2 w-full sm:w-auto"
-      >
-        <Upload class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-xs font-semibold">Upload Document</span>
-      </button>
+      <UiButton v-if="can('project-edit')" :icon="Upload" class="w-full sm:w-auto shrink-0" @click="openUploadModal">
+        {{ $t("projects.documents.upload") }}
+      </UiButton>
     </div>
 
-    <!-- Capped + scrollable so a project with lots of documents doesn't
-         grow this card taller than its Invoices/Inspect siblings in the
-         same row -- keeps the row's height fixed regardless of content. -->
-    <div class="overflow-y-auto max-h-[320px] sm:max-h-[420px] pr-1 -mr-1">
-      <div v-if="loading" class="text-center py-8 text-xs text-gray-400">
-        Loading documents...
-      </div>
-
-      <div
-        v-else-if="documents.length === 0"
-        class="text-center px-4 py-10 text-gray-500 bg-gray-100 rounded-[12px] border border-dashed border-[#DCDEDD]"
-      >
-        <FileIcon class="w-9 h-9 text-gray-300 mx-auto mb-3" />
-        <p class="text-sm font-semibold">No documents uploaded yet</p>
-        <p class="text-xs text-gray-400">
-          Documents are optional — upload proposals, client files, or other supporting files.
-        </p>
-      </div>
-
-      <!-- One document per row: this card sits in a three-column row, too
-           narrow to split into a grid without cutting the names off. -->
-      <div v-else class="flex flex-col gap-2.5">
-      <div
-        v-for="document in documents"
-        :key="document.id"
-        class="flex items-center gap-3 p-3 bg-white border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:shadow-sm transition-all"
-      >
-        <div
-          class="w-9 h-9 bg-teal-50 rounded-[10px] flex items-center justify-center shrink-0"
-        >
-          <FileText class="w-4 h-4 text-teal-600" />
+    <div v-if="loading" class="divide-y divide-ui-line" aria-busy="true">
+      <div v-for="i in 3" :key="i" class="flex items-center gap-3 py-3">
+        <Skeleton width="36px" height="36px" rounded="8px" />
+        <div class="flex-1 space-y-2">
+          <Skeleton width="45%" height="14px" />
+          <Skeleton width="25%" height="12px" />
         </div>
+      </div>
+      <span class="sr-only">{{ $t("projects.documents.loading") }}</span>
+    </div>
+
+    <UiEmpty
+      v-else-if="documents.length === 0"
+      :icon="FileIcon"
+      :title="$t('projects.documents.emptyTitle')"
+      :message="$t('projects.documents.emptyMessage')"
+      class="bg-ui-subtle rounded-ui-control"
+    />
+
+    <ul v-else class="divide-y divide-ui-line -my-1 ui-stagger">
+      <li v-for="document in documents" :key="document.id" class="group flex items-center gap-3 py-3">
+        <span class="w-9 h-9 rounded-ui-control bg-ui-subtle text-ui-muted flex items-center justify-center shrink-0">
+          <FileText class="w-4 h-4" />
+        </span>
         <div class="flex-1 min-w-0">
-          <p
-            class="text-brand-dark text-sm font-semibold leading-snug line-clamp-2 break-words"
-            :title="document.document_name"
-          >
+          <p class="text-ui-body font-medium text-ui-ink leading-snug line-clamp-2 break-words" :title="document.document_name">
             {{ document.document_name }}
           </p>
-          <p v-if="document.description" class="text-brand-light text-xs mt-0.5 line-clamp-2 break-words">
+          <p v-if="document.description" class="text-ui-cap text-ui-muted mt-0.5 line-clamp-2 break-words">
             {{ document.description }}
           </p>
-          <div class="flex items-center gap-1.5 mt-1 flex-wrap text-xs text-gray-500">
-            <span
-              v-if="document.type_file"
-              class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-semibold uppercase text-[10px] leading-none"
-            >
+          <div class="flex items-center gap-1.5 mt-1 flex-wrap text-ui-cap text-ui-muted">
+            <span v-if="document.type_file" class="px-1.5 h-[18px] inline-flex items-center rounded bg-ui-subtle text-ui-text font-medium uppercase text-ui-over">
               {{ document.type_file }}
             </span>
-            <span v-if="document.size_file" class="whitespace-nowrap">{{ document.size_file }}</span>
-            <span v-if="document.size_file" class="text-gray-300">·</span>
-            <span class="whitespace-nowrap">{{ formatDate(document.created_at) }}</span>
+            <span v-if="document.size_file" class="whitespace-nowrap tabular-nums">{{ document.size_file }}</span>
+            <span v-if="document.size_file" class="text-ui-faint">·</span>
+            <span class="whitespace-nowrap tabular-nums">{{ formatDate(document.created_at) }}</span>
           </div>
         </div>
-        <div class="flex items-center gap-1.5 shrink-0">
+        <div class="flex items-center gap-0.5 shrink-0">
           <a
             :href="document.document_path"
             target="_blank"
             rel="noopener"
-            class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
-            title="Download / View"
+            class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
+            :title="$t('projects.documents.downloadView')"
+            :aria-label="$t('projects.documents.downloadView')"
           >
-            <Download class="w-3.5 h-3.5 text-gray-600" />
+            <Download class="w-4 h-4" />
           </a>
           <button
             v-if="can('project-delete')"
+            type="button"
             @click="confirmDelete(document)"
-            class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-            title="Delete"
+            class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
+            :title="$t('common.actions.delete')"
+            :aria-label="$t('common.actions.delete')"
           >
-            <Trash2 class="w-3.5 h-3.5 text-gray-600 group-hover:text-red-600" />
+            <Trash2 class="w-4 h-4" />
           </button>
         </div>
-      </div>
-      </div>
-    </div>
+      </li>
+    </ul>
 
     <!-- UPLOAD MODAL -->
-    <Transition name="fade">
-      <div
-        v-if="isUploadModalOpen"
-        class="fixed inset-0 z-[99] flex items-center justify-center p-5"
-      >
-        <div
-          class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"
-          @click="closeUploadModal"
-        ></div>
+    <UiModal
+      :open="isUploadModalOpen"
+      :title="$t('projects.documents.upload')"
+      size="sm"
+      @update:open="(value) => !value && closeUploadModal()"
+    >
+      <form id="project-document-upload-form" @submit.prevent="handleUpload" class="space-y-4">
+        <UiInput v-model="form.document_name" :label="$t('projects.documents.name')" required :placeholder="$t('projects.documents.namePlaceholder')" />
+        <UiInput v-model="form.description" :label="$t('common.labels.description')" :rows="3" :placeholder="$t('projects.documents.descriptionPlaceholder')" />
 
-        <div class="bg-white rounded-[14px] p-6 w-full max-w-md relative z-10 shadow-2xl">
-          <button
-            @click="closeUploadModal"
-            class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600"
-          >
-            <X class="w-4 h-4" />
-          </button>
-
-          <h3 class="text-base font-bold text-brand-dark mb-4">Upload Document</h3>
-
-          <form @submit.prevent="handleUpload" class="space-y-4">
-            <div>
-              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
-                Document Name <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="form.document_name"
-                type="text"
-                placeholder="e.g. Proposal Penawaran"
-                class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-              />
-            </div>
-
-            <div>
-              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
-                Description
-              </label>
-              <textarea
-                v-model="form.description"
-                rows="3"
-                placeholder="Optional notes about this document"
-                class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none resize-none"
-              ></textarea>
-            </div>
-
-            <div>
-              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
-                File <span class="text-red-500">*</span>
-              </label>
-              <input
-                ref="fileInputRef"
-                type="file"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                @change="handleFileChange"
-                class="w-full text-xs text-gray-700 file:border file:border-gray-300 file:rounded-lg file:px-3 file:py-2 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
-              />
-              <p class="text-xs text-gray-400 mt-1.5">
-                PDF, Word, Excel, or image. Max 10MB.
-              </p>
-            </div>
-
-            <p v-if="formError" class="text-red-500 text-xs">{{ formError }}</p>
-
-            <div class="grid grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
-                @click="closeUploadModal"
-                class="px-4 py-3 rounded-lg border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                :disabled="uploading"
-                class="px-4 py-3 rounded-lg bg-[#0C51D9] text-white text-sm font-semibold hover:brightness-110 transition disabled:opacity-50"
-              >
-                {{ uploading ? "Uploading..." : "Upload" }}
-              </button>
-            </div>
-          </form>
+        <div>
+          <label for="project-document-file" class="block text-ui-small font-medium text-ui-ink mb-1.5">
+            {{ $t("projects.documents.file") }}<span class="text-ui-bad"> *</span>
+          </label>
+          <input
+            id="project-document-file"
+            ref="fileInputRef"
+            type="file"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+            @change="handleFileChange"
+            class="block w-full text-ui-small text-ui-text cursor-pointer file:mr-3 file:h-9 file:px-3.5 file:rounded-ui-control file:border file:border-solid file:border-ui-line-strong file:bg-ui-surface file:text-ui-small file:font-medium file:text-ui-ink hover:file:bg-ui-subtle"
+          />
+          <p class="text-ui-cap text-ui-muted mt-1.5">{{ $t("projects.documents.fileHint") }}</p>
         </div>
-      </div>
-    </Transition>
+
+        <p v-if="formError" class="text-ui-cap text-ui-bad">{{ formError }}</p>
+      </form>
+
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="closeUploadModal">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="project-document-upload-form" :icon="Upload" :loading="uploading" class="flex-1 sm:flex-none">
+          {{ uploading ? $t("projects.documents.uploading") : $t("common.actions.upload") }}
+        </UiButton>
+      </template>
+    </UiModal>
 
     <!-- DELETE MODAL -->
-    <Transition name="fade">
-      <div
-        v-if="isDeleteModalOpen"
-        class="fixed inset-0 z-[99] flex items-center justify-center p-5"
-      >
-        <div
-          class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"
-          @click="isDeleteModalOpen = false"
-        ></div>
-
-        <div class="bg-white rounded-[18px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <button
-            @click="isDeleteModalOpen = false"
-            class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600"
-          >
-            <X class="w-4 h-4" />
-          </button>
-
-          <div class="text-center">
-            <div
-              class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4"
-            >
-              <AlertTriangle class="w-7 h-7 text-red-500" />
-            </div>
-
-            <h3 class="text-base font-bold text-brand-dark mb-2">Delete Document?</h3>
-            <p class="text-gray-500 text-sm mb-6">
-              Are you sure you want to delete
-              <span class="font-bold text-brand-dark">
-                "{{ documentToDelete?.document_name }}"</span
-              >? This action cannot be undone.
-            </p>
-
-            <div class="grid grid-cols-2 gap-3">
-              <button
-                @click="isDeleteModalOpen = false"
-                class="px-4 py-3 rounded-lg border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                @click="handleDelete"
-                :disabled="isDeleting"
-                class="px-4 py-3 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2.5 disabled:opacity-50"
-              >
-                <Trash2 v-if="!isDeleting" class="w-3.5 h-3.5" />
-                {{ isDeleting ? "Deleting..." : "Yes, Delete" }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </div>
+    <UiConfirmDialog
+      v-model:open="isDeleteModalOpen"
+      type="danger"
+      :title="$t('projects.documents.deleteTitle')"
+      :message="$t('projects.documents.deleteMessage', { name: documentToDelete?.document_name ?? '' })"
+      :confirm-text="isDeleting ? $t('common.actions.deleting') : $t('projects.documents.deleteConfirm')"
+      :loading="isDeleting"
+      @confirm="handleDelete"
+    />
+  </section>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

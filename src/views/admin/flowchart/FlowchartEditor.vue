@@ -28,9 +28,14 @@ import {
   ChevronDown,
   MousePointerClick,
   Bold,
+  Lock,
 } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+import { UiButton, UiSpinner } from "@/components/ui";
+import { uiColor } from "@/utils/uiColor";
 import FlowchartNode from "@/components/admin/flowchart/FlowchartNode.vue";
-import { SHAPES, SHAPE_KEYS, COLOR_PRESETS, makeNode } from "@/components/admin/flowchart/flowchartShapes";
+import { SHAPES, SHAPE_KEYS, COLOR_PRESETS, makeNode, shapeLabel } from "@/components/admin/flowchart/flowchartShapes";
 import { exportFlowchartJpg, exportFlowchartPdf, renderFlowchartPreview } from "@/components/admin/flowchart/exportFlowchart";
 import { useFlowchartStore } from "@/stores/flowchart";
 import { useAuthStore } from "@/stores/auth";
@@ -42,6 +47,7 @@ const props = defineProps({
   readonly: { type: Boolean, default: false },
 });
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useFlowchartStore();
@@ -71,7 +77,7 @@ const {
   onNodesInitialized,
 } = useVueFlow(flowId);
 
-const name = ref("Untitled Flowchart");
+const name = ref(t("flowchart.editor.untitled"));
 const description = ref("");
 // Who the flowchart is for -- shown in the export's details and licence line.
 const preparedFor = ref("");
@@ -342,7 +348,7 @@ const load = async () => {
     history.value = [savedState.value];
     historyIndex.value = 0;
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Flowchart could not be loaded."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("flowchart.editor.loadFailed")), { type: "danger" });
     router.push({ name: "admin.flowchart.dashboard" });
   } finally {
     loading.value = false;
@@ -364,7 +370,7 @@ const refreshPreview = async (id) => {
 const save = async () => {
   if (isReadonly.value || store.saving) return;
   if (!name.value.trim()) {
-    await alertModal.alert("Please give the flowchart a name.", { type: "warning" });
+    await alertModal.alert(t("flowchart.editor.nameRequired"), { type: "warning" });
     return;
   }
   const payload = {
@@ -385,7 +391,7 @@ const save = async () => {
     }
     refreshPreview(meta.value.id);
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Flowchart could not be saved."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("flowchart.editor.saveFailed")), { type: "danger" });
   }
 };
 
@@ -422,7 +428,7 @@ const doExport = async (format) => {
     if (format === "jpg") await exportFlowchartJpg(vueFlowRef.value, getNodes.value, options);
     else await exportFlowchartPdf(vueFlowRef.value, getNodes.value, options);
   } catch (error) {
-    await alertModal.alert(error?.message || "Export failed.", { type: "danger" });
+    await alertModal.alert(error?.message || t("flowchart.export.failed"), { type: "danger" });
   } finally {
     exporting.value = false;
   }
@@ -465,7 +471,7 @@ onBeforeRouteLeave(async (to) => {
   // Saving a new flowchart swaps /create for /:id/edit -- not a real leave.
   if (to.name === "admin.flowchart.edit" && !flowchartId.value) return true;
   if (!isDirty.value) return true;
-  return alertModal.confirm("You have unsaved changes. Leave without saving?", { type: "warning", confirmText: "Leave" });
+  return alertModal.confirm(t("flowchart.editor.leaveConfirm"), { type: "warning", confirmText: t("flowchart.editor.leave") });
 });
 
 onMounted(() => {
@@ -490,8 +496,23 @@ watch(flowchartId, (id, oldId) => {
 });
 
 const nodeTypes = { flowchart: FlowchartNode };
-const minimapNodeColor = (node) => (node.data?.fill === "transparent" ? "#E2E8F0" : node.data?.fill ?? "#E2E8F0");
-const minimapStrokeColor = (node) => node.data?.stroke ?? "#94A3B8";
+// Default canvas chrome follows the design tokens; shape colours stay as
+// the user picked them.
+const CHROME = {
+  accent: uiColor("accent"),
+  dots: uiColor("line-strong"),
+  minimapFill: uiColor("subtle"),
+  minimapStroke: uiColor("faint"),
+};
+const minimapNodeColor = (node) => (node.data?.fill === "transparent" ? CHROME.minimapFill : node.data?.fill ?? CHROME.minimapFill);
+const minimapStrokeColor = (node) => node.data?.stroke ?? CHROME.minimapStroke;
+const FIELD =
+  "w-full bg-ui-surface text-ui-small text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control px-2.5 transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
+
+const exportOrientations = computed(() => [
+  { value: "portrait", label: t("flowchart.export.portrait"), w: 14, h: 19 },
+  { value: "landscape", label: t("flowchart.export.landscape"), w: 19, h: 14 },
+]);
 
 const previewSize = (shape) => {
   if (shape === "connector") return { width: 26, height: 26 };
@@ -502,134 +523,158 @@ const previewSize = (shape) => {
 
 const updatedLabel = computed(() => {
   if (!meta.value?.updated_at) return null;
-  const at = new Date(meta.value.updated_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
-  return meta.value.updater?.name ? `Last saved ${at} by ${meta.value.updater.name}` : `Last saved ${at}`;
+  const at = new Date(meta.value.updated_at).toLocaleString(localeTag(), { dateStyle: "medium", timeStyle: "short" });
+  return meta.value.updater?.name
+    ? t("flowchart.editor.lastSavedBy", { at, name: meta.value.updater.name })
+    : t("flowchart.editor.lastSaved", { at });
 });
 </script>
 
 <template>
-  <div class="flex flex-col bg-white border border-[#DCDEDD] rounded-[14px] overflow-hidden" style="height: 100%; min-height: 560px">
+  <div class="flex flex-col bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden" style="height: 100%; min-height: 560px">
     <!-- Top bar -->
-    <div class="flex flex-wrap items-center gap-2.5 px-3.5 py-2.5 border-b border-[#DCDEDD] bg-slate-50">
+    <header class="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 border-b border-ui-line bg-ui-surface">
       <button
         type="button"
-        class="w-9 h-9 rounded-[10px] border border-[#DCDEDD] bg-white flex items-center justify-center hover:border-[#0C51D9] transition-colors shrink-0"
-        title="Back to list"
+        class="w-8 h-8 shrink-0 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors focus:outline-none focus-visible:shadow-ui-focus"
+        :title="$t('flowchart.editor.backToList')"
+        :aria-label="$t('flowchart.editor.backToList')"
         @click="router.push({ name: 'admin.flowchart.dashboard' })"
       >
-        <ArrowLeft class="w-4 h-4 text-brand-dark" />
+        <ArrowLeft class="w-4 h-4" />
       </button>
 
-      <div class="flex-1 min-w-[180px]">
+      <div class="flex-1 min-w-0">
+        <!-- The visible title is the editable name field below. -->
+        <h1 class="sr-only">{{ name || "Flowchart" }}</h1>
         <input
           v-model="name"
           :readonly="isReadonly"
           maxlength="255"
-          placeholder="Flowchart name"
-          class="w-full bg-transparent text-brand-dark text-base font-bold outline-none border-b border-transparent focus:border-[#0C51D9] transition-colors"
+          :placeholder="$t('flowchart.editor.namePlaceholder')"
+          :aria-label="$t('flowchart.editor.namePlaceholder')"
+          class="w-full bg-transparent text-ui-h3 text-ui-ink placeholder:text-ui-faint outline-none rounded-[4px] -mx-1 px-1 focus:bg-ui-subtle transition-colors"
         />
-        <input
-          v-model="description"
-          :readonly="isReadonly"
-          maxlength="2000"
-          :placeholder="isReadonly ? '' : 'Add a short description (optional)'"
-          class="w-full bg-transparent text-brand-light text-xs outline-none border-b border-transparent focus:border-[#0C51D9] transition-colors mt-0.5"
-        />
-        <label class="flex items-center gap-1.5 mt-0.5 text-xs text-brand-light">
-          <span class="shrink-0 font-semibold">Disiapkan untuk:</span>
-          <input
-            v-model="preparedFor"
-            :readonly="isReadonly"
-            maxlength="255"
-            :placeholder="isReadonly ? '-' : 'cth. PT Misael Berkat Abadi (opsional)'"
-            class="flex-1 min-w-0 bg-transparent text-brand-dark outline-none border-b border-transparent focus:border-[#0C51D9] transition-colors"
-          />
-        </label>
+        <p class="text-ui-cap truncate">
+          <span v-if="isDirty" class="text-ui-warn font-medium">{{ $t("flowchart.editor.unsaved") }}</span>
+          <span v-else-if="updatedLabel" class="text-ui-muted">{{ updatedLabel }}</span>
+          <span v-else class="text-ui-faint">{{ isReadonly ? $t("flowchart.editor.readOnly") : $t("flowchart.editor.notSaved") }}</span>
+        </p>
       </div>
 
-      <span v-if="isDirty" class="text-xs font-semibold text-amber-600 shrink-0">Unsaved changes</span>
-      <span v-else-if="updatedLabel" class="text-xs text-brand-light shrink-0 hidden md:inline">{{ updatedLabel }}</span>
+      <!-- Edit tools (desktop) -->
+      <div v-if="!isReadonly" class="hidden md:flex items-center gap-0.5 shrink-0">
+        <button type="button" class="fc-tool" :disabled="!canUndo" :title="$t('flowchart.tools.undo') + ' (Ctrl+Z)'" :aria-label="$t('flowchart.tools.undo')" @click="undo"><Undo2 class="w-4 h-4" /></button>
+        <button type="button" class="fc-tool" :disabled="!canRedo" :title="$t('flowchart.tools.redo') + ' (Ctrl+Shift+Z)'" :aria-label="$t('flowchart.tools.redo')" @click="redo"><Redo2 class="w-4 h-4" /></button>
+        <span class="w-px h-5 bg-ui-line mx-1"></span>
+        <button type="button" class="fc-tool" :disabled="!getSelectedNodes.length" :title="$t('common.actions.duplicate') + ' (Ctrl+D)'" :aria-label="$t('common.actions.duplicate')" @click="duplicateSelected"><Copy class="w-4 h-4" /></button>
+        <button type="button" class="fc-tool fc-tool--danger" :disabled="!hasSelection" :title="$t('common.actions.delete') + ' (Del)'" :aria-label="$t('common.actions.delete')" @click="deleteSelected"><Trash2 class="w-4 h-4" /></button>
+        <span class="w-px h-5 bg-ui-line mx-1"></span>
+        <button type="button" class="fc-tool" :class="{ 'fc-tool--active': snapToGrid }" :title="$t('flowchart.tools.snap')" :aria-label="$t('flowchart.tools.snap')" :aria-pressed="snapToGrid" @click="snapToGrid = !snapToGrid"><Grid3x3 class="w-4 h-4" /></button>
+        <button type="button" class="fc-tool" :title="$t('flowchart.tools.fit')" :aria-label="$t('flowchart.tools.fit')" @click="fitView({ padding: 0.2, maxZoom: 1.25 })"><Maximize class="w-4 h-4" /></button>
+      </div>
 
-      <div class="relative shrink-0">
-        <button
-          type="button"
-          class="rounded-[10px] border border-[#DCDEDD] bg-white px-3 py-2 flex items-center gap-1.5 hover:border-[#0C51D9] transition-colors disabled:opacity-50"
-          :disabled="exporting || nodes.length === 0"
-          @click="toggleExportMenu"
-        >
-          <Loader2 v-if="exporting" class="w-4 h-4 animate-spin text-brand-dark" />
-          <Download v-else class="w-4 h-4 text-brand-dark" />
-          <span class="text-brand-dark text-sm font-semibold">Export</span>
-          <ChevronDown class="w-3.5 h-3.5 text-gray-400" />
-        </button>
-        <div
-          v-if="exportMenuOpen"
-          class="absolute right-0 mt-1.5 w-56 bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg z-20 p-2.5"
-        >
-          <p class="fc-panel-title">Paper · A4</p>
-          <div class="grid grid-cols-2 gap-1.5 mb-2.5">
-            <button
-              v-for="option in [
-                { value: 'portrait', label: 'Portrait', w: 14, h: 19 },
-                { value: 'landscape', label: 'Landscape', w: 19, h: 14 },
-              ]"
-              :key="option.value"
-              type="button"
-              class="flex flex-col items-center gap-1 rounded-[10px] border py-2 transition-colors"
-              :class="exportOrientation === option.value ? 'border-[#0C51D9] bg-blue-50' : 'border-[#DCDEDD] hover:border-[#0C51D9]'"
-              @click="exportOrientation = option.value"
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <span v-if="isReadonly" class="hidden sm:inline-flex items-center gap-1.5 px-2 text-ui-small text-ui-muted">
+          <Lock class="w-3.5 h-3.5" /> {{ $t("flowchart.editor.readOnly") }}
+        </span>
+
+        <div class="relative">
+          <UiButton
+            variant="secondary"
+            :icon="Download"
+            :loading="exporting"
+            :disabled="exporting || nodes.length === 0"
+            :icon-right="ChevronDown"
+            :aria-label="$t('common.actions.export')"
+            @click="toggleExportMenu"
+          >
+            <span class="hidden sm:inline">{{ $t("common.actions.export") }}</span>
+          </UiButton>
+          <Transition name="ui-pop">
+            <div
+              v-if="exportMenuOpen"
+              class="absolute right-0 top-full mt-1.5 w-60 bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay z-30 p-2"
             >
-              <span
-                class="rounded-[2px] border-2"
-                :class="exportOrientation === option.value ? 'border-[#0C51D9]' : 'border-gray-400'"
-                :style="{ width: `${option.w}px`, height: `${option.h}px` }"
-              ></span>
-              <span class="text-xs font-semibold text-brand-dark">{{ option.label }}</span>
-            </button>
-          </div>
-          <button type="button" class="w-full px-2 py-2 rounded-[8px] flex items-center gap-2 text-sm text-brand-dark hover:bg-gray-50" @click="doExport('jpg')">
-            <FileImage class="w-4 h-4 text-emerald-600" /> Export as JPG
-          </button>
-          <button type="button" class="w-full px-2 py-2 rounded-[8px] flex items-center gap-2 text-sm text-brand-dark hover:bg-gray-50" @click="doExport('pdf')">
-            <FileText class="w-4 h-4 text-red-600" /> Export as PDF
-          </button>
+              <p class="fc-panel-title px-1 pt-1">{{ $t("flowchart.export.paper") }}</p>
+              <div class="grid grid-cols-2 gap-1.5 mb-2">
+                <button
+                  v-for="option in exportOrientations"
+                  :key="option.value"
+                  type="button"
+                  class="flex flex-col items-center gap-1.5 rounded-ui-control border py-2.5 transition-colors"
+                  :class="exportOrientation === option.value ? 'border-ui-accent bg-ui-accent-soft' : 'border-ui-line hover:bg-ui-hover'"
+                  :aria-pressed="exportOrientation === option.value"
+                  @click="exportOrientation = option.value"
+                >
+                  <span
+                    class="rounded-[2px] border-2"
+                    :class="exportOrientation === option.value ? 'border-ui-accent' : 'border-ui-faint'"
+                    :style="{ width: `${option.w}px`, height: `${option.h}px` }"
+                  ></span>
+                  <span class="text-ui-cap font-medium" :class="exportOrientation === option.value ? 'text-ui-accent' : 'text-ui-text'">{{ option.label }}</span>
+                </button>
+              </div>
+              <div class="border-t border-ui-line pt-1.5 space-y-0.5">
+                <button type="button" class="w-full h-9 px-2 rounded-ui-control flex items-center gap-2 text-ui-small text-ui-ink hover:bg-ui-hover" @click="doExport('jpg')">
+                  <FileImage class="w-4 h-4 text-ui-muted" /> {{ $t("flowchart.export.jpg") }}
+                </button>
+                <button type="button" class="w-full h-9 px-2 rounded-ui-control flex items-center gap-2 text-ui-small text-ui-ink hover:bg-ui-hover" @click="doExport('pdf')">
+                  <FileText class="w-4 h-4 text-ui-muted" /> {{ $t("flowchart.export.pdf") }}
+                </button>
+              </div>
+            </div>
+          </Transition>
         </div>
-      </div>
 
-      <RouterLink
-        v-if="isReadonly && flowchartId && can('flowchart-edit')"
-        :to="{ name: 'admin.flowchart.edit', params: { id: flowchartId } }"
-        class="btn-primary rounded-[10px] border border-[#2151A0] blue-gradient blue-btn-shadow px-3.5 py-2 flex items-center gap-1.5 shrink-0"
-      >
-        <Pencil class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Edit</span>
-      </RouterLink>
-      <button
-        v-if="!isReadonly"
-        type="button"
-        class="btn-primary rounded-[10px] border border-[#2151A0] blue-gradient blue-btn-shadow px-3.5 py-2 flex items-center gap-1.5 shrink-0 disabled:opacity-60"
-        :disabled="store.saving"
-        title="Save (Ctrl+S)"
-        @click="save"
-      >
-        <Loader2 v-if="store.saving" class="w-4 h-4 text-white animate-spin" />
-        <Save v-else class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Save</span>
-      </button>
+        <UiButton
+          v-if="isReadonly && flowchartId && can('flowchart-edit')"
+          :icon="Pencil"
+          :to="{ name: 'admin.flowchart.edit', params: { id: flowchartId } }"
+        >
+          {{ $t("common.actions.edit") }}
+        </UiButton>
+        <UiButton v-if="!isReadonly" :icon="Save" :loading="store.saving" :title="$t('common.actions.save') + ' (Ctrl+S)'" @click="save">{{ $t("common.actions.save") }}</UiButton>
+      </div>
+    </header>
+
+    <!-- Details: description + who it's for -->
+    <div
+      v-if="!isReadonly || description || preparedFor"
+      class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 px-3 sm:px-4 py-1.5 border-b border-ui-line bg-ui-subtle/60 text-ui-cap"
+    >
+      <input
+        v-model="description"
+        :readonly="isReadonly"
+        maxlength="2000"
+        :placeholder="isReadonly ? '' : $t('flowchart.editor.descriptionPlaceholder')"
+        :aria-label="$t('common.labels.description')"
+        class="flex-1 min-w-0 bg-transparent text-ui-text placeholder:text-ui-faint outline-none rounded-[4px] -mx-1 px-1 focus:bg-ui-surface transition-colors"
+      />
+      <label class="flex items-center gap-1.5 sm:w-[340px] shrink-0 text-ui-muted">
+        <span class="shrink-0 font-medium">{{ $t("flowchart.editor.preparedFor") }}</span>
+        <input
+          v-model="preparedFor"
+          :readonly="isReadonly"
+          maxlength="255"
+          :placeholder="isReadonly ? '-' : $t('flowchart.editor.preparedForPlaceholder')"
+          class="flex-1 min-w-0 bg-transparent text-ui-ink placeholder:text-ui-faint outline-none rounded-[4px] px-1 focus:bg-ui-surface transition-colors"
+        />
+      </label>
     </div>
 
     <div class="flex flex-1 min-h-0">
       <!-- Shape palette -->
-      <aside v-if="!isReadonly" class="w-[150px] shrink-0 border-r border-[#DCDEDD] bg-white overflow-y-auto p-2.5 hidden sm:block">
-        <p class="text-[11px] font-bold uppercase tracking-wide text-brand-light mb-2 px-1">Shapes</p>
-        <div class="grid grid-cols-2 gap-1.5">
+      <aside v-if="!isReadonly" class="w-[176px] shrink-0 border-r border-ui-line bg-ui-surface overflow-y-auto p-3 hidden sm:block">
+        <p class="fc-panel-title px-1">{{ $t("flowchart.palette.title") }}</p>
+        <div class="grid grid-cols-2 gap-1">
           <button
             v-for="shape in SHAPE_KEYS"
             :key="shape"
             type="button"
             draggable="true"
-            class="flex flex-col items-center justify-center gap-1 rounded-[10px] border border-[#EEF0F2] hover:border-[#0C51D9] hover:bg-blue-50/40 transition-colors py-2 px-1 cursor-grab active:cursor-grabbing"
-            :title="`${SHAPES[shape].label} — click or drag onto the canvas`"
+            class="flex flex-col items-center justify-center gap-1.5 rounded-ui-control border border-transparent hover:border-ui-line hover:bg-ui-subtle transition-colors py-2.5 px-1 cursor-grab active:cursor-grabbing focus:outline-none focus-visible:shadow-ui-focus"
+            :title="$t('flowchart.palette.shapeHint', { shape: shapeLabel(shape) })"
             @click="addShape(shape)"
             @dragstart="onPaletteDragStart($event, shape)"
           >
@@ -650,34 +695,34 @@ const updatedLabel = computed(() => {
                 stroke-width="1.5"
               />
             </svg>
-            <span v-else class="text-brand-dark font-bold" style="font-size: 18px; line-height: 28px">T</span>
-            <span class="text-[10px] leading-tight text-center text-brand-dark font-medium">{{ SHAPES[shape].label }}</span>
+            <span v-else class="text-ui-h2 font-bold text-ui-ink leading-7">T</span>
+            <span class="text-ui-cap leading-tight text-center text-ui-muted">{{ shapeLabel(shape) }}</span>
           </button>
         </div>
-        <p class="text-[10px] text-brand-light leading-snug mt-3 px-1">
-          Drag from a shape's edge dot to another shape to connect them. Double-click a shape or line to edit its text.
+        <p class="text-ui-cap text-ui-faint mt-4 px-1">
+          {{ $t("flowchart.palette.help") }}
         </p>
       </aside>
 
       <!-- Canvas -->
       <div class="flex-1 min-w-0 relative" @dragover="onDragOver" @drop="onDrop">
-        <div v-if="loading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/70">
-          <Loader2 class="w-6 h-6 text-[#0C51D9] animate-spin" />
+        <div v-if="loading" class="absolute inset-0 z-10 flex items-center justify-center bg-ui-surface/70">
+          <UiSpinner size="24px" :center="false" :label="$t('flowchart.editor.loading')" />
         </div>
 
-        <!-- Canvas toolbar -->
+        <!-- Canvas toolbar (phones / tablets; desktop has it in the top bar) -->
         <div
           v-if="!isReadonly"
-          class="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-0.5 bg-white border border-[#DCDEDD] rounded-[12px] shadow-sm p-1"
+          class="md:hidden absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-0.5 bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-raised p-1"
         >
-          <button type="button" class="fc-tool" :disabled="!canUndo" title="Undo (Ctrl+Z)" @click="undo"><Undo2 class="w-4 h-4" /></button>
-          <button type="button" class="fc-tool" :disabled="!canRedo" title="Redo (Ctrl+Shift+Z)" @click="redo"><Redo2 class="w-4 h-4" /></button>
-          <span class="w-px h-5 bg-[#DCDEDD] mx-0.5"></span>
-          <button type="button" class="fc-tool" :disabled="!getSelectedNodes.length" title="Duplicate (Ctrl+D)" @click="duplicateSelected"><Copy class="w-4 h-4" /></button>
-          <button type="button" class="fc-tool fc-tool--danger" :disabled="!hasSelection" title="Delete (Del)" @click="deleteSelected"><Trash2 class="w-4 h-4" /></button>
-          <span class="w-px h-5 bg-[#DCDEDD] mx-0.5"></span>
-          <button type="button" class="fc-tool" :class="{ 'fc-tool--active': snapToGrid }" title="Snap to grid" @click="snapToGrid = !snapToGrid"><Grid3x3 class="w-4 h-4" /></button>
-          <button type="button" class="fc-tool" title="Fit to screen" @click="fitView({ padding: 0.2, maxZoom: 1.25 })"><Maximize class="w-4 h-4" /></button>
+          <button type="button" class="fc-tool" :disabled="!canUndo" :title="$t('flowchart.tools.undo') + ' (Ctrl+Z)'" :aria-label="$t('flowchart.tools.undo')" @click="undo"><Undo2 class="w-4 h-4" /></button>
+          <button type="button" class="fc-tool" :disabled="!canRedo" :title="$t('flowchart.tools.redo') + ' (Ctrl+Shift+Z)'" :aria-label="$t('flowchart.tools.redo')" @click="redo"><Redo2 class="w-4 h-4" /></button>
+          <span class="w-px h-5 bg-ui-line mx-0.5"></span>
+          <button type="button" class="fc-tool" :disabled="!getSelectedNodes.length" :title="$t('common.actions.duplicate') + ' (Ctrl+D)'" :aria-label="$t('common.actions.duplicate')" @click="duplicateSelected"><Copy class="w-4 h-4" /></button>
+          <button type="button" class="fc-tool fc-tool--danger" :disabled="!hasSelection" :title="$t('common.actions.delete') + ' (Del)'" :aria-label="$t('common.actions.delete')" @click="deleteSelected"><Trash2 class="w-4 h-4" /></button>
+          <span class="w-px h-5 bg-ui-line mx-0.5"></span>
+          <button type="button" class="fc-tool" :class="{ 'fc-tool--active': snapToGrid }" :title="$t('flowchart.tools.snap')" :aria-label="$t('flowchart.tools.snap')" :aria-pressed="snapToGrid" @click="snapToGrid = !snapToGrid"><Grid3x3 class="w-4 h-4" /></button>
+          <button type="button" class="fc-tool" :title="$t('flowchart.tools.fit')" :aria-label="$t('flowchart.tools.fit')" @click="fitView({ padding: 0.2, maxZoom: 1.25 })"><Maximize class="w-4 h-4" /></button>
         </div>
 
         <VueFlow
@@ -687,7 +732,7 @@ const updatedLabel = computed(() => {
           :node-types="nodeTypes"
           :connection-mode="ConnectionMode.Loose"
           :default-edge-options="{ type: 'smoothstep' }"
-          :connection-line-options="{ style: { stroke: '#0C51D9', strokeWidth: 2 } }"
+          :connection-line-options="{ style: { stroke: CHROME.accent, strokeWidth: 2 } }"
           :snap-to-grid="snapToGrid"
           :snap-grid="[10, 10]"
           :nodes-draggable="!isReadonly"
@@ -702,148 +747,184 @@ const updatedLabel = computed(() => {
           class="fc-canvas"
           @edge-double-click="onEdgeDoubleClick"
         >
-          <Background pattern-color="#CBD5E1" :gap="20" />
+          <Background :pattern-color="CHROME.dots" :gap="20" />
           <Controls :show-interactive="false" position="bottom-left" />
-          <MiniMap pannable zoomable :node-color="minimapNodeColor" :node-stroke-color="minimapStrokeColor" position="bottom-right" />
+          <MiniMap pannable zoomable :node-color="minimapNodeColor" :node-stroke-color="minimapStrokeColor" position="bottom-right" class="hidden sm:block" />
         </VueFlow>
 
-        <div
-          v-if="!loading && nodes.length === 0"
-          class="absolute inset-0 flex items-center justify-center pointer-events-none"
-        >
+        <div v-if="!loading && nodes.length === 0" class="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div class="text-center">
-            <MousePointerClick class="w-9 h-9 text-gray-300 mx-auto mb-2" />
-            <p class="text-brand-dark text-sm font-semibold">{{ isReadonly ? "This flowchart is empty" : "Start your flowchart" }}</p>
-            <p v-if="!isReadonly" class="text-brand-light text-xs mt-1">Click or drag a shape from the left panel</p>
+            <div class="w-10 h-10 rounded-full bg-ui-surface border border-ui-line text-ui-muted flex items-center justify-center mx-auto mb-3">
+              <MousePointerClick class="w-5 h-5" />
+            </div>
+            <p class="text-ui-body font-medium text-ui-ink">{{ isReadonly ? $t("flowchart.editor.emptyReadonly") : $t("flowchart.editor.emptyTitle") }}</p>
+            <p v-if="!isReadonly" class="text-ui-small text-ui-muted mt-1">{{ $t("flowchart.editor.emptyHint") }}</p>
           </div>
         </div>
       </div>
 
       <!-- Properties panel -->
-      <aside v-if="!isReadonly" class="w-[240px] shrink-0 border-l border-[#DCDEDD] bg-white overflow-y-auto p-3.5 hidden lg:block">
+      <aside v-if="!isReadonly" class="w-[264px] shrink-0 border-l border-ui-line bg-ui-surface overflow-y-auto hidden lg:flex flex-col">
         <!-- Node -->
         <template v-if="selectedNode">
-          <p class="fc-panel-title">Shape</p>
-          <select class="fc-input mb-3" :value="selectedNode.data.shape" @change="changeShape($event.target.value)">
-            <option v-for="shape in SHAPE_KEYS" :key="shape" :value="shape">{{ SHAPES[shape].label }}</option>
-          </select>
-
-          <p class="fc-panel-title">Text</p>
-          <textarea
-            class="fc-input mb-2"
-            rows="3"
-            :value="selectedNode.data.label"
-            @input="setNodeData({ label: $event.target.value })"
-          ></textarea>
-          <div class="flex items-center gap-2 mb-3">
-            <input
-              type="number"
-              min="8"
-              max="48"
-              class="fc-input"
-              style="width: 70px"
-              :value="selectedNode.data.fontSize"
-              @input="setNodeData({ fontSize: Number($event.target.value) || 13 })"
-            />
-            <span class="text-xs text-brand-light">px</span>
-            <button
-              type="button"
-              class="fc-tool border border-[#DCDEDD]"
-              :class="{ 'fc-tool--active': selectedNode.data.bold }"
-              title="Bold"
-              @click="setNodeData({ bold: !selectedNode.data.bold })"
-            >
-              <Bold class="w-4 h-4" />
-            </button>
-            <input
-              type="color"
-              class="fc-color"
-              title="Text color"
-              :value="selectedNode.data.textColor"
-              @input="setNodeData({ textColor: $event.target.value })"
-            />
+          <div class="px-4 pt-4 pb-3 border-b border-ui-line">
+            <p class="text-ui-h3 text-ui-ink truncate">{{ selectedNode.data.label || shapeLabel(selectedNode.data.shape) }}</p>
+            <p class="text-ui-cap text-ui-muted">{{ shapeLabel(selectedNode.data.shape) }}</p>
           </div>
+          <div class="p-4 space-y-4 flex-1">
+            <div>
+              <p class="fc-label">{{ $t("flowchart.inspector.shape") }}</p>
+              <select :class="[FIELD, 'h-9']" :value="selectedNode.data.shape" @change="changeShape($event.target.value)">
+                <option v-for="shape in SHAPE_KEYS" :key="shape" :value="shape">{{ shapeLabel(shape) }}</option>
+              </select>
+            </div>
 
-          <p class="fc-panel-title">Color</p>
-          <div class="grid grid-cols-5 gap-1.5 mb-2.5">
-            <button
-              v-for="(preset, i) in COLOR_PRESETS"
-              :key="i"
-              type="button"
-              class="h-7 rounded-md border-2 transition-transform hover:scale-110"
-              :style="{ backgroundColor: preset.fill, borderColor: preset.stroke }"
-              @click="setNodeData({ fill: preset.fill, stroke: preset.stroke, textColor: ['#0C51D9', '#0F172A'].includes(preset.fill) ? '#FFFFFF' : '#0F172A' })"
-            ></button>
+            <div>
+              <p class="fc-label">{{ $t("flowchart.inspector.text") }}</p>
+              <textarea
+                :class="[FIELD, 'py-2 resize-y']"
+                rows="3"
+                :value="selectedNode.data.label"
+                @input="setNodeData({ label: $event.target.value })"
+              ></textarea>
+              <div class="flex items-center gap-2 mt-2">
+                <input
+                  type="number"
+                  min="8"
+                  max="48"
+                  :class="[FIELD, 'h-8 tabular-nums']"
+                  style="width: 64px"
+                  :value="selectedNode.data.fontSize"
+                  :aria-label="$t('flowchart.inspector.fontSize')"
+                  @input="setNodeData({ fontSize: Number($event.target.value) || 13 })"
+                />
+                <span class="text-ui-cap text-ui-muted">px</span>
+                <button
+                  type="button"
+                  class="fc-tool border border-ui-line-strong"
+                  :class="{ 'fc-tool--active': selectedNode.data.bold }"
+                  :title="$t('flowchart.inspector.bold')"
+                  :aria-label="$t('flowchart.inspector.bold')"
+                  :aria-pressed="!!selectedNode.data.bold"
+                  @click="setNodeData({ bold: !selectedNode.data.bold })"
+                >
+                  <Bold class="w-4 h-4" />
+                </button>
+                <input
+                  type="color"
+                  class="fc-color"
+                  :title="$t('flowchart.inspector.textColor')"
+                  :aria-label="$t('flowchart.inspector.textColor')"
+                  :value="selectedNode.data.textColor"
+                  @input="setNodeData({ textColor: $event.target.value })"
+                />
+              </div>
+            </div>
+
+            <div>
+              <p class="fc-label">{{ $t("flowchart.inspector.color") }}</p>
+              <div class="grid grid-cols-5 gap-1.5 mb-3">
+                <button
+                  v-for="(preset, i) in COLOR_PRESETS"
+                  :key="i"
+                  type="button"
+                  class="h-7 rounded-ui-control border-2 transition-transform hover:scale-110"
+                  :style="{ backgroundColor: preset.fill, borderColor: preset.stroke }"
+                  :aria-label="$t('flowchart.inspector.colorPreset', { n: i + 1 })"
+                  @click="setNodeData({ fill: preset.fill, stroke: preset.stroke, textColor: ['#0C51D9', '#0F172A'].includes(preset.fill) ? '#FFFFFF' : '#0F172A' })"
+                ></button>
+              </div>
+              <div class="flex items-center gap-4">
+                <label class="flex items-center gap-1.5 text-ui-cap text-ui-text">
+                  <input type="color" class="fc-color" :value="selectedNode.data.fill === 'transparent' ? '#FFFFFF' : selectedNode.data.fill" @input="setNodeData({ fill: $event.target.value })" />
+                  {{ $t("flowchart.inspector.fill") }}
+                </label>
+                <label class="flex items-center gap-1.5 text-ui-cap text-ui-text">
+                  <input type="color" class="fc-color" :value="selectedNode.data.stroke === 'transparent' ? '#334155' : selectedNode.data.stroke" @input="setNodeData({ stroke: $event.target.value })" />
+                  {{ $t("flowchart.inspector.border") }}
+                </label>
+              </div>
+            </div>
           </div>
-          <div class="flex items-center gap-3 mb-1">
-            <label class="flex items-center gap-1.5 text-xs text-brand-dark">
-              <input type="color" class="fc-color" :value="selectedNode.data.fill === 'transparent' ? '#FFFFFF' : selectedNode.data.fill" @input="setNodeData({ fill: $event.target.value })" />
-              Fill
-            </label>
-            <label class="flex items-center gap-1.5 text-xs text-brand-dark">
-              <input type="color" class="fc-color" :value="selectedNode.data.stroke === 'transparent' ? '#334155' : selectedNode.data.stroke" @input="setNodeData({ stroke: $event.target.value })" />
-              Border
-            </label>
+          <div class="px-4 pb-4">
+            <UiButton variant="danger" size="sm" :icon="Trash2" @click="deleteSelected">{{ $t("flowchart.inspector.deleteShape") }}</UiButton>
           </div>
         </template>
 
         <!-- Edge -->
         <template v-else-if="selectedEdge">
-          <p class="fc-panel-title">Connector Label</p>
-          <input
-            ref="edgeLabelInput"
-            class="fc-input mb-3"
-            placeholder="e.g. Yes / No"
-            :value="selectedEdge.label"
-            @input="setEdge({ label: $event.target.value })"
-          />
-
-          <p class="fc-panel-title">Line Type</p>
-          <select class="fc-input mb-3" :value="selectedEdge.type" @change="setEdge({ type: $event.target.value })">
-            <option value="smoothstep">Rounded elbow</option>
-            <option value="step">Sharp elbow</option>
-            <option value="straight">Straight</option>
-            <option value="default">Curved</option>
-          </select>
-
-          <p class="fc-panel-title">Arrow</p>
-          <select class="fc-input mb-3" :value="selectedEdge.data?.arrow ?? 'end'" @change="setEdge({ data: { arrow: $event.target.value } })">
-            <option value="end">One way →</option>
-            <option value="both">Both ways ↔</option>
-            <option value="none">No arrow</option>
-          </select>
-
-          <p class="fc-panel-title">Style</p>
-          <div class="flex items-center gap-3 mb-2">
-            <label class="flex items-center gap-1.5 text-xs text-brand-dark">
-              <input type="color" class="fc-color" :value="selectedEdge.data?.color ?? '#475569'" @input="setEdge({ data: { color: $event.target.value } })" />
-              Color
-            </label>
-            <label class="flex items-center gap-1.5 text-xs text-brand-dark">
-              <input type="checkbox" :checked="selectedEdge.data?.dashed" @change="setEdge({ data: { dashed: $event.target.checked } })" />
-              Dashed
-            </label>
+          <div class="px-4 pt-4 pb-3 border-b border-ui-line">
+            <p class="text-ui-h3 text-ui-ink truncate">{{ selectedEdge.label || $t("flowchart.inspector.connector") }}</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t("flowchart.inspector.connector") }}</p>
           </div>
-          <label class="flex items-center gap-1.5 text-xs text-brand-dark">
-            <input type="checkbox" :checked="selectedEdge.animated" @change="setEdge({ animated: $event.target.checked })" />
-            Animated flow
-          </label>
+          <div class="p-4 space-y-4 flex-1">
+            <div>
+              <p class="fc-label">{{ $t("flowchart.inspector.connectorLabel") }}</p>
+              <input
+                ref="edgeLabelInput"
+                :class="[FIELD, 'h-9']"
+                :placeholder="$t('flowchart.inspector.connectorLabelPlaceholder')"
+                :value="selectedEdge.label"
+                @input="setEdge({ label: $event.target.value })"
+              />
+            </div>
+
+            <div>
+              <p class="fc-label">{{ $t("flowchart.inspector.lineType") }}</p>
+              <select :class="[FIELD, 'h-9']" :value="selectedEdge.type" @change="setEdge({ type: $event.target.value })">
+                <option value="smoothstep">{{ $t("flowchart.inspector.lines.smoothstep") }}</option>
+                <option value="step">{{ $t("flowchart.inspector.lines.step") }}</option>
+                <option value="straight">{{ $t("flowchart.inspector.lines.straight") }}</option>
+                <option value="default">{{ $t("flowchart.inspector.lines.curved") }}</option>
+              </select>
+            </div>
+
+            <div>
+              <p class="fc-label">{{ $t("flowchart.inspector.arrow") }}</p>
+              <select :class="[FIELD, 'h-9']" :value="selectedEdge.data?.arrow ?? 'end'" @change="setEdge({ data: { arrow: $event.target.value } })">
+                <option value="end">{{ $t("flowchart.inspector.arrows.end") }}</option>
+                <option value="both">{{ $t("flowchart.inspector.arrows.both") }}</option>
+                <option value="none">{{ $t("flowchart.inspector.arrows.none") }}</option>
+              </select>
+            </div>
+
+            <div>
+              <p class="fc-label">{{ $t("flowchart.inspector.style") }}</p>
+              <div class="flex items-center gap-4 mb-2.5">
+                <label class="flex items-center gap-1.5 text-ui-cap text-ui-text">
+                  <input type="color" class="fc-color" :value="selectedEdge.data?.color ?? '#475569'" @input="setEdge({ data: { color: $event.target.value } })" />
+                  {{ $t("flowchart.inspector.color") }}
+                </label>
+                <label class="flex items-center gap-1.5 text-ui-cap text-ui-text">
+                  <input type="checkbox" class="fc-check" :checked="selectedEdge.data?.dashed" @change="setEdge({ data: { dashed: $event.target.checked } })" />
+                  {{ $t("flowchart.inspector.dashed") }}
+                </label>
+              </div>
+              <label class="flex items-center gap-1.5 text-ui-cap text-ui-text">
+                <input type="checkbox" class="fc-check" :checked="selectedEdge.animated" @change="setEdge({ animated: $event.target.checked })" />
+                {{ $t("flowchart.inspector.animated") }}
+              </label>
+            </div>
+          </div>
+          <div class="px-4 pb-4">
+            <UiButton variant="danger" size="sm" :icon="Trash2" @click="deleteSelected">{{ $t("flowchart.inspector.deleteConnector") }}</UiButton>
+          </div>
         </template>
 
         <!-- Nothing selected -->
-        <template v-else>
-          <p class="fc-panel-title">Properties</p>
-          <p class="text-xs text-brand-light leading-relaxed mb-4">Select a shape or connector to change its text, colors, and style.</p>
-          <p class="fc-panel-title">Shortcuts</p>
-          <ul class="text-xs text-brand-dark space-y-1.5">
-            <li class="flex justify-between"><span>Save</span><kbd class="fc-kbd">Ctrl S</kbd></li>
-            <li class="flex justify-between"><span>Undo / Redo</span><kbd class="fc-kbd">Ctrl Z / ⇧Z</kbd></li>
-            <li class="flex justify-between"><span>Duplicate</span><kbd class="fc-kbd">Ctrl D</kbd></li>
-            <li class="flex justify-between"><span>Delete</span><kbd class="fc-kbd">Del</kbd></li>
-            <li class="flex justify-between"><span>Multi-select</span><kbd class="fc-kbd">Shift</kbd></li>
+        <div v-else class="p-4">
+          <p class="fc-panel-title">{{ $t("flowchart.inspector.properties") }}</p>
+          <p class="text-ui-small text-ui-muted mb-5">{{ $t("flowchart.inspector.propertiesHint") }}</p>
+          <p class="fc-panel-title">{{ $t("flowchart.inspector.shortcuts") }}</p>
+          <ul class="text-ui-cap text-ui-text space-y-2">
+            <li class="flex justify-between items-center"><span>{{ $t("common.actions.save") }}</span><kbd class="fc-kbd">Ctrl S</kbd></li>
+            <li class="flex justify-between items-center"><span>{{ $t("flowchart.tools.undo") }} / {{ $t("flowchart.tools.redo") }}</span><kbd class="fc-kbd">Ctrl Z / ⇧Z</kbd></li>
+            <li class="flex justify-between items-center"><span>{{ $t("common.actions.duplicate") }}</span><kbd class="fc-kbd">Ctrl D</kbd></li>
+            <li class="flex justify-between items-center"><span>{{ $t("common.actions.delete") }}</span><kbd class="fc-kbd">Del</kbd></li>
+            <li class="flex justify-between items-center"><span>{{ $t("flowchart.inspector.multiSelect") }}</span><kbd class="fc-kbd">Shift</kbd></li>
           </ul>
-          <p class="text-xs text-brand-light mt-4">{{ nodes.length }} shapes · {{ edges.length }} connectors</p>
-        </template>
+          <p class="text-ui-cap text-ui-faint mt-5 tabular-nums">{{ $t("flowchart.counts.shapes", { n: nodes.length }, nodes.length) }} · {{ $t("flowchart.counts.connectors", { n: edges.length }, edges.length) }}</p>
+        </div>
       </aside>
     </div>
   </div>
@@ -853,70 +934,73 @@ const updatedLabel = computed(() => {
 .fc-tool {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #334155;
-  transition: background-color 0.15s, color 0.15s;
+  color: rgb(var(--ui-text));
+  transition: background-color 0.12s, color 0.12s;
 }
 .fc-tool:hover:not(:disabled) {
-  background: #eff6ff;
-  color: #0c51d9;
+  background: rgb(var(--ui-hover));
+  color: rgb(var(--ui-ink));
+}
+.fc-tool:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(var(--ui-accent) / 0.16);
 }
 .fc-tool:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
-.fc-tool--active {
-  background: #dbeafe;
-  color: #0c51d9;
+.fc-tool--active,
+.fc-tool--active:hover:not(:disabled) {
+  background: rgb(var(--ui-accent-soft));
+  color: rgb(var(--ui-accent));
 }
 .fc-tool--danger:hover:not(:disabled) {
-  background: #fef2f2;
-  color: #dc2626;
+  background: rgb(var(--ui-bad-soft));
+  color: rgb(var(--ui-bad));
 }
 .fc-panel-title {
   font-size: 11px;
-  font-weight: 700;
+  line-height: 16px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #64748b;
-  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+  color: rgb(var(--ui-faint));
+  margin-bottom: 8px;
 }
-.fc-input {
-  width: 100%;
-  border: 1px solid #dcdedd;
-  border-radius: 8px;
-  padding: 6px 8px;
+.fc-label {
   font-size: 13px;
-  color: #0f172a;
-  outline: none;
-  background: #ffffff;
-}
-.fc-input:focus {
-  border-color: #0c51d9;
+  line-height: 18px;
+  font-weight: 500;
+  color: rgb(var(--ui-ink));
+  margin-bottom: 6px;
 }
 .fc-color {
   width: 28px;
   height: 28px;
   padding: 0;
-  border: 1px solid #dcdedd;
+  border: 1px solid rgb(var(--ui-line-strong));
   border-radius: 6px;
   background: none;
   cursor: pointer;
 }
+.fc-check {
+  accent-color: rgb(var(--ui-accent));
+}
 .fc-kbd {
   font-family: inherit;
-  font-size: 10px;
+  font-size: 11px;
   padding: 1px 6px;
   border-radius: 4px;
-  border: 1px solid #dcdedd;
-  background: #f8fafc;
-  color: #475569;
+  border: 1px solid rgb(var(--ui-line));
+  background: rgb(var(--ui-subtle));
+  color: rgb(var(--ui-muted));
 }
 .fc-canvas {
-  background: #f8fafc;
+  background: rgb(var(--ui-bg));
 }
 </style>
 
@@ -930,7 +1014,38 @@ const updatedLabel = computed(() => {
   box-shadow: none;
 }
 .fc-canvas .vue-flow__edge.selected .vue-flow__edge-path {
-  filter: drop-shadow(0 0 3px rgba(12, 81, 217, 0.55));
+  filter: drop-shadow(0 0 3px rgb(var(--ui-accent) / 0.55));
+}
+/* Canvas chrome in the design tokens. */
+.fc-canvas .vue-flow__controls {
+  box-shadow: 0 1px 2px rgb(var(--ui-ink) / 0.06);
+  border: 1px solid rgb(var(--ui-line));
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgb(var(--ui-surface));
+}
+.fc-canvas .vue-flow__controls-button {
+  width: 30px;
+  height: 30px;
+  background: rgb(var(--ui-surface));
+  border-bottom: 1px solid rgb(var(--ui-line));
+  color: rgb(var(--ui-text));
+}
+.fc-canvas .vue-flow__controls-button:last-child {
+  border-bottom: none;
+}
+.fc-canvas .vue-flow__controls-button:hover {
+  background: rgb(var(--ui-hover));
+}
+.fc-canvas .vue-flow__controls-button svg {
+  fill: currentColor;
+}
+.fc-canvas .vue-flow__minimap {
+  border: 1px solid rgb(var(--ui-line));
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgb(var(--ui-surface));
+  box-shadow: 0 1px 2px rgb(var(--ui-ink) / 0.06);
 }
 /* While exporting: no selection glow in the picture. */
 .fc-exporting .fc-node--selected .fc-shape,

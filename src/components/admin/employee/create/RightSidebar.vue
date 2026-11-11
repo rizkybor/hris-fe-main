@@ -1,5 +1,17 @@
 <script setup lang="ts">
-import { Lightbulb, Check, Zap, Users } from "lucide-vue-next";
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import { Lightbulb, Check, Zap, Users, ChevronRight } from "lucide-vue-next";
+
+const { t } = useI18n();
+
+const TIPS = computed(() =>
+  ["goals", "leader", "timeline", "teams"].map((key) => ({
+    key,
+    title: t(`projects.sidebar.tips.${key}.title`),
+    text: t(`projects.sidebar.tips.${key}.text`),
+  }))
+);
 
 const browseTeams = () => {
   document
@@ -10,122 +22,54 @@ const browseTeams = () => {
 
 <template>
   <!-- Right Sidebar -->
-  <div class="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-6 hidden md:block">
+  <aside class="w-full min-w-0 space-y-5 xl:sticky xl:top-6 hidden xl:block">
     <!-- Tips Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex items-center gap-2.5 mb-5">
-        <div
-          class="w-9 h-9 bg-yellow-50 rounded-[12px] flex items-center justify-center"
-        >
-          <Lightbulb class="w-6 h-6 text-yellow-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-base font-bold">
-            Project Creation Tips
-          </h3>
-          <p class="text-brand-light text-sm font-normal">
-            Best practices for setting up projects
-          </p>
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+      <div class="flex items-start gap-3 pb-4 mb-4 border-b border-ui-line">
+        <span class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted shrink-0">
+          <Lightbulb class="w-4 h-4" />
+        </span>
+        <div class="min-w-0">
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("projects.sidebar.tipsTitle") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.sidebar.tipsSubtitle") }}</p>
         </div>
       </div>
 
-      <div class="space-y-3.5">
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
+      <ul class="space-y-3.5">
+        <li v-for="tip in TIPS" :key="tip.key" class="flex items-start gap-2.5">
+          <Check class="w-4 h-4 text-ui-ok shrink-0 mt-0.5" />
+          <div class="min-w-0">
+            <p class="text-ui-small font-medium text-ui-ink">{{ tip.title }}</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ tip.text }}</p>
           </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Define Clear Goals
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Set specific, measurable objectives for project success.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
-          </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Choose Right Leader
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Select someone with project management skills and domain
-              expertise.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
-          </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Set Realistic Timeline
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Plan achievable deadlines with buffer time for unexpected issues.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
-          </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Assign Right Teams
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Match team skills with project requirements and workload.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+        </li>
+      </ul>
+    </section>
 
     <!-- Quick Actions Section -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mt-5">
-      <div class="flex items-center gap-2.5 mb-5">
-        <div
-          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
-        >
-          <Zap class="w-6 h-6 text-blue-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-base font-bold">Quick Actions</h3>
-          <p class="text-brand-light text-sm font-normal">
-            Common project setup tasks
-          </p>
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+      <div class="flex items-start gap-3 pb-4 mb-4 border-b border-ui-line">
+        <span class="w-8 h-8 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted shrink-0">
+          <Zap class="w-4 h-4" />
+        </span>
+        <div class="min-w-0">
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("projects.sidebar.quickActions") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.sidebar.quickActionsSubtitle") }}</p>
         </div>
       </div>
 
-      <div class="space-y-2.5">
-        <button
-          type="button"
-          @click="browseTeams"
-          class="w-full border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2.5 text-left"
-        >
-          <Users class="w-5 h-5 text-gray-600" />
-          <div class="flex-1">
-            <h4 class="text-brand-dark text-sm font-semibold">Browse Teams</h4>
-            <p class="text-brand-light text-xs">Jump to Team Assignment below</p>
-          </div>
-        </button>
-      </div>
-    </div>
-  </div>
+      <button
+        type="button"
+        @click="browseTeams"
+        class="ui-press w-full border border-ui-line rounded-ui-control hover:bg-ui-hover px-3.5 py-2.5 flex items-center gap-2.5 text-left transition-colors"
+      >
+        <Users class="w-4 h-4 text-ui-muted shrink-0" />
+        <div class="flex-1 min-w-0">
+          <p class="text-ui-small font-medium text-ui-ink">{{ $t("projects.sidebar.browseTeams") }}</p>
+          <p class="text-ui-cap text-ui-muted">{{ $t("projects.sidebar.browseTeamsHint") }}</p>
+        </div>
+        <ChevronRight class="w-4 h-4 text-ui-faint shrink-0" />
+      </button>
+    </section>
+  </aside>
 </template>

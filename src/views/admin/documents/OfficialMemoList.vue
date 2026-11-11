@@ -1,14 +1,17 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
-import { FileSignature, Plus, Search, Trash2, Eye, FileText, Pencil, ArrowLeft, ChevronDown } from "lucide-vue-next";
+import { FileSignature, Plus, Search, SearchX, Trash2, Eye, FileText, Pencil, ArrowLeft } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useDocumentLetterStore } from "@/stores/documentLetter";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
-import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Pagination from "@/components/common/Pagination.vue";
+import { UiPageHeader, UiButton, UiInput, UiChips, UiTable, UiBadge, UiEmpty } from "@/components/ui";
 
+const { t } = useI18n();
 const router = useRouter();
 const store = useDocumentLetterStore();
 const alertModal = useAlertModalStore();
@@ -44,165 +47,168 @@ const handleViewPdf = async (memo) => {
 
 const handleDelete = async (memo) => {
   if (
-    !(await alertModal.confirm(`Delete Official Memo "${memo.document_number}"? This action cannot be undone.`, {
+    !(await alertModal.confirm(t("documents.memo.list.deleteConfirm", { number: memo.document_number }), {
       type: "danger",
-      confirmText: "Delete",
+      confirmText: t("common.actions.delete"),
     }))
   )
     return;
   await store.deleteDocumentLetter(memo.id);
 };
 
-const STATUS_LABEL = { draft: "Draft", pending: "Pending", approved: "Approved", rejected: "Rejected" };
-const STATUS_CLASS = {
-  draft: "bg-gray-100 text-gray-600",
-  pending: "bg-amber-50 text-amber-600",
-  approved: "bg-green-50 text-green-700",
-  rejected: "bg-red-50 text-red-600",
-};
+const STATUS_LABEL = computed(() => ({
+  draft: t("documents.shared.status.draft"),
+  pending: t("documents.shared.status.pending"),
+  approved: t("documents.shared.status.approved"),
+  rejected: t("documents.shared.status.rejected"),
+}));
+// Presentation only: badge tones, status chips, table columns.
+const STATUS_TONE = { draft: "neutral", pending: "warn", approved: "ok", rejected: "bad" };
+const STATUS_OPTIONS = computed(() => [
+  { value: "", label: t("common.labels.all") },
+  { value: "draft", label: t("documents.shared.status.draft") },
+  { value: "pending", label: t("documents.shared.status.pending") },
+  { value: "approved", label: t("documents.shared.status.approved") },
+  { value: "rejected", label: t("documents.shared.status.rejected") },
+]);
+const COLUMNS = computed(() => [
+  { key: "document_number", label: t("documents.shared.number") },
+  { key: "subject", label: t("documents.memo.fields.subject") },
+  { key: "document_date", label: t("common.labels.date") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "actions", label: "", align: "right" },
+]);
+const iconBtn =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink disabled:opacity-50 focus:outline-none focus-visible:shadow-ui-focus";
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "short", day: "numeric" }) : "-";
 </script>
 
 <template>
-  <div>
-    <div class="bg-white p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-3">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('documents.memo.list.title')" :subtitle="$t('documents.memo.list.subtitle')" class="ui-anim-fade-up">
+      <template #eyebrow>
         <router-link
           :to="{ name: 'admin.documents.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Documents"
-          title="Back to Documents"
+          class="ui-press inline-flex items-center gap-1 mb-1.5 text-ui-small font-medium text-ui-accent hover:underline"
+          :aria-label="$t('documents.shared.backToDocuments')"
+          :title="$t('documents.shared.backToDocuments')"
         >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+          <ArrowLeft class="w-4 h-4" />{{ $t("documents.shared.documents") }}
         </router-link>
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <FileSignature class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Official Memo</h3>
-          <p class="text-brand-light text-sm">Internal memos with a Finance Manager approval workflow</p>
-        </div>
+      </template>
+      <template #actions>
+        <UiButton v-if="can('document-letter-create')" :to="{ name: 'admin.official-memos.create' }" :icon="Plus" class="w-full sm:w-auto">{{ $t("documents.memo.list.create") }}</UiButton>
+      </template>
+    </UiPageHeader>
+
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+      <!-- Toolbar -->
+      <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line flex flex-col md:flex-row md:items-center gap-3">
+        <UiInput
+          v-model="search"
+          :icon="Search"
+          :placeholder="$t('documents.memo.list.searchPlaceholder')"
+          class="md:w-[300px]"
+          @keyup.enter="handleSearch"
+        />
+        <UiChips v-model="statusFilter" :options="STATUS_OPTIONS" @update:model-value="handleFilterChange" />
       </div>
 
-      <router-link
-        v-if="can('document-letter-create')"
-        :to="{ name: 'admin.official-memos.create' }"
-        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
-      >
-        <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Create Official Memo</span>
-      </router-link>
-    </div>
-
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex flex-col sm:flex-row gap-3 mb-4">
-        <div class="relative max-w-sm w-full">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search class="w-4 h-4 text-gray-400" />
-          </div>
-          <input
-            v-model="search"
-            @keyup.enter="handleSearch"
-            type="text"
-            placeholder="Search number, subject..."
-            class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <div class="relative">
-          <select
-            v-model="statusFilter"
-            @change="handleFilterChange"
-            class="select-soft"
-          >
-            <option value="">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <ChevronDown
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-          />
-        </div>
-      </div>
-
-      <SkeletonTable v-if="loading" :rows="6" :cols="6" />
-
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
-              <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">Number</th>
-              <th class="py-3 pr-4 font-semibold">Subject</th>
-              <th class="py-3 pr-4 font-semibold">Date</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(memo, index) in documentLetters"
-              :key="memo.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
-              @click="goToDetail(memo.id)"
+      <UiTable :columns="COLUMNS" :rows="documentLetters" :meta="meta" :loading="loading" :skeleton-rows="6" clickable @row-click="(memo) => goToDetail(memo.id)">
+        <template #cell-document_number="{ row }">
+          <span class="font-mono text-ui-cap text-ui-ink whitespace-nowrap">{{ row.document_number }}</span>
+        </template>
+        <template #cell-subject="{ row }">
+          <span class="block max-w-[420px] truncate text-ui-ink" :title="row.subject">{{ row.subject }}</span>
+        </template>
+        <template #cell-document_date="{ row }">
+          <span class="tabular-nums whitespace-nowrap">{{ formatDate(row.document_date) }}</span>
+        </template>
+        <template #cell-status="{ row }">
+          <UiBadge :tone="STATUS_TONE[row.status]" dot>{{ STATUS_LABEL[row.status] }}</UiBadge>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="inline-flex items-center gap-0.5" @click.stop>
+            <button type="button" :class="iconBtn" :title="$t('documents.shared.viewDetail')" :aria-label="$t('documents.shared.viewItem', { number: row.document_number })" @click="goToDetail(row.id)">
+              <Eye class="w-4 h-4" />
+            </button>
+            <button type="button" :class="iconBtn" :disabled="viewingId === row.id" :title="$t('documents.shared.viewPdf')" :aria-label="$t('documents.shared.viewPdfItem', { number: row.document_number })" @click="handleViewPdf(row)">
+              <FileText class="w-4 h-4" />
+            </button>
+            <router-link
+              v-if="can('document-letter-edit') && row.status === 'draft'"
+              :to="{ name: 'admin.official-memos.edit', params: { id: row.id } }"
+              :class="iconBtn"
+              :title="$t('common.actions.edit')"
+              :aria-label="$t('documents.shared.editItem', { number: row.document_number })"
             >
-              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4 font-mono text-xs">{{ memo.document_number }}</td>
-              <td class="py-3 pr-4">{{ memo.subject }}</td>
-              <td class="py-3 pr-4">{{ formatDate(memo.document_date) }}</td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="STATUS_CLASS[memo.status]">
-                  {{ STATUS_LABEL[memo.status] }}
-                </span>
-              </td>
-              <td class="py-3 pr-4" @click.stop>
-                <div class="flex items-center justify-end gap-1">
-                  <button
-                    @click="goToDetail(memo.id)"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
-                    title="View Detail"
-                  >
-                    <Eye class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button
-                    @click="handleViewPdf(memo)"
-                    :disabled="viewingId === memo.id"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
-                    title="View PDF"
-                  >
-                    <FileText class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <router-link
-                    v-if="can('document-letter-edit') && memo.status === 'draft'"
-                    :to="{ name: 'admin.official-memos.edit', params: { id: memo.id } }"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
-                    title="Edit"
-                  >
-                    <Pencil class="w-4 h-4 text-gray-600" />
-                  </router-link>
-                  <button
-                    v-if="can('document-letter-delete') && memo.status === 'draft'"
-                    @click="handleDelete(memo)"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Delete"
-                  >
-                    <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              <Pencil class="w-4 h-4" />
+            </router-link>
+            <button
+              v-if="can('document-letter-delete') && row.status === 'draft'"
+              type="button"
+              :class="[iconBtn, 'hover:!bg-ui-bad-soft hover:!text-ui-bad']"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('documents.shared.deleteItem', { number: row.document_number })"
+              @click="handleDelete(row)"
+            >
+              <Trash2 class="w-4 h-4" />
+            </button>
+          </div>
+        </template>
 
-        <div v-if="!loading && documentLetters.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">No Official Memo yet</p>
-        </div>
+        <!-- Phones: one card per memo -->
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="w-5 pt-0.5 text-ui-cap text-ui-faint tabular-nums shrink-0">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <p class="font-mono text-ui-cap text-ui-muted truncate">{{ row.document_number }}</p>
+                <UiBadge :tone="STATUS_TONE[row.status]" dot class="shrink-0">{{ STATUS_LABEL[row.status] }}</UiBadge>
+              </div>
+              <p class="text-ui-body font-medium text-ui-ink mt-0.5 break-words">{{ row.subject }}</p>
+              <p class="text-ui-cap text-ui-muted mt-0.5 tabular-nums">{{ formatDate(row.document_date) }}</p>
+              <div class="flex items-center gap-1 mt-2 -ml-2" @click.stop>
+                <button type="button" :class="iconBtn" class="!w-9 !h-9" :disabled="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.document_number })" @click="handleViewPdf(row)">
+                  <FileText class="w-4 h-4" />
+                </button>
+                <router-link
+                  v-if="can('document-letter-edit') && row.status === 'draft'"
+                  :to="{ name: 'admin.official-memos.edit', params: { id: row.id } }"
+                  :class="iconBtn"
+                  class="!w-9 !h-9"
+                  :aria-label="$t('documents.shared.editItem', { number: row.document_number })"
+                >
+                  <Pencil class="w-4 h-4" />
+                </router-link>
+                <button
+                  v-if="can('document-letter-delete') && row.status === 'draft'"
+                  type="button"
+                  :class="iconBtn"
+                  class="!w-9 !h-9"
+                  :aria-label="$t('documents.shared.deleteItem', { number: row.document_number })"
+                  @click="handleDelete(row)"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template #empty>
+          <UiEmpty v-if="search || statusFilter" :icon="SearchX" :title="$t('documents.memo.list.noMatchTitle')" :message="$t('documents.memo.list.noMatchMessage')" compact />
+          <UiEmpty v-else :icon="FileSignature" :title="$t('documents.memo.list.emptyTitle')" compact>
+            <UiButton v-if="can('document-letter-create')" variant="secondary" size="sm" :icon="Plus" :to="{ name: 'admin.official-memos.create' }">{{ $t("documents.memo.list.create") }}</UiButton>
+          </UiEmpty>
+        </template>
+      </UiTable>
+
+      <div class="px-4 sm:px-5 pb-4">
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('documents.memo.list.itemLabel')" @page-change="load" />
       </div>
-
-      <Pagination :meta="meta" :loading="loading" item-label="memo" @page-change="load" />
-    </div>
+    </section>
   </div>
 </template>

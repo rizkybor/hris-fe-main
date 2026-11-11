@@ -1,0 +1,249 @@
+{
+  "page": {
+    "title": "Operational Cost",
+    "subtitle": "Company operational cost overview"
+  },
+  "itemLabel": "items",
+  "usageStatus": {
+    "active": "In use",
+    "inactive": "Not in use"
+  },
+  "expiry": {
+    "expired": "Expired",
+    "today": "Today",
+    "inDays": "in {n} day | in {n} days"
+  },
+  "categories": {
+    "fixedCost": "Fixed Cost",
+    "sdmResource": "SDM Resource",
+    "sdmResources": "SDM Resources",
+    "infrastructure": "Infrastructure",
+    "infraTool": "Infrastructure Tool",
+    "infraTools": "Infrastructure Tools"
+  },
+  "stats": {
+    "actualInUse": "Actual · items in use",
+    "monthly": "Monthly:",
+    "annual": "Annual:",
+    "infraInUse": "Infrastructure in use:",
+    "trendTitle": "Operational Cost Trend",
+    "trendSubtitle": "Monthly cost overview by category"
+  },
+  "search": {
+    "fixedCost": "Search fixed cost...",
+    "sdmResource": "Search SDM resource...",
+    "infra": "Search infrastructure..."
+  },
+  "table": {
+    "item": "Item",
+    "actual": "Actual",
+    "expired": "Expired",
+    "field": "Field",
+    "hoursPerMonth": "Hours/Month",
+    "hoursPerMonthValue": "{n} hrs/month",
+    "techStack": "Tech Stack",
+    "vendor": "Vendor",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "annualValue": "Annual {amount}",
+    "expShort": "Exp. {date}",
+    "inactiveHint": "Not in use — not counted in the total",
+    "empty": "No {kind} data found."
+  },
+  "alerts": {
+    "createdTitle": "{kind} item created",
+    "createdMessage": "{kind} item has been successfully added.",
+    "updatedTitle": "{kind} item updated",
+    "updatedMessage": "{kind} item has been successfully updated.",
+    "failed": "Failed",
+    "saveFailed": "Failed to save {kind} item.",
+    "deleted": "Deleted",
+    "deletedMessage": "{kind} item \"{name}\" has been deleted.",
+    "deleteFailed": "Failed to delete \"{name}\"."
+  },
+  "delete": {
+    "title": "Delete {kind} item",
+    "message": "Are you sure you want to delete \"{name}\"?"
+  },
+  "modals": {
+    "usage": {
+      "statusPlaceholder": "Select status",
+      "statusHint": "Only items marked In use count toward the Operational Cost total.",
+      "expired": "Expired",
+      "expiredOptional": "Expired (optional)"
+    },
+    "validation": {
+      "statusRequired": "Status is required",
+      "expiredRequired": "Expired is required for items in use",
+      "itemRequired": "Item is required",
+      "descriptionRequired": "Description is required",
+      "fieldRequired": "Field is required",
+      "hoursRequired": "Hours / Month is required",
+      "techStackRequired": "Tech Stack is required",
+      "vendorRequired": "Vendor is required"
+    },
+    "fields": {
+      "item": "Item",
+      "itemPlaceholder": "Add your financial item",
+      "descriptionPlaceholder": "Add item description",
+      "actual": "Actual (Rp.)",
+      "actualPlaceholder": "Add actual price",
+      "notesPlaceholder": "Add notes",
+      "field": "Field",
+      "fieldPlaceholder": "Select field / role",
+      "hours": "Productive Hours / Month",
+      "hoursPlaceholder": "e.g. 120",
+      "techStack": "Tech Stack Component",
+      "techStackPlaceholder": "Add your tech stack item",
+      "vendor": "Vendor",
+      "vendorPlaceholder": "Add vendor",
+      "monthlyFee": "Monthly Fee (Rp.)",
+      "monthlyFeePlaceholder": "Add monthly fee",
+      "annualFee": "Annual Fee (Rp.)",
+      "annualFeePlaceholder": "Add annual fee"
+    },
+    "fixedCost": {
+      "title": {
+        "add": "Add Fixed Cost",
+        "edit": "Edit Fixed Cost",
+        "view": "Fixed Cost Detail"
+      },
+      "description": {
+        "add": "Create a new fixed cost record.",
+        "edit": "Modify the fixed cost details.",
+        "view": "Details of the selected fixed cost."
+      }
+    },
+    "sdm": {
+      "title": {
+        "add": "Add SDM Resource",
+        "edit": "Edit SDM Resource",
+        "view": "SDM Resource Detail"
+      },
+      "description": {
+        "add": "Add a team member as an SDM resource record.",
+        "edit": "Modify the SDM resource details.",
+        "view": "Details of the selected SDM resource."
+      }
+    },
+    "infra": {
+      "title": {
+        "add": "Add Infrastructure Tool",
+        "edit": "Edit Infrastructure Tool",
+        "view": "Infrastructure Tool Detail"
+      },
+      "description": {
+        "add": "Create a new infrastructure tool record.",
+        "edit": "Modify the infrastructure tool details.",
+        "view": "Details of the selected infrastructure tool."
+      }
+    }
+  },
+  "cashBook": {
+    "title": "Company Cash Book",
+    "subtitle": "Real debit/credit transactions as they actually happen -- auto-synced from every project's own cash ledger, plus manual entries",
+    "periods": {
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "thisYear": "This year"
+    },
+    "errors": {
+      "proofType": "The proof must be a JPG, PNG, WEBP or PDF file.",
+      "proofSize": "The proof may not be larger than 5 MB.",
+      "required": "Description, amount, and date are required.",
+      "employeeRequired": "Choose who this spending is on behalf of.",
+      "saveFailed": "Failed to save the transaction.",
+      "balanceFailed": "Failed to update the opening balance."
+    },
+    "tabs": {
+      "all": "All Transactions",
+      "spending": "Spending"
+    },
+    "filtered": "filtered",
+    "filters": {
+      "everyone": "Everyone",
+      "allProjects": "All projects",
+      "allTypes": "Debit & Credit",
+      "allSources": "All sources",
+      "fromProjects": "From projects"
+    },
+    "debitIn": "Debit (In)",
+    "creditOut": "Credit (Out)",
+    "manual": "Manual",
+    "onBehalfOf": "On behalf of",
+    "source": "Source",
+    "debit": "Debit",
+    "credit": "Credit",
+    "balance": "Balance",
+    "form": {
+      "editSpending": "Edit Spending",
+      "editTransaction": "Edit Transaction",
+      "addTransaction": "Add Cash Transaction",
+      "chooseEmployee": "Choose an employee",
+      "recordedAsDebit": "Recorded as Debit in the cash book.",
+      "spendingPlaceholder": "e.g. Taxi to client meeting",
+      "descriptionPlaceholder": "e.g. Consulting income",
+      "amount": "Amount (Rp)",
+      "notesPlaceholder": "Optional notes"
+    },
+    "delete": {
+      "message": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "spendingTitle": "Delete Spending?",
+      "transactionTitle": "Delete Transaction?",
+      "confirm": "Yes, Delete"
+    },
+    "setOpeningBalance": "Set Opening Balance",
+    "addSpending": "Add Spending",
+    "addTransaction": "Add Transaction",
+    "openingBalance": "Opening Balance",
+    "openingBalanceRp": "Opening Balance (Rp)",
+    "closingBalance": "Closing Balance",
+    "stamp": {
+      "full": "Last updated {date}",
+      "fullBy": "Last updated {date} by {name}",
+      "updated": "Updated {date}",
+      "never": "Never set"
+    },
+    "totalDebit": "Total Debit",
+    "excludingSpending": "Excluding spending",
+    "totalDebitSpending": "Total Debit + Spending",
+    "totalCredit": "Total Credit (Out)",
+    "spendingByPerson": "Spending by person",
+    "entries": "{n} entry | {n} entries",
+    "search": {
+      "spending": "Search description, notes, person...",
+      "all": "Search description, notes, project..."
+    },
+    "fromDate": "From date",
+    "toDate": "To date",
+    "to": "to",
+    "matching": "{n} matching transaction | {n} matching transactions",
+    "empty": {
+      "filtered": "No transactions match the filters",
+      "spending": "No spending yet",
+      "all": "No cash transactions yet",
+      "spendingHint": "Record spending on behalf of an employee with Add Spending.",
+      "allHint": "Recording a transaction on any project's own Cash Ledger will automatically appear here too."
+    },
+    "viewProof": "View proof",
+    "spendingOnBehalf": "Spending on behalf of {name}",
+    "anEmployee": "an employee",
+    "autoSynced": "Auto-synced from {project}'s cash ledger",
+    "viaProject": "via Project",
+    "viaProjectHint": "Edit this from the project's own Cash Ledger",
+    "itemLabel": "transactions",
+    "proof": {
+      "title": "Proof of transaction",
+      "optional": "optional",
+      "preview": "Preview",
+      "uploadedOnSave": "Uploaded when you save",
+      "replace": "Replace",
+      "upload": "Upload proof (JPG, PNG, WEBP, PDF · max 5 MB)",
+      "willBeRemoved": "The current proof will be removed when you save.",
+      "undo": "Undo",
+      "pdfDocument": "PDF document",
+      "openFull": "Open full size",
+      "openPdf": "Open PDF"
+    }
+  }
+}

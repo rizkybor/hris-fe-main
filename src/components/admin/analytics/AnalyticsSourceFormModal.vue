@@ -1,8 +1,7 @@
 <script setup>
 import { computed, reactive, watch } from "vue";
-import { X } from "lucide-vue-next";
-import BaseInput from "@/components/common/form/Input.vue";
-import BaseSelect from "@/components/common/form/Select.vue";
+import { useI18n } from "vue-i18n";
+import { UiModal, UiInput, UiSelect, UiButton } from "@/components/ui";
 
 const props = defineProps({
   show: Boolean,
@@ -16,6 +15,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["submit", "close"]);
+const { t } = useI18n();
 
 const TYPE_OPTIONS = [
   { value: "posthog", label: "PostHog" },
@@ -52,7 +52,11 @@ watch(
   { immediate: true }
 );
 
-const title = computed(() => (props.mode === "edit" ? "Edit Analytics Source" : "Add Analytics Source"));
+const title = computed(() => (props.mode === "edit" ? t("analytics.form.editTitle") : t("analytics.form.addTitle")));
+
+const EMBED_HINT = computed(() => t("analytics.form.embedHint"));
+
+const fieldError = (key) => (props.errors?.[key] ? [].concat(props.errors[key]).join(", ") : "");
 
 const submit = () => {
   emit("submit", {
@@ -64,113 +68,74 @@ const submit = () => {
 </script>
 
 <template>
-  <div
-    v-if="show"
-    class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-    @click.self="$emit('close')"
+  <UiModal
+    :open="show"
+    :title="title"
+    :description="$t('analytics.form.description')"
+    @close="$emit('close')"
   >
-    <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg max-h-[90vh] overflow-y-auto">
-      <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">{{ title }}</h3>
-          <p class="text-brand-light text-xs mt-0.5">
-            Sources sharing the same Category are grouped together on the Analytics page.
-          </p>
-        </div>
-        <button
-          @click="$emit('close')"
-          class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] shrink-0"
-        >
-          <X class="w-4 h-4 text-gray-600" />
-        </button>
+    <div class="space-y-4">
+      <UiInput
+        id="analytics-name"
+        v-model="form.name"
+        :label="$t('common.labels.name')"
+        :placeholder="$t('analytics.form.namePlaceholder')"
+        required
+        :error="fieldError('name')"
+      />
+
+      <UiInput
+        id="analytics-website-url"
+        v-model="form.website_url"
+        :label="$t('analytics.form.websiteUrl')"
+        placeholder="https://example.com"
+        :error="fieldError('website_url')"
+      />
+
+      <UiSelect
+        id="analytics-type"
+        v-model="form.type"
+        :label="$t('common.labels.type')"
+        :placeholder="$t('analytics.form.typePlaceholder')"
+        :options="TYPE_OPTIONS"
+        required
+        :error="fieldError('type')"
+      />
+
+      <div class="min-w-0">
+        <label for="analytics-category" class="block text-ui-small font-medium text-ui-ink mb-1.5">
+          {{ $t("common.labels.category") }}<span class="text-ui-bad"> *</span>
+        </label>
+        <input
+          id="analytics-category"
+          v-model="form.category"
+          list="analytics-category-suggestions"
+          :placeholder="$t('analytics.form.categoryPlaceholder')"
+          class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+          :class="fieldError('category') ? 'border-ui-bad/50' : 'border-ui-line-strong'"
+        />
+        <datalist id="analytics-category-suggestions">
+          <option v-for="c in categorySuggestions" :key="c" :value="c" />
+        </datalist>
+        <p v-if="fieldError('category')" class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("category") }}</p>
       </div>
 
-      <div class="p-5 space-y-4">
-        <div>
-          <BaseInput
-            id="analytics-name"
-            label="Name"
-            placeholder="e.g. Landing Page PostHog"
-            v-model="form.name"
-            required
-          />
-          <p v-if="errors.name" class="text-red-500 text-sm mt-1">{{ errors.name.join(", ") }}</p>
-        </div>
-
-        <div>
-          <BaseInput
-            id="analytics-website-url"
-            label="Website URL (optional)"
-            placeholder="https://example.com"
-            v-model="form.website_url"
-          />
-          <p v-if="errors.website_url" class="text-red-500 text-sm mt-1">{{ errors.website_url.join(", ") }}</p>
-        </div>
-
-        <div>
-          <BaseSelect
-            id="analytics-type"
-            label="Type"
-            placeholder="Select a source type"
-            v-model="form.type"
-            :options="TYPE_OPTIONS"
-            required
-          />
-          <p v-if="errors.type" class="text-red-500 text-sm mt-1">{{ errors.type.join(", ") }}</p>
-        </div>
-
-        <div>
-          <label class="block text-brand-dark text-sm font-semibold mb-1"
-            >Category <span class="text-red-600">*</span></label
-          >
-          <input
-            list="analytics-category-suggestions"
-            v-model="form.category"
-            placeholder="e.g. Landing Page Jendela Cakra Digital Analytics"
-            class="w-full border rounded-[12px] transition-all duration-300 hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white border-[#DCDEDD] px-3.5 py-3"
-          />
-          <datalist id="analytics-category-suggestions">
-            <option v-for="c in categorySuggestions" :key="c" :value="c" />
-          </datalist>
-          <p v-if="errors.category" class="text-red-500 text-sm mt-1">{{ errors.category.join(", ") }}</p>
-        </div>
-
-        <div>
-          <label class="block text-brand-dark text-sm font-semibold mb-1"
-            >Embed URL <span class="text-red-600">*</span></label
-          >
-          <textarea
-            v-model="form.embed_url"
-            rows="3"
-            placeholder="https://us.posthog.com/embedded/... or a Looker Studio /embed/ report URL"
-            class="w-full border rounded-[12px] transition-all duration-300 hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white border-[#DCDEDD] px-3.5 py-3 text-sm"
-          ></textarea>
-          <p class="text-brand-light text-xs mt-1">
-            PostHog: use its own "Embed" share link. Google Analytics 4 / Search Console don't offer a direct embed
-            link -- connect them to a Looker Studio report instead, share it as "Anyone with the link", and paste
-            that report's Embed URL here.
-          </p>
-          <p v-if="errors.embed_url" class="text-red-500 text-sm mt-1">{{ errors.embed_url.join(", ") }}</p>
-        </div>
-      </div>
-
-      <div class="p-5 border-t border-[#DCDEDD] flex justify-end gap-3">
-        <button
-          type="button"
-          class="px-4 py-2.5 border border-[#DCDEDD] rounded-[10px] text-sm font-semibold hover:border-[#0C51D9] transition-colors"
-          @click="$emit('close')"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-          :disabled="loading"
-          @click="submit"
-        >
-          {{ loading ? "Saving..." : "Save" }}
-        </button>
-      </div>
+      <UiInput
+        id="analytics-embed-url"
+        v-model="form.embed_url"
+        :label="$t('analytics.form.embedUrl')"
+        :rows="3"
+        required
+        :placeholder="$t('analytics.form.embedUrlPlaceholder')"
+        :error="fieldError('embed_url')"
+        :hint="EMBED_HINT"
+      />
+      <p v-if="fieldError('embed_url')" class="text-ui-cap text-ui-muted -mt-2">{{ EMBED_HINT }}</p>
     </div>
-  </div>
+
+    <template #footer>
+      <UiButton variant="secondary" @click="$emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
+      <UiButton :loading="loading" @click="submit">{{ loading ? $t("common.actions.saving") : $t("common.actions.save") }}</UiButton>
+    </template>
+  </UiModal>
 </template>

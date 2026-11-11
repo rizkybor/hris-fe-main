@@ -1,0 +1,84 @@
+{
+  "title": "Absen Masuk/Pulang",
+  "liveClock": "Jam Langsung",
+  "todayStatus": "Status Hari Ini",
+  "clockIn": "Absen Masuk",
+  "clockOut": "Absen Pulang",
+  "worked": "Durasi Kerja",
+  "processing": "Memproses...",
+  "requiredTag": "(wajib)",
+  "checkOutAvailableIn": "Absen pulang tersedia dalam {duration} (min. 8 jam kerja)",
+  "footerHint": "Ambil lokasi dan foto sebelum absen masuk/pulang",
+  "duration": {
+    "hm": "{h}j {m}m",
+    "m": "{m}m"
+  },
+  "status": {
+    "notClockedIn": "Belum Absen Masuk",
+    "overtime": "Lembur",
+    "clockedInLate": "Sudah Masuk (Terlambat)",
+    "clockedIn": "Sudah Masuk",
+    "completed": "Selesai"
+  },
+  "late": {
+    "notice": "Terlambat {duration} (batas jam masuk 09:00 WIB)"
+  },
+  "location": {
+    "notDetected": "Lokasi belum terdeteksi",
+    "notDetectedHint": "Klik 'Ambil Lokasi Saat Ini' untuk mendeteksi posisi Anda",
+    "againHint": "Ambil lokasi lagi untuk absensi berikutnya",
+    "unsupported": "Geolokasi tidak didukung",
+    "unsupportedHint": "Browser Anda tidak mendukung layanan lokasi",
+    "getting": "Mengambil lokasi...",
+    "gettingHint": "Mohon tunggu, posisi Anda sedang dideteksi",
+    "gettingButton": "Mengambil Lokasi...",
+    "detected": "Lokasi terdeteksi",
+    "accuracy": "Akurasi: ±{m}m",
+    "failed": "Gagal mengambil lokasi",
+    "refresh": "Perbarui Lokasi",
+    "get": "Ambil Lokasi Saat Ini",
+    "errors": {
+      "denied": "Akses lokasi ditolak. Aktifkan izin lokasi.",
+      "unavailable": "Informasi lokasi tidak tersedia.",
+      "timeout": "Permintaan lokasi melewati batas waktu. Silakan coba lagi.",
+      "unknown": "Terjadi kesalahan saat mengambil lokasi."
+    }
+  },
+  "office": {
+    "radius": "Radius Kantor: {m}m",
+    "distance": "Anda berjarak {m}m dari kantor",
+    "withinRange": "dalam jangkauan",
+    "outsideRange": "di luar radius yang diizinkan",
+    "getLocationHint": "Ambil lokasi untuk mengecek jarak dari kantor"
+  },
+  "camera": {
+    "previewHint": "Pratinjau kamera akan tampil di sini",
+    "captured": "Foto diambil",
+    "capturedAlt": "Foto yang diambil",
+    "start": "Nyalakan Kamera",
+    "take": "Ambil Foto",
+    "retake": "Ulangi Foto",
+    "error": "Kamera tidak dapat diakses. Periksa izin kamera lalu coba lagi."
+  },
+  "weekend": {
+    "blocked": "Absen masuk tidak tersedia hari ini (Sabtu/Minggu). Hubungi Superadmin/Manager di menu Pengaturan jika Anda perlu masuk lembur.",
+    "overtime": "Hari ini Sabtu/Minggu — absen masuk akan tercatat sebagai lembur."
+  },
+  "ready": {
+    "in": "Siap Absen Masuk?",
+    "out": "Siap Absen Pulang?",
+    "inHint": "Catat kehadiran dengan lokasi",
+    "outHint": "Catat kepulangan dengan lokasi"
+  },
+  "alerts": {
+    "needLocation": "Ambil lokasi Anda terlebih dahulu!",
+    "needPhotoIn": "Ambil foto sebelum absen masuk.",
+    "needPhotoOut": "Ambil foto sebelum absen pulang.",
+    "overtimeIn": "Absen masuk lembur berhasil — hari ini akhir pekan.",
+    "lateIn": "Absen masuk berhasil, tetapi Anda terlambat {n} menit (batas 09:00 WIB).",
+    "successIn": "Absen masuk berhasil!",
+    "successOut": "Absen pulang berhasil!",
+    "failedIn": "Gagal absen masuk. Silakan coba lagi.",
+    "failedOut": "Gagal absen pulang. Silakan coba lagi."
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "title": "Daftar Server",
+  "subtitle": "Pemantauan disk, RAM, CPU, dan website setiap VPS yang Anda kelola",
+  "add": "Tambah VPS",
+  "edit": "Ubah VPS",
+  "noIp": "IP belum diisi",
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "pending": "Menunggu laporan"
+  },
+  "stats": {
+    "attention": "Perlu perhatian"
+  },
+  "filter": {
+    "attention": "Perlu perhatian",
+    "showingAttention": "Hanya ini yang tampil · ketuk untuk semua",
+    "tapToFilter": "Ketuk untuk menampilkan ini saja",
+    "clear": "Hapus filter",
+    "noneNeedAttention": "Tidak ada VPS yang perlu perhatian",
+    "noneMatch": "Tidak ada VPS yang cocok",
+    "showAll": "Tampilkan semua VPS"
+  },
+  "toolbar": {
+    "online": "{n} online",
+    "attention": "{n} perlu perhatian"
+  },
+  "empty": {
+    "title": "Belum ada VPS yang dipantau",
+    "message": "Tambahkan VPS, lalu jalankan perintah instalasi yang diberikan di VPS tersebut. Agen akan melaporkan disk, RAM, dan CPU setiap 5 menit.",
+    "addFirst": "Tambah VPS pertama"
+  },
+  "metrics": {
+    "coresLoad": "{cores} core · load {load}"
+  },
+  "card": {
+    "noReport": "Belum ada laporan. Jalankan perintah instalasi agen di VPS ini.",
+    "lastReport": "Laporan terakhir: {time}",
+    "websites": "{n} website",
+    "sslExpiring": "{n} SSL hampir habis"
+  },
+  "time": {
+    "never": "belum pernah",
+    "justNow": "baru saja",
+    "minutesAgo": "{n} menit lalu",
+    "hoursAgo": "{n} jam lalu",
+    "daysAgo": "{n} hari lalu"
+  },
+  "uptime": {
+    "daysHours": "{days} hari {hours} jam",
+    "hoursMinutes": "{hours} jam {minutes} menit"
+  },
+  "siteTypes": {
+    "proxy": "Aplikasi (proxy)",
+    "static": "Situs statis",
+    "folder": "Folder",
+    "unknown": "Lainnya"
+  },
+  "ssl": {
+    "none": "Tanpa SSL",
+    "expired": "SSL kedaluwarsa",
+    "until": "SSL s/d {date}",
+    "withDays": "{label} ({n} hari)"
+  },
+  "form": {
+    "name": "Nama VPS",
+    "namePlaceholder": "cth. VPS Produksi HRIS",
+    "ip": "IP Address",
+    "ipPlaceholder": "cth. 103.10.20.30",
+    "description": "Keterangan",
+    "descriptionPlaceholder": "cth. Hosting website klien, provider IDCloudHost",
+    "afterSaveHint": "Setelah disimpan, Anda akan mendapat perintah instalasi agen untuk dijalankan di VPS ini.",
+    "saveAndShow": "Simpan & Lihat Perintah"
+  },
+  "install": {
+    "title": "Pasang Agen di {name}",
+    "descRegenerated": "Token baru dibuat. Pasang ulang agen dengan perintah di bawah.",
+    "descAdded": "VPS ditambahkan. Pasang agen dengan perintah di bawah.",
+    "step1": "Masuk ke VPS lewat SSH dengan user yang punya akses {sudo}.",
+    "step2": "Salin dan jalankan perintah berikut (sekali saja):",
+    "step3": "Tunggu sampai muncul {done}. Laporan pertama bisa memakan 1–2 menit karena ukuran folder diukur dulu.",
+    "doneWord": "Selesai",
+    "step4": "Kartu VPS ini akan berubah menjadi {online}, lalu diperbarui otomatis setiap 5 menit.",
+    "secretWarning": "Perintah ini berisi token rahasia VPS ini dan {once}. Jangan dibagikan. Kalau hilang, gunakan {regenerate} di rincian VPS.",
+    "shownOnce": "hanya ditampilkan sekali",
+    "requirements": "Persyaratan: Ubuntu dengan {python}, {curl}, dan {cron} (semuanya bawaan Ubuntu). Untuk mencopot agen:"
+  },
+  "detail": {
+    "neverReported": "VPS ini belum pernah melapor. Pasang agen dengan perintah instalasi yang diberikan saat VPS ditambahkan.",
+    "lostCommand": "Kalau perintahnya hilang, gunakan {regenerate} di bawah."
+  },
+  "actions": {
+    "regenerate": "Buat token baru",
+    "copyUninstall": "Salin perintah copot agen"
+  },
+  "confirm": {
+    "regenerate": "Buat token baru untuk \"{name}\"? Token lama langsung berhenti berlaku, jadi agen di VPS ini harus dipasang ulang dengan perintah baru.",
+    "remove": "Hapus \"{name}\" dari pemantauan? Laporan dari VPS ini tidak akan diterima lagi. Untuk membersihkan agen di VPS, jalankan: {command}"
+  },
+  "errors": {
+    "save": "VPS gagal disimpan.",
+    "regenerate": "Token gagal dibuat ulang.",
+    "remove": "VPS gagal dihapus."
+  },
+  "report": {
+    "defaultSite": "Situs default (tanpa domain)",
+    "diskSub": "{used} terpakai · sisa {free} dari {total}",
+    "cpuSub": "{cores} core · load {load1} / {load5} / {load15} (1/5/15 mnt)",
+    "outdated": "Agen di VPS ini versi lama ({version}). Perbarui agar daftar website ikut terbaca. Jalankan di VPS (tanpa token baru):",
+    "copyUpdate": "Salin perintah update",
+    "sitesTitle": "Website & Sistem ({n})",
+    "sitesSource": "Dibaca dari konfigurasi nginx/apache",
+    "noSites": "Tidak ada website yang terkonfigurasi di nginx/apache.",
+    "alsoDomains": "juga: {domains}",
+    "proxyTo": "proxy ke",
+    "foldersTitle": "Folder di /var/www tanpa domain ({n})",
+    "foldersHint": "Tidak dipakai oleh konfigurasi web server mana pun. Bisa jadi sisa proyek lama yang aman dihapus; periksa dulu.",
+    "diskByFolder": "Pemakaian Disk per Folder",
+    "measuredAt": "Diukur {date} · diperbarui tiap 6 jam",
+    "noBreakdown": "Rincian folder belum tersedia.",
+    "os": "Sistem operasi",
+    "uptime": "Uptime",
+    "lastReport": "Laporan terakhir",
+    "agentVersion": "Versi agen"
+  }
+}

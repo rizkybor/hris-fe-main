@@ -4,7 +4,8 @@
 // Village selects (stored as codes, names filled in), other countries free
 // text. Then postal code and street address.
 import { computed, onMounted, ref, watch } from "vue";
-import { Globe, MapPin, Map as MapIcon, Building, Home, Mail as MailIcon, Hash } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+import { Globe, MapPin, Map as MapIcon, Building, Home, Mail as MailIcon } from "lucide-vue-next";
 import LicenseFormField from "@/components/admin/license-manager/LicenseFormField.vue";
 import SearchSelect from "@/components/admin/license-manager/SearchSelect.vue";
 import { COUNTRY_OPTIONS } from "@/components/admin/license-manager/countries";
@@ -18,6 +19,7 @@ const props = defineProps({
   inputClass: { type: Function, required: true },
 });
 
+const { t } = useI18n();
 const store = useLicenseManagerStore();
 
 const indonesia = computed(() => isIndonesia(form.value.country));
@@ -49,7 +51,7 @@ const load = async (level) => {
     lists.value[level] = await store.fetchRegions(level, parentCode);
   } catch {
     lists.value[level] = [];
-    loadError.value = "Could not load the region list. Check the connection and try again.";
+    loadError.value = t("licenses.location.loadError");
   } finally {
     loading.value[level] = false;
   }
@@ -96,22 +98,22 @@ watch(
 </script>
 
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-    <LicenseFormField field="country" label="Country" :required="required('country')" :error="fieldError('country')" wide v-slot="{ id }">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5">
+    <LicenseFormField field="country" :label="$t('licenses.location.country')" :required="required('country')"   :error="fieldError('country')" v-slot="{ id }">
       <SearchSelect
         :id="id"
         v-model="form.country"
         :options="COUNTRY_OPTIONS"
         :icon="Globe"
         :invalid="!!fieldError('country')"
-        placeholder="Choose a country"
-        search-placeholder="Search country..."
+        :placeholder="$t('licenses.location.chooseCountry')"
+        :search-placeholder="$t('licenses.location.searchCountry')"
       />
     </LicenseFormField>
 
     <!-- Indonesia: cascading region selects -->
     <template v-if="indonesia">
-      <LicenseFormField field="province_code" label="Province" :required="required('province_code')" :error="fieldError('province_code')" v-slot="{ id }">
+      <LicenseFormField field="province_code" :label="$t('licenses.location.province')" :required="required('province_code')" :error="fieldError('province_code')" v-slot="{ id }">
         <SearchSelect
           :id="id"
           :model-value="form.province_code"
@@ -119,12 +121,12 @@ watch(
           :loading="loading.province"
           :icon="MapIcon"
           :invalid="!!fieldError('province_code')"
-          placeholder="Choose a province"
-          search-placeholder="Search province..."
+          :placeholder="$t('licenses.location.chooseProvince')"
+          :search-placeholder="$t('licenses.location.searchProvince')"
           @change="(o) => pick('province', o)"
         />
       </LicenseFormField>
-      <LicenseFormField field="regency_code" label="City / Regency" :required="required('regency_code')" :error="fieldError('regency_code')" v-slot="{ id }">
+      <LicenseFormField field="regency_code" :label="$t('licenses.location.regency')" :required="required('regency_code')" :error="fieldError('regency_code')" v-slot="{ id }">
         <SearchSelect
           :id="id"
           :model-value="form.regency_code"
@@ -133,12 +135,12 @@ watch(
           :disabled="!form.province_code"
           :icon="Building"
           :invalid="!!fieldError('regency_code')"
-          :placeholder="form.province_code ? 'Choose a city / regency' : 'Choose a province first'"
-          search-placeholder="Search Kota / Kabupaten..."
+          :placeholder="form.province_code ? $t('licenses.location.chooseRegency') : $t('licenses.location.chooseProvinceFirst')"
+          :search-placeholder="$t('licenses.location.searchRegency')"
           @change="(o) => pick('regency', o)"
         />
       </LicenseFormField>
-      <LicenseFormField field="district_code" label="District (Kecamatan)" :required="required('district_code')" :error="fieldError('district_code')" v-slot="{ id }">
+      <LicenseFormField field="district_code" :label="$t('licenses.location.districtId')" :required="required('district_code')" :error="fieldError('district_code')" v-slot="{ id }">
         <SearchSelect
           :id="id"
           :model-value="form.district_code"
@@ -147,12 +149,12 @@ watch(
           :disabled="!form.regency_code"
           :icon="MapPin"
           :invalid="!!fieldError('district_code')"
-          :placeholder="form.regency_code ? 'Choose a district' : 'Choose a city / regency first'"
-          search-placeholder="Search Kecamatan..."
+          :placeholder="form.regency_code ? $t('licenses.location.chooseDistrict') : $t('licenses.location.chooseRegencyFirst')"
+          :search-placeholder="$t('licenses.location.searchDistrict')"
           @change="(o) => pick('district', o)"
         />
       </LicenseFormField>
-      <LicenseFormField field="village_code" label="Village (Kelurahan / Desa)" :required="required('village_code')" :error="fieldError('village_code')" v-slot="{ id }">
+      <LicenseFormField field="village_code" :label="$t('licenses.location.villageId')" :required="required('village_code')" :error="fieldError('village_code')" v-slot="{ id }">
         <SearchSelect
           :id="id"
           :model-value="form.village_code"
@@ -161,28 +163,28 @@ watch(
           :disabled="!form.district_code"
           :icon="Home"
           :invalid="!!fieldError('village_code')"
-          :placeholder="form.district_code ? 'Choose a village' : 'Choose a district first'"
-          search-placeholder="Search Kelurahan / Desa..."
+          :placeholder="form.district_code ? $t('licenses.location.chooseVillage') : $t('licenses.location.chooseDistrictFirst')"
+          :search-placeholder="$t('licenses.location.searchVillage')"
           @change="(o) => pick('village', o)"
         />
       </LicenseFormField>
-      <p v-if="loadError" class="md:col-span-2 text-xs text-red-600 -mt-2">{{ loadError }}</p>
+      <p v-if="loadError" class="md:col-span-2 text-ui-cap text-ui-bad -mt-2">{{ loadError }}</p>
     </template>
 
     <!-- Other countries: free text -->
     <template v-else>
-      <LicenseFormField field="province" label="State / Province" :required="required('province')" :error="fieldError('province')" :icon="MapIcon" v-slot="{ id }">
-        <input :id="id" v-model="form.province" type="text" autocomplete="address-level1" placeholder="e.g. Selangor" :class="inputClass('province')" />
+      <LicenseFormField field="province" :label="$t('licenses.location.state')" :required="required('province')" :error="fieldError('province')" :icon="MapIcon" v-slot="{ id }">
+        <input :id="id" v-model="form.province" type="text" autocomplete="address-level1" :placeholder="$t('licenses.location.statePlaceholder')" :class="inputClass('province')" />
       </LicenseFormField>
-      <LicenseFormField field="regency" label="City" :required="required('regency')" :error="fieldError('regency')" :icon="Building" v-slot="{ id }">
-        <input :id="id" v-model="form.regency" type="text" autocomplete="address-level2" placeholder="e.g. Shah Alam" :class="inputClass('regency')" />
+      <LicenseFormField field="regency" :label="$t('licenses.location.city')" :required="required('regency')" :error="fieldError('regency')" :icon="Building" v-slot="{ id }">
+        <input :id="id" v-model="form.regency" type="text" autocomplete="address-level2" :placeholder="$t('licenses.location.cityPlaceholder')" :class="inputClass('regency')" />
       </LicenseFormField>
-      <LicenseFormField field="district" label="District" :required="required('district')" :error="fieldError('district')" :icon="MapPin" v-slot="{ id }">
+      <LicenseFormField field="district" :label="$t('licenses.location.district')" :required="required('district')" :error="fieldError('district')" :icon="MapPin" v-slot="{ id }">
         <input :id="id" v-model="form.district" type="text" autocomplete="address-level3" :class="inputClass('district')" />
       </LicenseFormField>
     </template>
 
-    <LicenseFormField field="postal_code" label="Postal Code" :required="required('postal_code')" :error="fieldError('postal_code')" :icon="MailIcon" v-slot="{ id }">
+    <LicenseFormField field="postal_code" :label="$t('licenses.location.postalCode')" :required="required('postal_code')" :error="fieldError('postal_code')" :icon="MailIcon" v-slot="{ id }">
       <input
         :id="id"
         v-model.trim="form.postal_code"
@@ -190,19 +192,19 @@ watch(
         :inputmode="indonesia ? 'numeric' : 'text'"
         :maxlength="indonesia ? 5 : 20"
         autocomplete="postal-code"
-        :placeholder="indonesia ? 'e.g. 10110' : 'e.g. 40000'"
+        :placeholder="$t('licenses.location.postalPlaceholder', { example: indonesia ? '10110' : '40000' })"
         :class="inputClass('postal_code')"
       />
     </LicenseFormField>
 
-    <LicenseFormField field="address" label="Street Address" :required="required('address')" :error="fieldError('address')" :icon="Hash" wide v-slot="{ id }">
+    <LicenseFormField field="address" :label="$t('licenses.location.address')" :required="required('address')" :error="fieldError('address')" wide v-slot="{ id }">
       <textarea
         :id="id"
         v-model="form.address"
         rows="2"
         autocomplete="street-address"
-        placeholder="Street, number, building, RT/RW"
-        :class="[inputClass('address'), 'font-normal resize-none']"
+        :placeholder="$t('licenses.location.addressPlaceholder')"
+        :class="[inputClass('address', false), 'resize-y']"
       ></textarea>
     </LicenseFormField>
   </div>

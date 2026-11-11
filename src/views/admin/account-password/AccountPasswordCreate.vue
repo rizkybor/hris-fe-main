@@ -2,7 +2,6 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import {
-  ShieldCheck,
   Eye,
   EyeOff,
   Save,
@@ -13,10 +12,14 @@ import {
   User,
   IdCard,
   Lock,
+  ArrowLeft,
 } from "lucide-vue-next";
-import Alert from "@/components/common/Alert.vue";
+import { UiPageHeader, UiButton, UiCard, UiInput, UiAlert } from "@/components/ui";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
 import { errorMessage } from "@/helpers/errorHelper";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const router = useRouter();
 const passwordStore = useAccountPasswordStore();
@@ -51,10 +54,17 @@ const passwordStrength = computed(() => {
   if (/[0-9]/.test(value)) score++;
   if (/[^A-Za-z0-9]/.test(value)) score++;
 
-  if (score <= 1) return { score: 1, label: "Lemah", color: "bg-red-500" };
-  if (score <= 3) return { score: 2, label: "Cukup", color: "bg-amber-500" };
-  return { score: 3, label: "Kuat", color: "bg-emerald-500" };
+  if (score <= 1) return { score: 1, label: t("credentials.strength.weak"), color: "bg-red-500" };
+  if (score <= 3) return { score: 2, label: t("credentials.strength.fair"), color: "bg-amber-500" };
+  return { score: 3, label: t("credentials.strength.strong"), color: "bg-emerald-500" };
 });
+
+// Strength meter segments in token colours (score 1-3 from passwordStrength).
+const STRENGTH_TONE = {
+  1: { bar: "bg-ui-bad", text: "text-ui-bad" },
+  2: { bar: "bg-ui-warn", text: "text-ui-warn" },
+  3: { bar: "bg-ui-ok", text: "text-ui-ok" },
+};
 
 const submit = async () => {
   error.value = "";
@@ -65,7 +75,7 @@ const submit = async () => {
     !form.value.username_email ||
     !form.value.password
   ) {
-    error.value = "Password Label, Username/Email, and Password are required.";
+    error.value = t("credentials.form.createRequired");
     return;
   }
 
@@ -73,13 +83,13 @@ const submit = async () => {
   try {
     await passwordStore.createAccount(form.value);
 
-    success.value = "Credential saved successfully.";
+    success.value = t("credentials.form.saveSuccess");
 
     setTimeout(() => {
       router.push({ name: "admin.account-password.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = errorMessage(err, "Failed to save credential.");
+    error.value = errorMessage(err, t("credentials.form.saveFailed"));
   } finally {
     loading.value = false;
   }
@@ -87,206 +97,143 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto">
-    <!-- Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex items-center gap-3">
-        <div
-          class="w-12 h-12 bg-violet-50 rounded-[12px] flex items-center justify-center"
-        >
-          <ShieldCheck class="w-6 h-6 text-violet-600" />
-        </div>
-        <div>
-          <h1 class="text-brand-dark text-xl font-bold">
-            Create Credential Account
-          </h1>
-          <p class="text-brand-light text-sm">
-            Save system or internal service password credentials
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div class="mb-6">
-      <Transition name="fade">
-        <Alert
-          v-if="error"
-          type="danger"
-          :title="error"
-          message=""
-          :show="!!error"
-          @close="error = ''"
-        />
-      </Transition>
-      <Transition name="fade">
-        <Alert v-if="success" type="success" :title="success" message="" :show="!!success" />
-      </Transition>
-    </div>
-
-    <form @submit.prevent="submit" class="space-y-6">
-      <!-- Account Detail -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <IdCard class="w-4.5 h-4.5 text-violet-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Detail Akun</h4>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div class="md:col-span-2">
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Password Label *</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Tag class="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                v-model="form.label_password"
-                type="text"
-                placeholder="e.g. ERP Finance Admin, VPN Office"
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Username / Email *</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <User class="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                v-model="form.username_email"
-                type="text"
-                placeholder="e.g. admin@company.com / admin.erp"
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-brand-dark text-sm font-semibold mb-1.5">Website (Optional)</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Globe class="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                v-model="form.website"
-                type="url"
-                placeholder="https://example.com"
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-semibold"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Password -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <Lock class="w-4.5 h-4.5 text-violet-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Password</h4>
-        </div>
-
-        <label class="block text-brand-dark text-sm font-semibold mb-1.5">Password *</label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Key class="w-5 h-5 text-gray-400" />
-          </div>
-
-          <input
-            v-model="form.password"
-            :type="showPassword ? 'text' : 'password'"
-            placeholder="Enter secure password"
-            class="w-full pl-12 pr-12 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-mono"
-          />
-
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <form @submit.prevent="submit" class="space-y-5">
+      <UiPageHeader :title="$t('credentials.form.createTitle')" :subtitle="$t('credentials.form.createSubtitle')">
+        <template #eyebrow>
           <button
             type="button"
-            @click="togglePassword"
-            class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            @click="$router.back()"
+            class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
+            :aria-label="$t('common.actions.back')"
           >
-            <Eye v-if="!showPassword" class="w-5 h-5" />
-            <EyeOff v-else class="w-5 h-5" />
+            <ArrowLeft class="w-4 h-4" />
+            {{ $t("common.actions.back") }}
           </button>
-        </div>
-
-        <div v-if="form.password" class="flex items-center gap-2 mt-2.5">
-          <div class="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden flex gap-0.5">
-            <div
-              v-for="i in 3"
-              :key="i"
-              class="flex-1 h-full rounded-full transition-colors"
-              :class="i <= passwordStrength.score ? passwordStrength.color : 'bg-gray-100'"
-            ></div>
+        </template>
+        <template #actions>
+          <div class="hidden sm:flex items-center gap-2">
+            <UiButton variant="secondary" @click="$router.back()">{{ $t("common.actions.cancel") }}</UiButton>
+            <UiButton type="submit" :icon="Save" :loading="loading">
+              {{ loading ? $t("common.actions.saving") : $t("credentials.form.saveCredential") }}
+            </UiButton>
           </div>
-          <span class="text-xs font-semibold shrink-0" :class="{
-            'text-red-600': passwordStrength.score === 1,
-            'text-amber-600': passwordStrength.score === 2,
-            'text-emerald-600': passwordStrength.score === 3,
-          }">{{ passwordStrength.label }}</span>
-        </div>
+        </template>
+      </UiPageHeader>
+
+      <div v-if="error || success" class="space-y-3">
+        <Transition name="ui-fade">
+          <UiAlert v-if="error" tone="bad" :title="error" />
+        </Transition>
+        <Transition name="ui-fade">
+          <UiAlert v-if="success" tone="ok" :title="success" />
+        </Transition>
       </div>
 
-      <!-- Notes -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-gray-100 rounded-[10px] flex items-center justify-center shrink-0">
-            <FileText class="w-4.5 h-4.5 text-gray-500" />
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start ui-stagger">
+        <!-- Account Detail -->
+        <UiCard>
+          <template #header>
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><IdCard class="w-4 h-4" /></span>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("credentials.form.accountDetail") }}</h3>
+            </div>
+          </template>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            <UiInput
+              class="md:col-span-2"
+              v-model="form.label_password"
+              :label="$t('credentials.form.labelRequired')"
+              :icon="Tag"
+              :placeholder="$t('credentials.form.labelPlaceholder')"
+            />
+            <UiInput
+              v-model="form.username_email"
+              :label="$t('credentials.form.usernameRequired')"
+              mono
+              :icon="User"
+              :placeholder="$t('credentials.form.usernamePlaceholder')"
+            />
+            <UiInput
+              v-model="form.website"
+              type="url"
+              :label="$t('credentials.form.websiteOptional')"
+              mono
+              :icon="Globe"
+              placeholder="https://example.com"
+            />
           </div>
-          <h4 class="text-brand-dark font-bold">Catatan</h4>
-        </div>
+        </UiCard>
 
-        <label class="block text-brand-dark text-sm font-semibold mb-1.5">Notes (Optional)</label>
-        <div class="relative">
-          <div class="absolute top-3 left-4 pointer-events-none">
-            <FileText class="w-5 h-5 text-gray-400" />
+        <!-- Password -->
+        <UiCard>
+          <template #header>
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><Lock class="w-4 h-4" /></span>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("credentials.fields.password") }}</h3>
+            </div>
+          </template>
+          <label for="credential-password" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("credentials.form.passwordRequired") }}</label>
+          <div class="relative">
+            <Key class="absolute left-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
+            <input
+              id="credential-password"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              autocomplete="new-password"
+              :placeholder="$t('credentials.form.passwordPlaceholder')"
+              class="w-full h-[38px] pl-9 pr-10 bg-ui-surface font-mono text-ui-small text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+            />
+            <button
+              type="button"
+              @click="togglePassword"
+              class="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:text-ui-ink hover:bg-ui-hover"
+              :aria-label="showPassword ? $t('common.a11y.hidePassword') : $t('common.a11y.showPassword')"
+              :aria-pressed="showPassword"
+            >
+              <Eye v-if="!showPassword" class="w-4 h-4" />
+              <EyeOff v-else class="w-4 h-4" />
+            </button>
           </div>
-          <textarea
+
+          <div v-if="form.password" class="flex items-center gap-2.5 mt-3">
+            <div class="flex-1 flex gap-1">
+              <div
+                v-for="i in 3"
+                :key="i"
+                class="flex-1 h-1.5 rounded-full transition-colors"
+                :class="i <= passwordStrength.score ? STRENGTH_TONE[passwordStrength.score].bar : 'bg-ui-subtle'"
+              ></div>
+            </div>
+            <span class="text-ui-cap font-medium shrink-0" :class="STRENGTH_TONE[passwordStrength.score]?.text">{{ passwordStrength.label }}</span>
+          </div>
+        </UiCard>
+
+        <!-- Notes -->
+        <UiCard class="lg:col-span-2">
+          <template #header>
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><FileText class="w-4 h-4" /></span>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("common.labels.notes") }}</h3>
+            </div>
+          </template>
+          <UiInput
             v-model="form.notes"
-            rows="4"
-            placeholder="Additional notes or instructions..."
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 font-normal resize-none"
-          ></textarea>
-        </div>
+            :rows="4"
+            :label="$t('credentials.form.notesOptional')"
+            :icon="FileText"
+            :placeholder="$t('credentials.form.notesPlaceholder')"
+          />
+        </UiCard>
       </div>
 
-      <!-- Actions -->
-      <div class="flex flex-col sm:flex-row gap-3">
-        <button
-          type="button"
-          @click="$router.back()"
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-violet-400 hover:bg-violet-50/30 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full sm:w-auto btn-primary rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          <Save class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">
-            {{ loading ? "Saving..." : "Save Credential" }}
-          </span>
-        </button>
+      <!-- Actions (phones) -->
+      <div class="sm:hidden grid grid-cols-2 gap-2">
+        <UiButton variant="secondary" size="lg" block @click="$router.back()">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" size="lg" block :icon="Save" :loading="loading">
+          {{ loading ? $t("common.actions.saving") : $t("credentials.form.saveCredential") }}
+        </UiButton>
       </div>
     </form>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>

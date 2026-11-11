@@ -4,6 +4,8 @@ import { Wrench, Plus, PiggyBank, ChevronRight } from "lucide-vue-next";
 import { useMaintenanceStore } from "@/stores/maintenance";
 import { can } from "@/helpers/permissionHelper";
 import { formatHours, formatMonth, CONTRACT_STATUS, usageColor } from "@/utils/maintenance";
+import { UiEmpty } from "@/components/ui";
+import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
 // Maintenance contracts of one client or project, on their detail pages.
 const props = defineProps({
@@ -29,54 +31,52 @@ const createQuery = () => ({ new: 1, ...(props.clientId ? { client_id: props.cli
 </script>
 
 <template>
-  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-    <div class="flex items-center justify-between gap-3 mb-4">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 bg-teal-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <Wrench class="w-4 h-4 text-teal-600" />
-        </div>
-        <div>
-          <h4 class="text-brand-dark font-bold">Maintenance</h4>
-          <p class="text-brand-light text-xs">Optional — monthly maintenance hour quota</p>
+  <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div class="flex items-start gap-2.5 min-w-0">
+        <Wrench class="w-4 h-4 text-ui-faint shrink-0 mt-1" />
+        <div class="min-w-0">
+          <h4 class="text-ui-h2 text-ui-ink">{{ $t("maintenance.panel.title") }}</h4>
+          <p class="text-ui-cap text-ui-muted">{{ $t("maintenance.panel.subtitle") }}</p>
         </div>
       </div>
       <router-link
         v-if="can('maintenance-create')"
         :to="{ name: 'admin.maintenance.dashboard', query: createQuery() }"
-        class="text-xs font-semibold text-[#0C51D9] inline-flex items-center gap-1 hover:underline shrink-0"
+        class="text-ui-small font-medium text-ui-accent inline-flex items-center gap-1 hover:underline shrink-0"
       >
-        <Plus class="w-3.5 h-3.5" /> New contract
+        <Plus class="w-3.5 h-3.5" /> {{ $t("maintenance.panel.newContract") }}
       </router-link>
     </div>
 
-    <div v-if="!loaded" class="h-16 bg-gray-100 rounded-[12px] animate-pulse"></div>
-    <div v-else-if="!contracts.length" class="text-center py-6 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD]">
-      <p class="text-sm font-semibold">No maintenance contract</p>
+    <Skeleton v-if="!loaded" height="72px" rounded="12px" />
+    <div v-else-if="!contracts.length" class="rounded-ui-card border border-dashed border-ui-line-strong">
+      <UiEmpty :icon="Wrench" :title="$t('maintenance.panel.empty')" compact />
     </div>
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <router-link
         v-for="c in contracts"
         :key="c.id"
         :to="{ name: 'admin.maintenance.detail', params: { id: c.id } }"
-        class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] hover:shadow-sm transition-all"
+        class="ui-lift group block bg-ui-surface border border-ui-line rounded-ui-card p-4 hover:border-ui-line-strong"
       >
         <div class="flex items-center justify-between gap-2 mb-2">
-          <p class="text-brand-dark text-sm font-bold truncate">{{ c.name }}</p>
-          <span class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0" :class="CONTRACT_STATUS[c.status]?.class">{{ CONTRACT_STATUS[c.status]?.label }}</span>
+          <p class="text-ui-h3 text-ui-ink truncate">{{ c.name }}</p>
+          <span class="inline-flex items-center h-5 px-1.5 rounded-md text-ui-cap font-medium shrink-0" :class="CONTRACT_STATUS[c.status]?.class">{{ CONTRACT_STATUS[c.status]?.label }}</span>
         </div>
         <template v-if="c.current_period">
-          <p class="text-xs text-brand-light">
-            <strong class="text-brand-dark text-sm">{{ formatHours(c.current_period.remaining) }}</strong> left of {{ formatHours(c.current_period.total) }} · {{ formatMonth(c.current_period.month) }}
+          <p class="text-ui-cap text-ui-muted">
+            <strong class="text-ui-small font-medium text-ui-ink tabular-nums">{{ formatHours(c.current_period.remaining) }}</strong> {{ $t("maintenance.common.leftOf", { total: formatHours(c.current_period.total) }) }} · {{ formatMonth(c.current_period.month) }}
           </p>
-          <div class="w-full bg-gray-100 rounded-full overflow-hidden mt-1.5" style="height: 6px">
+          <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden mt-1.5">
             <div class="h-full rounded-full" :style="{ width: `${Math.min(c.current_period.used_percent, 100)}%`, backgroundColor: usageColor(c.current_period) }"></div>
           </div>
         </template>
-        <div class="flex items-center justify-between text-xs text-gray-500 mt-2.5">
-          <span class="inline-flex items-center gap-1"><PiggyBank class="w-3.5 h-3.5" /> {{ formatHours(c.balance_hours) }} balance</span>
-          <ChevronRight class="w-4 h-4" />
+        <div class="flex items-center justify-between text-ui-cap text-ui-muted mt-2.5">
+          <span class="inline-flex items-center gap-1 tabular-nums"><PiggyBank class="w-3.5 h-3.5" /> {{ $t("maintenance.common.balance", { hours: formatHours(c.balance_hours) }) }}</span>
+          <ChevronRight class="w-4 h-4 text-ui-faint group-hover:text-ui-ink" />
         </div>
       </router-link>
     </div>
-  </div>
+  </section>
 </template>

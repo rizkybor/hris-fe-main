@@ -10,8 +10,6 @@ import {
   Banknote,
   Plus,
   FileText,
-  TrendingUp,
-  Star,
   Calendar,
   Users,
   Eye,
@@ -19,13 +17,17 @@ import {
   Gift,
   Trash2,
   RefreshCw,
+  CheckCircle,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import { can, hasAnyRole } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
-import Skeleton from "@/components/common/skeleton/Skeleton.vue";
-import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+import { UiBadge, UiButton, UiEmpty, UiPageHeader, UiStat, UiTable } from "@/components/ui";
+
+const { t } = useI18n();
 
 const router = useRouter();
 const payrollStore = usePayrollStore();
@@ -45,10 +47,10 @@ onMounted(async () => {
 const canManagePayroll = computed(() => hasAnyRole(["superadmin", "manager", "finance"]));
 
 const handleDeletePayroll = async (payroll) => {
-  const label = payroll.type === "thr" ? "THR" : "Payroll";
+  const label = payroll.type === "thr" ? "THR" : t("payroll.common.payroll");
   const ok = await alertModal.confirm(
-    `Delete this ${label} period (${formatDate(payroll.period || payroll.salary_month)})? This permanently removes it and all its employee details.`,
-    { type: "danger", confirmText: "Delete" }
+    t("payroll.dashboard.deleteConfirm", { label, period: formatDate(payroll.period || payroll.salary_month) }),
+    { type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
 
@@ -58,17 +60,17 @@ const handleDeletePayroll = async (payroll) => {
     await fetchList();
   } catch (error) {
     await alertModal.alert(
-      error?.response?.data?.message || "Failed to delete payroll.",
+      error?.response?.data?.message || t("payroll.dashboard.deleteFailed"),
       { type: "danger" }
     );
   }
 };
 
 const handleRegenerate = async (payroll) => {
-  const label = payroll.type === "thr" ? "THR" : "Payroll";
+  const label = payroll.type === "thr" ? "THR" : t("payroll.common.payroll");
   const ok = await alertModal.confirm(
-    `Re-generate ${label} for ${formatDate(payroll.period || payroll.salary_month)}? This replaces the existing employee details for this period with freshly computed ones.`,
-    { type: "warning", confirmText: "Regenerate" }
+    t("payroll.dashboard.regenerateConfirm", { label, period: formatDate(payroll.period || payroll.salary_month) }),
+    { type: "warning", confirmText: t("payroll.common.regenerate") }
   );
   if (!ok) return;
 
@@ -82,14 +84,14 @@ const handleRegenerate = async (payroll) => {
       await payrollStore.generatePayroll(payload);
     }
     await alertModal.alert(
-      `${label} regeneration is being processed in the background. Please check back shortly.`,
+      t("payroll.dashboard.regenerateQueued", { label }),
       { type: "success" }
     );
     await payrollStore.fetchStatistics();
     await fetchList();
   } catch (error) {
     await alertModal.alert(
-      error?.response?.data?.message || `Failed to regenerate ${label}.`,
+      error?.response?.data?.message || t("payroll.dashboard.regenerateFailed", { label }),
       { type: "danger" }
     );
   }
@@ -100,28 +102,47 @@ const isTotalAmountVisible = ref(false);
 const isAverageSalaryVisible = ref(false);
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
   });
 };
 
 const formatProcessedDate = (date) => {
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 };
 
-const getStatusColor = (status) => {
-  const colors = {
-    pending: "bg-yellow-100 text-yellow-800",
-    processing: "bg-blue-100 text-blue-800",
-    paid: "bg-green-100 text-green-800",
-  };
-  return colors[status] || colors.pending;
+// Presentation only: payroll status -> badge tone + label.
+const STATUS_TONES = {
+  draft: "neutral",
+  pending: "warn",
+  processing: "warn",
+  approved: "info",
+  paid: "ok",
+  cancelled: "bad",
 };
+const statusOf = (status) =>
+  STATUS_TONES[status]
+    ? { tone: STATUS_TONES[status], label: t(`payroll.status.${status}`) }
+    : { tone: "neutral", label: status || t("payroll.status.pending") };
+
+const salaryChangeHint = computed(() => {
+  const change = statistics.value?.salary_change ?? 0;
+  return t("payroll.dashboard.changeThisMonth", { change: `${change >= 0 ? "+" : ""}${change}` });
+});
+
+const columns = computed(() => [
+  { key: "period", label: t("common.labels.period") },
+  { key: "employees", label: t("payroll.dashboard.columns.employees") },
+  { key: "processed", label: t("payroll.dashboard.columns.processed") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "total_amount", label: t("payroll.dashboard.columns.total"), align: "right" },
+  ...(canManagePayroll.value ? [{ key: "actions", label: "", align: "right", width: 96 }] : []),
+]);
 
 const viewDetails = (id) => {
   router.push({ name: "admin.payroll.detail", params: { id } });
@@ -129,379 +150,160 @@ const viewDetails = (id) => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <!-- Stats Layout -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <!-- Total Payroll Amount Card (spans 2 rows on the left) -->
-      <div
-        class="main-card lg:row-span-2 rounded-[14px] border border-[#0B1042] relative overflow-hidden p-5"
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('payroll.dashboard.title')" :subtitle="$t('payroll.dashboard.subtitle')">
+      <template #actions>
+        <UiButton variant="secondary" :icon="FileText" :to="{ name: 'admin.report.dashboard' }">{{ $t("payroll.dashboard.generateReports") }}</UiButton>
+        <UiButton
+          v-if="can('payroll-create')"
+          variant="secondary"
+          :icon="Gift"
+          :to="{ name: 'admin.payroll.create', query: { type: 'thr' } }"
+        >{{ $t("payroll.common.generateThr") }}</UiButton>
+        <UiButton v-if="can('payroll-create')" :icon="Plus" :to="{ name: 'admin.payroll.create' }">{{ $t("payroll.dashboard.createNew") }}</UiButton>
+      </template>
+    </UiPageHeader>
+
+    <!-- KPI tiles -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 ui-stagger">
+      <UiStat
+        class="col-span-2 lg:col-span-1"
+        :label="$t('payroll.dashboard.stats.totalAmount')"
+        :icon="DollarSign"
+        :loading="loading"
+        :hint="salaryChangeHint"
       >
-        <div class="flex flex-col justify-center h-full relative z-10">
-          <!-- Trending Badge -->
-          <div class="flex items-center gap-2 mb-3">
-            <div
-              class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm"
-            >
-              <TrendingUp class="w-3 h-3 text-white" />
-              <span class="text-brand-white text-xs font-semibold">
-                {{ (statistics.salary_change ?? 0) >= 0 ? "+" : ""
-                }}{{ statistics.salary_change ?? 0 }}% this month
-              </span>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex-1 min-w-0 pr-2">
-              <p class="text-brand-white-90 text-xs font-medium">
-                Total Payroll Amount
-              </p>
-              <div class="flex items-center gap-2 my-3">
-                <Skeleton
-                  v-if="loading"
-                  dark
-                  width="120px"
-                  height="2.5rem"
-                  rounded="8px"
-                />
-
-                <p
-                  v-else-if="isTotalAmountVisible"
-                  class="text-brand-white text-xl font-bold leading-none"
-                >
-                  {{ formatRupiahCompact(statistics.total_amount) }}
-                </p>
-
-                <p
-                  v-else
-                  class="text-brand-white text-xl font-bold leading-none tracking-widest"
-                >
-                  Rp ••••••
-                </p>
-
-                <button
-                  type="button"
-                  @click="isTotalAmountVisible = !isTotalAmountVisible"
-                  class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors shrink-0"
-                  :title="isTotalAmountVisible ? 'Hide amount' : 'Show amount'"
-                >
-                  <Eye v-if="!isTotalAmountVisible" class="w-4 h-4" />
-                  <EyeOff v-else class="w-4 h-4" />
-                </button>
-              </div>
-              <p class="text-brand-white-80 text-sm font-normal">
-                Monthly compensation
-              </p>
-            </div>
-            <div class="flex flex-col items-center gap-2 flex-shrink-0">
-              <div
-                class="w-21 h-21 p-4 bg-white rounded-[14px] flex items-center justify-center"
-              >
-                <DollarSign class="w-21 h-21 text-brand-primary" />
-              </div>
-            </div>
-          </div>
-
-          <!-- Additional Info -->
-          <div class="flex items-center gap-3 mt-auto">
-            <div class="flex items-center gap-1">
-              <div
-                class="w-2 h-2 bg-green-400 rounded-full animate-pulse"
-              ></div>
-              <span class="text-brand-white-70 text-[11px] font-normal"
-                >All Departments</span
-              >
-            </div>
-            <div class="flex items-center gap-1">
-              <Star class="w-3 h-3 text-white opacity-70" />
-              <span class="text-brand-white-70 text-[11px] font-normal"
-                >On Schedule</span
-              >
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 1 Stats Cards -->
-      <!-- Employees Paid -->
-      <div
-        class="stats-card bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex-1 min-w-0 pr-2">
-            <p class="text-brand-dark text-xs font-medium">Employees Paid</p>
-            <Skeleton
-              v-if="loading"
-              width="50px"
-              height="1.5rem"
-              rounded="6px"
-              class="my-1.5"
-            />
-            <p
-              v-else
-              class="text-brand-dark text-2xl font-extrabold leading-tight my-1.5 truncate"
-            >
-              {{ statistics.total_payroll }}
-            </p>
-            <p class="text-success text-xs font-medium">This month</p>
-          </div>
-          <div
-            class="w-10 h-10 bg-green-50 rounded-[10px] flex items-center justify-center flex-shrink-0"
+        <span class="inline-flex items-center gap-1.5">
+          <span>{{ isTotalAmountVisible ? formatRupiahCompact(statistics.total_amount) : "Rp ••••••" }}</span>
+          <button
+            type="button"
+            class="ui-press w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
+            :title="isTotalAmountVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
+            :aria-label="isTotalAmountVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
+            @click="isTotalAmountVisible = !isTotalAmountVisible"
           >
-            <UserCheck class="w-5 h-5 text-green-600" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Pending Payments -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex-1 min-w-0 pr-2">
-            <p class="text-brand-dark text-xs font-medium">Pending Payments</p>
-            <Skeleton
-              v-if="loading"
-              width="50px"
-              height="1.5rem"
-              rounded="6px"
-              class="my-1.5"
-            />
-            <p
-              v-else
-              class="text-brand-dark text-2xl font-extrabold leading-tight my-1.5 truncate"
-            >
-              {{ statistics.pending_review }}
-            </p>
-            <p class="text-danger text-xs font-medium">Need approval</p>
-          </div>
-          <div
-            class="w-10 h-10 bg-red-50 rounded-[10px] flex items-center justify-center flex-shrink-0"
+            <EyeOff v-if="isTotalAmountVisible" class="w-4 h-4" /><Eye v-else class="w-4 h-4" />
+          </button>
+        </span>
+      </UiStat>
+      <UiStat :label="$t('payroll.dashboard.stats.employeesPaid')" :icon="UserCheck" :loading="loading" :value="statistics.total_payroll ?? 0" :hint="$t('payroll.dashboard.stats.thisMonth')" />
+      <UiStat
+        :label="$t('payroll.dashboard.stats.pending')"
+        :icon="Clock"
+        :loading="loading"
+        :value="statistics.pending_review ?? 0"
+        :tone="statistics.pending_review ? 'warn' : ''"
+        :hint="$t('payroll.dashboard.stats.needApproval')"
+      />
+      <UiStat :label="$t('payroll.dashboard.stats.averageSalary')" :icon="Banknote" :loading="loading" :hint="$t('payroll.dashboard.stats.perEmployee')">
+        <span class="inline-flex items-center gap-1.5">
+          <span>{{ isAverageSalaryVisible ? formatRupiahCompact(statistics.average_salary) : "Rp ••••••" }}</span>
+          <button
+            type="button"
+            class="ui-press w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
+            :title="isAverageSalaryVisible ? $t('payroll.dashboard.hideSalary') : $t('payroll.dashboard.showSalary')"
+            :aria-label="isAverageSalaryVisible ? $t('payroll.dashboard.hideSalary') : $t('payroll.dashboard.showSalary')"
+            @click="isAverageSalaryVisible = !isAverageSalaryVisible"
           >
-            <Clock class="w-5 h-5 text-red-600" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Actions Card (spans 2 rows on the right) -->
-      <div
-        class="lg:row-span-2 bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <h3 class="text-brand-dark text-base font-bold mb-3.5">
-          Payroll Actions
-        </h3>
-        <div class="space-y-3">
-          <RouterLink
-            v-if="can('payroll-create')"
-            :to="{ name: 'admin.payroll.create' }"
-            class="btn-secondary w-full text-left rounded-[10px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center gap-2"
-          >
-            <Plus class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-xs font-semibold"
-              >Create New Payroll</span
-            >
-          </RouterLink>
-
-          <RouterLink
-            v-if="can('payroll-create')"
-            :to="{ name: 'admin.payroll.create', query: { type: 'thr' } }"
-            class="bg-white btn-secondary w-full text-left border border-purple-200 rounded-[10px] hover:border-purple-400 hover:border-2 focus:border-purple-400 focus:border-2 focus:bg-white transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2"
-          >
-            <Gift class="w-4 h-4 text-purple-600" />
-            <span class="text-brand-dark text-xs font-medium">Generate THR</span>
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'admin.report.dashboard' }"
-            class="bg-white btn-secondary w-full text-left border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2"
-          >
-            <FileText class="w-4 h-4 text-gray-600" />
-            <span class="text-brand-dark text-xs font-medium"
-              >Generate Reports</span
-            >
-          </RouterLink>
-        </div>
-      </div>
-
-      <!-- Row 2 Stats Cards -->
-      <!-- Average Salary -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex-1 min-w-0 pr-2">
-            <p class="text-brand-dark text-xs font-medium">Average Salary</p>
-            <Skeleton
-              v-if="loading"
-              width="80px"
-              height="1.5rem"
-              rounded="6px"
-              class="my-1.5"
-            />
-            <p
-              v-else-if="isAverageSalaryVisible"
-              class="text-brand-dark text-xl lg:text-xl font-extrabold leading-tight my-1.5"
-            >
-              {{ formatRupiahCompact(statistics.average_salary) }}
-            </p>
-            <p
-              v-else
-              class="text-brand-dark text-xl lg:text-xl font-extrabold leading-tight my-1.5 tracking-widest"
-            >
-              Rp ••••••
-            </p>
-            <p class="text-success text-xs font-medium">Per employee</p>
-          </div>
-          <div class="flex items-center gap-1.5 flex-shrink-0">
-            <button
-              type="button"
-              @click="isAverageSalaryVisible = !isAverageSalaryVisible"
-              class="w-7 h-7 rounded-full flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-colors"
-              :title="isAverageSalaryVisible ? 'Hide salary' : 'Show salary'"
-            >
-              <Eye v-if="!isAverageSalaryVisible" class="w-3.5 h-3.5" />
-              <EyeOff v-else class="w-3.5 h-3.5" />
-            </button>
-            <div
-              class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center"
-            >
-              <Banknote class="w-5 h-5 text-blue-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Finalized Payrolls -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex-1 min-w-0 pr-2">
-            <p class="text-brand-dark text-xs font-medium">Finalized</p>
-            <Skeleton
-              v-if="loading"
-              width="50px"
-              height="1.5rem"
-              rounded="6px"
-              class="my-1.5"
-            />
-            <p
-              v-else
-              class="text-brand-dark text-2xl font-extrabold leading-tight my-1.5 truncate"
-            >
-              {{ statistics.finalized }}
-            </p>
-            <p class="text-purple-600 text-xs font-medium">This month</p>
-          </div>
-          <div
-            class="w-10 h-10 bg-purple-50 rounded-[10px] flex items-center justify-center flex-shrink-0"
-          >
-            <Clock class="w-5 h-5 text-purple-600" />
-          </div>
-        </div>
-      </div>
+            <EyeOff v-if="isAverageSalaryVisible" class="w-4 h-4" /><Eye v-else class="w-4 h-4" />
+          </button>
+        </span>
+      </UiStat>
+      <UiStat :label="$t('payroll.dashboard.stats.finalized')" :icon="CheckCircle" :loading="loading" :value="statistics.finalized ?? 0" :hint="$t('payroll.dashboard.stats.thisMonth')" />
     </div>
 
     <Alert type="success" :title="success" :show="success" @close="payrollStore.clearMessages()" />
 
     <!-- Monthly Payroll Periods -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-4 sm:p-5">
-      <div class="flex items-center justify-between mb-3.5">
-        <h3 class="text-brand-dark text-base font-bold">
-          Monthly Payroll Periods
-        </h3>
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+      <div class="px-4 sm:px-5 pt-4 pb-3 border-b border-ui-line">
+        <h2 class="text-ui-h2 text-ui-ink">{{ $t("payroll.dashboard.periodsTitle") }}</h2>
+        <p class="text-ui-cap text-ui-muted">{{ $t("payroll.dashboard.periodsSubtitle") }}</p>
       </div>
-      <SkeletonList v-if="loading" :rows="3" />
 
-      <div v-else class="space-y-3.5">
-        <div
-          v-for="payroll in payrolls"
-          :key="payroll.id"
-          @click="viewDetails(payroll.id)"
-          class="flex flex-col sm:flex-row sm:items-center gap-3.5 p-3.5 border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 cursor-pointer"
-        >
-          <div class="flex items-center gap-3.5">
-            <div
-              class="w-12 h-12 shrink-0 relative flex items-center justify-center rounded-[10px] overflow-hidden"
-            >
-              <!-- Background -->
-              <div
-                class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-[10px]"
-              ></div>
-              <!-- Icon -->
-              <Calendar class="w-6 h-6 text-white relative z-10" />
-            </div>
+      <UiTable
+        :columns="columns"
+        :rows="payrolls"
+        :loading="loading"
+        :skeleton-rows="4"
+        clickable
+        @row-click="(row) => viewDetails(row.id)"
+      >
+        <template #cell-period="{ row }">
+          <span class="inline-flex items-center gap-2">
+            <Calendar class="w-4 h-4 text-ui-faint shrink-0" />
+            <span class="text-ui-ink font-medium">{{ formatDate(row.period) }}</span>
+            <UiBadge v-if="row.type === 'thr'" tone="accent">THR</UiBadge>
+          </span>
+        </template>
+        <template #cell-employees="{ row }">
+          <span class="inline-flex items-center gap-1.5 tabular-nums">
+            <Users class="w-3.5 h-3.5 text-ui-faint" />{{ $t("payroll.common.employeesCount", { n: row.employee_count || 0 }, row.employee_count || 0) }}
+          </span>
+        </template>
+        <template #cell-processed="{ row }">
+          <span class="text-ui-muted">{{ formatProcessedDate(row.created_at) }}</span>
+        </template>
+        <template #cell-status="{ row }">
+          <UiBadge :tone="statusOf(row.status).tone" dot>{{ statusOf(row.status).label }}</UiBadge>
+        </template>
+        <template #cell-total_amount="{ row }">
+          <span class="tabular-nums text-ui-ink font-medium">{{ isTotalAmountVisible ? formatRupiahCompact(row.total_amount) : "Rp ••••••" }}</span>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-1">
+            <UiButton variant="ghost" size="sm" :icon="RefreshCw" :title="$t('payroll.common.regenerate')" :aria-label="$t('payroll.common.regenerate')" @click.stop="handleRegenerate(row)" />
+            <UiButton variant="ghost" size="sm" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" class="!text-ui-bad" @click.stop="handleDeletePayroll(row)" />
+          </div>
+        </template>
+
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <p class="text-brand-dark text-sm font-bold">
-                  {{ formatDate(payroll.period) }}
-                </p>
-                <span
-                  v-if="payroll.type === 'thr'"
-                  class="px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-700 flex items-center gap-1"
-                >
-                  <Gift class="w-3 h-3" /> THR
-                </span>
-              </div>
-              <div class="flex items-center gap-2">
-                <Users class="w-3.5 h-3.5 text-gray-600 shrink-0" />
-                <p class="text-brand-dark text-xs font-normal">
-                  {{ payroll.employee_count || 0 }} employees • All departments
-                </p>
-              </div>
-              <p class="text-brand-light text-[11px] font-normal mt-1">
-                Processed on {{ formatProcessedDate(payroll.created_at) }}
+              <p class="text-ui-body font-medium text-ui-ink truncate">{{ formatDate(row.period) }}</p>
+              <p class="text-ui-cap text-ui-muted mt-0.5 tabular-nums">
+                {{ $t("payroll.common.employeesCount", { n: row.employee_count || 0 }, row.employee_count || 0) }} · {{ formatProcessedDate(row.created_at) }}
               </p>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between gap-4 sm:flex-1">
-            <div class="flex flex-col justify-center items-center shrink-0">
-              <span
-                :class="[
-                  'px-2 py-0.5 rounded-md text-xs font-semibold',
-                  getStatusColor(payroll.status),
-                ]"
-              >
-                {{ payroll.status }}
-              </span>
-            </div>
-            <div class="flex-1 flex flex-col justify-center items-center">
-              <div class="text-left">
-                <p class="text-brand-dark text-sm font-bold">
-                  {{ isTotalAmountVisible ? formatRupiahCompact(payroll.total_amount) : "Rp ••••••" }}
-                </p>
-                <p class="text-brand-light text-xs font-normal">
-                  Total payroll
-                </p>
+              <div class="flex items-center gap-1.5 mt-1.5">
+                <UiBadge v-if="row.type === 'thr'" tone="accent">THR</UiBadge>
+                <UiBadge :tone="statusOf(row.status).tone" dot>{{ statusOf(row.status).label }}</UiBadge>
               </div>
             </div>
-            <button
-              v-if="canManagePayroll"
-              @click.stop="handleRegenerate(payroll)"
-              title="Regenerate"
-              class="shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-yellow-500 hover:text-yellow-600 transition-all duration-300 p-2.5 flex items-center justify-center"
-            >
-              <RefreshCw class="w-4 h-4" />
-            </button>
-            <button
-              v-if="canManagePayroll"
-              @click.stop="handleDeletePayroll(payroll)"
-              title="Delete"
-              class="shrink-0 border border-[#DCDEDD] rounded-xl hover:ring-2 hover:ring-red-500 hover:text-red-600 transition-all duration-300 p-2.5 flex items-center justify-center"
-            >
-              <Trash2 class="w-4 h-4" />
-            </button>
+            <div class="text-right shrink-0">
+              <p class="text-ui-body font-medium text-ui-ink tabular-nums">
+                {{ isTotalAmountVisible ? formatRupiahCompact(row.total_amount) : "Rp ••••••" }}
+              </p>
+              <div v-if="canManagePayroll" class="flex items-center justify-end gap-0.5 mt-1">
+                <button
+                  type="button"
+                  class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover"
+                  :title="$t('payroll.common.regenerate')"
+                  :aria-label="$t('payroll.common.regenerate')"
+                  @click.stop="handleRegenerate(row)"
+                >
+                  <RefreshCw class="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-bad hover:bg-ui-bad-soft"
+                  :title="$t('common.actions.delete')"
+                  :aria-label="$t('common.actions.delete')"
+                  @click.stop="handleDeletePayroll(row)"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        </template>
 
-        <div
-          v-if="!loading && payrolls.length === 0"
-          class="text-center py-12 text-gray-500"
-        >
-          <p class="text-base font-semibold">No payroll data found</p>
-          <p class="text-xs">Create your first payroll to get started</p>
-        </div>
-      </div>
-    </div>
+        <template #empty>
+          <UiEmpty :icon="Calendar" :title="$t('payroll.dashboard.empty.title')" :message="$t('payroll.dashboard.empty.message')" compact>
+            <UiButton v-if="can('payroll-create')" :icon="Plus" size="sm" :to="{ name: 'admin.payroll.create' }">{{ $t("payroll.dashboard.createNew") }}</UiButton>
+          </UiEmpty>
+        </template>
+      </UiTable>
+    </section>
   </div>
 </template>

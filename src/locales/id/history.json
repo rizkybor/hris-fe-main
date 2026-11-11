@@ -1,0 +1,54 @@
+{
+  "title": "Log Aktivitas",
+  "subtitle": "Semua pembuatan, perubahan, penghapusan, dan login di seluruh sistem.",
+  "stats": {
+    "total": "Total Aktivitas",
+    "totalHint": "Semua aktivitas sistem",
+    "todayHint": "Aktivitas hari ini",
+    "thisWeek": "Minggu Ini",
+    "thisWeekHint": "Sejak Senin",
+    "categories": "Kategori"
+  },
+  "filters": {
+    "allCategories": "Semua Kategori",
+    "search": "Cari aktivitas...",
+    "dateFrom": "Dari tanggal",
+    "dateTo": "Sampai tanggal"
+  },
+  "list": {
+    "title": "Semua Aktivitas",
+    "empty": "Aktivitas tidak ditemukan",
+    "activity": "Aktivitas",
+    "when": "Waktu",
+    "system": "Sistem",
+    "showDetails": "Tampilkan detail",
+    "hideDetails": "Sembunyikan detail",
+    "before": "Sebelum",
+    "after": "Sesudah",
+    "totalActivities": "{n} total aktivitas"
+  },
+  "events": {
+    "created": "Dibuat",
+    "updated": "Diubah",
+    "deleted": "Dihapus",
+    "login": "Login",
+    "loginFailed": "Login Gagal",
+    "logout": "Logout",
+    "roleCreated": "Role Dibuat",
+    "roleUpdated": "Role Diubah",
+    "roleDeleted": "Role Dihapus",
+    "backupDownloaded": "Backup Diunduh"
+  },
+  "deleteRow": {
+    "confirm": "Hapus entri log aktivitas ini? Penghapusan bersifat permanen dan tidak bisa dibatalkan.",
+    "failed": "Gagal menghapus entri log aktivitas."
+  },
+  "deleteRange": {
+    "title": "Hapus per Rentang Tanggal",
+    "submit": "Hapus Rentang",
+    "warning": "Semua entri log aktivitas dalam rentang ini akan dihapus permanen. Log aktivitas tidak bisa dipulihkan.",
+    "confirm": "Hapus semua entri log aktivitas antara {start} dan {end}? Penghapusan bersifat permanen dan tidak bisa dibatalkan.",
+    "deleted": "{n} entri log aktivitas dihapus.",
+    "failed": "Gagal menghapus entri dalam rentang ini."
+  }
+}

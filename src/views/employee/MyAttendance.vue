@@ -4,13 +4,9 @@ import {
   CalendarCheck,
   CalendarDays,
   Clock,
-  Clock3,
   Plus,
-  User,
-  CalendarPlus,
   Eye,
   CalendarX,
-  ChevronDown,
   Paperclip,
 } from "lucide-vue-next";
 import { useAttendanceStore } from "@/stores/attendance";
@@ -31,11 +27,22 @@ import {
   calculateWorkingHours,
   calculateWorkingDays,
 } from "@/utils/dateUtils";
-import { getStatusConfig, formatLeaveType } from "@/utils/attendanceUtils";
+import { formatLeaveType } from "@/utils/attendanceUtils";
 import AttendanceStatsCards from "@/components/employee/attendance/AttendanceStatsCards.vue";
 import LeaveRequestSuccessModal from "@/components/employee/attendance/LeaveRequestSuccessModal.vue";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
+import { UiBadge, UiButton, UiCard, UiEmpty, UiInput, UiModal, UiPageHeader, UiSelect, UiSwitch, UiTable } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
+
+// Display labels for API enum values (the values themselves are unchanged).
+// Unknown statuses fall back to "Present", same as getStatusConfig().
+const statusLabel = (status) =>
+  te(`myAttendance.status.${status}`) ? t(`myAttendance.status.${status}`) : t("myAttendance.status.present");
+const leaveTypeLabel = (type) =>
+  type && te(`myAttendance.leaveTypes.${type}`) ? t(`myAttendance.leaveTypes.${type}`) : formatLeaveType(type);
 
 const attendanceStore = useAttendanceStore();
 const alertModal = useAlertModalStore();
@@ -57,7 +64,9 @@ const { user } = storeToRefs(authStore);
 // (backend rejects it too -- this just keeps the UI from showing a dead end).
 const isIntern = computed(() => user.value?.employee_profile?.job_information?.employment_type === "intern");
 const availableLeaveTypes = computed(() =>
-  isIntern.value ? leaveTypes.value.filter((type) => type.value !== "annual_leave") : leaveTypes.value
+  (isIntern.value ? leaveTypes.value.filter((type) => type.value !== "annual_leave") : leaveTypes.value).map(
+    (type) => ({ ...type, label: te(`myAttendance.leaveTypes.${type.value}`) ? t(`myAttendance.leaveTypes.${type.value}`) : type.label })
+  )
 );
 
 // State
@@ -148,18 +157,18 @@ const submitLeaveRequest = async () => {
   today.setHours(0, 0, 0, 0);
 
   if (startDate <= today) {
-    await alertModal.alert("Start date must be at least tomorrow.", { type: "warning" });
+    await alertModal.alert(t("myAttendance.form.errors.startTomorrow"), { type: "warning" });
     return;
   }
 
   if (endDate < startDate) {
-    await alertModal.alert("End date must be after start date.", { type: "warning" });
+    await alertModal.alert(t("myAttendance.form.errors.endAfterStart"), { type: "warning" });
     return;
   }
 
   if (attachmentRequired.value && !leaveForm.value.attachment) {
     await alertModal.alert(
-      "Lampiran surat keterangan dokter wajib diunggah untuk cuti sakit lebih dari 1 hari.",
+      t("myAttendance.form.errors.attachmentRequired"),
       { type: "warning" }
     );
     return;
@@ -186,7 +195,7 @@ const submitLeaveRequest = async () => {
   } catch (error) {
     console.error("Failed to submit leave request:", error);
     await alertModal.alert(
-      error?.response?.data?.message || "Failed to submit leave request. Please try again.",
+      error?.response?.data?.message || t("myAttendance.form.errors.submitFailed"),
       { type: "danger" }
     );
   }
@@ -222,6 +231,28 @@ const updateEndDateMin = () => {
   }
 };
 
+// Presentation only: badge tone per status, table columns and the shared
+// field style for the native date / file inputs.
+const STATUS_TONE = {
+  present: "ok",
+  approved: "ok",
+  absent: "bad",
+  rejected: "bad",
+  sick_leave: "warn",
+  pending: "warn",
+  weekend: "neutral",
+};
+const statusTone = (status) => STATUS_TONE[status] || "ok"; // getStatusConfig falls back to "Present"
+const attendanceColumns = computed(() => [
+  { key: "date", label: t("common.labels.date") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "check_in", label: t("myAttendance.recent.checkIn") },
+  { key: "check_out", label: t("myAttendance.recent.checkOut") },
+  { key: "total", label: t("myAttendance.recent.totalHours"), align: "right" },
+]);
+const fieldClass =
+  "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus disabled:bg-ui-subtle disabled:text-ui-muted disabled:cursor-not-allowed";
+
 // Lifecycle
 onMounted(async () => {
   await Promise.all([
@@ -235,50 +266,21 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-5">
-    <!-- Banner Section -->
-    <div
-      class="relative rounded-[14px] mb-6 overflow-hidden"
-      style="
-        background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c');
-        background-size: cover;
-        background-position: center;
-      "
+  <!-- Bottom padding below lg: main's own bottom padding (room for the tab
+       bar) is lost once the page overflows its h-full wrapper. -->
+  <div class="p-1 sm:p-3 lg:p-5 space-y-4 sm:space-y-5">
+    <UiPageHeader
+      :title="$t('myAttendance.title')"
+      :subtitle="$t('myAttendance.subtitle')"
+      class="ui-anim-fade-up"
     >
-      <!-- Dark Overlay -->
-      <div class="absolute inset-0 bg-black/40"></div>
-
-      <!-- Banner Content -->
-      <div class="relative z-10 p-5 sm:p-6 flex flex-col gap-5 sm:gap-0 sm:flex-row sm:items-center sm:justify-between sm:min-h-[200px]">
-        <div class="flex items-center gap-3 sm:gap-4">
-          <div
-            class="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-[12px] flex items-center justify-center shrink-0"
-          >
-            <CalendarCheck class="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-          </div>
-          <div class="min-w-0">
-            <h3 class="text-white text-lg sm:text-2xl font-bold">Attendance Overview</h3>
-            <p class="text-white/90 text-sm sm:text-base font-normal">
-              Track your daily presence and manage leave requests efficiently
-            </p>
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-[10px]">
-          <button
-            @click="openLeaveRequestModal"
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:py-3 flex items-center justify-center gap-2 shadow-lg"
-          >
-            <Plus class="w-4 h-4 text-white" />
-            <span class="text-white text-sm font-semibold">Request Leave</span>
-          </button>
-        </div>
-      </div>
-    </div>
+      <template #actions>
+        <UiButton :icon="Plus" @click="openLeaveRequestModal">{{ $t("myAttendance.requestLeave") }}</UiButton>
+      </template>
+    </UiPageHeader>
 
     <!-- Stats Cards -->
-    <SkeletonStatCards v-if="attendanceLoading" :count="4" class="mb-6" />
+    <SkeletonStatCards v-if="attendanceLoading" :count="4" cols="grid-cols-2 lg:grid-cols-4" />
     <AttendanceStatsCards
       v-else
       :statistics="statistics"
@@ -287,679 +289,343 @@ onMounted(async () => {
     />
 
     <!-- Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5 items-start">
       <!-- Recent Attendance -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
+      <UiCard
+        :title="$t('myAttendance.recent.title')"
+        :subtitle="$t('myAttendance.recent.subtitle')"
+        :padded="false"
+        class="xl:col-span-2 ui-anim-fade-up overflow-hidden"
       >
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div
-              class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
-            >
-              <CalendarCheck class="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">
-                Recent Attendance
-              </h3>
-              <p class="text-brand-light text-sm">Last 7 days</p>
-            </div>
-          </div>
-        </div>
+        <template #actions>
+          <CalendarCheck class="w-[18px] h-[18px] text-ui-faint" />
+        </template>
 
-        <SkeletonList v-if="attendanceLoading" :rows="3" />
+        <UiTable
+          :columns="attendanceColumns"
+          :rows="recentAttendances"
+          :loading="attendanceLoading"
+          :skeleton-rows="5"
+          class="border-t border-ui-line"
+        >
+          <template #cell-date="{ row }">
+            <p class="text-ui-small font-medium text-ui-ink">{{ getDayName(row.date) }}</p>
+            <p class="text-ui-cap text-ui-muted">{{ formatDateShort(row.date) }}</p>
+          </template>
+          <template #cell-status="{ row }">
+            <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
+          </template>
+          <template #cell-check_in="{ row }">
+            <span v-if="row.check_in" class="tabular-nums text-ui-ink font-medium">{{ formatTime(row.check_in) }}</span>
+            <span v-else class="text-ui-muted italic">{{ $t("myAttendance.recent.noData") }}</span>
+          </template>
+          <template #cell-check_out="{ row }">
+            <span v-if="row.check_in && row.check_out" class="tabular-nums text-ui-ink font-medium">{{ formatTime(row.check_out) }}</span>
+            <UiBadge v-else-if="row.check_in" tone="info" dot>{{ $t("myAttendance.recent.working") }}</UiBadge>
+            <span v-else class="text-ui-faint">—</span>
+          </template>
+          <template #cell-total="{ row }">
+            <span v-if="row.check_in && row.check_out" class="tabular-nums text-ui-ink font-medium">
+              {{ calculateWorkingHours(row.check_in, row.check_out) }}
+            </span>
+            <span v-else class="text-ui-faint">—</span>
+          </template>
 
-        <div v-else class="space-y-3">
-          <div
-            v-for="record in recentAttendances"
-            :key="record.id"
-            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
-          >
-            <div class="flex items-center justify-between mb-3">
+          <!-- Phones: one card per day -->
+          <template #mobile="{ row, number }">
+            <div class="px-4 py-3.5">
               <div class="flex items-center gap-3">
-                <div
-                  class="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px] flex items-center justify-center"
-                >
-                  <User class="w-5 h-5 text-white" />
+                <span class="w-5 text-ui-cap text-ui-faint tabular-nums shrink-0">{{ number }}</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-ui-h3 text-ui-ink">{{ getDayName(row.date) }}</p>
+                  <p class="text-ui-cap text-ui-muted">{{ formatDateShort(row.date) }}</p>
                 </div>
+                <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
+              </div>
+              <dl v-if="row.check_in" class="grid grid-cols-3 gap-2 mt-3 pl-8">
                 <div>
-                  <h4 class="text-brand-dark text-sm font-semibold">
-                    {{ getDayName(record.date) }}
-                  </h4>
-                  <p class="text-brand-light text-sm">
-                    {{ formatDateShort(record.date) }}
-                  </p>
+                  <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.recent.checkIn") }}</dt>
+                  <dd class="text-ui-small font-medium text-ui-ink tabular-nums">{{ formatTime(row.check_in) }}</dd>
                 </div>
-              </div>
-              <span
-                :class="getStatusConfig(record.status).class"
-                class="px-2 py-1 rounded-md text-sm font-semibold"
-              >
-                {{ getStatusConfig(record.status).text }}
-              </span>
+                <template v-if="row.check_out">
+                  <div>
+                    <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.recent.checkOut") }}</dt>
+                    <dd class="text-ui-small font-medium text-ui-ink tabular-nums">{{ formatTime(row.check_out) }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.recent.totalHours") }}</dt>
+                    <dd class="text-ui-small font-medium text-ui-ink tabular-nums">
+                      {{ calculateWorkingHours(row.check_in, row.check_out) }}
+                    </dd>
+                  </div>
+                </template>
+                <div v-else class="col-span-2">
+                  <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.status") }}</dt>
+                  <dd><UiBadge tone="info" dot>{{ $t("myAttendance.recent.working") }}</UiBadge></dd>
+                </div>
+              </dl>
+              <p v-else class="text-ui-small text-ui-muted italic mt-2 pl-8">{{ $t("myAttendance.recent.noData") }}</p>
             </div>
+          </template>
 
-            <div class="border-b border-[#DCDEDD] mb-3"></div>
+          <template #empty>
+            <UiEmpty :icon="CalendarCheck" :title="$t('myAttendance.recent.empty')" compact />
+          </template>
+        </UiTable>
+      </UiCard>
 
-            <div v-if="record.check_in" class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-brand-dark text-sm font-medium"
-                  >Check-in</span
-                >
-                <span class="text-brand-dark text-sm font-semibold">{{
-                  formatTime(record.check_in)
-                }}</span>
-              </div>
-              <div v-if="record.check_out">
-                <div class="flex items-center justify-between">
-                  <span class="text-brand-dark text-sm font-medium"
-                    >Check-out</span
-                  >
-                  <span class="text-brand-dark text-sm font-semibold">{{
-                    formatTime(record.check_out)
-                  }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-brand-dark text-sm font-medium"
-                    >Total Hours</span
-                  >
-                  <span class="text-brand-dark text-sm font-semibold">{{
-                    calculateWorkingHours(record.check_in, record.check_out)
-                  }}</span>
-                </div>
-              </div>
-              <div v-else class="flex items-center justify-between">
-                <span class="text-brand-dark text-sm font-medium">Status</span>
-                <span
-                  class="text-green-600 text-sm font-semibold flex items-center gap-1"
-                >
-                  <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  Currently Working
-                </span>
-              </div>
-            </div>
-            <div v-else class="flex items-center justify-center py-2">
-              <span class="text-brand-light text-sm italic"
-                >No attendance data</span
-              >
-            </div>
+      <div class="space-y-4 sm:space-y-5 min-w-0">
+        <!-- Leave Balance -->
+        <div
+          v-if="myLeaveBalance"
+          class="ui-anim-fade-up bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 flex items-center justify-between gap-4"
+        >
+          <div class="min-w-0">
+            <p class="text-ui-small text-ui-muted">{{ $t("myAttendance.balance.title", { year: myLeaveBalance.year }) }}</p>
+            <p class="text-ui-h1 text-ui-ink tabular-nums mt-1">
+              {{ myLeaveBalance.remaining }}
+              <span class="text-ui-body font-normal text-ui-muted">/ {{ $t("common.duration.day", { n: myLeaveBalance.quota }, myLeaveBalance.quota) }}</span>
+            </p>
           </div>
-
-          <div
-            v-if="!attendanceLoading && recentAttendances.length === 0"
-            class="text-center py-8"
-          >
-            <p class="text-brand-light">No attendance records found</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Leave Balance -->
-      <div
-        v-if="myLeaveBalance"
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6 flex items-center justify-between"
-      >
-        <div>
-          <p class="text-brand-light text-sm">Sisa Cuti Tahunan {{ myLeaveBalance.year }}</p>
-          <p class="text-brand-dark text-xl sm:text-2xl font-bold mt-1">
-            {{ myLeaveBalance.remaining }} <span class="text-base font-medium text-brand-light">/ {{ myLeaveBalance.quota }} hari</span>
-          </p>
-        </div>
-        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <CalendarDays class="w-6 h-6 text-[#0C51D9]" />
-        </div>
-      </div>
-
-      <!-- Leave Requests -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-6"
-      >
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div
-              class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
-            >
-              <CalendarX class="w-6 h-6 text-orange-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">
-                My Leave Requests
-              </h3>
-              <p class="text-brand-light text-sm">Recent requests</p>
-            </div>
+          <div class="w-10 h-10 rounded-ui-control bg-ui-accent-soft text-ui-accent flex items-center justify-center shrink-0">
+            <CalendarDays class="w-5 h-5" />
           </div>
         </div>
 
-        <SkeletonList v-if="leaveLoading" :rows="3" />
+        <!-- Leave Requests -->
+        <UiCard :title="$t('myAttendance.requests.title')" :subtitle="$t('myAttendance.requests.subtitle')" :padded="false" class="ui-anim-fade-up overflow-hidden">
+          <template #actions>
+            <CalendarX class="w-[18px] h-[18px] text-ui-faint" />
+          </template>
 
-        <div v-else class="space-y-4">
-          <div
-            v-for="request in myLeaveRequests"
-            :key="request.id"
-            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
-          >
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px] flex items-center justify-center"
-                >
-                  <CalendarPlus class="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 class="text-brand-dark text-sm font-semibold">
-                    {{ formatLeaveType(request.leave_type) }}
-                  </h4>
-                  <p class="text-brand-light text-sm">
-                    {{ request.total_days }} {{ request.total_days === 1 ? "day" : "days" }}
-                  </p>
-                </div>
-              </div>
-              <span
-                :class="getStatusConfig(request.status).class"
-                class="px-2 py-1 rounded-md text-sm font-semibold"
-              >
-                {{ getStatusConfig(request.status).text }}
-              </span>
+          <div class="border-t border-ui-line">
+            <div v-if="leaveLoading" class="p-3">
+              <SkeletonList :rows="3" />
             </div>
 
-            <div class="border-b border-[#DCDEDD] mb-3"></div>
+            <ul v-else-if="myLeaveRequests.length" class="divide-y divide-ui-line ui-stagger">
+              <li v-for="request in myLeaveRequests" :key="request.id" class="px-5 py-3.5">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-ui-h3 text-ui-ink truncate">{{ leaveTypeLabel(request.leave_type) }}</p>
+                    <p class="text-ui-cap text-ui-muted mt-0.5">
+                      {{ formatDateShort(request.start_date) }} – {{ formatDateShort(request.end_date) }}
+                      &middot; {{ $t("common.duration.day", { n: request.total_days }, request.total_days) }}
+                    </p>
+                  </div>
+                  <UiBadge :tone="statusTone(request.status)" dot>{{ statusLabel(request.status) }}</UiBadge>
+                </div>
+                <div class="flex items-center justify-between gap-3 mt-2">
+                  <p class="text-ui-cap text-ui-faint truncate">{{ $t("myAttendance.requests.requested", { date: formatRequestDate(request.created_at) }) }}</p>
+                  <UiButton variant="ghost" size="sm" :icon="Eye" class="-mr-2.5" @click="openLeaveDetailsModal(request.id)">
+                    {{ $t("common.actions.viewDetails") }}
+                  </UiButton>
+                </div>
+              </li>
+            </ul>
 
-            <div class="space-y-2 mb-3">
-              <div class="flex items-center justify-between">
-                <span class="text-brand-dark text-sm font-medium"
-                  >Start Date</span
-                >
-                <span class="text-brand-dark text-sm font-semibold">{{
-                  formatDateShort(request.start_date)
-                }}</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-brand-dark text-sm font-medium"
-                  >End Date</span
-                >
-                <span class="text-brand-dark text-sm font-semibold">{{
-                  formatDateShort(request.end_date)
-                }}</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-brand-dark text-sm font-medium"
-                  >Requested</span
-                >
-                <span class="text-brand-light text-sm">{{
-                  formatRequestDate(request.created_at)
-                }}</span>
-              </div>
-            </div>
-
-            <button
-              @click="openLeaveDetailsModal(request.id)"
-              class="w-full btn-view-soft"
-            >
-              <Eye class="w-4 h-4" />
-              <span>View Details</span>
-            </button>
+            <UiEmpty v-else :icon="CalendarX" :title="$t('myAttendance.requests.empty')" compact />
           </div>
-
-          <div
-            v-if="!leaveLoading && myLeaveRequests.length === 0"
-            class="text-center py-8"
-          >
-            <p class="text-brand-light">No leave requests found</p>
-          </div>
-        </div>
+        </UiCard>
       </div>
     </div>
 
     <!-- Leave Request Modal -->
-    <Teleport to="body">
-      <div
-        v-if="showLeaveRequestModal"
-        class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center"
-        @click.self="closeLeaveRequestModal"
-      >
-        <div
-          class="bg-slate-50 rounded-[14px] border border-[#DCDEDD] w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden"
-        >
-          <!-- Modal Header -->
-          <div class="p-4 sm:p-6 border-b border-[#DCDEDD]">
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                <div
-                  class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0"
-                >
-                  <CalendarPlus class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-                </div>
-                <div class="min-w-0">
-                  <h3 class="text-brand-dark text-base sm:text-xl font-bold truncate">
-                    Request New Leave
-                  </h3>
-                  <p class="text-brand-light text-xs sm:text-sm font-normal truncate">
-                    Submit a leave request for approval
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                @click="closeLeaveRequestModal"
-                class="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150 shrink-0"
-              >
-                <span class="text-gray-600 text-lg sm:text-xl">×</span>
-              </button>
+    <UiModal
+      v-model:open="showLeaveRequestModal"
+      :title="$t('myAttendance.form.title')"
+      :description="$t('myAttendance.form.description')"
+      size="lg"
+      @close="closeLeaveRequestModal"
+    >
+      <form id="leaveRequestForm" @submit.prevent="submitLeaveRequest" class="space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Leave Type -->
+          <UiSelect
+            v-model="leaveForm.leave_type"
+            class="md:col-span-2"
+            :label="$t('myAttendance.form.leaveType')"
+            :placeholder="$t('myAttendance.form.leaveTypePlaceholder')"
+            :options="availableLeaveTypes"
+            required
+          />
+
+          <!-- Start Date -->
+          <div>
+            <label for="leave-start-date" class="block text-ui-small font-medium text-ui-ink mb-1.5">
+              {{ $t("myAttendance.form.startDate") }}<span class="text-ui-bad"> *</span>
+            </label>
+            <input
+              id="leave-start-date"
+              type="date"
+              v-model="leaveForm.start_date"
+              @change="updateEndDateMin"
+              required
+              :class="fieldClass"
+            />
+          </div>
+
+          <!-- End Date -->
+          <div>
+            <label for="leave-end-date" class="block text-ui-small font-medium text-ui-ink mb-1.5">
+              {{ $t("myAttendance.form.endDate") }}<span class="text-ui-bad"> *</span>
+            </label>
+            <input
+              id="leave-end-date"
+              type="date"
+              v-model="leaveForm.end_date"
+              :min="leaveForm.start_date"
+              :disabled="leaveForm.is_half_day"
+              required
+              :class="fieldClass"
+            />
+          </div>
+
+          <!-- Half Day -->
+          <UiSwitch
+            class="md:col-span-2"
+            :label="$t('myAttendance.form.halfDay')"
+            :model-value="leaveForm.is_half_day"
+            @update:model-value="toggleHalfDay"
+          />
+
+          <!-- Total Days -->
+          <div class="md:col-span-2 flex items-center gap-3 px-4 py-3 bg-ui-subtle rounded-ui-control">
+            <div class="w-9 h-9 rounded-ui-control bg-ui-surface border border-ui-line text-ui-muted flex items-center justify-center shrink-0">
+              <Clock class="w-[18px] h-[18px]" />
+            </div>
+            <div>
+              <p class="text-ui-cap text-ui-muted">{{ $t("myAttendance.form.totalDays") }}</p>
+              <p class="text-ui-h3 text-ui-ink">
+                {{ $t("common.duration.day", { n: totalDaysCalculated }, totalDaysCalculated) }}
+                <span class="text-ui-cap font-normal text-ui-muted">&middot; {{ $t("myAttendance.form.excludingWeekends") }}</span>
+              </p>
             </div>
           </div>
+        </div>
 
-          <!-- Modal Content -->
-          <div class="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-            <form @submit.prevent="submitLeaveRequest" class="space-y-6">
-              <!-- Leave Information Section -->
-              <div
-                class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6"
-              >
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <!-- Leave Type -->
-                  <div class="md:col-span-2">
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-1"
-                      >Leave Type<span class="text-red-600 ml-1">*</span></label
-                    >
-                    <div class="relative w-full">
-                      <select
-                        v-model="leaveForm.leave_type"
-                        required
-                        class="select-soft"
-                      >
-                        <option value="">Select leave type</option>
-                        <option
-                          v-for="type in availableLeaveTypes"
-                          :key="type.value"
-                          :value="type.value"
-                        >
-                          {{ type.label }}
-                        </option>
-                      </select>
-                      <ChevronDown
-                        class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-                      />
-                    </div>
-                  </div>
+        <div class="space-y-4 pt-5 border-t border-ui-line">
+          <!-- Reason -->
+          <UiInput
+            v-model="leaveForm.reason"
+            :label="$t('myAttendance.form.reason')"
+            :rows="4"
+            required
+            :placeholder="$t('myAttendance.form.reasonPlaceholder')"
+          />
 
-                  <!-- Start Date -->
-                  <div>
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-1"
-                      >Start Date <span class="text-red-600 ml-1">*</span></label
-                    >
-                    <input
-                      type="date"
-                      v-model="leaveForm.start_date"
-                      @change="updateEndDateMin"
-                      required
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-                    />
-                  </div>
+          <!-- Emergency Contact -->
+          <UiInput
+            v-model="leaveForm.emergency_contact"
+            type="tel"
+            :label="$t('myAttendance.form.emergencyContact')"
+            :placeholder="$t('myAttendance.form.emergencyContactPlaceholder')"
+          />
 
-                  <!-- End Date -->
-                  <div>
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-1"
-                      >End Date <span class="text-red-600 ml-1">*</span></label
-                    >
-                    <input
-                      type="date"
-                      v-model="leaveForm.end_date"
-                      :min="leaveForm.start_date"
-                      :disabled="leaveForm.is_half_day"
-                      required
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    />
-                  </div>
-
-                  <!-- Half Day -->
-                  <div class="md:col-span-2">
-                    <label class="flex items-center gap-2.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        :checked="leaveForm.is_half_day"
-                        @change="toggleHalfDay"
-                        class="w-4 h-4 rounded border-[#DCDEDD] text-[#0C51D9] focus:ring-[#0C51D9]"
-                      />
-                      <span class="text-brand-dark text-sm font-semibold">Cuti Setengah Hari (Half Day)</span>
-                    </label>
-                  </div>
-
-                  <!-- Total Days -->
-                  <div class="md:col-span-2">
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-1"
-                      >Total Days</label
-                    >
-                    <div
-                      class="p-4 bg-gray-50 rounded-[12px] border border-[#DCDEDD]"
-                    >
-                      <div class="flex items-center gap-3">
-                        <div
-                          class="w-10 h-10 bg-blue-50 rounded-[12px] flex items-center justify-center"
-                        >
-                          <Clock class="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p class="text-brand-dark text-lg font-bold">
-                            {{ totalDaysCalculated }}
-                            {{ totalDaysCalculated === 1 ? "day" : "days" }}
-                          </p>
-                          <p class="text-brand-light text-sm">
-                            Excluding weekends
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Reason Section -->
-              <div
-                class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6"
-              >
-                <div class="space-y-4">
-                  <!-- Reason -->
-                  <div>
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-1"
-                      >Reason for Leave <span class="text-red-600 ml-1">*</span></label
-                    >
-                    <textarea
-                      v-model="leaveForm.reason"
-                      required
-                      rows="4"
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold resize-none"
-                      placeholder="Please provide a detailed reason for your leave request..."
-                    ></textarea>
-                  </div>
-
-                  <!-- Emergency Contact -->
-                  <div>
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-1"
-                      >Emergency Contact (Optional)</label
-                    >
-                    <input
-                      type="tel"
-                      v-model="leaveForm.emergency_contact"
-                      class="w-full px-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-                      placeholder="Phone number for emergency contact"
-                    />
-                  </div>
-
-                  <!-- Attachment -->
-                  <div>
-                    <label class="block text-brand-dark text-base font-semibold mb-1">
-                      Lampiran (Surat Keterangan Dokter, dll.)
-                      <span v-if="attachmentRequired" class="text-red-600 ml-1">*</span>
-                      <span v-else class="text-brand-light text-sm font-normal ml-1">(Optional)</span>
-                    </label>
-                    <input
-                      ref="attachmentInputRef"
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.pdf"
-                      @change="handleAttachmentChange"
-                      class="w-full text-sm border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 file:mr-3 file:py-2.5 file:px-4 file:rounded-l-[12px] file:border-0 file:bg-gray-100 file:text-brand-dark file:font-semibold file:cursor-pointer"
-                    />
-                    <p v-if="attachmentRequired" class="text-red-600 text-xs mt-1.5 flex items-center gap-1">
-                      <Paperclip class="w-3.5 h-3.5" />
-                      Wajib diunggah untuk cuti sakit lebih dari 1 hari.
-                    </p>
-                    <p v-else class="text-brand-light text-xs mt-1.5">Format: JPG, PNG, atau PDF, maks. 5MB.</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Form Actions -->
-              <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-                <button
-                  type="button"
-                  @click="closeLeaveRequestModal"
-                  class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2"
-                >
-                  <span class="text-brand-dark text-base font-semibold"
-                    >Cancel</span
-                  >
-                </button>
-                <button
-                  type="submit"
-                  class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2"
-                >
-                  <span class="text-brand-white text-base font-semibold"
-                    >Submit Request</span
-                  >
-                </button>
-              </div>
-            </form>
+          <!-- Attachment -->
+          <div>
+            <label for="leave-attachment" class="block text-ui-small font-medium text-ui-ink mb-1.5">
+              {{ $t("myAttendance.form.attachment") }}
+              <span v-if="attachmentRequired" class="text-ui-bad"> *</span>
+              <span v-else class="text-ui-muted font-normal ml-1">({{ $t("common.states.optional") }})</span>
+            </label>
+            <input
+              id="leave-attachment"
+              ref="attachmentInputRef"
+              type="file"
+              accept=".jpg,.jpeg,.png,.pdf"
+              @change="handleAttachmentChange"
+              class="w-full text-ui-small text-ui-text bg-ui-surface border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus file:mr-3 file:h-[36px] file:px-3 file:border-0 file:border-r file:border-ui-line file:bg-ui-subtle file:text-ui-ink file:font-medium file:cursor-pointer"
+            />
+            <p v-if="attachmentRequired" class="text-ui-cap text-ui-bad mt-1.5 flex items-center gap-1">
+              <Paperclip class="w-3.5 h-3.5" />
+              {{ $t("myAttendance.form.attachmentRequiredHint") }}
+            </p>
+            <p v-else class="text-ui-cap text-ui-muted mt-1.5">{{ $t("myAttendance.form.attachmentHint") }}</p>
           </div>
         </div>
-      </div>
-    </Teleport>
+      </form>
+
+      <template #footer="{ close }">
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="close">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="leaveRequestForm" class="flex-1 sm:flex-none">{{ $t("myAttendance.form.submit") }}</UiButton>
+      </template>
+    </UiModal>
 
     <!-- Leave Details Modal -->
-    <Teleport to="body">
-      <div
-        v-if="showLeaveDetailsModal && selectedLeaveRequest"
-        class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center"
-        @click.self="closeLeaveDetailsModal"
-      >
-        <div
-          class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
-        >
-          <!-- Modal Header -->
-          <div class="p-4 sm:p-6 border-b border-[#DCDEDD]">
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                <div
-                  class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0"
-                >
-                  <CalendarCheck class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-                </div>
-                <div class="min-w-0">
-                  <h3 class="text-brand-dark text-base sm:text-xl font-bold truncate">
-                    Leave Request Details
-                  </h3>
-                  <p class="text-brand-light text-xs sm:text-sm font-normal truncate">
-                    Complete information about this leave request
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                @click="closeLeaveDetailsModal"
-                class="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150 shrink-0"
-              >
-                <span class="text-gray-600 text-lg sm:text-xl">×</span>
-              </button>
+    <UiModal
+      v-model:open="showLeaveDetailsModal"
+      :title="$t('myAttendance.details.title')"
+      :description="$t('myAttendance.details.description')"
+      @close="closeLeaveDetailsModal"
+    >
+      <div v-if="selectedLeaveRequest" class="space-y-5">
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-4">
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.form.leaveType") }}</dt>
+            <dd class="text-ui-body font-medium text-ui-ink mt-0.5">{{ leaveTypeLabel(selectedLeaveRequest.leave_type) }}</dd>
+          </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.status") }}</dt>
+            <dd class="mt-1">
+              <UiBadge :tone="statusTone(selectedLeaveRequest.status)" dot>
+                {{ statusLabel(selectedLeaveRequest.status) }}
+              </UiBadge>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.form.startDate") }}</dt>
+            <dd class="text-ui-body font-medium text-ui-ink mt-0.5">{{ formatDateLong(selectedLeaveRequest.start_date) }}</dd>
+          </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.form.endDate") }}</dt>
+            <dd class="text-ui-body font-medium text-ui-ink mt-0.5">{{ formatDateLong(selectedLeaveRequest.end_date) }}</dd>
+          </div>
+          <div class="col-span-2 flex items-center gap-3 px-4 py-3 bg-ui-subtle rounded-ui-control">
+            <div class="w-9 h-9 rounded-ui-control bg-ui-surface border border-ui-line text-ui-muted flex items-center justify-center shrink-0">
+              <Clock class="w-[18px] h-[18px]" />
+            </div>
+            <div>
+              <p class="text-ui-cap text-ui-muted">{{ $t("myAttendance.details.totalDuration") }}</p>
+              <p class="text-ui-h3 text-ui-ink">
+                {{ $t("common.duration.day", { n: selectedLeaveRequest.total_days }, selectedLeaveRequest.total_days) }}
+                <span v-if="selectedLeaveRequest.is_half_day" class="text-ui-accent">({{ $t("myAttendance.details.halfDay") }})</span>
+                <span class="block text-ui-cap font-normal text-ui-muted">{{ $t("myAttendance.details.workingDays") }}</span>
+              </p>
             </div>
           </div>
+        </dl>
 
-          <!-- Modal Content -->
-          <div class="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-            <div class="space-y-6">
-              <!-- Leave Information Section -->
-              <div
-                class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6"
-              >
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <!-- Leave Type -->
-                  <div>
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-2"
-                      >Leave Type</label
-                    >
-                    <div
-                      class="p-3 bg-gray-50 rounded-[12px] border border-[#DCDEDD]"
-                    >
-                      <span class="text-brand-dark text-base font-medium">{{
-                        formatLeaveType(selectedLeaveRequest.leave_type)
-                      }}</span>
-                    </div>
-                  </div>
-
-                  <!-- Status -->
-                  <div>
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-2"
-                      >Status</label
-                    >
-                    <div
-                      class="p-3 bg-gray-50 rounded-[12px] border border-[#DCDEDD]"
-                    >
-                      <span
-                        :class="
-                          getStatusConfig(selectedLeaveRequest.status).class
-                        "
-                        class="text-base font-semibold"
-                      >
-                        {{
-                          getStatusConfig(selectedLeaveRequest.status).text
-                        }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Start Date -->
-                  <div>
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-2"
-                      >Start Date</label
-                    >
-                    <div
-                      class="p-3 bg-gray-50 rounded-[12px] border border-[#DCDEDD]"
-                    >
-                      <span class="text-brand-dark text-base font-medium">{{
-                        formatDateLong(selectedLeaveRequest.start_date)
-                      }}</span>
-                    </div>
-                  </div>
-
-                  <!-- End Date -->
-                  <div>
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-2"
-                      >End Date</label
-                    >
-                    <div
-                      class="p-3 bg-gray-50 rounded-[12px] border border-[#DCDEDD]"
-                    >
-                      <span class="text-brand-dark text-base font-medium">{{
-                        formatDateLong(selectedLeaveRequest.end_date)
-                      }}</span>
-                    </div>
-                  </div>
-
-                  <!-- Total Days -->
-                  <div class="md:col-span-2">
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-2"
-                      >Total Duration</label
-                    >
-                    <div
-                      class="p-4 bg-blue-50 rounded-[12px] border border-[#DCDEDD]"
-                    >
-                      <div class="flex items-center gap-3">
-                        <div
-                          class="w-10 h-10 bg-blue-100 rounded-[12px] flex items-center justify-center"
-                        >
-                          <Clock class="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p class="text-brand-dark text-lg font-bold">
-                            {{ selectedLeaveRequest.total_days }}
-                            {{
-                              selectedLeaveRequest.total_days === 1 ? "day" : "days"
-                            }}
-                            <span v-if="selectedLeaveRequest.is_half_day" class="text-sm font-semibold text-blue-600">(Half Day)</span>
-                          </p>
-                          <p class="text-brand-light text-sm">
-                            Working days (excluding weekends)
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Reason Section -->
-              <div
-                class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6"
-              >
-                <div class="space-y-4">
-                  <!-- Reason -->
-                  <div>
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-2"
-                      >Reason for Leave</label
-                    >
-                    <div
-                      class="p-4 bg-gray-50 rounded-[12px] border border-[#DCDEDD] min-h-[100px]"
-                    >
-                      <p class="text-brand-dark text-base leading-relaxed">
-                        {{ selectedLeaveRequest.reason }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Request Date -->
-                  <div>
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-2"
-                      >Request Submitted</label
-                    >
-                    <div
-                      class="p-3 bg-gray-50 rounded-[12px] border border-[#DCDEDD]"
-                    >
-                      <span class="text-brand-dark text-base font-medium">{{
-                        formatRequestDateLong(selectedLeaveRequest.created_at)
-                      }}</span>
-                    </div>
-                  </div>
-
-                  <!-- Attachment -->
-                  <div v-if="selectedLeaveRequest.attachment_url">
-                    <label
-                      class="block text-brand-dark text-base font-semibold mb-2"
-                      >Lampiran</label
-                    >
-                    <a
-                      :href="selectedLeaveRequest.attachment_url"
-                      target="_blank"
-                      rel="noopener"
-                      class="p-3 bg-blue-50 rounded-[12px] border border-[#DCDEDD] flex items-center gap-2 hover:border-[#0C51D9] transition-all duration-300"
-                    >
-                      <Paperclip class="w-4 h-4 text-blue-600 shrink-0" />
-                      <span class="text-blue-700 text-sm font-medium truncate">{{
-                        selectedLeaveRequest.attachment_original_name || "Lihat Lampiran"
-                      }}</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="flex items-center justify-end gap-4">
-                <button
-                  type="button"
-                  @click="closeLeaveDetailsModal"
-                  class="w-full sm:w-auto border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2"
-                >
-                  <span class="text-brand-dark text-base font-semibold"
-                    >Close</span
-                  >
-                </button>
-              </div>
-            </div>
+        <div class="pt-5 border-t border-ui-line space-y-4">
+          <div>
+            <p class="text-ui-cap text-ui-muted">{{ $t("myAttendance.form.reason") }}</p>
+            <p class="text-ui-body text-ui-ink mt-1 whitespace-pre-line">{{ selectedLeaveRequest.reason }}</p>
+          </div>
+          <div>
+            <p class="text-ui-cap text-ui-muted">{{ $t("myAttendance.details.submitted") }}</p>
+            <p class="text-ui-body text-ui-ink mt-0.5">{{ formatRequestDateLong(selectedLeaveRequest.created_at) }}</p>
+          </div>
+          <div v-if="selectedLeaveRequest.attachment_url">
+            <p class="text-ui-cap text-ui-muted mb-1.5">{{ $t("myAttendance.details.attachment") }}</p>
+            <a
+              :href="selectedLeaveRequest.attachment_url"
+              target="_blank"
+              rel="noopener"
+              class="flex items-center gap-2 px-3 py-2.5 border border-ui-line rounded-ui-control hover:bg-ui-subtle text-ui-accent transition-colors"
+            >
+              <Paperclip class="w-4 h-4 shrink-0" />
+              <span class="text-ui-small font-medium truncate">{{
+                selectedLeaveRequest.attachment_original_name || $t("myAttendance.details.viewAttachment")
+              }}</span>
+            </a>
           </div>
         </div>
       </div>
-    </Teleport>
+
+      <template #footer="{ close }">
+        <UiButton variant="secondary" class="w-full sm:w-auto" @click="close">{{ $t("common.actions.close") }}</UiButton>
+      </template>
+    </UiModal>
 
     <!-- Success Modal -->
     <LeaveRequestSuccessModal

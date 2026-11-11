@@ -1,0 +1,175 @@
+{
+  "status": {
+    "active": "Aktif",
+    "forming": "Pembentukan",
+    "planning": "Perencanaan",
+    "dormant": "Tidak aktif"
+  },
+  "list": {
+    "title": "Semua Tim",
+    "itemLabel": "tim",
+    "importCsv": "Impor CSV",
+    "addTeam": "Tambah Tim",
+    "searchPlaceholder": "Cari nama, ketua, status...",
+    "allDepartments": "Semua Departemen",
+    "empty": "Tim tidak ditemukan"
+  },
+  "card": {
+    "members": "{n} anggota",
+    "teamLeader": "Ketua Tim",
+    "noLeader": "Belum ada ketua",
+    "responsibilities": "{n} tanggung jawab",
+    "activeProjects": "{n} proyek aktif",
+    "completedTasks": "{n} tugas selesai"
+  },
+  "stats": {
+    "total": "Total Tim",
+    "active": "Tim Aktif",
+    "members": "Anggota Tim",
+    "averageSize": "Rata-rata Ukuran Tim",
+    "newTeams": "Tim Baru",
+    "optimalSize": "Ukuran optimal",
+    "thisMonth": "{n} bulan ini",
+    "thisWeek": "{n} minggu ini",
+    "thisMonthHint": "Bulan ini"
+  },
+  "tips": {
+    "title": "Tips Membuat Tim",
+    "subtitle": "Praktik terbaik menyiapkan tim",
+    "name": {
+      "title": "Pilih Nama yang Jelas",
+      "text": "Gunakan nama deskriptif yang mencerminkan tujuan dan fungsi tim."
+    },
+    "lead": {
+      "title": "Pilih Ketua yang Tepat",
+      "text": "Pilih orang yang berpengalaman memimpin dan menguasai bidangnya."
+    },
+    "goals": {
+      "title": "Tetapkan Tujuan yang Jelas",
+      "text": "Tulis deskripsi jelas tentang apa yang akan dicapai tim."
+    },
+    "growth": {
+      "title": "Rencanakan Pertumbuhan",
+      "text": "Pertimbangkan bagaimana tim akan berkembang dari waktu ke waktu."
+    }
+  },
+  "quickActions": {
+    "title": "Aksi Cepat",
+    "subtitle": "Tugas umum menyiapkan tim",
+    "browse": "Lihat Karyawan",
+    "browseHint": "Temukan calon anggota tim"
+  },
+  "create": {
+    "title": "Buat Tim Baru",
+    "subtitle": "Siapkan tim baru dan tentukan ketuanya",
+    "submit": "Buat Tim",
+    "membersSubtitle": "Pilih karyawan yang akan bergabung dalam tim ini"
+  },
+  "edit": {
+    "title": "Ubah Tim",
+    "subtitle": "Perbarui detail dan kepemimpinan tim",
+    "submit": "Perbarui Tim",
+    "membersSubtitle": "Tambah atau hapus karyawan dari tim ini"
+  },
+  "form": {
+    "info": {
+      "title": "Informasi Tim",
+      "subtitle": "Detail dasar dan deskripsi tim"
+    },
+    "icon": {
+      "label": "Ikon Tim",
+      "upload": "Unggah Ikon",
+      "remove": "Hapus Ikon",
+      "hint": "SVG, PNG maks. 1MB (disarankan format ikon)"
+    },
+    "name": "Nama",
+    "namePlaceholder": "Masukkan nama tim",
+    "department": "Departemen",
+    "departmentPlaceholder": "Pilih departemen",
+    "expectedSize": "Target Ukuran Tim",
+    "expectedSizePlaceholder": "Masukkan target ukuran tim",
+    "purpose": "Tujuan Tim",
+    "purposePlaceholder": "Jelaskan tujuan dan sasaran tim...",
+    "searchEmployees": "Cari karyawan...",
+    "lead": {
+      "title": "Ketua Tim",
+      "subtitle": "Tentukan ketua untuk mengelola tim ini",
+      "select": "Pilih Ketua Tim",
+      "placeholder": "Pilih ketua tim",
+      "remove": "Hapus ketua tim",
+      "modalSubtitle": "Pilih karyawan untuk memimpin tim ini",
+      "noEmployees": "Karyawan tidak ditemukan",
+      "noEmployeesHint": "Coba ubah kata kunci pencarian"
+    },
+    "members": {
+      "title": "Anggota Tim",
+      "label": "Anggota",
+      "selected": "{n} dipilih",
+      "empty": "Belum ada data karyawan.",
+      "noMatch": "Tidak ada karyawan yang cocok dengan \"{q}\"."
+    },
+    "responsibilities": {
+      "title": "Tanggung Jawab Tim",
+      "subtitle": "Tentukan tanggung jawab dan tugas utama tim ini",
+      "item": "Tanggung jawab {n}",
+      "placeholder": "mis. Mengembangkan dan memelihara aplikasi perangkat lunak",
+      "additionalPlaceholder": "Masukkan tanggung jawab tambahan",
+      "remove": "Hapus tanggung jawab",
+      "add": "Tambah Tanggung Jawab"
+    },
+    "settings": {
+      "title": "Pengaturan Tim",
+      "subtitle": "Atur status tim",
+      "initialStatus": "Status Awal Tim",
+      "selected": "Dipilih"
+    }
+  },
+  "detail": {
+    "tabs": {
+      "overview": "Ringkasan",
+      "members": "Anggota Tim"
+    },
+    "verified": "Terverifikasi",
+    "membersOf": "{n}/{size} anggota",
+    "share": "Bagikan Tim",
+    "edit": "Ubah Tim",
+    "responsibilitiesSubtitle": "Tugas dan sasaran utama",
+    "leadSubtitle": "Kepemimpinan dan pengelolaan tim",
+    "contactInfo": "Informasi Kontak",
+    "emailAddress": "Alamat Email",
+    "phoneNumber": "Nomor Telepon",
+    "viewProfile": "Lihat Profil",
+    "noLead": "Belum Ada Ketua Tim",
+    "noLeadHint": "Tim ini belum memiliki ketua.",
+    "dangerZone": "Zona Berbahaya",
+    "dangerZoneHint": "Tindakan permanen yang tidak dapat dibatalkan",
+    "disband": "Bubarkan Tim",
+    "disbandHint": "Hapus tim ini secara permanen dan pindahkan semua anggotanya. Tindakan ini tidak dapat dibatalkan.",
+    "disbandConfirm": "Yakin ingin membubarkan '{name}'? Tim akan dihapus permanen dan semua anggotanya dipindahkan. Tindakan ini tidak dapat dibatalkan.",
+    "membersSubtitle": "Susunan tim saat ini",
+    "viewMore": "Lihat Lainnya",
+    "viewLess": "Lihat Lebih Sedikit",
+    "joined": "Bergabung {date}",
+    "experience": "Pengalaman {n} tahun",
+    "noMembers": "Belum ada anggota tim",
+    "stats": {
+      "activeMembers": "Anggota Aktif",
+      "fullCapacity": "Kapasitas penuh",
+      "membersNeeded": "Butuh {n} anggota lagi",
+      "projectsAssigned": "Proyek Ditugaskan",
+      "inProgress": "{n} sedang berjalan",
+      "performance": "Kinerja Tim",
+      "aboveTarget": "Di atas target",
+      "belowTarget": "Di bawah target",
+      "completionRate": "Tingkat Penyelesaian"
+    },
+    "chart": {
+      "teamGrowth": "Pertumbuhan Tim",
+      "teamGrowthHint": "Anggota baru yang bergabung dalam 4 bulan terakhir",
+      "tasksGrowth": "Pertumbuhan Tugas",
+      "tasksGrowthHint": "Tugas yang diberikan ke tim dalam 4 bulan terakhir",
+      "newMembers": "Anggota Baru",
+      "tasksAssigned": "Tugas Diberikan"
+    }
+  }
+}

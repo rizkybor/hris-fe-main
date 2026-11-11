@@ -1,19 +1,25 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { Workflow, Plus, Search, Eye, Pencil, Trash2, Shapes, Spline } from "lucide-vue-next";
+import { Workflow, Plus, Search, SearchX, Eye, Pencil, Trash2, Shapes, Spline, ImageOff } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { useFlowchartStore } from "@/stores/flowchart";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
-import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import { UiPageHeader, UiButton, UiInput, UiEmpty, rowNumber } from "@/components/ui";
 import Pagination from "@/components/common/Pagination.vue";
 
+const { t } = useI18n();
 const store = useFlowchartStore();
 const alertModal = useAlertModalStore();
 const { flowcharts, meta, loading } = storeToRefs(store);
 
 const search = ref("");
+const ICON_BTN =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted transition-colors hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus";
 
 const fetchPage = (page = 1) =>
   store.fetchFlowcharts({ search: search.value || undefined, page, row_per_page: 10 });
@@ -27,12 +33,12 @@ const onSearchInput = () => {
 };
 
 const formatDate = (value) =>
-  value ? new Date(value).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
+  value ? new Date(value).toLocaleString(localeTag(), { dateStyle: "medium", timeStyle: "short" }) : "-";
 
 const handleDelete = async (flowchart) => {
-  const ok = await alertModal.confirm(`Delete flowchart "${flowchart.name}"? This action cannot be undone.`, {
+  const ok = await alertModal.confirm(t("flowchart.list.deleteConfirm", { name: flowchart.name }), {
     type: "danger",
-    confirmText: "Delete",
+    confirmText: t("common.actions.delete"),
   });
   if (!ok) return;
   try {
@@ -41,135 +47,134 @@ const handleDelete = async (flowchart) => {
     const page = flowcharts.value.length === 0 && meta.value.current_page > 1 ? meta.value.current_page - 1 : meta.value.current_page;
     await fetchPage(page);
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Failed to delete flowchart."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("flowchart.list.deleteFailed")), { type: "danger" });
   }
 };
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <!-- Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-5">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
-            <Workflow class="w-6 h-6 text-blue-600" />
-          </div>
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-base font-bold">Flowchart</h3>
-            <p class="text-brand-light text-xs font-normal">
-              Design process flows with standard flowchart symbols and export them as JPG or PDF
-            </p>
-          </div>
-        </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('flowchart.title')" :subtitle="$t('flowchart.subtitle')">
+      <template #actions>
+        <UiButton v-if="can('flowchart-create')" :icon="Plus" :to="{ name: 'admin.flowchart.create' }">{{ $t("flowchart.new") }}</UiButton>
+      </template>
+    </UiPageHeader>
 
-        <RouterLink
-          v-if="can('flowchart-create')"
-          :to="{ name: 'admin.flowchart.create' }"
-          class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center justify-center gap-1.5 w-full sm:w-auto"
-        >
-          <Plus class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">New Flowchart</span>
-        </RouterLink>
-      </div>
-
-      <div class="relative">
-        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-          <Search class="h-5 w-5 text-gray-400" />
-        </div>
-        <input
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+      <!-- Toolbar -->
+      <div class="px-4 sm:px-5 py-3.5 flex flex-col md:flex-row md:items-center gap-3 border-b border-ui-line">
+        <UiInput
           v-model="search"
-          type="text"
-          class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-          placeholder="Search by name or description..."
+          :icon="Search"
+          :placeholder="$t('flowchart.list.search')"
+          class="w-full md:w-[320px]"
           @input="onSearchInput"
         />
-      </div>
-    </div>
-
-    <!-- Table -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-      <SkeletonTable v-if="loading" />
-
-      <div v-else-if="flowcharts.length === 0" class="text-center py-12">
-        <Workflow class="w-10 h-10 text-gray-300 mx-auto mb-2.5" />
-        <p class="text-brand-dark text-sm font-semibold">{{ search ? "No flowcharts match your search" : "No flowcharts yet" }}</p>
-        <p v-if="!search" class="text-brand-light text-xs mt-1">Create your first flowchart to map out a process.</p>
+        <p v-if="!loading && flowcharts.length" class="md:ml-auto text-ui-cap text-ui-muted tabular-nums">
+          {{ $t("flowchart.list.count", { n: meta.total }, meta.total) }}
+        </p>
       </div>
 
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
-              <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">Name</th>
-              <th class="py-3 pr-4 font-semibold">Contents</th>
-              <th class="py-3 pr-4 font-semibold">Created By</th>
-              <th class="py-3 pr-4 font-semibold">Last Updated</th>
-              <th class="py-3 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(flowchart, index) in flowcharts" :key="flowchart.id" class="border-b border-[#F1F1F1] hover:bg-gray-50">
-              <td class="py-3 pr-4 text-brand-light align-top">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4 align-top" style="min-width: 220px; max-width: 380px">
-                <RouterLink
-                  :to="{ name: 'admin.flowchart.detail', params: { id: flowchart.id } }"
-                  class="font-semibold text-brand-dark hover:text-[#0C51D9] transition-colors"
-                >
-                  {{ flowchart.name }}
-                </RouterLink>
-                <p v-if="flowchart.description" class="text-brand-light text-xs mt-0.5 line-clamp-2">{{ flowchart.description }}</p>
-              </td>
-              <td class="py-3 pr-4 align-top whitespace-nowrap">
-                <span class="inline-flex items-center gap-1 text-xs text-brand-dark mr-2.5">
-                  <Shapes class="w-3.5 h-3.5 text-blue-600" /> {{ flowchart.node_count }} shapes
-                </span>
-                <span class="inline-flex items-center gap-1 text-xs text-brand-dark">
-                  <Spline class="w-3.5 h-3.5 text-violet-600" /> {{ flowchart.edge_count }} connectors
-                </span>
-              </td>
-              <td class="py-3 pr-4 align-top text-brand-dark whitespace-nowrap">{{ flowchart.creator?.name || "-" }}</td>
-              <td class="py-3 pr-4 align-top whitespace-nowrap">
-                <p class="text-brand-dark">{{ formatDate(flowchart.updated_at) }}</p>
-                <p v-if="flowchart.updater?.name" class="text-brand-light text-xs">by {{ flowchart.updater.name }}</p>
-              </td>
-              <td class="py-3 align-top">
-                <div class="flex items-center justify-end gap-1.5">
+      <div class="p-3 sm:p-5">
+        <SkeletonCardGrid v-if="loading" :count="6" />
+
+        <UiEmpty
+          v-else-if="flowcharts.length === 0"
+          :icon="search ? SearchX : Workflow"
+          :title="search ? $t('flowchart.list.noMatch') : $t('flowchart.list.empty')"
+          :message="search ? '' : $t('flowchart.list.emptyHint')"
+        >
+          <UiButton v-if="!search && can('flowchart-create')" variant="secondary" :icon="Plus" :to="{ name: 'admin.flowchart.create' }">
+            {{ $t("flowchart.new") }}
+          </UiButton>
+        </UiEmpty>
+
+        <ul v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 ui-stagger">
+          <li
+            v-for="(flowchart, index) in flowcharts"
+            :key="flowchart.id"
+            class="group relative bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden flex flex-col ui-lift hover:border-ui-line-strong transition-colors"
+          >
+            <!-- Preview -->
+            <RouterLink
+              :to="{ name: 'admin.flowchart.detail', params: { id: flowchart.id } }"
+              class="hidden sm:flex shrink-0 h-[140px] bg-ui-subtle border-b border-ui-line items-center justify-center p-2"
+              :aria-label="$t('flowchart.list.open', { name: flowchart.name })"
+            >
+              <img
+                v-if="flowchart.preview_url"
+                :src="flowchart.preview_url"
+                :alt="flowchart.name"
+                class="max-w-full max-h-full object-contain"
+                loading="lazy"
+              />
+              <ImageOff v-else class="w-5 h-5 text-ui-faint" />
+            </RouterLink>
+
+            <div class="flex-1 min-w-0 p-3.5 sm:p-4 flex flex-col">
+              <div class="flex items-start gap-2">
+                <span class="text-ui-cap text-ui-faint tabular-nums pt-px">{{ rowNumber(index, meta) }}</span>
+                <div class="flex-1 min-w-0">
                   <RouterLink
                     :to="{ name: 'admin.flowchart.detail', params: { id: flowchart.id } }"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-1.5 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
-                    title="View"
+                    class="block text-ui-h3 text-ui-ink truncate hover:text-ui-accent transition-colors"
                   >
-                    <Eye class="w-4 h-4 text-gray-600" />
+                    {{ flowchart.name }}
+                  </RouterLink>
+                  <p v-if="flowchart.description" class="text-ui-cap text-ui-muted mt-0.5 line-clamp-2">{{ flowchart.description }}</p>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-ui-cap text-ui-text">
+                <span class="inline-flex items-center gap-1 tabular-nums"><Shapes class="w-3.5 h-3.5 text-ui-faint" /> {{ $t("flowchart.counts.shapes", { n: flowchart.node_count }, flowchart.node_count) }}</span>
+                <span class="inline-flex items-center gap-1 tabular-nums"><Spline class="w-3.5 h-3.5 text-ui-faint" /> {{ $t("flowchart.counts.connectors", { n: flowchart.edge_count }, flowchart.edge_count) }}</span>
+              </div>
+
+              <div class="mt-auto pt-3 sm:mt-3 sm:border-t sm:border-ui-line flex items-end justify-between gap-2">
+                <div class="min-w-0 text-ui-cap">
+                  <p class="text-ui-muted truncate">{{ flowchart.creator?.name || "-" }}</p>
+                  <p class="text-ui-faint truncate tabular-nums">
+                    {{ formatDate(flowchart.updated_at) }}<template v-if="flowchart.updater?.name"> · {{ $t("flowchart.list.by", { name: flowchart.updater.name }) }}</template>
+                  </p>
+                </div>
+                <div class="flex items-center gap-0.5 shrink-0">
+                  <RouterLink
+                    :to="{ name: 'admin.flowchart.detail', params: { id: flowchart.id } }"
+                    :class="ICON_BTN"
+                    :title="$t('common.actions.view')"
+                    :aria-label="$t('common.actions.view')"
+                  >
+                    <Eye class="w-4 h-4" />
                   </RouterLink>
                   <RouterLink
                     v-if="can('flowchart-edit')"
                     :to="{ name: 'admin.flowchart.edit', params: { id: flowchart.id } }"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-1.5 hover:border-[#0C51D9] hover:ring-2 hover:ring-[#0C51D9]/30 transition-all"
-                    title="Edit"
+                    :class="ICON_BTN"
+                    :title="$t('common.actions.edit')"
+                    :aria-label="$t('common.actions.edit')"
                   >
-                    <Pencil class="w-4 h-4 text-gray-600" />
+                    <Pencil class="w-4 h-4" />
                   </RouterLink>
                   <button
                     v-if="can('flowchart-delete')"
                     type="button"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-xl p-1.5 hover:border-red-500 hover:ring-2 hover:ring-red-500/30 hover:bg-red-50 group transition-all"
-                    title="Delete"
+                    :class="[ICON_BTN, 'hover:!text-ui-bad hover:!bg-ui-bad-soft']"
+                    :title="$t('common.actions.delete')"
+                    :aria-label="$t('common.actions.delete')"
                     @click="handleDelete(flowchart)"
                   >
-                    <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
+                    <Trash2 class="w-4 h-4" />
                   </button>
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+          </li>
+        </ul>
       </div>
 
-      <div v-if="!loading && flowcharts.length > 0" class="pt-3.5 border-t border-[#DCDEDD] mt-4">
-        <Pagination :meta="meta" :loading="loading" item-label="flowcharts" @page-change="fetchPage" />
+      <div v-if="!loading && flowcharts.length > 0" class="px-4 sm:px-5 py-3 border-t border-ui-line">
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('flowchart.list.itemLabel')" @page-change="fetchPage" />
       </div>
-    </div>
+    </section>
   </div>
 </template>

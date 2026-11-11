@@ -5,6 +5,9 @@ import { handleError } from "@/helpers/errorHelper";
 export const useStaffTaskCommentStore = defineStore("staffTaskComment", {
     state: () => ({
         comments: [],
+        // Task the `comments` belong to: switching tasks (drawer prev/next)
+        // must not show the previous task's thread while the new one loads.
+        staffTaskId: null,
         loading: false,
         submitting: false,
         error: null,
@@ -14,9 +17,14 @@ export const useStaffTaskCommentStore = defineStore("staffTaskComment", {
         async fetchComments(staffTaskId) {
             this.loading = true;
             this.error = null;
+            if (String(this.staffTaskId) !== String(staffTaskId)) {
+                this.comments = [];
+                this.staffTaskId = staffTaskId;
+            }
 
             try {
                 const response = await axiosInstance.get(`staff-tasks/${staffTaskId}/comments`);
+                if (String(this.staffTaskId) !== String(staffTaskId)) return;
                 this.comments = response.data.data;
             } catch (error) {
                 this.error = handleError(error);

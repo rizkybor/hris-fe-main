@@ -4,6 +4,18 @@ import { capitalize } from "lodash-es";
 import { Building, User, Calendar, Eye, Edit } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import Avatar from "@/components/common/Avatar.vue";
+import { UiBadge, UiButton } from "@/components/ui";
+import { getJobStatusText } from "@/utils/formatUtils.js";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
+// Known enum values get a translated label; anything else keeps the old formatting.
+const enumLabel = (group, value, fallback) =>
+  value && te(`employees.enums.${group}.${value}`) ? t(`employees.enums.${group}.${value}`) : fallback;
+
+// Presentation only: job status -> badge tone.
+const STATUS_TONES = { active: "ok", on_leave: "warn", resigned: "bad" };
+const statusTone = (status) => STATUS_TONES[status] || "neutral";
 
 const router = useRouter();
 
@@ -27,87 +39,63 @@ const goToDetail = () => {
 </script>
 
 <template>
-  <!-- Employee Card 1 -->
-  <div
-    class="bg-white border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5"
-  >
-    <div class="flex items-start justify-between mb-2.5">
+  <div class="ui-lift group flex flex-col bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-[18px] hover:border-ui-line-strong">
+    <div class="flex items-start gap-3">
       <Avatar
         :src="data?.user?.profile_photo"
         :alt="data?.user?.name"
-        size="w-9 h-9"
+        size="w-10 h-10"
         icon-size="w-5 h-5"
+        class="shrink-0"
       />
-      <div class="flex flex-col items-end gap-1">
-        <span
-          v-if="data?.user?.is_active === false"
-          class="px-1.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700"
-        >
-          Login Disabled
-        </span>
-        <span
-          class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#F0FDF4] text-[#166534]"
-        >
-          {{ capitalize(data?.job_information?.status) }}
-        </span>
-      </div>
-    </div>
-    <div class="flex items-center justify-between mb-2.5">
-      <div class="text-left">
-        <h4
-          class="text-[#0C1C3C] font-['Plus_Jakarta_Sans'] text-[16px] font-bold"
-        >
-          {{ data?.user?.name }}
+      <div class="flex-1 min-w-0">
+        <h4 class="text-ui-h3 text-ui-ink truncate" :title="data?.user?.name">
+          <button type="button" class="text-left hover:underline focus:outline-none focus-visible:shadow-ui-focus rounded" @click="goToDetail">
+            {{ data?.user?.name }}
+          </button>
         </h4>
-        <p
-          class="mt-1 text-[#6B7280] font-['Plus_Jakarta_Sans'] text-[14px] font-normal"
-        >
+        <p class="text-ui-small text-ui-muted truncate">
           {{ capitalize(data?.job_information?.job_title) }}
         </p>
       </div>
-      <span
-        class="px-1.5 py-1 rounded-md text-xs font-semibold bg-[#EBF8FF] text-[#1E40AF]"
-      >
-        {{ capitalize(data?.job_information?.skill_level) }}
-      </span>
     </div>
 
-    <!-- Divider -->
-    <div class="border-b border-[#DCDEDD] mb-2.5"></div>
+    <div class="flex flex-wrap items-center gap-1.5 mt-3">
+      <UiBadge v-if="data?.job_information?.skill_level" tone="neutral">
+        {{ enumLabel("skillLevel", data?.job_information?.skill_level, capitalize(data?.job_information?.skill_level)) }}
+      </UiBadge>
+      <UiBadge :tone="statusTone(data?.job_information?.status)" dot>
+        {{ enumLabel("jobStatus", data?.job_information?.status, getJobStatusText(data?.job_information?.status)) }}
+      </UiBadge>
+      <UiBadge v-if="data?.user?.is_active === false" tone="bad">
+        {{ $t("employees.card.loginDisabled") }}
+      </UiBadge>
+    </div>
 
     <!-- Employee Details -->
-    <div class="space-y-1.5 mb-3.5">
-      <div class="flex items-center gap-1.5 text-sm text-gray-500">
-        <Building class="w-3.5 h-3.5" />
-        <span>{{ capitalize(data?.job_information?.work_location) }}</span>
+    <div class="mt-3.5 pt-3.5 border-t border-ui-line flex flex-wrap gap-x-4 gap-y-1.5 sm:block sm:space-y-1.5 text-ui-small text-ui-muted">
+      <div class="flex items-center gap-2 min-w-0">
+        <Building class="w-3.5 h-3.5 text-ui-faint shrink-0" />
+        <span class="truncate">{{ enumLabel("workLocation", data?.job_information?.work_location, capitalize(data?.job_information?.work_location)) }}</span>
       </div>
-      <div class="flex items-center gap-1.5 text-sm text-gray-500">
-        <User class="w-3.5 h-3.5" />
-        <span>{{ capitalize(data?.gender) }}</span>
+      <div class="flex items-center gap-2">
+        <User class="w-3.5 h-3.5 text-ui-faint shrink-0" />
+        <span>{{ enumLabel("gender", data?.gender, capitalize(data?.gender)) }}</span>
       </div>
-      <div class="flex items-center gap-1.5 text-sm text-gray-500">
-        <Calendar class="w-3.5 h-3.5" />
-        <span
-          >{{ data?.job_information?.years_experience }} years experience</span
-        >
+      <div class="flex items-center gap-2">
+        <Calendar class="w-3.5 h-3.5 text-ui-faint shrink-0" />
+        <span class="tabular-nums">{{ $t("employees.card.yearsExperience", { n: data?.job_information?.years_experience }, Number(data?.job_information?.years_experience) || 0) }}</span>
       </div>
     </div>
-    <div class="flex gap-1.5">
-      <button
-        @click="goToDetail"
-        class="flex-1 btn-view-soft"
-      >
-        <Eye class="w-4 h-4" />
-        <span>View</span>
-      </button>
-      <button
-        @click="goToEdit"
-        class="flex-1 btn-edit-soft"
-        v-if="can('employee-edit')"
-      >
-        <Edit class="w-4 h-4" />
-        <span>Edit</span>
-      </button>
+
+    <div class="flex-1"></div>
+    <div class="flex gap-2 mt-4">
+      <UiButton variant="secondary" size="sm" :icon="Eye" class="flex-1" @click="goToDetail">
+        {{ $t("common.actions.view") }}
+      </UiButton>
+      <UiButton v-if="can('employee-edit')" variant="ghost" size="sm" :icon="Edit" class="flex-1" @click="goToEdit">
+        {{ $t("common.actions.edit") }}
+      </UiButton>
     </div>
   </div>
 </template>

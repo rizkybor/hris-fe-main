@@ -1,11 +1,16 @@
 <script setup>
+import DashboardWidgetCard from "./DashboardWidgetCard.vue";
+import { UiBadge, UiEmpty } from "@/components/ui";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import { computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { ClipboardList, ChevronRight } from "lucide-vue-next";
+import { ClipboardList } from "lucide-vue-next";
 import { useLeaveRequestStore } from "@/stores/leaveRequest";
 import { can } from "@/helpers/permissionHelper";
 import { getTimeAgo } from "@/utils/dateUtils";
-import { getStatusBadgeClass } from "@/utils/badgeUtils";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
 
 const canViewLeaveRequests = computed(() => can("leave-request-list"));
 
@@ -18,56 +23,33 @@ onMounted(() => {
     leaveRequestStore.fetchAllPaginated({ status: "pending", row_per_page: 5 });
   }
 });
+
+const STATUS_TONES = { pending: "warn", approved: "ok", rejected: "bad", cancelled: "neutral" };
+const statusTone = (status) => STATUS_TONES[String(status).toLowerCase()] || "neutral";
+const statusLabel = (status) => {
+  const key = `dashboard.leaveRequests.status.${String(status).toLowerCase()}`;
+  return te(key) ? t(key) : status;
+};
 </script>
 
 <template>
-  <div
+  <DashboardWidgetCard
     v-if="canViewLeaveRequests"
-    class="bg-gradient-to-br from-indigo-50 to-white border-2 border-indigo-200 rounded-[14px] p-5 shadow-sm"
+    :title="$t('dashboard.widgets.pendingLeaveRequests')"
+    :subtitle="$t('dashboard.leaveRequests.awaiting', { n: leaveMeta?.total ?? 0 })"
+    :to="{ name: 'admin.leave-requests.dashboard' }"
+    flush
   >
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 bg-indigo-100 rounded-[10px] flex items-center justify-center shrink-0">
-          <ClipboardList class="w-4 h-4 text-indigo-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-base font-bold">Pending Leave Requests</h3>
-          <p class="text-brand-light text-sm">{{ leaveMeta.total }} awaiting your review</p>
-        </div>
-      </div>
-      <RouterLink
-        :to="{ name: 'admin.leave-requests.dashboard' }"
-        class="text-[#0C51D9] text-sm font-medium hover:underline shrink-0 flex items-center gap-0.5"
-      >
-        View All <ChevronRight class="w-4 h-4" />
-      </RouterLink>
-    </div>
-
-    <div v-if="leaveLoading" class="text-center py-10 text-sm text-gray-400">Loading...</div>
-    <div v-else-if="pendingLeaveRequests.length === 0" class="text-center py-10 text-sm text-gray-400">
-      No pending leave requests.
-    </div>
-    <div v-else class="space-y-3">
-      <div
-        v-for="request in pendingLeaveRequests"
-        :key="request.id"
-        class="flex items-center justify-between gap-3 border border-[#DCDEDD] rounded-[12px] p-3 bg-white"
-      >
+    <SkeletonList v-if="leaveLoading" :rows="3" class="p-3" />
+    <UiEmpty v-else-if="pendingLeaveRequests.length === 0" :icon="ClipboardList" :title="$t('dashboard.leaveRequests.empty')" compact />
+    <ul v-else class="divide-y divide-ui-line">
+      <li v-for="request in pendingLeaveRequests" :key="request.id" class="flex items-center justify-between gap-3 px-5 py-3">
         <div class="min-w-0">
-          <p class="text-brand-dark text-sm font-medium truncate">
-            {{ request.employee?.user?.name || "Unknown" }}
-          </p>
-          <p class="text-brand-light text-xs mt-0.5">
-            {{ request.leave_type || "Leave" }} &middot; {{ getTimeAgo(request.created_at) }}
-          </p>
+          <p class="text-ui-body font-medium text-ui-ink truncate">{{ request.employee?.user?.name || $t("dashboard.leaveRequests.unknown") }}</p>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ request.leave_type || $t("dashboard.leaveRequests.leave") }} &middot; {{ getTimeAgo(request.created_at) }}</p>
         </div>
-        <span
-          class="text-xs px-2 py-1 rounded-full font-semibold shrink-0"
-          :class="getStatusBadgeClass(request.status)"
-        >
-          {{ request.status }}
-        </span>
-      </div>
-    </div>
-  </div>
+        <UiBadge :tone="statusTone(request.status)" dot class="capitalize shrink-0">{{ statusLabel(request.status) }}</UiBadge>
+      </li>
+    </ul>
+  </DashboardWidgetCard>
 </template>

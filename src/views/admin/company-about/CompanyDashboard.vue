@@ -3,13 +3,15 @@ import { useCompanyAboutStore } from "@/stores/companyAbout";
 import { ref, reactive, computed, onMounted } from "vue";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiModal, UiInput, UiEmpty, UiBadge } from "@/components/ui";
 import { can } from "@/helpers/permissionHelper";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import {
   Building2,
   Pencil,
   Plus,
-  X,
   Target,
   Flag,
   MapPin,
@@ -20,9 +22,11 @@ import {
   Type,
   FileText,
   Save,
+  Hash,
 } from "lucide-vue-next";
 
 // Pinia store
+const { t } = useI18n();
 const companyStore = useCompanyAboutStore();
 const { company, loading, success, error } = storeToRefs(companyStore);
 
@@ -62,13 +66,21 @@ const cleanedBranches = computed(() => {
 // Format tanggal
 const formattedDate = computed(() =>
   company.value?.established_date
-    ? new Date(company.value.established_date).toLocaleDateString("id-ID", {
+    ? new Date(company.value.established_date).toLocaleDateString(localeTag(), {
         year: "numeric",
         month: "long",
         day: "numeric",
       })
     : "-"
 );
+
+const overviewItems = computed(() => [
+  { key: "established", icon: CalendarDays, label: t("company.fields.established"), value: formattedDate.value },
+  { key: "npwp", icon: Hash, label: t("company.fields.npwp"), value: company.value?.npwp },
+  { key: "email", icon: Mail, label: t("common.labels.email"), value: company.value?.email },
+  { key: "phone", icon: Phone, label: t("common.labels.phone"), value: company.value?.phone },
+  { key: "address", icon: MapPin, label: t("common.labels.address"), value: company.value?.address, wide: true },
+]);
 
 // --- Modal state
 const showModal = ref(false);
@@ -165,342 +177,187 @@ const saveCompany = async () => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-  <!-- Alerts -->
-  <Alert type="success" :title="success" :show="!!success" />
-  <Alert type="error" :title="error" :show="!!error" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <!-- Alerts -->
+    <Alert type="success" :title="success" :show="!!success" />
+    <Alert type="error" :title="error" :show="!!error" />
 
-  <!-- Page Header -->
-  <div class="bg-white mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-    <div class="flex items-center gap-3 min-w-0">
-      <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
-        <Building2 class="w-5 h-5 text-[#0C51D9]" />
-      </div>
-      <div class="min-w-0">
-        <h3 class="text-brand-dark text-base font-bold">Company About</h3>
-        <p class="text-brand-light text-xs">Company profile shown across the system</p>
-      </div>
-    </div>
-    <button
-      v-if="can('company-about-edit') && company"
-      @click="openModal(true)"
-      class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto"
-    >
-      <Pencil class="w-4 h-4 text-white" />
-      <span class="text-brand-white text-sm font-semibold">Edit</span>
-    </button>
-  </div>
+    <!-- Page Header -->
+    <UiPageHeader :title="$t('company.title')" :subtitle="$t('company.subtitle')">
+      <template #actions>
+        <UiButton v-if="can('company-about-edit') && company" :icon="Pencil" class="w-full sm:w-auto" @click="openModal(true)">
+          {{ $t("common.actions.edit") }}
+        </UiButton>
+      </template>
+    </UiPageHeader>
 
-  <!-- Loading State -->
-  <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 lg:col-span-2 space-y-3">
-      <Skeleton width="64px" height="64px" rounded="12px" />
-      <Skeleton width="60%" height="20px" />
-      <Skeleton width="100%" height="14px" />
-      <Skeleton width="90%" height="14px" />
-    </div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3">
-      <Skeleton width="100%" height="14px" />
-      <Skeleton width="80%" height="14px" />
-      <Skeleton width="70%" height="14px" />
-    </div>
-  </div>
-
-  <!-- Company Content -->
-  <div v-else-if="company" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <!-- Overview -->
-    <div class="main-card rounded-[14px] p-5 lg:col-span-2 relative overflow-hidden">
-      <div class="absolute -top-12 -right-12 w-48 h-48 bg-blue-500/20 rounded-full blur-2xl"></div>
-      <div class="relative z-10 mb-5">
+    <!-- Loading State -->
+    <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 lg:col-span-2 space-y-3">
         <div class="flex items-center gap-4">
-          <div class="w-14 h-14 bg-white border border-white/10 rounded-[12px] flex items-center justify-center shrink-0">
-            <img src="/images/jcd-only-color.png" alt="Company Logo" class="w-9 h-9 object-contain" />
-          </div>
-          <div class="min-w-0">
-            <h2 class="text-white text-lg font-bold truncate">{{ company.name || "-" }}</h2>
-            <p v-if="company.legal_name" class="text-brand-white-70 text-sm truncate">{{ company.legal_name }}</p>
+          <Skeleton width="56px" height="56px" rounded="12px" />
+          <div class="flex-1 space-y-2">
+            <Skeleton width="50%" height="18px" />
+            <Skeleton width="30%" height="12px" />
           </div>
         </div>
-        <p
-          v-if="company.description"
-          :title="company.description"
-          class="text-brand-white-70 text-sm leading-relaxed mt-3.5 pt-3.5 border-t border-white/10 line-clamp-2"
-        >
-          {{ company.description }}
-        </p>
+        <Skeleton width="100%" height="12px" />
+        <Skeleton width="85%" height="12px" />
       </div>
-
-      <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
-            <CalendarDays class="w-4 h-4 text-blue-300" />
-          </div>
-          <div class="min-w-0">
-            <p class="text-brand-white-70 text-xs">Established</p>
-            <p class="text-white text-sm font-semibold truncate">{{ formattedDate }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
-            <MapPin class="w-4 h-4 text-blue-300" />
-          </div>
-          <div class="min-w-0">
-            <p class="text-brand-white-70 text-xs">Address</p>
-            <p class="text-white text-sm font-semibold truncate">{{ company.address || "-" }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
-            <Mail class="w-4 h-4 text-blue-300" />
-          </div>
-          <div class="min-w-0">
-            <p class="text-brand-white-70 text-xs">Email</p>
-            <p class="text-white text-sm font-semibold truncate">{{ company.email || "-" }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
-            <Phone class="w-4 h-4 text-blue-300" />
-          </div>
-          <div class="min-w-0">
-            <p class="text-brand-white-70 text-xs">Phone</p>
-            <p class="text-white text-sm font-semibold truncate">{{ company.phone || "-" }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
-            <FileText class="w-4 h-4 text-blue-300" />
-          </div>
-          <div class="min-w-0">
-            <p class="text-brand-white-70 text-xs">NPWP</p>
-            <p class="text-white text-sm font-semibold truncate">{{ company.npwp || "-" }}</p>
-          </div>
-        </div>
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 space-y-3">
+        <Skeleton width="40%" height="14px" />
+        <Skeleton width="100%" height="12px" />
+        <Skeleton width="80%" height="12px" />
+        <Skeleton width="70%" height="12px" />
       </div>
     </div>
 
-    <!-- Vision -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <Target class="w-4 h-4 text-blue-600" />
-        </div>
-        <h4 class="text-brand-dark text-sm font-bold">Vision</h4>
-      </div>
-      <p class="text-brand-light text-sm leading-relaxed">{{ company.vision || "-" }}</p>
-    </div>
-
-    <!-- Mission -->
-    <div v-if="cleanedMission.length" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <Flag class="w-4 h-4 text-blue-600" />
-        </div>
-        <h4 class="text-brand-dark text-sm font-bold">Mission</h4>
-      </div>
-      <ul class="space-y-2">
-        <li v-for="(m, index) in cleanedMission" :key="index" class="flex gap-2.5 text-sm text-brand-light">
-          <span class="text-blue-500 font-semibold shrink-0">{{ index + 1 }}.</span>
-          {{ m }}
-        </li>
-      </ul>
-    </div>
-
-    <!-- Branches -->
-    <div v-if="cleanedBranches.length" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 lg:col-span-2">
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-9 h-9 bg-gray-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <Network class="w-4 h-4 text-gray-500" />
-        </div>
-        <h4 class="text-brand-dark text-sm font-bold">Sub-companies / Branches</h4>
-      </div>
-      <ul class="space-y-2">
-        <li v-for="(b, index) in cleanedBranches" :key="index" class="text-sm text-brand-light border-l-2 border-gray-200 pl-3">
-          {{ b }}
-        </li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- Empty State -->
-  <div v-else class="bg-white border border-[#DCDEDD] rounded-[14px] p-12 text-center">
-    <Building2 class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-    <h4 class="text-brand-dark text-base font-semibold mb-1">No company data yet</h4>
-    <p class="text-brand-light text-sm mb-5">Add your company profile so it appears across the system.</p>
-    <button
-      v-if="can('company-about-edit')"
-      @click="openModal(false)"
-      class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-5 py-2.5 w-fit mx-auto"
-    >
-      <Plus class="w-4 h-4 text-white" />
-      <span class="text-brand-white text-sm font-semibold">Add Company Information</span>
-    </button>
-  </div>
-
-  <!-- Create/Edit Modal -->
-  <Transition name="fade">
-    <div
-      v-if="showModal"
-      class="fixed inset-0 bg-brand-dark/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="showModal = false"
-    >
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between shrink-0">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
-              <Building2 class="w-5 h-5 text-[#0C51D9]" />
-            </div>
-            <h3 class="text-brand-dark text-lg font-bold">
-              {{ isEditing ? "Edit Company Information" : "Add Company Information" }}
-            </h3>
+    <!-- Company Content -->
+    <div v-else-if="company" class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 items-start ui-stagger">
+      <!-- Overview -->
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card lg:col-span-2 min-w-0">
+        <div class="p-5 sm:p-6 flex items-start gap-4">
+          <div class="w-14 h-14 bg-ui-surface border border-ui-line rounded-ui-card flex items-center justify-center shrink-0">
+            <img src="/images/jcd-only-color.png" :alt="$t('company.logoAlt')" class="w-9 h-9 object-contain" />
           </div>
-          <button @click="showModal = false" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150">
-            <X class="w-4 h-4" />
-          </button>
+          <div class="min-w-0 flex-1">
+            <h2 class="text-ui-h1 text-ui-ink truncate">{{ company.name || "-" }}</h2>
+            <p v-if="company.legal_name" class="text-ui-small text-ui-muted truncate mt-0.5">{{ company.legal_name }}</p>
+            <p
+              v-if="company.description"
+              :title="company.description"
+              class="text-ui-body text-ui-text mt-3 line-clamp-3"
+            >
+              {{ company.description }}
+            </p>
+          </div>
         </div>
 
-        <form @submit.prevent="saveCompany" class="flex-1 overflow-y-auto p-5 space-y-6">
-          <!-- Identity -->
-          <div>
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
-                <Type class="w-4 h-4 text-blue-600" />
-              </div>
-              <h4 class="text-brand-dark text-sm font-bold">Identitas Perusahaan</h4>
-            </div>
-            <div class="space-y-4">
-              <div>
-                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Name</label>
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Building2 class="w-4 h-4 text-gray-400" />
-                  </div>
-                  <input v-model="form.name" type="text" class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
-                </div>
-              </div>
-              <div>
-                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Description</label>
-                <textarea v-model="form.description" rows="2" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"></textarea>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Legal Name (optional)</label>
-                  <input v-model="form.legal_name" type="text" placeholder="PT ..." class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
-                </div>
-                <div>
-                  <label class="text-sm font-semibold text-brand-dark mb-1.5 block">NPWP (optional)</label>
-                  <input v-model="form.npwp" type="text" placeholder="00.000.000.0-000.000" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Vision & Mission -->
-          <div>
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 bg-blue-50 rounded-[9px] flex items-center justify-center shrink-0">
-                <Target class="w-4 h-4 text-blue-600" />
-              </div>
-              <h4 class="text-brand-dark text-sm font-bold">Visi &amp; Misi</h4>
-            </div>
-            <div class="space-y-4">
-              <div>
-                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Vision</label>
-                <textarea v-model="form.vision" rows="2" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"></textarea>
-              </div>
-              <div>
-                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Mission (one per line)</label>
-                <textarea v-model="form.mission" rows="3" placeholder="Enter one mission per line" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"></textarea>
-              </div>
-            </div>
-          </div>
-
-          <!-- Contact -->
-          <div>
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 bg-emerald-50 rounded-[9px] flex items-center justify-center shrink-0">
-                <Phone class="w-4 h-4 text-emerald-600" />
-              </div>
-              <h4 class="text-brand-dark text-sm font-bold">Kontak &amp; Lokasi</h4>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Established Date</label>
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <CalendarDays class="w-4 h-4 text-gray-400" />
-                  </div>
-                  <input v-model="form.established_date" type="date" class="w-full h-[42px] pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-base sm:text-sm appearance-none hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
-                </div>
-              </div>
-              <div>
-                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Phone</label>
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Phone class="w-4 h-4 text-gray-400" />
-                  </div>
-                  <input v-model="form.phone" type="text" class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
-                </div>
-              </div>
-              <div class="sm:col-span-2">
-                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Address</label>
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <MapPin class="w-4 h-4 text-gray-400" />
-                  </div>
-                  <input v-model="form.address" type="text" class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
-                </div>
-              </div>
-              <div class="sm:col-span-2">
-                <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Email</label>
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Mail class="w-4 h-4 text-gray-400" />
-                  </div>
-                  <input v-model="form.email" type="email" class="w-full pl-10 pr-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Branches -->
-          <div>
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 bg-gray-100 rounded-[9px] flex items-center justify-center shrink-0">
-                <Network class="w-4 h-4 text-gray-500" />
-              </div>
-              <h4 class="text-brand-dark text-sm font-bold">Sub-companies / Branches</h4>
-            </div>
-            <textarea v-model="form.branches" rows="3" placeholder="Enter one branch per line" class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all resize-none"></textarea>
-          </div>
-        </form>
-
-        <div class="flex items-center gap-3 p-5 border-t border-[#DCDEDD] shrink-0">
-          <button
-            @click="saveCompany"
-            :disabled="saving"
-            class="btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-2.5 flex items-center gap-2 disabled:opacity-50"
+        <dl class="border-t border-ui-line px-5 sm:px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+          <div v-for="item in overviewItems"
+            :key="item.key"
+            class="flex items-start gap-3 min-w-0"
+            :class="item.wide ? 'sm:col-span-2' : ''"
           >
-            <Save class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">{{ saving ? "Saving..." : "Save" }}</span>
-          </button>
-          <button @click="showModal = false" class="px-6 py-2.5 rounded-[12px] border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50 transition-all">
-            Cancel
-          </button>
+            <div class="w-8 h-8 rounded-ui-control bg-ui-subtle text-ui-muted flex items-center justify-center shrink-0">
+              <component :is="item.icon" class="w-4 h-4" />
+            </div>
+            <div class="min-w-0">
+              <dt class="text-ui-cap text-ui-muted">{{ item.label }}</dt>
+              <dd class="text-ui-body text-ui-ink break-words">{{ item.value || "-" }}</dd>
+            </div>
+          </div>
+        </dl>
+      </section>
+
+      <!-- Vision -->
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+        <div class="flex items-center gap-2.5 mb-3">
+          <Target class="w-4 h-4 text-ui-muted" />
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("company.vision") }}</h3>
         </div>
-      </div>
+        <p class="text-ui-body text-ui-text whitespace-pre-line">{{ company.vision || "-" }}</p>
+      </section>
+
+      <!-- Mission -->
+      <section v-if="cleanedMission.length" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 lg:col-span-2 min-w-0">
+        <div class="flex items-center gap-2.5 mb-3">
+          <Flag class="w-4 h-4 text-ui-muted" />
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("company.mission") }}</h3>
+          <UiBadge class="ml-auto">{{ cleanedMission.length }}</UiBadge>
+        </div>
+        <ol class="divide-y divide-ui-line">
+          <li v-for="(m, index) in cleanedMission" :key="index" class="flex gap-3 py-2.5 first:pt-0 last:pb-0 text-ui-body text-ui-text">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 shrink-0 pt-0.5">{{ index + 1 }}</span>
+            <span class="min-w-0">{{ m }}</span>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Branches -->
+      <section v-if="cleanedBranches.length" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0" :class="cleanedMission.length ? '' : 'lg:col-span-2'">
+        <div class="flex items-center gap-2.5 mb-3">
+          <Network class="w-4 h-4 text-ui-muted" />
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("company.branches") }}</h3>
+          <UiBadge class="ml-auto">{{ cleanedBranches.length }}</UiBadge>
+        </div>
+        <ul class="divide-y divide-ui-line">
+          <li v-for="(b, index) in cleanedBranches" :key="index" class="flex items-start gap-2.5 py-2.5 first:pt-0 last:pb-0 text-ui-body text-ui-text">
+            <Building2 class="w-4 h-4 text-ui-faint shrink-0 mt-0.5" />
+            <span class="min-w-0">{{ b }}</span>
+          </li>
+        </ul>
+      </section>
     </div>
-  </Transition>
+
+    <!-- Empty State -->
+    <div v-else class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty :icon="Building2" :title="$t('company.empty.title')" :message="$t('company.empty.message')">
+        <UiButton v-if="can('company-about-edit')" :icon="Plus" @click="openModal(false)">{{ $t("company.modal.addTitle") }}</UiButton>
+      </UiEmpty>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <UiModal
+      v-model:open="showModal"
+      size="lg"
+      :title="isEditing ? $t('company.modal.editTitle') : $t('company.modal.addTitle')"
+    >
+      <form id="company-about-form" class="space-y-6" @submit.prevent="saveCompany">
+        <!-- Identity -->
+        <fieldset class="space-y-4">
+          <legend class="sr-only">{{ $t("company.modal.identity") }}</legend>
+          <p class="flex items-center gap-2 text-ui-over uppercase text-ui-muted">
+            <Type class="w-3.5 h-3.5" />{{ $t("company.modal.identity") }}
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <UiInput v-model="form.name" :label="$t('common.labels.name')" :icon="Building2" class="sm:col-span-2" />
+            <UiInput v-model="form.description" :label="$t('common.labels.description')" :rows="2" class="sm:col-span-2" />
+            <UiInput v-model="form.legal_name" :label="$t('company.fields.legalNameOptional')" placeholder="PT ..." />
+            <UiInput v-model="form.npwp" :label="$t('company.fields.npwpOptional')" placeholder="00.000.000.0-000.000" />
+          </div>
+        </fieldset>
+
+        <!-- Vision & Mission -->
+        <fieldset class="space-y-4 pt-5 border-t border-ui-line">
+          <legend class="sr-only">{{ $t("company.modal.visionMission") }}</legend>
+          <p class="flex items-center gap-2 text-ui-over uppercase text-ui-muted">
+            <Target class="w-3.5 h-3.5" />{{ $t("company.modal.visionMission") }}
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <UiInput v-model="form.vision" :label="$t('company.vision')" :rows="3" />
+            <UiInput v-model="form.mission" :label="$t('company.fields.missionPerLine')" :rows="3" :placeholder="$t('company.fields.missionPlaceholder')" />
+          </div>
+        </fieldset>
+
+        <!-- Contact -->
+        <fieldset class="space-y-4 pt-5 border-t border-ui-line">
+          <legend class="sr-only">{{ $t("company.modal.contact") }}</legend>
+          <p class="flex items-center gap-2 text-ui-over uppercase text-ui-muted">
+            <Phone class="w-3.5 h-3.5" />{{ $t("company.modal.contact") }}
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <UiInput v-model="form.established_date" type="date" :label="$t('company.fields.establishedDate')" :icon="CalendarDays" />
+            <UiInput v-model="form.phone" :label="$t('common.labels.phone')" :icon="Phone" />
+            <UiInput v-model="form.address" :label="$t('common.labels.address')" :icon="MapPin" class="sm:col-span-2" />
+            <UiInput v-model="form.email" type="email" :label="$t('common.labels.email')" :icon="Mail" class="sm:col-span-2" />
+          </div>
+        </fieldset>
+
+        <!-- Branches -->
+        <fieldset class="space-y-4 pt-5 border-t border-ui-line">
+          <legend class="sr-only">{{ $t("company.branches") }}</legend>
+          <p class="flex items-center gap-2 text-ui-over uppercase text-ui-muted">
+            <Network class="w-3.5 h-3.5" />{{ $t("company.branches") }}
+          </p>
+          <UiInput v-model="form.branches" :rows="3" :placeholder="$t('company.fields.branchesPlaceholder')" :aria-label="$t('company.branches')" />
+        </fieldset>
+      </form>
+
+      <template #footer>
+        <UiButton variant="secondary" @click="showModal = false">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton :icon="Save" :loading="saving" @click="saveCompany">{{ saving ? $t("common.actions.saving") : $t("common.actions.save") }}</UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

@@ -1,13 +1,14 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
 import {
   ArrowLeft,
   Save,
   Eye,
   Download,
-  Loader2,
   Plus,
   ChevronUp,
   ChevronDown,
@@ -19,7 +20,9 @@ import {
   ListTree,
   SeparatorHorizontal,
   Share2,
+  ChevronRight,
 } from "lucide-vue-next";
+import { UiButton, UiBadge, UiInput, UiSelect, UiSpinner } from "@/components/ui";
 import ShareProposalModal from "@/components/admin/documents/ShareProposalModal.vue";
 import FlowchartPickerModal from "@/components/admin/documents/FlowchartPickerModal.vue";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
@@ -29,6 +32,7 @@ import { useAlertModalStore } from "@/stores/alertModal";
 import { errorMessage } from "@/helpers/errorHelper";
 import { PROPOSAL_STATUSES, proposalStatus } from "@/utils/proposalStatus";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useProposalStore();
@@ -74,7 +78,7 @@ const load = async () => {
     doc.value = fromProposal(data);
     savedState.value = snapshot();
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Proposal tidak bisa dibuka."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.editor.errors.open")), { type: "danger" });
     router.push({ name: "admin.proposals.dashboard" });
   } finally {
     loading.value = false;
@@ -112,7 +116,10 @@ const moveSection = (index, delta) => {
 
 const removeSection = async (index) => {
   const section = doc.value.sections[index];
-  const ok = await alertModal.confirm(`Hapus bagian "${section.title || "tanpa judul"}"?`, { type: "danger", confirmText: "Hapus" });
+  const ok = await alertModal.confirm(t("documents.proposal.editor.removeSectionConfirm", { title: section.title || t("documents.proposal.editor.untitledLower") }), {
+    type: "danger",
+    confirmText: t("common.actions.delete"),
+  });
   if (ok) doc.value.sections.splice(index, 1);
 };
 
@@ -134,7 +141,7 @@ const closeFlowchartPicker = (picked = null) => {
 
 // ===== Images =====
 const uploadEditorImage = async (file) => {
-  if (file.size > MAX_IMAGE_BYTES) throw new Error("Ukuran gambar maksimal 5 MB.");
+  if (file.size > MAX_IMAGE_BYTES) throw new Error(t("documents.proposal.editor.errors.imageTooLarge"));
   const { url } = await store.uploadImage(file);
   return url;
 };
@@ -145,7 +152,7 @@ const onCoverSelected = async (event) => {
   event.target.value = "";
   if (!file) return;
   if (file.size > MAX_IMAGE_BYTES) {
-    await alertModal.alert("Ukuran gambar maksimal 5 MB.", { type: "warning" });
+    await alertModal.alert(t("documents.proposal.editor.errors.imageTooLarge"), { type: "warning" });
     return;
   }
   coverUploading.value = true;
@@ -154,7 +161,7 @@ const onCoverSelected = async (event) => {
     doc.value.cover_image = public_id;
     doc.value.cover_image_url = url;
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Gambar sampul gagal diunggah."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.editor.errors.coverUpload")), { type: "danger" });
   } finally {
     coverUploading.value = false;
   }
@@ -181,7 +188,7 @@ const save = async () => {
     savedState.value = snapshot();
     return true;
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Proposal gagal disimpan."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.editor.errors.save")), { type: "danger" });
     return false;
   }
 };
@@ -198,7 +205,7 @@ const openPdf = async (download = false) => {
       await store.viewPdf(route.params.id);
     }
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "PDF gagal dibuat."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.errors.pdf")), { type: "danger" });
   } finally {
     pdfBusy.value = false;
   }
@@ -235,9 +242,9 @@ const onBeforeUnload = (event) => {
 
 onBeforeRouteLeave(async () => {
   if (!isDirty.value) return true;
-  return alertModal.confirm("Ada perubahan yang belum disimpan. Tinggalkan halaman tanpa menyimpan?", {
+  return alertModal.confirm(t("documents.proposal.editor.leaveConfirm"), {
     type: "warning",
-    confirmText: "Tinggalkan",
+    confirmText: t("documents.proposal.editor.leave"),
   });
 });
 
@@ -252,184 +259,195 @@ onBeforeUnmount(() => {
   window.removeEventListener("beforeunload", onBeforeUnload);
 });
 
+// ===== Presentation only =====
+const STATUS_TONE = { draft: "neutral", sent: "info", accepted: "ok", rejected: "bad" };
+const clientOptions = computed(() => [
+  { value: "", label: t("documents.proposal.editor.newClient") },
+  ...clients.value.map((c) => ({ value: c.id, label: c.name })),
+]);
+const fieldClass =
+  "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus transition-shadow";
+const iconBtn =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:shadow-ui-focus transition-colors";
+
 const lastSaved = computed(() => {
   if (!proposal.value?.updated_at) return null;
-  const at = new Date(proposal.value.updated_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
-  return proposal.value.updater?.name ? `Tersimpan ${at} oleh ${proposal.value.updater.name}` : `Tersimpan ${at}`;
+  const at = new Date(proposal.value.updated_at).toLocaleString(localeTag(), { dateStyle: "medium", timeStyle: "short" });
+  return proposal.value.updater?.name
+    ? t("documents.proposal.editor.savedAtBy", { at, name: proposal.value.updater.name })
+    : t("documents.proposal.editor.savedAt", { at });
 });
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div v-if="loading" class="flex items-center justify-center py-24">
-      <Loader2 class="w-6 h-6 text-[#0C51D9] animate-spin" />
-    </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiSpinner v-if="loading" :label="$t('documents.proposal.editor.loading')" />
 
     <template v-else-if="doc">
-      <!-- Top bar -->
-      <!-- top: -12px cancels the layout's <main> padding (p-3), so the bar
-           sticks flush to the edge instead of leaving a gap that content
-           scrolls through. -->
-      <div class="sticky z-20 bg-slate-50 border border-[#DCDEDD] rounded-[14px] px-4 py-3 mb-5 flex flex-wrap items-center gap-2.5" style="top: -12px; box-shadow: 0 -12px 0 0 #ffffff">
-        <button
-          type="button"
-          class="w-9 h-9 rounded-[10px] border border-[#DCDEDD] bg-white flex items-center justify-center hover:border-[#0C51D9] transition-colors shrink-0"
-          title="Kembali ke daftar"
-          @click="router.push({ name: 'admin.proposals.dashboard' })"
-        >
-          <ArrowLeft class="w-4 h-4 text-brand-dark" />
-        </button>
-        <div class="flex-1 min-w-[200px]">
-          <p class="text-brand-dark text-sm font-bold truncate">Proposal Penawaran — {{ doc.title || "Tanpa judul" }}</p>
-          <p class="text-brand-light text-xs truncate">
-            {{ doc.client_name }}
-            <span v-if="isDirty" class="text-amber-600 font-semibold"> · Belum disimpan</span>
-            <span v-else-if="lastSaved"> · {{ lastSaved }}</span>
-          </p>
-        </div>
+      <!-- Top bar: sticks to the top of <main>. -top-3 cancels main's
+           padding, and the wrapper's page-coloured band hides content
+           scrolling past above / beside the bar. -->
+      <div class="sticky -top-3 z-20 -mt-3 pt-3 -mx-1 px-1 sm:-mx-3 sm:px-3 lg:-mx-5 lg:px-5 bg-ui-bg">
+        <div class="bg-ui-surface border border-ui-line rounded-ui-card px-3 sm:px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2.5">
+          <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-[220px]">
+            <button
+              type="button"
+              class="w-8 h-8 -ml-1 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink shrink-0 focus:outline-none focus-visible:shadow-ui-focus"
+              :title="$t('documents.proposal.editor.backToList')"
+              :aria-label="$t('documents.proposal.editor.backToList')"
+              @click="router.push({ name: 'admin.proposals.dashboard' })"
+            >
+              <ArrowLeft class="w-4 h-4" />
+            </button>
+            <div class="min-w-0 flex-1">
+              <h1 class="text-ui-h3 text-ui-ink truncate">{{ $t("documents.hub.links.proposal.title") }} — {{ doc.title || $t("documents.proposal.editor.untitled") }}</h1>
+              <p class="text-ui-cap text-ui-muted truncate">
+                {{ doc.client_name }}<span v-if="!isDirty && lastSaved"> · {{ lastSaved }}</span>
+              </p>
+            </div>
+            <UiBadge v-if="isDirty" tone="warn" dot class="shrink-0">{{ $t("documents.proposal.editor.unsaved") }}</UiBadge>
+          </div>
 
-        <div class="relative shrink-0">
-          <select v-model="doc.status" class="select-soft" title="Status proposal">
-            <option v-for="s in PROPOSAL_STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
-          </select>
-          <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <UiSelect v-model="doc.status" :options="PROPOSAL_STATUSES" :title="$t('documents.proposal.editor.statusTitle')" class="flex-1 min-w-0 sm:flex-none sm:w-32" />
+            <div class="flex items-center gap-1.5 ml-auto shrink-0">
+              <UiButton
+                variant="ghost"
+                :icon="Share2"
+                :disabled="saving"
+                :title="$t('documents.proposal.editor.shareHint')"
+                :aria-label="$t('common.actions.share')"
+                @click="openShare"
+              ><span class="hidden xl:inline">{{ $t("common.actions.share") }}</span></UiButton>
+              <UiButton
+                variant="secondary"
+                :icon="Eye"
+                :loading="pdfBusy"
+                :title="$t('documents.proposal.editor.viewPdfHint')"
+                :aria-label="$t('documents.shared.viewPdf')"
+                @click="openPdf(false)"
+              ><span class="hidden xl:inline">{{ $t("documents.shared.viewPdf") }}</span></UiButton>
+              <UiButton
+                variant="secondary"
+                :icon="Download"
+                :disabled="pdfBusy"
+                :title="$t('common.actions.downloadPdf')"
+                :aria-label="$t('common.actions.downloadPdf')"
+                @click="openPdf(true)"
+              ><span class="hidden xl:inline">{{ $t("common.actions.download") }}</span></UiButton>
+              <UiButton :icon="Save" :loading="saving" :disabled="!isDirty" :title="$t('documents.proposal.editor.saveHint')" :aria-label="$t('common.actions.save')" @click="save"><span class="hidden sm:inline">{{ $t("common.actions.save") }}</span></UiButton>
+            </div>
+          </div>
         </div>
-
-        <button
-          type="button"
-          class="rounded-[10px] border border-[#DCDEDD] bg-white px-3 py-2 flex items-center gap-1.5 hover:border-[#0C51D9] transition-colors disabled:opacity-50 shrink-0"
-          :disabled="saving"
-          title="Bagikan lewat link, email, atau WhatsApp"
-          @click="openShare"
-        >
-          <Share2 class="w-4 h-4 text-brand-dark" />
-          <span class="text-brand-dark text-sm font-semibold">Bagikan</span>
-        </button>
-        <button
-          type="button"
-          class="rounded-[10px] border border-[#DCDEDD] bg-white px-3 py-2 flex items-center gap-1.5 hover:border-[#0C51D9] transition-colors disabled:opacity-50 shrink-0"
-          :disabled="pdfBusy"
-          title="Lihat PDF di tab baru"
-          @click="openPdf(false)"
-        >
-          <Loader2 v-if="pdfBusy" class="w-4 h-4 animate-spin text-brand-dark" />
-          <Eye v-else class="w-4 h-4 text-brand-dark" />
-          <span class="text-brand-dark text-sm font-semibold">Lihat PDF</span>
-        </button>
-        <button
-          type="button"
-          class="rounded-[10px] border border-[#DCDEDD] bg-white px-3 py-2 flex items-center gap-1.5 hover:border-[#0C51D9] transition-colors disabled:opacity-50 shrink-0"
-          :disabled="pdfBusy"
-          title="Unduh PDF"
-          @click="openPdf(true)"
-        >
-          <Download class="w-4 h-4 text-brand-dark" />
-          <span class="text-brand-dark text-sm font-semibold">Unduh</span>
-        </button>
-        <button
-          type="button"
-          class="btn-primary rounded-[10px] border border-[#2151A0] blue-gradient blue-btn-shadow px-3.5 py-2 flex items-center gap-1.5 shrink-0 disabled:opacity-60"
-          :disabled="saving || !isDirty"
-          title="Simpan (Ctrl+S)"
-          @click="save"
-        >
-          <Loader2 v-if="saving" class="w-4 h-4 text-white animate-spin" />
-          <Save v-else class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">Simpan</span>
-        </button>
       </div>
 
-      <div class="flex flex-col lg:flex-row gap-5 items-start">
-        <!-- Main column -->
-        <div class="flex-1 min-w-0 w-full space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-[240px,minmax(0,1fr)] gap-5 items-start">
+        <!-- Outline (left panel on desktop, section list card on phones) -->
+        <aside class="min-w-0 lg:sticky lg:top-[76px]">
+          <div class="bg-ui-surface border border-ui-line rounded-ui-card lg:bg-transparent lg:border-0 lg:rounded-none">
+            <div class="flex items-center gap-2 px-4 pt-3.5 pb-2 lg:px-1 lg:pt-1">
+              <ListTree class="w-4 h-4 text-ui-faint lg:hidden" />
+              <p class="text-ui-h3 lg:text-ui-over lg:uppercase text-ui-ink lg:text-ui-muted flex-1">{{ $t("documents.proposal.editor.outline") }}</p>
+            </div>
+            <ol class="overflow-y-auto max-h-[60vh] divide-y divide-ui-line lg:divide-y-0 lg:space-y-0.5 border-t border-ui-line lg:border-t-0">
+              <li v-for="(section, index) in doc.sections" :key="section.id">
+                <button
+                  type="button"
+                  class="w-full text-left flex items-center gap-2 px-4 lg:px-2.5 h-11 lg:h-9 text-ui-small text-ui-text hover:bg-ui-hover hover:text-ui-ink lg:rounded-ui-control transition-colors"
+                  @click="scrollToSection(section.id)"
+                >
+                  <span class="text-ui-faint shrink-0 tabular-nums min-w-[18px]">{{ sectionNumbers[index] ? `${sectionNumbers[index]}.` : "·" }}</span>
+                  <span class="truncate flex-1">{{ section.title || $t("documents.proposal.editor.untitled") }}</span>
+                  <ChevronRight class="w-4 h-4 text-ui-faint shrink-0 lg:hidden" />
+                </button>
+              </li>
+            </ol>
+            <div class="p-3 lg:px-1 border-t border-ui-line lg:border-t-0">
+              <UiButton variant="secondary" size="sm" :icon="Plus" block @click="addSection(doc.sections.length)">{{ $t("documents.proposal.editor.addSectionEnd") }}</UiButton>
+              <p class="text-ui-cap text-ui-muted mt-3">
+                {{ $t("documents.proposal.editor.bracketHint") }}
+              </p>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Document canvas -->
+        <div class="min-w-0 w-full max-w-[880px] mx-auto space-y-4">
           <!-- Document info -->
-          <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-raised p-4 sm:p-6">
             <div class="flex items-center gap-2 mb-4">
-              <FileText class="w-5 h-5 text-violet-600" />
-              <h3 class="text-brand-dark text-base font-bold">Informasi Dokumen</h3>
+              <FileText class="w-4 h-4 text-ui-faint" />
+              <h2 class="text-ui-h2 text-ui-ink">{{ $t("documents.proposal.editor.docInfo") }}</h2>
             </div>
 
             <!-- Cover -->
             <div class="mb-4">
-              <label class="pp-label">Gambar Sampul</label>
-              <div v-if="doc.cover_image_url" class="relative rounded-[12px] overflow-hidden border border-[#DCDEDD]" style="height: 160px">
-                <img :src="doc.cover_image_url" class="w-full h-full object-cover" alt="Sampul" />
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.proposal.editor.cover") }}</p>
+              <div v-if="doc.cover_image_url" class="relative h-40 rounded-ui-control overflow-hidden border border-ui-line">
+                <img :src="doc.cover_image_url" class="w-full h-full object-cover" :alt="$t('documents.proposal.editor.cover')" />
                 <div class="absolute top-2 right-2 flex gap-1.5">
-                  <button type="button" class="pp-chip" @click="coverInput?.click()">Ganti</button>
-                  <button type="button" class="pp-chip" @click="removeCover"><X class="w-3.5 h-3.5" /></button>
+                  <UiButton variant="secondary" size="sm" @click="coverInput?.click()">{{ $t("documents.proposal.editor.replace") }}</UiButton>
+                  <UiButton variant="secondary" size="sm" :icon="X" :aria-label="$t('documents.proposal.editor.removeCover')" :title="$t('documents.proposal.editor.removeCover')" @click="removeCover" />
                 </div>
               </div>
               <button
                 v-else
                 type="button"
-                class="w-full rounded-[12px] border-2 border-dashed border-[#DCDEDD] hover:border-[#0C51D9] transition-colors flex flex-col items-center justify-center gap-1 text-brand-light"
-                style="height: 110px"
+                class="w-full h-[110px] rounded-ui-control border border-dashed border-ui-line-strong hover:border-ui-accent hover:text-ui-accent hover:bg-ui-accent-soft/40 transition-colors flex flex-col items-center justify-center gap-1.5 px-4 text-ui-muted disabled:opacity-60"
                 :disabled="coverUploading"
                 @click="coverInput?.click()"
               >
-                <Loader2 v-if="coverUploading" class="w-5 h-5 animate-spin" />
+                <UiSpinner v-if="coverUploading" :center="false" />
                 <ImagePlus v-else class="w-5 h-5" />
-                <span class="text-xs font-medium">Unggah gambar sampul (opsional, JPG/PNG/WebP, maks. 5 MB)</span>
+                <span class="text-ui-cap font-medium text-center">{{ $t("documents.proposal.editor.uploadCover") }}</span>
               </button>
               <input ref="coverInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" @change="onCoverSelected" />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              <div class="md:col-span-2">
-                <label class="pp-label">Judul Proyek</label>
-                <input v-model="doc.title" type="text" class="pp-input" maxlength="255" />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="md:col-span-2 min-w-0">
+                <label for="pe-title" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.proposal.create.title") }}</label>
+                <input id="pe-title" v-model="doc.title" type="text" maxlength="255" :class="fieldClass" />
               </div>
-              <div>
-                <label class="pp-label">Pilih dari Data Klien</label>
-                <select v-model="doc.client_id" class="pp-input" @change="onClientPicked">
-                  <option value="">— Klien baru / prospek —</option>
-                  <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
-                </select>
+              <UiSelect v-model="doc.client_id" :label="$t('documents.proposal.create.pickClient')" :options="clientOptions" @change="onClientPicked" />
+              <div class="min-w-0">
+                <label for="pe-client-name" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.shared.clientName") }}</label>
+                <input id="pe-client-name" v-model="doc.client_name" type="text" maxlength="255" :class="fieldClass" />
               </div>
-              <div>
-                <label class="pp-label">Nama Klien</label>
-                <input v-model="doc.client_name" type="text" class="pp-input" maxlength="255" />
+              <UiInput v-model="doc.proposal_date" type="date" :label="$t('common.labels.date')" />
+              <div class="min-w-0">
+                <label for="pe-letter-number" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.proposal.editor.letterNumber") }}</label>
+                <input id="pe-letter-number" v-model="doc.letter_number" type="text" :placeholder="$t('documents.proposal.create.letterNumberPlaceholder')" maxlength="100" :class="fieldClass" />
               </div>
-              <div>
-                <label class="pp-label">Tanggal</label>
-                <input v-model="doc.proposal_date" type="date" class="pp-input" />
+              <div class="min-w-0">
+                <label for="pe-signatory-name" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.letter.form.signatoryName") }}</label>
+                <input id="pe-signatory-name" v-model="doc.signatory_name" type="text" maxlength="255" :class="fieldClass" />
               </div>
-              <div>
-                <label class="pp-label">Lampiran Surat Nomor (SPH)</label>
-                <input v-model="doc.letter_number" type="text" class="pp-input" maxlength="100" placeholder="cth. 002/E/SPH-JCD/BD/X/2026" />
+              <div class="min-w-0">
+                <label for="pe-signatory-title" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.shared.position") }}</label>
+                <input id="pe-signatory-title" v-model="doc.signatory_title" type="text" maxlength="255" :class="fieldClass" />
               </div>
-              <div>
-                <label class="pp-label">Nama Penanda Tangan</label>
-                <input v-model="doc.signatory_name" type="text" class="pp-input" maxlength="255" />
-              </div>
-              <div>
-                <label class="pp-label">Jabatan</label>
-                <input v-model="doc.signatory_title" type="text" class="pp-input" maxlength="255" />
-              </div>
-              <label class="md:col-span-2 flex items-center gap-2 text-sm text-brand-dark">
-                <input v-model="doc.use_signature" type="checkbox" />
-                Tampilkan tanda tangan (jika tersedia untuk nama penanda tangan)
+              <label class="md:col-span-2 flex items-center gap-2.5 text-ui-small text-ui-ink">
+                <input v-model="doc.use_signature" type="checkbox" class="w-4 h-4 accent-ui-accent" />
+                {{ $t("documents.proposal.editor.showSignature") }}
               </label>
             </div>
-          </div>
+          </section>
 
           <!-- Sections -->
           <template v-for="(section, index) in doc.sections" :key="section.id">
-            <div
-              v-if="section.page_break_before"
-              class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-violet-600"
-            >
-              <span class="flex-1 border-t border-dashed border-violet-300"></span>
-              Halaman baru
-              <span class="flex-1 border-t border-dashed border-violet-300"></span>
+            <div v-if="section.page_break_before" class="flex items-center gap-2 text-ui-over uppercase text-ui-accent">
+              <span class="flex-1 border-t border-dashed border-ui-accent/40"></span>
+              {{ $t("documents.proposal.editor.newPage") }}
+              <span class="flex-1 border-t border-dashed border-ui-accent/40"></span>
             </div>
 
-            <div :id="`section-${section.id}`" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 scroll-mt-24">
-              <div class="flex items-center gap-2 mb-3">
+            <section :id="`section-${section.id}`" class="bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-raised p-4 sm:p-6 scroll-mt-24">
+              <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 mb-3">
                 <span
-                  class="w-8 h-8 rounded-[10px] flex items-center justify-center text-sm font-bold shrink-0"
-                  :class="sectionNumbers[index] ? 'bg-blue-50 text-[#0C51D9]' : 'bg-gray-100 text-gray-400'"
-                  :title="sectionNumbers[index] ? 'Nomor bagian di PDF' : 'Bagian tanpa judul tidak diberi nomor'"
+                  class="w-8 h-8 rounded-ui-control flex items-center justify-center text-ui-small font-semibold tabular-nums shrink-0"
+                  :class="sectionNumbers[index] ? 'bg-ui-accent-soft text-ui-accent' : 'bg-ui-subtle text-ui-faint'"
+                  :title="sectionNumbers[index] ? $t('documents.proposal.editor.sectionNumberHint') : $t('documents.proposal.editor.unnumberedHint')"
                 >
                   {{ sectionNumbers[index] ?? "–" }}
                 </span>
@@ -437,77 +455,61 @@ const lastSaved = computed(() => {
                   v-model="section.title"
                   type="text"
                   maxlength="255"
-                  placeholder="Judul bagian (kosongkan untuk blok tanpa nomor)"
-                  class="flex-1 min-w-0 text-brand-dark text-base font-bold bg-transparent outline-none border-b border-transparent focus:border-[#0C51D9] py-1"
+                  :placeholder="$t('documents.proposal.editor.sectionTitlePlaceholder')"
+                  class="flex-1 min-w-0 text-ui-h2 text-ui-ink placeholder:text-ui-faint placeholder:font-normal bg-transparent outline-none border-b border-transparent focus:border-ui-accent py-1"
                 />
-                <div class="flex items-center gap-0.5 shrink-0">
-                  <button type="button" class="pp-icon" :disabled="index === 0" title="Naikkan" @click="moveSection(index, -1)"><ChevronUp class="w-4 h-4" /></button>
-                  <button type="button" class="pp-icon" :disabled="index === doc.sections.length - 1" title="Turunkan" @click="moveSection(index, 1)"><ChevronDown class="w-4 h-4" /></button>
+                <div class="flex items-center gap-0.5 shrink-0 w-full sm:w-auto justify-end">
+                  <button type="button" :class="iconBtn" :disabled="index === 0" :title="$t('documents.proposal.editor.moveUp')" :aria-label="$t('documents.proposal.editor.moveUp')" @click="moveSection(index, -1)">
+                    <ChevronUp class="w-4 h-4" />
+                  </button>
                   <button
                     type="button"
-                    class="pp-icon"
-                    :class="{ 'pp-icon--active': section.page_break_before }"
-                    title="Mulai bagian ini di halaman baru"
+                    :class="iconBtn"
+                    :disabled="index === doc.sections.length - 1"
+                    :title="$t('documents.proposal.editor.moveDown')"
+                    :aria-label="$t('documents.proposal.editor.moveDown')"
+                    @click="moveSection(index, 1)"
+                  >
+                    <ChevronDown class="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    :class="[iconBtn, section.page_break_before ? '!bg-ui-accent-soft !text-ui-accent' : '']"
+                    :aria-pressed="section.page_break_before"
+                    :title="$t('documents.proposal.editor.pageBreak')"
+                    :aria-label="$t('documents.proposal.editor.pageBreak')"
                     @click="section.page_break_before = !section.page_break_before"
                   >
                     <SeparatorHorizontal class="w-4 h-4" />
                   </button>
-                  <button type="button" class="pp-icon" title="Duplikat bagian" @click="duplicateSection(index)"><Copy class="w-4 h-4" /></button>
-                  <button type="button" class="pp-icon pp-icon--danger" title="Hapus bagian" @click="removeSection(index)"><Trash2 class="w-4 h-4" /></button>
+                  <button type="button" :class="iconBtn" :title="$t('documents.proposal.editor.duplicateSection')" :aria-label="$t('documents.proposal.editor.duplicateSection')" @click="duplicateSection(index)">
+                    <Copy class="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    :class="[iconBtn, 'hover:!bg-ui-bad-soft hover:!text-ui-bad']"
+                    :title="$t('documents.proposal.editor.removeSection')"
+                    :aria-label="$t('documents.proposal.editor.removeSection')"
+                    @click="removeSection(index)"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
-              <RichTextEditor v-model="section.content" :upload-image="uploadEditorImage" :insert-flowchart="pickFlowchart" placeholder="Tulis isi bagian ini..." />
-            </div>
+              <RichTextEditor v-model="section.content" :upload-image="uploadEditorImage" :insert-flowchart="pickFlowchart" :placeholder="$t('documents.proposal.editor.sectionPlaceholder')" />
+            </section>
 
             <div class="flex justify-center">
-              <button
-                type="button"
-                class="text-xs font-semibold text-brand-light hover:text-[#0C51D9] flex items-center gap-1 px-3 py-1 rounded-full hover:bg-blue-50 transition-colors"
-                @click="addSection(index + 1)"
-              >
-                <Plus class="w-3.5 h-3.5" /> Tambah bagian di sini
-              </button>
+              <UiButton variant="ghost" size="sm" :icon="Plus" @click="addSection(index + 1)">{{ $t("documents.proposal.editor.addSectionHere") }}</UiButton>
             </div>
           </template>
 
-          <div v-if="doc.sections.length === 0" class="bg-white border border-dashed border-[#DCDEDD] rounded-[14px] p-8 text-center">
-            <p class="text-brand-dark text-sm font-semibold mb-2">Proposal ini belum punya bagian</p>
-            <button type="button" class="text-sm font-semibold text-[#0C51D9] hover:underline" @click="addSection(0)">+ Tambah bagian pertama</button>
+          <div v-if="doc.sections.length === 0" class="bg-ui-surface border border-dashed border-ui-line-strong rounded-ui-card p-8 text-center">
+            <p class="text-ui-body font-medium text-ui-ink mb-3">{{ $t("documents.proposal.editor.noSections") }}</p>
+            <UiButton variant="secondary" size="sm" :icon="Plus" @click="addSection(0)">{{ $t("documents.proposal.editor.addFirstSection") }}</UiButton>
           </div>
         </div>
-
-        <!-- Outline -->
-        <aside class="w-full lg:w-[260px] shrink-0 lg:sticky lg:top-24">
-          <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-            <div class="flex items-center gap-2 mb-3">
-              <ListTree class="w-4 h-4 text-brand-light" />
-              <p class="text-brand-dark text-sm font-bold">Daftar Bagian</p>
-            </div>
-            <ol class="space-y-0.5 overflow-y-auto" style="max-height: 60vh">
-              <li v-for="(section, index) in doc.sections" :key="section.id">
-                <button
-                  type="button"
-                  class="w-full text-left text-xs text-brand-dark hover:bg-gray-50 hover:text-[#0C51D9] rounded-md px-2 py-1.5 flex gap-1.5"
-                  @click="scrollToSection(section.id)"
-                >
-                  <span class="text-brand-light shrink-0" style="min-width: 18px">{{ sectionNumbers[index] ? `${sectionNumbers[index]}.` : "·" }}</span>
-                  <span class="truncate">{{ section.title || "Tanpa judul" }}</span>
-                </button>
-              </li>
-            </ol>
-            <button
-              type="button"
-              class="mt-3 w-full rounded-[10px] border border-dashed border-[#DCDEDD] hover:border-[#0C51D9] text-xs font-semibold text-brand-dark py-2 flex items-center justify-center gap-1"
-              @click="addSection(doc.sections.length)"
-            >
-              <Plus class="w-3.5 h-3.5" /> Tambah bagian di akhir
-            </button>
-            <p class="text-[11px] text-brand-light leading-snug mt-3">
-              Teks dalam [kurung siku] adalah petunjuk dari template. Ganti sebelum proposal dikirim.
-            </p>
-          </div>
-        </aside>
       </div>
     </template>
 
@@ -516,65 +518,3 @@ const lastSaved = computed(() => {
     <ShareProposalModal v-if="showShare" :proposal-id="route.params.id" @close="showShare = false" @updated="onShared" />
   </div>
 </template>
-
-<style scoped>
-.pp-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 4px;
-}
-.pp-input {
-  width: 100%;
-  border: 1px solid #dcdedd;
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 14px;
-  color: #0f172a;
-  background: #ffffff;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.pp-input:focus {
-  border-color: #0c51d9;
-}
-.pp-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  transition: background-color 0.15s, color 0.15s;
-}
-.pp-icon:hover:not(:disabled) {
-  background: #eff6ff;
-  color: #0c51d9;
-}
-.pp-icon:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-.pp-icon--active {
-  background: #ede9fe;
-  color: #7c3aed;
-}
-.pp-icon--danger:hover:not(:disabled) {
-  background: #fef2f2;
-  color: #dc2626;
-}
-.pp-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid #dcdedd;
-  border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #0f172a;
-}
-</style>

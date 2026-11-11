@@ -1,0 +1,249 @@
+{
+  "page": {
+    "title": "Biaya Operasional",
+    "subtitle": "Ringkasan biaya operasional perusahaan"
+  },
+  "itemLabel": "item",
+  "usageStatus": {
+    "active": "Digunakan",
+    "inactive": "Tidak Digunakan"
+  },
+  "expiry": {
+    "expired": "Sudah lewat",
+    "today": "Hari ini",
+    "inDays": "{n} hari lagi"
+  },
+  "categories": {
+    "fixedCost": "Biaya Tetap",
+    "sdmResource": "Sumber Daya SDM",
+    "sdmResources": "Sumber Daya SDM",
+    "infrastructure": "Infrastruktur",
+    "infraTool": "Tool Infrastruktur",
+    "infraTools": "Tool Infrastruktur"
+  },
+  "stats": {
+    "actualInUse": "Aktual · item Digunakan",
+    "monthly": "Bulanan:",
+    "annual": "Tahunan:",
+    "infraInUse": "Infrastruktur Digunakan:",
+    "trendTitle": "Tren Biaya Operasional",
+    "trendSubtitle": "Ringkasan biaya bulanan per kategori"
+  },
+  "search": {
+    "fixedCost": "Cari biaya tetap...",
+    "sdmResource": "Cari sumber daya SDM...",
+    "infra": "Cari infrastruktur..."
+  },
+  "table": {
+    "item": "Item",
+    "actual": "Aktual",
+    "expired": "Kedaluwarsa",
+    "field": "Bidang",
+    "hoursPerMonth": "Jam/Bulan",
+    "hoursPerMonthValue": "{n} Jam/Bulan",
+    "techStack": "Tech Stack",
+    "vendor": "Vendor",
+    "monthly": "Bulanan",
+    "annual": "Tahunan",
+    "annualValue": "Tahunan {amount}",
+    "expShort": "Exp. {date}",
+    "inactiveHint": "Tidak Digunakan — tidak dihitung ke total",
+    "empty": "Belum ada data {kind}."
+  },
+  "alerts": {
+    "createdTitle": "Item {kind} ditambahkan",
+    "createdMessage": "Item {kind} berhasil ditambahkan.",
+    "updatedTitle": "Item {kind} diperbarui",
+    "updatedMessage": "Item {kind} berhasil diperbarui.",
+    "failed": "Gagal",
+    "saveFailed": "Gagal menyimpan item {kind}.",
+    "deleted": "Dihapus",
+    "deletedMessage": "Item {kind} \"{name}\" telah dihapus.",
+    "deleteFailed": "Gagal menghapus \"{name}\"."
+  },
+  "delete": {
+    "title": "Hapus item {kind}",
+    "message": "Yakin ingin menghapus \"{name}\"?"
+  },
+  "modals": {
+    "usage": {
+      "statusPlaceholder": "Pilih status",
+      "statusHint": "Hanya item berstatus Digunakan yang dihitung ke total Biaya Operasional.",
+      "expired": "Kedaluwarsa",
+      "expiredOptional": "Kedaluwarsa (opsional)"
+    },
+    "validation": {
+      "statusRequired": "Status wajib dipilih",
+      "expiredRequired": "Tanggal kedaluwarsa wajib diisi untuk item yang Digunakan",
+      "itemRequired": "Item wajib diisi",
+      "descriptionRequired": "Deskripsi wajib diisi",
+      "fieldRequired": "Bidang wajib dipilih",
+      "hoursRequired": "Jam Produktif / Bulan wajib diisi",
+      "techStackRequired": "Tech Stack wajib diisi",
+      "vendorRequired": "Vendor wajib diisi"
+    },
+    "fields": {
+      "item": "Item",
+      "itemPlaceholder": "Masukkan item keuangan",
+      "descriptionPlaceholder": "Masukkan deskripsi item",
+      "actual": "Aktual (Rp.)",
+      "actualPlaceholder": "Masukkan harga aktual",
+      "notesPlaceholder": "Tambahkan catatan",
+      "field": "Bidang",
+      "fieldPlaceholder": "Pilih bidang / peran",
+      "hours": "Jam Produktif / Bulan",
+      "hoursPlaceholder": "cth. 120",
+      "techStack": "Komponen Tech Stack",
+      "techStackPlaceholder": "Masukkan item tech stack",
+      "vendor": "Vendor",
+      "vendorPlaceholder": "Masukkan vendor",
+      "monthlyFee": "Biaya Bulanan (Rp.)",
+      "monthlyFeePlaceholder": "Masukkan biaya bulanan",
+      "annualFee": "Biaya Tahunan (Rp.)",
+      "annualFeePlaceholder": "Masukkan biaya tahunan"
+    },
+    "fixedCost": {
+      "title": {
+        "add": "Tambah Biaya Tetap",
+        "edit": "Ubah Biaya Tetap",
+        "view": "Detail Biaya Tetap"
+      },
+      "description": {
+        "add": "Buat data biaya tetap baru.",
+        "edit": "Ubah detail biaya tetap.",
+        "view": "Detail biaya tetap yang dipilih."
+      }
+    },
+    "sdm": {
+      "title": {
+        "add": "Tambah Sumber Daya SDM",
+        "edit": "Ubah Sumber Daya SDM",
+        "view": "Detail Sumber Daya SDM"
+      },
+      "description": {
+        "add": "Tambahkan anggota tim sebagai data sumber daya SDM.",
+        "edit": "Ubah detail sumber daya SDM.",
+        "view": "Detail sumber daya SDM yang dipilih."
+      }
+    },
+    "infra": {
+      "title": {
+        "add": "Tambah Tool Infrastruktur",
+        "edit": "Ubah Tool Infrastruktur",
+        "view": "Detail Tool Infrastruktur"
+      },
+      "description": {
+        "add": "Buat data tool infrastruktur baru.",
+        "edit": "Ubah detail tool infrastruktur.",
+        "view": "Detail tool infrastruktur yang dipilih."
+      }
+    }
+  },
+  "cashBook": {
+    "title": "Buku Kas Perusahaan",
+    "subtitle": "Transaksi debit/kredit riil sesuai kejadian -- tersinkron otomatis dari buku kas setiap proyek, ditambah entri manual",
+    "periods": {
+      "thisMonth": "Bulan ini",
+      "lastMonth": "Bulan lalu",
+      "thisYear": "Tahun ini"
+    },
+    "errors": {
+      "proofType": "Bukti harus berupa file JPG, PNG, WEBP, atau PDF.",
+      "proofSize": "Ukuran bukti maksimal 5 MB.",
+      "required": "Deskripsi, jumlah, dan tanggal wajib diisi.",
+      "employeeRequired": "Pilih atas nama siapa pengeluaran ini.",
+      "saveFailed": "Gagal menyimpan transaksi.",
+      "balanceFailed": "Gagal memperbarui saldo awal."
+    },
+    "tabs": {
+      "all": "Semua Transaksi",
+      "spending": "Pengeluaran"
+    },
+    "filtered": "difilter",
+    "filters": {
+      "everyone": "Semua orang",
+      "allProjects": "Semua proyek",
+      "allTypes": "Debit & Kredit",
+      "allSources": "Semua sumber",
+      "fromProjects": "Dari proyek"
+    },
+    "debitIn": "Debit (Masuk)",
+    "creditOut": "Kredit (Keluar)",
+    "manual": "Manual",
+    "onBehalfOf": "Atas nama",
+    "source": "Sumber",
+    "debit": "Debit",
+    "credit": "Kredit",
+    "balance": "Saldo",
+    "form": {
+      "editSpending": "Ubah Pengeluaran",
+      "editTransaction": "Ubah Transaksi",
+      "addTransaction": "Tambah Transaksi Kas",
+      "chooseEmployee": "Pilih karyawan",
+      "recordedAsDebit": "Dicatat sebagai Debit di buku kas.",
+      "spendingPlaceholder": "cth. Taksi ke rapat klien",
+      "descriptionPlaceholder": "cth. Pendapatan konsultasi",
+      "amount": "Jumlah (Rp)",
+      "notesPlaceholder": "Catatan opsional"
+    },
+    "delete": {
+      "message": "Yakin ingin menghapus \"{name}\"? Tindakan ini tidak bisa dibatalkan.",
+      "spendingTitle": "Hapus Pengeluaran?",
+      "transactionTitle": "Hapus Transaksi?",
+      "confirm": "Ya, Hapus"
+    },
+    "setOpeningBalance": "Atur Saldo Awal",
+    "addSpending": "Tambah Pengeluaran",
+    "addTransaction": "Tambah Transaksi",
+    "openingBalance": "Saldo Awal",
+    "openingBalanceRp": "Saldo Awal (Rp)",
+    "closingBalance": "Saldo Akhir",
+    "stamp": {
+      "full": "Terakhir diperbarui {date}",
+      "fullBy": "Terakhir diperbarui {date} oleh {name}",
+      "updated": "Diperbarui {date}",
+      "never": "Belum pernah diatur"
+    },
+    "totalDebit": "Total Debit",
+    "excludingSpending": "Tanpa pengeluaran",
+    "totalDebitSpending": "Total Debit + Pengeluaran",
+    "totalCredit": "Total Kredit (Keluar)",
+    "spendingByPerson": "Pengeluaran per orang",
+    "entries": "{n} entri",
+    "search": {
+      "spending": "Cari deskripsi, catatan, orang...",
+      "all": "Cari deskripsi, catatan, proyek..."
+    },
+    "fromDate": "Dari tanggal",
+    "toDate": "Sampai tanggal",
+    "to": "s/d",
+    "matching": "{n} transaksi sesuai",
+    "empty": {
+      "filtered": "Tidak ada transaksi yang sesuai filter",
+      "spending": "Belum ada pengeluaran",
+      "all": "Belum ada transaksi kas",
+      "spendingHint": "Catat pengeluaran atas nama karyawan lewat Tambah Pengeluaran.",
+      "allHint": "Transaksi yang dicatat di buku kas proyek mana pun otomatis muncul di sini juga."
+    },
+    "viewProof": "Lihat bukti",
+    "spendingOnBehalf": "Pengeluaran atas nama {name}",
+    "anEmployee": "karyawan",
+    "autoSynced": "Tersinkron otomatis dari buku kas {project}",
+    "viaProject": "via Proyek",
+    "viaProjectHint": "Ubah dari buku kas proyeknya",
+    "itemLabel": "transaksi",
+    "proof": {
+      "title": "Bukti transaksi",
+      "optional": "opsional",
+      "preview": "Pratinjau",
+      "uploadedOnSave": "Diunggah saat disimpan",
+      "replace": "Ganti",
+      "upload": "Unggah bukti (JPG, PNG, WEBP, PDF · maks 5 MB)",
+      "willBeRemoved": "Bukti saat ini akan dihapus saat disimpan.",
+      "undo": "Urungkan",
+      "pdfDocument": "Dokumen PDF",
+      "openFull": "Buka ukuran penuh",
+      "openPdf": "Buka PDF"
+    }
+  }
+}

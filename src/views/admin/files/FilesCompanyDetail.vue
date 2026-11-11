@@ -14,6 +14,11 @@ import {
 } from "lucide-vue-next";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 import Spinner from "@/components/common/skeleton/Spinner.vue";
+import { UiPageHeader, UiButton, UiBadge, UiEmpty } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const archiveStore = useFilesCompanyStore();
 const route = useRoute();
@@ -25,7 +30,7 @@ const error = ref("");
 
 const formatDate = (date) => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -44,7 +49,7 @@ onMounted(async () => {
     await archiveStore.fetchArchiveById(archiveId);
   } catch (err) {
     console.error(err);
-    error.value = "Failed to load archive detail.";
+    error.value = t("files.detail.loadFailed");
   }
 });
 
@@ -53,131 +58,127 @@ const downloadFile = () => {
 };
 
 const isImage = (type) => type?.startsWith("image/");
+
+// Extension badge (redesign: neutral icon + extension).
+const fileExt = (name, mime) => {
+  const base = String(name || "").split("?")[0].split("/").pop();
+  if (base.includes(".")) return base.split(".").pop().slice(0, 5).toUpperCase();
+  if (!mime) return "FILE";
+  if (mime.includes("spreadsheetml")) return "XLSX";
+  if (mime.includes("wordprocessingml")) return "DOCX";
+  return mime.split("/").pop().split(/[.+-]/).pop().slice(0, 5).toUpperCase();
+};
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto">
-    <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex items-center gap-3">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('files.detail.title')" :subtitle="$t('files.detail.subtitle')">
+      <template #eyebrow>
         <button
+          type="button"
           @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-blue-400 transition-all"
-          aria-label="Back"
+          class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
+          :aria-label="$t('common.actions.back')"
         >
-          <ArrowLeft class="w-5 h-5 text-gray-600" />
+          <ArrowLeft class="w-4 h-4" />
+          {{ $t("common.actions.back") }}
         </button>
-
-        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <Archive class="w-6 h-6 text-blue-600" />
-        </div>
-
-        <div class="flex-1">
-          <h1 class="text-brand-dark text-xl font-bold">Document File Detail</h1>
-          <p class="text-brand-light text-sm">Informasi file (read-only)</p>
-        </div>
-
-        <router-link
-          :to="{ name: 'admin.files-company.edit', params: { id: archiveId } }"
-          class="btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2"
-        >
-          <Pencil class="w-4 h-4 text-white" />
-          <span class="text-brand-white font-semibold text-sm">Edit</span>
-        </router-link>
-      </div>
-    </div>
+      </template>
+      <template #actions>
+        <UiButton :to="{ name: 'admin.files-company.edit', params: { id: archiveId } }" :icon="Pencil" class="w-full sm:w-auto">
+          {{ $t("common.actions.edit") }}
+        </UiButton>
+      </template>
+    </UiPageHeader>
 
     <!-- Loading -->
-    <Spinner v-if="loading" label="Loading archive detail..." />
+    <Spinner v-if="loading" :label="$t('files.detail.loading')" class="!py-20" />
 
     <!-- Error -->
-    <div v-else-if="error" class="text-center py-20 text-red-600">
-      {{ error }}
+    <div v-else-if="error" class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty :icon="Archive" :title="error" />
     </div>
 
     <!-- Content -->
-    <div v-else-if="archiveStore.currentArchive" class="space-y-6">
-      <!-- Hero -->
-      <div class="main-card rounded-[14px] p-6 relative overflow-hidden">
-        <div class="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/20 rounded-full blur-2xl"></div>
-        <div class="relative z-10 flex items-start gap-4">
-          <div class="w-14 h-14 bg-white/10 border border-white/10 rounded-[14px] flex items-center justify-center shrink-0">
-            <FileType class="w-7 h-7 text-blue-300" />
+    <div v-else-if="archiveStore.currentArchive" class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start ui-stagger">
+      <!-- Summary -->
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 lg:order-2">
+        <div class="p-5 sm:p-6 flex items-start gap-3">
+          <div class="w-12 h-12 rounded-ui-control bg-ui-subtle text-ui-muted flex items-center justify-center shrink-0">
+            <FileText class="w-6 h-6" />
           </div>
-          <div class="min-w-0">
-            <h2 class="text-white text-xl font-extrabold truncate">
+          <div class="min-w-0 flex-1">
+            <h2 class="text-ui-h2 text-ui-ink break-words">
               {{ archiveStore.currentArchive.document_name || "—" }}
             </h2>
-            <p class="text-brand-white-70 text-sm mt-1 whitespace-pre-line">
-              {{ archiveStore.currentArchive.description || "No description" }}
-            </p>
+            <UiBadge tone="outline" class="font-mono mt-1">
+              {{ fileExt(archiveStore.currentArchive.document_path, archiveStore.currentArchive.type_file) }}
+            </UiBadge>
           </div>
         </div>
+        <p class="px-5 sm:px-6 pb-5 text-ui-body text-ui-text whitespace-pre-line">
+          {{ archiveStore.currentArchive.description || $t("files.detail.noDescription") }}
+        </p>
 
-        <div class="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
-              <FileType class="w-4 h-4 text-blue-300" />
-            </div>
-            <div class="min-w-0">
-              <p class="text-brand-white-70 text-xs">File Type</p>
-              <p class="text-white text-sm font-semibold truncate">{{ archiveStore.currentArchive.type_file || "—" }}</p>
-            </div>
+        <dl class="border-t border-ui-line px-5 sm:px-6 py-2 divide-y divide-ui-line">
+          <div class="flex items-center justify-between gap-4 py-2.5">
+            <dt class="flex items-center gap-2 text-ui-small text-ui-muted"><FileType class="w-4 h-4" />{{ $t("files.detail.fileType") }}</dt>
+            <dd class="text-ui-small text-ui-ink truncate text-right">{{ archiveStore.currentArchive.type_file || "—" }}</dd>
           </div>
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
-              <HardDrive class="w-4 h-4 text-blue-300" />
-            </div>
-            <div class="min-w-0">
-              <p class="text-brand-white-70 text-xs">File Size</p>
-              <p class="text-white text-sm font-semibold truncate">{{ formatSize(archiveStore.currentArchive.size_file) }}</p>
-            </div>
+          <div class="flex items-center justify-between gap-4 py-2.5">
+            <dt class="flex items-center gap-2 text-ui-small text-ui-muted"><HardDrive class="w-4 h-4" />{{ $t("files.detail.fileSize") }}</dt>
+            <dd class="text-ui-small text-ui-ink tabular-nums text-right">{{ formatSize(archiveStore.currentArchive.size_file) }}</dd>
           </div>
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center shrink-0">
-              <Clock class="w-4 h-4 text-blue-300" />
-            </div>
-            <div class="min-w-0">
-              <p class="text-brand-white-70 text-xs">Upload Date</p>
-              <p class="text-white text-sm font-semibold truncate">{{ formatDate(archiveStore.currentArchive.created_at) }}</p>
-            </div>
+          <div class="flex items-center justify-between gap-4 py-2.5">
+            <dt class="flex items-center gap-2 text-ui-small text-ui-muted"><Clock class="w-4 h-4" />{{ $t("files.detail.uploadDate") }}</dt>
+            <dd class="text-ui-small text-ui-ink text-right">{{ formatDate(archiveStore.currentArchive.created_at) }}</dd>
           </div>
+        </dl>
+
+        <div class="px-5 sm:px-6 pb-5 pt-2">
+          <UiButton :icon="Download" block @click="downloadFile">{{ $t("files.actions.download") }}</UiButton>
         </div>
-      </div>
+      </section>
 
       <!-- File Preview -->
-      <div v-if="isImage(archiveStore.currentArchive.type_file) || archiveStore.currentArchive.type_file === 'application/pdf'" class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <Eye class="w-4.5 h-4.5 text-indigo-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Preview</h4>
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 lg:col-span-2 lg:order-1">
+        <div class="flex items-center gap-2 px-5 sm:px-6 py-4 border-b border-ui-line">
+          <Eye class="w-4 h-4 text-ui-muted" />
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("files.detail.preview") }}</h3>
         </div>
 
-        <div v-if="isImage(archiveStore.currentArchive.type_file)" class="w-full max-h-[75vh] overflow-auto border border-[#DCDEDD] rounded-[12px] p-2 bg-gray-50 flex justify-center">
+        <div
+          v-if="isImage(archiveStore.currentArchive.type_file)"
+          class="m-4 max-h-[75vh] overflow-auto border border-ui-line rounded-ui-control p-2 bg-ui-subtle flex justify-center"
+        >
           <img
             :src="archiveStore.currentArchive.document_path"
-            alt="File Preview"
-            class="max-w-full max-h-[70vh] object-contain rounded-[12px]"
+            :alt="$t('files.detail.preview')"
+            class="max-w-full max-h-[70vh] object-contain rounded-ui-control"
           />
         </div>
 
-        <div v-else class="w-full h-[80vh] min-h-[600px] border border-[#DCDEDD] rounded-[12px] overflow-hidden">
+        <div
+          v-else-if="archiveStore.currentArchive.type_file === 'application/pdf'"
+          class="m-4 h-[80vh] min-h-[600px] border border-ui-line rounded-ui-control overflow-hidden"
+        >
           <iframe :src="archiveStore.currentArchive.document_path" class="w-full h-full"></iframe>
         </div>
-      </div>
 
-      <!-- Download -->
-      <button
-        @click="downloadFile"
-        class="w-full btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 transition-all"
-      >
-        <Download class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Download File</span>
-      </button>
+        <UiEmpty
+          v-else
+          :icon="FileText"
+          :title="$t('files.detail.noPreview')"
+          :message="archiveStore.currentArchive.type_file || ''"
+        >
+          <UiButton variant="secondary" :icon="Download" @click="downloadFile">{{ $t("files.actions.download") }}</UiButton>
+        </UiEmpty>
+      </section>
     </div>
 
     <!-- Fallback -->
-    <div v-else class="text-center py-20 text-gray-400">Archive data not available.</div>
+    <div v-else class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty :icon="Archive" :title="$t('files.detail.notAvailable')" />
+    </div>
   </div>
 </template>

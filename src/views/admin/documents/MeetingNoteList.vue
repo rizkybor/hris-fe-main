@@ -1,14 +1,17 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
-import { NotebookPen, Plus, Search, Trash2, Eye, Pin, PinOff, ArrowLeft, ChevronDown } from "lucide-vue-next";
+import { NotebookPen, Plus, Search, SearchX, Trash2, Eye, Pin, PinOff, ArrowLeft } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
-import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
+import { UiPageHeader, UiButton, UiBadge, UiInput, UiChips, UiTable, UiEmpty } from "@/components/ui";
 import Pagination from "@/components/common/Pagination.vue";
 
+const { t } = useI18n();
 const router = useRouter();
 const store = useMeetingNoteStore();
 const alertModal = useAlertModalStore();
@@ -35,9 +38,9 @@ const goToDetail = (id) => router.push({ name: "admin.meeting-notes.detail", par
 
 const handleDelete = async (note) => {
   if (
-    !(await alertModal.confirm(`Delete Meeting Note "${note.document_number}"? This action cannot be undone.`, {
+    !(await alertModal.confirm(t("documents.meetingNote.list.deleteConfirm", { number: note.document_number }), {
       type: "danger",
-      confirmText: "Delete",
+      confirmText: t("common.actions.delete"),
     }))
   )
     return;
@@ -53,141 +56,179 @@ const togglePin = async (note) => {
   }
 };
 
-const TYPE_LABEL = { internal: "Internal", external: "External" };
+const TYPE_LABEL = computed(() => ({ internal: t("documents.meetingNote.types.internal"), external: t("documents.meetingNote.types.external") }));
+// Presentation only: filter chips + table columns.
+const TYPE_OPTIONS = computed(() => [
+  { value: "", label: t("documents.meetingNote.list.allTypes") },
+  { value: "internal", label: t("documents.meetingNote.types.internal") },
+  { value: "external", label: t("documents.meetingNote.types.external") },
+]);
+const TYPE_TONE = { internal: "accent", external: "outline" };
+const COLUMNS = computed(() => [
+  { key: "document_number", label: t("documents.shared.number") },
+  { key: "title", label: t("documents.meetingNote.fields.title") },
+  { key: "meeting_type", label: t("common.labels.type") },
+  { key: "meeting_date", label: t("documents.meetingNote.list.columns.meetingTime") },
+  { key: "actions", label: t("common.labels.actions"), align: "right" },
+]);
+const iconBtn =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus disabled:opacity-50";
+const iconBtnDanger =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus";
+
 const formatDateTime = (date) =>
-  date ? new Date(date).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
+  date ? new Date(date).toLocaleString(localeTag(), { dateStyle: "medium", timeStyle: "short" }) : "-";
 </script>
 
 <template>
-  <div>
-    <div class="bg-white p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-3">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader
+      :title="$t('documents.meetingNote.list.title')"
+      :subtitle="$t('documents.meetingNote.list.subtitle')"
+    >
+      <template #eyebrow>
         <router-link
           :to="{ name: 'admin.documents.dashboard' }"
-          class="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all duration-300 shrink-0"
-          aria-label="Back to Documents"
-          title="Back to Documents"
+          class="inline-flex items-center gap-1 text-ui-small text-ui-accent hover:underline mb-1.5"
+          :aria-label="$t('documents.shared.backToDocuments')"
+          :title="$t('documents.shared.backToDocuments')"
         >
-          <ArrowLeft class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+          <ArrowLeft class="w-3.5 h-3.5" />
+          {{ $t("documents.shared.documents") }}
         </router-link>
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <NotebookPen class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Meeting Note</h3>
-          <p class="text-brand-light text-sm">Internal & external meeting recaps, managed together by Manager/Operational Director/HR/Finance Manager</p>
-        </div>
+      </template>
+      <template #actions>
+        <UiButton
+          v-if="can('meeting-note-create')"
+          :icon="Plus"
+          :to="{ name: 'admin.meeting-notes.create' }"
+          class="w-full sm:w-auto"
+        >{{ $t("documents.meetingNote.list.create") }}</UiButton>
+      </template>
+    </UiPageHeader>
+
+    <div class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden">
+      <div class="p-3 sm:p-4 border-b border-ui-line flex flex-col sm:flex-row sm:items-center gap-3">
+        <UiInput
+          v-model="search"
+          :icon="Search"
+          :placeholder="$t('documents.meetingNote.list.searchPlaceholder')"
+          class="sm:max-w-sm w-full"
+          @keyup.enter="handleSearch"
+        />
+        <UiChips
+          :model-value="typeFilter"
+          :options="TYPE_OPTIONS"
+          @update:model-value="(v) => { typeFilter = v; handleFilterChange(); }"
+        />
       </div>
 
-      <router-link
-        v-if="can('meeting-note-create')"
-        :to="{ name: 'admin.meeting-notes.create' }"
-        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center gap-2"
+      <UiTable
+        :columns="COLUMNS"
+        :rows="meetingNotes"
+        :meta="meta"
+        :loading="loading"
+        :skeleton-rows="6"
+        clickable
+        @row-click="(note) => goToDetail(note.id)"
       >
-        <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Create Meeting Note</span>
-      </router-link>
-    </div>
-
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex flex-col sm:flex-row gap-3 mb-4">
-        <div class="relative max-w-sm w-full">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search class="w-4 h-4 text-gray-400" />
+        <template #cell-document_number="{ row }">
+          <span class="font-mono text-ui-cap text-ui-ink whitespace-nowrap">{{ row.document_number }}</span>
+        </template>
+        <template #cell-title="{ row }">
+          <div class="flex items-center gap-2 min-w-0 max-w-[420px]">
+            <span class="font-medium text-ui-ink truncate">{{ row.title }}</span>
+            <Pin v-if="row.is_pinned" class="w-3.5 h-3.5 text-ui-warn shrink-0" :aria-label="$t('documents.meetingNote.list.pinned')" />
           </div>
-          <input
-            v-model="search"
-            @keyup.enter="handleSearch"
-            type="text"
-            placeholder="Search number, title..."
-            class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <div class="relative">
-          <select
-            v-model="typeFilter"
-            @change="handleFilterChange"
-            class="select-soft"
-          >
-            <option value="">All Types</option>
-            <option value="internal">Internal</option>
-            <option value="external">External</option>
-          </select>
-          <ChevronDown
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-          />
-        </div>
-      </div>
-
-      <SkeletonTable v-if="loading" :rows="6" :cols="6" />
-
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
-              <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">Number</th>
-              <th class="py-3 pr-4 font-semibold">Title</th>
-              <th class="py-3 pr-4 font-semibold">Type</th>
-              <th class="py-3 pr-4 font-semibold">Meeting Time</th>
-              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(note, index) in meetingNotes"
-              :key="note.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50 cursor-pointer"
-              @click="goToDetail(note.id)"
+        </template>
+        <template #cell-meeting_type="{ row }">
+          <UiBadge :tone="TYPE_TONE[row.meeting_type] || 'neutral'">{{ TYPE_LABEL[row.meeting_type] }}</UiBadge>
+        </template>
+        <template #cell-meeting_date="{ row }">
+          <span class="tabular-nums whitespace-nowrap">{{ formatDateTime(row.meeting_date) }}</span>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="inline-flex items-center justify-end gap-1" @click.stop>
+            <button
+              v-if="can('meeting-note-pin')"
+              type="button"
+              :disabled="pinBusyId === row.id"
+              :class="[iconBtn, row.is_pinned ? 'text-ui-warn' : '']"
+              :title="row.is_pinned ? $t('documents.meetingNote.list.unpin') : $t('documents.meetingNote.list.pin')"
+              :aria-label="row.is_pinned ? $t('documents.meetingNote.list.unpin') : $t('documents.meetingNote.list.pin')"
+              @click="togglePin(row)"
             >
-              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4 font-mono text-xs">{{ note.document_number }}</td>
-              <td class="py-3 pr-4">{{ note.title }}</td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-1 rounded-md text-xs font-semibold bg-blue-50 text-[#0C51D9]">
-                  {{ TYPE_LABEL[note.meeting_type] }}
-                </span>
-              </td>
-              <td class="py-3 pr-4">{{ formatDateTime(note.meeting_date) }}</td>
-              <td class="py-3 pr-4" @click.stop>
-                <div class="flex items-center justify-end gap-1">
-                  <button
-                    v-if="can('meeting-note-pin')"
-                    @click="togglePin(note)"
-                    :disabled="pinBusyId === note.id"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-amber-400 hover:bg-amber-50 group disabled:opacity-50"
-                    :title="note.is_pinned ? 'Unpin from Dashboard' : 'Pin to Dashboard'"
-                  >
-                    <PinOff v-if="note.is_pinned" class="w-4 h-4 text-amber-600" />
-                    <Pin v-else class="w-4 h-4 text-gray-600 group-hover:text-amber-600" />
-                  </button>
-                  <button
-                    @click="goToDetail(note.id)"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9]"
-                    title="View Detail"
-                  >
-                    <Eye class="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button
-                    v-if="can('meeting-note-delete')"
-                    @click="handleDelete(note)"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Delete"
-                  >
-                    <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              <PinOff v-if="row.is_pinned" class="w-4 h-4" />
+              <Pin v-else class="w-4 h-4" />
+            </button>
+            <button type="button" :class="iconBtn" :title="$t('documents.shared.viewDetail')" :aria-label="$t('documents.shared.viewDetail')" @click="goToDetail(row.id)">
+              <Eye class="w-4 h-4" />
+            </button>
+            <button
+              v-if="can('meeting-note-delete')"
+              type="button"
+              :class="iconBtnDanger"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('common.actions.delete')"
+              @click="handleDelete(row)"
+            >
+              <Trash2 class="w-4 h-4" />
+            </button>
+          </div>
+        </template>
 
-        <div v-if="!loading && meetingNotes.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">No Meeting Note yet</p>
-        </div>
+        <!-- Phones: one card per note -->
+        <template #mobile="{ row, number }">
+          <div class="px-4 py-3.5 flex items-start gap-3">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 shrink-0 pt-0.5">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-mono text-ui-cap text-ui-muted">{{ row.document_number }}</p>
+              <p class="text-ui-body font-medium text-ui-ink break-words mt-0.5">{{ row.title }}</p>
+              <div class="flex items-center gap-2 flex-wrap mt-1.5">
+                <UiBadge :tone="TYPE_TONE[row.meeting_type] || 'neutral'">{{ TYPE_LABEL[row.meeting_type] }}</UiBadge>
+                <UiBadge v-if="row.is_pinned" tone="warn"><Pin class="w-3 h-3" />{{ $t("documents.meetingNote.list.pinnedBadge") }}</UiBadge>
+                <span class="text-ui-cap text-ui-muted tabular-nums">{{ formatDateTime(row.meeting_date) }}</span>
+              </div>
+            </div>
+            <div class="flex flex-col items-center gap-1 shrink-0 -mr-1.5 -mt-1" @click.stop>
+              <button
+                v-if="can('meeting-note-pin')"
+                type="button"
+                :disabled="pinBusyId === row.id"
+                class="w-9 h-9 inline-flex items-center justify-center rounded-ui-control active:bg-ui-hover disabled:opacity-50"
+                :class="row.is_pinned ? 'text-ui-warn' : 'text-ui-muted'"
+                :aria-label="row.is_pinned ? $t('documents.meetingNote.list.unpin') : $t('documents.meetingNote.list.pin')"
+                @click="togglePin(row)"
+              >
+                <PinOff v-if="row.is_pinned" class="w-4 h-4" />
+                <Pin v-else class="w-4 h-4" />
+              </button>
+              <button
+                v-if="can('meeting-note-delete')"
+                type="button"
+                class="w-9 h-9 inline-flex items-center justify-center rounded-ui-control text-ui-muted active:bg-ui-bad-soft active:text-ui-bad"
+                :aria-label="$t('common.actions.delete')"
+                @click="handleDelete(row)"
+              >
+                <Trash2 class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <template #empty>
+          <UiEmpty v-if="search || typeFilter" :icon="SearchX" :title="$t('documents.meetingNote.list.noMatchTitle')" :message="$t('documents.meetingNote.list.noMatchMessage')" compact />
+          <UiEmpty v-else :icon="NotebookPen" :title="$t('documents.meetingNote.list.emptyTitle')" compact>
+            <UiButton v-if="can('meeting-note-create')" variant="secondary" size="sm" :icon="Plus" :to="{ name: 'admin.meeting-notes.create' }">
+              {{ $t("documents.meetingNote.list.create") }}
+            </UiButton>
+          </UiEmpty>
+        </template>
+      </UiTable>
+
+      <div v-if="meta?.total" class="px-3 sm:px-4 pb-4 border-t border-ui-line">
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('documents.meetingNote.list.itemLabel')" @page-change="load" />
       </div>
-
-      <Pagination :meta="meta" :loading="loading" item-label="note" @page-change="load" />
     </div>
   </div>
 </template>

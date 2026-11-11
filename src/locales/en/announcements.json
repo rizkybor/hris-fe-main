@@ -1,0 +1,37 @@
+{
+  "title": "Announcements",
+  "subtitle": "Broadcast information to the entire or selected teams",
+  "create": "Create Announcement",
+  "edit": "Edit Announcement",
+  "detailTitle": "Announcement Detail",
+  "pinned": "Pinned",
+  "by": "By {name}",
+  "createdBy": "Created by {name}",
+  "validUntilDate": "Valid until {date}",
+  "empty": "No announcements found.",
+  "itemLabel": "announcements",
+  "audience": {
+    "all": "All Roles",
+    "manager": "Manager",
+    "operationalDirector": "Operational Director",
+    "hr": "HR",
+    "finance": "Finance Manager",
+    "staff": "Staff"
+  },
+  "form": {
+    "title": "Title",
+    "content": "Content",
+    "audience": "Audience",
+    "validUntilOptional": "Valid Until (Optional)",
+    "pinToTop": "Pin to Top",
+    "pinExpired": "An announcement with a past Valid Until date can't be pinned."
+  },
+  "confirm": {
+    "delete": "Delete this announcement?"
+  },
+  "errors": {
+    "save": "Failed to save announcement.",
+    "delete": "Failed to delete announcement.",
+    "load": "Failed to load announcement."
+  }
+}

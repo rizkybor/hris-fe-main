@@ -1,0 +1,228 @@
+{
+  "scenario": {
+    "all": "All Scenarios",
+    "feature": "New Feature",
+    "build": "Build from Scratch",
+    "landingPage": "Landing Page"
+  },
+  "vat": {
+    "including": "including VAT",
+    "excluding": "excluding VAT"
+  },
+  "lp": {
+    "serverDedicated": "Server Dedicated",
+    "serverShared": "Server Shared",
+    "designDedicated": "Design Dedicated",
+    "designTemplate": "Design Template"
+  },
+  "dashboard": {
+    "title": "Project Calculator",
+    "subtitle": "Consistent development cost estimates.",
+    "createNew": "Create New Estimate",
+    "stats": {
+      "total": "Estimates Total",
+      "thisMonth": "{n} this month",
+      "totalValue": "Estimates Total Value",
+      "allHistory": "all history",
+      "average": "Average Value",
+      "perEstimate": "/ estimate",
+      "scenario": "Scenario",
+      "byScenario": "breakdown by scenario",
+      "features": "Features",
+      "builds": "Builds",
+      "landingPages": "Landing Pages"
+    },
+    "teamRate": {
+      "title": "Team Rate Setup",
+      "subtitle": "Baseline fee & rate/hour.",
+      "config": "Rate Config",
+      "teamFee": "Team Fee / Month",
+      "teamHours": "Team & Productive Hours",
+      "teamHoursValue": "{people} people · {hours} hrs/month",
+      "rateCost": "Rate Cost / Hour",
+      "rateSell": "Rate Sell / Hour ({x}x)"
+    },
+    "lpRate": {
+      "title": "Landing Page Rate Setup",
+      "subtitle": "The Landing Page scenario",
+      "config": "Landing Page Config"
+    },
+    "history": "Estimate History",
+    "searchPlaceholder": "Search estimate or client name...",
+    "columns": {
+      "estimate": "Estimate",
+      "scenario": "Scenario",
+      "duration": "Duration",
+      "feeRef": "Fee Ref"
+    },
+    "weeksEstimated": "{n} weeks estimated",
+    "weeks": "{n} weeks",
+    "months": "{n} months",
+    "deleteConfirm": "Delete estimate \"{name}\"? This action cannot be undone.",
+    "deleteFailed": "Failed to delete estimate.",
+    "empty": {
+      "title": "No estimates found",
+      "message": "Create your first project estimate to start building your quotation history."
+    },
+    "itemLabel": "estimates"
+  },
+  "lpModal": {
+    "description": "Configure the package pricing used by the Landing Page scenario",
+    "saveFailed": "Failed to save the Landing Page configuration.",
+    "server": "Server",
+    "design": "Design",
+    "dedicated": "Dedicated (Rp)",
+    "shared": "Shared (Rp)",
+    "template": "Template (Rp)",
+    "save": "Save Configuration"
+  },
+  "rateModal": {
+    "description": "Select items from Operational Cost to build the team cost",
+    "loadFailed": "Failed to load the Operational Cost items.",
+    "saveFailed": "Failed to save the rate setup.",
+    "loading": "Loading Operational Cost data...",
+    "fixedCost": "Fixed Cost",
+    "sdm": "SDM Resource",
+    "infra": "Infrastructure Tools",
+    "emptyFixed": "No Fixed Cost items yet",
+    "emptySdm": "No SDM Resource yet",
+    "emptyInfra": "No Infrastructure Tool yet",
+    "perMonth": "{amount}/mo",
+    "hoursPerMonth": "{n} hrs/mo",
+    "notUsed": "Not in use",
+    "notUsedHint": "Not in use in Operational Cost (can still be selected)",
+    "margin": "Selling Margin Multiplier",
+    "pmOverhead": "Default PM Overhead (%)",
+    "infraSetup": "Default Infrastructure Setup Cost (Rp)",
+    "previewCost": "Total Team Operational Cost / Month",
+    "previewHours": "Team Productive Hours / Month",
+    "previewHoursValue": "{hours} hrs · {people} people",
+    "previewRateCost": "Rate Cost / Hour (preview)",
+    "previewRateSell": "Rate Sell / Hour (preview)",
+    "save": "Save Rate Setup"
+  },
+  "detail": {
+    "title": "Estimate Detail",
+    "subtitle": "Project cost estimate summary",
+    "scenario": {
+      "feature": "New Feature Estimate",
+      "build": "Build from Scratch Estimate",
+      "landingPage": "Landing Page Estimate"
+    },
+    "print": "Print / PDF",
+    "notFound": "Estimate not found.",
+    "notFoundHint": "It may have been deleted.",
+    "monthly": "Monthly",
+    "annual": "Annual"
+  },
+  "fee": {
+    "title": "Fee Marketing / B2B-B2C Sales",
+    "hint": "Reference only, not added to total"
+  },
+  "form": {
+    "editTitle": "Edit Estimate",
+    "subtitle": "Fill in the details below, the total will be calculated automatically",
+    "saveEstimate": "Save Estimate",
+    "replaceConfirm": "Replace the current items with those from \"{name}\"? This can't be undone.",
+    "requiredError": "Estimate name and each item name are required.",
+    "saveFailed": "Failed to save estimate.",
+    "scenarioDesc": {
+      "feature": "Adding features to the existing system",
+      "build": "Building a new application, per module",
+      "landingPage": "Server, Design, and Development package"
+    },
+    "details": "Estimate details",
+    "name": "Project Name Example",
+    "namePlaceholder": "example: Added WA Monitoring Featured",
+    "clientName": "Client Name (Optional)",
+    "clientPlaceholder": "example: PT. Client Name",
+    "featureList": "Feature List",
+    "moduleList": "Module List",
+    "loadPrevious": "Load from Previous Estimate",
+    "addFeature": "Add Feature",
+    "addModule": "Add Module",
+    "complexityHint": "Complexity Factor: Simple = 1.0 · Medium = 1.3–1.5 · Complex = 1.8–2.2. Typical risk buffer 15–20%.",
+    "featureName": "Feature name",
+    "moduleName": "Module name",
+    "hours": {
+      "analysis": "Analysis Hours",
+      "development": "Development Hours",
+      "testing": "Testing Hours",
+      "deployment": "Deployment Hours",
+      "estimated": "Estimated Hours"
+    },
+    "complexity": "Complexity Factor",
+    "bufferPercent": "Buffer Risk %",
+    "finalPrice": "Final Price",
+    "subtotal": "Subtotal",
+    "hoursUsed": "{n}h used",
+    "lp": {
+      "title": "Landing Page Configuration",
+      "dedicated": "Dedicated",
+      "shared": "Shared",
+      "template": "Template",
+      "development": "Development",
+      "estimatedHours": "Estimate Final Time (hours)",
+      "rateDeveloper": "Developer Rate (Rp/hour)",
+      "developerCount": "Number of Developers",
+      "developmentCost": "Development Cost",
+      "additional": "Additional Items",
+      "additionalOptional": "Additional Items (Optional)",
+      "addItem": "Add Item",
+      "noAdditional": "No additional items -- optional extras like domain, third-party integration, or extra revisions.",
+      "qty": "Amount",
+      "price": "Price (Rp)",
+      "itemPlaceholder": "e.g. Domain .com (1 year)",
+      "additionalTotal": "Additional Items Total",
+      "marginPercent": "Selling Margin (%)",
+      "marginAmount": "Margin Amount"
+    },
+    "overhead": {
+      "title": "Project overhead",
+      "pmPercent": "PM Overhead (%)",
+      "infraSetup": "Infrastructure Setup Cost (Rp)"
+    },
+    "tax": {
+      "title": "Tax & notes",
+      "includePpn": "Include VAT (PPN)",
+      "ppnPercent": "VAT (PPN) %",
+      "includePph": "Include PPh (withheld by client)",
+      "includePphHint": "PPh is withheld by the client from the payment -- it reduces what is received, it doesn't add to the bill.",
+      "pphType": "PPh type",
+      "pphTypePlaceholder": "Select PPh type...",
+      "pphRate": "PPh Rate (%)"
+    },
+    "notes": "Notes (Optional)",
+    "notesPlaceholder": "Additional notes for this estimate...",
+    "summary": {
+      "title": "Summary",
+      "rateSell": "Rate Sell / Hour",
+      "buffer": "Buffer Risk",
+      "pmOverhead": "PM Overhead",
+      "infraSetup": "Infrastructure Setup Cost",
+      "margin": "Selling Margin",
+      "total": "Estimate Total",
+      "totalPpn": "Total + VAT",
+      "netReceived": "Net Received",
+      "afterPph": "After PPh withheld by the client"
+    },
+    "duration": {
+      "label": "Estimate Duration",
+      "hours": "{n} hours",
+      "developers": "{n} developer | {n} developers",
+      "hoursPerMonth": "{n} hours/month"
+    },
+    "allocated": {
+      "label": "Allocated developers",
+      "hint": "People actually working on this project, out of {team} in the Team Rate Setup (≈ {hours} hrs/person/month). Affects duration only, not price."
+    },
+    "reference": {
+      "description": "Reuse a saved estimate's item list as a starting point",
+      "search": "Search by estimate or client name...",
+      "empty": "No saved estimates found.",
+      "noClient": "No client",
+      "package": "Package",
+      "items": "{n} item | {n} items"
+    }
+  }
+}

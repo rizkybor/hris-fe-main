@@ -1,18 +1,25 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
-import { ListChecks, Plus, Search, ChevronDown, Inbox, Filter, X } from "lucide-vue-next";
+import { Plus, Search, ChevronDown, Inbox, X, User, AlertTriangle, CornerDownLeft } from "lucide-vue-next";
 import { VueDraggableNext } from "vue-draggable-next";
 import { useTaskStore } from "@/stores/task";
+import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { can } from "@/helpers/permissionHelper";
 import TaskCard from "./TaskCard.vue";
 import TaskDetailModal from "./TaskDetailModal.vue";
 import TaskCreateModal from "./TaskCreateModal.vue";
+import { UiAlert, UiButton, UiInput, UiSelect } from "@/components/ui";
+import { useListState } from "@/composables/useListState";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
 const taskStore = useTaskStore();
+const authStore = useAuthStore();
 const { tasks: allTasks, loading } = storeToRefs(taskStore);
 const { fetchProjectTasks, moveTask, createTask, deleteTask } = taskStore;
 
@@ -22,11 +29,11 @@ const { fetchProjectTasks, moveTask, createTask, deleteTask } = taskStore;
 // TaskStatus value that previously had no column at all -- tasks set to
 // it just vanished from the board.
 const COLUMNS = [
-  { status: "todo", label: "To Do", bg: "bg-gray-50/70", border: "border-gray-200", bar: "bg-gray-400", dot: "bg-gray-400", countBg: "bg-gray-200", countText: "text-gray-700", emptyText: "text-gray-400" },
-  { status: "in_progress", label: "In Progress", bg: "bg-blue-50/60", border: "border-blue-100", bar: "bg-blue-500", dot: "bg-blue-500", countBg: "bg-blue-200", countText: "text-blue-700", emptyText: "text-blue-300" },
-  { status: "review", label: "Review", bg: "bg-amber-50/60", border: "border-amber-100", bar: "bg-amber-500", dot: "bg-amber-500", countBg: "bg-amber-200", countText: "text-amber-700", emptyText: "text-amber-300" },
-  { status: "done", label: "Done", bg: "bg-green-50/60", border: "border-green-100", bar: "bg-green-500", dot: "bg-green-500", countBg: "bg-green-200", countText: "text-green-700", emptyText: "text-green-300" },
-  { status: "cancelled", label: "Cancelled", bg: "bg-slate-100/70", border: "border-slate-200", bar: "bg-slate-500", dot: "bg-slate-500", countBg: "bg-slate-300", countText: "text-slate-700", emptyText: "text-slate-400" },
+  { status: "todo", labelKey: "projects.taskStatus.todo" },
+  { status: "in_progress", labelKey: "projects.taskStatus.inProgress" },
+  { status: "review", labelKey: "projects.taskStatus.review" },
+  { status: "done", labelKey: "projects.taskStatus.done" },
+  { status: "cancelled", labelKey: "projects.taskStatus.cancelled" },
 ];
 
 // Cards actually rendered per column, at any one time -- capped and grown
@@ -34,34 +41,66 @@ const COLUMNS = [
 // TaskCard components at once. Reset to the page size whenever the filter
 // (search) changes, so a narrowed search doesn't stay oddly capped.
 const PAGE_SIZE = 40;
+
+// Presentation only: column status dot (the label always sits next to it).
+const COLUMN_DOT = { todo: "bg-ui-faint", in_progress: "bg-ui-accent", review: "bg-ui-warn", done: "bg-ui-ok", cancelled: "bg-ui-line-strong" };
+const PRIORITY_FILTER_OPTIONS = computed(() => [
+  { value: "", label: t("projects.tasks.allPriorities") },
+  { value: "urgent", label: t("projects.priority.urgent") },
+  { value: "high", label: t("projects.priority.high") },
+  { value: "medium", label: t("projects.priority.medium") },
+  { value: "low", label: t("projects.priority.low") },
+]);
 const visibleCounts = reactive(Object.fromEntries(COLUMNS.map((c) => [c.status, PAGE_SIZE])));
 
-const searchQuery = ref("");
-const debouncedSearch = ref("");
+// Board filters live in the URL (back/forward and reload keep them); not
+// remembered across projects since types/assignees differ per project.
+const filters = useListState(
+  "project-board",
+  { q: "", priority: "", type: "", assignee: "", mine: false, overdue: false },
+  { remember: false }
+);
+
+const searchQuery = ref(filters.q);
 let searchDebounceTimer = null;
 watch(searchQuery, (value) => {
   clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(() => {
-    debouncedSearch.value = value;
-  }, 200);
+    filters.q = value;
+  }, 250);
 });
 
-// Priority/Type filters, applied alongside the search text -- "All" (empty
-// string) means no restriction on that field.
-const priorityFilter = ref("");
-const typeFilter = ref("");
+const myEmployeeId = computed(() => authStore.user?.employee_profile?.id ?? null);
+const assigneeIdOf = (task) => task.assignee?.id ?? task.assignee_id ?? null;
+const todayStr = (() => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+})();
+const isOverdue = (task) =>
+  Boolean(task.due_date) && String(task.due_date).slice(0, 10) < todayStr && !["done", "cancelled"].includes(task.status);
 
 const filteredTasks = computed(() => {
   let tasks = allTasks.value;
 
-  if (priorityFilter.value) {
-    tasks = tasks.filter((task) => task.priority === priorityFilter.value);
+  if (filters.priority) {
+    tasks = tasks.filter((task) => task.priority === filters.priority);
   }
-  if (typeFilter.value) {
-    tasks = tasks.filter((task) => task.type === typeFilter.value);
+  if (filters.type) {
+    tasks = tasks.filter((task) => task.type === filters.type);
   }
-  if (debouncedSearch.value.trim()) {
-    const query = debouncedSearch.value.trim().toLowerCase();
+  if (filters.assignee) {
+    tasks = tasks.filter((task) =>
+      filters.assignee === "none" ? !assigneeIdOf(task) : String(assigneeIdOf(task)) === filters.assignee
+    );
+  }
+  if (filters.mine && myEmployeeId.value) {
+    tasks = tasks.filter((task) => assigneeIdOf(task) === myEmployeeId.value);
+  }
+  if (filters.overdue) {
+    tasks = tasks.filter(isOverdue);
+  }
+  if (filters.q.trim()) {
+    const query = filters.q.trim().toLowerCase();
     tasks = tasks.filter(
       (task) =>
         task.name?.toLowerCase().includes(query) ||
@@ -90,18 +129,19 @@ const columnTasks = (status) =>
 // array it was just dragging, so the neighbor lookup in onColumnChange has
 // to read from this same array, not re-derive one from scratch (which
 // would still show the pre-drop order and silently miscompute the new
-// position). Explicitly (re)synced from columnTasks() on fetch, search
-// change, and Load More -- never mutated mid-drag by anything but
-// vue-draggable-next itself.
+// position). Explicitly (re)synced from columnTasks() whenever the store's
+// tasks change (fetch, create, edit, move response), on filter change, and
+// on Load More -- never mutated mid-drag by anything but vue-draggable-next.
 const columnVisible = reactive(Object.fromEntries(COLUMNS.map((c) => [c.status, []])));
 const syncColumn = (status) => {
   columnVisible[status] = columnTasks(status).slice(0, visibleCounts[status]);
 };
 const syncAllColumns = () => COLUMNS.forEach((c) => syncColumn(c.status));
 
-watch(allTasks, syncAllColumns);
+// Deep: edits patch tasks in place (no refetch), and the cards must follow.
+watch(allTasks, syncAllColumns, { deep: true });
 watch(
-  [debouncedSearch, priorityFilter, typeFilter],
+  () => [filters.q, filters.priority, filters.type, filters.assignee, filters.mine, filters.overdue],
   () => {
     COLUMNS.forEach((c) => {
       visibleCounts[c.status] = PAGE_SIZE;
@@ -115,10 +155,12 @@ const loadMore = (status) => {
   syncColumn(status);
 };
 
-const hasActiveFilters = computed(() => Boolean(priorityFilter.value || typeFilter.value));
+const hasActiveFilters = computed(() =>
+  Boolean(filters.q || filters.priority || filters.type || filters.assignee || filters.mine || filters.overdue)
+);
 const clearFilters = () => {
-  priorityFilter.value = "";
-  typeFilter.value = "";
+  searchQuery.value = "";
+  filters.reset();
 };
 
 // Every task type used anywhere in this project, most-recently-defined
@@ -135,9 +177,26 @@ const typeSuggestions = computed(() => {
   return Array.from(seen.entries()).map(([type, color]) => ({ type, color }));
 });
 
-const isModalOpen = ref(false);
+// People who have tasks on this board, for the assignee filter.
+const assigneeOptions = computed(() => {
+  const seen = new Map();
+  allTasks.value.forEach((task) => {
+    const id = assigneeIdOf(task);
+    if (id && !seen.has(id)) seen.set(id, task.assignee?.user?.name || `#${id}`);
+  });
+  return [
+    { value: "", label: t("projects.tasks.allAssignees") },
+    { value: "none", label: t("projects.tasks.unassigned") },
+    ...Array.from(seen.entries())
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([id, name]) => ({ value: String(id), label: name })),
+  ];
+});
+const overdueCount = computed(() => allTasks.value.filter(isOverdue).length);
+
 const selectedTaskId = ref(null);
 const isCreateModalOpen = ref(false);
+const createStatus = ref("todo");
 const actionError = ref("");
 
 const selectedTask = computed(() => {
@@ -147,10 +206,8 @@ const selectedTask = computed(() => {
 
 const openTaskDetail = (task) => {
   selectedTaskId.value = task.id;
-  isModalOpen.value = true;
 };
 const closeTaskDetail = () => {
-  isModalOpen.value = false;
   selectedTaskId.value = null;
   if (route.query.task) {
     const { task: _discard, ...rest } = route.query;
@@ -160,53 +217,91 @@ const closeTaskDetail = () => {
 
 // Deep-link support: My Tasks (and anywhere else) can link straight to a
 // specific task's detail modal via ?task=<id> on the project detail route,
-// instead of only being reachable by clicking its Kanban card.
+// instead of only being reachable by clicking its Kanban card. Opens once,
+// as soon as the task is in the store (cached or freshly loaded).
+let deepLinkDone = false;
 const openTaskFromQuery = () => {
   const taskId = route.query.task ? Number(route.query.task) : null;
-  if (!taskId) return;
+  if (deepLinkDone || !taskId) return;
   const task = allTasks.value.find((t) => t.id === taskId);
-  if (task) openTaskDetail(task);
+  if (task) {
+    deepLinkDone = true;
+    openTaskDetail(task);
+  }
 };
-watch(allTasks, openTaskFromQuery);
-const openCreateModal = () => {
+watch(() => allTasks.value.length, openTaskFromQuery, { immediate: true });
+
+// The column "+" opens the form with that column's status preset.
+const openCreateModal = (status = "todo") => {
+  createStatus.value = status;
   isCreateModalOpen.value = true;
 };
 const closeCreateModal = () => {
   isCreateModalOpen.value = false;
 };
 
+const errorText = (fallbackKey) => (typeof taskStore.error === "string" ? taskStore.error : t(fallbackKey));
+
+// The store adds the created task to the board from the response.
 const handleCreateTask = async (taskData) => {
   actionError.value = "";
   try {
     await createTask(taskData);
-    await fetchProjectTasks(route.params.id);
   } catch {
-    actionError.value = typeof taskStore.error === "string" ? taskStore.error : "Failed to create task.";
+    actionError.value = errorText("projects.tasks.createFailed");
   }
 };
 
+// Quick add: a title + Enter at the top of a column (same create API,
+// with that column's status and the default priority).
+const quickAdd = reactive(Object.fromEntries(COLUMNS.map((c) => [c.status, ""])));
+const quickAddBusy = reactive({});
+const submitQuickAdd = async (status) => {
+  const name = quickAdd[status].trim();
+  if (!name || quickAddBusy[status]) return;
+  quickAddBusy[status] = true;
+  actionError.value = "";
+  try {
+    await createTask({ project_id: route.params.id, name, status, priority: "medium" });
+    quickAdd[status] = "";
+  } catch {
+    actionError.value = errorText("projects.tasks.createFailed");
+  } finally {
+    quickAddBusy[status] = false;
+  }
+};
+
+// The store removes the card; no refetch.
 const handleDeleteTask = async (taskId) => {
   actionError.value = "";
   try {
     await deleteTask(taskId);
-    await fetchProjectTasks(route.params.id);
   } catch {
-    actionError.value = typeof taskStore.error === "string" ? taskStore.error : "Failed to delete task.";
+    actionError.value = errorText("projects.tasks.deleteFailed");
   }
 };
 
 // vue-draggable-next mutates columnVisible[status] in place (splice) during
 // a drag -- no computed get/set wrapper involved, so what onColumnChange
 // reads below is the exact post-drop array Sortable's newIndex indexes into.
+// The move is applied locally first; the response's status/position are
+// patched in by the store (no board refetch), a failure puts it back.
 const onColumnChange = async (status, event) => {
   const entry = event.added || event.moved;
   if (!entry) return; // "removed" alone is handled by the target column's "added"/"moved"
 
   const task = entry.element;
+  const before = { status: task.status, position: task.position };
   const isCrossColumnMove = task.status !== status;
   if (isCrossColumnMove) task.status = status;
 
   actionError.value = "";
+  const revert = () => {
+    task.status = before.status;
+    task.position = before.position;
+    taskStore.patchMyTasks(task.id, { status: before.status });
+    syncAllColumns();
+  };
 
   // Dropping a card into a DIFFERENT column ignores the exact drop slot --
   // the backend places it by priority cluster within that column instead
@@ -217,12 +312,9 @@ const onColumnChange = async (status, event) => {
   if (isCrossColumnMove) {
     try {
       await moveTask(task.id, { status });
-      await fetchProjectTasks(route.params.id);
-      syncAllColumns();
     } catch {
-      actionError.value = typeof taskStore.error === "string" ? taskStore.error : "Failed to move task. Reverting.";
-      await fetchProjectTasks(route.params.id);
-      syncAllColumns();
+      actionError.value = errorText("projects.tasks.moveFailed");
+      revert();
     }
     return;
   }
@@ -246,9 +338,8 @@ const onColumnChange = async (status, event) => {
   try {
     await moveTask(task.id, { status, position });
   } catch {
-    actionError.value = typeof taskStore.error === "string" ? taskStore.error : "Failed to move task. Reverting.";
-    await fetchProjectTasks(route.params.id);
-    syncAllColumns();
+    actionError.value = errorText("projects.tasks.moveFailed");
+    revert();
   }
 };
 
@@ -262,11 +353,16 @@ const setSentinelRef = (el, status) => {
 };
 let sentinelObserver = null;
 
+// Shown while the board has nothing for this project yet.
+const boardLoading = computed(() => loading.value && allTasks.value.length === 0);
+
 onMounted(async () => {
+  // ProjectDetail loads the tasks (its overview needs them too); only
+  // fetch here when the store holds another project's board.
   const projectId = route.params.id;
-  if (projectId) {
+  syncAllColumns();
+  if (projectId && String(taskStore.tasksProjectId) !== String(projectId)) {
     await fetchProjectTasks(projectId);
-    syncAllColumns();
   }
 
   sentinelObserver = new IntersectionObserver(
@@ -289,118 +385,118 @@ onUnmounted(() => sentinelObserver?.disconnect());
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 sm:w-10 sm:h-10 bg-purple-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <ListChecks class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-brand-dark text-base sm:text-lg font-bold">Project Tasks</h3>
-          <p class="text-brand-light text-xs font-normal">
-            Manage and track all project tasks with Kanban system.
-          </p>
-        </div>
+  <div class="space-y-4">
+    <!-- Toolbar: search + filters + create -->
+    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
+      <UiInput
+        v-model="searchQuery"
+        :icon="Search"
+        :placeholder="$t('projects.tasks.searchPlaceholder')"
+        class="flex-1 min-w-0 lg:max-w-sm"
+      />
+
+      <div class="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] -mx-1 px-1">
+        <button
+          v-if="myEmployeeId"
+          type="button"
+          :aria-pressed="filters.mine"
+          class="ui-press shrink-0 inline-flex items-center gap-1.5 h-[38px] px-3 rounded-ui-control border text-ui-small font-medium whitespace-nowrap"
+          :class="filters.mine ? 'bg-ui-ink text-white border-ui-ink' : 'bg-ui-surface text-ui-text border-ui-line-strong hover:bg-ui-hover'"
+          @click="filters.mine = !filters.mine"
+        >
+          <User class="w-3.5 h-3.5" /> {{ $t("projects.tasks.mine") }}
+        </button>
+        <button
+          type="button"
+          :aria-pressed="filters.overdue"
+          class="ui-press shrink-0 inline-flex items-center gap-1.5 h-[38px] px-3 rounded-ui-control border text-ui-small font-medium whitespace-nowrap"
+          :class="filters.overdue ? 'bg-ui-bad text-white border-ui-bad' : 'bg-ui-surface text-ui-text border-ui-line-strong hover:bg-ui-hover'"
+          @click="filters.overdue = !filters.overdue"
+        >
+          <AlertTriangle class="w-3.5 h-3.5" /> {{ $t("projects.tasks.overdue") }}
+          <span class="tabular-nums" :class="filters.overdue ? 'text-white/80' : 'text-ui-faint'">{{ overdueCount }}</span>
+        </button>
+        <UiSelect v-model="filters.assignee" :options="assigneeOptions" class="w-44 shrink-0" :aria-label="$t('projects.tasks.detail.assignee')" />
+        <UiSelect v-model="filters.priority" :options="PRIORITY_FILTER_OPTIONS" class="w-40 shrink-0" :aria-label="$t('projects.fields.priority')" />
+        <UiSelect
+          v-if="typeSuggestions.length"
+          v-model="filters.type"
+          :options="[{ value: '', label: $t('projects.tasks.allTypes') }, ...typeSuggestions.map((s) => ({ value: s.type, label: s.type }))]"
+          class="w-40 shrink-0"
+          :aria-label="$t('projects.tasks.form.type')"
+        />
+        <UiButton v-if="hasActiveFilters" variant="ghost" :icon="X" class="shrink-0" @click="clearFilters">{{ $t("common.actions.clear") }}</UiButton>
       </div>
+
+      <UiButton v-if="can('task-create')" :icon="Plus" class="w-full lg:w-auto lg:ml-auto shrink-0" @click="openCreateModal()">
+        {{ $t("projects.tasks.createNew") }}
+      </UiButton>
+    </div>
+
+    <div v-if="actionError" class="relative">
+      <UiAlert tone="bad" :message="actionError" class="pr-10" />
       <button
-        v-if="can('task-create')"
-        @click="openCreateModal"
-        class="btn-primary w-full sm:w-auto rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center justify-center gap-2"
+        type="button"
+        @click="actionError = ''"
+        class="absolute top-2 right-2 w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-bad/70 hover:text-ui-bad hover:bg-ui-bad/10"
+        :aria-label="$t('projects.tasks.dismiss')"
       >
-        <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-xs font-semibold">Create New Task</span>
+        <X class="w-4 h-4" />
       </button>
     </div>
 
-    <div
-      v-if="actionError"
-      class="mb-4 px-4 py-3 rounded-[10px] bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center justify-between"
-    >
-      <span>{{ actionError }}</span>
-      <button @click="actionError = ''" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button>
-    </div>
-
-    <!-- Tasks Filter -->
-    <div class="mb-5 flex flex-col sm:flex-row gap-3">
-      <div class="relative flex-1 min-w-0">
-        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search class="h-4 w-4 text-gray-400" />
-        </div>
-        <input
-          type="text"
-          class="w-full pl-10 pr-5 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-medium"
-          placeholder="Search tasks by name, description, type, or assignee..."
-          v-model="searchQuery"
-        />
-      </div>
-
-      <div class="flex items-center gap-2 flex-wrap">
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Filter class="h-3.5 w-3.5 text-gray-400" />
-          </div>
-          <select
-            v-model="priorityFilter"
-            class="select-soft select-soft-icon-pl"
-          >
-            <option value="">All Priorities</option>
-            <option value="urgent">Urgent</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-          <ChevronDown class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-
-        <div v-if="typeSuggestions.length" class="relative">
-          <select
-            v-model="typeFilter"
-            class="select-soft max-w-[160px]"
-          >
-            <option value="">All Types</option>
-            <option v-for="s in typeSuggestions" :key="s.type" :value="s.type">{{ s.type }}</option>
-          </select>
-          <ChevronDown class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-
-        <button
-          v-if="hasActiveFilters"
-          type="button"
-          @click="clearFilters"
-          class="flex items-center gap-1 px-3 py-3 rounded-[10px] text-xs font-semibold text-gray-500 hover:text-[#0C51D9] hover:bg-gray-50 transition-colors duration-200 shrink-0"
-        >
-          <X class="w-3.5 h-3.5" />
-          Clear
-        </button>
-      </div>
-    </div>
-
-    <!-- Task Management Columns -->
-    <div class="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-5 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+    <!-- Task Management Columns: side by side, snapping sideways on phones -->
+    <div class="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1 scroll-px-1">
       <div
         v-for="column in COLUMNS"
         :key="column.status"
-        class="border rounded-[12px] flex-shrink-0 w-[85vw] sm:w-72 md:w-80 overflow-hidden snap-start"
-        :class="[column.bg, column.border]"
+        class="flex-shrink-0 w-[85vw] sm:w-72 md:w-[300px] snap-start bg-ui-subtle border border-ui-line rounded-ui-card flex flex-col"
       >
-        <div class="h-1" :class="column.bar"></div>
-        <div class="flex items-center justify-between px-4 pt-5 pb-5 mb-2">
-          <div class="flex items-center gap-2">
-            <div class="w-1.5 h-1.5 rounded-full" :class="column.dot"></div>
-            <h4 class="text-brand-dark text-xs font-bold">{{ column.label }}</h4>
-          </div>
-          <span
-            class="min-w-[20px] px-2 py-0.5 rounded-full text-xs font-semibold text-center"
-            :class="[column.countBg, column.countText]"
+        <div class="flex items-center gap-2 px-3.5 pt-3.5 pb-2.5">
+          <span class="w-2 h-2 rounded-full shrink-0" :class="COLUMN_DOT[column.status]" aria-hidden="true"></span>
+          <h4 class="text-ui-h3 text-ui-ink">{{ $t(column.labelKey) }}</h4>
+          <span class="text-ui-cap text-ui-muted tabular-nums">{{ columnTasks(column.status).length }}</span>
+          <button
+            v-if="can('task-create')"
+            type="button"
+            class="ml-auto w-8 h-8 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink"
+            :title="$t('projects.tasks.addToColumn', { column: $t(column.labelKey) })"
+            :aria-label="$t('projects.tasks.addToColumn', { column: $t(column.labelKey) })"
+            @click="openCreateModal(column.status)"
           >
-            {{ columnTasks(column.status).length }}
-          </span>
+            <Plus class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Quick add: title + Enter (top of the column, always in view) -->
+        <form v-if="can('task-create')" class="px-2.5 pb-2" @submit.prevent="submitQuickAdd(column.status)">
+          <label class="relative block">
+            <span class="sr-only">{{ $t("projects.tasks.quickAddLabel", { column: $t(column.labelKey) }) }}</span>
+            <Plus class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ui-faint pointer-events-none" />
+            <input
+              v-model="quickAdd[column.status]"
+              type="text"
+              maxlength="255"
+              :disabled="quickAddBusy[column.status]"
+              :placeholder="$t('projects.tasks.quickAdd')"
+              class="w-full h-10 pl-8 pr-9 bg-transparent hover:bg-ui-surface focus:bg-ui-surface text-ui-small text-ui-ink placeholder:text-ui-muted border border-transparent hover:border-ui-line focus:border-ui-accent rounded-ui-control focus:outline-none focus:shadow-ui-focus transition-colors disabled:opacity-60"
+              @keydown.esc="quickAdd[column.status] = ''"
+            />
+            <CornerDownLeft
+              v-if="quickAdd[column.status].trim()"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ui-faint pointer-events-none"
+              aria-hidden="true"
+            />
+          </label>
+        </form>
+        <div v-if="boardLoading" class="px-2.5 pb-2.5 space-y-2" aria-hidden="true">
+          <div v-for="i in 2" :key="i" class="h-[92px] rounded-ui-card bg-ui-surface/70 border border-ui-line animate-pulse"></div>
         </div>
 
         <VueDraggableNext
           v-model="columnVisible[column.status]"
           group="tasks"
-          class="space-y-3 min-h-[480px] max-h-[640px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent px-4 pb-4"
+          class="space-y-2 min-h-[120px] sm:min-h-[420px] max-h-[640px] overflow-y-auto px-2.5 pb-2.5"
           :animation="200"
           @change="(event) => onColumnChange(column.status, event)"
         >
@@ -410,9 +506,12 @@ onUnmounted(() => sentinelObserver?.disconnect());
             :task="task"
             @click="openTaskDetail(task)"
           />
-          <div v-if="columnTasks(column.status).length === 0" class="flex flex-col items-center justify-center py-10 text-center">
-            <Inbox class="w-7 h-7 mb-2 opacity-60" :class="column.emptyText" />
-            <p class="text-xs font-medium" :class="column.emptyText">No tasks here</p>
+          <div
+            v-if="!boardLoading && columnTasks(column.status).length === 0"
+            class="flex flex-col items-center justify-center py-8 text-center rounded-ui-card border border-dashed border-ui-line-strong"
+          >
+            <Inbox class="w-5 h-5 mb-1.5 text-ui-faint" />
+            <p class="text-ui-cap text-ui-muted">{{ $t("projects.tasks.emptyColumn") }}</p>
           </div>
 
           <!-- Load-more sentinel + fallback button, only when this column has more than what's rendered -->
@@ -421,20 +520,22 @@ onUnmounted(() => sentinelObserver?.disconnect());
             <button
               type="button"
               @click="loadMore(column.status)"
-              class="w-full flex items-center justify-center gap-2 py-2.5 rounded-[10px] border border-dashed border-gray-300 hover:border-[#0C51D9] hover:bg-white text-xs font-semibold text-gray-500 hover:text-[#0C51D9] transition-all duration-200"
+              class="ui-press w-full flex items-center justify-center gap-1.5 h-9 rounded-ui-control border border-dashed border-ui-line-strong bg-ui-surface/60 hover:bg-ui-surface text-ui-cap font-medium text-ui-muted hover:text-ui-ink tabular-nums"
             >
               <ChevronDown class="w-3.5 h-3.5" />
-              Load more ({{ visibleCounts[column.status] }} of {{ columnTasks(column.status).length }})
+              {{ $t("projects.tasks.loadMore", { shown: visibleCounts[column.status], total: columnTasks(column.status).length }) }}
             </button>
           </template>
         </VueDraggableNext>
+
       </div>
     </div>
 
-    <!-- Task Detail Modal -->
+    <!-- Task Detail Modal: only mounted while a task is open -->
     <TaskDetailModal
+      v-if="selectedTask"
       :task="selectedTask"
-      :is-open="isModalOpen"
+      :is-open="true"
       :project-id="parseInt(route.params.id)"
       :type-suggestions="typeSuggestions"
       @close="closeTaskDetail"
@@ -444,6 +545,7 @@ onUnmounted(() => sentinelObserver?.disconnect());
     <!-- Task Create Modal -->
     <TaskCreateModal
       :is-open="isCreateModalOpen"
+      :initial-status="createStatus"
       :project-id="route.params.id"
       :type-suggestions="typeSuggestions"
       @close="closeCreateModal"

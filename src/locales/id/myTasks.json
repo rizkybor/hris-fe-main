@@ -1,0 +1,67 @@
+{
+  "title": "Kumpulan Tugas (Ditugaskan/Proyek)",
+  "subtitle": "Tugas proyek dan tugas dari atasan Anda, diurutkan dari tenggat terdekat.",
+  "searchPlaceholder": "Cari tugas, proyek, atau pemberi tugas...",
+  "allProjects": "Semua Proyek",
+  "noProject": "Tanpa Proyek",
+  "assignedBy": "Ditugaskan oleh {name}",
+  "statusOf": "Status {title}",
+  "source": {
+    "assigned": "Ditugaskan"
+  },
+  "status": {
+    "todo": "To Do",
+    "in_progress": "Dikerjakan",
+    "review": "Review",
+    "done": "Selesai",
+    "cancelled": "Dibatalkan"
+  },
+  "priority": {
+    "urgent": "Mendesak",
+    "high": "Tinggi",
+    "medium": "Sedang",
+    "low": "Rendah"
+  },
+  "buckets": {
+    "overdue": "Lewat tenggat",
+    "today": "Tenggat hari ini",
+    "week": "7 hari ke depan",
+    "later": "Nanti",
+    "nodate": "Tanpa tenggat",
+    "completed": "Selesai"
+  },
+  "summary": {
+    "open": "Terbuka"
+  },
+  "empty": {
+    "filteredTitle": "Tidak ada tugas yang cocok",
+    "filteredMessage": "Coba kata kunci, status, proyek, atau tab lain",
+    "showAll": "Tampilkan semua tugas",
+    "title": "Belum ada tugas",
+    "message": "Tugas dari proyek dan dari atasan Anda akan tampil di sini."
+  },
+  "detail": {
+    "dueBy": "Tenggat {date} • oleh {name}",
+    "yourStatus": "Status Anda",
+    "due": "Tenggat",
+    "priority": "Prioritas",
+    "type": "Jenis",
+    "assignedByLabel": "Ditugaskan oleh",
+    "noDescription": "Belum ada deskripsi",
+    "openInProject": "Buka di proyek"
+  },
+  "recap": {
+    "standTitle": "Posisi tugas saya",
+    "standSubtitle": "Tugas proyek dan tugas dari atasan",
+    "noTasks": "Belum ada tugas.",
+    "doneLabel": "selesai",
+    "byProjectTitle": "Tugas terbuka per proyek",
+    "byProjectSubtitle": "Terbanyak lebih dulu",
+    "nothingOpen": "Tidak ada tugas terbuka. Kerja bagus!",
+    "assignedTasks": "Tugas dari atasan",
+    "openCount": "{n} terbuka",
+    "overdueCount": "{n} lewat tenggat",
+    "more": "+ {n} lainnya"
+  },
+  "refreshing": "Memperbarui…"
+}

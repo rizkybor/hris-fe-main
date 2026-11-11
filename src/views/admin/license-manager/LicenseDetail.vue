@@ -1,20 +1,16 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import {
-  ArrowLeft,
   Pencil,
   Trash2,
   User,
   Mail,
-  CalendarClock,
   MonitorSmartphone,
-  Clock,
-  FileText,
   Unplug,
   Laptop,
   Tablet,
-  BadgeCheck,
   Phone,
   MapPin,
   Globe,
@@ -27,19 +23,17 @@ import {
   Contact,
   IdCard,
   Activity,
-  FileDown,
-  Hash,
-  ScrollText,
-  ArrowRight,
   MessageCircle,
-  KeyRound,
   Share2,
+  ChevronLeft,
+  MoreHorizontal,
+  Download,
 } from "lucide-vue-next";
+import { UiPageHeader, UiButton, UiBadge, UiSelect, UiEmpty } from "@/components/ui";
 import ShareLicenseModal from "@/components/admin/license-manager/ShareLicenseModal.vue";
 import LicensePeriodCard from "@/components/admin/license-manager/LicensePeriodCard.vue";
 import LicenseTrackingTimeline from "@/components/admin/license-manager/LicenseTrackingTimeline.vue";
 import Alert from "@/components/common/Alert.vue";
-import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
 import LicenseProductGate from "@/components/admin/license-manager/LicenseProductGate.vue";
 import { useLicenseProduct, onProductReady } from "@/components/admin/license-manager/useLicenseProduct";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -63,9 +57,11 @@ import {
   categoryLabel,
   planCategory,
   KEY_STATUS,
+  KEY_MODE_OPTIONS,
   certificateKeyOptions,
 } from "@/components/admin/license-manager/licenseHelpers";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useLicenseManagerStore();
@@ -112,28 +108,28 @@ const detailGroups = computed(() => {
   if (isOrganization.value) {
     return [
       {
-        title: "Organization",
+        title: t("licenses.form.sections.organization.title"),
         icon: Building2,
         items: [
-          { label: "Organization Name", value: l.licensee_name, icon: Building2 },
-          { label: "Type", value: l.organization_type_label || organizationTypeLabel(l.organization_type), icon: Users },
-          { label: "Member Count", value: l.member_count, icon: Users },
-          { label: "Website", value: l.website, icon: Link2, href: l.website },
-          { label: "Tax ID (NPWP)", value: l.tax_id, icon: Receipt },
+          { label: t("licenses.form.organizationName"), value: l.licensee_name, icon: Building2 },
+          { label: t("licenses.form.orgType"), value: organizationTypeLabel(l.organization_type) !== "-" ? organizationTypeLabel(l.organization_type) : l.organization_type_label, icon: Users },
+          { label: t("licenses.form.memberCount"), value: l.member_count, icon: Users },
+          { label: t("licenses.fields.website"), value: l.website, icon: Link2, href: l.website },
+          { label: t("licenses.form.taxId"), value: l.tax_id, icon: Receipt },
         ],
       },
       {
-        title: "Contact Person",
+        title: t("licenses.form.sections.contact.title"),
         icon: Contact,
         items: [
-          { label: "Name", value: l.contact_name, icon: User },
-          { label: "Position", value: l.contact_position, icon: Briefcase },
-          { label: "Email", value: l.licensee_email, icon: Mail, href: l.licensee_email && `mailto:${l.licensee_email}` },
-          { label: "Phone / WhatsApp", value: l.phone, icon: Phone, href: l.phone && `tel:${l.phone.replace(/[^0-9+]/g, "")}` },
+          { label: t("common.labels.name"), value: l.contact_name, icon: User },
+          { label: t("licenses.form.position"), value: l.contact_position, icon: Briefcase },
+          { label: t("common.labels.email"), value: l.licensee_email, icon: Mail, href: l.licensee_email && `mailto:${l.licensee_email}` },
+          { label: t("licenses.checklist.phone"), value: l.phone, icon: Phone, href: l.phone && `tel:${l.phone.replace(/[^0-9+]/g, "")}` },
         ],
       },
       {
-        title: "Address",
+        title: t("licenses.form.sections.address.title"),
         icon: MapPin,
         items: locationItems(l),
       },
@@ -141,18 +137,18 @@ const detailGroups = computed(() => {
   }
   return [
     {
-      title: "Licensee",
+      title: t("licenses.form.sections.licensee.title"),
       icon: IdCard,
       items: [
-        { label: "Full Name", value: l.licensee_name, icon: User },
-        { label: "Email", value: l.licensee_email, icon: Mail, href: l.licensee_email && `mailto:${l.licensee_email}` },
-        { label: "Phone / WhatsApp", value: l.phone, icon: Phone, href: l.phone && `tel:${l.phone.replace(/[^0-9+]/g, "")}` },
-        { label: "Occupation", value: l.occupation, icon: Briefcase },
-        { label: "Affiliation", value: l.affiliation, icon: GraduationCap },
+        { label: t("licenses.form.fullName"), value: l.licensee_name, icon: User },
+        { label: t("common.labels.email"), value: l.licensee_email, icon: Mail, href: l.licensee_email && `mailto:${l.licensee_email}` },
+        { label: t("licenses.checklist.phone"), value: l.phone, icon: Phone, href: l.phone && `tel:${l.phone.replace(/[^0-9+]/g, "")}` },
+        { label: t("licenses.fields.occupation"), value: l.occupation, icon: Briefcase },
+        { label: t("licenses.fields.affiliation"), value: l.affiliation, icon: GraduationCap },
       ],
     },
     {
-      title: "Location",
+      title: t("licenses.form.sections.location.title"),
       icon: MapPin,
       items: locationItems(l),
     },
@@ -161,14 +157,14 @@ const detailGroups = computed(() => {
 
 // Location rows: the full one-line address first, then the parts.
 const locationItems = (l) => [
-  { label: "Full Address", value: l.full_address, icon: MapPin, wide: true },
-  { label: "Street Address", value: l.address, icon: MapPin, wide: true },
-  { label: "Village (Kelurahan / Desa)", value: l.village, icon: MapPin },
-  { label: "District (Kecamatan)", value: l.district, icon: MapPin },
-  { label: "City / Regency", value: l.regency, icon: MapPin },
-  { label: "Province", value: l.province, icon: MapPin },
-  { label: "Postal Code", value: l.postal_code, icon: MapPin },
-  { label: "Country", value: l.country, icon: Globe },
+  { label: t("licenses.detail.fullAddress"), value: l.full_address, icon: MapPin, wide: true },
+  { label: t("licenses.location.address"), value: l.address, icon: MapPin, wide: true },
+  { label: t("licenses.location.villageId"), value: l.village, icon: MapPin },
+  { label: t("licenses.location.districtId"), value: l.district, icon: MapPin },
+  { label: t("licenses.location.regency"), value: l.regency, icon: MapPin },
+  { label: t("licenses.location.province"), value: l.province, icon: MapPin },
+  { label: t("licenses.location.postalCode"), value: l.postal_code, icon: MapPin },
+  { label: t("licenses.location.country"), value: l.country, icon: Globe },
 ];
 
 // LIC-OCCA-MAC-0001 / LIC-OCCA-IPAD-0001, the same reference as on the
@@ -189,7 +185,17 @@ const certKeyOptions = computed(() => certificateKeyOptions(license.value));
 const certKeyId = ref(null);
 const certKey = computed(() => certKeyOptions.value.find((k) => k.id === certKeyId.value) || null);
 const certKeyLabel = (k) =>
-  `${license.value?.bundle?.length ? `${k.platform_label} ` : ""}Key ${k.position} · ${k.key}${k.status === "in_use" ? " (in use)" : ""}`;
+  `${license.value?.bundle?.length ? `${k.platform_label} ` : ""}${t("licenses.detail.keyN", { n: k.position })} · ${k.key}${
+    k.status === "in_use" ? ` (${t("licenses.keyStatus.inUse").toLowerCase()})` : ""
+  }`;
+const certSelectOptions = computed(() => [
+  { value: null, label: t("licenses.detail.allKeys") },
+  ...certKeyOptions.value.map((k) => ({ value: k.id, label: certKeyLabel(k) })),
+]);
+// API's key_mode_label is English; the local label follows the language.
+const keyModeLabel = computed(
+  () => KEY_MODE_OPTIONS.find((o) => o.value === license.value?.key_mode)?.label || license.value?.key_mode_label || ""
+);
 const shareKeyId = ref(null);
 const openShare = (tab, keyId = certKeyId.value) => {
   shareKeyId.value = keyId;
@@ -199,10 +205,53 @@ const onShared = () => timeline.value?.reload();
 
 // Key card: status as a dot + word, the rest as one neutral line.
 const keyStatus = computed(() => {
-  if (expired.value) return { label: "Expired", dot: "bg-red-500", text: "text-red-600" };
+  if (expired.value) return { label: t("licenses.status.expired"), tone: "bad" };
   return license.value?.is_active
-    ? { label: "Active", dot: "bg-emerald-500", text: "text-emerald-700" }
-    : { label: "Inactive", dot: "bg-gray-400", text: "text-gray-500" };
+    ? { label: t("licenses.status.active"), tone: "ok" }
+    : { label: t("licenses.status.inactive"), tone: "neutral" };
+});
+
+// Presentation only: header line, the main key(s) of this license and its
+// bundle (Mac first), phone tabs and the "more" menu.
+const headerMeta = computed(() => {
+  const l = license.value;
+  if (!l) return "";
+  const platforms = isBundle.value ? keyGroups.value.map((g) => g.label).join(" + ") : licensePlatformLabel(l);
+  const parts = [categoryLabel(l) !== planLabel(l) ? categoryLabel(l) : ""];
+  if (isOrganization.value && (l.organization_type_label || l.organization_type))
+    parts.push(l.organization_type ? organizationTypeLabel(l.organization_type) : l.organization_type_label);
+  parts.push(platforms, l.licensee_email);
+  parts.push(
+    l.last_activity_at
+      ? t("licenses.detail.lastActivity", { time: relativeTime(l.last_activity_at) })
+      : t("licenses.detail.noAppActivity")
+  );
+  return parts.filter(Boolean).join(" · ");
+});
+const mainKeys = computed(() => {
+  const l = license.value;
+  if (!l) return [];
+  return [l, ...(l.bundle || [])]
+    .map((x) => ({ id: x.id, key: x.key, platform: x.platform, label: x.id === l.id ? licensePlatformLabel(l) : x.platform_label }))
+    .sort((a, b) => (a.platform === "mac" ? -1 : b.platform === "mac" ? 1 : 0));
+});
+const platformsLabel = computed(() => mainKeys.value.map((k) => k.label).join(" + "));
+const mobileTab = ref("overview");
+const mobileTabs = computed(() => [
+  { value: "overview", label: t("licenses.dashboard.overview") },
+  ...(perDevice.value ? [{ value: "keys", label: t("licenses.form.keys") }] : []),
+  { value: "devices", label: t("licenses.detail.devices") },
+  { value: "activity", label: t("licenses.timeline.title") },
+]);
+// Below lg only the picked tab's cards show; lg and up shows everything.
+const onTab = (name) => (mobileTab.value === name ? "" : "hidden lg:block");
+const mobileKeyGroup = ref(0);
+const moreOpen = ref(false);
+const periodLabel = computed(() => {
+  const l = license.value;
+  if (!l) return "-";
+  if (!l.expires_at) return `${formatDate(l.starts_at || l.created_at)} → ${t("licenses.plans.lifetime.label")}`;
+  return `${formatDate(l.starts_at || l.created_at)} → ${formatDate(l.expires_at)}`;
 });
 const keyMeta = computed(() => {
   const l = license.value;
@@ -239,10 +288,10 @@ const deviceKeys = computed(() => keyGroups.value.flatMap((g) => g.keys));
 const keysSummary = computed(() => summarize(deviceKeys.value));
 const keyFilter = ref("all");
 const keyFilters = computed(() => [
-  { value: "all", label: "All", count: keysSummary.value.total },
-  { value: "available", label: "Available", count: keysSummary.value.available },
-  { value: "in_use", label: "In use", count: keysSummary.value.in_use },
-  { value: "used", label: "Used", count: keysSummary.value.used },
+  { value: "all", label: t("common.labels.all"), count: keysSummary.value.total },
+  { value: "available", label: t("licenses.keyStatus.available"), count: keysSummary.value.available },
+  { value: "in_use", label: t("licenses.keyStatus.inUse"), count: keysSummary.value.in_use },
+  { value: "used", label: t("licenses.keyStatus.used"), count: keysSummary.value.used },
 ]);
 const filterKeys = (keys) => (keyFilter.value === "all" ? keys : keys.filter((k) => k.status === keyFilter.value));
 const filteredKeys = computed(() => filterKeys(keyGroups.value[0]?.keys || []));
@@ -268,7 +317,7 @@ const downloadPdf = async (key = certKey.value) => {
     await store.downloadCertificate(license.value.id, `${productName.value}-License-${keys}.pdf`, key?.id ?? null);
     timeline.value?.reload();
   } catch (err) {
-    error.value = errorMessage(err, "Failed to download the license PDF.");
+    error.value = errorMessage(err, t("licenses.detail.pdfFailed"));
   } finally {
     downloading.value = false;
     downloadingKeyId.value = null;
@@ -291,7 +340,7 @@ onProductReady(
       await store.fetchLicense(route.params.id);
     } catch (err) {
       store.currentLicense = null;
-      error.value = errorMessage(err, "License not found.");
+      error.value = errorMessage(err, t("licenses.edit.notFound"));
     } finally {
       loading.value = false;
     }
@@ -304,10 +353,10 @@ const toggleActive = async (value) => {
   error.value = "";
   try {
     await store.setActive(license.value.id, value);
-    flash(`License ${value ? "activated" : "deactivated"}.`);
+    flash(value ? t("licenses.dashboard.activated") : t("licenses.dashboard.deactivated"));
     timeline.value?.reload();
   } catch (err) {
-    error.value = errorMessage(err, "Failed to update license status.");
+    error.value = errorMessage(err, t("licenses.dashboard.statusFailed"));
   } finally {
     toggling.value = false;
   }
@@ -316,9 +365,9 @@ const toggleActive = async (value) => {
 const releaseDevice = async (activation) => {
   const ok = await alertModal.confirm(
     perDevice.value
-      ? `Release "${activation.device_name || activation.device_id}"? The device will be signed out and the key it used can never be used again; another device can use one of the remaining keys.`
-      : `Release "${activation.device_name || activation.device_id}"? The device will be signed out of this license and the slot becomes free for another device.`,
-    { title: "Release Device", type: "warning", confirmText: "Release" }
+      ? t("licenses.detail.releaseConfirmPerDevice", { name: activation.device_name || activation.device_id })
+      : t("licenses.detail.releaseConfirm", { name: activation.device_name || activation.device_id }),
+    { title: t("licenses.detail.releaseTitle"), type: "warning", confirmText: t("licenses.detail.release") }
   );
   if (!ok) return;
 
@@ -329,10 +378,10 @@ const releaseDevice = async (activation) => {
     // Reload: a released per-device key turns "used", and an iPad device
     // lives on the bundle's other license.
     if (perDevice.value || isBundle.value) await store.fetchLicense(license.value.id);
-    flash("Device released.");
+    flash(t("licenses.detail.released"));
     timeline.value?.reload();
   } catch (err) {
-    error.value = errorMessage(err, "Failed to release device.");
+    error.value = errorMessage(err, t("licenses.detail.releaseFailed"));
   } finally {
     releasingId.value = null;
   }
@@ -340,8 +389,8 @@ const releaseDevice = async (activation) => {
 
 const handleDelete = async () => {
   const ok = await alertModal.confirm(
-    `Delete license ${license.value.key} for "${license.value.licensee_name}"? Devices using it will lose access. This action cannot be undone.`,
-    { title: "Delete License", type: "danger", confirmText: "Delete" }
+    t("licenses.dashboard.deleteConfirm", { key: license.value.key, name: license.value.licensee_name }),
+    { title: t("licenses.dashboard.deleteTitle"), type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
 
@@ -349,7 +398,7 @@ const handleDelete = async () => {
     await store.deleteLicense(license.value.id);
     toDashboard();
   } catch (err) {
-    error.value = errorMessage(err, "Failed to delete license.");
+    error.value = errorMessage(err, t("licenses.dashboard.deleteFailed"));
   }
 };
 
@@ -357,504 +406,577 @@ const isMac = (platform) => /mac/i.test(platform || "");
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <LicenseProductGate :state="productState" :code="productCode" :product-name="productName">
-      <!-- Header row: back, product icon, title + key, actions -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[16px] px-4 py-4 sm:px-5 mb-5">
-        <div class="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            @click="toDashboard"
-            class="bg-white w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-violet-400 transition-all shrink-0"
-            aria-label="Back"
-          >
-            <ArrowLeft class="w-5 h-5 text-gray-600" />
-          </button>
-          <ProductIcon :product="product" :size="40" />
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold text-violet-600">
-              <RouterLink :to="{ name: 'admin.license-manager.licenses.dashboard', params: { product: productCode } }" class="hover:underline">
-                {{ productName }} &middot; Licenses
-              </RouterLink>
-            </p>
-            <div class="flex flex-wrap items-center gap-2">
-              <h1 class="text-brand-dark text-xl font-bold truncate">{{ license?.licensee_name || "License Detail" }}</h1>
-              <span v-if="license" class="inline-flex items-center gap-1.5 bg-slate-50 border border-[#DCDEDD] rounded-[10px] pl-3 pr-1 py-0.5">
-                <span class="font-mono text-xs font-bold tracking-wider text-brand-dark">{{ license.key }}</span>
-                <CopyKeyButton :value="license.key" />
-              </span>
-            </div>
-            <p class="text-brand-light text-sm flex items-center gap-1.5">
-              <Activity class="w-3.5 h-3.5" />
-              <template v-if="license?.last_activity_at">
-                Last activity
-                <span class="font-semibold text-brand-dark" :title="formatDateTime(license.last_activity_at)">
-                  {{ relativeTime(license.last_activity_at) }}
-                </span>
+      <div class="space-y-5">
+        <!-- Header: back link, licensee, status + plan, one meta line, actions -->
+        <UiPageHeader :title="license?.licensee_name || $t('licenses.detail.title')" class="ui-anim-fade-up">
+          <template #eyebrow>
+            <button type="button" @click="toDashboard" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1.5">
+              <ChevronLeft class="w-4 h-4" /> {{ productName }} &middot; {{ $t("licenses.licenses") }}
+            </button>
+          </template>
+          <template #subtitle>
+            <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <template v-if="license">
+                <UiBadge :tone="keyStatus.tone" dot>{{ keyStatus.label }}</UiBadge>
+                <span class="text-ui-cap font-medium px-2 py-0.5 rounded-full" :class="planChipClass(license.plan)">{{ planLabel(license) }}</span>
+                <span class="min-w-0" :title="license.last_activity_at ? formatDateTime(license.last_activity_at) : ''">{{ headerMeta }}</span>
               </template>
-              <template v-else>No activity from the app yet</template>
-            </p>
-          </div>
-
-          <div v-if="license" class="flex flex-wrap items-center gap-2">
-            <button
-              v-if="can('license-manager-delete')"
-              type="button"
-              @click="handleDelete"
-              class="rounded-[12px] border border-[#DCDEDD] bg-white hover:border-red-500 hover:bg-red-50 transition-all px-4 py-2.5 flex items-center gap-2 group"
-            >
-              <Trash2 class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-              <span class="text-sm font-semibold text-brand-dark group-hover:text-red-600">Delete</span>
-            </button>
-            <button
+            </span>
+          </template>
+          <template v-if="license" #actions>
+            <UiButton
               v-if="can('license-manager-edit')"
-              type="button"
+              variant="secondary"
+              :icon="Pencil"
               @click="router.push({ name: 'admin.license-manager.licenses.edit', params: { product: productCode, id: license.id } })"
-              class="btn-primary rounded-[12px] border border-violet-800 hover:brightness-110 focus:ring-2 focus:ring-violet-500 transition-all duration-300 bg-gradient-to-r from-violet-600 to-indigo-700 shadow-[inset_-2px_2px_1px_0_rgba(167,139,250,0.55),inset_2px_2px_1px_0_rgba(167,139,250,0.35)] px-4 py-2.5 flex items-center gap-2"
             >
-              <Pencil class="w-4 h-4 text-white" />
-              <span class="text-brand-white font-semibold text-sm">Edit</span>
-            </button>
+              {{ $t("common.actions.edit") }}
+            </UiButton>
+            <div v-if="can('license-manager-delete')" class="relative">
+              <UiButton variant="secondary" :icon="MoreHorizontal" :aria-label="$t('licenses.detail.moreActions')" :aria-expanded="moreOpen" class="!px-2.5" @click="moreOpen = !moreOpen" />
+              <div v-if="moreOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="moreOpen = false"></div>
+              <Transition name="ui-pop">
+                <div v-if="moreOpen" class="absolute right-0 top-full mt-1.5 z-40 w-48 bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay p-1" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="w-full flex items-center gap-2 px-3 py-2 rounded-ui-control text-ui-small font-medium text-ui-bad hover:bg-ui-bad-soft"
+                    @click="moreOpen = false; handleDelete()"
+                  >
+                    <Trash2 class="w-4 h-4" /> {{ $t("licenses.dashboard.deleteLicense") }}
+                  </button>
+                </div>
+              </Transition>
+            </div>
+          </template>
+        </UiPageHeader>
+
+        <Transition name="ui-fade">
+          <Alert class="!mb-0" v-if="success" type="success" :title="success" message="" :show="!!success" @close="success = ''" />
+        </Transition>
+        <Transition name="ui-fade">
+          <Alert class="!mb-0" v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
+        </Transition>
+
+        <!-- Loading -->
+        <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div class="lg:col-span-8 space-y-5">
+            <Skeleton height="110px" rounded="12px" />
+            <Skeleton height="320px" rounded="12px" />
+          </div>
+          <div class="lg:col-span-4 space-y-5">
+            <Skeleton height="300px" rounded="12px" />
+            <Skeleton height="200px" rounded="12px" />
           </div>
         </div>
-      </div>
 
-      <Transition name="fade">
-        <div v-if="success" class="mb-5"><Alert type="success" :title="success" message="" :show="!!success" @close="success = ''" /></div>
-      </Transition>
-      <Transition name="fade">
-        <div v-if="error" class="mb-5"><Alert type="danger" :title="error" message="" :show="!!error" @close="error = ''" /></div>
-      </Transition>
-
-      <!-- Loading -->
-      <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div class="lg:col-span-8 space-y-5">
-          <Skeleton height="150px" rounded="16px" />
-          <Skeleton height="220px" rounded="16px" />
-        </div>
-        <div class="lg:col-span-4"><Skeleton height="360px" rounded="16px" /></div>
-      </div>
-
-      <div v-else-if="license" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        <!-- ===================== Left: 8 columns ===================== -->
-        <div class="lg:col-span-8 space-y-5 min-w-0">
-          <!-- Key: a plain card -- label + status, the key, one quiet meta line -->
-          <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-5 sm:p-6">
-            <div class="flex items-center justify-between gap-3 mb-2.5">
-              <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light">
-                License key<template v-if="perDevice && keysSummary.total"> &middot; key 1 of {{ keysSummary.total }}</template>
-              </p>
-              <span class="inline-flex items-center gap-1.5 text-xs font-semibold" :class="keyStatus.text">
-                <span class="w-1.5 h-1.5 rounded-full" :class="keyStatus.dot"></span>
-                {{ keyStatus.label }}
-              </span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="font-mono text-lg sm:text-2xl font-bold tracking-wider text-brand-dark break-all flex-1 select-all">
-                {{ license.key }}
-              </span>
-              <CopyKeyButton :value="license.key" size="md" />
-            </div>
-            <p class="text-xs text-brand-light mt-3">
-              {{ keyMeta }}<template v-if="license.key_mode_label"> &middot; {{ license.key_mode_label }}</template>
-            </p>
-          </div>
-
-          <!-- Device keys: one per device, with which ones are taken -->
-          <div v-if="perDevice" class="bg-white border border-[#DCDEDD] rounded-[16px] p-5 sm:p-6">
-            <div class="flex flex-wrap items-center gap-2.5 mb-4">
-              <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
-                <KeyRound class="w-[18px] h-[18px] text-violet-600" />
+        <!-- Below lg the columns dissolve (display: contents) so each card
+             can be ordered and shown per phone tab. -->
+        <div v-else-if="license" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start ui-stagger">
+          <!-- ===================== Left: 8 columns ===================== -->
+          <div class="contents lg:block lg:col-span-8 lg:space-y-5 min-w-0">
+            <!-- Main key(s) -->
+            <section class="order-1 lg:order-none bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 sm:px-6 sm:py-5 min-w-0">
+              <div class="flex items-center justify-between gap-3 mb-2">
+                <p class="text-ui-over uppercase text-ui-muted">
+                  {{ mainKeys.length > 1 ? $t("licenses.detail.licenseKeys") : $t("licenses.detail.licenseKey") }}<template v-if="perDevice && keysSummary.total">
+                    &middot;
+                    {{
+                      mainKeys.length > 1
+                        ? $t("licenses.detail.key1OfEach", { total: keyGroups[0]?.summary.total })
+                        : $t("licenses.create.key1Of", { total: keysSummary.total })
+                    }}</template>
+                </p>
+                <p class="hidden sm:block text-ui-cap text-ui-muted text-right truncate">
+                  {{ mainKeys.length > 1 ? keyModeLabel || keyMeta : keyMeta }}<template v-if="mainKeys.length === 1 && keyModeLabel"> &middot; {{ keyModeLabel }}</template>
+                </p>
               </div>
-              <div class="flex-1 min-w-0">
-                <h4 class="text-brand-dark font-bold">Device keys</h4>
-                <p class="text-xs text-brand-light">One key per device. A key whose device was released can't be used again.</p>
+              <div v-for="k in mainKeys" :key="k.id" class="flex items-center gap-3 py-1">
+                <span v-if="mainKeys.length > 1" class="text-ui-cap font-medium px-2 py-0.5 rounded-ui-control shrink-0 w-12 text-center" :class="platformChipClass(k.platform)">{{ k.label }}</span>
+                <span class="font-mono text-ui-body sm:text-ui-h1 font-semibold tracking-wider text-ui-ink break-all flex-1 select-all">{{ k.key }}</span>
+                <CopyKeyButton :value="k.key" size="md" />
               </div>
-              <span class="text-sm font-semibold text-brand-dark tabular-nums">
-                {{ keysSummary.in_use + keysSummary.used }} / {{ keysSummary.total }} used
-              </span>
-            </div>
+            </section>
 
-            <!-- Usage bar: in use, used, available -->
-            <div class="flex h-2 w-full rounded-full overflow-hidden bg-slate-100 gap-[2px] mb-2">
-              <div class="bg-blue-500" :style="{ width: segmentWidth(keysSummary.in_use) }"></div>
-              <div class="bg-gray-400" :style="{ width: segmentWidth(keysSummary.used) }"></div>
-              <div class="bg-emerald-400" :style="{ width: segmentWidth(keysSummary.available) }"></div>
-            </div>
-            <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-brand-light mb-4">
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span> In use <b class="text-brand-dark tabular-nums">{{ keysSummary.in_use }}</b></span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Used <b class="text-brand-dark tabular-nums">{{ keysSummary.used }}</b></span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Available <b class="text-brand-dark tabular-nums">{{ keysSummary.available }}</b></span>
-            </div>
-
-            <div class="inline-flex flex-wrap p-1 bg-slate-100 border border-[#DCDEDD] rounded-[12px] mb-3" role="tablist" aria-label="Filter keys">
+            <!-- Phone tabs -->
+            <div class="order-2 lg:hidden flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="tablist" :aria-label="$t('licenses.detail.sections')">
               <button
-                v-for="f in keyFilters"
-                :key="f.value"
+                v-for="t in mobileTabs"
+                :key="t.value"
                 type="button"
                 role="tab"
-                :aria-selected="keyFilter === f.value"
-                @click="keyFilter = f.value"
-                class="px-3 py-1.5 rounded-[9px] text-xs font-semibold transition-all"
-                :class="keyFilter === f.value ? 'bg-white text-violet-700 shadow-sm ring-1 ring-violet-200' : 'text-brand-light hover:text-brand-dark'"
+                :aria-selected="mobileTab === t.value"
+                class="flex-1 h-8 rounded-ui-control text-ui-small font-medium transition-colors"
+                :class="mobileTab === t.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
+                @click="mobileTab = t.value"
               >
-                {{ f.label }} <span class="tabular-nums opacity-70">{{ f.count }}</span>
+                {{ t.label }}
               </button>
             </div>
 
-            <!-- Mac + iPad: one list per platform, side by side -->
-            <div v-if="keyGroups.length > 1" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              <div v-for="group in keyGroups" :key="group.licenseId" class="border border-[#DCDEDD] rounded-[12px] overflow-hidden min-w-0">
-                <div class="flex items-center gap-2 px-3.5 py-2.5 bg-slate-50 border-b border-[#DCDEDD]">
-                  <span class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="platformChipClass(group.platform)">{{ group.label }}</span>
-                  <span class="text-xs text-brand-light">keys</span>
-                  <span class="ml-auto text-xs font-semibold text-brand-dark tabular-nums">
-                    {{ group.summary.in_use + group.summary.used }} / {{ group.summary.total }} used
-                  </span>
+            <!-- Device keys: one per device, with which ones are taken -->
+            <section v-if="perDevice" class="order-3 lg:order-none bg-ui-surface border border-ui-line rounded-ui-card min-w-0" :class="onTab('keys')">
+              <div class="px-5 pt-5 sm:px-6">
+                <div class="flex items-start gap-3">
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-ui-h2 text-ui-ink">{{ $t("licenses.detail.deviceKeys") }}</h3>
+                    <p class="text-ui-cap text-ui-muted mt-0.5">
+                      {{
+                        keyGroups.length > 1
+                          ? $t("licenses.detail.sideBySide", { platforms: keyGroups.map((g) => g.label).join($t("licenses.dashboard.and")) })
+                          : $t("licenses.detail.onePerDevice")
+                      }}
+                      {{ $t("licenses.detail.releasedKeyDead") }}
+                    </p>
+                  </div>
+                  <p class="text-ui-small text-ui-muted whitespace-nowrap tabular-nums pt-1">
+                    <i18n-t keypath="licenses.detail.usedOf" tag="span" scope="global">
+                      <template #used><b class="text-ui-ink font-semibold">{{ keysSummary.in_use + keysSummary.used }}</b></template>
+                      <template #total>{{ keysSummary.total }}</template>
+                    </i18n-t>
+                  </p>
                 </div>
-                <ul>
-                  <li
-                    v-for="key in filterKeys(group.keys)"
-                    :key="key.id"
-                    class="flex items-start gap-2.5 px-3.5 py-2.5 border-b border-[#F1F1F1] last:border-0"
+
+                <!-- Usage bar: in use, used, available -->
+                <div class="flex h-1.5 w-full rounded-full overflow-hidden bg-ui-subtle gap-[2px] mt-4" role="img" :aria-label="$t('licenses.detail.usageAria', { inUse: keysSummary.in_use, used: keysSummary.used, available: keysSummary.available })">
+                  <div class="bg-ui-accent" :style="{ width: segmentWidth(keysSummary.in_use) }"></div>
+                  <div class="bg-ui-faint" :style="{ width: segmentWidth(keysSummary.used) }"></div>
+                  <div class="bg-ui-ok/40" :style="{ width: segmentWidth(keysSummary.available) }"></div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 mt-3">
+                  <div class="flex flex-wrap gap-x-4 gap-y-1 text-ui-cap text-ui-muted">
+                    <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-ui-accent"></span> {{ $t("licenses.keyStatus.inUse") }} <b class="text-ui-ink font-semibold tabular-nums">{{ keysSummary.in_use }}</b></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-ui-faint"></span> {{ $t("licenses.keyStatus.used") }} <b class="text-ui-ink font-semibold tabular-nums">{{ keysSummary.used }}</b></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-ui-ok/60"></span> {{ $t("licenses.keyStatus.available") }} <b class="text-ui-ink font-semibold tabular-nums">{{ keysSummary.available }}</b></span>
+                  </div>
+                  <div class="max-w-full overflow-x-auto [scrollbar-width:none]">
+                    <div class="inline-flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="tablist" :aria-label="$t('licenses.detail.filterKeys')">
+                      <button
+                        v-for="f in keyFilters"
+                        :key="f.value"
+                        type="button"
+                        role="tab"
+                        :aria-selected="keyFilter === f.value"
+                        @click="keyFilter = f.value"
+                        class="px-3 h-7 rounded-ui-control text-ui-small font-medium whitespace-nowrap transition-colors"
+                        :class="keyFilter === f.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
+                      >
+                        {{ f.label }} <span class="tabular-nums" :class="keyFilter === f.value ? 'text-ui-muted' : 'text-ui-faint'">{{ f.count }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mac + iPad: one list per platform, side by side -->
+              <div v-if="keyGroups.length > 1" class="p-5 sm:p-6 pt-4 sm:pt-4">
+                <!-- Phones: pick the platform -->
+                <div class="md:hidden flex items-center gap-2 mb-3">
+                  <button
+                    v-for="(group, gi) in keyGroups"
+                    :key="group.licenseId"
+                    type="button"
+                    class="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border text-ui-small font-medium"
+                    :class="mobileKeyGroup === gi ? 'bg-ui-ink text-white border-ui-ink' : 'bg-ui-surface text-ui-text border-ui-line'"
+                    :aria-pressed="mobileKeyGroup === gi"
+                    @click="mobileKeyGroup = gi"
                   >
-                    <span class="text-xs text-brand-light tabular-nums w-5 pt-0.5 shrink-0">{{ key.position }}</span>
-                    <div class="flex-1 min-w-0">
-                      <!-- Key on the first line, status + device under it -->
-                      <div class="flex items-center gap-1">
-                        <span
-                          class="font-mono text-[11px] font-bold whitespace-nowrap"
-                          :class="key.status === 'used' ? 'text-gray-400 line-through' : 'text-brand-dark'"
-                        >{{ key.key }}</span>
-                        <CopyKeyButton v-if="key.status !== 'used'" :value="key.key" />
-                      </div>
-                      <div class="flex items-center gap-1.5 mt-1 min-w-0">
-                        <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-px rounded-full shrink-0" :class="keyStatusOf(key).chip">
-                          <span class="w-1.5 h-1.5 rounded-full" :class="keyStatusOf(key).dot"></span>
+                    <component :is="isMac(group.platform) ? Laptop : Tablet" class="w-4 h-4" />
+                    {{ group.label }}
+                    <span class="tabular-nums" :class="mobileKeyGroup === gi ? 'text-white/70' : 'text-ui-faint'">{{ group.summary.in_use + group.summary.used }}/{{ group.summary.total }}</span>
+                  </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                  <div
+                    v-for="(group, gi) in keyGroups"
+                    :key="group.licenseId"
+                    class="border border-ui-line rounded-ui-card overflow-hidden min-w-0"
+                    :class="mobileKeyGroup === gi ? '' : 'hidden md:block'"
+                  >
+                    <div class="flex items-center gap-2 px-4 py-2.5 bg-ui-subtle border-b border-ui-line">
+                      <span class="inline-flex items-center gap-1 text-ui-cap font-medium px-2 py-0.5 rounded-ui-control bg-ui-surface border border-ui-line text-ui-text">
+                        <component :is="isMac(group.platform) ? Laptop : Tablet" class="w-3.5 h-3.5" /> {{ group.label }}
+                      </span>
+                      <span class="text-ui-cap text-ui-muted">{{ $t("licenses.detail.keysWord") }}</span>
+                      <span class="ml-auto text-ui-cap text-ui-muted tabular-nums">
+                        <i18n-t keypath="licenses.detail.usedOf" tag="span" scope="global">
+                          <template #used><b class="text-ui-ink font-semibold">{{ group.summary.in_use + group.summary.used }}</b></template>
+                          <template #total>{{ group.summary.total }}</template>
+                        </i18n-t>
+                      </span>
+                    </div>
+                    <ul class="divide-y divide-ui-line">
+                      <li v-for="key in filterKeys(group.keys)" :key="key.id" class="flex items-start gap-3 px-4 py-3">
+                        <span class="text-ui-cap text-ui-faint tabular-nums w-4 pt-0.5 shrink-0">{{ key.position }}</span>
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-1 min-w-0">
+                            <span
+                              class="font-mono text-ui-cap font-medium whitespace-nowrap truncate"
+                              :class="key.status === 'used' ? 'text-ui-faint line-through' : 'text-ui-ink'"
+                            >{{ key.key }}</span>
+                            <CopyKeyButton v-if="key.status !== 'used'" :value="key.key" class="!w-6 !h-6 !border-0" />
+                          </div>
+                          <div class="flex items-center gap-2 mt-1 min-w-0">
+                            <span class="inline-flex items-center gap-1 text-ui-cap font-medium px-2 py-0.5 rounded-full shrink-0" :class="keyStatusOf(key).chip">
+                              <span v-if="key.status !== 'used'" class="w-1.5 h-1.5 rounded-full" :class="keyStatusOf(key).dot"></span>
+                              {{ keyStatusOf(key).label }}
+                            </span>
+                            <span v-if="key.device_id || key.device_name" class="text-ui-cap text-ui-muted truncate" :title="key.device_id">
+                              <template v-if="key.status === 'used'">{{ $t("licenses.detail.was") }} </template>{{ key.device_name || $t("licenses.detail.unnamedDevice") }}
+                              <template v-if="key.status === 'used' && key.used_at"> &middot; {{ formatDate(key.used_at) }}</template>
+                              <template v-else-if="key.activated_at"> &middot; {{ formatDate(key.activated_at) }}</template>
+                            </span>
+                          </div>
+                        </div>
+                        <div v-if="can('license-manager-view') && key.status !== 'used'" class="flex items-center gap-0.5 shrink-0">
+                          <button
+                            type="button"
+                            @click="downloadPdf(certKeyOptions.find((k) => k.id === key.id))"
+                            :disabled="downloading"
+                            class="w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:text-ui-ink hover:bg-ui-hover disabled:opacity-50"
+                            :title="$t('licenses.detail.downloadPlatformKeyCert', { platform: group.label, n: key.position })"
+                            :aria-label="$t('licenses.detail.downloadPlatformKeyCert', { platform: group.label, n: key.position })"
+                          >
+                            <Download class="w-4 h-4" :class="downloadingKeyId === key.id ? 'text-ui-accent animate-pulse' : ''" />
+                          </button>
+                          <button
+                            type="button"
+                            @click="openShare('email', key.id)"
+                            class="w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:text-ui-ink hover:bg-ui-hover"
+                            :title="$t('licenses.detail.sharePlatformKeyCert', { platform: group.label, n: key.position })"
+                            :aria-label="$t('licenses.detail.sharePlatformKeyCert', { platform: group.label, n: key.position })"
+                          >
+                            <Share2 class="w-4 h-4" />
+                          </button>
+                        </div>
+                        <span v-else-if="can('license-manager-view')" class="w-[58px] shrink-0"></span>
+                      </li>
+                      <li v-if="!filterKeys(group.keys).length" class="px-4 py-6 text-center text-ui-cap text-ui-muted">
+                        {{ $t(`licenses.detail.noKeys.${keyFilter}`) }}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- One platform: a table from sm, stacked rows on phones -->
+              <div v-else class="mt-4">
+                <table class="hidden sm:table w-full text-ui-small">
+                  <thead>
+                    <tr class="text-left text-ui-cap text-ui-muted border-y border-ui-line">
+                      <th class="font-medium py-2.5 pl-5 sm:pl-6 pr-2 w-12">#</th>
+                      <th class="font-medium py-2.5 px-2">{{ $t("licenses.form.key") }}</th>
+                      <th class="font-medium py-2.5 px-2">{{ $t("common.labels.status") }}</th>
+                      <th class="font-medium py-2.5 px-2">{{ $t("licenses.detail.device") }}</th>
+                      <th v-if="can('license-manager-view')" class="font-medium py-2.5 pl-2 pr-5 sm:pr-6 text-right">{{ $t("licenses.detail.certificate") }}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-ui-line">
+                    <tr v-for="key in filteredKeys" :key="key.id" class="align-middle hover:bg-ui-subtle/60">
+                      <td class="py-3 pl-5 sm:pl-6 pr-2 text-ui-faint tabular-nums">{{ key.position }}</td>
+                      <td class="py-3 px-2">
+                        <span class="inline-flex items-center gap-1">
+                          <span
+                            class="font-mono text-ui-cap font-medium tracking-wide whitespace-nowrap"
+                            :class="key.status === 'used' ? 'text-ui-faint line-through' : 'text-ui-ink'"
+                          >{{ key.key }}</span>
+                          <CopyKeyButton v-if="key.status !== 'used'" :value="key.key" class="!w-6 !h-6 !border-0" />
+                        </span>
+                      </td>
+                      <td class="py-3 px-2 whitespace-nowrap">
+                        <span class="inline-flex items-center gap-1.5 text-ui-cap font-medium px-2 py-0.5 rounded-full" :class="keyStatusOf(key).chip">
+                          <span v-if="key.status !== 'used'" class="w-1.5 h-1.5 rounded-full" :class="keyStatusOf(key).dot"></span>
                           {{ keyStatusOf(key).label }}
                         </span>
-                        <span v-if="key.device_id || key.device_name" class="text-[11px] text-brand-light truncate" :title="key.device_id">
-                          <template v-if="key.status === 'used'">was </template>{{ key.device_name || "Unnamed device" }}
+                      </td>
+                      <td class="py-3 px-2 min-w-0">
+                        <template v-if="key.device_id || key.device_name">
+                          <p class="text-ui-small text-ui-ink truncate max-w-[220px]" :title="key.device_id">
+                            <template v-if="key.status === 'used'">{{ $t("licenses.detail.was") }} </template>{{ key.device_name || $t("licenses.detail.unnamedDevice") }}
+                          </p>
+                          <p class="text-ui-cap text-ui-muted">
+                            <template v-if="key.platform">{{ platformLabel(key.platform) }} &middot; </template>
+                            <template v-if="key.status === 'used' && key.used_at">{{ $t("licenses.detail.releasedOn", { date: formatDate(key.used_at) }) }}</template>
+                            <template v-else-if="key.activated_at">{{ $t("licenses.detail.sinceDate", { date: formatDate(key.activated_at) }) }}</template>
+                          </p>
+                        </template>
+                        <span v-else class="text-ui-faint">—</span>
+                      </td>
+                      <td v-if="can('license-manager-view')" class="py-2 pl-2 pr-5 sm:pr-6 text-right whitespace-nowrap">
+                        <template v-if="key.status !== 'used'">
+                          <button
+                            type="button"
+                            @click="downloadPdf(certKeyOptions.find((k) => k.id === key.id))"
+                            :disabled="downloading"
+                            class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:text-ui-ink hover:bg-ui-hover disabled:opacity-50"
+                            :title="$t('licenses.detail.downloadKeyCert', { n: key.position })"
+                            :aria-label="$t('licenses.detail.downloadKeyCert', { n: key.position })"
+                          >
+                            <Download class="w-4 h-4" :class="downloadingKeyId === key.id ? 'text-ui-accent animate-pulse' : ''" />
+                          </button>
+                          <button
+                            type="button"
+                            @click="openShare('email', key.id)"
+                            class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:text-ui-ink hover:bg-ui-hover"
+                            :title="$t('licenses.detail.shareKeyCert', { n: key.position })"
+                            :aria-label="$t('licenses.detail.shareKeyCert', { n: key.position })"
+                          >
+                            <Share2 class="w-4 h-4" />
+                          </button>
+                        </template>
+                        <span v-else class="text-ui-faint" :title="$t('licenses.detail.usedNoCert')">—</span>
+                      </td>
+                    </tr>
+                    <tr v-if="!filteredKeys.length">
+                      <td :colspan="can('license-manager-view') ? 5 : 4" class="py-8 text-center text-ui-cap text-ui-muted">{{ $t(`licenses.detail.noKeys.${keyFilter}`) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <ul class="sm:hidden divide-y divide-ui-line border-t border-ui-line">
+                  <li v-for="key in filteredKeys" :key="key.id" class="flex items-start gap-3 px-5 py-3">
+                    <span class="text-ui-cap text-ui-faint tabular-nums w-4 pt-0.5 shrink-0">{{ key.position }}</span>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-1 min-w-0">
+                        <span class="font-mono text-ui-cap font-medium truncate" :class="key.status === 'used' ? 'text-ui-faint line-through' : 'text-ui-ink'">{{ key.key }}</span>
+                        <CopyKeyButton v-if="key.status !== 'used'" :value="key.key" class="!w-6 !h-6 !border-0" />
+                      </div>
+                      <div class="flex items-center gap-2 mt-1 min-w-0">
+                        <span class="inline-flex items-center gap-1 text-ui-cap font-medium px-2 py-0.5 rounded-full shrink-0" :class="keyStatusOf(key).chip">
+                          <span v-if="key.status !== 'used'" class="w-1.5 h-1.5 rounded-full" :class="keyStatusOf(key).dot"></span>
+                          {{ keyStatusOf(key).label }}
+                        </span>
+                        <span v-if="key.device_id || key.device_name" class="text-ui-cap text-ui-muted truncate">
+                          <template v-if="key.status === 'used'">{{ $t("licenses.detail.was") }} </template>{{ key.device_name || $t("licenses.detail.unnamedDevice") }}
                           <template v-if="key.status === 'used' && key.used_at"> &middot; {{ formatDate(key.used_at) }}</template>
                           <template v-else-if="key.activated_at"> &middot; {{ formatDate(key.activated_at) }}</template>
                         </span>
                       </div>
                     </div>
-                    <template v-if="can('license-manager-view') && key.status !== 'used'">
+                    <div v-if="can('license-manager-view') && key.status !== 'used'" class="flex items-center gap-0.5 shrink-0">
                       <button
                         type="button"
                         @click="downloadPdf(certKeyOptions.find((k) => k.id === key.id))"
                         :disabled="downloading"
-                        class="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-[#DCDEDD] hover:border-[#F2821F] hover:bg-orange-50 transition-all disabled:opacity-50 shrink-0"
-                        :title="`Download the certificate of ${group.label} key ${key.position}`"
-                        :aria-label="`Download the certificate of ${group.label} key ${key.position}`"
+                        class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover disabled:opacity-50"
+                        :aria-label="$t('licenses.detail.downloadKeyCert', { n: key.position })"
                       >
-                        <FileDown class="w-3.5 h-3.5" :class="downloadingKeyId === key.id ? 'text-[#F2821F] animate-pulse' : 'text-gray-600'" />
+                        <Download class="w-4 h-4" :class="downloadingKeyId === key.id ? 'text-ui-accent animate-pulse' : ''" />
                       </button>
                       <button
                         type="button"
                         @click="openShare('email', key.id)"
-                        class="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-[#DCDEDD] hover:border-violet-400 hover:bg-violet-50 transition-all shrink-0"
-                        :title="`Share the certificate of ${group.label} key ${key.position}`"
-                        :aria-label="`Share the certificate of ${group.label} key ${key.position}`"
+                        class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover"
+                        :aria-label="$t('licenses.detail.shareKeyCert', { n: key.position })"
                       >
-                        <Share2 class="w-3.5 h-3.5 text-gray-600" />
+                        <Share2 class="w-4 h-4" />
                       </button>
-                    </template>
-                    <span v-else-if="can('license-manager-view')" class="w-[60px] shrink-0"></span>
+                    </div>
                   </li>
-                  <li v-if="!filterKeys(group.keys).length" class="px-3.5 py-5 text-center text-xs text-brand-light">
-                    No {{ keyFilter === "in_use" ? "keys in use" : `${keyFilter} keys` }}.
-                  </li>
+                  <li v-if="!filteredKeys.length" class="py-8 text-center text-ui-cap text-ui-muted">{{ $t(`licenses.detail.noKeys.${keyFilter}`) }}</li>
                 </ul>
               </div>
-            </div>
+            </section>
 
-            <div v-else class="overflow-x-auto -mx-1">
-              <table class="w-full text-sm min-w-[640px]">
-                <thead>
-                  <tr class="text-left text-[11px] uppercase tracking-wider text-brand-light border-b border-[#DCDEDD]">
-                    <th class="font-semibold py-2 px-1 w-10">#</th>
-                    <th class="font-semibold py-2 px-1">Key</th>
-                    <th class="font-semibold py-2 px-1">Status</th>
-                    <th class="font-semibold py-2 px-1">Device</th>
-                    <th v-if="can('license-manager-view')" class="font-semibold py-2 px-1 text-right">Certificate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="key in filteredKeys" :key="key.id" class="border-b border-[#F1F1F1] last:border-0 align-top">
-                    <td class="py-2.5 px-1 text-brand-light tabular-nums">{{ key.position }}</td>
-                    <td class="py-2.5 px-1">
-                      <span class="inline-flex items-center gap-1">
-                        <span
-                          class="font-mono text-xs font-bold tracking-wider"
-                          :class="key.status === 'used' ? 'text-gray-400 line-through' : 'text-brand-dark'"
-                        >{{ key.key }}</span>
-                        <CopyKeyButton v-if="key.status !== 'used'" :value="key.key" />
-                      </span>
-                    </td>
-                    <td class="py-2.5 px-1 whitespace-nowrap">
-                      <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full" :class="keyStatusOf(key).chip">
-                        <span class="w-1.5 h-1.5 rounded-full" :class="keyStatusOf(key).dot"></span>
-                        {{ keyStatusOf(key).label }}
-                      </span>
-                    </td>
-                    <td class="py-2.5 px-1 min-w-0">
-                      <template v-if="key.device_id || key.device_name">
-                        <p class="text-xs font-semibold text-brand-dark truncate max-w-[220px]" :title="key.device_id">
-                          <template v-if="key.status === 'used'">was </template>{{ key.device_name || "Unnamed device" }}
-                        </p>
-                        <p class="text-[11px] text-brand-light">
-                          <template v-if="key.platform">{{ platformLabel(key.platform) }} &middot; </template>
-                          <template v-if="key.status === 'used' && key.used_at">released {{ formatDate(key.used_at) }}</template>
-                          <template v-else-if="key.activated_at">since {{ formatDate(key.activated_at) }}</template>
-                        </p>
-                      </template>
-                      <span v-else class="text-xs text-gray-300">—</span>
-                    </td>
-                    <td v-if="can('license-manager-view')" class="py-2 px-1 text-right whitespace-nowrap">
-                      <template v-if="key.status !== 'used'">
-                        <button
-                          type="button"
-                          @click="downloadPdf(certKeyOptions.find((k) => k.id === key.id))"
-                          :disabled="downloading"
-                          class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#DCDEDD] hover:border-[#F2821F] hover:bg-orange-50 transition-all disabled:opacity-50"
-                          :title="`Download the certificate of key ${key.position}`"
-                          :aria-label="`Download the certificate of key ${key.position}`"
-                        >
-                          <FileDown class="w-4 h-4" :class="downloadingKeyId === key.id ? 'text-[#F2821F] animate-pulse' : 'text-gray-600'" />
-                        </button>
-                        <button
-                          type="button"
-                          @click="openShare('email', key.id)"
-                          class="inline-flex items-center justify-center w-8 h-8 ml-1 rounded-lg border border-[#DCDEDD] hover:border-violet-400 hover:bg-violet-50 transition-all"
-                          :title="`Share the certificate of key ${key.position}`"
-                          :aria-label="`Share the certificate of key ${key.position}`"
-                        >
-                          <Share2 class="w-4 h-4 text-gray-600" />
-                        </button>
-                      </template>
-                      <span v-else class="text-[11px] text-gray-300" title="A used key gets no certificate">—</span>
-                    </td>
-                  </tr>
-                  <tr v-if="!filteredKeys.length">
-                    <td :colspan="can('license-manager-view') ? 5 : 4" class="py-6 text-center text-xs text-brand-light">No {{ keyFilter === "in_use" ? "keys in use" : `${keyFilter} keys` }}.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+            <!-- Tracking -->
+            <LicenseTrackingTimeline ref="timeline" :license-id="license.id" class="order-3 lg:order-none" :class="onTab('activity')" />
 
-          <!-- Active period -->
-          <LicensePeriodCard :license="license" />
+            <!-- Active period -->
+            <LicensePeriodCard :license="license" class="order-5 lg:order-none" :class="onTab('overview')" />
 
-          <!-- Licensee / Organization / Contact / Location, grouped like the form -->
-          <div v-for="group in detailGroups" :key="group.title" class="bg-white border border-[#DCDEDD] rounded-[16px] p-5 sm:p-6">
-            <div class="flex items-center gap-2.5 mb-5">
-              <div class="w-9 h-9 bg-violet-50 rounded-[10px] flex items-center justify-center shrink-0">
-                <component :is="group.icon" class="w-[18px] h-[18px] text-violet-600" />
-              </div>
-              <h4 class="text-brand-dark font-bold">{{ group.title }}</h4>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div v-for="item in group.items" :key="item.label" class="flex items-start gap-3" :class="{ 'md:col-span-2': item.wide }">
-                <component :is="item.icon" class="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
-                <div class="min-w-0">
-                  <p class="text-xs text-gray-500">{{ item.label }}</p>
-                  <a
-                    v-if="item.href && item.value"
-                    :href="item.href"
-                    target="_blank"
-                    rel="noopener"
-                    class="text-sm font-semibold text-violet-700 hover:underline break-all"
-                  >{{ item.value }}</a>
-                  <p v-else class="text-sm font-semibold text-brand-dark break-words whitespace-pre-line">{{ item.value === null || item.value === undefined || item.value === "" ? "-" : item.value }}</p>
+            <!-- Licensee / Organization / Contact / Location, grouped like the form -->
+            <section
+              v-for="group in detailGroups"
+              :key="group.title"
+              class="order-6 lg:order-none bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0"
+              :class="onTab('overview')"
+            >
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-ui-control border border-ui-line bg-ui-surface flex items-center justify-center shrink-0">
+                  <component :is="group.icon" class="w-4 h-4 text-ui-muted" />
                 </div>
+                <h3 class="text-ui-h2 text-ui-ink">{{ group.title }}</h3>
               </div>
-            </div>
+              <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                <div v-for="item in group.items" :key="item.label" class="min-w-0" :class="{ 'md:col-span-2': item.wide }">
+                  <dt class="text-ui-cap text-ui-muted">{{ item.label }}</dt>
+                  <dd class="mt-0.5">
+                    <a
+                      v-if="item.href && item.value"
+                      :href="item.href"
+                      target="_blank"
+                      rel="noopener"
+                      class="text-ui-body text-ui-accent hover:underline break-all"
+                    >{{ item.value }}</a>
+                    <span v-else class="text-ui-body text-ui-ink break-words whitespace-pre-line">{{ item.value === null || item.value === undefined || item.value === "" ? "-" : item.value }}</span>
+                  </dd>
+                </div>
+              </dl>
+            </section>
           </div>
 
-          <!-- Tracking -->
-          <LicenseTrackingTimeline ref="timeline" :license-id="license.id" />
-        </div>
+          <!-- ===================== Right: 4 columns, sticky ===================== -->
+          <!-- Sticky on lg; scrolls on its own when taller than the screen. -->
+          <aside class="contents lg:block lg:col-span-4 lg:sticky lg:top-3 lg:max-h-[calc(100vh-6.5rem)] lg:overflow-y-auto scroll-soft lg:-mr-2 lg:pr-1 lg:space-y-5 min-w-0">
+            <!-- License terms -->
+            <section class="order-3 lg:order-none bg-ui-surface border border-ui-line rounded-ui-card px-5 pt-5 pb-2 min-w-0" :class="onTab('overview')">
+              <h3 class="text-ui-h2 text-ui-ink mb-1">{{ $t("licenses.detail.license") }}</h3>
+              <dl class="divide-y divide-ui-line text-ui-small">
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted">{{ $t("licenses.form.plan") }}</dt>
+                  <dd class="text-ui-ink text-right">
+                    {{ planLabel(license) }}<span v-if="categoryLabel(license) !== planLabel(license)" class="text-ui-muted"> &middot; {{ categoryLabel(license) }}</span>
+                  </dd>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted">{{ isBundle ? $t("licenses.releaseForm.platforms") : $t("licenses.form.platform") }}</dt>
+                  <dd class="text-ui-ink">{{ platformsLabel }}</dd>
+                </div>
+                <!-- Mac + iPad generated together: the other key of the bundle -->
+                <div v-for="sibling in license.bundle || []" :key="sibling.id" class="flex items-start justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted shrink-0">{{ $t("licenses.detail.pairedKey", { platform: sibling.platform_label }) }}</dt>
+                  <dd class="text-right min-w-0">
+                    <router-link
+                      :to="{ name: 'admin.license-manager.licenses.detail', params: { product: productCode, id: sibling.id } }"
+                      class="font-mono text-ui-cap text-ui-accent hover:underline break-all"
+                    >
+                      {{ sibling.key }}
+                    </router-link>
+                  </dd>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted">{{ $t("licenses.form.keys") }}</dt>
+                  <dd class="text-ui-ink text-right">
+                    <template v-if="perDevice">{{ $t("licenses.keyMode.perDevice.label") }} &middot; {{ keysSummary.total }} <span class="text-ui-muted">({{ $t("licenses.detail.nAvailable", { n: keysSummary.available }) }})</span></template>
+                    <template v-else>{{ $t("licenses.keyMode.shared.label") }}</template>
+                  </dd>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted">{{ $t("licenses.detail.devices") }}</dt>
+                  <dd class="text-ui-ink tabular-nums">{{ $t("licenses.detail.usedOf", { used: devicesUsed, total: license.max_devices }) }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted">{{ $t("licenses.fields.type") }}</dt>
+                  <dd class="text-ui-ink">{{ license.type === "lifetime" ? $t("licenses.type.lifetime") : $t("licenses.type.term") }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted shrink-0">{{ $t("common.labels.period") }}</dt>
+                  <dd class="text-ui-ink text-right tabular-nums">{{ periodLabel }}</dd>
+                </div>
+                <div v-if="license.updates_label" class="flex items-start justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted shrink-0">{{ $t("licenses.detail.updates") }}</dt>
+                  <dd class="text-ui-ink text-right">{{ license.updates_label }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted">{{ $t("licenses.detail.terms") }}</dt>
+                  <dd class="text-ui-ink">{{ license.terms_version ? `v${license.terms_version}` : "—" }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted shrink-0">{{ $t("licenses.detail.reference") }}</dt>
+                  <dd class="font-mono text-ui-cap text-ui-ink text-right break-all">{{ reference }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted shrink-0">{{ $t("licenses.detail.lastActivated") }}</dt>
+                  <dd class="text-ui-ink text-right tabular-nums">{{ license.last_activated_at ? formatDateTime(license.last_activated_at) : $t("licenses.dashboard.never") }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-ui-muted">{{ $t("common.labels.createdAt") }}</dt>
+                  <dd class="text-ui-ink text-right tabular-nums">{{ formatDateTime(license.created_at) }}</dd>
+                </div>
+                <div class="py-2.5">
+                  <dt class="text-ui-muted mb-0.5">{{ $t("common.labels.notes") }}</dt>
+                  <dd class="text-ui-ink whitespace-pre-line break-words">{{ license.notes || "—" }}</dd>
+                </div>
+                <div v-if="can('license-manager-edit')" class="flex items-center justify-between gap-4 py-3">
+                  <dt class="text-ui-h3 text-ui-ink">{{ $t("licenses.detail.licenseStatus") }}</dt>
+                  <dd><LicenseStatusSwitch :model-value="!!license.is_active" :disabled="toggling" @update:model-value="toggleActive" /></dd>
+                </div>
+              </dl>
+            </section>
 
-        <!-- ===================== Right: 4 columns, sticky ===================== -->
-        <!-- Sticky on lg; scrolls on its own when taller than the screen. -->
-        <aside class="lg:col-span-4 lg:sticky lg:top-3 lg:max-h-[calc(100vh-6.5rem)] lg:overflow-y-auto scroll-soft lg:-mr-2 lg:pr-1 space-y-5 min-w-0">
-          <!-- License terms -->
-          <div class="bg-white border border-[#DCDEDD] rounded-[16px] overflow-hidden">
-            <div class="flex items-center gap-2.5 px-5 py-4 border-b border-[#DCDEDD] bg-gradient-to-br from-violet-50 to-white">
-              <BadgeCheck class="w-[18px] h-[18px] text-violet-600" />
-              <h4 class="text-brand-dark font-bold">License</h4>
-            </div>
-            <dl class="px-5 py-4 space-y-3 text-sm">
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-brand-light">Platform</dt>
-                <dd>
-                  <span class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="platformChipClass(license.platform)">{{ licensePlatformLabel(license) }}</span>
-                </dd>
+            <!-- Certificate: download or share, for the licensee or one key -->
+            <section v-if="can('license-manager-view')" class="order-4 lg:order-none bg-ui-surface border border-ui-line rounded-ui-card p-5 min-w-0" :class="onTab('overview')">
+              <h3 class="text-ui-h2 text-ui-ink mb-3">{{ $t("licenses.detail.certificate") }}</h3>
+              <UiSelect
+                v-if="certKeyOptions.length"
+                id="cert-key"
+                v-model="certKeyId"
+                :label="$t('licenses.share.certificateFor')"
+                :options="certSelectOptions"
+                :hint="certKey ? $t('licenses.share.hintOneKey') : $t('licenses.share.hintAllKeys')"
+              />
+              <UiButton block size="lg" :icon="Download" :loading="downloading && downloadingKeyId === (certKey?.id ?? null)" :disabled="downloading" class="mt-4" @click="downloadPdf()">
+                {{
+                  downloading && downloadingKeyId === (certKey?.id ?? null)
+                    ? $t("licenses.create.preparingPdf")
+                    : certKey
+                      ? $t("licenses.detail.downloadKeyPdf", { n: certKey.position })
+                      : $t("licenses.create.downloadPdf")
+                }}
+              </UiButton>
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <UiButton variant="secondary" size="lg" :icon="Mail" :title="$t('licenses.detail.shareEmail')" @click="openShare('email')">{{ $t("common.labels.email") }}</UiButton>
+                <UiButton variant="secondary" size="lg" :icon="MessageCircle" :title="$t('licenses.detail.shareWhatsapp')" @click="openShare('whatsapp')">WhatsApp</UiButton>
               </div>
-              <!-- Mac + iPad generated together: the other key of the bundle -->
-              <div v-for="sibling in license.bundle || []" :key="sibling.id" class="flex items-start justify-between gap-3">
-                <dt class="text-brand-light shrink-0">Paired {{ sibling.platform_label }} key</dt>
-                <dd class="text-right min-w-0">
-                  <router-link
-                    :to="{ name: 'admin.license-manager.licenses.detail', params: { product: productCode, id: sibling.id } }"
-                    class="font-mono text-xs font-semibold text-violet-700 hover:underline break-all"
-                  >
-                    {{ sibling.key }}
-                  </router-link>
-                </dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-brand-light">Plan</dt>
-                <dd class="flex items-center gap-1.5">
-                  <span class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="planChipClass(license.plan)">{{ planLabel(license) }}</span>
-                  <span v-if="categoryLabel(license) !== planLabel(license)" class="text-xs text-brand-light">{{ categoryLabel(license) }}</span>
-                </dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-brand-light">Type</dt>
-                <dd class="font-semibold text-brand-dark">{{ license.type === "lifetime" ? "Lifetime" : "Term" }}</dd>
-              </div>
-              <div v-if="license.updates_label" class="flex items-start justify-between gap-3">
-                <dt class="text-brand-light shrink-0">Updates</dt>
-                <dd class="font-semibold text-brand-dark text-right">{{ license.updates_label }}</dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-brand-light">Max devices</dt>
-                <dd class="font-semibold text-brand-dark tabular-nums">{{ devicesUsed }} / {{ license.max_devices }} used</dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-brand-light flex items-center gap-1.5"><KeyRound class="w-4 h-4" /> Keys</dt>
-                <dd class="font-semibold text-brand-dark text-right">
-                  <template v-if="perDevice">{{ keysSummary.total }} &middot; {{ keysSummary.available }} available</template>
-                  <template v-else>One shared key</template>
-                </dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-brand-light flex items-center gap-1.5"><ScrollText class="w-4 h-4" /> Terms</dt>
-                <dd class="font-semibold text-brand-dark">{{ license.terms_version ? `v${license.terms_version}` : "—" }}</dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-brand-light flex items-center gap-1.5"><Hash class="w-4 h-4" /> Reference</dt>
-                <dd class="font-mono text-xs font-semibold text-brand-dark">{{ reference }}</dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-brand-light">Last activated</dt>
-                <dd class="text-brand-dark text-right">{{ license.last_activated_at ? formatDateTime(license.last_activated_at) : "Never" }}</dd>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <dt class="text-brand-light">Created</dt>
-                <dd class="text-brand-dark text-right">{{ formatDateTime(license.created_at) }}</dd>
-              </div>
-              <div class="pt-3 border-t border-[#F1F1F1]">
-                <dt class="text-brand-light flex items-center gap-1.5 mb-1"><FileText class="w-4 h-4" /> Notes</dt>
-                <dd class="text-brand-dark whitespace-pre-line break-words">{{ license.notes || "—" }}</dd>
-              </div>
-              <div v-if="can('license-manager-edit')" class="flex items-center justify-between gap-4 pt-3 border-t border-[#F1F1F1]">
-                <dt class="font-semibold text-brand-dark">License status</dt>
-                <dd><LicenseStatusSwitch :model-value="!!license.is_active" :disabled="toggling" @update:model-value="toggleActive" /></dd>
-              </div>
-            </dl>
-            <div v-if="can('license-manager-view')" class="px-5 pb-5">
-              <div v-if="certKeyOptions.length" class="mb-3">
-                <label for="cert-key" class="text-[11px] font-semibold uppercase tracking-wider text-brand-light mb-1.5 block">Certificate for</label>
-                <select
-                  id="cert-key"
-                  v-model="certKeyId"
-                  class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-[12px] text-sm font-semibold text-brand-dark bg-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none"
-                >
-                  <option :value="null">Licensee · all keys</option>
-                  <option v-for="k in certKeyOptions" :key="k.id" :value="k.id">{{ certKeyLabel(k) }}</option>
-                </select>
-                <p class="text-[11px] text-brand-light mt-1">
-                  {{ certKey ? "A certificate with only this key, e.g. for the member who uses it." : "One certificate with every key, for the licensee." }}
-                </p>
-              </div>
-              <button
-                type="button"
-                @click="downloadPdf()"
-                :disabled="downloading"
-                class="w-full rounded-[12px] bg-[#F2821F] hover:brightness-110 transition-all px-4 py-3 flex items-center justify-center gap-2 text-white text-sm font-bold disabled:opacity-60"
-              >
-                <FileDown class="w-4 h-4" />
-                {{ downloading && downloadingKeyId === (certKey?.id ?? null) ? "Preparing PDF..." : certKey ? `Download Key ${certKey.position} PDF` : "Download License PDF" }}
-              </button>
-              <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-light mt-3 mb-1.5">Share certificate</p>
-              <div class="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  @click="openShare('email')"
-                  class="rounded-[12px] border border-[#DCDEDD] hover:border-[#0C51D9] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold whitespace-nowrap"
-                  title="Share the certificate by email"
-                >
-                  <Mail class="w-4 h-4 text-[#0C51D9]" /> Email
-                </button>
-                <button
-                  type="button"
-                  @click="openShare('whatsapp')"
-                  class="rounded-[12px] border border-[#DCDEDD] hover:border-[#25D366] transition-all px-3 py-2.5 flex items-center justify-center gap-2 text-brand-dark text-xs font-semibold whitespace-nowrap"
-                  title="Share the certificate via WhatsApp"
-                >
-                  <MessageCircle class="w-4 h-4 text-[#25D366]" /> WhatsApp
-                </button>
-              </div>
-            </div>
-          </div>
+            </section>
 
-          <!-- Devices -->
-          <div class="bg-white border border-[#DCDEDD] rounded-[16px] p-5">
-            <div class="flex items-center gap-2.5 mb-4">
-              <MonitorSmartphone class="w-[18px] h-[18px] text-violet-600" />
-              <h4 class="text-brand-dark font-bold flex-1">Devices</h4>
-              <span class="text-xs font-semibold text-brand-light tabular-nums">{{ activations.length }} / {{ totalMaxDevices }}</span>
-            </div>
+            <!-- Devices -->
+            <section class="order-3 lg:order-none bg-ui-surface border border-ui-line rounded-ui-card px-5 pt-5 pb-2 min-w-0" :class="onTab('devices')">
+              <div class="flex items-center gap-3 mb-1">
+                <h3 class="text-ui-h2 text-ui-ink flex-1">{{ $t("licenses.detail.devices") }}</h3>
+                <span class="text-ui-small text-ui-muted tabular-nums">{{ $t("licenses.form.doneOf", { done: activations.length, total: totalMaxDevices }) }}</span>
+              </div>
 
-            <ul v-if="activations.length" class="space-y-2.5">
-              <li v-for="activation in activations" :key="activation.id" class="border border-[#DCDEDD] rounded-[12px] p-3">
-                <div class="flex items-start gap-2.5">
-                  <Laptop v-if="isMac(activation.platform)" class="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                  <Tablet v-else class="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+              <ul v-if="activations.length" class="divide-y divide-ui-line">
+                <li v-for="activation in activations" :key="activation.id" class="flex items-start gap-3 py-3.5">
+                  <Laptop v-if="isMac(activation.platform)" class="w-[18px] h-[18px] text-ui-muted shrink-0 mt-0.5" />
+                  <Tablet v-else class="w-[18px] h-[18px] text-ui-muted shrink-0 mt-0.5" />
                   <div class="min-w-0 flex-1">
-                    <p class="font-semibold text-sm text-brand-dark truncate">{{ activation.device_name || "Unnamed device" }}</p>
-                    <p v-if="keyOfActivation(activation)" class="font-mono text-[10px] font-semibold text-violet-700 truncate">
-                      Key {{ keyOfActivation(activation).position }} &middot; {{ keyOfActivation(activation).key }}
-                    </p>
-                    <p class="text-xs text-brand-light">
+                    <p class="flex items-center gap-1.5 min-w-0">
+                      <span class="text-ui-h3 text-ui-ink truncate">{{ activation.device_name || $t("licenses.detail.unnamedDevice") }}</span>
                       <span
                         v-if="isBundle"
-                        class="text-[10px] font-semibold px-1.5 py-px rounded-full mr-1"
-                        :class="platformChipClass(activationOwner(activation).platform)"
+                        class="text-ui-cap font-medium px-1.5 rounded-ui-control border border-ui-line text-ui-text shrink-0"
                       >{{ activationOwner(activation).label }}</span>
+                    </p>
+                    <p v-if="keyOfActivation(activation)" class="font-mono text-ui-cap text-ui-muted truncate">
+                      {{ $t("licenses.detail.keyN", { n: keyOfActivation(activation).position }) }} &middot; {{ keyOfActivation(activation).key }}
+                    </p>
+                    <p class="text-ui-cap text-ui-muted">
                       {{ platformLabel(activation.platform) }}<template v-if="activation.app_version"> &middot; v{{ activation.app_version }}</template>
                     </p>
-                    <p class="font-mono text-[10px] text-gray-400 truncate" :title="activation.device_id">{{ activation.device_id }}</p>
-                    <p class="text-[11px] text-brand-light mt-1" :title="formatDateTime(activation.last_seen_at)">
-                      Seen <span class="font-semibold text-brand-dark">{{ relativeTime(activation.last_seen_at) }}</span>
-                      &middot; since {{ formatDate(activation.activated_at) }}
+                    <p class="font-mono text-ui-cap text-ui-faint truncate" :title="activation.device_id">{{ activation.device_id }}</p>
+                    <p class="text-ui-cap text-ui-muted" :title="formatDateTime(activation.last_seen_at)">
+                      {{ $t("licenses.detail.seen", { time: relativeTime(activation.last_seen_at) }) }} &middot;
+                      {{ $t("licenses.detail.sinceDate", { date: formatDate(activation.activated_at) }) }}
                     </p>
                   </div>
-                </div>
-                <button
-                  v-if="can('license-manager-edit')"
-                  type="button"
-                  @click="releaseDevice(activation)"
-                  :disabled="releasingId === activation.id"
-                  class="mt-2.5 w-full flex items-center justify-center gap-1.5 border border-[#DCDEDD] rounded-lg px-3 py-1.5 hover:border-amber-500 hover:bg-amber-50 transition-all disabled:opacity-50 group"
-                >
-                  <Unplug class="w-4 h-4 text-gray-600 group-hover:text-amber-600" />
-                  <span class="text-xs font-semibold text-brand-dark">{{ releasingId === activation.id ? "Releasing..." : "Release device" }}</span>
-                </button>
-              </li>
-            </ul>
-            <div v-else class="text-center py-8 rounded-[12px] border border-dashed border-[#DCDEDD]">
-              <MonitorSmartphone class="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p class="text-sm font-semibold text-brand-dark">No devices yet</p>
-              <p class="text-xs text-brand-light px-4">Devices appear here once {{ perDevice ? "a key" : "the key" }} is entered in {{ productName }}.</p>
-            </div>
-          </div>
-        </aside>
+                  <UiButton
+                    v-if="can('license-manager-edit')"
+                    variant="ghost"
+                    size="sm"
+                    :icon="Unplug"
+                    :loading="releasingId === activation.id"
+                    @click="releaseDevice(activation)"
+                  >
+                    {{ releasingId === activation.id ? $t("licenses.detail.releasing") : $t("licenses.detail.release") }}
+                  </UiButton>
+                </li>
+              </ul>
+              <UiEmpty
+                v-else
+                compact
+                :icon="MonitorSmartphone"
+                :title="$t('licenses.detail.noDevices')"
+                :message="perDevice ? $t('licenses.detail.noDevicesPerDevice', { product: productName }) : $t('licenses.detail.noDevicesShared', { product: productName })"
+                class="pb-3"
+              />
+            </section>
+          </aside>
+        </div>
       </div>
     </LicenseProductGate>
 
@@ -869,14 +991,3 @@ const isMac = (platform) => /mac/i.test(platform || "");
     />
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>
