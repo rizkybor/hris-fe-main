@@ -41,6 +41,8 @@ import {
   Download,
 } from "lucide-vue-next";
 import { useScrollFade } from "@/composables/useScrollFade";
+import { UiBadge, UiButton, UiCard, UiEmpty, UiStat } from "@/components/ui";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 
 const employeeStore = useEmployeeStore();
 const { loading, performanceStatistics } = storeToRefs(employeeStore);
@@ -194,6 +196,55 @@ const skillLevelBadgeClass = computed(() => {
   return getLevelColor(capitalize(profile.value?.job_information?.skill_level));
 });
 
+// ---- Presentation-only helpers (redesign): badge tones + label/value rows ----
+const JOB_STATUS_TONES: Record<string, string> = { active: "ok", on_leave: "warn", resigned: "bad" };
+const jobStatusTone = computed(
+  () => JOB_STATUS_TONES[String(profile.value?.job_information?.status || "").toLowerCase()] || "neutral"
+);
+const TASK_TONES: Record<string, string> = { "To Do": "neutral", "In Progress": "warn", Waiting: "info", Completed: "ok" };
+const taskTone = (label: string) => TASK_TONES[label] || "neutral";
+const assetConditionTone = (condition: string) => {
+  const c = String(condition || "").toLowerCase();
+  if (["good", "new", "excellent"].includes(c)) return "ok";
+  if (["fair", "needs_repair", "maintenance"].includes(c)) return "warn";
+  if (["damaged", "broken", "lost", "poor"].includes(c)) return "bad";
+  return "neutral";
+};
+
+const personalRows = computed(() => [
+  { label: "Email", value: profile.value?.user?.email },
+  { label: "Phone", value: profile.value?.phone || "-" },
+  { label: "Date of Birth", value: formatDate(profile.value?.date_of_birth) },
+  { label: "Employee ID", value: profile.value?.code },
+  { label: "Office Location", value: capitalize(profile.value?.job_information?.work_location) },
+  { label: "Hobbies", value: profile.value?.hobby || "-" },
+]);
+const locationRows = computed(() => [
+  { label: "Gender", value: capitalize(profile.value?.gender) },
+  { label: "Place of Birth", value: profile.value?.place_of_birth || "-" },
+  { label: "Address", value: profile.value?.address || "-" },
+  { label: "City", value: profile.value?.city || "-" },
+  { label: "Post Code", value: profile.value?.postal_code || "-" },
+  { label: "Country", value: "Indonesia" },
+]);
+const employmentRows = computed(() => [
+  { label: "Job Title", value: capitalize(profile.value?.job_information?.job_title) },
+  { label: "Start Date", value: formatDate(profile.value?.job_information?.start_date) },
+  { label: "Employment Type", value: capitalize(profile.value?.job_information?.employment_type) },
+  { label: "Monthly Salary", value: formatCurrency(profile.value?.job_information?.monthly_salary) },
+  { label: "Skill Level", value: capitalize(profile.value?.job_information?.skill_level), badge: true },
+  { label: "Work Location", value: capitalize(profile.value?.job_information?.work_location) },
+]);
+const emergencyRows = computed(() => {
+  const c = profile.value?.emergency_contacts?.[0];
+  return [
+    { label: "Contact Name", value: c?.full_name || "-" },
+    { label: "Relationship", value: capitalize(c?.relationship) },
+    { label: "Phone Number", value: c?.phone || "-" },
+    { label: "Email", value: c?.email || "-" },
+  ];
+});
+
 onMounted(() => {
   loadProfile();
   taskStore.fetchMyTasks(5);
@@ -203,718 +254,308 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-  <div v-if="loading">
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
-      <div class="flex flex-col sm:flex-row sm:items-center gap-6">
-        <Skeleton width="96px" height="96px" rounded="9999px" class="self-center sm:self-auto" />
-        <div class="flex-1 space-y-3">
-          <Skeleton width="220px" height="24px" />
-          <Skeleton width="140px" height="16px" />
-          <Skeleton width="260px" height="14px" />
-        </div>
+  <div class="px-1 py-2 sm:px-4 sm:py-4 lg:px-5">
+  <!-- Loading -->
+  <div v-if="loading" role="status" aria-label="Loading">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 mb-6">
+      <Skeleton width="64px" height="64px" rounded="9999px" class="self-center sm:self-auto" />
+      <div class="flex-1 space-y-2.5 flex flex-col items-center sm:items-start">
+        <Skeleton width="220px" height="22px" />
+        <Skeleton width="300px" height="14px" />
       </div>
     </div>
     <SkeletonStatCards :count="4" class="mb-6" />
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5 space-y-3">
         <Skeleton v-for="i in 5" :key="i" width="100%" height="16px" />
       </div>
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3">
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5 space-y-3">
         <Skeleton v-for="i in 5" :key="i" width="100%" height="16px" />
       </div>
     </div>
   </div>
 
-  <div v-else-if="profile">
-    <!-- Employee Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
-      <div class="flex flex-col sm:flex-row sm:items-center gap-6">
-        <div class="relative self-center sm:self-auto flex-shrink-0">
-          <Avatar
-            :src="profile?.user?.profile_photo"
-            :alt="profile?.user?.name"
-            size="w-24 h-24 sm:w-32 sm:h-32"
-            icon-size="w-10 h-10 sm:w-14 sm:h-14"
-          />
-          <span
-            :class="statusBadgeClass"
-            class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap"
-          >
-            {{ capitalize(profile?.job_information?.status) }}
-          </span>
+  <div v-else-if="profile" class="ui-anim-fade-up">
+    <!-- Detail header: avatar, name + status, meta line, action -->
+    <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 mb-6">
+      <Avatar
+        :src="profile?.user?.profile_photo"
+        :alt="profile?.user?.name"
+        size="w-16 h-16"
+        icon-size="w-7 h-7"
+        class="self-center sm:self-auto"
+      />
+      <div class="flex-1 min-w-0 text-center sm:text-left">
+        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1.5">
+          <h1 class="text-ui-h1 text-ui-ink break-words">{{ profile?.user?.name }}</h1>
+          <UiBadge :tone="jobStatusTone" dot>{{ capitalize(profile?.job_information?.status) }}</UiBadge>
+          <UiBadge v-if="profile?.job_information?.skill_level" tone="outline">
+            {{ capitalize(profile?.job_information?.skill_level) }}
+          </UiBadge>
         </div>
-        <div class="flex-1 min-w-0 text-center sm:text-left">
-          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 mb-2">
-            <h1 class="text-brand-dark text-2xl sm:text-3xl font-extrabold">
-              {{ profile?.user?.name }}
-            </h1>
-            <span
-              :class="skillLevelBadgeClass"
-              class="px-3 py-1 rounded-md text-sm font-semibold"
-            >
-              {{ capitalize(profile?.job_information?.skill_level) }}
-            </span>
-          </div>
-          <p class="text-brand-light text-sm mb-3">
-            {{ capitalize(profile?.job_information?.job_title) }}
-          </p>
-          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-6 gap-y-2 text-sm text-gray-600">
-            <div class="flex items-center gap-2">
-              <Building class="w-4 h-4" />
-              <span>{{
-                capitalize(profile?.job_information?.work_location)
-              }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <User class="w-4 h-4" />
-              <span>{{ profile?.code }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Calendar class="w-4 h-4" />
-              <span
-                >Joined
-                {{ formatDate(profile?.job_information?.start_date) }}</span
-              >
-            </div>
-          </div>
+        <p class="text-ui-small text-ui-muted mt-1">{{ capitalize(profile?.job_information?.job_title) }}</p>
+        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 mt-2 text-ui-small text-ui-muted">
+          <span class="inline-flex items-center gap-1.5"><Building class="w-3.5 h-3.5 text-ui-faint" />{{ capitalize(profile?.job_information?.work_location) }}</span>
+          <span class="inline-flex items-center gap-1.5"><User class="w-3.5 h-3.5 text-ui-faint" />{{ profile?.code }}</span>
+          <span class="inline-flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />Joined {{ formatDate(profile?.job_information?.start_date) }}</span>
         </div>
-        <div class="flex items-center justify-center sm:justify-end">
-          <RouterLink
-            :to="{ name: 'employee.profile.edit' }"
-            class="w-full sm:w-auto btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2"
-          >
-            <Edit class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">Edit Profile</span>
-          </RouterLink>
-        </div>
+      </div>
+      <div class="flex justify-center sm:justify-end shrink-0">
+        <UiButton variant="secondary" :icon="Edit" :to="{ name: 'employee.profile.edit' }" class="w-full sm:w-auto">
+          Edit Profile
+        </UiButton>
       </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <!-- Tasks Completed Card -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Tasks Completed</p>
-            <p
-              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-none my-2"
-            >
-              {{ performanceStatistics?.tasks_completed || 0 }}
-            </p>
-            <p class="text-success text-sm font-medium">This month</p>
-          </div>
-          <div
-            class="w-14 h-14 bg-blue-50 rounded-[12px] flex items-center justify-center"
-          >
-            <CheckCircle class="w-6 h-6 text-blue-600" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Attendance Rate Card -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Attendance Rate</p>
-            <p
-              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-none my-2"
-            >
-              {{ performanceStatistics?.attendance_rate || 0 }}%
-            </p>
-            <p class="text-success text-sm font-medium">Above average</p>
-          </div>
-          <div
-            class="w-14 h-14 bg-green-50 rounded-[12px] flex items-center justify-center"
-          >
-            <CalendarCheck class="w-6 h-6 text-green-600" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Active Projects Card -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Active Projects</p>
-            <p
-              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-none my-2"
-            >
-              {{ performanceStatistics?.projects_count || 0 }}
-            </p>
-            <p class="text-success text-sm font-medium">Current projects</p>
-          </div>
-          <div
-            class="w-14 h-14 bg-purple-50 rounded-[12px] flex items-center justify-center"
-          >
-            <Folder class="w-6 h-6 text-purple-600" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Performance Rating Card -->
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-brand-dark text-sm font-medium">Performance</p>
-            <p
-              class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-none my-2"
-            >
-              {{ performanceStatistics?.performance_score || 0 }}%
-            </p>
-            <p class="text-success text-sm font-medium">Excellent rating</p>
-          </div>
-          <div
-            class="w-14 h-14 bg-orange-50 rounded-[12px] flex items-center justify-center"
-          >
-            <TrendingUp class="w-6 h-6 text-orange-600" />
-          </div>
-        </div>
-      </div>
+    <!-- Statistics -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 ui-stagger">
+      <UiStat label="Tasks Completed" :icon="CheckCircle" :value="performanceStatistics?.tasks_completed || 0" hint="This month" />
+      <UiStat label="Attendance Rate" :icon="CalendarCheck" :value="`${performanceStatistics?.attendance_rate || 0}%`" hint="Above average" />
+      <UiStat label="Active Projects" :icon="Folder" :value="performanceStatistics?.projects_count || 0" hint="Current projects" />
+      <UiStat label="Performance" :icon="TrendingUp" :value="`${performanceStatistics?.performance_score || 0}%`" hint="Excellent rating" />
     </div>
 
-    <!-- Tab Bar -->
-    <div class="relative mb-6">
+    <!-- Tabs: underline on desktop, scrolling chips on phones -->
+    <div class="relative mb-5 sm:mb-6">
       <div
         ref="tabScrollRef"
         @scroll="updateTabFade"
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-2 overflow-x-auto"
+        class="overflow-x-auto [scrollbar-width:none] sm:border-b sm:border-ui-line"
       >
-        <div class="flex items-center gap-1 min-w-max">
+        <div class="flex items-center gap-1.5 sm:gap-6 min-w-max" role="tablist">
           <button
             v-for="tab in tabs"
             :key="tab.id"
+            type="button"
+            role="tab"
+            :aria-selected="activeTab === tab.id"
             @click="activeTab = tab.id"
             :class="[
-              'flex items-center gap-2 px-4 py-2.5 rounded-[10px] text-sm font-semibold transition-all duration-200 whitespace-nowrap',
+              'ui-press shrink-0 inline-flex items-center gap-2 whitespace-nowrap font-medium focus:outline-none focus-visible:shadow-ui-focus',
+              'h-8 px-3 rounded-full border text-ui-small',
+              'sm:h-auto sm:px-0.5 sm:pt-1 sm:pb-3 sm:rounded-none sm:border-0 sm:border-b-2 sm:-mb-px sm:text-ui-body',
               activeTab === tab.id
-                ? 'blue-gradient blue-btn-shadow text-white'
-                : 'text-brand-light hover:bg-gray-50 hover:text-brand-dark',
+                ? 'bg-ui-ink text-white border-ui-ink sm:bg-transparent sm:text-ui-ink sm:border-ui-ink'
+                : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover sm:bg-transparent sm:text-ui-muted sm:border-transparent sm:hover:bg-transparent sm:hover:text-ui-ink',
             ]"
           >
-            <component :is="tab.icon" class="w-4 h-4" />
+            <component :is="tab.icon" class="w-4 h-4 hidden sm:block" />
             {{ tab.label }}
           </button>
         </div>
       </div>
-      <Transition name="fade">
+      <Transition name="ui-fade">
         <div
           v-if="showTabRightFade"
-          class="sm:hidden pointer-events-none absolute inset-y-0 right-0 w-10 rounded-r-[14px] bg-gradient-to-l from-white via-white/80 to-transparent flex items-center justify-end pr-1"
+          class="sm:hidden pointer-events-none absolute inset-y-0 right-0 flex items-center"
         >
-          <ChevronRight class="w-4 h-4 text-[#0C51D9] scroll-hint-nudge" />
+          <span class="w-7 h-7 rounded-full bg-ui-surface border border-ui-line shadow-ui-raised flex items-center justify-center">
+            <ChevronRight class="w-4 h-4 text-ui-accent scroll-hint-nudge" />
+          </span>
         </div>
-      </Transition>
-      <Transition name="fade">
-        <div
-          v-if="showTabLeftFade"
-          class="sm:hidden pointer-events-none absolute inset-y-0 left-0 w-8 rounded-l-[14px] bg-gradient-to-r from-white via-white/80 to-transparent"
-        ></div>
       </Transition>
     </div>
 
     <!-- Overview Tab -->
-    <div v-show="activeTab === 'overview'" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
-        <!-- Personal Information -->
-        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div
-              class="w-12 h-12 bg-teal-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Contact class="w-6 h-6 text-teal-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-md font-bold">
-                Personal Information
-              </h3>
-              <p class="text-brand-light text-sm">
-                Your contact and profile details
-              </p>
-            </div>
+    <div v-show="activeTab === 'overview'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mb-6 items-start ui-stagger">
+      <UiCard title="Personal Information" subtitle="Your contact and profile details">
+        <template #actions><Contact class="w-4 h-4 text-ui-faint mt-1" /></template>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-5 divide-y divide-ui-line sm:divide-y-0 -my-3 sm:my-0">
+          <div v-for="row in personalRows" :key="row.label" class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
+            <dt class="text-ui-small text-ui-muted shrink-0">{{ row.label }}</dt>
+            <dd class="text-ui-body text-ui-ink text-right sm:text-left sm:mt-1 break-words min-w-0">{{ row.value }}</dd>
           </div>
-          <div class="space-y-4">
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Email</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                profile?.user?.email
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Phone</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                profile?.phone || "-"
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Date of Birth</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                formatDate(profile?.date_of_birth)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Employee ID</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                profile?.code
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Office Location</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                capitalize(profile?.job_information?.work_location)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-start">
-              <span class="text-brand-light text-sm">Hobbies</span>
-              <span
-                class="text-brand-dark text-sm font-medium text-right max-w-[60%]"
-                >{{ profile?.hobby || "-" }}</span
-              >
-            </div>
-          </div>
-        </div>
+        </dl>
+      </UiCard>
 
-        <!-- Location Details -->
-        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div
-              class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
-            >
-              <MapPin class="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-md font-bold">
-                Location Details
-              </h3>
-              <p class="text-brand-light text-sm">
-                Address and location information
-              </p>
-            </div>
+      <UiCard title="Location Details" subtitle="Address and location information">
+        <template #actions><MapPin class="w-4 h-4 text-ui-faint mt-1" /></template>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-5 divide-y divide-ui-line sm:divide-y-0 -my-3 sm:my-0">
+          <div v-for="row in locationRows" :key="row.label" class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
+            <dt class="text-ui-small text-ui-muted shrink-0">{{ row.label }}</dt>
+            <dd class="text-ui-body text-ui-ink text-right sm:text-left sm:mt-1 break-words min-w-0">{{ row.value }}</dd>
           </div>
-          <div class="space-y-4">
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Gender</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                capitalize(profile?.gender)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Place of Birth</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                profile?.place_of_birth || "-"
-              }}</span>
-            </div>
-            <div class="flex justify-between items-start">
-              <span class="text-brand-light text-sm">Address</span>
-              <span
-                class="text-brand-dark text-sm font-medium text-right max-w-[60%]"
-                >{{ profile?.address || "-" }}</span
-              >
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">City</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                profile?.city || "-"
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Post Code</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                profile?.postal_code || "-"
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Country</span>
-              <span class="text-brand-dark text-sm font-medium"
-                >Indonesia</span
-              >
-            </div>
-          </div>
-        </div>
-
+        </dl>
+      </UiCard>
     </div>
 
     <!-- Employment & Team Tab -->
-    <div v-show="activeTab === 'employment'" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
-        <!-- Employment Details -->
-        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div
-              class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Briefcase class="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-md font-bold">
-                Employment Details
-              </h3>
-              <p class="text-brand-light text-sm">
-                Work and compensation information
-              </p>
-            </div>
+    <div v-show="activeTab === 'employment'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mb-6 items-start ui-stagger">
+      <UiCard title="Employment Details" subtitle="Work and compensation information">
+        <template #actions><Briefcase class="w-4 h-4 text-ui-faint mt-1" /></template>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-5 divide-y divide-ui-line sm:divide-y-0 -my-3 sm:my-0">
+          <div v-for="row in employmentRows" :key="row.label" class="flex justify-between items-center sm:items-start gap-4 py-3 sm:block sm:py-0 min-w-0">
+            <dt class="text-ui-small text-ui-muted shrink-0">{{ row.label }}</dt>
+            <dd class="text-ui-body text-ui-ink text-right sm:text-left sm:mt-1 break-words min-w-0">
+              <UiBadge v-if="row.badge" tone="outline">{{ row.value }}</UiBadge>
+              <template v-else>{{ row.value }}</template>
+            </dd>
           </div>
-          <div class="space-y-4">
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Job Title</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                capitalize(profile?.job_information?.job_title)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Start Date</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                formatDate(profile?.job_information?.start_date)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Employment Type</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                capitalize(profile?.job_information?.employment_type)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Monthly Salary</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                formatCurrency(profile?.job_information?.monthly_salary)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Skill Level</span>
-              <span
-                :class="skillLevelBadgeClass"
-                class="px-2 py-1 rounded-md text-sm font-semibold"
-                >{{ capitalize(profile?.job_information?.skill_level) }}</span
-              >
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Work Location</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                capitalize(profile?.job_information?.work_location)
-              }}</span>
-            </div>
-          </div>
-        </div>
+        </dl>
+      </UiCard>
 
-        <!-- Team Information -->
-        <div
-          class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 h-fit"
-          v-if="profile?.job_information?.team"
-        >
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <div class="flex items-center gap-3">
-              <div
-                class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0"
-              >
-                <Users class="w-6 h-6 text-indigo-600" />
-              </div>
-              <div>
-                <h3 class="text-brand-dark text-sm font-bold">My Team</h3>
-                <p class="text-brand-light text-sm">Team information</p>
-              </div>
-            </div>
-            <button
-              @click="goToMyTeam"
-              class="w-full sm:w-auto border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2 flex items-center justify-center gap-2"
-            >
-              <Users class="w-4 h-4 text-gray-600" />
-              <span class="text-brand-dark text-sm font-semibold"
-                >View Team</span
-              >
-            </button>
+      <UiCard v-if="profile?.job_information?.team" title="My Team" subtitle="Team information">
+        <template #actions>
+          <UiButton variant="secondary" size="sm" :icon="Users" @click="goToMyTeam">View Team</UiButton>
+        </template>
+        <div class="flex items-center gap-3 p-3 mb-4 rounded-[10px] bg-ui-subtle border border-ui-line">
+          <div class="w-10 h-10 rounded-[10px] bg-ui-surface border border-ui-line flex items-center justify-center shrink-0">
+            <Code class="w-5 h-5 text-ui-muted" />
           </div>
-
-          <!-- Team Header -->
-          <div
-            class="flex items-center gap-3 sm:gap-4 mb-4 p-3 sm:p-4 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[12px]"
-          >
-            <div
-              class="w-12 h-12 sm:w-16 sm:h-16 relative flex items-center justify-center rounded-[12px] overflow-hidden shrink-0"
-            >
-              <div
-                class="w-full h-full absolute bg-white/20 rounded-[12px]"
-              ></div>
-              <Code class="w-6 h-6 sm:w-8 sm:h-8 text-white relative z-10" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <h4 class="text-white text-sm sm:text-xl font-bold truncate">
-                {{ profile.job_information.team.name }}
-              </h4>
-              <p class="text-white/80 text-sm sm:text-sm font-normal">
-                {{ profile.job_information.team.members_count ?? 0 }} members •
-                {{ capitalize(profile.job_information.team.status) }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Team Details -->
-          <div class="space-y-3">
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Team Lead</span>
-              <div class="flex items-center gap-2">
-                <span class="text-brand-dark text-sm font-medium">{{
-                  profile.job_information.team.leader?.name || "-"
-                }}</span>
-              </div>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Department</span>
-              <span class="text-brand-dark text-sm font-medium">{{
-                capitalize(profile.job_information.team.department)
-              }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-brand-light text-sm">Team Size</span>
-              <span class="text-brand-dark text-sm font-medium"
-                >{{ profile.job_information.team.members_count ?? 0 }} members</span
-              >
-            </div>
-          </div>
-        </div>
-    </div>
-
-    <!-- Emergency Contact Tab -->
-    <div v-show="activeTab === 'emergency'" class="mb-6">
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 max-w-2xl">
-        <div class="flex items-center gap-3 mb-4">
-          <div
-            class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center"
-          >
-            <Phone class="w-6 h-6 text-red-600" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-md font-bold">
-              Emergency Contact
-            </h3>
-            <p class="text-brand-light text-sm">
-              Person to contact in case of emergency
+          <div class="min-w-0">
+            <p class="text-ui-h3 text-ui-ink truncate">{{ profile.job_information.team.name }}</p>
+            <p class="text-ui-cap text-ui-muted">
+              {{ profile.job_information.team.members_count ?? 0 }} members •
+              {{ capitalize(profile.job_information.team.status) }}
             </p>
           </div>
         </div>
-        <div
-          class="space-y-4"
-          v-if="
-            profile?.emergency_contacts &&
-            profile.emergency_contacts.length > 0
-          "
+        <dl class="divide-y divide-ui-line">
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-ui-small text-ui-muted">Team Lead</dt>
+            <dd class="text-ui-body text-ui-ink text-right">{{ profile.job_information.team.leader?.name || "-" }}</dd>
+          </div>
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-ui-small text-ui-muted">Department</dt>
+            <dd class="text-ui-body text-ui-ink text-right">{{ capitalize(profile.job_information.team.department) }}</dd>
+          </div>
+          <div class="flex justify-between gap-4 pt-2.5">
+            <dt class="text-ui-small text-ui-muted">Team Size</dt>
+            <dd class="text-ui-body text-ui-ink text-right">{{ profile.job_information.team.members_count ?? 0 }} members</dd>
+          </div>
+        </dl>
+      </UiCard>
+    </div>
+
+    <!-- Emergency Contact Tab -->
+    <div v-show="activeTab === 'emergency'" class="mb-6 ui-anim-fade-up">
+      <UiCard title="Emergency Contact" subtitle="Person to contact in case of emergency">
+        <template #actions><Phone class="w-4 h-4 text-ui-faint mt-1" /></template>
+        <dl
+          v-if="profile?.emergency_contacts && profile.emergency_contacts.length > 0"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 sm:gap-x-6 sm:gap-y-5 divide-y divide-ui-line sm:divide-y-0 -my-3 sm:my-0"
         >
-          <div class="flex justify-between items-center">
-            <span class="text-brand-light text-sm">Contact Name</span>
-            <span class="text-brand-dark text-sm font-medium">{{
-              profile.emergency_contacts[0]?.full_name || "-"
-            }}</span>
+          <div v-for="row in emergencyRows" :key="row.label" class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
+            <dt class="text-ui-small text-ui-muted shrink-0">{{ row.label }}</dt>
+            <dd class="text-ui-body text-ui-ink text-right sm:text-left sm:mt-1 break-words min-w-0">{{ row.value }}</dd>
           </div>
-          <div class="flex justify-between items-center">
-            <span class="text-brand-light text-sm">Relationship</span>
-            <span class="text-brand-dark text-sm font-medium">{{
-              capitalize(profile.emergency_contacts[0]?.relationship)
-            }}</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-brand-light text-sm">Phone Number</span>
-            <span class="text-brand-dark text-sm font-medium">{{
-              profile.emergency_contacts[0]?.phone || "-"
-            }}</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-brand-light text-sm">Email</span>
-            <span class="text-brand-dark text-sm font-medium">{{
-              profile.emergency_contacts[0]?.email || "-"
-            }}</span>
-          </div>
-        </div>
-        <div v-else class="text-center text-gray-500 py-4">
-          No emergency contact added
-        </div>
-      </div>
+        </dl>
+        <UiEmpty v-else compact :icon="Phone" title="No emergency contact added" />
+      </UiCard>
     </div>
 
     <!-- Tasks Tab -->
-    <div v-show="activeTab === 'tasks'" class="mb-6">
-        <!-- Latest 5 Tasks Assigned -->
-        <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <div
-                class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
-              >
-                <ListChecks class="w-6 h-6 text-orange-600" />
-              </div>
-              <div>
-                <h3 class="text-brand-dark text-md font-bold">Latest Tasks</h3>
-                <p class="text-brand-light text-sm">Recently assigned tasks</p>
-              </div>
-            </div>
-            <button
-              @click="goToAllTasks"
-              class="text-[#0C51D9] text-sm font-medium hover:underline"
-            >
-              View All
-            </button>
-          </div>
+    <div v-show="activeTab === 'tasks'" class="mb-6 ui-anim-fade-up">
+      <UiCard title="Latest Tasks" subtitle="Recently assigned tasks" :padded="false">
+        <template #actions>
+          <button type="button" @click="goToAllTasks" class="text-ui-small font-medium text-ui-accent hover:underline mt-1">
+            View All
+          </button>
+        </template>
 
-          <div v-if="taskStore.loading" class="space-y-4">
-            <Skeleton v-for="i in 3" :key="i" height="90px" rounded="12px" />
-          </div>
-
-          <div v-else-if="latestTasks.length === 0" class="text-center py-6 text-sm text-gray-400">
-            No active tasks assigned
-          </div>
-
-          <div v-else class="space-y-4">
-            <div
-              v-for="task in latestTasks"
-              :key="task.id"
-              class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
-            >
-              <div class="flex items-start justify-between mb-2">
-                <h4 class="text-brand-dark text-sm font-semibold">
-                  {{ task.title }}
-                </h4>
-                <span
-                  :class="task.statusClass"
-                  class="px-2 py-1 rounded-md text-xs font-semibold flex-shrink-0"
-                  >{{ task.status }}</span
-                >
-              </div>
-              <p class="text-brand-light text-sm mb-3">
-                {{ task.description }}
-              </p>
-              <div class="flex items-center gap-4 text-xs text-gray-600">
-                <div class="flex items-center gap-1">
-                  <Calendar class="w-3 h-3" />
-                  <span>{{ task.dueDate }}</span>
-                </div>
-                <div class="flex items-center gap-1">
-                  <Folder class="w-3 h-3" />
-                  <span>{{ task.project }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div v-if="taskStore.loading" class="p-4 sm:p-5">
+          <SkeletonList :rows="3" />
         </div>
+
+        <UiEmpty v-else-if="latestTasks.length === 0" compact :icon="ListChecks" title="No active tasks assigned" />
+
+        <ul v-else class="divide-y divide-ui-line border-t border-ui-line ui-stagger">
+          <li v-for="task in latestTasks" :key="task.id" class="px-5 sm:px-6 py-4">
+            <div class="flex items-start justify-between gap-3">
+              <h4 class="text-ui-h3 text-ui-ink min-w-0 break-words">{{ task.title }}</h4>
+              <UiBadge :tone="taskTone(task.status)" dot class="shrink-0">{{ task.status }}</UiBadge>
+            </div>
+            <p v-if="task.description" class="text-ui-small text-ui-muted mt-1 line-clamp-2">{{ task.description }}</p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-ui-cap text-ui-muted">
+              <span class="inline-flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />{{ task.dueDate }}</span>
+              <span class="inline-flex items-center gap-1.5"><Folder class="w-3.5 h-3.5 text-ui-faint" />{{ task.project }}</span>
+            </div>
+          </li>
+        </ul>
+      </UiCard>
     </div>
 
     <!-- Assets & Reviews Tab -->
-    <div v-show="activeTab === 'more'" class="mb-6 space-y-6">
-        <!-- My Assets -->
-        <div v-if="myAssets.length > 0" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
-              <Laptop class="w-6 h-6 text-[#0C51D9]" />
+    <div v-show="activeTab === 'more'" class="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start ui-stagger">
+      <!-- My Assets -->
+      <UiCard v-if="myAssets.length > 0" title="My Assets" subtitle="Company equipment assigned to you" :padded="false">
+        <template #actions><Laptop class="w-4 h-4 text-ui-faint mt-1" /></template>
+        <ul class="divide-y divide-ui-line border-t border-ui-line">
+          <li v-for="asset in myAssets" :key="asset.id" class="px-5 sm:px-6 py-3.5 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-ui-body font-medium text-ui-ink truncate">{{ asset.name }}</p>
+              <p class="text-ui-cap text-ui-muted truncate">{{ asset.asset_code }}<span v-if="asset.brand"> • {{ asset.brand }}</span></p>
             </div>
-            <div>
-              <h3 class="text-brand-dark text-md font-bold">My Assets</h3>
-              <p class="text-brand-light text-sm">Company equipment assigned to you</p>
-            </div>
-          </div>
-          <div class="space-y-3">
-            <div
-              v-for="asset in myAssets"
-              :key="asset.id"
-              class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 flex items-center justify-between"
-            >
-              <div>
-                <p class="text-brand-dark text-sm font-semibold">{{ asset.name }}</p>
-                <p class="text-brand-light text-xs">{{ asset.asset_code }}<span v-if="asset.brand"> • {{ asset.brand }}</span></p>
-              </div>
-              <span class="px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-700">{{ asset.condition }}</span>
-            </div>
-          </div>
-        </div>
+            <UiBadge :tone="assetConditionTone(asset.condition)" class="shrink-0">{{ asset.condition }}</UiBadge>
+          </li>
+        </ul>
+      </UiCard>
 
-        <!-- My Performance Reviews -->
-        <div v-if="myReviews.length > 0" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-12 h-12 bg-yellow-50 rounded-[12px] flex items-center justify-center">
-              <Star class="w-6 h-6 text-yellow-600" />
+      <!-- My Performance Reviews -->
+      <UiCard v-if="myReviews.length > 0" title="My Performance Reviews" subtitle="Feedback and ratings from your reviewer" :padded="false">
+        <template #actions><Star class="w-4 h-4 text-ui-faint mt-1" /></template>
+        <ul class="divide-y divide-ui-line border-t border-ui-line">
+          <li v-for="review in myReviews" :key="review.id" class="px-5 sm:px-6 py-4">
+            <div class="flex items-center justify-between gap-3 mb-2">
+              <p class="text-ui-h3 text-ui-ink">{{ review.period }}</p>
+              <span class="flex items-center gap-0.5 shrink-0" :aria-label="`Rating ${review.overall_rating} of 5`">
+                <Star
+                  v-for="i in 5"
+                  :key="i"
+                  class="w-3.5 h-3.5"
+                  :class="i <= Math.round(review.overall_rating) ? 'text-ui-warn' : 'text-ui-line-strong'"
+                  :fill="i <= Math.round(review.overall_rating) ? 'currentColor' : 'none'"
+                />
+                <span class="text-ui-cap font-semibold text-ui-ink ml-1 tabular-nums">{{ review.overall_rating }}/5</span>
+              </span>
             </div>
-            <div>
-              <h3 class="text-brand-dark text-sm font-bold">My Performance Reviews</h3>
-              <p class="text-brand-light text-sm">Feedback and ratings from your reviewer</p>
+            <div class="space-y-1 text-ui-small text-ui-text">
+              <p v-if="review.strengths"><span class="font-medium text-ui-ink">Strengths:</span> {{ review.strengths }}</p>
+              <p v-if="review.areas_for_improvement"><span class="font-medium text-ui-ink">To Improve:</span> {{ review.areas_for_improvement }}</p>
+              <p v-if="review.goals_next_period"><span class="font-medium text-ui-ink">Goals:</span> {{ review.goals_next_period }}</p>
             </div>
-          </div>
-          <div class="space-y-3">
-            <div v-for="review in myReviews" :key="review.id" class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
-              <div class="flex items-center justify-between mb-2">
-                <p class="text-brand-dark text-sm font-semibold">{{ review.period }}</p>
-                <span class="flex items-center gap-0.5">
-                  <Star
-                    v-for="i in 5"
-                    :key="i"
-                    class="w-3.5 h-3.5"
-                    :class="i <= Math.round(review.overall_rating) ? 'text-amber-500' : 'text-gray-200'"
-                    :fill="i <= Math.round(review.overall_rating) ? 'currentColor' : 'none'"
-                  />
-                  <span class="text-xs font-semibold text-brand-dark ml-1">{{ review.overall_rating }}/5</span>
-                </span>
-              </div>
-              <p v-if="review.strengths" class="text-brand-light text-xs mb-1"><strong>Strengths:</strong> {{ review.strengths }}</p>
-              <p v-if="review.areas_for_improvement" class="text-brand-light text-xs mb-1"><strong>To Improve:</strong> {{ review.areas_for_improvement }}</p>
-              <p v-if="review.goals_next_period" class="text-brand-light text-xs mb-2"><strong>Goals:</strong> {{ review.goals_next_period }}</p>
-              <button
+            <div class="mt-3">
+              <UiButton
                 v-if="review.status !== 'acknowledged'"
+                variant="secondary"
+                size="sm"
+                :icon="CheckCircle"
                 @click="acknowledgeReview(review.id)"
-                class="text-[#0C51D9] text-xs font-semibold hover:underline"
               >
                 Mark as Read
-              </button>
-              <span v-else class="text-green-600 text-xs font-semibold">Acknowledged</span>
+              </UiButton>
+              <UiBadge v-else tone="ok" dot>Acknowledged</UiBadge>
             </div>
-          </div>
-        </div>
+          </li>
+        </ul>
+      </UiCard>
 
-        <!-- Empty State -->
-        <div
-          v-if="myAssets.length === 0 && myReviews.length === 0"
-          class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-12 text-center"
-        >
-          <Star class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p class="text-brand-light text-sm font-medium">
-            No asset & reviews assigned
-          </p>
-        </div>
+      <!-- Empty State -->
+      <div
+        v-if="myAssets.length === 0 && myReviews.length === 0"
+        class="lg:col-span-2 bg-ui-surface border border-ui-line rounded-ui-card"
+      >
+        <UiEmpty :icon="Star" title="No asset & reviews assigned" />
+      </div>
     </div>
 
     <!-- ID Card Tab -->
-    <div v-show="activeTab === 'idcard'" class="mb-6">
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-indigo-50 rounded-[12px] flex items-center justify-center">
-              <CreditCardIcon class="w-6 h-6 text-indigo-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-md font-bold">Digital ID Card</h3>
-              <p class="text-brand-light text-sm">Preview and download your employee ID card</p>
-            </div>
-          </div>
-          <button
-            @click="downloadIdCard"
-            :disabled="downloadingIdCard"
-            class="w-full sm:w-auto btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <Download class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">
-              {{ downloadingIdCard ? "Preparing..." : "Download PDF" }}
-            </span>
-          </button>
-        </div>
+    <div v-show="activeTab === 'idcard'" class="mb-6 ui-anim-fade-up">
+      <UiCard title="Digital ID Card" subtitle="Preview and download your employee ID card">
+        <template #actions>
+          <UiButton :icon="Download" :loading="downloadingIdCard" class="hidden sm:inline-flex" @click="downloadIdCard">
+            {{ downloadingIdCard ? "Preparing..." : "Download PDF" }}
+          </UiButton>
+        </template>
 
-        <!-- Card Preview -->
-        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-center" style="gap: 3rem;">
+        <!-- Card Preview: positions/colours below mirror the printed PDF
+             artwork exactly, so they stay as-is (not theme tokens). -->
+        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-center pt-2" style="gap: 3rem;">
           <div class="text-center">
-            <p class="text-brand-light text-xs font-semibold uppercase tracking-wide mb-2">Front</p>
+            <p class="text-ui-over uppercase text-ui-muted mb-2">Front</p>
             <!-- Card, front: the design team's own background artwork,
                  with the employee's name/title/id/contact overlaid. -->
-            <div class="relative rounded-[3px] overflow-hidden shadow-xl" style="width: 54mm; height: 85.6mm;">
+            <div class="relative rounded-[3px] overflow-hidden shadow-ui-overlay" style="width: 54mm; height: 85.6mm;">
               <img src="/images/idcard-front-bg.png" class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
 
               <div
@@ -952,40 +593,30 @@ onMounted(() => {
           </div>
 
           <div class="text-center">
-            <p class="text-brand-light text-xs font-semibold uppercase tracking-wide mb-2">Back</p>
+            <p class="text-ui-over uppercase text-ui-muted mb-2">Back</p>
             <!-- Card, back: the design team's own artwork, unchanged. -->
-            <div class="relative rounded-[3px] overflow-hidden shadow-xl" style="width: 54mm; height: 85.6mm;">
+            <div class="relative rounded-[3px] overflow-hidden shadow-ui-overlay" style="width: 54mm; height: 85.6mm;">
               <img src="/images/idcard-back-bg.png" class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
             </div>
           </div>
         </div>
-        <p class="text-brand-light text-xs text-center mt-6">
+        <p class="text-ui-cap text-ui-muted text-center mt-6">
           Shown at true size &mdash; 54mm &times; 85.6mm each side, the same portrait badge size used for physical printing.
         </p>
-      </div>
+        <UiButton :icon="Download" :loading="downloadingIdCard" block size="lg" class="sm:hidden mt-5" @click="downloadIdCard">
+          {{ downloadingIdCard ? "Preparing..." : "Download PDF" }}
+        </UiButton>
+      </UiCard>
     </div>
   </div>
 
   <!-- No Employee Profile (e.g. Super Admin / other system accounts) -->
-  <div v-else-if="profileNotFound" class="bg-white border border-[#DCDEDD] rounded-[14px] p-12 text-center">
-    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-      <User class="w-8 h-8 text-gray-400" />
-    </div>
-    <p class="text-brand-dark text-sm font-bold mb-1">No profile to show</p>
-    <p class="text-brand-light text-sm">
-      This account doesn't have an employee profile -- that's expected for system accounts like Super Admin.
-    </p>
+  <div v-else-if="profileNotFound" class="bg-ui-surface border border-ui-line rounded-ui-card ui-anim-fade-up">
+    <UiEmpty
+      :icon="User"
+      title="No profile to show"
+      message="This account doesn't have an employee profile -- that's expected for system accounts like Super Admin."
+    />
   </div>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

@@ -18,6 +18,7 @@ import { formatDate as formatDateUtil } from "@/utils/dateUtils.js";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 import Avatar from "@/components/common/Avatar.vue";
 import { useScrollFade } from "@/composables/useScrollFade";
+import { UiBadge, UiCard, UiEmpty, UiSpinner, UiStat } from "@/components/ui";
 
 const employeeStore = useEmployeeStore();
 const team = ref(null);
@@ -101,248 +102,112 @@ const getMemberStatusClass = (member) => {
     : "bg-[#F0FDF4] text-[#166534]";
 };
 
+// Presentation-only (redesign): badge tones for team + member status.
+const TEAM_STATUS_TONES = { active: "ok", inactive: "bad", archived: "neutral" };
+const teamStatusTone = (status) => TEAM_STATUS_TONES[status?.toLowerCase()] || "info";
+const MEMBER_STATUS_TONES = { Left: "neutral", Lead: "info", Active: "ok" };
+const memberStatusTone = (member) => MEMBER_STATUS_TONES[getMemberStatus(member)] || "neutral";
+const teamTabs = [
+  { id: "members", label: "Members", icon: Users },
+  { id: "projects", label: "Projects", icon: Folder },
+  { id: "description", label: "Description", icon: FileText },
+];
+
 onMounted(() => {
   Promise.all([loadTeam(), loadMembers(), loadProjects()]);
 });
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col overflow-hidden">
-    <!-- Team Detail Content -->
-    <main class="main-content flex-1 overflow-auto p-3 sm:p-5">
-      <!-- Loading State -->
-      <div v-if="loadingTeam" class="flex items-center justify-center py-24">
-        <div class="text-center">
-          <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p class="text-brand-light text-base">Loading your team...</p>
-        </div>
-      </div>
+  <div class="px-1 py-2 sm:px-4 sm:py-4 lg:px-5">
+    <!-- Loading State -->
+    <UiSpinner v-if="loadingTeam" size="28px" label="Loading your team..." class="py-24" />
 
-      <!-- No Team Assigned -->
-      <div v-else-if="!team" class="bg-white border border-[#DCDEDD] rounded-[14px] p-12 text-center">
-        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Users class="w-8 h-8 text-gray-400" />
-        </div>
-        <p class="text-brand-dark text-lg font-bold mb-1">No team assigned yet</p>
-        <p class="text-brand-light text-sm">
-          You're not currently a member of any team. Reach out to your manager or HR if you think this is a mistake.
-        </p>
-      </div>
+    <!-- No Team Assigned -->
+    <div v-else-if="!team" class="bg-ui-surface border border-ui-line rounded-ui-card ui-anim-fade-up">
+      <UiEmpty
+        :icon="Users"
+        title="No team assigned yet"
+        message="You're not currently a member of any team. Reach out to your manager or HR if you think this is a mistake."
+      />
+    </div>
 
-      <template v-else>
+    <div v-else class="ui-anim-fade-up">
       <!-- Team Header -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] mb-6 p-4 sm:p-6">
-        <div class="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 text-center sm:text-left">
-          <div class="relative shrink-0">
-            <div
-              class="w-20 h-20 sm:w-32 sm:h-32 relative flex items-center justify-center rounded-full overflow-hidden"
-            >
-              <div
-                class="w-full h-full absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full"
-              ></div>
-              <Users class="w-10 h-10 sm:w-16 sm:h-16 text-white relative z-10" />
-            </div>
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 mb-6 text-center sm:text-left">
+        <div class="w-16 h-16 rounded-full bg-ui-accent-soft text-ui-accent flex items-center justify-center shrink-0 self-center sm:self-auto">
+          <Users class="w-7 h-7" />
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1.5">
+            <h1 class="text-ui-h1 text-ui-ink break-words">{{ team.name }}</h1>
+            <UiBadge v-if="team?.status" :tone="teamStatusTone(team.status)" dot>{{ team.status }}</UiBadge>
           </div>
-          <div class="flex-1 min-w-0 w-full">
-            <div class="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-4 mb-3">
-              <h1 class="text-brand-dark text-xl sm:text-3xl font-extrabold truncate max-w-full">
-                {{ team.name }}
-              </h1>
-              <span
-                v-if="team?.status"
-                class="px-3 py-1 rounded-md text-sm font-semibold shrink-0"
-                :class="getStatusClass(team.status)"
-              >
-                {{ team.status }}
-              </span>
-            </div>
-            <div class="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-6 text-sm sm:text-base text-gray-600">
-              <div class="flex items-center gap-2">
-                <Users class="w-4 h-4 shrink-0" />
-                <span>{{ members?.length || 0 }} members</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <Building class="w-4 h-4 shrink-0" />
-                <span>{{ team?.department || "N/A" }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <Calendar class="w-4 h-4 shrink-0" />
-                <span>{{ team?.created_at ? formatDateUtil(team.created_at) : "N/A" }}</span>
-              </div>
-            </div>
+          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 mt-2 text-ui-small text-ui-muted">
+            <span class="inline-flex items-center gap-1.5"><Users class="w-3.5 h-3.5 text-ui-faint" />{{ members?.length || 0 }} members</span>
+            <span class="inline-flex items-center gap-1.5"><Building class="w-3.5 h-3.5 text-ui-faint" />{{ team?.department || "N/A" }}</span>
+            <span class="inline-flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />{{ team?.created_at ? formatDateUtil(team.created_at) : "N/A" }}</span>
           </div>
         </div>
       </div>
 
       <!-- Team Statistics -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div
-          class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-brand-dark text-base font-medium">
-                Active Members
-              </p>
-              <p
-                class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
-              >
-                {{ activeMembers }}
-              </p>
-              <p class="text-success text-base font-medium">
-                {{ activeMembersStatus }}
-              </p>
-            </div>
-            <div
-              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Users class="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-        <div
-          class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-brand-dark text-base font-medium">
-                Projects Assigned
-              </p>
-              <p
-                class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
-              >
-                {{ projects?.length || 0 }}
-              </p>
-              <p class="text-success text-base font-medium">Active projects</p>
-            </div>
-            <div
-              class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Folder class="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        <div
-          class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-brand-dark text-base font-medium">Expected Size</p>
-              <p
-                class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight my-2"
-              >
-                {{ team?.expected_size || 0 }}
-              </p>
-              <p class="text-success text-base font-medium">Team capacity</p>
-            </div>
-            <div
-              class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
-            >
-              <TrendingUp class="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-        <div
-          class="bg-white border border-[#DCDEDD] rounded-[14px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-5"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-brand-dark text-base font-medium">Team Lead</p>
-              <p
-                class="text-brand-dark text-lg sm:text-xl font-extrabold leading-tight my-2"
-              >
-                {{ team?.leader?.name || "N/A" }}
-              </p>
-              <p class="text-success text-base font-medium">Leader</p>
-            </div>
-            <div
-              class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
-            >
-              <User class="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-        </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 ui-stagger">
+        <UiStat label="Active Members" :icon="Users" :value="activeMembers" :hint="activeMembersStatus" />
+        <UiStat label="Projects Assigned" :icon="Folder" :value="projects?.length || 0" hint="Active projects" />
+        <UiStat label="Expected Size" :icon="TrendingUp" :value="team?.expected_size || 0" hint="Team capacity" />
+        <UiStat label="Team Lead" :icon="User" hint="Leader">
+          <span class="text-ui-h2">{{ team?.leader?.name || "N/A" }}</span>
+        </UiStat>
       </div>
 
-      <!-- Tab Navigation -->
-      <div class="relative mb-6">
-      <div
-        ref="tabScrollRef"
-        @scroll="updateTabFade"
-        class="bg-white border border-[#DCDEDD] rounded-[12px] p-2 sm:p-6 overflow-x-auto"
-      >
-        <div class="flex items-center gap-2 min-w-max sm:min-w-0">
-          <button
-            @click="activeTab = 'members'"
-            :class="
-              activeTab === 'members'
-                ? 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-sm sm:text-base transition-all duration-300 whitespace-nowrap'
-                : 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] border border-[#DCDEDD] bg-white text-brand-dark font-medium text-sm sm:text-base hover:border-[#0C51D9] hover:border-2 transition-all duration-300 whitespace-nowrap'
-            "
-          >
-            <Users class="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" />
-            Members
-          </button>
-          <button
-            @click="activeTab = 'projects'"
-            :class="
-              activeTab === 'projects'
-                ? 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-sm sm:text-base transition-all duration-300 whitespace-nowrap'
-                : 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] border border-[#DCDEDD] bg-white text-brand-dark font-medium text-sm sm:text-base hover:border-[#0C51D9] hover:border-2 transition-all duration-300 whitespace-nowrap'
-            "
-          >
-            <Folder class="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" />
-            Projects
-          </button>
-          <button
-            @click="activeTab = 'description'"
-            :class="
-              activeTab === 'description'
-                ? 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-sm sm:text-base transition-all duration-300 whitespace-nowrap'
-                : 'px-4 sm:px-6 py-2.5 sm:py-3 rounded-[12px] border border-[#DCDEDD] bg-white text-brand-dark font-medium text-sm sm:text-base hover:border-[#0C51D9] hover:border-2 transition-all duration-300 whitespace-nowrap'
-            "
-          >
-            <FileText class="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" />
-            Description
-          </button>
-        </div>
-      </div>
-      <Transition name="fade">
+      <!-- Tab Navigation: underline on desktop, scrolling chips on phones -->
+      <div class="relative mb-5 sm:mb-6">
         <div
-          v-if="showTabRightFade"
-          class="sm:hidden pointer-events-none absolute inset-y-0 right-0 w-10 rounded-r-[12px] bg-gradient-to-l from-white via-white/80 to-transparent flex items-center justify-end pr-1"
+          ref="tabScrollRef"
+          @scroll="updateTabFade"
+          class="overflow-x-auto [scrollbar-width:none] sm:border-b sm:border-ui-line"
         >
-          <ChevronRight class="w-4 h-4 text-[#0C51D9] scroll-hint-nudge" />
+          <div class="flex items-center gap-1.5 sm:gap-6 min-w-max" role="tablist">
+            <button
+              v-for="tab in teamTabs"
+              :key="tab.id"
+              type="button"
+              role="tab"
+              :aria-selected="activeTab === tab.id"
+              @click="activeTab = tab.id"
+              :class="[
+                'ui-press shrink-0 inline-flex items-center gap-2 whitespace-nowrap font-medium focus:outline-none focus-visible:shadow-ui-focus',
+                'h-8 px-3 rounded-full border text-ui-small',
+                'sm:h-auto sm:px-0.5 sm:pt-1 sm:pb-3 sm:rounded-none sm:border-0 sm:border-b-2 sm:-mb-px sm:text-ui-body',
+                activeTab === tab.id
+                  ? 'bg-ui-ink text-white border-ui-ink sm:bg-transparent sm:text-ui-ink sm:border-ui-ink'
+                  : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover sm:bg-transparent sm:text-ui-muted sm:border-transparent sm:hover:bg-transparent sm:hover:text-ui-ink',
+              ]"
+            >
+              <component :is="tab.icon" class="w-4 h-4 hidden sm:block" />
+              {{ tab.label }}
+              <span v-if="tab.id === 'members'" class="tabular-nums text-ui-cap" :class="activeTab === tab.id ? 'text-white/70 sm:text-ui-muted' : 'text-ui-faint'">{{ members?.length || 0 }}</span>
+              <span v-else-if="tab.id === 'projects'" class="tabular-nums text-ui-cap" :class="activeTab === tab.id ? 'text-white/70 sm:text-ui-muted' : 'text-ui-faint'">{{ projects?.length || 0 }}</span>
+            </button>
+          </div>
         </div>
-      </Transition>
-      <Transition name="fade">
-        <div
-          v-if="showTabLeftFade"
-          class="sm:hidden pointer-events-none absolute inset-y-0 left-0 w-8 rounded-l-[12px] bg-gradient-to-r from-white via-white/80 to-transparent"
-        ></div>
-      </Transition>
+        <Transition name="ui-fade">
+          <div v-if="showTabRightFade" class="sm:hidden pointer-events-none absolute inset-y-0 right-0 flex items-center">
+            <span class="w-7 h-7 rounded-full bg-ui-surface border border-ui-line shadow-ui-raised flex items-center justify-center">
+              <ChevronRight class="w-4 h-4 text-ui-accent scroll-hint-nudge" />
+            </span>
+          </div>
+        </Transition>
       </div>
 
       <!-- Team Members Section -->
-      <div
-        v-if="activeTab === 'members'"
-        class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-6 mb-6"
-      >
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div
-              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Users class="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">Team Members</h3>
-              <p class="text-brand-light text-sm">Current team composition</p>
-            </div>
-          </div>
+      <section v-if="activeTab === 'members'" class="mb-6">
+        <div class="mb-4">
+          <h3 class="text-ui-h2 text-ui-ink">Team Members</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">Current team composition</p>
         </div>
 
-        <!-- Members Grid -->
         <SkeletonCardGrid
           v-if="loadingMembers"
           :count="4"
@@ -350,51 +215,35 @@ onMounted(() => {
         />
         <div
           v-else
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 ui-stagger"
         >
           <div
             v-for="member in members"
             :key="member.id"
-            class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-4"
+            class="ui-lift bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-[18px] min-w-0"
           >
-            <div class="flex flex-col items-center mb-3">
-              <div class="relative">
-                <Avatar
-                  :src="member.employee?.user?.profile_photo"
-                  :alt="member.employee?.user?.name"
-                  size="w-[100px] h-[100px] mb-3"
-                  icon-size="w-8 h-8"
-                />
-                <span
-                  class="absolute bottom-2 left-1/2 transform -translate-x-1/2 px-2 py-1 rounded-md text-xs font-semibold whitespace-nowrap"
-                  :class="getMemberStatusClass(member)"
-                >
-                  {{ getMemberStatus(member) }}
-                </span>
+            <div class="flex items-center gap-3">
+              <Avatar
+                :src="member.employee?.user?.profile_photo"
+                :alt="member.employee?.user?.name"
+                size="w-10 h-10"
+                icon-size="w-5 h-5"
+              />
+              <div class="min-w-0 flex-1">
+                <h4 class="text-ui-h3 text-ui-ink truncate">{{ member.employee?.user?.name || "N/A" }}</h4>
+                <p class="text-ui-cap text-ui-muted truncate">{{ member.employee?.jobInformation?.job_title || "N/A" }}</p>
               </div>
+              <UiBadge :tone="memberStatusTone(member)" dot class="shrink-0">{{ getMemberStatus(member) }}</UiBadge>
             </div>
-            <div class="text-center mb-3">
-              <h4 class="text-brand-dark text-lg font-bold">
-                {{ member.employee?.user?.name || "N/A" }}
-              </h4>
-              <p class="text-brand-light text-base">
-                {{ member.employee?.jobInformation?.job_title || "N/A" }}
-              </p>
-            </div>
-            <div class="space-y-1 mb-3">
-              <div class="flex items-center gap-2 text-sm text-gray-500">
-                <Calendar class="w-4 h-4" />
-                <span>{{ member.joined_at ? `Joined ${formatDateUtil(member.joined_at)}` : "N/A" }}</span>
-              </div>
-              <div class="flex items-center gap-2 text-sm text-gray-500">
-                <Clock class="w-4 h-4" />
-                <span
-                  >{{
-                    member.employee?.jobInformation?.years_experience || 0
-                  }}
-                  years experience</span
-                >
-              </div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-4 pt-3 border-t border-ui-line text-ui-cap text-ui-muted">
+              <span class="inline-flex items-center gap-1.5">
+                <Calendar class="w-3.5 h-3.5 text-ui-faint" />
+                {{ member.joined_at ? `Joined ${formatDateUtil(member.joined_at)}` : "N/A" }}
+              </span>
+              <span class="inline-flex items-center gap-1.5">
+                <Clock class="w-3.5 h-3.5 text-ui-faint" />
+                {{ member.employee?.jobInformation?.years_experience || 0 }} years experience
+              </span>
             </div>
           </div>
         </div>
@@ -402,43 +251,22 @@ onMounted(() => {
         <!-- Empty State -->
         <div
           v-if="!loadingMembers && (!members || members.length === 0)"
-          class="text-center py-12"
+          class="bg-ui-surface border border-ui-line rounded-ui-card"
         >
-          <Users class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p class="text-gray-500 text-lg font-medium">No team members</p>
-          <p class="text-gray-400 text-sm">Team members will appear here</p>
+          <UiEmpty :icon="Users" title="No team members" message="Team members will appear here" />
         </div>
-      </div>
+      </section>
 
       <!-- Projects Section -->
-      <div
-        v-if="activeTab === 'projects'"
-        class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-6 mb-6"
-      >
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div
-              class="w-12 h-12 bg-purple-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Folder class="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-lg font-bold">Team Projects</h3>
-              <p class="text-brand-light text-sm">
-                Projects assigned to {{ team?.name }}
-              </p>
-            </div>
+      <section v-if="activeTab === 'projects'" class="mb-6">
+        <div class="flex items-start justify-between gap-3 mb-4">
+          <div class="min-w-0">
+            <h3 class="text-ui-h2 text-ui-ink">Team Projects</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">Projects assigned to {{ team?.name }}</p>
           </div>
-          <div class="flex items-center gap-2">
-            <span
-              class="px-3 py-1 rounded-md text-sm font-semibold bg-[#EBF8FF] text-[#1E40AF]"
-            >
-              {{ projects?.length || 0 }} Projects
-            </span>
-          </div>
+          <UiBadge tone="outline" class="shrink-0">{{ projects?.length || 0 }} Projects</UiBadge>
         </div>
 
-        <!-- Projects Grid -->
         <SkeletonCardGrid
           v-if="loadingProjects"
           :count="4"
@@ -446,7 +274,7 @@ onMounted(() => {
         />
         <div
           v-else
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 ui-stagger"
         >
           <CardList
             v-for="project in projects"
@@ -458,74 +286,37 @@ onMounted(() => {
         <!-- Empty State -->
         <div
           v-if="!loadingProjects && (!projects || projects.length === 0)"
-          class="text-center py-12"
+          class="bg-ui-surface border border-ui-line rounded-ui-card"
         >
-          <Folder class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p class="text-gray-500 text-lg font-medium">No projects assigned</p>
-          <p class="text-gray-400 text-sm">
-            Projects assigned to your team will appear here
-          </p>
+          <UiEmpty :icon="Folder" title="No projects assigned" message="Projects assigned to your team will appear here" />
         </div>
-      </div>
+      </section>
 
       <!-- Description Section -->
-      <div
-        v-if="activeTab === 'description'"
-        class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 sm:p-6 mb-6"
-      >
-        <div class="flex items-center gap-3 mb-6">
-          <div
-            class="w-12 h-12 bg-orange-50 rounded-[12px] flex items-center justify-center"
-          >
-            <FileText class="w-6 h-6 text-orange-600" />
-          </div>
+      <UiCard v-if="activeTab === 'description'" title="Team Description" subtitle="Team overview and details" class="mb-6 ui-anim-fade-up">
+        <div class="space-y-5">
           <div>
-            <h3 class="text-brand-dark text-lg font-bold">Team Description</h3>
-            <p class="text-brand-light text-sm">Team overview and details</p>
-          </div>
-        </div>
-
-        <div class="space-y-4">
-          <div>
-            <h4 class="text-brand-dark text-base font-semibold mb-2">
-              Description
-            </h4>
-            <p class="text-gray-600 text-base leading-relaxed">
+            <h4 class="text-ui-h3 text-ui-ink mb-1.5">Description</h4>
+            <p class="text-ui-body text-ui-text leading-relaxed">
               {{ team?.description || "No description available" }}
             </p>
           </div>
 
           <div v-if="team?.responsibilities?.length">
-            <h4 class="text-brand-dark text-base font-semibold mb-2">
-              Responsibilities
-            </h4>
+            <h4 class="text-ui-h3 text-ui-ink mb-2">Responsibilities</h4>
             <ul class="space-y-2">
               <li
                 v-for="(responsibility, index) in team.responsibilities"
                 :key="index"
-                class="flex items-start gap-2 text-gray-600"
+                class="flex items-start gap-2.5 text-ui-body text-ui-text"
               >
-                <CheckCircle
-                  class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0"
-                />
+                <CheckCircle class="w-4 h-4 text-ui-ok mt-0.5 shrink-0" />
                 <span>{{ responsibility }}</span>
               </li>
             </ul>
           </div>
         </div>
-      </div>
-      </template>
-    </main>
+      </UiCard>
+    </div>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

@@ -14,7 +14,6 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardList,
-  X,
   AlertTriangle,
   CalendarClock,
   CalendarRange,
@@ -22,8 +21,8 @@ import {
   CheckCircle2,
   Inbox,
 } from "lucide-vue-next";
-import Skeleton from "@/components/common/skeleton/Skeleton.vue";
-import { getPriorityColor } from "@/utils/styleHelpers";
+import { UiBadge, UiButton, UiChips, UiEmpty, UiInput, UiModal, UiPageHeader, UiSelect, UiStat } from "@/components/ui";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import StaffTaskComments from "@/components/admin/documents/StaffTaskComments.vue";
 import MyTasksRecap from "@/components/employee/MyTasksRecap.vue";
 
@@ -49,20 +48,22 @@ const STATUS_OPTIONS = [
 ];
 const STAFF_TASK_STATUS_OPTIONS = STATUS_OPTIONS.filter((o) => ["todo", "in_progress", "done"].includes(o.value));
 
+// Presentation only: status -> token colours (the select always shows the label).
 const STATUS_CLASS = {
-  todo: "bg-gray-100 text-gray-600",
-  in_progress: "bg-[#FEF3C7] text-[#D97706]",
-  review: "bg-[#EBF8FF] text-[#1E40AF]",
-  done: "bg-[#F0FDF4] text-[#166534]",
-  cancelled: "bg-slate-100 text-slate-600",
+  todo: "bg-ui-subtle text-ui-text",
+  in_progress: "bg-ui-warn-soft text-ui-warn",
+  review: "bg-ui-info-soft text-ui-info",
+  done: "bg-ui-ok-soft text-ui-ok",
+  cancelled: "bg-ui-subtle text-ui-muted",
 };
 const STATUS_DOT = {
-  todo: "bg-gray-400",
-  in_progress: "bg-amber-500",
-  review: "bg-blue-500",
-  done: "bg-green-500",
-  cancelled: "bg-slate-400",
+  todo: "bg-ui-faint",
+  in_progress: "bg-ui-warn",
+  review: "bg-ui-info",
+  done: "bg-ui-ok",
+  cancelled: "bg-ui-line-strong",
 };
+const PRIORITY_TONE = { urgent: "bad", high: "warn", medium: "info", low: "neutral" };
 const PRIORITY_RANK = { urgent: 0, high: 1, medium: 2, low: 3 };
 
 // Card previews show plain text -- raw HTML inside a clamped line looks broken.
@@ -118,12 +119,12 @@ const bucketOf = (item) => {
 };
 
 const BUCKETS = [
-  { key: "overdue", label: "Overdue", icon: AlertTriangle, tone: "text-red-600" },
-  { key: "today", label: "Due today", icon: CalendarClock, tone: "text-amber-600" },
-  { key: "week", label: "Next 7 days", icon: CalendarRange, tone: "text-[#0C51D9]" },
-  { key: "later", label: "Later", icon: Calendar, tone: "text-brand-light" },
-  { key: "nodate", label: "No due date", icon: CircleDot, tone: "text-brand-light" },
-  { key: "completed", label: "Completed", icon: CheckCircle2, tone: "text-green-600" },
+  { key: "overdue", label: "Overdue", icon: AlertTriangle, tone: "text-ui-bad" },
+  { key: "today", label: "Due today", icon: CalendarClock, tone: "text-ui-warn" },
+  { key: "week", label: "Next 7 days", icon: CalendarRange, tone: "text-ui-accent" },
+  { key: "later", label: "Later", icon: Calendar, tone: "text-ui-muted" },
+  { key: "nodate", label: "No due date", icon: CircleDot, tone: "text-ui-muted" },
+  { key: "completed", label: "Completed", icon: CheckCircle2, tone: "text-ui-ok" },
 ];
 
 // ----- Filters -----
@@ -179,13 +180,20 @@ const groups = computed(() =>
 const summary = computed(() => {
   const by = (key) => items.value.filter((i) => bucketOf(i) === key).length;
   return [
-    { key: "overdue", label: "Overdue", short: "Overdue", value: by("overdue"), icon: AlertTriangle, class: "text-red-600 bg-red-50" },
-    { key: "today", label: "Due today", short: "Today", value: by("today"), icon: CalendarClock, class: "text-amber-600 bg-amber-50" },
-    { key: "week", label: "Next 7 days", short: "7 days", value: by("week"), icon: CalendarRange, class: "text-[#0C51D9] bg-blue-50" },
-    { key: "open", label: "Open", short: "Open", value: items.value.filter((i) => !isClosed(i)).length, icon: ListChecks, class: "text-indigo-600 bg-indigo-50" },
-    { key: "completed", label: "Completed", short: "Done", value: by("completed"), icon: CheckCircle2, class: "text-green-600 bg-green-50" },
+    { key: "overdue", label: "Overdue", short: "Overdue", value: by("overdue"), icon: AlertTriangle, tone: "bad" },
+    { key: "today", label: "Due today", short: "Today", value: by("today"), icon: CalendarClock, tone: "warn" },
+    { key: "week", label: "Next 7 days", short: "7 days", value: by("week"), icon: CalendarRange, tone: "" },
+    { key: "open", label: "Open", short: "Open", value: items.value.filter((i) => !isClosed(i)).length, icon: ListChecks, tone: "" },
+    { key: "completed", label: "Completed", short: "Done", value: by("completed"), icon: CheckCircle2, tone: "" },
   ];
 });
+
+// Presentation only: source tabs as filter chips with counts.
+const sourceTabs = computed(() => [
+  { value: "all", label: "All", count: counts.value.all },
+  { value: "assigned", label: "Assigned", count: counts.value.assigned },
+  { value: "project", label: "Project", count: counts.value.project },
+]);
 
 const showCompleted = ref(false);
 const initialLoading = computed(
@@ -271,195 +279,146 @@ onMounted(async () => {
 
 <template>
   <!-- The admin layout already pads the page, so phones get little extra. -->
-  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
-    <!-- Header + summary -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3 sm:p-5 mb-4">
-      <div class="flex items-center gap-3 mb-3 sm:mb-4">
-        <div class="w-10 h-10 bg-orange-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <ListChecks class="w-5 h-5 text-orange-600" />
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-brand-dark text-base font-bold">Task Collection (Assigned/Project)</h3>
-          <p class="text-brand-light text-xs">Your project tasks and the tasks your supervisor assigned you, sorted by what's due first.</p>
-        </div>
-      </div>
+  <div class="sm:px-3 sm:py-3 space-y-5 ui-anim-fade-up">
+    <UiPageHeader
+      title="Task Collection (Assigned/Project)"
+      subtitle="Your project tasks and the tasks your supervisor assigned you, sorted by what's due first."
+    />
 
-      <!-- Five across at every width: compact number-over-label tiles on
-           phones, icon tiles from sm up. -->
-      <div class="grid grid-cols-5 gap-1.5 sm:gap-2.5">
-        <div
-          v-for="s in summary"
-          :key="s.key"
-          class="bg-white border border-[#DCDEDD] rounded-[10px] sm:rounded-[12px] px-1 py-2 sm:px-3.5 sm:py-3 flex flex-col sm:flex-row items-center sm:items-center gap-0.5 sm:gap-3 text-center sm:text-left min-w-0"
-        >
-          <div class="hidden sm:flex w-9 h-9 rounded-[10px] items-center justify-center shrink-0" :class="s.class">
-            <component :is="s.icon" class="w-4 h-4" />
-          </div>
-          <div class="min-w-0 w-full sm:w-auto flex flex-col-reverse sm:flex-col">
-            <p class="text-brand-light text-[10px] sm:text-xs font-medium truncate">
-              <span class="sm:hidden">{{ s.short }}</span><span class="hidden sm:inline">{{ s.label }}</span>
-            </p>
-            <Skeleton v-if="initialLoading" width="24px" height="20px" rounded="4px" class="mx-auto sm:mx-0" />
-            <p v-else class="text-lg sm:text-xl font-extrabold leading-tight" :class="s.key === 'overdue' && s.value ? 'text-red-600' : 'text-brand-dark'">{{ s.value }}</p>
-          </div>
-        </div>
-      </div>
+    <!-- Summary: scrolls sideways on phones, five across on desktop. -->
+    <div class="flex gap-3 overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] lg:grid lg:grid-cols-5 ui-stagger">
+      <UiStat
+        v-for="s in summary"
+        :key="s.key"
+        class="w-[150px] shrink-0 lg:w-auto"
+        :label="s.label"
+        :value="s.value"
+        :icon="s.icon"
+        :tone="s.value ? s.tone : ''"
+        :loading="initialLoading"
+      />
     </div>
 
     <MyTasksRecap :items="items" :loading="initialLoading" />
 
     <!-- Toolbar -->
-    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5 sm:gap-3 mb-4">
-      <div class="grid grid-cols-3 sm:flex bg-gray-100 rounded-[10px] p-1 shrink-0 w-full sm:w-auto sm:self-start">
-        <button
-          v-for="t in [
-            { key: 'all', label: 'All', icon: ListChecks },
-            { key: 'assigned', label: 'Assigned', icon: ClipboardList },
-            { key: 'project', label: 'Project', icon: Folder },
-          ]"
-          :key="t.key"
-          type="button"
-          class="px-2 sm:px-3 py-1.5 rounded-[8px] text-[13px] sm:text-sm font-semibold inline-flex items-center justify-center gap-1 sm:gap-1.5 transition-colors min-w-0"
-          :class="sourceTab === t.key ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-light hover:text-brand-dark'"
-          @click="sourceTab = t.key"
-        >
-          <component :is="t.icon" class="w-4 h-4 shrink-0 hidden sm:block" />
-          <span class="truncate">{{ t.label }}</span>
-          <span class="text-[11px] sm:text-xs font-semibold px-1.5 rounded-full shrink-0" :class="sourceTab === t.key ? 'bg-blue-50 text-[#0C51D9]' : 'bg-gray-200 text-gray-500'">{{ counts[t.key] }}</span>
-        </button>
-      </div>
-
-      <div class="relative flex-1 min-w-0">
-        <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search tasks, projects or who assigned it..."
-          class="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] focus:border-[#0C51D9] focus:outline-none transition-colors font-medium"
+    <div class="bg-ui-surface border border-ui-line rounded-ui-card p-3 sm:p-4 flex flex-col xl:flex-row xl:items-center gap-3">
+      <UiChips v-model="sourceTab" :options="sourceTabs" class="shrink-0" />
+      <UiInput
+        v-model="searchQuery"
+        :icon="Search"
+        placeholder="Search tasks, projects or who assigned it..."
+        class="flex-1"
+      />
+      <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 shrink-0">
+        <UiSelect
+          v-if="sourceTab !== 'assigned' && projects.length"
+          v-model="projectFilter"
+          :options="[{ value: '', label: 'All Projects' }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))]"
+          class="sm:w-[180px]"
+          aria-label="Project"
         />
-      </div>
-
-      <div class="grid grid-cols-2 sm:flex items-center gap-2">
-        <div v-if="sourceTab !== 'assigned' && projects.length" class="relative min-w-0">
-          <select v-model="projectFilter" class="select-soft w-full sm:max-w-[180px]">
-            <option value="">All Projects</option>
-            <option v-for="p in projects" :key="p.id ?? 'none'" :value="String(p.id)">{{ p.name }}</option>
-          </select>
-          <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-        <div class="relative min-w-0" :class="{ 'col-span-2': sourceTab === 'assigned' || !projects.length }">
-          <select v-model="statusFilter" class="select-soft w-full">
-            <option value="">All Status</option>
-            <option v-for="opt in STATUS_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-          </select>
-          <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-        <button
-          v-if="hasActiveFilters"
-          type="button"
-          @click="clearFilters"
-          class="col-span-2 sm:col-span-1 px-3 py-2 sm:py-2.5 rounded-[10px] text-xs font-semibold text-gray-500 hover:text-[#0C51D9] hover:bg-gray-50 transition-colors shrink-0"
-        >
+        <UiSelect
+          v-model="statusFilter"
+          :options="[{ value: '', label: 'All Status' }, ...STATUS_OPTIONS]"
+          :class="sourceTab === 'assigned' || !projects.length ? 'col-span-2 sm:w-[160px]' : 'sm:w-[160px]'"
+          aria-label="Status"
+        />
+        <UiButton v-if="hasActiveFilters" variant="ghost" size="sm" class="col-span-2 sm:col-span-1" @click="clearFilters">
           Clear filters
-        </button>
+        </UiButton>
       </div>
     </div>
 
     <!-- Loading -->
-    <div v-if="initialLoading" class="space-y-3">
-      <Skeleton v-for="i in 4" :key="i" height="72px" rounded="12px" />
-    </div>
+    <SkeletonList v-if="initialLoading" :rows="4" />
 
     <!-- Empty -->
-    <div
-      v-else-if="!groups.length"
-      class="flex flex-col items-center justify-center text-center py-14 rounded-[14px] border border-dashed border-[#DCDEDD] bg-gray-50/60"
-    >
-      <template v-if="hasActiveFilters || sourceTab !== 'all'">
-        <SearchX class="w-10 h-10 text-gray-300 mb-3" />
-        <h4 class="text-brand-dark text-sm font-semibold mb-1">No tasks match your filters</h4>
-        <p class="text-brand-light text-xs mb-4">Try another search, status, project or tab</p>
-        <button
-          type="button"
-          @click="clearFilters(), (sourceTab = 'all')"
-          class="px-4 py-2 rounded-[8px] border border-[#DCDEDD] text-xs font-semibold text-brand-dark hover:border-[#0C51D9] hover:bg-white transition-colors"
-        >
-          Show all tasks
-        </button>
-      </template>
-      <template v-else>
-        <Inbox class="w-10 h-10 text-gray-300 mb-3" />
-        <h4 class="text-brand-dark text-sm font-semibold mb-1">No tasks yet</h4>
-        <p class="text-brand-light text-xs">Tasks from your projects and from your supervisor will show up here.</p>
-      </template>
+    <div v-else-if="!groups.length" class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty
+        v-if="hasActiveFilters || sourceTab !== 'all'"
+        :icon="SearchX"
+        title="No tasks match your filters"
+        message="Try another search, status, project or tab"
+      >
+        <UiButton variant="secondary" size="sm" @click="clearFilters(), (sourceTab = 'all')">Show all tasks</UiButton>
+      </UiEmpty>
+      <UiEmpty
+        v-else
+        :icon="Inbox"
+        title="No tasks yet"
+        message="Tasks from your projects and from your supervisor will show up here."
+      />
     </div>
 
     <!-- Grouped by urgency -->
-    <div v-else class="space-y-4">
-      <section v-for="group in groups" :key="group.key" class="bg-white border border-[#DCDEDD] rounded-[14px] overflow-hidden">
+    <div v-else class="space-y-4 ui-stagger">
+      <section v-for="group in groups" :key="group.key" class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden">
         <button
           type="button"
-          class="w-full flex items-center gap-2 px-3 sm:px-4 py-3 bg-slate-50 border-b border-[#EEF1F5] text-left"
-          :class="{ 'cursor-pointer hover:bg-slate-100': group.key === 'completed', 'cursor-default': group.key !== 'completed', '!border-b-0': group.key === 'completed' && !showCompleted }"
+          class="w-full flex items-center gap-2 px-4 h-12 text-left border-b border-ui-line"
+          :class="{
+            'cursor-pointer hover:bg-ui-hover': group.key === 'completed',
+            'cursor-default': group.key !== 'completed',
+            '!border-b-0': group.key === 'completed' && !showCompleted,
+          }"
+          :aria-expanded="group.key === 'completed' ? showCompleted : undefined"
           @click="group.key === 'completed' && (showCompleted = !showCompleted)"
         >
           <component :is="group.icon" class="w-4 h-4 shrink-0" :class="group.tone" />
-          <h4 class="text-brand-dark text-sm font-bold">{{ group.label }}</h4>
-          <span class="text-xs font-semibold text-gray-500 bg-white border border-[#EEF1F5] rounded-full px-2">{{ group.items.length }}</span>
+          <h2 class="text-ui-h3 text-ui-ink">{{ group.label }}</h2>
+          <span class="text-ui-cap text-ui-muted tabular-nums">{{ group.items.length }}</span>
           <ChevronRight
             v-if="group.key === 'completed'"
-            class="w-4 h-4 text-gray-400 ml-auto transition-transform"
+            class="w-4 h-4 text-ui-faint ml-auto transition-transform duration-ui-base"
             :class="{ 'rotate-90': showCompleted }"
           />
         </button>
 
-        <ul v-if="group.key !== 'completed' || showCompleted" class="divide-y divide-[#F1F1F1]">
+        <ul v-if="group.key !== 'completed' || showCompleted" class="divide-y divide-ui-line">
           <li
             v-for="item in group.items"
             :key="item.uid"
-            class="px-3 sm:px-4 py-3 flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2 hover:bg-slate-50 transition-colors"
+            class="px-4 py-3.5 flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2 transition-colors hover:bg-ui-hover/60 active:bg-ui-hover"
             :class="item.source === 'project' && !item.projectId ? 'cursor-default' : 'cursor-pointer'"
             @click="openItem(item)"
           >
-            <span class="mt-1.5 w-2 h-2 rounded-full shrink-0" :class="STATUS_DOT[item.status] || 'bg-gray-300'"></span>
+            <span class="mt-[7px] w-2 h-2 rounded-full shrink-0" :class="STATUS_DOT[item.status] || 'bg-ui-faint'" aria-hidden="true"></span>
 
             <div class="flex-1 min-w-0 basis-[calc(100%-1.25rem)] sm:basis-auto">
-              <p class="text-brand-dark text-sm font-semibold leading-snug break-words" :class="{ 'line-through text-gray-400': isClosed(item) }">
+              <p
+                class="text-ui-body font-medium leading-snug break-words"
+                :class="isClosed(item) ? 'line-through text-ui-faint' : 'text-ui-ink'"
+              >
                 {{ item.title }}
               </p>
-              <p v-if="item.description" class="text-brand-light text-xs mt-0.5 line-clamp-1">{{ item.description }}</p>
-              <div class="flex items-center gap-1.5 flex-wrap mt-1.5 text-xs">
-                <span
-                  v-if="item.source === 'project'"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-medium max-w-full sm:max-w-[220px]"
-                >
+              <p v-if="item.description" class="text-ui-cap text-ui-muted mt-0.5 line-clamp-1">{{ item.description }}</p>
+              <div class="flex items-center gap-1.5 flex-wrap mt-2">
+                <UiBadge v-if="item.source === 'project'" tone="outline" class="max-w-full sm:max-w-[240px]">
                   <Folder class="w-3 h-3 shrink-0" /><span class="truncate">{{ item.projectName }}</span>
-                </span>
-                <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-medium max-w-full sm:max-w-[220px]">
+                </UiBadge>
+                <UiBadge v-else tone="neutral" class="max-w-full sm:max-w-[240px]">
                   <ClipboardList class="w-3 h-3 shrink-0" /><span class="truncate">Assigned{{ item.creatorName ? ` by ${item.creatorName}` : "" }}</span>
-                </span>
-                <span v-if="item.priority" :class="getPriorityColor(item.priority)" class="px-2 py-0.5 rounded-md font-semibold capitalize">
+                </UiBadge>
+                <UiBadge v-if="item.priority" :tone="PRIORITY_TONE[item.priority] || 'neutral'" class="capitalize">
                   {{ item.priority }}
-                </span>
-                <span
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium"
-                  :class="group.key === 'overdue' ? 'bg-red-50 text-red-600' : group.key === 'today' ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-500'"
-                >
+                </UiBadge>
+                <UiBadge :tone="group.key === 'overdue' ? 'bad' : group.key === 'today' ? 'warn' : 'outline'">
                   <AlertTriangle v-if="group.key === 'overdue'" class="w-3 h-3" />
                   <Calendar v-else class="w-3 h-3" />
                   {{ dueLabel(item) }}
-                </span>
+                </UiBadge>
               </div>
             </div>
 
-            <!-- Status: compact colored select, doubles as the status badge.
+            <!-- Status: compact select that doubles as the status badge.
                  Below the title on phones so the title keeps the full width. -->
             <div class="relative inline-block shrink-0 ml-5 sm:ml-0" @click.stop>
               <select
                 :value="item.status"
                 :disabled="updatingUid === item.uid"
                 :class="STATUS_CLASS[item.status]"
-                class="status-select-badge"
+                class="appearance-none h-7 pl-2.5 pr-7 rounded-full text-ui-cap font-medium border border-transparent cursor-pointer transition-shadow focus:outline-none focus:shadow-ui-focus disabled:opacity-50 disabled:cursor-wait"
                 :aria-label="`Status of ${item.title}`"
                 @change="changeStatus(item, $event)"
               >
@@ -467,92 +426,56 @@ onMounted(async () => {
                   {{ opt.label }}
                 </option>
               </select>
-              <ChevronDown class="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-current opacity-60 pointer-events-none" />
+              <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-current opacity-60 pointer-events-none" :class="STATUS_CLASS[item.status]?.split(' ')[1]" />
             </div>
           </li>
         </ul>
       </section>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- ASSIGNED TASK DETAIL MODAL -->
-    <!-- ========================================================= -->
-    <div
-      v-if="showStaffTaskDetail"
-      class="fixed inset-0 backdrop-blur-sm bg-black/20 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-      @click.self="closeStaffTaskDetail"
-    >
-      <div
-        class="bg-white rounded-t-[16px] sm:rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[88vh] sm:max-h-[90vh] overflow-y-auto"
-      >
-        <!-- Modal Header -->
+    <!-- Assigned task detail (with comments) -->
+    <UiModal :open="showStaffTaskDetail" size="lg" @close="closeStaffTaskDetail">
+      <template #header>
+        <div class="flex-1 min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink break-words">{{ detailStaffTask?.title }}</h2>
+          <p class="text-ui-small text-ui-muted mt-0.5">
+            Due {{ formatDate(detailStaffTask?.due_date) }} • by
+            {{ detailStaffTask?.creator?.name }}
+          </p>
+        </div>
+      </template>
+
+      <div v-if="detailStaffTask" class="space-y-5">
         <div
-          class="p-4 sm:p-5 border-b border-[#DCDEDD] flex items-start justify-between gap-3 sticky top-0 bg-white z-10"
-        >
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-base font-bold break-words">
-              {{ detailStaffTask?.title }}
-            </h3>
+          v-if="detailStaffTask.description"
+          class="rich-text-content text-ui-body text-ui-text"
+          v-html="detailStaffTask.description"
+        ></div>
 
-            <p class="text-brand-light text-xs mt-0.5">
-              Due {{ formatDate(detailStaffTask?.due_date) }} • by
-              {{ detailStaffTask?.creator?.name }}
-            </p>
+        <div class="sm:max-w-[240px]">
+          <label for="my-task-detail-status" class="block text-ui-small font-medium text-ui-ink mb-1.5">Your Status</label>
+          <div class="relative">
+            <select
+              id="my-task-detail-status"
+              :value="detailStaffTask.my_assignment?.status"
+              class="w-full h-[38px] pl-3 pr-9 appearance-none bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+              @change="handleStaffTaskStatusChange(detailStaffTask, $event)"
+            >
+              <option v-for="opt in STAFF_TASK_STATUS_OPTIONS" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+            <ChevronDown class="absolute right-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
           </div>
-
-          <button
-            @click="closeStaffTaskDetail"
-            class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] shrink-0"
-          >
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
         </div>
 
-        <!-- Modal Body -->
-        <div class="p-4 sm:p-5 space-y-5">
-          <!-- Description -->
-          <div
-            v-if="detailStaffTask?.description"
-            class="rich-text-content text-sm text-brand-dark leading-relaxed"
-            v-html="detailStaffTask.description"
-          ></div>
-
-          <!-- Status -->
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1.5 block">
-              Your Status
-            </label>
-
-            <div class="relative">
-              <select
-                :value="detailStaffTask?.my_assignment?.status"
-                @change="handleStaffTaskStatusChange(detailStaffTask, $event)"
-                class="select-soft"
-              >
-                <option
-                  v-for="opt in STAFF_TASK_STATUS_OPTIONS"
-                  :key="opt.value"
-                  :value="opt.value"
-                >
-                  {{ opt.label }}
-                </option>
-              </select>
-
-              <ChevronDown
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-              />
-            </div>
-          </div>
-
-          <!-- Comments -->
-          <StaffTaskComments
-            :staff-task-id="detailStaffTask.id"
-            :assignees="staffTaskCommentAssignees"
-            :can-comment="true"
-          />
-        </div>
+        <StaffTaskComments
+          :staff-task-id="detailStaffTask.id"
+          :assignees="staffTaskCommentAssignees"
+          :can-comment="true"
+        />
       </div>
-    </div>
+    </UiModal>
   </div>
 </template>
 
@@ -573,33 +496,36 @@ onMounted(async () => {
   margin-bottom: 0.75rem;
 }
 .rich-text-content :deep(h1) {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 600;
   margin: 0.5rem 0;
 }
 .rich-text-content :deep(h2) {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 17px;
+  line-height: 26px;
+  font-weight: 600;
   margin: 0.5rem 0;
 }
 .rich-text-content :deep(h3) {
-  font-size: 1.1rem;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 600;
   margin: 0.5rem 0;
 }
 .rich-text-content :deep(blockquote) {
-  border-left: 3px solid #0c51d9;
+  border-left: 3px solid rgb(var(--ui-line-strong));
   padding-left: 0.75rem;
-  color: #6b7280;
+  color: rgb(var(--ui-muted));
   margin: 0.5rem 0;
 }
 .rich-text-content :deep(a) {
-  color: #0c51d9;
+  color: rgb(var(--ui-accent));
   text-decoration: underline;
 }
 .rich-text-content :deep(hr) {
   border: none;
-  border-top: 1px solid #dcdedd;
+  border-top: 1px solid rgb(var(--ui-line));
   margin: 0.75rem 0;
 }
 </style>

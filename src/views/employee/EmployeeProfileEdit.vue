@@ -6,7 +6,8 @@ import { storeToRefs } from "pinia";
 import Input from "@/components/common/form/Input.vue";
 import Alert from "@/components/common/Alert.vue";
 import Avatar from "@/components/common/Avatar.vue";
-import { User as UserIcon, Mail, Lock, Camera, ArrowLeft } from "lucide-vue-next";
+import { User as UserIcon, Mail, Lock, Camera, ArrowLeft, Save } from "lucide-vue-next";
+import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader } from "@/components/ui";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -60,94 +61,68 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="p-5">
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6 mb-6">
-      <div class="flex items-center gap-3 mb-6">
+  <form class="px-1 py-2 sm:px-4 sm:py-4 lg:px-5 ui-anim-fade-up" @submit.prevent="handleSubmit">
+    <UiPageHeader title="Edit Profile" subtitle="Update your personal information">
+      <template #eyebrow>
         <button
           type="button"
           @click="router.back()"
-          class="bg-white w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all"
+          class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
           aria-label="Back"
         >
-          <ArrowLeft class="w-5 h-5 text-gray-600" />
+          <ArrowLeft class="w-4 h-4" />
+          Back
         </button>
-        <div
-          class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
-        >
-          <UserIcon class="w-6 h-6 text-blue-600" />
+      </template>
+      <template #actions>
+        <div class="hidden sm:flex items-center gap-2">
+          <UiButton variant="secondary" @click="router.back()">Cancel</UiButton>
+          <UiButton type="submit" :icon="Save" :loading="loading">
+            {{ loading ? "Saving..." : "Save Changes" }}
+          </UiButton>
         </div>
-        <div>
-          <h3 class="text-brand-dark text-lg sm:text-xl font-bold">Edit Profile</h3>
-          <p class="text-brand-light text-sm">
-            Update your personal information
-          </p>
-        </div>
-      </div>
+      </template>
+    </UiPageHeader>
 
-      <div class="mb-6">
-        <Transition name="fade">
-          <Alert
-            v-if="typeof error === 'string' && error"
-            type="danger"
-            :title="error"
-            message=""
-            :show="!!error"
-          />
-        </Transition>
-        <Transition name="fade">
-          <Alert
-            v-if="success"
-            type="success"
-            :title="success"
-            message=""
-            :show="!!success"
-          />
-        </Transition>
-      </div>
+    <div class="mt-5 space-y-3" v-if="(typeof error === 'string' && error) || success">
+      <Transition name="ui-fade">
+        <UiAlert v-if="typeof error === 'string' && error" tone="bad" :title="error" />
+      </Transition>
+      <Transition name="ui-fade">
+        <UiAlert v-if="success" tone="ok" :title="success" />
+      </Transition>
+    </div>
 
-      <form class="space-y-6" @submit.prevent="handleSubmit">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div class="mb-4">
-            <Input
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 mt-5 sm:mt-6 items-start">
+      <div class="lg:col-span-2 space-y-4 sm:space-y-5 ui-stagger">
+        <UiCard title="Account">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            <UiInput
               id="name"
               name="name"
               type="text"
               v-model="form.name"
               label="Full Name"
               placeholder="Enter full name"
+              :icon="UserIcon"
               :error="error?.name?.join(', ')"
               required
-            >
-              <template #icon>
-                <UserIcon class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
+            />
+            <UiInput
+              :model-value="user?.email"
+              type="email"
+              label="Email Address"
+              :icon="Mail"
+              readonly
+              disabled
+              hint="Email cannot be changed. Contact HR if this needs to be updated."
+            />
           </div>
+        </UiCard>
 
-          <div class="mb-4">
-            <label class="block text-brand-dark text-base font-semibold mb-1">
-              Email Address
-            </label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Mail class="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                :value="user?.email"
-                type="email"
-                readonly
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] bg-gray-50 text-gray-500 cursor-not-allowed"
-              />
-            </div>
-            <p class="text-brand-light text-xs mt-1">
-              Email cannot be changed. Contact HR if this needs to be updated.
-            </p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div class="mb-4">
-            <Input
+        <UiCard title="Password">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            <UiInput
               id="password"
               name="password"
               type="password"
@@ -155,19 +130,11 @@ const handleSubmit = async () => {
               v-model="form.password"
               label="New Password"
               placeholder="Enter new password (optional)"
+              :icon="Lock"
               :error="error?.password?.join(', ')"
-            >
-              <template #icon>
-                <Lock class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
-            <p class="text-xs text-gray-400 mt-1">
-              Min. 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol. Tidak boleh password yang pernah bocor di data breach.
-            </p>
-          </div>
-
-          <div class="mb-4">
-            <Input
+              hint="Min. 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol. Tidak boleh password yang pernah bocor di data breach."
+            />
+            <UiInput
               id="password_confirmation"
               name="password_confirmation"
               type="password"
@@ -175,96 +142,57 @@ const handleSubmit = async () => {
               v-model="form.password_confirmation"
               label="Confirm Password"
               placeholder="Confirm new password"
+              :icon="Lock"
               :error="error?.password_confirmation?.join(', ')"
-            >
-              <template #icon>
-                <Lock class="h-5 w-5 text-gray-400" />
-              </template>
-            </Input>
+            />
           </div>
-        </div>
+        </UiCard>
+      </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div class="mb-4 md:col-span-2">
-            <label class="block text-brand-dark text-base font-semibold mb-1"
-              >Profile Photo</label
-            >
-            <div class="flex items-center gap-4">
-              <input
-                type="file"
-                accept="image/*"
-                class="hidden"
-                ref="photoInput"
-                @change="handlePhotoSelect"
-              />
-              <button
-                type="button"
-                class="relative w-32 h-32 rounded-full shrink-0 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0C51D9] focus:ring-offset-2"
-                @click="photoInput?.click()"
-                aria-label="Change profile photo"
-              >
-                <div
-                  class="w-32 h-32 absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full"
-                ></div>
-                <div
-                  class="w-32 h-32 relative z-10 flex items-center justify-center"
-                >
-                  <Avatar :src="form.profile_photo_url" :alt="form.name" size="w-32 h-32" />
-                </div>
-                <!-- Hover overlay -->
-                <div
-                  class="absolute inset-0 z-20 rounded-full bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center"
-                >
-                  <Camera
-                    class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  />
-                </div>
-                <!-- Camera badge -->
-                <div
-                  class="absolute bottom-1 right-1 z-30 w-9 h-9 bg-[#0C51D9] border-4 border-white rounded-full flex items-center justify-center group-hover:brightness-110 transition-all duration-300"
-                >
-                  <Camera class="w-4 h-4 text-white" />
-                </div>
-              </button>
-              <p class="text-brand-light text-xs">
-                JPG, PNG up to 2MB<br />Recommended: 400x400px
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-4">
+      <UiCard title="Profile Photo" class="ui-anim-fade-up">
+        <div class="flex flex-row lg:flex-col items-center gap-5 lg:gap-4 lg:text-center">
+          <input
+            type="file"
+            accept="image/*"
+            class="hidden"
+            ref="photoInput"
+            @change="handlePhotoSelect"
+          />
           <button
             type="button"
-            @click="router.back()"
-            class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
+            class="relative w-24 h-24 rounded-full shrink-0 group cursor-pointer focus:outline-none focus-visible:shadow-ui-focus"
+            @click="photoInput?.click()"
+            aria-label="Change profile photo"
           >
-            Cancel
+            <Avatar :src="form.profile_photo_url" :alt="form.name" size="w-24 h-24" />
+            <!-- Hover overlay -->
+            <div
+              class="absolute inset-0 rounded-full bg-ui-ink/0 group-hover:bg-ui-ink/40 transition-colors duration-ui-base ease-ui-out flex items-center justify-center"
+            >
+              <Camera class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-ui-base" />
+            </div>
+            <!-- Camera badge -->
+            <div
+              class="absolute bottom-0.5 right-0.5 w-8 h-8 bg-ui-ink border-[3px] border-ui-surface rounded-full flex items-center justify-center"
+            >
+              <Camera class="w-3.5 h-3.5 text-white" />
+            </div>
           </button>
-          <button
-            type="submit"
-            :disabled="loading"
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 disabled:opacity-50"
-          >
-            <span class="text-brand-white text-base font-semibold">{{
-              loading ? "Saving..." : "Save Changes"
-            }}</span>
-          </button>
+          <div class="min-w-0">
+            <p class="text-ui-cap text-ui-muted">
+              JPG, PNG up to 2MB<br />Recommended: 400x400px
+            </p>
+          </div>
         </div>
-      </form>
+      </UiCard>
     </div>
-  </div>
+
+    <!-- Phones: actions at the end of the form, full width -->
+    <div class="sm:hidden mt-5 flex flex-col gap-2">
+      <UiButton type="submit" size="lg" block :icon="Save" :loading="loading">
+        {{ loading ? "Saving..." : "Save Changes" }}
+      </UiButton>
+      <UiButton variant="ghost" size="lg" block @click="router.back()">Cancel</UiButton>
+    </div>
+  </form>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>

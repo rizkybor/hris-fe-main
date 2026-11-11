@@ -1,11 +1,13 @@
 <script setup>
+import DashboardWidgetCard from "./DashboardWidgetCard.vue";
+import { UiBadge, UiEmpty } from "@/components/ui";
+import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import { onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
-import { AlertTriangle, ArrowRight, ShieldCheck } from "lucide-vue-next";
-import { getProjectHealth, PROJECT_HEALTH_BADGE_CLASS } from "@/utils/projectHealth";
-import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { ShieldCheck } from "lucide-vue-next";
+import { getProjectHealth } from "@/utils/projectHealth";
 
 const router = useRouter();
 const projectStore = useProjectStore();
@@ -32,69 +34,35 @@ const atRiskProjects = computed(() => {
 const goToProjectDetail = (id) => {
   router.push({ name: "admin.projects.detail", params: { id } });
 };
+const HEALTH_TONES = { overdue: "bad", critical: "bad", "at-risk": "warn", behind: "info" };
 </script>
 
 <template>
-  <div class="bg-gradient-to-br from-orange-50 to-white border-2 border-orange-200 rounded-[14px] p-4 sm:p-5 shadow-sm">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-orange-100 rounded-[10px] flex items-center justify-center">
-          <AlertTriangle class="w-5 h-5 text-orange-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-base font-bold">Projects at Risk</h3>
-          <p class="text-brand-light text-xs">Behind schedule or close to deadline</p>
-        </div>
-      </div>
-      <RouterLink
-        :to="{ name: 'admin.projects' }"
-        class="text-sm font-semibold text-[#0C51D9] hover:underline flex items-center gap-1 shrink-0"
-      >
-        View all
-        <ArrowRight class="w-3.5 h-3.5" />
-      </RouterLink>
-    </div>
-
-    <!-- Loading State -->
-    <div v-if="loading" class="space-y-3">
-      <div v-for="i in 3" :key="i" class="flex items-center gap-3">
-        <Skeleton width="40px" height="40px" rounded="12px" />
-        <div class="flex-1 space-y-2">
-          <Skeleton width="50%" height="14px" />
-          <Skeleton width="35%" height="12px" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="atRiskProjects.length === 0" class="text-center py-8">
-      <ShieldCheck class="w-10 h-10 text-green-300 mx-auto mb-2" />
-      <p class="text-gray-500 text-sm">No active projects are at risk right now</p>
-    </div>
-
-    <!-- List -->
-    <div v-else class="space-y-3">
-      <button
-        v-for="{ project, health } in atRiskProjects"
-        :key="project.id"
-        type="button"
-        @click="goToProjectDetail(project.id)"
-        class="w-full text-left border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 p-3 flex items-center gap-3"
-      >
-        <div class="flex-1 min-w-0">
-          <p class="text-brand-dark text-sm font-semibold truncate">{{ project.name }}</p>
-          <p class="text-brand-light text-xs mt-0.5">
-            {{ health.actualProgress }}% done &middot; expected {{ health.expectedProgress }}%
-          </p>
-        </div>
-        <span
-          class="px-2 py-1 rounded-md text-xs font-semibold shrink-0"
-          :class="PROJECT_HEALTH_BADGE_CLASS[health.level]"
+  <DashboardWidgetCard title="Projects at Risk" subtitle="Behind schedule or close to deadline" :to="{ name: 'admin.projects' }" flush>
+    <SkeletonList v-if="loading" :rows="3" class="p-3" />
+    <UiEmpty v-else-if="atRiskProjects.length === 0" :icon="ShieldCheck" title="No active projects are at risk right now" compact />
+    <ul v-else class="divide-y divide-ui-line">
+      <li v-for="{ project, health } in atRiskProjects" :key="project.id">
+        <button
+          type="button"
+          @click="goToProjectDetail(project.id)"
+          class="w-full text-left px-5 py-3 flex items-center gap-3 hover:bg-ui-hover transition-colors"
         >
-          {{ health.label }} &middot;
-          {{ health.daysRemaining >= 0 ? `${health.daysRemaining}d left` : `${Math.abs(health.daysRemaining)}d overdue` }}
-        </span>
-      </button>
-    </div>
-  </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-ui-body font-medium text-ui-ink truncate">{{ project.name }}</p>
+            <div class="mt-1.5 flex items-center gap-2">
+              <div class="relative h-1 flex-1 max-w-[160px] bg-ui-subtle rounded-full overflow-hidden">
+                <div class="absolute inset-y-0 left-0 bg-ui-line-strong" :style="{ width: `${Math.min(health.expectedProgress, 100)}%` }"></div>
+                <div class="absolute inset-y-0 left-0 bg-ui-ink rounded-full" :style="{ width: `${Math.min(health.actualProgress, 100)}%` }"></div>
+              </div>
+              <span class="text-ui-cap text-ui-muted tabular-nums">{{ health.actualProgress }}% · expected {{ health.expectedProgress }}%</span>
+            </div>
+          </div>
+          <UiBadge :tone="HEALTH_TONES[health.level] || 'neutral'" dot class="shrink-0">
+            {{ health.label }} · {{ health.daysRemaining >= 0 ? `${health.daysRemaining}d left` : `${Math.abs(health.daysRemaining)}d overdue` }}
+          </UiBadge>
+        </button>
+      </li>
+    </ul>
+  </DashboardWidgetCard>
 </template>

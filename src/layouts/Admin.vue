@@ -2,7 +2,7 @@
 import Sidebar from "@/components/admin/Sidebar.vue";
 import Header from "@/components/admin/Header.vue";
 import MobileTabBar from "@/components/admin/MobileTabBar.vue";
-import { nextTick, ref, watch } from "vue";
+import { nextTick, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 const isSidebarOpen = ref(false);
@@ -15,21 +15,28 @@ const closeSidebar = () => {
   isSidebarOpen.value = false;
 };
 
-// Page enter: the content rises in on every navigation. The class is
-// re-applied instead of re-keying the RouterView, so pages keep their
-// component instance (and state) exactly as before.
+// Page enter: the page's root element rises in on every navigation. The
+// RouterView stays a direct child of <main> (no wrapper), so pages that use
+// h-full still size against <main> and main's bottom padding (room for the
+// phone tab bar) still applies to long pages. The class is re-applied
+// instead of re-keying the RouterView, so pages keep their component
+// instance and state exactly as before.
 const route = useRoute();
 const mainEl = ref(null);
+const playPageEnter = async () => {
+  await nextTick();
+  const el = mainEl.value?.firstElementChild;
+  if (!el) return;
+  el.classList.remove("ui-page-enter");
+  void el.offsetWidth; // restart the CSS animation
+  el.classList.add("ui-page-enter");
+};
+onMounted(playPageEnter);
 watch(
   () => route.path,
-  async () => {
+  () => {
     closeSidebar();
-    await nextTick();
-    const el = mainEl.value;
-    if (!el) return;
-    el.classList.remove("ui-page-enter");
-    void el.offsetWidth; // restart the CSS animation
-    el.classList.add("ui-page-enter");
+    playPageEnter();
   }
 );
 </script>
@@ -46,10 +53,8 @@ watch(
       <!-- Top bar -->
       <Header @toggle-sidebar="toggleSidebar" />
       <!-- Page content; room for the tab bar on phones and tablets -->
-      <main class="main-content flex-1 overflow-auto p-3 pb-[calc(76px+env(safe-area-inset-bottom))] lg:pb-3">
-        <div ref="mainEl" class="ui-page-enter h-full">
-          <RouterView />
-        </div>
+      <main ref="mainEl" class="main-content flex-1 overflow-auto p-3 pb-[calc(76px+env(safe-area-inset-bottom))] lg:pb-3">
+        <RouterView />
       </main>
     </div>
   </div>

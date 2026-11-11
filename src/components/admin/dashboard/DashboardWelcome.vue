@@ -4,8 +4,10 @@ import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/stores/auth";
 import { useGreetingStore } from "@/stores/greeting";
 import { useAnnouncementStore } from "@/stores/announcement";
-import { getRoleBadgeClass, getRoleLabel } from "@/utils/badgeUtils";
-import { SparklesIcon, PartyPopper, Cake, CalendarClock, Megaphone, Pin } from "lucide-vue-next";
+import { getRoleLabel } from "@/utils/badgeUtils";
+import { can } from "@/helpers/permissionHelper";
+import { UiBadge, UiButton } from "@/components/ui";
+import { SparklesIcon, PartyPopper, Cake, CalendarClock, Megaphone, Pin, Clock } from "lucide-vue-next";
 
 const authStore = useAuthStore();
 const greetingStore = useGreetingStore();
@@ -68,83 +70,50 @@ const todayLabel = computed(() =>
 </script>
 
 <template>
-  <div
-    class="relative overflow-hidden rounded-[14px] border border-[#DCDEDD] bg-gradient-to-br from-blue-50/70 via-white to-indigo-50/50 px-5 sm:px-7 py-6 sm:py-7 mb-6"
-  >
-    <!-- Decorative soft glow orbs -->
-    <div
-      class="pointer-events-none absolute -top-16 -right-10 w-56 h-56 rounded-full bg-blue-200/25 blur-3xl"
-    ></div>
-    <div
-      class="pointer-events-none absolute -bottom-20 left-1/3 w-64 h-64 rounded-full bg-indigo-200/20 blur-3xl"
-    ></div>
-
-    <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <div
-            class="flex items-center gap-1 px-3 py-1 bg-white border border-[#DCDEDD] rounded-full"
-          >
-            <SparklesIcon class="w-3 h-3 text-blue-400" />
-            <span class="text-brand-light text-xs font-medium">{{ todayLabel }}</span>
-          </div>
-          <span
-            v-if="primaryRole"
-            :class="getRoleBadgeClass(primaryRole)"
-            class="px-3 py-1 rounded-full text-xs font-semibold border"
-          >
-            {{ getRoleLabel(primaryRole) }}
-          </span>
-        </div>
-
-        <h1 class="text-brand-dark text-2xl sm:text-3xl font-extrabold leading-tight">
-          {{ greeting }}, {{ userName }} 👋
-        </h1>
-        <p class="text-brand-light text-sm sm:text-base mt-1">
-          {{ roleSubtitle }}
-        </p>
-
-        <div v-if="todayGreetings.length > 0" class="mt-3 flex flex-col gap-2">
-          <div
-            v-for="item in todayGreetings"
-            :key="item.id"
-            class="inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-full max-w-full"
-            style="background-color: #d9f99d; border: 1px solid #bef264"
-          >
-            <component :is="greetingIcon(item.type)" class="w-3.5 h-3.5 shrink-0" style="color: #4d7c0f" />
-            <span class="text-xs sm:text-sm font-semibold truncate" style="color: #365314">{{ item.message }}</span>
-          </div>
-        </div>
+  <div class="flex flex-col lg:flex-row lg:items-end gap-5">
+    <div class="flex-1 min-w-0">
+      <div class="flex flex-wrap items-center gap-2 mb-1.5">
+        <p class="text-ui-small text-ui-muted capitalize">{{ todayLabel }}</p>
+        <UiBadge v-if="primaryRole" tone="outline">{{ getRoleLabel(primaryRole) }}</UiBadge>
       </div>
+      <h1 class="text-ui-h1 sm:text-ui-display text-ui-ink">{{ greeting }}, {{ userName }}</h1>
+      <p class="text-ui-small text-ui-muted mt-1">{{ roleSubtitle }}</p>
+
+      <div v-if="todayGreetings.length > 0" class="mt-3 flex flex-wrap gap-2">
+        <span
+          v-for="item in todayGreetings"
+          :key="item.id"
+          class="ui-anim-fade-up inline-flex items-center gap-2 h-7 px-3 rounded-full bg-ui-ok-soft text-ui-ok max-w-full"
+        >
+          <component :is="greetingIcon(item.type)" class="w-3.5 h-3.5 shrink-0" />
+          <span class="text-ui-cap font-medium truncate">{{ item.message }}</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3 lg:items-end shrink-0">
+      <UiButton v-if="can('attendance-check-in')" :to="{ name: 'employee.attendance.clock' }" variant="secondary" :icon="Clock">Clock in / out</UiButton>
 
       <!-- Announcements -->
       <RouterLink
         v-if="announcements.length > 0"
         :to="{ name: 'admin.announcements.dashboard' }"
-        class="blue-gradient relative w-full sm:w-64 lg:w-80 shrink-0 overflow-hidden rounded-[12px] p-3.5 shadow-lg shadow-blue-900/25 ring-1 ring-white/10 transition-all duration-300 hover:shadow-xl hover:shadow-blue-900/35 hover:-translate-y-0.5"
+        class="ui-lift group w-full sm:w-80 rounded-ui-card bg-ui-surface border border-ui-line hover:border-ui-line-strong p-4"
       >
-        <!-- Decorative glow, echoing the banner's own orbs -->
-        <div class="pointer-events-none absolute -top-8 -right-6 w-24 h-24 rounded-full bg-white/10 blur-2xl"></div>
-
-        <div class="relative flex items-center gap-1.5 mb-2.5">
-          <div class="flex items-center justify-center w-6 h-6 rounded-full bg-white/15 shrink-0">
-            <Megaphone class="w-3.5 h-3.5 text-white" />
-          </div>
-          <h3 class="text-white text-xs font-bold uppercase tracking-wide">Announcements</h3>
-          <span class="ml-auto relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/60"></span>
-            <span class="relative inline-flex h-2 w-2 rounded-full bg-white"></span>
-          </span>
+        <div class="flex items-center gap-2 mb-2">
+          <Megaphone class="w-4 h-4 text-ui-faint" />
+          <p class="text-ui-h3 text-ui-ink">Announcements</p>
+          <UiBadge tone="accent" class="ml-auto">New</UiBadge>
         </div>
-        <div class="relative space-y-2 max-h-40 overflow-hidden">
-          <div v-for="item in announcements" :key="item.id" class="min-w-0">
+        <ul class="space-y-1.5">
+          <li v-for="item in announcements" :key="item.id" class="min-w-0">
             <div class="flex items-center gap-1.5 min-w-0">
-              <Pin v-if="item.is_pinned" class="w-3 h-3 text-amber-300 shrink-0" />
-              <p class="text-white text-xs sm:text-sm font-semibold truncate min-w-0">{{ item.title }}</p>
+              <Pin v-if="item.is_pinned" class="w-3 h-3 text-ui-warn shrink-0" aria-label="Pinned" />
+              <p class="text-ui-small font-medium text-ui-ink truncate">{{ item.title }}</p>
             </div>
-            <p class="text-blue-100 text-xs truncate">{{ item.body }}</p>
-          </div>
-        </div>
+            <p class="text-ui-cap text-ui-muted truncate">{{ item.body }}</p>
+          </li>
+        </ul>
       </RouterLink>
     </div>
   </div>

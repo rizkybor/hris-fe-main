@@ -1,4 +1,5 @@
 <script setup>
+import DashboardWidgetCard from "./DashboardWidgetCard.vue";
 import { computed } from "vue";
 import { ShieldCheck, UserCheck, ListChecks, DatabaseBackup, ChevronRight } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
@@ -36,22 +37,19 @@ const quickLinks = computed(() =>
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-    <h3 class="text-brand-dark text-base font-bold mb-4">System Settings</h3>
-    <div class="space-y-2">
+  <DashboardWidgetCard title="System Settings" flush>
+    <nav v-if="quickLinks.length" class="p-2 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-0.5">
       <RouterLink
         v-for="link in quickLinks"
         :key="link.title"
         :to="link.to"
-        class="flex items-center gap-3 p-3 rounded-[12px] border border-[#DCDEDD] hover:border-[#0C51D9] hover:shadow-sm transition-all"
+        class="group flex items-center gap-3 h-10 px-3 rounded-ui-control text-ui-small text-ui-text hover:bg-ui-hover hover:text-ui-ink transition-colors"
       >
-        <div class="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <component :is="link.icon" class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <span class="text-brand-dark text-sm font-semibold flex-1">{{ link.title }}</span>
-        <ChevronRight class="w-4 h-4 text-gray-400 shrink-0" />
+        <component :is="link.icon" class="w-4 h-4 text-ui-faint group-hover:text-ui-ink shrink-0" />
+        <span class="flex-1 truncate">{{ link.title }}</span>
+        <ChevronRight class="w-3.5 h-3.5 text-ui-faint opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
       </RouterLink>
-      <p v-if="quickLinks.length === 0" class="text-center py-6 text-sm text-gray-400">No quick links available.</p>
-    </div>
-  </div>
+    </nav>
+    <p v-else class="text-ui-small text-ui-muted text-center py-6">No quick links available.</p>
+  </DashboardWidgetCard>
 </template>

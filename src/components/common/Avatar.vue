@@ -14,16 +14,11 @@ const props = defineProps({
 // so a given teammate reads as "the same person" across the app even
 // without a photo.
 const PALETTE = [
-  { bg: "bg-blue-100", text: "text-blue-700" },
-  { bg: "bg-indigo-100", text: "text-indigo-700" },
-  { bg: "bg-purple-100", text: "text-purple-700" },
-  { bg: "bg-pink-100", text: "text-pink-700" },
-  { bg: "bg-red-100", text: "text-red-700" },
-  { bg: "bg-orange-100", text: "text-orange-700" },
-  { bg: "bg-amber-100", text: "text-amber-700" },
-  { bg: "bg-green-100", text: "text-green-700" },
-  { bg: "bg-teal-100", text: "text-teal-700" },
-  { bg: "bg-cyan-100", text: "text-cyan-700" },
+  { bg: "bg-ui-accent-soft", text: "text-ui-accent" },
+  { bg: "bg-ui-info-soft", text: "text-ui-info" },
+  { bg: "bg-ui-ok-soft", text: "text-ui-ok" },
+  { bg: "bg-ui-warn-soft", text: "text-ui-warn" },
+  { bg: "bg-ui-subtle", text: "text-ui-text" },
 ];
 
 const initials = computed(() => {
@@ -37,11 +32,12 @@ const initials = computed(() => {
 
   const words = namePart.split(/\s+/).filter(Boolean);
 
-  return words
+  // First and last word only, so long names stay two letters ("RK").
+  const picked = words.length > 1 ? [words[0], words[words.length - 1]] : words;
+  return picked
     .map((word) => word[0])
     .join("")
-    .toUpperCase()
-    .slice(0, 4);
+    .toUpperCase();
 });
 
 const colors = computed(() => {
@@ -62,14 +58,14 @@ const colors = computed(() => {
 const initialsFontSize = computed(() => {
   const arbitrary = props.size.match(/w-\[(\d+)px\]/);
   if (arbitrary) {
-    return `${Math.max(Number(arbitrary[1]) * 0.4, 10)}px`;
+    return `${Math.max(Number(arbitrary[1]) * 0.36, 10)}px`;
   }
 
   const scale = props.size.match(/w-(\d+(?:\.\d+)?)/);
   const units = scale ? Number(scale[1]) : 12;
   const px = units * 4;
 
-  return `${Math.max(px * 0.4, 10)}px`;
+  return `${Math.max(px * 0.36, 10)}px`;
 });
 </script>
 
@@ -84,15 +80,15 @@ const initialsFontSize = computed(() => {
   <div
     v-else-if="initials"
     :title="alt"
-    :class="[size, rounded, colors.bg, colors.text, 'flex items-center justify-center shrink-0 font-bold select-none']"
+    :class="[size, rounded, colors.bg, colors.text, 'flex items-center justify-center shrink-0 font-semibold select-none']"
   >
     <span class="leading-none" :style="{ fontSize: initialsFontSize }">{{ initials }}</span>
   </div>
   <div
     v-else
     :title="alt"
-    :class="[size, rounded, 'bg-gray-100 flex items-center justify-center shrink-0']"
+    :class="[size, rounded, 'bg-ui-subtle flex items-center justify-center shrink-0']"
   >
-    <User :class="[iconSize, 'text-gray-400']" />
+    <User :class="[iconSize, 'text-ui-faint']" />
   </div>
 </template>

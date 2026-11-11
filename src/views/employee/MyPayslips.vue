@@ -16,10 +16,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Wallet,
-  ChevronDown,
 } from "lucide-vue-next";
-import Pagination from "@/components/admin/team/Pagination.vue";
-import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import { UiBadge, UiButton, UiCard, UiInput, UiPageHeader, UiPagination, UiSelect, UiStat, UiTable } from "@/components/ui";
 
 const router = useRouter();
 const payrollStore = usePayrollStore();
@@ -108,6 +106,22 @@ const totalEarnings = computed(() => {
   return payslips.value.reduce((sum, slip) => sum + (slip.gross_salary || 0), 0);
 });
 
+// Presentation only.
+const currentYear = new Date().getFullYear();
+const yearOptions = [currentYear, currentYear - 1, currentYear - 2].map((y) => ({ value: y, label: String(y) }));
+const perPageOptions = [10, 12, 24, 48].map((n) => ({ value: n, label: `${n} / page` }));
+const perPageModel = computed({
+  get: () => Number(meta.value?.per_page) || serverOptions.value.row_per_page,
+  set: (n) => handlePerPageChange(n),
+});
+const columns = [
+  { key: "period", label: "Period" },
+  { key: "type", label: "Type" },
+  { key: "net_salary", label: "Net salary", align: "right" },
+  { key: "status", label: "Status" },
+  { key: "actions", label: "", align: "right", width: 120 },
+];
+
 const totalDeductions = computed(() => {
   return payslips.value.reduce(
     (sum, slip) => sum + (slip.total_deductions || 0),
@@ -117,164 +131,108 @@ const totalDeductions = computed(() => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="flex justify-end mb-4">
-      <button
-        type="button"
-        @click="showAmounts = !showAmounts"
-        class="border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 px-4 py-2 flex items-center gap-2"
-      >
-        <Eye v-if="!showAmounts" class="w-4 h-4 text-gray-600" />
-        <EyeOff v-else class="w-4 h-4 text-gray-600" />
-        <span class="text-brand-dark text-sm font-semibold">
+  <div class="sm:px-3 sm:py-3 space-y-5 ui-anim-fade-up">
+    <UiPageHeader title="My Payslips" subtitle="Your monthly and THR payslips, with PDF download.">
+      <template #actions>
+        <UiButton variant="secondary" :icon="showAmounts ? EyeOff : Eye" @click="showAmounts = !showAmounts">
           {{ showAmounts ? "Hide Amounts" : "Show Amounts" }}
-        </span>
-      </button>
+        </UiButton>
+      </template>
+    </UiPageHeader>
+
+    <!-- Statistics -->
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 ui-stagger">
+      <UiStat class="col-span-2 md:col-span-1" label="Total Payslips" :value="meta.total || 0" :icon="FileText" :loading="loading && !payslips.length" />
+      <UiStat label="Total Earnings" :value="maskCurrency(totalEarnings)" :icon="ArrowUpRight" hint="This year" />
+      <UiStat label="Total Deductions" :value="maskCurrency(totalDeductions)" :icon="ArrowDownRight" hint="This year" />
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="main-card rounded-[14px] border border-[#0B1042] relative overflow-hidden p-4 text-white">
-        <div class="flex items-center justify-between mb-3">
-          <div class="w-12 h-12 bg-white/20 rounded-[12px] flex items-center justify-center backdrop-blur-sm">
-            <FileText class="w-6 h-6" />
-          </div>
+    <!-- Payslips -->
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+      <div class="px-4 sm:px-5 pt-4 pb-3 flex flex-col md:flex-row md:items-center gap-3 border-b border-ui-line">
+        <div class="flex-1 min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink">All Payslips</h2>
+          <p class="text-ui-cap text-ui-muted tabular-nums">
+            Showing {{ meta.from || 0 }} - {{ meta.to || 0 }} of {{ meta.total || 0 }} payslips
+          </p>
         </div>
-        <p class="text-white/80 text-sm font-medium mb-2">Total Payslips</p>
-        <p class="text-3xl font-extrabold">{{ meta.total || 0 }}</p>
-      </div>
-
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#10B981] hover:border-2 transition-all duration-300 p-6">
-        <div class="flex items-center justify-between mb-3">
-          <div class="w-12 h-12 bg-green-50 rounded-[12px] flex items-center justify-center">
-            <ArrowUpRight class="w-6 h-6 text-green-600" />
-          </div>
-        </div>
-        <p class="text-brand-dark text-sm font-medium mb-2">Total Earnings</p>
-        <p class="text-brand-dark text-xl font-extrabold">
-          {{ maskCurrency(totalEarnings) }}
-        </p>
-        <p class="text-success text-sm font-medium mt-1">This year</p>
-      </div>
-
-      <div
-        class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] hover:border-[#EF4444] hover:border-2 transition-all duration-300 p-6">
-        <div class="flex items-center justify-between mb-3">
-          <div class="w-12 h-12 bg-red-50 rounded-[12px] flex items-center justify-center">
-            <ArrowDownRight class="w-6 h-6 text-red-600" />
-          </div>
-        </div>
-        <p class="text-brand-dark text-sm font-medium mb-2">Total Deductions</p>
-        <p class="text-brand-dark text-xl font-extrabold">
-          {{ maskCurrency(totalDeductions) }}
-        </p>
-        <p class="text-danger text-sm font-medium mt-1">This year</p>
-      </div>
-    </div>
-
-    <!-- Payslips Grid -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="mb-6">
-        <h3 class="text-[#0C1C3C] font-bold text-base">All Payslips</h3>
-        <p class="text-gray-600 text-sm mt-1">
-          Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} payslips
-        </p>
-      </div>
-
-
-       <!-- Search Section -->
-    <div class="bg-slate-50 mb-6">
-      <div class="flex flex-col md:flex-row gap-4">
-        <div class="flex-1 relative">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search class="h-5 w-5 text-gray-400" />
-          </div>
-          <input type="text"
-            class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300"
-            placeholder="Search payslips by month or year..." v-model="filters.search" />
-        </div>
-
-        <div class="relative">
-          <select v-model.number="filters.year"
-            class="select-soft">
-            <option :value="new Date().getFullYear()">
-              {{ new Date().getFullYear() }}
-            </option>
-            <option :value="new Date().getFullYear() - 1">
-              {{ new Date().getFullYear() - 1 }}
-            </option>
-            <option :value="new Date().getFullYear() - 2">
-              {{ new Date().getFullYear() - 2 }}
-            </option>
-          </select>
-          <ChevronDown
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+        <div class="grid grid-cols-2 md:flex md:items-center gap-2">
+          <UiInput
+            v-model="filters.search"
+            :icon="Search"
+            placeholder="Search payslips by month or year..."
+            class="col-span-2 md:w-[280px]"
           />
-        </div>
-      </div>
-    </div>
-
-      <SkeletonCardGrid v-if="loading" :count="4" cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-        class="mb-6" />
-
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
-        <div v-for="payslip in payslips" :key="payslip.id"
-          class="border border-[#DCDEDD] rounded-[12px] p-5 hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 cursor-pointer group"
-          @click="viewDetails(payslip.id)">
-          <div class="flex items-start justify-between mb-4">
-            <div
-              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center group-hover:bg-blue-100 transition-all duration-300">
-              <FileText class="w-6 h-6 text-blue-600" />
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span
-                v-if="payslip.type === 'thr'"
-                class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full"
-              >THR</span>
-              <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                Paid
-              </span>
-            </div>
-          </div>
-
-          <div class="mb-4">
-            <div class="flex items-center gap-2 mb-2">
-              <Calendar class="w-4 h-4 text-gray-400" />
-              <p class="text-brand-dark font-bold">{{ formatDate(payslip.period) }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <DollarSign class="w-4 h-4 text-gray-400" />
-              <p class="text-brand-dark text-xl font-extrabold">
-                {{ maskCurrency(payslip.net_salary) }}
-              </p>
-            </div>
-          </div>
-
-          <div class="pt-4 border-t border-gray-200 flex items-center gap-2">
-            <button @click.stop="viewDetails(payslip.id)"
-              class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold">
-              <Eye class="w-4 h-4" />
-              View
-            </button>
-            <button @click.stop="handleDownload(payslip.id)"
-              class="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-[8px] hover:brightness-110 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold">
-              <Download class="w-4 h-4" />
-              PDF
-            </button>
-          </div>
+          <UiSelect v-model="filters.year" :options="yearOptions" class="md:w-[110px]" aria-label="Year" />
+          <UiSelect v-model="perPageModel" :options="perPageOptions" class="md:w-[120px]" aria-label="Rows per page" />
         </div>
       </div>
 
-      <div v-if="!loading && payslips.length === 0" class="text-center py-12 text-gray-500">
-        <FileText class="w-16 h-16 mx-auto mb-4 text-gray-300" />
-        <p class="text-lg font-semibold">No payslips found</p>
-        <p class="text-sm">Your payslips will appear here once they are processed</p>
-      </div>
+      <UiTable
+        :columns="columns"
+        :rows="payslips"
+        :meta="meta"
+        :loading="loading"
+        :skeleton-rows="4"
+        clickable
+        @row-click="(row) => viewDetails(row.id)"
+      >
+        <template #cell-period="{ row }">
+          <span class="inline-flex items-center gap-2 text-ui-ink font-medium">
+            <Calendar class="w-4 h-4 text-ui-faint" />{{ formatDate(row.period) }}
+          </span>
+        </template>
+        <template #cell-type="{ row }">
+          <UiBadge :tone="row.type === 'thr' ? 'accent' : 'neutral'">{{ row.type === "thr" ? "THR" : "Monthly" }}</UiBadge>
+        </template>
+        <template #cell-net_salary="{ row }">
+          <span class="tabular-nums text-ui-ink font-medium">{{ maskCurrency(row.net_salary) }}</span>
+        </template>
+        <template #cell-status>
+          <UiBadge tone="ok" dot>Paid</UiBadge>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-1">
+            <UiButton variant="ghost" size="sm" :icon="Eye" @click.stop="viewDetails(row.id)">View</UiButton>
+            <UiButton variant="secondary" size="sm" :icon="Download" @click.stop="handleDownload(row.id)">PDF</UiButton>
+          </div>
+        </template>
 
-      <!-- Pagination -->
-      <Pagination :meta="meta" :loading="loading" @page-change="handlePageChange"
-        @per-page-change="handlePerPageChange" />
-    </div>
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-body font-medium text-ui-ink truncate">{{ formatDate(row.period) }}</p>
+              <div class="flex items-center gap-1.5 mt-1.5">
+                <UiBadge v-if="row.type === 'thr'" tone="accent">THR</UiBadge>
+                <UiBadge tone="ok" dot>Paid</UiBadge>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-ui-body font-medium text-ui-ink tabular-nums">{{ maskCurrency(row.net_salary) }}</p>
+              <button
+                type="button"
+                class="ui-press mt-1 inline-flex items-center gap-1 text-ui-cap font-medium text-ui-accent"
+                @click.stop="handleDownload(row.id)"
+              >
+                <Download class="w-3.5 h-3.5" />PDF
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <template #empty>
+          <div class="flex flex-col items-center py-4">
+            <div class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mb-3">
+              <FileText class="w-5 h-5" />
+            </div>
+            <p class="text-ui-body font-medium text-ui-ink">No payslips found</p>
+            <p class="text-ui-small text-ui-muted mt-1">Your payslips will appear here once they are processed</p>
+          </div>
+        </template>
+      </UiTable>
+
+      <UiPagination v-if="meta.total" :meta="meta" item-label="payslips" :disabled="loading" @change="handlePageChange" />
+    </section>
   </div>
 </template>

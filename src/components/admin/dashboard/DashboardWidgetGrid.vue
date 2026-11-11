@@ -2,11 +2,13 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
 import { VueDraggableNext } from "vue-draggable-next";
-import { GripVertical, RotateCcw, CheckCircle2, AlertCircle, Loader2, RefreshCw } from "lucide-vue-next";
+import { GripVertical, RotateCcw, CheckCircle2, AlertCircle, RefreshCw, LayoutGrid } from "lucide-vue-next";
 import { useDashboardWidgetsStore } from "@/stores/dashboardWidgets";
 import { DASHBOARD_WIDGET_REGISTRY } from "@/helpers/dashboardWidgetRegistry";
 import { useAlertModalStore } from "@/stores/alertModal";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import Spinner from "@/components/common/skeleton/Spinner.vue";
+import { UiButton, UiEmpty } from "@/components/ui";
 
 const store = useDashboardWidgetsStore();
 const { widgets, loading, error, saveStatus } = storeToRefs(store);
@@ -15,6 +17,9 @@ const alertModal = useAlertModalStore();
 onMounted(() => {
   store.fetchWidgets();
 });
+
+// Layout edit mode (drag handles + size pickers); view-only otherwise.
+const editing = ref(false);
 
 // macOS/iOS-style widget sizes, on a 6-column base grid so every size
 // tiles cleanly with itself: "small" = 2 of 6 columns (three per row),
@@ -114,118 +119,98 @@ const handleResetLayout = async () => {
 
 <template>
   <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-6 gap-4">
-    <Skeleton v-for="i in 6" :key="i" class="lg:col-span-3" width="100%" height="220px" rounded="14px" />
+    <Skeleton v-for="i in 6" :key="i" class="lg:col-span-3" width="100%" height="220px" rounded="12px" />
   </div>
 
-  <div v-else-if="error && orderedWidgets.length === 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-8 text-center">
-    <AlertCircle class="w-8 h-8 text-red-400 mx-auto mb-2" />
-    <p class="text-sm text-gray-500 mb-3">Couldn't load your dashboard widgets.</p>
-    <button
-      type="button"
-      @click="store.fetchWidgets()"
-      class="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0C51D9] hover:underline"
-    >
-      <RefreshCw class="w-3.5 h-3.5" /> Try again
-    </button>
+  <div v-else-if="error && orderedWidgets.length === 0" class="bg-ui-surface border border-ui-line rounded-ui-card">
+    <UiEmpty :icon="AlertCircle" title="Couldn't load your dashboard widgets." message="Check your connection and try again.">
+      <UiButton variant="secondary" size="sm" :icon="RefreshCw" @click="store.fetchWidgets()">Try again</UiButton>
+    </UiEmpty>
   </div>
 
   <template v-else>
-    <div v-if="orderedWidgets.length > 0" class="flex justify-end mb-3">
-      <button
-        type="button"
-        @click="handleResetLayout"
-        class="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-[#0C51D9] transition-colors"
-        title="Reset dashboard to default widget order and sizes"
-      >
-        <RotateCcw class="w-3.5 h-3.5" /> Reset Layout
-      </button>
-    </div>
+    <!-- Layout editing: off by default so the dashboard stays calm; Customize
+         turns on drag handles and size pickers. Changes still auto-save. -->
+    <Transition name="ui-fade" mode="out-in">
+      <div v-if="editing" key="editing" class="sticky top-0 z-30 mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-ui-card bg-ui-ink text-white px-4 py-2.5 shadow-ui-raised">
+        <LayoutGrid class="w-4 h-4 text-white/60 shrink-0" />
+        <p class="text-ui-small font-medium">Editing dashboard layout</p>
+        <p class="hidden md:block text-ui-small text-white/60 flex-1 min-w-0 truncate">Drag widgets to reorder · changes are saved for you only</p>
+        <div class="flex items-center gap-2 ml-auto">
+          <button type="button" class="h-8 px-3 rounded-ui-control text-ui-small font-medium bg-white/10 hover:bg-white/15 inline-flex items-center gap-1.5" @click="handleResetLayout">
+            <RotateCcw class="w-3.5 h-3.5" /> Reset
+          </button>
+          <button type="button" class="h-8 px-3.5 rounded-ui-control text-ui-small font-medium bg-white text-ui-ink hover:bg-white/90" @click="editing = false">Done</button>
+        </div>
+      </div>
+      <div v-else-if="orderedWidgets.length > 0" key="idle" class="flex justify-end -mt-1 mb-2">
+        <UiButton variant="ghost" size="sm" :icon="LayoutGrid" @click="editing = true">Customize</UiButton>
+      </div>
+    </Transition>
 
     <VueDraggableNext
       v-model="orderedWidgets"
       :animation="200"
+      :disabled="!editing"
       handle=".widget-drag-handle"
       ghost-class="widget-drag-ghost"
-      class="grid grid-cols-1 lg:grid-cols-6 gap-4"
+      :class="['grid grid-cols-1 lg:grid-cols-6 gap-4', editing ? 'gap-y-8 pt-3' : '']"
     >
       <div
         v-for="widget in orderedWidgets"
         :key="widget.key"
-        class="relative group"
+        class="relative min-w-0 rounded-ui-card"
+        :class="editing ? 'outline-dashed outline-1 outline-offset-4 outline-ui-line-strong' : ''"
         :style="isDesktopGrid ? { gridColumn: widget.gridColumn, gridRow: widget.gridRow } : {}"
       >
-        <!-- Overlay controls -- float just above the card's own top edge
-             (outside its content box) rather than on top of it, so they
-             never sit over a widget's own top-right UI (e.g. Project
-             Budget's Monthly/Yearly toggle lives in that exact corner).
-             `pointer-events-none` while invisible is required, not just
-             cosmetic: CSS opacity alone doesn't stop an element from
-             capturing clicks, so without it this row would silently
-             swallow clicks meant for whatever sits underneath even while
-             faded out. Always visible + interactive on touch devices
-             (no hover state to fade in from), overlay-styled with a
-             shadow so it reads as floating chrome, not embedded content. -->
-        <div
-          class="absolute -top-3 right-3 z-20 flex items-center gap-1.5 opacity-70 pointer-events-auto sm:opacity-0 sm:pointer-events-none transition-opacity sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto"
-        >
-          <div class="hidden lg:flex items-center gap-0.5 bg-white/70 backdrop-blur-sm border border-[#DCDEDD]/70 rounded-md shadow-sm hover:bg-white/90 transition-colors p-1">
+        <!-- Edit controls float on the card's top edge so they never cover
+             the widget's own header actions. -->
+        <div v-if="editing" class="absolute -top-[22px] right-3 z-20 flex items-center gap-1.5 ui-anim-fade">
+          <div class="hidden lg:flex items-center gap-0.5 bg-ui-surface border border-ui-line rounded-ui-control shadow-ui-raised p-1" role="group" :aria-label="`Size of ${DASHBOARD_WIDGET_REGISTRY[widget.key]?.title ?? widget.key}`">
             <button
               v-for="opt in SIZE_OPTIONS"
               :key="opt.value"
               type="button"
               @click="store.resizeWidget(widget.key, opt.value)"
-              :class="['flex items-center justify-center w-5 h-5 rounded transition-colors', widget.size === opt.value ? 'bg-[#0C51D9]' : 'hover:bg-gray-100']"
+              :class="['flex items-center justify-center w-6 h-6 rounded-md transition-colors', widget.size === opt.value ? 'bg-ui-ink' : 'hover:bg-ui-hover']"
               :title="opt.label"
+              :aria-pressed="widget.size === opt.value"
             >
-              <span
-                class="block h-1.5 rounded-sm transition-colors"
-                :class="widget.size === opt.value ? 'bg-white' : 'bg-gray-400'"
-                :style="{ width: opt.bar }"
-              ></span>
+              <span class="block h-1.5 rounded-sm" :class="widget.size === opt.value ? 'bg-white' : 'bg-ui-faint'" :style="{ width: opt.bar }"></span>
             </button>
           </div>
-          <div class="widget-drag-handle cursor-grab active:cursor-grabbing bg-white/70 backdrop-blur-sm border border-[#DCDEDD]/70 rounded-md shadow-sm hover:bg-white/90 transition-colors p-1.5" :title="`Drag to reorder: ${DASHBOARD_WIDGET_REGISTRY[widget.key]?.title ?? widget.key}`">
-            <GripVertical class="w-4 h-4 text-gray-500" />
+          <div
+            class="widget-drag-handle cursor-grab active:cursor-grabbing bg-ui-surface border border-ui-line rounded-ui-control shadow-ui-raised p-1.5 text-ui-muted hover:text-ui-ink"
+            :title="`Drag to reorder: ${DASHBOARD_WIDGET_REGISTRY[widget.key]?.title ?? widget.key}`"
+          >
+            <GripVertical class="w-4 h-4" />
           </div>
         </div>
-        <component
-          :is="DASHBOARD_WIDGET_REGISTRY[widget.key]?.component"
-          v-bind="DASHBOARD_WIDGET_REGISTRY[widget.key]?.props"
-        />
+        <component :is="DASHBOARD_WIDGET_REGISTRY[widget.key]?.component" v-bind="DASHBOARD_WIDGET_REGISTRY[widget.key]?.props" />
       </div>
     </VueDraggableNext>
 
-    <div v-if="orderedWidgets.length === 0" class="text-center py-12 text-gray-400 text-sm">
-      No widgets available for your role yet.
+    <div v-if="orderedWidgets.length === 0" class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty :icon="LayoutGrid" title="No widgets available for your role yet." />
     </div>
   </template>
 
-  <!-- Save-status pill: unobtrusive confirmation for what's otherwise a
-       silent auto-save, without interrupting the user with a dialog. -->
-  <Transition name="fade">
+  <!-- Save-status pill: quiet confirmation for the silent auto-save. Sits
+       above the phone tab bar. -->
+  <Transition name="ui-pop">
     <div
       v-if="saveStatus !== 'idle'"
-      class="fixed bottom-5 right-5 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-[10px] shadow-lg text-sm font-semibold"
-      :class="{
-        'bg-white border border-[#DCDEDD] text-gray-600': saveStatus === 'saving',
-        'bg-white border border-green-200 text-green-700': saveStatus === 'saved',
-        'bg-white border border-red-200 text-red-600': saveStatus === 'error',
-      }"
+      class="fixed right-4 bottom-[calc(84px+env(safe-area-inset-bottom))] lg:bottom-5 lg:right-5 z-40 flex items-center gap-2 h-10 px-3.5 rounded-ui-control bg-ui-surface border border-ui-line shadow-ui-overlay text-ui-small font-medium"
+      :class="{ 'text-ui-text': saveStatus === 'saving', 'text-ui-ok': saveStatus === 'saved', 'text-ui-bad': saveStatus === 'error' }"
+      role="status"
     >
-      <Loader2 v-if="saveStatus === 'saving'" class="w-4 h-4 animate-spin" />
+      <Spinner v-if="saveStatus === 'saving'" :center="false" size="16px" />
       <CheckCircle2 v-else-if="saveStatus === 'saved'" class="w-4 h-4" />
       <AlertCircle v-else-if="saveStatus === 'error'" class="w-4 h-4" />
       <span v-if="saveStatus === 'saving'">Saving layout&hellip;</span>
       <span v-else-if="saveStatus === 'saved'">Layout saved</span>
       <span v-else-if="saveStatus === 'error'">Couldn't save layout</span>
-      <button
-        v-if="saveStatus === 'error'"
-        type="button"
-        @click="store.queueSaveOrder(orderedWidgets.map((w) => w.key))"
-        class="text-red-700 underline ml-1"
-      >
-        Retry
-      </button>
+      <button v-if="saveStatus === 'error'" type="button" @click="store.queueSaveOrder(orderedWidgets.map((w) => w.key))" class="underline ml-1">Retry</button>
     </div>
   </Transition>
 </template>
@@ -233,15 +218,5 @@ const handleResetLayout = async () => {
 <style scoped>
 .widget-drag-ghost {
   opacity: 0.4;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(8px);
 }
 </style>

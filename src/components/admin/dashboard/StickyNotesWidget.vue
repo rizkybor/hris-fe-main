@@ -1,4 +1,6 @@
 <script setup>
+import DashboardWidgetCard from "./DashboardWidgetCard.vue";
+import { UiEmpty } from "@/components/ui";
 import { onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { Pin, ChevronRight } from "lucide-vue-next";
@@ -18,45 +20,34 @@ onMounted(() => {
 // text, not the rich-text body itself.
 const previewText = (html) => (html || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
-const NOTE_COLORS = [
-  "bg-amber-50 border-amber-200",
-  "bg-blue-50 border-blue-200",
-  "bg-green-50 border-green-200",
-  "bg-pink-50 border-pink-200",
-];
+// One quiet colour stripe per note, cycling through the status hues.
+const NOTE_COLORS = ["bg-ui-warn", "bg-ui-accent", "bg-ui-ok", "bg-ui-info"];
 const colorFor = (index) => NOTE_COLORS[index % NOTE_COLORS.length];
 </script>
 
 <template>
-  <div
-    v-if="can('meeting-note-pin')"
-    class="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 rounded-[14px] p-5 shadow-sm"
-  >
-    <div class="flex items-center gap-2 mb-4">
-      <div class="w-8 h-8 bg-amber-100 rounded-[10px] flex items-center justify-center shrink-0">
-        <Pin class="w-4 h-4 text-amber-600" />
-      </div>
-      <h3 class="text-brand-dark text-base font-bold">Sticky Notes</h3>
-    </div>
-
-    <div v-if="pinnedMeetingNotes.length === 0" class="text-center py-6 text-sm text-gray-400">
-      No Meeting Notes pinned yet. Pin an important note from Business Documents so it shows up here.
-    </div>
-
+  <DashboardWidgetCard v-if="can('meeting-note-pin')" title="Sticky Notes" subtitle="Pinned meeting notes">
+    <UiEmpty
+      v-if="pinnedMeetingNotes.length === 0"
+      :icon="Pin"
+      title="No pinned notes"
+      message="Pin an important note from Business Documents so it shows up here."
+      compact
+    />
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <router-link
+      <RouterLink
         v-for="(note, index) in pinnedMeetingNotes"
         :key="note.id"
         :to="{ name: 'admin.meeting-notes.detail', params: { id: note.id } }"
-        class="rounded-[12px] border p-4 hover:shadow-sm transition-all flex flex-col gap-2"
-        :class="colorFor(index)"
+        class="ui-lift group relative rounded-ui-card border border-ui-line bg-ui-subtle/60 p-4 pl-5 hover:border-ui-line-strong flex flex-col gap-1.5 overflow-hidden"
       >
+        <span class="absolute left-0 inset-y-0 w-1" :class="colorFor(index)" aria-hidden="true"></span>
         <div class="flex items-start justify-between gap-2">
-          <p class="text-brand-dark text-sm font-bold truncate">{{ note.title }}</p>
-          <ChevronRight class="w-4 h-4 text-gray-400 shrink-0" />
+          <p class="text-ui-h3 text-ui-ink truncate">{{ note.title }}</p>
+          <ChevronRight class="w-4 h-4 text-ui-faint group-hover:text-ui-ink shrink-0" />
         </div>
-        <p class="text-brand-light text-xs line-clamp-3">{{ previewText(note.body) || "Tidak ada catatan." }}</p>
-      </router-link>
+        <p class="text-ui-cap text-ui-muted line-clamp-3">{{ previewText(note.body) || "Tidak ada catatan." }}</p>
+      </RouterLink>
     </div>
-  </div>
+  </DashboardWidgetCard>
 </template>

@@ -1,4 +1,5 @@
 <script setup>
+import { UiButton } from "@/components/ui";
 import { computed } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { isCompanySignatory } from "@/utils/signatories";
@@ -24,32 +25,19 @@ const deadlineLabel = deadline.toLocaleDateString("id-ID", { day: "numeric", mon
 </script>
 
 <template>
-  <div
-    v-if="visible"
-    class="flex flex-col sm:flex-row sm:items-center gap-4 rounded-[14px] border border-amber-300 bg-amber-50 px-5 py-4"
-  >
+  <div v-if="visible" class="ui-anim-fade-up flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-ui-card border border-ui-warn/30 bg-ui-warn-soft px-4 sm:px-5 py-3.5">
     <div class="flex items-start gap-3 flex-1 min-w-0">
-      <div class="flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 shrink-0">
-        <AlertTriangle class="w-5 h-5 text-amber-600" />
-      </div>
+      <AlertTriangle class="w-5 h-5 text-ui-warn shrink-0 mt-px" />
       <div class="min-w-0">
-        <p class="text-amber-900 font-bold">Buka Aplikasi Coretax - Segera Lakukan SPT Tahunan</p>
-        <p class="text-amber-800 text-sm mt-0.5">
-          Batas pelaporan SPT Tahunan PPh Orang Pribadi adalah <strong>{{ deadlineLabel }}</strong>
+        <p class="text-ui-h3 text-ui-ink">Buka Aplikasi Coretax - Segera Lakukan SPT Tahunan</p>
+        <p class="text-ui-small text-ui-text mt-0.5">
+          Batas pelaporan SPT Tahunan PPh Orang Pribadi adalah <strong class="font-medium text-ui-ink">{{ deadlineLabel }}</strong>
           <template v-if="daysLeft > 0"> ({{ daysLeft }} hari lagi)</template>
           <template v-else> (hari ini)</template>.
           Jika telat, akan dikenakan denda.
         </p>
       </div>
     </div>
-    <a
-      :href="CORETAX_URL"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-colors shrink-0"
-    >
-      Buka Coretax
-      <ExternalLink class="w-4 h-4" />
-    </a>
+    <UiButton :href="CORETAX_URL" target="_blank" rel="noopener noreferrer" variant="secondary" :icon-right="ExternalLink" class="shrink-0">Buka Coretax</UiButton>
   </div>
 </template>

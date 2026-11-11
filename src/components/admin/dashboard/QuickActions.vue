@@ -108,52 +108,21 @@ const visibleActions = computed(() => {
 </script>
 
 <template>
-  <div
-    class="lg:row-span-2 bg-slate-50 border border-[#DCDEDD] rounded-[14px]
-           hover:border-[#0C51D9] hover:border-2
-           transition-all duration-300 p-5"
-  >
-    <div class="flex items-center gap-2 mb-4">
-      <div class="w-8 h-8 bg-blue-50 rounded-[10px] flex items-center justify-center">
-        <ZapIcon class="w-4 h-4 text-blue-600" />
-      </div>
-      <h3 class="text-brand-dark text-base font-bold">Quick Actions</h3>
-    </div>
-
-    <div class="space-y-3">
+  <div class="lg:row-span-2 bg-ui-surface border border-ui-line rounded-ui-card p-4 flex flex-col">
+    <h3 class="text-ui-h3 text-ui-ink px-1 mb-3">Quick Actions</h3>
+    <div class="space-y-1.5">
       <button
         v-for="action in visibleActions"
         :key="action.label"
         type="button"
         @click="goTo(action.route)"
-        :class="
-          action.variant === 'primary'
-            ? 'border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow'
-            : 'border border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white'
-        "
-        class="bg-white btn-secondary w-full text-left rounded-[12px] transition-all duration-300 px-4 py-3 inline-flex items-center gap-3"
+        class="ui-press w-full h-10 px-3 rounded-ui-control inline-flex items-center gap-2.5 text-ui-small font-medium text-left border"
+        :class="action.variant === 'primary' ? 'bg-ui-ink text-white border-ui-ink hover:bg-ui-ink/90' : 'bg-ui-surface text-ui-ink border-ui-line hover:bg-ui-hover'"
       >
-        <div
-          :class="action.variant === 'primary' ? 'bg-white/20' : 'bg-gray-100'"
-          class="w-8 h-8 rounded-[9px] flex items-center justify-center flex-shrink-0"
-        >
-          <component
-            :is="action.icon"
-            class="w-4 h-4"
-            :class="action.variant === 'primary' ? 'text-white' : 'text-gray-600'"
-          />
-        </div>
-        <span
-          :class="action.variant === 'primary' ? 'text-brand-white' : 'text-brand-dark'"
-          class="text-sm font-semibold"
-        >
-          {{ action.label }}
-        </span>
+        <component :is="action.icon" class="w-4 h-4 shrink-0" :class="action.variant === 'primary' ? 'text-white/80' : 'text-ui-faint'" />
+        <span class="truncate">{{ action.label }}</span>
       </button>
-
-      <p v-if="visibleActions.length === 0" class="text-center text-sm text-gray-400 py-6">
-        No quick actions available
-      </p>
+      <p v-if="visibleActions.length === 0" class="text-center text-ui-small text-ui-muted py-6">No quick actions available</p>
     </div>
   </div>
 </template>
