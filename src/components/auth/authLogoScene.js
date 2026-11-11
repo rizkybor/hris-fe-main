@@ -114,7 +114,11 @@ export async function start(host, onReady) {
   const [geometry, faceTexture] = [buildGeometry(), await loadFaceTexture()];
 
   const renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  // Full device resolution in the box (sharp logo and sparks on Retina);
+  // the full-screen flight is capped lower to stay light.
+  const BOX_DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const FLIGHT_DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+  renderer.setPixelRatio(BOX_DPR);
   renderer.localClippingEnabled = true;
   renderer.setClearColor(0x000000, 0);
   host.appendChild(renderer.domElement);
@@ -268,11 +272,12 @@ export async function start(host, onReady) {
       varying float vAlpha;
       void main() {
         float d = length(gl_PointCoord - 0.5) * 2.0;
-        float core = 1.0 - smoothstep(0.18, 0.34, d);
-        float halo = (1.0 - smoothstep(0.34, 1.0, d)) * 0.45;
+        // Crisp: a solid core with a tight edge and only a faint, narrow halo.
+        float core = 1.0 - smoothstep(0.30, 0.38, d);
+        float halo = (1.0 - smoothstep(0.38, 0.70, d)) * 0.22;
         float a = max(core, halo) * vAlpha;
         if (a < 0.01) discard;
-        gl_FragColor = vec4(mix(vColor, vec3(1.0), core * 0.75), a);
+        gl_FragColor = vec4(mix(vColor, vec3(1.0), core * 0.6), a);
       }`,
     transparent: true,
     depthWrite: false,
@@ -353,6 +358,7 @@ export async function start(host, onReady) {
     pointerIn = false;
     canvas.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;z-index:40;pointer-events:none;display:block";
     document.body.appendChild(canvas);
+    renderer.setPixelRatio(FLIGHT_DPR);
     overlayResize();
   };
   // Back into the box. It has already landed and its trail has died out,
@@ -366,6 +372,7 @@ export async function start(host, onReady) {
     logo.position.set(0, logo.position.y - home.y, 0);
     logo.rotation.order = "XYZ";
     logo.rotation.z = 0;
+    renderer.setPixelRatio(BOX_DPR);
     boxResize();
   };
   const tipLeft = new Vector3();
