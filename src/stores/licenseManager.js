@@ -184,8 +184,11 @@ export const useLicenseManagerStore = defineStore("licenseManager", {
       return data.data?.data ?? data.data ?? [];
     },
 
-    async fetchRecentEvents({ limit = 15 } = {}) {
-      const { data } = await axiosInstance.get("/license-manager/events/recent", { params: { limit } });
+    // beforeId: the events older than that one (load on scroll).
+    async fetchRecentEvents({ limit = 15, beforeId = null } = {}) {
+      const { data } = await axiosInstance.get("/license-manager/events/recent", {
+        params: { limit, before_id: beforeId || undefined },
+      });
       return data.data?.data ?? data.data ?? [];
     },
 

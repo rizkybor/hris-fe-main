@@ -2,9 +2,10 @@
 // Overview panel: the latest tracking events of every product. While the
 // endpoint is missing or failing it shows a quiet "Not available yet"
 // state (no toast).
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { Activity, PlugZap, RefreshCw, Inbox } from "lucide-vue-next";
+import { Activity, PlugZap, RefreshCw, Inbox, Loader2 } from "lucide-vue-next";
+import { useLoadOnScroll } from "@/components/admin/license-manager/useLoadOnScroll";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import ProductIcon from "@/components/admin/license-manager/ProductIcon.vue";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
@@ -17,8 +18,9 @@ import {
 } from "@/components/admin/license-manager/licenseHelpers";
 import { eventIcon } from "@/components/admin/license-manager/licenseEventIcons";
 
+// limit: events per load (the first one, then each scroll to the end).
 const props = defineProps({
-  limit: { type: Number, default: 15 },
+  limit: { type: Number, default: 10 },
 });
 
 const store = useLicenseManagerStore();
@@ -26,17 +28,40 @@ const router = useRouter();
 
 const items = ref([]);
 const state = ref("loading"); // loading | ready | unavailable
+// Load on scroll: a full page means there may be more.
+const hasMore = ref(false);
+const loadingMore = ref(false);
+const scroller = ref(null);
+const sentinel = ref(null);
+const lastId = computed(() => items.value[items.value.length - 1]?.id ?? null);
 
 const load = async () => {
   state.value = "loading";
   try {
     items.value = await store.fetchRecentEvents({ limit: props.limit });
+    hasMore.value = items.value.length >= props.limit;
     state.value = "ready";
   } catch {
     items.value = [];
+    hasMore.value = false;
     state.value = "unavailable";
   }
 };
+
+const loadMore = async () => {
+  loadingMore.value = true;
+  try {
+    const more = await store.fetchRecentEvents({ limit: props.limit, beforeId: lastId.value });
+    items.value = [...items.value, ...more.filter((e) => !items.value.some((x) => x.id === e.id))];
+    hasMore.value = more.length >= props.limit;
+  } catch {
+    // Scrolling again retries.
+  } finally {
+    loadingMore.value = false;
+  }
+};
+
+useLoadOnScroll(scroller, sentinel, loadMore, () => hasMore.value && !loadingMore.value && state.value === "ready");
 onMounted(load);
 defineExpose({ reload: load });
 
@@ -107,7 +132,8 @@ const open = (e) => {
       <p class="text-xs text-brand-light">Activations and admin changes will show up here.</p>
     </div>
 
-    <ul v-else class="divide-y divide-[#F1F1F1]">
+    <div v-else ref="scroller" class="max-h-[460px] overflow-y-auto scroll-soft">
+    <ul class="divide-y divide-[#F1F1F1]">
       <li v-for="e in items" :key="e.id">
         <component
           :is="canOpen(e) ? 'button' : 'div'"
@@ -134,5 +160,11 @@ const open = (e) => {
         </component>
       </li>
     </ul>
+      <div ref="sentinel" class="h-px"></div>
+      <p v-if="loadingMore" class="flex items-center justify-center gap-2 py-3 text-xs text-brand-light">
+        <Loader2 class="w-3.5 h-3.5 animate-spin" /> Loading more...
+      </p>
+      <p v-else-if="!hasMore && items.length > limit" class="py-3 text-center text-[11px] text-gray-400">That's all the activity</p>
+    </div>
   </section>
 </template>
