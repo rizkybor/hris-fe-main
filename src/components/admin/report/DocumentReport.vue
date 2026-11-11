@@ -4,6 +4,7 @@ import { Files, ReceiptText, Wallet, Trophy } from "lucide-vue-next";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import RecapTile from "@/components/common/RecapTile.vue";
+import { uiColor, uiChartBase } from "@/utils/uiColor";
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
@@ -26,32 +27,33 @@ onBeforeUnmount(() => mq?.removeEventListener("change", onMq));
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const monthLabel = (m, i) => (narrow.value && i % 2 ? "" : MONTHS[Number(m.slice(5, 7)) - 1] + (props.data?.per_month?.length > 12 ? ` ${m.slice(2, 4)}` : ""));
-const AXIS = { colors: "#64748B", fontSize: "11px" };
-const BLUE = "#2a78d6";
-const GREEN = "#1baf7a";
+// Token colours (read at render time). Categorical order: accent, ink, …;
+// status colours (ok / warn / bad) only where the bar means a status.
+const AXIS = () => uiChartBase().axisLabel;
+const BLUE = uiColor("accent");
+const INK = uiColor("ink");
+const GREEN = uiColor("ok");
 
 const s = computed(() => props.data?.summary || {});
 const ready = computed(() => props.data && Array.isArray(props.data.types));
 
 const tiles = computed(() => [
-  { key: "docs", label: "Total documents", value: s.value.total_documents ?? 0, sub: "In this date range", icon: Files, iconClass: "bg-blue-50 text-[#0C51D9]" },
+  { key: "docs", label: "Total documents", value: s.value.total_documents ?? 0, sub: "In this date range", icon: Files, },
   {
     key: "invoiced",
     label: "Invoiced",
     value: formatRupiah(s.value.invoice_total ?? 0),
     sub: "Excluding cancelled invoices",
     alert: s.value.invoice_unpaid_count ? `${formatRupiahCompact(s.value.invoice_unpaid)} unpaid (${s.value.invoice_unpaid_count})` : null,
-    icon: ReceiptText,
-    iconClass: "bg-amber-50 text-amber-600",
+    icon: ReceiptText
   },
-  { key: "received", label: "Payments received", value: formatRupiah(s.value.received_total ?? 0), sub: `${s.value.receipt_count ?? 0} payment receipt${s.value.receipt_count === 1 ? "" : "s"}`, icon: Wallet, iconClass: "bg-emerald-50 text-emerald-600" },
+  { key: "received", label: "Payments received", value: formatRupiah(s.value.received_total ?? 0), sub: `${s.value.receipt_count ?? 0} payment receipt${s.value.receipt_count === 1 ? "" : "s"}`, icon: Wallet },
   {
     key: "win",
     label: "Proposal win rate",
     value: s.value.proposal_win_rate !== null && s.value.proposal_win_rate !== undefined ? `${s.value.proposal_win_rate}%` : "-",
     sub: s.value.proposal_decided ? `Of ${s.value.proposal_decided} accepted or rejected` : "No proposal decided yet",
-    icon: Trophy,
-    iconClass: "bg-violet-50 text-violet-600",
+    icon: Trophy
   },
 ]);
 
@@ -62,13 +64,13 @@ const typeMax = computed(() => Math.max(1, ...types.value.map((t) => t.count)));
 // ----- Per month (single series) -----
 const perMonth = computed(() => props.data?.per_month || []);
 const perMonthOptions = computed(() => ({
-  chart: { type: "bar", toolbar: { show: false }, animations: { enabled: false }, fontFamily: "inherit" },
+  ...uiChartBase(),
+  chart: { ...uiChartBase().chart, type: "bar" },
   plotOptions: { bar: { borderRadius: 4, borderRadiusApplication: "end", columnWidth: narrow.value ? "55%" : "22px" } },
   colors: [BLUE],
-  dataLabels: { enabled: false },
-  grid: { borderColor: "#EEF1F5", padding: { left: 4, right: 4 } },
-  xaxis: { categories: perMonth.value.map((m, i) => monthLabel(m.month, i)), axisBorder: { show: false }, axisTicks: { show: false }, labels: { rotate: 0, style: AXIS } },
-  yaxis: { tickAmount: 3, forceNiceScale: true, labels: { formatter: (v) => Math.round(v), style: AXIS } },
+  states: { hover: { filter: { type: "darken", value: 0.9 } } },
+  xaxis: { categories: perMonth.value.map((m, i) => monthLabel(m.month, i)), axisBorder: { show: false }, axisTicks: { show: false }, labels: { rotate: 0, style: AXIS() } },
+  yaxis: { tickAmount: 3, forceNiceScale: true, labels: { formatter: (v) => Math.round(v), style: AXIS() } },
   tooltip: { x: { formatter: (_, { dataPointIndex }) => perMonth.value[dataPointIndex]?.month }, y: { formatter: (v) => `${v} document${v === 1 ? "" : "s"}` } },
 }));
 
@@ -76,15 +78,14 @@ const perMonthOptions = computed(() => ({
 const money = computed(() => props.data?.money_per_month || []);
 const hasMoney = computed(() => money.value.some((m) => m.invoiced || m.received));
 const moneyOptions = computed(() => ({
-  chart: { type: "bar", toolbar: { show: false }, animations: { enabled: false }, fontFamily: "inherit" },
+  ...uiChartBase(),
+  chart: { ...uiChartBase().chart, type: "bar" },
   plotOptions: { bar: { borderRadius: 4, borderRadiusApplication: "end", columnWidth: narrow.value ? "70%" : "55%" } },
-  colors: [BLUE, GREEN],
+  colors: [BLUE, INK],
   stroke: { show: true, width: 2, colors: ["transparent"] },
-  dataLabels: { enabled: false },
-  legend: { show: true, position: "top", horizontalAlign: "right", fontSize: "11px", labels: { colors: "#64748B" }, markers: { size: 5, shape: "square" } },
-  grid: { borderColor: "#EEF1F5", padding: { left: 4, right: 4 } },
-  xaxis: { categories: money.value.map((m, i) => monthLabel(m.month, i)), axisBorder: { show: false }, axisTicks: { show: false }, labels: { rotate: 0, style: AXIS } },
-  yaxis: { tickAmount: 3, labels: { formatter: (v) => formatRupiahCompact(v), style: AXIS } },
+  legend: { show: true, position: "top", horizontalAlign: "right", fontSize: "11px", labels: { colors: uiColor("muted") }, markers: { size: 5, shape: "square" } },
+  xaxis: { categories: money.value.map((m, i) => monthLabel(m.month, i)), axisBorder: { show: false }, axisTicks: { show: false }, labels: { rotate: 0, style: AXIS() } },
+  yaxis: { tickAmount: 3, labels: { formatter: (v) => formatRupiahCompact(v), style: AXIS() } },
   tooltip: { shared: true, intersect: false, y: { formatter: (v) => formatRupiah(v) } },
 }));
 const moneySeries = computed(() => [
@@ -93,14 +94,14 @@ const moneySeries = computed(() => [
 ]);
 
 // ----- Invoice status (donut by amount) -----
-const INVOICE_STATUS = { unpaid: { label: "Unpaid", color: "#eda100" }, paid: { label: "Paid", color: GREEN }, cancelled: { label: "Cancelled", color: "#cbd5e1" } };
+const INVOICE_STATUS = { unpaid: { label: "Unpaid", color: uiColor("warn") }, paid: { label: "Paid", color: GREEN }, cancelled: { label: "Cancelled", color: uiColor("line-strong") } };
 const invoiceSlices = computed(() => (props.data?.invoice_status || []).filter((x) => x.count > 0).map((x) => ({ ...x, ...INVOICE_STATUS[x.status] })));
 const invoiceCount = computed(() => invoiceSlices.value.reduce((n, x) => n + x.count, 0));
 const donutOptions = computed(() => ({
   chart: { type: "donut", fontFamily: "inherit", animations: { enabled: false } },
   labels: invoiceSlices.value.map((x) => x.label),
   colors: invoiceSlices.value.map((x) => x.color),
-  stroke: { width: 2, colors: ["#ffffff"] },
+  stroke: { width: 2, colors: [uiColor("surface")] },
   legend: { show: false },
   dataLabels: { enabled: false },
   plotOptions: {
@@ -109,9 +110,9 @@ const donutOptions = computed(() => ({
         size: "70%",
         labels: {
           show: true,
-          name: { show: true, offsetY: 18, color: "#64748b", fontSize: "11px" },
-          value: { show: true, offsetY: -14, color: "#0f172a", fontSize: "18px", fontWeight: 800 },
-          total: { show: true, label: "invoices", color: "#64748b", fontSize: "11px", formatter: () => invoiceCount.value },
+          name: { show: true, offsetY: 18, color: uiColor("muted"), fontSize: "11px" },
+          value: { show: true, offsetY: -14, color: uiColor("ink"), fontSize: "18px", fontWeight: 600 },
+          total: { show: true, label: "invoices", color: uiColor("muted"), fontSize: "11px", formatter: () => invoiceCount.value },
         },
       },
     },
@@ -123,13 +124,13 @@ const donutOptions = computed(() => ({
 const proposal = computed(() => props.data?.types?.find((t) => t.key === "proposal"));
 const proposalMax = computed(() => Math.max(1, ...(proposal.value?.breakdown || []).map((b) => b.count)));
 
-// Same colour = same meaning on every row: green done, amber waiting, gray
-// draft, red rejected/cancelled; internal/external are blue/orange.
+// Same colour = same meaning on every row: ok done, warn waiting, faint
+// draft, bad rejected, line cancelled; internal/external are accent/ink.
 const STATUS_COLOR = {
   paid: GREEN, approved: GREEN, accepted: GREEN,
-  unpaid: "#eda100", pending: "#eda100", partial: "#eda100",
-  draft: "#94a3b8", cancelled: "#cbd5e1", rejected: "#e5484d", sent: BLUE,
-  I: BLUE, internal: BLUE, E: "#eb6834", external: "#eb6834",
+  unpaid: uiColor("warn"), pending: uiColor("warn"), partial: uiColor("warn"),
+  draft: uiColor("faint"), cancelled: uiColor("line-strong"), rejected: uiColor("bad"), sent: BLUE,
+  I: BLUE, internal: BLUE, E: INK, external: INK,
 };
 const colorOf = (value) => STATUS_COLOR[value] || BLUE;
 // Proposals and invoices already have their own charts above.
@@ -138,106 +139,102 @@ const breakdownTypes = computed(() => (props.data?.types || []).filter((t) => ![
 
 <template>
   <div v-if="loading || !ready" class="space-y-3">
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-      <Skeleton v-for="i in 4" :key="i" height="88px" rounded="12px" />
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <Skeleton v-for="i in 4" :key="i" height="92px" rounded="12px" />
     </div>
-    <Skeleton height="260px" rounded="14px" />
+    <Skeleton height="260px" rounded="12px" />
   </div>
 
-  <div v-else class="space-y-3">
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+  <div v-else class="space-y-3 ui-stagger">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <RecapTile v-for="t in tiles" :key="t.key" v-bind="t" />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
       <!-- Per type -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-        <p class="text-brand-dark text-sm font-bold">Documents per type</p>
-        <p class="text-brand-light text-xs mb-3">Number created in this range</p>
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
+        <h3 class="text-ui-h3 text-ui-ink">Documents per type</h3>
+        <p class="text-ui-cap text-ui-muted mb-4">Number created in this range</p>
         <div class="space-y-2.5">
-          <div v-for="t in types" :key="t.key" class="grid grid-cols-[110px_1fr_32px] sm:grid-cols-[130px_1fr_36px] items-center gap-2 text-xs">
-            <span class="text-brand-dark font-medium truncate">{{ t.label }}</span>
-            <div class="bg-gray-100 rounded-full overflow-hidden" style="height: 10px">
+          <div v-for="t in types" :key="t.key" class="grid grid-cols-[110px_1fr_32px] sm:grid-cols-[130px_1fr_36px] items-center gap-2 text-ui-cap">
+            <span class="text-ui-text font-medium truncate">{{ t.label }}</span>
+            <div class="h-2 bg-ui-subtle rounded-full overflow-hidden">
               <div v-if="t.count" class="h-full rounded-full" :style="{ width: `${Math.max(3, (t.count / typeMax) * 100)}%`, backgroundColor: BLUE }"></div>
             </div>
-            <span class="text-brand-dark font-semibold text-right tabular-nums">{{ t.count }}</span>
+            <span class="text-ui-ink font-medium text-right tabular-nums">{{ t.count }}</span>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- Per month -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-        <p class="text-brand-dark text-sm font-bold">Documents per month</p>
-        <p class="text-brand-light text-xs">All document types together</p>
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
+        <h3 class="text-ui-h3 text-ui-ink">Documents per month</h3>
+        <p class="text-ui-cap text-ui-muted">All document types together</p>
         <div class="-mx-2">
           <VueApexCharts type="bar" height="220" :options="perMonthOptions" :series="[{ name: 'Documents', data: perMonth.map((m) => m.count) }]" />
         </div>
-      </div>
+      </section>
     </div>
 
     <!-- Money -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
-        <div>
-          <p class="text-brand-dark text-sm font-bold">Invoiced vs received</p>
-          <p class="text-brand-light text-xs">Invoice totals (excl. cancelled) and payment receipts, by document date</p>
-        </div>
-      </div>
-      <p v-if="!hasMoney" class="text-sm text-gray-500 py-10 text-center">No invoices or payment receipts in this range.</p>
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
+      <h3 class="text-ui-h3 text-ui-ink">Invoiced vs received</h3>
+      <p class="text-ui-cap text-ui-muted">Invoice totals (excl. cancelled) and payment receipts, by document date</p>
+      <p v-if="!hasMoney" class="text-ui-small text-ui-muted py-10 text-center">No invoices or payment receipts in this range.</p>
       <div v-else class="-mx-2">
         <VueApexCharts type="bar" height="240" :options="moneyOptions" :series="moneySeries" />
       </div>
-    </div>
+    </section>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
       <!-- Invoice status -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-        <p class="text-brand-dark text-sm font-bold">Invoice status</p>
-        <p class="text-brand-light text-xs mb-2">How many invoices, and their value</p>
-        <p v-if="!invoiceSlices.length" class="text-sm text-gray-500 py-10 text-center">No invoices in this range.</p>
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
+        <h3 class="text-ui-h3 text-ui-ink">Invoice status</h3>
+        <p class="text-ui-cap text-ui-muted mb-2">How many invoices, and their value</p>
+        <p v-if="!invoiceSlices.length" class="text-ui-small text-ui-muted py-10 text-center">No invoices in this range.</p>
         <div v-else class="flex flex-col sm:flex-row items-center gap-4">
           <div class="w-44 shrink-0">
             <VueApexCharts type="donut" height="190" :options="donutOptions" :series="invoiceSlices.map((x) => x.count)" />
           </div>
-          <ul class="w-full space-y-2 text-xs">
-            <li v-for="x in invoiceSlices" :key="x.status" class="flex items-center gap-2">
+          <ul class="w-full divide-y divide-ui-line text-ui-small">
+            <li v-for="x in invoiceSlices" :key="x.status" class="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
               <span class="w-2.5 h-2.5 rounded-sm shrink-0" :style="{ backgroundColor: x.color }"></span>
-              <span class="text-brand-dark font-medium flex-1">{{ x.label }}</span>
-              <span class="text-brand-light tabular-nums">{{ x.count }}×</span>
-              <span class="text-brand-dark font-semibold tabular-nums">{{ formatRupiahCompact(x.amount) }}</span>
+              <span class="text-ui-text font-medium flex-1">{{ x.label }}</span>
+              <span class="text-ui-muted tabular-nums">{{ x.count }}×</span>
+              <span class="text-ui-ink font-medium tabular-nums w-20 text-right">{{ formatRupiahCompact(x.amount) }}</span>
             </li>
           </ul>
         </div>
-      </div>
+      </section>
 
       <!-- Proposal pipeline -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-        <p class="text-brand-dark text-sm font-bold">Proposal pipeline</p>
-        <p class="text-brand-light text-xs mb-3">Proposals by status</p>
-        <p v-if="!proposal?.count" class="text-sm text-gray-500 py-10 text-center">No proposals in this range.</p>
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
+        <h3 class="text-ui-h3 text-ui-ink">Proposal pipeline</h3>
+        <p class="text-ui-cap text-ui-muted mb-4">Proposals by status</p>
+        <p v-if="!proposal?.count" class="text-ui-small text-ui-muted py-10 text-center">No proposals in this range.</p>
         <div v-else class="space-y-2.5">
-          <div v-for="b in proposal.breakdown" :key="b.value" class="grid grid-cols-[80px_1fr_32px] items-center gap-2 text-xs">
-            <span class="text-brand-dark font-medium">{{ b.label }}</span>
-            <div class="bg-gray-100 rounded-full overflow-hidden" style="height: 10px">
+          <div v-for="b in proposal.breakdown" :key="b.value" class="grid grid-cols-[80px_1fr_32px] items-center gap-2 text-ui-cap">
+            <span class="text-ui-text font-medium">{{ b.label }}</span>
+            <div class="h-2 bg-ui-subtle rounded-full overflow-hidden">
               <div v-if="b.count" class="h-full rounded-full" :style="{ width: `${Math.max(3, (b.count / proposalMax) * 100)}%`, backgroundColor: colorOf(b.value) }"></div>
             </div>
-            <span class="text-brand-dark font-semibold text-right tabular-nums">{{ b.count }}</span>
+            <span class="text-ui-ink font-medium text-right tabular-nums">{{ b.count }}</span>
           </div>
         </div>
-      </div>
+      </section>
     </div>
 
     <!-- Status per type -->
-    <div v-if="breakdownTypes.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-      <p class="text-brand-dark text-sm font-bold">Breakdown per document type</p>
-      <p class="text-brand-light text-xs mb-3">Status or internal/external split of the other documents</p>
+    <section v-if="breakdownTypes.length" class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
+      <h3 class="text-ui-h3 text-ui-ink">Breakdown per document type</h3>
+      <p class="text-ui-cap text-ui-muted mb-4">Status or internal/external split of the other documents</p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
         <div v-for="t in breakdownTypes" :key="t.key">
-          <div class="flex items-baseline justify-between text-xs mb-1">
-            <span class="text-brand-dark font-semibold">{{ t.label }}</span>
-            <span class="text-brand-light tabular-nums">{{ t.count }}</span>
+          <div class="flex items-baseline justify-between text-ui-cap mb-1">
+            <span class="text-ui-ink font-medium">{{ t.label }}</span>
+            <span class="text-ui-muted tabular-nums">{{ t.count }}</span>
           </div>
-          <div class="flex gap-[2px] rounded-full overflow-hidden bg-gray-100" style="height: 8px">
+          <div class="flex gap-0.5 h-2 rounded-full overflow-hidden bg-ui-subtle">
             <div
               v-for="b in t.breakdown.filter((x) => x.count)"
               :key="b.value"
@@ -246,13 +243,13 @@ const breakdownTypes = computed(() => (props.data?.types || []).filter((t) => ![
               :title="`${b.label}: ${b.count}`"
             ></div>
           </div>
-          <p class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[11px] text-brand-light">
+          <p class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-ui-cap text-ui-muted">
             <span v-for="b in t.breakdown" :key="b.value" class="inline-flex items-center gap-1">
-              <span class="w-2 h-2 rounded-sm" :style="{ backgroundColor: colorOf(b.value) }"></span>{{ b.label }} {{ b.count }}
+              <span class="w-2 h-2 rounded-sm" :style="{ backgroundColor: colorOf(b.value) }"></span>{{ b.label }} <span class="tabular-nums">{{ b.count }}</span>
             </span>
           </p>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>

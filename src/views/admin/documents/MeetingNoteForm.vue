@@ -2,7 +2,8 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
-import { NotebookPen, Paperclip, X, FileText, Plus, UserPlus, Search, Users, ChevronDown } from "lucide-vue-next";
+import { ArrowLeft, Paperclip, X, FileText, Plus, UserPlus, Search, Users } from "lucide-vue-next";
+import { UiPageHeader, UiButton, UiInput, UiSelect, UiAlert } from "@/components/ui";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
 import { useEmployeeStore } from "@/stores/employee";
 import { useAuthStore } from "@/stores/auth";
@@ -156,6 +157,16 @@ const buildFormData = () => {
   return formData;
 };
 
+// Presentation only.
+const TYPE_OPTIONS = [
+  { value: "internal", label: "Internal" },
+  { value: "external", label: "External" },
+];
+const fieldClass =
+  "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus transition-shadow";
+const removeBtn =
+  "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus shrink-0";
+
 const handleSubmit = async () => {
   saving.value = true;
   try {
@@ -173,209 +184,184 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex items-start justify-between gap-3 flex-wrap">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <NotebookPen class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">{{ isEditing ? "Edit Meeting Note" : "Create Meeting Note" }}</h3>
-          <p class="text-brand-light text-sm">Meeting notes can be managed together by Manager, Operational Director, HR, and Finance Manager.</p>
-        </div>
-      </div>
-      <PresenceIndicator :viewers="activeViewers" />
-    </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader
+      :title="isEditing ? 'Edit Meeting Note' : 'Create Meeting Note'"
+      subtitle="Meeting notes can be managed together by Manager, Operational Director, HR, and Finance Manager."
+    >
+      <template #eyebrow>
+        <button type="button" class="inline-flex items-center gap-1 text-ui-small text-ui-accent hover:underline mb-1.5" @click="router.back()">
+          <ArrowLeft class="w-3.5 h-3.5" />
+          Back
+        </button>
+      </template>
+      <template #actions>
+        <PresenceIndicator :viewers="activeViewers" />
+      </template>
+    </UiPageHeader>
 
-    <form @submit.prevent="handleSubmit" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-5">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Document Number</label>
-          <input
-            v-model="form.document_number"
-            type="text"
-            placeholder="Leave blank to auto-generate"
-            class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Meeting Type</label>
-          <div class="relative">
-            <select
-              v-model="form.meeting_type"
-              class="select-soft"
-            >
-              <option value="internal">Internal</option>
-              <option value="external">External</option>
-            </select>
-            <ChevronDown
-              class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Meeting Date & Time</label>
-          <input
-            v-model="form.meeting_date"
-            type="datetime-local"
+    <form @submit.prevent="handleSubmit" class="bg-ui-surface border border-ui-line rounded-ui-card ui-anim-fade-up">
+      <div class="p-4 sm:p-6 space-y-6">
+        <!-- Basics -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <UiInput v-model="form.document_number" label="Document Number" placeholder="Leave blank to auto-generate" mono />
+          <UiSelect v-model="form.meeting_type" label="Meeting Type" :options="TYPE_OPTIONS" />
+          <UiInput v-model="form.meeting_date" type="datetime-local" label="Meeting Date & Time" required class="sm:col-span-2 lg:col-span-1" />
+          <UiInput
+            v-model="form.title"
+            label="Meeting Title / Subject"
             required
-            class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
+            placeholder="e.g. Weekly Operations Sync"
+            class="sm:col-span-2 lg:col-span-3"
           />
         </div>
-      </div>
 
-      <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Meeting Title / Subject</label>
-        <input
-          v-model="form.title"
-          type="text"
-          required
-          placeholder="e.g. Weekly Operations Sync"
-          class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-        />
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-sm font-semibold text-brand-dark block">Internal Attendees</label>
-            <span v-if="form.attendee_employee_ids.length" class="text-xs text-[#0C51D9] font-semibold flex items-center gap-1">
-              <Users class="w-3.5 h-3.5" />
-              {{ form.attendee_employee_ids.length }} selected
-            </span>
-          </div>
-          <div class="border border-[#DCDEDD] rounded-xl overflow-hidden">
-            <div v-if="selectableEmployees.length > 8" class="relative border-b border-[#DCDEDD] bg-gray-50 p-2">
-              <Search class="w-3.5 h-3.5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-              <input
-                v-model="attendeeSearch"
-                type="text"
-                placeholder="Search attendees..."
-                class="w-full pl-7 pr-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs bg-white focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-              />
+        <!-- Attendees -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="min-w-0">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-ui-small font-medium text-ui-ink block">Internal Attendees</label>
+              <span v-if="form.attendee_employee_ids.length" class="text-ui-cap text-ui-accent font-medium flex items-center gap-1 tabular-nums">
+                <Users class="w-3.5 h-3.5" />
+                {{ form.attendee_employee_ids.length }} selected
+              </span>
             </div>
-            <div class="p-3 max-h-64 overflow-y-auto space-y-1">
-              <label
-                v-for="employee in filteredEmployees"
-                :key="employee.id"
-                class="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50"
-              >
+            <div class="border border-ui-line-strong rounded-ui-control overflow-hidden">
+              <div v-if="selectableEmployees.length > 8" class="relative border-b border-ui-line bg-ui-subtle p-2">
+                <Search class="w-3.5 h-3.5 text-ui-faint absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
-                  type="checkbox"
-                  :checked="form.attendee_employee_ids.includes(employee.id)"
-                  @change="toggleAttendee(employee.id)"
-                  class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] shrink-0"
+                  v-model="attendeeSearch"
+                  type="text"
+                  placeholder="Search attendees..."
+                  class="w-full h-8 pl-7 pr-2 bg-ui-surface text-ui-small text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
                 />
-                <span class="truncate">{{ employee.user?.name || employee.name }}</span>
-              </label>
-              <p v-if="selectableEmployees.length === 0" class="text-sm text-gray-400 italic py-2">No staff data yet.</p>
-              <p v-else-if="filteredEmployees.length === 0" class="text-sm text-gray-400 italic py-2">No attendees match "{{ attendeeSearch }}".</p>
+              </div>
+              <div class="p-1.5 max-h-64 overflow-y-auto">
+                <label
+                  v-for="employee in filteredEmployees"
+                  :key="employee.id"
+                  class="flex items-center gap-2.5 text-ui-small px-2.5 h-9 rounded-ui-control cursor-pointer hover:bg-ui-hover"
+                  :class="form.attendee_employee_ids.includes(employee.id) ? 'text-ui-ink font-medium' : 'text-ui-text'"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="form.attendee_employee_ids.includes(employee.id)"
+                    @change="toggleAttendee(employee.id)"
+                    class="w-4 h-4 accent-ui-accent shrink-0"
+                  />
+                  <span class="truncate">{{ employee.user?.name || employee.name }}</span>
+                </label>
+                <p v-if="selectableEmployees.length === 0" class="text-ui-small text-ui-muted px-2.5 py-2">No staff data yet.</p>
+                <p v-else-if="filteredEmployees.length === 0" class="text-ui-small text-ui-muted px-2.5 py-2">No attendees match "{{ attendeeSearch }}".</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="min-w-0">
+            <label class="text-ui-small font-medium text-ui-ink mb-1.5 block">External Attendees</label>
+            <div class="border border-ui-line-strong rounded-ui-control p-2 space-y-1.5">
+              <div
+                v-for="(att, index) in externalAttendees"
+                :key="index"
+                class="flex items-center justify-between gap-2 text-ui-small pl-2.5 pr-0.5 h-9 rounded-ui-control bg-ui-subtle"
+              >
+                <span class="truncate text-ui-ink">{{ att.name }}<span v-if="att.organization" class="text-ui-muted"> &middot; {{ att.organization }}</span></span>
+                <button type="button" @click="removeExternalAttendee(index)" :class="removeBtn" aria-label="Remove attendee">
+                  <X class="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div class="flex gap-1.5">
+                <input v-model="newExternalName" type="text" placeholder="Name" :class="[fieldClass, 'flex-1 min-w-0']" />
+                <input v-model="newExternalOrg" type="text" placeholder="Organization" :class="[fieldClass, 'flex-1 min-w-0']" />
+                <UiButton variant="secondary" :icon="UserPlus" aria-label="Add external attendee" title="Add external attendee" @click="addExternalAttendee" />
+              </div>
             </div>
           </div>
         </div>
 
-        <div>
-          <label class="text-sm font-semibold text-brand-dark mb-1.5 block">External Attendees</label>
-          <div class="border border-[#DCDEDD] rounded-xl p-3 space-y-2">
-            <div v-for="(att, index) in externalAttendees" :key="index" class="flex items-center justify-between gap-2 text-sm px-2 py-1.5 rounded-lg bg-gray-50">
-              <span class="truncate">{{ att.name }}<span v-if="att.organization" class="text-gray-400"> &middot; {{ att.organization }}</span></span>
-              <button type="button" @click="removeExternalAttendee(index)" class="text-gray-400 hover:text-red-500 shrink-0">
-                <X class="w-3.5 h-3.5" />
+        <!-- Body -->
+        <div class="min-w-0">
+          <label class="text-ui-small font-medium text-ui-ink mb-1.5 block">Notes Content</label>
+          <RichTextEditor v-model="form.body" placeholder="Meeting discussion summary..." />
+        </div>
+
+        <!-- Action items -->
+        <div class="min-w-0">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-ui-small font-medium text-ui-ink block">Action Items</label>
+            <UiButton variant="ghost" size="sm" :icon="Plus" @click="addActionItem">Add Item</UiButton>
+          </div>
+          <div class="space-y-2">
+            <div
+              v-for="(item, index) in actionItems"
+              :key="index"
+              class="grid grid-cols-[auto,1fr,auto] sm:grid-cols-[auto,1fr,10rem,auto] items-center gap-2"
+            >
+              <input type="checkbox" v-model="item.done" class="w-4 h-4 accent-ui-accent shrink-0" aria-label="Done" />
+              <input v-model="item.text" type="text" placeholder="Action item description" :class="[fieldClass, 'min-w-0']" />
+              <input
+                v-model="item.assignee"
+                type="text"
+                placeholder="Assignee"
+                :class="[fieldClass, 'min-w-0 col-start-2 row-start-2 sm:col-start-auto sm:row-start-auto']"
+              />
+              <button type="button" @click="removeActionItem(index)" :class="[removeBtn, 'col-start-3 row-start-1 sm:col-start-auto sm:row-start-auto']" aria-label="Remove item">
+                <X class="w-4 h-4" />
               </button>
             </div>
-            <div class="flex gap-1.5">
-              <input v-model="newExternalName" type="text" placeholder="Name" class="flex-1 min-w-0 px-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs" />
-              <input v-model="newExternalOrg" type="text" placeholder="Organization" class="flex-1 min-w-0 px-2 py-1.5 border border-[#DCDEDD] rounded-lg text-xs" />
-              <button type="button" @click="addExternalAttendee" class="shrink-0 px-2.5 py-1.5 rounded-lg border border-[#DCDEDD] hover:border-[#0C51D9] hover:text-[#0C51D9]">
-                <UserPlus class="w-3.5 h-3.5" />
+            <p v-if="actionItems.length === 0" class="text-ui-small text-ui-muted">No action items yet.</p>
+          </div>
+        </div>
+
+        <!-- Attachments -->
+        <div class="min-w-0">
+          <label class="text-ui-small font-medium text-ui-ink mb-1.5 block">Attachments</label>
+          <div class="space-y-2">
+            <div
+              v-for="attachment in existingAttachments"
+              :key="attachment.id"
+              class="flex items-center justify-between gap-2 pl-3 pr-1 h-10 border border-ui-line rounded-ui-control text-ui-small"
+            >
+              <a :href="attachment.url" target="_blank" class="flex items-center gap-2 text-ui-accent hover:underline min-w-0">
+                <FileText class="w-4 h-4 shrink-0 text-ui-faint" />
+                <span class="truncate">{{ attachment.original_name }}</span>
+              </a>
+              <button type="button" @click="removeExistingAttachment(attachment.id)" :class="removeBtn" aria-label="Remove attachment">
+                <X class="w-4 h-4" />
               </button>
             </div>
+            <div
+              v-for="(file, index) in newAttachments"
+              :key="index"
+              class="flex items-center justify-between gap-2 pl-3 pr-1 h-10 border border-ui-line rounded-ui-control text-ui-small"
+            >
+              <span class="flex items-center gap-2 min-w-0 text-ui-ink">
+                <FileText class="w-4 h-4 shrink-0 text-ui-faint" />
+                <span class="truncate">{{ file.name }}</span>
+              </span>
+              <button type="button" @click="removeNewAttachment(index)" :class="removeBtn" aria-label="Remove attachment">
+                <X class="w-4 h-4" />
+              </button>
+            </div>
+
+            <label
+              class="flex items-center gap-2 justify-center text-center border border-dashed border-ui-line-strong rounded-ui-control px-3 py-3 text-ui-small text-ui-muted cursor-pointer hover:border-ui-accent hover:text-ui-accent hover:bg-ui-accent-soft/40 transition-colors"
+            >
+              <Paperclip class="w-4 h-4 shrink-0" />
+              Add Attachment (PDF, DOC, PNG, JPG — max 5MB)
+              <input type="file" multiple class="hidden" @change="onFileChange" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+            </label>
           </div>
         </div>
+
+        <UiAlert v-if="error" tone="bad">
+          {{ typeof error === "string" ? error : "Please review the fields you've filled in." }}
+        </UiAlert>
       </div>
 
-      <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Notes Content</label>
-        <RichTextEditor v-model="form.body" placeholder="Meeting discussion summary..." />
-      </div>
-
-      <div>
-        <div class="flex items-center justify-between mb-1.5">
-          <label class="text-sm font-semibold text-brand-dark block">Action Items</label>
-          <button type="button" @click="addActionItem" class="text-xs text-[#0C51D9] font-semibold hover:underline flex items-center gap-1">
-            <Plus class="w-3.5 h-3.5" /> Add Item
-          </button>
-        </div>
-        <div class="space-y-2">
-          <div v-for="(item, index) in actionItems" :key="index" class="flex items-center gap-2">
-            <input type="checkbox" v-model="item.done" class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] shrink-0" />
-            <input v-model="item.text" type="text" placeholder="Action item description" class="flex-1 min-w-0 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            <input v-model="item.assignee" type="text" placeholder="Assignee" class="w-32 shrink-0 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            <button type="button" @click="removeActionItem(index)" class="text-gray-400 hover:text-red-500 shrink-0">
-              <X class="w-4 h-4" />
-            </button>
-          </div>
-          <p v-if="actionItems.length === 0" class="text-sm text-gray-400 italic">No action items yet.</p>
-        </div>
-      </div>
-
-      <div>
-        <label class="text-sm font-semibold text-brand-dark mb-1.5 block">Attachments</label>
-        <div class="space-y-2">
-          <div
-            v-for="attachment in existingAttachments"
-            :key="attachment.id"
-            class="flex items-center justify-between gap-2 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm"
-          >
-            <a :href="attachment.url" target="_blank" class="flex items-center gap-2 text-[#0C51D9] hover:underline truncate">
-              <FileText class="w-4 h-4 shrink-0" />
-              {{ attachment.original_name }}
-            </a>
-            <button type="button" @click="removeExistingAttachment(attachment.id)" class="text-gray-400 hover:text-red-500 shrink-0">
-              <X class="w-4 h-4" />
-            </button>
-          </div>
-          <div
-            v-for="(file, index) in newAttachments"
-            :key="index"
-            class="flex items-center justify-between gap-2 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm"
-          >
-            <span class="flex items-center gap-2 truncate">
-              <FileText class="w-4 h-4 shrink-0 text-gray-400" />
-              {{ file.name }}
-            </span>
-            <button type="button" @click="removeNewAttachment(index)" class="text-gray-400 hover:text-red-500 shrink-0">
-              <X class="w-4 h-4" />
-            </button>
-          </div>
-
-          <label class="flex items-center gap-2 justify-center border border-dashed border-[#DCDEDD] rounded-lg py-3 text-sm text-brand-light cursor-pointer hover:border-[#0C51D9] hover:text-[#0C51D9] transition-colors">
-            <Paperclip class="w-4 h-4" />
-            Add Attachment (PDF, DOC, PNG, JPG — max 5MB)
-            <input type="file" multiple class="hidden" @change="onFileChange" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
-          </label>
-        </div>
-      </div>
-
-      <p v-if="error" class="text-red-500 text-sm">
-        {{ typeof error === "string" ? error : "Please review the fields you've filled in." }}
-      </p>
-
-      <div class="flex items-center gap-3 pt-2 border-t border-[#F1F1F1]">
-        <button
-          type="submit"
-          :disabled="saving"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-5 py-2.5 disabled:opacity-50"
-        >
-          <span class="text-brand-white text-sm font-semibold">{{ saving ? "Saving..." : "Save" }}</span>
-        </button>
-        <button
-          type="button"
-          @click="router.back()"
-          class="px-5 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50"
-        >
-          Cancel
-        </button>
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 px-4 sm:px-6 py-4 border-t border-ui-line bg-ui-subtle/60 rounded-b-ui-card">
+        <UiButton variant="secondary" @click="router.back()">Cancel</UiButton>
+        <UiButton type="submit" :loading="saving">{{ saving ? "Saving..." : "Save" }}</UiButton>
       </div>
     </form>
   </div>

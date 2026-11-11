@@ -39,8 +39,10 @@ const currentPage = computed(() => props.meta?.current_page || 1);
 const lastPage = computed(() => props.meta?.last_page || 1);
 const perPage = computed(() => props.meta?.per_page || 10);
 const total = computed(() => props.meta?.total || 0);
-const from = computed(() => props.meta?.from || 0);
-const to = computed(() => props.meta?.to || 0);
+// Some APIs omit from/to in meta; derive them from the page so the range
+// never reads "0–0".
+const from = computed(() => props.meta?.from || (total.value ? (currentPage.value - 1) * perPage.value + 1 : 0));
+const to = computed(() => props.meta?.to || Math.min(currentPage.value * perPage.value, total.value));
 
 // Windowed page numbers with ellipsis, so a dataset with hundreds of pages
 // doesn't render hundreds of buttons into the DOM.

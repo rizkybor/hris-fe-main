@@ -1,6 +1,6 @@
 <script setup>
-import BaseInput from "@/components/common/form/Input.vue";
 import UsageStatusFields from "./UsageStatusFields.vue";
+import { UiModal, UiInput, UiButton } from "@/components/ui";
 import { reactive, watch, computed } from "vue";
 
 const props = defineProps({
@@ -133,113 +133,76 @@ const submit = () => {
 </script>
 
 <template>
-  <div
-    v-if="show"
-    class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+  <UiModal
+    :open="show"
+    :title="props.mode === 'add' ? 'Add Infrastructure Tool' : props.mode === 'edit' ? 'Edit Infrastructure Tool' : 'Infrastructure Detail'"
+    :description="props.mode === 'add' ? 'create a new infra tools record.' : props.mode === 'edit' ? 'modify the infra tools details.' : 'details of the selected infra tools.'"
+    size="lg"
+    @update:open="(v) => !v && $emit('close')"
   >
-    <div
-      class="bg-slate-50 rounded-[14px] w-full max-w-md max-h-[90vh] overflow-y-auto p-6 shadow-xl"
-    >
-      <h3 class="text-xl font-bold">
-        {{
-          props.mode === "add"
-            ? "Add Infrastructure Tool"
-            : props.mode === "edit"
-            ? "Edit Infrastructure Tool"
-            : "Infrastructure Detail"
-        }}
-      </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <UiInput
+        id="tech"
+        label="Tech Stack Component"
+        placeholder="add your tech stack item"
+        v-model="form.tech_stack_component"
+        :readonly="props.mode === 'view'"
+        :required="props.mode !== 'view'"
+        :error="errors.tech_stack_component"
+      />
 
-      <h6 class="text-sm text-gray-400 italic mb-4">
-        {{
-          props.mode === "add"
-            ? "create a new infra tools record."
-            : props.mode === "edit"
-            ? "modify the infra tools details."
-            : "details of the selected infra tools."
-        }}
-      </h6>
+      <UiInput
+        id="vendor"
+        label="Vendor"
+        placeholder="add vendor item"
+        v-model="form.vendor"
+        :readonly="props.mode === 'view'"
+        :required="props.mode !== 'view'"
+        :error="errors.vendor"
+      />
 
-      <div class="space-y-4">
-        <div>
-          <BaseInput
-            id="tech"
-            label="Tech Stack Component"
-            placeholder="add your tech stack item"
-            v-model="form.tech_stack_component"
-            :readonly="props.mode === 'view'"
-            :required="props.mode !== 'view'"
-          />
-          <p
-            v-if="errors.tech_stack_component"
-            class="text-red-500 text-sm mt-1"
-          >
-            {{ errors.tech_stack_component }}
-          </p>
-        </div>
+      <UiInput
+        id="monthly"
+        label="Monthly Fee (Rp.)"
+        placeholder="add price monthly fee item"
+        v-model="monthlyModel"
+        :readonly="props.mode === 'view'"
+        class="[&_input]:tabular-nums"
+      />
 
-        <div>
-          <BaseInput
-            id="vendor"
-            label="Vendor"
-            placeholder="add vendor item"
-            v-model="form.vendor"
-            :readonly="props.mode === 'view'"
-            :required="props.mode !== 'view'"
-          />
-          <p v-if="errors.vendor" class="text-red-500 text-sm mt-1">
-            {{ errors.vendor }}
-          </p>
-        </div>
+      <UiInput
+        id="annual"
+        label="Annual Fee (Rp.)"
+        placeholder="add price annual fee item"
+        v-model="annualModel"
+        :readonly="props.mode === 'view'"
+        class="[&_input]:tabular-nums"
+      />
 
-        <BaseInput
-          id="monthly"
-          label="Monthly Fee (Rp.)"
-          placeholder="add price monthly fee item"
-          v-model="monthlyModel"
-          :readonly="props.mode === 'view'"
-          only-number
-        />
+      <UsageStatusFields
+        v-model:status="form.status"
+        v-model:expired-date="form.expired_date"
+        :readonly="props.mode === 'view'"
+        :errors="errors"
+      />
 
-        <BaseInput
-          id="annual"
-          label="Annual Fee (Rp.)"
-          placeholder="add price annual fee item"
-          v-model="annualModel"
-          :readonly="props.mode === 'view'"
-          only-number
-        />
-
-        <UsageStatusFields
-          v-model:status="form.status"
-          v-model:expired-date="form.expired_date"
-          :readonly="props.mode === 'view'"
-          :errors="errors"
-        />
-
-        <BaseInput
-          id="notes"
-          label="Notes"
-          placeholder="add notes item"
-          v-model="form.notes"
-          :readonly="props.mode === 'view'"
-        />
-      </div>
-
-      <div class="flex justify-end gap-3 mt-6">
-        <button class="bg-white px-4 py-2 border rounded-lg" @click="$emit('close')">
-          {{ props.mode === "view" ? "Close" : "Cancel" }}
-        </button>
-
-        <button
-          v-if="props.mode !== 'view'"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg"
-          @click="submit"
-          :disabled="loading"
-        >
-          Save
-        </button>
-      </div>
+      <UiInput
+        id="notes"
+        label="Notes"
+        placeholder="add notes item"
+        v-model="form.notes"
+        :readonly="props.mode === 'view'"
+        class="sm:col-span-2"
+      />
     </div>
-  </div>
+
+    <template #footer>
+      <UiButton variant="secondary" @click="$emit('close')">
+        {{ props.mode === "view" ? "Close" : "Cancel" }}
+      </UiButton>
+      <UiButton v-if="props.mode !== 'view'" :loading="loading" :disabled="loading" @click="submit">
+        Save
+      </UiButton>
+    </template>
+  </UiModal>
 </template>

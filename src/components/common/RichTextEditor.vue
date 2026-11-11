@@ -583,38 +583,38 @@ const FORMAT_OPTIONS = [
 </script>
 
 <template>
-  <div class="border border-[#DCDEDD] rounded-xl overflow-hidden" :class="{ 'opacity-60': disabled }">
-    <div v-if="!disabled" class="flex flex-wrap items-center gap-1 border-b border-[#DCDEDD] bg-gray-50 px-2 py-1.5">
+  <div class="border border-ui-line rounded-ui-card overflow-hidden" :class="{ 'opacity-60': disabled }">
+    <div v-if="!disabled" class="flex flex-wrap items-center gap-1 border-b border-ui-line bg-ui-subtle px-2 py-1.5">
       <select
         @change="setFormatBlock($event.target.value)"
-        class="text-xs border border-[#DCDEDD] rounded-md px-1.5 py-1 bg-white text-gray-600 cursor-pointer transition-colors hover:border-[#93C5FD] hover:bg-blue-50 focus:outline-none focus:ring-1 focus:ring-[#60A5FA] focus:border-[#60A5FA] mr-1"
+        class="text-ui-cap border border-ui-line rounded-md px-1.5 py-1 bg-ui-surface text-ui-text cursor-pointer transition-colors hover:border-ui-line-strong focus:outline-none focus:ring-1 focus:ring-ui-accent focus:border-ui-accent mr-1"
         title="Format Teks"
       >
         <option v-for="opt in FORMAT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
       </select>
 
       <template v-for="(group, gi) in TOOLBAR_GROUPS" :key="gi">
-        <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+        <span class="w-px h-5 bg-ui-line mx-0.5" />
         <button
           v-for="btn in group"
           :key="btn.command"
           type="button"
           :title="btn.title"
           @mousedown.prevent="exec(btn.command, btn.value)"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
         >
           <component :is="btn.icon" class="w-4 h-4" />
         </button>
       </template>
 
       <template v-if="uploadImage">
-        <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+        <span class="w-px h-5 bg-ui-line mx-0.5" />
         <button
           type="button"
           title="Insert Image"
           :disabled="uploadingImage"
           @mousedown.prevent="openImagePicker"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors disabled:opacity-50"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors disabled:opacity-50"
         >
           <Loader2 v-if="uploadingImage" class="w-4 h-4 animate-spin" />
           <ImagePlus v-else class="w-4 h-4" />
@@ -627,25 +627,25 @@ const FORMAT_OPTIONS = [
         title="Insert Flowchart"
         :disabled="insertingFlowchart"
         @mousedown.prevent="pickFlowchart"
-        class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors disabled:opacity-50"
+        class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors disabled:opacity-50"
       >
         <Workflow class="w-4 h-4" />
       </button>
 
-      <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+      <span class="w-px h-5 bg-ui-line mx-0.5" />
       <div class="relative">
         <button
           type="button"
           title="Insert Link"
           @mousedown.prevent="openLinkPopover"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
         >
           <Link2 class="w-4 h-4" />
         </button>
 
         <div
           v-if="linkPopoverOpen"
-          class="absolute z-10 top-full left-0 mt-1 bg-white border border-[#DCDEDD] rounded-lg shadow-lg p-2 flex items-center gap-1.5 w-64"
+          class="absolute z-10 top-full left-0 mt-1 bg-ui-surface border border-ui-line rounded-ui-control shadow-ui-overlay p-2 flex items-center gap-1.5 w-64"
         >
           <input
             v-model="linkUrl"
@@ -654,35 +654,35 @@ const FORMAT_OPTIONS = [
             type="text"
             placeholder="https://..."
             autofocus
-            class="flex-1 min-w-0 px-2 py-1 border border-[#DCDEDD] rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-[#0C51D9]"
+            class="flex-1 min-w-0 px-2 py-1 border border-ui-line rounded-md text-ui-cap focus:outline-none focus:ring-1 focus:ring-ui-accent"
           />
           <button
             type="button"
             @mousedown.prevent="confirmLink"
-            class="shrink-0 px-2 py-1 rounded-md bg-[#0C51D9] text-white text-xs font-semibold"
+            class="shrink-0 px-2 py-1 rounded-md bg-ui-ink text-white text-ui-cap font-semibold"
           >
             OK
           </button>
         </div>
       </div>
 
-      <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+      <span class="w-px h-5 bg-ui-line mx-0.5" />
       <div class="relative">
         <button
           type="button"
           title="Insert Table"
           @mousedown.prevent="openTablePopover"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
         >
           <Table class="w-4 h-4" />
         </button>
 
         <div
           v-if="tablePopoverOpen"
-          class="absolute z-10 top-full left-0 mt-1 bg-white border border-[#DCDEDD] rounded-lg shadow-lg p-3 w-44"
+          class="absolute z-10 top-full left-0 mt-1 bg-ui-surface border border-ui-line rounded-ui-control shadow-ui-overlay p-3 w-44"
         >
           <div class="flex items-center gap-2 mb-2">
-            <label class="text-xs text-gray-500 w-12 shrink-0">Baris</label>
+            <label class="text-ui-cap text-ui-muted w-12 shrink-0">Baris</label>
             <input
               v-model.number="tableRows"
               @keydown.enter.prevent="confirmInsertTable"
@@ -690,11 +690,11 @@ const FORMAT_OPTIONS = [
               type="number"
               min="1"
               max="20"
-              class="flex-1 min-w-0 px-2 py-1 border border-[#DCDEDD] rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-[#0C51D9]"
+              class="flex-1 min-w-0 px-2 py-1 border border-ui-line rounded-md text-ui-cap focus:outline-none focus:ring-1 focus:ring-ui-accent"
             />
           </div>
           <div class="flex items-center gap-2 mb-2.5">
-            <label class="text-xs text-gray-500 w-12 shrink-0">Kolom</label>
+            <label class="text-ui-cap text-ui-muted w-12 shrink-0">Kolom</label>
             <input
               v-model.number="tableCols"
               @keydown.enter.prevent="confirmInsertTable"
@@ -702,13 +702,13 @@ const FORMAT_OPTIONS = [
               type="number"
               min="1"
               max="10"
-              class="flex-1 min-w-0 px-2 py-1 border border-[#DCDEDD] rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-[#0C51D9]"
+              class="flex-1 min-w-0 px-2 py-1 border border-ui-line rounded-md text-ui-cap focus:outline-none focus:ring-1 focus:ring-ui-accent"
             />
           </div>
           <button
             type="button"
             @mousedown.prevent="confirmInsertTable"
-            class="w-full px-2 py-1.5 rounded-md bg-[#0C51D9] text-white text-xs font-semibold"
+            class="w-full px-2 py-1.5 rounded-md bg-ui-ink text-white text-ui-cap font-semibold"
           >
             Sisipkan Tabel
           </button>
@@ -716,12 +716,12 @@ const FORMAT_OPTIONS = [
       </div>
 
       <template v-if="inTable">
-        <span class="w-px h-5 bg-[#DCDEDD] mx-0.5" />
+        <span class="w-px h-5 bg-ui-line mx-0.5" />
         <button
           type="button"
           title="Add Row Below"
           @mousedown.prevent="addRow"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
         >
           <Rows3 class="w-4 h-4" />
         </button>
@@ -729,7 +729,7 @@ const FORMAT_OPTIONS = [
           type="button"
           title="Delete Current Row"
           @mousedown.prevent="deleteRow"
-          class="p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-bad-soft text-ui-bad transition-colors"
         >
           <Rows3 class="w-4 h-4" />
         </button>
@@ -737,7 +737,7 @@ const FORMAT_OPTIONS = [
           type="button"
           title="Add Column Right"
           @mousedown.prevent="addColumn"
-          class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
         >
           <Columns3 class="w-4 h-4" />
         </button>
@@ -745,7 +745,7 @@ const FORMAT_OPTIONS = [
           type="button"
           title="Delete Current Column"
           @mousedown.prevent="deleteColumn"
-          class="p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-bad-soft text-ui-bad transition-colors"
         >
           <Columns3 class="w-4 h-4" />
         </button>
@@ -753,7 +753,7 @@ const FORMAT_OPTIONS = [
           type="button"
           title="Delete Table"
           @mousedown.prevent="deleteTable"
-          class="p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors"
+          class="p-1.5 rounded-md hover:bg-ui-bad-soft text-ui-bad transition-colors"
         >
           <Trash2 class="w-4 h-4" />
         </button>
@@ -763,14 +763,14 @@ const FORMAT_OPTIONS = [
             type="button"
             title="Column Color"
             @mousedown.prevent="openColorPopover"
-            class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+            class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
           >
             <Palette class="w-4 h-4" />
           </button>
 
           <div
             v-if="colorPopoverOpen"
-            class="absolute z-10 top-full left-0 mt-1 bg-white border border-[#DCDEDD] rounded-lg shadow-lg p-2 flex items-center gap-1.5"
+            class="absolute z-10 top-full left-0 mt-1 bg-ui-surface border border-ui-line rounded-ui-control shadow-ui-overlay p-2 flex items-center gap-1.5"
           >
             <button
               v-for="color in CELL_COLORS"
@@ -778,7 +778,7 @@ const FORMAT_OPTIONS = [
               type="button"
               :title="color.label"
               @mousedown.prevent="applyColumnColor(color.value)"
-              class="w-6 h-6 rounded-md border border-[#DCDEDD] transition-transform hover:scale-110"
+              class="w-6 h-6 rounded-md border border-ui-line transition-transform hover:scale-110"
               :class="{ 'bg-white bg-[linear-gradient(135deg,transparent_45%,#ef4444_45%,#ef4444_55%,transparent_55%)]': !color.value }"
               :style="color.value ? { backgroundColor: color.value } : {}"
             ></button>
@@ -790,14 +790,14 @@ const FORMAT_OPTIONS = [
             type="button"
             title="Row Color"
             @mousedown.prevent="openRowColorPopover"
-            class="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition-colors"
+            class="p-1.5 rounded-md hover:bg-ui-hover text-ui-text transition-colors"
           >
             <PaintBucket class="w-4 h-4" />
           </button>
 
           <div
             v-if="rowColorPopoverOpen"
-            class="absolute z-10 top-full left-0 mt-1 bg-white border border-[#DCDEDD] rounded-lg shadow-lg p-2 flex items-center gap-1.5"
+            class="absolute z-10 top-full left-0 mt-1 bg-ui-surface border border-ui-line rounded-ui-control shadow-ui-overlay p-2 flex items-center gap-1.5"
           >
             <button
               v-for="color in CELL_COLORS"
@@ -805,7 +805,7 @@ const FORMAT_OPTIONS = [
               type="button"
               :title="color.label"
               @mousedown.prevent="applyRowColor(color.value)"
-              class="w-6 h-6 rounded-md border border-[#DCDEDD] transition-transform hover:scale-110"
+              class="w-6 h-6 rounded-md border border-ui-line transition-transform hover:scale-110"
               :class="{ 'bg-white bg-[linear-gradient(135deg,transparent_45%,#ef4444_45%,#ef4444_55%,transparent_55%)]': !color.value }"
               :style="color.value ? { backgroundColor: color.value } : {}"
             ></button>
@@ -816,16 +816,16 @@ const FORMAT_OPTIONS = [
 
     <div
       v-if="selectedImage && !disabled"
-      class="flex flex-wrap items-center gap-2 border-b border-[#DCDEDD] bg-blue-50 px-2.5 py-1.5 text-xs text-brand-dark"
+      class="flex flex-wrap items-center gap-2 border-b border-ui-line bg-ui-accent-soft px-2.5 py-1.5 text-ui-cap text-ui-ink"
     >
       <span class="font-semibold">Gambar:</span>
-      <div class="inline-flex rounded-md border border-[#DCDEDD] bg-white overflow-hidden">
+      <div class="inline-flex rounded-md border border-ui-line bg-ui-surface overflow-hidden">
         <button
           v-for="size in IMAGE_SIZES"
           :key="size.value"
           type="button"
           class="px-2 py-1 font-semibold transition-colors"
-          :class="imageWidth === size.value ? 'bg-[#0C51D9] text-white' : 'text-gray-600 hover:bg-gray-100'"
+          :class="imageWidth === size.value ? 'bg-ui-ink text-white' : 'text-ui-text hover:bg-ui-hover'"
           :title="`Lebar ${size.value}%`"
           @mousedown.prevent="setImageWidth(size.value)"
         >
@@ -838,12 +838,12 @@ const FORMAT_OPTIONS = [
         max="100"
         step="5"
         :value="imageWidth"
-        class="w-28 accent-[#0C51D9]"
+        class="w-28 accent-[rgb(var(--ui-ink))]"
         title="Atur lebar"
         @input="setImageWidth(Number($event.target.value))"
       />
       <span class="w-9 tabular-nums">{{ imageWidth }}%</span>
-      <span class="w-px h-5 bg-[#DCDEDD]" />
+      <span class="w-px h-5 bg-ui-line" />
       <div class="inline-flex gap-0.5">
         <button
           v-for="opt in [
@@ -854,17 +854,17 @@ const FORMAT_OPTIONS = [
           :key="opt.value"
           type="button"
           class="p-1 rounded-md transition-colors"
-          :class="imageAlign === opt.value ? 'bg-white text-[#0C51D9] shadow-sm' : 'text-gray-600 hover:bg-white'"
+          :class="imageAlign === opt.value ? 'bg-ui-ink text-white' : 'text-ui-text hover:bg-ui-hover'"
           :title="opt.title"
           @mousedown.prevent="setImageAlign(opt.value)"
         >
           <component :is="opt.icon" class="w-4 h-4" />
         </button>
       </div>
-      <button type="button" class="ml-auto p-1 rounded-md text-gray-600 hover:bg-red-50 hover:text-red-600" title="Hapus gambar" @mousedown.prevent="removeSelectedImage">
+      <button type="button" class="ml-auto p-1 rounded-md text-ui-text hover:bg-ui-bad-soft hover:text-ui-bad" title="Hapus gambar" @mousedown.prevent="removeSelectedImage">
         <Trash2 class="w-4 h-4" />
       </button>
-      <button type="button" class="px-1.5 py-0.5 rounded-md text-gray-500 hover:bg-white" title="Selesai" @mousedown.prevent="deselectImage">Selesai</button>
+      <button type="button" class="px-1.5 py-0.5 rounded-md text-ui-muted hover:bg-ui-surface" title="Selesai" @mousedown.prevent="deselectImage">Selesai</button>
     </div>
 
     <div
@@ -875,16 +875,18 @@ const FORMAT_OPTIONS = [
       @mousemove="onEditorMouseMove"
       @mousedown="onEditorMouseDown"
       @mouseleave="editorRef.style.cursor = ''"
-      class="rich-text-editor px-3 py-2.5 text-sm min-h-[180px] max-h-[400px] overflow-y-auto focus:outline-none"
+      class="rich-text-editor px-3 py-2.5 text-ui-small min-h-[180px] max-h-[400px] overflow-y-auto focus:outline-none"
       :data-placeholder="placeholder"
     ></div>
   </div>
 </template>
 
 <style scoped>
+/* Content styles mirror the exported PDF on purpose (headings, quotes,
+   links, tables) -- only the editor chrome follows the UI tokens. */
 .rich-text-editor:empty::before {
   content: attr(data-placeholder);
-  color: #9ca3af;
+  color: rgb(var(--ui-faint));
 }
 /* Indentation is left to the Align/Indent controls (and Tab) instead of
    being auto-applied to every paragraph -- matches the PDF, where
@@ -948,7 +950,7 @@ const FORMAT_OPTIONS = [
   cursor: pointer;
 }
 .rich-text-editor :deep(img.rte-img-selected) {
-  outline: 2px solid #0c51d9;
+  outline: 2px solid rgb(var(--ui-accent));
   outline-offset: 2px;
 }
 .rich-text-editor :deep(table) {

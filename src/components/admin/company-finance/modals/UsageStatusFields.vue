@@ -1,6 +1,5 @@
 <script setup>
-import BaseInput from "@/components/common/form/Input.vue";
-import BaseSelect from "@/components/common/form/Select.vue";
+import { UiInput, UiSelect } from "@/components/ui";
 import { OPERATIONAL_COST_STATUSES } from "@/utils/operationalCostStatus";
 
 // Status + Expired pair used by every Operational Cost form. Expired is
@@ -15,31 +14,25 @@ const expiredDate = defineModel("expiredDate", { type: String, default: "" });
 </script>
 
 <template>
-  <div>
-    <BaseSelect
-      id="usage_status"
-      label="Status"
-      placeholder="Pilih status"
-      v-model="status"
-      :options="OPERATIONAL_COST_STATUSES"
-      :required="!readonly"
-      :readonly="readonly"
-    />
-    <p v-if="errors.status" class="text-red-500 text-sm mt-1">{{ errors.status }}</p>
-    <p v-else-if="!readonly" class="text-gray-400 text-xs mt-1">
-      Hanya item berstatus Digunakan yang dihitung ke total Operational Cost.
-    </p>
-  </div>
+  <UiSelect
+    id="usage_status"
+    label="Status"
+    placeholder="Pilih status"
+    v-model="status"
+    :options="OPERATIONAL_COST_STATUSES"
+    :required="!readonly"
+    :disabled="readonly"
+    :error="errors.status"
+    :hint="readonly ? '' : 'Hanya item berstatus Digunakan yang dihitung ke total Operational Cost.'"
+  />
 
-  <div>
-    <BaseInput
-      id="expired_date"
-      type="date"
-      :label="status === 'active' ? 'Expired' : 'Expired (opsional)'"
-      v-model="expiredDate"
-      :readonly="readonly"
-      :required="!readonly && status === 'active'"
-    />
-    <p v-if="errors.expired_date" class="text-red-500 text-sm mt-1">{{ errors.expired_date }}</p>
-  </div>
+  <UiInput
+    id="expired_date"
+    type="date"
+    :label="status === 'active' ? 'Expired' : 'Expired (opsional)'"
+    v-model="expiredDate"
+    :readonly="readonly"
+    :required="!readonly && status === 'active'"
+    :error="errors.expired_date"
+  />
 </template>

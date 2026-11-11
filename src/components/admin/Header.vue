@@ -420,6 +420,18 @@ const titles = {
     title: "Payslip Details",
     subtitle: "See payroll breakdown",
   },
+  "admin.analytics.dashboard": { title: "Analytics", subtitle: "Usage and trends across the system" },
+  "admin.invoices.edit": { title: "Edit Invoice", subtitle: "Update the invoice details" },
+  "admin.payment-receipts.edit": { title: "Edit Payment Receipt", subtitle: "Update the receipt details" },
+  "admin.purchase-orders.edit": { title: "Edit Purchase Order", subtitle: "Update the purchase order" },
+  "admin.letters.edit": { title: "Edit Letter", subtitle: "Update the letter details" },
+  "admin.settings.staff-permissions": { title: "Staff Account Permissions", subtitle: "Extra permissions per staff account" },
+  "admin.settings.dropdown-options": { title: "Dropdown Options", subtitle: "Options used across forms" },
+  "admin.settings.bank-accounts": { title: "Bank Accounts", subtitle: "Company bank accounts" },
+  "admin.settings.greetings": { title: "Greetings", subtitle: "Dashboard greetings and occasions" },
+  "admin.settings.attendance": { title: "Attendance Settings", subtitle: "Working hours, holidays and rules" },
+  "admin.settings.payroll": { title: "Payroll Settings", subtitle: "Payroll components and rules" },
+  "admin.settings.documents": { title: "Document Settings", subtitle: "Numbering, templates and letterheads" },
 };
 
 // License pages are per product: the title carries the product name.

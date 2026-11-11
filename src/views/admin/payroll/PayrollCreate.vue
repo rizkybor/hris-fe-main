@@ -8,10 +8,11 @@ import {
   Calculator,
   Plus,
   ArrowLeft,
-  AlertCircle,
   Gift,
+  Check,
 } from "lucide-vue-next";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { UiAlert, UiButton, UiInput, UiPageHeader } from "@/components/ui";
 
 const router = useRouter();
 const route = useRoute();
@@ -78,168 +79,121 @@ const handleSubmit = async () => {
     console.error("Error creating payroll:", error);
   }
 };
+
+// Presentation only: the two run types as option cards.
+const typeOptions = [
+  { value: "monthly", label: "Monthly Payroll", icon: Calendar },
+  { value: "thr", label: "THR (Tunjangan Hari Raya)", icon: Gift },
+];
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-5 px-4 py-4 items-start">
-    <!-- Form Section -->
-    <div class="flex-1 w-full">
-      <form @submit.prevent="handleSubmit" class="space-y-6">
-        <!-- Payroll Period Section -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6">
-          <div class="flex items-center gap-3 mb-6">
-            <div
-              class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Calendar class="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-base font-bold">
-                {{ payrollType === "thr" ? "Generate THR" : "Generate Payroll" }}
-              </h3>
-              <p class="text-brand-light text-xs font-normal">
-                {{
-                  payrollType === "thr"
-                    ? "Select the month to generate THR (Tunjangan Hari Raya) for eligible employees"
-                    : "Select the salary month to generate payroll for all active employees"
-                }}
-              </p>
-            </div>
-          </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader
+      :title="payrollType === 'thr' ? 'Generate THR' : 'Generate Payroll'"
+      :subtitle="
+        payrollType === 'thr'
+          ? 'Select the month to generate THR (Tunjangan Hari Raya) for eligible employees'
+          : 'Select the salary month to generate payroll for all active employees'
+      "
+    />
 
-          <div class="mb-4">
-            <label class="block text-brand-dark text-sm mb-1">Payroll Type <span class="text-red-500">*</span></label>
-            <div class="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                @click="payrollType = 'monthly'"
-                :class="[
-                  'px-4 py-3 rounded-[12px] border-2 text-sm transition-all duration-300',
-                  payrollType === 'monthly'
-                    ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9]'
-                    : 'border-[#DCDEDD] text-brand-dark hover:border-[#0C51D9]',
-                ]"
-              >
-                Monthly Payroll
-              </button>
-              <button
-                type="button"
-                @click="payrollType = 'thr'"
-                :class="[
-                  'px-4 py-3 rounded-[12px] border-2 text-sm font-semibold transition-all duration-300',
-                  payrollType === 'thr'
-                    ? 'border-[#0C51D9] bg-blue-50 text-[#0C51D9]'
-                    : 'border-[#DCDEDD] text-brand-dark hover:border-[#0C51D9]',
-                ]"
-              >
-                THR (Tunjangan Hari Raya)
-              </button>
-            </div>
-          </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+      <!-- Form -->
+      <form
+        class="lg:col-span-2 bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-6 space-y-5 ui-anim-fade-up"
+        @submit.prevent="handleSubmit"
+      >
+        <div class="pb-4 border-b border-ui-line">
+          <h2 class="text-ui-h2 text-ui-ink">Payroll Period</h2>
+          <p class="text-ui-small text-ui-muted mt-0.5">Choose the run type and the salary month.</p>
+        </div>
 
-          <div class="mb-4">
-            <label class="block text-brand-dark text-sm mb-1"
-              >Salary Month <span class="text-red-500">*</span></label
+        <fieldset>
+          <legend class="block text-ui-small font-medium text-ui-ink mb-1.5">
+            Payroll Type<span class="text-ui-bad"> *</span>
+          </legend>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="radiogroup">
+            <button
+              v-for="opt in typeOptions"
+              :key="opt.value"
+              type="button"
+              role="radio"
+              :aria-checked="payrollType === opt.value"
+              :class="[
+                'ui-press flex items-center gap-3 text-left px-4 py-3 rounded-ui-control border transition-colors',
+                'focus:outline-none focus-visible:shadow-ui-focus',
+                payrollType === opt.value
+                  ? 'border-ui-accent bg-ui-accent-soft text-ui-ink'
+                  : 'border-ui-line-strong bg-ui-surface text-ui-text hover:bg-ui-subtle',
+              ]"
+              @click="payrollType = opt.value"
             >
-            <div class="relative">
-              <div
-                class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
-              >
-                <Calendar class="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="month"
-                v-model="form.salary_month"
-                required
-                class="w-full pl-12 pr-4 py-3 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
+              <component
+                :is="opt.icon"
+                :class="['w-[18px] h-[18px] shrink-0', payrollType === opt.value ? 'text-ui-accent' : 'text-ui-faint']"
               />
-            </div>
+              <span class="flex-1 text-ui-body font-medium">{{ opt.label }}</span>
+              <span
+                :class="[
+                  'w-[18px] h-[18px] rounded-full border flex items-center justify-center shrink-0',
+                  payrollType === opt.value ? 'bg-ui-accent border-ui-accent text-white' : 'border-ui-line-strong',
+                ]"
+              >
+                <Check v-if="payrollType === opt.value" class="w-3 h-3" />
+              </span>
+            </button>
           </div>
+        </fieldset>
 
-          <!-- Info Box -->
-          <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-[12px] flex items-start gap-3">
-            <AlertCircle class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div v-if="payrollType === 'thr'">
-              <h4 class="text-blue-900 text-sm font-semibold mb-1">Automatic Generation (THR)</h4>
-              <p class="text-blue-800 text-sm">
-                THR will be generated for every employee with at least 1 month of continuous service, prorated by
-                tenure (full amount at 12+ months). This is a separate run from the regular monthly payroll -- both
-                can exist for the same month.
-              </p>
-            </div>
-            <div v-else>
-              <h4 class="text-blue-900 text-sm font-semibold mb-1">Automatic Generation</h4>
-              <p class="text-blue-800 text-sm">
-                Payroll will be automatically generated for all active employees based on their attendance records for the selected month. Salaries will be calculated based on attendance, sick days, and absences.
-              </p>
-            </div>
-          </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <UiInput v-model="form.salary_month" type="month" label="Salary Month" :icon="Calendar" required />
         </div>
 
-        <!-- Error Display -->
-        <div v-if="error" class="bg-red-50 border border-red-200 rounded-[12px] p-4 flex items-start gap-3">
-          <AlertCircle class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <h4 class="text-red-900 text-sm font-semibold mb-1">Error</h4>
-            <p class="text-red-800 text-sm">{{ error }}</p>
-          </div>
-        </div>
+        <UiAlert v-if="payrollType === 'thr'" tone="info" title="Automatic Generation (THR)">
+          THR will be generated for every employee with at least 1 month of continuous service, prorated by
+          tenure (full amount at 12+ months). This is a separate run from the regular monthly payroll -- both
+          can exist for the same month.
+        </UiAlert>
+        <UiAlert v-else tone="info" title="Automatic Generation">
+          Payroll will be automatically generated for all active employees based on their attendance records for the selected month. Salaries will be calculated based on attendance, sick days, and absences.
+        </UiAlert>
+
+        <UiAlert v-if="error" tone="bad" title="Error" :message="error" />
       </form>
-    </div>
 
-    <!-- Right Sidebar -->
-    <div class="w-full lg:w-80 flex-shrink-0">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4 sm:p-6 lg:sticky lg:top-6">
-        <div class="flex items-center gap-3 mb-6">
-          <div
-            class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center"
-          >
-            <Calculator class="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-base font-bold">Payroll Summary</h3>
-            <p class="text-brand-light text-xs font-normal">Generation details</p>
-          </div>
+      <!-- Summary -->
+      <aside class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 lg:sticky lg:top-6 ui-anim-fade-up">
+        <div class="flex items-center gap-2">
+          <Calculator class="w-4 h-4 text-ui-faint" />
+          <h3 class="text-ui-h3 text-ui-ink">Payroll Summary</h3>
         </div>
+        <p class="text-ui-cap text-ui-muted mt-0.5">Generation details</p>
 
-        <div class="space-y-4">
-          <div
-            class="flex justify-between items-center py-2 bg-blue-50 px-3 rounded-[8px] mb-4"
+        <dl class="mt-4 divide-y divide-ui-line border-y border-ui-line">
+          <div class="flex items-center justify-between gap-3 py-2.5">
+            <dt class="text-ui-small text-ui-muted">Type</dt>
+            <dd class="text-ui-small text-ui-ink text-right">{{ payrollType === "thr" ? "THR" : "Monthly Payroll" }}</dd>
+          </div>
+          <div class="flex items-center justify-between gap-3 py-2.5">
+            <dt class="text-ui-small text-ui-muted">Selected Month:</dt>
+            <dd class="text-ui-small font-medium text-ui-ink text-right">{{ formatMonth(form.salary_month) }}</dd>
+          </div>
+        </dl>
+
+        <div class="mt-4 space-y-2">
+          <UiButton
+            block
+            :loading="loading"
+            :disabled="!form.salary_month"
+            :icon="payrollType === 'thr' ? Gift : Plus"
+            @click="handleSubmit"
           >
-            <span class="text-blue-700 text-xs"
-              >Selected Month:</span
-            >
-            <span class="text-blue-700 text-xs font-bold">{{
-              formatMonth(form.salary_month)
-            }}</span>
-          </div>
-
-          <!-- Form Actions -->
-          <div class="space-y-3 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              @click="handleSubmit"
-              :disabled="loading || !form.salary_month"
-              class="btn-primary w-full rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span class="text-brand-white text-sm sm:text-base font-semibold">{{
-                loading ? "Generating..." : payrollType === "thr" ? "Generate THR" : "Generate Payroll"
-              }}</span>
-              <Gift v-if="payrollType === 'thr'" class="w-4 h-4 text-white" />
-              <Plus v-else class="w-4 h-4 text-white" />
-            </button>
-            <button
-              type="button"
-              @click="router.back()"
-              :disabled="loading"
-              class="w-full border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 sm:px-6 sm:py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ArrowLeft class="w-4 h-4 text-gray-600" />
-              <span class="text-brand-dark text-sm sm:text-base font-semibold">Cancel</span>
-            </button>
-          </div>
+            {{ loading ? "Generating..." : payrollType === "thr" ? "Generate THR" : "Generate Payroll" }}
+          </UiButton>
+          <UiButton block variant="secondary" :icon="ArrowLeft" :disabled="loading" @click="router.back()">Cancel</UiButton>
         </div>
-      </div>
+      </aside>
     </div>
   </div>
 </template>

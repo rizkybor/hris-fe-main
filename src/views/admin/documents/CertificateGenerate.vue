@@ -2,10 +2,11 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { Award, Settings, Plus, Trash2, Info, ClipboardPaste, Loader2, ChevronDown } from "lucide-vue-next";
+import { Settings, Plus, Trash2, Hash, ClipboardPaste, ArrowLeft, Award } from "lucide-vue-next";
 import { useCertificateStore } from "@/stores/certificate";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import { can } from "@/helpers/permissionHelper";
+import { UiPageHeader, UiButton, UiCard, UiInput, UiSelect, UiAlert, UiBadge, UiSpinner } from "@/components/ui";
 
 const store = useCertificateStore();
 const { templates } = storeToRefs(store);
@@ -112,155 +113,142 @@ const handleSubmit = async () => {
     submitting.value = false;
   }
 };
+
+// Presentation only: template options and the summary panel.
+const templateOptions = computed(() => [
+  { value: "", label: "Default Premium (system default)" },
+  ...templates.value.map((tpl) => ({ value: tpl.id, label: tpl.name })),
+]);
+const filledRecipients = computed(() => recipients.value.filter((r) => r.name).length);
+const submitLabel = computed(() => (submitting.value ? "Generating Certificate..." : isBulk.value ? "Bulk Generate (.zip)" : "Generate Certificate"));
 </script>
 
 <template>
-  <div>
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-amber-50 rounded-[12px] flex items-center justify-center">
-          <Award class="w-5 h-5 text-amber-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-lg font-bold">Generate Certificate</h3>
-          <p class="text-brand-light text-sm">Certificate number is generated automatically, supports bulk generation</p>
-        </div>
-      </div>
-      <router-link
-        v-if="can('certificate-menu')"
-        :to="{ name: 'admin.settings.certificate-settings' }"
-        class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1 hover:underline shrink-0"
-      >
-        <Settings class="w-4 h-4" /> Settings & Templates
-      </router-link>
-    </div>
-
-    <form @submit.prevent="handleSubmit" class="space-y-6">
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Certificate Information</h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Certificate Title <span class="text-red-600">*</span></label>
-            <input v-model="form.title" type="text" required placeholder="e.g. Advanced React Training Certificate" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Description (optional)</label>
-            <textarea v-model="form.description" rows="3" placeholder="Description of achievement / program" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Start Date (optional)</label>
-            <input v-model="form.start_date" type="date" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">End Date (optional)</label>
-            <input v-model="form.end_date" type="date" :min="form.start_date || undefined" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Signatory Name <span class="text-red-600">*</span></label>
-            <input v-model="form.signatory_name" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Signatory Position <span class="text-red-600">*</span></label>
-            <input v-model="form.signatory_title" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <SignatureToggle v-model="form.use_signature" class="md:col-span-2" />
-        </div>
-      </div>
-
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <h4 class="text-brand-dark font-bold mb-4">Numbering & Template</h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Category Code <span class="text-red-600">*</span></label>
-            <input v-model="form.category_code" type="text" required placeholder="e.g. TRAINING" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Program Code <span class="text-red-600">*</span></label>
-            <input v-model="form.program_code" type="text" required placeholder="e.g. REACT101" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm uppercase" />
-          </div>
-          <div class="md:col-span-2">
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Background Template</label>
-            <div class="relative w-full">
-              <select v-model="form.certificate_template_id" class="select-soft">
-                <option value="">Default Premium (system default)</option>
-                <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">{{ tpl.name }}</option>
-              </select>
-              <ChevronDown
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 flex items-start gap-2">
-          <Info class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-          <div class="text-sm text-amber-800">
-            <span v-if="previewLoading" class="flex items-center gap-1">
-              <Loader2 class="w-3.5 h-3.5 animate-spin" /> Calculating number...
-            </span>
-            <span v-else-if="preview">
-              Next certificate number: <span class="font-mono font-bold">{{ preview.number }}</span>
-            </span>
-            <span v-else>Fill in Category Code and Program Code to preview the certificate number.</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-        <div class="flex items-center justify-between mb-1">
-          <h4 class="text-brand-dark font-bold">Recipients <span class="text-red-600">*</span></h4>
-          <button type="button" @click="showBulkPaste = !showBulkPaste" class="text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
-            <ClipboardPaste class="w-4 h-4" /> Bulk Paste
-          </button>
-        </div>
-        <p class="text-xs text-gray-400 mb-4">
-          Add more than 1 recipient for bulk generation &mdash; the result is automatically bundled into a .zip file containing a PDF per recipient, no duplicate numbers.
-          <span v-if="isBulk" class="text-amber-600 font-semibold"> Bulk mode active ({{ recipients.filter(r => r.name).length }} recipients).</span>
-        </p>
-
-        <div v-if="showBulkPaste" class="mb-4 rounded-xl border border-[#DCDEDD] p-4">
-          <label class="text-sm font-semibold text-brand-dark mb-1 block">Paste name list (one name per line)</label>
-          <textarea v-model="bulkText" rows="5" placeholder="John Doe&#10;Jane Smith&#10;..." class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none font-mono"></textarea>
-          <button type="button" @click="applyBulkPaste" class="mt-2 px-4 py-2 rounded-lg bg-[#0C51D9] text-white text-sm font-semibold">
-            Apply to Recipient List
-          </button>
-        </div>
-
-        <div class="space-y-2">
-          <div v-for="(recipient, i) in recipients" :key="i" class="flex items-center gap-2">
-            <span class="text-xs text-gray-400 w-6 shrink-0">{{ i + 1 }}.</span>
-            <input v-model="recipient.name" type="text" placeholder="Recipient name" class="flex-1 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm" />
-            <button v-if="recipients.length > 1" type="button" @click="removeRecipient(i)" class="text-gray-400 hover:text-red-600 shrink-0">
-              <Trash2 class="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-        <button type="button" @click="addRecipient" class="mt-3 text-[#0C51D9] text-sm font-semibold flex items-center gap-1">
-          <Plus class="w-4 h-4" /> Add Recipient
-        </button>
-      </div>
-
-      <p v-if="errorMessage" class="text-red-500 text-sm">{{ errorMessage }}</p>
-      <p v-if="successMessage" class="text-green-600 text-sm font-semibold">{{ successMessage }}</p>
-
-      <div class="flex items-center gap-3">
-        <button
-          type="submit"
-          :disabled="submitting"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center gap-2 disabled:opacity-50"
-        >
-          <Loader2 v-if="submitting" class="w-4 h-4 animate-spin text-white" />
-          <span class="text-brand-white text-sm font-semibold">
-            {{ submitting ? "Generating Certificate..." : isBulk ? "Bulk Generate (.zip)" : "Generate Certificate" }}
-          </span>
-        </button>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader
+      title="Generate Certificate"
+      subtitle="Certificate number is generated automatically, supports bulk generation"
+      class="ui-anim-fade-up"
+    >
+      <template #eyebrow>
         <router-link
           :to="{ name: 'admin.certificates.dashboard' }"
-          class="px-6 py-3 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50"
+          class="ui-press inline-flex items-center gap-1 mb-1.5 text-ui-small font-medium text-ui-accent hover:underline"
+          aria-label="Back to Certificates"
         >
-          Cancel
+          <ArrowLeft class="w-4 h-4" />Certificate
         </router-link>
+      </template>
+      <template #actions>
+        <UiButton v-if="can('certificate-menu')" variant="ghost" :icon="Settings" :to="{ name: 'admin.settings.certificate-settings' }">Settings & Templates</UiButton>
+        <div class="hidden sm:flex items-center gap-2">
+          <UiButton variant="secondary" :to="{ name: 'admin.certificates.dashboard' }">Cancel</UiButton>
+          <UiButton type="submit" form="certificate-form" :icon="Award" :loading="submitting">{{ submitLabel }}</UiButton>
+        </div>
+      </template>
+    </UiPageHeader>
+
+    <form id="certificate-form" class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start" @submit.prevent="handleSubmit">
+      <div class="lg:col-span-2 space-y-5 min-w-0 ui-stagger">
+        <UiCard title="Certificate Information">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UiInput v-model="form.title" label="Certificate Title" required placeholder="e.g. Advanced React Training Certificate" class="md:col-span-2" />
+            <UiInput v-model="form.description" :rows="3" label="Description (optional)" placeholder="Description of achievement / program" class="md:col-span-2" />
+            <UiInput v-model="form.start_date" type="date" label="Start Date (optional)" />
+            <div class="min-w-0">
+              <label for="certificate-end-date" class="block text-ui-small font-medium text-ui-ink mb-1.5">End Date (optional)</label>
+              <input
+                id="certificate-end-date"
+                v-model="form.end_date"
+                type="date"
+                :min="form.start_date || undefined"
+                class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+              />
+            </div>
+            <UiInput v-model="form.signatory_name" label="Signatory Name" required />
+            <UiInput v-model="form.signatory_title" label="Signatory Position" required />
+            <SignatureToggle v-model="form.use_signature" class="md:col-span-2" />
+          </div>
+        </UiCard>
+
+        <UiCard title="Numbering & Template">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UiInput v-model="form.category_code" label="Category Code" required placeholder="e.g. TRAINING" class="[&_input]:uppercase" />
+            <UiInput v-model="form.program_code" label="Program Code" required placeholder="e.g. REACT101" class="[&_input]:uppercase" />
+            <UiSelect v-model="form.certificate_template_id" label="Background Template" :options="templateOptions" class="md:col-span-2" />
+          </div>
+        </UiCard>
+
+        <UiCard title="Recipients">
+          <template #actions>
+            <UiButton variant="ghost" size="sm" :icon="ClipboardPaste" @click="showBulkPaste = !showBulkPaste">Bulk Paste</UiButton>
+          </template>
+          <p class="text-ui-cap text-ui-muted -mt-1 mb-4">
+            Add more than 1 recipient for bulk generation &mdash; the result is automatically bundled into a .zip file containing a PDF per recipient, no duplicate numbers.
+          </p>
+
+          <div v-if="showBulkPaste" class="mb-4 rounded-ui-control border border-ui-line bg-ui-subtle/60 p-4 ui-anim-fade-up">
+            <UiInput v-model="bulkText" :rows="5" label="Paste name list (one name per line)" placeholder="John Doe&#10;Jane Smith&#10;..." mono />
+            <UiButton variant="secondary" size="sm" class="mt-2" @click="applyBulkPaste">Apply to Recipient List</UiButton>
+          </div>
+
+          <ol class="space-y-2">
+            <li v-for="(recipient, i) in recipients" :key="i" class="flex items-center gap-2">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-6 shrink-0 text-right">{{ i + 1 }}.</span>
+              <UiInput v-model="recipient.name" placeholder="Recipient name" class="flex-1" />
+              <button
+                v-if="recipients.length > 1"
+                type="button"
+                class="w-9 h-9 shrink-0 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus"
+                :aria-label="`Remove recipient ${i + 1}`"
+                @click="removeRecipient(i)"
+              >
+                <Trash2 class="w-4 h-4" />
+              </button>
+            </li>
+          </ol>
+          <UiButton variant="secondary" :icon="Plus" class="mt-3 w-full sm:w-auto" @click="addRecipient">Add Recipient</UiButton>
+        </UiCard>
       </div>
+
+      <!-- Side panel: number preview, summary, actions -->
+      <aside class="space-y-4 lg:sticky lg:top-4 min-w-0">
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+          <div class="flex items-center gap-2">
+            <Hash class="w-4 h-4 text-ui-faint" />
+            <h3 class="text-ui-h3 text-ui-ink">Next certificate number</h3>
+          </div>
+          <div class="mt-3 rounded-ui-control bg-ui-subtle border border-ui-line px-3.5 py-3 min-h-[48px] flex items-center">
+            <span v-if="previewLoading" class="flex items-center gap-2 text-ui-small text-ui-muted">
+              <UiSpinner size="14px" /> Calculating number...
+            </span>
+            <span v-else-if="preview" class="font-mono text-ui-body font-semibold text-ui-ink break-all">{{ preview.number }}</span>
+            <span v-else class="text-ui-small text-ui-muted">Fill in Category Code and Program Code to preview the certificate number.</span>
+          </div>
+
+          <dl class="mt-3 divide-y divide-ui-line text-ui-small">
+            <div class="flex items-center justify-between gap-3 py-2">
+              <dt class="text-ui-muted">Recipients</dt>
+              <dd class="text-ui-ink tabular-nums">{{ filledRecipients }}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 py-2">
+              <dt class="text-ui-muted">Mode</dt>
+              <dd>
+                <UiBadge v-if="isBulk" tone="warn" dot>Bulk mode active ({{ recipients.filter(r => r.name).length }} recipients)</UiBadge>
+                <UiBadge v-else tone="neutral">Single</UiBadge>
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <UiAlert v-if="errorMessage" tone="bad" :message="errorMessage" />
+        <UiAlert v-if="successMessage" tone="ok" :message="successMessage" />
+
+        <div class="flex flex-col gap-2">
+          <UiButton type="submit" size="lg" block :icon="Award" :loading="submitting">{{ submitLabel }}</UiButton>
+          <UiButton variant="secondary" size="lg" block class="sm:hidden" :to="{ name: 'admin.certificates.dashboard' }">Cancel</UiButton>
+        </div>
+      </aside>
     </form>
   </div>
 </template>

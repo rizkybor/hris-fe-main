@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Pointer on everything clickable. Tailwind's reset leaves buttons with the
+   default arrow; this restores the hand cursor app-wide (native controls
+   and ARIA widgets). Disabled controls show not-allowed instead. Clickable
+   non-interactive elements (a div/tr with @click) still add
+   `cursor-pointer` themselves. */
+@layer base {
+  button,
+  a[href],
+  summary,
+  select,
+  label[for],
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]),
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"],
+  input[type="color"],
+  input[type="range"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"],
+  [role="button"],
+  [role="tab"],
+  [role="link"],
+  [role="menuitem"],
+  [role="option"],
+  [role="switch"],
+  [role="checkbox"],
+  [role="radio"] {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  input:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
 
 /* Redesign tokens (HRIS+ v4.0, palette "B · Navy + Blue"), as RGB channels
    so Tailwind's ui-* colours (tailwind.config.js) accept opacity

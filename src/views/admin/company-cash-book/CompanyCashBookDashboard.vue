@@ -7,15 +7,12 @@ import {
   Plus,
   Pencil,
   Trash2,
-  X,
-  AlertTriangle,
   ArrowDownCircle,
   ArrowUpCircle,
   Link2,
   Settings2,
   Eye,
   EyeOff,
-  ChevronDown,
   Paperclip,
   FileText,
   Upload,
@@ -31,6 +28,7 @@ import { useProjectStore } from "@/stores/project";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
 import Pagination from "@/components/common/Pagination.vue";
+import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiTable, UiEmpty, UiModal, UiConfirmDialog, UiAlert } from "@/components/ui";
 
 const store = useCompanyCashTransactionStore();
 const {
@@ -337,662 +335,485 @@ onMounted(() => {
 
 // Hidden by default -- balance figures are sensitive, revealed only on demand.
 const isBalanceVisible = ref(false);
+
+// ----- Presentation only -----
+const TABS = [
+  { key: "all", label: "All Transactions", icon: Landmark },
+  { key: "spending", label: "Spending", icon: Wallet },
+];
+const masked = (value) => (isBalanceVisible.value ? formatRupiah(value) : "Rp ••••••");
+const filteredSuffix = computed(() => (hasFilters.value || isSpendingTab.value ? " · filtered" : ""));
+const employeeFilterOptions = computed(() => [{ value: "", label: "Everyone" }, ...employeeOptions.value.map((e) => ({ value: e.id, label: e.name }))]);
+const projectFilterOptions = computed(() => [{ value: "", label: "All projects" }, ...(projects.value || []).map((p) => ({ value: p.id, label: p.name }))]);
+const TYPE_FILTER_OPTIONS = [
+  { value: "", label: "Debit & Credit" },
+  { value: "debit", label: "Debit (In)" },
+  { value: "credit", label: "Credit (Out)" },
+];
+const SOURCE_FILTER_OPTIONS = [
+  { value: "", label: "All sources" },
+  { value: "manual", label: "Manual" },
+  { value: "project", label: "From projects" },
+];
+const employeeFormOptions = computed(() => employeeOptions.value.map((e) => ({ value: e.id, label: e.name })));
+const tableColumns = computed(() => [
+  { key: "transaction_date", label: "Date", width: 120 },
+  { key: "description", label: "Description" },
+  { key: "source", label: isSpendingTab.value ? "On behalf of" : "Source" },
+  { key: "debit", label: "Debit", align: "right" },
+  ...(isSpendingTab.value ? [] : [{ key: "credit", label: "Credit", align: "right" }]),
+  { key: "balance", label: "Balance", align: "right" },
+  ...(canManage.value ? [{ key: "actions", label: "Actions", align: "right" }] : []),
+]);
+const formTitle = computed(() =>
+  isSpendingForm.value ? (editingId.value ? "Edit Spending" : "Add Spending") : editingId.value ? "Edit Transaction" : "Add Cash Transaction"
+);
+const deleteMessage = computed(
+  () => `Are you sure you want to delete "${transactionToDelete.value?.description ?? ""}"? This action cannot be undone.`
+);
+const fieldClass =
+  "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink tabular-nums placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
 </script>
 
 <template>
-  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
-    <!-- Buttons drop below the title until there is room for all three. -->
-    <div class="bg-white mb-5 flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-3">
-      <div class="flex items-center gap-3 min-w-0">
-        <div class="w-11 h-11 bg-emerald-50 rounded-[12px] flex items-center justify-center shrink-0">
-          <Landmark class="w-5 h-5 text-emerald-600" />
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-brand-dark text-base font-bold">Company Cash Book</h3>
-          <p class="text-brand-light text-xs">
-            Real debit/credit transactions as they actually happen -- auto-synced from every project's own cash ledger, plus manual entries
-          </p>
-        </div>
-      </div>
-      <div class="flex flex-wrap items-center gap-2 w-full 2xl:w-auto 2xl:shrink-0">
-        <button
-          v-if="canManage"
-          @click="openBalanceModal"
-          class="rounded-lg border border-[#DCDEDD] hover:border-[#0C51D9] transition-all px-4 py-2.5 flex items-center justify-center gap-2 flex-1 sm:flex-none"
-        >
-          <Settings2 class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark text-xs font-semibold">Set Opening Balance</span>
-        </button>
-        <button
-          v-if="canManage"
-          @click="openCreateModal(true)"
-          class="rounded-lg border border-[#DCDEDD] hover:border-[#0C51D9] transition-all px-4 py-2.5 flex items-center justify-center gap-2 flex-1 sm:flex-none"
-        >
-          <Wallet class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark text-xs font-semibold">Add Spending</span>
-        </button>
-        <button
-          v-if="canManage"
-          @click="openCreateModal"
-          class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center justify-center gap-2 flex-1 sm:flex-none"
-        >
-          <Plus class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-xs font-semibold">Add Transaction</span>
-        </button>
-      </div>
-    </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader
+      title="Company Cash Book"
+      subtitle="Real debit/credit transactions as they actually happen -- auto-synced from every project's own cash ledger, plus manual entries"
+    >
+      <template #actions>
+        <UiButton
+          variant="secondary"
+          :icon="isBalanceVisible ? EyeOff : Eye"
+          :title="isBalanceVisible ? 'Hide amounts' : 'Show amounts'"
+          :aria-label="isBalanceVisible ? 'Hide amounts' : 'Show amounts'"
+          class="!px-2.5"
+          @click="isBalanceVisible = !isBalanceVisible"
+        />
+        <UiButton v-if="canManage" variant="secondary" :icon="Settings2" class="flex-1 sm:flex-none" @click="openBalanceModal">Set Opening Balance</UiButton>
+        <UiButton v-if="canManage" variant="secondary" :icon="Wallet" class="flex-1 sm:flex-none" @click="openCreateModal(true)">Add Spending</UiButton>
+        <UiButton v-if="canManage" :icon="Plus" class="w-full sm:w-auto" @click="openCreateModal">Add Transaction</UiButton>
+      </template>
+    </UiPageHeader>
 
     <!-- Balance summary -->
-    <div class="flex items-center justify-end mb-2">
-      <button
-        type="button"
-        @click="isBalanceVisible = !isBalanceVisible"
-        class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
-        :title="isBalanceVisible ? 'Hide amounts' : 'Show amounts'"
-      >
-        <Eye v-if="!isBalanceVisible" class="w-4 h-4" />
-        <EyeOff v-else class="w-4 h-4" />
-      </button>
-    </div>
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
-      <div class="bg-gray-50 border border-[#DCDEDD] rounded-[10px] p-3.5 min-w-0">
-        <p class="text-brand-light text-xs">Opening Balance</p>
-        <p class="text-brand-dark text-xs sm:text-sm font-bold mt-1 truncate">
-          {{ isBalanceVisible ? formatRupiah(openingBalance) : "Rp ••••••" }}
-        </p>
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 ui-stagger">
+      <div class="col-span-2 lg:col-span-1 bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
+        <p class="text-ui-small text-ui-muted truncate">Opening Balance</p>
+        <p class="text-ui-h2 text-ui-ink tabular-nums mt-1 truncate">{{ masked(openingBalance) }}</p>
         <p
-          class="text-[10px] sm:text-[11px] text-gray-500 mt-1 flex items-start gap-1 leading-snug"
+          class="text-ui-cap text-ui-muted mt-1 flex items-start gap-1"
           :title="openingBalanceStamp ? `Last updated ${openingBalanceStamp.full}${openingBalanceStamp.by ? ' by ' + openingBalanceStamp.by : ''}` : ''"
         >
-          <History class="w-3 h-3 shrink-0 mt-px" />
+          <History class="w-3 h-3 shrink-0 mt-0.5 text-ui-faint" />
           <span v-if="openingBalanceStamp" class="min-w-0">
             Updated {{ openingBalanceStamp.text }}<span v-if="openingBalanceStamp.by" class="hidden sm:inline"> · {{ openingBalanceStamp.by }}</span>
           </span>
           <span v-else>Never set</span>
         </p>
       </div>
-      <div class="bg-emerald-50 border border-emerald-100 rounded-[10px] p-3.5 min-w-0">
-        <p class="text-emerald-600 text-xs">Total Debit<span v-if="hasFilters || isSpendingTab" class="opacity-70"> · filtered</span></p>
-        <p class="text-emerald-700 text-xs sm:text-sm font-bold mt-1 truncate">
-          {{ isBalanceVisible ? formatRupiah(debitOnly) : "Rp ••••••" }}
-        </p>
-        <p class="text-[10px] sm:text-[11px] text-emerald-600/80 mt-1">Excluding spending</p>
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
+        <p class="text-ui-small text-ui-muted truncate" :title="`Total Debit${filteredSuffix}`">Total Debit<span v-if="filteredSuffix" class="text-ui-faint">{{ filteredSuffix }}</span></p>
+        <p class="text-ui-h2 text-ui-ok tabular-nums mt-1 truncate">{{ masked(debitOnly) }}</p>
+        <p class="text-ui-cap text-ui-muted mt-1 truncate">Excluding spending</p>
       </div>
-      <div class="bg-teal-50 border border-teal-100 rounded-[10px] p-3.5 min-w-0">
-        <p class="text-teal-700 text-xs">Total Debit + Spending<span v-if="hasFilters || isSpendingTab" class="opacity-70"> · filtered</span></p>
-        <p class="text-teal-800 text-xs sm:text-sm font-bold mt-1 truncate">
-          {{ isBalanceVisible ? formatRupiah(totalDebit) : "Rp ••••••" }}
-        </p>
-        <p class="text-[10px] sm:text-[11px] text-teal-700/80 mt-1 truncate">
-          Spending {{ isBalanceVisible ? formatRupiah(totalSpending) : "Rp ••••••" }}
-        </p>
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
+        <p class="text-ui-small text-ui-muted truncate" :title="`Total Debit + Spending${filteredSuffix}`">Total Debit + Spending<span v-if="filteredSuffix" class="text-ui-faint">{{ filteredSuffix }}</span></p>
+        <p class="text-ui-h2 text-ui-ok tabular-nums mt-1 truncate">{{ masked(totalDebit) }}</p>
+        <p class="text-ui-cap text-ui-muted mt-1 truncate">Spending <span class="tabular-nums">{{ masked(totalSpending) }}</span></p>
       </div>
-      <div class="bg-red-50 border border-red-100 rounded-[10px] p-3.5">
-        <p class="text-red-600 text-xs">Total Credit (Out)<span v-if="hasFilters || isSpendingTab" class="opacity-70"> · filtered</span></p>
-        <p class="text-red-700 text-xs sm:text-sm font-bold mt-1 truncate">
-          {{ isBalanceVisible ? formatRupiah(totalCredit) : "Rp ••••••" }}
-        </p>
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
+        <p class="text-ui-small text-ui-muted truncate" :title="`Total Credit (Out)${filteredSuffix}`">Total Credit (Out)<span v-if="filteredSuffix" class="text-ui-faint">{{ filteredSuffix }}</span></p>
+        <p class="text-ui-h2 text-ui-bad tabular-nums mt-1 truncate">{{ masked(totalCredit) }}</p>
       </div>
-      <div class="bg-blue-50 border border-blue-100 rounded-[10px] p-3.5">
-        <p class="text-blue-600 text-xs">Closing Balance</p>
-        <p class="text-blue-700 text-xs sm:text-sm font-bold mt-1 truncate">
-          {{ isBalanceVisible ? formatRupiah(closingBalance) : "Rp ••••••" }}
-        </p>
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
+        <p class="text-ui-small text-ui-muted truncate">Closing Balance</p>
+        <p class="text-ui-h2 text-ui-ink tabular-nums mt-1 truncate">{{ masked(closingBalance) }}</p>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex items-center gap-1 mb-3 border-b border-[#DCDEDD]">
-      <button
-        v-for="tab in [{ key: 'all', label: 'All Transactions', icon: Landmark }, { key: 'spending', label: 'Spending', icon: Wallet }]"
-        :key="tab.key"
-        type="button"
-        @click="switchTab(tab.key)"
-        class="px-4 py-2.5 -mb-px border-b-2 text-sm font-semibold inline-flex items-center gap-2 transition-colors"
-        :class="activeTab === tab.key ? 'border-[#0C51D9] text-[#0C51D9]' : 'border-transparent text-gray-500 hover:text-brand-dark'"
-      >
-        <component :is="tab.icon" class="w-4 h-4" /> {{ tab.label }}
-      </button>
-    </div>
-
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
-      <!-- Spending per person: click a card to show only their spending. -->
-      <div v-if="isSpendingTab" class="mb-4">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-xs font-semibold text-brand-dark">Spending by person<span v-if="filters.start_date || filters.end_date || filters.search" class="text-gray-400 font-normal"> · filtered</span></p>
-          <p class="text-xs text-gray-500">Total {{ isBalanceVisible ? formatRupiah(spendingTotal) : "Rp ••••••" }}</p>
-        </div>
-        <div v-if="spendingByEmployee.length" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+      <!-- Tabs: underline on desktop, chips on phones -->
+      <div class="px-4 sm:px-5 pt-4 sm:pt-3 sm:border-b sm:border-ui-line">
+        <div class="flex items-center gap-1.5 sm:gap-6 overflow-x-auto [scrollbar-width:none]" role="tablist">
           <button
-            v-for="person in spendingByEmployee"
-            :key="person.employee_id ?? 'none'"
+            v-for="tab in TABS"
+            :key="tab.key"
             type="button"
-            @click="filterByEmployee(person.employee_id)"
-            class="text-left bg-white border rounded-[10px] p-3 transition-all min-w-0"
-            :class="String(filters.employee_id) === String(person.employee_id) ? 'border-[#0C51D9] ring-1 ring-[#0C51D9]' : 'border-[#DCDEDD] hover:border-[#0C51D9]'"
+            role="tab"
+            :aria-selected="activeTab === tab.key"
+            @click="switchTab(tab.key)"
+            :class="[
+              'ui-press shrink-0 inline-flex items-center gap-2 whitespace-nowrap font-medium focus:outline-none focus-visible:shadow-ui-focus',
+              'h-8 px-3 rounded-full border text-ui-small',
+              'sm:h-auto sm:px-0.5 sm:pt-2 sm:pb-3 sm:rounded-none sm:border-0 sm:border-b-2 sm:-mb-px sm:text-ui-body',
+              activeTab === tab.key
+                ? 'bg-ui-ink text-white border-ui-ink sm:bg-transparent sm:text-ui-ink sm:border-ui-ink'
+                : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover sm:bg-transparent sm:text-ui-muted sm:border-transparent sm:hover:bg-transparent sm:hover:text-ui-ink',
+            ]"
           >
-            <p class="flex items-center gap-1.5 text-xs font-semibold text-brand-dark truncate">
-              <UserRound class="w-3.5 h-3.5 text-gray-400 shrink-0" /> {{ person.name }}
-            </p>
-            <p class="text-sm font-bold text-emerald-700 mt-1 truncate">{{ isBalanceVisible ? formatRupiah(person.total) : "Rp ••••••" }}</p>
-            <p class="text-[11px] text-gray-400">{{ person.count }} {{ person.count === 1 ? "entry" : "entries" }}</p>
+            <component :is="tab.icon" class="w-4 h-4 hidden sm:block" /> {{ tab.label }}
           </button>
         </div>
       </div>
 
-      <!-- Filters: one row on desktop, stacked on phones. The Balance column
-           stays the company-wide running balance whatever is filtered. -->
-      <div class="mb-4 space-y-2.5">
+      <div class="px-4 sm:px-5 py-4 space-y-4 border-b border-ui-line">
+        <!-- Spending per person: click a card to show only their spending. -->
+        <div v-if="isSpendingTab">
+          <div class="flex items-center justify-between gap-3 mb-2">
+            <p class="text-ui-small font-medium text-ui-ink">Spending by person<span v-if="filters.start_date || filters.end_date || filters.search" class="text-ui-faint font-normal"> · filtered</span></p>
+            <p class="text-ui-cap text-ui-muted">Total <span class="tabular-nums text-ui-ink font-medium">{{ masked(spendingTotal) }}</span></p>
+          </div>
+          <div v-if="spendingByEmployee.length" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 ui-stagger">
+            <button
+              v-for="person in spendingByEmployee"
+              :key="person.employee_id ?? 'none'"
+              type="button"
+              @click="filterByEmployee(person.employee_id)"
+              class="ui-press text-left bg-ui-surface border rounded-ui-card px-3.5 py-3 transition-colors min-w-0 focus:outline-none focus-visible:shadow-ui-focus"
+              :class="String(filters.employee_id) === String(person.employee_id) ? 'border-ui-accent bg-ui-accent-soft' : 'border-ui-line hover:border-ui-line-strong hover:bg-ui-subtle'"
+              :aria-pressed="String(filters.employee_id) === String(person.employee_id)"
+            >
+              <p class="flex items-center gap-1.5 text-ui-cap font-medium text-ui-text truncate">
+                <UserRound class="w-3.5 h-3.5 text-ui-faint shrink-0" /> {{ person.name }}
+              </p>
+              <p class="text-ui-h3 text-ui-ink tabular-nums mt-1 truncate">{{ masked(person.total) }}</p>
+              <p class="text-ui-cap text-ui-muted tabular-nums">{{ person.count }} {{ person.count === 1 ? "entry" : "entries" }}</p>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters. The Balance column stays the company-wide running
+             balance whatever is filtered. -->
         <div
           class="grid grid-cols-2 gap-2.5"
           :class="isSpendingTab ? 'lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]' : 'lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,0.9fr)]'"
         >
-          <div class="relative col-span-2 lg:col-span-1">
-            <Search class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              v-model="filters.search"
-              type="text"
-              :placeholder="isSpendingTab ? 'Search description, notes, person...' : 'Search description, notes, project...'"
-              class="cb-input"
-              style="padding-left: 2.25rem"
-            />
-          </div>
-          <div v-if="isSpendingTab" class="relative col-span-2 lg:col-span-1">
-            <select v-model="filters.employee_id" class="select-soft w-full" aria-label="On behalf of">
-              <option value="">Everyone</option>
-              <option v-for="employee in employeeOptions" :key="employee.id" :value="employee.id">{{ employee.name }}</option>
-            </select>
-            <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-          </div>
+          <UiInput
+            v-model="filters.search"
+            :icon="Search"
+            :placeholder="isSpendingTab ? 'Search description, notes, person...' : 'Search description, notes, project...'"
+            class="col-span-2 lg:col-span-1"
+          />
+          <UiSelect v-if="isSpendingTab" v-model="filters.employee_id" :options="employeeFilterOptions" class="col-span-2 lg:col-span-1" aria-label="On behalf of" />
           <template v-else>
-          <div class="relative col-span-2 lg:col-span-1">
-            <select v-model="filters.project_id" class="select-soft w-full" aria-label="Project">
-              <option value="">All projects</option>
-              <option v-for="proj in projects" :key="proj.id" :value="proj.id">{{ proj.name }}</option>
-            </select>
-            <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-          </div>
-          <div class="relative">
-            <select v-model="filters.type" class="select-soft w-full" aria-label="Type">
-              <option value="">Debit & Credit</option>
-              <option value="debit">Debit (In)</option>
-              <option value="credit">Credit (Out)</option>
-            </select>
-            <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-          </div>
-          <div class="relative">
-            <select v-model="filters.source" class="select-soft w-full" aria-label="Source">
-              <option value="">All sources</option>
-              <option value="manual">Manual</option>
-              <option value="project">From projects</option>
-            </select>
-            <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-          </div>
+            <UiSelect v-model="filters.project_id" :options="projectFilterOptions" class="col-span-2 lg:col-span-1" aria-label="Project" />
+            <UiSelect v-model="filters.type" :options="TYPE_FILTER_OPTIONS" aria-label="Type" />
+            <UiSelect v-model="filters.source" :options="SOURCE_FILTER_OPTIONS" aria-label="Source" />
           </template>
         </div>
 
         <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
           <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 lg:w-[340px]">
-            <input v-model="filters.start_date" type="date" class="cb-input" aria-label="From date" />
-            <span class="text-xs text-gray-400">to</span>
-            <input v-model="filters.end_date" type="date" :min="filters.start_date || undefined" class="cb-input" aria-label="To date" />
+            <input v-model="filters.start_date" type="date" :class="fieldClass" aria-label="From date" />
+            <span class="text-ui-cap text-ui-muted">to</span>
+            <input v-model="filters.end_date" type="date" :min="filters.start_date || undefined" :class="fieldClass" aria-label="To date" />
           </div>
-          <div class="flex flex-wrap items-center gap-1.5">
+          <div class="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] -mx-1 px-1">
             <button
               v-for="p in PERIODS"
               :key="p.key"
               type="button"
-              class="px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-colors"
-              :class="activePeriod === p.key ? 'bg-blue-50 border-[#0C51D9] text-[#0C51D9]' : 'bg-white border-[#DCDEDD] text-gray-600 hover:border-[#0C51D9]'"
+              class="ui-press shrink-0 inline-flex items-center h-8 px-3 rounded-full border text-ui-small font-medium whitespace-nowrap"
+              :class="activePeriod === p.key ? 'bg-ui-ink text-white border-ui-ink' : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover'"
+              :aria-pressed="activePeriod === p.key"
               @click="applyPeriod(p)"
             >
               {{ p.label }}
             </button>
+            <UiButton v-if="hasFilters" variant="ghost" size="sm" :icon="RotateCcw" class="shrink-0" @click="resetFilters">Reset</UiButton>
+          </div>
+          <p v-if="hasFilters && !loading" class="text-ui-cap text-ui-muted tabular-nums lg:ml-auto">{{ meta.total }} matching {{ meta.total === 1 ? "transaction" : "transactions" }}</p>
+        </div>
+      </div>
+
+      <UiEmpty
+        v-if="!loading && transactions.length === 0"
+        :icon="Landmark"
+        :title="hasFilters ? 'No transactions match the filters' : isSpendingTab ? 'No spending yet' : 'No cash transactions yet'"
+        :message="hasFilters ? '' : isSpendingTab ? 'Record spending on behalf of an employee with Add Spending.' : 'Recording a transaction on any project\'s own Cash Ledger will automatically appear here too.'"
+      >
+        <UiButton v-if="hasFilters" variant="secondary" size="sm" :icon="RotateCcw" @click="resetFilters">Reset filters</UiButton>
+      </UiEmpty>
+
+      <UiTable v-else :columns="tableColumns" :rows="displayedTransactions" :meta="meta" :loading="loading" :skeleton-rows="6">
+        <template #cell-transaction_date="{ row }">
+          <span class="text-ui-muted whitespace-nowrap tabular-nums">{{ formatDate(row.transaction_date) }}</span>
+        </template>
+        <template #cell-description="{ row }">
+          <div class="py-2 min-w-[180px]">
+            <p class="text-ui-ink font-medium">{{ row.description }}</p>
+            <p v-if="row.notes" class="text-ui-cap text-ui-muted mt-0.5">{{ row.notes }}</p>
             <button
-              v-if="hasFilters"
+              v-if="row.proof"
               type="button"
-              class="px-2.5 py-1.5 rounded-full text-xs font-semibold text-gray-500 hover:text-red-600 inline-flex items-center gap-1"
-              @click="resetFilters"
+              class="mt-1 inline-flex items-center gap-1 text-ui-cap font-medium text-ui-accent hover:underline"
+              @click="openProof(row.proof)"
             >
-              <RotateCcw class="w-3 h-3" /> Reset
+              <Paperclip class="w-3 h-3" /> View proof
             </button>
           </div>
-          <p v-if="hasFilters && !loading" class="text-xs text-gray-500 lg:ml-auto">{{ meta.total }} matching {{ meta.total === 1 ? "transaction" : "transactions" }}</p>
-        </div>
-      </div>
-
-      <div v-if="loading" class="text-center py-8 text-xs text-gray-400">Loading transactions...</div>
-
-      <div
-        v-else-if="transactions.length === 0"
-        class="text-center py-10 text-gray-500 bg-gray-100 rounded-[12px] border border-dashed border-[#DCDEDD]"
-      >
-        <Landmark class="w-9 h-9 text-gray-300 mx-auto mb-3" />
-        <template v-if="hasFilters">
-          <p class="text-sm font-semibold">No transactions match the filters</p>
-          <button type="button" class="text-xs font-semibold text-[#0C51D9] hover:underline mt-1" @click="resetFilters">Reset filters</button>
         </template>
-        <template v-else-if="isSpendingTab">
-          <p class="text-sm font-semibold">No spending yet</p>
-          <p class="text-xs text-gray-400">Record spending on behalf of an employee with Add Spending.</p>
+        <template #cell-source="{ row }">
+          <UiBadge v-if="row.category === 'spending'" tone="warn" :title="`Spending on behalf of ${row.employee?.name || 'an employee'}`">
+            <Wallet v-if="!isSpendingTab" class="w-3 h-3" />
+            <UserRound v-else class="w-3 h-3" />
+            {{ isSpendingTab ? row.employee?.name || "-" : `Spending · ${row.employee?.name || "-"}` }}
+          </UiBadge>
+          <UiBadge v-else-if="row.is_synced" tone="info" :title="`Auto-synced from ${row.project_name}'s cash ledger`">
+            <Link2 class="w-3 h-3" /> {{ row.project_name }}
+          </UiBadge>
+          <UiBadge v-else tone="neutral">Manual</UiBadge>
         </template>
-        <template v-else>
-        <p class="text-sm font-semibold">No cash transactions yet</p>
-        <p class="text-xs text-gray-400">
-          Recording a transaction on any project's own Cash Ledger will automatically appear here too.
-        </p>
+        <template #cell-debit="{ row }">
+          <span v-if="row.type === 'debit'" class="inline-flex items-center gap-1 justify-end text-ui-ok tabular-nums whitespace-nowrap">
+            <ArrowUpCircle class="w-3.5 h-3.5" />
+            {{ masked(row.amount) }}
+          </span>
+          <span v-else class="text-ui-faint">—</span>
         </template>
-      </div>
+        <template #cell-credit="{ row }">
+          <span v-if="row.type === 'credit'" class="inline-flex items-center gap-1 justify-end text-ui-bad tabular-nums whitespace-nowrap">
+            <ArrowDownCircle class="w-3.5 h-3.5" />
+            {{ masked(row.amount) }}
+          </span>
+          <span v-else class="text-ui-faint">—</span>
+        </template>
+        <template #cell-balance="{ row }">
+          <span class="font-semibold text-ui-ink tabular-nums whitespace-nowrap">{{ masked(row.balance) }}</span>
+        </template>
+        <template #cell-actions="{ row }">
+          <div v-if="!row.is_synced" class="flex justify-end gap-0.5">
+            <button type="button" @click="openEditModal(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" title="Edit" aria-label="Edit">
+              <Pencil class="w-4 h-4" />
+            </button>
+            <button type="button" @click="confirmDelete(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" title="Delete" aria-label="Delete">
+              <Trash2 class="w-4 h-4" />
+            </button>
+          </div>
+          <p v-else class="text-right text-ui-cap text-ui-faint whitespace-nowrap" title="Edit this from the project's own Cash Ledger">via Project</p>
+        </template>
 
-      <div v-else class="overflow-x-auto rounded-[12px] border border-[#DCDEDD]">
-        <table class="min-w-full text-sm">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">No</th>
-              <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Date</th>
-              <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">Description</th>
-              <th class="px-3 py-2.5 text-left text-xs uppercase text-gray-500 font-semibold">{{ isSpendingTab ? "On behalf of" : "Source" }}</th>
-              <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Debit</th>
-              <th v-if="!isSpendingTab" class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Credit</th>
-              <th class="px-3 py-2.5 text-right text-xs uppercase text-gray-500 font-semibold">Balance</th>
-              <th v-if="canManage" class="px-3 py-2.5 text-center text-xs uppercase text-gray-500 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(transaction, index) in displayedTransactions"
-              :key="transaction.id"
-              class="border-t border-[#DCDEDD] hover:bg-gray-50/60"
-            >
-              <td class="px-3 py-2.5 text-gray-500">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-              <td class="px-3 py-2.5 text-gray-500 whitespace-nowrap">{{ formatDate(transaction.transaction_date) }}</td>
-              <td class="px-3 py-2.5">
-                <p class="text-brand-dark font-medium">{{ transaction.description }}</p>
-                <p v-if="transaction.notes" class="text-gray-400 text-xs mt-0.5">{{ transaction.notes }}</p>
-                <button
-                  v-if="transaction.proof"
-                  type="button"
-                  class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#0C51D9] hover:underline"
-                  @click="openProof(transaction.proof)"
-                >
-                  <Paperclip class="w-3 h-3" /> View proof
-                </button>
-              </td>
-              <td class="px-3 py-2.5">
-                <span
-                  v-if="transaction.category === 'spending'"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 whitespace-nowrap"
-                  :title="`Spending on behalf of ${transaction.employee?.name || 'an employee'}`"
-                >
-                  <Wallet v-if="!isSpendingTab" class="w-3 h-3" />
-                  <UserRound v-else class="w-3 h-3" />
-                  {{ isSpendingTab ? transaction.employee?.name || "-" : `Spending · ${transaction.employee?.name || "-"}` }}
-                </span>
-                <span
-                  v-else-if="transaction.is_synced"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-600"
-                  :title="`Auto-synced from ${transaction.project_name}'s cash ledger`"
-                >
-                  <Link2 class="w-3 h-3" />
-                  {{ transaction.project_name }}
-                </span>
-                <span v-else class="px-2 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-600">
-                  Manual
-                </span>
-              </td>
-              <td class="px-3 py-2.5 text-right text-emerald-600 text-xs sm:text-sm">
-                <span v-if="transaction.type === 'debit'" class="inline-flex items-center gap-1 justify-end">
-                  <ArrowUpCircle class="w-3.5 h-3.5" />
-                  {{ isBalanceVisible ? formatRupiah(transaction.amount) : "Rp ••••••" }}
-                </span>
-              </td>
-              <td v-if="!isSpendingTab" class="px-3 py-2.5 text-right text-red-600 text-xs sm:text-sm">
-                <span v-if="transaction.type === 'credit'" class="inline-flex items-center gap-1 justify-end">
-                  <ArrowDownCircle class="w-3.5 h-3.5" />
-                  {{ isBalanceVisible ? formatRupiah(transaction.amount) : "Rp ••••••" }}
-                </span>
-              </td>
-              <td class="px-3 py-2.5 text-right font-semibold text-brand-dark whitespace-nowrap text-xs sm:text-sm">
-                {{ isBalanceVisible ? formatRupiah(transaction.balance) : "Rp ••••••" }}
-              </td>
-              <td v-if="canManage" class="px-3 py-2.5">
-                <div v-if="!transaction.is_synced" class="flex justify-center gap-1">
-                  <button
-                    @click="openEditModal(transaction)"
-                    class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
-                    title="Edit"
-                  >
-                    <Pencil class="w-4 h-4" />
-                  </button>
-                  <button
-                    @click="confirmDelete(transaction)"
-                    class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 class="w-4 h-4" />
-                  </button>
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-ui-body font-medium text-ui-ink">{{ row.description }}</p>
+                  <p class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(row.transaction_date) }}</p>
                 </div>
-                <p v-else class="text-center text-xs text-gray-400" title="Edit this from the project's own Cash Ledger">
-                  via Project
-                </p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                <div class="text-right shrink-0">
+                  <p
+                    class="inline-flex items-center gap-1 text-ui-body font-medium tabular-nums"
+                    :class="row.type === 'debit' ? 'text-ui-ok' : 'text-ui-bad'"
+                  >
+                    <ArrowUpCircle v-if="row.type === 'debit'" class="w-3.5 h-3.5" />
+                    <ArrowDownCircle v-else class="w-3.5 h-3.5" />
+                    {{ masked(row.amount) }}
+                  </p>
+                  <p class="text-ui-cap text-ui-muted">{{ row.type === "debit" ? "Debit" : "Credit" }}</p>
+                </div>
+              </div>
+              <p v-if="row.notes" class="text-ui-cap text-ui-muted mt-1">{{ row.notes }}</p>
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
+                <UiBadge v-if="row.category === 'spending'" tone="warn">
+                  <UserRound class="w-3 h-3" />
+                  {{ isSpendingTab ? row.employee?.name || "-" : `Spending · ${row.employee?.name || "-"}` }}
+                </UiBadge>
+                <UiBadge v-else-if="row.is_synced" tone="info"><Link2 class="w-3 h-3" /> {{ row.project_name }}</UiBadge>
+                <UiBadge v-else tone="neutral">Manual</UiBadge>
+                <span class="text-ui-cap text-ui-muted">Balance <span class="tabular-nums font-medium text-ui-ink">{{ masked(row.balance) }}</span></span>
+              </div>
+              <div v-if="row.proof || canManage" class="flex items-center gap-1 mt-2 -ml-2">
+                <UiButton v-if="row.proof" variant="ghost" size="sm" :icon="Paperclip" @click="openProof(row.proof)">View proof</UiButton>
+                <template v-if="canManage">
+                  <template v-if="!row.is_synced">
+                    <UiButton variant="ghost" size="sm" :icon="Pencil" @click="openEditModal(row)">Edit</UiButton>
+                    <UiButton variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="confirmDelete(row)">Delete</UiButton>
+                  </template>
+                  <span v-else class="text-ui-cap text-ui-faint px-2" title="Edit this from the project's own Cash Ledger">via Project</span>
+                </template>
+              </div>
+            </div>
+          </div>
+        </template>
+      </UiTable>
 
-      <Pagination
-        v-if="!loading && transactions.length > 0"
-        :meta="meta"
-        :loading="loading"
-        item-label="transactions"
-        @page-change="fetchData"
-        @per-page-change="handlePerPageChange"
-      />
-    </div>
+      <div v-if="!loading && transactions.length > 0" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
+        <Pagination
+          :meta="meta"
+          :loading="loading"
+          item-label="transactions"
+          @page-change="fetchData"
+          @per-page-change="handlePerPageChange"
+        />
+      </div>
+    </section>
 
     <!-- FORM MODAL -->
-    <Transition name="fade">
-      <div v-if="isFormModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-5">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="closeFormModal"></div>
-
-        <div class="bg-white rounded-[14px] p-6 w-full max-w-md relative z-10 shadow-2xl">
-          <button @click="closeFormModal" class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600">
-            <X class="w-4 h-4" />
-          </button>
-
-          <h3 class="text-base font-bold text-brand-dark mb-4">
-            {{ isSpendingForm ? (editingId ? "Edit Spending" : "Add Spending") : editingId ? "Edit Transaction" : "Add Cash Transaction" }}
-          </h3>
-
-          <form @submit.prevent="handleSubmit" class="space-y-4">
-            <!-- Spending: on whose behalf; always recorded as Debit -->
-            <div v-if="isSpendingForm">
-              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
-                On behalf of <span class="text-red-500">*</span>
-              </label>
-              <div class="relative">
-                <select
-                  v-model="form.employee_id"
-                  class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm bg-white appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-                >
-                  <option value="" disabled>Choose an employee</option>
-                  <option v-for="employee in employeeOptions" :key="employee.id" :value="employee.id">{{ employee.name }}</option>
-                </select>
-                <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-              </div>
-              <p class="text-[11px] text-gray-500 mt-1.5 flex items-center gap-1">
-                <ArrowUpCircle class="w-3 h-3 text-emerald-600" /> Recorded as Debit in the cash book.
-              </p>
-            </div>
-
-            <div v-else>
-              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Type</label>
-              <div class="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  @click="form.type = 'debit'"
-                  class="px-3 py-2.5 rounded-lg border text-sm font-semibold transition-all"
-                  :class="form.type === 'debit' ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-[#DCDEDD] text-gray-500'"
-                >
-                  Debit (In)
-                </button>
-                <button
-                  type="button"
-                  @click="form.type = 'credit'"
-                  class="px-3 py-2.5 rounded-lg border text-sm font-semibold transition-all"
-                  :class="form.type === 'credit' ? 'border-red-400 bg-red-50 text-red-700' : 'border-[#DCDEDD] text-gray-500'"
-                >
-                  Credit (Out)
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
-                Description <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="form.description"
-                type="text"
-:placeholder="isSpendingForm ? 'e.g. Taxi to client meeting' : 'e.g. Consulting income'"
-                class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-              />
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
-                  Amount (Rp) <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model.number="form.amount"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-                />
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
-                  Date <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model="form.transaction_date"
-                  type="date"
-                  class="w-full h-[42px] px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-base sm:text-sm appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Notes</label>
-              <textarea
-                v-model="form.notes"
-                rows="2"
-                placeholder="Optional notes"
-                class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none resize-none"
-              ></textarea>
-            </div>
-
-            <!-- Proof of transaction -->
-            <div>
-              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">
-                Proof of transaction <span class="text-gray-400 font-normal">(optional)</span>
-              </label>
-
-              <!-- New file picked -->
-              <div v-if="form.proof" class="flex items-center gap-3 p-2.5 border border-[#DCDEDD] rounded-lg">
-                <img v-if="proofPreviewUrl" :src="proofPreviewUrl" alt="Preview" class="w-12 h-12 rounded-md object-cover border border-[#EEF0F2]" />
-                <div v-else class="w-12 h-12 rounded-md bg-red-50 flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-red-600" /></div>
-                <div class="min-w-0 flex-1">
-                  <p class="text-sm text-brand-dark font-medium truncate">{{ form.proof.name }}</p>
-                  <p class="text-xs text-gray-400">Uploaded when you save</p>
-                </div>
-                <button type="button" class="text-xs font-semibold text-gray-500 hover:text-red-600" @click="clearNewProof">Cancel</button>
-              </div>
-
-              <!-- Proof already saved on this transaction -->
-              <div v-else-if="existingProof && !form.remove_proof" class="flex items-center gap-3 p-2.5 border border-[#DCDEDD] rounded-lg">
-                <img v-if="existingProof.is_image" :src="existingProof.url" alt="Proof" class="w-12 h-12 rounded-md object-cover border border-[#EEF0F2]" />
-                <div v-else class="w-12 h-12 rounded-md bg-red-50 flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-red-600" /></div>
-                <div class="min-w-0 flex-1">
-                  <p class="text-sm text-brand-dark font-medium truncate">{{ existingProof.name || "Proof of transaction" }}</p>
-                  <button type="button" class="text-xs font-semibold text-[#0C51D9] hover:underline" @click="openProof(existingProof)">View</button>
-                </div>
-                <button type="button" class="text-xs font-semibold text-gray-500 hover:text-[#0C51D9]" @click="proofInput?.click()">Replace</button>
-                <button type="button" class="text-xs font-semibold text-gray-500 hover:text-red-600" @click="removeExistingProof">Remove</button>
-              </div>
-
-              <!-- Nothing attached -->
-              <button
-                v-else
-                type="button"
-                class="w-full flex items-center justify-center gap-2 px-3.5 py-3 border border-dashed border-[#DCDEDD] rounded-lg text-sm text-gray-500 hover:border-[#0C51D9] hover:text-[#0C51D9] transition"
-                @click="proofInput?.click()"
-              >
-                <Upload class="w-4 h-4" /> Upload proof (JPG, PNG, WEBP, PDF · max 5 MB)
-              </button>
-              <p v-if="existingProof && form.remove_proof && !form.proof" class="text-xs text-gray-500 mt-1">
-                The current proof will be removed when you save.
-                <button type="button" class="font-semibold text-[#0C51D9] hover:underline" @click="form.remove_proof = false">Undo</button>
-              </p>
-              <input ref="proofInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="hidden" @change="onProofSelected" />
-            </div>
-
-            <p v-if="formError" class="text-red-500 text-xs">{{ formError }}</p>
-
-            <div class="grid grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
-                @click="closeFormModal"
-                class="px-4 py-3 rounded-lg border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                :disabled="saving"
-                class="px-4 py-3 rounded-lg bg-[#0C51D9] text-white text-sm font-semibold hover:brightness-110 transition disabled:opacity-50"
-              >
-                {{ saving ? "Saving..." : "Save" }}
-              </button>
-            </div>
-          </form>
+    <UiModal :open="isFormModalOpen" :title="formTitle" size="lg" @update:open="(v) => !v && closeFormModal()">
+      <form id="cash-book-form" @submit.prevent="handleSubmit" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Spending: on whose behalf; always recorded as Debit -->
+        <div v-if="isSpendingForm" class="sm:col-span-2">
+          <!-- No native `required`: handleSubmit shows its own message. -->
+          <label for="cb-employee" class="block text-ui-small font-medium text-ui-ink mb-1.5">On behalf of<span class="text-ui-bad"> *</span></label>
+          <UiSelect
+            id="cb-employee"
+            v-model="form.employee_id"
+            placeholder="Choose an employee"
+            :options="employeeFormOptions"
+          />
+          <p class="text-ui-cap text-ui-muted mt-1.5 flex items-center gap-1">
+            <ArrowUpCircle class="w-3 h-3 text-ui-ok" /> Recorded as Debit in the cash book.
+          </p>
         </div>
-      </div>
-    </Transition>
+
+        <div v-else class="sm:col-span-2">
+          <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Type</p>
+          <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Type">
+            <button
+              type="button"
+              role="radio"
+              :aria-checked="form.type === 'debit'"
+              @click="form.type = 'debit'"
+              class="ui-press h-[38px] inline-flex items-center justify-center gap-1.5 rounded-ui-control border text-ui-small font-medium transition-colors"
+              :class="form.type === 'debit' ? 'border-ui-ok/40 bg-ui-ok-soft text-ui-ok' : 'border-ui-line-strong bg-ui-surface text-ui-muted hover:bg-ui-subtle'"
+            >
+              <ArrowUpCircle class="w-4 h-4" /> Debit (In)
+            </button>
+            <button
+              type="button"
+              role="radio"
+              :aria-checked="form.type === 'credit'"
+              @click="form.type = 'credit'"
+              class="ui-press h-[38px] inline-flex items-center justify-center gap-1.5 rounded-ui-control border text-ui-small font-medium transition-colors"
+              :class="form.type === 'credit' ? 'border-ui-bad/40 bg-ui-bad-soft text-ui-bad' : 'border-ui-line-strong bg-ui-surface text-ui-muted hover:bg-ui-subtle'"
+            >
+              <ArrowDownCircle class="w-4 h-4" /> Credit (Out)
+            </button>
+          </div>
+        </div>
+
+        <div class="sm:col-span-2 min-w-0">
+          <label for="cb-description" class="block text-ui-small font-medium text-ui-ink mb-1.5">Description<span class="text-ui-bad"> *</span></label>
+          <UiInput
+            id="cb-description"
+            v-model="form.description"
+            :placeholder="isSpendingForm ? 'e.g. Taxi to client meeting' : 'e.g. Consulting income'"
+          />
+        </div>
+
+        <div class="min-w-0">
+          <label for="cb-amount" class="block text-ui-small font-medium text-ui-ink mb-1.5">Amount (Rp)<span class="text-ui-bad"> *</span></label>
+          <input id="cb-amount" v-model.number="form.amount" type="number" min="0" placeholder="0" :class="[fieldClass, 'text-right']" />
+        </div>
+        <div class="min-w-0">
+          <label for="cb-date" class="block text-ui-small font-medium text-ui-ink mb-1.5">Date<span class="text-ui-bad"> *</span></label>
+          <UiInput id="cb-date" v-model="form.transaction_date" type="date" />
+        </div>
+
+        <UiInput v-model="form.notes" label="Notes" :rows="2" placeholder="Optional notes" class="sm:col-span-2" />
+
+        <!-- Proof of transaction -->
+        <div class="sm:col-span-2">
+          <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
+            Proof of transaction <span class="text-ui-muted font-normal">(optional)</span>
+          </p>
+
+          <!-- New file picked -->
+          <div v-if="form.proof" class="flex items-center gap-3 p-2.5 border border-ui-line rounded-ui-control">
+            <img v-if="proofPreviewUrl" :src="proofPreviewUrl" alt="Preview" class="w-12 h-12 rounded-md object-cover border border-ui-line" />
+            <div v-else class="w-12 h-12 rounded-md bg-ui-subtle flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-ui-muted" /></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-ui-small text-ui-ink font-medium truncate">{{ form.proof.name }}</p>
+              <p class="text-ui-cap text-ui-muted">Uploaded when you save</p>
+            </div>
+            <UiButton variant="ghost" size="sm" @click="clearNewProof">Cancel</UiButton>
+          </div>
+
+          <!-- Proof already saved on this transaction -->
+          <div v-else-if="existingProof && !form.remove_proof" class="flex items-center gap-3 p-2.5 border border-ui-line rounded-ui-control">
+            <img v-if="existingProof.is_image" :src="existingProof.url" alt="Proof" class="w-12 h-12 rounded-md object-cover border border-ui-line" />
+            <div v-else class="w-12 h-12 rounded-md bg-ui-subtle flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-ui-muted" /></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-ui-small text-ui-ink font-medium truncate">{{ existingProof.name || "Proof of transaction" }}</p>
+              <button type="button" class="text-ui-cap font-medium text-ui-accent hover:underline" @click="openProof(existingProof)">View</button>
+            </div>
+            <UiButton variant="ghost" size="sm" @click="proofInput?.click()">Replace</UiButton>
+            <UiButton variant="ghost" size="sm" class="!text-ui-bad" @click="removeExistingProof">Remove</UiButton>
+          </div>
+
+          <!-- Nothing attached -->
+          <button
+            v-else
+            type="button"
+            class="ui-press w-full flex items-center justify-center gap-2 px-3.5 py-3 border border-dashed border-ui-line-strong rounded-ui-control text-ui-small text-ui-muted hover:border-ui-accent hover:text-ui-accent transition-colors"
+            @click="proofInput?.click()"
+          >
+            <Upload class="w-4 h-4" /> Upload proof (JPG, PNG, WEBP, PDF · max 5 MB)
+          </button>
+          <p v-if="existingProof && form.remove_proof && !form.proof" class="text-ui-cap text-ui-muted mt-1.5">
+            The current proof will be removed when you save.
+            <button type="button" class="font-medium text-ui-accent hover:underline" @click="form.remove_proof = false">Undo</button>
+          </p>
+          <input ref="proofInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="hidden" @change="onProofSelected" />
+        </div>
+
+        <UiAlert v-if="formError" tone="bad" :message="formError" class="sm:col-span-2" />
+      </form>
+
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="closeFormModal">Cancel</UiButton>
+        <UiButton type="submit" form="cash-book-form" :loading="saving" :disabled="saving" class="flex-1 sm:flex-none">
+          {{ saving ? "Saving..." : "Save" }}
+        </UiButton>
+      </template>
+    </UiModal>
 
     <!-- PROOF VIEWER (kept small) -->
-    <Transition name="fade">
-      <div v-if="viewingProof" class="fixed inset-0 z-[100] flex items-center justify-center p-5">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="viewingProof = null"></div>
-        <div class="relative bg-white rounded-[14px] w-full max-w-sm p-4 shadow-xl">
-          <button @click="viewingProof = null" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600"><X class="w-5 h-5" /></button>
-          <p class="text-brand-dark text-sm font-bold mb-0.5">Proof of transaction</p>
-          <p class="text-xs text-gray-400 truncate pr-6 mb-3">{{ viewingProof.name }}</p>
-
-          <div v-if="viewingProof.is_image" class="bg-gray-50 border border-[#EEF0F2] rounded-lg flex items-center justify-center p-2">
-            <img :src="viewingProof.url" :alt="viewingProof.name" class="max-w-full object-contain rounded" style="max-height: 320px" />
-          </div>
-          <div v-else class="bg-gray-50 border border-[#EEF0F2] rounded-lg flex flex-col items-center justify-center py-8">
-            <FileText class="w-10 h-10 text-red-600 mb-2" />
-            <p class="text-xs text-gray-500">PDF document</p>
-          </div>
-
-          <a
-            :href="viewingProof.url"
-            target="_blank"
-            rel="noopener"
-            class="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:border-[#0C51D9] transition"
-          >
-            <ExternalLink class="w-4 h-4" /> {{ viewingProof.is_image ? "Open full size" : "Open PDF" }}
-          </a>
-        </div>
+    <UiModal :open="!!viewingProof" title="Proof of transaction" :description="viewingProof?.name || ''" size="sm" :z-index="150" @update:open="(v) => !v && (viewingProof = null)">
+      <div v-if="viewingProof?.is_image" class="bg-ui-subtle border border-ui-line rounded-ui-control flex items-center justify-center p-2">
+        <img :src="viewingProof?.url" :alt="viewingProof?.name" class="max-w-full object-contain rounded" style="max-height: 320px" />
       </div>
-    </Transition>
+      <div v-else class="bg-ui-subtle border border-ui-line rounded-ui-control flex flex-col items-center justify-center py-8">
+        <FileText class="w-10 h-10 text-ui-muted mb-2" />
+        <p class="text-ui-cap text-ui-muted">PDF document</p>
+      </div>
+      <template #footer>
+        <UiButton variant="secondary" :href="viewingProof?.url" target="_blank" rel="noopener" :icon="ExternalLink" class="w-full">
+          {{ viewingProof?.is_image ? "Open full size" : "Open PDF" }}
+        </UiButton>
+      </template>
+    </UiModal>
 
     <!-- OPENING BALANCE MODAL -->
-    <Transition name="fade">
-      <div v-if="isBalanceModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-5">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isBalanceModalOpen = false"></div>
-
-        <div class="bg-white rounded-[14px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <button @click="isBalanceModalOpen = false" class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600">
-            <X class="w-4 h-4" />
-          </button>
-
-          <h3 class="text-base font-bold text-brand-dark mb-4">Set Opening Balance</h3>
-
-          <form @submit.prevent="handleBalanceSubmit" class="space-y-4">
-            <div>
-              <label class="text-xs font-semibold text-brand-dark mb-1.5 block">Opening Balance (Rp)</label>
-              <input
-                v-model.number="balanceDraft"
-                type="number"
-                min="0"
-                class="w-full px-3.5 py-2.5 border border-[#DCDEDD] rounded-lg text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-              />
-            </div>
-
-            <p v-if="balanceError" class="text-red-500 text-xs">{{ balanceError }}</p>
-
-            <div class="grid grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
-                @click="isBalanceModalOpen = false"
-                class="px-4 py-3 rounded-lg border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                :disabled="saving"
-                class="px-4 py-3 rounded-lg bg-[#0C51D9] text-white text-sm font-semibold hover:brightness-110 transition disabled:opacity-50"
-              >
-                {{ saving ? "Saving..." : "Save" }}
-              </button>
-            </div>
-          </form>
+    <UiModal v-model:open="isBalanceModalOpen" title="Set Opening Balance" size="sm">
+      <form id="cash-book-balance-form" @submit.prevent="handleBalanceSubmit" class="space-y-4">
+        <div>
+          <label for="cb-opening-balance" class="block text-ui-small font-medium text-ui-ink mb-1.5">Opening Balance (Rp)</label>
+          <input id="cb-opening-balance" v-model.number="balanceDraft" type="number" min="0" :class="[fieldClass, 'text-right']" />
         </div>
-      </div>
-    </Transition>
+        <UiAlert v-if="balanceError" tone="bad" :message="balanceError" />
+      </form>
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="isBalanceModalOpen = false">Cancel</UiButton>
+        <UiButton type="submit" form="cash-book-balance-form" :loading="saving" :disabled="saving" class="flex-1 sm:flex-none">
+          {{ saving ? "Saving..." : "Save" }}
+        </UiButton>
+      </template>
+    </UiModal>
 
     <!-- DELETE MODAL -->
-    <Transition name="fade">
-      <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-5">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isDeleteModalOpen = false"></div>
-
-        <div class="bg-white rounded-[18px] p-6 w-full max-w-sm relative z-10 shadow-2xl">
-          <button @click="isDeleteModalOpen = false" class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600">
-            <X class="w-4 h-4" />
-          </button>
-
-          <div class="text-center">
-            <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle class="w-7 h-7 text-red-500" />
-            </div>
-
-            <h3 class="text-base font-bold text-brand-dark mb-2">{{ transactionToDelete?.category === 'spending' ? "Delete Spending?" : "Delete Transaction?" }}</h3>
-            <p class="text-gray-500 text-sm mb-6">
-              Are you sure you want to delete
-              <span class="font-bold text-brand-dark">"{{ transactionToDelete?.description }}"</span>?
-              This action cannot be undone.
-            </p>
-
-            <div class="grid grid-cols-2 gap-3">
-              <button
-                @click="isDeleteModalOpen = false"
-                class="px-4 py-3 rounded-lg border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                @click="handleDelete"
-                :disabled="isDeleting"
-                class="px-4 py-3 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2.5 disabled:opacity-50"
-              >
-                <Trash2 v-if="!isDeleting" class="w-3.5 h-3.5" />
-                {{ isDeleting ? "Deleting..." : "Yes, Delete" }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <UiConfirmDialog
+      v-model:open="isDeleteModalOpen"
+      type="danger"
+      :title="transactionToDelete?.category === 'spending' ? 'Delete Spending?' : 'Delete Transaction?'"
+      :message="deleteMessage"
+      confirm-text="Yes, Delete"
+      cancel-text="Cancel"
+      :loading="isDeleting"
+      @confirm="handleDelete"
+    />
   </div>
 </template>
-
-<style scoped>
-.cb-input { width: 100%; border: 1px solid #dcdedd; border-radius: 8px; padding: 7px 12px; font-size: 13px; background: #fff; color: #0f172a; outline: none; min-height: 40px; }
-.cb-input:hover { border-color: #93c5fd; }
-.cb-input:focus { border-color: #0c51d9; }
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

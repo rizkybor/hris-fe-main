@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import {
-  FileSignature,
   Pencil,
   Send,
   CheckCircle2,
@@ -12,8 +11,8 @@ import {
   ShieldCheck,
   Calendar,
   User,
-  X,
   Download,
+  Paperclip,
   ArrowLeft,
 } from "lucide-vue-next";
 import { useDocumentLetterStore } from "@/stores/documentLetter";
@@ -21,6 +20,7 @@ import { useAuthStore } from "@/stores/auth";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiBadge, UiAlert, UiModal, UiInput } from "@/components/ui";
 
 const route = useRoute();
 const router = useRouter();
@@ -45,12 +45,8 @@ const canSubmit = computed(() => canEdit.value);
 const canApprove = computed(() => can("document-letter-approve") && isFinanceManager.value && memo.value?.status === "pending");
 
 const STATUS_LABEL = { draft: "Draft", pending: "Pending", approved: "Approved", rejected: "Rejected" };
-const STATUS_CLASS = {
-  draft: "bg-gray-100 text-gray-600",
-  pending: "bg-amber-50 text-amber-600",
-  approved: "bg-green-50 text-green-700",
-  rejected: "bg-red-50 text-red-600",
-};
+// Presentation only: status → badge tone.
+const STATUS_TONE = { draft: "neutral", pending: "warn", approved: "ok", rejected: "bad" };
 
 const formatDate = (date) =>
   date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" }) : "-";
@@ -109,181 +105,152 @@ const handleDownload = async () => {
 </script>
 
 <template>
-  <div>
-    <div v-if="loading" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3">
-      <Skeleton width="40%" height="24px" />
-      <Skeleton width="100%" height="200px" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <div v-if="loading" class="space-y-5">
+      <div class="space-y-2">
+        <Skeleton width="120px" height="16px" />
+        <Skeleton width="40%" height="28px" />
+        <Skeleton width="180px" height="16px" />
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 bg-ui-surface border border-ui-line rounded-ui-card p-5 space-y-3">
+          <Skeleton width="30%" height="20px" />
+          <Skeleton width="100%" height="200px" />
+        </div>
+        <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5 space-y-3">
+          <Skeleton width="60%" height="16px" />
+          <Skeleton width="80%" height="16px" />
+          <Skeleton width="70%" height="16px" />
+        </div>
+      </div>
     </div>
 
     <template v-else-if="memo">
-      <router-link
-        :to="{ name: 'admin.official-memos.dashboard' }"
-        class="inline-flex items-center gap-1.5 text-brand-light hover:text-[#0C51D9] text-xs font-semibold mb-3 transition-colors"
-      >
-        <ArrowLeft class="w-3.5 h-3.5" />
-        Back to Official Memos
-      </router-link>
-
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div class="flex items-start gap-3 min-w-0">
-          <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
-            <FileSignature class="w-5 h-5 text-[#0C51D9]" />
-          </div>
-          <div class="min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="text-brand-dark text-lg font-bold">{{ memo.subject }}</h3>
-              <span class="px-2 py-1 rounded-md text-xs font-semibold shrink-0" :class="STATUS_CLASS[memo.status]">
-                {{ STATUS_LABEL[memo.status] }}
-              </span>
-            </div>
-            <p class="text-brand-light text-sm font-mono">{{ memo.document_number }}</p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2 shrink-0">
-          <button
-            @click="handleDownload"
-            :disabled="downloading"
-            class="px-4 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
-          >
-            <Download class="w-4 h-4" />
-            {{ downloading ? "Downloading..." : "Download PDF" }}
-          </button>
+      <UiPageHeader :title="memo.subject" class="ui-anim-fade-up">
+        <template #eyebrow>
           <router-link
-            v-if="canEdit"
-            :to="{ name: 'admin.official-memos.edit', params: { id: memo.id } }"
-            class="px-4 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50 flex items-center gap-2"
+            :to="{ name: 'admin.official-memos.dashboard' }"
+            class="ui-press inline-flex items-center gap-1 mb-1.5 text-ui-small font-medium text-ui-accent hover:underline"
           >
-            <Pencil class="w-4 h-4" />
-            Edit
+            <ArrowLeft class="w-4 h-4" />
+            Back to Official Memos
           </router-link>
-          <button
-            v-if="canSubmit"
-            @click="handleSubmit"
-            :disabled="busy"
-            class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2 disabled:opacity-50"
-          >
-            <Send class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">Submit</span>
-          </button>
-          <button
-            v-if="canApprove"
-            @click="handleApprove"
-            :disabled="busy"
-            class="rounded-lg bg-green-600 hover:brightness-110 px-4 py-2.5 flex items-center gap-2 disabled:opacity-50"
-          >
-            <CheckCircle2 class="w-4 h-4 text-white" />
-            <span class="text-white text-sm font-semibold">Approve</span>
-          </button>
-          <button
-            v-if="canApprove"
-            @click="openRejectModal"
-            :disabled="busy"
-            class="rounded-lg bg-red-500 hover:brightness-110 px-4 py-2.5 flex items-center gap-2 disabled:opacity-50"
-          >
-            <XCircle class="w-4 h-4 text-white" />
-            <span class="text-white text-sm font-semibold">Reject</span>
-          </button>
-        </div>
-      </div>
+        </template>
+        <template #subtitle>
+          <span class="inline-flex items-center gap-2 flex-wrap">
+            <UiBadge :tone="STATUS_TONE[memo.status]" dot>{{ STATUS_LABEL[memo.status] }}</UiBadge>
+            <span class="font-mono">{{ memo.document_number }}</span>
+          </span>
+        </template>
+        <template #actions>
+          <UiButton variant="secondary" :icon="Download" :loading="downloading" @click="handleDownload">
+            {{ downloading ? "Downloading..." : "Download PDF" }}
+          </UiButton>
+          <UiButton v-if="canEdit" variant="secondary" :icon="Pencil" :to="{ name: 'admin.official-memos.edit', params: { id: memo.id } }">Edit</UiButton>
+          <UiButton v-if="canSubmit" :icon="Send" :disabled="busy" @click="handleSubmit">Submit</UiButton>
+          <UiButton v-if="canApprove" variant="danger" :icon="XCircle" :disabled="busy" @click="openRejectModal">Reject</UiButton>
+          <UiButton v-if="canApprove" :icon="CheckCircle2" :disabled="busy" @click="handleApprove">Approve</UiButton>
+        </template>
+      </UiPageHeader>
 
-      <div v-if="memo.status === 'rejected' && memo.rejection_reason" class="bg-red-50 border border-red-100 rounded-[14px] p-4 mb-6">
-        <p class="text-red-700 text-sm font-semibold mb-1">Rejection Reason</p>
-        <p class="text-red-600 text-sm">{{ memo.rejection_reason }}</p>
-      </div>
+      <UiAlert v-if="memo.status === 'rejected' && memo.rejection_reason" tone="bad" title="Rejection Reason" :message="memo.rejection_reason" />
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="lg:col-span-2 space-y-4">
-          <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-            <h4 class="text-brand-dark text-sm font-bold mb-3">Memo Content</h4>
-            <div class="rich-text-content text-sm text-brand-dark leading-relaxed" v-html="memo.body"></div>
-          </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+        <div class="lg:col-span-2 space-y-5 min-w-0 ui-stagger">
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+            <h3 class="text-ui-h2 text-ui-ink mb-3">Memo Content</h3>
+            <div class="rich-text-content text-ui-body text-ui-text leading-relaxed" v-html="memo.body"></div>
+          </section>
 
-          <div v-if="memo.attachments?.length" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5">
-            <h4 class="text-brand-dark text-sm font-bold mb-3">Attachments</h4>
+          <section v-if="memo.attachments?.length" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+            <h3 class="text-ui-h2 text-ui-ink mb-3">Attachments</h3>
             <div class="space-y-2">
               <a
                 v-for="attachment in memo.attachments"
                 :key="attachment.id"
                 :href="attachment.url"
                 target="_blank"
-                class="flex items-center gap-2 px-3 py-2 border border-[#DCDEDD] rounded-lg text-sm text-[#0C51D9] hover:underline"
+                class="flex items-center gap-2 px-3 h-11 border border-ui-line rounded-ui-control text-ui-small text-ui-accent hover:bg-ui-hover hover:underline min-w-0"
               >
                 <FileText class="w-4 h-4 shrink-0" />
-                {{ attachment.original_name }}
+                <span class="truncate">{{ attachment.original_name }}</span>
               </a>
             </div>
-          </div>
+          </section>
         </div>
 
-        <div class="space-y-4">
-          <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-3">
-            <div class="flex items-center gap-2 text-sm">
-              <Calendar class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-brand-light">Date:</span>
-              <span class="text-brand-dark font-medium">{{ formatDate(memo.document_date) }}</span>
-            </div>
-            <div class="flex items-center gap-2 text-sm">
-              <User class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-brand-light">Sender:</span>
-              <span class="text-brand-dark font-medium">{{ memo.sender?.name || memo.creator?.name || "-" }}</span>
-            </div>
-            <div class="flex items-center gap-2 text-sm">
-              <ShieldCheck class="w-4 h-4 text-gray-400 shrink-0" />
-              <span class="text-brand-light">Recipient:</span>
-              <span class="text-brand-dark font-medium">Finance Manager</span>
-            </div>
-          </div>
+        <aside class="space-y-4 min-w-0">
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+            <h3 class="text-ui-h3 text-ui-ink">Details</h3>
+            <dl class="mt-2 divide-y divide-ui-line text-ui-small">
+              <div class="flex items-center justify-between gap-3 py-2.5">
+                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><Calendar class="w-4 h-4 text-ui-faint" />Date</dt>
+                <dd class="text-ui-ink text-right tabular-nums">{{ formatDate(memo.document_date) }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-3 py-2.5">
+                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><User class="w-4 h-4 text-ui-faint" />Sender</dt>
+                <dd class="text-ui-ink text-right truncate">{{ memo.sender?.name || memo.creator?.name || "-" }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-3 py-2.5">
+                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><ShieldCheck class="w-4 h-4 text-ui-faint" />Recipient</dt>
+                <dd class="text-ui-ink text-right">Finance Manager</dd>
+              </div>
+              <div v-if="memo.attachments?.length" class="flex items-center justify-between gap-3 py-2.5">
+                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><Paperclip class="w-4 h-4 text-ui-faint" />Attachments</dt>
+                <dd class="text-ui-ink text-right tabular-nums">{{ memo.attachments.length }}</dd>
+              </div>
+            </dl>
+          </section>
 
-          <div v-if="memo.submitted_at || memo.approved_at && memo.approver" class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 space-y-2 text-xs text-brand-light">
-            <p v-if="memo.submitted_at">Submitted: {{ formatDateTime(memo.submitted_at) }}</p>
-            <p v-if="memo.approved_at && memo.approver">
-              {{ memo.status === "rejected" ? "Rejected" : "Approved" }} by {{ memo.approver.name }} &middot;
-              {{ formatDateTime(memo.approved_at) }}
-            </p>
-          </div>
-        </div>
+          <section v-if="memo.submitted_at || memo.approved_at && memo.approver" class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
+            <h3 class="text-ui-h3 text-ui-ink">Activity</h3>
+            <ol class="mt-3 space-y-3">
+              <li v-if="memo.submitted_at" class="flex items-start gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-ui-muted mt-1.5 shrink-0" aria-hidden="true"></span>
+                <p class="text-ui-small text-ui-text">Submitted: <span class="tabular-nums text-ui-muted">{{ formatDateTime(memo.submitted_at) }}</span></p>
+              </li>
+              <li v-if="memo.approved_at && memo.approver" class="flex items-start gap-2.5">
+                <span class="w-2 h-2 rounded-full mt-1.5 shrink-0" :class="memo.status === 'rejected' ? 'bg-ui-bad' : 'bg-ui-ok'" aria-hidden="true"></span>
+                <p class="text-ui-small text-ui-text">
+                  {{ memo.status === "rejected" ? "Rejected" : "Approved" }} by {{ memo.approver.name }} &middot;
+                  <span class="tabular-nums text-ui-muted">{{ formatDateTime(memo.approved_at) }}</span>
+                </p>
+              </li>
+            </ol>
+          </section>
+        </aside>
       </div>
     </template>
 
-    <Transition name="fade">
-      <div v-if="isRejectModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm" @click="isRejectModalOpen = false"></div>
-        <div class="bg-white rounded-[24px] p-6 w-full max-w-md relative z-10 shadow-2xl">
-          <button @click="isRejectModalOpen = false" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
-            <X class="w-5 h-5" />
-          </button>
-          <h3 class="text-xl font-bold text-brand-dark mb-2">Reject Official Memo?</h3>
-          <p class="text-gray-500 text-sm mb-4">Provide a rejection reason so the author knows what needs to be fixed.</p>
-          <textarea
-            v-model="rejectionReason"
-            rows="4"
-            required
-            placeholder="Example: Budget doesn't match the Q3 allocation..."
-            class="w-full px-3 py-2.5 border border-[#DCDEDD] rounded-xl text-sm resize-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none mb-4"
-          ></textarea>
-          <div class="grid grid-cols-2 gap-3">
-            <button @click="isRejectModalOpen = false" class="px-4 py-3 rounded-xl border border-[#DCDEDD] font-semibold text-brand-dark hover:bg-gray-50">
-              Cancel
-            </button>
-            <button
-              @click="handleReject"
-              :disabled="busy || !rejectionReason.trim()"
-              class="px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 disabled:opacity-50"
-            >
-              {{ busy ? "Rejecting..." : "Reject" }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <UiModal
+      v-model:open="isRejectModalOpen"
+      title="Reject Official Memo?"
+      description="Provide a rejection reason so the author knows what needs to be fixed."
+    >
+      <UiInput
+        v-model="rejectionReason"
+        :rows="4"
+        required
+        label="Rejection Reason"
+        placeholder="Example: Budget doesn't match the Q3 allocation..."
+      />
+      <template #footer>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="isRejectModalOpen = false">Cancel</UiButton>
+        <UiButton
+          variant="destructive"
+          class="flex-1 sm:flex-none"
+          :loading="busy"
+          :disabled="busy || !rejectionReason.trim()"
+          @click="handleReject"
+        >
+          {{ busy ? "Rejecting..." : "Reject" }}
+        </UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-
 /* Table containment (overflow-x-auto, border, padding) lives in the
    shared global .rich-text-content class in src/assets/css/input.css --
    only the non-table typography rules stay local here. */
@@ -293,7 +260,7 @@ const handleDownload = async () => {
 .rich-text-content :deep(h1) { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0; }
 .rich-text-content :deep(h2) { font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0; }
 .rich-text-content :deep(h3) { font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; }
-.rich-text-content :deep(blockquote) { border-left: 3px solid #0c51d9; padding-left: 0.75rem; color: #6b7280; margin: 0.5rem 0; }
-.rich-text-content :deep(a) { color: #0c51d9; text-decoration: underline; }
-.rich-text-content :deep(hr) { border: none; border-top: 1px solid #dcdedd; margin: 0.75rem 0; }
+.rich-text-content :deep(blockquote) { border-left: 3px solid rgb(var(--ui-line-strong)); padding-left: 0.75rem; color: rgb(var(--ui-muted)); margin: 0.5rem 0; }
+.rich-text-content :deep(a) { color: rgb(var(--ui-accent)); text-decoration: underline; }
+.rich-text-content :deep(hr) { border: none; border-top: 1px solid rgb(var(--ui-line)); margin: 0.75rem 0; }
 </style>
