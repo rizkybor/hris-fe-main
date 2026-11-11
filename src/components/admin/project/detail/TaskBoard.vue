@@ -9,6 +9,7 @@ import { can } from "@/helpers/permissionHelper";
 import TaskCard from "./TaskCard.vue";
 import TaskDetailModal from "./TaskDetailModal.vue";
 import TaskCreateModal from "./TaskCreateModal.vue";
+import { UiAlert, UiButton, UiInput, UiSelect } from "@/components/ui";
 
 const route = useRoute();
 const router = useRouter();
@@ -34,6 +35,16 @@ const COLUMNS = [
 // TaskCard components at once. Reset to the page size whenever the filter
 // (search) changes, so a narrowed search doesn't stay oddly capped.
 const PAGE_SIZE = 40;
+
+// Presentation only: column status dot (the label always sits next to it).
+const COLUMN_DOT = { todo: "bg-ui-faint", in_progress: "bg-ui-accent", review: "bg-ui-warn", done: "bg-ui-ok", cancelled: "bg-ui-line-strong" };
+const PRIORITY_FILTER_OPTIONS = [
+  { value: "", label: "All Priorities" },
+  { value: "urgent", label: "Urgent" },
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
+];
 const visibleCounts = reactive(Object.fromEntries(COLUMNS.map((c) => [c.status, PAGE_SIZE])));
 
 const searchQuery = ref("");
@@ -289,118 +300,75 @@ onUnmounted(() => sentinelObserver?.disconnect());
 </script>
 
 <template>
-  <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 sm:w-10 sm:h-10 bg-purple-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <ListChecks class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-brand-dark text-base sm:text-lg font-bold">Project Tasks</h3>
-          <p class="text-brand-light text-xs font-normal">
-            Manage and track all project tasks with Kanban system.
-          </p>
-        </div>
+  <div class="space-y-4">
+    <!-- Toolbar: search + filters + create -->
+    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
+      <UiInput
+        v-model="searchQuery"
+        :icon="Search"
+        placeholder="Search tasks by name, description, type, or assignee..."
+        class="flex-1 min-w-0 lg:max-w-md"
+      />
+
+      <div class="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] -mx-1 px-1">
+        <UiSelect v-model="priorityFilter" :options="PRIORITY_FILTER_OPTIONS" class="w-40 shrink-0" />
+        <UiSelect
+          v-if="typeSuggestions.length"
+          v-model="typeFilter"
+          :options="[{ value: '', label: 'All Types' }, ...typeSuggestions.map((s) => ({ value: s.type, label: s.type }))]"
+          class="w-40 shrink-0"
+        />
+        <UiButton v-if="hasActiveFilters" variant="ghost" :icon="X" class="shrink-0" @click="clearFilters">Clear</UiButton>
       </div>
+
+      <UiButton v-if="can('task-create')" :icon="Plus" class="w-full lg:w-auto lg:ml-auto shrink-0" @click="openCreateModal">
+        Create New Task
+      </UiButton>
+    </div>
+
+    <div v-if="actionError" class="relative">
+      <UiAlert tone="bad" :message="actionError" class="pr-10" />
       <button
-        v-if="can('task-create')"
-        @click="openCreateModal"
-        class="btn-primary w-full sm:w-auto rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center justify-center gap-2"
+        type="button"
+        @click="actionError = ''"
+        class="absolute top-2 right-2 w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-bad/70 hover:text-ui-bad hover:bg-ui-bad/10"
+        aria-label="Dismiss"
       >
-        <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-xs font-semibold">Create New Task</span>
+        <X class="w-4 h-4" />
       </button>
     </div>
 
-    <div
-      v-if="actionError"
-      class="mb-4 px-4 py-3 rounded-[10px] bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center justify-between"
-    >
-      <span>{{ actionError }}</span>
-      <button @click="actionError = ''" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button>
-    </div>
-
-    <!-- Tasks Filter -->
-    <div class="mb-5 flex flex-col sm:flex-row gap-3">
-      <div class="relative flex-1 min-w-0">
-        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search class="h-4 w-4 text-gray-400" />
-        </div>
-        <input
-          type="text"
-          class="w-full pl-10 pr-5 py-3 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-medium"
-          placeholder="Search tasks by name, description, type, or assignee..."
-          v-model="searchQuery"
-        />
-      </div>
-
-      <div class="flex items-center gap-2 flex-wrap">
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Filter class="h-3.5 w-3.5 text-gray-400" />
-          </div>
-          <select
-            v-model="priorityFilter"
-            class="select-soft select-soft-icon-pl"
-          >
-            <option value="">All Priorities</option>
-            <option value="urgent">Urgent</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-          <ChevronDown class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-
-        <div v-if="typeSuggestions.length" class="relative">
-          <select
-            v-model="typeFilter"
-            class="select-soft max-w-[160px]"
-          >
-            <option value="">All Types</option>
-            <option v-for="s in typeSuggestions" :key="s.type" :value="s.type">{{ s.type }}</option>
-          </select>
-          <ChevronDown class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-
-        <button
-          v-if="hasActiveFilters"
-          type="button"
-          @click="clearFilters"
-          class="flex items-center gap-1 px-3 py-3 rounded-[10px] text-xs font-semibold text-gray-500 hover:text-[#0C51D9] hover:bg-gray-50 transition-colors duration-200 shrink-0"
-        >
-          <X class="w-3.5 h-3.5" />
-          Clear
-        </button>
-      </div>
-    </div>
-
-    <!-- Task Management Columns -->
-    <div class="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-5 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+    <!-- Task Management Columns: side by side, snapping sideways on phones -->
+    <div class="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1 scroll-px-1">
       <div
         v-for="column in COLUMNS"
         :key="column.status"
-        class="border rounded-[12px] flex-shrink-0 w-[85vw] sm:w-72 md:w-80 overflow-hidden snap-start"
-        :class="[column.bg, column.border]"
+        class="flex-shrink-0 w-[85vw] sm:w-72 md:w-[300px] snap-start bg-ui-subtle border border-ui-line rounded-ui-card flex flex-col"
       >
-        <div class="h-1" :class="column.bar"></div>
-        <div class="flex items-center justify-between px-4 pt-5 pb-5 mb-2">
-          <div class="flex items-center gap-2">
-            <div class="w-1.5 h-1.5 rounded-full" :class="column.dot"></div>
-            <h4 class="text-brand-dark text-xs font-bold">{{ column.label }}</h4>
-          </div>
-          <span
-            class="min-w-[20px] px-2 py-0.5 rounded-full text-xs font-semibold text-center"
-            :class="[column.countBg, column.countText]"
+        <div class="flex items-center gap-2 px-3.5 pt-3.5 pb-2.5">
+          <span class="w-2 h-2 rounded-full shrink-0" :class="COLUMN_DOT[column.status]" aria-hidden="true"></span>
+          <h4 class="text-ui-h3 text-ui-ink">{{ column.label }}</h4>
+          <span class="text-ui-cap text-ui-muted tabular-nums">{{ columnTasks(column.status).length }}</span>
+          <button
+            v-if="can('task-create')"
+            type="button"
+            class="ml-auto w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink"
+            title="Create New Task"
+            aria-label="Create New Task"
+            @click="openCreateModal"
           >
-            {{ columnTasks(column.status).length }}
-          </span>
+            <Plus class="w-4 h-4" />
+          </button>
+        </div>
+
+        <div v-if="loading && columnTasks(column.status).length === 0" class="px-2.5 pb-2.5 space-y-2" aria-hidden="true">
+          <div v-for="i in 2" :key="i" class="h-[92px] rounded-ui-card bg-ui-surface/70 border border-ui-line animate-pulse"></div>
         </div>
 
         <VueDraggableNext
           v-model="columnVisible[column.status]"
           group="tasks"
-          class="space-y-3 min-h-[480px] max-h-[640px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent px-4 pb-4"
+          class="space-y-2 min-h-[120px] sm:min-h-[420px] max-h-[640px] overflow-y-auto px-2.5 pb-2.5"
           :animation="200"
           @change="(event) => onColumnChange(column.status, event)"
         >
@@ -410,9 +378,12 @@ onUnmounted(() => sentinelObserver?.disconnect());
             :task="task"
             @click="openTaskDetail(task)"
           />
-          <div v-if="columnTasks(column.status).length === 0" class="flex flex-col items-center justify-center py-10 text-center">
-            <Inbox class="w-7 h-7 mb-2 opacity-60" :class="column.emptyText" />
-            <p class="text-xs font-medium" :class="column.emptyText">No tasks here</p>
+          <div
+            v-if="!loading && columnTasks(column.status).length === 0"
+            class="flex flex-col items-center justify-center py-8 text-center rounded-ui-card border border-dashed border-ui-line-strong"
+          >
+            <Inbox class="w-5 h-5 mb-1.5 text-ui-faint" />
+            <p class="text-ui-cap text-ui-muted">No tasks here</p>
           </div>
 
           <!-- Load-more sentinel + fallback button, only when this column has more than what's rendered -->
@@ -421,7 +392,7 @@ onUnmounted(() => sentinelObserver?.disconnect());
             <button
               type="button"
               @click="loadMore(column.status)"
-              class="w-full flex items-center justify-center gap-2 py-2.5 rounded-[10px] border border-dashed border-gray-300 hover:border-[#0C51D9] hover:bg-white text-xs font-semibold text-gray-500 hover:text-[#0C51D9] transition-all duration-200"
+              class="ui-press w-full flex items-center justify-center gap-1.5 h-9 rounded-ui-control border border-dashed border-ui-line-strong bg-ui-surface/60 hover:bg-ui-surface text-ui-cap font-medium text-ui-muted hover:text-ui-ink tabular-nums"
             >
               <ChevronDown class="w-3.5 h-3.5" />
               Load more ({{ visibleCounts[column.status] }} of {{ columnTasks(column.status).length }})

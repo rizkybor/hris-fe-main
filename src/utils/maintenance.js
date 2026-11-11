@@ -1,3 +1,4 @@
+import { uiColor } from "@/utils/uiColor";
 // Labels and formatting shared by the Maintenance Management screens.
 
 // 7.5 -> "7.5 h", 8 -> "8 h". Hours are stored with two decimals.
@@ -11,9 +12,9 @@ export const formatMonth = (month) =>
   month ? new Date(`${month}-01T00:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "-";
 
 export const CONTRACT_STATUS = {
-  active: { label: "Active", class: "bg-green-50 text-green-700" },
-  paused: { label: "Paused", class: "bg-amber-50 text-amber-700" },
-  ended: { label: "Ended", class: "bg-gray-100 text-gray-500" },
+  active: { label: "Active", class: "bg-ui-ok-soft text-ui-ok" },
+  paused: { label: "Paused", class: "bg-ui-warn-soft text-ui-warn" },
+  ended: { label: "Ended", class: "bg-ui-subtle text-ui-muted" },
 };
 
 // What happens to a month's unused hours.
@@ -34,11 +35,11 @@ export const LOG_CATEGORIES = [
 export const categoryLabel = (value) => LOG_CATEGORIES.find((c) => c.value === value)?.label || value || "-";
 
 export const FEATURE_STATUS = {
-  proposed: { label: "Proposed", class: "bg-gray-100 text-gray-600" },
-  approved: { label: "Approved", class: "bg-blue-50 text-[#0C51D9]" },
-  in_progress: { label: "In progress", class: "bg-amber-50 text-amber-700" },
-  done: { label: "Done", class: "bg-green-50 text-green-700" },
-  cancelled: { label: "Cancelled", class: "bg-gray-100 text-gray-400" },
+  proposed: { label: "Proposed", class: "bg-ui-subtle text-ui-text" },
+  approved: { label: "Approved", class: "bg-ui-accent-soft text-ui-accent" },
+  in_progress: { label: "In progress", class: "bg-ui-warn-soft text-ui-warn" },
+  done: { label: "Done", class: "bg-ui-ok-soft text-ui-ok" },
+  cancelled: { label: "Cancelled", class: "bg-ui-subtle text-ui-faint" },
 };
 
 export const BANK_ENTRY_TYPE = {
@@ -52,10 +53,10 @@ export const BANK_ENTRY_TYPE = {
 
 // Bar colour: blue, amber from 75%, red once over quota.
 export const usageColor = (period) => {
-  if (!period) return "#CBD5E1";
-  if (period.overage > 0) return "#DC2626";
-  if (period.used_percent >= 75) return "#D97706";
-  return "#0C51D9";
+  if (!period) return uiColor("line-strong");
+  if (period.overage > 0) return uiColor("bad");
+  if (period.used_percent >= 75) return uiColor("warn");
+  return uiColor("accent");
 };
 
 // How a closed month's leftover was handled, for the history table.

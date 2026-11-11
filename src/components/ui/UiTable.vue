@@ -56,7 +56,7 @@ const onRow = (row) => props.clickable && emit("row-click", row);
               :key="col.key"
               scope="col"
               :style="col.width ? { width: typeof col.width === 'number' ? `${col.width}px` : col.width } : undefined"
-              :class="['px-4 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line bg-ui-surface whitespace-nowrap', ALIGN[col.align] || 'text-left']"
+              :class="['px-4 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line bg-ui-surface whitespace-nowrap', ALIGN[col.align] || 'text-left', col.class || '']"
             >{{ col.label }}</th>
           </tr>
         </thead>

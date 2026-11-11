@@ -12,12 +12,12 @@ import {
   File as FileIcon,
   Info,
   Paperclip,
+  ArrowLeft,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
-import BaseInput from "@/components/common/form/Input.vue";
-import TextArea from "@/components/common/form/TextArea.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 import { errorMessage } from "@/helpers/errorHelper";
+import { UiPageHeader, UiButton, UiBadge, UiInput } from "@/components/ui";
 
 const router = useRouter();
 const archiveStore = useFilesCompanyStore();
@@ -57,6 +57,17 @@ const fileTypeMeta = (mime) => {
 
 const selectedFileMeta = computed(() => fileTypeMeta(form.value.file?.type));
 
+// Extension badge for the chosen file (redesign: neutral icon + extension).
+const fileExt = (file) => {
+  const name = file?.name || "";
+  return name.includes(".") ? name.split(".").pop().slice(0, 5).toUpperCase() : "FILE";
+};
+const formatSize = (bytes) => {
+  if (!bytes) return "";
+  const kb = bytes / 1024;
+  return kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(1)} MB`;
+};
+
 const submit = async () => {
   error.value = "";
   success.value = "";
@@ -95,54 +106,59 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto">
-    <!-- Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <Archive class="w-6 h-6 text-blue-600" />
+  <form class="p-1 sm:p-3 lg:p-5 space-y-5" @submit.prevent="submit">
+    <UiPageHeader title="Upload Document File" subtitle="Store a permanent company document">
+      <template #eyebrow>
+        <button
+          type="button"
+          @click="$router.back()"
+          class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
+          aria-label="Back"
+        >
+          <ArrowLeft class="w-4 h-4" />
+          Back
+        </button>
+      </template>
+      <template #actions>
+        <div class="hidden sm:flex items-center gap-2">
+          <UiButton variant="secondary" @click="$router.back()">Cancel</UiButton>
+          <UiButton type="submit" :icon="Upload" :loading="loading">
+            {{ loading ? "Uploading..." : "Upload File" }}
+          </UiButton>
         </div>
-        <div>
-          <h1 class="text-brand-dark text-xl font-bold">Upload Document File</h1>
-          <p class="text-brand-light text-sm">Store a permanent company document</p>
-        </div>
-      </div>
+      </template>
+    </UiPageHeader>
+
+    <div v-if="error || success" class="space-y-3">
+      <Alert
+        v-if="error"
+        type="danger"
+        :title="error"
+        message=""
+        :show="!!error"
+        @close="error = ''"
+      />
+      <Alert
+        v-if="success"
+        type="success"
+        :title="success"
+        message=""
+        :show="!!success"
+      />
     </div>
 
-    <div class="mb-6">
-      <Transition name="fade">
-        <Alert
-          v-if="error"
-          type="danger"
-          :title="error"
-          message=""
-          :show="!!error"
-          @close="error = ''"
-        />
-      </Transition>
-      <Transition name="fade">
-        <Alert
-          v-if="success"
-          type="success"
-          :title="success"
-          message=""
-          :show="!!success"
-        />
-      </Transition>
-    </div>
-
-    <form @submit.prevent="submit" class="space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start ui-stagger">
       <!-- File Info -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <Info class="w-4.5 h-4.5 text-blue-600" />
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+        <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+          <div class="w-8 h-8 rounded-ui-control border border-ui-line text-ui-muted flex items-center justify-center shrink-0">
+            <Info class="w-4 h-4" />
           </div>
-          <h4 class="text-brand-dark font-bold">Informasi File</h4>
+          <h2 class="text-ui-h2 text-ui-ink">Informasi File</h2>
         </div>
 
         <div class="space-y-5">
-          <BaseInput
+          <UiInput
             id="file_name"
             label="File Name *"
             placeholder="e.g. Company NDA Template, HR Policy 2026"
@@ -150,76 +166,55 @@ const submit = async () => {
             :error="nameError ? 'File name is required.' : ''"
           />
 
-          <TextArea
+          <UiInput
             id="description"
             label="Description (Optional)"
             placeholder="Additional notes about this file..."
             v-model="form.description"
-            rows="4"
+            :rows="4"
           />
         </div>
-      </div>
+      </section>
 
       <!-- Upload -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <Paperclip class="w-4.5 h-4.5 text-indigo-600" />
+      <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+        <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+          <div class="w-8 h-8 rounded-ui-control border border-ui-line text-ui-muted flex items-center justify-center shrink-0">
+            <Paperclip class="w-4 h-4" />
           </div>
-          <h4 class="text-brand-dark font-bold">File</h4>
+          <h2 class="text-ui-h2 text-ui-ink">File</h2>
         </div>
 
-        <label class="block text-brand-dark text-sm font-semibold mb-1.5">
-          Upload File <span class="text-red-500">*</span>
-        </label>
+        <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
+          Upload File <span class="text-ui-bad">*</span>
+        </p>
         <label
-          class="flex flex-col items-center justify-center gap-2 w-full py-8 border-2 border-dashed rounded-[12px] cursor-pointer transition-all"
-          :class="fileError ? 'border-red-400 bg-red-50' : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:bg-blue-50/30'"
+          class="flex flex-col items-center justify-center gap-2 w-full py-10 px-4 border border-dashed rounded-ui-card cursor-pointer text-center transition-colors focus-within:shadow-ui-focus"
+          :class="fileError ? 'border-ui-bad/50 bg-ui-bad-soft' : 'border-ui-line-strong bg-ui-subtle/50 hover:border-ui-accent hover:bg-ui-accent-soft/40'"
         >
-          <component :is="form.file ? selectedFileMeta.icon : FileUp" class="w-8 h-8" :class="form.file ? selectedFileMeta.class : 'text-gray-400'" />
-          <span class="text-sm text-brand-dark font-semibold">
+          <div class="w-11 h-11 rounded-ui-control bg-ui-surface border border-ui-line text-ui-muted flex items-center justify-center">
+            <component :is="form.file ? selectedFileMeta.icon : FileUp" class="w-5 h-5" />
+          </div>
+          <span class="text-ui-body text-ui-ink font-medium break-all">
             {{ form.file ? form.file.name : "Click to choose a file" }}
           </span>
-          <span v-if="!form.file" class="text-xs text-brand-light">or drag and drop</span>
-          <input type="file" class="hidden" @change="onFileChange" />
-        </label>
-        <p v-if="fileError" class="mt-2 text-red-600 text-sm">File is required.</p>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex flex-col sm:flex-row gap-3">
-        <button
-          type="button"
-          @click="$router.back()"
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          <Upload class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">
-            {{ loading ? "Uploading..." : "Upload File" }}
+          <span v-if="form.file" class="flex items-center gap-1.5">
+            <UiBadge tone="outline" class="font-mono">{{ fileExt(form.file) }}</UiBadge>
+            <span class="text-ui-cap text-ui-muted tabular-nums">{{ formatSize(form.file.size) }}</span>
           </span>
-        </button>
-      </div>
-    </form>
-  </div>
+          <span v-else class="text-ui-cap text-ui-muted">or drag and drop</span>
+          <input type="file" class="sr-only" @change="onFileChange" />
+        </label>
+        <p v-if="fileError" class="mt-1.5 text-ui-cap text-ui-bad">File is required.</p>
+      </section>
+    </div>
+
+    <!-- Phones: actions at the end of the form, full width -->
+    <div class="sm:hidden flex flex-col gap-2">
+      <UiButton type="submit" size="lg" block :icon="Upload" :loading="loading">
+        {{ loading ? "Uploading..." : "Upload File" }}
+      </UiButton>
+      <UiButton variant="ghost" size="lg" block @click="$router.back()">Cancel</UiButton>
+    </div>
+  </form>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>

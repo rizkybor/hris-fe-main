@@ -3,6 +3,7 @@ import { ref, watch } from "vue";
 import { ClipboardCheck, Pencil, X } from "lucide-vue-next";
 import { useProjectStore } from "@/stores/project";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
+import { UiButton, UiEmpty } from "@/components/ui";
 
 const props = defineProps({
   projectId: {
@@ -69,28 +70,16 @@ const handleSave = async () => {
 </script>
 
 <template>
-  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full flex flex-col">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5 shrink-0">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 sm:w-10 sm:h-10 bg-purple-50 rounded-[10px] flex items-center justify-center shrink-0">
-          <ClipboardCheck class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-        </div>
-        <div>
-          <h3 class="text-brand-dark text-base sm:text-lg font-bold">Project Inspect</h3>
-          <p class="text-brand-light text-xs font-normal">
-            Optional — only the Project Leader can write this note
-          </p>
-        </div>
+  <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 h-full flex flex-col">
+    <div class="flex items-start justify-between gap-3 mb-4 shrink-0">
+      <div class="min-w-0">
+        <h3 class="text-ui-h2 text-ui-ink">Project Inspect</h3>
+        <p class="text-ui-cap text-ui-muted mt-0.5">Optional — only the Project Leader can write this note</p>
       </div>
 
-      <button
-        v-if="isLeader && !editing"
-        @click="startEditing"
-        class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-3 flex items-center justify-center gap-2 w-full sm:w-auto"
-      >
-        <Pencil class="w-3.5 h-3.5 text-white" />
-        <span class="text-brand-white text-xs font-semibold">{{ note ? "Edit Note" : "Add Note" }}</span>
-      </button>
+      <UiButton v-if="isLeader && !editing" variant="ghost" size="sm" :icon="Pencil" class="shrink-0" @click="startEditing">
+        {{ note ? "Edit Note" : "Add Note" }}
+      </UiButton>
     </div>
 
     <!-- Editing (Project Leader only) -- left unconstrained (not capped
@@ -98,43 +87,29 @@ const handleSave = async () => {
          isn't cramped into a tiny scroll box. -->
     <div v-if="editing">
       <RichTextEditor v-model="draft" placeholder="Write your inspection notes here..." />
-      <p v-if="errorMessage" class="text-red-500 text-xs mt-2">{{ errorMessage }}</p>
-      <div class="flex items-center gap-2.5 mt-3.5">
-        <button
-          @click="handleSave"
-          :disabled="saving"
-          class="px-4 py-2.5 rounded-lg bg-[#0C51D9] text-white text-xs font-semibold hover:brightness-110 transition disabled:opacity-50"
-        >
+      <p v-if="errorMessage" class="text-ui-cap text-ui-bad mt-1.5">{{ errorMessage }}</p>
+      <div class="flex items-center gap-2 mt-3">
+        <UiButton :loading="saving" class="flex-1 sm:flex-none" @click="handleSave">
           {{ saving ? "Saving..." : "Save Note" }}
-        </button>
-        <button
-          @click="cancelEditing"
-          :disabled="saving"
-          class="px-4 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-xs font-semibold hover:bg-gray-50 transition flex items-center gap-1.5"
-        >
-          <X class="w-3.5 h-3.5" />
-          Cancel
-        </button>
+        </UiButton>
+        <UiButton variant="secondary" :icon="X" :disabled="saving" class="flex-1 sm:flex-none" @click="cancelEditing">Cancel</UiButton>
       </div>
     </div>
 
     <!-- Read-only content -- capped + scrollable so a long note doesn't
-         grow this card taller than its Documents/Invoices siblings in the
-         same row -- keeps the row's height fixed regardless of content. -->
-    <div v-else-if="note" class="overflow-y-auto max-h-[320px] sm:max-h-[420px] pr-1 -mr-1">
+         grow this card taller than its siblings. -->
+    <div v-else-if="note" class="overflow-y-auto max-h-[320px] sm:max-h-[420px]">
       <RichTextEditor :model-value="note" disabled />
     </div>
 
     <!-- Empty state -->
-    <div
+    <UiEmpty
       v-else
-      class="text-center p-4 py-10 text-gray-500 bg-gray-100 rounded-[12px] border border-dashed border-[#DCDEDD]"
-    >
-      <ClipboardCheck class="w-9 h-9 text-gray-300 mx-auto mb-3" />
-      <p class="text-sm font-semibold">No inspection notes yet</p>
-      <p class="text-xs text-gray-400">
-        {{ isLeader ? "Optional — add a note whenever you inspect this project." : "Only the Project Leader can add one." }}
-      </p>
-    </div>
-  </div>
+      compact
+      :icon="ClipboardCheck"
+      title="No inspection notes yet"
+      :message="isLeader ? 'Optional — add a note whenever you inspect this project.' : 'Only the Project Leader can add one.'"
+      class="bg-ui-subtle rounded-ui-control"
+    />
+  </section>
 </template>

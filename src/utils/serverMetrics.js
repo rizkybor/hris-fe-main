@@ -1,3 +1,4 @@
+import { uiColor } from "@/utils/uiColor";
 // Formatting / threshold helpers for server monitoring.
 
 export const formatBytes = (bytes) => {
@@ -15,16 +16,16 @@ export const formatBytes = (bytes) => {
 // Under 75% fine, 75-90% needs attention, 90%+ critical -- the same
 // thresholds used for the app server's disk.
 export const usageLevel = (percent) => {
-  if (percent === null || percent === undefined) return { color: "#94A3B8", text: "text-gray-500" };
-  if (percent >= 90) return { color: "#DC2626", text: "text-red-600" };
-  if (percent >= 75) return { color: "#D97706", text: "text-amber-600" };
-  return { color: "#0C51D9", text: "text-brand-dark" };
+  if (percent === null || percent === undefined) return { color: uiColor("faint"), text: "text-ui-muted" };
+  if (percent >= 90) return { color: uiColor("bad"), text: "text-ui-bad" };
+  if (percent >= 75) return { color: uiColor("warn"), text: "text-ui-warn" };
+  return { color: uiColor("accent"), text: "text-ui-ink" };
 };
 
 export const STATUS = {
-  online: { label: "Online", class: "bg-green-50 text-green-700", dot: "#16A34A" },
-  offline: { label: "Offline", class: "bg-red-50 text-red-600", dot: "#DC2626" },
-  pending: { label: "Menunggu laporan", class: "bg-amber-50 text-amber-700", dot: "#D97706" },
+  online: { label: "Online", class: "bg-ui-ok-soft text-ui-ok", dot: uiColor("ok") },
+  offline: { label: "Offline", class: "bg-ui-bad-soft text-ui-bad", dot: uiColor("bad") },
+  pending: { label: "Menunggu laporan", class: "bg-ui-warn-soft text-ui-warn", dot: uiColor("warn") },
 };
 
 export const timeAgo = (value) => {
@@ -45,28 +46,28 @@ export const formatUptime = (seconds) => {
 
 // Kinds of site the agent recognises from the web server config.
 export const SITE_TYPES = {
-  laravel: { label: "Laravel", class: "bg-red-50 text-red-700" },
-  wordpress: { label: "WordPress", class: "bg-sky-50 text-sky-700" },
-  node: { label: "Node.js", class: "bg-green-50 text-green-700" },
-  proxy: { label: "Aplikasi (proxy)", class: "bg-violet-50 text-violet-700" },
-  codeigniter: { label: "CodeIgniter", class: "bg-orange-50 text-orange-700" },
-  php: { label: "PHP", class: "bg-indigo-50 text-indigo-700" },
-  static: { label: "Situs statis", class: "bg-slate-100 text-slate-700" },
-  redirect: { label: "Redirect", class: "bg-slate-100 text-slate-600" },
-  folder: { label: "Folder", class: "bg-slate-100 text-slate-600" },
-  unknown: { label: "Lainnya", class: "bg-slate-100 text-slate-600" },
+  laravel: { label: "Laravel", class: "bg-ui-bad-soft text-ui-bad" },
+  wordpress: { label: "WordPress", class: "bg-ui-info-soft text-ui-info" },
+  node: { label: "Node.js", class: "bg-ui-ok-soft text-ui-ok" },
+  proxy: { label: "Aplikasi (proxy)", class: "bg-ui-accent-soft text-ui-accent" },
+  codeigniter: { label: "CodeIgniter", class: "bg-ui-warn-soft text-ui-warn" },
+  php: { label: "PHP", class: "bg-ui-info-soft text-ui-info" },
+  static: { label: "Situs statis", class: "bg-ui-subtle text-ui-text" },
+  redirect: { label: "Redirect", class: "bg-ui-subtle text-ui-text" },
+  folder: { label: "Folder", class: "bg-ui-subtle text-ui-text" },
+  unknown: { label: "Lainnya", class: "bg-ui-subtle text-ui-text" },
 };
 
 // SSL badge: expired / under 14 days red, under 30 days amber, else green.
 export const sslState = (site) => {
-  if (!site.ssl) return { label: "Tanpa SSL", class: "bg-slate-100 text-slate-600" };
-  if (!site.ssl_expires_at) return { label: "SSL", class: "bg-green-50 text-green-700" };
+  if (!site.ssl) return { label: "Tanpa SSL", class: "bg-ui-subtle text-ui-text" };
+  if (!site.ssl_expires_at) return { label: "SSL", class: "bg-ui-ok-soft text-ui-ok" };
   const days = Math.floor((new Date(site.ssl_expires_at).getTime() - Date.now()) / 86400000);
-  if (days < 0) return { label: "SSL kedaluwarsa", class: "bg-red-50 text-red-600", days };
+  if (days < 0) return { label: "SSL kedaluwarsa", class: "bg-ui-bad-soft text-ui-bad", days };
   const label = `SSL s/d ${new Date(site.ssl_expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}`;
-  if (days < 14) return { label: `${label} (${days} hari)`, class: "bg-red-50 text-red-600", days };
-  if (days < 30) return { label: `${label} (${days} hari)`, class: "bg-amber-50 text-amber-700", days };
-  return { label, class: "bg-green-50 text-green-700", days };
+  if (days < 14) return { label: `${label} (${days} hari)`, class: "bg-ui-bad-soft text-ui-bad", days };
+  if (days < 30) return { label: `${label} (${days} hari)`, class: "bg-ui-warn-soft text-ui-warn", days };
+  return { label, class: "bg-ui-ok-soft text-ui-ok", days };
 };
 
 // Clipboard with a fallback for plain-http pages, where navigator.clipboard

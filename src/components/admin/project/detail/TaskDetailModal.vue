@@ -27,6 +27,19 @@ import { useTaskStore } from "@/stores/task";
 import { storeToRefs } from "pinia";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { UiBadge, UiButton, UiInput, UiModal, UiSelect } from "@/components/ui";
+
+// Presentation only: priority -> badge tone, status -> badge tone, options.
+const PRIORITY_TONES = { urgent: "bad", high: "warn", medium: "info", low: "neutral" };
+const STATUS_TONES = { todo: "neutral", in_progress: "accent", review: "warn", done: "ok", cancelled: "outline" };
+const PRIORITY_OPTIONS = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "urgent", label: "Urgent" },
+];
+const fieldClass =
+  "w-full bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
 
 const alertModal = useAlertModalStore();
 
@@ -338,556 +351,383 @@ watch(
 </script>
 
 <template>
-  <Transition name="fade">
-    <div
-      v-if="isOpen && task"
-      class="fixed inset-0 z-50 flex items-center justify-center p-5"
-      @click.self="closeModal"
-    >
-      <!-- Backdrop -->
-      <div class="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"></div>
-
-      <!-- Modal Container -->
-      <div
-        class="relative bg-white rounded-[18px] sm:rounded-[24px] border shadow-2xl w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] overflow-hidden flex flex-col"
-        :class="task.color ? taskTypeColor.border : 'border-[#DCDEDD]'"
-        @click.stop
-      >
-        <!-- Color accent bar -->
-        <div v-if="task.color" class="h-1.5" :class="taskTypeColor.dot"></div>
-
-        <!-- Modal Header -->
-        <div
-          class="flex items-start justify-between gap-3 sm:gap-3.5 p-4 sm:p-6 border-b border-[#DCDEDD]"
-          :class="task.color ? taskTypeColor.accentBg : ''"
-        >
-          <div class="flex items-start gap-3 flex-1 min-w-0">
-            <div class="w-9 h-9 sm:w-10 sm:h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5">
-              <ClipboardList class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <input
-                v-if="isEditingDetails"
-                v-model="editedName"
-                type="text"
-                class="text-base sm:text-lg font-bold text-brand-dark border-b-2 border-[#0C51D9] focus:outline-none w-full pb-1.5"
-              />
-              <h2 v-else class="text-brand-dark text-base sm:text-lg font-bold truncate">
-                {{ task.name }}
-              </h2>
-              <div class="flex items-center gap-2 mt-1.5 flex-wrap">
-                <p class="text-brand-light text-xs">
-                  in list <span class="font-semibold capitalize">{{ task.status.replace("_", " ") }}</span>
-                </p>
-                <span
-                  v-if="task.type && !isEditingDetails"
-                  :class="[taskTypeColor.bg, taskTypeColor.text]"
-                  class="px-2.5 py-0.5 rounded-md text-xs font-semibold"
-                >
-                  {{ task.type }}
-                </span>
-              </div>
-            </div>
-          </div>
-          <button
-            @click="closeModal"
-            class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150 shrink-0"
+  <UiModal
+    :open="isOpen && !!task"
+    size="lg"
+    :title="task?.name || ''"
+    @update:open="(value) => !value && closeModal()"
+  >
+    <template #header>
+      <div v-if="task" class="flex-1 min-w-0">
+        <input
+          v-if="isEditingDetails"
+          v-model="editedName"
+          type="text"
+          aria-label="Task name"
+          :class="[fieldClass, 'h-10 px-3 text-ui-h2 font-semibold']"
+        />
+        <h2 v-else class="text-ui-h2 text-ui-ink break-words">{{ task.name }}</h2>
+        <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+          <p class="text-ui-cap text-ui-muted">
+            in list <span class="font-medium text-ui-text capitalize">{{ task.status.replace("_", " ") }}</span>
+          </p>
+          <span
+            v-if="task.type && !isEditingDetails"
+            class="inline-flex items-center gap-1.5 h-[22px] px-2 rounded-md bg-ui-subtle text-ui-cap font-medium text-ui-text"
           >
-            <X class="w-4 h-4" />
-          </button>
+            <span v-if="task.color" class="w-1.5 h-1.5 rounded-full" :class="taskTypeColor.dot" aria-hidden="true"></span>
+            {{ task.type }}
+          </span>
+        </div>
+      </div>
+    </template>
+
+    <div v-if="task" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Main Content (Left Side) -->
+      <div class="md:col-span-2 space-y-5 min-w-0">
+        <!-- Labels/Priority -->
+        <div>
+          <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
+            <Tag class="w-3.5 h-3.5" /> Priority
+          </h3>
+          <UiSelect v-if="isEditingDetails" v-model="editedPriority" :options="PRIORITY_OPTIONS" class="sm:max-w-[220px]" />
+          <UiBadge v-else :tone="PRIORITY_TONES[task.priority] || 'neutral'" dot class="capitalize">{{ task.priority }}</UiBadge>
         </div>
 
-        <!-- Modal Body -->
-        <div class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <!-- Main Content (Left Side) -->
-              <div class="md:col-span-2 space-y-5">
-                <!-- Labels/Priority -->
-                <div>
-                  <div class="flex items-center gap-2 mb-2.5">
-                    <Tag class="w-3.5 h-3.5 text-brand-light" />
-                    <h3 class="text-brand-dark text-xs font-semibold">Priority</h3>
-                  </div>
-                  <div class="relative" v-if="isEditingDetails">
-                    <select
-                      v-model="editedPriority"
-                      class="select-soft"
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="urgent">Urgent</option>
-                    </select>
-                    <ChevronDown
-                      class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-                    />
-                  </div>
-                  <div v-else class="flex items-center gap-2.5">
-                    <span
-                      :class="getPriorityColor(task.priority)"
-                      class="px-3 py-1.5 rounded-[8px] text-xs font-semibold capitalize"
-                    >
-                      {{ task.priority }}
-                    </span>
-                  </div>
-                </div>
+        <!-- Task Type & Color -->
+        <div>
+          <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
+            <Tag class="w-3.5 h-3.5" /> Task Type
+          </h3>
+          <template v-if="isEditingDetails">
+            <div class="relative mb-3">
+              <input
+                v-model="editedType"
+                type="text"
+                list="task-type-suggestions-edit"
+                maxlength="100"
+                aria-label="Task type"
+                placeholder="e.g. Bug, Feature, Design, Copywriting..."
+                :class="[fieldClass, 'h-[38px] px-3']"
+              />
+              <datalist id="task-type-suggestions-edit">
+                <option v-for="s in typeSuggestions" :key="s.type" :value="s.type" />
+              </datalist>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button
+                v-for="swatch in TASK_TYPE_COLORS"
+                :key="swatch.key"
+                type="button"
+                :title="swatch.label"
+                :aria-label="swatch.label"
+                :aria-pressed="editedColor === swatch.key"
+                @click="editedColor = editedColor === swatch.key ? null : swatch.key"
+                class="ui-press w-6 h-6 rounded-full"
+                :class="[swatch.dot, editedColor === swatch.key ? `ring-2 ring-offset-2 ${swatch.ring}` : 'opacity-60 hover:opacity-100']"
+              ></button>
+              <span v-if="editedColor" class="text-ui-cap font-medium text-ui-text ml-1">{{ editedTypeColor.label }}</span>
+            </div>
+          </template>
+          <span
+            v-else-if="task.type"
+            class="inline-flex items-center gap-1.5 h-[22px] px-2 rounded-md bg-ui-subtle text-ui-cap font-medium text-ui-text"
+          >
+            <span v-if="task.color" class="w-1.5 h-1.5 rounded-full" :class="taskTypeColor.dot" aria-hidden="true"></span>
+            {{ task.type }}
+          </span>
+          <p v-else class="text-ui-small text-ui-faint">No type set</p>
+        </div>
 
-                <!-- Task Type & Color -->
-                <div>
-                  <div class="flex items-center gap-2 mb-2.5">
-                    <Tag class="w-3.5 h-3.5 text-brand-light" />
-                    <h3 class="text-brand-dark text-xs font-semibold">Task Type</h3>
-                  </div>
-                  <template v-if="isEditingDetails">
-                    <div class="relative mb-3">
-                      <input
-                        v-model="editedType"
-                        type="text"
-                        list="task-type-suggestions-edit"
-                        maxlength="100"
-                        placeholder="e.g. Bug, Feature, Design, Copywriting..."
-                        class="w-full px-4 py-2.5 text-sm border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 font-semibold"
-                      />
-                      <datalist id="task-type-suggestions-edit">
-                        <option v-for="s in typeSuggestions" :key="s.type" :value="s.type" />
-                      </datalist>
-                    </div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <button
-                        v-for="swatch in TASK_TYPE_COLORS"
-                        :key="swatch.key"
-                        type="button"
-                        :title="swatch.label"
-                        @click="editedColor = editedColor === swatch.key ? null : swatch.key"
-                        class="w-6 h-6 rounded-full transition-all duration-150"
-                        :class="[swatch.dot, editedColor === swatch.key ? `ring-2 ring-offset-2 ${swatch.ring}` : 'opacity-70 hover:opacity-100']"
-                      ></button>
-                      <span v-if="editedColor" class="text-xs font-semibold ml-1.5" :class="editedTypeColor.text">{{ editedTypeColor.label }}</span>
-                    </div>
-                  </template>
-                  <div v-else-if="task.type" class="flex items-center gap-2.5">
-                    <span :class="[taskTypeColor.bg, taskTypeColor.text]" class="px-3 py-1.5 rounded-[8px] text-xs font-semibold">
-                      {{ task.type }}
-                    </span>
-                  </div>
-                  <p v-else class="text-brand-light text-xs italic">No type set</p>
-                </div>
+        <!-- Image (Optional) -->
+        <div>
+          <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
+            <ImageIcon class="w-3.5 h-3.5" /> Image <span class="normal-case tracking-normal font-normal text-ui-faint">(optional)</span>
+          </h3>
 
-                <!-- Image (Optional) -->
-                <div>
-                  <div class="flex items-center gap-2 mb-2.5">
-                    <ImageIcon class="w-3.5 h-3.5 text-brand-light" />
-                    <h3 class="text-brand-dark text-xs font-semibold">
-                      Image <span class="text-brand-light font-normal">(optional)</span>
-                    </h3>
-                  </div>
+          <input
+            ref="imageInput"
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            class="hidden"
+            @change="handleImageSelect"
+          />
 
+          <!-- Edit mode -->
+          <template v-if="isEditingDetails">
+            <div v-if="imagePreviewUrl" class="relative w-full sm:w-48">
+              <img
+                :src="imagePreviewUrl"
+                alt="Task image"
+                class="w-full h-32 object-cover rounded-ui-control border border-ui-line cursor-pointer"
+                @click="lightboxOpen = true"
+              />
+              <div class="absolute top-1.5 right-1.5 flex items-center gap-1">
+                <button
+                  type="button"
+                  @click="lightboxOpen = true"
+                  class="w-7 h-7 rounded-full bg-ui-surface/90 hover:bg-ui-surface flex items-center justify-center shadow-ui-raised text-ui-text"
+                  title="View image"
+                >
+                  <Eye class="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  @click="removeImageInEditor"
+                  class="w-7 h-7 rounded-full bg-ui-surface/90 hover:bg-ui-bad-soft flex items-center justify-center shadow-ui-raised text-ui-bad"
+                  title="Remove image"
+                >
+                  <X class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+            <button
+              v-else
+              type="button"
+              @click="imageInput.click()"
+              class="ui-press w-full sm:w-48 h-32 border border-dashed border-ui-line-strong rounded-ui-control hover:bg-ui-subtle flex flex-col items-center justify-center gap-1.5"
+            >
+              <span class="w-8 h-8 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center">
+                <Upload class="w-4 h-4" />
+              </span>
+              <span class="text-ui-small font-medium text-ui-ink">Upload Image</span>
+              <span class="text-ui-cap text-ui-muted">PNG, JPG, WEBP up to 2MB</span>
+            </button>
+            <p v-if="imageError" class="text-ui-cap text-ui-bad mt-1.5">{{ imageError }}</p>
+          </template>
+
+          <!-- View mode -->
+          <template v-else>
+            <div v-if="task.image" class="relative w-full sm:w-48">
+              <img
+                :src="task.image"
+                alt="Task image"
+                class="w-full h-32 object-cover rounded-ui-control border border-ui-line cursor-pointer"
+                @click="lightboxOpen = true"
+              />
+              <div class="absolute top-1.5 right-1.5 flex items-center gap-1">
+                <button
+                  type="button"
+                  @click="lightboxOpen = true"
+                  class="w-7 h-7 rounded-full bg-ui-surface/90 hover:bg-ui-surface flex items-center justify-center shadow-ui-raised text-ui-text"
+                  title="View image"
+                >
+                  <Eye class="w-3.5 h-3.5" />
+                </button>
+                <button
+                  v-if="can('task-edit')"
+                  type="button"
+                  @click="handleDeleteImage"
+                  :disabled="isDeletingImage"
+                  class="w-7 h-7 rounded-full bg-ui-surface/90 hover:bg-ui-bad-soft flex items-center justify-center shadow-ui-raised text-ui-bad disabled:opacity-50"
+                  title="Delete image"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+            <p v-else class="text-ui-small text-ui-faint">No image attached</p>
+          </template>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
+            <AlignLeft class="w-3.5 h-3.5" /> Description
+          </h3>
+          <UiInput v-if="isEditingDetails" v-model="editedDescription" :rows="4" placeholder="Add a description..." />
+          <div v-else class="bg-ui-subtle rounded-ui-control px-3.5 py-3 text-ui-body text-ui-text leading-relaxed min-h-[72px] whitespace-pre-line break-words">
+            <p v-if="task.description">{{ task.description }}</p>
+            <p v-else class="text-ui-faint">No description added</p>
+          </div>
+
+          <p v-if="detailsError" class="text-ui-cap text-ui-bad mt-2">{{ detailsError }}</p>
+
+          <div v-if="isEditingDetails" class="flex gap-2 mt-3">
+            <UiButton :loading="isSavingDetails" class="flex-1 sm:flex-none" @click="handleSaveDetails">
+              {{ isSavingDetails ? "Saving..." : "Save Changes" }}
+            </UiButton>
+            <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="cancelEditDetails">Cancel</UiButton>
+          </div>
+        </div>
+
+        <!-- Comments -->
+        <TaskComments
+          v-if="!isEditingDetails"
+          :task-id="task.id"
+          :project-id="projectId"
+          :can-comment="task.can_comment !== false"
+        />
+      </div>
+
+      <!-- Sidebar (Right Side): first on phones so the key facts sit on top -->
+      <div class="order-first md:order-none space-y-5 md:border-l md:border-ui-line md:pl-6">
+        <!-- Assignee -->
+        <div v-if="!isEditingDetails" class="relative">
+          <h3 class="text-ui-over uppercase text-ui-muted mb-2">Assignee</h3>
+
+          <!-- Selected Assignee Display -->
+          <div v-if="selectedAssignee" class="flex items-center gap-2.5 mb-2">
+            <Avatar
+              :src="selectedAssignee?.user?.profile_photo"
+              :alt="selectedAssignee?.user?.name"
+              size="w-8 h-8"
+              icon-size="w-4 h-4"
+            />
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-small font-medium text-ui-ink truncate">{{ selectedAssignee?.user?.name }}</p>
+              <p class="text-ui-cap text-ui-muted truncate">{{ selectedAssignee?.job_information?.job_title }}</p>
+            </div>
+            <button
+              v-if="can('task-edit')"
+              type="button"
+              @click="handleRemoveAssignee"
+              class="w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-bad-soft hover:text-ui-bad shrink-0"
+              title="Remove assignee"
+              aria-label="Remove assignee"
+            >
+              <X class="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <p v-else class="text-ui-small text-ui-faint mb-2">Unassigned</p>
+
+          <!-- Dropdown Toggle Button -->
+          <button
+            v-if="can('task-edit')"
+            type="button"
+            class="ui-press w-full h-9 border border-ui-line-strong rounded-ui-control bg-ui-surface hover:bg-ui-subtle px-3 flex items-center gap-2 text-left"
+            :aria-expanded="assigneeDropdown"
+            @click="toggleAssigneeDropdown"
+          >
+            <UserCheck class="w-4 h-4 text-ui-faint" />
+            <span class="text-ui-small font-medium text-ui-ink flex-1">
+              {{ selectedAssignee ? "Change assignee" : "Select assignee" }}
+            </span>
+            <ChevronDown class="w-4 h-4 text-ui-faint transition-transform duration-200" :class="{ 'rotate-180': assigneeDropdown }" />
+          </button>
+
+          <!-- Dropdown Menu -->
+          <Transition name="ui-pop">
+            <div
+              v-if="assigneeDropdown"
+              class="absolute top-full left-0 right-0 mt-1.5 bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay z-10 max-h-80 overflow-hidden flex flex-col"
+            >
+              <!-- Search -->
+              <div class="p-2 border-b border-ui-line">
+                <div class="relative">
+                  <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ui-faint pointer-events-none" />
                   <input
-                    ref="imageInput"
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/webp"
-                    class="hidden"
-                    @change="handleImageSelect"
+                    type="text"
+                    v-model="searchAssignee"
+                    placeholder="Search employees..."
+                    :class="[fieldClass, 'h-8 pl-8 pr-3 text-ui-small']"
                   />
-
-                  <!-- Edit mode -->
-                  <template v-if="isEditingDetails">
-                    <div v-if="imagePreviewUrl" class="relative w-full sm:w-48">
-                      <img
-                        :src="imagePreviewUrl"
-                        alt="Task image"
-                        class="w-full h-32 object-cover rounded-[10px] border border-[#DCDEDD] cursor-pointer"
-                        @click="lightboxOpen = true"
-                      />
-                      <div class="absolute top-1.5 right-1.5 flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          @click="lightboxOpen = true"
-                          class="w-6 h-6 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-sm transition-colors"
-                          title="View image"
-                        >
-                          <Eye class="w-3 h-3 text-gray-600" />
-                        </button>
-                        <button
-                          type="button"
-                          @click="removeImageInEditor"
-                          class="w-6 h-6 rounded-full bg-white/90 hover:bg-red-50 flex items-center justify-center shadow-sm transition-colors"
-                          title="Remove image"
-                        >
-                          <X class="w-3 h-3 text-red-500" />
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      v-else
-                      type="button"
-                      @click="imageInput.click()"
-                      class="w-full sm:w-48 h-32 border-2 border-dashed border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 flex flex-col items-center justify-center gap-2"
-                    >
-                      <div class="w-8 h-8 bg-blue-50 rounded-[8px] flex items-center justify-center">
-                        <Upload class="w-3.5 h-3.5 text-blue-600" />
-                      </div>
-                      <span class="text-brand-dark text-xs font-semibold">Upload Image</span>
-                      <span class="text-brand-light text-xs">PNG, JPG, WEBP up to 2MB</span>
-                    </button>
-                    <p v-if="imageError" class="text-red-500 text-xs mt-2">{{ imageError }}</p>
-                  </template>
-
-                  <!-- View mode -->
-                  <template v-else>
-                    <div v-if="task.image" class="relative w-full sm:w-48">
-                      <img
-                        :src="task.image"
-                        alt="Task image"
-                        class="w-full h-32 object-cover rounded-[10px] border border-[#DCDEDD] cursor-pointer"
-                        @click="lightboxOpen = true"
-                      />
-                      <div class="absolute top-1.5 right-1.5 flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          @click="lightboxOpen = true"
-                          class="w-6 h-6 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-sm transition-colors"
-                          title="View image"
-                        >
-                          <Eye class="w-3 h-3 text-gray-600" />
-                        </button>
-                        <button
-                          v-if="can('task-edit')"
-                          type="button"
-                          @click="handleDeleteImage"
-                          :disabled="isDeletingImage"
-                          class="w-6 h-6 rounded-full bg-white/90 hover:bg-red-50 flex items-center justify-center shadow-sm transition-colors disabled:opacity-50"
-                          title="Delete image"
-                        >
-                          <Trash2 class="w-3 h-3 text-red-500" />
-                        </button>
-                      </div>
-                    </div>
-                    <p v-else class="text-brand-light text-xs italic">No image attached</p>
-                  </template>
                 </div>
-
-                <!-- Description -->
-                <div>
-                  <div class="flex items-center gap-2 mb-2.5">
-                    <AlignLeft class="w-3.5 h-3.5 text-brand-light" />
-                    <h3 class="text-brand-dark text-xs font-semibold">
-                      Description
-                    </h3>
-                  </div>
-                  <textarea
-                    v-if="isEditingDetails"
-                    v-model="editedDescription"
-                    rows="4"
-                    placeholder="Add a description..."
-                    class="w-full bg-gray-50 rounded-[10px] p-4 text-sm text-brand-dark leading-relaxed border border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 transition-all duration-300 resize-none"
-                  ></textarea>
-                  <div
-                    v-else
-                    class="bg-gray-50 rounded-[10px] p-4 text-sm text-brand-light leading-relaxed min-h-[80px]"
-                  >
-                    <p v-if="task.description">{{ task.description }}</p>
-                    <p v-else class="text-gray-400 italic">
-                      No description added
-                    </p>
-                  </div>
-
-                  <p v-if="detailsError" class="text-red-500 text-xs mt-2.5">
-                    {{ detailsError }}
-                  </p>
-
-                  <div v-if="isEditingDetails" class="flex gap-2.5 mt-3">
-                    <button
-                      type="button"
-                      @click="handleSaveDetails"
-                      :disabled="isSavingDetails"
-                      class="btn-primary rounded-[10px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-2.5 disabled:opacity-50"
-                    >
-                      <span class="text-brand-white text-xs font-semibold">
-                        {{ isSavingDetails ? "Saving..." : "Save Changes" }}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      @click="cancelEditDetails"
-                      class="border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-4 py-2.5 flex items-center gap-2.5"
-                    >
-                      <span class="text-brand-dark text-xs font-semibold">Cancel</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Comments -->
-                <TaskComments
-                  v-if="!isEditingDetails"
-                  :task-id="task.id"
-                  :project-id="projectId"
-                  :can-comment="task.can_comment !== false"
-                />
               </div>
 
-              <!-- Sidebar (Right Side) -->
-              <div class="space-y-5">
-                <!-- Assignee -->
-                <div v-if="!isEditingDetails" class="relative">
-                  <h3
-                    class="text-brand-light text-xs font-semibold uppercase mb-2.5"
-                  >
-                    Assignee
-                  </h3>
-
-                  <!-- Selected Assignee Display -->
-                  <div
-                    class="p-3 bg-gray-50 rounded-[10px] border border-[#DCDEDD] mb-2.5"
-                    v-if="selectedAssignee"
-                  >
-                    <div class="flex items-center gap-3">
-                      <Avatar
-                        :src="selectedAssignee?.user?.profile_photo"
-                        :alt="selectedAssignee?.user?.name"
-                        size="w-9 h-9"
-                      />
-                      <div class="flex-1 min-w-0">
-                        <h4 class="text-brand-dark text-xs font-semibold truncate">
-                          {{ selectedAssignee?.user?.name }}
-                        </h4>
-                        <p class="text-brand-light text-xs truncate">
-                          {{ selectedAssignee?.job_information?.job_title }}
-                        </p>
-                      </div>
-                      <button
-                        v-if="can('task-edit')"
-                        type="button"
-                        @click="handleRemoveAssignee"
-                        class="text-gray-400 hover:text-red-600 transition-colors shrink-0"
-                      >
-                        <X class="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+              <!-- Employee List -->
+              <div class="overflow-y-auto max-h-64 p-1">
+                <button
+                  v-for="employee in employees"
+                  :key="employee.id"
+                  type="button"
+                  @click="handleSelectAssignee(employee)"
+                  class="w-full px-2.5 py-2 rounded-md hover:bg-ui-hover flex items-center gap-2.5 text-left"
+                >
+                  <Avatar :src="employee.user?.profile_photo" :alt="employee.user?.name" size="w-7 h-7" icon-size="w-3 h-3" />
+                  <div class="flex-1 min-w-0">
+                    <p class="text-ui-small font-medium text-ui-ink truncate">{{ employee.user?.name }}</p>
+                    <p class="text-ui-cap text-ui-muted truncate">{{ employee.job_information?.job_title }}</p>
                   </div>
+                </button>
 
-                  <!-- Dropdown Toggle Button -->
-                  <button
-                    v-if="can('task-edit')"
-                    type="button"
-                    class="w-full border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3 py-2.5 flex items-center gap-3 text-left"
-                    @click="toggleAssigneeDropdown"
-                  >
-                    <UserCheck class="w-3.5 h-3.5 text-gray-400" />
-                    <span class="text-brand-dark text-xs font-medium flex-1">
-                      {{
-                        selectedAssignee ? "Change assignee" : "Select assignee"
-                      }}
-                    </span>
-                    <ChevronDown
-                      class="w-3.5 h-3.5 text-gray-400 transition-transform duration-200"
-                      :class="{ 'rotate-180': assigneeDropdown }"
-                    />
-                  </button>
-
-                  <!-- Dropdown Menu -->
-                  <div
-                    v-if="assigneeDropdown"
-                    class="absolute top-full left-0 right-0 mt-2.5 bg-white border border-[#DCDEDD] rounded-[12px] shadow-lg z-10 max-h-80 overflow-hidden flex flex-col"
-                  >
-                    <!-- Search -->
-                    <div class="p-3 border-b border-[#DCDEDD]">
-                      <div class="relative flex items-center">
-                        <div class="absolute left-2.5 pointer-events-none">
-                          <Search class="w-3.5 h-3.5 text-gray-400" />
-                        </div>
-                        <input
-                          type="text"
-                          v-model="searchAssignee"
-                          placeholder="Search employees..."
-                          class="w-full pl-8 pr-3.5 py-2 text-xs border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all duration-300 outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <!-- Employee List -->
-                    <div class="overflow-y-auto max-h-64">
-                      <button
-                        v-for="employee in employees"
-                        :key="employee.id"
-                        type="button"
-                        @click="handleSelectAssignee(employee)"
-                        class="w-full p-3 hover:bg-gray-50 transition-colors flex items-center gap-3 text-left"
-                      >
-                        <Avatar
-                          :src="employee.user?.profile_photo"
-                          :alt="employee.user?.name"
-                          size="w-7 h-7"
-                          icon-size="w-3 h-3"
-                        />
-                        <div class="flex-1 min-w-0">
-                          <p class="text-brand-dark text-xs font-medium truncate">
-                            {{ employee.user?.name }}
-                          </p>
-                          <p class="text-brand-light text-xs truncate">
-                            {{ employee.job_information?.job_title }}
-                          </p>
-                        </div>
-                      </button>
-
-                      <!-- No Results -->
-                      <div
-                        v-if="employees.length === 0"
-                        class="p-5 text-center"
-                      >
-                        <SearchX class="w-7 h-7 text-gray-400 mx-auto mb-2" />
-                        <p class="text-xs text-gray-500">No employees found</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Due Date -->
-                <div>
-                  <div class="flex items-center justify-between mb-2.5">
-                    <h3 class="text-brand-light text-xs font-semibold uppercase">
-                      Due Date
-                    </h3>
-                    <button
-                      v-if="!dueDateEditing && can('task-edit')"
-                      type="button"
-                      @click="toggleDueDateEdit"
-                      class="text-gray-400 hover:text-[#0C51D9] transition-colors"
-                    >
-                      <Pencil class="w-3 h-3" />
-                    </button>
-                  </div>
-
-                  <!-- Display Mode -->
-                  <div v-if="!dueDateEditing" class="flex items-center gap-2.5">
-                    <div class="p-2 bg-gray-100 rounded-lg">
-                      <Calendar class="w-3.5 h-3.5 text-gray-600" />
-                    </div>
-                    <div>
-                      <p class="text-brand-dark text-xs font-medium">
-                        {{ formatDate(task.due_date) }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Edit Mode -->
-                  <div v-else class="space-y-2.5">
-                    <input
-                      type="date"
-                      v-model="editedDueDate"
-                      class="w-full px-3 py-2 text-xs border border-[#DCDEDD] rounded-[10px] hover:border-[#0C51D9] focus:border-[#0C51D9] transition-all duration-300 outline-none"
-                    />
-                    <div class="flex gap-2.5">
-                      <button
-                        type="button"
-                        @click="handleUpdateDueDate"
-                        class="btn-primary flex-1 rounded-[8px] border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-3.5 py-2 text-xs font-semibold flex items-center justify-center gap-1.5"
-                      >
-                        <Check class="w-3 h-3 text-white" />
-                        <span class="text-brand-white">Save</span>
-                      </button>
-                      <button
-                        type="button"
-                        @click="cancelDueDateEdit"
-                        class="flex-1 border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2 text-xs font-semibold text-brand-dark"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Status -->
-                <div v-if="!isEditingDetails">
-                  <h3
-                    class="text-brand-light text-xs font-semibold uppercase mb-2.5"
-                  >
-                    Status
-                  </h3>
-                  <div
-                    class="px-3 py-2 bg-gray-100 rounded-[10px] text-xs font-medium text-brand-dark capitalize"
-                  >
-                    {{ task.status.replace("_", " ") }}
-                  </div>
-                </div>
-
-                <!-- Actions -->
-                <div>
-                  <h3
-                    class="text-brand-light text-xs font-semibold uppercase mb-2.5"
-                  >
-                    Actions
-                  </h3>
-                  <div class="space-y-2.5">
-                    <button
-                      v-if="can('task-edit') && !isEditingDetails"
-                      @click="toggleEditDetails"
-                      class="btn-primary w-full rounded-[10px] border border-[#2151A0] hover:brightness-110 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center justify-center gap-2.5"
-                    >
-                      <Pencil class="w-3.5 h-3.5 text-white" />
-                      <span class="text-brand-white text-xs font-semibold">Edit Task</span>
-                    </button>
-                    <button
-                      v-if="can('task-delete')"
-                      @click="handleDelete"
-                      class="w-full border border-red-200 rounded-[10px] hover:border-red-300 hover:bg-red-50 bg-red-50/60 transition-all duration-300 px-4 py-2.5 flex items-center justify-center gap-2.5"
-                    >
-                      <Trash2 class="w-3.5 h-3.5 text-red-600" />
-                      <span class="text-red-600 text-xs font-semibold">Delete Task</span>
-                    </button>
-                  </div>
+                <!-- No Results -->
+                <div v-if="employees.length === 0" class="p-5 text-center">
+                  <SearchX class="w-5 h-5 text-ui-faint mx-auto mb-1.5" />
+                  <p class="text-ui-cap text-ui-muted">No employees found</p>
                 </div>
               </div>
             </div>
+          </Transition>
+        </div>
+
+        <!-- Due Date -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-ui-over uppercase text-ui-muted">Due Date</h3>
+            <button
+              v-if="!dueDateEditing && can('task-edit')"
+              type="button"
+              @click="toggleDueDateEdit"
+              class="w-7 h-7 -mr-1.5 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink"
+              title="Edit due date"
+              aria-label="Edit due date"
+            >
+              <Pencil class="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <!-- Display Mode -->
+          <div v-if="!dueDateEditing" class="flex items-center gap-2 text-ui-small text-ui-ink tabular-nums">
+            <Calendar class="w-4 h-4 text-ui-faint" />
+            {{ formatDate(task.due_date) }}
+          </div>
+
+          <!-- Edit Mode -->
+          <div v-else class="space-y-2">
+            <UiInput v-model="editedDueDate" type="date" />
+            <div class="flex gap-2">
+              <UiButton size="sm" :icon="Check" class="flex-1" @click="handleUpdateDueDate">Save</UiButton>
+              <UiButton size="sm" variant="secondary" class="flex-1" @click="cancelDueDateEdit">Cancel</UiButton>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div v-if="!isEditingDetails">
+          <h3 class="text-ui-over uppercase text-ui-muted mb-2">Status</h3>
+          <UiBadge :tone="STATUS_TONES[task.status] || 'neutral'" dot class="capitalize">{{ task.status.replace("_", " ") }}</UiBadge>
+        </div>
+
+        <!-- Actions -->
+        <div v-if="(can('task-edit') && !isEditingDetails) || can('task-delete')">
+          <h3 class="text-ui-over uppercase text-ui-muted mb-2">Actions</h3>
+          <div class="flex md:flex-col gap-2">
+            <UiButton v-if="can('task-edit') && !isEditingDetails" :icon="Pencil" class="flex-1 md:flex-none md:w-full" @click="toggleEditDetails">
+              Edit Task
+            </UiButton>
+            <UiButton v-if="can('task-delete')" variant="danger" :icon="Trash2" class="flex-1 md:flex-none md:w-full" @click="handleDelete">
+              Delete Task
+            </UiButton>
           </div>
         </div>
       </div>
-  </Transition>
+    </div>
+  </UiModal>
 
   <!-- Image Lightbox -->
-  <Transition name="fade">
-    <div
-      v-if="lightboxOpen && (imagePreviewUrl || task?.image)"
-      class="fixed inset-0 z-[60] flex items-center justify-center p-5"
-      @click="lightboxOpen = false"
-    >
-      <div class="absolute inset-0 bg-brand-dark/70 backdrop-blur-sm"></div>
-      <button
-        type="button"
+  <Teleport to="body">
+    <Transition name="ui-fade">
+      <div
+        v-if="lightboxOpen && (imagePreviewUrl || task?.image)"
+        class="fixed inset-0 z-[150] flex items-center justify-center p-5"
         @click="lightboxOpen = false"
-        class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-10"
       >
-        <X class="w-5 h-5" />
-      </button>
-      <img
-        :src="isEditingDetails ? imagePreviewUrl : task?.image"
-        alt="Task image"
-        class="relative w-[min(90vw,900px)] max-h-[85vh] rounded-[12px] object-contain"
-      />
-    </div>
-  </Transition>
+        <div class="absolute inset-0 bg-ui-ink/80"></div>
+        <button
+          type="button"
+          @click="lightboxOpen = false"
+          class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white z-10"
+          aria-label="Close"
+        >
+          <X class="w-5 h-5" />
+        </button>
+        <img
+          :src="isEditingDetails ? imagePreviewUrl : task?.image"
+          alt="Task image"
+          class="relative w-[min(90vw,900px)] max-h-[85vh] rounded-ui-card object-contain"
+        />
+      </div>
+    </Transition>
+  </Teleport>
 </template>
-
-
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.fade-enter-active .relative,
-.fade-leave-active .relative {
-  transition: transform 0.3s ease;
-}
-
-.fade-enter-from .relative,
-.fade-leave-to .relative {
-  transform: scale(0.95);
-}
-</style>

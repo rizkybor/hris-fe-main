@@ -11,10 +11,10 @@ import {
   Edit,
   Trash2,
   Receipt,
-  ChevronDown,
   Building2,
   FolderKanban,
   MailCheck,
+  CalendarClock,
 } from "lucide-vue-next";
 import { useSubscriptionStore } from "@/stores/subscription";
 import { useClientStore } from "@/stores/client";
@@ -27,7 +27,7 @@ import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
 import { formatDateLong as formatDate, formatDate as formatDateMedium } from "@/utils/dateUtils";
 import Alert from "@/components/common/Alert.vue";
-import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiChips, UiTable, UiEmpty } from "@/components/ui";
 import Pagination from "@/components/common/Pagination.vue";
 import SubscriptionFormModal from "@/components/admin/subscription/SubscriptionFormModal.vue";
 import SubscriptionsRecap from "@/components/admin/subscription/SubscriptionsRecap.vue";
@@ -81,10 +81,10 @@ onMounted(async () => {
 // result set can leave the view on a page number that no longer exists.
 watch([search, statusFilter, serviceTypeFilter], debounce(() => fetchData(1), 300));
 
-const STATUS_CLASS = {
-  active: "bg-green-50 text-green-700",
-  postponed: "bg-amber-50 text-amber-700",
-  cancelled: "bg-gray-100 text-gray-500",
+const STATUS_TONE = {
+  active: "ok",
+  postponed: "warn",
+  cancelled: "neutral",
 };
 
 // "cancelled" is still the stored value (matches the backend enum and
@@ -104,8 +104,8 @@ const dueBadge = (subscription) => {
   today.setHours(0, 0, 0, 0);
   const due = new Date(subscription.next_due_date);
   const diffDays = Math.round((due - today) / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return { label: `Overdue ${Math.abs(diffDays)}d`, class: "bg-red-50 text-red-600" };
-  if (diffDays <= 7) return { label: diffDays === 0 ? "Due today" : `Due in ${diffDays}d`, class: "bg-amber-50 text-amber-700" };
+  if (diffDays < 0) return { label: `Overdue ${Math.abs(diffDays)}d`, tone: "bad" };
+  if (diffDays <= 7) return { label: diffDays === 0 ? "Due today" : `Due in ${diffDays}d`, tone: "warn" };
   return null;
 };
 
@@ -131,6 +131,22 @@ const reminderSent = (subscription) =>
 
 // Bumped after any change so the recap above the list reloads.
 const recapKey = ref(0);
+
+// Presentation only: filter options and table columns.
+const STATUS_CHIPS = [
+  { value: "", label: "All" },
+  { value: "active", label: "Active" },
+  { value: "postponed", label: "Postponed" },
+  { value: "cancelled", label: "Not Active" },
+];
+const typeFilterOptions = computed(() => [{ value: "", label: "All Types" }, ...serviceTypeOptions.value]);
+const COLUMNS = [
+  { key: "name", label: "Subscription" },
+  { key: "status", label: "Status" },
+  { key: "amount", label: "Amount", align: "right" },
+  { key: "next_due_date", label: "Next due" },
+  { key: "actions", label: "", align: "right" },
+];
 
 // ===== Add / Edit modal =====
 const showModal = ref(false);
@@ -220,212 +236,153 @@ const handleGenerateInvoice = async (subscription) => {
 </script>
 
 <template>
-  <!-- The admin layout already pads the page, so phones get little extra. -->
-  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
-    <!-- Header -->
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-4 sm:mb-5">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-5">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-9 h-9 bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0">
-            <RefreshCw class="w-6 h-6 text-indigo-600" />
-          </div>
-          <div class="min-w-0">
-            <h3 class="text-brand-dark text-base font-bold">Subscriptions</h3>
-            <p class="text-brand-light text-xs font-normal">
-              Recurring billing -- maintenance, domain renewal, SaaS subscriptions
-            </p>
-          </div>
-        </div>
-
-        <div v-if="can('subscription-create')" class="flex items-center gap-3.5">
-          <button
-            type="button"
-            @click="openAdd"
-            class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5 flex items-center justify-center gap-1.5 w-full sm:w-auto"
-          >
-            <Plus class="w-4 h-4 text-white" />
-            <span class="text-brand-white text-sm font-semibold">Add Subscription</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
-        <div class="relative flex-1">
-          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <Search class="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            v-model="search"
-            class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-            placeholder="Search by name..."
-          />
-        </div>
-        <div class="grid grid-cols-2 sm:flex gap-2 sm:gap-3.5">
-        <div class="relative w-full sm:w-auto min-w-0">
-          <select v-model="serviceTypeFilter" class="select-soft w-full">
-            <option value="">All Types</option>
-            <option v-for="opt in serviceTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-          </select>
-          <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-        <div class="relative w-full sm:w-auto min-w-0">
-          <select v-model="statusFilter" class="select-soft w-full">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="postponed">Postponed</option>
-            <option value="cancelled">Not Active</option>
-          </select>
-          <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-        </div>
-        </div>
-      </div>
-    </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Subscriptions" subtitle="Recurring billing -- maintenance, domain renewal, SaaS subscriptions">
+      <template v-if="can('subscription-create')" #actions>
+        <UiButton :icon="Plus" class="w-full sm:w-auto" @click="openAdd">Add Subscription</UiButton>
+      </template>
+    </UiPageHeader>
 
     <SubscriptionsRecap :service-type-options="serviceTypeOptions" :refresh-key="recapKey" />
 
     <Alert type="success" :title="success" :show="!!success" @close="store.clearMessages()" />
-    <Alert type="error" :title="typeof error === 'string' ? error : ''" :show="!!error && typeof error === 'string'" @close="store.clearMessages()" />
+    <Alert type="danger" :title="typeof error === 'string' ? error : ''" :show="!!error && typeof error === 'string'" @close="store.clearMessages()" />
 
-    <!-- Loading -->
-    <div v-if="loading" class="space-y-3">
-      <Skeleton v-for="i in 4" :key="i" height="90px" rounded="12px" />
-    </div>
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+      <!-- Toolbar -->
+      <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line flex flex-col lg:flex-row lg:items-center gap-2.5 lg:gap-3">
+        <div class="flex flex-col sm:flex-row gap-2 lg:contents">
+          <UiInput v-model="search" :icon="Search" placeholder="Search by name..." class="flex-1 lg:flex-none lg:w-[300px]" aria-label="Search subscriptions" />
+          <UiSelect v-model="serviceTypeFilter" :options="typeFilterOptions" class="sm:w-[200px] lg:order-last lg:ml-auto" aria-label="Service type" />
+        </div>
+        <UiChips v-model="statusFilter" :options="STATUS_CHIPS" class="min-w-0" />
+      </div>
 
-    <!-- Empty state -->
-    <div
-      v-else-if="subscriptions.length === 0"
-      class="flex flex-col items-center justify-center text-center py-16 rounded-[14px] border border-dashed border-[#DCDEDD] bg-gray-50/60"
-    >
-      <template v-if="search || statusFilter || serviceTypeFilter">
-        <SearchX class="w-10 h-10 text-gray-300 mb-3" />
-        <h4 class="text-brand-dark text-sm font-semibold mb-1">No subscriptions match your filters</h4>
-        <p class="text-brand-light text-xs">Try a different name, type, or status</p>
-      </template>
-      <template v-else>
-        <Inbox class="w-10 h-10 text-gray-300 mb-3" />
-        <h4 class="text-brand-dark text-sm font-semibold mb-1">No subscriptions yet</h4>
-        <p class="text-brand-light text-xs mb-4">
-          Add a maintenance, domain renewal, or SaaS subscription to start tracking recurring billing here.
-        </p>
-        <button
-          v-if="can('subscription-create')"
-          type="button"
-          @click="openAdd"
-          class="px-4 py-2.5 rounded-[8px] border border-[#DCDEDD] text-sm font-semibold text-brand-dark hover:border-[#0C51D9] hover:bg-white transition-colors duration-200"
-        >
-          Add your first subscription
-        </button>
-      </template>
-    </div>
-
-    <!-- List -->
-    <div v-else class="space-y-3">
-      <div
-        v-for="(subscription, index) in subscriptions"
-        :key="subscription.id"
-        class="rounded-[14px] p-3.5 sm:p-4 hover:border-[#0C51D9] transition-all duration-300"
-        :class="isNearDue(subscription) ? 'bg-orange-100 border border-orange-500' : 'bg-white border border-[#DCDEDD]'"
-      >
-        <div class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
-          <!-- Number, name, badges, services, client/project -->
-          <div class="flex items-start gap-2 flex-1 min-w-0">
-            <span class="text-gray-400 text-xs font-semibold shrink-0 tabular-nums leading-5">
-              {{ (meta.current_page - 1) * meta.per_page + index + 1 }}.
-            </span>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-start sm:items-center gap-x-2 gap-y-1 flex-wrap mb-1.5">
-                <h4 class="text-brand-dark text-sm font-bold leading-5 line-clamp-2 sm:line-clamp-1 break-words min-w-0" :title="subscription.name">
-                  {{ subscription.name }}
-                </h4>
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0" :class="STATUS_CLASS[subscription.status] || 'bg-gray-100 text-gray-500'">
-                  {{ STATUS_LABEL[subscription.status] || subscription.status }}
-                </span>
-                <span v-if="dueBadge(subscription)" class="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0" :class="dueBadge(subscription).class">
-                  {{ dueBadge(subscription).label }}
-                </span>
-              </div>
-              <div class="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
-                <span
-                  v-for="service in subscription.services"
-                  :key="service.id"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-medium max-w-full truncate"
-                >
-                  {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
-                </span>
-                <span class="inline-flex items-center gap-1 min-w-0 max-w-full">
-                  <Building2 class="w-3 h-3 shrink-0" /> <span class="truncate">{{ subscription.client?.name || "-" }}</span>
-                </span>
-                <span v-if="subscription.project" class="inline-flex items-center gap-1 min-w-0 max-w-full">
-                  <FolderKanban class="w-3 h-3 shrink-0" /> <span class="truncate">{{ subscription.project.name }}</span>
-                </span>
-              </div>
+      <UiTable :columns="COLUMNS" :rows="subscriptions" :meta="meta" :loading="loading" :skeleton-rows="4">
+        <template #cell-name="{ row }">
+          <div class="min-w-0 max-w-[420px] py-2">
+            <p class="text-ui-ink font-medium truncate" :title="row.name">{{ row.name }}</p>
+            <div class="flex items-center gap-x-3 gap-y-1 flex-wrap mt-1 text-ui-cap text-ui-muted">
+              <span v-for="service in row.services" :key="service.id" class="inline-flex items-center px-1.5 h-5 rounded bg-ui-subtle text-ui-text max-w-full truncate">
+                {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
+              </span>
+              <span class="inline-flex items-center gap-1 min-w-0 max-w-full">
+                <Building2 class="w-3 h-3 shrink-0 text-ui-faint" /><span class="truncate">{{ row.client?.name || "-" }}</span>
+              </span>
+              <span v-if="row.project" class="inline-flex items-center gap-1 min-w-0 max-w-full">
+                <FolderKanban class="w-3 h-3 shrink-0 text-ui-faint" /><span class="truncate">{{ row.project.name }}</span>
+              </span>
             </div>
           </div>
+        </template>
+        <template #cell-status="{ row }">
+          <div class="flex flex-col items-start gap-1">
+            <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot>{{ STATUS_LABEL[row.status] || row.status }}</UiBadge>
+            <UiBadge v-if="dueBadge(row)" :tone="dueBadge(row).tone">{{ dueBadge(row).label }}</UiBadge>
+          </div>
+        </template>
+        <template #cell-amount="{ row }">
+          <p class="text-ui-ink font-medium tabular-nums whitespace-nowrap">{{ formatRupiah(row.amount) }}</p>
+          <p class="text-ui-cap text-ui-muted capitalize">{{ row.billing_cycle }}</p>
+        </template>
+        <template #cell-next_due_date="{ row }">
+          <p class="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-ink'">
+            <CalendarClock v-if="isNearDue(row)" class="w-3.5 h-3.5 shrink-0" />{{ formatDate(row.next_due_date) }}
+          </p>
+          <p
+            v-if="reminderSent(row)"
+            class="text-ui-cap text-ui-ok font-medium flex items-center gap-1"
+            :title="`Reminder email sent for the ${formatDate(row.next_due_date)} due date`"
+          >
+            <MailCheck class="w-3.5 h-3.5 shrink-0" /> Reminder emailed
+          </p>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-1">
+            <UiButton
+              v-if="can('subscription-generate-invoice') && row.status === 'active'"
+              variant="secondary"
+              size="sm"
+              :icon="Receipt"
+              :loading="generatingId === row.id"
+              title="Generate Invoice"
+              aria-label="Generate invoice"
+              @click="handleGenerateInvoice(row)"
+            />
+            <UiButton v-if="can('subscription-edit')" variant="ghost" size="sm" :icon="Edit" title="Edit" aria-label="Edit subscription" @click="openEdit(row)" />
+            <UiButton v-if="can('subscription-delete')" variant="ghost" size="sm" :icon="Trash2" class="hover:!text-ui-bad" title="Delete" aria-label="Delete subscription" @click="handleDelete(row)" />
+          </div>
+        </template>
 
-          <!-- Amount, next due and actions: one row on desktop; on phones the
-               figures sit side by side and the actions get their own row. -->
-          <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 shrink-0 pl-5 lg:pl-0">
-            <div class="grid grid-cols-2 gap-3 sm:flex sm:gap-6">
-              <div class="lg:text-right min-w-0">
-                <p class="text-brand-dark text-sm font-bold">{{ formatRupiah(subscription.amount) }}</p>
-                <p class="text-gray-400 text-xs capitalize">{{ subscription.billing_cycle }}</p>
-              </div>
-              <div class="lg:text-right min-w-0">
-                <p class="text-brand-dark text-xs font-semibold">
-                  <span class="sm:hidden">{{ formatDateMedium(subscription.next_due_date) }}</span>
-                  <span class="hidden sm:inline">{{ formatDate(subscription.next_due_date) }}</span>
+        <!-- Phones: stacked row cards -->
+        <template #mobile="{ row, number }">
+          <div class="px-4 py-3.5" :class="isNearDue(row) ? 'bg-ui-warn-soft/60' : ''">
+            <div class="flex items-start gap-3">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-ui-body font-medium text-ui-ink line-clamp-2 break-words">{{ row.name }}</p>
+                <p class="text-ui-cap text-ui-muted truncate mt-0.5">
+                  {{ row.client?.name || "-" }}<template v-if="row.project"> · {{ row.project.name }}</template>
                 </p>
-                <p class="text-gray-400 text-xs">Next due</p>
-                <p
-                  v-if="reminderSent(subscription)"
-                  class="text-emerald-600 text-xs font-medium flex items-center gap-1 lg:justify-end"
-                  :title="`Reminder email sent for the ${formatDate(subscription.next_due_date)} due date`"
-                >
+                <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
+                  <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot>{{ STATUS_LABEL[row.status] || row.status }}</UiBadge>
+                  <UiBadge v-if="dueBadge(row)" :tone="dueBadge(row).tone">{{ dueBadge(row).label }}</UiBadge>
+                  <span v-for="service in row.services" :key="service.id" class="inline-flex items-center px-1.5 h-5 rounded bg-ui-subtle text-ui-cap text-ui-text max-w-full truncate">
+                    {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
+                  </span>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-ui-body font-medium text-ui-ink tabular-nums">{{ formatRupiah(row.amount) }}</p>
+                <p class="text-ui-cap text-ui-muted capitalize">{{ row.billing_cycle }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 mt-2.5 pl-8">
+              <div class="flex-1 min-w-0">
+                <p class="text-ui-cap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-muted'">Next due {{ formatDateMedium(row.next_due_date) }}</p>
+                <p v-if="reminderSent(row)" class="text-ui-cap text-ui-ok font-medium flex items-center gap-1">
                   <MailCheck class="w-3.5 h-3.5 shrink-0" /> Reminder emailed
                 </p>
               </div>
-            </div>
-
-            <div class="flex items-center justify-end gap-1.5 pt-3 sm:pt-0 border-t border-black/5 sm:border-0">
-              <button
-                v-if="can('subscription-generate-invoice') && subscription.status === 'active'"
-                type="button"
-                @click="handleGenerateInvoice(subscription)"
-                :disabled="generatingId === subscription.id"
-                title="Generate Invoice"
+              <UiButton
+                v-if="can('subscription-generate-invoice') && row.status === 'active'"
+                variant="secondary"
+                size="sm"
+                :icon="Receipt"
+                :loading="generatingId === row.id"
                 aria-label="Generate invoice"
-                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] bg-white rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 disabled:opacity-50"
-              >
-                <Receipt class="w-4 h-4 text-gray-600" />
-              </button>
-              <button
-                v-if="can('subscription-edit')"
-                type="button"
-                @click="openEdit(subscription)"
-                title="Edit"
-                aria-label="Edit subscription"
-                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] bg-white rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300"
-              >
-                <Edit class="w-3.5 h-3.5 text-gray-600" />
-              </button>
-              <button
-                v-if="can('subscription-delete')"
-                type="button"
-                @click="handleDelete(subscription)"
-                title="Delete"
-                aria-label="Delete subscription"
-                class="w-9 h-9 shrink-0 flex items-center justify-center border border-[#DCDEDD] bg-white rounded-[8px] hover:border-red-400 hover:bg-red-50 group/delete transition-all duration-300"
-              >
-                <Trash2 class="w-3.5 h-3.5 text-gray-500 group-hover/delete:text-red-600" />
-              </button>
+                @click="handleGenerateInvoice(row)"
+              />
+              <UiButton v-if="can('subscription-edit')" variant="secondary" size="sm" :icon="Edit" aria-label="Edit subscription" @click="openEdit(row)" />
+              <UiButton v-if="can('subscription-delete')" variant="danger" size="sm" :icon="Trash2" aria-label="Delete subscription" @click="handleDelete(row)" />
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </template>
 
-    <Pagination :meta="meta" :loading="loading" item-label="subscription" @page-change="fetchData" />
+        <template #empty>
+          <UiEmpty
+            v-if="search || statusFilter || serviceTypeFilter"
+            :icon="SearchX"
+            title="No subscriptions match your filters"
+            message="Try a different name, type, or status"
+            compact
+          />
+          <UiEmpty
+            v-else
+            :icon="Inbox"
+            title="No subscriptions yet"
+            message="Add a maintenance, domain renewal, or SaaS subscription to start tracking recurring billing here."
+            compact
+          >
+            <UiButton v-if="can('subscription-create')" variant="secondary" :icon="Plus" @click="openAdd">Add your first subscription</UiButton>
+          </UiEmpty>
+        </template>
+      </UiTable>
+
+      <div v-if="meta.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
+        <Pagination :meta="meta" :loading="loading" item-label="subscription" @page-change="fetchData" />
+      </div>
+    </section>
 
     <SubscriptionFormModal
       :show="showModal"

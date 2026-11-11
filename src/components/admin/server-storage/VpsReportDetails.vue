@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref } from "vue";
 import { HardDrive, MemoryStick, Cpu, Check, ExternalLink, RefreshCcw } from "lucide-vue-next";
-import { formatBytes, usageLevel, formatUptime, SITE_TYPES, sslState, copyText } from "@/utils/serverMetrics";
+import { formatBytes, formatUptime, SITE_TYPES, sslState, copyText } from "@/utils/serverMetrics";
+import { UiBadge, UiButton } from "@/components/ui";
 
 // What one VPS's agent last reported: usage, hosted websites, folder sizes.
 const props = defineProps({
@@ -22,151 +23,135 @@ const copy = async (text, key) => {
   copied.value = key;
   setTimeout(() => (copied.value = ""), 1800);
 };
+
+// ===== Presentation helpers (tokens) =====
+// Same thresholds as usageLevel() in utils/serverMetrics (75 / 90).
+const usageTone = (pct) => (pct === null || pct === undefined ? "neutral" : pct >= 90 ? "bad" : pct >= 75 ? "warn" : "ok");
+const TONE_TEXT = { ok: "text-ui-ink", warn: "text-ui-warn", bad: "text-ui-bad", neutral: "text-ui-muted" };
+const TONE_BAR = { ok: "bg-ui-ok", warn: "bg-ui-warn", bad: "bg-ui-bad", neutral: "bg-ui-faint" };
+// sslState() returns legacy classes; read its colour family as a badge tone.
+const sslTone = (site) => {
+  const cls = sslState(site).class;
+  return cls.includes("red") ? "bad" : cls.includes("amber") ? "warn" : cls.includes("green") ? "ok" : "neutral";
+};
+const usageTiles = computed(() => {
+  const r = props.server.report;
+  return [
+    {
+      key: "disk",
+      icon: HardDrive,
+      label: `Disk (${r.disk.mount})`,
+      pct: r.disk.used_percent,
+      sub: `${formatBytes(r.disk.used)} terpakai · sisa ${formatBytes(r.disk.free)} dari ${formatBytes(r.disk.total)}`,
+    },
+    {
+      key: "ram",
+      icon: MemoryStick,
+      label: "RAM",
+      pct: r.memory.used_percent,
+      sub:
+        `${formatBytes(r.memory.used)} / ${formatBytes(r.memory.total)}` +
+        (r.memory.swap_total ? ` · swap ${formatBytes(r.memory.swap_used)} / ${formatBytes(r.memory.swap_total)}` : ""),
+    },
+    {
+      key: "cpu",
+      icon: Cpu,
+      label: "CPU",
+      pct: r.cpu.usage_percent,
+      sub: `${r.cpu.cores} core · load ${r.cpu.load1} / ${r.cpu.load5} / ${r.cpu.load15} (1/5/15 mnt)`,
+    },
+  ];
+});
 </script>
 
 <template>
   <div v-if="server.report" class="space-y-5">
-    <div v-if="server.agent_outdated" class="bg-blue-50 border border-blue-200 rounded-[10px] p-3 text-xs text-blue-900 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+    <div v-if="server.agent_outdated" class="bg-ui-info-soft border border-ui-info/20 rounded-ui-control p-3 text-ui-cap text-ui-text flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
       <span>Agen di VPS ini versi lama ({{ server.report.agent_version }}). Perbarui agar daftar website ikut terbaca. Jalankan di VPS (tanpa token baru):</span>
-      <button type="button" class="vm-btn shrink-0" @click="copy(server.update_command, 'update')">
-        <Check v-if="copied === 'update'" class="w-4 h-4 text-green-600" /><RefreshCcw v-else class="w-4 h-4" />
+      <UiButton variant="secondary" size="sm" class="shrink-0" :icon="copied === 'update' ? Check : RefreshCcw" @click="copy(server.update_command, 'update')">
         {{ copied === "update" ? "Tersalin" : "Salin perintah update" }}
-      </button>
+      </UiButton>
     </div>
+
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div class="vm-stat">
-        <p class="vm-stat-label"><HardDrive class="w-3.5 h-3.5" /> Disk ({{ server.report.disk.mount }})</p>
-        <p class="vm-stat-value" :class="usageLevel(server.report.disk.used_percent).text">{{ server.report.disk.used_percent }}%</p>
-        <p class="vm-stat-sub">{{ formatBytes(server.report.disk.used) }} terpakai · sisa {{ formatBytes(server.report.disk.free) }} dari {{ formatBytes(server.report.disk.total) }}</p>
-      </div>
-      <div class="vm-stat">
-        <p class="vm-stat-label"><MemoryStick class="w-3.5 h-3.5" /> RAM</p>
-        <p class="vm-stat-value" :class="usageLevel(server.report.memory.used_percent).text">{{ server.report.memory.used_percent }}%</p>
-        <p class="vm-stat-sub">
-          {{ formatBytes(server.report.memory.used) }} / {{ formatBytes(server.report.memory.total) }}
-          <template v-if="server.report.memory.swap_total"> · swap {{ formatBytes(server.report.memory.swap_used) }} / {{ formatBytes(server.report.memory.swap_total) }}</template>
-        </p>
-      </div>
-      <div class="vm-stat">
-        <p class="vm-stat-label"><Cpu class="w-3.5 h-3.5" /> CPU</p>
-        <p class="vm-stat-value" :class="usageLevel(server.report.cpu.usage_percent).text">{{ server.report.cpu.usage_percent }}%</p>
-        <p class="vm-stat-sub">{{ server.report.cpu.cores }} core · load {{ server.report.cpu.load1 }} / {{ server.report.cpu.load5 }} / {{ server.report.cpu.load15 }} (1/5/15 mnt)</p>
+      <div v-for="t in usageTiles" :key="t.key" class="border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
+        <p class="flex items-center gap-1.5 text-ui-small text-ui-muted"><component :is="t.icon" class="w-4 h-4 text-ui-faint" /> {{ t.label }}</p>
+        <p class="text-ui-h1 tabular-nums mt-1" :class="TONE_TEXT[usageTone(t.pct)]">{{ t.pct }}%</p>
+        <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden mt-2">
+          <div class="h-full rounded-full" :class="TONE_BAR[usageTone(t.pct)]" :style="{ width: `${Math.min(t.pct || 0, 100)}%` }"></div>
+        </div>
+        <p class="text-ui-cap text-ui-muted mt-2 leading-snug">{{ t.sub }}</p>
       </div>
     </div>
 
     <div v-if="server.report.sites">
-      <div class="flex items-center justify-between mb-2">
-        <p class="text-brand-dark text-sm font-bold">Website &amp; Sistem ({{ sites.length }})</p>
-        <p class="text-xs text-brand-light">Dibaca dari konfigurasi nginx/apache</p>
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <p class="text-ui-h3 text-ui-ink">Website &amp; Sistem ({{ sites.length }})</p>
+        <p class="text-ui-cap text-ui-muted text-right">Dibaca dari konfigurasi nginx/apache</p>
       </div>
-      <p v-if="!sites.length" class="text-xs text-brand-light">Tidak ada website yang terkonfigurasi di nginx/apache.</p>
-      <div v-else class="border border-[#DCDEDD] rounded-[12px] divide-y divide-[#F1F1F1]">
+      <p v-if="!sites.length" class="text-ui-cap text-ui-muted">Tidak ada website yang terkonfigurasi di nginx/apache.</p>
+      <div v-else class="border border-ui-line rounded-ui-card divide-y divide-ui-line">
         <div v-for="site in sites" :key="siteLabel(site) + site.path" class="p-3 flex flex-col sm:flex-row sm:items-start gap-2 justify-between">
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-1.5">
-              <a v-if="site.domains?.length" :href="`${site.ssl ? 'https' : 'http'}://${site.domains[0]}`" target="_blank" rel="noopener" class="text-brand-dark text-sm font-semibold hover:text-[#0C51D9] inline-flex items-center gap-1">
+              <a v-if="site.domains?.length" :href="`${site.ssl ? 'https' : 'http'}://${site.domains[0]}`" target="_blank" rel="noopener" class="text-ui-small font-medium text-ui-ink hover:text-ui-accent inline-flex items-center gap-1">
                 {{ site.domains[0] }} <ExternalLink class="w-3 h-3" />
               </a>
-              <span v-else class="text-brand-dark text-sm font-semibold">{{ siteLabel(site) }}</span>
-              <span class="px-1.5 py-0.5 rounded text-[11px] font-semibold" :class="siteType(site).class">{{ siteType(site).label + (site.version ? ` ${site.version}` : "") }}</span>
+              <span v-else class="text-ui-small font-medium text-ui-ink">{{ siteLabel(site) }}</span>
+              <UiBadge tone="outline">{{ siteType(site).label + (site.version ? ` ${site.version}` : "") }}</UiBadge>
             </div>
-            <p v-if="site.domains?.length > 1" class="text-[11px] text-brand-light mt-0.5 break-all">juga: {{ site.domains.slice(1).join(", ") }}</p>
-            <p class="text-[11px] text-brand-light mt-0.5 break-all">
-              <template v-if="site.path"><code>{{ site.path }}</code></template>
-              <template v-if="site.proxy"> · proxy ke <code>{{ site.proxy }}</code><template v-if="site.process"> ({{ site.process }})</template></template>
+            <p v-if="site.domains?.length > 1" class="text-ui-cap text-ui-muted mt-0.5 break-all">juga: {{ site.domains.slice(1).join(", ") }}</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5 break-all">
+              <template v-if="site.path"><code class="font-mono">{{ site.path }}</code></template>
+              <template v-if="site.proxy"> · proxy ke <code class="font-mono">{{ site.proxy }}</code><template v-if="site.process"> ({{ site.process }})</template></template>
               <template v-if="site.server"> · {{ site.server }}</template>
             </p>
           </div>
           <div class="flex sm:flex-col items-center sm:items-end gap-1.5 shrink-0">
-            <span class="text-brand-dark text-xs font-semibold">{{ site.bytes != null ? formatBytes(site.bytes) : "-" }}</span>
-            <span class="px-1.5 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap" :class="sslState(site).class">{{ sslState(site).label }}</span>
+            <span class="text-ui-cap font-medium text-ui-ink tabular-nums">{{ site.bytes != null ? formatBytes(site.bytes) : "-" }}</span>
+            <UiBadge :tone="sslTone(site)" class="whitespace-nowrap">{{ sslState(site).label }}</UiBadge>
           </div>
         </div>
       </div>
 
       <template v-if="folders.length">
-        <p class="text-brand-dark text-xs font-bold mt-3 mb-1.5">Folder di /var/www tanpa domain ({{ folders.length }})</p>
-        <p class="text-[11px] text-brand-light mb-1.5">Tidak dipakai oleh konfigurasi web server mana pun. Bisa jadi sisa proyek lama yang aman dihapus; periksa dulu.</p>
-        <div class="border border-[#DCDEDD] rounded-[12px] divide-y divide-[#F1F1F1]">
-          <div v-for="site in folders" :key="site.path" class="px-3 py-2 flex items-center justify-between gap-2 text-xs">
-            <span class="min-w-0 break-all"><code class="text-brand-dark">{{ site.path }}</code>
-              <span v-if="site.type !== 'folder'" class="ml-1 px-1.5 py-0.5 rounded text-[11px] font-semibold" :class="siteType(site).class">{{ siteType(site).label + (site.version ? ` ${site.version}` : "") }}</span>
+        <p class="text-ui-small font-medium text-ui-ink mt-4 mb-1">Folder di /var/www tanpa domain ({{ folders.length }})</p>
+        <p class="text-ui-cap text-ui-muted mb-2">Tidak dipakai oleh konfigurasi web server mana pun. Bisa jadi sisa proyek lama yang aman dihapus; periksa dulu.</p>
+        <div class="border border-ui-line rounded-ui-card divide-y divide-ui-line">
+          <div v-for="site in folders" :key="site.path" class="px-3 py-2 flex items-center justify-between gap-2 text-ui-cap">
+            <span class="min-w-0 break-all"><code class="font-mono text-ui-ink">{{ site.path }}</code>
+              <UiBadge v-if="site.type !== 'folder'" tone="outline" class="ml-1">{{ siteType(site).label + (site.version ? ` ${site.version}` : "") }}</UiBadge>
             </span>
-            <span class="text-brand-dark font-semibold shrink-0">{{ site.bytes != null ? formatBytes(site.bytes) : "-" }}</span>
+            <span class="text-ui-ink font-medium tabular-nums shrink-0">{{ site.bytes != null ? formatBytes(site.bytes) : "-" }}</span>
           </div>
         </div>
       </template>
     </div>
 
     <div>
-      <div class="flex items-center justify-between mb-2">
-        <p class="text-brand-dark text-sm font-bold">Pemakaian Disk per Folder</p>
-        <p class="text-xs text-brand-light">Diukur {{ formatDateTime(server.report.breakdown_at) }} · diperbarui tiap 6 jam</p>
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <p class="text-ui-h3 text-ui-ink">Pemakaian Disk per Folder</p>
+        <p class="text-ui-cap text-ui-muted text-right">Diukur {{ formatDateTime(server.report.breakdown_at) }} · diperbarui tiap 6 jam</p>
       </div>
-      <div v-if="server.report.breakdown?.length" class="space-y-2">
+      <div v-if="server.report.breakdown?.length" class="space-y-2.5">
         <div v-for="item in server.report.breakdown" :key="item.path">
-          <div class="flex items-center justify-between text-xs mb-1">
-            <code class="text-brand-dark">{{ item.path }}</code>
-            <span class="text-brand-dark font-semibold">{{ formatBytes(item.bytes) }}</span>
+          <div class="flex items-center justify-between gap-2 text-ui-cap mb-1">
+            <code class="font-mono text-ui-ink break-all">{{ item.path }}</code>
+            <span class="text-ui-ink font-medium tabular-nums shrink-0">{{ formatBytes(item.bytes) }}</span>
           </div>
-          <div class="w-full bg-gray-100 rounded-full overflow-hidden" style="height: 6px">
-            <div class="h-full rounded-full" :style="{ width: `${breakdownTotal ? Math.min((item.bytes / breakdownTotal) * 100, 100) : 0}%`, backgroundColor: '#0C51D9' }"></div>
+          <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-ui-accent" :style="{ width: `${breakdownTotal ? Math.min((item.bytes / breakdownTotal) * 100, 100) : 0}%` }"></div>
           </div>
         </div>
       </div>
-      <p v-else class="text-xs text-brand-light">Rincian folder belum tersedia.</p>
+      <p v-else class="text-ui-cap text-ui-muted">Rincian folder belum tersedia.</p>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-      <div><p class="text-brand-light">Sistem operasi</p><p class="text-brand-dark font-semibold">{{ server.report.os || "-" }}</p></div>
-      <div><p class="text-brand-light">Uptime</p><p class="text-brand-dark font-semibold">{{ formatUptime(server.report.uptime_seconds) }}</p></div>
-      <div><p class="text-brand-light">Laporan terakhir</p><p class="text-brand-dark font-semibold">{{ formatDateTime(server.last_report_at) }}</p></div>
-      <div><p class="text-brand-light">Versi agen</p><p class="text-brand-dark font-semibold">{{ server.report.agent_version || "-" }}</p></div>
-    </div>
+    <dl class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-ui-line">
+      <div><dt class="text-ui-cap text-ui-muted">Sistem operasi</dt><dd class="text-ui-small font-medium text-ui-ink">{{ server.report.os || "-" }}</dd></div>
+      <div><dt class="text-ui-cap text-ui-muted">Uptime</dt><dd class="text-ui-small font-medium text-ui-ink">{{ formatUptime(server.report.uptime_seconds) }}</dd></div>
+      <div><dt class="text-ui-cap text-ui-muted">Laporan terakhir</dt><dd class="text-ui-small font-medium text-ui-ink">{{ formatDateTime(server.last_report_at) }}</dd></div>
+      <div><dt class="text-ui-cap text-ui-muted">Versi agen</dt><dd class="text-ui-small font-medium text-ui-ink font-mono">{{ server.report.agent_version || "-" }}</dd></div>
+    </dl>
   </div>
 </template>
-
-<style scoped>
-.vm-stat {
-  border: 1px solid #dcdedd;
-  border-radius: 12px;
-  padding: 12px;
-}
-.vm-stat-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-}
-.vm-stat-value {
-  font-size: 24px;
-  font-weight: 800;
-  margin: 2px 0;
-}
-.vm-stat-sub {
-  font-size: 11px;
-  color: #64748b;
-  line-height: 1.4;
-}
-.vm-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid #dcdedd;
-  border-radius: 9px;
-  padding: 7px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-  background: #ffffff;
-}
-.vm-btn:hover {
-  border-color: #0c51d9;
-}
-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-}
-</style>

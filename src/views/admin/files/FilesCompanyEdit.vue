@@ -16,10 +16,9 @@ import {
   Paperclip,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
-import BaseInput from "@/components/common/form/Input.vue";
-import TextArea from "@/components/common/form/TextArea.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 import { errorMessage } from "@/helpers/errorHelper";
+import { UiPageHeader, UiButton, UiBadge, UiInput, UiSpinner, UiEmpty } from "@/components/ui";
 
 const archiveStore = useFilesCompanyStore();
 const route = useRoute();
@@ -167,194 +166,173 @@ const fileTypeMeta = (mime) => {
 };
 
 const newFileMeta = computed(() => fileTypeMeta(form.value.new_file?.type));
+
+// Extension badge (redesign: neutral icon + extension).
+const fileExt = (name, mime) => {
+  const base = String(name || "").split("?")[0].split("/").pop();
+  if (base.includes(".")) return base.split(".").pop().slice(0, 5).toUpperCase();
+  if (!mime) return "FILE";
+  if (mime.includes("spreadsheetml")) return "XLSX";
+  if (mime.includes("wordprocessingml")) return "DOCX";
+  return mime.split("/").pop().split(/[.+-]/).pop().slice(0, 5).toUpperCase();
+};
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto">
-    <!-- Header -->
-    <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 mb-6">
-      <div class="flex items-center gap-3">
-        <button
-          @click="router.back()"
-          class="w-10 h-10 rounded-[12px] border border-[#DCDEDD] flex items-center justify-center hover:border-blue-400 transition-all"
-          aria-label="Back"
-        >
-          <ArrowLeft class="w-5 h-5 text-gray-600" />
-        </button>
-
-        <div class="w-12 h-12 bg-blue-50 rounded-[12px] flex items-center justify-center">
-          <Archive class="w-6 h-6 text-blue-600" />
-        </div>
-
-        <div>
-          <h1 class="text-brand-dark text-xl font-bold">Edit Document File</h1>
-          <p class="text-brand-light text-sm">Update file metadata or replace the attached document</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="mb-6">
-      <Transition name="fade">
-        <Alert
-          v-if="error"
-          type="danger"
-          :title="error"
-          message=""
-          :show="!!error"
-          @close="error = ''"
-        />
-      </Transition>
-      <Transition name="fade">
-        <Alert
-          v-if="success"
-          type="success"
-          :title="success"
-          message=""
-          :show="!!success"
-        />
-      </Transition>
-    </div>
-
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center gap-3 py-20 text-gray-500">
-      <span class="w-5 h-5 border-2 border-gray-300 border-t-[#0C51D9] rounded-full animate-spin"></span>
-      Loading archive data...
-    </div>
-
-    <!-- Load error -->
-    <div v-else-if="loadError" class="text-center py-20 text-red-600">
-      {{ loadError }}
-    </div>
-
-    <!-- Form -->
-    <form v-else @submit.prevent="submit" class="space-y-6">
-      <!-- File Info -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <Info class="w-4.5 h-4.5 text-blue-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">Informasi File</h4>
-        </div>
-
-        <div class="space-y-5">
-          <BaseInput
-            id="document_name"
-            label="File Name *"
-            placeholder="Enter file name"
-            v-model="form.document_name"
-            :error="fileNameError ? 'File name is required.' : ''"
-          />
-
-          <TextArea
-            id="description"
-            label="Description (Optional)"
-            placeholder="Enter a description"
-            v-model="form.description"
-            rows="4"
-          />
-        </div>
-      </div>
-
-      <!-- File -->
-      <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-6">
-        <div class="flex items-center gap-2 mb-5">
-          <div class="w-9 h-9 bg-indigo-50 rounded-[10px] flex items-center justify-center shrink-0">
-            <Paperclip class="w-4.5 h-4.5 text-indigo-600" />
-          </div>
-          <h4 class="text-brand-dark font-bold">File</h4>
-        </div>
-
-        <!-- Current / Preview File -->
-        <div v-if="previewFile" class="mb-5">
-          <label class="block text-brand-dark text-sm font-semibold mb-1.5">File Preview</label>
-
-          <div
-            v-if="!form.new_file && !form.remove_file"
-            class="flex items-center justify-between gap-3 px-4 py-3 border border-[#DCDEDD] rounded-[12px] mb-3"
-          >
-            <a
-              :href="archiveStore.currentArchive.document_path"
-              target="_blank"
-              class="text-[#0C51D9] font-semibold hover:underline truncate"
-            >
-              {{ archiveStore.currentArchive.document_name }}
-            </a>
-            <button
-              type="button"
-              @click="removeFile"
-              class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-all flex-shrink-0"
-            >
-              <X class="w-4 h-4" /> Remove
-            </button>
-          </div>
-
-          <div class="w-full max-h-[400px] overflow-auto border border-[#DCDEDD] rounded-[12px] p-1">
-            <img
-              v-if="isImage(form.new_file?.type || archiveStore.currentArchive?.type_file)"
-              :src="previewFile"
-              alt="File Preview"
-              class="w-full object-contain rounded-[12px]"
-            />
-            <iframe
-              v-else-if="(form.new_file?.type || archiveStore.currentArchive?.type_file) === 'application/pdf'"
-              :src="previewFile"
-              class="w-full h-[400px] rounded-[12px]"
-            ></iframe>
-          </div>
-        </div>
-
-        <!-- Upload New File -->
-        <div>
-          <label class="block text-brand-dark text-sm font-semibold mb-1.5">
-            Replace File (Optional)
-          </label>
-          <label
-            class="flex flex-col items-center justify-center gap-2 w-full py-6 border-2 border-dashed border-[#DCDEDD] rounded-[12px] cursor-pointer hover:border-[#0C51D9] hover:bg-blue-50/30 transition-all"
-          >
-            <component :is="form.new_file ? newFileMeta.icon : FileUp" class="w-7 h-7" :class="form.new_file ? newFileMeta.class : 'text-gray-400'" />
-            <span class="text-sm text-brand-dark font-semibold">
-              {{ form.new_file ? form.new_file.name : "Click to choose a new file" }}
-            </span>
-            <input type="file" class="hidden" @change="onFileChange" />
-          </label>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex flex-col sm:flex-row gap-3">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Edit Document File" subtitle="Update file metadata or replace the attached document">
+      <template #eyebrow>
         <button
           type="button"
           @click="router.back()"
-          class="w-full sm:w-auto border border-[#DCDEDD] rounded-[12px] hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-300 px-6 py-3 text-brand-dark font-semibold"
+          class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
+          aria-label="Back"
         >
-          Cancel
+          <ArrowLeft class="w-4 h-4" />
+          Back
         </button>
-
-        <button
-          type="submit"
-          :disabled="submitting"
-          class="w-full sm:w-auto btn-primary rounded-[12px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
-        >
-          <Save class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold">
+      </template>
+      <template v-if="!loading && !loadError" #actions>
+        <div class="hidden sm:flex items-center gap-2">
+          <UiButton variant="secondary" @click="router.back()">Cancel</UiButton>
+          <UiButton type="submit" form="files-company-edit-form" :icon="Save" :loading="submitting">
             {{ submitting ? "Saving..." : "Save Changes" }}
-          </span>
-        </button>
+          </UiButton>
+        </div>
+      </template>
+    </UiPageHeader>
+
+    <div v-if="error || success" class="space-y-3">
+      <Alert
+        v-if="error"
+        type="danger"
+        :title="error"
+        message=""
+        :show="!!error"
+        @close="error = ''"
+      />
+      <Alert
+        v-if="success"
+        type="success"
+        :title="success"
+        message=""
+        :show="!!success"
+      />
+    </div>
+
+    <!-- Loading -->
+    <UiSpinner v-if="loading" label="Loading archive data..." class="!py-20" />
+
+    <!-- Load error -->
+    <div v-else-if="loadError" class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty :icon="Archive" :title="loadError" />
+    </div>
+
+    <!-- Form -->
+    <form v-else id="files-company-edit-form" class="space-y-5" @submit.prevent="submit">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start ui-stagger">
+        <!-- File Info -->
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+          <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+            <div class="w-8 h-8 rounded-ui-control border border-ui-line text-ui-muted flex items-center justify-center shrink-0">
+              <Info class="w-4 h-4" />
+            </div>
+            <h2 class="text-ui-h2 text-ui-ink">Informasi File</h2>
+          </div>
+
+          <div class="space-y-5">
+            <UiInput
+              id="document_name"
+              label="File Name *"
+              placeholder="Enter file name"
+              v-model="form.document_name"
+              :error="fileNameError ? 'File name is required.' : ''"
+            />
+
+            <UiInput
+              id="description"
+              label="Description (Optional)"
+              placeholder="Enter a description"
+              v-model="form.description"
+              :rows="4"
+            />
+          </div>
+        </section>
+
+        <!-- File -->
+        <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
+          <div class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+            <div class="w-8 h-8 rounded-ui-control border border-ui-line text-ui-muted flex items-center justify-center shrink-0">
+              <Paperclip class="w-4 h-4" />
+            </div>
+            <h2 class="text-ui-h2 text-ui-ink">File</h2>
+          </div>
+
+          <!-- Current / Preview File -->
+          <div v-if="previewFile" class="mb-5">
+            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">File Preview</p>
+
+            <div
+              v-if="!form.new_file && !form.remove_file"
+              class="flex items-center gap-3 px-3 py-2.5 border border-ui-line rounded-ui-control mb-3"
+            >
+              <div class="w-9 h-9 rounded-ui-control bg-ui-subtle text-ui-muted flex items-center justify-center shrink-0">
+                <component :is="fileTypeMeta(archiveStore.currentArchive.type_file).icon" class="w-4 h-4" />
+              </div>
+              <a
+                :href="archiveStore.currentArchive.document_path"
+                target="_blank"
+                class="flex-1 min-w-0 text-ui-body font-medium text-ui-accent hover:underline truncate"
+              >
+                {{ archiveStore.currentArchive.document_name }}
+              </a>
+              <UiBadge tone="outline" class="font-mono shrink-0">
+                {{ fileExt(archiveStore.currentArchive.document_path, archiveStore.currentArchive.type_file) }}
+              </UiBadge>
+              <UiButton variant="danger" size="sm" :icon="X" class="shrink-0" @click="removeFile">Remove</UiButton>
+            </div>
+
+            <div class="w-full max-h-[400px] overflow-auto border border-ui-line rounded-ui-card bg-ui-subtle p-1">
+              <img
+                v-if="isImage(form.new_file?.type || archiveStore.currentArchive?.type_file)"
+                :src="previewFile"
+                alt="File Preview"
+                class="w-full object-contain rounded-ui-control"
+              />
+              <iframe
+                v-else-if="(form.new_file?.type || archiveStore.currentArchive?.type_file) === 'application/pdf'"
+                :src="previewFile"
+                class="w-full h-[400px] rounded-ui-control bg-ui-surface"
+              ></iframe>
+            </div>
+          </div>
+
+          <!-- Upload New File -->
+          <div>
+            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Replace File (Optional)</p>
+            <label
+              class="flex flex-col items-center justify-center gap-2 w-full py-8 px-4 border border-dashed border-ui-line-strong bg-ui-subtle/50 rounded-ui-card cursor-pointer text-center transition-colors hover:border-ui-accent hover:bg-ui-accent-soft/40 focus-within:shadow-ui-focus"
+            >
+              <div class="w-11 h-11 rounded-ui-control bg-ui-surface border border-ui-line text-ui-muted flex items-center justify-center">
+                <component :is="form.new_file ? newFileMeta.icon : FileUp" class="w-5 h-5" />
+              </div>
+              <span class="text-ui-body text-ui-ink font-medium break-all">
+                {{ form.new_file ? form.new_file.name : "Click to choose a new file" }}
+              </span>
+              <UiBadge v-if="form.new_file" tone="outline" class="font-mono">{{ fileExt(form.new_file.name, form.new_file.type) }}</UiBadge>
+              <input type="file" class="sr-only" @change="onFileChange" />
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <!-- Phones: actions at the end of the form, full width -->
+      <div class="sm:hidden flex flex-col gap-2">
+        <UiButton type="submit" size="lg" block :icon="Save" :loading="submitting">
+          {{ submitting ? "Saving..." : "Save Changes" }}
+        </UiButton>
+        <UiButton variant="ghost" size="lg" block @click="router.back()">Cancel</UiButton>
       </div>
     </form>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>

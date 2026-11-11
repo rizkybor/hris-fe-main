@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
   ArrowLeft, Download, FileLock2, Link2, Copy, Check, RefreshCw, Trash2, Plus, Save, Loader2, AlertTriangle,
-  Sparkles, Clock, Wallet, Layers, Pencil, X, Send,
+  Sparkles, Clock, Wallet, Layers, Pencil, X, Send, ChevronDown,
 } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
 import { useScreeningStore } from "@/stores/screening";
@@ -15,6 +15,7 @@ import { copyText } from "@/utils/serverMetrics";
 import { SCREENING_STATUS, SCREENING_SOURCE, COMPLEXITY, PRICE_UNIT } from "@/utils/screening";
 import ScreeningFormFields from "@/components/admin/screening/ScreeningFormFields.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiButton, UiBadge, UiEmpty, UiAlert, UiInput } from "@/components/ui";
 
 const route = useRoute();
 const router = useRouter();
@@ -193,297 +194,328 @@ const remove = async () => {
   await store.deleteScreening(s.value.id);
   router.push({ name: "admin.screening.dashboard" });
 };
+
+// Presentation only: badge tones and field styles.
+const STATUS_TONE = { draft: "neutral", invited: "outline", new: "info", in_review: "warn", reviewed: "accent", won: "ok", lost: "bad" };
+const SIZE_TONE = { S: "ok", M: "info", L: "warn", XL: "bad" };
+const FIT_TONE = { fit: "ok", over: "bad", unknown: "neutral" };
+const cell = "h-8 px-2 bg-ui-surface text-ui-small text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus disabled:bg-ui-subtle";
+const iconBtn = "ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad shrink-0";
 </script>
 
 <template>
-  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
-    <div v-if="loading && !s" class="space-y-3">
-      <Skeleton height="120px" rounded="14px" />
-      <Skeleton height="320px" rounded="14px" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <div v-if="loading && !s" class="space-y-4">
+      <Skeleton height="96px" rounded="12px" />
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Skeleton v-for="i in 4" :key="i" height="88px" rounded="12px" />
+      </div>
+      <Skeleton height="320px" rounded="12px" />
     </div>
 
     <template v-else-if="s">
       <!-- Header -->
-      <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 mb-4">
-        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
-          <div class="flex items-start gap-3 min-w-0">
-            <RouterLink :to="{ name: 'admin.screening.dashboard' }" class="w-9 h-9 rounded-[10px] bg-white border border-[#DCDEDD] flex items-center justify-center shrink-0 hover:border-[#0C51D9]" aria-label="Back">
-              <ArrowLeft class="w-4 h-4 text-gray-600" />
-            </RouterLink>
-            <div class="min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="text-brand-dark text-lg font-bold">{{ s.company || s.contact_name || "Unnamed client" }}</h3>
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold" :class="SCREENING_STATUS[s.status]?.class">{{ SCREENING_STATUS[s.status]?.label }}</span>
-              </div>
-              <p class="text-xs text-brand-light mt-0.5">
-                {{ s.code }} · {{ SCREENING_SOURCE[s.source] }} · {{ s.lang === "en" ? "English" : "Bahasa Indonesia" }}
-                · {{ s.submitted_at ? `Submitted ${formatDate(s.submitted_at)}` : `Created ${formatDate(s.created_at)}` }}
-              </p>
-              <p class="text-xs text-brand-dark mt-1">
-                {{ s.contact_name || "-" }}<template v-if="s.email"> · {{ s.email }}</template><template v-if="s.phone"> · {{ s.phone }}</template>
-                <button v-if="canEdit" type="button" class="ml-1 text-[#0C51D9] inline-flex items-center gap-0.5 font-semibold" @click="editingContact = !editingContact">
-                  <Pencil class="w-3 h-3" /> Edit
-                </button>
-              </p>
+      <div class="flex flex-col lg:flex-row lg:items-start gap-4">
+        <div class="flex items-start gap-3 flex-1 min-w-0">
+          <UiButton variant="secondary" :icon="ArrowLeft" :to="{ name: 'admin.screening.dashboard' }" aria-label="Back" class="!px-0 w-9 shrink-0" />
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-ui-h1 text-ui-ink truncate">{{ s.company || s.contact_name || "Unnamed client" }}</h1>
+              <UiBadge :tone="STATUS_TONE[s.status] || 'neutral'" dot>{{ SCREENING_STATUS[s.status]?.label }}</UiBadge>
             </div>
+            <p class="text-ui-small text-ui-muted mt-0.5">
+              <span class="font-mono">{{ s.code }}</span> · {{ SCREENING_SOURCE[s.source] }} · {{ s.lang === "en" ? "English" : "Bahasa Indonesia" }}
+              · {{ s.submitted_at ? `Submitted ${formatDate(s.submitted_at)}` : `Created ${formatDate(s.created_at)}` }}
+            </p>
+            <p class="text-ui-small text-ui-text mt-1">
+              {{ s.contact_name || "-" }}<template v-if="s.email"> · {{ s.email }}</template><template v-if="s.phone"> · {{ s.phone }}</template>
+              <button v-if="canEdit" type="button" class="ml-1.5 text-ui-accent font-medium inline-flex items-center gap-1 hover:underline" @click="editingContact = !editingContact">
+                <Pencil class="w-3 h-3" /> Edit
+              </button>
+            </p>
           </div>
-          <div class="flex flex-wrap gap-2 shrink-0">
-            <select v-if="canEdit" :value="s.status" class="select-soft !w-auto" aria-label="Status" @change="setStatus($event.target.value)">
+        </div>
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <div v-if="canEdit" class="relative">
+            <select
+              :value="s.status"
+              aria-label="Status"
+              class="h-9 pl-3 pr-8 appearance-none bg-ui-surface text-ui-small font-medium text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+              @change="setStatus($event.target.value)"
+            >
               <option v-for="(v, k) in SCREENING_STATUS" :key="k" :value="k">{{ v.label }}</option>
             </select>
-            <button type="button" class="rounded-[8px] border border-[#DCDEDD] bg-white hover:border-[#0C51D9] px-3 py-2 text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50" :disabled="!!pdfBusy" @click="pdf(false)">
-              <Loader2 v-if="pdfBusy === 'client'" class="w-3.5 h-3.5 animate-spin" /><Download v-else class="w-3.5 h-3.5" /> PDF for client
-            </button>
-            <button type="button" class="rounded-[8px] border border-[#DCDEDD] bg-white hover:border-[#0C51D9] px-3 py-2 text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50" :disabled="!!pdfBusy" @click="pdf(true)">
-              <Loader2 v-if="pdfBusy === 'internal'" class="w-3.5 h-3.5 animate-spin" /><FileLock2 v-else class="w-3.5 h-3.5" /> PDF with prices
-            </button>
-            <button v-if="can('screening-delete')" type="button" class="w-9 h-9 rounded-[8px] border border-[#DCDEDD] bg-white hover:border-red-400 hover:bg-red-50 flex items-center justify-center" aria-label="Delete" @click="remove">
-              <Trash2 class="w-4 h-4 text-gray-500" />
-            </button>
+            <ChevronDown class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-faint pointer-events-none" />
           </div>
+          <UiButton variant="secondary" :icon="Download" :loading="pdfBusy === 'client'" :disabled="!!pdfBusy" @click="pdf(false)">PDF for client</UiButton>
+          <UiButton variant="secondary" :icon="FileLock2" :loading="pdfBusy === 'internal'" :disabled="!!pdfBusy" @click="pdf(true)">PDF with prices</UiButton>
+          <UiButton v-if="can('screening-delete')" variant="danger" :icon="Trash2" aria-label="Delete" class="!px-0 w-9" @click="remove" />
         </div>
+      </div>
 
-        <form v-if="editingContact" class="mt-3 grid grid-cols-1 sm:grid-cols-4 gap-2" @submit.prevent="saveContact">
-          <input v-model="contact.contact_name" placeholder="Contact name" maxlength="120" class="border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm bg-white" />
-          <input v-model="contact.company" placeholder="Company" maxlength="150" class="border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm bg-white" />
-          <input v-model="contact.email" type="email" placeholder="Email" maxlength="150" class="border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm bg-white" />
+      <!-- Contact edit -->
+      <form v-if="editingContact" class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 items-end ui-anim-fade-up" @submit.prevent="saveContact">
+        <UiInput v-model="contact.contact_name" placeholder="Contact name" aria-label="Contact name" />
+        <UiInput v-model="contact.company" placeholder="Company" aria-label="Company" />
+        <UiInput v-model="contact.email" type="email" placeholder="Email" aria-label="Email" :error="contactErrors.email?.[0] || ''" />
+        <UiInput v-model="contact.phone" placeholder="Phone" aria-label="Phone" />
+        <UiButton type="submit" :loading="saving">Save</UiButton>
+      </form>
+
+      <!-- Invite link -->
+      <section v-if="s.invite_url" class="bg-ui-info-soft border border-ui-info/20 rounded-ui-card p-4">
+        <p class="text-ui-small font-medium text-ui-info flex items-center gap-1.5"><Link2 class="w-4 h-4" /> Link for the client — open until {{ formatDate(s.token_expires_at) }}</p>
+        <div class="flex flex-col sm:flex-row gap-2 mt-2">
+          <input
+            :value="s.invite_url"
+            readonly
+            aria-label="Invite link"
+            class="w-full sm:flex-1 min-w-0 h-9 shrink-0 px-3 bg-ui-surface font-mono text-ui-cap text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+            @focus="$event.target.select()"
+          />
           <div class="flex gap-2">
-            <input v-model="contact.phone" placeholder="Phone" maxlength="40" class="flex-1 min-w-0 border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm bg-white" />
-            <button type="submit" class="blue-gradient border border-[#2151A0] rounded-[10px] px-3 text-white text-xs font-semibold">Save</button>
+            <UiButton variant="secondary" :icon="copied ? Check : Copy" class="flex-1 sm:flex-none" @click="copyLink">{{ copied ? "Copied" : "Copy" }}</UiButton>
+            <UiButton v-if="can('screening-share')" variant="secondary" :icon="RefreshCw" class="flex-1 sm:flex-none" @click="makeInvite()">New link</UiButton>
           </div>
-          <p v-if="contactErrors.email" class="text-xs text-red-500 sm:col-span-4">{{ contactErrors.email[0] }}</p>
-        </form>
-
-        <!-- Invite link -->
-        <div v-if="s.invite_url" class="mt-3 bg-white border border-sky-200 rounded-[10px] p-3">
-          <p class="text-xs font-semibold text-sky-800 flex items-center gap-1.5"><Link2 class="w-3.5 h-3.5" /> Link for the client — open until {{ formatDate(s.token_expires_at) }}</p>
-          <div class="flex flex-col sm:flex-row gap-2 mt-1.5">
-            <input :value="s.invite_url" readonly class="flex-1 min-w-0 border border-[#DCDEDD] rounded-[8px] px-2.5 py-1.5 text-xs bg-gray-50" @focus="$event.target.select()" />
-            <div class="flex gap-2">
-              <button type="button" class="rounded-[8px] border border-[#DCDEDD] px-3 py-1.5 text-xs font-semibold flex items-center gap-1" @click="copyLink">
-                <Check v-if="copied" class="w-3.5 h-3.5 text-green-600" /><Copy v-else class="w-3.5 h-3.5" /> {{ copied ? "Copied" : "Copy" }}
-              </button>
-              <button v-if="can('screening-share')" type="button" class="rounded-[8px] border border-[#DCDEDD] px-3 py-1.5 text-xs font-semibold flex items-center gap-1" @click="makeInvite()">
-                <RefreshCw class="w-3.5 h-3.5" /> New link
-              </button>
-            </div>
-          </div>
-          <p class="text-[11px] text-brand-light mt-1.5">The client sees only the questions — no prices. Their answers save as they go; you'll get an email when they submit.</p>
         </div>
-        <div v-else-if="!s.submitted_at && can('screening-share')" class="mt-3 flex flex-wrap items-center gap-2 text-xs">
-          <span class="text-brand-light">Let the client fill it in themselves:</span>
-          <button type="button" class="rounded-[8px] border border-[#DCDEDD] bg-white px-3 py-1.5 font-semibold flex items-center gap-1 hover:border-[#0C51D9]" @click="makeInvite('id')"><Send class="w-3.5 h-3.5" /> Link (ID)</button>
-          <button type="button" class="rounded-[8px] border border-[#DCDEDD] bg-white px-3 py-1.5 font-semibold flex items-center gap-1 hover:border-[#0C51D9]" @click="makeInvite('en')"><Send class="w-3.5 h-3.5" /> Link (EN)</button>
-        </div>
+        <p class="text-ui-cap text-ui-muted mt-2">The client sees only the questions — no prices. Their answers save as they go; you'll get an email when they submit.</p>
+      </section>
+      <div v-else-if="!s.submitted_at && can('screening-share')" class="flex flex-wrap items-center gap-2">
+        <span class="text-ui-small text-ui-muted">Let the client fill it in themselves:</span>
+        <UiButton variant="secondary" size="sm" :icon="Send" @click="makeInvite('id')">Link (ID)</UiButton>
+        <UiButton variant="secondary" size="sm" :icon="Send" @click="makeInvite('en')">Link (EN)</UiButton>
       </div>
 
       <!-- Tabs -->
-      <div class="inline-grid grid-cols-2 bg-gray-100 rounded-[10px] p-1 mb-4 w-full sm:w-auto">
-        <button
-          v-for="t in [{ k: 'recommendation', l: 'Recommendation' }, { k: 'answers', l: 'Answers' }]"
-          :key="t.k"
-          type="button"
-          class="px-4 py-1.5 rounded-[8px] text-sm font-semibold"
-          :class="tab === t.k ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-light hover:text-brand-dark'"
-          @click="tab = t.k"
-        >{{ t.l }}</button>
+      <div class="overflow-x-auto [scrollbar-width:none] sm:border-b sm:border-ui-line">
+        <div class="flex items-center gap-1.5 sm:gap-6 min-w-max" role="tablist">
+          <button
+            v-for="t in [{ k: 'recommendation', l: 'Recommendation' }, { k: 'answers', l: 'Answers' }]"
+            :key="t.k"
+            type="button"
+            role="tab"
+            :aria-selected="tab === t.k"
+            :class="[
+              'ui-press shrink-0 inline-flex items-center gap-2 whitespace-nowrap font-medium focus:outline-none focus-visible:shadow-ui-focus',
+              'h-8 px-3 rounded-full border text-ui-small',
+              'sm:h-auto sm:px-0.5 sm:pt-1 sm:pb-3 sm:rounded-none sm:border-0 sm:border-b-2 sm:-mb-px sm:text-ui-body',
+              tab === t.k
+                ? 'bg-ui-ink text-white border-ui-ink sm:bg-transparent sm:text-ui-ink sm:border-ui-ink'
+                : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover sm:bg-transparent sm:text-ui-muted sm:border-transparent sm:hover:bg-transparent sm:hover:text-ui-ink',
+            ]"
+            @click="tab = t.k"
+          >{{ t.l }}</button>
+        </div>
       </div>
 
       <!-- Recommendation -->
-      <div v-if="tab === 'recommendation'" class="space-y-4">
-        <div v-if="!s.result" class="text-center py-12 rounded-[14px] border border-dashed border-[#DCDEDD] bg-gray-50/60">
-          <Sparkles class="w-9 h-9 text-gray-300 mx-auto mb-2" />
-          <p class="text-sm font-semibold text-brand-dark">No recommendation yet</p>
-          <p class="text-xs text-brand-light">It's prepared once the questionnaire is submitted{{ canEdit ? " — or fill it in on the Answers tab" : "" }}.</p>
+      <div v-if="tab === 'recommendation'" class="space-y-5">
+        <div v-if="!s.result" class="bg-ui-surface border border-ui-line rounded-ui-card">
+          <UiEmpty :icon="Sparkles" title="No recommendation yet" :message="`It's prepared once the questionnaire is submitted${canEdit ? ' — or fill it in on the Answers tab' : ''}.`" />
         </div>
 
         <template v-else>
-          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-            <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-4 xl:col-span-2">
-              <p class="text-xs text-brand-light flex items-center gap-1.5"><Layers class="w-3.5 h-3.5" /> Recommended system</p>
-              <p class="text-sm font-bold text-brand-dark mt-1">{{ s.result.system_types?.join(", ") || "Needs a conversation" }}</p>
-              <span v-if="s.result.complexity" class="inline-block mt-2 px-2 py-0.5 rounded-md text-xs font-semibold" :class="COMPLEXITY[s.result.complexity]?.class">{{ COMPLEXITY[s.result.complexity]?.label }}</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 ui-stagger">
+            <div class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 xl:col-span-2 min-w-0">
+              <p class="text-ui-small text-ui-muted flex items-center gap-2"><Layers class="w-4 h-4 text-ui-faint" /> Recommended system</p>
+              <p class="text-ui-h2 text-ui-ink mt-1.5">{{ s.result.system_types?.join(", ") || "Needs a conversation" }}</p>
+              <UiBadge v-if="s.result.complexity" :tone="SIZE_TONE[s.result.complexity] || 'neutral'" class="mt-2">{{ COMPLEXITY[s.result.complexity]?.label }}</UiBadge>
             </div>
-            <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
-              <p class="text-xs text-brand-light flex items-center gap-1.5"><Wallet class="w-3.5 h-3.5" /> Estimate (from)</p>
-              <p class="text-lg font-extrabold text-brand-dark mt-1">{{ money(est.one_time) }}</p>
-              <p v-if="est.monthly" class="text-xs text-brand-dark">+ {{ money(est.monthly) }} / month</p>
-              <p v-if="est.yearly" class="text-xs text-brand-dark">+ {{ money(est.yearly) }} / year</p>
-              <p v-if="est.by_quote?.length" class="text-[11px] text-gray-400 mt-1">{{ est.by_quote.length }} item(s) by quote</p>
+            <div class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0">
+              <p class="text-ui-small text-ui-muted flex items-center gap-2"><Wallet class="w-4 h-4 text-ui-faint" /> Estimate (from)</p>
+              <p class="text-ui-h1 text-ui-ink tabular-nums mt-1.5">{{ money(est.one_time) }}</p>
+              <p v-if="est.monthly" class="text-ui-cap text-ui-text tabular-nums">+ {{ money(est.monthly) }} / month</p>
+              <p v-if="est.yearly" class="text-ui-cap text-ui-text tabular-nums">+ {{ money(est.yearly) }} / year</p>
+              <p v-if="est.by_quote?.length" class="text-ui-cap text-ui-faint mt-1">{{ est.by_quote.length }} item(s) by quote</p>
             </div>
-            <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
-              <p class="text-xs text-brand-light flex items-center gap-1.5"><Clock class="w-3.5 h-3.5" /> Timeline & budget</p>
-              <p class="text-sm font-bold text-brand-dark mt-1">{{ est.longest_duration || "-" }}<span v-if="est.extra_weeks" class="font-normal text-xs"> + ~{{ est.extra_weeks }} wk add-ons</span></p>
-              <p class="text-xs text-brand-dark mt-1">{{ s.result.budget?.label || "No budget given" }}</p>
-              <span class="inline-block mt-1 px-2 py-0.5 rounded-md text-[11px] font-semibold" :class="FIT[est.budget_fit]?.class">{{ FIT[est.budget_fit]?.label }}</span>
-              <p v-if="est.deferrable?.length" class="text-[11px] text-amber-700 mt-1">Could move to phase 2: {{ est.deferrable.join(", ") }}</p>
+            <div class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0">
+              <p class="text-ui-small text-ui-muted flex items-center gap-2"><Clock class="w-4 h-4 text-ui-faint" /> Timeline & budget</p>
+              <p class="text-ui-h3 text-ui-ink mt-1.5">{{ est.longest_duration || "-" }}<span v-if="est.extra_weeks" class="font-normal text-ui-cap text-ui-muted"> + ~{{ est.extra_weeks }} wk add-ons</span></p>
+              <p class="text-ui-cap text-ui-text mt-1">{{ s.result.budget?.label || "No budget given" }}</p>
+              <UiBadge :tone="FIT_TONE[est.budget_fit] || 'neutral'" dot class="mt-1.5">{{ FIT[est.budget_fit]?.label }}</UiBadge>
+              <p v-if="est.deferrable?.length" class="text-ui-cap text-ui-warn mt-1.5">Could move to phase 2: {{ est.deferrable.join(", ") }}</p>
             </div>
           </div>
 
-          <div v-if="s.result.flags?.length" class="bg-amber-50 border border-amber-200 rounded-[12px] p-3.5">
-            <p class="text-xs font-semibold text-amber-800 flex items-center gap-1.5 mb-1"><AlertTriangle class="w-3.5 h-3.5" /> Notes for the team</p>
-            <ul class="list-disc pl-5 text-xs text-amber-900 space-y-0.5">
+          <div v-if="s.result.flags?.length" class="bg-ui-warn-soft border border-ui-warn/20 rounded-ui-card px-4 py-3.5">
+            <p class="text-ui-small font-semibold text-ui-warn flex items-center gap-1.5 mb-1"><AlertTriangle class="w-4 h-4" /> Notes for the team</p>
+            <ul class="list-disc pl-5 text-ui-small text-ui-text space-y-0.5">
               <li v-for="f in s.result.flags" :key="f">{{ f }}</li>
             </ul>
           </div>
 
           <!-- Items -->
-          <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-              <div>
-                <p class="text-sm font-bold text-brand-dark">Services to offer</p>
-                <p class="text-xs text-brand-light">Prices from the Rate Card, or hours × the Project Calculator rate. Untick to leave a service out of the summary.</p>
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+            <header class="flex flex-col sm:flex-row sm:items-center gap-3 px-4 sm:px-5 py-4 border-b border-ui-line">
+              <div class="flex-1 min-w-0">
+                <h2 class="text-ui-h2 text-ui-ink">Services to offer</h2>
+                <p class="text-ui-cap text-ui-muted">Prices from the Rate Card, or hours × the Project Calculator rate. Untick to leave a service out of the summary.</p>
               </div>
-              <div v-if="canEdit" class="flex gap-2 shrink-0">
-                <button type="button" class="rounded-[8px] border border-[#DCDEDD] px-3 py-2 text-xs font-semibold flex items-center gap-1.5 hover:border-[#0C51D9]" :disabled="saving" @click="recalculate">
-                  <RefreshCw class="w-3.5 h-3.5" /> Recalculate
-                </button>
-                <button type="button" class="blue-gradient border border-[#2151A0] rounded-[8px] px-3 py-2 text-xs font-semibold text-white flex items-center gap-1.5 disabled:opacity-50" :disabled="!itemsDirty || saving" @click="saveItems">
-                  <Loader2 v-if="saving" class="w-3.5 h-3.5 animate-spin" /><Save v-else class="w-3.5 h-3.5" /> Save changes
-                </button>
+              <div v-if="canEdit" class="grid grid-cols-2 sm:flex gap-2 shrink-0">
+                <UiButton variant="secondary" :icon="RefreshCw" :disabled="saving" @click="recalculate">Recalculate</UiButton>
+                <UiButton :icon="Save" :loading="saving" :disabled="!itemsDirty || saving" @click="saveItems">Save changes</UiButton>
               </div>
+            </header>
+            <div v-if="(canEdit && !hourlyRate && catalog.length) || itemErrors" class="px-4 sm:px-5 pt-3 space-y-1">
+              <p v-if="canEdit && !hourlyRate && catalog.length" class="text-ui-cap text-ui-warn">The Project Calculator hourly rate isn't set, so hourly items show no price.</p>
+              <p v-if="itemErrors" class="text-ui-cap text-ui-bad">{{ itemErrors }}</p>
             </div>
-            <p v-if="canEdit && !hourlyRate && catalog.length" class="text-[11px] text-amber-700 mb-2">The Project Calculator hourly rate isn't set, so hourly items show no price.</p>
-            <p v-if="itemErrors" class="text-xs text-red-500 mb-2">{{ itemErrors }}</p>
 
             <!-- Phones: one card per service -->
-            <div class="md:hidden space-y-2">
-              <div v-for="(i, idx) in items" :key="i.id ?? `m-${idx}`" class="border border-[#EEF1F5] rounded-[10px] p-3" :class="{ 'opacity-50': !i.is_selected }">
-                <div class="flex items-start gap-2">
-                  <input v-model="i.is_selected" type="checkbox" class="mt-1 accent-[#0C51D9]" :disabled="!canEdit" @change="markDirty" />
+            <ul class="md:hidden divide-y divide-ui-line">
+              <li v-for="(i, idx) in items" :key="i.id ?? `m-${idx}`" class="px-4 py-3.5" :class="{ 'opacity-50': !i.is_selected }">
+                <div class="flex items-start gap-2.5">
+                  <span class="text-ui-cap text-ui-faint tabular-nums w-4 pt-2 shrink-0">{{ idx + 1 }}</span>
+                  <input v-model="i.is_selected" type="checkbox" class="mt-2.5 accent-ui-ink" :disabled="!canEdit" aria-label="Include" @change="markDirty" />
                   <div class="flex-1 min-w-0">
-                    <input v-if="canEdit" v-model="i.name" class="w-full border border-[#DCDEDD] rounded-[6px] px-2 py-1 text-sm font-medium text-brand-dark" @input="markDirty" />
-                    <p v-else class="text-sm font-medium text-brand-dark">{{ i.name }}</p>
-                    <p class="text-[11px] text-gray-400 mt-0.5">
-                      <span v-if="i.source === 'manual'" class="text-[#0C51D9] font-semibold">Added · </span>
-                      <span v-if="i.availability === 'preparation'" class="text-amber-700 font-semibold">Not available yet · </span>{{ i.reason }}
+                    <input v-if="canEdit" v-model="i.name" aria-label="Service" :class="[cell, 'w-full font-medium']" @input="markDirty" />
+                    <p v-else class="text-ui-body font-medium text-ui-ink pt-1">{{ i.name }}</p>
+                    <p class="text-ui-cap text-ui-muted mt-1">
+                      <span v-if="i.source === 'manual'" class="text-ui-accent font-medium">Added · </span>
+                      <span v-if="i.availability === 'preparation'" class="text-ui-warn font-medium">Not available yet · </span>{{ i.reason }}
                     </p>
                   </div>
-                  <button v-if="canEdit" type="button" class="w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center shrink-0" aria-label="Remove" @click="removeItem(idx)">
-                    <X class="w-3.5 h-3.5 text-gray-400" />
+                  <button v-if="canEdit" type="button" :class="iconBtn" aria-label="Remove" @click="removeItem(idx)">
+                    <X class="w-4 h-4" />
                   </button>
                 </div>
-                <div v-if="canEdit" class="grid grid-cols-[1fr_1fr_2fr_1.3fr] gap-1.5 mt-2 text-[11px] text-brand-light">
-                  <label>Hours<input v-if="i.hours !== null" v-model.number="i.hours" type="number" min="0" class="w-full border border-[#DCDEDD] rounded-[6px] px-1.5 py-1 text-xs text-brand-dark" @input="onHours(i)" /><span v-else class="block py-1 text-gray-300">-</span></label>
-                  <label>Qty<input v-model.number="i.qty" type="number" min="0" step="any" class="w-full border border-[#DCDEDD] rounded-[6px] px-1.5 py-1 text-xs text-brand-dark" @input="markDirty" /></label>
-                  <label>Unit price<input v-model.number="i.unit_price" type="number" min="0" placeholder="By quote" class="w-full border border-[#DCDEDD] rounded-[6px] px-1.5 py-1 text-xs text-brand-dark" @input="markDirty" /></label>
-                  <label>Per<select v-model="i.price_unit" class="w-full border border-[#DCDEDD] rounded-[6px] px-1 py-1 text-xs text-brand-dark" @change="markDirty"><option value="once">once</option><option value="month">month</option><option value="year">year</option></select></label>
+                <div v-if="canEdit" class="grid grid-cols-[1fr_1fr_2fr_1.3fr] gap-1.5 mt-2.5 pl-[42px] text-ui-cap text-ui-muted">
+                  <label>Hours<input v-if="i.hours !== null" v-model.number="i.hours" type="number" min="0" :class="[cell, 'w-full mt-0.5 tabular-nums']" @input="onHours(i)" /><span v-else class="block h-8 leading-8 text-ui-faint">-</span></label>
+                  <label>Qty<input v-model.number="i.qty" type="number" min="0" step="any" :class="[cell, 'w-full mt-0.5 tabular-nums']" @input="markDirty" /></label>
+                  <label>Unit price<input v-model.number="i.unit_price" type="number" min="0" placeholder="By quote" :class="[cell, 'w-full mt-0.5 tabular-nums']" @input="markDirty" /></label>
+                  <label>Per<select v-model="i.price_unit" :class="[cell, 'w-full mt-0.5 px-1']" @change="markDirty"><option value="once">once</option><option value="month">month</option><option value="year">year</option></select></label>
                 </div>
-                <p class="text-right text-sm font-semibold mt-1.5">
-                  <template v-if="lineTotal(i) === null"><span class="text-xs text-gray-400 font-normal">By quote</span></template>
-                  <template v-else>{{ money(lineTotal(i)) }}<span class="text-[11px] font-normal text-gray-400">{{ PRICE_UNIT[i.price_unit] }}</span></template>
+                <p class="text-right text-ui-body font-medium text-ui-ink tabular-nums mt-2">
+                  <template v-if="lineTotal(i) === null"><span class="text-ui-cap text-ui-faint font-normal">By quote</span></template>
+                  <template v-else>{{ money(lineTotal(i)) }}<span class="text-ui-cap font-normal text-ui-faint">{{ PRICE_UNIT[i.price_unit] }}</span></template>
                 </p>
-              </div>
-            </div>
+              </li>
+            </ul>
 
-            <div class="hidden md:block overflow-x-auto -mx-4 px-4">
-              <table class="min-w-[760px] w-full text-sm">
-                <thead class="text-left text-brand-light text-xs">
-                  <tr class="border-b border-[#EEF1F5]">
-                    <th class="py-2 pr-2 w-8"></th>
-                    <th class="py-2 pr-3">Service</th>
-                    <th class="py-2 pr-3 w-20 text-right">Hours</th>
-                    <th class="py-2 pr-3 w-16 text-right">Qty</th>
-                    <th class="py-2 pr-3 w-36 text-right">Unit price</th>
-                    <th class="py-2 pr-3 w-24">Per</th>
-                    <th class="py-2 pr-3 w-32 text-right">Total</th>
-                    <th v-if="canEdit" class="py-2 w-8"></th>
+            <div class="hidden md:block overflow-x-auto">
+              <table class="min-w-[800px] w-full border-collapse">
+                <thead>
+                  <tr class="text-left text-ui-cap font-medium text-ui-muted">
+                    <th class="w-11 pl-4 pr-0 h-10 border-b border-ui-line font-medium">#</th>
+                    <th class="w-8 px-2 h-10 border-b border-ui-line"><span class="sr-only">Include</span></th>
+                    <th class="px-3 h-10 border-b border-ui-line font-medium">Service</th>
+                    <th class="px-3 h-10 border-b border-ui-line font-medium w-24 text-right">Hours</th>
+                    <th class="px-3 h-10 border-b border-ui-line font-medium w-20 text-right">Qty</th>
+                    <th class="px-3 h-10 border-b border-ui-line font-medium w-40 text-right">Unit price</th>
+                    <th class="px-3 h-10 border-b border-ui-line font-medium w-28">Per</th>
+                    <th class="px-3 h-10 border-b border-ui-line font-medium w-36 text-right">Total</th>
+                    <th v-if="canEdit" class="w-12 h-10 border-b border-ui-line"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(i, idx) in items" :key="i.id ?? `new-${idx}`" class="border-b border-[#F4F5F7] align-top" :class="{ 'opacity-50': !i.is_selected }">
-                    <td class="py-2 pr-2"><input v-model="i.is_selected" type="checkbox" class="mt-2 accent-[#0C51D9]" :disabled="!canEdit" @change="markDirty" /></td>
-                    <td class="py-2 pr-3">
-                      <input v-if="canEdit" v-model="i.name" class="w-full border border-transparent hover:border-[#DCDEDD] focus:border-[#0C51D9] rounded-[6px] px-1.5 py-1 font-medium text-brand-dark" @input="markDirty" />
-                      <p v-else class="font-medium text-brand-dark py-1">{{ i.name }}</p>
-                      <p class="text-[11px] text-gray-400 px-1.5">
-                        <span v-if="i.source === 'manual'" class="text-[#0C51D9] font-semibold">Added · </span>
-                        <span v-if="i.availability === 'preparation'" class="text-amber-700 font-semibold">Not available yet · </span>
+                  <tr v-for="(i, idx) in items" :key="i.id ?? `new-${idx}`" class="align-top hover:bg-ui-subtle/60 transition-colors" :class="{ 'opacity-50': !i.is_selected }">
+                    <td class="pl-4 pr-0 py-3 text-ui-cap text-ui-faint tabular-nums border-b border-ui-line"><span class="inline-block pt-1.5">{{ idx + 1 }}</span></td>
+                    <td class="px-2 py-3 border-b border-ui-line"><input v-model="i.is_selected" type="checkbox" class="mt-2 accent-ui-ink" :disabled="!canEdit" aria-label="Include" @change="markDirty" /></td>
+                    <td class="px-3 py-3 border-b border-ui-line">
+                      <input v-if="canEdit" v-model="i.name" aria-label="Service" :class="[cell, 'w-full font-medium border-transparent hover:border-ui-line-strong']" @input="markDirty" />
+                      <p v-else class="text-ui-body font-medium text-ui-ink py-1.5">{{ i.name }}</p>
+                      <p class="text-ui-cap text-ui-muted px-2 mt-0.5">
+                        <span v-if="i.source === 'manual'" class="text-ui-accent font-medium">Added · </span>
+                        <span v-if="i.availability === 'preparation'" class="text-ui-warn font-medium">Not available yet · </span>
                         {{ i.reason }}
                       </p>
                     </td>
-                    <td class="py-2 pr-3 text-right">
-                      <input v-if="canEdit && i.hours !== null" v-model.number="i.hours" type="number" min="0" class="w-16 border border-[#DCDEDD] rounded-[6px] px-1.5 py-1 text-right" @input="onHours(i)" />
-                      <span v-else class="text-gray-300">-</span>
+                    <td class="px-3 py-3 text-right border-b border-ui-line">
+                      <input v-if="canEdit && i.hours !== null" v-model.number="i.hours" type="number" min="0" aria-label="Hours" :class="[cell, 'w-20 text-right tabular-nums']" @input="onHours(i)" />
+                      <span v-else class="inline-block pt-1.5 text-ui-faint">-</span>
                     </td>
-                    <td class="py-2 pr-3 text-right">
-                      <input v-if="canEdit" v-model.number="i.qty" type="number" min="0" step="any" class="w-14 border border-[#DCDEDD] rounded-[6px] px-1.5 py-1 text-right" @input="markDirty" />
-                      <span v-else>{{ i.qty }}</span>
+                    <td class="px-3 py-3 text-right border-b border-ui-line text-ui-small tabular-nums">
+                      <input v-if="canEdit" v-model.number="i.qty" type="number" min="0" step="any" aria-label="Qty" :class="[cell, 'w-16 text-right tabular-nums']" @input="markDirty" />
+                      <span v-else class="inline-block pt-1.5">{{ i.qty }}</span>
                     </td>
-                    <td class="py-2 pr-3 text-right">
-                      <input v-if="canEdit" v-model.number="i.unit_price" type="number" min="0" placeholder="By quote" class="w-32 border border-[#DCDEDD] rounded-[6px] px-1.5 py-1 text-right" @input="markDirty" />
-                      <span v-else>{{ i.unit_price === null ? "By quote" : money(i.unit_price) }}</span>
+                    <td class="px-3 py-3 text-right border-b border-ui-line text-ui-small tabular-nums">
+                      <input v-if="canEdit" v-model.number="i.unit_price" type="number" min="0" placeholder="By quote" aria-label="Unit price" :class="[cell, 'w-36 text-right tabular-nums']" @input="markDirty" />
+                      <span v-else class="inline-block pt-1.5">{{ i.unit_price === null ? "By quote" : money(i.unit_price) }}</span>
                     </td>
-                    <td class="py-2 pr-3">
-                      <select v-if="canEdit" v-model="i.price_unit" class="border border-[#DCDEDD] rounded-[6px] px-1 py-1 text-xs" @change="markDirty">
+                    <td class="px-3 py-3 border-b border-ui-line">
+                      <select v-if="canEdit" v-model="i.price_unit" aria-label="Per" :class="[cell, 'px-1.5']" @change="markDirty">
                         <option value="once">once</option><option value="month">month</option><option value="year">year</option>
                       </select>
-                      <span v-else class="text-xs">{{ i.price_unit }}</span>
+                      <span v-else class="inline-block pt-1.5 text-ui-small">{{ i.price_unit }}</span>
                     </td>
-                    <td class="py-2 pr-3 text-right whitespace-nowrap font-semibold">
-                      <template v-if="lineTotal(i) === null"><span class="text-xs text-gray-400 font-normal">By quote</span></template>
-                      <template v-else>{{ money(lineTotal(i)) }}<span class="text-[11px] font-normal text-gray-400">{{ PRICE_UNIT[i.price_unit] }}</span></template>
+                    <td class="px-3 py-3 text-right whitespace-nowrap border-b border-ui-line text-ui-small font-medium text-ui-ink tabular-nums">
+                      <span class="inline-block pt-1.5">
+                        <template v-if="lineTotal(i) === null"><span class="text-ui-cap text-ui-faint font-normal">By quote</span></template>
+                        <template v-else>{{ money(lineTotal(i)) }}<span class="text-ui-cap font-normal text-ui-faint">{{ PRICE_UNIT[i.price_unit] }}</span></template>
+                      </span>
                     </td>
-                    <td v-if="canEdit" class="py-2">
-                      <button type="button" class="w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center" aria-label="Remove" @click="removeItem(idx)">
-                        <X class="w-3.5 h-3.5 text-gray-400" />
+                    <td v-if="canEdit" class="py-3 pr-3 border-b border-ui-line">
+                      <button type="button" :class="iconBtn" aria-label="Remove" @click="removeItem(idx)">
+                        <X class="w-4 h-4" />
                       </button>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p v-if="!items.length" class="text-sm text-gray-400 text-center py-6">No services yet.</p>
+            <UiEmpty v-if="!items.length" title="No services yet." compact />
 
-            <div v-if="canEdit" class="flex flex-col sm:flex-row gap-2 mt-3">
-              <select v-model="addPick" class="select-soft sm:max-w-sm" aria-label="Add a service">
-                <option value="">Add a service…</option>
-                <option value="__custom">Custom item</option>
-                <option v-for="c in catalog" :key="c.id" :value="String(c.id)">{{ c.name }}{{ c.availability !== "available" ? " (not available yet)" : "" }}</option>
-              </select>
-              <button type="button" class="rounded-[8px] border border-[#DCDEDD] px-3 py-2 text-xs font-semibold flex items-center justify-center gap-1 hover:border-[#0C51D9] disabled:opacity-50" :disabled="!addPick" @click="addItem">
-                <Plus class="w-3.5 h-3.5" /> Add
-              </button>
+            <div v-if="canEdit" class="flex flex-col sm:flex-row gap-2 px-4 sm:px-5 py-4 border-t border-ui-line bg-ui-subtle/40 rounded-b-ui-card">
+              <div class="relative sm:w-[360px]">
+                <select
+                  v-model="addPick"
+                  aria-label="Add a service"
+                  class="w-full h-9 pl-3 pr-9 appearance-none bg-ui-surface text-ui-body border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
+                  :class="addPick ? 'text-ui-ink' : 'text-ui-muted'"
+                >
+                  <option value="">Add a service…</option>
+                  <option value="__custom">Custom item</option>
+                  <option v-for="c in catalog" :key="c.id" :value="String(c.id)">{{ c.name }}{{ c.availability !== "available" ? " (not available yet)" : "" }}</option>
+                </select>
+                <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-faint pointer-events-none" />
+              </div>
+              <UiButton variant="secondary" :icon="Plus" :disabled="!addPick" @click="addItem">Add</UiButton>
             </div>
-          </div>
+          </section>
 
-          <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-            <p class="text-sm font-bold text-brand-dark mb-1">Internal notes</p>
-            <textarea v-model="notes" rows="3" maxlength="5000" :readonly="!canEdit" class="w-full border border-[#DCDEDD] rounded-[10px] px-3 py-2 text-sm focus:outline-none focus:border-[#0C51D9]" placeholder="Follow-up, what the client said in the meeting, etc."></textarea>
-            <button v-if="canEdit" type="button" class="mt-2 rounded-[8px] border border-[#DCDEDD] px-3 py-1.5 text-xs font-semibold hover:border-[#0C51D9] disabled:opacity-50" :disabled="notes === (s.internal_notes || '') || saving" @click="saveNotes">Save notes</button>
-          </div>
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5">
+            <h2 class="text-ui-h3 text-ui-ink mb-2">Internal notes</h2>
+            <textarea
+              v-model="notes"
+              rows="3"
+              maxlength="5000"
+              :readonly="!canEdit"
+              aria-label="Internal notes"
+              class="w-full px-3 py-2.5 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control resize-y focus:outline-none focus:border-ui-accent focus:shadow-ui-focus read-only:bg-ui-subtle"
+              placeholder="Follow-up, what the client said in the meeting, etc."
+            ></textarea>
+            <UiButton v-if="canEdit" variant="secondary" size="sm" class="mt-2" :disabled="notes === (s.internal_notes || '') || saving" @click="saveNotes">Save notes</UiButton>
+          </section>
         </template>
       </div>
 
       <!-- Answers -->
-      <div v-else class="space-y-4">
-        <div v-if="canEdit" class="flex flex-wrap gap-2 justify-end">
+      <div v-else class="space-y-5">
+        <div v-if="canEdit" class="flex flex-wrap items-center gap-2 justify-end">
           <template v-if="editingAnswers">
-            <button type="button" class="rounded-[8px] border border-[#DCDEDD] px-3 py-2 text-xs font-semibold" @click="(editingAnswers = false), resetDrafts()">Cancel</button>
-            <button type="button" class="rounded-[8px] border border-[#DCDEDD] px-3 py-2 text-xs font-semibold disabled:opacity-50" :disabled="saving" @click="saveAnswers(false)">Save draft</button>
-            <button type="button" class="blue-gradient border border-[#2151A0] rounded-[8px] px-3 py-2 text-xs font-semibold text-white flex items-center gap-1.5 disabled:opacity-50" :disabled="saving" @click="saveAnswers(true)">
-              <Loader2 v-if="saving" class="w-3.5 h-3.5 animate-spin" /><Sparkles v-else class="w-3.5 h-3.5" /> Save & analyse
-            </button>
+            <UiButton variant="ghost" @click="(editingAnswers = false), resetDrafts()">Cancel</UiButton>
+            <UiButton variant="secondary" :disabled="saving" @click="saveAnswers(false)">Save draft</UiButton>
+            <UiButton :icon="Sparkles" :loading="saving" :disabled="saving" @click="saveAnswers(true)">Save & analyse</UiButton>
           </template>
-          <button v-else type="button" class="rounded-[8px] border border-[#DCDEDD] px-3 py-2 text-xs font-semibold flex items-center gap-1.5 hover:border-[#0C51D9]" @click="editingAnswers = true">
-            <Pencil class="w-3.5 h-3.5" /> {{ s.submitted_at ? "Edit answers" : "Fill in" }}
-          </button>
+          <UiButton v-else variant="secondary" :icon="Pencil" @click="editingAnswers = true">{{ s.submitted_at ? "Edit answers" : "Fill in" }}</UiButton>
         </div>
-        <p v-if="Object.keys(answerErrors).length" class="text-xs text-red-500 text-right">Some required questions are still empty.</p>
+        <UiAlert v-if="Object.keys(answerErrors).length" tone="bad" message="Some required questions are still empty." />
 
         <ScreeningFormFields v-if="editingAnswers" v-model="answers" :form="s.form" :errors="answerErrors" />
 
         <template v-else>
-          <div v-if="!s.readable_answers?.length" class="text-center py-12 rounded-[14px] border border-dashed border-[#DCDEDD] bg-gray-50/60 text-sm text-brand-light">No answers yet.</div>
-          <div v-for="section in s.readable_answers" :key="section.key" class="bg-white border border-[#DCDEDD] rounded-[14px] p-4">
-            <p class="text-sm font-bold text-brand-dark mb-2">{{ section.title }}</p>
-            <dl class="divide-y divide-[#F1F3F7]">
-              <div v-for="a in section.answers" :key="a.key" class="py-2 grid grid-cols-1 sm:grid-cols-[40%_1fr] gap-x-4 gap-y-0.5 text-sm">
-                <dt class="text-brand-light">{{ a.question }}</dt>
-                <dd class="text-brand-dark whitespace-pre-line">{{ a.answer }}</dd>
+          <div v-if="!s.readable_answers?.length" class="bg-ui-surface border border-ui-line rounded-ui-card">
+            <UiEmpty title="No answers yet." compact />
+          </div>
+          <section v-for="section in s.readable_answers" :key="section.key" class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+            <h2 class="text-ui-h2 text-ui-ink px-5 sm:px-6 pt-4 pb-3 border-b border-ui-line">{{ section.title }}</h2>
+            <dl class="divide-y divide-ui-line px-5 sm:px-6">
+              <div v-for="a in section.answers" :key="a.key" class="py-3 grid grid-cols-1 sm:grid-cols-[40%_1fr] gap-x-6 gap-y-0.5">
+                <dt class="text-ui-small text-ui-muted">{{ a.question }}</dt>
+                <dd class="text-ui-body text-ui-ink whitespace-pre-line">{{ a.answer }}</dd>
               </div>
             </dl>
-          </div>
+          </section>
         </template>
       </div>
     </template>

@@ -1,11 +1,12 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { ListChecksIcon, Plus, X, Pencil, Trash2, Users, User } from "lucide-vue-next";
+import { ListChecksIcon, Plus, Pencil, Trash2, Users, User, Search, Calendar, AlertTriangle, SearchX } from "lucide-vue-next";
 import { useStaffTaskStore } from "@/stores/staffTask";
 import { useAuthStore } from "@/stores/auth";
 import { can } from "@/helpers/permissionHelper";
-import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { UiAlert, UiBadge, UiButton, UiEmpty, UiInput, UiModal, UiPageHeader, UiTable } from "@/components/ui";
+import Avatar from "@/components/common/Avatar.vue";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import StaffTaskComments from "@/components/admin/documents/StaffTaskComments.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
@@ -20,11 +21,22 @@ const { user } = storeToRefs(authStore);
 
 const filters = ref({ search: "" });
 
+// Same tones as My Tasks (the assignee side): to do = neutral, working = warn, done = ok.
 const STATUS_LABELS = {
-  todo: { label: "To Do", class: "bg-gray-100 text-gray-600" },
-  in_progress: { label: "In Progress", class: "bg-blue-100 text-blue-700" },
-  done: { label: "Done", class: "bg-green-100 text-green-700" },
+  todo: { label: "To Do", tone: "neutral" },
+  in_progress: { label: "In Progress", tone: "warn" },
+  done: { label: "Done", tone: "ok" },
 };
+
+// Presentation only: table columns (UiTable adds the "#" column).
+const COLUMNS = [
+  { key: "title", label: "Task" },
+  { key: "assignment_mode", label: "Assigned to", width: 150 },
+  { key: "due_date", label: "Due", width: 190 },
+  { key: "progress", label: "Progress", width: 190 },
+  { key: "actions", label: "", align: "right", width: 96 },
+];
+const progressPct = (task) => (task.progress?.total ? (task.progress.done / task.progress.total) * 100 : 0);
 
 const showFormModal = ref(false);
 const editingId = ref(null);
@@ -160,224 +172,243 @@ onMounted(fetchData);
 </script>
 
 <template>
-  <div class="px-0.5 py-1 sm:px-4 sm:py-4">
-    <div class="bg-white mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div class="flex items-center gap-3 min-w-0">
-        <div class="w-11 h-11 bg-emerald-50 rounded-[12px] flex items-center justify-center shrink-0">
-          <ListChecksIcon class="w-5 h-5 text-emerald-600" />
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-brand-dark text-lg font-bold">Staff Tasks</h3>
-          <p class="text-brand-light text-sm">Assign daily tasks to all staff or hand-picked staff</p>
-        </div>
-      </div>
-      <button
-        v-if="can('staff-task-create')"
-        @click="openCreateModal"
-        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto"
-      >
-        <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Add Task</span>
-      </button>
-    </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Staff Tasks" subtitle="Assign daily tasks to all staff or hand-picked staff">
+      <template #actions>
+        <UiButton v-if="can('staff-task-create')" :icon="Plus" class="w-full sm:w-auto" @click="openCreateModal">Add Task</UiButton>
+      </template>
+    </UiPageHeader>
 
     <StaffTasksRecap :refresh-key="recapKey" />
 
-    <div class="mb-4">
-      <input
-        v-model="filters.search"
-        @input="fetchData"
-        type="text"
-        placeholder="Search task title..."
-        class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm"
-      />
-    </div>
+    <div class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden">
+      <div class="p-3 sm:p-4 border-b border-ui-line">
+        <UiInput
+          :model-value="filters.search"
+          :icon="Search"
+          placeholder="Search task title..."
+          class="sm:max-w-sm"
+          @update:model-value="(v) => { filters.search = v; fetchData(); }"
+        />
+      </div>
 
-    <div v-if="loading" class="space-y-3">
-      <Skeleton v-for="i in 4" :key="i" height="90px" rounded="16px" />
-    </div>
-
-    <div v-else class="space-y-3">
-      <div
-        v-for="(task, index) in staffTasks"
-        :key="task.id"
-        @click="openDetailModal(task)"
-        class="bg-white border border-[#DCDEDD] rounded-[14px] p-5 cursor-pointer hover:border-[#0C51D9] transition-colors"
-      >
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 mb-1 flex-wrap">
-              <span class="text-gray-400 text-xs font-semibold shrink-0">{{ index + 1 }}.</span>
-              <h4 class="text-brand-dark font-bold">{{ task.title }}</h4>
-              <span
-                class="px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1"
-                :class="task.assignment_mode === 'all_staff' ? 'bg-purple-100 text-purple-700' : 'bg-sky-100 text-sky-700'"
-              >
-                <Users v-if="task.assignment_mode === 'all_staff'" class="w-3 h-3" />
-                <User v-else class="w-3 h-3" />
-                {{ task.assignment_mode === "all_staff" ? "All Staff" : `${task.assignees?.length || 0} Selected` }}
-              </span>
-              <span v-if="isOverdue(task)" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Overdue</span>
-            </div>
-            <p class="text-brand-light text-sm">
-              Due {{ formatDate(task.due_date) }}
-              <span v-if="task.creator"> • by {{ task.creator.name }}</span>
-            </p>
-            <div v-if="task.progress" class="flex items-center gap-2 mt-2">
-              <div class="flex-1 max-w-[160px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  class="h-full bg-emerald-500 transition-all"
-                  :style="{ width: `${task.progress.total ? (task.progress.done / task.progress.total) * 100 : 0}%` }"
-                ></div>
-              </div>
-              <span class="text-xs text-brand-light">{{ task.progress.done }}/{{ task.progress.total }} done</span>
-            </div>
+      <UiTable :columns="COLUMNS" :rows="staffTasks" :loading="loading" :skeleton-rows="4" clickable @row-click="openDetailModal">
+        <template #cell-title="{ row }">
+          <div class="min-w-0 max-w-[420px]">
+            <p class="text-ui-small font-medium text-ui-ink truncate">{{ row.title }}</p>
+            <p v-if="row.creator" class="text-ui-cap text-ui-muted truncate">by {{ row.creator.name }}</p>
           </div>
-          <div class="flex items-center gap-2 shrink-0" @click.stop>
+        </template>
+        <template #cell-assignment_mode="{ row }">
+          <UiBadge :tone="row.assignment_mode === 'all_staff' ? 'neutral' : 'outline'">
+            <Users v-if="row.assignment_mode === 'all_staff'" class="w-3 h-3" />
+            <User v-else class="w-3 h-3" />
+            {{ row.assignment_mode === "all_staff" ? "All Staff" : `${row.assignees?.length || 0} Selected` }}
+          </UiBadge>
+        </template>
+        <template #cell-due_date="{ row }">
+          <div class="flex items-center gap-2 whitespace-nowrap">
+            <span class="tabular-nums" :class="isOverdue(row) ? 'text-ui-bad font-medium' : 'text-ui-text'">{{ formatDate(row.due_date) }}</span>
+            <UiBadge v-if="isOverdue(row)" tone="bad"><AlertTriangle class="w-3 h-3" />Overdue</UiBadge>
+          </div>
+        </template>
+        <template #cell-progress="{ row }">
+          <div v-if="row.progress" class="flex items-center gap-2.5">
+            <div class="flex-1 max-w-[110px] h-1.5 bg-ui-subtle rounded-full overflow-hidden">
+              <div class="h-full bg-ui-ok rounded-full transition-all" :style="{ width: `${progressPct(row)}%` }"></div>
+            </div>
+            <span class="text-ui-cap text-ui-muted tabular-nums whitespace-nowrap">{{ row.progress.done }}/{{ row.progress.total }} done</span>
+          </div>
+          <span v-else class="text-ui-faint">—</span>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="inline-flex items-center gap-1" @click.stop>
             <button
               v-if="can('staff-task-edit')"
-              @click="openEditModal(task)"
-              class="w-8 h-8 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] transition-colors"
+              type="button"
+              class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
+              :aria-label="`Edit ${row.title}`"
+              title="Edit"
+              @click="openEditModal(row)"
             >
-              <Pencil class="w-3.5 h-3.5 text-gray-600" />
+              <Pencil class="w-4 h-4" />
             </button>
             <button
               v-if="can('staff-task-delete')"
-              @click="handleDelete(task.id)"
-              class="w-8 h-8 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-red-400 transition-colors"
+              type="button"
+              class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus"
+              :aria-label="`Delete ${row.title}`"
+              title="Delete"
+              @click="handleDelete(row.id)"
             >
-              <Trash2 class="w-3.5 h-3.5 text-red-500" />
+              <Trash2 class="w-4 h-4" />
             </button>
           </div>
-        </div>
-      </div>
+        </template>
 
-      <div v-if="staffTasks.length === 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-10 text-center">
-        <ListChecksIcon class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p class="text-brand-light text-sm">No staff tasks yet.</p>
-      </div>
+        <!-- Phones: one card per task -->
+        <template #mobile="{ row, number }">
+          <div class="px-4 py-3.5 flex items-start gap-3">
+            <span class="text-ui-cap text-ui-faint tabular-nums w-5 shrink-0 pt-0.5">{{ number }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-ui-body font-medium text-ui-ink break-words">{{ row.title }}</p>
+              <p class="text-ui-cap text-ui-muted mt-0.5">
+                Due <span class="tabular-nums">{{ formatDate(row.due_date) }}</span><span v-if="row.creator"> • by {{ row.creator.name }}</span>
+              </p>
+              <div class="flex items-center gap-1.5 flex-wrap mt-2">
+                <UiBadge :tone="row.assignment_mode === 'all_staff' ? 'neutral' : 'outline'">
+                  <Users v-if="row.assignment_mode === 'all_staff'" class="w-3 h-3" />
+                  <User v-else class="w-3 h-3" />
+                  {{ row.assignment_mode === "all_staff" ? "All Staff" : `${row.assignees?.length || 0} Selected` }}
+                </UiBadge>
+                <UiBadge v-if="isOverdue(row)" tone="bad"><AlertTriangle class="w-3 h-3" />Overdue</UiBadge>
+              </div>
+              <div v-if="row.progress" class="flex items-center gap-2.5 mt-2.5">
+                <div class="flex-1 h-1.5 bg-ui-subtle rounded-full overflow-hidden">
+                  <div class="h-full bg-ui-ok rounded-full transition-all" :style="{ width: `${progressPct(row)}%` }"></div>
+                </div>
+                <span class="text-ui-cap text-ui-muted tabular-nums whitespace-nowrap">{{ row.progress.done }}/{{ row.progress.total }} done</span>
+              </div>
+            </div>
+            <div class="flex flex-col items-center gap-1 shrink-0 -mr-1.5 -mt-1" @click.stop>
+              <button
+                v-if="can('staff-task-edit')"
+                type="button"
+                class="w-9 h-9 inline-flex items-center justify-center rounded-ui-control text-ui-muted active:bg-ui-hover"
+                :aria-label="`Edit ${row.title}`"
+                @click="openEditModal(row)"
+              >
+                <Pencil class="w-4 h-4" />
+              </button>
+              <button
+                v-if="can('staff-task-delete')"
+                type="button"
+                class="w-9 h-9 inline-flex items-center justify-center rounded-ui-control text-ui-muted active:bg-ui-bad-soft active:text-ui-bad"
+                :aria-label="`Delete ${row.title}`"
+                @click="handleDelete(row.id)"
+              >
+                <Trash2 class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <template #empty>
+          <UiEmpty v-if="filters.search" :icon="SearchX" title="No tasks match your search" message="Try another task title." compact />
+          <UiEmpty v-else :icon="ListChecksIcon" title="No staff tasks yet." compact>
+            <UiButton v-if="can('staff-task-create')" variant="secondary" size="sm" :icon="Plus" @click="openCreateModal">Add Task</UiButton>
+          </UiEmpty>
+        </template>
+      </UiTable>
     </div>
 
     <!-- Create/Edit Modal -->
-    <div v-if="showFormModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeFormModal">
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-brand-dark text-lg font-bold">{{ editingId ? "Edit Task" : "Add Task" }}</h3>
-          <button @click="closeFormModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
-        <form @submit.prevent="handleSubmit" class="p-5 space-y-4">
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Task Title<span class="text-red-600 ml-1">*</span></label>
-            <input v-model="form.title" type="text" required placeholder="e.g. Submit weekly report" class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Description</label>
-            <RichTextEditor v-model="form.description" placeholder="Task details, instructions, links..." />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Due Date<span class="text-red-600 ml-1">*</span></label>
-            <input
-              v-model="form.due_date"
-              type="date"
-              required
-              class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base sm:text-sm appearance-none"
-            />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-2 block">Assign To<span class="text-red-600 ml-1">*</span></label>
-            <div class="flex gap-3">
-              <label class="flex-1 flex items-center gap-2 px-3 py-2.5 border rounded-xl text-sm cursor-pointer" :class="form.assignment_mode === 'all_staff' ? 'border-[#0C51D9] bg-blue-50' : 'border-[#DCDEDD]'">
-                <input type="radio" v-model="form.assignment_mode" value="all_staff" class="accent-[#0C51D9]" />
-                <Users class="w-4 h-4 text-gray-500" />
-                All Staff
-              </label>
-              <label class="flex-1 flex items-center gap-2 px-3 py-2.5 border rounded-xl text-sm cursor-pointer" :class="form.assignment_mode === 'selected' ? 'border-[#0C51D9] bg-blue-50' : 'border-[#DCDEDD]'">
-                <input type="radio" v-model="form.assignment_mode" value="selected" class="accent-[#0C51D9]" />
-                <User class="w-4 h-4 text-gray-500" />
-                Select Staff
-              </label>
-            </div>
+    <UiModal :open="showFormModal" size="lg" :title="editingId ? 'Edit Task' : 'Add Task'" @close="closeFormModal">
+      <form id="staff-task-form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4" @submit.prevent="handleSubmit">
+        <UiInput v-model="form.title" label="Task Title" required placeholder="e.g. Submit weekly report" />
+        <UiInput v-model="form.due_date" label="Due Date" type="date" required />
 
-            <div v-if="form.assignment_mode === 'selected'" class="mt-3 border border-[#DCDEDD] rounded-xl max-h-48 overflow-y-auto p-2 space-y-1">
+        <div class="sm:col-span-2 min-w-0">
+          <label class="block text-ui-small font-medium text-ui-ink mb-1.5">Description</label>
+          <RichTextEditor v-model="form.description" placeholder="Task details, instructions, links..." />
+        </div>
+
+        <fieldset class="sm:col-span-2 min-w-0">
+          <legend class="block text-ui-small font-medium text-ui-ink mb-1.5">Assign To<span class="text-ui-bad"> *</span></legend>
+          <div class="grid grid-cols-2 gap-2.5">
+            <label
+              class="flex items-center gap-2.5 h-11 px-3 border rounded-ui-control text-ui-small cursor-pointer transition-colors"
+              :class="form.assignment_mode === 'all_staff' ? 'border-ui-accent bg-ui-accent-soft text-ui-ink' : 'border-ui-line-strong text-ui-text hover:bg-ui-hover'"
+            >
+              <input type="radio" v-model="form.assignment_mode" value="all_staff" class="accent-ui-accent" />
+              <Users class="w-4 h-4 text-ui-muted" />
+              All Staff
+            </label>
+            <label
+              class="flex items-center gap-2.5 h-11 px-3 border rounded-ui-control text-ui-small cursor-pointer transition-colors"
+              :class="form.assignment_mode === 'selected' ? 'border-ui-accent bg-ui-accent-soft text-ui-ink' : 'border-ui-line-strong text-ui-text hover:bg-ui-hover'"
+            >
+              <input type="radio" v-model="form.assignment_mode" value="selected" class="accent-ui-accent" />
+              <User class="w-4 h-4 text-ui-muted" />
+              Select Staff
+            </label>
+          </div>
+
+          <div v-if="form.assignment_mode === 'selected'" class="mt-2.5 border border-ui-line rounded-ui-control max-h-56 overflow-y-auto p-1.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-0.5">
               <label
                 v-for="opt in staffOptions"
                 :key="opt.id"
-                class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-gray-50 cursor-pointer text-sm"
+                class="flex items-center gap-2.5 px-2.5 h-10 rounded-md hover:bg-ui-hover cursor-pointer text-ui-small text-ui-text min-w-0"
               >
-                <input type="checkbox" :value="opt.id" v-model="form.assignee_employee_ids" class="accent-[#0C51D9]" />
-                {{ opt.name }}
+                <input type="checkbox" :value="opt.id" v-model="form.assignee_employee_ids" class="accent-ui-accent shrink-0" />
+                <span class="truncate">{{ opt.name }}</span>
               </label>
-              <p v-if="staffOptions.length === 0" class="text-xs text-brand-light text-center py-3">No staff members found.</p>
             </div>
+            <p v-if="staffOptions.length === 0" class="text-ui-cap text-ui-muted text-center py-3">No staff members found.</p>
           </div>
+        </fieldset>
 
-          <p v-if="errorMessage" class="text-red-500 text-sm">{{ errorMessage }}</p>
+        <UiAlert v-if="errorMessage" tone="bad" :message="errorMessage" class="sm:col-span-2" />
+      </form>
 
-          <div class="flex items-center gap-3 pt-2">
-            <button type="submit" :disabled="submitting" class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-2.5 flex items-center gap-2 disabled:opacity-50">
-              <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : "Save" }}</span>
-            </button>
-            <button type="button" @click="closeFormModal" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
+      <template #footer>
+        <UiButton variant="ghost" @click="closeFormModal">Cancel</UiButton>
+        <UiButton type="submit" form="staff-task-form" :loading="submitting">{{ submitting ? "Saving..." : "Save" }}</UiButton>
+      </template>
+    </UiModal>
 
     <!-- Detail Modal -->
-    <div v-if="showDetailModal" class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeDetailModal">
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <div>
-            <h3 class="text-brand-dark text-lg font-bold">{{ detailTask?.title }}</h3>
-            <p class="text-brand-light text-xs mt-0.5">Due {{ formatDate(detailTask?.due_date) }} • by {{ detailTask?.creator?.name }}</p>
+    <UiModal :open="showDetailModal" size="lg" @close="closeDetailModal">
+      <template #header>
+        <div class="flex-1 min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink break-words">{{ detailTask?.title }}</h2>
+          <p class="text-ui-small text-ui-muted mt-0.5">Due {{ formatDate(detailTask?.due_date) }} • by {{ detailTask?.creator?.name }}</p>
+          <div v-if="detailTask" class="flex items-center gap-1.5 flex-wrap mt-2">
+            <UiBadge :tone="detailTask.assignment_mode === 'all_staff' ? 'neutral' : 'outline'">
+              <Users v-if="detailTask.assignment_mode === 'all_staff'" class="w-3 h-3" />
+              <User v-else class="w-3 h-3" />
+              {{ detailTask.assignment_mode === "all_staff" ? "All Staff" : `${detailTask.assignees?.length || 0} Selected` }}
+            </UiBadge>
+            <UiBadge v-if="isOverdue(detailTask)" tone="bad"><AlertTriangle class="w-3 h-3" />Overdue</UiBadge>
           </div>
-          <button @click="closeDetailModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] shrink-0">
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
         </div>
-        <div class="p-5 space-y-5">
-          <div v-if="detailTask?.description" class="rich-text-content text-sm text-brand-dark leading-relaxed" v-html="detailTask.description"></div>
+      </template>
 
-          <div>
-            <h4 class="text-sm font-semibold text-brand-dark mb-2">Assignee Progress</h4>
-            <div class="border border-[#DCDEDD] rounded-xl overflow-hidden">
-              <div
-                v-for="assignee in detailTask?.assignees"
-                :key="assignee.id"
-                class="flex items-center justify-between gap-3 px-3.5 py-2.5 border-b border-[#DCDEDD] last:border-b-0"
-              >
-                <p class="text-sm text-brand-dark">{{ assignee.name }}</p>
-                <span class="px-2 py-0.5 rounded-full text-xs font-semibold" :class="STATUS_LABELS[assignee.status]?.class">
-                  {{ STATUS_LABELS[assignee.status]?.label ?? assignee.status }}
-                </span>
+      <div v-if="detailTask" class="space-y-5">
+        <div v-if="detailTask.description" class="rich-text-content text-ui-body text-ui-text" v-html="detailTask.description"></div>
+
+        <section>
+          <h3 class="text-ui-h3 text-ui-ink mb-2">Assignee Progress</h3>
+          <ul class="border border-ui-line rounded-ui-card divide-y divide-ui-line">
+            <li v-for="assignee in detailTask.assignees" :key="assignee.id" class="flex items-center justify-between gap-3 px-3.5 py-2.5">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <Avatar :alt="assignee.name" size="w-7 h-7" icon-size="w-3.5 h-3.5" />
+                <p class="text-ui-small text-ui-ink truncate">{{ assignee.name }}</p>
               </div>
-            </div>
-          </div>
+              <UiBadge :tone="STATUS_LABELS[assignee.status]?.tone ?? 'neutral'" dot>
+                {{ STATUS_LABELS[assignee.status]?.label ?? assignee.status }}
+              </UiBadge>
+            </li>
+          </ul>
+        </section>
 
-          <StaffTaskComments
-            v-if="detailTask"
-            :staff-task-id="detailTask.id"
-            :assignees="commentAssignees"
-            :can-comment="canCommentOnDetail"
-          />
-        </div>
+        <StaffTaskComments :staff-task-id="detailTask.id" :assignees="commentAssignees" :can-comment="canCommentOnDetail" />
       </div>
-    </div>
+    </UiModal>
   </div>
 </template>
 
 <style scoped>
 /* Base .rich-text-content lives in src/assets/css/input.css -- these add
-   the same supplementary tag styling MeetingNoteDetail.vue uses. */
+   the same supplementary tag styling MyTasks.vue uses. */
 .rich-text-content :deep(p) { margin-bottom: 0.75rem; }
 .rich-text-content :deep(ul) { list-style: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
 .rich-text-content :deep(ol) { list-style: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
-.rich-text-content :deep(h1) { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0; }
-.rich-text-content :deep(h2) { font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0; }
-.rich-text-content :deep(h3) { font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; }
-.rich-text-content :deep(blockquote) { border-left: 3px solid #0c51d9; padding-left: 0.75rem; color: #6b7280; margin: 0.5rem 0; }
-.rich-text-content :deep(a) { color: #0c51d9; text-decoration: underline; }
-.rich-text-content :deep(hr) { border: none; border-top: 1px solid #dcdedd; margin: 0.75rem 0; }
+.rich-text-content :deep(h1) { font-size: 22px; line-height: 30px; font-weight: 600; margin: 0.5rem 0; }
+.rich-text-content :deep(h2) { font-size: 17px; line-height: 26px; font-weight: 600; margin: 0.5rem 0; }
+.rich-text-content :deep(h3) { font-size: 14px; line-height: 20px; font-weight: 600; margin: 0.5rem 0; }
+.rich-text-content :deep(blockquote) { border-left: 3px solid rgb(var(--ui-line-strong)); padding-left: 0.75rem; color: rgb(var(--ui-muted)); margin: 0.5rem 0; }
+.rich-text-content :deep(a) { color: rgb(var(--ui-accent)); text-decoration: underline; }
+.rich-text-content :deep(hr) { border: none; border-top: 1px solid rgb(var(--ui-line)); margin: 0.75rem 0; }
 </style>

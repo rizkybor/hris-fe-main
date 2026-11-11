@@ -1,13 +1,16 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { Megaphone, Plus, Pin, Pencil, Trash2, X, Eye, ChevronDown } from "lucide-vue-next";
+import { Megaphone, Plus, Pin, Pencil, Trash2, Eye, CalendarClock } from "lucide-vue-next";
 import { useAnnouncementStore } from "@/stores/announcement";
 import { useAuthStore } from "@/stores/auth";
 import { can } from "@/helpers/permissionHelper";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { UiPageHeader, UiButton, UiBadge, UiModal, UiInput, UiSelect, UiSwitch, UiEmpty, UiAlert } from "@/components/ui";
+import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import Avatar from "@/components/common/Avatar.vue";
 
 const store = useAnnouncementStore();
 const authStore = useAuthStore();
@@ -151,215 +154,134 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div class="bg-white mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div class="flex items-center gap-3 min-w-0">
-        <div class="w-11 h-11 bg-blue-50 rounded-[12px] flex items-center justify-center shrink-0">
-          <Megaphone class="w-5 h-5 text-[#0C51D9]" />
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-brand-dark text-base font-bold">Announcements</h3>
-          <p class="text-brand-light text-xs">Broadcast information to the entire or selected teams</p>
-        </div>
-      </div>
-      <button
-        v-if="can('announcement-create')"
-        @click="openCreateModal"
-        class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto"
-      >
-        <Plus class="w-4 h-4 text-white" />
-        <span class="text-brand-white text-sm font-semibold">Create Announcement</span>
-      </button>
-    </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Announcements" subtitle="Broadcast information to the entire or selected teams">
+      <template #actions>
+        <UiButton v-if="can('announcement-create')" :icon="Plus" class="w-full sm:w-auto" @click="openCreateModal">
+          Create Announcement
+        </UiButton>
+      </template>
+    </UiPageHeader>
 
-    <div v-if="loading" class="space-y-3">
-      <Skeleton v-for="i in 3" :key="i" height="90px" rounded="16px" />
-    </div>
+    <SkeletonCardGrid v-if="loading" :count="4" cols="grid-cols-1 lg:grid-cols-2" />
 
-    <div v-else class="space-y-3">
-      <div
-        v-for="(announcement, index) in announcements"
-        :key="announcement.id"
-        class="bg-white border border-[#DCDEDD] rounded-[14px] p-5"
-      >
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 mb-1 flex-wrap">
-              <span class="text-gray-400 text-xs font-semibold shrink-0">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}.</span>
-              <Pin v-if="announcement.is_pinned" class="w-3.5 h-3.5 text-[#0C51D9]" />
-              <h4 class="text-brand-dark font-bold">{{ announcement.title }}</h4>
-              <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">
-                {{ audienceLabel(announcement.audience) }}
-              </span>
+    <div v-else class="space-y-4">
+      <div v-if="announcements.length" class="grid grid-cols-1 lg:grid-cols-2 gap-4 ui-stagger">
+        <article
+          v-for="(announcement, index) in announcements"
+          :key="announcement.id"
+          class="ui-lift bg-ui-surface border border-ui-line rounded-ui-card p-5 flex flex-col min-w-0"
+        >
+          <div class="flex items-center gap-3">
+            <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+              <span class="text-ui-cap text-ui-faint tabular-nums">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</span>
+              <UiBadge v-if="announcement.is_pinned" tone="accent"><Pin class="w-3 h-3" />Pinned</UiBadge>
+              <UiBadge tone="outline">{{ audienceLabel(announcement.audience) }}</UiBadge>
             </div>
-            <p class="text-brand-light text-sm whitespace-pre-line">{{ announcement.body }}</p>
-            <p class="text-xs text-gray-400 mt-2">
-              By {{ announcement.created_by?.name ?? '-' }} • {{ formatDate(announcement.created_at) }}
-              <span v-if="announcement.expires_at"> • Valid until {{ formatDate(announcement.expires_at) }}</span>
-            </p>
+            <div class="flex items-center gap-0.5 shrink-0 -mr-1.5 -my-1">
+              <button
+                type="button"
+                class="ui-press w-8 h-8 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
+                title="View"
+                aria-label="View"
+                @click="openViewModal(announcement.id)"
+              >
+                <Eye class="w-4 h-4" />
+              </button>
+              <button
+                v-if="can('announcement-edit') && canManage(announcement)"
+                type="button"
+                class="ui-press w-8 h-8 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
+                title="Edit"
+                aria-label="Edit"
+                @click="openEditModal(announcement)"
+              >
+                <Pencil class="w-4 h-4" />
+              </button>
+              <button
+                v-if="can('announcement-delete') && canManage(announcement)"
+                type="button"
+                class="ui-press w-8 h-8 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
+                title="Delete"
+                aria-label="Delete"
+                @click="handleDelete(announcement.id)"
+              >
+                <Trash2 class="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <button
-              @click="openViewModal(announcement.id)"
-              class="w-8 h-8 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] transition-colors"
-              title="View"
-            >
-              <Eye class="w-3.5 h-3.5 text-gray-600" />
-            </button>
-            <button
-              v-if="can('announcement-edit') && canManage(announcement)"
-              @click="openEditModal(announcement)"
-              class="w-8 h-8 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] transition-colors"
-            >
-              <Pencil class="w-3.5 h-3.5 text-gray-600" />
-            </button>
-            <button
-              v-if="can('announcement-delete') && canManage(announcement)"
-              @click="handleDelete(announcement.id)"
-              class="w-8 h-8 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-red-400 transition-colors"
-            >
-              <Trash2 class="w-3.5 h-3.5 text-red-500" />
-            </button>
+
+          <h3 class="text-ui-h3 text-ui-ink mt-3 break-words">{{ announcement.title }}</h3>
+          <p class="text-ui-body text-ui-text whitespace-pre-line line-clamp-4 mt-1.5 flex-1">{{ announcement.body }}</p>
+
+          <div class="flex items-center gap-2 mt-4 pt-3 border-t border-ui-line text-ui-cap text-ui-muted min-w-0">
+            <Avatar :alt="announcement.created_by?.name ?? ''" size="w-6 h-6" icon-size="w-3 h-3" />
+            <span class="truncate">By {{ announcement.created_by?.name ?? '-' }} · {{ formatDate(announcement.created_at) }}</span>
+            <span v-if="announcement.expires_at" class="ml-auto inline-flex items-center gap-1 shrink-0">
+              <CalendarClock class="w-3.5 h-3.5" />Valid until {{ formatDate(announcement.expires_at) }}
+            </span>
           </div>
-        </div>
+        </article>
       </div>
 
-      <div v-if="announcements.length === 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-10 text-center">
-        <Megaphone class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p class="text-brand-light text-sm">No announcements found.</p>
+      <div v-if="announcements.length === 0" class="bg-ui-surface border border-ui-line rounded-ui-card">
+        <UiEmpty :icon="Megaphone" title="No announcements found." />
       </div>
 
       <Pagination :meta="meta" :loading="loading" item-label="announcements" @page-change="load" />
     </div>
 
     <!-- Create/Edit Modal -->
-    <div
-      v-if="showModal"
-      class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="closeModal"
-    >
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <h3 class="text-brand-dark text-lg font-bold">
-            {{ editingId ? 'Edit Announcement' : 'Create Announcement' }}
-          </h3>
-          <button @click="closeModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
+    <UiModal v-model:open="showModal" :title="editingId ? 'Edit Announcement' : 'Create Announcement'" size="lg">
+      <form id="announcement-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="handleSubmit">
+        <UiInput v-model="form.title" label="Title" required class="sm:col-span-2" />
+        <UiInput v-model="form.body" label="Content" :rows="6" required class="sm:col-span-2" />
+        <UiSelect v-model="form.audience" label="Audience" :options="audienceOptions" />
+        <UiInput v-model="form.expires_at" type="date" label="Valid Until (Optional)" />
+        <div class="sm:col-span-2 rounded-ui-control border border-ui-line px-3.5 py-3" :class="isExpiredForPin ? 'opacity-60' : ''">
+          <UiSwitch v-model="form.is_pinned" label="Pin to Top" :disabled="isExpiredForPin" />
+          <p v-if="isExpiredForPin" class="text-ui-cap text-ui-bad mt-1">
+            An announcement with a past Valid Until date can't be pinned.
+          </p>
         </div>
+        <UiAlert v-if="errorMessage" tone="bad" :message="errorMessage" class="sm:col-span-2" />
+      </form>
 
-        <form @submit.prevent="handleSubmit" class="p-5 space-y-4">
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Title</label>
-            <input v-model="form.title" type="text" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm" />
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-brand-dark mb-1 block">Content</label>
-            <textarea v-model="form.body" rows="5" required class="w-full px-3 py-2 border border-[#DCDEDD] rounded-xl text-sm resize-none"></textarea>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Audience</label>
-              <div class="relative">
-                <select v-model="form.audience" class="select-soft">
-                  <option v-for="opt in audienceOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-                </select>
-                <ChevronDown
-                  class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="text-sm font-semibold text-brand-dark mb-1 block">Valid Until (Optional)</label>
-              <input
-                v-model="form.expires_at"
-                type="date"
-                class="w-full h-[42px] px-3 py-2 border border-[#DCDEDD] rounded-xl text-base appearance-none focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-              />
-            </div>
-          </div>
-          <div>
-            <label class="flex items-center gap-2" :class="isExpiredForPin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'">
-              <input
-                type="checkbox"
-                v-model="form.is_pinned"
-                :disabled="isExpiredForPin"
-                class="w-4 h-4"
-              />
-              <span class="text-sm text-brand-dark">Pin to Top</span>
-            </label>
-            <p v-if="isExpiredForPin" class="text-xs text-red-500 mt-1">
-              An announcement with a past Valid Until date can't be pinned.
-            </p>
-          </div>
-
-          <p v-if="errorMessage" class="text-red-500 text-sm">{{ errorMessage }}</p>
-
-          <div class="flex items-center gap-3 pt-2">
-            <button
-              type="submit"
-              :disabled="submitting"
-              class="btn-primary rounded-lg border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-2.5 flex items-center gap-2 disabled:opacity-50"
-            >
-              <span class="text-brand-white text-sm font-semibold">{{ submitting ? "Saving..." : "Save" }}</span>
-            </button>
-            <button type="button" @click="closeModal" class="px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      <template #footer>
+        <UiButton variant="secondary" @click="closeModal">Cancel</UiButton>
+        <UiButton type="submit" form="announcement-form" :loading="submitting">{{ submitting ? "Saving..." : "Save" }}</UiButton>
+      </template>
+    </UiModal>
 
     <!-- View Modal -->
-    <div
-      v-if="showViewModal"
-      class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="closeViewModal"
-    >
-      <div class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-lg">
-        <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0">
-              <Eye class="w-4 h-4 text-[#0C51D9]" />
-            </div>
-            <h3 class="text-brand-dark text-lg font-bold">Announcement Detail</h3>
-          </div>
-          <button @click="closeViewModal" class="w-9 h-9 rounded-full border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9]">
-            <X class="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
+    <UiModal v-model:open="showViewModal" title="Announcement Detail" @close="closeViewModal">
+      <div v-if="loadingDetail" class="space-y-3">
+        <Skeleton width="60%" height="18px" />
+        <Skeleton width="100%" height="14px" />
+        <Skeleton width="90%" height="14px" />
+        <Skeleton width="40%" height="14px" />
+      </div>
 
-        <div v-if="loadingDetail" class="p-5 space-y-3">
-          <Skeleton width="60%" height="18px" />
-          <Skeleton width="100%" height="14px" />
-          <Skeleton width="90%" height="14px" />
-          <Skeleton width="40%" height="14px" />
-        </div>
-
-        <div v-else-if="viewingAnnouncement" class="p-5 space-y-4">
+      <div v-else-if="viewingAnnouncement" class="space-y-4">
+        <div class="space-y-2">
           <div class="flex items-center gap-2 flex-wrap">
-            <Pin v-if="viewingAnnouncement.is_pinned" class="w-3.5 h-3.5 text-[#0C51D9]" />
-            <h4 class="text-brand-dark text-base font-bold">{{ viewingAnnouncement.title }}</h4>
-            <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">
-              {{ audienceLabel(viewingAnnouncement.audience) }}
-            </span>
+            <UiBadge v-if="viewingAnnouncement.is_pinned" tone="accent"><Pin class="w-3 h-3" />Pinned</UiBadge>
+            <UiBadge tone="outline">{{ audienceLabel(viewingAnnouncement.audience) }}</UiBadge>
           </div>
-
-          <p class="text-brand-light text-sm whitespace-pre-line">{{ viewingAnnouncement.body }}</p>
-
-          <div class="border-t border-[#DCDEDD] pt-3 space-y-1.5 text-xs text-gray-400">
-            <p>Created by {{ viewingAnnouncement.created_by?.name ?? '-' }} • {{ formatDate(viewingAnnouncement.created_at) }}</p>
-            <p v-if="viewingAnnouncement.expires_at">Valid until {{ formatDate(viewingAnnouncement.expires_at) }}</p>
-          </div>
+          <h3 class="text-ui-h2 text-ui-ink break-words">{{ viewingAnnouncement.title }}</h3>
         </div>
 
-        <div class="p-5 border-t border-[#DCDEDD]">
-          <button @click="closeViewModal" class="w-full px-6 py-2.5 rounded-lg border border-[#DCDEDD] text-brand-dark text-sm font-semibold hover:bg-gray-50">
-            Close
-          </button>
+        <p class="text-ui-body text-ui-text whitespace-pre-line">{{ viewingAnnouncement.body }}</p>
+
+        <div class="border-t border-ui-line pt-3 space-y-1.5 text-ui-cap text-ui-muted">
+          <p>Created by {{ viewingAnnouncement.created_by?.name ?? '-' }} · {{ formatDate(viewingAnnouncement.created_at) }}</p>
+          <p v-if="viewingAnnouncement.expires_at">Valid until {{ formatDate(viewingAnnouncement.expires_at) }}</p>
         </div>
       </div>
-    </div>
+
+      <template #footer>
+        <UiButton variant="secondary" block class="sm:w-auto" @click="closeViewModal">Close</UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>

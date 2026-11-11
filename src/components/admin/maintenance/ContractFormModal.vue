@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
-import { X, Loader2 } from "lucide-vue-next";
+import { UiModal, UiButton, UiSelect } from "@/components/ui";
 import { LEFTOVER_POLICY } from "@/utils/maintenance";
 
 const props = defineProps({
@@ -105,134 +105,124 @@ const submit = () => {
 };
 
 const err = (field) => props.errors?.[field]?.[0];
+
+// Presentation only: token classes for the native fields.
+const LABEL = "block text-ui-small font-medium text-ui-ink mb-1.5";
+const FIELD =
+  "w-full min-h-[38px] px-3 py-2 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus disabled:bg-ui-subtle disabled:text-ui-muted";
+const ERR = "text-ui-cap text-ui-bad mt-1.5";
+const HINT = "text-ui-cap text-ui-muted mt-1.5";
+const clientSelectOptions = computed(() => [{ value: "", label: "Select client" }, ...props.clients.map((c) => ({ value: String(c.id), label: c.name }))]);
+const projectSelectOptions = computed(() => [{ value: "", label: "Not tied to a project" }, ...projectOptions.value.map((p) => ({ value: String(p.id), label: p.name }))]);
+
 </script>
 
 <template>
-  <div v-if="show" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="emit('close')">
-    <form class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-2xl max-h-[92vh] flex flex-col" @submit.prevent="submit">
-      <div class="p-5 border-b border-[#DCDEDD] flex items-center justify-between shrink-0">
+  <UiModal
+    :open="show"
+    size="lg"
+    :title="data ? 'Edit Maintenance Contract' : 'New Maintenance Contract'"
+    description="Monthly hour quota for a client, optionally tied to one of their projects."
+    @close="emit('close')"
+  >
+    <form id="maintenance-contract-form" class="space-y-5" @submit.prevent="submit">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <UiSelect id="mc-client" v-model="form.client_id" label="Client" :options="clientSelectOptions" required :error="err('client_id') || ''" />
         <div>
-          <h3 class="text-brand-dark text-base font-bold">{{ data ? "Edit Maintenance Contract" : "New Maintenance Contract" }}</h3>
-          <p class="text-brand-light text-xs">Monthly hour quota for a client, optionally tied to one of their projects.</p>
+          <label for="mc-project" :class="LABEL">Project <span class="text-ui-muted font-normal">(optional)</span></label>
+          <UiSelect id="mc-project" v-model="form.project_id" :options="projectSelectOptions" :error="err('project_id') || ''" />
         </div>
-        <button type="button" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100" @click="emit('close')"><X class="w-5 h-5" /></button>
+
+        <div class="sm:col-span-2">
+          <label for="mc-name" :class="LABEL">Contract name<span class="text-ui-bad"> *</span></label>
+          <input id="mc-name" v-model="form.name" :class="FIELD" maxlength="255" placeholder="e.g. Website Maintenance 2026" required />
+          <p v-if="err('name')" :class="ERR">{{ err("name") }}</p>
+        </div>
       </div>
 
-      <div class="p-5 space-y-4 overflow-y-auto">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="mt-label">Client <span class="text-red-500">*</span></label>
-            <select v-model="form.client_id" class="mt-input" required>
-              <option value="">Select client</option>
-              <option v-for="c in clients" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
-            </select>
-            <p v-if="err('client_id')" class="mt-err">{{ err("client_id") }}</p>
-          </div>
-          <div>
-            <label class="mt-label">Project <span class="text-brand-light font-normal">(optional)</span></label>
-            <select v-model="form.project_id" class="mt-input">
-              <option value="">Not tied to a project</option>
-              <option v-for="p in projectOptions" :key="p.id" :value="String(p.id)">{{ p.name }}</option>
-            </select>
-            <p v-if="err('project_id')" class="mt-err">{{ err("project_id") }}</p>
-          </div>
-        </div>
-
-        <div>
-          <label class="mt-label">Contract name <span class="text-red-500">*</span></label>
-          <input v-model="form.name" class="mt-input" maxlength="255" placeholder="e.g. Website Maintenance 2026" required />
-          <p v-if="err('name')" class="mt-err">{{ err("name") }}</p>
-        </div>
-
+      <div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label class="mt-label">Quota per month (hours) <span class="text-red-500">*</span></label>
-            <input v-model="form.monthly_quota_hours" type="number" min="0.5" step="any" class="mt-input" required />
-            <p v-if="err('monthly_quota_hours')" class="mt-err">{{ err("monthly_quota_hours") }}</p>
+            <label for="mc-quota" :class="LABEL">Quota per month (hours)<span class="text-ui-bad"> *</span></label>
+            <input id="mc-quota" v-model="form.monthly_quota_hours" type="number" min="0.5" step="any" :class="[FIELD, 'tabular-nums']" required />
+            <p v-if="err('monthly_quota_hours')" :class="ERR">{{ err("monthly_quota_hours") }}</p>
           </div>
           <div>
-            <label class="mt-label">Start date <span class="text-red-500">*</span></label>
-            <input v-model="form.start_date" type="date" class="mt-input" required />
-            <p v-if="err('start_date')" class="mt-err">{{ err("start_date") }}</p>
+            <label for="mc-start" :class="LABEL">Start date<span class="text-ui-bad"> *</span></label>
+            <input id="mc-start" v-model="form.start_date" type="date" :class="FIELD" required />
+            <p v-if="err('start_date')" :class="ERR">{{ err("start_date") }}</p>
           </div>
           <div>
-            <label class="mt-label">End date <span class="text-brand-light font-normal">(optional)</span></label>
-            <input v-model="form.end_date" type="date" class="mt-input" />
-            <p v-if="err('end_date')" class="mt-err">{{ err("end_date") }}</p>
+            <label for="mc-end" :class="LABEL">End date <span class="text-ui-muted font-normal">(optional)</span></label>
+            <input id="mc-end" v-model="form.end_date" type="date" :class="FIELD" />
+            <p v-if="err('end_date')" :class="ERR">{{ err("end_date") }}</p>
           </div>
         </div>
-        <p v-if="data" class="text-xs text-brand-light -mt-2">
+        <p v-if="data" :class="[HINT, '!mt-2']">
           A new quota applies from next month (and to this month only while nothing has been logged or adjusted yet). Use "Adjust quota" to change this month.
         </p>
+      </div>
 
-        <div>
-          <label class="mt-label">Status</label>
-          <div class="flex gap-2">
-            <label v-for="s in ['active', 'paused', 'ended']" :key="s" class="mt-chip" :class="{ 'mt-chip--on': form.status === s }">
-              <input v-model="form.status" type="radio" :value="s" class="sr-only" />{{ s.charAt(0).toUpperCase() + s.slice(1) }}
-            </label>
-          </div>
-          <p class="text-xs text-brand-light mt-1">Paused and ended contracts don't get a quota for new months.</p>
+      <div>
+        <p :class="LABEL">Status</p>
+        <div class="flex gap-1.5" role="radiogroup">
+          <label
+            v-for="s in ['active', 'paused', 'ended']"
+            :key="s"
+            class="ui-press inline-flex items-center h-8 px-3 rounded-full border text-ui-small font-medium cursor-pointer has-[:focus-visible]:shadow-ui-focus"
+            :class="form.status === s ? 'bg-ui-ink text-white border-ui-ink' : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover'"
+          >
+            <input v-model="form.status" type="radio" :value="s" class="sr-only" />{{ s.charAt(0).toUpperCase() + s.slice(1) }}
+          </label>
         </div>
+        <p :class="HINT">Paused and ended contracts don't get a quota for new months.</p>
+      </div>
 
-        <div>
-          <label class="mt-label">Unused hours at month end</label>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <label
-              v-for="(policy, key) in LEFTOVER_POLICY"
-              :key="key"
-              class="border rounded-[10px] p-3 cursor-pointer transition-colors"
-              :class="form.leftover_policy === key ? 'border-[#0C51D9] bg-blue-50/60' : 'border-[#DCDEDD] hover:border-[#0C51D9]'"
-            >
-              <input v-model="form.leftover_policy" type="radio" :value="key" class="sr-only" />
-              <p class="text-sm font-semibold text-brand-dark">{{ policy.label }}</p>
-              <p class="text-xs text-brand-light mt-0.5">{{ POLICY_HINT[key] }}</p>
-            </label>
-          </div>
-        </div>
-
-        <div v-if="form.leftover_policy === 'bank'" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 border border-[#DCDEDD] rounded-[12px] p-4">
-          <div>
-            <label class="mt-label">Balance cap (hours)</label>
-            <input v-model="form.bank_cap_hours" type="number" min="0" step="any" class="mt-input bg-white" placeholder="No cap" @input="capTouched = true" />
-            <p class="text-xs text-brand-light mt-1">Leftover beyond this expires. Default 3× the monthly quota; empty = no cap.</p>
-          </div>
-          <div>
-            <label class="mt-label">Hours expire after (months)</label>
-            <input v-model="form.bank_expiry_months" type="number" min="1" max="36" step="1" class="mt-input bg-white" placeholder="Never" />
-            <p class="text-xs text-brand-light mt-1">Unused balance expires after this. Empty = never.</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="mt-label">Overage rate per hour (Rp) <span class="text-brand-light font-normal">(optional)</span></label>
-            <input v-model="form.overage_rate" type="number" min="0" step="any" class="mt-input" placeholder="e.g. 150000" />
-            <p class="text-xs text-brand-light mt-1">Shown next to hours worked beyond the quota.</p>
-          </div>
-          <div>
-            <label class="mt-label">Notes</label>
-            <textarea v-model="form.notes" rows="2" maxlength="2000" class="mt-input" placeholder="Scope, SLA, contact person..."></textarea>
-          </div>
+      <div>
+        <p :class="LABEL">Unused hours at month end</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <label
+            v-for="(policy, key) in LEFTOVER_POLICY"
+            :key="key"
+            class="border rounded-ui-control p-3 cursor-pointer transition-colors has-[:focus-visible]:shadow-ui-focus"
+            :class="form.leftover_policy === key ? 'border-ui-accent bg-ui-accent-soft' : 'border-ui-line-strong hover:bg-ui-subtle'"
+          >
+            <input v-model="form.leftover_policy" type="radio" :value="key" class="sr-only" />
+            <p class="text-ui-small font-medium text-ui-ink">{{ policy.label }}</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ POLICY_HINT[key] }}</p>
+          </label>
         </div>
       </div>
 
-      <div class="p-5 border-t border-[#DCDEDD] flex justify-end gap-2.5 shrink-0">
-        <button type="button" class="rounded-[8px] border border-[#DCDEDD] px-4 py-2.5 text-sm font-semibold text-brand-dark hover:bg-gray-50" @click="emit('close')">Cancel</button>
-        <button type="submit" :disabled="loading" class="btn-primary rounded-[8px] border border-[#2151A0] blue-gradient blue-btn-shadow px-4 py-2.5 flex items-center gap-1.5 disabled:opacity-60">
-          <Loader2 v-if="loading" class="w-4 h-4 text-white animate-spin" />
-          <span class="text-brand-white text-sm font-semibold">{{ data ? "Save Changes" : "Create Contract" }}</span>
-        </button>
+      <div v-if="form.leftover_policy === 'bank'" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-ui-subtle/60 border border-ui-line rounded-ui-card p-4">
+        <div>
+          <label for="mc-cap" :class="LABEL">Balance cap (hours)</label>
+          <input id="mc-cap" v-model="form.bank_cap_hours" type="number" min="0" step="any" :class="[FIELD, 'tabular-nums']" placeholder="No cap" @input="capTouched = true" />
+          <p :class="HINT">Leftover beyond this expires. Default 3× the monthly quota; empty = no cap.</p>
+        </div>
+        <div>
+          <label for="mc-expiry" :class="LABEL">Hours expire after (months)</label>
+          <input id="mc-expiry" v-model="form.bank_expiry_months" type="number" min="1" max="36" step="1" :class="[FIELD, 'tabular-nums']" placeholder="Never" />
+          <p :class="HINT">Unused balance expires after this. Empty = never.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="mc-overage" :class="LABEL">Overage rate per hour (Rp) <span class="text-ui-muted font-normal">(optional)</span></label>
+          <input id="mc-overage" v-model="form.overage_rate" type="number" min="0" step="any" :class="[FIELD, 'tabular-nums']" placeholder="e.g. 150000" />
+          <p :class="HINT">Shown next to hours worked beyond the quota.</p>
+        </div>
+        <div>
+          <label for="mc-notes" :class="LABEL">Notes</label>
+          <textarea id="mc-notes" v-model="form.notes" rows="2" maxlength="2000" :class="FIELD" placeholder="Scope, SLA, contact person..."></textarea>
+        </div>
       </div>
     </form>
-  </div>
-</template>
 
-<style scoped>
-.mt-label { display: block; font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 6px; }
-.mt-input { width: 100%; border: 1px solid #dcdedd; border-radius: 12px; padding: 9px 12px; font-size: 14px; color: #0f172a; background: #fff; outline: none; transition: border-color 0.2s; }
-.mt-input:hover, .mt-input:focus { border-color: #0c51d9; }
-.mt-err { color: #ef4444; font-size: 12px; margin-top: 4px; }
-.mt-chip { border: 1px solid #dcdedd; border-radius: 9px; padding: 7px 14px; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; }
-.mt-chip--on { border-color: #0c51d9; color: #0c51d9; background: #eff4ff; }
-</style>
+    <template #footer>
+      <UiButton variant="secondary" @click="emit('close')">Cancel</UiButton>
+      <UiButton type="submit" form="maintenance-contract-form" :loading="loading">{{ data ? "Save Changes" : "Create Contract" }}</UiButton>
+    </template>
+  </UiModal>
+</template>

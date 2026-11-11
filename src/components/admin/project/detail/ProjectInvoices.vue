@@ -3,6 +3,10 @@ import { ref } from "vue";
 import { Receipt, ReceiptText, Download } from "lucide-vue-next";
 import { formatRupiah } from "@/utils/formatUtils";
 import { useInvoiceStore } from "@/stores/invoice";
+import { UiBadge, UiEmpty } from "@/components/ui";
+
+// Presentation only: invoice status -> badge tone (label from statusLabel).
+const statusTone = (status) => (status === "paid" ? "ok" : status === "cancelled" ? "bad" : "warn");
 
 const props = defineProps({
   invoices: {
@@ -48,110 +52,59 @@ const formatDate = (date) =>
 </script>
 
 <template>
-  <div
-    class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 sm:p-6 h-full flex flex-col"
-  >
-    <div class="flex items-center gap-3 mb-5 shrink-0">
-      <div
-        class="w-9 h-9 sm:w-10 sm:h-10 bg-blue-50 rounded-[10px] flex items-center justify-center shrink-0"
-      >
-        <Receipt class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-      </div>
-      <div>
-        <h3 class="text-brand-dark text-base sm:text-lg font-bold">Invoices</h3>
-        <p class="text-brand-light text-xs font-normal">
-          Optional — invoices billed against this project, if linked
-        </p>
-      </div>
+  <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 h-full flex flex-col">
+    <div class="mb-3 shrink-0">
+      <h3 class="text-ui-h2 text-ui-ink">Invoices</h3>
+      <p class="text-ui-cap text-ui-muted mt-0.5">Optional — invoices billed against this project, if linked</p>
     </div>
 
-    <!-- Capped + scrollable so a project with many invoices doesn't grow
-         this card taller than its Documents/Inspect siblings in the same
-         row -- keeps the row's height fixed regardless of content. -->
-    <div class="overflow-y-auto max-h-[320px] sm:max-h-[420px] pr-1 -mr-1">
-      <div
-        v-if="invoices.length === 0"
-        class="text-center px-4 py-10 text-gray-500 bg-gray-100 rounded-[12px] border border-dashed border-[#DCDEDD]"
-      >
-        <ReceiptText class="w-9 h-9 text-gray-300 mx-auto mb-3" />
-        <p class="text-sm font-semibold">No invoices linked yet</p>
-        <p class="text-xs text-gray-400">
-          Invoices are optional — link one to this project from the Invoice form
-          to see it here.
-        </p>
-      </div>
+    <UiEmpty
+      v-if="invoices.length === 0"
+      compact
+      :icon="ReceiptText"
+      title="No invoices linked yet"
+      message="Invoices are optional — link one to this project from the Invoice form to see it here."
+      class="bg-ui-subtle rounded-ui-control"
+    />
 
-      <div v-else class="space-y-4">
-        <div
-          v-for="invoice in invoices"
-          :key="invoice.id"
-          class="bg-white border border-[#DCDEDD] rounded-[12px] p-4"
-        >
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p class="text-brand-dark text-sm font-bold font-mono">
-                {{ invoice.invoice_number }}
-              </p>
-              <p class="text-brand-light text-xs mt-0.5">
-                {{ formatDate(invoice.date) }} &middot;
-                {{ formatRupiah(invoice.total) }}
-              </p>
-            </div>
-            <div class="flex items-center gap-2">
-              <span
-                class="px-2 py-1 rounded-md text-xs font-semibold"
-                :class="statusClass(invoice.status)"
-              >
-                {{ statusLabel(invoice.status) }}
-              </span>
-              <button
-                @click="handleDownload(invoice)"
-                :disabled="downloadingId === invoice.id"
-                class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-[#0C51D9] disabled:opacity-50"
-                title="Download PDF"
-              >
-                <Download class="w-3.5 h-3.5 text-gray-600" />
-              </button>
-            </div>
-          </div>
-
-          <!-- Payment Receipts, if any -->
-          <div
-            v-if="invoice.receipts && invoice.receipts.length > 0"
-            class="mt-3.5 pt-3.5 border-t border-[#F1F1F1]"
-          >
-            <p
-              class="text-brand-light text-xs font-semibold uppercase tracking-wide mb-2"
-            >
-              Payment Receipts
+    <!-- Capped + scrollable so a project with many invoices stays compact. -->
+    <ul v-else class="divide-y divide-ui-line overflow-y-auto max-h-[420px] -mx-1 px-1">
+      <li v-for="invoice in invoices" :key="invoice.id" class="py-3">
+        <div class="flex items-center gap-3">
+          <div class="flex-1 min-w-0">
+            <p class="text-ui-small font-mono text-ui-ink truncate">{{ invoice.invoice_number }}</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5 tabular-nums">
+              {{ formatDate(invoice.date) }} &middot; {{ formatRupiah(invoice.total) }}
             </p>
-
-            <div class="space-y-1.5">
-              <div
-                v-for="receipt in invoice.receipts"
-                :key="receipt.id"
-                class="grid grid-cols-2 gap-x-3 gap-y-1.5 bg-green-100 rounded-lg px-3 py-2 text-xs"
-              >
-                <!-- Receipt Number - Top Left -->
-                <span class="font-mono text-brand-dark min-w-0 truncate">
-                  {{ receipt.receipt_number }}
-                </span>
-
-                <!-- Date - Top Right -->
-                <span class="text-brand-light text-right whitespace-nowrap">
-                  {{ formatDate(receipt.date) }}
-                </span>
-
-                <!-- Amount - Bottom Left -->
-                <span class="font-semibold text-brand-dark col-span-1">
-                  {{ formatRupiah(receipt.amount) }}
-                </span>
-              </div>
-            </div>
           </div>
-          
+          <UiBadge :tone="statusTone(invoice.status)" dot>{{ statusLabel(invoice.status) }}</UiBadge>
+          <button
+            type="button"
+            @click="handleDownload(invoice)"
+            :disabled="downloadingId === invoice.id"
+            class="w-8 h-8 -mr-1.5 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink disabled:opacity-50 shrink-0"
+            title="Download PDF"
+            aria-label="Download PDF"
+          >
+            <Download class="w-4 h-4" />
+          </button>
         </div>
-      </div>
-    </div>
-  </div>
+
+        <!-- Payment Receipts, if any -->
+        <div v-if="invoice.receipts && invoice.receipts.length > 0" class="mt-2 space-y-1">
+          <p class="text-ui-over uppercase text-ui-faint">Payment Receipts</p>
+          <div
+            v-for="receipt in invoice.receipts"
+            :key="receipt.id"
+            class="flex items-center gap-2 bg-ui-subtle rounded-md px-2.5 py-1.5 text-ui-cap"
+          >
+            <Receipt class="w-3.5 h-3.5 text-ui-faint shrink-0" />
+            <span class="font-mono text-ui-text min-w-0 truncate">{{ receipt.receipt_number }}</span>
+            <span class="text-ui-muted whitespace-nowrap">{{ formatDate(receipt.date) }}</span>
+            <span class="ml-auto font-medium text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(receipt.amount) }}</span>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </section>
 </template>
