@@ -5,8 +5,9 @@ import { storeToRefs } from "pinia";
 import { debounce } from "lodash-es";
 import { Plus, Search, SearchX, Inbox, Building2, FolderKanban, PiggyBank, Sparkles, AlertTriangle, ChevronRight } from "lucide-vue-next";
 import { useMaintenanceStore } from "@/stores/maintenance";
-import { useClientStore } from "@/stores/client";
-import { useProjectStore } from "@/stores/project";
+import { useLookupStore } from "@/stores/lookups";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
 import { can } from "@/helpers/permissionHelper";
 import { formatHours, formatMonth, CONTRACT_STATUS } from "@/utils/maintenance";
 import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiChips, UiTable, UiEmpty, UiAlert } from "@/components/ui";
@@ -20,37 +21,62 @@ const route = useRoute();
 const router = useRouter();
 const store = useMaintenanceStore();
 const { contracts, loading, error } = storeToRefs(store);
-const clientStore = useClientStore();
-const { clients } = storeToRefs(clientStore);
-const projectStore = useProjectStore();
-const { projects } = storeToRefs(projectStore);
+const lookups = useLookupStore();
+const clients = computed(() => lookups.clients);
 
-const search = ref("");
-const statusFilter = ref("");
-const clientFilter = ref("");
+// Search, status, client and the "needs attention" view live in the URL and
+// are remembered; the list shows what the store has and refreshes quietly.
+const list = useListState("maintenance", { q: "", status: "", client: "", attention: false });
+const search = ref(list.q);
+watch(search, debounce((v) => (list.q = v.trim()), 300));
+watch(() => list.q, (v) => v !== search.value.trim() && (search.value = v));
+const statusFilter = computed({ get: () => list.status, set: (v) => (list.status = v) });
+const clientFilter = computed({ get: () => list.client, set: (v) => (list.client = v) });
 
-const fetchData = () =>
-  store.fetchContracts({
-    search: search.value || undefined,
-    status: statusFilter.value || undefined,
-    client_id: clientFilter.value || undefined,
-  });
-
-onMounted(async () => {
-  fetchData();
-  if (clients.value.length === 0) await clientStore.fetchAllClient();
-  if (projects.value.length === 0) await projectStore.fetchProjectsPaginated({ row_per_page: 100 });
-  // "New contract" from a client's or project's detail page.
-  if (route.query.new && can("maintenance-create")) {
-    const project = projects.value.find((p) => String(p.id) === String(route.query.project_id));
-    presetClientId.value = route.query.client_id || project?.client_id || project?.client?.id || null;
-    presetProjectId.value = route.query.project_id || null;
-    router.replace({ query: {} });
-    openCreate();
-  }
+const params = computed(() => ({ search: list.q || undefined, status: list.status || undefined, client_id: list.client || undefined }));
+const { refreshing } = useStaleFetch(() => store.fetchContracts(params.value), {
+  key: () => ["maintenance-list", params.value],
+  hasData: () => contracts.value.length > 0,
 });
-watch([search, statusFilter, clientFilter], debounce(fetchData, 300));
 
+// The client filter needs the client names (shared, cached lookup).
+lookups.ensure("clients").catch(() => {});
+
+// Contracts that need a look this month: over quota, from 75% used, or
+// balance hours about to expire. Counted from the loaded list (it isn't
+// paginated), so the chip and the filter always agree.
+const needsAttention = (c) => (c.current_period && (c.current_period.overage > 0 || c.current_period.used_percent >= 75)) || c.expiring_soon?.hours > 0;
+const attentionCount = computed(() => contracts.value.filter(needsAttention).length);
+const rows = computed(() => (list.attention ? contracts.value.filter(needsAttention) : contracts.value));
+
+// "New contract" from a client's or project's detail page:
+// ?new=1&client_id=..&project_id=.. opens the form once; only those keys
+// are removed from the URL so the list's own filters stay.
+const NEW_KEYS = ["new", "client_id", "project_id"];
+onMounted(async () => {
+  if (!route.query.new) return;
+  const { new: isNew, client_id: clientId, project_id: projectId } = route.query;
+  const query = { ...route.query };
+  NEW_KEYS.forEach((k) => delete query[k]);
+  // Written out here too: a restored view may still be on its way into the
+  // URL, and this replace would otherwise drop it.
+  for (const key of ["q", "status", "client"]) {
+    if (list[key]) query[key] = list[key];
+    else delete query[key];
+  }
+  if (list.attention) query.attention = "1";
+  else delete query.attention;
+  router.replace({ query });
+  if (!isNew || !can("maintenance-create")) return;
+  let project = null;
+  if (projectId && !clientId) {
+    const projects = await lookups.ensure("projects").catch(() => []);
+    project = projects.find((p) => String(p.id) === String(projectId));
+  }
+  presetClientId.value = clientId || project?.client_id || project?.client?.id || null;
+  presetProjectId.value = projectId || null;
+  openCreate();
+});
 
 // ===== Create =====
 const showForm = ref(false);
@@ -60,6 +86,8 @@ const saving = ref(false);
 const formErrors = ref({});
 const openCreate = () => {
   formErrors.value = {};
+  // The form's pickers load when it opens (shared cache).
+  lookups.ensureAll(["clients", "projects"]).catch(() => {});
   showForm.value = true;
 };
 const handleSubmit = async (payload) => {
@@ -114,13 +142,27 @@ const openContract = (contract) => router.push({ name: "admin.maintenance.detail
           <UiInput v-model="search" :icon="Search" :placeholder="$t('maintenance.list.searchPlaceholder')" class="flex-1 lg:flex-none lg:w-[300px]" :aria-label="$t('maintenance.list.searchAria')" />
           <UiSelect v-model="clientFilter" :options="clientOptions" class="sm:w-[220px] lg:order-last lg:ml-auto" :aria-label="$t('common.labels.client')" />
         </div>
-        <UiChips v-model="statusFilter" :options="statusChips" class="min-w-0" />
+        <div class="flex items-center gap-1.5 min-w-0 overflow-x-auto [scrollbar-width:none]">
+          <UiChips v-model="statusFilter" :options="statusChips" class="min-w-0" />
+          <button
+            v-if="attentionCount || list.attention"
+            type="button"
+            :aria-pressed="list.attention"
+            class="ui-press shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full border text-ui-small font-medium whitespace-nowrap"
+            :class="list.attention ? 'bg-ui-warn text-white border-ui-warn' : 'bg-ui-warn-soft text-ui-warn border-ui-warn/30 hover:bg-ui-hover'"
+            @click="list.attention = !list.attention"
+          >
+            <AlertTriangle class="w-3.5 h-3.5" /> {{ $t("maintenance.list.needsAttention") }}
+            <span class="tabular-nums" :class="list.attention ? 'text-white/80' : ''">{{ attentionCount }}</span>
+          </button>
+        </div>
       </div>
 
       <UiTable
         :columns="COLUMNS"
-        :rows="contracts"
+        :rows="rows"
         :loading="loading && !contracts.length"
+        :class="refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
         :skeleton-rows="3"
         clickable
         @row-click="openContract"
@@ -220,7 +262,9 @@ const openContract = (contract) => router.push({ name: "admin.maintenance.detail
         </template>
 
         <template #empty>
-          <UiEmpty v-if="search || statusFilter || clientFilter" :icon="SearchX" :title="$t('maintenance.list.emptyFiltered')" compact />
+          <UiEmpty v-if="list.isDirty" :icon="SearchX" :title="$t('maintenance.list.emptyFiltered')" compact>
+            <UiButton variant="secondary" @click="(search = ''), list.reset()">{{ $t("maintenance.list.clearFilters") }}</UiButton>
+          </UiEmpty>
           <UiEmpty
             v-else
             :icon="Inbox"
@@ -238,7 +282,7 @@ const openContract = (contract) => router.push({ name: "admin.maintenance.detail
       :show="showForm"
       :loading="saving"
       :clients="clients"
-      :projects="projects"
+      :projects="lookups.projects"
       :errors="formErrors"
       :preset-client-id="presetClientId"
       :preset-project-id="presetProjectId"

@@ -52,13 +52,32 @@ export const useScreeningStore = defineStore("screening", {
       this.error = null;
       try {
         const { data } = await request();
-        if (data.data?.id) this.screening = data.data;
+        if (data.data?.id) {
+          this.screening = data.data;
+          this.patchListRow(data.data);
+        }
         return data.data;
       } catch (error) {
         this.error = handleError(error);
         throw error;
       } finally {
         this.saving = false;
+      }
+    },
+
+    // Keeps the list (kept in the store between pages) in step with an edit
+    // made on the detail page: the row's fields and the status counts.
+    patchListRow(detail) {
+      const row = this.screenings.find((r) => r.id === detail.id);
+      if (!row) return;
+      if (row.status !== detail.status && this.statusCounts) {
+        const counts = { ...this.statusCounts };
+        if (counts[row.status]) counts[row.status] = Number(counts[row.status]) - 1;
+        counts[detail.status] = Number(counts[detail.status] || 0) + 1;
+        this.statusCounts = counts;
+      }
+      for (const key of ["status", "company", "contact_name", "email", "phone", "complexity", "submitted_at"]) {
+        if (key in detail) row[key] = detail[key];
       }
     },
 
@@ -79,6 +98,12 @@ export const useScreeningStore = defineStore("screening", {
     },
     async deleteScreening(id) {
       await axiosInstance.delete(`/screenings/${id}`);
+      const row = this.screenings.find((r) => r.id === id);
+      if (row) {
+        this.screenings = this.screenings.filter((r) => r.id !== id);
+        if (this.statusCounts?.[row.status]) this.statusCounts = { ...this.statusCounts, [row.status]: Number(this.statusCounts[row.status]) - 1 };
+        if (this.meta?.total) this.meta = { ...this.meta, total: this.meta.total - 1 };
+      }
     },
 
     async downloadPdf(screening, withPrices) {

@@ -1,9 +1,9 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { debounce } from "lodash-es";
-import { ClipboardCheck, Plus, Search, Inbox, X, Loader2, PenLine, Send, Settings2 } from "lucide-vue-next";
+import { ClipboardCheck, Plus, Search, SearchX, Inbox, X, Loader2, PenLine, Send, Settings2 } from "lucide-vue-next";
 import { useScreeningStore } from "@/stores/screening";
 import { can } from "@/helpers/permissionHelper";
 import { SCREENING_STATUS, SCREENING_SOURCE, COMPLEXITY } from "@/utils/screening";
@@ -12,6 +12,8 @@ import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiPageHeader, UiButton, UiInput, UiChips, UiTable, UiBadge, UiEmpty, UiModal, UiStat } from "@/components/ui";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
 
 const { t } = useI18n();
 
@@ -19,13 +21,21 @@ const router = useRouter();
 const store = useScreeningStore();
 const { screenings, meta, statusCounts, loading, saving } = storeToRefs(store);
 
-const status = ref("");
-const search = ref("");
-const load = (page = 1) =>
-  store.fetchScreenings({ page, status: status.value || undefined, search: search.value.trim() || undefined, row_per_page: meta.value.per_page || 15 });
-onMounted(() => load());
-watch(status, () => load());
-watch(search, debounce(() => load(), 300));
+// Status, search and page live in the URL and are remembered, so coming
+// back from a screening restores the same view. The list shows what the
+// store already has and refreshes quietly.
+const list = useListState("screening", { q: "", status: "", page: 1 });
+const search = ref(list.q);
+watch(search, debounce((v) => (list.q = v.trim()), 300));
+watch(() => list.q, (v) => v !== search.value.trim() && (search.value = v));
+const params = computed(() => ({ page: list.page, status: list.status || undefined, search: list.q || undefined, row_per_page: 15 }));
+const { refreshing } = useStaleFetch(() => store.fetchScreenings(params.value), {
+  key: () => ["screening-list", params.value],
+  hasData: () => screenings.value.length > 0,
+});
+const status = computed({ get: () => list.status, set: (v) => (list.status = v) });
+const toggleStatus = (key) => (list.status = list.status === key ? "" : key);
+const load = (page = 1) => (list.page = page);
 
 const TABS = ["", "new", "in_review", "reviewed", "invited", "draft", "won", "lost"];
 const total = computed(() => Object.values(statusCounts.value || {}).reduce((a, b) => a + Number(b), 0));
@@ -84,10 +94,10 @@ const fieldClass = "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink 
 
     <!-- KPIs from the status counts -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 ui-stagger">
-      <UiStat :label="$t('common.labels.all')" :value="total" :icon="ClipboardCheck" :loading="loading && !screenings.length" />
-      <UiStat :label="SCREENING_STATUS.new.label" :value="tabCount('new')" :tone="tabCount('new') ? 'accent' : ''" :loading="loading && !screenings.length" />
-      <UiStat :label="SCREENING_STATUS.in_review.label" :value="tabCount('in_review')" :tone="tabCount('in_review') ? 'warn' : ''" :loading="loading && !screenings.length" />
-      <UiStat :label="SCREENING_STATUS.won.label" :value="tabCount('won')" :tone="tabCount('won') ? 'ok' : ''" :loading="loading && !screenings.length" />
+      <UiStat :label="$t('common.labels.all')" :value="total" :icon="ClipboardCheck" :loading="loading && !screenings.length" selectable :active="!list.status" @select="list.status = ''" />
+      <UiStat :label="SCREENING_STATUS.new.label" :value="tabCount('new')" :tone="tabCount('new') ? 'accent' : ''" :loading="loading && !screenings.length" selectable :active="list.status === 'new'" @select="toggleStatus('new')" />
+      <UiStat :label="SCREENING_STATUS.in_review.label" :value="tabCount('in_review')" :tone="tabCount('in_review') ? 'warn' : ''" :loading="loading && !screenings.length" selectable :active="list.status === 'in_review'" @select="toggleStatus('in_review')" />
+      <UiStat :label="SCREENING_STATUS.won.label" :value="tabCount('won')" :tone="tabCount('won') ? 'ok' : ''" :loading="loading && !screenings.length" selectable :active="list.status === 'won'" @select="toggleStatus('won')" />
     </div>
 
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
@@ -102,6 +112,7 @@ const fieldClass = "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink 
         :meta="meta"
         :loading="loading && !screenings.length"
         :skeleton-rows="4"
+        :class="refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
         clickable
         @row-click="open"
       >
@@ -142,7 +153,10 @@ const fieldClass = "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink 
         </template>
 
         <template #empty>
-          <UiEmpty :icon="Inbox" :title="$t('screening.list.emptyTitle')" :message="$t('screening.list.emptyHint')" compact />
+          <UiEmpty v-if="list.isDirty" :icon="SearchX" :title="$t('screening.list.emptyFilteredTitle')" :message="$t('screening.list.emptyFilteredHint')" compact>
+            <UiButton variant="secondary" @click="(search = ''), list.reset()">{{ $t("screening.list.clearFilters") }}</UiButton>
+          </UiEmpty>
+          <UiEmpty v-else :icon="Inbox" :title="$t('screening.list.emptyTitle')" :message="$t('screening.list.emptyHint')" compact />
         </template>
       </UiTable>
 

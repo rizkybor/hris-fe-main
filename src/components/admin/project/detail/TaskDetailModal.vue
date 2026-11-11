@@ -1,3 +1,9 @@
+<script>
+// projectId -> Promise<employee[]> for the assignee picker (module scope so
+// reopening a task, or another task of the project, needs no request).
+const peopleCache = new Map();
+</script>
+
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import {
@@ -19,28 +25,30 @@ import {
 } from "lucide-vue-next";
 import Avatar from "@/components/common/Avatar.vue";
 import TaskComments from "./TaskComments.vue";
-import { debounce } from "lodash-es";
 import { getPriorityColor, TASK_TYPE_COLORS, getTaskTypeColorClasses } from "@/utils/styleHelpers";
 import { formatDate } from "@/utils/dateUtils";
-import { useEmployeeStore } from "@/stores/employee";
+import { axiosInstance } from "@/plugins/axios";
 import { useTaskStore } from "@/stores/task";
-import { storeToRefs } from "pinia";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
-import { UiBadge, UiButton, UiInput, UiModal, UiSelect } from "@/components/ui";
+import { UiBadge, UiButton, UiInput, UiModal, UiSelect, UiStatusSelect } from "@/components/ui";
+import { optimistic } from "@/utils/optimistic";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
 
 // Presentation only: priority -> badge tone, status -> badge tone, options.
 const PRIORITY_TONES = { urgent: "bad", high: "warn", medium: "info", low: "neutral" };
-const STATUS_TONES = { todo: "neutral", in_progress: "accent", review: "warn", done: "ok", cancelled: "outline" };
+const STATUS_TONES = { todo: "neutral", in_progress: "accent", review: "warn", done: "ok", cancelled: "neutral" };
 const PRIORITY_OPTIONS = computed(() =>
   ["low", "medium", "high", "urgent"].map((value) => ({ value, label: t(`projects.priority.${value}`) }))
 );
 const TASK_STATUS_KEYS = { todo: "todo", in_progress: "inProgress", review: "review", done: "done", cancelled: "cancelled" };
 const taskStatusLabel = (status) =>
   TASK_STATUS_KEYS[status] ? t(`projects.taskStatus.${TASK_STATUS_KEYS[status]}`) : (status || "").replace("_", " ");
+const STATUS_OPTIONS = computed(() =>
+  Object.keys(TASK_STATUS_KEYS).map((value) => ({ value, label: taskStatusLabel(value), tone: STATUS_TONES[value] }))
+);
 const priorityLabel = (priority) =>
   PRIORITY_TONES[priority] ? t(`projects.priority.${priority}`) : priority;
 const fieldClass =
@@ -72,12 +80,8 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "deleted", "assigneeChanged", "updated"]);
 
-const employeeStore = useEmployeeStore();
-const { employees } = storeToRefs(employeeStore);
-const { fetchEmployees } = employeeStore;
-
 const taskStore = useTaskStore();
-const { updateTask, fetchProjectTasks } = taskStore;
+const { updateTask } = taskStore;
 
 const assigneeDropdown = ref(false);
 const dueDateEditing = ref(false);
@@ -92,6 +96,39 @@ const editedType = ref("");
 const editedColor = ref(null);
 const isSavingDetails = ref(false);
 const detailsError = ref("");
+
+// Assignee picker: this project's people (leader, team and members), loaded
+// once when the picker is first opened -- not when the modal mounts -- and
+// filtered locally while typing. Cached per project for this page session.
+const projectPeople = ref([]);
+const peopleLoading = ref(false);
+const loadProjectPeople = async () => {
+  if (!peopleCache.has(props.projectId)) {
+    peopleCache.set(
+      props.projectId,
+      axiosInstance
+        .get("employees", { params: { project_id: props.projectId } })
+        .then(({ data }) => data.data ?? [])
+        .catch((error) => {
+          peopleCache.delete(props.projectId);
+          console.error("Failed to load employees:", error);
+          return [];
+        })
+    );
+  }
+  peopleLoading.value = true;
+  projectPeople.value = await peopleCache.get(props.projectId);
+  peopleLoading.value = false;
+};
+const employees = computed(() => {
+  const q = searchAssignee.value.trim().toLowerCase();
+  const list = q
+    ? projectPeople.value.filter((e) =>
+        [e.user?.name, e.user?.email, e.job_information?.job_title].some((v) => v?.toLowerCase().includes(q))
+      )
+    : projectPeople.value;
+  return list.slice(0, 50);
+});
 
 const taskTypeColor = computed(() => getTaskTypeColorClasses(props.task?.color));
 const editedTypeColor = computed(() => getTaskTypeColorClasses(editedColor.value));
@@ -184,7 +221,6 @@ const handleSaveDetails = async () => {
     }
 
     await updateTask(props.task.id, payload);
-    await fetchProjectTasks(props.projectId);
     emit("updated");
     isEditingDetails.value = false;
   } catch (error) {
@@ -202,7 +238,6 @@ const handleDeleteImage = async () => {
   isDeletingImage.value = true;
   try {
     await updateTask(props.task.id, { remove_image: true });
-    await fetchProjectTasks(props.projectId);
     emit("updated");
   } catch (error) {
     console.error("Failed to delete image:", error);
@@ -222,18 +257,16 @@ const toggleAssigneeDropdown = () => {
   assigneeDropdown.value = !assigneeDropdown.value;
   if (assigneeDropdown.value) {
     searchAssignee.value = "";
+    loadProjectPeople();
   }
 };
 
 const handleSelectAssignee = async (employee) => {
   try {
-    await updateTask(props.task.id, {
-      assignee_id: employee.id,
-    });
+    // The response still carries the previous assignee relation, so the
+    // picked person is stored with it (no board refetch).
+    await updateTask(props.task.id, { assignee_id: employee.id }, { assignee: employee, assignee_id: employee.id });
     selectedAssignee.value = employee;
-
-    // Fetch ulang data tasks
-    await fetchProjectTasks(props.projectId);
 
     emit("assigneeChanged", employee);
     emit("updated");
@@ -247,13 +280,8 @@ const handleSelectAssignee = async (employee) => {
 const handleRemoveAssignee = async () => {
   try {
     // Kirim string kosong untuk remove assignee (Laravel lebih baik handle string kosong daripada null)
-    await updateTask(props.task.id, {
-      assignee_id: "",
-    });
+    await updateTask(props.task.id, { assignee_id: "" }, { assignee: null, assignee_id: null });
     selectedAssignee.value = null;
-
-    // Fetch ulang data tasks
-    await fetchProjectTasks(props.projectId);
 
     emit("assigneeChanged", null);
     emit("updated");
@@ -275,9 +303,6 @@ const handleUpdateDueDate = async () => {
       due_date: editedDueDate.value,
     });
 
-    // Fetch ulang data tasks
-    await fetchProjectTasks(props.projectId);
-
     emit("updated");
     dueDateEditing.value = false;
   } catch (error) {
@@ -291,12 +316,26 @@ const cancelDueDateEdit = () => {
   editedDueDate.value = props.task?.due_date || "";
 };
 
-onMounted(async () => {
-  await fetchEmployees({
-    limit: 6,
-    project_id: props.projectId,
-  });
+// Status straight from the modal (dragging is hard on phones): instant,
+// put back with an error toast if the save fails. The server re-places
+// the card in its new column; the response is stored as is.
+const changeStatus = (value) => {
+  const task = props.task;
+  if (!task || value === task.status) return;
+  const before = task.status;
+  return optimistic({
+    apply: () => {
+      task.status = value;
+      return () => {
+        const current = taskStore.tasks.find((t) => t.id === task.id) || task;
+        current.status = before;
+      };
+    },
+    request: () => updateTask(task.id, { status: value }),
+  }).then(({ ok }) => ok && emit("updated"));
+};
 
+onMounted(() => {
   // Set initial assignee from task prop
   if (props.task?.assignee) {
     selectedAssignee.value = props.task.assignee;
@@ -308,17 +347,6 @@ onMounted(async () => {
   }
 });
 
-watch(
-  searchAssignee,
-  debounce(() => {
-    fetchEmployees({
-      limit: 6,
-      search: searchAssignee.value,
-      project_id: props.projectId,
-    });
-  }, 300),
-  { deep: true }
-);
 
 // Watch for task changes to update selected assignee
 watch(
@@ -343,9 +371,7 @@ watch(
   () => props.task,
   (newTask) => {
     if (newTask) {
-      if (newTask.assignee) {
-        selectedAssignee.value = newTask.assignee;
-      }
+      selectedAssignee.value = newTask.assignee || null;
       if (newTask.due_date && !dueDateEditing.value) {
         editedDueDate.value = newTask.due_date;
       }
@@ -647,7 +673,7 @@ watch(
                 </button>
 
                 <!-- No Results -->
-                <div v-if="employees.length === 0" class="p-5 text-center">
+                <div v-if="employees.length === 0 && !peopleLoading" class="p-5 text-center">
                   <SearchX class="w-5 h-5 text-ui-faint mx-auto mb-1.5" />
                   <p class="text-ui-cap text-ui-muted">{{ $t("projects.tasks.detail.noEmployees") }}</p>
                 </div>
@@ -691,7 +717,13 @@ watch(
         <!-- Status -->
         <div v-if="!isEditingDetails">
           <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("common.labels.status") }}</h3>
-          <UiBadge :tone="STATUS_TONES[task.status] || 'neutral'" dot class="capitalize">{{ taskStatusLabel(task.status) }}</UiBadge>
+          <UiStatusSelect
+            :model-value="task.status"
+            :options="STATUS_OPTIONS"
+            :label="$t('common.labels.status')"
+            :disabled="!can('task-edit')"
+            @change="changeStatus"
+          />
         </div>
 
         <!-- Actions -->

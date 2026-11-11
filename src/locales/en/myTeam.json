@@ -1,5 +1,6 @@
 {
   "loading": "Loading your team...",
+  "refreshing": "Updating…",
   "noTeam": {
     "title": "No team assigned yet",
     "message": "You're not currently a member of any team. Reach out to your manager or HR if you think this is a mistake."
@@ -10,6 +11,7 @@
     "growing": "Growing"
   },
   "stats": {
+    "openCount": "{n} open",
     "activeMembers": "Active Members",
     "projectsAssigned": "Projects Assigned",
     "activeProjects": "Active projects",
@@ -22,12 +24,14 @@
     "projects": "Projects",
     "description": "Description"
   },
+  "projectStatus": { "draft": "Draft", "planning": "Planning", "active": "Active", "on_hold": "On hold", "completed": "Completed", "cancelled": "Cancelled" },
   "memberStatus": {
     "left": "Left",
     "lead": "Lead",
     "active": "Active"
   },
   "members": {
+    "emailTo": "Email {name}", "callTo": "Call {name}", "viewProfile": "Profile",
     "title": "Team Members",
     "subtitle": "Current team composition",
     "experience": "{n} year experience | {n} years experience",
@@ -35,6 +39,7 @@
     "emptyHint": "Team members will appear here"
   },
   "projects": {
+    "noClient": "No client", "ends": "Ends {date}", "noEndDate": "No end date",
     "title": "Team Projects",
     "subtitle": "Projects assigned to {name}",
     "count": "{n} Project | {n} Projects",

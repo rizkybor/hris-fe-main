@@ -26,6 +26,7 @@
     "phoneNumber": "Nomor Telepon"
   },
   "view": {
+    "refreshing": "Memperbarui…",
     "editProfile": "Ubah Profil",
     "joined": "Bergabung {date}",
     "tabs": {
@@ -69,6 +70,7 @@
       "done": "Selesai"
     },
     "tasks": {
+      "open": "Buka tugas {name}",
       "title": "Tugas Terbaru",
       "subtitle": "Tugas yang baru ditugaskan",
       "empty": "Belum ada tugas aktif",
@@ -80,6 +82,7 @@
       "empty": "Belum ada aset & penilaian"
     },
     "reviews": {
+      "acknowledgedToast": "Penilaian ditandai sudah dibaca",
       "title": "Penilaian Kinerja Saya",
       "subtitle": "Masukan dan nilai dari penilai Anda",
       "rating": "Nilai {n} dari 5",

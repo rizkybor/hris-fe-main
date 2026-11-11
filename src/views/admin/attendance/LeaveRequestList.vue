@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, toRef } from "vue";
+import { useListState } from "@/composables/useListState";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { CalendarClock, Search, Check, X, ArrowLeft, ChevronDown, Paperclip } from "lucide-vue-next";
@@ -21,14 +22,18 @@ const router = useRouter();
 const store = useLeaveRequestStore();
 const { leaveRequests, meta, loading } = storeToRefs(store);
 
-const search = ref("");
-const statusFilter = ref("");
+// Status/search/page in the URL (?status=pending) and remembered per
+// browser, so links can open a filtered list and returning keeps the view.
+const list = useListState("leave-requests", { q: "", status: "", page: 1 });
+const search = toRef(list, "q");
+const statusFilter = toRef(list, "status");
 const showApproveModalState = ref(false);
 const showRejectModalState = ref(false);
 const selectedLeaveRequest = ref(null);
 const processingAction = ref(false);
 
 const load = (page = 1) => {
+  list.page = page;
   store.fetchAllPaginated({
     search: search.value || undefined,
     status: statusFilter.value || undefined,
@@ -36,7 +41,7 @@ const load = (page = 1) => {
   });
 };
 
-onMounted(() => load());
+onMounted(() => load(list.page));
 
 const handleSearch = () => load(1);
 const handleFilterChange = () => load(1);

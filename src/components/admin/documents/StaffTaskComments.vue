@@ -1,3 +1,8 @@
+<script>
+// Module scope (not per component instance).
+const mentionableCache = { list: [], at: 0, request: null };
+</script>
+
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { useRoute } from "vue-router";
@@ -13,6 +18,10 @@ import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
+
+// Shared by every mount (drawer prev/next, reopening, My Tasks): the list is
+// the same for every task, so it is fetched once per few minutes, not per open.
+const MENTIONABLE_TTL_MS = 5 * 60 * 1000;
 
 const props = defineProps({
   staffTaskId: {
@@ -67,17 +76,23 @@ const mentionDropdownStyle = ref({});
 // mentionable here regardless of task assignment -- fetched once since
 // this list is the same for every task, then merged with the task's own
 // assignees for the dropdown. The backend enforces the same allowance.
-const alwaysMentionableEmployees = ref([]);
+const alwaysMentionableEmployees = ref(mentionableCache.list);
 
 const fetchAlwaysMentionableEmployees = async () => {
+  if (Date.now() - mentionableCache.at < MENTIONABLE_TTL_MS) {
+    alwaysMentionableEmployees.value = mentionableCache.list;
+    return;
+  }
   try {
-    const { data } = await axiosInstance.get("employees", {
-      params: { roles: "manager,finance,operational_director", limit: 20 },
-    });
-    alwaysMentionableEmployees.value = data.data.map((employee) => ({
-      id: employee.id,
-      name: employee.user?.name,
-    }));
+    mentionableCache.request ||= axiosInstance
+      .get("employees", { params: { roles: "manager,finance,operational_director", limit: 20 } })
+      .then(({ data }) => {
+        mentionableCache.list = data.data.map((employee) => ({ id: employee.id, name: employee.user?.name }));
+        mentionableCache.at = Date.now();
+        return mentionableCache.list;
+      })
+      .finally(() => (mentionableCache.request = null));
+    alwaysMentionableEmployees.value = await mentionableCache.request;
   } catch (error) {
     console.error("Failed to load always-mentionable employees:", error);
   }

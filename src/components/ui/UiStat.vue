@@ -1,7 +1,8 @@
 <script setup>
 // KPI tile: label, big value, optional hint line. `tone` colours the value
 // only (e.g. "bad" for an overdue count); text stays on text tokens.
-// With `to` the whole tile is a link.
+// With `to` the whole tile is a link. With `selectable` it is a filter
+// toggle (button, aria-pressed): emits `select`, `active` highlights it.
 import { computed } from "vue";
 import Skeleton from "../common/skeleton/Skeleton.vue";
 
@@ -13,17 +14,26 @@ const props = defineProps({
   icon: { type: [Object, Function], default: null },
   to: { type: [String, Object], default: null },
   loading: { type: Boolean, default: false },
+  selectable: { type: Boolean, default: false },
+  active: { type: Boolean, default: false },
 });
+defineEmits(["select"]);
 const TONES = { ok: "text-ui-ok", warn: "text-ui-warn", bad: "text-ui-bad", accent: "text-ui-accent" };
 const valueClass = computed(() => TONES[props.tone] || "text-ui-ink");
 </script>
 
 <template>
   <component
-    :is="to ? 'RouterLink' : 'div'"
+    :is="to ? 'RouterLink' : selectable ? 'button' : 'div'"
     :to="to || undefined"
-    class="block bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0"
-    :class="to ? 'ui-lift hover:border-ui-line-strong' : ''"
+    :type="selectable ? 'button' : undefined"
+    :aria-pressed="selectable ? active : undefined"
+    class="block w-full text-left bg-ui-surface border rounded-ui-card px-5 py-4 min-w-0"
+    :class="[
+      to || selectable ? 'ui-lift hover:border-ui-line-strong' : '',
+      active ? 'border-ui-accent ring-1 ring-ui-accent' : 'border-ui-line',
+    ]"
+    @click="selectable && $emit('select')"
   >
     <div class="flex items-center gap-2">
       <component :is="icon" v-if="icon" class="w-4 h-4 text-ui-faint shrink-0" />

@@ -45,7 +45,9 @@
     "emptyTitle": "No projects yet",
     "emptyMessage": "Create your first project to start tracking tasks and progress",
     "deleteConfirm": "Delete project \"{name}\"? This action cannot be undone.",
-    "deleteFailed": "Failed to delete project."
+    "deleteFailed": "Failed to delete project.",
+    "deleted": "Project \"{name}\" deleted",
+    "refreshing": "Updating projects…"
   },
   "stats": {
     "total": "Total Projects",
@@ -340,7 +342,13 @@
       "updateFailed": "Failed to update task.",
       "deleteImageConfirm": "Delete this task's image?",
       "deleteConfirm": "Are you sure you want to delete this task?"
-    }
+    },
+    "allAssignees": "All Assignees",
+    "mine": "Mine",
+    "overdue": "Overdue",
+    "addToColumn": "Add a task to {column}",
+    "quickAdd": "Add a task",
+    "quickAddLabel": "New task title for {column} (press Enter)"
   },
   "comments": {
     "title": "Comments",

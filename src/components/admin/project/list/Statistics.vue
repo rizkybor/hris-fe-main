@@ -6,6 +6,14 @@ import { storeToRefs } from "pinia";
 import { UiStat } from "@/components/ui";
 import { formatRupiah } from "@/utils/formatUtils";
 
+// With `selectable`, the Total/Active tiles filter the list: they emit
+// `filter` with "" (all) or "active"; `activeStatus` highlights Active.
+const props = defineProps({
+  selectable: { type: Boolean, default: false },
+  activeStatus: { type: String, default: null },
+});
+defineEmits(["filter"]);
+
 const projectStore = useProjectStore();
 const { loadingStatistics } = storeToRefs(projectStore);
 
@@ -27,11 +35,26 @@ onMounted(() => {
 <template>
   <!-- Statistics Cards: one horizontal row of KPIs -->
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 ui-stagger">
-    <UiStat :label="$t('projects.stats.total')" :icon="Briefcase" :hint="$t('projects.stats.totalHint')" :loading="loadingStatistics">
+    <UiStat
+      :label="$t('projects.stats.total')"
+      :icon="Briefcase"
+      :hint="$t('projects.stats.totalHint')"
+      :loading="loadingStatistics"
+      :selectable="props.selectable"
+      @select="$emit('filter', '')"
+    >
       <span id="totalProjects">{{ total }}</span>
     </UiStat>
 
-    <UiStat :label="$t('projects.stats.active')" :icon="PlayCircle" :hint="$t('projects.stats.activeHint')" :loading="loadingStatistics">
+    <UiStat
+      :label="$t('projects.stats.active')"
+      :icon="PlayCircle"
+      :hint="$t('projects.stats.activeHint')"
+      :loading="loadingStatistics"
+      :selectable="props.selectable"
+      :active="props.selectable && props.activeStatus === 'active'"
+      @select="$emit('filter', 'active')"
+    >
       <span id="activeProjects">{{ active }}</span>
     </UiStat>
 

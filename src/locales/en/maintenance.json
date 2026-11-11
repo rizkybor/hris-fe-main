@@ -75,7 +75,9 @@
     "emptyFiltered": "No contracts match your filters",
     "emptyTitle": "No maintenance contracts yet",
     "emptyHint": "Create a contract with a monthly hour quota, then log the work you do. The client can follow their remaining quota through a private link.",
-    "createFirst": "Create your first contract"
+    "createFirst": "Create your first contract",
+    "needsAttention": "Needs attention",
+    "clearFilters": "Clear filters"
   },
   "recap": {
     "paused": "{n} paused",

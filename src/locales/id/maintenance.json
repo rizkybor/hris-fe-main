@@ -75,7 +75,9 @@
     "emptyFiltered": "Tidak ada kontrak yang cocok dengan filter",
     "emptyTitle": "Belum ada kontrak maintenance",
     "emptyHint": "Buat kontrak dengan kuota jam bulanan, lalu catat pekerjaan yang dilakukan. Klien dapat memantau sisa kuota melalui link pribadi.",
-    "createFirst": "Buat kontrak pertama"
+    "createFirst": "Buat kontrak pertama",
+    "needsAttention": "Perlu perhatian",
+    "clearFilters": "Hapus filter"
   },
   "recap": {
     "paused": "{n} dijeda",

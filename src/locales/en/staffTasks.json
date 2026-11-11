@@ -37,7 +37,8 @@
     "descriptionPlaceholder": "Task details, instructions, links...",
     "assignTo": "Assign To",
     "selectStaff": "Select Staff",
-    "noStaff": "No staff members found."
+    "noStaff": "No staff members found.",
+    "loadingStaff": "Loading staff…"
   },
   "recap": {
     "open": "Open tasks",
@@ -45,8 +46,6 @@
     "overdueSub": "Past due, still open",
     "dueThisWeek": "Due this week",
     "stillOpen": "Still open",
-    "assignmentsDone": "Assignments done",
-    "doneOf": "{done} of {total}",
     "assignments": "assignments",
     "thisWeek": "This wk",
     "nextWeek": "Next wk",
@@ -75,5 +74,25 @@
     "notEligible": "Only the assigned staff, the task's creator, or managers can comment or mention others here.",
     "placeholder": "Write a comment... use {'@'} to mention someone",
     "insertEmoji": "Insert emoji"
-  }
+  },
+  "itemLabel": "tasks",
+  "updating": "Updating…",
+  "you": "(you)",
+  "myStatus": "Your status",
+  "summary": {
+    "doneTasks": "Done tasks",
+    "doneHint": "{pct}% of assignments done"
+  },
+  "toast": {
+    "created": "Task created",
+    "createdElsewhere": "It's at the top of page 1.",
+    "updated": "Task updated",
+    "deleted": "Task deleted",
+    "statusUpdated": "Status updated",
+    "notFound": "This task no longer exists.",
+    "loadFailed": "Couldn't load this task."
+  },
+  "emptyFilterTitle": "No “{label}” tasks",
+  "emptyFilterMessage": "Nothing in this group right now. Clear the filter to see every task.",
+  "clearFilter": "Clear filter: {label}"
 }

@@ -47,7 +47,8 @@
     "fileRequired": "File is required.",
     "nameAndFileRequired": "File Name and File are required.",
     "uploadSuccess": "File uploaded successfully.",
-    "uploadFailed": "Failed to upload file."
+    "uploadFailed": "Failed to upload file.",
+    "replacementRequired": "Upload a replacement file before removing the current one."
   },
   "detail": {
     "title": "Document File Detail",

@@ -5,6 +5,9 @@ import { handleError } from "@/helpers/errorHelper";
 export const useProjectDocumentStore = defineStore("projectDocument", {
   state: () => ({
     documents: [],
+    // Which project `documents` belongs to (cleared on switch so another
+    // project's files never show while the new list loads).
+    documentsProjectId: null,
     loading: false,
     uploading: false,
     error: null,
@@ -13,6 +16,10 @@ export const useProjectDocumentStore = defineStore("projectDocument", {
 
   actions: {
     async fetchByProject(projectId) {
+      if (String(this.documentsProjectId) !== String(projectId)) {
+        this.documents = [];
+        this.documentsProjectId = projectId;
+      }
       this.loading = true;
       this.error = null;
       try {

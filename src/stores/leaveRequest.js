@@ -144,6 +144,17 @@ export const useLeaveRequestStore = defineStore("leaveRequest", {
             }
         },
 
+        // The newest pending requests (for the Attendance summary) plus how
+        // many are pending in all. Leaves the paginated list
+        // state (leaveRequests/meta/loading) of the Leave Requests page alone.
+        async fetchPendingLeaveRequests(limit = 5) {
+            const response = await axiosInstance.get('leave-requests/all/paginated', {
+                params: { status: 'pending', row_per_page: limit },
+            });
+            const page = response.data.data ?? {};
+            return { items: page.data ?? [], total: page.meta?.total ?? (page.data ?? []).length };
+        },
+
         async approveLeaveRequest(id) {
             this.loading = true;
             this.error = null;

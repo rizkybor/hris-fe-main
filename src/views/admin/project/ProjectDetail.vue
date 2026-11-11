@@ -37,7 +37,7 @@ import {
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import router from "@/router";
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch, defineAsyncComponent } from "vue";
 import { formatDate, calculateDuration } from "@/utils/dateUtils";
 import { formatRupiah } from "@/utils/formatUtils";
 import {
@@ -54,7 +54,10 @@ import ProjectInvoices from "@/components/admin/project/detail/ProjectInvoices.v
 import ProjectInspect from "@/components/admin/project/detail/ProjectInspect.vue";
 import ProjectAccess from "@/components/admin/project/detail/ProjectAccess.vue";
 import ProjectBilling from "@/components/admin/project/detail/ProjectBilling.vue";
-import MaintenancePanel from "@/components/admin/maintenance/MaintenancePanel.vue";
+import { useListState } from "@/composables/useListState";
+import { useVisitedTabs } from "@/composables/useVisitedTabs";
+// Owned by the Maintenance page; loaded only when its tab is first opened.
+const MaintenancePanel = defineAsyncComponent(() => import("@/components/admin/maintenance/MaintenancePanel.vue"));
 import Avatar from "@/components/common/Avatar.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiBadge, UiButton, UiCard, UiEmpty } from "@/components/ui";
@@ -237,8 +240,16 @@ const hasAccessLinks = computed(() => {
   );
 });
 
+// The open tab lives in the URL (?tab=board), per project (not remembered).
 // A ?task=<id> deep link opens on the Board tab (the task modal opens on top).
-const activeTab = ref(route.query.task ? "board" : "overview");
+const tabState = useListState("project-detail", { tab: "overview" }, { remember: false });
+if (route.query.task && !route.query.tab) tabState.tab = "board";
+const activeTab = computed({
+  get: () => tabState.tab,
+  set: (value) => (tabState.tab = value),
+});
+// Each tab mounts (and fetches) the first time it is opened, then stays.
+const visitedTabs = useVisitedTabs(() => tabState.tab);
 const { scrollRef: tabScrollRef, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
 const tabs = computed(() => {
   const list = [
@@ -252,7 +263,20 @@ const tabs = computed(() => {
   return list;
 });
 
+// An unknown or no-longer-available tab (e.g. no permission) falls back.
+watch(
+  [pageReady, tabs],
+  () => {
+    if (pageReady.value && !tabs.value.some((tab) => tab.id === tabState.tab)) tabState.tab = "overview";
+  },
+  { immediate: true }
+);
+
 onMounted(async () => {
+  // The task list feeds the overview (progress, counts) and the board, so
+  // it loads alongside the project instead of waiting for the board tab.
+  // Same project as last time: the board shows what it has meanwhile.
+  taskStore.fetchProjectTasks(id);
   await handleFetchProject();
   pageReady.value = true;
 });
@@ -625,28 +649,28 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Board Tab (kept mounted so progress stays live from the task store) -->
-      <div v-show="activeTab === 'board'">
+      <!-- Board Tab (progress stays live from the task store either way) -->
+      <div v-if="visitedTabs.has('board')" v-show="activeTab === 'board'">
         <TaskBoard />
       </div>
 
       <!-- Documents Tab -->
-      <div v-show="activeTab === 'documents'">
+      <div v-if="visitedTabs.has('documents')" v-show="activeTab === 'documents'">
         <ProjectDocuments :project-id="id" />
       </div>
 
       <!-- Billing Tab: invoiced vs paid for this project -->
-      <div v-if="can('project-expense-list')" v-show="activeTab === 'billing'">
+      <div v-if="can('project-expense-list') && visitedTabs.has('billing')" v-show="activeTab === 'billing'">
         <ProjectBilling :project-id="id" />
       </div>
 
       <!-- Maintenance contracts tied to this project (optional) -->
-      <div v-if="can('maintenance-menu') || can('maintenance-list')" v-show="activeTab === 'maintenance'">
+      <div v-if="(can('maintenance-menu') || can('maintenance-list')) && visitedTabs.has('maintenance')" v-show="activeTab === 'maintenance'">
         <MaintenancePanel :project-id="id" />
       </div>
 
       <!-- Project Access (optional quick links) -->
-      <div v-show="activeTab === 'access'">
+      <div v-if="visitedTabs.has('access')" v-show="activeTab === 'access'">
         <ProjectAccess
           :access-project-name="project.access_project_name || ''"
           :access-project-url="project.access_project_url || ''"

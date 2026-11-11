@@ -209,6 +209,15 @@ watch(
   { immediate: true }
 );
 
+// The pickers load when the modal opens: fill the account number in once
+// the bank accounts arrive.
+watch(
+  () => props.bankAccounts,
+  () => {
+    if (props.show && form.bank_name && !form.bank_account) handleBankNameChange();
+  }
+);
+
 const title = computed(() => (props.mode === "edit" ? t("subscriptions.form.editTitle") : t("subscriptions.form.addTitle")));
 
 // Presentation only: token classes for the native number fields (they keep

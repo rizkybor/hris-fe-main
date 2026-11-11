@@ -58,7 +58,10 @@
       "formLanguage": "Bahasa formulir untuk klien",
       "createLink": "Buat link",
       "start": "Mulai"
-    }
+    },
+    "emptyFilteredTitle": "Tidak ada screening yang cocok dengan filter",
+    "emptyFilteredHint": "Coba status atau kata kunci lain.",
+    "clearFilters": "Hapus filter"
   },
   "detail": {
     "submitted": "Dikirim {date}",
@@ -130,7 +133,13 @@
     "fillIn": "Isi",
     "requiredMissing": "Beberapa pertanyaan wajib masih kosong.",
     "noAnswers": "Belum ada jawaban.",
-    "deleteConfirm": "Hapus screening ini?"
+    "deleteConfirm": "Hapus screening ini?",
+    "toast": {
+      "statusSaved": "Status diperbarui",
+      "notesSaved": "Catatan disimpan",
+      "itemsSaved": "Layanan disimpan",
+      "deleted": "Screening dihapus"
+    }
   },
   "settings": {
     "title": "Katalog & Pertanyaan",
@@ -243,6 +252,11 @@
       "duration": "Durasi",
       "durationPlaceholder": "mis. 2-3 minggu",
       "active": "Aktif (dipakai untuk rekomendasi)"
+    },
+    "toast": {
+      "itemSaved": "Item katalog disimpan",
+      "itemAdded": "Item katalog ditambahkan",
+      "itemDeleted": "Item katalog dihapus"
     }
   }
 }

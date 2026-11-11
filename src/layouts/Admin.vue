@@ -45,9 +45,16 @@ const playPageEnter = async () => {
   await nextTick();
   const el = mainEl.value?.firstElementChild;
   if (!el) return;
+  // A new page root just gets the class. The same root (e.g. only a param
+  // changed) drops it and gets it back two frames later, so the browser sees
+  // the change and restarts the animation — without forcing a synchronous
+  // layout of the whole page (reading offsetWidth did that).
+  if (!el.classList.contains("ui-page-enter")) {
+    el.classList.add("ui-page-enter");
+    return;
+  }
   el.classList.remove("ui-page-enter");
-  void el.offsetWidth; // restart the CSS animation
-  el.classList.add("ui-page-enter");
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("ui-page-enter")));
 };
 onMounted(playPageEnter);
 watch(

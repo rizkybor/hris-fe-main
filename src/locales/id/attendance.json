@@ -36,6 +36,14 @@
     "compassionate_leave": "Cuti Duka"
   },
   "summary": {
+    "refreshing": "Memperbarui…",
+    "needsApproval": "Pengajuan cuti",
+    "needsApprovalHint": "Yang menunggu persetujuan lebih dulu, lalu keputusan terbaru",
+    "morePending": "{n} lagi menunggu persetujuan",
+    "allCaughtUp": "Tidak ada yang menunggu persetujuan",
+    "recentDecisions": "Keputusan terbaru",
+    "approvedToast": "Cuti {name} disetujui",
+    "rejectedToast": "Cuti {name} ditolak",
     "title": "Ringkasan Kehadiran",
     "subtitle": "Tinjau catatan absen masuk/pulang",
     "stats": {

@@ -45,7 +45,9 @@
     "emptyTitle": "Belum ada proyek",
     "emptyMessage": "Buat proyek pertama untuk mulai memantau tugas dan progres",
     "deleteConfirm": "Hapus proyek \"{name}\"? Tindakan ini tidak dapat dibatalkan.",
-    "deleteFailed": "Gagal menghapus proyek."
+    "deleteFailed": "Gagal menghapus proyek.",
+    "deleted": "Proyek \"{name}\" dihapus",
+    "refreshing": "Memperbarui proyek…"
   },
   "stats": {
     "total": "Total Proyek",
@@ -340,7 +342,13 @@
       "updateFailed": "Gagal memperbarui tugas.",
       "deleteImageConfirm": "Hapus gambar tugas ini?",
       "deleteConfirm": "Yakin ingin menghapus tugas ini?"
-    }
+    },
+    "allAssignees": "Semua Penanggung Jawab",
+    "mine": "Tugas Saya",
+    "overdue": "Lewat jatuh tempo",
+    "addToColumn": "Tambah tugas ke {column}",
+    "quickAdd": "Tambah tugas",
+    "quickAddLabel": "Judul tugas baru untuk {column} (tekan Enter)"
   },
   "comments": {
     "title": "Komentar",

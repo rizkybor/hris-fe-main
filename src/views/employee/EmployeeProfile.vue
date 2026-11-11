@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, computed } from "vue";
 import { useEmployeeStore } from "@/stores/employee";
 import { useTaskStore } from "@/stores/task";
 import { useAssetStore } from "@/stores/asset";
 import { usePerformanceReviewStore } from "@/stores/performanceReview";
+import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
+import { optimistic } from "@/utils/optimistic";
+import { canOneOf } from "@/helpers/permissionHelper";
 import { getJobStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
 import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -41,7 +46,7 @@ import {
   Download,
 } from "lucide-vue-next";
 import { useScrollFade } from "@/composables/useScrollFade";
-import { UiBadge, UiButton, UiCard, UiEmpty, UiStat } from "@/components/ui";
+import { UiBadge, UiButton, UiCard, UiEmpty, UiSpinner, UiStat } from "@/components/ui";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import { useI18n } from "vue-i18n";
 
@@ -52,9 +57,8 @@ const enumLabel = (group: string, value: any) =>
   value && te(`profile.enums.${group}.${value}`) ? t(`profile.enums.${group}.${value}`) : capitalize(value);
 
 const employeeStore = useEmployeeStore();
-const { loading, performanceStatistics } = storeToRefs(employeeStore);
+const authStore = useAuthStore();
 const taskStore = useTaskStore();
-const { myTasks } = storeToRefs(taskStore);
 const assetStore = useAssetStore();
 const reviewStore = usePerformanceReviewStore();
 
@@ -65,15 +69,29 @@ const myAssets = computed(() => assetStore.myAssets as any[]);
 const myReviews = computed(() => reviewStore.myReviews as any[]);
 const router = useRouter();
 
-const acknowledgeReview = async (id: number) => {
-  try {
-    await reviewStore.acknowledgeReview(id);
-    await reviewStore.fetchMyReviews();
-  } catch (error) {}
-};
+// Instant: the review shows as acknowledged right away (undone with an
+// error toast if the request fails) -- no refetch of the review list.
+const acknowledgeReview = (review: any) =>
+  optimistic({
+    apply: () => {
+      const before = review.status;
+      review.status = "acknowledged";
+      return () => (review.status = before);
+    },
+    request: () => reviewStore.acknowledgeReview(review.id),
+    success: t("profile.view.reviews.acknowledgedToast"),
+  });
 
-const profile = ref<any>(null);
+// The profile lives in the employee store, so a revisit shows it at once
+// and refreshes quietly. Cached data only counts for the signed-in user
+// (stores aren't reset on logout).
+const myUserId = computed(() => authStore.user?.id ?? null);
+const profile = computed<any>(() => {
+  const p: any = employeeStore.myProfile;
+  return p && (!myUserId.value || p.user?.id === myUserId.value) ? p : null;
+});
 const profileNotFound = ref(false);
+const performanceStatistics = computed<any>(() => (profile.value ? employeeStore.myPerformanceStatistics : null) || {});
 
 // These three mirror PHP behavior exactly (ucwords() and Str::limit()'s
 // defaults) so the ID card preview's job title/phone/email match the
@@ -129,7 +147,13 @@ const idCardNameLines = computed(() => {
   return { line1, line2 };
 });
 
-const activeTab = ref("overview");
+// Tab lives in the URL (?tab=), so back/reload and links keep it.
+const TAB_IDS = ["overview", "employment", "emergency", "tasks", "more", "idcard"];
+const tabState = useListState("my-profile", { tab: "overview" }, { remember: false });
+const activeTab = computed({
+  get: () => (TAB_IDS.includes(tabState.tab) ? tabState.tab : "overview"),
+  set: (v: string) => (tabState.tab = v),
+});
 const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
 const tabs = computed(() => [
   { id: "overview", label: t("profile.view.tabs.overview"), icon: LayoutGrid },
@@ -152,19 +176,35 @@ const downloadIdCard = async () => {
   }
 };
 
+// Everything the page shows, in parallel. The statistics need the employee
+// id: known from the cached profile on a revisit (parallel), otherwise
+// requested right after the profile arrives.
 const loadProfile = async () => {
-  profileNotFound.value = false;
+  const knownId = profile.value?.id;
+  const side = [
+    knownId ? employeeStore.fetchMyPerformanceStatistics(knownId).catch(() => null) : null,
+    taskStore.fetchMyTasks(5, false),
+    assetStore.fetchMyAssets(),
+    reviewStore.fetchMyReviews(),
+  ];
   try {
-    profile.value = await employeeStore.fetchMyProfile();
-    if (profile.value?.id) {
-      await employeeStore.fetchPerformanceStatistics(profile.value.id);
+    const fresh = await employeeStore.fetchMyProfile();
+    profileNotFound.value = false;
+    if (fresh?.id && fresh.id !== knownId) {
+      await employeeStore.fetchMyPerformanceStatistics(fresh.id).catch(() => null);
     }
   } catch (error) {
     // System accounts (e.g. Super Admin) have no employee profile -- that's
     // expected, not a failure, so show an explanation instead of a blank page.
-    profileNotFound.value = true;
+    if (!profile.value) profileNotFound.value = true;
   }
+  await Promise.all(side);
 };
+const { loading, refreshing } = useStaleFetch(loadProfile, {
+  key: () => ["ws-my-profile", myUserId.value],
+  hasData: () => !!profile.value,
+  maxAge: 60_000,
+});
 
 // Status -> message key (profile.view.taskStatus.*); the tone map below
 // is keyed by the same status values.
@@ -177,6 +217,18 @@ const taskStatusClasses: Record<string, string> = {
   done: "bg-[#F0FDF4] text-[#166534]",
 };
 
+// The profile's own fetchMyTasks(5) result -- not the shared myTasks slot,
+// which the dashboard widget and My Tasks overwrite with their own lists.
+const myTasks = computed<any[]>(() => (taskStore.myTasksCache as any)["5:false"] || []);
+const tasksLoading = computed(() => !(taskStore.myTasksCache as any)["5:false"]);
+const canOpenProject = computed(() => canOneOf(["project-list", "project-create", "project-edit", "project-delete"]));
+// A task row opens the task on its project board (same deep link My Tasks
+// uses), or My Tasks when the project page isn't available.
+const taskLink = (task: any) =>
+  task.projectId && canOpenProject.value
+    ? { name: "admin.projects.detail", params: { id: task.projectId }, query: { task: task.id } }
+    : { name: "employee.tasks" };
+
 const latestTasks = computed(() =>
   myTasks.value.map((task: any) => ({
     id: task.id,
@@ -187,6 +239,7 @@ const latestTasks = computed(() =>
     statusClass: taskStatusClasses[task.status] ?? "bg-gray-100 text-gray-600",
     dueDate: task.due_date ? formatDate(task.due_date) : t("profile.view.tasks.noDueDate"),
     project: task.project?.name ?? t("common.duration.na"),
+    projectId: task.project?.id ?? null,
   }))
 );
 
@@ -255,12 +308,6 @@ const emergencyRows = computed(() => {
   ];
 });
 
-onMounted(() => {
-  loadProfile();
-  taskStore.fetchMyTasks(5);
-  assetStore.fetchMyAssets();
-  reviewStore.fetchMyReviews();
-});
 </script>
 
 <template>
@@ -311,6 +358,9 @@ onMounted(() => {
         </div>
       </div>
       <div class="flex justify-center sm:justify-end shrink-0">
+        <span v-if="refreshing" class="hidden sm:inline-flex items-center gap-1.5 text-ui-cap text-ui-muted mr-3 self-center" role="status">
+          <UiSpinner size="14px" />{{ $t("profile.view.refreshing") }}
+        </span>
         <UiButton variant="secondary" :icon="Edit" :to="{ name: 'employee.profile.edit' }" class="w-full sm:w-auto">
           {{ $t("profile.view.editProfile") }}
         </UiButton>
@@ -463,23 +513,32 @@ onMounted(() => {
           </button>
         </template>
 
-        <div v-if="taskStore.loading" class="p-4 sm:p-5">
+        <div v-if="tasksLoading" class="p-4 sm:p-5">
           <SkeletonList :rows="3" />
         </div>
 
         <UiEmpty v-else-if="latestTasks.length === 0" compact :icon="ListChecks" :title="$t('profile.view.tasks.empty')" />
 
         <ul v-else class="divide-y divide-ui-line border-t border-ui-line ui-stagger">
-          <li v-for="task in latestTasks" :key="task.id" class="px-5 sm:px-6 py-4">
-            <div class="flex items-start justify-between gap-3">
-              <h4 class="text-ui-h3 text-ui-ink min-w-0 break-words">{{ task.title }}</h4>
-              <UiBadge :tone="taskTone(task.statusKey)" dot class="shrink-0">{{ task.status }}</UiBadge>
-            </div>
-            <p v-if="task.description" class="text-ui-small text-ui-muted mt-1 line-clamp-2">{{ task.description }}</p>
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-ui-cap text-ui-muted">
-              <span class="inline-flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />{{ task.dueDate }}</span>
-              <span class="inline-flex items-center gap-1.5"><Folder class="w-3.5 h-3.5 text-ui-faint" />{{ task.project }}</span>
-            </div>
+          <li v-for="task in latestTasks" :key="task.id">
+            <RouterLink
+              :to="taskLink(task)"
+              class="group flex items-center gap-3 px-5 sm:px-6 py-4 hover:bg-ui-hover focus:outline-none focus-visible:bg-ui-hover"
+              :aria-label="$t('profile.view.tasks.open', { name: task.title })"
+            >
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-3">
+                  <h4 class="text-ui-h3 text-ui-ink min-w-0 break-words group-hover:text-ui-accent">{{ task.title }}</h4>
+                  <UiBadge :tone="taskTone(task.statusKey)" dot class="shrink-0">{{ task.status }}</UiBadge>
+                </div>
+                <p v-if="task.description" class="text-ui-small text-ui-muted mt-1 line-clamp-2">{{ task.description }}</p>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-ui-cap text-ui-muted">
+                  <span class="inline-flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />{{ task.dueDate }}</span>
+                  <span class="inline-flex items-center gap-1.5"><Folder class="w-3.5 h-3.5 text-ui-faint" />{{ task.project }}</span>
+                </div>
+              </div>
+              <ChevronRight class="w-4 h-4 text-ui-faint shrink-0" />
+            </RouterLink>
           </li>
         </ul>
       </UiCard>
@@ -530,7 +589,7 @@ onMounted(() => {
                 variant="secondary"
                 size="sm"
                 :icon="CheckCircle"
-                @click="acknowledgeReview(review.id)"
+                @click="acknowledgeReview(review)"
               >
                 {{ $t("profile.view.reviews.markRead") }}
               </UiButton>

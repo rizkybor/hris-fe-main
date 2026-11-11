@@ -47,7 +47,8 @@
     "fileRequired": "File wajib diisi.",
     "nameAndFileRequired": "Nama File dan File wajib diisi.",
     "uploadSuccess": "File berhasil diunggah.",
-    "uploadFailed": "Gagal mengunggah file."
+    "uploadFailed": "Gagal mengunggah file.",
+    "replacementRequired": "Unggah file pengganti sebelum menghapus file lama."
   },
   "detail": {
     "title": "Detail File Dokumen",

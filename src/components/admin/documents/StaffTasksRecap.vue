@@ -1,9 +1,6 @@
 <script setup>
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { ListChecks, AlertTriangle, CalendarRange, CheckCircle2 } from "lucide-vue-next";
-import { axiosInstance } from "@/plugins/axios";
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from "vue";
 import RecapSection from "@/components/common/RecapSection.vue";
-import RecapTile from "@/components/common/RecapTile.vue";
 import { uiColor, uiChartBase } from "@/utils/uiColor";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
@@ -12,34 +9,27 @@ const { t } = useI18n();
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
-// Recap above the Staff Tasks list. A task is done once every assignee has
-// marked it done; the charts count assignments (one per staff per task).
-const props = defineProps({ refreshKey: { type: Number, default: 0 } });
+// Recap charts of the Staff Tasks page. A task is done once every assignee
+// has marked it done; the charts count assignments (one per staff per task).
+// The page owns the data (GET /staff-tasks/summary via staffTaskStore, so it
+// refreshes quietly and also feeds the summary tiles above the list).
+const props = defineProps({
+  data: { type: Object, default: null },
+  loading: { type: Boolean, default: false },
+  failed: { type: Boolean, default: false },
+});
+const emit = defineEmits(["retry"]);
+const data = computed(() => props.data);
 
-const data = ref(null);
-const loading = ref(true);
-const failed = ref(false);
-const load = async () => {
-  failed.value = false;
-  try {
-    data.value = (await axiosInstance.get("/staff-tasks/summary")).data.data;
-  } catch {
-    failed.value = true;
-  } finally {
-    loading.value = false;
-  }
-};
 const narrow = ref(false);
 let mq;
 const onMq = (e) => (narrow.value = e.matches);
 onMounted(() => {
-  load();
   mq = window.matchMedia("(max-width: 640px)");
   narrow.value = mq.matches;
   mq.addEventListener("change", onMq);
 });
 onBeforeUnmount(() => mq?.removeEventListener("change", onMq));
-watch(() => props.refreshKey, load);
 
 // Status, not identity: faint = not started, warn = working, ok = done
 // (same meaning as the badges on Staff Tasks and My Tasks).
@@ -52,18 +42,6 @@ const STATUSES = computed(() =>
 );
 
 const assignmentTotal = computed(() => STATUSES.value.reduce((s, st) => s + (data.value?.assignments?.[st.key] ?? 0), 0));
-const donePct = computed(() => (assignmentTotal.value ? Math.round((data.value.assignments.done / assignmentTotal.value) * 100) : 0));
-
-const tiles = computed(() => {
-  const d = data.value;
-  if (!d) return [];
-  return [
-    { key: "open", label: t("staffTasks.recap.open"), value: d.open, sub: t("staffTasks.recap.ofTotal", { n: d.total }, d.total), icon: ListChecks },
-    { key: "overdue", label: t("staffTasks.overdue"), value: d.overdue, valueClass: d.overdue ? "text-ui-bad" : "text-ui-ink", sub: t("staffTasks.recap.overdueSub"), icon: AlertTriangle },
-    { key: "week", label: t("staffTasks.recap.dueThisWeek"), value: d.due_this_week, sub: t("staffTasks.recap.stillOpen"), icon: CalendarRange },
-    { key: "done", label: t("staffTasks.recap.assignmentsDone"), value: `${donePct.value}%`, sub: t("staffTasks.recap.doneOf", { done: d.assignments.done, total: assignmentTotal.value }), icon: CheckCircle2 },
-  ];
-});
 
 const donutOptions = computed(() => ({
   chart: { type: "donut", fontFamily: "inherit", animations: { enabled: false } },
@@ -120,12 +98,8 @@ const trendSeries = computed(() => STATUSES.value.map((s) => ({ name: s.label, d
 </script>
 
 <template>
-  <RecapSection storage-key="staff-tasks-recap-open" :loading="loading" :failed="failed" @retry="load">
+  <RecapSection storage-key="staff-tasks-recap-open" :loading="loading" :failed="failed" :tiles="0" @retry="emit('retry')">
     <template v-if="data">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 ui-stagger">
-        <RecapTile v-for="t in tiles" :key="t.key" v-bind="t" />
-      </div>
-
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <!-- Assignment status -->
         <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5">

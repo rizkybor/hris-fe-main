@@ -33,13 +33,12 @@ import {
   Trash2,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
-import { debounce } from "lodash-es";
 import { useProjectStore } from "@/stores/project";
 import { useTeamStore } from "@/stores/team";
-import { useEmployeeStore } from "@/stores/employee";
-import { useClientStore } from "@/stores/client";
+import { useLookupStore } from "@/stores/lookups";
+import { useToastStore } from "@/stores/toast";
+import { invalidate } from "@/composables/useStaleFetch";
 import { storeToRefs } from "pinia";
-import { axiosInstance } from "@/plugins/axios";
 import router from "@/router";
 import { UiPageHeader, UiButton, UiInput, UiSelect, UiModal, UiEmpty, UiBadge } from "@/components/ui";
 import { ArrowLeft, Save } from "lucide-vue-next";
@@ -79,13 +78,11 @@ const teamStore = useTeamStore();
 const { teams } = storeToRefs(teamStore);
 const { fetchTeams } = teamStore;
 
-const employeeStore = useEmployeeStore();
-const { employees } = storeToRefs(employeeStore);
-const { fetchEmployees } = employeeStore;
-
-const clientsStore = useClientStore();
-const { clients } = storeToRefs(clientsStore);
-const clientOptions = computed(() => clients.value.map((client) => ({ value: client.id, label: client.name })));
+// Pickers come from the shared lookup cache (one request each, reused
+// across forms for a few minutes), loaded in parallel on mount.
+const lookups = useLookupStore();
+const toast = useToastStore();
+const clientOptions = computed(() => lookups.clients.map((client) => ({ value: client.id, label: client.name })));
 
 const form = ref({
   name: "",
@@ -149,10 +146,9 @@ watch(
   }
 );
 
-// Kept separate from employeeStore.employees (driven by the Project Leader
-// search modal's own limited/search-scoped fetches) so this full-roster
-// member picker doesn't fight it over the same shared state.
-const memberCandidates = ref([]);
+// The full employee roster (lookup cache) feeds both this member picker and
+// the Project Leader modal below, which filters it locally.
+const memberCandidates = computed(() => lookups.employees);
 const memberSearch = ref("");
 // The Project Leader shouldn't also be pickable as a Member -- they're
 // already the project's owner, so offering them again here would just be
@@ -199,10 +195,19 @@ const handleSubmit = async () => {
   // filled in) rather than sending a half-empty pair the backend would
   // reject.
   payload.additional_access = form.value.additional_access.filter((item) => item.name && item.url);
-  await createProject(payload);
+  projectStore.clearMessages();
+  const created = await createProject(payload);
 
   if (success.value) {
-    router.push({ name: "admin.projects" });
+    toast.success(success.value);
+    projectStore.clearMessages();
+    // The list, the KPI tiles and every project picker include it now.
+    invalidate("project-list");
+    lookups.invalidate("projects");
+    // Straight to the new project (its board is the next step); the list
+    // when the response carries no id.
+    if (created?.id) router.push({ name: "admin.projects.detail", params: { id: created.id } });
+    else router.push({ name: "admin.projects" });
   }
 };
 
@@ -253,30 +258,23 @@ const handleRemoveLeader = () => {
 };
 
 onMounted(async () => {
-  await fetchTeams();
-  await fetchEmployees({
-    limit: 6,
-  });
-  await clientsStore.fetchAllClient();
-
-  const { data } = await axiosInstance.get("employees");
-  memberCandidates.value = data.data;
+  await Promise.all([fetchTeams(), lookups.ensureAll(["clients", "employees"]).catch(() => {})]);
 
   if (form.value.budget) {
     form.value.budget = formatRupiahInput(form.value.budget);
   }
 });
 
-watch(
-  searchLeader,
-  debounce(() => {
-    fetchEmployees({
-      limit: 6,
-      search: searchLeader.value,
-    });
-  }, 300),
-  { deep: true }
-);
+// Project Leader modal: the roster filtered locally (no request per keystroke).
+const employees = computed(() => {
+  const q = searchLeader.value.trim().toLowerCase();
+  const list = q
+    ? lookups.employees.filter((e) =>
+        [e.user?.name, e.user?.email, e.code, e.job_information?.job_title].some((v) => String(v ?? "").toLowerCase().includes(q))
+      )
+    : lookups.employees;
+  return list.slice(0, 12);
+});
 
 watch(
   () => form.value.budget,

@@ -41,7 +41,20 @@
     "generateDuplicate": "Catatan: Invoice untuk periode yang sama ({period}) sudah ada (No. {number}). Periksa dulu sebelum membuat lagi.",
     "generateAction": "Buat",
     "generated": "Invoice berhasil dibuat.",
-    "generateFailed": "Gagal membuat invoice."
+    "generateFailed": "Gagal membuat invoice.",
+    "chips": {
+      "dueSoon": "Jatuh tempo 30 hari",
+      "overdue": "Lewat jatuh tempo"
+    },
+    "emptyDueHint": "Tidak ada yang jatuh tempo di tampilan ini. Coba filter lain.",
+    "clearFilters": "Hapus filter",
+    "dueCount": "{n} langganan | {n} langganan",
+    "toast": {
+      "created": "Langganan ditambahkan",
+      "updated": "Langganan diperbarui",
+      "deleted": "Langganan dihapus",
+      "invoiceNumber": "Invoice No. {number}"
+    }
   },
   "recap": {
     "perMonth": "per bulan",

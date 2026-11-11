@@ -6,27 +6,17 @@ import RealizedChart from "@/components/admin/project/list/RealizedChart.vue";
 import ProjectProgressChart from "@/components/admin/project/list/ProjectProgressChart.vue";
 import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
-import {
-  Upload,
-  Plus,
-  Briefcase,
-  Search,
-  SearchX,
-  X,
-  FolderPlus,
-  ChevronDown,
-} from "lucide-vue-next";
-import { computed } from "vue";
-import { ref } from "vue";
-import { onMounted } from "vue";
+import { Plus, Search, SearchX, X, FolderPlus } from "lucide-vue-next";
+import { computed, ref, watch } from "vue";
 import Pagination from "@/components/admin/team/Pagination.vue";
-import { watch } from "vue";
 import { debounce } from "lodash-es";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
-import Alert from "@/components/common/Alert.vue";
+import { useToastStore } from "@/stores/toast";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 import { UiPageHeader, UiButton, UiChips, UiEmpty } from "@/components/ui";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -41,57 +31,57 @@ const STATUS_OPTIONS = computed(() => [
 ]);
 
 const projectStore = useProjectStore();
-const { projects, meta, loading, success } = storeToRefs(projectStore);
+const { projects, meta } = storeToRefs(projectStore);
 const { fetchProjectsPaginated, deleteProject } = projectStore;
 const alertModal = useAlertModalStore();
+const toast = useToastStore();
 
-const serverOptions = ref({
-  page: 1,
-  row_per_page: 10,
-});
+// Search, status and page live in the URL and are remembered, so coming
+// back from a project restores the same view.
+const list = useListState("projects", { q: "", status: "", page: 1, perPage: 10 });
 
-const filters = ref({
-  search: null,
-  status: "",
-});
-
-const fetchData = async () => {
-  await fetchProjectsPaginated({
-    ...serverOptions.value,
-    ...filters.value,
-  });
-};
-
-onMounted(async () => {
-  await fetchData();
-});
-
+const searchInput = ref(list.q);
+const applySearch = debounce((value) => (list.q = value), 300);
+watch(searchInput, (value) => applySearch(value));
 watch(
-  filters,
-  debounce(() => {
-    serverOptions.value.page = 1;
-    fetchData();
-  }, 300),
-  { deep: true },
+  () => list.q,
+  (value) => {
+    if (value !== searchInput.value) searchInput.value = value;
+  }
+);
+
+const params = computed(() => ({
+  page: list.page,
+  row_per_page: list.perPage,
+  search: list.q || null,
+  status: list.status,
+}));
+
+// The store's list is also filled by other pages (with their own params),
+// so only what this page loaded counts as something to show.
+const { loading, refreshing, refresh } = useStaleFetch(
+  () => fetchProjectsPaginated(params.value, { source: "list" }),
+  { key: () => ["project-list", params.value], hasData: () => projectStore.projectsSource === "list" }
 );
 
 const handlePageChange = (page) => {
-  serverOptions.value.page = page;
-  fetchData();
+  list.page = page;
 };
 
 const handlePerPageChange = (perPage) => {
-  serverOptions.value.row_per_page = perPage;
-  serverOptions.value.page = 1;
-  fetchData();
+  list.perPage = perPage;
 };
 
-const hasActiveFilters = computed(() =>
-  Boolean(filters.value.search || filters.value.status),
-);
+const hasActiveFilters = computed(() => Boolean(list.q || list.status));
 const clearFilters = () => {
-  filters.value.search = null;
-  filters.value.status = "";
+  searchInput.value = "";
+  list.q = "";
+  list.status = "";
+};
+
+// KPI tiles that map onto the status filter: Total -> all, Active -> active.
+const onStatFilter = (status) => {
+  list.status = list.status === status ? "" : status;
 };
 
 const handleDelete = async (project) => {
@@ -105,10 +95,19 @@ const handleDelete = async (project) => {
   if (!ok) return;
 
   try {
+    // The store drops the card; only refetch when paging needs it.
     await deleteProject(project.id);
-    await fetchData();
+    projectStore.clearMessages();
+    toast.success(t("projects.list.deleted", { name: project.name }));
+    if (meta.value) {
+      meta.value.total = Math.max(0, (meta.value.total ?? 1) - 1);
+      if (meta.value.to) meta.value.to -= 1;
+    }
+    if (!projects.value.length && list.page > 1) list.page -= 1;
+    else if (meta.value && meta.value.current_page < meta.value.last_page) refresh({ force: true });
+    if (can("project-statistic")) projectStore.fetchStatistics({ force: true });
   } catch (error) {
-    await alertModal.alert(t("projects.list.deleteFailed"), { type: "danger" });
+    toast.error(t("projects.list.deleteFailed"));
   }
 };
 </script>
@@ -129,15 +128,13 @@ const handleDelete = async (project) => {
     </UiPageHeader>
 
     <template v-if="can('project-statistic')">
-      <Statistics />
+      <Statistics selectable :active-status="list.status" @filter="onStatFilter" />
       <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 ui-stagger">
         <ProjectProgressChart />
         <BudgetChart compact />
         <RealizedChart compact />
       </div>
     </template>
-
-    <Alert type="success" :title="success" :show="success" @close="projectStore.clearMessages()" />
 
     <!-- Projects Grid Section -->
     <section class="sm:bg-ui-surface sm:border sm:border-ui-line sm:rounded-ui-card">
@@ -150,11 +147,11 @@ const handleDelete = async (project) => {
             class="w-full h-[38px] pl-9 pr-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus transition-shadow"
             :placeholder="$t('projects.list.searchPlaceholder')"
             :aria-label="$t('projects.list.searchLabel')"
-            v-model="filters.search"
+            v-model="searchInput"
           />
         </div>
         <div class="flex items-center gap-2 min-w-0 flex-1">
-          <UiChips v-model="filters.status" :options="STATUS_OPTIONS" class="min-w-0 flex-1" />
+          <UiChips v-model="list.status" :options="STATUS_OPTIONS" class="min-w-0 flex-1" />
           <UiButton v-if="hasActiveFilters" variant="ghost" size="sm" :icon="X" class="shrink-0" @click="clearFilters">
             {{ $t("common.actions.clear") }}
           </UiButton>
@@ -162,6 +159,7 @@ const handleDelete = async (project) => {
       </div>
 
       <div class="pt-4 sm:p-5">
+        <p v-if="refreshing" class="sr-only" role="status">{{ $t("projects.list.refreshing") }}</p>
         <SkeletonCardGrid
           v-if="loading"
           :count="6"
@@ -170,7 +168,8 @@ const handleDelete = async (project) => {
 
         <div
           v-else-if="projects.length > 0"
-          class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 ui-stagger"
+          class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 ui-stagger transition-opacity"
+          :class="{ 'opacity-60': refreshing }"
         >
           <CardList
             v-for="project in projects"
@@ -211,7 +210,7 @@ const handleDelete = async (project) => {
       <div class="pt-4 sm:pt-0 sm:px-5 sm:pb-5">
         <Pagination
           :meta="meta"
-          :loading="loading"
+          :loading="loading || refreshing"
           @page-change="handlePageChange"
           @per-page-change="handlePerPageChange"
         />

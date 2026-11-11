@@ -36,6 +36,14 @@
     "compassionate_leave": "Compassionate Leave"
   },
   "summary": {
+    "refreshing": "Updating…",
+    "needsApproval": "Leave requests",
+    "needsApprovalHint": "Waiting for approval first, then recent decisions",
+    "morePending": "{n} more waiting for approval | {n} more waiting for approval",
+    "allCaughtUp": "Nothing waiting for approval",
+    "recentDecisions": "Recent decisions",
+    "approvedToast": "Leave approved for {name}",
+    "rejectedToast": "Leave rejected for {name}",
     "title": "Attendance Summary",
     "subtitle": "Review clock in/out records",
     "stats": {

@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, toRef } from "vue";
+import { useListState } from "@/composables/useListState";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { Users, Search, Clock, ArrowLeft, ChevronDown, Pencil, ClipboardList } from "lucide-vue-next";
@@ -20,12 +21,18 @@ const router = useRouter();
 const store = useAttendanceStore();
 const { attendances, meta, loading } = storeToRefs(store);
 
-const search = ref("");
-const statusFilter = ref("");
-const startDate = ref("");
-const endDate = ref("");
+// Filters live in the URL (?status=absent&from=2026-11-12&to=2026-11-12),
+// so other pages (e.g. the attendance summary tiles) can link to a filtered
+// list. Not remembered per browser: a date range from an earlier visit
+// would be misleading.
+const list = useListState("attendance-records", { q: "", status: "", from: "", to: "", page: 1 }, { remember: false });
+const search = toRef(list, "q");
+const statusFilter = toRef(list, "status");
+const startDate = toRef(list, "from");
+const endDate = toRef(list, "to");
 
 const load = (page = 1) => {
+  list.page = page;
   store.fetchAllPaginated({
     search: search.value || undefined,
     status: statusFilter.value || undefined,
@@ -35,7 +42,7 @@ const load = (page = 1) => {
   });
 };
 
-onMounted(() => load());
+onMounted(() => load(list.page));
 
 const handleSearch = () => load(1);
 const handleFilterChange = () => load(1);

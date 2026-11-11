@@ -122,7 +122,11 @@
     "deleteTitle": "Delete this item?",
     "deleteMessage": "This can't be undone.",
     "ok": "OK",
-    "notice": "Notice"
+    "notice": "Notice",
+    "unsavedTitle": "Leave without saving?",
+    "unsavedMessage": "Your changes on this page haven't been saved.",
+    "leave": "Leave",
+    "stay": "Stay"
   },
   "table": {
     "empty": "No data yet",
@@ -155,7 +159,10 @@
     "loading": "Loading",
     "loadingPage": "Loading page",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "previousItem": "Previous item (K)",
+    "nextItem": "Next item (J)",
+    "openFullPage": "Open full page"
   },
   "toast": {
     "success": "Done",

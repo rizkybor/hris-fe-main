@@ -42,7 +42,13 @@
   },
   "detail": {
     "dueBy": "Tenggat {date} • oleh {name}",
-    "yourStatus": "Status Anda"
+    "yourStatus": "Status Anda",
+    "due": "Tenggat",
+    "priority": "Prioritas",
+    "type": "Jenis",
+    "assignedByLabel": "Ditugaskan oleh",
+    "noDescription": "Belum ada deskripsi",
+    "openInProject": "Buka di proyek"
   },
   "recap": {
     "standTitle": "Posisi tugas saya",
@@ -56,5 +62,6 @@
     "openCount": "{n} terbuka",
     "overdueCount": "{n} lewat tenggat",
     "more": "+ {n} lainnya"
-  }
+  },
+  "refreshing": "Memperbarui…"
 }

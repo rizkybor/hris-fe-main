@@ -9,13 +9,17 @@ import {
 import { axiosInstance } from "@/plugins/axios";
 import { useScreeningStore } from "@/stores/screening";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useToastStore } from "@/stores/toast";
+import { useListState } from "@/composables/useListState";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
+import { optimistic } from "@/utils/optimistic";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
 import { copyText } from "@/utils/serverMetrics";
 import { SCREENING_STATUS, SCREENING_SOURCE, COMPLEXITY, PRICE_UNIT } from "@/utils/screening";
 import ScreeningFormFields from "@/components/admin/screening/ScreeningFormFields.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
-import { UiButton, UiBadge, UiEmpty, UiAlert, UiInput } from "@/components/ui";
+import { UiButton, UiBadge, UiEmpty, UiAlert, UiInput, UiStatusSelect } from "@/components/ui";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
 
@@ -25,17 +29,24 @@ const route = useRoute();
 const router = useRouter();
 const store = useScreeningStore();
 const alertModal = useAlertModalStore();
+const toast = useToastStore();
 const { screening: s, saving } = storeToRefs(store);
 const loading = ref(true);
 const canEdit = computed(() => can("screening-edit"));
 
-const tab = ref("recommendation");
+// The tab is in the URL (?tab=answers) so a reload or a shared link opens
+// the same tab. Without one: the recommendation once submitted, otherwise
+// straight to the questions.
+const view = useListState("screening-detail", { tab: "" }, { remember: false });
+const tab = computed({
+  get: () => view.tab || (s.value && !s.value.submitted_at ? "answers" : "recommendation"),
+  set: (value) => (view.tab = value),
+});
 const load = async () => {
-  loading.value = true;
+  // Coming from the list: show what it already knows while the rest loads.
+  loading.value = String(s.value?.id) !== String(route.params.id);
   try {
     await store.fetchScreening(route.params.id);
-    // Nothing answered yet: go straight to the questions.
-    tab.value = s.value?.submitted_at ? "recommendation" : "answers";
     editingAnswers.value = !s.value?.submitted_at && s.value?.source === "internal" && canEdit.value;
     resetDrafts();
   } finally {
@@ -43,13 +54,32 @@ const load = async () => {
   }
 };
 onMounted(load);
-watch(() => route.params.id, (id) => id && load());
+watch(
+  () => route.params.id,
+  (id, old) => {
+    if (!id || id === old) return;
+    view.tab = route.query.tab || "";
+    load();
+  }
+);
 
 const formatDate = (d) => (d ? new Date(d).toLocaleDateString(localeTag(), { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-");
 const money = (v) => formatRupiah(v ?? 0);
 
 // ----- Status, notes, contact -----
-const setStatus = (status) => store.updateScreening(s.value.id, { status });
+// The badge is the control: the new status shows at once and is undone if
+// saving fails.
+const setStatus = (status) =>
+  optimistic({
+    apply: () => {
+      const before = s.value.status;
+      s.value.status = status;
+      return () => (s.value.status = before);
+    },
+    request: () => store.updateScreening(s.value.id, { status }),
+    success: t("screening.detail.toast.statusSaved"),
+  });
+const statusOptions = computed(() => Object.keys(SCREENING_STATUS).map((k) => ({ value: k, label: SCREENING_STATUS[k].label, tone: STATUS_TONE[k] || "neutral" })));
 const notes = ref("");
 const contact = ref({});
 const editingContact = ref(false);
@@ -60,7 +90,10 @@ const resetDrafts = () => {
   items.value = (s.value?.items || []).map((i) => ({ ...i }));
   itemsDirty.value = false;
 };
-const saveNotes = () => store.updateScreening(s.value.id, { internal_notes: notes.value });
+const saveNotes = async () => {
+  await store.updateScreening(s.value.id, { internal_notes: notes.value });
+  toast.success(t("screening.detail.toast.notesSaved"));
+};
 const contactErrors = ref({});
 const saveContact = async () => {
   contactErrors.value = {};
@@ -166,6 +199,7 @@ const saveItems = async () => {
       }))
     );
     resetDrafts();
+    toast.success(t("screening.detail.toast.itemsSaved"));
   } catch (e) {
     itemErrors.value = e?.response?.data?.message || t("screening.detail.saveItemsFailed");
   }
@@ -175,6 +209,12 @@ const recalculate = async () => {
   await store.recalculate(s.value.id);
   resetDrafts();
 };
+
+// Unsaved services, notes or answers: ask before leaving the page.
+let leaving = false;
+const answersDirty = computed(() => editingAnswers.value && JSON.stringify(answers.value) !== JSON.stringify(s.value?.answers || {}));
+const notesDirty = computed(() => !!s.value && notes.value !== (s.value.internal_notes || ""));
+useUnsavedGuard(() => !leaving && (itemsDirty.value || answersDirty.value || notesDirty.value));
 
 const est = computed(() => s.value?.estimate || {});
 const FIT = {
@@ -196,6 +236,8 @@ const pdf = async (withPrices) => {
 const remove = async () => {
   if (!(await alertModal.confirm(t("screening.detail.deleteConfirm"), { type: "danger", confirmText: t("common.actions.delete") }))) return;
   await store.deleteScreening(s.value.id);
+  leaving = true;
+  toast.success(t("screening.detail.toast.deleted"));
   router.push({ name: "admin.screening.dashboard" });
 };
 
@@ -209,7 +251,7 @@ const iconBtn = "ui-press w-8 h-8 inline-flex items-center justify-center rounde
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <div v-if="loading && !s" class="space-y-4">
+    <div v-if="loading" class="space-y-4">
       <Skeleton height="96px" rounded="12px" />
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Skeleton v-for="i in 4" :key="i" height="88px" rounded="12px" />
@@ -225,7 +267,8 @@ const iconBtn = "ui-press w-8 h-8 inline-flex items-center justify-center rounde
           <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <h1 class="text-ui-h1 text-ui-ink truncate">{{ s.company || s.contact_name || $t("screening.unnamedClient") }}</h1>
-              <UiBadge :tone="STATUS_TONE[s.status] || 'neutral'" dot>{{ SCREENING_STATUS[s.status]?.label }}</UiBadge>
+              <UiStatusSelect v-if="canEdit" :model-value="s.status" :options="statusOptions" :label="$t('common.labels.status')" :busy="saving" @change="setStatus" />
+              <UiBadge v-else :tone="STATUS_TONE[s.status] || 'neutral'" dot>{{ SCREENING_STATUS[s.status]?.label }}</UiBadge>
             </div>
             <p class="text-ui-small text-ui-muted mt-0.5">
               <span class="font-mono">{{ s.code }}</span> · {{ SCREENING_SOURCE[s.source] }} · {{ s.lang === "en" ? $t("screening.langEn") : $t("screening.langId") }}
@@ -240,17 +283,6 @@ const iconBtn = "ui-press w-8 h-8 inline-flex items-center justify-center rounde
           </div>
         </div>
         <div class="flex flex-wrap items-center gap-2 shrink-0">
-          <div v-if="canEdit" class="relative">
-            <select
-              :value="s.status"
-              :aria-label="$t('common.labels.status')"
-              class="h-9 pl-3 pr-8 appearance-none bg-ui-surface text-ui-small font-medium text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
-              @change="setStatus($event.target.value)"
-            >
-              <option v-for="(v, k) in SCREENING_STATUS" :key="k" :value="k">{{ v.label }}</option>
-            </select>
-            <ChevronDown class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-faint pointer-events-none" />
-          </div>
           <UiButton variant="secondary" :icon="Download" :loading="pdfBusy === 'client'" :disabled="!!pdfBusy" @click="pdf(false)">{{ $t("screening.detail.pdfClient") }}</UiButton>
           <UiButton variant="secondary" :icon="FileLock2" :loading="pdfBusy === 'internal'" :disabled="!!pdfBusy" @click="pdf(true)">{{ $t("screening.detail.pdfPrices") }}</UiButton>
           <UiButton v-if="can('screening-delete')" variant="danger" :icon="Trash2" :aria-label="$t('common.actions.delete')" class="!px-0 w-9" @click="remove" />

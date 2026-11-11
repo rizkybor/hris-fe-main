@@ -58,7 +58,10 @@
       "formLanguage": "Form language for the client",
       "createLink": "Create link",
       "start": "Start"
-    }
+    },
+    "emptyFilteredTitle": "No screenings match your filters",
+    "emptyFilteredHint": "Try another status or search term.",
+    "clearFilters": "Clear filters"
   },
   "detail": {
     "submitted": "Submitted {date}",
@@ -130,7 +133,13 @@
     "fillIn": "Fill in",
     "requiredMissing": "Some required questions are still empty.",
     "noAnswers": "No answers yet.",
-    "deleteConfirm": "Delete this screening?"
+    "deleteConfirm": "Delete this screening?",
+    "toast": {
+      "statusSaved": "Status updated",
+      "notesSaved": "Notes saved",
+      "itemsSaved": "Services saved",
+      "deleted": "Screening deleted"
+    }
   },
   "settings": {
     "title": "Catalog & Questions",
@@ -243,6 +252,11 @@
       "duration": "Duration",
       "durationPlaceholder": "e.g. 2-3 weeks",
       "active": "Active (used for recommendations)"
+    },
+    "toast": {
+      "itemSaved": "Catalog item saved",
+      "itemAdded": "Catalog item added",
+      "itemDeleted": "Catalog item deleted"
     }
   }
 }

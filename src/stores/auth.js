@@ -123,7 +123,10 @@ export const useAuthStore = defineStore("auth", {
                 this.user = null
                 this.error = null
 
-                router.push({ name: 'login' })
+                // Full reload into the login page: clears every cached store
+                // and in-memory cache, so the next person to sign in on this
+                // browser never sees the previous user's data.
+                window.location.assign(router.resolve({ name: 'login' }).href)
             } catch (error) {
                 this.error = handleError(error)
             } finally {

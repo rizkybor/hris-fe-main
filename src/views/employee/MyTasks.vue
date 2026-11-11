@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { useRouter, useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { debounce } from "lodash-es";
 import { useTaskStore } from "@/stores/task";
 import { useStaffTaskStore } from "@/stores/staffTask";
 import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
@@ -11,7 +12,6 @@ import {
   Folder,
   ListChecks,
   SearchX,
-  ChevronDown,
   ChevronRight,
   ClipboardList,
   AlertTriangle,
@@ -20,43 +20,52 @@ import {
   CircleDot,
   CheckCircle2,
   Inbox,
+  ExternalLink,
+  User,
 } from "lucide-vue-next";
-import { UiBadge, UiButton, UiChips, UiEmpty, UiInput, UiModal, UiPageHeader, UiSelect, UiStat } from "@/components/ui";
+import { UiBadge, UiButton, UiChips, UiDrawer, UiEmpty, UiInput, UiPageHeader, UiSelect, UiStat, UiStatusSelect } from "@/components/ui";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import StaffTaskComments from "@/components/admin/documents/StaffTaskComments.vue";
+import TaskComments from "@/components/admin/project/detail/TaskComments.vue";
 import MyTasksRecap from "@/components/employee/MyTasksRecap.vue";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
+import { optimistic } from "@/utils/optimistic";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
-
-const router = useRouter();
 const route = useRoute();
+const router = useRouter();
 
 // Two sources in one list: Project Tasks (from a project's board) and
 // Assigned Tasks (daily tasks handed out via Business Documents > Staff
 // Tasks). Both are shown together, grouped by how urgent they are.
 const taskStore = useTaskStore();
-const { myTasks, loading } = storeToRefs(taskStore);
 const staffTaskStore = useStaffTaskStore();
-const { myStaffTasks, loading: staffTasksLoading } = storeToRefs(staffTaskStore);
+const { myStaffTasks } = storeToRefs(staffTaskStore);
+// This page's own cached result (the dashboard widget and profile load
+// smaller lists into taskStore.myTasks).
+const MY_TASKS_KEY = "200:true";
+const myProjectTasks = computed(() => taskStore.myTasksCache[MY_TASKS_KEY] ?? []);
+
+// Shows what the stores already hold right away and refreshes quietly.
+const { loading: initialLoading, refreshing } = useStaleFetch(
+  () => Promise.all([taskStore.fetchMyTasks(200, true), staffTaskStore.fetchMyStaffTasks()]),
+  { key: () => "my-tasks-page", hasData: () => Boolean(taskStore.myTasksCache[MY_TASKS_KEY]) }
+);
 
 // Same 5 statuses/labels as the Kanban board's columns (TaskBoard.vue);
 // Assigned Tasks only use To Do / In Progress / Done.
+const STATUS_TONE = { todo: "neutral", in_progress: "warn", review: "info", done: "ok", cancelled: "neutral" };
 const STATUS_OPTIONS = computed(() =>
-  ["todo", "in_progress", "review", "done", "cancelled"].map((value) => ({ value, label: t(`myTasks.status.${value}`) }))
+  ["todo", "in_progress", "review", "done", "cancelled"].map((value) => ({ value, label: t(`myTasks.status.${value}`), tone: STATUS_TONE[value] }))
 );
 const STAFF_TASK_STATUS_OPTIONS = computed(() =>
   STATUS_OPTIONS.value.filter((o) => ["todo", "in_progress", "done"].includes(o.value))
 );
+const statusOptionsFor = (item) => (item.source === "assigned" ? STAFF_TASK_STATUS_OPTIONS.value : STATUS_OPTIONS.value);
 
-// Presentation only: status -> token colours (the select always shows the label).
-const STATUS_CLASS = {
-  todo: "bg-ui-subtle text-ui-text",
-  in_progress: "bg-ui-warn-soft text-ui-warn",
-  review: "bg-ui-info-soft text-ui-info",
-  done: "bg-ui-ok-soft text-ui-ok",
-  cancelled: "bg-ui-subtle text-ui-muted",
-};
+// Presentation only: status -> dot colour.
 const STATUS_DOT = {
   todo: "bg-ui-faint",
   in_progress: "bg-ui-warn",
@@ -66,6 +75,7 @@ const STATUS_DOT = {
 };
 const PRIORITY_TONE = { urgent: "bad", high: "warn", medium: "info", low: "neutral" };
 const PRIORITY_RANK = { urgent: 0, high: 1, medium: 2, low: 3 };
+const priorityLabel = (p) => (["urgent", "high", "medium", "low"].includes(p) ? t(`myTasks.priority.${p}`) : p);
 
 // Card previews show plain text -- raw HTML inside a clamped line looks broken.
 const stripHtml = (html) =>
@@ -80,7 +90,7 @@ const today = localDate();
 const inAWeek = localDate(new Date(Date.now() + 7 * 86400000));
 
 const items = computed(() => [
-  ...myTasks.value.map((task) => ({
+  ...myProjectTasks.value.map((task) => ({
     uid: `p-${task.id}`,
     source: "project",
     id: task.id,
@@ -88,24 +98,24 @@ const items = computed(() => [
     description: stripHtml(task.description),
     status: task.status,
     due: task.due_date ? String(task.due_date).slice(0, 10) : null,
-    projectId: task.project?.id ?? null,
+    projectId: task.project?.id ?? task.project_id ?? null,
     projectName: task.project?.name ?? t("myTasks.noProject"),
     priority: task.priority,
     raw: task,
   })),
-  ...myStaffTasks.value.map((t) => ({
-    uid: `a-${t.id}`,
+  ...myStaffTasks.value.map((task) => ({
+    uid: `a-${task.id}`,
     source: "assigned",
-    id: t.id,
-    title: t.title,
-    description: stripHtml(t.description),
-    status: t.my_assignment?.status ?? "todo",
-    due: t.due_date ? String(t.due_date).slice(0, 10) : null,
+    id: task.id,
+    title: task.title,
+    description: stripHtml(task.description),
+    status: task.my_assignment?.status ?? "todo",
+    due: task.due_date ? String(task.due_date).slice(0, 10) : null,
     projectId: null,
     projectName: null,
     priority: null,
-    creatorName: t.creator?.name,
-    raw: t,
+    creatorName: task.creator?.name,
+    raw: task,
   })),
 ]);
 
@@ -129,11 +139,20 @@ const BUCKETS = [
   { key: "completed", icon: CheckCircle2, tone: "text-ui-ok" },
 ];
 
-// ----- Filters -----
-const sourceTab = ref("all");
-const searchQuery = ref("");
-const statusFilter = ref("");
-const projectFilter = ref("");
+// ----- Filters (URL + remembered per browser) -----
+// `due` is set by the summary tiles: overdue | today | week | open | completed.
+const list = useListState("my-tasks", { source: "all", q: "", status: "", project: "", due: "" });
+
+// Search typed into its own box, applied ~300ms after typing stops.
+const searchInput = ref(list.q);
+const applySearch = debounce((value) => (list.q = value), 300);
+watch(searchInput, (value) => applySearch(value));
+watch(
+  () => list.q,
+  (value) => {
+    if (value !== searchInput.value) searchInput.value = value;
+  }
+);
 
 const projects = computed(() => {
   const map = new Map();
@@ -147,22 +166,35 @@ const counts = computed(() => ({
   project: items.value.filter((i) => i.source === "project").length,
 }));
 
+const matchesDue = (item) => {
+  if (!list.due) return true;
+  if (list.due === "open") return !isClosed(item);
+  return bucketOf(item) === list.due;
+};
+
 const filtered = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase();
+  const q = list.q.trim().toLowerCase();
   return items.value.filter((i) => {
-    if (sourceTab.value !== "all" && i.source !== sourceTab.value) return false;
-    if (statusFilter.value && i.status !== statusFilter.value) return false;
-    if (projectFilter.value && (i.source !== "project" || String(i.projectId) !== projectFilter.value)) return false;
+    if (list.source !== "all" && i.source !== list.source) return false;
+    if (list.status && i.status !== list.status) return false;
+    if (list.project && (i.source !== "project" || String(i.projectId) !== list.project)) return false;
+    if (!matchesDue(i)) return false;
     if (q && ![i.title, i.description, i.projectName, i.creatorName].some((v) => v?.toLowerCase().includes(q))) return false;
     return true;
   });
 });
 
-const hasActiveFilters = computed(() => Boolean(searchQuery.value || statusFilter.value || projectFilter.value));
+const hasActiveFilters = computed(() => Boolean(list.q || list.status || list.project || list.due));
 const clearFilters = () => {
-  searchQuery.value = "";
-  statusFilter.value = "";
-  projectFilter.value = "";
+  searchInput.value = "";
+  list.q = "";
+  list.status = "";
+  list.project = "";
+  list.due = "";
+};
+const showAll = () => {
+  clearFilters();
+  list.source = "all";
 };
 
 const groups = computed(() =>
@@ -179,7 +211,7 @@ const groups = computed(() =>
   })).filter((g) => g.items.length)
 );
 
-// Summary across everything (ignores filters) -- the "how am I doing" row.
+// Summary across everything (ignores filters); a tile filters the list.
 const summary = computed(() => {
   const by = (key) => items.value.filter((i) => bucketOf(i) === key).length;
   return [
@@ -190,6 +222,10 @@ const summary = computed(() => {
     { key: "completed", label: t("myTasks.buckets.completed"), value: by("completed"), icon: CheckCircle2, tone: "" },
   ];
 });
+const toggleDue = (key) => {
+  list.due = list.due === key ? "" : key;
+  if (key === "completed" && list.due) showCompleted.value = true;
+};
 
 // Presentation only: source tabs as filter chips with counts.
 const sourceTabs = computed(() => [
@@ -198,35 +234,30 @@ const sourceTabs = computed(() => [
   { value: "project", label: t("common.labels.project"), count: counts.value.project },
 ]);
 
-const showCompleted = ref(false);
-const initialLoading = computed(
-  () => (loading.value || staffTasksLoading.value) && items.value.length === 0
-);
+const showCompleted = ref(list.due === "completed");
 
-// ----- Actions -----
-const updatingUid = ref(null);
-const changeStatus = async (item, event) => {
-  const newStatus = event.target.value;
-  if (newStatus === item.status) return;
-  updatingUid.value = item.uid;
-  try {
-    if (item.source === "assigned") {
-      await staffTaskStore.updateMyStatus(item.id, newStatus);
-    } else {
-      await taskStore.updateTask(item.id, { status: newStatus });
-      await taskStore.fetchMyTasks(200, true);
-    }
-  } catch (error) {
-    console.error("Failed to update task status:", error);
-  } finally {
-    updatingUid.value = null;
+// ----- Status: instant, undone with an error toast if the save fails -----
+const changeStatus = (item, value) => {
+  if (!value || value === item.status) return;
+  if (item.source === "assigned") {
+    const task = item.raw;
+    return optimistic({
+      apply: () => {
+        const before = task.my_assignment;
+        task.my_assignment = { ...(before || {}), status: value };
+        return () => (task.my_assignment = before);
+      },
+      request: () => staffTaskStore.updateMyStatus(item.id, value),
+    });
   }
-};
-
-const openItem = (item) => {
-  if (item.source === "assigned") return openStaffTaskDetail(item.raw);
-  if (!item.projectId) return;
-  router.push({ name: "admin.projects.detail", params: { id: item.projectId }, query: { task: item.id } });
+  const before = item.status;
+  return optimistic({
+    apply: () => {
+      taskStore.patchMyTasks(item.id, { status: value });
+      return () => taskStore.patchMyTasks(item.id, { status: before });
+    },
+    request: () => taskStore.updateTask(item.id, { status: value }),
+  });
 };
 
 const dueLabel = (item) => {
@@ -235,60 +266,109 @@ const dueLabel = (item) => {
   return formatDate(item.due);
 };
 
-// ----- Assigned task detail (with comments) -----
-const detailStaffTask = ref(null);
-const showStaffTaskDetail = ref(false);
-const openStaffTaskDetail = (task) => {
-  detailStaffTask.value = task;
-  showStaffTaskDetail.value = true;
+// ----- Detail drawer (both sources), with prev/next through the list -----
+const openUid = ref(null);
+const drawerOpen = computed({
+  get: () => Boolean(openUid.value && current.value),
+  set: (value) => {
+    if (!value) closeDetail();
+  },
+});
+const current = computed(() => items.value.find((i) => i.uid === openUid.value) || null);
+
+// What is on screen, top to bottom (collapsed Completed group excluded).
+const visibleList = computed(() => groups.value.flatMap((g) => (g.key === "completed" && !showCompleted.value ? [] : g.items)));
+const currentIndex = computed(() => visibleList.value.findIndex((i) => i.uid === openUid.value));
+// Where the open item was, so prev/next still work after it leaves the
+// list (e.g. marked done while Completed is collapsed).
+const lastIndex = ref(0);
+watch(currentIndex, (i) => {
+  if (i !== -1) lastIndex.value = i;
+});
+const hasPrev = computed(() => (currentIndex.value === -1 ? lastIndex.value > 0 : currentIndex.value > 0));
+const hasNext = computed(() =>
+  currentIndex.value === -1 ? lastIndex.value < visibleList.value.length : currentIndex.value < visibleList.value.length - 1
+);
+const goPrev = () => {
+  const i = currentIndex.value === -1 ? lastIndex.value - 1 : currentIndex.value - 1;
+  if (visibleList.value[i]) openUid.value = visibleList.value[i].uid;
 };
-const closeStaffTaskDetail = () => {
-  showStaffTaskDetail.value = false;
-  detailStaffTask.value = null;
+const goNext = () => {
+  const i = currentIndex.value === -1 ? lastIndex.value : currentIndex.value + 1;
+  if (visibleList.value[i]) openUid.value = visibleList.value[i].uid;
 };
-const handleStaffTaskStatusChange = async (task, event) => {
-  const newStatus = event.target.value;
-  if (newStatus === task.my_assignment?.status) return;
-  try {
-    await staffTaskStore.updateMyStatus(task.id, newStatus);
-  } catch (error) {
-    console.error("Failed to update task status:", error);
+
+const openItem = (item) => {
+  openUid.value = item.uid;
+};
+const closeDetail = () => {
+  openUid.value = null;
+  // A notification deep link has done its job once the task is closed.
+  if (route.query.staff_task || route.query.comment) {
+    const { staff_task: _s, comment: _c, ...rest } = route.query;
+    router.replace({ query: rest }).catch(() => {});
   }
 };
+
+const fullPageLink = computed(() =>
+  current.value?.source === "project" && current.value.projectId
+    ? { name: "admin.projects.detail", params: { id: current.value.projectId }, query: { task: current.value.id } }
+    : null
+);
 
 const staffTaskCommentAssignees = computed(() => {
-  if (!detailStaffTask.value) return [];
-  const list = (detailStaffTask.value.assignees || []).map((a) => ({ id: a.employee_id, name: a.name }));
-  const creatorEmployeeId = detailStaffTask.value.creator?.employee_profile?.id;
-  if (creatorEmployeeId && !list.some((a) => a.id === creatorEmployeeId)) {
-    list.push({ id: creatorEmployeeId, name: detailStaffTask.value.creator?.name });
+  const task = current.value?.source === "assigned" ? current.value.raw : null;
+  if (!task) return [];
+  const people = (task.assignees || []).map((a) => ({ id: a.employee_id, name: a.name }));
+  const creatorEmployeeId = task.creator?.employee_profile?.id;
+  if (creatorEmployeeId && !people.some((a) => a.id === creatorEmployeeId)) {
+    people.push({ id: creatorEmployeeId, name: task.creator?.name });
   }
-  return list;
+  return people;
 });
 
-onMounted(async () => {
-  taskStore.fetchMyTasks(200, true);
-  await staffTaskStore.fetchMyStaffTasks();
+// Deep link from a StaffTaskAssigned/StaffTaskCommentMention notification
+// (?staff_task=<id>, optionally &comment=<id>): open that task as soon as it
+// is in the list -- from the cache right away, or after the refresh.
+let deepLinkDone = false;
+watch(
+  myStaffTasks,
+  (tasks) => {
+    const targetId = route.query.staff_task ? Number(route.query.staff_task) : null;
+    if (deepLinkDone || !targetId) return;
+    if (tasks.some((task) => task.id === targetId)) {
+      deepLinkDone = true;
+      openUid.value = `a-${targetId}`;
+    }
+  },
+  { immediate: true }
+);
 
-  // Deep-link from a StaffTaskAssigned/StaffTaskCommentMention notification
-  // (?staff_task=<id>, optionally &comment=<id>) -- open that task straight away.
-  const targetId = route.query.staff_task ? Number(route.query.staff_task) : null;
-  if (targetId) {
-    const task = myStaffTasks.value.find((t) => t.id === targetId);
-    if (task) openStaffTaskDetail(task);
-  }
-});
+// ?task=<id> (e.g. from My Profile for users without project access):
+// open that project task in the drawer once the list has it, then drop
+// only the `task` key from the URL.
+let taskLinkDone = false;
+watch(
+  myProjectTasks,
+  (tasks) => {
+    const targetId = route.query.task ? Number(route.query.task) : null;
+    if (taskLinkDone || !targetId) return;
+    if (tasks.some((task) => task.id === targetId)) {
+      taskLinkDone = true;
+      openUid.value = `p-${targetId}`;
+      const { task: _t, ...rest } = route.query;
+      router.replace({ query: rest }).catch(() => {});
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
-  <!-- The admin layout already pads the page, so phones get little extra. -->
-  <div class="sm:px-3 sm:py-3 space-y-5 ui-anim-fade-up">
-    <UiPageHeader
-      :title="$t('myTasks.title')"
-      :subtitle="$t('myTasks.subtitle')"
-    />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader :title="$t('myTasks.title')" :subtitle="$t('myTasks.subtitle')" />
 
-    <!-- Summary: scrolls sideways on phones, five across on desktop. -->
+    <!-- Summary: scrolls sideways on phones, five across on desktop. A tile filters the list. -->
     <div class="flex gap-3 overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] lg:grid lg:grid-cols-5 ui-stagger">
       <UiStat
         v-for="s in summary"
@@ -299,6 +379,9 @@ onMounted(async () => {
         :icon="s.icon"
         :tone="s.value ? s.tone : ''"
         :loading="initialLoading"
+        selectable
+        :active="list.due === s.key"
+        @select="toggleDue(s.key)"
       />
     </div>
 
@@ -306,25 +389,22 @@ onMounted(async () => {
 
     <!-- Toolbar -->
     <div class="bg-ui-surface border border-ui-line rounded-ui-card p-3 sm:p-4 flex flex-col xl:flex-row xl:items-center gap-3">
-      <UiChips v-model="sourceTab" :options="sourceTabs" class="shrink-0" />
-      <UiInput
-        v-model="searchQuery"
-        :icon="Search"
-        :placeholder="$t('myTasks.searchPlaceholder')"
-        class="flex-1"
-      />
+      <div class="overflow-x-auto [scrollbar-width:none] -mx-1 px-1 shrink-0">
+        <UiChips v-model="list.source" :options="sourceTabs" />
+      </div>
+      <UiInput v-model="searchInput" :icon="Search" :placeholder="$t('myTasks.searchPlaceholder')" class="flex-1" />
       <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 shrink-0">
         <UiSelect
-          v-if="sourceTab !== 'assigned' && projects.length"
-          v-model="projectFilter"
+          v-if="list.source !== 'assigned' && projects.length"
+          v-model="list.project"
           :options="[{ value: '', label: $t('myTasks.allProjects') }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))]"
           class="sm:w-[180px]"
           :aria-label="$t('common.labels.project')"
         />
         <UiSelect
-          v-model="statusFilter"
+          v-model="list.status"
           :options="[{ value: '', label: $t('common.labels.allStatuses') }, ...STATUS_OPTIONS]"
-          :class="sourceTab === 'assigned' || !projects.length ? 'col-span-2 sm:w-[160px]' : 'sm:w-[160px]'"
+          :class="list.source === 'assigned' || !projects.length ? 'col-span-2 sm:w-[160px]' : 'sm:w-[160px]'"
           :aria-label="$t('common.labels.status')"
         />
         <UiButton v-if="hasActiveFilters" variant="ghost" size="sm" class="col-span-2 sm:col-span-1" @click="clearFilters">
@@ -333,29 +413,26 @@ onMounted(async () => {
       </div>
     </div>
 
+    <p v-if="refreshing" class="text-ui-cap text-ui-muted -mt-2" role="status">{{ $t("myTasks.refreshing") }}</p>
+
     <!-- Loading -->
     <SkeletonList v-if="initialLoading" :rows="4" />
 
     <!-- Empty -->
     <div v-else-if="!groups.length" class="bg-ui-surface border border-ui-line rounded-ui-card">
       <UiEmpty
-        v-if="hasActiveFilters || sourceTab !== 'all'"
+        v-if="hasActiveFilters || list.source !== 'all'"
         :icon="SearchX"
         :title="$t('myTasks.empty.filteredTitle')"
         :message="$t('myTasks.empty.filteredMessage')"
       >
-        <UiButton variant="secondary" size="sm" @click="clearFilters(), (sourceTab = 'all')">{{ $t("myTasks.empty.showAll") }}</UiButton>
+        <UiButton variant="secondary" size="sm" @click="showAll">{{ $t("myTasks.empty.showAll") }}</UiButton>
       </UiEmpty>
-      <UiEmpty
-        v-else
-        :icon="Inbox"
-        :title="$t('myTasks.empty.title')"
-        :message="$t('myTasks.empty.message')"
-      />
+      <UiEmpty v-else :icon="Inbox" :title="$t('myTasks.empty.title')" :message="$t('myTasks.empty.message')" />
     </div>
 
     <!-- Grouped by urgency -->
-    <div v-else class="space-y-4 ui-stagger">
+    <div v-else class="space-y-4 ui-stagger" :class="{ 'opacity-60 transition-opacity': refreshing }">
       <section v-for="group in groups" :key="group.key" class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden">
         <button
           type="button"
@@ -382,17 +459,16 @@ onMounted(async () => {
           <li
             v-for="item in group.items"
             :key="item.uid"
-            class="px-4 py-3.5 flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2 transition-colors hover:bg-ui-hover/60 active:bg-ui-hover"
-            :class="item.source === 'project' && !item.projectId ? 'cursor-default' : 'cursor-pointer'"
+            class="px-4 py-3.5 flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2 transition-colors cursor-pointer hover:bg-ui-hover/60 active:bg-ui-hover"
+            :class="{ 'bg-ui-hover/60': item.uid === openUid }"
+            tabindex="0"
             @click="openItem(item)"
+            @keydown.enter.self="openItem(item)"
           >
             <span class="mt-[7px] w-2 h-2 rounded-full shrink-0" :class="STATUS_DOT[item.status] || 'bg-ui-faint'" aria-hidden="true"></span>
 
             <div class="flex-1 min-w-0 basis-[calc(100%-1.25rem)] sm:basis-auto">
-              <p
-                class="text-ui-body font-medium leading-snug break-words"
-                :class="isClosed(item) ? 'line-through text-ui-faint' : 'text-ui-ink'"
-              >
+              <p class="text-ui-body font-medium leading-snug break-words" :class="isClosed(item) ? 'line-through text-ui-faint' : 'text-ui-ink'">
                 {{ item.title }}
               </p>
               <p v-if="item.description" class="text-ui-cap text-ui-muted mt-0.5 line-clamp-1">{{ item.description }}</p>
@@ -404,7 +480,7 @@ onMounted(async () => {
                   <ClipboardList class="w-3 h-3 shrink-0" /><span class="truncate">{{ item.creatorName ? $t("myTasks.assignedBy", { name: item.creatorName }) : $t("myTasks.source.assigned") }}</span>
                 </UiBadge>
                 <UiBadge v-if="item.priority" :tone="PRIORITY_TONE[item.priority] || 'neutral'" class="capitalize">
-                  {{ $te(`myTasks.priority.${item.priority}`) ? $t(`myTasks.priority.${item.priority}`) : item.priority }}
+                  {{ priorityLabel(item.priority) }}
                 </UiBadge>
                 <UiBadge :tone="group.key === 'overdue' ? 'bad' : group.key === 'today' ? 'warn' : 'outline'">
                   <AlertTriangle v-if="group.key === 'overdue'" class="w-3 h-3" />
@@ -414,70 +490,116 @@ onMounted(async () => {
               </div>
             </div>
 
-            <!-- Status: compact select that doubles as the status badge.
+            <!-- Status: the badge is the control (instant, undone on error).
                  Below the title on phones so the title keeps the full width. -->
-            <div class="relative inline-block shrink-0 ml-5 sm:ml-0" @click.stop>
-              <select
-                :value="item.status"
-                :disabled="updatingUid === item.uid"
-                :class="STATUS_CLASS[item.status]"
-                class="appearance-none h-7 pl-2.5 pr-7 rounded-full text-ui-cap font-medium border border-transparent cursor-pointer transition-shadow focus:outline-none focus:shadow-ui-focus disabled:opacity-50 disabled:cursor-wait"
-                :aria-label="$t('myTasks.statusOf', { title: item.title })"
-                @change="changeStatus(item, $event)"
-              >
-                <option v-for="opt in item.source === 'assigned' ? STAFF_TASK_STATUS_OPTIONS : STATUS_OPTIONS" :key="opt.value" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
-              <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-current opacity-60 pointer-events-none" :class="STATUS_CLASS[item.status]?.split(' ')[1]" />
+            <div class="shrink-0 ml-5 sm:ml-0 min-h-[32px] flex items-center" @click.stop>
+              <UiStatusSelect
+                :model-value="item.status"
+                :options="statusOptionsFor(item)"
+                :label="$t('myTasks.statusOf', { title: item.title })"
+                @change="(value) => changeStatus(item, value)"
+              />
             </div>
           </li>
         </ul>
       </section>
     </div>
 
-    <!-- Assigned task detail (with comments) -->
-    <UiModal :open="showStaffTaskDetail" size="lg" @close="closeStaffTaskDetail">
+    <!-- Detail drawer: project and assigned tasks, J/K or arrows to move through the list -->
+    <UiDrawer
+      v-model:open="drawerOpen"
+      :title="current?.title || ''"
+      size="lg"
+      :has-prev="hasPrev"
+      :has-next="hasNext"
+      :to="fullPageLink"
+      @prev="goPrev"
+      @next="goNext"
+    >
       <template #header>
-        <div class="flex-1 min-w-0">
-          <h2 class="text-ui-h2 text-ui-ink break-words">{{ detailStaffTask?.title }}</h2>
-          <p class="text-ui-small text-ui-muted mt-0.5">
-            {{ $t("myTasks.detail.dueBy", { date: formatDate(detailStaffTask?.due_date), name: detailStaffTask?.creator?.name }) }}
+        <div v-if="current" class="min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink break-words">{{ current.title }}</h2>
+          <p class="text-ui-small text-ui-muted mt-0.5 flex items-center gap-1.5 min-w-0">
+            <template v-if="current.source === 'project'">
+              <Folder class="w-3.5 h-3.5 shrink-0" /><span class="truncate">{{ current.projectName }}</span>
+            </template>
+            <template v-else>
+              <ClipboardList class="w-3.5 h-3.5 shrink-0" />
+              <span class="truncate">{{ current.creatorName ? $t("myTasks.assignedBy", { name: current.creatorName }) : $t("myTasks.source.assigned") }}</span>
+            </template>
           </p>
         </div>
       </template>
 
-      <div v-if="detailStaffTask" class="space-y-5">
-        <div
-          v-if="detailStaffTask.description"
-          class="rich-text-content text-ui-body text-ui-text"
-          v-html="detailStaffTask.description"
-        ></div>
-
-        <div class="sm:max-w-[240px]">
-          <label for="my-task-detail-status" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("myTasks.detail.yourStatus") }}</label>
-          <div class="relative">
-            <select
-              id="my-task-detail-status"
-              :value="detailStaffTask.my_assignment?.status"
-              class="w-full h-[38px] pl-3 pr-9 appearance-none bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
-              @change="handleStaffTaskStatusChange(detailStaffTask, $event)"
-            >
-              <option v-for="opt in STAFF_TASK_STATUS_OPTIONS" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </option>
-            </select>
-            <ChevronDown class="absolute right-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
+      <div v-if="current" class="space-y-5">
+        <!-- Key facts -->
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-3">
+          <div>
+            <dt class="text-ui-cap text-ui-muted mb-1">{{ current.source === "assigned" ? $t("myTasks.detail.yourStatus") : $t("common.labels.status") }}</dt>
+            <dd>
+              <UiStatusSelect
+                :model-value="current.status"
+                :options="statusOptionsFor(current)"
+                :label="$t('myTasks.statusOf', { title: current.title })"
+                @change="(value) => changeStatus(current, value)"
+              />
+            </dd>
           </div>
+          <div>
+            <dt class="text-ui-cap text-ui-muted mb-1">{{ $t("myTasks.detail.due") }}</dt>
+            <dd class="flex items-center gap-1.5 text-ui-small tabular-nums" :class="bucketOf(current) === 'overdue' ? 'text-ui-bad font-medium' : 'text-ui-ink'">
+              <AlertTriangle v-if="bucketOf(current) === 'overdue'" class="w-3.5 h-3.5" />
+              <Calendar v-else class="w-3.5 h-3.5 text-ui-faint" />
+              {{ dueLabel(current) }}
+            </dd>
+          </div>
+          <div v-if="current.priority">
+            <dt class="text-ui-cap text-ui-muted mb-1">{{ $t("myTasks.detail.priority") }}</dt>
+            <dd>
+              <UiBadge :tone="PRIORITY_TONE[current.priority] || 'neutral'" dot>{{ priorityLabel(current.priority) }}</UiBadge>
+            </dd>
+          </div>
+          <div v-if="current.source === 'project' && current.raw.type">
+            <dt class="text-ui-cap text-ui-muted mb-1">{{ $t("myTasks.detail.type") }}</dt>
+            <dd class="text-ui-small text-ui-ink">{{ current.raw.type }}</dd>
+          </div>
+          <div v-if="current.source === 'assigned' && current.creatorName">
+            <dt class="text-ui-cap text-ui-muted mb-1">{{ $t("myTasks.detail.assignedByLabel") }}</dt>
+            <dd class="flex items-center gap-1.5 text-ui-small text-ui-ink"><User class="w-3.5 h-3.5 text-ui-faint" />{{ current.creatorName }}</dd>
+          </div>
+        </dl>
+
+        <!-- Description -->
+        <div>
+          <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("common.labels.description") }}</h3>
+          <div
+            v-if="current.source === 'assigned' && current.raw.description"
+            class="rich-text-content text-ui-body text-ui-text"
+            v-html="current.raw.description"
+          ></div>
+          <p v-else-if="current.source === 'project' && current.raw.description" class="text-ui-body text-ui-text leading-relaxed whitespace-pre-line break-words">
+            {{ current.raw.description }}
+          </p>
+          <p v-else class="text-ui-small text-ui-faint">{{ $t("myTasks.detail.noDescription") }}</p>
         </div>
 
-        <StaffTaskComments
-          :staff-task-id="detailStaffTask.id"
-          :assignees="staffTaskCommentAssignees"
-          :can-comment="true"
+        <!-- Comments -->
+        <TaskComments
+          v-if="current.source === 'project'"
+          :key="current.uid"
+          :task-id="current.id"
+          :project-id="current.projectId ?? ''"
+          :can-comment="current.raw.can_comment !== false"
         />
+        <StaffTaskComments v-else :key="current.uid" :staff-task-id="current.id" :assignees="staffTaskCommentAssignees" :can-comment="true" />
       </div>
-    </UiModal>
+
+      <template v-if="fullPageLink" #footer>
+        <UiButton variant="secondary" :icon="ExternalLink" :to="fullPageLink" class="w-full sm:w-auto">
+          {{ $t("myTasks.detail.openInProject") }}
+        </UiButton>
+      </template>
+    </UiDrawer>
   </div>
 </template>
 

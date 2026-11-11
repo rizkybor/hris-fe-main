@@ -7,9 +7,9 @@ import {
   EyeOff, X, Copy, Check, Link2, Mail, MessageCircle, AlertTriangle, Clock, SlidersHorizontal, CheckCircle2, Ban,
 } from "lucide-vue-next";
 import { useMaintenanceStore } from "@/stores/maintenance";
-import { useClientStore } from "@/stores/client";
-import { useProjectStore } from "@/stores/project";
-import { useEmployeeStore } from "@/stores/employee";
+import { useLookupStore } from "@/stores/lookups";
+import { useListState } from "@/composables/useListState";
+import { invalidate } from "@/composables/useStaleFetch";
 import { useAuthStore } from "@/stores/auth";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
@@ -31,13 +31,14 @@ const route = useRoute();
 const router = useRouter();
 const store = useMaintenanceStore();
 const { contract, period, detailLoading, periodLoading } = storeToRefs(store);
-const clientStore = useClientStore();
-const projectStore = useProjectStore();
-const employeeStore = useEmployeeStore();
+const lookups = useLookupStore();
 const authStore = useAuthStore();
 const alertModal = useAlertModalStore();
 
-const tab = ref("work");
+// The tab is in the URL (?tab=features) so a reload or a shared link opens
+// it; it starts on "work" for every contract.
+const view = useListState("maintenance-detail", { tab: "work" }, { remember: false });
+const tab = computed({ get: () => view.tab, set: (value) => (view.tab = value) });
 const selectedPeriodId = ref(null);
 
 const load = async ({ silent = false } = {}) => {
@@ -52,7 +53,6 @@ const open = async () => {
   store.contract = null;
   store.period = null;
   selectedPeriodId.value = null;
-  tab.value = "work";
   try {
     await load();
   } catch (e) {
@@ -64,16 +64,19 @@ const open = async () => {
 watch(
   () => route.params.id,
   (id, old) => {
-    if (id && id !== old) open();
+    if (id && id !== old) {
+      // Another contract: its own link decides the tab, otherwise "work".
+      view.tab = route.query.tab || "work";
+      open();
+    }
   }
 );
 
-onMounted(async () => {
-  await open();
-  if (!clientStore.clients.length) clientStore.fetchAllClient();
-  if (!projectStore.projects.length) projectStore.fetchProjectsPaginated({ row_per_page: 100 });
-  if (!employeeStore.employees.length) employeeStore.fetchEmployees({});
-});
+// Pickers (clients, projects, employees) load when their form opens.
+onMounted(open);
+
+// After a change here the list page refreshes its numbers on the next visit.
+const changed = () => invalidate("maintenance-list");
 
 watch(selectedPeriodId, (id, old) => {
   if (id && old && id !== old) store.fetchPeriod(id);
@@ -83,7 +86,7 @@ const current = computed(() => contract.value?.current_period);
 const selectedPeriod = computed(() => contract.value?.periods.find((p) => p.id === selectedPeriodId.value));
 const periodOpen = computed(() => period.value && !period.value.is_closed);
 const employees = computed(() =>
-  employeeStore.employees.filter((e) => e.user?.id).map((e) => ({ id: e.user.id, name: e.user.name }))
+  lookups.employees.filter((e) => e.user?.id).map((e) => ({ id: e.user.id, name: e.user.name }))
 );
 const policyLabel = (key) => LEFTOVER_POLICY[key]?.label || "-";
 
@@ -107,14 +110,23 @@ const saveContract = async (payload) => {
   contractSaving.value = true;
   contractErrors.value = {};
   try {
-    await store.updateContract(contract.value.id, payload);
+    // The response is the full contract: carry its month totals over to the
+    // open month instead of reloading both.
+    const data = await store.updateContract(contract.value.id, payload);
+    store.patchPeriod(data.periods?.find((p) => p.id === period.value?.id));
     showContractForm.value = false;
-    await load({ silent: true });
+    changed();
   } catch (e) {
     contractErrors.value = e?.response?.data?.errors || {};
   } finally {
     contractSaving.value = false;
   }
+};
+
+const openContractForm = () => {
+  contractErrors.value = {};
+  lookups.ensureAll(["clients", "projects"]).catch(() => {});
+  showContractForm.value = true;
 };
 
 const deleteContract = async () => {
@@ -189,7 +201,8 @@ const mailUrl = computed(
 const leftoverChoice = computed({
   get: () => period.value?.leftover_action ?? "",
   set: async (value) => {
-    if (await run(() => store.setLeftoverAction(period.value.id, value || null), t("maintenance.detail.confirm.updateFailed"))) await load({ silent: true });
+    // The response is the updated month; the store patches it in place.
+    if (await run(() => store.setLeftoverAction(period.value.id, value || null), t("maintenance.detail.confirm.updateFailed"))) changed();
   },
 });
 
@@ -206,10 +219,17 @@ const saveAdjust = async (payload) => {
   adjustBusy.value = true;
   adjustErrors.value = {};
   try {
-    if (adjustTarget.value === "period") await store.addAdjustment(period.value.id, payload);
-    else await store.adjustBalance(contract.value.id, payload);
-    showAdjust.value = false;
-    await load({ silent: true });
+    // Only the part that changed is re-read: the month or the balance.
+    if (adjustTarget.value === "period") {
+      await store.addAdjustment(period.value.id, payload);
+      showAdjust.value = false;
+      await store.refreshPeriod(period.value.id);
+    } else {
+      await store.adjustBalance(contract.value.id, payload);
+      showAdjust.value = false;
+      await store.refreshContract(contract.value.id);
+    }
+    changed();
   } catch (e) {
     adjustErrors.value = e?.response?.data?.errors || {};
   } finally {
@@ -218,7 +238,10 @@ const saveAdjust = async (payload) => {
 };
 const deleteAdjustment = async (adjustment) => {
   const ok = await alertModal.confirm(t("maintenance.detail.confirm.removeAdjustment", { hours: formatHours(adjustment.hours), reason: adjustment.reason }), { confirmText: t("common.actions.remove") });
-  if (ok && (await run(() => store.deleteAdjustment(adjustment.id), t("maintenance.detail.confirm.removeFailed")))) await load({ silent: true });
+  if (ok && (await run(() => store.deleteAdjustment(adjustment.id), t("maintenance.detail.confirm.removeFailed")))) {
+    await store.refreshPeriod(period.value.id);
+    changed();
+  }
 };
 
 // ===== Work logs =====
@@ -228,6 +251,7 @@ const logErrors = ref({});
 const editingLog = ref(null);
 const logFeature = ref(null);
 const openLog = (log = null, feature = null) => {
+  lookups.ensure("employees").catch(() => {});
   editingLog.value = log;
   logFeature.value = feature;
   logErrors.value = {};
@@ -239,9 +263,13 @@ const saveLog = async (payload) => {
   try {
     const saved = await store.saveLog(contract.value.id, payload, editingLog.value?.id);
     showLog.value = false;
-    // Jump to the month the work was logged in.
+    // The saved log goes straight into the open month; only the contract
+    // (month totals, balance, feature hours) is re-read.
+    store.upsertPeriodLog(saved);
+    // Jump to the month the work was logged in (that month loads itself).
     if (!payload.maintenance_feature_id && saved.maintenance_period_id) selectedPeriodId.value = saved.maintenance_period_id;
-    await load({ silent: true });
+    await store.refreshContract(contract.value.id);
+    changed();
   } catch (e) {
     logErrors.value = e?.response?.data?.errors || {};
   } finally {
@@ -250,7 +278,11 @@ const saveLog = async (payload) => {
 };
 const deleteLog = async (log) => {
   const ok = await alertModal.confirm(t("maintenance.detail.confirm.deleteLog", { title: log.title, hours: formatHours(log.hours) }), { type: "danger", confirmText: t("common.actions.delete") });
-  if (ok && (await run(() => store.deleteLog(log.id), t("maintenance.detail.confirm.deleteFailed")))) await load({ silent: true });
+  if (ok && (await run(() => store.deleteLog(log.id), t("maintenance.detail.confirm.deleteFailed")))) {
+    store.removePeriodLog(log.id);
+    await store.refreshContract(contract.value.id);
+    changed();
+  }
 };
 const defaultLogDate = computed(() => {
   // Logging from a past month that's still open defaults to that month;
@@ -279,9 +311,10 @@ const saveFeature = async () => {
   const payload = { ...featureForm.value, description: featureForm.value.description || null };
   if (editingFeature.value && editingFeature.value.status !== "proposed") delete payload.estimated_hours;
   try {
-    await store.saveFeature(contract.value.id, payload, editingFeature.value?.id);
+    // The response is the saved feature: no reload needed.
+    store.upsertFeature(await store.saveFeature(contract.value.id, payload, editingFeature.value?.id));
     showFeature.value = false;
-    await load({ silent: true });
+    changed();
   } catch (e) {
     featureErrors.value = e?.response?.data?.errors || {};
   } finally {
@@ -310,7 +343,11 @@ const featureAction = async (feature, action) => {
     type: action === "delete" || action === "cancel" ? "danger" : "info",
     confirmText: { approve: t("common.actions.approve"), complete: t("maintenance.detail.confirm.markDone"), cancel: t("maintenance.detail.cancelFeature"), delete: t("common.actions.delete") }[action],
   });
-  if (ok && (await run(() => store.featureAction(feature.id, action), t("maintenance.detail.confirm.actionFailed")))) await load({ silent: true });
+  // Approve/complete/cancel move hours in the balance: re-read the contract.
+  if (ok && (await run(() => store.featureAction(feature.id, action), t("maintenance.detail.confirm.actionFailed")))) {
+    await store.refreshContract(contract.value.id);
+    changed();
+  }
 };
 const expandedFeature = ref(null);
 
@@ -417,7 +454,7 @@ const HISTORY_COLUMNS = computed(() => [
         </template>
         <template #actions>
           <UiButton variant="secondary" :icon="Share2" @click="openShare">{{ $t("maintenance.detail.clientLink") }}</UiButton>
-          <UiButton v-if="can('maintenance-edit')" variant="secondary" :icon="Pencil" @click="(contractErrors = {}), (showContractForm = true)">{{ $t("common.actions.edit") }}</UiButton>
+          <UiButton v-if="can('maintenance-edit')" variant="secondary" :icon="Pencil" @click="openContractForm">{{ $t("common.actions.edit") }}</UiButton>
           <UiButton v-if="can('maintenance-delete')" variant="danger" :icon="Trash2" @click="deleteContract">{{ $t("common.actions.delete") }}</UiButton>
         </template>
       </UiPageHeader>
@@ -827,8 +864,8 @@ const HISTORY_COLUMNS = computed(() => [
         :show="showContractForm"
         :loading="contractSaving"
         :data="contract"
-        :clients="clientStore.clients"
-        :projects="projectStore.projects"
+        :clients="lookups.clients"
+        :projects="lookups.projects"
         :errors="contractErrors"
         @submit="saveContract"
         @close="showContractForm = false"

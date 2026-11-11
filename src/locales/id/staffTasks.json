@@ -37,7 +37,8 @@
     "descriptionPlaceholder": "Detail tugas, instruksi, tautan...",
     "assignTo": "Tugaskan ke",
     "selectStaff": "Pilih Staf",
-    "noStaff": "Staf tidak ditemukan."
+    "noStaff": "Staf tidak ditemukan.",
+    "loadingStaff": "Memuat staf…"
   },
   "recap": {
     "open": "Tugas terbuka",
@@ -45,8 +46,6 @@
     "overdueSub": "Lewat tenggat, masih terbuka",
     "dueThisWeek": "Jatuh tempo minggu ini",
     "stillOpen": "Masih terbuka",
-    "assignmentsDone": "Penugasan selesai",
-    "doneOf": "{done} dari {total}",
     "assignments": "penugasan",
     "thisWeek": "Mg ini",
     "nextWeek": "Mg depan",
@@ -75,5 +74,25 @@
     "notEligible": "Hanya staf yang ditugaskan, pembuat tugas, atau manajer yang dapat berkomentar atau menyebut orang lain di sini.",
     "placeholder": "Tulis komentar... gunakan {'@'} untuk menyebut seseorang",
     "insertEmoji": "Sisipkan emoji"
-  }
+  },
+  "itemLabel": "tugas",
+  "updating": "Memperbarui…",
+  "you": "(Anda)",
+  "myStatus": "Status Anda",
+  "summary": {
+    "doneTasks": "Tugas selesai",
+    "doneHint": "{pct}% penugasan selesai"
+  },
+  "toast": {
+    "created": "Tugas dibuat",
+    "createdElsewhere": "Tugas ada di urutan teratas halaman 1.",
+    "updated": "Tugas diperbarui",
+    "deleted": "Tugas dihapus",
+    "statusUpdated": "Status diperbarui",
+    "notFound": "Tugas ini sudah tidak ada.",
+    "loadFailed": "Gagal memuat tugas ini."
+  },
+  "emptyFilterTitle": "Tidak ada tugas “{label}”",
+  "emptyFilterMessage": "Belum ada tugas di grup ini. Hapus filter untuk melihat semua tugas.",
+  "clearFilter": "Hapus filter: {label}"
 }

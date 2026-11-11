@@ -122,7 +122,11 @@
     "deleteTitle": "Hapus data ini?",
     "deleteMessage": "Tindakan ini tidak bisa dibatalkan.",
     "ok": "OK",
-    "notice": "Pemberitahuan"
+    "notice": "Pemberitahuan",
+    "unsavedTitle": "Keluar tanpa menyimpan?",
+    "unsavedMessage": "Perubahan di halaman ini belum disimpan.",
+    "leave": "Keluar",
+    "stay": "Tetap di sini"
   },
   "table": {
     "empty": "Belum ada data",
@@ -155,7 +159,10 @@
     "loading": "Memuat",
     "loadingPage": "Memuat halaman",
     "showPassword": "Tampilkan password",
-    "hidePassword": "Sembunyikan password"
+    "hidePassword": "Sembunyikan password",
+    "previousItem": "Item sebelumnya (K)",
+    "nextItem": "Item berikutnya (J)",
+    "openFullPage": "Buka halaman penuh"
   },
   "toast": {
     "success": "Berhasil",

@@ -42,7 +42,13 @@
   },
   "detail": {
     "dueBy": "Due {date} • by {name}",
-    "yourStatus": "Your Status"
+    "yourStatus": "Your Status",
+    "due": "Due",
+    "priority": "Priority",
+    "type": "Type",
+    "assignedByLabel": "Assigned by",
+    "noDescription": "No description",
+    "openInProject": "Open in project"
   },
   "recap": {
     "standTitle": "Where my tasks stand",
@@ -56,5 +62,6 @@
     "openCount": "{n} open",
     "overdueCount": "{n} overdue",
     "more": "+ {n} more"
-  }
+  },
+  "refreshing": "Updating…"
 }

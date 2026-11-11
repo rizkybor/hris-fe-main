@@ -12,6 +12,15 @@
   "stats": {
     "attention": "Perlu perhatian"
   },
+  "filter": {
+    "attention": "Perlu perhatian",
+    "showingAttention": "Hanya ini yang tampil · ketuk untuk semua",
+    "tapToFilter": "Ketuk untuk menampilkan ini saja",
+    "clear": "Hapus filter",
+    "noneNeedAttention": "Tidak ada VPS yang perlu perhatian",
+    "noneMatch": "Tidak ada VPS yang cocok",
+    "showAll": "Tampilkan semua VPS"
+  },
   "toolbar": {
     "online": "{n} online",
     "attention": "{n} perlu perhatian"

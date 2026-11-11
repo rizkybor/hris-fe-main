@@ -41,7 +41,20 @@
     "generateDuplicate": "Note: An invoice for this exact period ({period}) already exists (No. {number}). Please review it before generating another.",
     "generateAction": "Generate",
     "generated": "Invoice generated successfully.",
-    "generateFailed": "Failed to generate invoice."
+    "generateFailed": "Failed to generate invoice.",
+    "chips": {
+      "dueSoon": "Due in 30 days",
+      "overdue": "Overdue"
+    },
+    "emptyDueHint": "Nothing is due in this view. Try another filter.",
+    "clearFilters": "Clear filters",
+    "dueCount": "{n} subscription | {n} subscriptions",
+    "toast": {
+      "created": "Subscription added",
+      "updated": "Subscription updated",
+      "deleted": "Subscription deleted",
+      "invoiceNumber": "Invoice No. {number}"
+    }
   },
   "recap": {
     "perMonth": "per month",

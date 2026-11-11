@@ -114,6 +114,13 @@ const submit = async () => {
     return;
   }
 
+  // A company file always has a file: removing it needs a replacement
+  // (the API rejects it otherwise, before deleting anything).
+  if (form.value.remove_file && !form.value.new_file) {
+    error.value = t("files.form.replacementRequired");
+    return;
+  }
+
   submitting.value = true;
   try {
     const formData = new FormData();

@@ -39,6 +39,11 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  // Status the form starts with (the column whose "+" opened it).
+  initialStatus: {
+    type: String,
+    default: "todo",
+  },
 });
 
 const emit = defineEmits(["close", "created"]);
@@ -47,7 +52,7 @@ const defaultFormData = () => ({
   name: "",
   description: "",
   priority: "medium",
-  status: "todo",
+  status: props.initialStatus || "todo",
   due_date: "",
   project_id: props.projectId,
   image: null,

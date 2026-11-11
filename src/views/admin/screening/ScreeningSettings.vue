@@ -5,6 +5,9 @@ import {
 } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useToastStore } from "@/stores/toast";
+import { useListState } from "@/composables/useListState";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
 import { formatRupiah } from "@/utils/formatUtils";
 import { PRICE_UNIT, PRICING_MODE } from "@/utils/screening";
 import { UiPageHeader, UiButton, UiBadge, UiTable, UiEmpty, UiModal, UiSelect, UiSwitch } from "@/components/ui";
@@ -17,7 +20,10 @@ const { t } = useI18n();
 // Settings > Client Screening: the service catalog (synced from the Rate
 // Card in Notion) and the questionnaire the website and the team use.
 const alertModal = useAlertModalStore();
-const tab = ref("catalog");
+// The tab is in the URL so a reload or a link opens the same one.
+const view = useListState("screening-settings", { tab: "catalog" }, { remember: false });
+const tab = computed({ get: () => view.tab, set: (value) => (view.tab = value) });
+const toast = useToastStore();
 
 // ===== Catalog =====
 const items = ref([]);
@@ -70,15 +76,31 @@ const openItem = (i) => {
   itemErrors.value = {};
   editing.value = i ? { ...i, price_from: i.price_from !== null ? Number(i.price_from) : null, default_hours: i.default_hours !== null ? Number(i.default_hours) : null } : blankItem();
 };
+// Same order as the API: sort_order, then name.
+const byOrder = (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || String(a.name).localeCompare(String(b.name));
+const upsertItem = (item, oldCode = null) => {
+  const idx = items.value.findIndex((i) => i.id === item.id);
+  const next = [...items.value];
+  if (idx === -1) next.push(item);
+  else next[idx] = { ...next[idx], ...item };
+  items.value = next.sort(byOrder);
+  // The questionnaire's "adds item" pickers list the catalog by code.
+  const codes = { ...itemCodes.value };
+  if (oldCode && oldCode !== item.code) delete codes[oldCode];
+  codes[item.code] = item.name;
+  itemCodes.value = codes;
+};
 const saveItem = async () => {
   savingItem.value = true;
   itemErrors.value = {};
   try {
     const payload = { ...editing.value };
-    if (payload.id) await axiosInstance.put(`/service-catalog/${payload.id}`, payload);
-    else await axiosInstance.post("/service-catalog", payload);
+    const { data } = payload.id ? await axiosInstance.put(`/service-catalog/${payload.id}`, payload) : await axiosInstance.post("/service-catalog", payload);
+    // The response is the saved item: put it in the list instead of
+    // reloading the whole catalog.
+    upsertItem(data.data || payload, payload.id ? items.value.find((i) => i.id === payload.id)?.code : null);
     editing.value = null;
-    await loadCatalog();
+    toast.success(payload.id ? t("screening.settings.toast.itemSaved") : t("screening.settings.toast.itemAdded"));
   } catch (e) {
     itemErrors.value = e?.response?.data?.errors || {};
   } finally {
@@ -87,8 +109,17 @@ const saveItem = async () => {
 };
 const deleteItem = async (i) => {
   if (!(await alertModal.confirm(t("screening.settings.deleteItemConfirm", { name: i.name }), { type: "danger", confirmText: t("common.actions.delete") }))) return;
-  await axiosInstance.delete(`/service-catalog/${i.id}`);
-  await loadCatalog();
+  try {
+    await axiosInstance.delete(`/service-catalog/${i.id}`);
+  } catch (e) {
+    toast.error(t("common.toast.error"), e?.response?.data?.message || "");
+    return;
+  }
+  items.value = items.value.filter((x) => x.id !== i.id);
+  const codes = { ...itemCodes.value };
+  delete codes[i.code];
+  itemCodes.value = codes;
+  toast.success(t("screening.settings.toast.itemDeleted"));
 };
 
 // ===== Questionnaire =====
@@ -119,6 +150,7 @@ onMounted(() => {
 });
 
 const dirty = () => (templateDirty.value = true);
+useUnsavedGuard(() => templateDirty.value);
 const needsOptions = computed(() => definition.value?.sections?.flatMap((s) => s.questions).find((q) => q.key === "needs")?.options || []);
 const slug = (text, prefix) => (text || prefix).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 30) || prefix;
 const uniqueKey = (base) => {

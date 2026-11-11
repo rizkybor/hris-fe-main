@@ -12,6 +12,15 @@
   "stats": {
     "attention": "Needs attention"
   },
+  "filter": {
+    "attention": "Needs attention",
+    "showingAttention": "Showing only these · tap to show all",
+    "tapToFilter": "Tap to show only these",
+    "clear": "Clear filter",
+    "noneNeedAttention": "No VPS needs attention",
+    "noneMatch": "No VPS matches this filter",
+    "showAll": "Show all VPS"
+  },
   "toolbar": {
     "online": "{n} online",
     "attention": "{n} need attention"

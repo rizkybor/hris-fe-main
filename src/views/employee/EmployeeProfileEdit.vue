@@ -92,7 +92,10 @@ const init = async () => {
 
   optionStore.fetchPreferredLanguages();
   try {
-    const profile = await employeeStore.fetchMyProfile();
+    // The profile page already loaded it into the store: fill the form from
+    // there (no request, no skeleton); fetch only when it isn't cached.
+    const cached = employeeStore.myProfile;
+    const profile = cached && cached.user?.id === user.value?.id ? cached : await employeeStore.fetchMyProfile();
     if (profile?.id) {
       hasEmployee.value = true;
       Object.keys(employee.value).forEach((key) => {
@@ -165,12 +168,29 @@ const handleSubmit = async () => {
     form.value.password = "";
     form.value.password_confirmation = "";
     form.value.profile_photo = null;
-    if (hasEmployee.value) {
-      // New contacts get their ids from the server.
+    // Keep My Profile in step without refetching it: PUT /me returns the
+    // user (name, photo), the employee fields are what was just saved.
+    const sentContacts = payload.emergency_contacts;
+    const cached = employeeStore.myProfile;
+    if (cached) {
+      employeeStore.patchMyProfile({
+        ...(hasEmployee.value ? { ...employee.value } : {}),
+        ...(hasEmployee.value && sentContacts && sentContacts.every((c) => c.id)
+          ? { emergency_contacts: sentContacts.map((c) => ({ ...(cached.emergency_contacts || []).find((o) => o.id === c.id), ...c })) }
+          : {}),
+        user: { ...cached.user, name: saved.name ?? cached.user?.name, email: saved.email ?? cached.user?.email, profile_photo: saved.profile_photo ?? cached.user?.profile_photo },
+      });
+    }
+    // New contacts only get their ids from the server, so only then is the
+    // profile fetched again (which also refreshes the store).
+    if (hasEmployee.value && sentContacts?.some((c) => !c.id)) {
       const profile = await employeeStore.fetchMyProfile().catch(() => null);
       if (profile) {
         contacts.value = (profile.emergency_contacts || []).map((c) => ({ id: c.id, full_name: c.full_name || "", relationship: c.relationship || "", phone: c.phone || "", email: c.email || "" }));
       }
+    } else if (hasEmployee.value) {
+      // Rows left empty were dropped from the request: drop them here too.
+      contacts.value = contacts.value.filter((c) => c.full_name || c.relationship || c.phone || c.email);
     }
   }
 };

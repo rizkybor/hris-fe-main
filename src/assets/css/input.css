@@ -386,6 +386,13 @@ html {
     .ui-dialog { animation: ui-sheet-up var(--ui-dur-slow) var(--ui-ease-out) backwards; }
 }
 
+/* Drawer panel: slides in from the right on desktop, up as a sheet on phones */
+@keyframes ui-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ui-drawer { animation: ui-drawer-in var(--ui-dur-slow) var(--ui-ease-out) backwards; }
+@media (max-width: 639px) {
+    .ui-drawer { animation: ui-sheet-up var(--ui-dur-slow) var(--ui-ease-out) backwards; }
+}
+
 /* Vue <Transition name="ui-fade"> / "ui-pop" (menus, popovers) */
 .ui-fade-enter-active { transition: opacity var(--ui-dur-base) var(--ui-ease-out); }
 .ui-fade-leave-active { transition: opacity var(--ui-dur-fast) var(--ui-ease-in); }

@@ -23,6 +23,9 @@ const props = defineProps({
   refreshKey: { type: Number, default: 0 },
 });
 
+// `loaded` hands the summary to the page (its due / overdue counts label
+// the list's quick filters) without a second request.
+const emit = defineEmits(["loaded"]);
 const data = ref(null);
 const loading = ref(true);
 const failed = ref(false);
@@ -31,6 +34,7 @@ const load = async () => {
   failed.value = false;
   try {
     data.value = (await axiosInstance.get("/subscriptions/summary")).data.data;
+    emit("loaded", data.value);
   } catch {
     failed.value = true;
   } finally {

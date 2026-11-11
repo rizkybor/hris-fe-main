@@ -71,7 +71,11 @@ export const useSubscriptionStore = defineStore("subscription", {
       try {
         await axiosInstance.delete(`subscriptions/${id}`);
         this.success = "Subscription deleted successfully";
+        const before = this.subscriptions.length;
         this.subscriptions = this.subscriptions.filter((s) => s.id !== id);
+        if (this.subscriptions.length < before && this.meta.total) {
+          this.meta = { ...this.meta, total: this.meta.total - 1, to: Math.max(0, (this.meta.to || 1) - 1), last_page: Math.max(1, Math.ceil((this.meta.total - 1) / (this.meta.per_page || 10))) };
+        }
       } catch (error) {
         this.error = handleError(error);
         throw error;
@@ -93,6 +97,12 @@ export const useSubscriptionStore = defineStore("subscription", {
       } finally {
         this.generatingId = null;
       }
+    },
+
+    // Merge fields into a row on the current page (e.g. after an invoice).
+    patchRow(id, fields) {
+      const row = this.subscriptions.find((s) => s.id === id);
+      if (row) Object.assign(row, fields);
     },
 
     // Success/error persist across route changes (Pinia stores are

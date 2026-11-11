@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { computed } from "vue";
 import {
   Users,
   Building,
@@ -11,32 +11,51 @@ import {
   Clock,
   CheckCircle,
   ChevronRight,
+  Mail,
+  Phone,
+  UserRound,
+  AlertTriangle,
 } from "lucide-vue-next";
 import { useEmployeeStore } from "@/stores/employee";
-import CardList from "@/components/admin/project/list/CardList.vue";
+import { useAuthStore } from "@/stores/auth";
 import { formatDate as formatDateUtil } from "@/utils/dateUtils.js";
-import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import { getProjectHealth } from "@/utils/projectHealth";
+import { canOneOf } from "@/helpers/permissionHelper";
 import Avatar from "@/components/common/Avatar.vue";
 import { useScrollFade } from "@/composables/useScrollFade";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
 import { UiBadge, UiCard, UiEmpty, UiSpinner, UiStat } from "@/components/ui";
 import { useI18n } from "vue-i18n";
 
 const { t, te } = useI18n();
 
 const employeeStore = useEmployeeStore();
-const team = ref(null);
-const members = ref([]);
-const projects = ref([]);
-const activeTab = ref("members");
-const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
-const loadingTeam = ref(true);
-const loadingMembers = ref(false);
-const loadingProjects = ref(false);
+const authStore = useAuthStore();
+const myUserId = computed(() => authStore.user?.id ?? null);
 
-const activeMembers = computed(() => {
-  if (!members.value) return 0;
-  return members.value.filter((m) => !m.left_at).length;
+// Team, members and projects live in the employee store (one parallel
+// load), so coming back shows them at once and refreshes quietly.
+const { loading, refreshing } = useStaleFetch(() => employeeStore.loadMyTeamBundle(myUserId.value), {
+  key: () => ["ws-my-team", myUserId.value],
+  hasData: () => employeeStore.myTeamLoaded && employeeStore.myTeamFor === myUserId.value,
+  maxAge: 60_000,
 });
+const ready = computed(() => employeeStore.myTeamLoaded && employeeStore.myTeamFor === myUserId.value);
+const team = computed(() => (ready.value ? employeeStore.myTeam : null));
+const members = computed(() => (ready.value ? employeeStore.myTeamMembers || [] : []));
+const projects = computed(() => (ready.value ? employeeStore.myTeamProjects || [] : []));
+
+// Tab in the URL (?tab=) so back/reload keep it.
+const TAB_IDS = ["members", "projects", "description"];
+const tabState = useListState("my-team", { tab: "members" }, { remember: false });
+const activeTab = computed({
+  get: () => (TAB_IDS.includes(tabState.tab) ? tabState.tab : "members"),
+  set: (v) => (tabState.tab = v),
+});
+const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
+
+const activeMembers = computed(() => members.value.filter((m) => !m.left_at).length);
 
 const activeMembersStatus = computed(() => {
   const expected = team.value?.expected_size || 0;
@@ -46,51 +65,6 @@ const activeMembersStatus = computed(() => {
   return t("myTeam.capacity.growing");
 });
 
-const loadTeam = async () => {
-  loadingTeam.value = true;
-  try {
-    team.value = await employeeStore.fetchMyTeam();
-  } catch (error) {
-    console.error("Error loading team:", error);
-    team.value = null;
-  } finally {
-    loadingTeam.value = false;
-  }
-};
-
-const loadMembers = async () => {
-  if (members.value.length > 0) return; // Already loaded
-  loadingMembers.value = true;
-  try {
-    members.value = await employeeStore.fetchMyTeamMembers();
-  } catch (error) {
-    console.error("Error loading team members:", error);
-  } finally {
-    loadingMembers.value = false;
-  }
-};
-
-const loadProjects = async () => {
-  if (projects.value.length > 0) return; // Already loaded
-  loadingProjects.value = true;
-  try {
-    projects.value = await employeeStore.fetchMyTeamProjects();
-  } catch (error) {
-    console.error("Error loading team projects:", error);
-  } finally {
-    loadingProjects.value = false;
-  }
-};
-
-const getStatusClass = (status) => {
-  const statusMap = {
-    active: "bg-[#F0FDF4] text-[#166534]",
-    inactive: "bg-[#FEE2E2] text-[#991B1B]",
-    archived: "bg-[#F3F4F6] text-[#374151]",
-  };
-  return statusMap[status?.toLowerCase()] || "bg-[#EBF8FF] text-[#1E40AF]";
-};
-
 // Returns a status key (left / lead / active); label: myTeam.memberStatus.<key>.
 const getMemberStatus = (member) => {
   if (member.left_at) return "left";
@@ -98,13 +72,20 @@ const getMemberStatus = (member) => {
   return isLeader ? "lead" : "active";
 };
 
-const getMemberStatusClass = (member) => {
-  if (member.left_at) return "bg-[#F3F4F6] text-[#374151]";
-  const isLeader = member.employee?.user?.id === team.value?.leader?.id;
-  return isLeader
-    ? "bg-[#FEF3C7] text-[#92400E]"
-    : "bg-[#F0FDF4] text-[#166534]";
-};
+// The API sends job_information (older code read jobInformation).
+const memberJob = (member) => member.employee?.job_information || member.employee?.jobInformation || {};
+
+// Lead first, then active members, people who left last.
+const STATUS_ORDER = { lead: 0, active: 1, left: 2 };
+const sortedMembers = computed(() =>
+  [...members.value].sort((a, b) => STATUS_ORDER[getMemberStatus(a)] - STATUS_ORDER[getMemberStatus(b)])
+);
+
+// Quick actions on a member: mail, call, and their employee page when the
+// user may open it (same permission the employee detail API checks).
+const canViewEmployee = computed(() => canOneOf(["employee-list", "employee-create", "employee-edit", "employee-delete"]));
+const canOpenProject = computed(() => canOneOf(["project-list", "project-create", "project-edit", "project-delete"]));
+const telHref = (phone) => `tel:${String(phone).replace(/[^\d+]/g, "")}`;
 
 // Presentation-only (redesign): badge tones for team + member status.
 const TEAM_STATUS_TONES = { active: "ok", inactive: "bad", archived: "neutral" };
@@ -120,15 +101,34 @@ const teamTabs = computed(() => [
 const teamStatusLabel = (status) =>
   te(`profile.enums.teamStatus.${status}`) ? t(`profile.enums.teamStatus.${status}`) : status;
 
-onMounted(() => {
-  Promise.all([loadTeam(), loadMembers(), loadProjects()]);
-});
+// ---- Projects: compact rows, open work first (soonest end date first) ----
+const PROJECT_STATUS_TONE = { draft: "neutral", planning: "info", active: "accent", on_hold: "warn", completed: "ok", cancelled: "outline" };
+const projectStatusLabel = (status) =>
+  te(`myTeam.projectStatus.${status}`) ? t(`myTeam.projectStatus.${status}`) : status || "-";
+const HEALTH_TONE = { overdue: "bad", critical: "bad", "at-risk": "warn", behind: "warn" };
+const isClosed = (p) => p.status === "completed" || p.status === "cancelled";
+const projectRows = computed(() =>
+  [...projects.value]
+    .sort((a, b) => {
+      if (isClosed(a) !== isClosed(b)) return isClosed(a) ? 1 : -1;
+      return String(a.end_date || "9999").localeCompare(String(b.end_date || "9999"));
+    })
+    .map((p) => {
+      const health = getProjectHealth(p);
+      return {
+        ...p,
+        progressPct: Math.max(0, Math.min(100, Math.round(p.progress ?? 0))),
+        health: health && health.level !== "on-track" ? { label: health.label, tone: HEALTH_TONE[health.level] || "warn" } : null,
+      };
+    })
+);
+const openProjects = computed(() => projects.value.filter((p) => !isClosed(p)).length);
 </script>
 
 <template>
   <div class="px-1 py-2 sm:px-4 sm:py-4 lg:px-5">
     <!-- Loading State -->
-    <UiSpinner v-if="loadingTeam" size="28px" :label="$t('myTeam.loading')" class="py-24" />
+    <UiSpinner v-if="loading && !ready" size="28px" :label="$t('myTeam.loading')" class="py-24" />
 
     <!-- No Team Assigned -->
     <div v-else-if="!team" class="bg-ui-surface border border-ui-line rounded-ui-card ui-anim-fade-up">
@@ -149,6 +149,9 @@ onMounted(() => {
           <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1.5">
             <h1 class="text-ui-h1 text-ui-ink break-words">{{ team.name }}</h1>
             <UiBadge v-if="team?.status" :tone="teamStatusTone(team.status)" dot>{{ teamStatusLabel(team.status) }}</UiBadge>
+            <span v-if="refreshing" class="inline-flex items-center gap-1.5 text-ui-cap text-ui-muted" role="status">
+              <UiSpinner size="14px" />{{ $t("myTeam.refreshing") }}
+            </span>
           </div>
           <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 mt-2 text-ui-small text-ui-muted">
             <span class="inline-flex items-center gap-1.5"><Users class="w-3.5 h-3.5 text-ui-faint" />{{ $t("profile.view.team.members", { n: members?.length || 0 }, members?.length || 0) }}</span>
@@ -161,7 +164,7 @@ onMounted(() => {
       <!-- Team Statistics -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 ui-stagger">
         <UiStat :label="$t('myTeam.stats.activeMembers')" :icon="Users" :value="activeMembers" :hint="activeMembersStatus" />
-        <UiStat :label="$t('myTeam.stats.projectsAssigned')" :icon="Folder" :value="projects?.length || 0" :hint="$t('myTeam.stats.activeProjects')" />
+        <UiStat :label="$t('myTeam.stats.projectsAssigned')" :icon="Folder" :value="projects?.length || 0" :hint="$t('myTeam.stats.openCount', { n: openProjects })" />
         <UiStat :label="$t('myTeam.stats.expectedSize')" :icon="TrendingUp" :value="team?.expected_size || 0" :hint="$t('myTeam.stats.teamCapacity')" />
         <UiStat :label="$t('profile.view.team.lead')" :icon="User" :hint="$t('myTeam.stats.leader')">
           <span class="text-ui-h2">{{ team?.leader?.name || $t("common.duration.na") }}</span>
@@ -215,19 +218,12 @@ onMounted(() => {
           <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("myTeam.members.subtitle") }}</p>
         </div>
 
-        <SkeletonCardGrid
-          v-if="loadingMembers"
-          :count="4"
-          cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-        />
-        <div
-          v-else
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 ui-stagger"
-        >
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 ui-stagger">
           <div
-            v-for="member in members"
+            v-for="member in sortedMembers"
             :key="member.id"
-            class="ui-lift bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-[18px] min-w-0"
+            class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-[18px] min-w-0 flex flex-col"
+            :class="member.left_at ? 'opacity-70' : ''"
           >
             <div class="flex items-center gap-3">
               <Avatar
@@ -237,8 +233,13 @@ onMounted(() => {
                 icon-size="w-5 h-5"
               />
               <div class="min-w-0 flex-1">
-                <h4 class="text-ui-h3 text-ui-ink truncate">{{ member.employee?.user?.name || $t("common.duration.na") }}</h4>
-                <p class="text-ui-cap text-ui-muted truncate">{{ member.employee?.jobInformation?.job_title || $t("common.duration.na") }}</p>
+                <RouterLink
+                  v-if="canViewEmployee && member.employee?.id"
+                  :to="{ name: 'admin.employees.detail', params: { id: member.employee.id } }"
+                  class="block text-ui-h3 text-ui-ink truncate hover:text-ui-accent"
+                >{{ member.employee?.user?.name || $t("common.duration.na") }}</RouterLink>
+                <h4 v-else class="text-ui-h3 text-ui-ink truncate">{{ member.employee?.user?.name || $t("common.duration.na") }}</h4>
+                <p class="text-ui-cap text-ui-muted truncate">{{ memberJob(member).job_title || $t("common.duration.na") }}</p>
               </div>
               <UiBadge :tone="memberStatusTone(member)" dot class="shrink-0">{{ $t(`myTeam.memberStatus.${getMemberStatus(member)}`) }}</UiBadge>
             </div>
@@ -249,15 +250,40 @@ onMounted(() => {
               </span>
               <span class="inline-flex items-center gap-1.5">
                 <Clock class="w-3.5 h-3.5 text-ui-faint" />
-                {{ $t("myTeam.members.experience", { n: member.employee?.jobInformation?.years_experience || 0 }, member.employee?.jobInformation?.years_experience || 0) }}
+                {{ $t("myTeam.members.experience", { n: memberJob(member).years_experience || 0 }, memberJob(member).years_experience || 0) }}
               </span>
+            </div>
+            <!-- Quick actions: always visible (phones have no hover) -->
+            <div
+              v-if="member.employee?.user?.email || member.employee?.phone || (canViewEmployee && member.employee?.id)"
+              class="flex items-center gap-1.5 mt-3"
+            >
+              <a
+                v-if="member.employee?.user?.email"
+                :href="`mailto:${member.employee.user.email}`"
+                class="ui-press inline-flex items-center justify-center w-10 h-10 sm:w-8 sm:h-8 rounded-ui-control border border-ui-line text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
+                :title="member.employee.user.email"
+                :aria-label="$t('myTeam.members.emailTo', { name: member.employee?.user?.name })"
+              ><Mail class="w-4 h-4" /></a>
+              <a
+                v-if="member.employee?.phone"
+                :href="telHref(member.employee.phone)"
+                class="ui-press inline-flex items-center justify-center w-10 h-10 sm:w-8 sm:h-8 rounded-ui-control border border-ui-line text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
+                :title="member.employee.phone"
+                :aria-label="$t('myTeam.members.callTo', { name: member.employee?.user?.name })"
+              ><Phone class="w-4 h-4" /></a>
+              <RouterLink
+                v-if="canViewEmployee && member.employee?.id"
+                :to="{ name: 'admin.employees.detail', params: { id: member.employee.id } }"
+                class="ui-press ml-auto inline-flex items-center justify-center gap-1.5 h-10 sm:h-8 px-2.5 rounded-ui-control text-ui-small font-medium text-ui-accent hover:bg-ui-hover"
+              ><UserRound class="w-4 h-4" />{{ $t("myTeam.members.viewProfile") }}</RouterLink>
             </div>
           </div>
         </div>
 
         <!-- Empty State -->
         <div
-          v-if="!loadingMembers && (!members || members.length === 0)"
+          v-if="members.length === 0"
           class="bg-ui-surface border border-ui-line rounded-ui-card"
         >
           <UiEmpty :icon="Users" :title="$t('myTeam.members.empty')" :message="$t('myTeam.members.emptyHint')" />
@@ -274,25 +300,40 @@ onMounted(() => {
           <UiBadge tone="outline" class="shrink-0">{{ $t("myTeam.projects.count", { n: projects?.length || 0 }, projects?.length || 0) }}</UiBadge>
         </div>
 
-        <SkeletonCardGrid
-          v-if="loadingProjects"
-          :count="4"
-          cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-        />
-        <div
-          v-else
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 ui-stagger"
-        >
-          <CardList
-            v-for="project in projects"
-            :key="project.id"
-            :data="project"
-          />
-        </div>
+        <ul v-if="projectRows.length" class="bg-ui-surface border border-ui-line rounded-ui-card divide-y divide-ui-line overflow-hidden ui-stagger">
+          <li v-for="project in projectRows" :key="project.id">
+            <component
+              :is="canOpenProject ? 'RouterLink' : 'div'"
+              :to="canOpenProject ? { name: 'admin.projects.detail', params: { id: project.id } } : undefined"
+              class="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 min-w-0"
+              :class="canOpenProject ? 'group hover:bg-ui-hover focus:outline-none focus-visible:bg-ui-hover' : ''"
+            >
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <p class="text-ui-h3 text-ui-ink truncate" :class="canOpenProject ? 'group-hover:text-ui-accent' : ''">{{ project.name }}</p>
+                  <UiBadge :tone="PROJECT_STATUS_TONE[project.status] || 'neutral'" dot>{{ projectStatusLabel(project.status) }}</UiBadge>
+                  <UiBadge v-if="project.health" :tone="project.health.tone"><AlertTriangle class="w-3 h-3" />{{ project.health.label }}</UiBadge>
+                </div>
+                <p class="text-ui-cap text-ui-muted truncate mt-0.5">
+                  {{ project.client?.name || $t("myTeam.projects.noClient") }}
+                  <span class="text-ui-faint">·</span>
+                  {{ project.end_date ? $t("myTeam.projects.ends", { date: formatDateUtil(project.end_date) }) : $t("myTeam.projects.noEndDate") }}
+                </p>
+              </div>
+              <div class="w-24 sm:w-36 shrink-0">
+                <div class="flex justify-end text-ui-cap font-semibold text-ui-ink tabular-nums mb-1">{{ project.progressPct }}%</div>
+                <div class="w-full bg-ui-subtle rounded-full h-1.5 overflow-hidden">
+                  <div class="h-full rounded-full" :class="project.progressPct >= 100 ? 'bg-ui-ok' : 'bg-ui-ink'" :style="{ width: `${project.progressPct}%` }"></div>
+                </div>
+              </div>
+              <ChevronRight v-if="canOpenProject" class="w-4 h-4 text-ui-faint shrink-0" />
+            </component>
+          </li>
+        </ul>
 
         <!-- Empty State -->
         <div
-          v-if="!loadingProjects && (!projects || projects.length === 0)"
+          v-if="projects.length === 0"
           class="bg-ui-surface border border-ui-line rounded-ui-card"
         >
           <UiEmpty :icon="Folder" :title="$t('myTeam.projects.empty')" :message="$t('myTeam.projects.emptyHint')" />
