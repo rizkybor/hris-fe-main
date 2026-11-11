@@ -62,7 +62,7 @@ onMounted(() => {
 
     <div
       v-if="isOpen"
-      class="ui-anim-scale absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-24px)] bg-ui-surface border border-ui-line rounded-[12px] shadow-ui-overlay z-[9999] max-h-[70vh] overflow-y-auto origin-top-right"
+      class="ui-anim-scale absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-24px)] bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay z-[9999] max-h-[70vh] overflow-y-auto origin-top-right"
     >
       <div class="px-4 py-3 border-b border-ui-line flex items-center justify-between">
         <p class="text-ui-small font-semibold text-ui-ink">Notifications</p>
@@ -109,7 +109,7 @@ onMounted(() => {
             <p class="text-ui-cap text-ui-muted line-clamp-2">
               {{ notification.data?.message }}
             </p>
-            <p class="text-[11px] text-ui-faint mt-1">
+            <p class="text-ui-cap text-ui-faint mt-1">
               {{ getTimeAgo(notification.created_at) }}
             </p>
           </div>

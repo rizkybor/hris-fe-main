@@ -1,6 +1,7 @@
 <script setup>
 import {
   ChevronDownIcon,
+  ChevronRight,
   UserIcon,
   ClockIcon,
   ReceiptIcon,
@@ -456,6 +457,24 @@ const pageInfo = computed(() => {
 });
 
 const pageTitle = computed(() => pageInfo.value.title);
+
+// Breadcrumb section, named like the sidebar groups. First matching
+// route-name prefix wins; the dashboard has no section.
+const SECTION_RULES = [
+  ["License Manager", ["admin.license-manager"]],
+  ["Settings", ["admin.settings"]],
+  ["General", ["employee.attendance.clock", "employee.attendance.my-attendances", "employee.payslips"]],
+  ["My Workspace", ["employee.profile", "employee.team", "employee.tasks", "admin.staff-tasks", "admin.screening", "admin.projects", "admin.subscriptions", "admin.maintenance", "admin.server-storage", "admin.attendances", "admin.leave-requests"]],
+  ["Administration", ["admin.employee", "admin.team", "admin.clients", "admin.documents", "admin.purchase-orders", "admin.invoices", "admin.payment-receipts", "admin.letters", "admin.certificates", "admin.official-memos", "admin.meeting-notes", "admin.proposals", "admin.orgchart"]],
+  ["Finance", ["admin.company-finance", "admin.company-cash-book", "admin.payroll", "admin.report"]],
+  ["Tools", ["admin.project-calculator", "admin.flowchart"]],
+  ["Company", ["admin.company-about", "admin.assets", "admin.files-company", "admin.account-password", "admin.announcements"]],
+  ["Insights", ["admin.analytics", "admin.history"]],
+];
+const pageSection = computed(() => {
+  const name = route.name?.toString() || "";
+  return SECTION_RULES.find(([, prefixes]) => prefixes.some((p) => name.startsWith(p)))?.[0] || "";
+});
 const pageSubtitle = computed(() => pageInfo.value.subtitle);
 
 const handleLogout = () => {
@@ -474,11 +493,16 @@ const confirmLogout = async () => {
 
 <template>
   <header class="page-header h-14 shrink-0 flex items-center gap-3 px-4 sm:px-6 bg-ui-bg border-b border-ui-line font-sans">
-    <!-- Page title (from the route), subtitle on larger screens -->
-    <div class="flex-1 min-w-0">
-      <h2 class="text-[15px] leading-5 font-semibold text-ui-ink truncate">{{ pageTitle }}</h2>
-      <p class="hidden sm:block text-ui-cap text-ui-muted truncate">{{ pageSubtitle }}</p>
-    </div>
+    <!-- Breadcrumb: the page itself carries the big title and description
+         (UiPageHeader), so the bar only says where you are. On phones it
+         reads as an app bar title. -->
+    <nav aria-label="Breadcrumb" class="flex-1 min-w-0 flex items-center gap-1.5">
+      <template v-if="pageSection">
+        <span class="hidden sm:inline text-ui-small text-ui-muted truncate shrink-0 max-w-[40%]">{{ pageSection }}</span>
+        <ChevronRight class="hidden sm:block w-3.5 h-3.5 text-ui-faint shrink-0" aria-hidden="true" />
+      </template>
+      <h2 class="text-ui-h3 sm:text-ui-small sm:font-medium text-ui-ink truncate" aria-current="page">{{ pageTitle }}</h2>
+    </nav>
 
     <div class="flex items-center gap-1">
       <NotificationBell />
@@ -505,7 +529,7 @@ const confirmLogout = async () => {
         <Avatar :src="user?.profile_photo" :alt="user?.name" size="w-8 h-8" />
         <div class="hidden md:block text-left max-w-[160px]">
           <p class="text-ui-small font-medium text-ui-ink leading-tight truncate">{{ user?.name }}</p>
-          <p class="text-[11px] text-ui-muted leading-tight mt-0.5 truncate capitalize">{{ join(user?.roles, ", ") }}</p>
+          <p class="text-ui-cap text-ui-muted leading-tight mt-0.5 truncate capitalize">{{ join(user?.roles, ", ") }}</p>
         </div>
         <ChevronDownIcon class="w-4 h-4 text-ui-faint shrink-0 transition-transform duration-ui-fast" :class="{ 'rotate-180': isOpen }" />
       </button>
@@ -514,12 +538,12 @@ const confirmLogout = async () => {
         <div
           v-if="isOpen"
           role="menu"
-          class="absolute right-0 top-full mt-2 w-60 bg-ui-surface border border-ui-line rounded-[12px] shadow-ui-overlay p-1.5 origin-top-right"
+          class="absolute right-0 top-full mt-2 w-60 bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay p-1.5 origin-top-right"
         >
           <div class="px-2.5 py-2.5 mb-1 border-b border-ui-line">
             <p class="text-ui-small font-semibold text-ui-ink truncate">{{ user?.name }}</p>
             <p class="text-ui-cap text-ui-muted truncate">{{ user?.email }}</p>
-            <p class="text-[11px] text-ui-faint mt-0.5 truncate capitalize">{{ join(user?.roles, ", ") }}</p>
+            <p class="text-ui-cap text-ui-faint mt-0.5 truncate capitalize">{{ join(user?.roles, ", ") }}</p>
           </div>
           <RouterLink
             :to="{ name: 'employee.profile.edit' }"

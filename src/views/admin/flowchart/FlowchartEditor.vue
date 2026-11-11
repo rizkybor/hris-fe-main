@@ -535,6 +535,8 @@ const updatedLabel = computed(() => {
       </button>
 
       <div class="flex-1 min-w-0">
+        <!-- The visible title is the editable name field below. -->
+        <h1 class="sr-only">{{ name || "Flowchart" }}</h1>
         <input
           v-model="name"
           :readonly="isReadonly"

@@ -44,7 +44,7 @@ const POINTS = ["Attendance with photo and location", "Payroll and payslips", "P
         </h2>
         <ul class="mt-8 space-y-3">
           <li v-for="p in POINTS" :key="p" class="flex items-center gap-3 text-ui-body text-white/75">
-            <span class="w-1.5 h-1.5 rounded-full bg-[#A9C2F5]"></span>{{ p }}
+            <span class="w-1.5 h-1.5 rounded-full bg-ui-accent-soft"></span>{{ p }}
           </li>
         </ul>
       </div>

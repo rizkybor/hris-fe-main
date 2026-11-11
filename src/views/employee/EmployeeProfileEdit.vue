@@ -3,7 +3,6 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
-import Input from "@/components/common/form/Input.vue";
 import Alert from "@/components/common/Alert.vue";
 import Avatar from "@/components/common/Avatar.vue";
 import { User as UserIcon, Mail, Lock, Camera, ArrowLeft, Save } from "lucide-vue-next";

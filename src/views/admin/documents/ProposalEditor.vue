@@ -292,7 +292,7 @@ const lastSaved = computed(() => {
               <ArrowLeft class="w-4 h-4" />
             </button>
             <div class="min-w-0 flex-1">
-              <p class="text-ui-h3 text-ui-ink truncate">Proposal Penawaran — {{ doc.title || "Tanpa judul" }}</p>
+              <h1 class="text-ui-h3 text-ui-ink truncate">Proposal Penawaran — {{ doc.title || "Tanpa judul" }}</h1>
               <p class="text-ui-cap text-ui-muted truncate">
                 {{ doc.client_name }}<span v-if="!isDirty && lastSaved"> · {{ lastSaved }}</span>
               </p>
