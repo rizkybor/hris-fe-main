@@ -376,7 +376,7 @@ const menuItem =
     <!-- Panels (license-manager-view) -->
     <div v-if="canView" class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
       <ExpiringList :days="30" :limit="10" />
-      <RecentActivity :limit="15" />
+      <RecentActivity :limit="10" />
     </div>
 
     <LicenseProductFormModal
