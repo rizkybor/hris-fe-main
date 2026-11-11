@@ -1787,6 +1787,10 @@ video {
   width: 38px;
 }
 
+.w-\[60px\] {
+  width: 60px;
+}
+
 .w-\[85vw\] {
   width: 85vw;
 }
@@ -4359,6 +4363,11 @@ video {
 .py-8 {
   padding-top: 2rem;
   padding-bottom: 2rem;
+}
+
+.py-px {
+  padding-top: 1px;
+  padding-bottom: 1px;
 }
 
 .\!pl-9 {
