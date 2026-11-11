@@ -81,8 +81,10 @@ const props = defineProps({
   product: { type: Object, default: null },
   title: { type: String, default: "" },
   subtitle: { type: String, default: "" },
-  // Edit: the immutable key, shown next to the title.
+  // Edit: the current key, shown next to the title.
   licenseKey: { type: String, default: "" },
+  // Edit: the plan saved now (a different plan gets a new key).
+  originalPlan: { type: String, default: "" },
 });
 
 const emit = defineEmits(["submit", "cancel"]);
@@ -163,6 +165,9 @@ const selectPlatform = (platform) => {
   form.value.platform = platform;
   if (!planAllowedOn(platform, form.value.plan)) selectPlan("professional");
 };
+
+// Edit: picking another plan replaces the key.
+const planChanged = computed(() => props.isEdit && !!props.originalPlan && form.value.plan !== props.originalPlan);
 
 // One key per device vs one shared key; fixed after create.
 const perDevice = computed(() => form.value.key_mode === "per_device");
@@ -348,6 +353,17 @@ const secondaryBtn =
             </template>
           </div>
           <p v-if="fieldError('plan')" class="text-xs text-red-600 mt-2">{{ fieldError("plan") }}</p>
+          <div
+            v-if="planChanged"
+            class="mt-3 flex items-start gap-2.5 p-3 rounded-[12px] border border-amber-200 bg-amber-50 text-amber-800"
+          >
+            <KeyRound class="w-4 h-4 shrink-0 mt-0.5" />
+            <p class="text-xs leading-relaxed">
+              <span class="font-semibold">A new license key will be generated.</span>
+              The current key{{ perDevice ? "s" : "" }} stop working and every device has to activate again with the new key.
+              Send the licensee the new certificate after saving.
+            </p>
+          </div>
         </section>
 
         <!-- 2-3. Individual: Licensee + Location -->
