@@ -539,6 +539,22 @@ export const KEY_MODE_OPTIONS = [
   { value: "shared", label: "One shared key", note: "Every device uses the same key, up to Max devices." },
 ];
 
+// Keys a one-key certificate can be made for: every key of the license
+// and its bundle that is not used (a used key is dead). Each with
+// { id, position, key, status, platform, platform_label, total }.
+export const certificateKeyOptions = (license) => {
+  if (license?.key_mode !== "per_device") return [];
+  const members = [
+    { platform: license.platform, platform_label: license.platform_label, keys: license.keys || [] },
+    ...(license.bundle || []).map((b) => ({ platform: b.platform, platform_label: b.platform_label, keys: b.keys || [] })),
+  ].sort((a, b) => (a.platform === "mac" ? -1 : b.platform === "mac" ? 1 : 0));
+  return members.flatMap((m) =>
+    m.keys
+      .filter((k) => k.status !== "used")
+      .map((k) => ({ ...k, platform: m.platform, platform_label: m.platform_label, total: m.keys.length }))
+  );
+};
+
 // Per-device key status: label + dot/text classes.
 export const KEY_STATUS = {
   available: { label: "Available", dot: "bg-emerald-500", text: "text-emerald-700", chip: "bg-emerald-50 text-emerald-700" },
