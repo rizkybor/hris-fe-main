@@ -613,6 +613,10 @@ const statusBadge = (license) =>
                         </span>
                         <CopyKeyButton :value="license.key" class="opacity-60 group-hover:opacity-100" />
                       </div>
+                      <p v-if="license.keys_summary" class="text-[11px] text-brand-light mt-0.5 whitespace-nowrap tabular-nums" title="One key per device">
+                        {{ license.keys_summary.total }} keys &middot;
+                        <span class="font-semibold text-brand-dark">{{ license.keys_summary.in_use + license.keys_summary.used }} used</span>
+                      </p>
                     </td>
 
                     <!-- Period -->
@@ -758,6 +762,10 @@ const statusBadge = (license) =>
                       <span class="font-mono text-xs font-semibold text-brand-dark truncate">{{ maskKey(license.key) }}</span>
                       <CopyKeyButton :value="license.key" />
                     </div>
+                    <p v-if="license.keys_summary" class="text-[11px] text-brand-light mt-0.5 tabular-nums">
+                      {{ license.keys_summary.total }} keys, one per device &middot;
+                      <span class="font-semibold text-brand-dark">{{ license.keys_summary.in_use + license.keys_summary.used }} used</span>
+                    </p>
 
                     <div v-if="!isLifetimeLicense(license)" class="mt-2.5">
                       <div class="flex items-center justify-between text-[11px] text-brand-light">

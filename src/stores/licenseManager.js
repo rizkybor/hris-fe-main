@@ -42,6 +42,8 @@ const toApiPayload = (payload) => {
     duration: isTerm ? payload.duration : null,
     expires_at: isCustom ? payload.expires_at || null : null,
     max_devices: Number(payload.max_devices),
+    // Create only (the API ignores it on update).
+    key_mode: payload.key_mode || "per_device",
     notes: payload.notes || null,
     is_active: !!payload.is_active,
     // Only meaningful for Lifetime; blank lets the API use the product's
