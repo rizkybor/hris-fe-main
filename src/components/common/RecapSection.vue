@@ -31,25 +31,25 @@ const toggle = () => {
 
 <template>
   <section class="mb-4 sm:mb-5">
-    <button type="button" class="w-full flex items-center justify-between gap-2 mb-2.5 text-left" :aria-expanded="open" @click="toggle">
-      <span class="text-brand-dark text-sm font-bold">Recap</span>
-      <span class="text-xs font-semibold text-brand-light inline-flex items-center gap-1 hover:text-[#0C51D9]">
+    <button type="button" class="w-full flex items-center justify-between gap-2 mb-2.5 text-left group" :aria-expanded="open" @click="toggle">
+      <span class="text-ui-over uppercase text-ui-muted">Recap</span>
+      <span class="text-ui-cap font-medium text-ui-muted inline-flex items-center gap-1 group-hover:text-ui-ink">
         {{ open ? "Hide" : "Show" }}
-        <ChevronDown class="w-3.5 h-3.5 transition-transform" :class="{ '-rotate-90': !open }" />
+        <ChevronDown class="w-3.5 h-3.5 transition-transform duration-ui-fast" :class="{ '-rotate-90': !open }" />
       </span>
     </button>
 
     <template v-if="open">
       <div v-if="loading" class="space-y-3">
-        <div v-if="tiles" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-          <Skeleton v-for="i in tiles" :key="i" height="84px" rounded="12px" />
+        <div v-if="tiles" class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Skeleton v-for="i in tiles" :key="i" height="88px" rounded="12px" />
         </div>
-        <Skeleton height="240px" rounded="14px" />
+        <Skeleton height="240px" rounded="12px" />
       </div>
-      <p v-else-if="failed" class="text-sm text-gray-500 bg-white border border-[#DCDEDD] rounded-[12px] p-4">
-        Couldn't load the recap. <button type="button" class="text-[#0C51D9] font-semibold hover:underline" @click="emit('retry')">Try again</button>
+      <p v-else-if="failed" class="text-ui-small text-ui-muted bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3">
+        Couldn't load the recap. <button type="button" class="text-ui-accent font-medium hover:underline" @click="emit('retry')">Try again</button>
       </p>
-      <div v-else class="space-y-3"><slot /></div>
+      <div v-else class="ui-anim-fade space-y-3"><slot /></div>
     </template>
   </section>
 </template>

@@ -93,76 +93,48 @@ const goToNext = () => {
     handlePageChange(currentPage.value + 1);
   }
 };
+
+// Shared button shape (matches UiPagination).
+const btn = "inline-flex items-center justify-center h-8 min-w-8 px-2 rounded-ui-control border text-ui-small font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none";
 </script>
 
 <template>
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
-    <!-- Per Page Selector -->
-    <div class="flex items-center gap-1.5 flex-wrap">
-      <p
-        class="text-[#6B7280] font-['Plus_Jakarta_Sans'] text-xs sm:text-[14px] font-normal"
-      >
-        Show
-      </p>
-      <div class="relative w-full sm:w-auto">
-        <select
-          :value="perPage"
-          @change="handlePerPageChange(parseInt($event.target.value))"
-          :disabled="loading"
-          class="select-soft"
-        >
-          <option v-for="option in perPageOptions" :key="option" :value="option">
-            {{ option }}
-          </option>
-        </select>
-        <ChevronDown
-          class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-        />
-      </div>
-      <p
-        class="text-[#6B7280] font-['Plus_Jakarta_Sans'] text-xs sm:text-[14px] font-normal"
-      >
-        teams per page
-      </p>
+  <nav class="flex flex-wrap items-center gap-3" aria-label="Pagination">
+    <div class="flex items-center gap-2">
+      <span class="text-ui-small text-ui-muted">Show</span>
+      <div class="relative">
+          <select
+            :value="perPage"
+            @change="handlePerPageChange(parseInt($event.target.value))"
+            :disabled="loading"
+            class="select-soft !w-auto"
+            aria-label="Rows per page"
+          >
+            <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
+          </select>
+          <ChevronDown class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ui-faint pointer-events-none" />
+        </div>
+      <span class="text-ui-small text-ui-muted">per page</span>
     </div>
-
-    <!-- Pagination Controls -->
-    <div class="flex flex-wrap items-center gap-1.5 justify-center sm:justify-start">
-      <!-- Previous Button -->
-      <button
-        @click="goToPrevious"
-        :disabled="currentPage <= 1 || loading"
-        class="bg-white px-2.5 sm:px-3.5 py-1.5 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <ChevronLeft class="w-4 h-4" />
+    <div v-if="lastPage > 1" class="ml-auto flex items-center gap-1">
+      <button type="button" @click="goToPrevious" :disabled="currentPage <= 1 || loading" :class="[btn, 'border-ui-line-strong bg-ui-surface text-ui-ink hover:bg-ui-subtle gap-1 px-2.5']" aria-label="Previous page">
+        <ChevronLeft class="w-4 h-4" /><span class="sm:hidden">Previous</span>
       </button>
-
-      <!-- Page Numbers -->
-      <template v-for="page in visiblePages" :key="page">
+      <template v-for="(page, i) in visiblePages" :key="`${page}-${i}`">
+        <span v-if="page === '...'" class="hidden sm:inline px-1 text-ui-faint">…</span>
         <button
-          v-if="page !== '...'"
+          v-else
+          type="button"
           @click="handlePageChange(page)"
           :disabled="loading"
-          :class="[
-            'px-2.5 sm:px-3.5 py-1.5 border rounded-lg font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed',
-            page === currentPage
-              ? 'border-[#2151A0] blue-gradient blue-btn-shadow text-white'
-              : 'border-[#DCDEDD] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50',
-          ]"
-        >
-          {{ page }}
-        </button>
-        <span v-else class="px-1.5 text-gray-500">...</span>
+          :aria-current="page === currentPage ? 'page' : undefined"
+          :class="[btn, 'hidden sm:inline-flex tabular-nums', page === currentPage ? 'bg-ui-ink text-white border-ui-ink' : 'border-transparent text-ui-text hover:bg-ui-hover']"
+        >{{ page }}</button>
       </template>
-
-      <!-- Next Button -->
-      <button
-        @click="goToNext"
-        :disabled="currentPage >= lastPage || loading"
-        class="bg-white px-2.5 sm:px-3.5 py-1.5 border border-[#DCDEDD] rounded-lg hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <ChevronRight class="w-4 h-4" />
+      <span class="sm:hidden text-ui-small text-ui-muted tabular-nums px-2">{{ currentPage }} / {{ lastPage }}</span>
+      <button type="button" @click="goToNext" :disabled="currentPage >= lastPage || loading" :class="[btn, 'border-ui-line-strong bg-ui-surface text-ui-ink hover:bg-ui-subtle gap-1 px-2.5']" aria-label="Next page">
+        <span class="sm:hidden">Next</span><ChevronRight class="w-4 h-4" />
       </button>
     </div>
-  </div>
+  </nav>
 </template>

@@ -52,110 +52,72 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-full lg:w-80 flex-shrink-0">
+  <div class="w-full min-w-0 xl:self-stretch">
     <div
       ref="sidebarRef"
       :class="[
-        'hidden md:block bg-white border border-[#DCDEDD] rounded-[14px] p-5 transition-all duration-300 ease-in-out',
-        isSticky ? 'fixed top-5 z-10' : 'relative'
+        'hidden md:block bg-ui-surface border border-ui-line rounded-ui-card p-5',
+        isSticky ? 'fixed top-5 z-10' : 'relative xl:sticky xl:top-0',
       ]"
       :style="isSticky ? { width: `${sidebarWidth}px` } : {}"
     >
-      <div class="flex items-center gap-2.5 mb-5">
-        <div
-          class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
-        >
-          <Lightbulb class="w-6 h-6 text-green-600" />
+      <header class="flex items-start gap-3 pb-4 mb-4 border-b border-ui-line">
+        <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line bg-ui-surface text-ui-text flex items-center justify-center">
+          <Lightbulb class="w-4 h-4" />
+        </span>
+        <div class="min-w-0">
+          <h3 class="text-ui-h3 text-ui-ink">Form Tips</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">Emergency Contact Guidelines</p>
         </div>
-        <div>
-          <h3 class="text-brand-dark text-base font-bold">Form Tips</h3>
-          <p class="text-brand-light text-sm font-normal">
-            Emergency Contact Guidelines
-          </p>
-        </div>
-      </div>
+      </header>
 
-      <div class="space-y-3.5">
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
+      <ul class="grid gap-3.5 md:grid-cols-2 xl:grid-cols-1">
+        <li class="flex items-start gap-2.5">
+          <span class="w-5 h-5 mt-px shrink-0 rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center">
+            <Check class="w-3 h-3" />
+          </span>
+          <div class="min-w-0">
+            <p class="text-ui-small font-medium text-ui-ink">Choose reliable contact</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">Select someone who is easily reachable</p>
           </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Choose reliable contact
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Select someone who is easily reachable
-            </p>
+        </li>
+        <li class="flex items-start gap-2.5">
+          <span class="w-5 h-5 mt-px shrink-0 rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center">
+            <Check class="w-3 h-3" />
+          </span>
+          <div class="min-w-0">
+            <p class="text-ui-small font-medium text-ui-ink">Verify contact information</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">Double-check phone numbers and email</p>
           </div>
-        </div>
-
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
+        </li>
+        <li class="flex items-start gap-2.5">
+          <span class="w-5 h-5 mt-px shrink-0 rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center">
+            <Check class="w-3 h-3" />
+          </span>
+          <div class="min-w-0">
+            <p class="text-ui-small font-medium text-ui-ink">Include relationship details</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">Specify how they're related to the employee</p>
           </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Verify contact information
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Double-check phone numbers and email
-            </p>
+        </li>
+        <li class="flex items-start gap-2.5">
+          <span class="w-5 h-5 mt-px shrink-0 rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center">
+            <Check class="w-3 h-3" />
+          </span>
+          <div class="min-w-0">
+            <p class="text-ui-small font-medium text-ui-ink">Consider multiple contacts</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">Primary and secondary emergency contacts</p>
           </div>
-        </div>
-
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
+        </li>
+        <li class="flex items-start gap-2.5">
+          <span class="w-5 h-5 mt-px shrink-0 rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center">
+            <Check class="w-3 h-3" />
+          </span>
+          <div class="min-w-0">
+            <p class="text-ui-small font-medium text-ui-ink">Review all form data</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">Final check before submitting the form</p>
           </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Include relationship details
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Specify how they're related to the employee
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
-          </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Consider multiple contacts
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Primary and secondary emergency contacts
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-2.5">
-          <div
-            class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-          >
-            <Check class="w-3 h-3 text-green-600" />
-          </div>
-          <div>
-            <p class="text-brand-dark text-sm font-semibold">
-              Review all form data
-            </p>
-            <p class="text-brand-light text-xs font-normal">
-              Final check before submitting the form
-            </p>
-          </div>
-        </div>
-      </div>
+        </li>
+      </ul>
     </div>
   </div>
 </template>

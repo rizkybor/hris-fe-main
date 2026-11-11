@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { Users, UserPlus, Plus } from "lucide-vue-next";
+import { Users, UserPlus, Plus, Check } from "lucide-vue-next";
+import { UiButton, UiStat } from "@/components/ui";
 import { useRouter } from "vue-router";
 import { useEmployeeStore } from "@/stores/employee";
 
@@ -24,95 +25,36 @@ const addAnotherEmployee = () => {
 </script>
 
 <template>
-  <!-- Success Content -->
-  <main class="flex items-center justify-center py-12 min-h-[calc(100vh-80px)]">
-      <div class="max-w-md mx-auto text-center px-4">
-        <!-- Success Card -->
-        <div class="bg-white border border-[#DCDEDD] rounded-[14px] p-8 shadow-sm">
-          <!-- Success Icon -->
-          <div class="flex justify-center mb-6">
-            <div class="w-32 h-32 flex items-center justify-center">
-              <div class="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center">
-                <div class="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center">
-                  <svg
-                    class="w-16 h-16 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="3"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Success Message -->
-          <div class="mb-8">
-            <h1 class="text-brand-dark text-2xl font-extrabold mb-3">
-              Added Successfully!
-            </h1>
-            <p class="text-brand-light text-base font-normal leading-relaxed">
-              The new employee has been successfully added to your system.
-            </p>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="flex flex-col gap-3">
-            <!-- Primary CTA -->
-            <button
-              @click="goToEmployees"
-              class="btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-6 py-3 flex items-center justify-center gap-2"
-            >
-              <span class="text-brand-white text-base font-semibold">View All Employees</span>
-              <Users class="w-4 h-4 text-white" />
-            </button>
-
-            <!-- Secondary CTA -->
-            <button
-              @click="addAnotherEmployee"
-              class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-6 py-3 flex items-center justify-center gap-2"
-            >
-              <span class="text-brand-dark text-base font-semibold">Add Another Employee</span>
-              <Plus class="w-4 h-4 text-gray-600" />
-            </button>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <div class="max-w-md mx-auto py-6 sm:py-12 space-y-4 ui-anim-fade-up">
+      <!-- Success Card -->
+      <div class="bg-ui-surface border border-ui-line rounded-ui-card px-6 py-8 sm:px-8 text-center">
+        <div class="w-16 h-16 mx-auto rounded-full bg-ui-ok-soft flex items-center justify-center">
+          <div class="w-11 h-11 rounded-full bg-ui-ok flex items-center justify-center">
+            <Check class="w-6 h-6 text-white" stroke-width="3" />
           </div>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
-            <div class="flex items-start gap-3">
-              <div class="w-10 h-10 bg-blue-50 rounded-[12px] flex items-center justify-center">
-                <Users class="w-5 h-5 text-blue-600" />
-              </div>
-              <div class="text-left">
-                <p class="text-brand-dark text-lg font-bold">
-                  {{ loadingStatistics ? "..." : statistics.total }}
-                </p>
-                <p class="text-brand-light text-xs font-normal">Total Employees</p>
-              </div>
-            </div>
-          </div>
-          <div class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
-            <div class="flex items-start gap-3">
-              <div class="w-10 h-10 bg-green-50 rounded-[12px] flex items-center justify-center">
-                <UserPlus class="w-5 h-5 text-green-600" />
-              </div>
-              <div class="text-left">
-                <p class="text-brand-dark text-lg font-bold">
-                  {{ loadingStatistics ? "..." : statistics.added_this_month }}
-                </p>
-                <p class="text-brand-light text-xs font-normal">Added This Month</p>
-              </div>
-            </div>
-          </div>
+        <h1 class="text-ui-h1 text-ui-ink mt-5">Added Successfully!</h1>
+        <p class="text-ui-body text-ui-muted mt-2">
+          The new employee has been successfully added to your system.
+        </p>
+
+        <div class="flex flex-col gap-2.5 mt-7">
+          <UiButton size="lg" block :icon-right="Users" @click="goToEmployees">
+            View All Employees
+          </UiButton>
+          <UiButton variant="secondary" size="lg" block :icon-right="Plus" @click="addAnotherEmployee">
+            Add Another Employee
+          </UiButton>
         </div>
       </div>
-  </main>
+
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-2 gap-3 sm:gap-4 ui-stagger">
+        <UiStat label="Total Employees" :icon="Users" :value="statistics.total" :loading="loadingStatistics" />
+        <UiStat label="Added This Month" :icon="UserPlus" :value="statistics.added_this_month" :loading="loadingStatistics" />
+      </div>
+    </div>
+  </div>
 </template>

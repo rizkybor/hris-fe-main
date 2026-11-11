@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { Network, Crown, User } from "lucide-vue-next";
+import { Network, Crown, User, Users } from "lucide-vue-next";
 import { useTeamStore } from "@/stores/team";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import Avatar from "@/components/common/Avatar.vue";
+import { UiPageHeader, UiEmpty } from "@/components/ui";
 
 const teamStore = useTeamStore();
 const departments = ref([]);
@@ -29,45 +31,69 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <div v-if="loading" class="space-y-4">
-      <Skeleton v-for="i in 3" :key="i" height="140px" rounded="20px" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Organization Chart" subtitle="Company structure by department and team" class="ui-anim-fade-up" />
+
+    <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div v-for="i in 4" :key="i" class="space-y-2.5">
+        <Skeleton height="88px" rounded="12px" />
+        <Skeleton height="120px" rounded="12px" />
+      </div>
     </div>
 
-    <div v-else class="space-y-6">
-      <div v-for="dept in departments" :key="dept.department" class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-6">
-        <h4 class="text-brand-dark text-base font-bold mb-4 uppercase tracking-wide">
-          {{ departmentLabels[dept.department] ?? dept.department }}
-        </h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="team in dept.teams" :key="team.id" class="bg-white border border-[#DCDEDD] rounded-[12px] p-4">
-            <div class="flex items-center gap-2 mb-3">
-              <div class="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-600 rounded-[10px] flex items-center justify-center">
-                <Crown class="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <p class="text-brand-dark text-sm font-bold">{{ team.name }}</p>
-                <p class="text-brand-light text-xs">Lead: {{ team.lead ?? '-' }}</p>
-              </div>
-            </div>
-            <div class="space-y-2">
-              <div v-for="member in team.members" :key="member.employee_id" class="flex items-center gap-2 pl-2 border-l-2 border-gray-200">
-                <User class="w-3.5 h-3.5 text-gray-400" />
-                <div>
-                  <p class="text-brand-dark text-xs font-medium">{{ member.name }}</p>
-                  <p class="text-gray-400 text-xs">{{ member.job_title }}</p>
-                </div>
-              </div>
-              <p v-if="team.members.length === 0" class="text-xs text-gray-400 pl-2">No members yet</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <UiEmpty
+      v-else-if="departments.length === 0"
+      :icon="Network"
+      title="No active teams available."
+      class="bg-ui-surface border border-ui-line rounded-ui-card"
+    />
 
-      <div v-if="departments.length === 0" class="bg-white border border-[#DCDEDD] rounded-[14px] p-10 text-center">
-        <Network class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p class="text-brand-light text-sm">No active teams available.</p>
-      </div>
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-6 items-start ui-stagger">
+      <section v-for="dept in departments" :key="dept.department" class="min-w-0">
+        <!-- Phones: section label (app list style) -->
+        <h2 class="sm:hidden px-1 mb-2 text-ui-over uppercase text-ui-muted">
+          {{ departmentLabels[dept.department] ?? dept.department }} · {{ dept.teams.length }} teams
+        </h2>
+        <!-- Tablet / desktop: department node -->
+        <header class="hidden sm:block bg-ui-surface border border-ui-ink rounded-ui-card px-4 py-3.5">
+          <p class="text-ui-over uppercase text-ui-muted">Department</p>
+          <h2 class="text-ui-h2 text-ui-ink truncate mt-0.5">{{ departmentLabels[dept.department] ?? dept.department }}</h2>
+          <p class="text-ui-cap text-ui-muted mt-1 tabular-nums">{{ dept.teams.length }} teams</p>
+        </header>
+
+        <!-- Teams: grouped card on phones, a branch of cards from sm up -->
+        <ul
+          class="bg-ui-surface border border-ui-line rounded-ui-card divide-y divide-ui-line overflow-hidden sm:overflow-visible sm:bg-transparent sm:rounded-none sm:divide-y-0 sm:border-y-0 sm:border-r-0 sm:border-ui-line-strong sm:ml-3 sm:pl-3 sm:pt-3 space-y-0 sm:space-y-2.5"
+        >
+          <li v-for="team in dept.teams" :key="team.id" class="px-4 py-3.5 sm:bg-ui-surface sm:border sm:border-ui-line sm:rounded-ui-card">
+            <div class="flex items-start gap-3">
+              <div class="flex-1 min-w-0">
+                <p class="text-ui-h3 text-ui-ink truncate">{{ team.name }}</p>
+                <p class="flex items-center gap-1.5 mt-1 text-ui-cap text-ui-muted min-w-0">
+                  <Crown class="w-3.5 h-3.5 text-ui-faint shrink-0" />
+                  <span class="truncate">Lead: {{ team.lead ?? '-' }}</span>
+                </p>
+              </div>
+              <span class="inline-flex items-center gap-1 text-ui-cap text-ui-muted tabular-nums shrink-0">
+                <Users class="w-3.5 h-3.5 text-ui-faint" />{{ team.members.length }}
+              </span>
+            </div>
+
+            <ul v-if="team.members.length" class="mt-3 pt-3 border-t border-ui-line space-y-2">
+              <li v-for="member in team.members" :key="member.employee_id" class="flex items-center gap-2.5 min-w-0">
+                <Avatar :alt="member.name" size="w-7 h-7" icon-size="w-3.5 h-3.5" />
+                <div class="min-w-0">
+                  <p class="text-ui-small font-medium text-ui-ink truncate">{{ member.name }}</p>
+                  <p class="text-ui-cap text-ui-muted truncate">{{ member.job_title }}</p>
+                </div>
+              </li>
+            </ul>
+            <p v-else class="mt-3 pt-3 border-t border-ui-line flex items-center gap-1.5 text-ui-cap text-ui-faint">
+              <User class="w-3.5 h-3.5" />No members yet
+            </p>
+          </li>
+        </ul>
+      </section>
     </div>
   </div>
 </template>

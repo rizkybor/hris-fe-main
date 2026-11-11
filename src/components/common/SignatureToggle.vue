@@ -13,11 +13,11 @@ defineProps({
 
 <template>
   <div>
-    <label class="flex items-center gap-2 cursor-pointer w-fit">
-      <input type="checkbox" v-model="model" class="w-4 h-4" />
-      <span class="text-sm font-semibold text-brand-dark">Use Signature (TTD)</span>
+    <label class="flex items-center gap-2.5 cursor-pointer w-fit">
+      <input type="checkbox" v-model="model" class="w-4 h-4 rounded border-ui-line-strong accent-[rgb(var(--ui-ink))]" />
+      <span class="text-ui-small font-medium text-ui-ink">Use Signature (TTD)</span>
     </label>
-    <p class="text-xs text-gray-400 mt-1">
+    <p class="text-ui-cap text-ui-muted mt-1">
       {{ hint || "Stamps the signatory's signature onto the PDF." }}
       Available for: {{ SIGNATORIES.join(", ") }}.
     </p>

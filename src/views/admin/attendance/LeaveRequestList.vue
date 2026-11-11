@@ -14,6 +14,7 @@ import { can } from "@/helpers/permissionHelper";
 import SkeletonTable from "@/components/common/skeleton/SkeletonTable.vue";
 import Avatar from "@/components/common/Avatar.vue";
 import Pagination from "@/components/common/Pagination.vue";
+import { UiPageHeader, UiTable, UiBadge, UiButton, UiInput, UiChips, UiConfirmDialog } from "@/components/ui";
 
 const router = useRouter();
 const store = useLeaveRequestStore();
@@ -38,6 +39,26 @@ onMounted(() => load());
 
 const handleSearch = () => load(1);
 const handleFilterChange = () => load(1);
+
+// Presentation only: table columns, status chips and badge tones.
+const STATUS_OPTIONS = [
+  { value: "", label: "All Statuses" },
+  { value: "pending", label: "Pending" },
+  { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
+];
+const LEAVE_STATUS_TONE = { pending: "warn", approved: "ok", rejected: "bad" };
+const LEAVE_TYPE_TONE = { annual: "info", sick: "bad", personal: "accent", emergency: "warn", maternity: "accent" };
+const leaveStatusTone = (status) => LEAVE_STATUS_TONE[status?.toLowerCase()] || "neutral";
+const leaveTypeTone = (type) => LEAVE_TYPE_TONE[type?.toLowerCase()] || "neutral";
+const columns = [
+  { key: "employee", label: "Employee" },
+  { key: "type", label: "Type" },
+  { key: "period", label: "Period" },
+  { key: "reason", label: "Reason" },
+  { key: "status", label: "Status" },
+  { key: "actions", label: "Actions", align: "right" },
+];
 
 const formatDate = (date) => (date ? formatDateShort(date) : "N/A");
 
@@ -84,257 +105,168 @@ const confirmReject = async () => {
 </script>
 
 <template>
-  <div>
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5 mb-6 flex items-center gap-3">
-      <button
-        @click="router.back()"
-        class="w-10 h-10 rounded-[12px] bg-white border border-[#DCDEDD] flex items-center justify-center hover:border-[#0C51D9] hover:border-2 transition-all shrink-0"
-        aria-label="Back"
-      >
-        <ArrowLeft class="w-5 h-5 text-gray-600" />
-      </button>
-      <div class="w-11 h-11 bg-orange-50 rounded-[12px] flex items-center justify-center shrink-0">
-        <CalendarClock class="w-5 h-5 text-orange-600" />
-      </div>
-      <div>
-        <h3 class="text-brand-dark text-lg font-bold">Leave Requests</h3>
-        <p class="text-brand-light text-sm">All leave applications across the company</p>
-      </div>
-    </div>
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Leave Requests" subtitle="All leave applications across the company" class="ui-anim-fade-up">
+      <template #eyebrow>
+        <button
+          type="button"
+          class="ui-press inline-flex items-center gap-1 mb-1.5 text-ui-small font-medium text-ui-accent hover:underline"
+          aria-label="Back"
+          @click="router.back()"
+        >
+          <ArrowLeft class="w-4 h-4" />Back
+        </button>
+      </template>
+    </UiPageHeader>
 
-    <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-5">
-      <div class="flex flex-col sm:flex-row gap-3 mb-4">
-        <div class="relative max-w-sm w-full">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search class="w-4 h-4 text-gray-400" />
+    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
+      <!-- Toolbar -->
+      <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line flex flex-col md:flex-row md:items-center gap-3">
+        <UiInput
+          v-model="search"
+          :icon="Search"
+          placeholder="Search employee name..."
+          class="md:w-[280px]"
+          @keyup.enter="handleSearch"
+        />
+        <UiChips v-model="statusFilter" :options="STATUS_OPTIONS" @update:model-value="handleFilterChange" />
+      </div>
+
+      <UiTable :columns="columns" :rows="leaveRequests" :meta="meta" :loading="loading" :skeleton-rows="6">
+        <template #cell-employee="{ row }">
+          <div class="flex items-center gap-3">
+            <Avatar :src="row.employee?.user?.profile_photo" :alt="row.employee?.user?.name" size="w-8 h-8" icon-size="w-4 h-4" />
+            <span class="font-medium text-ui-ink whitespace-nowrap">{{ row.employee?.user?.name || "-" }}</span>
           </div>
-          <input
-            v-model="search"
-            @keyup.enter="handleSearch"
-            type="text"
-            placeholder="Search employee name..."
-            class="w-full pl-9 pr-3 py-2 border border-[#DCDEDD] rounded-xl text-sm focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
-          />
-        </div>
-        <div class="relative">
-          <select
-            v-model="statusFilter"
-            @change="handleFilterChange"
-            class="select-soft"
-          >
-            <option value="">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <ChevronDown
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
-          />
-        </div>
-      </div>
+        </template>
+        <template #cell-type="{ row }">
+          <UiBadge :tone="leaveTypeTone(row.type)">{{ capitalize(row.type) }}</UiBadge>
+        </template>
+        <template #cell-period="{ row }">
+          <span class="inline-flex items-center gap-1 whitespace-nowrap">
+            <span class="tabular-nums text-ui-ink">{{ formatDate(row.start_date) }} - {{ formatDate(row.end_date) }}</span>
+            <span class="text-ui-muted">({{ row.days }} days)</span>
+            <UiBadge v-if="row.is_half_day" tone="accent">Half</UiBadge>
+            <Paperclip v-if="row.attachment_url" class="w-3.5 h-3.5 text-ui-faint" />
+          </span>
+        </template>
+        <template #cell-reason="{ row }">
+          <span class="block max-w-[240px] truncate" :title="row.reason">{{ row.reason || "-" }}</span>
+        </template>
+        <template #cell-status="{ row }">
+          <UiBadge :tone="leaveStatusTone(row.status)" dot>{{ capitalize(row.status) }}</UiBadge>
+        </template>
+        <template #cell-actions="{ row }">
+          <div v-if="row.status === 'pending' && can('leave-request-approve')" class="flex items-center justify-end gap-1.5">
+            <UiButton variant="secondary" size="sm" :icon="Check" title="Approve" @click="showApproveModal(row)">Approve</UiButton>
+            <UiButton variant="danger" size="sm" :icon="X" title="Reject" @click="showRejectModal(row)">Reject</UiButton>
+          </div>
+        </template>
 
-      <SkeletonTable v-if="loading" :rows="6" :cols="7" />
-
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-brand-light border-b border-[#DCDEDD]">
-              <th class="py-3 pr-4 font-semibold">No</th>
-              <th class="py-3 pr-4 font-semibold">Employee</th>
-              <th class="py-3 pr-4 font-semibold">Type</th>
-              <th class="py-3 pr-4 font-semibold">Period</th>
-              <th class="py-3 pr-4 font-semibold">Reason</th>
-              <th class="py-3 pr-4 font-semibold">Status</th>
-              <th class="py-3 pr-4 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(request, index) in leaveRequests"
-              :key="request.id"
-              class="border-b border-[#F1F1F1] hover:bg-gray-50"
-            >
-              <td class="py-3 pr-4 text-brand-light">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-              <td class="py-3 pr-4">
-                <div class="flex items-center gap-3">
-                  <Avatar
-                    :src="request.employee?.user?.profile_photo"
-                    :alt="request.employee?.user?.name"
-                    size="w-8 h-8"
-                    icon-size="w-4 h-4"
-                  />
-                  <span class="font-semibold text-brand-dark">{{ request.employee?.user?.name || "-" }}</span>
-                </div>
-              </td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="getLeaveTypeBadgeClass(request.type)">
-                  {{ capitalize(request.type) }}
+        <!-- Phones: one card per request -->
+        <template #mobile="{ row, number }">
+          <div class="flex items-start gap-3 px-4 py-3.5">
+            <span class="w-5 pt-2 text-ui-cap text-ui-faint tabular-nums shrink-0">{{ number }}</span>
+            <Avatar :src="row.employee?.user?.profile_photo" :alt="row.employee?.user?.name" size="w-9 h-9" icon-size="w-4 h-4" />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-ui-h3 text-ui-ink truncate">{{ row.employee?.user?.name || "-" }}</p>
+                <UiBadge :tone="leaveStatusTone(row.status)" dot class="shrink-0">{{ capitalize(row.status) }}</UiBadge>
+              </div>
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                <UiBadge :tone="leaveTypeTone(row.type)">{{ capitalize(row.type) }}</UiBadge>
+                <span class="text-ui-cap text-ui-muted tabular-nums">
+                  {{ formatDate(row.start_date) }} - {{ formatDate(row.end_date) }} ({{ row.days }} days)
                 </span>
-              </td>
-              <td class="py-3 pr-4 whitespace-nowrap">
-                {{ formatDate(request.start_date) }} - {{ formatDate(request.end_date) }}
-                <span class="text-brand-light">({{ request.days }} days)</span>
-                <span v-if="request.is_half_day" class="text-blue-600 text-xs font-semibold ml-1">Half</span>
-                <Paperclip v-if="request.attachment_url" class="w-3.5 h-3.5 text-gray-400 inline ml-1" />
-              </td>
-              <td class="py-3 pr-4 max-w-[240px] truncate" :title="request.reason">{{ request.reason || "-" }}</td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="getLeaveRequestStatusBadgeClass(request.status)">
-                  {{ capitalize(request.status) }}
-                </span>
-              </td>
-              <td class="py-3 pr-4">
-                <div v-if="request.status === 'pending' && can('leave-request-approve')" class="flex items-center justify-end gap-1">
-                  <button
-                    @click="showApproveModal(request)"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-green-500 hover:bg-green-50 group"
-                    title="Approve"
-                  >
-                    <Check class="w-4 h-4 text-gray-600 group-hover:text-green-600" />
-                  </button>
-                  <button
-                    @click="showRejectModal(request)"
-                    class="flex justify-center items-center border border-[#DCDEDD] rounded-lg p-2 hover:ring-2 hover:ring-red-500 hover:bg-red-50 group"
-                    title="Reject"
-                  >
-                    <X class="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                <span v-if="row.is_half_day" class="text-ui-cap font-medium text-ui-accent">Half</span>
+                <Paperclip v-if="row.attachment_url" class="w-3.5 h-3.5 text-ui-faint" />
+              </div>
+              <p v-if="row.reason" class="text-ui-cap text-ui-muted mt-1.5 line-clamp-2">{{ row.reason }}</p>
+              <div v-if="row.status === 'pending' && can('leave-request-approve')" class="grid grid-cols-2 gap-2 mt-3">
+                <UiButton variant="secondary" size="sm" :icon="Check" @click="showApproveModal(row)">Approve</UiButton>
+                <UiButton variant="danger" size="sm" :icon="X" @click="showRejectModal(row)">Reject</UiButton>
+              </div>
+            </div>
+          </div>
+        </template>
 
-        <div v-if="!loading && leaveRequests.length === 0" class="text-center py-12 text-gray-500">
-          <p class="text-lg font-semibold">No Leave Requests yet</p>
-        </div>
+        <template #empty>
+          <div class="flex flex-col items-center py-4">
+            <div class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mb-3">
+              <CalendarClock class="w-5 h-5" />
+            </div>
+            <p class="text-ui-body font-medium text-ui-ink">No Leave Requests yet</p>
+          </div>
+        </template>
+      </UiTable>
+
+      <div class="px-4 sm:px-5 pb-4">
+        <Pagination :meta="meta" :loading="loading" item-label="pengajuan" @page-change="load" />
       </div>
-
-      <Pagination :meta="meta" :loading="loading" item-label="pengajuan" @page-change="load" />
-    </div>
+    </section>
 
     <!-- Approve Modal -->
-    <div
-      v-if="showApproveModalState"
-      class="fixed inset-0 bg-brand-dark/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      @click.self="closeApproveModal"
+    <UiConfirmDialog
+      v-model:open="showApproveModalState"
+      type="success"
+      title="Approve Leave Request"
+      message="Confirm approval for this leave request"
+      :confirm-text="processingAction ? 'Approving...' : 'Approve'"
+      :loading="processingAction"
+      @cancel="closeApproveModal"
+      @confirm="confirmApprove"
     >
-      <div class="bg-white rounded-[14px] p-8 max-w-md w-full shadow-2xl">
-        <div class="flex items-center gap-4 mb-6">
-          <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-            <Check class="w-6 h-6 text-green-600" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-xl font-bold">Approve Leave Request</h3>
-            <p class="text-brand-light text-sm">Confirm approval for this leave request</p>
-          </div>
-        </div>
-
-        <div v-if="selectedLeaveRequest" class="mb-6 space-y-3">
-          <div class="border border-[#DCDEDD] rounded-[12px] p-4">
-            <p class="text-brand-dark text-sm font-semibold mb-2">{{ selectedLeaveRequest.employee?.user?.name }}</p>
-            <div class="flex items-center gap-2 mb-2">
-              <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="getLeaveTypeBadgeClass(selectedLeaveRequest.type)">
-                {{ capitalize(selectedLeaveRequest.type) }}
-              </span>
-            </div>
-            <p class="text-brand-dark text-sm">
-              {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ selectedLeaveRequest.days }} days)
-              <span v-if="selectedLeaveRequest.is_half_day" class="text-blue-600 font-semibold">(Half Day)</span>
-            </p>
-            <p class="text-brand-light text-sm mt-2">{{ selectedLeaveRequest.reason }}</p>
-            <a
-              v-if="selectedLeaveRequest.attachment_url"
-              :href="selectedLeaveRequest.attachment_url"
-              target="_blank"
-              rel="noopener"
-              class="mt-3 inline-flex items-center gap-1.5 text-blue-600 text-sm font-medium hover:underline"
-            >
-              <Paperclip class="w-3.5 h-3.5" />
-              {{ selectedLeaveRequest.attachment_original_name || "Lihat Lampiran" }}
-            </a>
-          </div>
-        </div>
-
-        <div class="flex gap-3">
-          <button
-            @click="closeApproveModal"
-            :disabled="processingAction"
-            class="flex-1 px-4 py-3 border border-[#DCDEDD] rounded-[12px] text-brand-dark text-sm font-semibold hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
-          >
-            Cancel
-          </button>
-          <button
-            @click="confirmApprove"
-            :disabled="processingAction"
-            class="flex-1 px-4 py-3 bg-green-600 text-white rounded-[12px] text-sm font-semibold hover:bg-green-700 transition-all duration-300 disabled:opacity-50"
-          >
-            {{ processingAction ? "Approving..." : "Approve" }}
-          </button>
-        </div>
+      <div v-if="selectedLeaveRequest" class="border border-ui-line rounded-ui-card p-3.5 space-y-1.5">
+        <p class="text-ui-h3 text-ui-ink">{{ selectedLeaveRequest.employee?.user?.name }}</p>
+        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ capitalize(selectedLeaveRequest.type) }}</UiBadge>
+        <p class="text-ui-small text-ui-text tabular-nums">
+          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ selectedLeaveRequest.days }} days)
+          <span v-if="selectedLeaveRequest.is_half_day" class="text-ui-accent font-medium">(Half Day)</span>
+        </p>
+        <p class="text-ui-small text-ui-muted">{{ selectedLeaveRequest.reason }}</p>
+        <a
+          v-if="selectedLeaveRequest.attachment_url"
+          :href="selectedLeaveRequest.attachment_url"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-1.5 pt-1 text-ui-small font-medium text-ui-accent hover:underline"
+        >
+          <Paperclip class="w-3.5 h-3.5" />
+          {{ selectedLeaveRequest.attachment_original_name || "Lihat Lampiran" }}
+        </a>
       </div>
-    </div>
+    </UiConfirmDialog>
 
     <!-- Reject Modal -->
-    <div
-      v-if="showRejectModalState"
-      class="fixed inset-0 bg-brand-dark/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      @click.self="closeRejectModal"
+    <UiConfirmDialog
+      v-model:open="showRejectModalState"
+      type="danger"
+      title="Reject Leave Request"
+      message="Confirm rejection for this leave request"
+      :confirm-text="processingAction ? 'Rejecting...' : 'Reject'"
+      :loading="processingAction"
+      @cancel="closeRejectModal"
+      @confirm="confirmReject"
     >
-      <div class="bg-white rounded-[14px] p-8 max-w-md w-full shadow-2xl">
-        <div class="flex items-center gap-4 mb-6">
-          <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-            <X class="w-6 h-6 text-red-600" />
-          </div>
-          <div>
-            <h3 class="text-brand-dark text-xl font-bold">Reject Leave Request</h3>
-            <p class="text-brand-light text-sm">Confirm rejection for this leave request</p>
-          </div>
-        </div>
-
-        <div v-if="selectedLeaveRequest" class="mb-6 space-y-3">
-          <div class="border border-[#DCDEDD] rounded-[12px] p-4">
-            <p class="text-brand-dark text-sm font-semibold mb-2">{{ selectedLeaveRequest.employee?.user?.name }}</p>
-            <div class="flex items-center gap-2 mb-2">
-              <span class="px-2 py-1 rounded-md text-xs font-semibold" :class="getLeaveTypeBadgeClass(selectedLeaveRequest.type)">
-                {{ capitalize(selectedLeaveRequest.type) }}
-              </span>
-            </div>
-            <p class="text-brand-dark text-sm">
-              {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ selectedLeaveRequest.days }} days)
-              <span v-if="selectedLeaveRequest.is_half_day" class="text-blue-600 font-semibold">(Half Day)</span>
-            </p>
-            <p class="text-brand-light text-sm mt-2">{{ selectedLeaveRequest.reason }}</p>
-            <a
-              v-if="selectedLeaveRequest.attachment_url"
-              :href="selectedLeaveRequest.attachment_url"
-              target="_blank"
-              rel="noopener"
-              class="mt-3 inline-flex items-center gap-1.5 text-blue-600 text-sm font-medium hover:underline"
-            >
-              <Paperclip class="w-3.5 h-3.5" />
-              {{ selectedLeaveRequest.attachment_original_name || "Lihat Lampiran" }}
-            </a>
-          </div>
-        </div>
-
-        <div class="flex gap-3">
-          <button
-            @click="closeRejectModal"
-            :disabled="processingAction"
-            class="flex-1 px-4 py-3 border border-[#DCDEDD] rounded-[12px] text-brand-dark text-sm font-semibold hover:border-[#0C51D9] hover:border-2 transition-all duration-300"
-          >
-            Cancel
-          </button>
-          <button
-            @click="confirmReject"
-            :disabled="processingAction"
-            class="flex-1 px-4 py-3 bg-red-600 text-white rounded-[12px] text-sm font-semibold hover:bg-red-700 transition-all duration-300 disabled:opacity-50"
-          >
-            {{ processingAction ? "Rejecting..." : "Reject" }}
-          </button>
-        </div>
+      <div v-if="selectedLeaveRequest" class="border border-ui-line rounded-ui-card p-3.5 space-y-1.5">
+        <p class="text-ui-h3 text-ui-ink">{{ selectedLeaveRequest.employee?.user?.name }}</p>
+        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ capitalize(selectedLeaveRequest.type) }}</UiBadge>
+        <p class="text-ui-small text-ui-text tabular-nums">
+          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ selectedLeaveRequest.days }} days)
+          <span v-if="selectedLeaveRequest.is_half_day" class="text-ui-accent font-medium">(Half Day)</span>
+        </p>
+        <p class="text-ui-small text-ui-muted">{{ selectedLeaveRequest.reason }}</p>
+        <a
+          v-if="selectedLeaveRequest.attachment_url"
+          :href="selectedLeaveRequest.attachment_url"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-1.5 pt-1 text-ui-small font-medium text-ui-accent hover:underline"
+        >
+          <Paperclip class="w-3.5 h-3.5" />
+          {{ selectedLeaveRequest.attachment_original_name || "Lihat Lampiran" }}
+        </a>
       </div>
-    </div>
+    </UiConfirmDialog>
   </div>
 </template>

@@ -89,68 +89,78 @@ watch(
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden">
+  <div class="flex h-screen overflow-hidden bg-ui-bg">
     <Stepper :current-step="currentStep" />
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col">
-      <!-- Top Navbar -->
-      <header class="page-header bg-white border-b border-[#DCDEDD] px-2.5 sm:px-4 py-2.5 sm:py-3.5">
-        <div class="flex items-center justify-between gap-3.5">
-          <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+    <div class="flex-1 flex flex-col min-w-0">
+      <!-- Top bar -->
+      <header class="page-header bg-ui-surface border-b border-ui-line px-4 sm:px-6 pt-3 pb-3 lg:py-3.5">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
             <button
+              type="button"
               @click="previousStep"
-              class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-2.5 py-1.5 flex items-center gap-1.5 shrink-0"
+              class="ui-press h-9 shrink-0 inline-flex items-center gap-1.5 px-2.5 sm:px-3 rounded-ui-control border border-ui-line-strong bg-ui-surface text-ui-ink hover:bg-ui-subtle focus:outline-none focus-visible:shadow-ui-focus"
+              aria-label="Back"
             >
-              <ArrowLeft class="w-4 h-4 text-gray-600" />
-              <span class="text-brand-dark text-sm font-semibold hidden sm:inline">Back</span>
+              <ArrowLeft class="w-4 h-4" />
+              <span class="text-ui-small font-medium hidden sm:inline">Back</span>
             </button>
             <div class="min-w-0">
-              <h2 class="text-brand-dark text-sm sm:text-lg font-extrabold truncate">
+              <h1 class="text-ui-h3 sm:text-ui-h2 text-ui-ink truncate">
                 {{ isEditing ? "Edit Employee" : "Add New Employee" }}
-              </h2>
-              <p class="text-brand-light text-xs sm:text-sm font-normal mt-1 truncate">
+              </h1>
+              <p class="text-ui-cap sm:text-ui-small text-ui-muted truncate">
                 Step {{ currentStep }} of {{ totalSteps }} &middot; {{ getStepTitle() }}
               </p>
             </div>
           </div>
 
+          <!-- Compact step counter (phones) -->
+          <span class="sm:hidden shrink-0 text-ui-cap font-medium text-ui-muted tabular-nums">
+            {{ currentStep }} of {{ totalSteps }}
+          </span>
+
           <!-- User Profile -->
-          <div class="flex items-center gap-2.5 shrink-0">
+          <div class="hidden sm:flex items-center gap-2.5 shrink-0">
             <Avatar
               :src="user?.profile_photo"
               :alt="user?.name"
-              size="w-9 h-9 sm:w-11 sm:h-11"
+              size="w-9 h-9"
             />
-            <div class="text-left hidden md:block">
-              <p class="text-brand-dark text-sm font-semibold">
+            <div class="text-left hidden md:block min-w-0">
+              <p class="text-ui-small font-medium text-ui-ink truncate max-w-[180px]">
                 {{ user?.name }}
               </p>
-              <p class="text-brand-light text-xs font-normal">
+              <p class="text-ui-cap text-ui-muted truncate max-w-[180px]">
                 {{ user?.roles.join(", ") }}
               </p>
             </div>
-            <ChevronDownIcon class="w-4 h-4 text-gray-400 hidden md:block" />
+            <ChevronDownIcon class="w-4 h-4 text-ui-faint hidden md:block" />
           </div>
         </div>
 
-        <!-- Step Progress Bar -->
-        <div class="mt-3.5 flex items-center gap-1.5">
+        <!-- Step progress (the vertical stepper takes over from lg up) -->
+        <div
+          class="lg:hidden mt-3 flex items-center gap-1"
+          role="progressbar"
+          :aria-valuenow="currentStep"
+          aria-valuemin="1"
+          :aria-valuemax="totalSteps"
+          :aria-label="`Step ${currentStep} of ${totalSteps}`"
+        >
           <div
             v-for="step in totalSteps"
             :key="step"
-            class="h-1.5 flex-1 rounded-full transition-all duration-300"
-            :class="step <= currentStep ? 'bg-[#0C51D9]' : 'bg-[#EDEFF3]'"
+            class="h-1 flex-1 rounded-full transition-colors duration-ui-base"
+            :class="step <= currentStep ? 'bg-ui-ink' : 'bg-ui-line'"
           ></div>
         </div>
-
-        <!-- Mobile step label (Stepper sidebar is hidden below lg) -->
-        <p class="lg:hidden text-brand-light text-xs font-medium mt-1.5">
-          Step {{ currentStep }} of {{ totalSteps }}: {{ getStepTitle() }}
-        </p>
       </header>
-      <!-- Dashboard Content -->
-      <main ref="mainContentRef" class="main-content flex-1 overflow-auto p-2.5 sm:p-4">
+
+      <!-- Wizard content (scroll container) -->
+      <main ref="mainContentRef" class="main-content flex-1 overflow-auto">
         <RouterView />
       </main>
     </div>

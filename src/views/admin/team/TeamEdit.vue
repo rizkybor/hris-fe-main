@@ -1,5 +1,14 @@
 <script setup>
-import { Input, Select, TextArea } from "@/components/common/form";
+import {
+  UiPageHeader,
+  UiButton,
+  UiInput,
+  UiSelect,
+  UiModal,
+  UiAlert,
+  UiEmpty,
+  UiBadge,
+} from "@/components/ui";
 import RightSidebarForm from "@/components/admin/team/RightSidebarForm.vue";
 import Alert from "@/components/common/Alert.vue";
 import Avatar from "@/components/common/Avatar.vue";
@@ -26,7 +35,8 @@ import {
   SearchX,
   ChevronDown,
   Camera,
-  Users2
+  Users2,
+  Check,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash-es";
@@ -41,6 +51,14 @@ import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 
 const route = useRoute();
 const id = route.params.id;
+
+// Presentation-only: the four status option cards (value, label, icon, tint).
+const statusChoices = [
+  { value: "active", label: "Active", icon: CheckCircle, tint: "bg-ui-ok-soft text-ui-ok" },
+  { value: "forming", label: "Forming", icon: UsersRound, tint: "bg-ui-info-soft text-ui-info" },
+  { value: "planning", label: "Planning", icon: ClipboardList, tint: "bg-ui-warn-soft text-ui-warn" },
+  { value: "dormant", label: "Dormant", icon: PauseCircle, tint: "bg-ui-subtle text-ui-muted" },
+];
 
 const teamStore = useTeamStore();
 const { loading, error, success } = storeToRefs(teamStore);
@@ -218,115 +236,82 @@ watch(
 </script>
 
 <template>
-  <div class="px-4 py-4">
-    <!-- Header -->
-    <div class="bg-white mb-5">
-      <div class="flex items-center gap-2.5">
-        <div
-          class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
-        >
-          <Users2 class="w-5 h-5 text-blue-600" />
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="Edit Team" subtitle="Update team details and leadership">
+      <template #actions>
+        <div class="hidden sm:flex items-center gap-2">
+          <UiButton variant="secondary" @click="router.back()">Cancel</UiButton>
+          <UiButton type="submit" form="team-form" :loading="loading" :icon-right="Check" :disabled="initialLoading">
+            Update Team
+          </UiButton>
         </div>
-        <div>
-          <h1 class="text-brand-dark text-base font-bold">Edit Team</h1>
-          <p class="text-brand-light text-sm">
-            Update team details and leadership
-          </p>
-        </div>
-      </div>
-    </div>
+      </template>
+    </UiPageHeader>
 
-    <div class="mb-5" v-if="typeof error === 'string'">
-      <Transition name="fade">
-        <Alert
-          :key="error"
-          type="danger"
-          :title="error"
-          message=""
-          :show="true"
-        />
+    <div v-if="typeof error === 'string'">
+      <Transition name="ui-fade">
+        <UiAlert :key="error" tone="bad" :title="error" />
       </Transition>
     </div>
 
-    <div class="flex flex-col lg:flex-row gap-3.5 sm:gap-4 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start">
       <!-- Form Section -->
-      <div class="flex-1">
-        <div v-if="initialLoading" class="space-y-5">
-          <div
-            class="bg-white border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5 space-y-3.5"
-          >
+      <div class="lg:col-span-2 min-w-0">
+        <div v-if="initialLoading" class="space-y-4 sm:space-y-5" role="status" aria-label="Loading">
+          <div v-for="i in 2" :key="i" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 space-y-4">
             <Skeleton width="200px" height="20px" />
-            <Skeleton height="48px" rounded="16px" />
-            <Skeleton height="48px" rounded="16px" />
-            <Skeleton height="90px" rounded="16px" />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+              <Skeleton height="38px" />
+              <Skeleton height="38px" />
+            </div>
+            <Skeleton height="90px" />
           </div>
         </div>
-        <form class="space-y-5" @submit.prevent="handleSubmit" v-else>
+        <form id="team-form" class="space-y-4 sm:space-y-5 ui-stagger" @submit.prevent="handleSubmit" v-else>
           <!-- Team Information Section -->
-          <div
-            class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5"
-          >
-            <div class="flex items-center gap-2.5 mb-5">
-              <div
-                class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
-              >
-                <User class="w-6 h-6 text-blue-600" />
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+            <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+              <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted">
+                <User class="w-4 h-4" />
+              </span>
+              <div class="min-w-0">
+                <h3 class="text-ui-h2 text-ui-ink">Team Information</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">Basic team details and description</p>
               </div>
-              <div>
-                <h3 class="text-brand-dark text-base font-bold">
-                  Team Information
-                </h3>
-                <p class="text-brand-light text-sm font-normal">
-                  Basic team details and description
-                </p>
-              </div>
-            </div>
+            </header>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
               <!-- Team Icon -->
               <div class="md:col-span-2">
-                <label class="block text-brand-dark text-sm font-semibold mb-1"
-                  >Team Icon</label
-                >
-                <div class="flex flex-col sm:flex-row items-center gap-3.5">
-                  <div class="w-16 h-16 sm:w-20 sm:h-20">
-                    <!-- Icon Container with Blue Gradient Background -->
-                    <div class="relative w-16 h-16 sm:w-20 sm:h-20">
-                      <!-- Blue gradient background -->
-                      <div
-                        class="w-16 h-16 sm:w-20 sm:h-20 absolute bg-gradient-to-br from-primary-500 to-primary-600 rounded-full"
-                      ></div>
-
-                      <!-- Icon Display (uploaded or default) -->
-                      <div
-                        id="teamIconDisplay"
-                        class="w-16 h-16 sm:w-20 sm:h-20 relative z-10 flex items-center justify-center"
-                      >
-                        <img
-                          id="uploadedTeamIcon"
-                          :src="form.icon_url"
-                          alt="Team Icon"
-                          class="w-7 h-7 sm:w-10 sm:h-10 object-contain"
-                          v-if="form.icon_url"
-                        />
-                        <Camera v-else class="w-7 h-7 text-white" />
-                      </div>
-
-                      <!-- Upload overlay (shown on hover) -->
-                      <div
-                        class="absolute inset-0 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer z-20 group"
-                      >
-                        <div
-                          class="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 rounded-full transition-opacity duration-300"
-                        ></div>
-                        <Upload
-                          class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 relative z-10"
-                          @click="teamIconInput.click()"
-                        />
-                      </div>
+                <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Team Icon</p>
+                <div class="flex items-center gap-4">
+                  <div class="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
+                    <!-- Icon Display (uploaded or default) -->
+                    <div
+                      id="teamIconDisplay"
+                      class="w-full h-full rounded-full bg-ui-accent-soft text-ui-accent flex items-center justify-center overflow-hidden"
+                    >
+                      <img
+                        id="uploadedTeamIcon"
+                        :src="form.icon_url"
+                        alt="Team Icon"
+                        class="w-7 h-7 sm:w-10 sm:h-10 object-contain"
+                        v-if="form.icon_url"
+                      />
+                      <Camera v-else class="w-7 h-7" />
                     </div>
+
+                    <!-- Upload overlay (shown on hover) -->
+                    <button
+                      type="button"
+                      aria-label="Upload Icon"
+                      class="absolute inset-0 rounded-full flex items-center justify-center cursor-pointer group bg-ui-ink/0 hover:bg-ui-ink/40 transition-colors focus:outline-none focus-visible:shadow-ui-focus"
+                      @click="teamIconInput?.click()"
+                    >
+                      <Upload class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
                   </div>
-                  <div class="flex flex-col gap-1.5">
+                  <div class="flex flex-col gap-2 min-w-0">
                     <input
                       type="file"
                       id="teamIconInput"
@@ -335,29 +320,21 @@ watch(
                       ref="teamIconInput"
                       @change="handleTeamIconSelect"
                     />
-                    <button
-                      type="button"
-                      class="bg-white border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-1.5 flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
-                      @click="teamIconInput.click()"
-                    >
-                      <Upload class="w-4 h-4 text-gray-600" />
-
-                      <span class="text-brand-dark text-sm font-semibold">
+                    <div class="flex flex-wrap gap-2">
+                      <UiButton variant="secondary" size="sm" :icon="Upload" @click="teamIconInput?.click()">
                         Upload Icon
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      v-if="form.icon_url"
-                      @click="handleRemoveIcon"
-                      class="border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-1.5 flex items-center gap-1.5 cursor-pointer w-full sm:w-auto"
-                    >
-                      <X class="w-4 h-4 text-gray-600" />
-                      <span class="text-brand-dark text-sm font-semibold"
-                        >Remove Icon</span
+                      </UiButton>
+                      <UiButton
+                        v-if="form.icon_url"
+                        variant="ghost"
+                        size="sm"
+                        :icon="X"
+                        @click="handleRemoveIcon"
                       >
-                    </button>
-                    <p class="text-brand-light text-xs">
+                        Remove Icon
+                      </UiButton>
+                    </div>
+                    <p class="text-ui-cap text-ui-muted">
                       SVG, PNG up to 1MB (recommended: icon format)
                     </p>
                   </div>
@@ -365,196 +342,148 @@ watch(
               </div>
 
               <!-- Team Name -->
-              <div class="md:col-span-2 mb-3.5">
-                <Input
-                  id="name"
-                  name="name"
-                  type="name"
-                  v-model="form.name"
-                  label="Name *"
-                  placeholder="Enter team name "
-                  :error="error?.name?.join(', ')"
-                >
-                  <template #icon>
-                    <Users class="h-5 w-5 text-gray-400" />
-                  </template>
-                </Input>
-              </div>
+              <UiInput
+                class="md:col-span-2"
+                id="name"
+                name="name"
+                type="text"
+                v-model="form.name"
+                label="Name *"
+                placeholder="Enter team name "
+                :icon="Users"
+                :error="error?.name?.join(', ')"
+              />
 
               <!-- Team Type -->
-              <div class="mb-3.5">
-                <Select
-                  id="department"
-                  name="department"
-                  v-model="form.department"
-                  label="Department *"
-                  placeholder="Select department"
-                  :options="departments"
-                  :error="error?.department?.join(', ')"
-                >
-                  <template #icon>
-                    <Tag class="h-5 w-5 text-gray-400" />
-                  </template>
-                </Select>
-              </div>
+              <UiSelect
+                id="department"
+                v-model="form.department"
+                label="Department *"
+                placeholder="Select department"
+                :options="departments"
+                :error="error?.department?.join(', ')"
+              />
 
               <!-- Team Size -->
-              <div class="mb-3.5">
-                <Input
-                  id="expected_size"
-                  name="expected_size"
-                  type="number"
-                  v-model="form.expected_size"
-                  label="Expected Team Size"
-                  placeholder="Enter expected team size"
-                  :error="error?.expected_size?.join(', ')"
-                >
-                  <template #icon>
-                    <UserPlus class="h-5 w-5 text-gray-400" />
-                  </template>
-                </Input>
-              </div>
+              <UiInput
+                id="expected_size"
+                name="expected_size"
+                type="number"
+                v-model="form.expected_size"
+                label="Expected Team Size"
+                placeholder="Enter expected team size"
+                :icon="UserPlus"
+                :error="error?.expected_size?.join(', ')"
+              />
 
               <!-- Team Description -->
-              <div class="md:col-span-2">
-                <TextArea
-                  id="teamPurpose"
-                  name="team_purpose"
-                  v-model="form.description"
-                  label="Team Purpose"
-                  placeholder="Describe the team's purpose and goals..."
-                  :error="error?.description?.join(', ')"
-                >
-                  <template #icon>
-                    <FileText class="h-5 w-5 text-gray-400" />
-                  </template>
-                </TextArea>
-              </div>
+              <UiInput
+                class="md:col-span-2"
+                id="teamPurpose"
+                name="team_purpose"
+                :rows="4"
+                v-model="form.description"
+                label="Team Purpose"
+                placeholder="Describe the team's purpose and goals..."
+                :error="error?.description?.join(', ')"
+              />
             </div>
-          </div>
+          </section>
 
           <!-- Team Lead Section -->
-          <div
-            class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5"
-          >
-            <div class="flex items-center gap-2.5 mb-5">
-              <div
-                class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
-              >
-                <Crown class="w-6 h-6 text-green-600" />
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+            <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+              <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted">
+                <Crown class="w-4 h-4" />
+              </span>
+              <div class="min-w-0">
+                <h3 class="text-ui-h2 text-ui-ink">Team Lead</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">Assign a team leader to manage this team</p>
               </div>
-              <div>
-                <h3 class="text-brand-dark text-base font-bold">Team Lead</h3>
-                <p class="text-brand-light text-sm font-normal">
-                  Assign a team leader to manage this team
-                </p>
-              </div>
-            </div>
+            </header>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
-              <!-- Team Lead Selection -->
-              <div class="md:col-span-2">
-                <label class="block text-brand-dark text-sm font-semibold mb-1"
-                  >Select Team Lead</label
-                >
+            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Select Team Lead</p>
+            <button
+              type="button"
+              class="w-full h-[38px] bg-ui-surface border border-ui-line-strong rounded-ui-control hover:bg-ui-hover transition-colors px-3 flex items-center gap-2.5 text-left focus:outline-none focus-visible:border-ui-accent focus-visible:shadow-ui-focus"
+              @click="leadModal = true"
+            >
+              <UserCheck class="w-4 h-4 text-ui-faint shrink-0" />
+              <span
+                class="text-ui-body flex-1 truncate"
+                :class="selectedLead?.user?.name ? 'text-ui-ink' : 'text-ui-faint'"
+              >
+                {{ selectedLead?.user?.name || "Select team lead" }}
+              </span>
+              <ChevronDown class="w-4 h-4 text-ui-faint shrink-0" />
+            </button>
+
+            <div
+              class="mt-3 p-3 bg-ui-subtle rounded-ui-control border border-ui-line"
+              v-if="selectedLead"
+            >
+              <div class="flex items-center gap-3">
+                <Avatar
+                  :src="selectedLead?.user?.profile_photo"
+                  :alt="selectedLead?.user?.name"
+                  size="w-9 h-9"
+                  icon-size="w-5 h-5"
+                />
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-ui-h3 text-ui-ink truncate">
+                    {{ selectedLead?.user?.name }}
+                  </h4>
+                  <p class="text-ui-small text-ui-muted truncate">
+                    {{ selectedLead?.job_information?.job_title }}
+                  </p>
+                </div>
                 <button
                   type="button"
-                  class="w-full bg-white border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2.5 text-left"
-                  @click="leadModal = true"
+                  @click="handleRemoveLead"
+                  aria-label="Remove team lead"
+                  class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
                 >
-                  <UserCheck class="w-5 h-5 text-gray-400" />
-                  <span class="text-[#0D2929] font-normal flex-1">
-                    {{ selectedLead?.user?.name || "Select team lead" }}
-                  </span>
-                  <ChevronDown class="w-4 h-4 text-gray-400" />
+                  <X class="w-4 h-4" />
                 </button>
-
-                <div
-                  class="mt-2.5 p-3.5 bg-green-50 rounded-[12px] border border-[#DCDEDD]"
-                  v-if="selectedLead"
-                >
-                  <div class="flex items-center gap-2.5">
-                    <Avatar
-                      :src="selectedLead?.user?.profile_photo"
-                      :alt="selectedLead?.user?.name"
-                      size="w-9 h-9"
-                      icon-size="w-5 h-5"
-                    />
-                    <div class="flex-1">
-                      <h4 class="text-brand-dark text-sm font-semibold">
-                        {{ selectedLead?.user?.name }}
-                      </h4>
-                      <p class="text-brand-light text-sm">
-                        {{ selectedLead?.job_information?.job_title }}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      @click="handleRemoveLead"
-                      class="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <X class="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
-          </div>
+          </section>
 
           <!-- Team Members Section -->
-          <div
-            class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5"
-          >
-            <div class="flex items-center gap-2.5 mb-5">
-              <div
-                class="w-9 h-9 bg-blue-50 rounded-[12px] flex items-center justify-center"
-              >
-                <Users class="w-6 h-6 text-blue-600" />
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+            <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+              <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted">
+                <Users class="w-4 h-4" />
+              </span>
+              <div class="min-w-0 flex-1">
+                <h3 class="text-ui-h2 text-ui-ink">Team Members</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">Add or remove employees from this team</p>
               </div>
-              <div>
-                <h3 class="text-brand-dark text-base font-bold">
-                  Team Members
-                </h3>
-                <p class="text-brand-light text-sm font-normal">
-                  Add or remove employees from this team
-                </p>
-              </div>
-            </div>
+            </header>
 
-            <div class="flex items-center justify-between mb-1">
-              <label class="text-sm font-semibold text-brand-dark block"
-                >Members</label
-              >
-              <span
-                v-if="form.member_employee_ids.length"
-                class="text-xs text-[#0C51D9] font-semibold flex items-center gap-1"
-              >
+            <div class="flex items-center justify-between mb-1.5">
+              <p class="text-ui-small font-medium text-ui-ink">Members</p>
+              <UiBadge v-if="form.member_employee_ids.length" tone="accent" class="tabular-nums">
                 <Users class="w-3.5 h-3.5" />
                 {{ form.member_employee_ids.length }} selected
-              </span>
+              </UiBadge>
             </div>
-            <div
-              class="bg-white border border-[#DCDEDD] rounded-xl overflow-hidden"
-            >
+            <div class="border border-ui-line rounded-ui-control overflow-hidden">
               <div
                 v-if="selectableMemberCandidates.length > 8"
-                class="relative border-b border-[#DCDEDD] bg-gray-50 p-1.5"
+                class="border-b border-ui-line bg-ui-subtle p-2"
               >
-                <Search
-                  class="w-3.5 h-3.5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"
-                />
-                <input
+                <UiInput
                   v-model="memberSearch"
-                  type="text"
+                  :icon="Search"
                   placeholder="Search employees..."
-                  class="w-full pl-6 pr-1.5 py-1 border border-[#DCDEDD] rounded-lg text-xs bg-white focus:border-[#0C51D9] focus:ring-1 focus:ring-[#0C51D9] outline-none"
                 />
               </div>
-              <div class="p-2.5 max-h-64 overflow-y-auto space-y-1">
+              <div class="p-1.5 max-h-64 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-x-2">
                 <label
                   v-for="employee in filteredMemberCandidates"
                   :key="employee.id"
-                  class="flex items-center gap-1.5 text-sm px-1.5 py-1 rounded-lg cursor-pointer hover:bg-gray-50"
+                  class="flex items-center gap-2.5 text-ui-body text-ui-ink px-2.5 py-2 rounded-ui-control cursor-pointer hover:bg-ui-hover"
                   :class="{
                     'opacity-60 pointer-events-none':
                       togglingMemberId === employee.id,
@@ -564,66 +493,55 @@ watch(
                     type="checkbox"
                     :checked="form.member_employee_ids.includes(employee.id)"
                     @change="toggleMember(employee.id)"
-                    class="rounded border-gray-300 text-[#0C51D9] focus:ring-[#0C51D9] shrink-0"
+                    class="w-4 h-4 shrink-0 accent-ui-ink cursor-pointer"
                   />
                   <span class="truncate">{{ employee.user?.name }}</span>
                 </label>
                 <p
                   v-if="selectableMemberCandidates.length === 0"
-                  class="text-sm text-gray-400 italic py-1.5"
+                  class="sm:col-span-2 text-ui-small text-ui-faint px-2.5 py-2"
                 >
                   No staff data yet.
                 </p>
                 <p
                   v-else-if="filteredMemberCandidates.length === 0"
-                  class="text-sm text-gray-400 italic py-1.5"
+                  class="sm:col-span-2 text-ui-small text-ui-faint px-2.5 py-2"
                 >
                   No employees match "{{ memberSearch }}".
                 </p>
               </div>
             </div>
-          </div>
+          </section>
 
           <!-- Team Responsibilities Section -->
-          <div
-            class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5"
-          >
-            <div class="flex items-center gap-2.5 mb-5">
-              <div
-                class="w-9 h-9 bg-orange-50 rounded-[12px] flex items-center justify-center"
-              >
-                <ListCheck class="w-6 h-6 text-orange-600" />
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+            <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+              <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted">
+                <ListCheck class="w-4 h-4" />
+              </span>
+              <div class="min-w-0">
+                <h3 class="text-ui-h2 text-ui-ink">Team Responsibilities</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">Define the key responsibilities and duties for this team</p>
               </div>
-              <div>
-                <h3 class="text-brand-dark text-base font-bold">
-                  Team Responsibilities
-                </h3>
-                <p class="text-brand-light text-sm font-normal">
-                  Define the key responsibilities and duties for this team
-                </p>
-              </div>
-            </div>
+            </header>
 
-            <div class="space-y-3.5" id="responsibilitiesContainer">
+            <div class="space-y-4" id="responsibilitiesContainer">
               <div
                 class="responsibility-item"
                 v-for="index in 3"
                 :key="`responsibility-${index - 1}`"
               >
-                <Input
+                <UiInput
                   :id="`responsibility_${index - 1}`"
                   :name="`responsibility_${index - 1}`"
                   type="text"
                   v-model="form.responsibilities[index - 1]"
-                  :label="`Responsibility ${index} *`"
+                  :label="`Responsibility ${index}`"
                   :error="error?.responsibilities?.[index - 1]?.join(', ')"
                   :required="true"
+                  :icon="CheckCircle"
                   placeholder="e.g., Develop and maintain software applications"
-                >
-                  <template #icon>
-                    <CheckCircle class="h-5 w-5 text-gray-400" />
-                  </template>
-                </Input>
+                />
               </div>
             </div>
 
@@ -634,37 +552,29 @@ watch(
               >
                 <div
                   v-if="index >= 3"
-                  class="responsibility-item mt-3.5"
+                  class="responsibility-item mt-4"
                   :id="`responsibility_field_${index + 1}`"
                 >
-                  <label
-                    class="block mb-1.5 text-gray-700 font-semibold font-jakarta text-[14px]"
-                  >
-                    Responsibility {{ index + 1 }}
-                  </label>
-                  <div
-                    class="flex flex-col sm:flex-row sm:items-start gap-2.5 justify-center"
-                  >
-                    <Input
+                  <div class="flex items-start gap-2">
+                    <UiInput
                       :id="`responsibility_${index}`"
                       :name="`responsibility_${index}`"
                       type="text"
                       v-model="form.responsibilities[index]"
+                      :label="`Responsibility ${index + 1}`"
                       :error="error?.responsibilities?.[index]?.join(', ')"
                       :required="true"
+                      :icon="CheckCircle"
                       placeholder="Enter additional responsibility"
                       class="flex-1"
-                    >
-                      <template #icon>
-                        <CheckCircle class="h-5 w-5 text-gray-400" />
-                      </template>
-                    </Input>
+                    />
                     <button
                       type="button"
-                      class="w-9 h-9 border border-[#DCDEDD] rounded-[12px] hover:border-red-500 hover:bg-red-50 transition-all duration-300 flex items-center justify-center mt-6 cursor-pointer"
+                      aria-label="Remove responsibility"
+                      class="ui-press w-[38px] h-[38px] mt-[26px] shrink-0 border border-ui-line-strong rounded-ui-control text-ui-muted hover:text-ui-bad hover:bg-ui-bad-soft hover:border-ui-bad/30 transition-colors flex items-center justify-center"
                       @click="removeResponsibility(index)"
                     >
-                      <Trash2 class="w-5 h-5 text-gray-600" />
+                      <Trash2 class="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -672,461 +582,145 @@ watch(
             </div>
 
             <!-- Add New Responsibility -->
-            <div class="mt-3.5">
-              <button
-                type="button"
-                class="w-full border-2 border-dashed border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center gap-2.5 text-left cursor-pointer"
-                @click="addNewResponsibility()"
-              >
-                <PlusCircle class="w-5 h-5 text-gray-400" />
-                <span class="text-brand-dark text-sm font-medium"
-                  >Add Another Responsibility</span
-                >
-              </button>
-            </div>
-          </div>
-
-          <!-- Team Settings Section -->
-          <div
-            class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] p-3.5 sm:p-5"
-          >
-            <div class="flex items-center gap-2.5 mb-5">
-              <div
-                class="w-9 h-9 bg-purple-50 rounded-[12px] flex items-center justify-center"
-              >
-                <Settings class="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <h3 class="text-brand-dark text-base font-bold">
-                  Team Settings
-                </h3>
-                <p class="text-brand-light text-sm font-normal">
-                  Configure team status
-                </p>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
-              <!-- Initial Team Status (Full Width) -->
-              <div class="md:col-span-2 mb-3.5">
-                <label class="block text-brand-dark text-sm font-semibold mb-1"
-                  >Initial Team Status</label
-                >
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <!-- Active Option -->
-                  <label
-                    :class="[
-                      'group flex items-center justify-between w-full min-h-[60px] rounded-[12px] border p-3.5 cursor-pointer transition-all duration-300',
-                      form.status === 'active'
-                        ? 'bg-green-50 ring-2 ring-[#0C51D9]'
-                        : 'bg-white border-[#DCDEDD] hover:border-[#B8C0CC] hover:bg-[#FAFAFA]',
-                    ]"
-                  >
-                    <div class="flex items-center gap-2.5">
-                      <div
-                        :class="[
-                          'w-10 h-10 rounded-[12px] flex items-center justify-center transition-all duration-300',
-                          form.status === 'active' ? 'bg-white' : 'bg-green-50',
-                        ]"
-                      >
-                        <CheckCircle
-                          :class="[
-                            'w-5 h-5 transition-all duration-300',
-                            form.status === 'active'
-                              ? 'text-green-600 scale-105'
-                              : 'text-green-600',
-                          ]"
-                        />
-                      </div>
-
-                      <div class="flex flex-col">
-                        <p class="text-brand-dark text-sm font-semibold">
-                          Active
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      :class="[
-                        'relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl py-1.5 px-2.5 gap-1.5 transition-all duration-300',
-                        form.status === 'active'
-                          ? 'border-green-200 bg-white'
-                          : 'border-[#DCDEDD] bg-white',
-                      ]"
-                    >
-                      <input
-                        type="radio"
-                        name="team_status"
-                        value="active"
-                        class="hidden"
-                        v-model="form.status"
-                      />
-
-                      <div
-                        :class="[
-                          'flex size-[18px] rounded-full shadow-sm border transition-all duration-300',
-                          form.status === 'active'
-                            ? 'border-[5px] border-[#0C51D9]'
-                            : 'border-[#DCDEDD]',
-                        ]"
-                      ></div>
-
-                      <p
-                        :class="[
-                          'text-xs font-semibold transition-colors duration-300',
-                          form.status === 'active'
-                            ? 'text-[#0C51D9]'
-                            : 'text-[#64748B]',
-                        ]"
-                      >
-                        {{ form.status === "active" ? "Selected" : "Select" }}
-                      </p>
-                    </div>
-                  </label>
-                  <!-- Forming Option -->
-                  <label
-                    :class="[
-                      'group flex items-center justify-between w-full min-h-[60px] rounded-[12px] border p-3.5 cursor-pointer transition-all duration-300',
-                      form.status === 'forming'
-                        ? 'bg-green-50 ring-2 ring-[#0C51D9]'
-                        : 'bg-white border-[#DCDEDD] hover:border-[#B8C0CC] hover:bg-[#FAFAFA]',
-                    ]"
-                  >
-                    <div class="flex items-center gap-2.5">
-                      <div
-                        :class="[
-                          'w-10 h-10 rounded-[12px] flex items-center justify-center transition-all duration-300',
-                          form.status === 'forming' ? 'bg-white' : 'bg-blue-50',
-                        ]"
-                      >
-                        <UsersRound
-                          :class="[
-                            'w-5 h-5 transition-all duration-300',
-                            form.status === 'forming'
-                              ? 'text-blue-600 scale-105'
-                              : 'text-blue-600',
-                          ]"
-                        />
-                      </div>
-
-                      <div class="flex flex-col">
-                        <p class="text-brand-dark text-sm font-semibold">
-                          Forming
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      :class="[
-                        'relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl py-1.5 px-2.5 gap-1.5 transition-all duration-300',
-                        form.status === 'forming'
-                          ? 'border-blue-200 bg-white'
-                          : 'border-[#DCDEDD] bg-white',
-                      ]"
-                    >
-                      <input
-                        type="radio"
-                        name="team_status"
-                        value="forming"
-                        class="hidden"
-                        v-model="form.status"
-                      />
-
-                      <div
-                        :class="[
-                          'flex size-[18px] rounded-full shadow-sm border transition-all duration-300',
-                          form.status === 'forming'
-                            ? 'border-[5px] border-[#0C51D9]'
-                            : 'border-[#DCDEDD]',
-                        ]"
-                      ></div>
-
-                      <p
-                        :class="[
-                          'text-xs font-semibold transition-colors duration-300',
-                          form.status === 'forming'
-                            ? 'text-[#0C51D9]'
-                            : 'text-[#64748B]',
-                        ]"
-                      >
-                        {{ form.status === "forming" ? "Selected" : "Select" }}
-                      </p>
-                    </div>
-                  </label>
-                  <!-- Planning Option -->
-                  <label
-                    :class="[
-                      'group flex items-center justify-between w-full min-h-[60px] rounded-[12px] border p-3.5 cursor-pointer transition-all duration-300',
-                      form.status === 'planning'
-                        ? 'bg-green-50 ring-2 ring-[#0C51D9]'
-                        : 'bg-white border-[#DCDEDD] hover:border-[#B8C0CC] hover:bg-[#FAFAFA]',
-                    ]"
-                  >
-                    <div class="flex items-center gap-2.5">
-                      <div
-                        :class="[
-                          'w-10 h-10 rounded-[12px] flex items-center justify-center transition-all duration-300',
-                          form.status === 'planning'
-                            ? 'bg-white'
-                            : 'bg-purple-50',
-                        ]"
-                      >
-                        <ClipboardList
-                          :class="[
-                            'w-5 h-5 transition-all duration-300',
-                            form.status === 'planning'
-                              ? 'text-purple-600 scale-105'
-                              : 'text-purple-600',
-                          ]"
-                        />
-                      </div>
-
-                      <div class="flex flex-col">
-                        <p class="text-brand-dark text-sm font-semibold">
-                          Planning
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      :class="[
-                        'relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl py-1.5 px-2.5 gap-1.5 transition-all duration-300',
-                        form.status === 'planning'
-                          ? 'border-purple-200 bg-white'
-                          : 'border-[#DCDEDD] bg-white',
-                      ]"
-                    >
-                      <input
-                        type="radio"
-                        name="team_status"
-                        value="planning"
-                        class="hidden"
-                        v-model="form.status"
-                      />
-
-                      <div
-                        :class="[
-                          'flex size-[18px] rounded-full shadow-sm border transition-all duration-300',
-                          form.status === 'planning'
-                            ? 'border-[5px] border-[#0C51D9]'
-                            : 'border-[#DCDEDD]',
-                        ]"
-                      ></div>
-
-                      <p
-                        :class="[
-                          'text-xs font-semibold transition-colors duration-300',
-                          form.status === 'planning'
-                            ? 'text-[#0C51D9]'
-                            : 'text-[#64748B]',
-                        ]"
-                      >
-                        {{ form.status === "planning" ? "Selected" : "Select" }}
-                      </p>
-                    </div>
-                  </label>
-                  <!-- Dormant Option -->
-                  <label
-                    :class="[
-                      'group flex items-center justify-between w-full min-h-[60px] rounded-[12px] border p-3.5 cursor-pointer transition-all duration-300',
-                      form.status === 'dormant'
-                        ? 'bg-green-50 ring-2 ring-[#0C51D9]'
-                        : 'bg-white border-[#DCDEDD] hover:border-[#B8C0CC] hover:bg-[#FAFAFA]',
-                    ]"
-                  >
-                    <div class="flex items-center gap-2.5">
-                      <div
-                        :class="[
-                          'w-10 h-10 rounded-[12px] flex items-center justify-center transition-all duration-300',
-                          form.status === 'dormant' ? 'bg-white' : 'bg-gray-50',
-                        ]"
-                      >
-                        <PauseCircle
-                          :class="[
-                            'w-5 h-5 transition-all duration-300',
-                            form.status === 'dormant'
-                              ? 'text-gray-600 scale-105'
-                              : 'text-gray-600',
-                          ]"
-                        />
-                      </div>
-
-                      <div class="flex flex-col">
-                        <p class="text-brand-dark text-sm font-semibold">
-                          Dormant
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      :class="[
-                        'relative flex items-center justify-center w-fit h-8 shrink-0 rounded-xl py-1.5 px-2.5 gap-1.5 transition-all duration-300',
-                        form.status === 'dormant'
-                          ? 'border-gray-200 bg-white'
-                          : 'border-[#DCDEDD] bg-white',
-                      ]"
-                    >
-                      <input
-                        type="radio"
-                        name="team_status"
-                        value="dormant"
-                        class="hidden"
-                        v-model="form.status"
-                      />
-
-                      <div
-                        :class="[
-                          'flex size-[18px] rounded-full shadow-sm border transition-all duration-300',
-                          form.status === 'dormant'
-                            ? 'border-[5px] border-[#0C51D9]'
-                            : 'border-[#DCDEDD]',
-                        ]"
-                      ></div>
-
-                      <p
-                        :class="[
-                          'text-xs font-semibold transition-colors duration-300',
-                          form.status === 'dormant'
-                            ? 'text-[#0C51D9]'
-                            : 'text-[#64748B]',
-                        ]"
-                      >
-                        {{ form.status === "dormant" ? "Selected" : "Select" }}
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Form Actions -->
-          <div class="flex flex-row items-center gap-1.5 sm:gap-3.5 pb-5">
-            <!-- Update Team -->
-            <button
-              type="submit"
-              :disabled="loading"
-              class="btn-primary flex-1 sm:flex-none sm:w-auto rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3 sm:px-5 py-2.5 flex items-center justify-center gap-1.5"
-            >
-              <span class="text-brand-white text-sm font-semibold">
-                Update Team
-              </span>
-
-              <Plus class="w-4 h-4 text-white" />
-            </button>
-
-            <!-- Cancel -->
             <button
               type="button"
-              onclick="window.history.back()"
-              class="flex-1 sm:flex-none sm:w-auto border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:bg-gray-50 transition-all duration-300 px-3 sm:px-5 py-2.5 flex items-center justify-center gap-1.5"
+              class="ui-press mt-4 w-full border border-dashed border-ui-line-strong rounded-ui-control hover:bg-ui-hover transition-colors px-3.5 py-2.5 flex items-center justify-center gap-2 text-ui-small font-medium text-ui-text focus:outline-none focus-visible:shadow-ui-focus"
+              @click="addNewResponsibility()"
             >
-              <span class="text-brand-dark text-sm font-semibold">
-                Cancel
-              </span>
+              <PlusCircle class="w-4 h-4 text-ui-muted" />
+              Add Another Responsibility
             </button>
+          </section>
+
+          <!-- Team Settings Section -->
+          <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+            <header class="flex items-start gap-3 pb-4 mb-5 border-b border-ui-line">
+              <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line flex items-center justify-center text-ui-muted">
+                <Settings class="w-4 h-4" />
+              </span>
+              <div class="min-w-0">
+                <h3 class="text-ui-h2 text-ui-ink">Team Settings</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">Configure team status</p>
+              </div>
+            </header>
+
+            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Initial Team Status</p>
+            <div class="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-3">
+              <label
+                v-for="option in statusChoices"
+                :key="option.value"
+                :class="[
+                  'ui-press relative flex items-center gap-3 rounded-ui-control border p-3.5 cursor-pointer transition-colors',
+                  form.status === option.value
+                    ? 'border-ui-ink bg-ui-surface shadow-ui-raised'
+                    : 'border-ui-line bg-ui-surface hover:bg-ui-hover hover:border-ui-line-strong',
+                ]"
+              >
+                <input
+                  type="radio"
+                  name="team_status"
+                  :value="option.value"
+                  class="sr-only"
+                  v-model="form.status"
+                />
+                <span
+                  class="w-8 h-8 shrink-0 rounded-ui-control flex items-center justify-center"
+                  :class="option.tint"
+                >
+                  <component :is="option.icon" class="w-4 h-4" />
+                </span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-ui-small font-medium text-ui-ink">{{ option.label }}</span>
+                  <span
+                    class="block text-ui-cap"
+                    :class="form.status === option.value ? 'text-ui-accent' : 'text-ui-muted'"
+                  >
+                    {{ form.status === option.value ? "Selected" : "Select" }}
+                  </span>
+                </span>
+                <span
+                  class="w-4 h-4 shrink-0 rounded-full border transition-all"
+                  :class="form.status === option.value ? 'border-[5px] border-ui-ink' : 'border-ui-line-strong'"
+                ></span>
+              </label>
+            </div>
+          </section>
+
+          <!-- Form Actions -->
+          <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <!-- Cancel -->
+            <UiButton variant="secondary" class="w-full sm:w-auto" size="lg" @click="router.back()">
+              Cancel
+            </UiButton>
+            <!-- Update Team -->
+            <UiButton
+              type="submit"
+              size="lg"
+              class="w-full sm:w-auto"
+              :loading="loading"
+              :icon-right="Check"
+            >
+              Update Team
+            </UiButton>
           </div>
         </form>
       </div>
 
       <RightSidebarForm @browse-employees="leadModal = true" />
     </div>
-  </div>
 
-  <div
-    class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center"
-    v-if="leadModal"
-  >
-    <div
-      class="bg-white rounded-[14px] border border-[#DCDEDD] w-full max-w-4xl mx-3.5 max-h-[80vh] overflow-hidden"
+    <!-- Team Lead picker -->
+    <UiModal
+      v-model:open="leadModal"
+      size="lg"
+      title="Select Team Lead"
+      description="Choose an employee to lead this team"
     >
-      <!-- Modal Header -->
-      <div class="p-5 border-b border-[#DCDEDD]">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div
-              class="w-9 h-9 bg-green-50 rounded-[12px] flex items-center justify-center"
-            >
-              <Crown class="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 class="text-brand-dark text-base font-bold">
-                Select Team Lead
-              </h3>
-              <p class="text-brand-light text-sm font-normal">
-                Choose an employee to lead this team
+      <!-- Search Bar -->
+      <UiInput
+        id="leadSearch"
+        :icon="Search"
+        placeholder="Search employees..."
+        v-model="searchLead"
+      />
+
+      <!-- Employees List -->
+      <div id="leadList" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-4">
+        <button
+          type="button"
+          class="lead-card ui-press w-full text-left border border-ui-line rounded-ui-control hover:bg-ui-hover hover:border-ui-line-strong transition-colors p-3 cursor-pointer focus:outline-none focus-visible:shadow-ui-focus"
+          :class="selectedLead?.id === employee.id ? 'border-ui-ink' : ''"
+          v-for="employee in employees"
+          :key="employee.id"
+          @click="handleSelectLead(employee)"
+        >
+          <div class="flex items-center gap-3">
+            <Avatar
+              :src="employee.user?.profile_photo"
+              :alt="employee.user?.name"
+              size="w-10 h-10"
+              icon-size="w-5 h-5"
+            />
+            <div class="flex-1 min-w-0">
+              <h4 class="text-ui-h3 text-ui-ink truncate">
+                {{ employee.user?.name }}
+              </h4>
+              <p class="text-ui-small text-ui-muted truncate">
+                {{ employee.job_information?.job_title }}
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            @click="leadModal = false"
-            class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors duration-150"
-          >
-            <X class="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
+        </button>
       </div>
 
-      <!-- Search Bar -->
-      <div class="p-5 border-b border-[#DCDEDD]">
-        <div class="relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-          >
-            <Search class="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            id="leadSearch"
-            class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300 font-semibold"
-            placeholder="Search employees..."
-            v-model="searchLead"
-          />
-        </div>
-      </div>
-
-      <!-- Employees List -->
-      <div class="p-5 overflow-y-auto max-h-96">
-        <div id="leadList" class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-          <!-- Employee Option 1 -->
-          <div
-            class="lead-card border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 hover:shadow-lg transition-all duration-300 p-3.5 cursor-pointer"
-            v-for="employee in employees"
-            :key="employee.id"
-            @click="handleSelectLead(employee)"
-          >
-            <div class="flex items-center gap-3.5">
-              <Avatar
-                :src="employee.user?.profile_photo"
-                :alt="employee.user?.name"
-                size="w-10 h-10"
-                icon-size="w-5 h-5"
-                rounded="rounded-[12px]"
-              />
-              <div class="flex-1">
-                <h4 class="text-brand-dark text-sm font-bold">
-                  {{ employee.user?.name }}
-                </h4>
-                <p class="text-brand-light text-sm font-normal">
-                  {{ employee.job_information?.job_title }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- No Results Message -->
-        <div class="text-center py-6" v-if="employees.length === 0">
-          <SearchX class="w-9 h-9 text-gray-400 mx-auto mb-2.5" />
-          <h4 class="text-brand-dark text-sm font-semibold mb-1">
-            No employees found
-          </h4>
-          <p class="text-brand-light text-sm">
-            Try adjusting your search terms
-          </p>
-        </div>
-      </div>
-    </div>
+      <!-- No Results Message -->
+      <UiEmpty
+        v-if="employees.length === 0"
+        compact
+        :icon="SearchX"
+        title="No employees found"
+        message="Try adjusting your search terms"
+      />
+    </UiModal>
   </div>
 </template>

@@ -4,7 +4,7 @@ import CardList from "@/components/admin/employee/list/CardList.vue";
 import { useEmployeeStore } from "@/stores/employee";
 import { useOptionStore } from "@/stores/option";
 import { storeToRefs } from "pinia";
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { debounce } from "lodash-es";
 import {
   Search,
@@ -15,11 +15,14 @@ import {
   Upload,
   UserPlus,
   AlertTriangle,
+  Users,
+  X,
 } from "lucide-vue-next";
 import Pagination from "@/components/admin/team/Pagination.vue";
 import { can } from "@/helpers/permissionHelper";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import { UiButton, UiEmpty, UiInput, UiPageHeader, UiSelect } from "@/components/ui";
 
 const employeeStore = useEmployeeStore();
 const { employees, meta, loading, success } = storeToRefs(employeeStore);
@@ -86,6 +89,16 @@ const handlePageChange = (page) => {
   fetchData();
 };
 
+// Presentation only: filter selects with an "All" option first.
+const typeOptions = computed(() => [
+  { value: "", label: "All Types" },
+  ...(employmentTypes.value || []).map((t) => ({ value: t.value, label: t.label })),
+]);
+const statusOptions = computed(() => [
+  { value: "", label: "All Status" },
+  ...(jobStatuses.value || []).map((s) => ({ value: s.value, label: s.label })),
+]);
+
 const handlePerPageChange = (perPage) => {
   serverOptions.value.row_per_page = perPage;
   serverOptions.value.page = 1;
@@ -94,180 +107,85 @@ const handlePerPageChange = (perPage) => {
 </script>
 
 <template>
-  <div class="px-4 py-4">
+  <div class="p-1 sm:p-3 lg:p-5 space-y-5">
+    <UiPageHeader title="All Employees">
+      <template #subtitle>
+        Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} employees
+      </template>
+      <template #actions>
+        <UiButton variant="secondary" :icon="Upload" class="flex-1 sm:flex-none">Import CSV</UiButton>
+        <UiButton
+          v-if="can('employee-create')"
+          :icon="UserPlus"
+          :to="{ name: 'admin.employees.create' }"
+          class="flex-1 sm:flex-none"
+        >
+          Add Employee
+        </UiButton>
+      </template>
+    </UiPageHeader>
 
-  <Statisctics />
+    <Statisctics />
 
-  <div
-    v-if="showContractAlerts && contractAlerts.length > 0"
-    class="bg-orange-50 border border-orange-200 rounded-[14px] p-4 mb-5"
-  >
-    <div class="flex items-start justify-between gap-3.5">
-      <div class="flex items-start gap-2.5">
-        <div class="w-10 h-10 bg-orange-100 rounded-[12px] flex items-center justify-center shrink-0">
-          <AlertTriangle class="w-5 h-5 text-orange-600" />
-        </div>
-        <div>
-          <h4 class="text-orange-900 font-bold text-sm mb-1">
+    <!-- Contract / probation alerts -->
+    <div
+      v-if="showContractAlerts && contractAlerts.length > 0"
+      class="ui-anim-fade-up bg-ui-warn-soft border border-ui-warn/20 rounded-ui-card px-4 py-3.5 sm:px-5"
+      role="status"
+    >
+      <div class="flex items-start gap-3">
+        <AlertTriangle class="w-[18px] h-[18px] text-ui-warn shrink-0 mt-px" />
+        <div class="flex-1 min-w-0">
+          <h4 class="text-ui-small font-semibold text-ui-warn">
             {{ contractAlerts.length }} karyawan akan habis masa kontrak/probation dalam 30 hari
           </h4>
-          <ul class="space-y-1">
-            <li
-              v-for="row in contractAlerts"
-              :key="row.employee_id"
-              class="text-orange-800 text-xs"
-            >
-              <span class="font-semibold">{{ row.employee_name }}</span>
+          <ul class="mt-1.5 space-y-1">
+            <li v-for="row in contractAlerts" :key="row.employee_id" class="text-ui-small text-ui-text">
+              <span class="font-medium text-ui-ink">{{ row.employee_name }}</span>
               ({{ row.job_title }}) — {{ alertLabel(row) }}
             </li>
           </ul>
         </div>
-      </div>
-      <button
-        @click="showContractAlerts = false"
-        class="text-orange-500 hover:text-orange-700 text-xs font-semibold shrink-0"
-      >
-        Tutup
-      </button>
-    </div>
-  </div>
-
- 
-
-  <Alert type="success" :title="success" :show="success" @close="employeeStore.clearMessages()" />
-
-  <div class="bg-slate-50 border border-[#DCDEDD] rounded-[14px] mb-5 p-4">
-    <!-- Section Cards -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
-      <div>
-        <h3
-          class="text-[#0C1C3C] font-['Plus_Jakarta_Sans'] text-base font-bold"
-        >
-          All Employees
-        </h3>
-        <p
-          class="text-[#6B7280] font-['Plus_Jakarta_Sans'] text-[14px] font-normal mt-1"
-        >
-          Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} employees
-        </p>
-      </div>
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-[10px]">
-        <button
-          class="bg-white w-full sm:w-auto border border-[#DCDEDD] rounded-[8px] hover:border-[#0C51D9] hover:border-2 hover:bg-gray-50 transition-all duration-300 px-3.5 py-2.5 flex items-center justify-center gap-1.5"
-        >
-          <Upload class="w-4 h-4 text-gray-600" />
-          <span class="text-brand-dark text-sm font-semibold">Import CSV</span>
-        </button>
-        <RouterLink
-          :to="{ name: 'admin.employees.create' }"
-          class="w-full sm:w-auto justify-center btn-primary rounded-[8px] border border-[#2151A0] hover:brightness-110 focus:ring-2 focus:ring-[#0C51D9] transition-all duration-300 blue-gradient blue-btn-shadow px-3.5 py-2.5"
-          v-if="can('employee-create')"
-        >
-          <UserPlus class="w-4 h-4 text-white" />
-          <span class="text-brand-white text-sm font-semibold"
-            >Add Employee</span
-          >
-        </RouterLink>
+        <UiButton variant="ghost" size="sm" :icon="X" class="shrink-0 -mr-1.5 -mt-1" @click="showContractAlerts = false">
+          Tutup
+        </UiButton>
       </div>
     </div>
 
-         <!-- Search Section -->
-  <div class="bg-slate-50 rounded-[14px] mb-5">
-    <div
-      class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5"
-    >
-      <!-- Search Bar -->
-      <div class="flex-1 relative">
-        <div
-          class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-        >
-          <Search class="h-5 w-5 text-gray-400" />
-        </div>
-        <input
-          type="text"
-          class="w-full pl-12 pr-3.5 py-2.5 border border-[#DCDEDD] rounded-[12px] hover:border-[#0C51D9] hover:border-2 focus:border-[#0C51D9] focus:border-2 focus:bg-white transition-all duration-300"
-          placeholder="Search employees by name, department, role..."
-          v-model="filters.search"
-        />
-      </div>
+    <Alert type="success" :title="success" :show="success" @close="employeeStore.clearMessages()" />
 
-      <!-- Filter and Action Buttons -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-        <!-- Type Filter -->
-        <div class="relative w-full sm:w-auto">
-          <div
-            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-          >
-            <Briefcase class="h-4 w-4 text-gray-400" />
-          </div>
-          <select
-            class="select-soft select-soft-icon-pl"
-            v-model="filters.type"
-          >
-            <option value="">All Types</option>
-            <option
-              v-for="employmentType in employmentTypes"
-              :key="employmentType.value"
-              :value="employmentType.value"
-            >
-              {{ employmentType.label }}
-            </option>
-          </select>
-          <div
-            class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none"
-          >
-            <ChevronDown class="h-4 w-4 text-gray-400" />
-          </div>
-        </div>
-
-        <!-- Status Filter -->
-        <div class="relative w-full sm:w-auto">
-          <div
-            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-          >
-            <CheckCircle class="h-4 w-4 text-gray-400" />
-          </div>
-          <select
-            class="select-soft select-soft-icon-pl"
-            v-model="filters.status"
-          >
-            <option value="">All Status</option>
-            <option
-              v-for="jobStatus in jobStatuses"
-              :key="jobStatus.value"
-              :value="jobStatus.value"
-            >
-              {{ jobStatus.label }}
-            </option>
-          </select>
-          <div
-            class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none"
-          >
-            <ChevronDown class="h-4 w-4 text-gray-400" />
-          </div>
-        </div>
+    <!-- Toolbar -->
+    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
+      <UiInput
+        :model-value="filters.search ?? ''"
+        @update:model-value="filters.search = $event"
+        :icon="Search"
+        placeholder="Search employees by name, department, role..."
+        class="flex-1 lg:max-w-md"
+      />
+      <div class="grid grid-cols-2 sm:flex sm:items-center gap-2.5">
+        <UiSelect v-model="filters.type" :options="typeOptions" class="sm:w-44" />
+        <UiSelect v-model="filters.status" :options="statusOptions" class="sm:w-44" />
       </div>
     </div>
-  </div>
 
     <!-- Employee Grid -->
     <SkeletonCardGrid
       v-if="loading"
       :count="8"
       cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      class="mb-5"
     />
 
-    <div
-      v-else-if="employees.length === 0"
-      class="text-center py-12 text-gray-500 bg-gray-50 rounded-[12px] border border-dashed border-[#DCDEDD] mb-5"
-    >
-      <p class="text-sm font-semibold">No employees found</p>
+    <div v-else-if="employees.length === 0" class="bg-ui-surface border border-ui-line rounded-ui-card">
+      <UiEmpty
+        :icon="Users"
+        title="No employees found"
+      />
     </div>
 
     <div
       v-else
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 mb-5"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 ui-stagger"
     >
       <CardList
         v-for="employee in employees"
@@ -277,12 +195,13 @@ const handlePerPageChange = (perPage) => {
     </div>
 
     <!-- Pagination -->
-    <Pagination
-      :meta="meta"
-      :loading="loading"
-      @page-change="handlePageChange"
-      @per-page-change="handlePerPageChange"
-    />
+    <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3 sm:px-5">
+      <Pagination
+        :meta="meta"
+        :loading="loading"
+        @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange"
+      />
+    </div>
   </div>
-   </div>
 </template>

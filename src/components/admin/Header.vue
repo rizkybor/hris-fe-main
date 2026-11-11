@@ -93,6 +93,14 @@ const titles = {
     title: "Attendance Summary",
     subtitle: "Review clock in/out records",
   },
+  "admin.attendances.records": {
+    title: "Attendance Records",
+    subtitle: "Every clock in/out across the company",
+  },
+  "admin.leave-requests.dashboard": {
+    title: "Leave Requests",
+    subtitle: "Review and approve leave applications",
+  },
   "admin.projects": {
     title: "Project Lists",
     subtitle: "Manage projects and tasks",
