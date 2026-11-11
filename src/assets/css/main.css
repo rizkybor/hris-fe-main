@@ -1060,6 +1060,10 @@ video {
   margin-right: -0.25rem;
 }
 
+.-mr-3 {
+  margin-right: -0.75rem;
+}
+
 .-mt-0\.5 {
   margin-top: -0.125rem;
 }
@@ -1447,6 +1451,10 @@ video {
   height: 100%;
 }
 
+.h-px {
+  height: 1px;
+}
+
 .h-screen {
   height: 100vh;
 }
@@ -1493,6 +1501,14 @@ video {
 
 .max-h-\[400px\] {
   max-height: 400px;
+}
+
+.max-h-\[460px\] {
+  max-height: 460px;
+}
+
+.max-h-\[620px\] {
+  max-height: 620px;
 }
 
 .max-h-\[640px\] {
@@ -6187,6 +6203,34 @@ html {
   color: #1E40AF;
 }
 
+/* Thin, quiet scrollbar for scrolling panels (License detail aside,
+   tracking timeline, recent activity). */
+
+.scroll-soft {
+  scrollbar-width: thin;
+  scrollbar-color: #D4D6E0 transparent;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+.scroll-soft::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scroll-soft::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-soft::-webkit-scrollbar-thumb {
+  background-color: #D4D6E0;
+  border-radius: 999px;
+}
+
+.scroll-soft:hover::-webkit-scrollbar-thumb {
+  background-color: #A9ACBD;
+}
+
 .file\:mr-3::file-selector-button {
   margin-right: 0.75rem;
 }
@@ -7899,6 +7943,10 @@ html {
     grid-row: span 2 / span 2;
   }
 
+  .lg\:-mr-2 {
+    margin-right: -0.5rem;
+  }
+
   .lg\:ml-auto {
     margin-left: auto;
   }
@@ -7917,6 +7965,10 @@ html {
 
   .lg\:h-\[720px\] {
     height: 720px;
+  }
+
+  .lg\:max-h-\[calc\(100vh-6\.5rem\)\] {
+    max-height: calc(100vh - 6.5rem);
   }
 
   .lg\:w-1\/2 {
@@ -8052,6 +8104,10 @@ html {
     align-self: center;
   }
 
+  .lg\:overflow-y-auto {
+    overflow-y: auto;
+  }
+
   .lg\:px-2 {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
@@ -8063,6 +8119,10 @@ html {
 
   .lg\:pl-5 {
     padding-left: 1.25rem;
+  }
+
+  .lg\:pr-1 {
+    padding-right: 0.25rem;
   }
 
   .lg\:pr-4 {
