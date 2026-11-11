@@ -6,6 +6,10 @@ import { formatHours, formatMonth, LOG_CATEGORIES } from "@/utils/maintenance";
 import RecapSection from "@/components/common/RecapSection.vue";
 import RecapTile from "@/components/common/RecapTile.vue";
 import { uiColor } from "@/utils/uiColor";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
@@ -36,24 +40,24 @@ const pctOf = (used, total) => (total > 0 ? Math.round((used / total) * 100) : u
 const tiles = computed(() => {
   const d = data.value;
   if (!d) return [];
-  const others = [d.counts.paused && `${d.counts.paused} paused`, d.counts.ended && `${d.counts.ended} ended`].filter(Boolean);
+  const others = [d.counts.paused && t("maintenance.recap.paused", { n: d.counts.paused }), d.counts.ended && t("maintenance.recap.ended", { n: d.counts.ended })].filter(Boolean);
   return [
-    { key: "active", label: "Active contracts", value: d.counts.active, sub: [`${d.client_count} client${d.client_count === 1 ? "" : "s"}`, ...others].join(" · "), icon: Wrench },
-    { key: "used", label: `Hours used · ${formatMonth(d.month).split(" ")[0]}`, value: `${h(d.used)} / ${h(d.total)}`, sub: `${pctOf(d.used, d.total)}% of this month's quota`, icon: Timer },
+    { key: "active", label: t("maintenance.recap.activeContracts"), value: d.counts.active, sub: [t("maintenance.recap.clients", { n: d.client_count }, d.client_count), ...others].join(" · "), icon: Wrench },
+    { key: "used", label: t("maintenance.recap.hoursUsed", { month: formatMonth(d.month).split(" ")[0] }), value: `${h(d.used)} / ${h(d.total)}`, sub: t("maintenance.recap.pctOfQuota", { n: pctOf(d.used, d.total) }), icon: Timer },
     {
       key: "over",
-      label: "Over quota",
+      label: t("maintenance.recap.overQuota"),
       value: d.over_count,
       valueClass: d.over_count ? "text-ui-bad" : "text-ui-ink",
-      sub: d.near_count ? `${d.near_count} near the limit (≥80%)` : "None near the limit",
+      sub: d.near_count ? t("maintenance.recap.nearLimit", { n: d.near_count }) : t("maintenance.recap.noneNear"),
       icon: AlertTriangle,
     },
     {
       key: "balance",
-      label: "Development balance",
+      label: t("maintenance.recap.devBalance"),
       value: h(d.balance),
-      sub: `${d.features_open} feature${d.features_open === 1 ? "" : "s"} in the pipeline`,
-      alert: d.expiring > 0 ? `${h(d.expiring)} expiring in 30 days` : null,
+      sub: t("maintenance.recap.featuresPipeline", { n: d.features_open }, d.features_open),
+      alert: d.expiring > 0 ? t("maintenance.recap.expiring30", { hours: h(d.expiring) }) : null,
       icon: PiggyBank,
     },
   ];
@@ -86,7 +90,7 @@ const donutOptions = computed(() => ({
           show: true,
           name: { show: true, offsetY: 18, color: uiColor("muted"), fontSize: "11px" },
           value: { show: true, offsetY: -14, color: uiColor("ink"), fontSize: "16px", fontWeight: 600, formatter: (v) => h(Number(v)) },
-          total: { show: true, label: "logged", color: uiColor("muted"), fontSize: "11px", formatter: () => h(sliceTotal.value) },
+          total: { show: true, label: t("maintenance.recap.logged"), color: uiColor("muted"), fontSize: "11px", formatter: () => h(sliceTotal.value) },
         },
       },
     },
@@ -98,7 +102,7 @@ const donutOptions = computed(() => ({
 const usage = computed(() => data.value?.usage ?? []);
 
 // ----- Last 6 months -----
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const MONTHS = computed(() => Array.from({ length: 12 }, (_, i) => new Date(2000, i, 1).toLocaleDateString(localeTag(), { month: "short" })));
 const trend = computed(() => data.value?.trend ?? []);
 const trendOptions = computed(() => ({
   chart: { type: "bar", toolbar: { show: false }, animations: { enabled: false }, fontFamily: "inherit" },
@@ -109,20 +113,20 @@ const trendOptions = computed(() => ({
   legend: { show: true, position: "top", horizontalAlign: "right", fontSize: "11px", labels: { colors: uiColor("muted") }, markers: { size: 5, shape: "square" } },
   grid: { borderColor: uiColor("line"), padding: { left: 4, right: 4 } },
   xaxis: {
-    categories: trend.value.map((t) => MONTHS[Number(t.month.slice(5, 7)) - 1]),
+    categories: trend.value.map((row) => MONTHS.value[Number(row.month.slice(5, 7)) - 1]),
     axisBorder: { show: false },
     axisTicks: { show: false },
     labels: { style: { colors: uiColor("muted"), fontSize: "11px" } },
   },
-  yaxis: { tickAmount: 3, labels: { formatter: (v) => `${Math.round(v)} h`, style: { colors: uiColor("muted"), fontSize: "11px" } } },
+  yaxis: { tickAmount: 3, labels: { formatter: (v) => `${Math.round(v)} ${t("maintenance.hourUnit")}`, style: { colors: uiColor("muted"), fontSize: "11px" } } },
   tooltip: { shared: true, intersect: false, y: { formatter: (v) => h(v) } },
 }));
 // Same thresholds as the dashboard widget: over quota bad, from 75% warn.
 const barClass = (u) => (u.overage > 0 ? "bg-ui-bad" : u.used_percent >= 75 ? "bg-ui-warn" : "bg-ui-accent");
 
 const trendSeries = computed(() => [
-  { name: "Available", data: trend.value.map((t) => t.total) },
-  { name: "Used", data: trend.value.map((t) => t.used) },
+  { name: t("maintenance.recap.available"), data: trend.value.map((row) => row.total) },
+  { name: t("maintenance.recap.used"), data: trend.value.map((row) => row.used) },
 ]);
 </script>
 
@@ -136,9 +140,9 @@ const trendSeries = computed(() => [
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <!-- Quota use per contract -->
         <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-          <p class="text-ui-h3 text-ui-ink">Quota used this month</p>
-          <p class="text-ui-cap text-ui-muted mb-3">Per contract, fullest first</p>
-          <p v-if="!usage.length" class="text-ui-small text-ui-muted py-10 text-center">No active contracts this month.</p>
+          <p class="text-ui-h3 text-ui-ink">{{ $t("maintenance.recap.quotaUsed") }}</p>
+          <p class="text-ui-cap text-ui-muted mb-3">{{ $t("maintenance.recap.perContract") }}</p>
+          <p v-if="!usage.length" class="text-ui-small text-ui-muted py-10 text-center">{{ $t("maintenance.recap.noActive") }}</p>
           <div v-else class="space-y-3">
             <RouterLink
               v-for="u in usage"
@@ -160,18 +164,18 @@ const trendSeries = computed(() => [
                 <div class="h-full rounded-full" :class="barClass(u)" :style="{ width: `${Math.min(100, Math.max(2, u.used_percent))}%` }"></div>
               </div>
               <p v-if="u.overage > 0" class="text-ui-cap text-ui-bad font-medium mt-0.5 flex items-center gap-1">
-                <AlertTriangle class="w-3 h-3" />{{ h(u.overage) }} over quota
+                <AlertTriangle class="w-3 h-3" />{{ $t("maintenance.common.overQuota", { hours: h(u.overage) }) }}
               </p>
             </RouterLink>
-            <p v-if="data.usage_count > usage.length" class="text-ui-cap text-ui-muted">+ {{ data.usage_count - usage.length }} more</p>
+            <p v-if="data.usage_count > usage.length" class="text-ui-cap text-ui-muted">{{ $t("maintenance.recap.more", { n: data.usage_count - usage.length }) }}</p>
           </div>
         </div>
 
         <!-- Hours by category -->
         <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-          <p class="text-ui-h3 text-ui-ink">What the hours went into</p>
-          <p class="text-ui-cap text-ui-muted mb-2">Work logged this month, by category</p>
-          <p v-if="!slices.length" class="text-ui-small text-ui-muted py-10 text-center">No work logged this month yet.</p>
+          <p class="text-ui-h3 text-ui-ink">{{ $t("maintenance.recap.byCategory") }}</p>
+          <p class="text-ui-cap text-ui-muted mb-2">{{ $t("maintenance.recap.byCategoryHint") }}</p>
+          <p v-if="!slices.length" class="text-ui-small text-ui-muted py-10 text-center">{{ $t("maintenance.recap.noWork") }}</p>
           <div v-else class="flex flex-col sm:flex-row items-center gap-4">
             <div class="w-48 shrink-0">
               <VueApexCharts type="donut" height="200" :options="donutOptions" :series="slices.map((s) => s.hours)" />
@@ -191,8 +195,8 @@ const trendSeries = computed(() => [
 
       <!-- Trend -->
       <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-        <p class="text-ui-h3 text-ui-ink">Hours available vs used, last 6 months</p>
-        <p class="text-ui-cap text-ui-muted">Available = quota + carried over + adjustments, across all contracts</p>
+        <p class="text-ui-h3 text-ui-ink">{{ $t("maintenance.recap.trend") }}</p>
+        <p class="text-ui-cap text-ui-muted">{{ $t("maintenance.recap.trendHint") }}</p>
         <div class="-mx-2">
           <VueApexCharts type="bar" height="220" :options="trendOptions" :series="trendSeries" />
         </div>

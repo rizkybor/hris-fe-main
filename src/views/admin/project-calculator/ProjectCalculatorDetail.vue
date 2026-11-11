@@ -18,6 +18,9 @@ import { formatToClientTimezone } from "@/helpers/format";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiPageHeader, UiButton, UiBadge, UiChips, UiEmpty } from "@/components/ui";
 import { rowNumber } from "@/components/ui/table";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -67,11 +70,18 @@ const scenarioMeta = {
   landing_page: { label: "Landing Page Estimate", tone: "outline" },
 };
 
+// Page chrome (the quote document above keeps its own wording).
+const scenarioTitle = computed(() => ({
+  feature: t("calculator.detail.scenario.feature"),
+  build: t("calculator.detail.scenario.build"),
+  landing_page: t("calculator.detail.scenario.landingPage"),
+}));
+
 // Presentation only.
-const infraPeriodOptions = [
-  { value: "monthly", label: "Bulanan" },
-  { value: "annual", label: "Tahunan" },
-];
+const infraPeriodOptions = computed(() => [
+  { value: "monthly", label: t("calculator.detail.monthly") },
+  { value: "annual", label: t("calculator.detail.annual") },
+]);
 
 const landingPageItem = computed(() => (calc.value?.scenario === "landing_page" ? calc.value.items?.[0] : null));
 
@@ -88,27 +98,27 @@ const printQuote = () => window.print();
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <UiPageHeader
       class="print:hidden"
-      :title="calc?.name || 'Estimate Detail'"
-      :subtitle="calc ? `Estimate Detail · ${scenarioMeta[calc.scenario].label}` : 'Project cost estimate summary'"
+      :title="calc?.name || $t('calculator.detail.title')"
+      :subtitle="calc ? `${$t('calculator.detail.title')} · ${scenarioTitle[calc.scenario]}` : $t('calculator.detail.subtitle')"
     >
       <template #eyebrow>
         <button
           type="button"
           class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
-          aria-label="Back"
+          :aria-label="$t('common.actions.back')"
           @click="router.push({ name: 'admin.project-calculator.dashboard' })"
         >
-          <ArrowLeft class="w-4 h-4" /> Project Calculator
+          <ArrowLeft class="w-4 h-4" /> {{ $t("calculator.dashboard.title") }}
         </button>
       </template>
       <template #actions>
-        <UiButton variant="secondary" :icon="PrinterIcon" @click="printQuote">Cetak / PDF</UiButton>
+        <UiButton variant="secondary" :icon="PrinterIcon" @click="printQuote">{{ $t("calculator.detail.print") }}</UiButton>
         <UiButton
           v-if="can('project-calculator-edit')"
           :icon="Pencil"
           :to="{ name: 'admin.project-calculator.edit', params: { id: route.params.id } }"
         >
-          Edit
+          {{ $t("common.actions.edit") }}
         </UiButton>
       </template>
     </UiPageHeader>
@@ -119,7 +129,7 @@ const printQuote = () => window.print();
     </div>
 
     <section v-else-if="!calc" class="bg-ui-surface border border-ui-line rounded-ui-card">
-      <UiEmpty title="Estimate not found." message="It may have been deleted." />
+      <UiEmpty :title="$t('calculator.detail.notFound')" :message="$t('calculator.detail.notFoundHint')" />
     </section>
 
     <!-- Printable quote document -->

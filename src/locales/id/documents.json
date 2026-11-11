@@ -1,0 +1,685 @@
+{
+  "certificate": {
+    "generate": {
+      "subtitle": "Nomor sertifikat dibuat otomatis, mendukung pembuatan massal",
+      "back": "Kembali ke Sertifikat",
+      "infoTitle": "Informasi Sertifikat",
+      "numberingTitle": "Penomoran & Template",
+      "recipientsTitle": "Penerima",
+      "fields": {
+        "title": "Judul Sertifikat",
+        "titlePlaceholder": "mis. Sertifikat Pelatihan React Lanjutan",
+        "description": "Deskripsi (opsional)",
+        "descriptionPlaceholder": "Deskripsi pencapaian / program",
+        "startDate": "Tanggal Mulai (opsional)",
+        "endDate": "Tanggal Selesai (opsional)",
+        "signatoryName": "Nama Penanda Tangan",
+        "signatoryTitle": "Jabatan Penanda Tangan",
+        "categoryCode": "Kode Kategori",
+        "categoryPlaceholder": "mis. TRAINING",
+        "programCode": "Kode Program",
+        "programPlaceholder": "mis. REACT101",
+        "template": "Template Latar"
+      },
+      "defaultTemplate": "Default Premium (bawaan sistem)",
+      "bulkPaste": "Tempel Massal",
+      "recipientsHint": "Tambahkan lebih dari 1 penerima untuk pembuatan massal — hasilnya otomatis dibundel menjadi file .zip berisi satu PDF per penerima, tanpa nomor ganda.",
+      "pasteLabel": "Tempel daftar nama (satu nama per baris)",
+      "applyPaste": "Terapkan ke Daftar Penerima",
+      "recipientName": "Nama penerima",
+      "removeRecipient": "Hapus penerima {n}",
+      "addRecipient": "Tambah Penerima",
+      "nextNumber": "Nomor sertifikat berikutnya",
+      "calculating": "Menghitung nomor...",
+      "previewHint": "Isi Kode Kategori dan Kode Program untuk melihat pratinjau nomor sertifikat.",
+      "mode": "Mode",
+      "bulkActive": "Mode massal aktif ({n} penerima)",
+      "single": "Satuan",
+      "submitting": "Membuat Sertifikat...",
+      "submitBulk": "Buat Massal (.zip)",
+      "successBulk": "Berhasil membuat {n} sertifikat, diunduh sebagai {filename}.",
+      "successSingle": "Sertifikat berhasil dibuat dan diunduh sebagai {filename}.",
+      "errors": {
+        "noRecipient": "Minimal 1 penerima wajib diisi.",
+        "failed": "Gagal membuat sertifikat."
+      }
+    },
+    "types": {
+      "individual": "Satuan",
+      "batch": "Massal"
+    },
+    "list": {
+      "title": "Sertifikat",
+      "subtitle": "Riwayat sertifikat yang telah diterbitkan",
+      "settings": "Pengaturan & Template",
+      "generate": "Buat Sertifikat",
+      "allTypes": "Semua Jenis",
+      "columns": {
+        "number": "No. Sertifikat",
+        "title": "Judul",
+        "recipient": "Penerima"
+      },
+      "stats": {
+        "total": "Total Sertifikat",
+        "batches": "Total Batch Massal",
+        "thisMonth": "Bulan Ini"
+      },
+      "searchPlaceholder": "Cari nomor sertifikat, judul, penerima...",
+      "noMatchTitle": "Tidak ada sertifikat yang cocok",
+      "noMatchMessage": "Coba nomor, judul, penerima, atau jenis lain.",
+      "emptyTitle": "Belum ada sertifikat",
+      "itemLabel": "sertifikat",
+      "deleteTitle": "Hapus Sertifikat?",
+      "deleteMessage": "\"{number}\" akan dihapus permanen beserta file PDF-nya."
+    }
+  },
+  "comments": {
+    "title": "Komentar",
+    "empty": "Belum ada komentar. Mulai percakapan.",
+    "reply": "Balas",
+    "delete": "Hapus komentar",
+    "replyingTo": "Membalas",
+    "notEligible": "Hanya karyawan yang tercatat sebagai Peserta Internal yang bisa berkomentar atau menyebut orang lain di sini.",
+    "cancelReply": "Batal membalas",
+    "placeholder": "Tulis komentar... gunakan {'@'} untuk menyebut seseorang",
+    "insertEmoji": "Sisipkan emoji",
+    "comment": "Kirim komentar",
+    "deleteConfirm": "Hapus komentar ini?"
+  },
+  "hub": {
+    "title": "Dokumen Bisnis",
+    "subtitle": "Invoice, kwitansi, purchase order, surat, dan dokumen perusahaan lainnya, diekspor sebagai PDF.",
+    "groups": {
+      "billing": "Penagihan & penjualan",
+      "office": "Surat & arsip"
+    },
+    "emptyTitle": "Belum ada dokumen yang tersedia",
+    "emptyMessage": "Belum ada akses ke jenis dokumen apa pun.",
+    "links": {
+      "proposal": {
+        "title": "Proposal Penawaran",
+        "description": "Tulis proposal penjualan dari template JCD dan ekspor sebagai PDF"
+      },
+      "letter": {
+        "title": "Surat",
+        "description": "Buat dan kelola surat internal maupun eksternal perusahaan"
+      },
+      "invoice": {
+        "title": "Invoice",
+        "description": "Buat dan kelola invoice klien"
+      },
+      "receipt": {
+        "title": "Kwitansi",
+        "description": "Buat dan kelola kwitansi pembayaran"
+      },
+      "purchaseOrder": {
+        "title": "Purchase Order",
+        "description": "Buat dan kelola Purchase Order (PO) untuk klien"
+      },
+      "memo": {
+        "title": "Memo Resmi",
+        "description": "Memo internal dengan alur persetujuan Finance Manager"
+      },
+      "meetingNote": {
+        "title": "Notulen Rapat",
+        "description": "Rekap rapat internal & eksternal, dikelola bersama oleh tim manajemen"
+      },
+      "certificate": {
+        "title": "Sertifikat",
+        "description": "Buat sertifikat dinamis, satuan maupun massal"
+      }
+    }
+  },
+  "shared": {
+    "clientInfo": "Informasi Klien",
+    "numberingAuto": "Otomatis",
+    "numberingManual": "Manual",
+    "manualNumberHint": "Dipakai persis seperti yang diisi — harus unik.",
+    "qty": "Qty",
+    "rate": "Tarif",
+    "totalRp": "Total (Rp)",
+    "bankName": "Nama Bank",
+    "selectBank": "Pilih bank",
+    "noBankAccounts": "Belum ada rekening bank. Tambahkan di Pengaturan → Rekening Bank.",
+    "accountNumber": "Nomor Rekening",
+    "pph23Type": "Jenis PPh 23",
+    "backToDocuments": "Kembali ke Dokumen",
+    "documents": "Dokumen",
+    "number": "Nomor",
+    "viewPdf": "Lihat PDF",
+    "viewDetail": "Lihat detail",
+    "viewItem": "Lihat {number}",
+    "viewPdfItem": "Lihat PDF {number}",
+    "downloadPdfItem": "Unduh PDF {number}",
+    "editItem": "Ubah {number}",
+    "deleteItem": "Hapus {number}",
+    "cancelItem": "Batalkan {number}",
+    "yesDelete": "Ya, Hapus",
+    "deleteMessage": "\"{number}\" akan dihapus permanen.",
+    "status": {
+      "draft": "Draf",
+      "pending": "Menunggu",
+      "approved": "Disetujui",
+      "rejected": "Ditolak",
+      "cancelled": "Dibatalkan",
+      "paid": "Lunas",
+      "unpaid": "Belum lunas"
+    },
+    "autoNumberPlaceholder": "Kosongkan untuk nomor otomatis",
+    "removeItem": "Hapus {name}",
+    "reviewFields": "Periksa kembali isian formulir.",
+    "downloading": "Mengunduh...",
+    "rejecting": "Menolak...",
+    "removeAttachment": "Hapus lampiran",
+    "generalInfo": "Informasi Umum",
+    "clientName": "Nama Klien",
+    "itemCount": "{n} item",
+    "items": "Item",
+    "quantity": "Jumlah",
+    "priceRp": "Harga (Rp)",
+    "amountRp": "Nominal (Rp)",
+    "removeLine": "Hapus item",
+    "addItem": "Tambah Item",
+    "position": "Jabatan",
+    "summary": "Ringkasan",
+    "selectSignatory": "- Pilih penanda tangan -"
+  },
+  "invoice": {
+    "form": {
+      "editTitle": "Ubah Invoice",
+      "manualNumber": "Nomor invoice dipakai persis seperti yang diisi",
+      "autoNumber": "Nomor invoice dibuat otomatis saat disimpan",
+      "save": "Simpan Invoice",
+      "update": "Perbarui Invoice",
+      "projectLink": "Tautan Proyek (Opsional)",
+      "projectHint": "Tautkan invoice ini ke proyek agar muncul di halaman proyek tersebut.",
+      "noProject": "Tanpa proyek",
+      "numbering": "Penomoran Invoice",
+      "clientCode": "Kode Klien",
+      "clientCodePlaceholder": "mis. ZACO",
+      "clientCodeHint": "Hanya kode singkat (tanpa \"/\") — digabung dengan tanggal dan urutan, mis. INV/JCD-ZACO/1805/26.001",
+      "invoiceNumber": "Nomor Invoice",
+      "invoiceNumberPlaceholder": "mis. INV/JCD-FASTTRACK/1805/26.001",
+      "emailOptional": "Email (opsional)",
+      "npwp": "NPWP Klien (opsional)",
+      "fakturPajak": "Nomor Faktur Pajak (opsional)",
+      "itemsTitle": "Item Tagihan",
+      "qtyPlaceholder": "Qty (mis. 1 tahun)",
+      "paymentTax": "Pembayaran & Pajak",
+      "vatPercent": "PPN (%)",
+      "adminFeeRp": "Biaya Admin (Rp)",
+      "icannFeeRp": "Biaya ICANN (Rp) (opsional)",
+      "icannHint": "Biaya registrar yang diteruskan, mis. untuk domain -- bukan bagian dari PPN.",
+      "terms": "Syarat & Ketentuan",
+      "pph23Switch": "Dikenakan pemotongan PPh 23?",
+      "pph23Description": "Hanya informasi — menambahkan catatan di PDF bahwa klien diharapkan memotong PPh 23 saat membayar. Tidak mengubah Total Tagihan; pemotongan sebenarnya dicatat nanti di Kwitansi.",
+      "estimatedWithholding": "Perkiraan potongan:",
+      "vatLine": "PPN ({pct}%)",
+      "adminFee": "Biaya Admin",
+      "icannFee": "Biaya ICANN",
+      "pph23Note": "Catatan PPh 23 di PDF · perkiraan potongan",
+      "errors": {
+        "load": "Gagal memuat invoice.",
+        "create": "Gagal membuat Invoice.",
+        "update": "Gagal memperbarui Invoice."
+      }
+    },
+    "list": {
+      "title": "Invoice",
+      "subtitle": "Kelola invoice klien",
+      "create": "Buat Invoice",
+      "searchPlaceholder": "Cari nomor invoice, klien...",
+      "columns": {
+        "number": "No. Invoice / No. Kwitansi",
+        "client": "Klien / Proyek"
+      },
+      "markPaid": "Tandai Lunas",
+      "cancelInvoice": "Batalkan invoice",
+      "cancelConfirm": "Batalkan Invoice \"{number}\"?",
+      "receiptPrefix": "Kwitansi:",
+      "emptyTitle": "Belum ada invoice",
+      "itemLabel": "invoice",
+      "deleteTitle": "Hapus Invoice?"
+    }
+  },
+  "letter": {
+    "fields": {
+      "subject": "Perihal",
+      "division": "Divisi",
+      "letterCode": "Kode Surat",
+      "divisionCode": "Kode Divisi",
+      "body": "Isi Surat"
+    },
+    "form": {
+      "editTitle": "Ubah Surat",
+      "autoNumber": "Nomor surat dibuat otomatis saat disimpan",
+      "back": "Kembali ke Surat",
+      "manageCodes": "Kelola Kode Surat",
+      "save": "Simpan Surat",
+      "update": "Perbarui Surat",
+      "templatePrimary": "Utama",
+      "templateSecondary": "Sekunder",
+      "noEmployee": "Tidak ditujukan ke karyawan tertentu",
+      "secondParty": "Pihak Kedua",
+      "classification": "Klasifikasi Surat",
+      "classificationLocked": "Kode Surat, Kode Divisi, Jenis, dan Tanggal terkunci setelah dibuat -- semuanya sudah tercantum di nomor surat yang terbit.",
+      "selectLetterCode": "Pilih kode surat",
+      "selectDivisionCode": "Pilih kode divisi",
+      "templateApplied": "Template referensi sudah diisikan otomatis ke Isi Surat, silakan sesuaikan.",
+      "to": "Kepada (opsional)",
+      "toPlaceholder": "mis. Seluruh Karyawan\nPT. Jendela Cakra Digital",
+      "toHidden": "Tata letak template Sekunder (gaya Surat Keterangan) tidak ditujukan ke penerima tertentu, jadi kolom ini disembunyikan.",
+      "relatedEmployee": "Karyawan Terkait",
+      "relatedEmployeeOptional": "Karyawan Terkait (opsional)",
+      "employeeRequiredHint": "Wajib untuk surat peringatan agar tercatat di riwayat karyawan.",
+      "bodyPlaceholder": "Dengan hormat, ...",
+      "signatoryFirst": "Nama Penanda Tangan (Pihak Pertama)",
+      "signatureHint": "Membubuhkan tanda tangan pihak pertama pada PDF.",
+      "itemTable": "Tambah Tabel Item",
+      "itemTableHint": "Untuk BAST (barang yang diserahkan) atau Surat Penawaran (barang/jasa yang ditawarkan). Kosongkan harga jika tidak relevan (mis. BAST).",
+      "priceOptional": "Harga (Rp, opsional)",
+      "specPlaceholder": "Catatan / spesifikasi",
+      "twoParty": "Tanda Tangan Dua Pihak (Pihak Kedua)",
+      "twoPartyHint": "Untuk BAST atau NDA yang ditandatangani kedua pihak. Jika tidak dicentang, surat hanya memakai tanda tangan perusahaan.",
+      "secondPartyName": "Nama Perusahaan/Pihak Kedua",
+      "signatoryName": "Nama Penanda Tangan",
+      "letterhead": "Template Kop Surat",
+      "errors": {
+        "load": "Gagal memuat surat.",
+        "bodyRequired": "Isi surat wajib diisi.",
+        "create": "Gagal membuat Surat.",
+        "update": "Gagal memperbarui Surat."
+      }
+    },
+    "list": {
+      "title": "Surat",
+      "subtitle": "Register surat internal dan eksternal perusahaan",
+      "create": "Buat Surat",
+      "searchPlaceholder": "Cari nomor surat, perihal...",
+      "columns": {
+        "number": "No. Surat"
+      },
+      "cancelLetter": "Batalkan surat",
+      "cancelConfirm": "Batalkan Surat \"{number}\"? Nomornya tetap tercatat dengan label DIBATALKAN.",
+      "noMatchTitle": "Tidak ada surat yang cocok",
+      "noMatchMessage": "Coba nomor, perihal, atau status lain.",
+      "emptyTitle": "Belum ada surat",
+      "itemLabel": "surat",
+      "deleteTitle": "Hapus Surat?",
+      "deleteMessage": "\"{number}\" akan dihapus permanen dari sistem. Untuk surat yang sudah terbit, sebaiknya gunakan \"Batalkan\" agar nomornya tetap tercatat di register."
+    }
+  },
+  "memo": {
+    "list": {
+      "title": "Memo Resmi",
+      "subtitle": "Memo internal dengan alur persetujuan Finance Manager",
+      "create": "Buat Memo Resmi",
+      "searchPlaceholder": "Cari nomor, perihal...",
+      "noMatchTitle": "Tidak ada memo yang cocok",
+      "noMatchMessage": "Coba nomor, perihal, atau status lain.",
+      "emptyTitle": "Belum ada memo resmi",
+      "itemLabel": "memo",
+      "deleteConfirm": "Hapus Memo Resmi \"{number}\"? Tindakan ini tidak dapat dibatalkan."
+    },
+    "fields": {
+      "number": "Nomor Memo",
+      "date": "Tanggal Dokumen",
+      "subject": "Perihal",
+      "subjectTitle": "Perihal / Judul",
+      "body": "Isi Memo",
+      "attachments": "Lampiran",
+      "sender": "Pengirim",
+      "recipient": "Penerima"
+    },
+    "form": {
+      "editTitle": "Ubah Memo Resmi",
+      "subtitle": "Memo Resmi disimpan sebagai Draf sampai diajukan untuk persetujuan.",
+      "saveDraft": "Simpan sebagai Draf",
+      "memoCard": "Memo",
+      "subjectPlaceholder": "mis. Pengajuan Anggaran Operasional Q3",
+      "bodyPlaceholder": "Yth. ...",
+      "signatureHint": "Membubuhkan tanda tangan pengirim pada PDF.",
+      "addAttachment": "Tambah Lampiran (PDF, DOC, PNG, JPG — maks. 5MB)",
+      "routing": "Alur",
+      "attachmentCount": "{n} lampiran"
+    },
+    "detail": {
+      "back": "Kembali ke Memo Resmi",
+      "submitConfirm": "Ajukan Memo Resmi ini untuk persetujuan Finance Manager?",
+      "approveConfirm": "Setujui Memo Resmi ini?",
+      "rejectionReason": "Alasan Penolakan",
+      "details": "Detail",
+      "activity": "Aktivitas",
+      "submitted": "Diajukan:",
+      "approvedBy": "Disetujui oleh {name}",
+      "rejectedBy": "Ditolak oleh {name}",
+      "rejectTitle": "Tolak Memo Resmi?",
+      "rejectDescription": "Tuliskan alasan penolakan agar pembuat tahu apa yang perlu diperbaiki.",
+      "rejectPlaceholder": "Contoh: Anggaran tidak sesuai alokasi Q3..."
+    }
+  },
+  "receipt": {
+    "list": {
+      "title": "Kwitansi",
+      "subtitle": "Kelola kwitansi pembayaran",
+      "create": "Buat Kwitansi",
+      "searchPlaceholder": "Cari nomor kwitansi, penerima...",
+      "columns": {
+        "number": "No. Kwitansi"
+      },
+      "cancelReceipt": "Batalkan kwitansi",
+      "cancelConfirm": "Batalkan Kwitansi \"{number}\"?",
+      "emptyTitle": "Belum ada kwitansi",
+      "itemLabel": "kwitansi",
+      "deleteTitle": "Hapus Kwitansi?"
+    },
+    "fields": {
+      "receivedFrom": "Diterima Dari"
+    },
+    "form": {
+      "createTitle": "Buat Kwitansi",
+      "editTitle": "Ubah Kwitansi",
+      "manualNumber": "Nomor kwitansi dipakai persis seperti yang diisi",
+      "autoNumber": "Nomor kwitansi dibuat otomatis saat disimpan",
+      "save": "Simpan Kwitansi",
+      "update": "Perbarui Kwitansi",
+      "paymentDetails": "Detail Pembayaran",
+      "relatedInvoice": "Invoice Terkait (opsional)",
+      "noInvoice": "- Tidak terkait invoice -",
+      "numbering": "Penomoran Kwitansi",
+      "clientCodeHint": "Hanya kode singkat (tanpa \"/\") — dipakai di nomor kwitansi, mis. RCP/JCD-ZACO/...",
+      "receiptNumber": "Nomor Kwitansi",
+      "receiptNumberPlaceholder": "mis. RCP/JCD-FASTTRACK/1805/26.001",
+      "receivedFromPlaceholder": "mis. Bpk. Zakaria - Zaco Law Firm",
+      "grossAmountRp": "Jumlah Bruto (Rp)",
+      "grossAmount": "Jumlah Bruto",
+      "paymentStatus": "Status Pembayaran",
+      "partial": "Sebagian",
+      "pph23Switch": "Dipotong PPh 23?",
+      "pph23Description": "Centang jika klien memotong PPh 23 saat membayar (mis. jasa teknik/IT). Amount di atas akan otomatis dihitung ulang sebagai jumlah bersih yang diterima.",
+      "pph23Amount": "Jumlah PPh 23",
+      "netAmount": "Jumlah Bersih Diterima",
+      "descriptionSignatory": "Keterangan & Penanda Tangan",
+      "forPaymentOf": "Untuk Pembayaran",
+      "printedAs": "Tercetak sebagai:",
+      "printedAsHint": "— nomor invoice ditambahkan otomatis.",
+      "recipientName": "Nama Penerima (Penanda Tangan)",
+      "signatureHint": "Membubuhkan tanda tangan penerima pada PDF.",
+      "errors": {
+        "load": "Gagal memuat kwitansi.",
+        "create": "Gagal membuat Kwitansi.",
+        "update": "Gagal memperbarui Kwitansi."
+      }
+    }
+  },
+  "purchaseOrder": {
+    "list": {
+      "title": "Purchase Order",
+      "subtitle": "Kelola dokumen Purchase Order (PO)",
+      "create": "Buat PO Baru",
+      "searchPlaceholder": "Cari nomor PO, klien, judul...",
+      "columns": {
+        "number": "No. PO"
+      },
+      "cancelPo": "Batalkan PO",
+      "cancelConfirm": "Batalkan PO \"{number}\"? Nomornya tetap tercatat dan tidak dapat dipakai ulang.",
+      "emptyTitle": "Belum ada purchase order.",
+      "itemLabel": "PO",
+      "deleteTitle": "Hapus Purchase Order?"
+    },
+    "types": {
+      "E": "Eksternal (E)",
+      "I": "Internal (I)"
+    },
+    "fields": {
+      "title": "Judul",
+      "titleSubject": "Judul / Perihal"
+    },
+    "form": {
+      "createTitle": "Buat Purchase Order Baru",
+      "editTitle": "Ubah Purchase Order",
+      "autoNumber": "Nomor PO dibuat otomatis saat disimpan",
+      "save": "Simpan Purchase Order",
+      "update": "Perbarui Purchase Order",
+      "titlePlaceholder": "mis. Pembelian Smart Locker",
+      "itemsTitle": "Rincian Pesanan (Item)",
+      "specification": "Spesifikasi (satu baris per poin)",
+      "paymentSchema": "Skema Pembayaran (opsional)",
+      "term": "Termin",
+      "termPlaceholder": "mis. DP (50%)",
+      "removeTerm": "Hapus termin",
+      "addTerm": "Tambah Termin",
+      "termsSignatures": "Ketentuan & Tanda Tangan",
+      "warranty": "Garansi (bulan)",
+      "replacement": "Waktu Penggantian (hari kerja)",
+      "buyerSignatory": "Penanda Tangan Pembeli (Nama)",
+      "clientSignatory": "Penanda Tangan Klien (Nama)",
+      "signatureHint": "Membubuhkan tanda tangan penanda tangan pembeli pada PDF.",
+      "paymentTermsCount": "Termin pembayaran ({n})",
+      "errors": {
+        "load": "Gagal memuat purchase order.",
+        "create": "Gagal membuat Purchase Order.",
+        "update": "Gagal memperbarui Purchase Order."
+      }
+    }
+  },
+  "meetingNote": {
+    "types": {
+      "internal": "Internal",
+      "external": "Eksternal"
+    },
+    "list": {
+      "title": "Notulen Rapat",
+      "subtitle": "Rekap rapat internal & eksternal, dikelola bersama oleh Manager/Operational Director/HR/Finance Manager",
+      "create": "Buat Notulen Rapat",
+      "searchPlaceholder": "Cari nomor, judul...",
+      "allTypes": "Semua Jenis",
+      "columns": {
+        "meetingTime": "Waktu Rapat"
+      },
+      "pinned": "Disematkan di Dasbor",
+      "pinnedBadge": "Disematkan",
+      "pin": "Sematkan di Dasbor",
+      "unpin": "Lepas dari Dasbor",
+      "noMatchTitle": "Tidak ada notulen yang cocok",
+      "noMatchMessage": "Coba kata kunci atau jenis lain.",
+      "emptyTitle": "Belum ada notulen rapat",
+      "itemLabel": "notulen",
+      "deleteConfirm": "Hapus Notulen Rapat \"{number}\"? Tindakan ini tidak dapat dibatalkan."
+    },
+    "fields": {
+      "number": "Nomor Dokumen",
+      "type": "Jenis Rapat",
+      "dateTime": "Tanggal & Waktu Rapat",
+      "title": "Judul",
+      "titleSubject": "Judul / Topik Rapat",
+      "internalAttendees": "Peserta Internal",
+      "externalAttendees": "Peserta Eksternal",
+      "body": "Isi Notulen",
+      "actionItems": "Tindak Lanjut"
+    },
+    "form": {
+      "editTitle": "Ubah Notulen Rapat",
+      "subtitle": "Notulen rapat dapat dikelola bersama oleh Manager, Operational Director, HR, dan Finance Manager.",
+      "titlePlaceholder": "mis. Sinkronisasi Operasional Mingguan",
+      "selected": "{n} dipilih",
+      "searchAttendees": "Cari peserta...",
+      "noStaff": "Belum ada data staf.",
+      "noAttendeeMatch": "Tidak ada peserta yang cocok dengan \"{q}\".",
+      "removeAttendee": "Hapus peserta",
+      "organization": "Organisasi",
+      "addExternal": "Tambah peserta eksternal",
+      "bodyPlaceholder": "Ringkasan pembahasan rapat...",
+      "actionPlaceholder": "Deskripsi tindak lanjut",
+      "assignee": "Penanggung jawab",
+      "noActionItems": "Belum ada tindak lanjut."
+    },
+    "detail": {
+      "pdfFailed": "PDF gagal dibuat. Coba lagi beberapa saat.",
+      "back": "Kembali ke Notulen Rapat",
+      "downloadHint": "Unduh Notulen Rapat ini sebagai PDF",
+      "pinHint": "Menyematkan juga menambahkan notulen ini ke dasbor setiap Peserta Internal",
+      "unpin": "Lepas sematan",
+      "noBody": "Belum ada catatan.",
+      "open": "Belum selesai",
+      "assignee": "Penanggung jawab: {name}",
+      "meeting": "Rapat",
+      "dateTime": "Tanggal & waktu",
+      "lastEditedBy": "Terakhir diubah oleh:"
+    }
+  },
+  "proposal": {
+    "status": {
+      "draft": "Draf",
+      "sent": "Terkirim",
+      "accepted": "Diterima",
+      "rejected": "Ditolak"
+    },
+    "errors": {
+      "pdf": "PDF gagal dibuat."
+    },
+    "list": {
+      "subtitle": "Susun proposal penawaran dari template standar JCD, edit per bagian, lalu unduh sebagai PDF",
+      "create": "Proposal Baru",
+      "searchPlaceholder": "Cari judul, klien, atau nomor surat...",
+      "columns": {
+        "proposal": "Proposal",
+        "letterNumber": "Nomor Surat"
+      },
+      "sectionCount": "{n} bagian",
+      "byName": "oleh {name}",
+      "shareHint": "Bagikan (link, email, WhatsApp)",
+      "noMatchTitle": "Tidak ada proposal yang cocok",
+      "emptyTitle": "Belum ada proposal",
+      "emptyMessage": "Buat proposal pertama dari template standar JCD.",
+      "itemLabel": "proposal",
+      "duplicateConfirm": "Buat salinan dari \"{title}\"? Salinan dibuat sebagai Draf dengan tanggal hari ini.",
+      "deleteConfirm": "Hapus proposal \"{title}\"? Tindakan ini tidak bisa dibatalkan.",
+      "errors": {
+        "create": "Proposal gagal dibuat.",
+        "duplicate": "Proposal gagal diduplikat.",
+        "delete": "Proposal gagal dihapus."
+      }
+    },
+    "create": {
+      "description": "Isi data utama. Isi proposal dimulai dari template standar JCD.",
+      "title": "Judul Proyek",
+      "titlePlaceholder": "cth. Sistem Manajemen Order",
+      "pickClient": "Pilih dari Data Klien",
+      "newClient": "— Klien baru / prospek (ketik di bawah) —",
+      "clientPlaceholder": "cth. PT Misael Berkat Abadi",
+      "recipient": "Ditujukan Kepada",
+      "recipientPlaceholder": "cth. Bapak Hendri",
+      "recipientHint": "Dipakai untuk salam pembuka di bagian Pendahuluan.",
+      "letterNumber": "Nomor Surat (SPH)",
+      "letterNumberPlaceholder": "cth. 002/E/SPH-JCD/BD/X/2026",
+      "submit": "Buat & Mulai Edit"
+    },
+    "editor": {
+      "loading": "Memuat proposal...",
+      "backToList": "Kembali ke daftar",
+      "untitled": "Tanpa judul",
+      "untitledLower": "tanpa judul",
+      "unsaved": "Belum disimpan",
+      "statusTitle": "Status proposal",
+      "shareHint": "Bagikan lewat link, email, atau WhatsApp",
+      "viewPdfHint": "Lihat PDF di tab baru",
+      "saveHint": "Simpan (Ctrl+S)",
+      "savedAt": "Tersimpan {at}",
+      "savedAtBy": "Tersimpan {at} oleh {name}",
+      "outline": "Daftar Bagian",
+      "addSectionEnd": "Tambah bagian di akhir",
+      "bracketHint": "Teks dalam [kurung siku] adalah petunjuk dari template. Ganti sebelum proposal dikirim.",
+      "docInfo": "Informasi Dokumen",
+      "cover": "Gambar Sampul",
+      "replace": "Ganti",
+      "removeCover": "Hapus sampul",
+      "uploadCover": "Unggah gambar sampul (opsional, JPG/PNG/WebP, maks. 5 MB)",
+      "newClient": "— Klien baru / prospek —",
+      "letterNumber": "Lampiran Surat Nomor (SPH)",
+      "showSignature": "Tampilkan tanda tangan (jika tersedia untuk nama penanda tangan)",
+      "newPage": "Halaman baru",
+      "sectionNumberHint": "Nomor bagian di PDF",
+      "unnumberedHint": "Bagian tanpa judul tidak diberi nomor",
+      "sectionTitlePlaceholder": "Judul bagian (kosongkan untuk blok tanpa nomor)",
+      "moveUp": "Naikkan",
+      "moveDown": "Turunkan",
+      "pageBreak": "Mulai bagian ini di halaman baru",
+      "duplicateSection": "Duplikat bagian",
+      "removeSection": "Hapus bagian",
+      "sectionPlaceholder": "Tulis isi bagian ini...",
+      "addSectionHere": "Tambah bagian di sini",
+      "noSections": "Proposal ini belum punya bagian",
+      "addFirstSection": "Tambah bagian pertama",
+      "removeSectionConfirm": "Hapus bagian \"{title}\"?",
+      "leaveConfirm": "Ada perubahan yang belum disimpan. Tinggalkan halaman tanpa menyimpan?",
+      "leave": "Tinggalkan",
+      "errors": {
+        "open": "Proposal tidak bisa dibuka.",
+        "imageTooLarge": "Ukuran gambar maksimal 5 MB.",
+        "coverUpload": "Gambar sampul gagal diunggah.",
+        "save": "Proposal gagal disimpan."
+      }
+    },
+    "share": {
+      "title": "Bagikan Proposal",
+      "linkTitle": "Link Proposal",
+      "notShared": "Belum dibagikan",
+      "openLink": "Buka link",
+      "validLabel": "Berlaku:",
+      "until": "hingga {date}",
+      "noExpiryLower": "tanpa batas waktu",
+      "viewed": "Dilihat {n}×",
+      "lastViewed": "terakhir {at}",
+      "renew": "Perbarui masa berlaku",
+      "disable": "Nonaktifkan",
+      "createLink": "Buat Link",
+      "linkIntro": "Buat link agar klien bisa membuka dan mengunduh PDF proposal tanpa login. Link selalu menampilkan versi terakhir yang disimpan.",
+      "noExpiry": "Tanpa batas waktu",
+      "days": "{n} hari",
+      "validNoExpiry": "Berlaku tanpa batas waktu",
+      "validDays": "Berlaku {n} hari",
+      "viaEmail": "Kirim via Email",
+      "viaWhatsApp": "Kirim via WhatsApp",
+      "recipientName": "Nama Penerima",
+      "recipientEmail": "Email Penerima",
+      "emailPlaceholder": "nama{'@'}perusahaan.com",
+      "cc": "CC (opsional)",
+      "ccPlaceholder": "pisahkan dengan koma, maks. 5 alamat",
+      "extraMessage": "Pesan tambahan (opsional)",
+      "extraMessagePlaceholder": "Ditampilkan di dalam email, di bawah salam pembuka.",
+      "emailNote": "Email dikirim atas nama PT Jendela Cakra Digital dan balasan klien masuk ke {email}.",
+      "emailAutoLink": "Link proposal dibuat otomatis.",
+      "emailStatusNote": "Status proposal akan berubah menjadi Terkirim.",
+      "sendEmail": "Kirim Email",
+      "waNumber": "Nomor WhatsApp",
+      "waPlaceholder": "cth. 0812 3456 7890",
+      "waHint": "Kosongkan untuk memilih kontak sendiri di WhatsApp.",
+      "message": "Pesan",
+      "resetTemplate": "Kembalikan ke template",
+      "linkPlaceholderNote": "{token} diganti otomatis dengan link proposal saat dikirim.",
+      "openWhatsApp": "Buka WhatsApp",
+      "emailSent": "Proposal terkirim ke {to}.",
+      "disableConfirm": "Nonaktifkan link ini? Siapa pun yang sudah menerima link tidak akan bisa membukanya lagi. Membuat link lagi nanti akan menghasilkan alamat baru.",
+      "errors": {
+        "load": "Proposal tidak bisa dimuat.",
+        "createLink": "Link gagal dibuat.",
+        "disable": "Link gagal dinonaktifkan.",
+        "email": "Email gagal dikirim."
+      }
+    }
+  },
+  "flowchartPicker": {
+    "title": "Sisipkan Flowchart",
+    "description": "Pilih flowchart dari menu Flowchart. Perubahan di flowchart ikut tampil di PDF proposal.",
+    "searchPlaceholder": "Cari nama flowchart...",
+    "noMatch": "Tidak ada flowchart yang cocok",
+    "empty": "Belum ada flowchart",
+    "emptyMessage": "Buat flowchart di menu Tools → Flowchart terlebih dahulu.",
+    "insertItem": "Sisipkan {name}",
+    "noPreviewHint": "Belum ada pratinjau. Buka flowchart ini di menu Flowchart lalu simpan ulang.",
+    "noPreview": "Belum ada pratinjau — simpan ulang di menu Flowchart",
+    "shapes": "{n} bentuk",
+    "loadError": "Daftar flowchart tidak bisa dimuat."
+  }
+}

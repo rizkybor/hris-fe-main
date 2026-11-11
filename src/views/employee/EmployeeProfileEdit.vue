@@ -30,6 +30,9 @@ import {
   IdCard,
 } from "lucide-vue-next";
 import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader, UiSelect } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -69,12 +72,12 @@ const hrOnly = ref({ code: "", identity_number: "", job_title: "" });
 const photoInput = ref(null);
 let tempPreviewURL = null;
 
-const GENDER_OPTIONS = [
-  { value: "", label: "Select gender" },
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-];
-const languageOptions = computed(() => [{ value: "", label: "Select language" }, ...(preferredLanguages.value || [])]);
+const GENDER_OPTIONS = computed(() => [
+  { value: "", label: t("profile.edit.selectGender") },
+  { value: "male", label: t("profile.enums.gender.male") },
+  { value: "female", label: t("profile.enums.gender.female") },
+]);
+const languageOptions = computed(() => [{ value: "", label: t("profile.edit.selectLanguage") }, ...(preferredLanguages.value || [])]);
 const today = new Date().toISOString().slice(0, 10);
 
 const blankContact = () => ({ id: null, full_name: "", relationship: "", phone: "", email: "" });
@@ -175,18 +178,18 @@ const handleSubmit = async () => {
 
 <template>
   <form class="p-1 sm:p-3 lg:p-5 space-y-5" @submit.prevent="handleSubmit">
-    <UiPageHeader title="Edit Profile" subtitle="Update your personal information">
+    <UiPageHeader :title="$t('profile.view.editProfile')" :subtitle="$t('profile.edit.subtitle')">
       <template #eyebrow>
         <RouterLink :to="{ name: 'employee.profile' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1">
           <ArrowLeft class="w-4 h-4" />
-          My Profile
+          {{ $t("profile.edit.myProfile") }}
         </RouterLink>
       </template>
       <template #actions>
         <div class="hidden sm:flex items-center gap-2">
-          <UiButton variant="secondary" :to="{ name: 'employee.profile' }">Cancel</UiButton>
+          <UiButton variant="secondary" :to="{ name: 'employee.profile' }">{{ $t("common.actions.cancel") }}</UiButton>
           <UiButton type="submit" :icon="Save" :loading="loading">
-            {{ loading ? "Saving..." : "Save Changes" }}
+            {{ loading ? $t("common.actions.saving") : $t("common.actions.saveChanges") }}
           </UiButton>
         </div>
       </template>
@@ -204,15 +207,15 @@ const handleSubmit = async () => {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
       <div class="lg:col-span-2 space-y-5 min-w-0">
         <!-- Account -->
-        <UiCard title="Account" subtitle="Your sign-in name and email">
+        <UiCard :title="$t('profile.edit.account.title')" :subtitle="$t('profile.edit.account.subtitle')">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
             <UiInput
               id="name"
               name="name"
               type="text"
               v-model="form.name"
-              label="Full Name"
-              placeholder="Enter full name"
+              :label="$t('profile.fields.fullName')"
+              :placeholder="$t('profile.edit.account.namePlaceholder')"
               :icon="UserIcon"
               :error="fieldError('name')"
               required
@@ -220,11 +223,11 @@ const handleSubmit = async () => {
             <UiInput
               :model-value="user?.email"
               type="email"
-              label="Email Address"
+              :label="$t('profile.edit.account.email')"
               :icon="Mail"
               readonly
               disabled
-              hint="Email cannot be changed. Contact HR if this needs to be updated."
+              :hint="$t('profile.edit.account.emailHint')"
             />
           </div>
         </UiCard>
@@ -242,13 +245,13 @@ const handleSubmit = async () => {
 
         <template v-else-if="hasEmployee">
           <!-- Personal details -->
-          <UiCard title="Personal Details" subtitle="Contact number, birth and personal information">
+          <UiCard :title="$t('profile.edit.personal.title')" :subtitle="$t('profile.edit.personal.subtitle')">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
-              <UiInput v-model="employee.phone" label="Phone Number" placeholder="+62 812 3456 7890" :icon="Phone" :error="fieldError('phone')" required />
-              <UiSelect v-model="employee.gender" label="Gender" :options="GENDER_OPTIONS" :error="fieldError('gender')" required />
-              <UiInput v-model="employee.place_of_birth" label="Place of Birth" placeholder="e.g. Bandung" :icon="MapPin" :error="fieldError('place_of_birth')" required />
+              <UiInput v-model="employee.phone" :label="$t('profile.fields.phoneNumber')" placeholder="+62 812 3456 7890" :icon="Phone" :error="fieldError('phone')" required />
+              <UiSelect v-model="employee.gender" :label="$t('profile.fields.gender')" :options="GENDER_OPTIONS" :error="fieldError('gender')" required />
+              <UiInput v-model="employee.place_of_birth" :label="$t('profile.fields.placeOfBirth')" :placeholder="$t('profile.edit.cityPlaceholder')" :icon="MapPin" :error="fieldError('place_of_birth')" required />
               <div class="min-w-0">
-                <label for="date_of_birth" class="block text-ui-small font-medium text-ui-ink mb-1.5">Date of Birth <span class="text-ui-bad">*</span></label>
+                <label for="date_of_birth" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("profile.fields.dateOfBirth") }} <span class="text-ui-bad">*</span></label>
                 <div class="relative">
                   <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-faint pointer-events-none" />
                   <input
@@ -263,68 +266,68 @@ const handleSubmit = async () => {
                 <p v-if="fieldError('date_of_birth')" class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("date_of_birth") }}</p>
               </div>
               <div class="md:col-span-2">
-                <UiInput v-model="employee.hobby" label="Hobby" placeholder="e.g. Reading, Orienteering" :error="fieldError('hobby')" />
+                <UiInput v-model="employee.hobby" :label="$t('profile.edit.personal.hobby')" :placeholder="$t('profile.edit.personal.hobbyPlaceholder')" :error="fieldError('hobby')" />
               </div>
             </div>
           </UiCard>
 
           <!-- Address -->
-          <UiCard title="Address" subtitle="Where you live">
+          <UiCard :title="$t('common.labels.address')" :subtitle="$t('profile.edit.address.subtitle')">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
               <div class="md:col-span-2">
-                <UiInput v-model="employee.address" label="Street Address" placeholder="Street, number, district" :rows="2" :error="fieldError('address')" required />
+                <UiInput v-model="employee.address" :label="$t('profile.edit.address.street')" :placeholder="$t('profile.edit.address.streetPlaceholder')" :rows="2" :error="fieldError('address')" required />
               </div>
-              <UiInput v-model="employee.city" label="City" placeholder="e.g. Bandung" :error="fieldError('city')" required />
-              <UiInput v-model="employee.postal_code" label="Postal Code" placeholder="40111" :error="fieldError('postal_code')" required />
+              <UiInput v-model="employee.city" :label="$t('common.labels.city')" :placeholder="$t('profile.edit.cityPlaceholder')" :error="fieldError('city')" required />
+              <UiInput v-model="employee.postal_code" :label="$t('profile.fields.postCode')" placeholder="40111" :error="fieldError('postal_code')" required />
             </div>
           </UiCard>
 
           <!-- Emergency contacts -->
-          <UiCard title="Emergency Contacts" subtitle="People we can reach if something happens">
+          <UiCard :title="$t('profile.edit.contacts.title')" :subtitle="$t('profile.edit.contacts.subtitle')">
             <template #actions>
-              <UiButton variant="secondary" size="sm" :icon="Plus" @click="addContact">Add contact</UiButton>
+              <UiButton variant="secondary" size="sm" :icon="Plus" @click="addContact">{{ $t("profile.edit.contacts.add") }}</UiButton>
             </template>
             <div v-if="!contacts.length" class="rounded-ui-card border border-dashed border-ui-line-strong px-4 py-6 text-center">
               <HeartHandshake class="w-5 h-5 text-ui-faint mx-auto mb-2" />
-              <p class="text-ui-small text-ui-muted">No emergency contact yet.</p>
-              <UiButton variant="ghost" size="sm" :icon="Plus" class="mt-2" @click="addContact">Add contact</UiButton>
+              <p class="text-ui-small text-ui-muted">{{ $t("profile.edit.contacts.empty") }}</p>
+              <UiButton variant="ghost" size="sm" :icon="Plus" class="mt-2" @click="addContact">{{ $t("profile.edit.contacts.add") }}</UiButton>
             </div>
             <TransitionGroup v-else name="ui-list" tag="div" class="space-y-3">
               <div v-for="(contact, index) in contacts" :key="contact.id || `new-${index}`" class="rounded-ui-card border border-ui-line bg-ui-subtle/50 p-4">
                 <div class="flex items-center justify-between gap-2 mb-3">
-                  <p class="text-ui-h3 text-ui-ink">Contact {{ index + 1 }}</p>
+                  <p class="text-ui-h3 text-ui-ink">{{ $t("profile.edit.contacts.contactN", { n: index + 1 }) }}</p>
                   <button
                     type="button"
                     class="w-8 h-8 -my-1 rounded-ui-control flex items-center justify-center text-ui-muted hover:text-ui-bad hover:bg-ui-bad-soft transition-colors"
-                    :aria-label="`Remove contact ${index + 1}`"
+                    :aria-label="$t('profile.edit.contacts.remove', { n: index + 1 })"
                     @click="removeContact(index)"
                   >
                     <Trash2 class="w-4 h-4" />
                   </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                  <UiInput v-model="contact.full_name" label="Full Name" placeholder="Contact name" :error="fieldError(`emergency_contacts.${index}.full_name`)" required />
-                  <UiInput v-model="contact.relationship" label="Relationship" placeholder="e.g. Spouse, Parent" :error="fieldError(`emergency_contacts.${index}.relationship`)" required />
-                  <UiInput v-model="contact.phone" label="Phone Number" placeholder="+62 812 3456 7890" :icon="Phone" :error="fieldError(`emergency_contacts.${index}.phone`)" required />
-                  <UiInput v-model="contact.email" type="email" label="Email" placeholder="name@example.com" :icon="Mail" :error="fieldError(`emergency_contacts.${index}.email`)" />
+                  <UiInput v-model="contact.full_name" :label="$t('profile.fields.fullName')" :placeholder="$t('profile.edit.contacts.namePlaceholder')" :error="fieldError(`emergency_contacts.${index}.full_name`)" required />
+                  <UiInput v-model="contact.relationship" :label="$t('profile.fields.relationship')" :placeholder="$t('profile.edit.contacts.relationshipPlaceholder')" :error="fieldError(`emergency_contacts.${index}.relationship`)" required />
+                  <UiInput v-model="contact.phone" :label="$t('profile.fields.phoneNumber')" placeholder="+62 812 3456 7890" :icon="Phone" :error="fieldError(`emergency_contacts.${index}.phone`)" required />
+                  <UiInput v-model="contact.email" type="email" :label="$t('common.labels.email')" placeholder="name@example.com" :icon="Mail" :error="fieldError(`emergency_contacts.${index}.email`)" />
                 </div>
               </div>
             </TransitionGroup>
           </UiCard>
 
           <!-- Preferences -->
-          <UiCard title="Preferences" subtitle="Optional details">
+          <UiCard :title="$t('profile.edit.preferences.title')" :subtitle="$t('profile.edit.preferences.subtitle')">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
-              <UiSelect v-model="employee.preferred_language" label="Preferred Language" :options="languageOptions" :error="fieldError('preferred_language')" />
+              <UiSelect v-model="employee.preferred_language" :label="$t('profile.edit.preferences.language')" :options="languageOptions" :error="fieldError('preferred_language')" />
               <div class="md:col-span-2">
-                <UiInput v-model="employee.additional_notes" label="Additional Notes" placeholder="Anything HR should know" :rows="3" :error="fieldError('additional_notes')" />
+                <UiInput v-model="employee.additional_notes" :label="$t('profile.edit.preferences.notes')" :placeholder="$t('profile.edit.preferences.notesPlaceholder')" :rows="3" :error="fieldError('additional_notes')" />
               </div>
             </div>
           </UiCard>
         </template>
 
         <!-- Password -->
-        <UiCard title="Password" subtitle="Leave empty to keep your current password">
+        <UiCard :title="$t('profile.edit.password.title')" :subtitle="$t('profile.edit.password.subtitle')">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
             <UiInput
               id="password"
@@ -332,11 +335,11 @@ const handleSubmit = async () => {
               type="password"
               autocomplete="new-password"
               v-model="form.password"
-              label="New Password"
-              placeholder="Enter new password (optional)"
+              :label="$t('profile.edit.password.new')"
+              :placeholder="$t('profile.edit.password.newPlaceholder')"
               :icon="Lock"
               :error="fieldError('password')"
-              hint="Min. 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol. Tidak boleh password yang pernah bocor di data breach."
+              :hint="$t('profile.edit.password.hint')"
             />
             <UiInput
               id="password_confirmation"
@@ -344,8 +347,8 @@ const handleSubmit = async () => {
               type="password"
               autocomplete="new-password"
               v-model="form.password_confirmation"
-              label="Confirm Password"
-              placeholder="Confirm new password"
+              :label="$t('profile.edit.password.confirm')"
+              :placeholder="$t('profile.edit.password.confirmPlaceholder')"
               :icon="Lock"
               :error="fieldError('password_confirmation')"
             />
@@ -354,14 +357,14 @@ const handleSubmit = async () => {
       </div>
 
       <div class="space-y-5 lg:sticky lg:top-0">
-        <UiCard title="Profile Photo">
+        <UiCard :title="$t('profile.edit.photo.title')">
           <div class="flex flex-row lg:flex-col items-center gap-5 lg:gap-4 lg:text-center">
             <input type="file" accept="image/*" class="hidden" ref="photoInput" @change="handlePhotoSelect" />
             <button
               type="button"
               class="relative w-24 h-24 rounded-full shrink-0 group cursor-pointer focus:outline-none focus-visible:shadow-ui-focus"
               @click="photoInput?.click()"
-              aria-label="Change profile photo"
+              :aria-label="$t('profile.edit.photo.change')"
             >
               <Avatar :src="form.profile_photo_url" :alt="form.name" size="w-24 h-24" />
               <div class="absolute inset-0 rounded-full bg-ui-scrim/0 group-hover:bg-ui-scrim/40 transition-colors duration-ui-base ease-ui-out flex items-center justify-center">
@@ -372,30 +375,30 @@ const handleSubmit = async () => {
               </div>
             </button>
             <div class="min-w-0">
-              <p class="text-ui-cap text-ui-muted">JPG, PNG up to 2MB<br />Recommended: 400x400px</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("profile.edit.photo.formats") }}<br />{{ $t("profile.edit.photo.recommended") }}</p>
               <p v-if="fieldError('profile_photo')" class="text-ui-cap text-ui-bad mt-1">{{ fieldError("profile_photo") }}</p>
             </div>
           </div>
         </UiCard>
 
         <!-- What HR manages, for reference -->
-        <UiCard v-if="hasEmployee" title="Managed by HR" subtitle="Ask HR to change these">
+        <UiCard v-if="hasEmployee" :title="$t('profile.edit.hr.title')" :subtitle="$t('profile.edit.hr.subtitle')">
           <dl class="space-y-3">
             <div class="flex items-center justify-between gap-3">
-              <dt class="text-ui-small text-ui-muted flex items-center gap-1.5"><IdCard class="w-4 h-4 text-ui-faint" /> Employee ID</dt>
+              <dt class="text-ui-small text-ui-muted flex items-center gap-1.5"><IdCard class="w-4 h-4 text-ui-faint" /> {{ $t("profile.fields.employeeId") }}</dt>
               <dd class="text-ui-small font-medium text-ui-ink font-mono">{{ hrOnly.code || "-" }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3">
-              <dt class="text-ui-small text-ui-muted">Identity Number</dt>
+              <dt class="text-ui-small text-ui-muted">{{ $t("profile.edit.hr.identityNumber") }}</dt>
               <dd class="text-ui-small font-medium text-ui-ink font-mono">{{ hrOnly.identity_number || "-" }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3">
-              <dt class="text-ui-small text-ui-muted">Job Title</dt>
+              <dt class="text-ui-small text-ui-muted">{{ $t("profile.fields.jobTitle") }}</dt>
               <dd class="text-ui-small font-medium text-ui-ink truncate">{{ hrOnly.job_title || "-" }}</dd>
             </div>
           </dl>
           <p class="text-ui-cap text-ui-muted mt-3 flex items-start gap-1.5">
-            <Lock class="w-3.5 h-3.5 shrink-0 mt-px" /> Job, salary and bank details are also kept by HR.
+            <Lock class="w-3.5 h-3.5 shrink-0 mt-px" /> {{ $t("profile.edit.hr.note") }}
           </p>
         </UiCard>
       </div>
@@ -404,9 +407,9 @@ const handleSubmit = async () => {
     <!-- Phones: actions at the end of the form, full width -->
     <div class="sm:hidden flex flex-col gap-2">
       <UiButton type="submit" size="lg" block :icon="Save" :loading="loading">
-        {{ loading ? "Saving..." : "Save Changes" }}
+        {{ loading ? $t("common.actions.saving") : $t("common.actions.saveChanges") }}
       </UiButton>
-      <UiButton variant="ghost" size="lg" block :to="{ name: 'employee.profile' }">Cancel</UiButton>
+      <UiButton variant="ghost" size="lg" block :to="{ name: 'employee.profile' }">{{ $t("common.actions.cancel") }}</UiButton>
     </div>
   </form>
 </template>

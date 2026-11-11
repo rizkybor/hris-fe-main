@@ -6,6 +6,10 @@ import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import RecapSection from "@/components/common/RecapSection.vue";
 import RecapTile from "@/components/common/RecapTile.vue";
 import { uiColor } from "@/utils/uiColor";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
@@ -53,7 +57,7 @@ watch(() => props.refreshKey, load);
 // the neutral line colour.
 const PALETTE = [uiColor("accent"), uiColor("ink"), uiColor("ok"), uiColor("warn"), uiColor("accent", 0.45), uiColor("ink", 0.45)];
 const OTHER_COLOR = uiColor("line-strong");
-const typeLabel = (type) => props.serviceTypeOptions.find((o) => o.value === type)?.label || type || "Other";
+const typeLabel = (type) => props.serviceTypeOptions.find((o) => o.value === type)?.label || type || t("subscriptions.recap.other");
 const typeSlot = (type) => {
   const i = props.serviceTypeOptions.findIndex((o) => o.value === type);
   return i >= 0 && i < PALETTE.length ? i : -1;
@@ -62,7 +66,7 @@ const typeSlot = (type) => {
 const slices = computed(() => {
   const rows = data.value?.by_service_type ?? [];
   const named = [];
-  let other = { type: "__other", label: "Other", monthly_value: 0, count: 0, color: OTHER_COLOR };
+  let other = { type: "__other", label: t("subscriptions.recap.other"), monthly_value: 0, count: 0, color: OTHER_COLOR };
   rows.forEach((r) => {
     const slot = typeSlot(r.type);
     if (slot >= 0) named.push({ ...r, label: typeLabel(r.type), color: PALETTE[slot] });
@@ -89,17 +93,17 @@ const donutOptions = computed(() => ({
           show: true,
           name: { show: true, offsetY: 18, color: uiColor("muted"), fontSize: "11px" },
           value: { show: true, offsetY: -14, color: uiColor("ink"), fontSize: "16px", fontWeight: 600, formatter: (v) => formatRupiahCompact(Number(v)) },
-          total: { show: true, label: "per month", color: uiColor("muted"), fontSize: "11px", formatter: () => formatRupiahCompact(sliceTotal.value) },
+          total: { show: true, label: t("subscriptions.recap.perMonth"), color: uiColor("muted"), fontSize: "11px", formatter: () => formatRupiahCompact(sliceTotal.value) },
         },
       },
     },
   },
   states: { hover: { filter: { type: "darken", value: 0.92 } } },
-  tooltip: { y: { formatter: (v) => `${formatRupiah(v)} / month` } },
+  tooltip: { y: { formatter: (v) => t("subscriptions.recap.perMonthValue", { amount: formatRupiah(v) }) } },
 }));
 
 // ----- Forecast -----
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const MONTHS = computed(() => Array.from({ length: 12 }, (_, i) => new Date(2000, i, 1).toLocaleDateString(localeTag(), { month: "short" })));
 const forecast = computed(() => data.value?.forecast ?? []);
 const forecastTotal = computed(() => forecast.value.reduce((sum, f) => sum + f.amount, 0));
 const forecastOptions = computed(() => ({
@@ -110,7 +114,7 @@ const forecastOptions = computed(() => ({
   states: { hover: { filter: { type: "darken", value: 0.9 } } },
   grid: { borderColor: uiColor("line"), strokeDashArray: 0, padding: { left: 4, right: 4 } },
   xaxis: {
-    categories: forecast.value.map((f, i) => (narrow.value && i % 2 ? "" : MONTHS[Number(f.month.slice(5, 7)) - 1])),
+    categories: forecast.value.map((f, i) => (narrow.value && i % 2 ? "" : MONTHS.value[Number(f.month.slice(5, 7)) - 1])),
     axisBorder: { show: false },
     axisTicks: { show: false },
     labels: { style: { colors: uiColor("muted"), fontSize: "11px" } },
@@ -121,9 +125,9 @@ const forecastOptions = computed(() => ({
       const f = forecast.value[dataPointIndex];
       const [y, m] = f.month.split("-");
       return `<div style="padding:8px 10px;font-size:12px;color:${uiColor("ink")}">
-        <div style="color:${uiColor("muted")}">${MONTHS[Number(m) - 1]} ${y}</div>
+        <div style="color:${uiColor("muted")}">${MONTHS.value[Number(m) - 1]} ${y}</div>
         <div style="font-weight:600">${formatRupiah(f.amount)}</div>
-        <div style="color:${uiColor("muted")}">${f.count} subscription${f.count === 1 ? "" : "s"} due</div></div>`;
+        <div style="color:${uiColor("muted")}">${t("subscriptions.recap.subscriptionsDue", { n: f.count }, f.count)}</div></div>`;
     },
   },
 }));
@@ -135,17 +139,17 @@ const clientMax = computed(() => Math.max(1, ...clients.value.map((c) => c.month
 const tiles = computed(() => {
   const d = data.value;
   if (!d) return [];
-  const inactive = [d.counts.postponed && `${d.counts.postponed} postponed`, d.counts.cancelled && `${d.counts.cancelled} not active`].filter(Boolean);
+  const inactive = [d.counts.postponed && t("subscriptions.recap.postponed", { n: d.counts.postponed }), d.counts.cancelled && t("subscriptions.recap.notActive", { n: d.counts.cancelled })].filter(Boolean);
   return [
-    { key: "active", label: "Active subscriptions", value: d.counts.active, sub: inactive.join(" · ") || "All running", icon: RefreshCw },
-    { key: "monthly", label: "Monthly value", value: formatRupiah(d.monthly_value), sub: "Yearly counted as 1/12", icon: Wallet },
-    { key: "annual", label: "Annual value", value: formatRupiah(d.annual_value), sub: `${d.client_count} client${d.client_count === 1 ? "" : "s"}`, icon: CalendarRange },
+    { key: "active", label: t("subscriptions.recap.activeSubs"), value: d.counts.active, sub: inactive.join(" · ") || t("subscriptions.recap.allRunning"), icon: RefreshCw },
+    { key: "monthly", label: t("subscriptions.recap.monthlyValue"), value: formatRupiah(d.monthly_value), sub: t("subscriptions.recap.yearlyHint"), icon: Wallet },
+    { key: "annual", label: t("subscriptions.recap.annualValue"), value: formatRupiah(d.annual_value), sub: t("subscriptions.recap.clients", { n: d.client_count }, d.client_count), icon: CalendarRange },
     {
       key: "due",
-      label: "Due in 30 days",
+      label: t("subscriptions.recap.dueIn30"),
       value: formatRupiah(d.due_soon.amount),
-      sub: `${d.due_soon.count} subscription${d.due_soon.count === 1 ? "" : "s"}`,
-      alert: d.overdue.count ? `${d.overdue.count} overdue · ${formatRupiahCompact(d.overdue.amount)}` : null,
+      sub: t("subscriptions.recap.subscriptions", { n: d.due_soon.count }, d.due_soon.count),
+      alert: d.overdue.count ? t("subscriptions.recap.overdue", { n: d.overdue.count, amount: formatRupiahCompact(d.overdue.amount) }) : null,
       icon: CalendarClock,
     },
   ];
@@ -163,9 +167,9 @@ const tiles = computed(() => {
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <!-- Value by service type -->
         <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-          <p class="text-ui-h3 text-ui-ink">Monthly value by service type</p>
-          <p class="text-ui-cap text-ui-muted mb-2">Active subscriptions only</p>
-          <p v-if="!slices.length" class="text-ui-small text-ui-muted py-10 text-center">No active subscriptions yet.</p>
+          <p class="text-ui-h3 text-ui-ink">{{ $t("subscriptions.recap.byType") }}</p>
+          <p class="text-ui-cap text-ui-muted mb-2">{{ $t("subscriptions.recap.activeOnly") }}</p>
+          <p v-if="!slices.length" class="text-ui-small text-ui-muted py-10 text-center">{{ $t("subscriptions.recap.noActive") }}</p>
           <div v-else class="flex flex-col sm:flex-row items-center gap-4">
             <div class="w-48 shrink-0">
               <VueApexCharts type="donut" height="200" :options="donutOptions" :series="slices.map((s) => s.monthly_value)" />
@@ -187,12 +191,12 @@ const tiles = computed(() => {
         <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <p class="text-ui-h3 text-ui-ink">Top clients by monthly value</p>
-              <p class="text-ui-cap text-ui-muted mb-3">Active subscriptions only</p>
+              <p class="text-ui-h3 text-ui-ink">{{ $t("subscriptions.recap.topClients") }}</p>
+              <p class="text-ui-cap text-ui-muted mb-3">{{ $t("subscriptions.recap.activeOnly") }}</p>
             </div>
             <Users class="w-4 h-4 text-ui-faint shrink-0" />
           </div>
-          <p v-if="!clients.length" class="text-ui-small text-ui-muted py-10 text-center">No active subscriptions yet.</p>
+          <p v-if="!clients.length" class="text-ui-small text-ui-muted py-10 text-center">{{ $t("subscriptions.recap.noActive") }}</p>
           <div v-else class="space-y-3">
             <div v-for="c in clients" :key="c.client">
               <div class="flex items-baseline justify-between gap-2 text-ui-cap mb-1">
@@ -206,7 +210,7 @@ const tiles = computed(() => {
               </div>
             </div>
             <p v-if="data.client_count > clients.length" class="text-ui-cap text-ui-muted">
-              + {{ data.client_count - clients.length }} more client{{ data.client_count - clients.length === 1 ? "" : "s" }}
+              {{ $t("subscriptions.recap.moreClients", { n: data.client_count - clients.length }, data.client_count - clients.length) }}
             </p>
           </div>
         </div>
@@ -216,13 +220,13 @@ const tiles = computed(() => {
       <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 mb-1">
           <div>
-            <p class="text-ui-h3 text-ui-ink">Projected billing, next 12 months</p>
-            <p class="text-ui-cap text-ui-muted">Each active subscription's due dates rolled forward by its cycle</p>
+            <p class="text-ui-h3 text-ui-ink">{{ $t("subscriptions.recap.forecast") }}</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t("subscriptions.recap.forecastHint") }}</p>
           </div>
-          <p class="text-ui-cap text-ui-muted shrink-0">12-month total <strong class="text-ui-ink font-medium tabular-nums">{{ formatRupiah(forecastTotal) }}</strong></p>
+          <p class="text-ui-cap text-ui-muted shrink-0">{{ $t("subscriptions.recap.forecastTotal") }} <strong class="text-ui-ink font-medium tabular-nums">{{ formatRupiah(forecastTotal) }}</strong></p>
         </div>
         <div class="-mx-2">
-          <VueApexCharts type="bar" height="220" :options="forecastOptions" :series="[{ name: 'Expected billing', data: forecast.map((f) => f.amount) }]" />
+          <VueApexCharts type="bar" height="220" :options="forecastOptions" :series="[{ name: $t('subscriptions.recap.expectedBilling'), data: forecast.map((f) => f.amount) }]" />
         </div>
       </div>
     </template>

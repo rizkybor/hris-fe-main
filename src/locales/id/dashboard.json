@@ -1,0 +1,265 @@
+{
+  "welcome": {
+    "greeting": {
+      "morning": "Selamat pagi, {name}",
+      "afternoon": "Selamat siang, {name}",
+      "evening": "Selamat sore, {name}",
+      "night": "Selamat malam, {name}"
+    },
+    "fallbackName": "Rekan",
+    "subtitle": {
+      "superadmin": "Ringkasan konfigurasi sistem Anda.",
+      "manager": "Begini kondisi perusahaan hari ini.",
+      "operational_director": "Ringkasan operasional & tenaga kerja Anda.",
+      "hr": "Ringkasan karyawan & tenaga kerja Anda.",
+      "finance": "Ringkasan penggajian & keuangan Anda.",
+      "staff": "Ringkasan pekerjaan pribadi Anda.",
+      "default": "Inilah yang terjadi hari ini."
+    },
+    "roles": {
+      "superadmin": "Super Admin",
+      "manager": "Manajer",
+      "operational_director": "Direktur Operasional",
+      "hr": "HR",
+      "finance": "Manajer Keuangan",
+      "staff": "Staf"
+    },
+    "clockInOut": "Absen masuk / pulang",
+    "announcements": "Pengumuman",
+    "new": "Baru",
+    "pinned": "Disematkan"
+  },
+  "widgets": {
+    "keyMetrics": "Metrik Utama",
+    "projectBudget": "Anggaran Proyek",
+    "projectRealized": "Realisasi Proyek",
+    "search": "Pencarian",
+    "stickyNotes": "Catatan Tempel",
+    "projectsAtRisk": "Proyek Berisiko",
+    "latestEmployees": "Karyawan Terbaru",
+    "latestTeams": "Tim Terbaru",
+    "quickAccess": "Akses Cepat",
+    "systemSettings": "Pengaturan Sistem",
+    "pendingLeaveRequests": "Pengajuan Cuti Menunggu",
+    "myOverview": "Ringkasan Saya",
+    "systemStats": "Statistik Sistem",
+    "recentActivity": "Aktivitas Terbaru",
+    "upcomingTasks": "Tugas Mendatang",
+    "subscriptions": "Langganan",
+    "maintenance": "Maintenance"
+  },
+  "layout": {
+    "loadError": "Widget dasbor gagal dimuat.",
+    "editing": "Mengatur tata letak dasbor",
+    "editingHint": "Seret widget untuk mengubah urutan · perubahan hanya berlaku untuk Anda",
+    "reset": "Atur ulang",
+    "resetTitle": "Atur Ulang Tata Letak",
+    "resetConfirm": "Kembalikan dasbor ke urutan dan ukuran widget bawaan?",
+    "empty": "Belum ada widget untuk peran Anda.",
+    "sizeOf": "Ukuran {name}",
+    "dragToReorder": "Seret untuk mengubah urutan: {name}",
+    "sizes": {
+      "small": "Kecil (1/3 lebar)",
+      "medium": "Sedang (1/2 lebar)",
+      "large": "Besar (lebar penuh)"
+    },
+    "saving": "Menyimpan tata letak…",
+    "saved": "Tata letak tersimpan",
+    "saveError": "Tata letak gagal disimpan"
+  },
+  "quickLinks": {
+    "empty": "Belum ada tautan cepat.",
+    "employees": "Karyawan",
+    "teams": "Tim Kami",
+    "projects": "Proyek",
+    "attendance": "Kehadiran",
+    "leaveRequests": "Pengajuan Cuti",
+    "announcements": "Pengumuman",
+    "payroll": "Penggajian",
+    "companyFinance": "Keuangan Perusahaan",
+    "invoices": "Invoice",
+    "purchaseOrders": "Purchase Order",
+    "reports": "Laporan",
+    "roles": "Peran & Hak Akses",
+    "staffPermissions": "Hak Akses Akun Staf",
+    "dropdownOptions": "Opsi Dropdown",
+    "backup": "Backup Database"
+  },
+  "myOverview": {
+    "attendanceRate": "Tingkat Kehadiran",
+    "thisMonth": "Bulan Ini",
+    "thisMonthHint": "Bulan ini",
+    "daysOf": "{present} dari {total} hari",
+    "onTime": "{n}% Tepat Waktu",
+    "greatPerformance": "Performa Bagus",
+    "hoursWorked": "Jam Kerja",
+    "hoursValue": "{n} jam",
+    "leaveBalance": "Sisa Cuti",
+    "daysRemaining": "Hari tersisa",
+    "tasksDone": "Tugas Selesai",
+    "yesterday": "+{n} kemarin",
+    "activeProjects": "Proyek Aktif",
+    "assignedLeading": "Ditugaskan ke Anda · Memimpin: {n}",
+    "recentActivities": "Aktivitas Terbaru",
+    "empty": "Belum ada aktivitas",
+    "read": "Sudah dibaca",
+    "unread": "Belum dibaca",
+    "notification": "Notifikasi"
+  },
+  "quickActions": {
+    "title": "Aksi Cepat",
+    "empty": "Belum ada aksi cepat",
+    "addEmployee": "Tambah Karyawan",
+    "createTeam": "Buat Tim Baru",
+    "processPayroll": "Proses Penggajian",
+    "viewAttendance": "Lihat Kehadiran",
+    "operationalCost": "Biaya Operasional",
+    "addClient": "Tambah Klien",
+    "clockInOut": "Absen Masuk / Pulang",
+    "requestLeave": "Ajukan Cuti",
+    "myTasks": "Tugas Saya",
+    "myPayslips": "Slip Gaji Saya"
+  },
+  "latestEmployees": {
+    "empty": "Belum ada karyawan",
+    "unknown": "Tidak diketahui",
+    "noJobTitle": "-"
+  },
+  "latestTeams": {
+    "empty": "Belum ada tim",
+    "members": "{n} anggota"
+  },
+  "maintenance": {
+    "subtitle": "Kuota terpakai bulan ini",
+    "loadError": "Data maintenance gagal dimuat.",
+    "empty": "Belum ada kontrak maintenance aktif.",
+    "usedThisMonth": "Terpakai bulan ini",
+    "ofPercent": "dari {total} · {percent}%",
+    "overQuota": "Melebihi kuota",
+    "ofContracts": "dari {n} kontrak",
+    "devBalance": "Saldo dev.",
+    "expiring": "{hours} akan hangus",
+    "over": "lebih {hours}",
+    "hoursPerMonth": "Jam terpakai per bulan (semua kontrak)",
+    "hoursUsed": "Jam terpakai",
+    "tooltipUsed": "{hours} terpakai",
+    "tooltipQuota": "dari kuota {hours}"
+  },
+  "leaveRequests": {
+    "awaiting": "{n} menunggu tinjauan Anda",
+    "empty": "Tidak ada pengajuan cuti yang menunggu.",
+    "unknown": "Tidak diketahui",
+    "leave": "Cuti",
+    "status": {
+      "pending": "Menunggu",
+      "approved": "Disetujui",
+      "rejected": "Ditolak",
+      "cancelled": "Dibatalkan"
+    }
+  },
+  "projectsAtRisk": {
+    "subtitle": "Terlambat atau mendekati tenggat",
+    "empty": "Tidak ada proyek aktif yang berisiko saat ini",
+    "progress": "{actual}% · target {expected}%",
+    "daysLeft": "{n} hari lagi",
+    "daysOverdue": "lewat {n} hari"
+  },
+  "recentActivity": {
+    "subtitle": "Perubahan terbaru di seluruh sistem",
+    "empty": "Belum ada aktivitas tercatat.",
+    "system": "Sistem"
+  },
+  "search": {
+    "subtitle": "Karyawan, proyek, tugas, dan tim",
+    "placeholder": "Cari karyawan, tugas, laporan, proyek...",
+    "clear": "Hapus pencarian",
+    "allDepartments": "Semua Departemen",
+    "searching": "Mencari...",
+    "noResults": "Tidak ada hasil untuk \"{query}\"",
+    "employees": "Karyawan",
+    "projects": "Proyek",
+    "tasks": "Tugas",
+    "teams": "Tim"
+  },
+  "stickyNotes": {
+    "subtitle": "Notulen rapat yang disematkan",
+    "empty": "Belum ada catatan disematkan",
+    "emptyHint": "Sematkan notulen penting dari Dokumen Bisnis agar muncul di sini.",
+    "noNotes": "Tidak ada catatan."
+  },
+  "keyMetrics": {
+    "profile": {
+      "business": "Ringkasan bisnis",
+      "finance": "Ringkasan keuangan",
+      "people": "Ringkasan karyawan"
+    },
+    "overview": "Ringkasan",
+    "loadError": "Metrik utama gagal dimuat.",
+    "empty": "Belum ada metrik untuk peran Anda.",
+    "points": "{n} poin"
+  },
+  "subscriptions": {
+    "subtitle": "Perkiraan tagihan 12 bulan ke depan",
+    "loadError": "Data langganan gagal dimuat.",
+    "empty": "Belum ada langganan aktif.",
+    "active": "Aktif",
+    "postponed": "{n} ditunda",
+    "perMonth": "Per bulan",
+    "perMonthHint": "Langganan tahunan dihitung 1/12 per bulan",
+    "dueIn30": "Jatuh tempo 30 hari",
+    "projected": "Proyeksi tagihan per bulan",
+    "yearTotal": "Total 12 bulan",
+    "dueSoon": "Segera jatuh tempo",
+    "overdue": "Lewat jatuh tempo",
+    "expectedBilling": "Perkiraan tagihan",
+    "countDue": "{n} langganan jatuh tempo"
+  },
+  "systemStats": {
+    "roles": "Peran Sistem",
+    "rolesHint": "Peran yang dikonfigurasi",
+    "permissions": "Hak Akses",
+    "permissionsHint": "Di seluruh modul",
+    "staffAccounts": "Akun Staf",
+    "staffHint": "{n} dengan hak akses tambahan",
+    "activityToday": "Aktivitas Hari Ini",
+    "thisWeek": "{n} minggu ini"
+  },
+  "upcomingTasks": {
+    "open": "{n} terbuka",
+    "empty": "Belum ada tugas mendatang",
+    "noDueDate": "Tanpa jatuh tempo",
+    "projectTask": "Tugas proyek",
+    "assignedTask": "Tugas yang diberikan",
+    "assignedBy": "Diberikan oleh {name}",
+    "noProject": "Tanpa Proyek",
+    "task": "Tugas",
+    "priority": "prioritas {p}",
+    "status": {
+      "todo": "Belum dikerjakan",
+      "in_progress": "Dikerjakan",
+      "review": "Ditinjau",
+      "done": "Selesai",
+      "cancelled": "Dibatalkan"
+    },
+    "priorities": {
+      "low": "rendah",
+      "medium": "sedang",
+      "high": "tinggi",
+      "urgent": "mendesak"
+    }
+  },
+  "spt": {
+    "title": "Buka Aplikasi Coretax - Segera Lakukan SPT Tahunan",
+    "deadline": "Batas pelaporan SPT Tahunan PPh Orang Pribadi adalah",
+    "daysLeft": "({n} hari lagi)",
+    "today": "(hari ini)",
+    "penalty": "Jika telat, akan dikenakan denda.",
+    "open": "Buka Coretax"
+  },
+  "notifications": {
+    "title": "Notifikasi",
+    "markAllRead": "Tandai semua dibaca",
+    "empty": "Belum ada notifikasi",
+    "fallbackTitle": "Notifikasi"
+  }
+}

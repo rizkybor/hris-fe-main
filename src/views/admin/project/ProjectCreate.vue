@@ -43,27 +43,30 @@ import { axiosInstance } from "@/plugins/axios";
 import router from "@/router";
 import { UiPageHeader, UiButton, UiInput, UiSelect, UiModal, UiEmpty, UiBadge } from "@/components/ui";
 import { ArrowLeft, Save } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 // Presentation-only option lists (same values as before).
-const TYPE_OPTIONS = [
-  { value: "web_development", label: "Web Development" },
-  { value: "mobile_app", label: "Mobile App" },
-  { value: "design", label: "Design" },
-  { value: "marketing", label: "Marketing" },
-  { value: "research", label: "Research" },
-  { value: "infrastructure", label: "Infrastructure" },
-];
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Low", icon: Minus },
-  { value: "medium", label: "Medium", icon: Flag },
-  { value: "high", label: "High", icon: Zap },
-];
-const STATUS_OPTIONS = [
-  { value: "active", label: "Active", icon: PlayCircle },
-  { value: "planning", label: "Planning", icon: ClipboardList },
-  { value: "on_hold", label: "On Hold", icon: PauseCircle },
-  { value: "draft", label: "Draft", icon: FileText },
-];
+const TYPE_OPTIONS = computed(() => [
+  { value: "web_development", label: t("projects.types.webDevelopment") },
+  { value: "mobile_app", label: t("projects.types.mobileApp") },
+  { value: "design", label: t("projects.types.design") },
+  { value: "marketing", label: t("projects.types.marketing") },
+  { value: "research", label: t("projects.types.research") },
+  { value: "infrastructure", label: t("projects.types.infrastructure") },
+]);
+const PRIORITY_OPTIONS = computed(() => [
+  { value: "low", label: t("projects.priority.low"), icon: Minus },
+  { value: "medium", label: t("projects.priority.medium"), icon: Flag },
+  { value: "high", label: t("projects.priority.high"), icon: Zap },
+]);
+const STATUS_OPTIONS = computed(() => [
+  { value: "active", label: t("projects.status.active"), icon: PlayCircle },
+  { value: "planning", label: t("projects.status.planning"), icon: ClipboardList },
+  { value: "on_hold", label: t("projects.status.onHold"), icon: PauseCircle },
+  { value: "draft", label: t("projects.status.draft"), icon: FileText },
+]);
 // Native input look for fields UiInput can't take 1:1 (min, prefix, rows).
 const FIELD =
   "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
@@ -211,9 +214,9 @@ const handleProjectPhotoSelect = (e) => {
   photoError.value = "";
   if (!file) return;
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-    photoError.value = "Please choose a JPG, PNG or WebP image.";
+    photoError.value = t("projects.form.photoType");
   } else if (file.size > MAX_PHOTO_BYTES) {
-    photoError.value = "The photo must be 2MB or smaller.";
+    photoError.value = t("projects.form.photoSize");
   } else {
     if (form.value.photo_url) URL.revokeObjectURL(form.value.photo_url);
     form.value.photo = file;
@@ -291,7 +294,7 @@ watch(
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Create Project" subtitle="Set up the project details, team and settings.">
+    <UiPageHeader :title="$t('projects.form.createTitle')" :subtitle="$t('projects.form.createSubtitle')">
       <template #eyebrow>
         <button
           type="button"
@@ -299,13 +302,13 @@ watch(
           class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
         >
           <ArrowLeft class="w-4 h-4" />
-          Back
+          {{ $t("common.actions.back") }}
         </button>
       </template>
       <template #actions>
         <div class="hidden sm:flex items-center gap-2">
-          <UiButton variant="secondary" @click="router.back()">Cancel</UiButton>
-          <UiButton type="submit" form="project-form" :icon="Plus" :loading="loading">Create Project</UiButton>
+          <UiButton variant="secondary" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
+          <UiButton type="submit" form="project-form" :icon="Plus" :loading="loading">{{ $t("projects.form.createSubmit") }}</UiButton>
         </div>
       </template>
     </UiPageHeader>
@@ -319,25 +322,25 @@ watch(
               <Briefcase class="w-4 h-4" />
             </span>
             <div class="min-w-0">
-              <h2 class="text-ui-h2 text-ui-ink">Project Information</h2>
-              <p class="text-ui-cap text-ui-muted mt-0.5">Basic project details and description</p>
+              <h2 class="text-ui-h2 text-ui-ink">{{ $t("projects.detail.info.title") }}</h2>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.infoSubtitle") }}</p>
             </div>
           </header>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
             <!-- Project Photo -->
             <div class="md:col-span-2">
-              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Project Photo (optional)</p>
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.photoOptional") }}</p>
               <div class="flex flex-col sm:flex-row items-start gap-4">
                 <button
                   type="button"
                   class="group relative w-full sm:w-64 h-40 shrink-0 rounded-ui-card overflow-hidden border border-dashed border-ui-line-strong bg-ui-subtle flex items-center justify-center focus:outline-none focus-visible:shadow-ui-focus"
-                  aria-label="Select project photo"
+                  :aria-label="$t('projects.form.selectPhotoLabel')"
                   @click="openPhotoPicker"
                 >
-                  <img :src="form.photo_url" alt="Project Photo" class="w-full h-full object-cover" v-if="form.photo_url" />
+                  <img :src="form.photo_url" :alt="$t('projects.form.photo')" class="w-full h-full object-cover" v-if="form.photo_url" />
                   <span v-else class="flex flex-col items-center justify-center text-ui-faint">
                     <Image class="w-8 h-8 mb-2" />
-                    <span class="text-ui-small font-medium text-ui-muted">Project Photo</span>
+                    <span class="text-ui-small font-medium text-ui-muted">{{ $t("projects.form.photo") }}</span>
                   </span>
                   <span class="absolute inset-0 bg-ui-scrim/0 group-hover:bg-ui-scrim/30 transition-colors flex items-center justify-center">
                     <Upload class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -351,9 +354,9 @@ watch(
                     ref="projectPhotoInput"
                     @change="handleProjectPhotoSelect"
                   />
-                  <UiButton variant="secondary" size="sm" :icon="ImagePlus" @click="openPhotoPicker">Select Photo</UiButton>
-                  <UiButton v-if="form.photo_url" variant="secondary" size="sm" :icon="X" @click="handleRemovePhoto">Remove Photo</UiButton>
-                  <p class="text-ui-cap text-ui-muted">JPG, PNG or WebP up to 2MB (recommended: 640x424px)</p>
+                  <UiButton variant="secondary" size="sm" :icon="ImagePlus" @click="openPhotoPicker">{{ $t("projects.form.selectPhoto") }}</UiButton>
+                  <UiButton v-if="form.photo_url" variant="secondary" size="sm" :icon="X" @click="handleRemovePhoto">{{ $t("projects.form.removePhoto") }}</UiButton>
+                  <p class="text-ui-cap text-ui-muted">{{ $t("projects.form.photoHint") }}</p>
                   <p v-if="photoError" class="text-ui-cap text-ui-bad">{{ photoError }}</p>
                 </div>
               </div>
@@ -365,8 +368,8 @@ watch(
               name="name"
               type="text"
               v-model="form.name"
-              label="Project Name"
-              placeholder="Enter project name"
+              :label="$t('projects.form.name')"
+              :placeholder="$t('projects.form.namePlaceholder')"
               :icon="Briefcase"
               required :error="error?.name?.join(', ')"
             />
@@ -375,14 +378,14 @@ watch(
             <UiSelect
               id="client_id"
               v-model="form.client_id"
-              label="Client (optional)"
-              :options="[{ value: '', label: 'No client' }, ...clientOptions]"
-              hint="Link this project to the client it's contracted through, if any."
+              :label="$t('projects.form.clientOptional')"
+              :options="[{ value: '', label: $t('projects.card.noClient') }, ...clientOptions]"
+              :hint="$t('projects.form.clientHint')"
             />
 
             <!-- Priority -->
             <div class="md:col-span-2">
-              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Priority <span class="text-ui-bad">*</span></p>
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.fields.priority") }} <span class="text-ui-bad">*</span></p>
               <div class="grid grid-cols-3 gap-2 sm:gap-3">
                 <label
                   v-for="opt in PRIORITY_OPTIONS"
@@ -404,8 +407,8 @@ watch(
               <UiSelect
                 id="type"
                 v-model="form.type"
-                label="Project Type"
-                placeholder="Select project type"
+                :label="$t('projects.form.type')"
+                :placeholder="$t('projects.form.typePlaceholder')"
                 :options="TYPE_OPTIONS"
                 required :error="error?.type?.join(', ')"
               />
@@ -416,7 +419,7 @@ watch(
                 name="start_date"
                 type="date"
                 v-model="form.start_date"
-                label="Start Date"
+                :label="$t('projects.fields.startDate')"
                 required :error="error?.start_date?.join(', ')"
               />
 
@@ -426,7 +429,7 @@ watch(
                 name="end_date"
                 type="date"
                 v-model="form.end_date"
-                label="End Date (optional)" :error="error?.end_date?.join(', ')"
+                :label="$t('projects.form.endDateOptional')" :error="error?.end_date?.join(', ')"
               />
             </div>
 
@@ -436,8 +439,8 @@ watch(
                 id="description"
                 name="description"
                 v-model="form.description"
-                label="Project Description (optional)"
-                placeholder="Describe the project's objectives and scope..."
+                :label="$t('projects.form.descriptionOptional')"
+                :placeholder="$t('projects.form.descriptionPlaceholder')"
                 :rows="4" :error="error?.description?.join(', ')"
               />
             </div>
@@ -450,8 +453,8 @@ watch(
               <Link2 class="w-4 h-4" />
             </span>
             <div class="min-w-0">
-              <h2 class="text-ui-h2 text-ui-ink">Project Access</h2>
-              <p class="text-ui-cap text-ui-muted mt-0.5">Optional — quick links for this project (opens in a new tab)</p>
+              <h2 class="text-ui-h2 text-ui-ink">{{ $t("projects.access.title") }}</h2>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.accessSubtitle") }}</p>
             </div>
           </header>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -459,15 +462,15 @@ watch(
               id="access_project_name"
               name="access_project_name"
               v-model="form.access_project_name"
-              label="Access Project Name (optional)"
-              placeholder="e.g. Staging Site"
+              :label="$t('projects.form.accessProjectName')"
+              :placeholder="$t('projects.form.accessProjectNamePlaceholder')"
             />
             <UiInput
               id="access_project_url"
               name="access_project_url"
               type="url"
               v-model="form.access_project_url"
-              label="Access Project Link (optional)"
+              :label="$t('projects.form.accessProjectUrl')"
               placeholder="https://..."
             />
 
@@ -475,15 +478,15 @@ watch(
               id="access_github_name"
               name="access_github_name"
               v-model="form.access_github_name"
-              label="Access Github Name (optional)"
-              placeholder="e.g. Repository"
+              :label="$t('projects.form.accessGithubName')"
+              :placeholder="$t('projects.form.accessGithubNamePlaceholder')"
             />
             <UiInput
               id="access_github_url"
               name="access_github_url"
               type="url"
               v-model="form.access_github_url"
-              label="Access Github Link (optional)"
+              :label="$t('projects.form.accessGithubUrl')"
               placeholder="https://github.com/..."
             />
 
@@ -491,23 +494,23 @@ watch(
               id="access_figma_name"
               name="access_figma_name"
               v-model="form.access_figma_name"
-              label="Access Figma Name (optional)"
-              placeholder="e.g. Design File"
+              :label="$t('projects.form.accessFigmaName')"
+              :placeholder="$t('projects.form.accessFigmaNamePlaceholder')"
             />
             <UiInput
               id="access_figma_url"
               name="access_figma_url"
               type="url"
               v-model="form.access_figma_url"
-              label="Access Figma Link (optional)"
+              :label="$t('projects.form.accessFigmaUrl')"
               placeholder="https://figma.com/..."
             />
           </div>
 
           <div class="mt-6 pt-5 border-t border-ui-line">
             <div class="flex items-center justify-between mb-3">
-              <p class="text-ui-small font-medium text-ui-ink">Additional Access (optional)</p>
-              <UiButton variant="ghost" size="sm" :icon="Plus" class="text-ui-accent" @click="addAdditionalAccess">Add Link</UiButton>
+              <p class="text-ui-small font-medium text-ui-ink">{{ $t("projects.form.additionalAccess") }}</p>
+              <UiButton variant="ghost" size="sm" :icon="Plus" class="text-ui-accent" @click="addAdditionalAccess">{{ $t("projects.form.addLink") }}</UiButton>
             </div>
             <div
               v-for="(item, i) in form.additional_access"
@@ -517,8 +520,8 @@ watch(
               <input
                 v-model="item.name"
                 type="text"
-                placeholder="Name (e.g. Postman Collection)"
-                aria-label="Link name"
+                :placeholder="$t('projects.form.linkNamePlaceholder')"
+                :aria-label="$t('projects.form.linkName')"
                 :class="FIELD"
                 class="col-span-2 md:col-span-1"
               />
@@ -526,20 +529,20 @@ watch(
                 v-model="item.url"
                 type="url"
                 placeholder="https://..."
-                aria-label="Link URL"
+                :aria-label="$t('projects.form.linkUrl')"
                 :class="FIELD"
               />
               <button
                 type="button"
                 @click="removeAdditionalAccess(i)"
                 class="ui-press w-[38px] h-[38px] inline-flex items-center justify-center rounded-ui-control border border-ui-line-strong text-ui-muted hover:text-ui-bad hover:border-ui-bad/30 hover:bg-ui-bad-soft"
-                aria-label="Remove link"
+                :aria-label="$t('projects.form.removeLink')"
               >
                 <Trash2 class="w-4 h-4" />
               </button>
             </div>
             <p v-if="form.additional_access.length === 0" class="text-ui-cap text-ui-faint">
-              No additional links added yet.
+              {{ $t("projects.form.noLinks") }}
             </p>
           </div>
         </section>
@@ -550,8 +553,8 @@ watch(
               <Users class="w-4 h-4" />
             </span>
             <div class="min-w-0">
-              <h2 class="text-ui-h2 text-ui-ink">Team Assignment</h2>
-              <p class="text-ui-cap text-ui-muted mt-0.5">Assign a whole Team, or pick a leader and members individually</p>
+              <h2 class="text-ui-h2 text-ui-ink">{{ $t("projects.form.teamAssignment") }}</h2>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.teamAssignmentSubtitle") }}</p>
             </div>
           </header>
           <!-- Mode Toggle -->
@@ -564,10 +567,10 @@ watch(
               :aria-pressed="form.team_assignment_mode === 'employee'"
             >
               <span class="flex items-center justify-between gap-2">
-                <span class="text-ui-small font-semibold text-ui-ink">By Employee</span>
+                <span class="text-ui-small font-semibold text-ui-ink">{{ $t("projects.form.byEmployee") }}</span>
                 <Check v-if="form.team_assignment_mode === 'employee'" class="w-4 h-4 text-ui-ink shrink-0" />
               </span>
-              <span class="block text-ui-cap text-ui-muted mt-0.5">Pick a leader and members one by one</span>
+              <span class="block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.byEmployeeHint") }}</span>
             </button>
             <button
               type="button"
@@ -577,17 +580,17 @@ watch(
               :aria-pressed="form.team_assignment_mode === 'team'"
             >
               <span class="flex items-center justify-between gap-2">
-                <span class="text-ui-small font-semibold text-ui-ink">By Team</span>
+                <span class="text-ui-small font-semibold text-ui-ink">{{ $t("projects.form.byTeam") }}</span>
                 <Check v-if="form.team_assignment_mode === 'team'" class="w-4 h-4 text-ui-ink shrink-0" />
               </span>
-              <span class="block text-ui-cap text-ui-muted mt-0.5">Leader and members come from a Team</span>
+              <span class="block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.byTeamHint") }}</span>
             </button>
           </div>
 
           <!-- By Team -->
           <div v-if="form.team_assignment_mode === 'team'" class="space-y-5">
             <div>
-              <p class="block text-ui-small font-medium text-ui-ink mb-2">Select a Team <span class="text-ui-bad">*</span></p>
+              <p class="block text-ui-small font-medium text-ui-ink mb-2">{{ $t("projects.form.selectTeam") }} <span class="text-ui-bad">*</span></p>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label
                   class="group flex items-center gap-3 w-full min-h-[64px] rounded-ui-control border border-ui-line bg-ui-surface px-3.5 py-3 cursor-pointer transition-colors hover:bg-ui-subtle has-[:checked]:border-ui-ink has-[:checked]:ring-1 has-[:checked]:ring-ui-ink has-[:focus-visible]:shadow-ui-focus"
@@ -599,20 +602,20 @@ watch(
                   </span>
                   <span class="flex-1 min-w-0">
                     <span class="block text-ui-small font-medium text-ui-ink truncate">{{ team.name }}</span>
-                    <span class="block text-ui-cap text-ui-muted truncate">{{ team.members_count }} members • {{ team.leader?.name || "No lead" }}</span>
+                    <span class="block text-ui-cap text-ui-muted truncate">{{ $t("projects.form.teamMembers", { n: team.members_count }, team.members_count) }} • {{ team.leader?.name || $t("projects.form.noLead") }}</span>
                   </span>
                   <input type="radio" name="team_id" :value="team.id" class="w-4 h-4 accent-ui-ink shrink-0" v-model="form.team_id" />
                 </label>
               </div>
-              <p v-if="teams.length === 0" class="text-ui-small text-ui-faint py-2">No teams yet.</p>
+              <p v-if="teams.length === 0" class="text-ui-small text-ui-faint py-2">{{ $t("projects.form.noTeams") }}</p>
             </div>
 
             <!-- Preview of the selected Team's leader + members -->
             <div v-if="selectedTeamDetail" class="rounded-ui-control bg-ui-subtle border border-ui-line p-4">
               <p class="text-ui-small font-medium text-ui-ink mb-1">
-                Project Leader will be <span class="text-ui-accent">{{ selectedTeamDetail.leader?.name || "unset (Team has no lead)" }}</span>
+                {{ $t("projects.form.leaderWillBe") }} <span class="text-ui-accent">{{ selectedTeamDetail.leader?.name || $t("projects.form.leaderUnset") }}</span>
               </p>
-              <p class="text-ui-cap text-ui-muted mb-2">Members ({{ selectedTeamDetail.members?.length || 0 }}) come directly from this Team:</p>
+              <p class="text-ui-cap text-ui-muted mb-2">{{ $t("projects.form.membersFromTeam", { n: selectedTeamDetail.members?.length || 0 }) }}</p>
               <div class="flex flex-wrap gap-1.5">
                 <UiBadge v-for="member in selectedTeamDetail.members" :key="member.id" tone="outline">
                   {{ member.employee?.user?.name }}
@@ -625,7 +628,7 @@ watch(
           <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
             <!-- Project Leader -->
             <div class="min-w-0">
-              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Select Project Leader (optional)</p>
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.selectLeaderOptional") }}</p>
               <button
                 type="button"
                 @click="leaderModal = true"
@@ -633,7 +636,7 @@ watch(
               >
                 <UserCheck class="w-4 h-4 text-ui-faint shrink-0" />
                 <span class="flex-1 truncate text-ui-body" :class="selectedLeader?.user?.name ? 'text-ui-ink' : 'text-ui-faint'">
-                  {{ selectedLeader?.user?.name || "Select project leader" }}
+                  {{ selectedLeader?.user?.name || $t("projects.form.selectLeaderPlaceholder") }}
                 </span>
                 <ChevronDown class="w-4 h-4 text-ui-faint shrink-0" />
               </button>
@@ -654,7 +657,7 @@ watch(
                     type="button"
                     @click="handleRemoveLeader"
                     class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:text-ui-ink hover:bg-ui-hover"
-                    aria-label="Remove project leader"
+                    :aria-label="$t('projects.form.removeLeader')"
                   >
                     <X class="w-4 h-4" />
                   </button>
@@ -665,10 +668,10 @@ watch(
             <!-- Members -->
             <div class="min-w-0">
               <div class="flex items-center justify-between mb-1.5">
-                <p class="text-ui-small font-medium text-ui-ink">Members (optional)</p>
+                <p class="text-ui-small font-medium text-ui-ink">{{ $t("projects.form.membersOptional") }}</p>
                 <span v-if="form.member_employee_ids.length" class="text-ui-cap text-ui-accent font-medium flex items-center gap-1 tabular-nums">
                   <Users class="w-3.5 h-3.5" />
-                  {{ form.member_employee_ids.length }} selected
+                  {{ $t("projects.form.selected", { n: form.member_employee_ids.length }) }}
                 </span>
               </div>
               <div class="border border-ui-line-strong rounded-ui-control overflow-hidden">
@@ -677,8 +680,8 @@ watch(
                   <input
                     v-model="memberSearch"
                     type="text"
-                    placeholder="Search employees..."
-                    aria-label="Search employees"
+                    :placeholder="$t('projects.tasks.detail.searchEmployees')"
+                    :aria-label="$t('projects.form.searchEmployees')"
                     class="w-full h-8 pl-7 pr-2 bg-ui-surface border border-ui-line-strong rounded-[7px] text-ui-small text-ui-ink placeholder:text-ui-faint focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
                   />
                 </div>
@@ -696,8 +699,8 @@ watch(
                     />
                     <span class="truncate">{{ employee.user?.name }}</span>
                   </label>
-                  <p v-if="selectableMemberCandidates.length === 0" class="text-ui-small text-ui-faint px-2.5 py-2">No staff data yet.</p>
-                  <p v-else-if="filteredMemberCandidates.length === 0" class="text-ui-small text-ui-faint px-2.5 py-2">No employees match "{{ memberSearch }}".</p>
+                  <p v-if="selectableMemberCandidates.length === 0" class="text-ui-small text-ui-faint px-2.5 py-2">{{ $t("projects.form.noStaff") }}</p>
+                  <p v-else-if="filteredMemberCandidates.length === 0" class="text-ui-small text-ui-faint px-2.5 py-2">{{ $t("projects.form.noMatch", { q: memberSearch }) }}</p>
                 </div>
               </div>
             </div>
@@ -710,14 +713,14 @@ watch(
               <Settings class="w-4 h-4" />
             </span>
             <div class="min-w-0">
-              <h2 class="text-ui-h2 text-ui-ink">Project Settings</h2>
-              <p class="text-ui-cap text-ui-muted mt-0.5">Configure project status, budget</p>
+              <h2 class="text-ui-h2 text-ui-ink">{{ $t("projects.form.settings") }}</h2>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.form.settingsSubtitle") }}</p>
             </div>
           </header>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             <!-- Budget -->
             <div class="min-w-0">
-              <label for="budget" class="block text-ui-small font-medium text-ui-ink mb-1.5">Budget (optional)</label>
+              <label for="budget" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.budgetOptional") }}</label>
               <div class="relative">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ui-small text-ui-muted pointer-events-none">Rp</span>
                 <input
@@ -735,27 +738,27 @@ watch(
 
             <!-- Warranty & Retention Period -->
               <div class="min-w-0">
-                <label for="warranty_period_months" class="block text-ui-small font-medium text-ui-ink mb-1.5">Warranty Period (months, optional)</label>
+                <label for="warranty_period_months" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.warrantyOptional") }}</label>
                 <input
                   id="warranty_period_months"
                   name="warranty_period_months"
                   type="number"
                   min="0"
                   v-model="form.warranty_period_months"
-                  placeholder="e.g. 12"
+                  :placeholder="$t('projects.form.examplePlaceholder', { n: 12 })"
                   :class="[FIELD, 'tabular-nums', error?.warranty_period_months ? 'border-ui-bad/50' : '']"
                 />
                 <p v-if="error?.warranty_period_months" class="text-ui-cap text-ui-bad mt-1.5">{{ error?.warranty_period_months?.join(", ") }}</p>
               </div>
               <div class="min-w-0">
-                <label for="retention_period_months" class="block text-ui-small font-medium text-ui-ink mb-1.5">Retention Period (months, optional)</label>
+                <label for="retention_period_months" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.retentionOptional") }}</label>
                 <input
                   id="retention_period_months"
                   name="retention_period_months"
                   type="number"
                   min="0"
                   v-model="form.retention_period_months"
-                  placeholder="e.g. 6"
+                  :placeholder="$t('projects.form.examplePlaceholder', { n: 6 })"
                   :class="[FIELD, 'tabular-nums', error?.retention_period_months ? 'border-ui-bad/50' : '']"
                 />
                 <p v-if="error?.retention_period_months" class="text-ui-cap text-ui-bad mt-1.5">{{ error?.retention_period_months?.join(", ") }}</p>
@@ -763,7 +766,7 @@ watch(
 
             <!-- Initial Project Status (Full Width) -->
             <div class="md:col-span-3">
-              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Initial Project Status <span class="text-ui-bad">*</span></p>
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("projects.form.initialStatus") }} <span class="text-ui-bad">*</span></p>
               <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                 <label
                   v-for="opt in STATUS_OPTIONS"
@@ -784,8 +787,8 @@ watch(
 
         <!-- Form Actions -->
         <div class="flex items-center gap-3 sm:justify-end">
-          <UiButton variant="secondary" size="lg" class="flex-1 sm:flex-none" @click="router.back()">Cancel</UiButton>
-          <UiButton type="submit" size="lg" class="flex-1 sm:flex-none" :icon="Plus" :loading="loading">Create Project</UiButton>
+          <UiButton variant="secondary" size="lg" class="flex-1 sm:flex-none" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
+          <UiButton type="submit" size="lg" class="flex-1 sm:flex-none" :icon="Plus" :loading="loading">{{ $t("projects.form.createSubmit") }}</UiButton>
         </div>
       </form>
 
@@ -796,14 +799,14 @@ watch(
     <UiModal
       v-model:open="leaderModal"
       size="lg"
-      title="Select Project Leader"
-      description="Choose an employee to lead this project"
+      :title="$t('projects.form.selectLeader')"
+      :description="$t('projects.form.selectLeaderDescription')"
     >
       <UiInput
         v-model="searchLeader"
         :icon="Search"
-        placeholder="Search employees..."
-        aria-label="Search employees"
+        :placeholder="$t('projects.tasks.detail.searchEmployees')"
+        :aria-label="$t('projects.form.searchEmployees')"
       />
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-4">
@@ -833,8 +836,8 @@ watch(
         v-if="employees.length === 0"
         compact
         :icon="SearchX"
-        title="No employees found"
-        message="Try adjusting your search terms"
+        :title="$t('projects.tasks.detail.noEmployees')"
+        :message="$t('projects.form.noEmployeesHint')"
       />
     </UiModal>
   </div>

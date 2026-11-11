@@ -3,25 +3,8 @@ import { Check, ChevronRight, Lightbulb, Users, Zap } from "lucide-vue-next";
 
 defineEmits(["browse-employees"]);
 
-// Static copy for the tips card.
-const tips = [
-  {
-    title: "Choose a Clear Name",
-    text: "Pick a descriptive name that reflects the team's purpose and function.",
-  },
-  {
-    title: "Select Right Lead",
-    text: "Choose someone with leadership experience and domain expertise.",
-  },
-  {
-    title: "Define Clear Goals",
-    text: "Write a clear description of what the team will achieve.",
-  },
-  {
-    title: "Plan for Growth",
-    text: "Consider how the team will scale and evolve over time.",
-  },
-];
+// Static copy for the tips card (keys under teams.tips.*).
+const tips = ["name", "lead", "goals", "growth"];
 </script>
 
 <template>
@@ -32,23 +15,23 @@ const tips = [
       <div class="flex items-start gap-3 mb-4">
         <Lightbulb class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
         <div>
-          <h3 class="text-ui-h3 text-ui-ink">Team Creation Tips</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("teams.tips.title") }}</h3>
           <p class="text-ui-cap text-ui-muted mt-0.5">
-            Best practices for setting up teams
+            {{ $t("teams.tips.subtitle") }}
           </p>
         </div>
       </div>
 
       <ul class="space-y-3.5">
-        <li v-for="tip in tips" :key="tip.title" class="flex items-start gap-2.5">
+        <li v-for="tip in tips" :key="tip" class="flex items-start gap-2.5">
           <span
             class="w-5 h-5 shrink-0 mt-px rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center"
           >
             <Check class="w-3 h-3" />
           </span>
           <div class="min-w-0">
-            <p class="text-ui-small font-medium text-ui-ink">{{ tip.title }}</p>
-            <p class="text-ui-cap text-ui-muted mt-0.5">{{ tip.text }}</p>
+            <p class="text-ui-small font-medium text-ui-ink">{{ $t(`teams.tips.${tip}.title`) }}</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t(`teams.tips.${tip}.text`) }}</p>
           </div>
         </li>
       </ul>
@@ -59,8 +42,8 @@ const tips = [
       <div class="flex items-start gap-3 mb-4">
         <Zap class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
         <div>
-          <h3 class="text-ui-h3 text-ui-ink">Quick Actions</h3>
-          <p class="text-ui-cap text-ui-muted mt-0.5">Common team setup tasks</p>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("teams.quickActions.title") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.quickActions.subtitle") }}</p>
         </div>
       </div>
 
@@ -71,8 +54,8 @@ const tips = [
       >
         <Users class="w-4 h-4 text-ui-muted shrink-0" />
         <div class="flex-1 min-w-0">
-          <h4 class="text-ui-small font-medium text-ui-ink">Browse Employees</h4>
-          <p class="text-ui-cap text-ui-muted">Find potential team members</p>
+          <h4 class="text-ui-small font-medium text-ui-ink">{{ $t("teams.quickActions.browse") }}</h4>
+          <p class="text-ui-cap text-ui-muted">{{ $t("teams.quickActions.browseHint") }}</p>
         </div>
         <ChevronRight class="w-4 h-4 text-ui-faint shrink-0" />
       </button>

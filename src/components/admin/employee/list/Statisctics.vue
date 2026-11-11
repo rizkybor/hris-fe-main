@@ -50,25 +50,25 @@ const toggleSalaryVisibility = () => {
   />
   <div v-else class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 ui-stagger">
     <UiStat
-      label="Total Employees"
+      :label="$t('employees.stats.totalEmployees')"
       :icon="Users"
       :value="total.toLocaleString()"
-      :hint="`+${addedThisMonth.toLocaleString()} this month`"
+      :hint="$t('employees.stats.addedThisMonth', { n: addedThisMonth.toLocaleString() })"
       class="col-span-2 lg:col-span-1"
     />
     <UiStat
-      label="Active Employees"
+      :label="$t('employees.stats.activeEmployees')"
       :icon="UserCheck"
       :value="active.toLocaleString()"
-      :hint="`${activeChange >= 0 ? '+' : ''}${activeChange} this week`"
+      :hint="$t('employees.stats.thisWeek', { n: `${activeChange >= 0 ? '+' : ''}${activeChange}` })"
     />
     <UiStat
-      label="New Hires"
+      :label="$t('employees.stats.newHires')"
       :icon="UserPlus"
       :value="newEmployees.toLocaleString()"
-      hint="This month"
+      :hint="$t('employees.stats.thisMonth')"
     />
-    <UiStat label="Average Salary" :icon="Trophy">
+    <UiStat :label="$t('employees.stats.averageSalary')" :icon="Trophy">
       <span v-if="isSalaryVisible">Rp {{ averageSalary.toLocaleString() }}</span>
       <span v-else class="tracking-widest">Rp ••••••</span>
       <template #hint>
@@ -76,21 +76,21 @@ const toggleSalaryVisibility = () => {
           type="button"
           @click="toggleSalaryVisibility"
           class="inline-flex items-center gap-1 text-ui-accent hover:underline focus:outline-none focus-visible:shadow-ui-focus rounded"
-          :title="isSalaryVisible ? 'Hide salary' : 'Show salary'"
-          :aria-label="isSalaryVisible ? 'Hide salary' : 'Show salary'"
+          :title="isSalaryVisible ? $t('employees.stats.hideSalary') : $t('employees.stats.showSalary')"
+          :aria-label="isSalaryVisible ? $t('employees.stats.hideSalary') : $t('employees.stats.showSalary')"
         >
           <Eye v-if="!isSalaryVisible" class="w-3.5 h-3.5" />
           <EyeOff v-else class="w-3.5 h-3.5" />
-          Company average
+          {{ $t("employees.stats.companyAverage") }}
         </button>
       </template>
     </UiStat>
     <UiStat
-      label="On Leave"
+      :label="$t('employees.stats.onLeave')"
       :icon="CalendarX"
       :value="onLeave.toLocaleString()"
       :tone="onLeave > 0 ? 'warn' : ''"
-      :hint="`${onLeaveChange >= 0 ? '+' : ''}${onLeaveChange} from last week`"
+      :hint="$t('employees.stats.fromLastWeek', { n: `${onLeaveChange >= 0 ? '+' : ''}${onLeaveChange}` })"
     />
   </div>
 </template>

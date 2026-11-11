@@ -13,47 +13,51 @@ import { UiPageHeader, UiInput, UiButton, UiBadge, UiTable } from "@/components/
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
 import Pagination from "@/components/common/Pagination.vue";
 import { operationalCostStatusLabel, expiryState } from "@/utils/operationalCostStatus";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const store = useCompanyFinanceStore();
 
-const tabs = [
-  { key: "fixed", label: "Fixed Cost", icon: Wallet },
-  { key: "sdm", label: "SDM Resource", icon: Users },
-  { key: "infra", label: "Infrastructure Tools", icon: Server },
-];
+const tabs = computed(() => [
+  { key: "fixed", label: t("finance.categories.fixedCost"), icon: Wallet },
+  { key: "sdm", label: t("finance.categories.sdmResource"), icon: Users },
+  { key: "infra", label: t("finance.categories.infraTools"), icon: Server },
+]);
 const activeTab = ref("fixed");
 
 // ----- Presentation only -----
 const statusTone = (status) => (status === "active" ? "ok" : "neutral");
 // expiryState() returns a legacy colour class; map it onto tokens.
 const expiryTextClass = (state) => (state?.class?.includes("red") ? "text-ui-bad" : "text-ui-warn");
-const inactiveTitle = (item) => (item.status !== "active" ? "Tidak Digunakan — tidak dihitung ke total" : "");
-const fixedColumns = [
-  { key: "financial_items", label: "Item" },
-  { key: "actual", label: "Actual", align: "right" },
-  { key: "expired_date", label: "Expired" },
-  { key: "status", label: "Status" },
-  { key: "notes", label: "Notes" },
-  { key: "actions", label: "Action", align: "right" },
-];
-const sdmColumns = [
-  { key: "field", label: "Bidang" },
-  { key: "productive_hours_per_month", label: "Jam/Bulan", align: "right" },
-  { key: "actual", label: "Actual", align: "right" },
-  { key: "expired_date", label: "Expired" },
-  { key: "status", label: "Status" },
-  { key: "notes", label: "Notes" },
-  { key: "actions", label: "Action", align: "right" },
-];
-const infraColumns = [
-  { key: "tech_stack_component", label: "Tech Stack" },
-  { key: "vendor", label: "Vendor" },
-  { key: "monthly_fee", label: "Monthly", align: "right" },
-  { key: "annual_fee", label: "Annual", align: "right" },
-  { key: "expired_date", label: "Expired" },
-  { key: "status", label: "Status" },
-  { key: "actions", label: "Action", align: "right" },
-];
+const inactiveTitle = (item) => (item.status !== "active" ? t("finance.table.inactiveHint") : "");
+const fixedColumns = computed(() => [
+  { key: "financial_items", label: t("finance.table.item") },
+  { key: "actual", label: t("finance.table.actual"), align: "right" },
+  { key: "expired_date", label: t("finance.table.expired") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "notes", label: t("common.labels.notes") },
+  { key: "actions", label: t("common.labels.actions"), align: "right" },
+]);
+const sdmColumns = computed(() => [
+  { key: "field", label: t("finance.table.field") },
+  { key: "productive_hours_per_month", label: t("finance.table.hoursPerMonth"), align: "right" },
+  { key: "actual", label: t("finance.table.actual"), align: "right" },
+  { key: "expired_date", label: t("finance.table.expired") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "notes", label: t("common.labels.notes") },
+  { key: "actions", label: t("common.labels.actions"), align: "right" },
+]);
+const infraColumns = computed(() => [
+  { key: "tech_stack_component", label: t("finance.table.techStack") },
+  { key: "vendor", label: t("finance.table.vendor") },
+  { key: "monthly_fee", label: t("finance.table.monthly"), align: "right" },
+  { key: "annual_fee", label: t("finance.table.annual"), align: "right" },
+  { key: "expired_date", label: t("finance.table.expired") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "actions", label: t("common.labels.actions"), align: "right" },
+]);
 
 const showSectionAlert = (section, type, title, message) => {
   section.value = {
@@ -100,8 +104,8 @@ const submitFixedCost = async ({ mode, id, payload }) => {
       showSectionAlert(
         fixedAlert,
         "success",
-        "Fixed Cost item created",
-        "Fixed Cost item has been successfully added."
+        t("finance.alerts.createdTitle", { kind: t("finance.categories.fixedCost") }),
+        t("finance.alerts.createdMessage", { kind: t("finance.categories.fixedCost") })
       );
     }
 
@@ -110,8 +114,8 @@ const submitFixedCost = async ({ mode, id, payload }) => {
       showSectionAlert(
         fixedAlert,
         "success",
-        "Fixed Cost item updated",
-        "Fixed Cost item has been successfully updated."
+        t("finance.alerts.updatedTitle", { kind: t("finance.categories.fixedCost") }),
+        t("finance.alerts.updatedMessage", { kind: t("finance.categories.fixedCost") })
       );
     }
 
@@ -121,8 +125,8 @@ const submitFixedCost = async ({ mode, id, payload }) => {
     showSectionAlert(
       fixedAlert,
       "danger",
-      "Failed",
-      "Failed to save fixed cost item."
+      t("finance.alerts.failed"),
+      t("finance.alerts.saveFailed", { kind: t("finance.categories.fixedCost") })
     );
   } finally {
     loading.value = false;
@@ -143,8 +147,8 @@ const editFixedCost = (item) => {
 
 const deleteFixedCostHandler = (item) => {
   openDeleteModal({
-    title: "Delete Fixed Cost item",
-    message: `Are you sure you want to delete "${item.financial_items}"?`,
+    title: t("finance.delete.title", { kind: t("finance.categories.fixedCost") }),
+    message: t("finance.delete.message", { name: item.financial_items }),
     type: "danger",
     onConfirm: async () => {
       try {
@@ -153,15 +157,15 @@ const deleteFixedCostHandler = (item) => {
         showSectionAlert(
           fixedAlert,
           "success",
-          "Deleted",
-          `Fixed Cost item "${item.financial_items}" has been deleted.`
+          t("finance.alerts.deleted"),
+          t("finance.alerts.deletedMessage", { kind: t("finance.categories.fixedCost"), name: item.financial_items })
         );
       } catch (error) {
         showSectionAlert(
           fixedAlert,
           "danger",
-          "Failed",
-          `Failed to delete "${item.financial_items}".`
+          t("finance.alerts.failed"),
+          t("finance.alerts.deleteFailed", { name: item.financial_items })
         );
         console.error(error);
       }
@@ -193,8 +197,8 @@ const submitSdm = async ({ mode, id, payload }) => {
       showSectionAlert(
         sdmAlert,
         "success",
-        "SDM Resource item created",
-        "SDM Resource item has been successfully added."
+        t("finance.alerts.createdTitle", { kind: t("finance.categories.sdmResource") }),
+        t("finance.alerts.createdMessage", { kind: t("finance.categories.sdmResource") })
       );
     }
 
@@ -203,8 +207,8 @@ const submitSdm = async ({ mode, id, payload }) => {
       showSectionAlert(
         sdmAlert,
         "success",
-        "SDM Resource item updated",
-        "SDM Resource item has been successfully updated."
+        t("finance.alerts.updatedTitle", { kind: t("finance.categories.sdmResource") }),
+        t("finance.alerts.updatedMessage", { kind: t("finance.categories.sdmResource") })
       );
     }
 
@@ -214,8 +218,8 @@ const submitSdm = async ({ mode, id, payload }) => {
     showSectionAlert(
       sdmAlert,
       "danger",
-      "Failed",
-      "Failed to save SDM Resource item."
+      t("finance.alerts.failed"),
+      t("finance.alerts.saveFailed", { kind: t("finance.categories.sdmResource") })
     );
   } finally {
     loading.value = false;
@@ -236,8 +240,8 @@ const editSdm = (item) => {
 
 const deleteSdmHandler = (item) => {
   openDeleteModal({
-    title: "Delete SDM Resource item",
-    message: `Are you sure you want to delete "${item.sdm_component}"?`,
+    title: t("finance.delete.title", { kind: t("finance.categories.sdmResource") }),
+    message: t("finance.delete.message", { name: item.sdm_component }),
     type: "danger",
     onConfirm: async () => {
       try {
@@ -246,15 +250,15 @@ const deleteSdmHandler = (item) => {
         showSectionAlert(
           sdmAlert,
           "success",
-          "Deleted",
-          `SDM Resource item "${item.sdm_component}" has been deleted.`
+          t("finance.alerts.deleted"),
+          t("finance.alerts.deletedMessage", { kind: t("finance.categories.sdmResource"), name: item.sdm_component })
         );
       } catch (error) {
         showSectionAlert(
           sdmAlert,
           "danger",
-          "Failed",
-          `Failed to delete "${item.sdm_component}".`
+          t("finance.alerts.failed"),
+          t("finance.alerts.deleteFailed", { name: item.sdm_component })
         );
         console.error(error);
       }
@@ -287,8 +291,8 @@ const submitInfra = async ({ mode, id, payload }) => {
       showSectionAlert(
         infraAlert,
         "success",
-        "Infrastructure Tool item created",
-        "Infrastructure Tool item has been successfully added."
+        t("finance.alerts.createdTitle", { kind: t("finance.categories.infraTool") }),
+        t("finance.alerts.createdMessage", { kind: t("finance.categories.infraTool") })
       );
     }
 
@@ -297,8 +301,8 @@ const submitInfra = async ({ mode, id, payload }) => {
       showSectionAlert(
         infraAlert,
         "success",
-        "Infrastructure Tool item updated",
-        "Infrastructure Tool item has been successfully updated."
+        t("finance.alerts.updatedTitle", { kind: t("finance.categories.infraTool") }),
+        t("finance.alerts.updatedMessage", { kind: t("finance.categories.infraTool") })
       );
     }
 
@@ -308,8 +312,8 @@ const submitInfra = async ({ mode, id, payload }) => {
     showSectionAlert(
       infraAlert,
       "danger",
-      "Failed",
-      "Failed to save Infrastructure Tool item."
+      t("finance.alerts.failed"),
+      t("finance.alerts.saveFailed", { kind: t("finance.categories.infraTool") })
     );
   } finally {
     loading.value = false;
@@ -330,8 +334,8 @@ const editInfra = (item) => {
 
 const deleteInfraHandler = (item) => {
   openDeleteModal({
-    title: "Delete Infrastructure Tool Item",
-    message: `Are you sure you want to delete "${item.tech_stack_component}"?`,
+    title: t("finance.delete.title", { kind: t("finance.categories.infraTool") }),
+    message: t("finance.delete.message", { name: item.tech_stack_component }),
     type: "danger",
     onConfirm: async () => {
       try {
@@ -340,15 +344,15 @@ const deleteInfraHandler = (item) => {
         showSectionAlert(
           infraAlert,
           "success",
-          "Deleted",
-          `Fixed Cost "${item.tech_stack_component}" has been deleted.`
+          t("finance.alerts.deleted"),
+          t("finance.alerts.deletedMessage", { kind: t("finance.categories.infraTool"), name: item.tech_stack_component })
         );
       } catch (error) {
         showSectionAlert(
           infraAlert,
           "danger",
-          "Failed",
-          `Failed to delete "${item.tech_stack_component}".`
+          t("finance.alerts.failed"),
+          t("finance.alerts.deleteFailed", { name: item.tech_stack_component })
         );
         console.error(error);
       }
@@ -423,7 +427,7 @@ const pageCount = (data) => Math.ceil(data.length / perPage);
 
 const formatDate = (date) => {
   if (!date) return "-";
-  return new Date(`${String(date).slice(0, 10)}T00:00:00`).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(`${String(date).slice(0, 10)}T00:00:00`).toLocaleDateString(localeTag(), { day: "numeric", month: "short", year: "numeric" });
 };
 
 const openDeleteModal = ({ title, message, type = "danger", onConfirm }) => {
@@ -510,7 +514,7 @@ watch(
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Operational Cost" subtitle="Company Operational Cost Overview" />
+    <UiPageHeader :title="$t('finance.page.title')" :subtitle="$t('finance.page.subtitle')" />
 
     <Statistics v-if="can('company-finance-statistic')" />
 
@@ -553,8 +557,8 @@ watch(
             :show="fixedAlert.show"
           />
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <UiInput v-model="fixedSearch" :icon="Search" placeholder="Search fixed cost..." class="w-full sm:w-[280px]" />
-            <UiButton v-if="can('fixed-cost-create')" :icon="Plus" class="w-full sm:w-auto" @click="addFixedCost">Fixed Cost</UiButton>
+            <UiInput v-model="fixedSearch" :icon="Search" :placeholder="$t('finance.search.fixedCost')" class="w-full sm:w-[280px]" />
+            <UiButton v-if="can('fixed-cost-create')" :icon="Plus" class="w-full sm:w-auto" @click="addFixedCost">{{ $t("finance.categories.fixedCost") }}</UiButton>
           </div>
         </div>
 
@@ -564,7 +568,7 @@ watch(
           :meta="{ current_page: fixedPage, per_page: perPage }"
           :loading="store.loading"
           :skeleton-rows="4"
-          empty-text="No Fixed Cost data found."
+          :empty-text="$t('finance.table.empty', { kind: $t('finance.categories.fixedCost') })"
         >
           <template #cell-financial_items="{ row }">
             <span class="font-medium" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-muted'" :title="inactiveTitle(row)">{{ row.financial_items }}</span>
@@ -586,9 +590,9 @@ watch(
           </template>
           <template #cell-actions="{ row }">
             <div class="flex justify-end gap-0.5">
-              <button type="button" @click="viewFixedCost(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" title="View" aria-label="View"><Eye class="w-4 h-4" /></button>
-              <button v-if="can('fixed-cost-edit')" type="button" @click="editFixedCost(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" title="Edit" aria-label="Edit"><Edit class="w-4 h-4" /></button>
-              <button v-if="can('fixed-cost-delete')" type="button" @click="deleteFixedCostHandler(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" title="Delete" aria-label="Delete"><Trash2 class="w-4 h-4" /></button>
+              <button type="button" @click="viewFixedCost(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.view')" :aria-label="$t('common.actions.view')"><Eye class="w-4 h-4" /></button>
+              <button v-if="can('fixed-cost-edit')" type="button" @click="editFixedCost(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')"><Edit class="w-4 h-4" /></button>
+              <button v-if="can('fixed-cost-delete')" type="button" @click="deleteFixedCostHandler(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')"><Trash2 class="w-4 h-4" /></button>
             </div>
           </template>
 
@@ -602,14 +606,14 @@ watch(
                 </div>
                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
                   <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
-                  <span class="text-ui-cap text-ui-muted tabular-nums">Exp. {{ formatDate(row.expired_date) }}</span>
+                  <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("finance.table.expShort", { date: formatDate(row.expired_date) }) }}</span>
                   <span v-if="expiryState(row)" class="text-ui-cap font-medium" :class="expiryTextClass(expiryState(row))">{{ expiryState(row).label }}</span>
                 </div>
                 <p v-if="row.notes" class="text-ui-cap text-ui-muted mt-1 line-clamp-2">{{ row.notes }}</p>
                 <div class="flex items-center gap-1 mt-2 -ml-2">
-                  <UiButton variant="ghost" size="sm" :icon="Eye" @click="viewFixedCost(row)">View</UiButton>
-                  <UiButton v-if="can('fixed-cost-edit')" variant="ghost" size="sm" :icon="Edit" @click="editFixedCost(row)">Edit</UiButton>
-                  <UiButton v-if="can('fixed-cost-delete')" variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="deleteFixedCostHandler(row)">Delete</UiButton>
+                  <UiButton variant="ghost" size="sm" :icon="Eye" @click="viewFixedCost(row)">{{ $t("common.actions.view") }}</UiButton>
+                  <UiButton v-if="can('fixed-cost-edit')" variant="ghost" size="sm" :icon="Edit" @click="editFixedCost(row)">{{ $t("common.actions.edit") }}</UiButton>
+                  <UiButton v-if="can('fixed-cost-delete')" variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="deleteFixedCostHandler(row)">{{ $t("common.actions.delete") }}</UiButton>
                 </div>
               </div>
             </div>
@@ -617,7 +621,7 @@ watch(
         </UiTable>
 
         <div v-if="store.fixedCostData.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
-          <Pagination :meta="store.fixedCostData.meta" :loading="store.loading" item-label="item" @page-change="fetchFixedCostData" />
+          <Pagination :meta="store.fixedCostData.meta" :loading="store.loading" :item-label="$t('finance.itemLabel')" @page-change="fetchFixedCostData" />
         </div>
       </div>
 
@@ -632,8 +636,8 @@ watch(
             :show="sdmAlert.show"
           />
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <UiInput v-model="sdmSearch" :icon="Search" placeholder="Search SDM resource..." class="w-full sm:w-[280px]" />
-            <UiButton v-if="can('sdm-resource-create')" :icon="Plus" class="w-full sm:w-auto" @click="addSdm">SDM Resource</UiButton>
+            <UiInput v-model="sdmSearch" :icon="Search" :placeholder="$t('finance.search.sdmResource')" class="w-full sm:w-[280px]" />
+            <UiButton v-if="can('sdm-resource-create')" :icon="Plus" class="w-full sm:w-auto" @click="addSdm">{{ $t("finance.categories.sdmResource") }}</UiButton>
           </div>
         </div>
 
@@ -643,7 +647,7 @@ watch(
           :meta="{ current_page: sdmPage, per_page: perPage }"
           :loading="store.loading"
           :skeleton-rows="4"
-          empty-text="No SDM Resource data found."
+          :empty-text="$t('finance.table.empty', { kind: $t('finance.categories.sdmResource') })"
         >
           <template #cell-field="{ row }">
             <span class="font-medium" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-muted'" :title="inactiveTitle(row)">{{ row.sdm_field_name ?? row.sdm_component }}</span>
@@ -668,9 +672,9 @@ watch(
           </template>
           <template #cell-actions="{ row }">
             <div class="flex justify-end gap-0.5">
-              <button type="button" @click="viewSdm(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" title="View" aria-label="View"><Eye class="w-4 h-4" /></button>
-              <button v-if="can('sdm-resource-edit')" type="button" @click="editSdm(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" title="Edit" aria-label="Edit"><Edit class="w-4 h-4" /></button>
-              <button v-if="can('sdm-resource-delete')" type="button" @click="deleteSdmHandler(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" title="Delete" aria-label="Delete"><Trash2 class="w-4 h-4" /></button>
+              <button type="button" @click="viewSdm(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.view')" :aria-label="$t('common.actions.view')"><Eye class="w-4 h-4" /></button>
+              <button v-if="can('sdm-resource-edit')" type="button" @click="editSdm(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')"><Edit class="w-4 h-4" /></button>
+              <button v-if="can('sdm-resource-delete')" type="button" @click="deleteSdmHandler(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')"><Trash2 class="w-4 h-4" /></button>
             </div>
           </template>
 
@@ -684,15 +688,15 @@ watch(
                 </div>
                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
                   <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
-                  <span class="text-ui-cap text-ui-muted tabular-nums">{{ row.productive_hours_per_month ?? "-" }} Jam/Bulan</span>
-                  <span class="text-ui-cap text-ui-muted tabular-nums">Exp. {{ formatDate(row.expired_date) }}</span>
+                  <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("finance.table.hoursPerMonthValue", { n: row.productive_hours_per_month ?? "-" }) }}</span>
+                  <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("finance.table.expShort", { date: formatDate(row.expired_date) }) }}</span>
                   <span v-if="expiryState(row)" class="text-ui-cap font-medium" :class="expiryTextClass(expiryState(row))">{{ expiryState(row).label }}</span>
                 </div>
                 <p v-if="row.notes" class="text-ui-cap text-ui-muted mt-1 line-clamp-2">{{ row.notes }}</p>
                 <div class="flex items-center gap-1 mt-2 -ml-2">
-                  <UiButton variant="ghost" size="sm" :icon="Eye" @click="viewSdm(row)">View</UiButton>
-                  <UiButton v-if="can('sdm-resource-edit')" variant="ghost" size="sm" :icon="Edit" @click="editSdm(row)">Edit</UiButton>
-                  <UiButton v-if="can('sdm-resource-delete')" variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="deleteSdmHandler(row)">Delete</UiButton>
+                  <UiButton variant="ghost" size="sm" :icon="Eye" @click="viewSdm(row)">{{ $t("common.actions.view") }}</UiButton>
+                  <UiButton v-if="can('sdm-resource-edit')" variant="ghost" size="sm" :icon="Edit" @click="editSdm(row)">{{ $t("common.actions.edit") }}</UiButton>
+                  <UiButton v-if="can('sdm-resource-delete')" variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="deleteSdmHandler(row)">{{ $t("common.actions.delete") }}</UiButton>
                 </div>
               </div>
             </div>
@@ -700,7 +704,7 @@ watch(
         </UiTable>
 
         <div v-if="store.sdmResourceData.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
-          <Pagination :meta="store.sdmResourceData.meta" :loading="store.loading" item-label="item" @page-change="fetchSdmResourcesData" />
+          <Pagination :meta="store.sdmResourceData.meta" :loading="store.loading" :item-label="$t('finance.itemLabel')" @page-change="fetchSdmResourcesData" />
         </div>
       </div>
 
@@ -715,8 +719,8 @@ watch(
             :show="infraAlert.show"
           />
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <UiInput v-model="infraSearch" :icon="Search" placeholder="Search infrastructure..." class="w-full sm:w-[280px]" />
-            <UiButton v-if="can('infrastructure-tool-create')" :icon="Plus" class="w-full sm:w-auto" @click="addInfra">Infrastructure Tool</UiButton>
+            <UiInput v-model="infraSearch" :icon="Search" :placeholder="$t('finance.search.infra')" class="w-full sm:w-[280px]" />
+            <UiButton v-if="can('infrastructure-tool-create')" :icon="Plus" class="w-full sm:w-auto" @click="addInfra">{{ $t("finance.categories.infraTool") }}</UiButton>
           </div>
         </div>
 
@@ -726,7 +730,7 @@ watch(
           :meta="{ current_page: infraPage, per_page: perPage }"
           :loading="store.loading"
           :skeleton-rows="4"
-          empty-text="No Infrastructure Tools data found."
+          :empty-text="$t('finance.table.empty', { kind: $t('finance.categories.infraTools') })"
         >
           <template #cell-tech_stack_component="{ row }">
             <span class="font-medium" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-muted'" :title="inactiveTitle(row)">{{ row.tech_stack_component }}</span>
@@ -748,9 +752,9 @@ watch(
           </template>
           <template #cell-actions="{ row }">
             <div class="flex justify-end gap-0.5">
-              <button type="button" @click="viewInfra(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" title="View" aria-label="View"><Eye class="w-4 h-4" /></button>
-              <button v-if="can('infrastructure-tool-edit')" type="button" @click="editInfra(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" title="Edit" aria-label="Edit"><Edit class="w-4 h-4" /></button>
-              <button v-if="can('infrastructure-tool-delete')" type="button" @click="deleteInfraHandler(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" title="Delete" aria-label="Delete"><Trash2 class="w-4 h-4" /></button>
+              <button type="button" @click="viewInfra(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.view')" :aria-label="$t('common.actions.view')"><Eye class="w-4 h-4" /></button>
+              <button v-if="can('infrastructure-tool-edit')" type="button" @click="editInfra(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')"><Edit class="w-4 h-4" /></button>
+              <button v-if="can('infrastructure-tool-delete')" type="button" @click="deleteInfraHandler(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')"><Trash2 class="w-4 h-4" /></button>
             </div>
           </template>
 
@@ -765,18 +769,18 @@ watch(
                   </div>
                   <div class="text-right shrink-0">
                     <p class="text-ui-body font-medium tabular-nums" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-faint'">Rp {{ row.monthly_fee.toLocaleString() }}</p>
-                    <p class="text-ui-cap text-ui-muted tabular-nums">Annual Rp {{ row.annual_fee.toLocaleString() }}</p>
+                    <p class="text-ui-cap text-ui-muted tabular-nums">{{ $t("finance.table.annualValue", { amount: `Rp ${row.annual_fee.toLocaleString()}` }) }}</p>
                   </div>
                 </div>
                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
                   <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
-                  <span class="text-ui-cap text-ui-muted tabular-nums">Exp. {{ formatDate(row.expired_date) }}</span>
+                  <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("finance.table.expShort", { date: formatDate(row.expired_date) }) }}</span>
                   <span v-if="expiryState(row)" class="text-ui-cap font-medium" :class="expiryTextClass(expiryState(row))">{{ expiryState(row).label }}</span>
                 </div>
                 <div class="flex items-center gap-1 mt-2 -ml-2">
-                  <UiButton variant="ghost" size="sm" :icon="Eye" @click="viewInfra(row)">View</UiButton>
-                  <UiButton v-if="can('infrastructure-tool-edit')" variant="ghost" size="sm" :icon="Edit" @click="editInfra(row)">Edit</UiButton>
-                  <UiButton v-if="can('infrastructure-tool-delete')" variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="deleteInfraHandler(row)">Delete</UiButton>
+                  <UiButton variant="ghost" size="sm" :icon="Eye" @click="viewInfra(row)">{{ $t("common.actions.view") }}</UiButton>
+                  <UiButton v-if="can('infrastructure-tool-edit')" variant="ghost" size="sm" :icon="Edit" @click="editInfra(row)">{{ $t("common.actions.edit") }}</UiButton>
+                  <UiButton v-if="can('infrastructure-tool-delete')" variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="deleteInfraHandler(row)">{{ $t("common.actions.delete") }}</UiButton>
                 </div>
               </div>
             </div>
@@ -784,7 +788,7 @@ watch(
         </UiTable>
 
         <div v-if="store.infraToolsData.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
-          <Pagination :meta="store.infraToolsData.meta" :loading="store.loading" item-label="item" @page-change="fetchInfraToolsData" />
+          <Pagination :meta="store.infraToolsData.meta" :loading="store.loading" :item-label="$t('finance.itemLabel')" @page-change="fetchInfraToolsData" />
         </div>
       </div>
     </section>
@@ -822,8 +826,8 @@ watch(
       :message="deletePayload.message"
       :loading="deleteLoading"
       :type="deletePayload.type"
-      confirmText="Delete"
-      cancelText="Cancel"
+      :confirmText="$t('common.actions.delete')"
+      :cancelText="$t('common.actions.cancel')"
       @confirm="confirmDelete"
       @cancel="showDeleteModal = false"
     >

@@ -1,6 +1,7 @@
 <script setup>
 import { UserPlus, TrendingUp } from "lucide-vue-next";
-import { onMounted, ref, watch, defineAsyncComponent } from "vue";
+import { computed, onMounted, ref, watch, defineAsyncComponent } from "vue";
+import { useI18n } from "vue-i18n";
 import { useTeamStore } from "@/stores/team";
 import { storeToRefs } from "pinia";
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
@@ -18,6 +19,7 @@ const props = defineProps({
   },
 });
 
+const { t } = useI18n();
 const teamStore = useTeamStore();
 const { teamChartData, loadingTeamChart } = storeToRefs(teamStore);
 const { fetchTeamChartData } = teamStore;
@@ -52,11 +54,10 @@ const memberGrowthOptions = ref({
   grid: base.grid,
 });
 
-const memberGrowthSeries = ref([
-  {
-    name: "New Members",
-    data: [],
-  },
+// Series data is copied in by updateCharts(); the name follows the language.
+const memberGrowthData = ref([]);
+const memberGrowthSeries = computed(() => [
+  { name: t("teams.detail.chart.newMembers"), data: memberGrowthData.value },
 ]);
 
 const taskGrowthOptions = ref({
@@ -95,32 +96,20 @@ const taskGrowthOptions = ref({
   },
 });
 
-const taskGrowthSeries = ref([
-  {
-    name: "Tasks Assigned",
-    data: [],
-  },
+const taskGrowthData = ref([]);
+const taskGrowthSeries = computed(() => [
+  { name: t("teams.detail.chart.tasksAssigned"), data: taskGrowthData.value },
 ]);
 
 const updateCharts = () => {
   if (teamChartData.value.months.length > 0) {
     // Update member growth chart
     memberGrowthOptions.value.xaxis.categories = teamChartData.value.months;
-    memberGrowthSeries.value = [
-      {
-        name: "New Members",
-        data: teamChartData.value.member_growth,
-      },
-    ];
+    memberGrowthData.value = teamChartData.value.member_growth;
 
     // Update task growth chart
     taskGrowthOptions.value.xaxis.categories = teamChartData.value.months;
-    taskGrowthSeries.value = [
-      {
-        name: "Tasks Assigned",
-        data: teamChartData.value.task_growth,
-      },
-    ];
+    taskGrowthData.value = teamChartData.value.task_growth;
   }
 };
 
@@ -153,9 +142,9 @@ watch(teamChartData, () => {
       <div class="flex items-start gap-3 mb-4">
         <UserPlus class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
         <div class="min-w-0">
-          <h3 class="text-ui-h3 text-ui-ink">Team Growth</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("teams.detail.chart.teamGrowth") }}</h3>
           <p class="text-ui-cap text-ui-muted mt-0.5">
-            New members joining over past 4 months
+            {{ $t("teams.detail.chart.teamGrowthHint") }}
           </p>
         </div>
       </div>
@@ -180,9 +169,9 @@ watch(teamChartData, () => {
       <div class="flex items-start gap-3 mb-4">
         <TrendingUp class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
         <div class="min-w-0">
-          <h3 class="text-ui-h3 text-ui-ink">Tasks Growth</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("teams.detail.chart.tasksGrowth") }}</h3>
           <p class="text-ui-cap text-ui-muted mt-0.5">
-            Tasks assigned to team over past 4 months
+            {{ $t("teams.detail.chart.tasksGrowthHint") }}
           </p>
         </div>
       </div>

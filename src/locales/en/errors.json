@@ -1,0 +1,8 @@
+{
+  "notFound": {
+    "title": "Page not found",
+    "message": "The address you opened isn't available, has moved, or you don't have access to it.",
+    "back": "Go back",
+    "toDashboard": "Go to Dashboard"
+  }
+}

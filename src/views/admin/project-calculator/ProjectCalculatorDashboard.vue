@@ -26,6 +26,9 @@ import { UiPageHeader, UiStat, UiButton, UiBadge, UiInput, UiChips, UiTable, UiE
 import RateSettingModal from "@/components/admin/project-calculator/RateSettingModal.vue";
 import LandingPageRateSettingModal from "@/components/admin/project-calculator/LandingPageRateSettingModal.vue";
 import Pagination from "@/components/common/Pagination.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const store = useProjectCalculatorStore();
 const alertModal = useAlertModalStore();
@@ -72,39 +75,39 @@ const goToPage = (page) => {
   });
 };
 
-const scenarioMeta = {
-  feature: { label: "New Feature", tone: "accent" },
-  build: { label: "Build from Scratch", tone: "info" },
-  landing_page: { label: "Landing Page", tone: "outline" },
-};
+const scenarioMeta = computed(() => ({
+  feature: { label: t("calculator.scenario.feature"), tone: "accent" },
+  build: { label: t("calculator.scenario.build"), tone: "info" },
+  landing_page: { label: t("calculator.scenario.landingPage"), tone: "outline" },
+}));
 
 // Presentation only: filter chips + table columns.
-const scenarioOptions = [
-  { value: "", label: "All Scenarios" },
-  { value: "feature", label: "New Feature" },
-  { value: "build", label: "Build from Scratch" },
-  { value: "landing_page", label: "Landing Page" },
-];
-const columns = [
-  { key: "name", label: "Estimate" },
-  { key: "scenario", label: "Scenario" },
-  { key: "duration", label: "Duration" },
-  { key: "fee", label: "Fee Ref", align: "right" },
-  { key: "total", label: "Total", align: "right" },
+const scenarioOptions = computed(() => [
+  { value: "", label: t("calculator.scenario.all") },
+  { value: "feature", label: t("calculator.scenario.feature") },
+  { value: "build", label: t("calculator.scenario.build") },
+  { value: "landing_page", label: t("calculator.scenario.landingPage") },
+]);
+const columns = computed(() => [
+  { key: "name", label: t("calculator.dashboard.columns.estimate") },
+  { key: "scenario", label: t("calculator.dashboard.columns.scenario") },
+  { key: "duration", label: t("calculator.dashboard.columns.duration") },
+  { key: "fee", label: t("calculator.dashboard.columns.feeRef"), align: "right" },
+  { key: "total", label: t("common.labels.total"), align: "right" },
   { key: "actions", label: "", align: "right", width: 120 },
-];
+]);
 
 const handleDelete = async (calc) => {
-  const ok = await alertModal.confirm(`Delete estimate "${calc.name}"? This action cannot be undone.`, {
+  const ok = await alertModal.confirm(t("calculator.dashboard.deleteConfirm", { name: calc.name }), {
     type: "danger",
-    confirmText: "Delete",
+    confirmText: t("common.actions.delete"),
   });
   if (!ok) return;
   try {
     await store.deleteCalculation(calc.id);
     await store.fetchStatistics();
   } catch (error) {
-    await alertModal.alert("Failed to delete estimate.", { type: "danger" });
+    await alertModal.alert(t("calculator.dashboard.deleteFailed"), { type: "danger" });
   }
 };
 
@@ -121,10 +124,10 @@ const onLandingPageRateSettingSaved = async () => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Project Calculator" subtitle="Consistent development cost estimates.">
+    <UiPageHeader :title="$t('calculator.dashboard.title')" :subtitle="$t('calculator.dashboard.subtitle')">
       <template #actions>
         <UiButton v-if="can('project-calculator-create')" :icon="PlusIcon" :to="{ name: 'admin.project-calculator.create' }">
-          Create New Estimate
+          {{ $t("calculator.dashboard.createNew") }}
         </UiButton>
       </template>
     </UiPageHeader>
@@ -132,31 +135,31 @@ const onLandingPageRateSettingSaved = async () => {
     <!-- KPI -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 ui-stagger">
       <UiStat
-        label="Estimates Total"
+        :label="$t('calculator.dashboard.stats.total')"
         :value="statistics.total_calculations"
-        :hint="`${statistics.this_month} this month`"
+        :hint="$t('calculator.dashboard.stats.thisMonth', { n: statistics.this_month })"
         :icon="CalculatorIcon"
         :loading="loadingStatistics"
       />
       <UiStat
-        label="Estimates Total Value"
+        :label="$t('calculator.dashboard.stats.totalValue')"
         :value="formatRupiahCompact(statistics.total_value)"
-        hint="all history"
+        :hint="$t('calculator.dashboard.stats.allHistory')"
         :icon="WalletIcon"
         :loading="loadingStatistics"
       />
       <UiStat
-        label="Average Value"
+        :label="$t('calculator.dashboard.stats.average')"
         :value="formatRupiahCompact(statistics.average_value)"
-        hint="/ estimate"
+        :hint="$t('calculator.dashboard.stats.perEstimate')"
         :icon="TrendingUpIcon"
         :loading="loadingStatistics"
       />
-      <UiStat label="Scenario" :icon="LayersIcon" :loading="loadingStatistics" hint="breakdown by scenario">
+      <UiStat :label="$t('calculator.dashboard.stats.scenario')" :icon="LayersIcon" :loading="loadingStatistics" :hint="$t('calculator.dashboard.stats.byScenario')">
         <span class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 whitespace-normal">
-          <span>{{ statistics.total_feature }}<span class="text-ui-small font-normal text-ui-muted"> Features</span></span>
-          <span>{{ statistics.total_build }}<span class="text-ui-small font-normal text-ui-muted"> Builds</span></span>
-          <span>{{ statistics.total_landing_page }}<span class="text-ui-small font-normal text-ui-muted"> Landing Pages</span></span>
+          <span>{{ statistics.total_feature }}<span class="text-ui-small font-normal text-ui-muted"> {{ $t("calculator.dashboard.stats.features") }}</span></span>
+          <span>{{ statistics.total_build }}<span class="text-ui-small font-normal text-ui-muted"> {{ $t("calculator.dashboard.stats.builds") }}</span></span>
+          <span>{{ statistics.total_landing_page }}<span class="text-ui-small font-normal text-ui-muted"> {{ $t("calculator.dashboard.stats.landingPages") }}</span></span>
         </span>
       </UiStat>
     </div>
@@ -170,12 +173,12 @@ const onLandingPageRateSettingSaved = async () => {
               <Users2Icon class="w-[18px] h-[18px]" />
             </div>
             <div class="min-w-0">
-              <h2 class="text-ui-h3 text-ui-ink">Team Rate Setup</h2>
-              <p class="text-ui-cap text-ui-muted">Baseline fee &amp; rate/hour.</p>
+              <h2 class="text-ui-h3 text-ui-ink">{{ $t("calculator.dashboard.teamRate.title") }}</h2>
+              <p class="text-ui-cap text-ui-muted">{{ $t("calculator.dashboard.teamRate.subtitle") }}</p>
             </div>
           </div>
           <UiButton v-if="can('project-calculator-settings')" variant="secondary" size="sm" :icon="SettingsIcon" @click="showRateModal = true">
-            Rate Config
+            {{ $t("calculator.dashboard.teamRate.config") }}
           </UiButton>
         </div>
         <div v-if="loadingRateSetting" class="grid grid-cols-2 gap-px bg-ui-line">
@@ -186,21 +189,21 @@ const onLandingPageRateSettingSaved = async () => {
         </div>
         <dl v-else class="grid grid-cols-2 gap-px bg-ui-line rounded-b-ui-card overflow-hidden">
           <div class="bg-ui-surface px-4 sm:px-5 py-3.5 min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Team Fee / Month</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.dashboard.teamRate.teamFee") }}</dt>
             <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5 truncate">{{ formatRupiahCompact(rateSetting.team_monthly_cost) }}</dd>
           </div>
           <div class="bg-ui-surface px-4 sm:px-5 py-3.5 min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Team &amp; Productive Hours</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.dashboard.teamRate.teamHours") }}</dt>
             <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5">
-              {{ rateSetting.team_size }} orang &middot; {{ rateSetting.total_productive_hours_per_month }} jam/bulan
+              {{ $t("calculator.dashboard.teamRate.teamHoursValue", { people: rateSetting.team_size, hours: rateSetting.total_productive_hours_per_month }) }}
             </dd>
           </div>
           <div class="bg-ui-surface px-4 sm:px-5 py-3.5 min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Rate Cost / Hour</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.dashboard.teamRate.rateCost") }}</dt>
             <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5 truncate">{{ formatRupiah(rateSetting.rate_cost_per_hour) }}</dd>
           </div>
           <div class="bg-ui-surface px-4 sm:px-5 py-3.5 min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Rate Sell / Hour ({{ rateSetting.margin_multiplier }}x)</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.dashboard.teamRate.rateSell", { x: rateSetting.margin_multiplier }) }}</dt>
             <dd class="text-ui-body font-semibold text-ui-accent tabular-nums mt-0.5 truncate">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</dd>
           </div>
         </dl>
@@ -213,12 +216,12 @@ const onLandingPageRateSettingSaved = async () => {
               <Globe class="w-[18px] h-[18px]" />
             </div>
             <div class="min-w-0">
-              <h2 class="text-ui-h3 text-ui-ink">Landing Page Rate Setup</h2>
-              <p class="text-ui-cap text-ui-muted">The Landing Page scenario</p>
+              <h2 class="text-ui-h3 text-ui-ink">{{ $t("calculator.dashboard.lpRate.title") }}</h2>
+              <p class="text-ui-cap text-ui-muted">{{ $t("calculator.dashboard.lpRate.subtitle") }}</p>
             </div>
           </div>
           <UiButton v-if="can('project-calculator-menu')" variant="secondary" size="sm" :icon="SettingsIcon" @click="showLandingPageRateModal = true">
-            Landing Page Config
+            {{ $t("calculator.dashboard.lpRate.config") }}
           </UiButton>
         </div>
         <div v-if="loadingLandingPageRateSetting" class="grid grid-cols-2 gap-px bg-ui-line">
@@ -229,19 +232,19 @@ const onLandingPageRateSettingSaved = async () => {
         </div>
         <dl v-else class="grid grid-cols-2 gap-px bg-ui-line rounded-b-ui-card overflow-hidden">
           <div class="bg-ui-surface px-4 sm:px-5 py-3.5 min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Server Dedicated</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.lp.serverDedicated") }}</dt>
             <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5 truncate">{{ formatRupiah(landingPageRateSetting.server_dedicated_price) }}</dd>
           </div>
           <div class="bg-ui-surface px-4 sm:px-5 py-3.5 min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Server Shared</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.lp.serverShared") }}</dt>
             <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5 truncate">{{ formatRupiah(landingPageRateSetting.server_shared_price) }}</dd>
           </div>
           <div class="bg-ui-surface px-4 sm:px-5 py-3.5 min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Design Dedicated</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.lp.designDedicated") }}</dt>
             <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5 truncate">{{ formatRupiah(landingPageRateSetting.design_dedicated_price) }}</dd>
           </div>
           <div class="bg-ui-surface px-4 sm:px-5 py-3.5 min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Design Template</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.lp.designTemplate") }}</dt>
             <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5 truncate">{{ formatRupiah(landingPageRateSetting.design_template_price) }}</dd>
           </div>
         </dl>
@@ -251,12 +254,12 @@ const onLandingPageRateSettingSaved = async () => {
     <!-- Estimate history -->
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <div class="px-4 sm:px-5 pt-4 pb-3 flex flex-col lg:flex-row lg:items-center gap-3 border-b border-ui-line">
-        <h2 class="text-ui-h2 text-ui-ink lg:mr-auto">Estimate History</h2>
+        <h2 class="text-ui-h2 text-ui-ink lg:mr-auto">{{ $t("calculator.dashboard.history") }}</h2>
         <UiChips v-model="scenarioFilter" :options="scenarioOptions" size="sm" @update:model-value="fetchAll" />
         <UiInput
           v-model="search"
           :icon="SearchIcon"
-          placeholder="Search estimate or client name..."
+          :placeholder="$t('calculator.dashboard.searchPlaceholder')"
           class="lg:w-[280px]"
           @update:model-value="onSearchInput"
         />
@@ -275,10 +278,10 @@ const onLandingPageRateSettingSaved = async () => {
         <template #cell-duration="{ row }">
           <span class="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
             <ClockIcon class="w-3.5 h-3.5 text-ui-faint" />
-            {{ row.estimated_duration_weeks ?? "-" }} weeks estimated
+            {{ $t("calculator.dashboard.weeksEstimated", { n: row.estimated_duration_weeks ?? "-" }) }}
           </span>
           <span v-if="row.estimated_duration_weeks" class="block text-ui-cap text-ui-muted tabular-nums">
-            &asymp; {{ (row.estimated_duration_weeks / 4.33).toFixed(1).replace(".", ",") }} months
+            &asymp; {{ $t("calculator.dashboard.months", { n: (row.estimated_duration_weeks / 4.33).toFixed(1).replace(".", ",") }) }}
           </span>
         </template>
         <template #cell-fee="{ row }">
@@ -289,15 +292,15 @@ const onLandingPageRateSettingSaved = async () => {
           <span class="text-ui-body font-semibold text-ui-ink tabular-nums whitespace-nowrap">
             {{ formatRupiah(row.include_ppn ? row.total_with_ppn : row.grand_total) }}
           </span>
-          <span class="block text-ui-cap text-ui-muted">{{ row.include_ppn ? "including VAT" : "excluding VAT" }}</span>
+          <span class="block text-ui-cap text-ui-muted">{{ row.include_ppn ? $t("calculator.vat.including") : $t("calculator.vat.excluding") }}</span>
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5">
             <RouterLink
               :to="{ name: 'admin.project-calculator.detail', params: { id: row.id } }"
               class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
-              title="Lihat Detail"
-              aria-label="Lihat Detail"
+              :title="$t('common.actions.viewDetails')"
+              :aria-label="$t('common.actions.viewDetails')"
             >
               <Eye class="w-4 h-4" />
             </RouterLink>
@@ -305,8 +308,8 @@ const onLandingPageRateSettingSaved = async () => {
               v-if="can('project-calculator-edit')"
               :to="{ name: 'admin.project-calculator.edit', params: { id: row.id } }"
               class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
-              title="Edit"
-              aria-label="Edit"
+              :title="$t('common.actions.edit')"
+              :aria-label="$t('common.actions.edit')"
             >
               <Pencil class="w-4 h-4" />
             </RouterLink>
@@ -314,8 +317,8 @@ const onLandingPageRateSettingSaved = async () => {
               v-if="can('project-calculator-delete')"
               type="button"
               class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
-              title="Delete"
-              aria-label="Delete"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('common.actions.delete')"
               @click="handleDelete(row)"
             >
               <Trash2 class="w-4 h-4" />
@@ -334,23 +337,23 @@ const onLandingPageRateSettingSaved = async () => {
               <p v-if="row.client_name" class="text-ui-cap text-ui-muted truncate">{{ row.client_name }}</p>
               <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
                 <UiBadge :tone="scenarioMeta[row.scenario].tone">{{ scenarioMeta[row.scenario].label }}</UiBadge>
-                <span class="text-ui-cap text-ui-muted tabular-nums">{{ row.estimated_duration_weeks ?? "-" }} weeks</span>
+                <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("calculator.dashboard.weeks", { n: row.estimated_duration_weeks ?? "-" }) }}</span>
               </div>
               <p class="text-ui-cap text-ui-muted tabular-nums mt-1">
-                Fee Ref: {{ calculateMarketingFee(row.grand_total).percent }}% ({{ formatRupiahCompact(calculateMarketingFee(row.grand_total).amount) }})
+                {{ $t("calculator.dashboard.columns.feeRef") }}: {{ calculateMarketingFee(row.grand_total).percent }}% ({{ formatRupiahCompact(calculateMarketingFee(row.grand_total).amount) }})
               </p>
             </div>
             <div class="text-right shrink-0">
               <p class="text-ui-body font-semibold text-ui-ink tabular-nums">
                 {{ formatRupiahCompact(row.include_ppn ? row.total_with_ppn : row.grand_total) }}
               </p>
-              <p class="text-ui-cap text-ui-muted">{{ row.include_ppn ? "including VAT" : "excluding VAT" }}</p>
+              <p class="text-ui-cap text-ui-muted">{{ row.include_ppn ? $t("calculator.vat.including") : $t("calculator.vat.excluding") }}</p>
               <div class="flex items-center justify-end gap-0.5 mt-1 -mr-1.5">
                 <RouterLink
                   v-if="can('project-calculator-edit')"
                   :to="{ name: 'admin.project-calculator.edit', params: { id: row.id } }"
                   class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover"
-                  aria-label="Edit"
+                  :aria-label="$t('common.actions.edit')"
                 >
                   <Pencil class="w-4 h-4" />
                 </RouterLink>
@@ -358,7 +361,7 @@ const onLandingPageRateSettingSaved = async () => {
                   v-if="can('project-calculator-delete')"
                   type="button"
                   class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
-                  aria-label="Delete"
+                  :aria-label="$t('common.actions.delete')"
                   @click="handleDelete(row)"
                 >
                   <Trash2 class="w-4 h-4" />
@@ -372,14 +375,14 @@ const onLandingPageRateSettingSaved = async () => {
           <UiEmpty
             compact
             :icon="CalculatorIcon"
-            title="No estimates found"
-            message="Create your first project estimate to start building your quotation history."
+            :title="$t('calculator.dashboard.empty.title')"
+            :message="$t('calculator.dashboard.empty.message')"
           />
         </template>
       </UiTable>
 
       <div v-if="!loading && calculations.length > 0" class="px-4 sm:px-5 pb-3 border-t border-ui-line">
-        <Pagination :meta="meta" :loading="loading" item-label="estimates" @page-change="goToPage" />
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('calculator.dashboard.itemLabel')" @page-change="goToPage" />
       </div>
     </section>
 

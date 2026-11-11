@@ -1,7 +1,10 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
 import { UiModal, UiButton, UiSelect } from "@/components/ui";
-import { LEFTOVER_POLICY } from "@/utils/maintenance";
+import { LEFTOVER_POLICY, CONTRACT_STATUS } from "@/utils/maintenance";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   show: Boolean,
@@ -16,11 +19,11 @@ const props = defineProps({
 });
 const emit = defineEmits(["submit", "close"]);
 
-const POLICY_HINT = {
-  bank: "Unused hours go to the Development Balance and can be spent on new features before they expire.",
-  rollover: "Unused hours are added to next month's quota.",
-  expire: "Unused hours are gone at the end of the month.",
-};
+const POLICY_HINT = computed(() => ({
+  bank: t("maintenance.contractForm.policyHint.bank"),
+  rollover: t("maintenance.contractForm.policyHint.rollover"),
+  expire: t("maintenance.contractForm.policyHint.expire"),
+}));
 
 const today = () => new Date().toISOString().slice(0, 10);
 const emptyForm = () => ({
@@ -112,8 +115,8 @@ const FIELD =
   "w-full min-h-[38px] px-3 py-2 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus disabled:bg-ui-subtle disabled:text-ui-muted";
 const ERR = "text-ui-cap text-ui-bad mt-1.5";
 const HINT = "text-ui-cap text-ui-muted mt-1.5";
-const clientSelectOptions = computed(() => [{ value: "", label: "Select client" }, ...props.clients.map((c) => ({ value: String(c.id), label: c.name }))]);
-const projectSelectOptions = computed(() => [{ value: "", label: "Not tied to a project" }, ...projectOptions.value.map((p) => ({ value: String(p.id), label: p.name }))]);
+const clientSelectOptions = computed(() => [{ value: "", label: t("maintenance.contractForm.selectClient") }, ...props.clients.map((c) => ({ value: String(c.id), label: c.name }))]);
+const projectSelectOptions = computed(() => [{ value: "", label: t("maintenance.contractForm.noProject") }, ...projectOptions.value.map((p) => ({ value: String(p.id), label: p.name }))]);
 
 </script>
 
@@ -121,21 +124,21 @@ const projectSelectOptions = computed(() => [{ value: "", label: "Not tied to a 
   <UiModal
     :open="show"
     size="lg"
-    :title="data ? 'Edit Maintenance Contract' : 'New Maintenance Contract'"
-    description="Monthly hour quota for a client, optionally tied to one of their projects."
+    :title="data ? $t('maintenance.contractForm.editTitle') : $t('maintenance.contractForm.newTitle')"
+    :description="$t('maintenance.contractForm.description')"
     @close="emit('close')"
   >
     <form id="maintenance-contract-form" class="space-y-5" @submit.prevent="submit">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <UiSelect id="mc-client" v-model="form.client_id" label="Client" :options="clientSelectOptions" required :error="err('client_id') || ''" />
+        <UiSelect id="mc-client" v-model="form.client_id" :label="$t('common.labels.client')" :options="clientSelectOptions" required :error="err('client_id') || ''" />
         <div>
-          <label for="mc-project" :class="LABEL">Project <span class="text-ui-muted font-normal">(optional)</span></label>
+          <label for="mc-project" :class="LABEL">{{ $t("common.labels.project") }} <span class="text-ui-muted font-normal">{{ $t("maintenance.contractForm.optional") }}</span></label>
           <UiSelect id="mc-project" v-model="form.project_id" :options="projectSelectOptions" :error="err('project_id') || ''" />
         </div>
 
         <div class="sm:col-span-2">
-          <label for="mc-name" :class="LABEL">Contract name<span class="text-ui-bad"> *</span></label>
-          <input id="mc-name" v-model="form.name" :class="FIELD" maxlength="255" placeholder="e.g. Website Maintenance 2026" required />
+          <label for="mc-name" :class="LABEL">{{ $t("maintenance.contractForm.name") }}<span class="text-ui-bad"> *</span></label>
+          <input id="mc-name" v-model="form.name" :class="FIELD" maxlength="255" :placeholder="$t('maintenance.contractForm.namePlaceholder')" required />
           <p v-if="err('name')" :class="ERR">{{ err("name") }}</p>
         </div>
       </div>
@@ -143,28 +146,28 @@ const projectSelectOptions = computed(() => [{ value: "", label: "Not tied to a 
       <div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label for="mc-quota" :class="LABEL">Quota per month (hours)<span class="text-ui-bad"> *</span></label>
+            <label for="mc-quota" :class="LABEL">{{ $t("maintenance.contractForm.quota") }}<span class="text-ui-bad"> *</span></label>
             <input id="mc-quota" v-model="form.monthly_quota_hours" type="number" min="0.5" step="any" :class="[FIELD, 'tabular-nums']" required />
             <p v-if="err('monthly_quota_hours')" :class="ERR">{{ err("monthly_quota_hours") }}</p>
           </div>
           <div>
-            <label for="mc-start" :class="LABEL">Start date<span class="text-ui-bad"> *</span></label>
+            <label for="mc-start" :class="LABEL">{{ $t("common.labels.startDate") }}<span class="text-ui-bad"> *</span></label>
             <input id="mc-start" v-model="form.start_date" type="date" :class="FIELD" required />
             <p v-if="err('start_date')" :class="ERR">{{ err("start_date") }}</p>
           </div>
           <div>
-            <label for="mc-end" :class="LABEL">End date <span class="text-ui-muted font-normal">(optional)</span></label>
+            <label for="mc-end" :class="LABEL">{{ $t("common.labels.endDate") }} <span class="text-ui-muted font-normal">{{ $t("maintenance.contractForm.optional") }}</span></label>
             <input id="mc-end" v-model="form.end_date" type="date" :class="FIELD" />
             <p v-if="err('end_date')" :class="ERR">{{ err("end_date") }}</p>
           </div>
         </div>
         <p v-if="data" :class="[HINT, '!mt-2']">
-          A new quota applies from next month (and to this month only while nothing has been logged or adjusted yet). Use "Adjust quota" to change this month.
+          {{ $t("maintenance.contractForm.quotaChangeHint") }}
         </p>
       </div>
 
       <div>
-        <p :class="LABEL">Status</p>
+        <p :class="LABEL">{{ $t("common.labels.status") }}</p>
         <div class="flex gap-1.5" role="radiogroup">
           <label
             v-for="s in ['active', 'paused', 'ended']"
@@ -172,14 +175,14 @@ const projectSelectOptions = computed(() => [{ value: "", label: "Not tied to a 
             class="ui-press inline-flex items-center h-8 px-3 rounded-full border text-ui-small font-medium cursor-pointer has-[:focus-visible]:shadow-ui-focus"
             :class="form.status === s ? 'bg-ui-ink text-white border-ui-ink' : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover'"
           >
-            <input v-model="form.status" type="radio" :value="s" class="sr-only" />{{ s.charAt(0).toUpperCase() + s.slice(1) }}
+            <input v-model="form.status" type="radio" :value="s" class="sr-only" />{{ CONTRACT_STATUS[s].label }}
           </label>
         </div>
-        <p :class="HINT">Paused and ended contracts don't get a quota for new months.</p>
+        <p :class="HINT">{{ $t("maintenance.contractForm.statusHint") }}</p>
       </div>
 
       <div>
-        <p :class="LABEL">Unused hours at month end</p>
+        <p :class="LABEL">{{ $t("maintenance.contractForm.unusedAtMonthEnd") }}</p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <label
             v-for="(policy, key) in LEFTOVER_POLICY"
@@ -196,33 +199,33 @@ const projectSelectOptions = computed(() => [{ value: "", label: "Not tied to a 
 
       <div v-if="form.leftover_policy === 'bank'" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-ui-subtle/60 border border-ui-line rounded-ui-card p-4">
         <div>
-          <label for="mc-cap" :class="LABEL">Balance cap (hours)</label>
-          <input id="mc-cap" v-model="form.bank_cap_hours" type="number" min="0" step="any" :class="[FIELD, 'tabular-nums']" placeholder="No cap" @input="capTouched = true" />
-          <p :class="HINT">Leftover beyond this expires. Default 3× the monthly quota; empty = no cap.</p>
+          <label for="mc-cap" :class="LABEL">{{ $t("maintenance.contractForm.cap") }}</label>
+          <input id="mc-cap" v-model="form.bank_cap_hours" type="number" min="0" step="any" :class="[FIELD, 'tabular-nums']" :placeholder="$t('maintenance.contractForm.noCap')" @input="capTouched = true" />
+          <p :class="HINT">{{ $t("maintenance.contractForm.capHint") }}</p>
         </div>
         <div>
-          <label for="mc-expiry" :class="LABEL">Hours expire after (months)</label>
-          <input id="mc-expiry" v-model="form.bank_expiry_months" type="number" min="1" max="36" step="1" :class="[FIELD, 'tabular-nums']" placeholder="Never" />
-          <p :class="HINT">Unused balance expires after this. Empty = never.</p>
+          <label for="mc-expiry" :class="LABEL">{{ $t("maintenance.contractForm.expiry") }}</label>
+          <input id="mc-expiry" v-model="form.bank_expiry_months" type="number" min="1" max="36" step="1" :class="[FIELD, 'tabular-nums']" :placeholder="$t('maintenance.contractForm.never')" />
+          <p :class="HINT">{{ $t("maintenance.contractForm.expiryHint") }}</p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label for="mc-overage" :class="LABEL">Overage rate per hour (Rp) <span class="text-ui-muted font-normal">(optional)</span></label>
-          <input id="mc-overage" v-model="form.overage_rate" type="number" min="0" step="any" :class="[FIELD, 'tabular-nums']" placeholder="e.g. 150000" />
-          <p :class="HINT">Shown next to hours worked beyond the quota.</p>
+          <label for="mc-overage" :class="LABEL">{{ $t("maintenance.contractForm.overageRate") }} <span class="text-ui-muted font-normal">{{ $t("maintenance.contractForm.optional") }}</span></label>
+          <input id="mc-overage" v-model="form.overage_rate" type="number" min="0" step="any" :class="[FIELD, 'tabular-nums']" :placeholder="$t('maintenance.contractForm.overagePlaceholder')" />
+          <p :class="HINT">{{ $t("maintenance.contractForm.overageHint") }}</p>
         </div>
         <div>
-          <label for="mc-notes" :class="LABEL">Notes</label>
-          <textarea id="mc-notes" v-model="form.notes" rows="2" maxlength="2000" :class="FIELD" placeholder="Scope, SLA, contact person..."></textarea>
+          <label for="mc-notes" :class="LABEL">{{ $t("common.labels.notes") }}</label>
+          <textarea id="mc-notes" v-model="form.notes" rows="2" maxlength="2000" :class="FIELD" :placeholder="$t('maintenance.contractForm.notesPlaceholder')"></textarea>
         </div>
       </div>
     </form>
 
     <template #footer>
-      <UiButton variant="secondary" @click="emit('close')">Cancel</UiButton>
-      <UiButton type="submit" form="maintenance-contract-form" :loading="loading">{{ data ? "Save Changes" : "Create Contract" }}</UiButton>
+      <UiButton variant="secondary" @click="emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
+      <UiButton type="submit" form="maintenance-contract-form" :loading="loading">{{ data ? $t("common.actions.saveChanges") : $t("maintenance.contractForm.create") }}</UiButton>
     </template>
   </UiModal>
 </template>

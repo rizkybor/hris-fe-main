@@ -18,7 +18,7 @@ defineProps({
     <label :for="`license-${field}`" class="block text-ui-small font-medium text-ui-ink mb-1.5">
       {{ label }}
       <span v-if="required" class="text-ui-bad">*</span>
-      <span v-else class="text-ui-faint font-normal">(Optional)</span>
+      <span v-else class="text-ui-faint font-normal">({{ $t("common.states.optional") }})</span>
     </label>
     <div class="relative">
       <div v-if="icon" class="absolute inset-y-0 left-3 flex items-center pointer-events-none">

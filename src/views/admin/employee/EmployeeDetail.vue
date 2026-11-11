@@ -56,6 +56,14 @@ import { useScrollFade } from "@/composables/useScrollFade";
 import { UiAlert, UiBadge, UiButton, UiCard, UiEmpty, UiInput, UiModal, UiSelect, UiStat } from "@/components/ui";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
+// Known enum values get a translated label; anything else keeps capitalize().
+const enumLabel = (group: string, value: any) => {
+  const key = `employees.enums.${group}.${value}`;
+  return value && te(key) ? t(key) : capitalize(value);
+};
 
 const route = useRoute();
 const router = useRouter();
@@ -100,14 +108,14 @@ const activeTab = ref("overview");
 const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
 const tabs = computed(() => {
   const list = [
-    { id: "overview", label: "Overview", icon: LayoutGrid },
-    { id: "employment", label: "Employment & Bank", icon: Wallet },
-    { id: "emergency", label: "Emergency Contact", icon: Phone },
-    { id: "documents", label: "Documents", icon: Images },
-    { id: "performance", label: "Performance", icon: Award },
+    { id: "overview", label: t("employees.detail.tabs.overview"), icon: LayoutGrid },
+    { id: "employment", label: t("employees.detail.tabs.employment"), icon: Wallet },
+    { id: "emergency", label: t("employees.detail.tabs.emergency"), icon: Phone },
+    { id: "documents", label: t("employees.detail.tabs.documents"), icon: Images },
+    { id: "performance", label: t("employees.detail.tabs.performance"), icon: Award },
   ];
   if (can("employee-edit")) {
-    list.push({ id: "offboarding", label: "Offboarding", icon: DoorOpen });
+    list.push({ id: "offboarding", label: t("employees.detail.tabs.offboarding"), icon: DoorOpen });
   }
   return list;
 });
@@ -160,7 +168,7 @@ const submitReview = async () => {
     await reviewStore.fetchReviews({ employee_id: route.params.id, row_per_page: 20 });
   } catch (error: any) {
     const data = error?.response?.data;
-    reviewError.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal menyimpan review.");
+    reviewError.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t("employees.detail.reviews.saveFailed"));
   } finally {
     reviewSubmitting.value = false;
   }
@@ -186,7 +194,7 @@ const submitResignation = async () => {
     await Promise.all([loadEmployee(), resignationStore.fetchEmployeeResignation(route.params.id as string)]);
   } catch (error: any) {
     const data = error?.response?.data;
-    resignError.value = data?.message || "Failed to process resignation/termination.";
+    resignError.value = data?.message || t("employees.detail.offboarding.processFailed");
   } finally {
     resignSubmitting.value = false;
   }
@@ -194,12 +202,12 @@ const submitResignation = async () => {
 
 const completeOffboarding = async () => {
   if (!resignation.value) return;
-  if (!(await alertModal.confirm("Mark offboarding process as complete?"))) return;
+  if (!(await alertModal.confirm(t("employees.detail.offboarding.confirmComplete")))) return;
   try {
     await resignationStore.completeOffboarding(resignation.value.id);
     await resignationStore.fetchEmployeeResignation(route.params.id as string);
   } catch (error) {
-    await alertModal.alert("Failed to complete offboarding process.", { type: "danger" });
+    await alertModal.alert(t("employees.detail.offboarding.completeFailed"), { type: "danger" });
   }
 };
 
@@ -209,7 +217,8 @@ const statusBadgeClass = computed(() => {
 });
 
 const statusText = computed(() => {
-  return getJobStatusText(employee.value?.job_information?.status);
+  const status = employee.value?.job_information?.status;
+  return status && te(`employees.enums.jobStatus.${status}`) ? t(`employees.enums.jobStatus.${status}`) : getJobStatusText(status);
 });
 
 // Actions
@@ -223,17 +232,17 @@ const editEmployee = () => {
 const shareProfile = async () => {
   const url = window.location.href;
   navigator.clipboard.writeText(url);
-  await alertModal.alert("Profile link copied to clipboard!", { type: "success" });
+  await alertModal.alert(t("employees.detail.share.copied"), { type: "success" });
 };
 
 const backupEmployee = async () => {
   if (
     await alertModal.confirm(
-      `Create backup for ${employee.value?.user?.name}? This will download all employee data.`,
-      { type: "info", confirmText: "Create Backup" }
+      t("employees.detail.backup.confirm", { name: employee.value?.user?.name }),
+      { type: "info", confirmText: t("employees.detail.backup.confirmText") }
     )
   ) {
-    await alertModal.alert("Backup feature will be implemented soon.");
+    await alertModal.alert(t("employees.detail.backup.soon"));
   }
 };
 
@@ -266,12 +275,15 @@ const togglingAccountStatus = ref(false);
 
 const handleToggleAccountStatus = async () => {
   const isActive = employee.value?.user?.is_active;
-  const action = isActive ? "deactivate" : "activate";
+  const name = employee.value?.user?.name;
   const ok = await alertModal.confirm(
     isActive
-      ? `Deactivate ${employee.value?.user?.name}'s account? They will be immediately logged out and unable to log in until reactivated.`
-      : `Activate ${employee.value?.user?.name}'s account? They will be able to log in again.`,
-    { type: isActive ? "danger" : "info", confirmText: isActive ? "Deactivate" : "Activate" }
+      ? t("employees.detail.account.confirmDeactivate", { name })
+      : t("employees.detail.account.confirmActivate", { name }),
+    {
+      type: isActive ? "danger" : "info",
+      confirmText: isActive ? t("employees.detail.account.deactivateShort") : t("employees.detail.account.activateShort"),
+    }
   );
   if (!ok) return;
 
@@ -281,9 +293,13 @@ const handleToggleAccountStatus = async () => {
     if (employee.value && updated?.user) {
       employee.value.user.is_active = updated.user.is_active;
     }
-    await alertModal.alert(`Account ${action}d successfully.`, { type: "success" });
+    await alertModal.alert(
+      isActive ? t("employees.detail.account.deactivatedOk") : t("employees.detail.account.activatedOk"),
+      { type: "success" }
+    );
   } catch (error: any) {
-    await alertModal.alert(error?.response?.data?.message || `Failed to ${action} account.`, { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message ||
+        (isActive ? t("employees.detail.account.deactivateFailed") : t("employees.detail.account.activateFailed")), { type: "danger" });
   } finally {
     togglingAccountStatus.value = false;
   }
@@ -300,58 +316,68 @@ const performanceTone = computed(() => {
   const score = performanceStatistics.value?.performance_score;
   return score >= 80 ? "ok" : score >= 60 ? "warn" : "bad";
 });
-const resignTypeOptions = [
-  { value: "resign", label: "Resignation" },
-  { value: "terminated", label: "Termination" },
-];
+const resignTypeOptions = computed(() => [
+  { value: "resign", label: t("employees.detail.offboarding.resignation") },
+  { value: "terminated", label: t("employees.detail.offboarding.termination") },
+]);
 const fieldClass =
   "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
 
 const teamRows = computed(() => [
-  { label: "Team", value: employee.value?.team?.name || "-" },
-  { label: "Team Members", value: `${employee.value?.team?.members_count || 0} members` },
-  { label: "Team Status", value: capitalize(employee.value?.team?.status) },
+  { label: t("employees.detail.fields.team"), value: employee.value?.team?.name || "-" },
+  {
+    label: t("employees.detail.fields.teamMembers"),
+    value: t("employees.detail.fields.membersCount", { n: employee.value?.team?.members_count || 0 }, employee.value?.team?.members_count || 0),
+  },
+  { label: t("employees.detail.fields.teamStatus"), value: enumLabel("teamStatus", employee.value?.team?.status) },
 ]);
 const contactRows = computed(() => [
-  { label: "Email", value: employee.value?.user?.email },
-  { label: "Phone", value: employee.value?.phone },
-  { label: "Identity Number", value: employee.value?.identity_number },
+  { label: t("common.labels.email"), value: employee.value?.user?.email },
+  { label: t("common.labels.phone"), value: employee.value?.phone },
+  { label: t("employees.detail.fields.identityNumber"), value: employee.value?.identity_number },
 ]);
 const personalRows = computed(() => [
-  { label: "Date of Birth", value: formatDate(employee.value?.date_of_birth) },
-  { label: "Place of Birth", value: employee.value?.place_of_birth },
-  { label: "Gender", value: capitalize(employee.value?.gender) },
-  { label: "Hobby", value: employee.value?.hobby || "-" },
+  { label: t("employees.detail.fields.dateOfBirth"), value: formatDate(employee.value?.date_of_birth) },
+  { label: t("employees.detail.fields.placeOfBirth"), value: employee.value?.place_of_birth },
+  { label: t("employees.detail.fields.gender"), value: enumLabel("gender", employee.value?.gender) },
+  { label: t("employees.detail.fields.hobby"), value: employee.value?.hobby || "-" },
 ]);
 const addressRows = computed(() => [
-  { label: "Address", value: employee.value?.address },
-  { label: "City", value: employee.value?.city },
-  { label: "Post Code", value: employee.value?.postal_code },
+  { label: t("common.labels.address"), value: employee.value?.address },
+  { label: t("common.labels.city"), value: employee.value?.city },
+  { label: t("employees.detail.fields.postCode"), value: employee.value?.postal_code },
 ]);
 const employmentRows = computed(() => [
-  { label: "Years of Experience", value: `${employee.value?.job_information?.years_experience} years` },
-  { label: "Employment Type", value: capitalize(employee.value?.job_information?.employment_type) },
-  { label: "Start Date", value: formatDate(employee.value?.job_information?.start_date) },
-  { label: "Monthly Salary", value: formatCurrency(employee.value?.job_information?.monthly_salary), num: true },
+  {
+    label: t("employees.detail.fields.yearsExperience"),
+    value: t(
+      "employees.detail.fields.years",
+      { n: employee.value?.job_information?.years_experience },
+      Number(employee.value?.job_information?.years_experience) || 0
+    ),
+  },
+  { label: t("employees.detail.fields.employmentType"), value: enumLabel("employmentType", employee.value?.job_information?.employment_type) },
+  { label: t("employees.detail.fields.startDate"), value: formatDate(employee.value?.job_information?.start_date) },
+  { label: t("employees.detail.fields.monthlySalary"), value: formatCurrency(employee.value?.job_information?.monthly_salary), num: true },
 ]);
 const bankRows = computed(() => [
-  { label: "Bank Name", value: capitalize(employee.value?.bank_information?.bank_name) || "-" },
-  { label: "Account Number", value: employee.value?.bank_information?.account_number || "-", num: true },
-  { label: "Account Holder", value: employee.value?.bank_information?.account_holder_name || "-" },
-  { label: "Account Type", value: capitalize(employee.value?.bank_information?.account_type) || "-" },
+  { label: t("employees.detail.fields.bankName"), value: capitalize(employee.value?.bank_information?.bank_name) || "-" },
+  { label: t("employees.detail.fields.accountNumber"), value: employee.value?.bank_information?.account_number || "-", num: true },
+  { label: t("employees.detail.fields.accountHolder"), value: employee.value?.bank_information?.account_holder_name || "-" },
+  { label: t("employees.detail.fields.accountType"), value: enumLabel("accountType", employee.value?.bank_information?.account_type) || "-" },
 ]);
 const adminRows = computed(() => [
-  { label: "Employee ID", value: employee.value?.code },
-  { label: "Preferred Language", value: capitalize(employee.value?.preferred_language) || "-" },
+  { label: t("employees.detail.fields.employeeId"), value: employee.value?.code },
+  { label: t("employees.detail.fields.preferredLanguage"), value: enumLabel("language", employee.value?.preferred_language) || "-" },
 ]);
 const emergencyRows = computed(() => {
   const c = employee.value?.emergency_contacts?.[0];
   if (!c) return [];
   return [
-    { label: "Contact Name", value: c.full_name },
-    { label: "Relationship", value: capitalize(c.relationship) },
-    { label: "Phone", value: c.phone },
-    { label: "Email", value: c.email || "-" },
+    { label: t("employees.detail.fields.contactName"), value: c.full_name },
+    { label: t("employees.detail.fields.relationship"), value: capitalize(c.relationship) },
+    { label: t("common.labels.phone"), value: c.phone },
+    { label: t("common.labels.email"), value: c.email || "-" },
   ];
 });
 </script>
@@ -359,7 +385,7 @@ const emergencyRows = computed(() => {
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
   <!-- Loading -->
-  <div v-if="loading" role="status" aria-label="Loading employee data..." class="space-y-5">
+  <div v-if="loading" role="status" :aria-label="$t('employees.detail.loading')" class="space-y-5">
     <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
       <Skeleton width="64px" height="64px" rounded="9999px" class="self-center sm:self-auto" />
       <div class="flex-1 space-y-2.5 flex flex-col items-center sm:items-start">
@@ -373,7 +399,7 @@ const emergencyRows = computed(() => {
         <Skeleton v-for="i in 4" :key="i" width="100%" height="16px" />
       </div>
     </div>
-    <span class="sr-only">Loading employee data...</span>
+    <span class="sr-only">{{ $t("employees.detail.loading") }}</span>
   </div>
 
   <div v-else-if="employee" class="space-y-5 ui-anim-fade-up">
@@ -391,44 +417,44 @@ const emergencyRows = computed(() => {
           <h1 class="text-ui-h1 text-ui-ink break-words">{{ employee.user?.name }}</h1>
           <UiBadge :tone="jobStatusTone" dot>{{ capitalize(statusText) }}</UiBadge>
           <UiBadge v-if="employee.job_information?.skill_level" tone="outline">
-            {{ capitalize(employee.job_information?.skill_level) }}
+            {{ enumLabel("skillLevel", employee.job_information?.skill_level) }}
           </UiBadge>
-          <UiBadge v-if="employee.user?.is_active === false" tone="bad">Login Disabled</UiBadge>
+          <UiBadge v-if="employee.user?.is_active === false" tone="bad">{{ $t("employees.detail.loginDisabled") }}</UiBadge>
         </div>
         <p class="text-ui-small text-ui-muted mt-1">{{ employee.job_information?.job_title }}</p>
         <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 mt-2 text-ui-small text-ui-muted">
-          <span class="inline-flex items-center gap-1.5"><Building class="w-3.5 h-3.5 text-ui-faint" />{{ capitalize(employee.job_information?.work_location) }}</span>
+          <span class="inline-flex items-center gap-1.5"><Building class="w-3.5 h-3.5 text-ui-faint" />{{ enumLabel("workLocation", employee.job_information?.work_location) }}</span>
           <span class="inline-flex items-center gap-1.5"><User class="w-3.5 h-3.5 text-ui-faint" />{{ employee.code }}</span>
-          <span class="inline-flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />Joined {{ formatDate(employee.job_information?.start_date) }}</span>
+          <span class="inline-flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />{{ $t("employees.detail.joined", { date: formatDate(employee.job_information?.start_date) }) }}</span>
         </div>
       </div>
       <div class="flex gap-2 w-full sm:w-auto shrink-0">
-        <UiButton variant="secondary" :icon="Share2" class="flex-1 sm:flex-none" @click="shareProfile">Share Profile</UiButton>
-        <UiButton :icon="Edit" class="flex-1 sm:flex-none" @click="editEmployee">Edit Profile</UiButton>
+        <UiButton variant="secondary" :icon="Share2" class="flex-1 sm:flex-none" @click="shareProfile">{{ $t("employees.detail.shareProfile") }}</UiButton>
+        <UiButton :icon="Edit" class="flex-1 sm:flex-none" @click="editEmployee">{{ $t("employees.detail.editProfile") }}</UiButton>
       </div>
     </div>
 
     <!-- Performance Stats -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ui-stagger">
-      <UiStat label="Tasks Completed" :icon="CheckCircle" :value="performanceStatistics.tasks_completed" hint="This month" />
+      <UiStat :label="$t('employees.detail.stats.tasksCompleted')" :icon="CheckCircle" :value="performanceStatistics.tasks_completed" :hint="$t('employees.detail.stats.thisMonth')" />
       <UiStat
-        label="Attendance Rate"
+        :label="$t('employees.detail.stats.attendanceRate')"
         :icon="CalendarCheck"
         :value="`${performanceStatistics.attendance_rate}%`"
-        :hint="performanceStatistics.attendance_rate >= 80 ? 'Above average' : 'Below average'"
+        :hint="performanceStatistics.attendance_rate >= 80 ? $t('employees.detail.stats.aboveAverage') : $t('employees.detail.stats.belowAverage')"
       />
-      <UiStat label="Projects" :icon="Folder" :value="performanceStatistics.projects_count" hint="Active projects" />
+      <UiStat :label="$t('employees.detail.stats.projects')" :icon="Folder" :value="performanceStatistics.projects_count" :hint="$t('employees.detail.stats.activeProjects')" />
       <UiStat
-        label="Performance"
+        :label="$t('employees.detail.stats.performance')"
         :icon="TrendingUp"
         :value="`${performanceStatistics.performance_score}%`"
         :tone="performanceTone"
         :hint="
           performanceStatistics.performance_score >= 80
-            ? 'Excellent rating'
+            ? $t('employees.detail.stats.excellent')
             : performanceStatistics.performance_score >= 60
-            ? 'Good rating'
-            : 'Needs improvement'
+            ? $t('employees.detail.stats.good')
+            : $t('employees.detail.stats.needsImprovement')
         "
       />
     </div>
@@ -478,12 +504,12 @@ const emergencyRows = computed(() => {
     <div v-show="activeTab === 'overview'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start ui-stagger">
       <UiCard
         v-for="section in [
-          { title: 'Team Information', subtitle: 'Current team and reporting structure', icon: Users, rows: teamRows },
-          { title: 'Contact Details', subtitle: 'How to reach this employee', icon: Contact, rows: contactRows },
-          { title: 'Personal Information', subtitle: 'Birth and personal details', icon: Calendar, rows: personalRows },
-          { title: 'Address Information', subtitle: 'Location and postal details', icon: MapPin, rows: addressRows },
+          { key: 'team', title: $t('employees.detail.sections.team.title'), subtitle: $t('employees.detail.sections.team.subtitle'), icon: Users, rows: teamRows },
+          { key: 'contact', title: $t('employees.detail.sections.contact.title'), subtitle: $t('employees.detail.sections.contact.subtitle'), icon: Contact, rows: contactRows },
+          { key: 'personal', title: $t('employees.detail.sections.personal.title'), subtitle: $t('employees.detail.sections.personal.subtitle'), icon: Calendar, rows: personalRows },
+          { key: 'address', title: $t('employees.detail.sections.address.title'), subtitle: $t('employees.detail.sections.address.subtitle'), icon: MapPin, rows: addressRows },
         ]"
-        :key="section.title"
+        :key="section.key"
         :title="section.title"
         :subtitle="section.subtitle"
       >
@@ -501,10 +527,10 @@ const emergencyRows = computed(() => {
     <div v-show="activeTab === 'employment'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start ui-stagger">
       <UiCard
         v-for="section in [
-          { title: 'Employment Details', subtitle: 'Work arrangement and compensation', icon: Briefcase, rows: employmentRows },
-          { title: 'Bank Information', subtitle: 'Banking details for payroll', icon: Wallet, rows: bankRows },
+          { key: 'employment', title: $t('employees.detail.sections.employment.title'), subtitle: $t('employees.detail.sections.employment.subtitle'), icon: Briefcase, rows: employmentRows },
+          { key: 'bank', title: $t('employees.detail.sections.bank.title'), subtitle: $t('employees.detail.sections.bank.subtitle'), icon: Wallet, rows: bankRows },
         ]"
-        :key="section.title"
+        :key="section.key"
         :title="section.title"
         :subtitle="section.subtitle"
       >
@@ -518,7 +544,7 @@ const emergencyRows = computed(() => {
       </UiCard>
 
       <!-- Administrative Information -->
-      <UiCard title="Administrative Information" subtitle="System details and preferences" class="lg:col-span-2">
+      <UiCard :title="$t('employees.detail.sections.admin.title')" :subtitle="$t('employees.detail.sections.admin.subtitle')" class="lg:col-span-2">
         <template #actions><FileText class="w-4 h-4 text-ui-faint mt-1" /></template>
         <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 sm:gap-x-6 sm:gap-y-5 divide-y divide-ui-line sm:divide-y-0 -my-3 sm:my-0">
           <div v-for="row in adminRows" :key="row.label" class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
@@ -527,7 +553,7 @@ const emergencyRows = computed(() => {
           </div>
         </dl>
         <div v-if="employee.additional_notes" class="mt-5 pt-4 border-t border-ui-line">
-          <p class="text-ui-small text-ui-muted mb-2">Additional Notes</p>
+          <p class="text-ui-small text-ui-muted mb-2">{{ $t("employees.detail.fields.additionalNotes") }}</p>
           <p class="text-ui-body text-ui-ink bg-ui-subtle border border-ui-line rounded-ui-control px-3.5 py-3 whitespace-pre-line">
             {{ employee.additional_notes }}
           </p>
@@ -537,7 +563,7 @@ const emergencyRows = computed(() => {
 
     <!-- Emergency Contact Tab -->
     <div v-show="activeTab === 'emergency'" class="ui-anim-fade-up">
-      <UiCard title="Emergency Contact" subtitle="Person to contact in emergency">
+      <UiCard :title="$t('employees.detail.sections.emergency.title')" :subtitle="$t('employees.detail.sections.emergency.subtitle')">
         <template #actions><Phone class="w-4 h-4 text-ui-faint mt-1" /></template>
         <dl
           v-if="employee.emergency_contacts && employee.emergency_contacts.length > 0"
@@ -548,7 +574,7 @@ const emergencyRows = computed(() => {
             <dd class="text-ui-body text-ui-ink text-right sm:text-left sm:mt-1 break-words min-w-0">{{ row.value }}</dd>
           </div>
         </dl>
-        <UiEmpty v-else compact :icon="Phone" title="No emergency contact information" />
+        <UiEmpty v-else compact :icon="Phone" :title="$t('employees.detail.noEmergencyContact')" />
       </UiCard>
     </div>
 
@@ -560,19 +586,19 @@ const emergencyRows = computed(() => {
     <!-- Performance Tab -->
     <div v-show="activeTab === 'performance'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start ui-stagger">
       <!-- Performance Reviews -->
-      <UiCard title="Performance Reviews" subtitle="Employee performance review history" :padded="false">
+      <UiCard :title="$t('employees.detail.reviews.title')" :subtitle="$t('employees.detail.reviews.subtitle')" :padded="false">
         <template #actions>
           <UiButton v-if="can('performance-review-create')" size="sm" :icon="Star" @click="openReviewModal">
-            Create Review
+            {{ $t("employees.detail.reviews.create") }}
           </UiButton>
           <Star v-else class="w-4 h-4 text-ui-faint mt-1" />
         </template>
-        <UiEmpty v-if="performanceReviews.length === 0" compact :icon="Star" title="No performance reviews yet." />
+        <UiEmpty v-if="performanceReviews.length === 0" compact :icon="Star" :title="$t('employees.detail.reviews.empty')" />
         <ul v-else class="divide-y divide-ui-line border-t border-ui-line">
           <li v-for="review in performanceReviews" :key="review.id" class="px-5 sm:px-6 py-4">
             <div class="flex items-center justify-between gap-3">
               <p class="text-ui-h3 text-ui-ink min-w-0 truncate">{{ review.period }}</p>
-              <span class="flex items-center gap-0.5 shrink-0" :aria-label="`${review.overall_rating} of 5`">
+              <span class="flex items-center gap-0.5 shrink-0" :aria-label="$t('employees.detail.reviews.ratingOf', { rating: review.overall_rating })">
                 <Star
                   v-for="i in 5"
                   :key="i"
@@ -583,12 +609,12 @@ const emergencyRows = computed(() => {
                 <span class="text-ui-cap font-medium text-ui-ink tabular-nums ml-1">{{ review.overall_rating }}/5</span>
               </span>
             </div>
-            <p v-if="review.strengths" class="text-ui-small text-ui-text mt-1.5"><span class="font-medium text-ui-ink">Kelebihan:</span> {{ review.strengths }}</p>
-            <p v-if="review.areas_for_improvement" class="text-ui-small text-ui-text mt-1"><span class="font-medium text-ui-ink">Area Perbaikan:</span> {{ review.areas_for_improvement }}</p>
+            <p v-if="review.strengths" class="text-ui-small text-ui-text mt-1.5"><span class="font-medium text-ui-ink">{{ $t("employees.detail.reviews.strengths") }}</span> {{ review.strengths }}</p>
+            <p v-if="review.areas_for_improvement" class="text-ui-small text-ui-text mt-1"><span class="font-medium text-ui-ink">{{ $t("employees.detail.reviews.improvements") }}</span> {{ review.areas_for_improvement }}</p>
             <div class="flex flex-wrap items-center gap-2 mt-2">
-              <span class="text-ui-cap text-ui-muted">By {{ review.reviewer?.name }}</span>
+              <span class="text-ui-cap text-ui-muted">{{ $t("employees.detail.reviews.by", { name: review.reviewer?.name }) }}</span>
               <UiBadge :tone="review.status === 'acknowledged' ? 'ok' : 'neutral'" dot>
-                {{ review.status === 'acknowledged' ? 'Read by employee' : 'Awaiting employee read' }}
+                {{ review.status === 'acknowledged' ? $t('employees.detail.reviews.acknowledged') : $t('employees.detail.reviews.awaiting') }}
               </UiBadge>
             </div>
           </li>
@@ -596,9 +622,9 @@ const emergencyRows = computed(() => {
       </UiCard>
 
       <!-- Disciplinary History -->
-      <UiCard title="Riwayat Surat Peringatan" subtitle="SP1 / SP2 / SP3 previously issued" :padded="false">
+      <UiCard :title="$t('employees.detail.warnings.title')" :subtitle="$t('employees.detail.warnings.subtitle')" :padded="false">
         <template #actions><ShieldAlert class="w-4 h-4 text-ui-faint mt-1" /></template>
-        <UiEmpty v-if="disciplinaryLetters.length === 0" compact :icon="ShieldAlert" title="Tidak ada riwayat surat peringatan." />
+        <UiEmpty v-if="disciplinaryLetters.length === 0" compact :icon="ShieldAlert" :title="$t('employees.detail.warnings.empty')" />
         <ul v-else class="divide-y divide-ui-line border-t border-ui-line">
           <li v-for="letter in disciplinaryLetters" :key="letter.id" class="px-5 sm:px-6 py-3.5 flex items-start gap-3">
             <ShieldAlert class="w-4 h-4 text-ui-bad shrink-0 mt-0.5" />
@@ -614,7 +640,7 @@ const emergencyRows = computed(() => {
     <!-- Offboarding Tab -->
     <div v-if="can('employee-edit')" v-show="activeTab === 'offboarding'" class="space-y-4 sm:space-y-5 ui-stagger">
       <!-- Resignation / Offboarding -->
-      <UiCard title="Resignation / Termination" subtitle="Process employee offboarding">
+      <UiCard :title="$t('employees.detail.offboarding.title')" :subtitle="$t('employees.detail.offboarding.subtitle')">
         <template #actions>
           <UiButton
             v-if="!resignation || resignation.status === 'completed'"
@@ -624,7 +650,7 @@ const emergencyRows = computed(() => {
             class="hidden sm:inline-flex"
             @click="openResignModal"
           >
-            Start Resignation/Termination Process
+            {{ $t("employees.detail.offboarding.start") }}
           </UiButton>
           <LogOut v-else class="w-4 h-4 text-ui-faint mt-1" />
         </template>
@@ -638,26 +664,26 @@ const emergencyRows = computed(() => {
           :class="resignation ? 'mb-4' : ''"
           @click="openResignModal"
         >
-          Start Resignation/Termination Process
+          {{ $t("employees.detail.offboarding.start") }}
         </UiButton>
 
         <div v-if="resignation" class="border border-ui-line rounded-ui-card p-4 space-y-3">
           <div class="flex items-center justify-between gap-3">
             <p class="text-ui-h3 text-ui-ink">
-              {{ resignation.type === 'terminated' ? 'Termination' : 'Resignation' }}
+              {{ resignation.type === 'terminated' ? $t('employees.detail.offboarding.termination') : $t('employees.detail.offboarding.resignation') }}
             </p>
             <UiBadge :tone="resignation.status === 'completed' ? 'ok' : 'warn'" dot>
-              {{ resignation.status === 'completed' ? 'Selesai' : 'Dalam Proses' }}
+              {{ resignation.status === 'completed' ? $t('employees.detail.offboarding.completed') : $t('employees.detail.offboarding.inProgress') }}
             </UiBadge>
           </div>
-          <p v-if="resignation.reason" class="text-ui-small text-ui-text">Reason: {{ resignation.reason }}</p>
+          <p v-if="resignation.reason" class="text-ui-small text-ui-text">{{ $t("employees.detail.offboarding.reason", { reason: resignation.reason }) }}</p>
           <p class="text-ui-small text-ui-muted">
-            Tanggal Pengajuan: {{ formatDate(resignation.resignation_date) }}
-            <span v-if="resignation.last_working_date"> • Last Working Day: {{ formatDate(resignation.last_working_date) }}</span>
+            {{ $t("employees.detail.offboarding.submittedOn", { date: formatDate(resignation.resignation_date) }) }}
+            <span v-if="resignation.last_working_date"> • {{ $t("employees.detail.offboarding.lastWorkingDay", { date: formatDate(resignation.last_working_date) }) }}</span>
           </p>
 
           <div v-if="assetsToReturn.length > 0" class="pt-3 border-t border-ui-line">
-            <p class="text-ui-small font-medium text-ui-ink mb-1.5">Assets to be Returned:</p>
+            <p class="text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("employees.detail.offboarding.assetsToReturn") }}</p>
             <ul class="space-y-1">
               <li v-for="asset in assetsToReturn" :key="asset.id" class="text-ui-small text-ui-text flex items-center gap-2">
                 <span class="w-1 h-1 rounded-full bg-ui-muted shrink-0"></span>
@@ -666,12 +692,12 @@ const emergencyRows = computed(() => {
             </ul>
           </div>
           <p v-else class="text-ui-small text-ui-ok inline-flex items-center gap-1.5">
-            <CheckCircle class="w-3.5 h-3.5" /> No assets need to be returned.
+            <CheckCircle class="w-3.5 h-3.5" /> {{ $t("employees.detail.offboarding.noAssets") }}
           </p>
 
           <div v-if="resignation.status === 'pending'" class="pt-1">
             <UiButton variant="secondary" :icon="CheckCircle" class="w-full sm:w-auto" @click="completeOffboarding">
-              Selesaikan Offboarding
+              {{ $t("employees.detail.offboarding.complete") }}
             </UiButton>
           </div>
         </div>
@@ -687,13 +713,13 @@ const emergencyRows = computed(() => {
             </div>
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-ui-h3 text-ui-ink">Account Login Access</h3>
+                <h3 class="text-ui-h3 text-ui-ink">{{ $t("employees.detail.account.title") }}</h3>
                 <UiBadge :tone="employee.user?.is_active ? 'ok' : 'bad'" dot>
-                  {{ employee.user?.is_active ? "Active" : "Deactivated" }}
+                  {{ employee.user?.is_active ? $t("employees.detail.account.active") : $t("employees.detail.account.deactivated") }}
                 </UiBadge>
               </div>
               <p class="text-ui-small text-ui-muted mt-0.5">
-                {{ employee.user?.is_active ? "This account can currently log in." : "This account is deactivated and cannot log in." }}
+                {{ employee.user?.is_active ? $t("employees.detail.account.canLogin") : $t("employees.detail.account.cannotLogin") }}
               </p>
             </div>
           </div>
@@ -705,9 +731,15 @@ const emergencyRows = computed(() => {
             class="w-full sm:w-auto shrink-0"
             @click="handleToggleAccountStatus"
           >
-            {{ togglingAccountStatus ? "Processing..." : employee.user?.is_active ? "Deactivate Account" : "Activate Account" }}
+            {{
+              togglingAccountStatus
+                ? $t("employees.detail.account.processing")
+                : employee.user?.is_active
+                ? $t("employees.detail.account.deactivate")
+                : $t("employees.detail.account.activate")
+            }}
           </UiButton>
-          <p v-else class="text-ui-cap text-ui-muted">Only Superadmin can change this account's status.</p>
+          <p v-else class="text-ui-cap text-ui-muted">{{ $t("employees.detail.account.superadminOnly") }}</p>
         </div>
       </div>
 
@@ -715,23 +747,22 @@ const emergencyRows = computed(() => {
       <div v-if="hasAnyRole(['superadmin'])" class="bg-ui-surface border border-ui-bad/30 rounded-ui-card px-5 py-4 sm:px-6 sm:py-5">
         <div class="flex items-center gap-2">
           <AlertTriangle class="w-4 h-4 text-ui-bad" />
-          <h3 class="text-ui-h3 text-ui-bad">Danger Zone</h3>
+          <h3 class="text-ui-h3 text-ui-bad">{{ $t("employees.detail.danger.title") }}</h3>
         </div>
-        <p class="text-ui-small text-ui-muted mt-0.5">Irreversible and destructive actions</p>
+        <p class="text-ui-small text-ui-muted mt-0.5">{{ $t("employees.detail.danger.subtitle") }}</p>
         <div class="flex flex-col sm:flex-row gap-3.5 justify-between items-start sm:items-center mt-4 pt-4 border-t border-ui-line">
           <div class="flex-1 min-w-0">
-            <h4 class="text-ui-body font-medium text-ui-ink">Delete Employee Profile</h4>
+            <h4 class="text-ui-body font-medium text-ui-ink">{{ $t("employees.detail.danger.deleteTitle") }}</h4>
             <p class="text-ui-small text-ui-muted mt-0.5">
-              Permanently remove this employee and all associated data. This
-              action cannot be undone.
+              {{ $t("employees.detail.danger.deleteText") }}
             </p>
           </div>
           <div class="flex gap-2 w-full sm:w-auto shrink-0">
             <UiButton variant="secondary" :icon="Download" class="flex-1 sm:flex-none" @click="backupEmployee">
-              Backup Data
+              {{ $t("employees.detail.danger.backup") }}
             </UiButton>
             <UiButton variant="danger" :icon="Trash2" class="flex-1 sm:flex-none" @click="showDeleteModal = true">
-              Delete Employee
+              {{ $t("employees.detail.danger.delete") }}
             </UiButton>
           </div>
         </div>
@@ -740,10 +771,10 @@ const emergencyRows = computed(() => {
 
     <ConfirmationModal
       :show="showDeleteModal"
-      title="Delete Employee"
-      :message="`Are you sure you want to delete '${employee.user?.name}'? This action cannot be undone.`"
-      confirmText="Delete Employee"
-      cancelText="Cancel"
+      :title="$t('employees.detail.danger.delete')"
+      :message="$t('employees.detail.danger.deleteConfirm', { name: employee.user?.name })"
+      :confirmText="$t('employees.detail.danger.delete')"
+      :cancelText="$t('common.actions.cancel')"
       type="danger"
       :loading="loading"
       @confirm="handleDeleteEmployee"
@@ -751,16 +782,16 @@ const emergencyRows = computed(() => {
     />
 
     <!-- Performance Review Modal -->
-    <UiModal v-model:open="showReviewModal" title="Create Performance Review" size="md">
+    <UiModal v-model:open="showReviewModal" :title="$t('employees.detail.reviews.modalTitle')" size="md">
       <form id="employeeReviewForm" @submit.prevent="submitReview" class="space-y-4">
-        <UiInput v-model="reviewForm.period" label="Periode" required placeholder="e.g. Q1 2026" />
+        <UiInput v-model="reviewForm.period" :label="$t('employees.detail.reviews.period')" required :placeholder="$t('employees.detail.reviews.periodPlaceholder')" />
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UiInput v-model="reviewForm.period_start" type="date" label="Mulai Periode" required />
-          <UiInput v-model="reviewForm.period_end" type="date" label="Akhir Periode" required />
+          <UiInput v-model="reviewForm.period_start" type="date" :label="$t('employees.detail.reviews.periodStart')" required />
+          <UiInput v-model="reviewForm.period_end" type="date" :label="$t('employees.detail.reviews.periodEnd')" required />
         </div>
         <div>
           <label for="review-overall-rating" class="block text-ui-small font-medium text-ui-ink mb-1.5">
-            Overall Rating (1-5)<span class="text-ui-bad"> *</span>
+            {{ $t("employees.detail.reviews.overallRating") }}<span class="text-ui-bad"> *</span>
           </label>
           <input
             id="review-overall-rating"
@@ -773,36 +804,36 @@ const emergencyRows = computed(() => {
             :class="[fieldClass, 'tabular-nums']"
           />
         </div>
-        <UiInput v-model="reviewForm.strengths" label="Kelebihan" :rows="2" />
-        <UiInput v-model="reviewForm.areas_for_improvement" label="Area Perbaikan" :rows="2" />
-        <UiInput v-model="reviewForm.goals_next_period" label="Target Periode Berikutnya" :rows="2" />
+        <UiInput v-model="reviewForm.strengths" :label="$t('employees.detail.reviews.strengthsLabel')" :rows="2" />
+        <UiInput v-model="reviewForm.areas_for_improvement" :label="$t('employees.detail.reviews.improvementsLabel')" :rows="2" />
+        <UiInput v-model="reviewForm.goals_next_period" :label="$t('employees.detail.reviews.goalsLabel')" :rows="2" />
 
         <UiAlert v-if="reviewError" tone="bad" :message="reviewError" />
       </form>
       <template #footer>
-        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="showReviewModal = false">Cancel</UiButton>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="showReviewModal = false">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton type="submit" form="employeeReviewForm" :loading="reviewSubmitting" class="flex-1 sm:flex-none">
-          {{ reviewSubmitting ? "Saving..." : "Save Review" }}
+          {{ reviewSubmitting ? $t("common.actions.saving") : $t("employees.detail.reviews.save") }}
         </UiButton>
       </template>
     </UiModal>
 
     <!-- Resignation Modal -->
-    <UiModal v-model:open="showResignModal" title="Resignation / Termination Process" size="sm">
+    <UiModal v-model:open="showResignModal" :title="$t('employees.detail.offboarding.modalTitle')" size="sm">
       <form id="employeeResignForm" @submit.prevent="submitResignation" class="space-y-4">
-        <UiSelect v-model="resignForm.type" label="Type" :options="resignTypeOptions" />
-        <UiInput v-model="resignForm.reason" label="Reason" :rows="2" />
+        <UiSelect v-model="resignForm.type" :label="$t('employees.detail.offboarding.typeLabel')" :options="resignTypeOptions" />
+        <UiInput v-model="resignForm.reason" :label="$t('employees.detail.offboarding.reasonLabel')" :rows="2" />
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UiInput v-model="resignForm.resignation_date" type="date" label="Submission Date" required />
-          <UiInput v-model="resignForm.last_working_date" type="date" label="Last Working Day" />
+          <UiInput v-model="resignForm.resignation_date" type="date" :label="$t('employees.detail.offboarding.submissionDate')" required />
+          <UiInput v-model="resignForm.last_working_date" type="date" :label="$t('employees.detail.offboarding.lastWorkingDayLabel')" />
         </div>
 
         <UiAlert v-if="resignError" tone="bad" :message="resignError" />
       </form>
       <template #footer>
-        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="showResignModal = false">Cancel</UiButton>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="showResignModal = false">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton type="submit" form="employeeResignForm" :loading="resignSubmitting" class="flex-1 sm:flex-none">
-          {{ resignSubmitting ? "Processing..." : "Process" }}
+          {{ resignSubmitting ? $t("employees.detail.offboarding.processing") : $t("employees.detail.offboarding.process") }}
         </UiButton>
       </template>
     </UiModal>

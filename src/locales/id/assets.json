@@ -1,0 +1,111 @@
+{
+  "title": "Aset Perusahaan",
+  "subtitle": "Kelola dan lacak aset yang dipinjamkan ke karyawan",
+  "addAsset": "Tambah Aset",
+  "editAsset": "Ubah Aset",
+  "empty": "Belum ada aset.",
+  "usedBy": "Dipakai oleh {name}",
+  "nextMaintenance": "Jadwal maintenance berikutnya: {date}",
+  "stats": {
+    "total": "Total Aset",
+    "totalValue": "Total Nilai Aset"
+  },
+  "status": {
+    "available": "Tersedia",
+    "assigned": "Dipakai",
+    "maintenance": "Maintenance",
+    "retired": "Dipensiunkan",
+    "lost": "Hilang"
+  },
+  "condition": {
+    "good": "Baik",
+    "fair": "Cukup",
+    "damaged": "Rusak"
+  },
+  "categories": {
+    "itHw": { "label": "Hardware / Perangkat IT", "examples": "Laptop, PC Desktop, Monitor, Server, Router, Switch" },
+    "itSw": { "label": "Software / Lisensi", "examples": "Lisensi OS, Software SaaS Enterprise, Domain, SSL" },
+    "ofEq": { "label": "Peralatan Kantor", "examples": "Printer, Scanner, Proyektor, AC, TV Display" },
+    "ofFn": { "label": "Furnitur Kantor", "examples": "Meja Kerja, Kursi Kantor, Lemari Arsip, Papan Tulis" },
+    "mVeh": { "label": "Kendaraan Operasional", "examples": "Mobil Dinas, Sepeda Motor" },
+    "mMisc": { "label": "Aset Pendukung Lainnya", "examples": "Kamera, Drone, Alat Live Streaming, Smart Lock" }
+  },
+  "filters": {
+    "allCategories": "Semua Kategori",
+    "searchPlaceholder": "Cari nama, kode, atau nomor seri..."
+  },
+  "columns": {
+    "asset": "Aset",
+    "warranty": "Garansi",
+    "bookValue": "Nilai Buku"
+  },
+  "warranty": {
+    "until": "Garansi s/d {date}",
+    "expired": "Garansi Habis",
+    "ended": "Habis"
+  },
+  "actions": {
+    "viewDetail": "Lihat detail & riwayat maintenance",
+    "viewDetailShort": "Lihat detail",
+    "assign": "Serahkan ke karyawan",
+    "return": "Kembalikan"
+  },
+  "form": {
+    "code": "Kode Aset",
+    "generateCode": "Buat kode berikutnya untuk kategori ini",
+    "codeFormat": "Format: JCD-{'{'}Kategori{'}'}-{'{'}Tahun{'}'}-{'{'}No. Urut{'}'}",
+    "examples": "Contoh: {examples}",
+    "name": "Nama Aset",
+    "namePlaceholder": "mis. MacBook Pro 14",
+    "serialNumber": "Nomor Seri",
+    "brand": "Merek",
+    "model": "Model",
+    "purchaseDate": "Tanggal Beli",
+    "purchasePriceRp": "Harga Beli (Rp)",
+    "warrantyUntil": "Garansi s/d",
+    "usefulLife": "Masa Pakai (bulan)",
+    "usefulLifePlaceholder": "mis. 36",
+    "usefulLifeHint": "Untuk menghitung depresiasi nilai aset.",
+    "supplier": "Supplier",
+    "supplierNone": "-- Tidak ditentukan --",
+    "addSupplier": "Tambah supplier baru",
+    "supplierName": "Nama supplier",
+    "condition": "Kondisi"
+  },
+  "assign": {
+    "title": "Serahkan Aset",
+    "selectEmployee": "Pilih karyawan",
+    "conditionAtHandover": "Kondisi saat Serah Terima",
+    "assign": "Serahkan",
+    "assigning": "Menyerahkan..."
+  },
+  "detail": {
+    "purchasePrice": "Harga Beli",
+    "currentBookValue": "Nilai Buku Saat Ini"
+  },
+  "maintenance": {
+    "history": "Riwayat Maintenance",
+    "addLog": "Tambah Log",
+    "serviceDate": "Tanggal Servis",
+    "nextSchedule": "Jadwal Berikutnya",
+    "nextScheduleOn": "Jadwal berikutnya: {date}",
+    "costRp": "Biaya (Rp)",
+    "saveLog": "Simpan Log",
+    "empty": "Belum ada riwayat maintenance",
+    "deleteLog": "Hapus log maintenance"
+  },
+  "confirm": {
+    "delete": "Hapus aset ini?",
+    "return": "Tandai \"{name}\" sudah dikembalikan?",
+    "deleteLog": "Hapus log maintenance ini?"
+  },
+  "errors": {
+    "addSupplier": "Gagal menambah supplier.",
+    "save": "Gagal menyimpan aset.",
+    "delete": "Gagal menghapus aset.",
+    "assign": "Gagal menyerahkan aset.",
+    "return": "Gagal memproses pengembalian aset.",
+    "saveLog": "Gagal menyimpan log maintenance.",
+    "deleteLog": "Gagal menghapus log maintenance."
+  }
+}

@@ -37,7 +37,7 @@ const style = computed(() => ({
   <img
     v-if="product?.icon_url && !failed"
     :src="product.icon_url"
-    :alt="`${product.name} icon`"
+    :alt="$t('licenses.productIcon.named', { name: product.name })"
     :style="style"
     class="object-cover shrink-0 bg-ui-surface ring-1 ring-ui-line"
     loading="lazy"
@@ -47,7 +47,7 @@ const style = computed(() => ({
     v-else
     :style="style"
     class="inline-flex items-center justify-center shrink-0 bg-ui-ink text-white font-semibold leading-none select-none"
-    :aria-label="product?.name ? `${product.name} icon` : 'Product icon'"
+    :aria-label="product?.name ? $t('licenses.productIcon.named', { name: product.name }) : $t('licenses.productIcon.generic')"
     role="img"
   >
     {{ initials }}

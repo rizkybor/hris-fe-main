@@ -54,7 +54,7 @@ onBeforeUnmount(() => {
 
 <template>
   <Transition name="ui-fade">
-    <div v-if="visible" class="fixed top-0 inset-x-0 z-[130] h-[2px] pointer-events-none" role="progressbar" aria-label="Loading page">
+    <div v-if="visible" class="fixed top-0 inset-x-0 z-[130] h-[2px] pointer-events-none" role="progressbar" :aria-label="$t('common.a11y.loadingPage')">
       <div
         class="h-full bg-ui-accent origin-left"
         :style="{ transform: `scaleX(${scale})`, transition: `transform ${duration} cubic-bezier(0.2, 0, 0, 1)` }"

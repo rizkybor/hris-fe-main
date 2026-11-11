@@ -80,7 +80,7 @@ const controlClass = computed(() => [
         v-if="isPassword && !rows"
         type="button"
         class="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 inline-flex items-center justify-center rounded-[6px] text-ui-faint hover:text-ui-ink"
-        :aria-label="revealed ? 'Hide password' : 'Show password'"
+        :aria-label="revealed ? $t('common.a11y.hidePassword') : $t('common.a11y.showPassword')"
         :aria-pressed="revealed"
         @click="revealed = !revealed"
       >

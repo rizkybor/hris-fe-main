@@ -2,6 +2,8 @@
 import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import {
   Pencil,
   Send,
@@ -22,6 +24,7 @@ import { useAlertModalStore } from "@/stores/alertModal";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiPageHeader, UiButton, UiBadge, UiAlert, UiModal, UiInput } from "@/components/ui";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useDocumentLetterStore();
@@ -44,17 +47,22 @@ const canEdit = computed(() => can("document-letter-edit") && isAuthor.value && 
 const canSubmit = computed(() => canEdit.value);
 const canApprove = computed(() => can("document-letter-approve") && isFinanceManager.value && memo.value?.status === "pending");
 
-const STATUS_LABEL = { draft: "Draft", pending: "Pending", approved: "Approved", rejected: "Rejected" };
+const STATUS_LABEL = computed(() => ({
+  draft: t("documents.shared.status.draft"),
+  pending: t("documents.shared.status.pending"),
+  approved: t("documents.shared.status.approved"),
+  rejected: t("documents.shared.status.rejected"),
+}));
 // Presentation only: status → badge tone.
 const STATUS_TONE = { draft: "neutral", pending: "warn", approved: "ok", rejected: "bad" };
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "long", day: "numeric" }) : "-";
 const formatDateTime = (date) =>
-  date ? new Date(date).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
+  date ? new Date(date).toLocaleString(localeTag(), { dateStyle: "medium", timeStyle: "short" }) : "-";
 
 const handleSubmit = async () => {
-  if (!(await alertModal.confirm("Submit this Official Memo for Finance Manager approval?", { type: "info", confirmText: "Submit" })))
+  if (!(await alertModal.confirm(t("documents.memo.detail.submitConfirm"), { type: "info", confirmText: t("common.actions.submit") })))
     return;
   busy.value = true;
   try {
@@ -66,7 +74,7 @@ const handleSubmit = async () => {
 };
 
 const handleApprove = async () => {
-  if (!(await alertModal.confirm("Approve this Official Memo?", { type: "success", confirmText: "Approve" }))) return;
+  if (!(await alertModal.confirm(t("documents.memo.detail.approveConfirm"), { type: "success", confirmText: t("common.actions.approve") }))) return;
   busy.value = true;
   try {
     await store.approveDocumentLetter(memo.value.id);
@@ -133,7 +141,7 @@ const handleDownload = async () => {
             class="ui-press inline-flex items-center gap-1 mb-1.5 text-ui-small font-medium text-ui-accent hover:underline"
           >
             <ArrowLeft class="w-4 h-4" />
-            Back to Official Memos
+            {{ $t("documents.memo.detail.back") }}
           </router-link>
         </template>
         <template #subtitle>
@@ -144,26 +152,26 @@ const handleDownload = async () => {
         </template>
         <template #actions>
           <UiButton variant="secondary" :icon="Download" :loading="downloading" @click="handleDownload">
-            {{ downloading ? "Downloading..." : "Download PDF" }}
+            {{ downloading ? $t("documents.shared.downloading") : $t("common.actions.downloadPdf") }}
           </UiButton>
-          <UiButton v-if="canEdit" variant="secondary" :icon="Pencil" :to="{ name: 'admin.official-memos.edit', params: { id: memo.id } }">Edit</UiButton>
-          <UiButton v-if="canSubmit" :icon="Send" :disabled="busy" @click="handleSubmit">Submit</UiButton>
-          <UiButton v-if="canApprove" variant="danger" :icon="XCircle" :disabled="busy" @click="openRejectModal">Reject</UiButton>
-          <UiButton v-if="canApprove" :icon="CheckCircle2" :disabled="busy" @click="handleApprove">Approve</UiButton>
+          <UiButton v-if="canEdit" variant="secondary" :icon="Pencil" :to="{ name: 'admin.official-memos.edit', params: { id: memo.id } }">{{ $t("common.actions.edit") }}</UiButton>
+          <UiButton v-if="canSubmit" :icon="Send" :disabled="busy" @click="handleSubmit">{{ $t("common.actions.submit") }}</UiButton>
+          <UiButton v-if="canApprove" variant="danger" :icon="XCircle" :disabled="busy" @click="openRejectModal">{{ $t("common.actions.reject") }}</UiButton>
+          <UiButton v-if="canApprove" :icon="CheckCircle2" :disabled="busy" @click="handleApprove">{{ $t("common.actions.approve") }}</UiButton>
         </template>
       </UiPageHeader>
 
-      <UiAlert v-if="memo.status === 'rejected' && memo.rejection_reason" tone="bad" title="Rejection Reason" :message="memo.rejection_reason" />
+      <UiAlert v-if="memo.status === 'rejected' && memo.rejection_reason" tone="bad" :title="$t('documents.memo.detail.rejectionReason')" :message="memo.rejection_reason" />
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         <div class="lg:col-span-2 space-y-5 min-w-0 ui-stagger">
           <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
-            <h3 class="text-ui-h2 text-ui-ink mb-3">Memo Content</h3>
+            <h3 class="text-ui-h2 text-ui-ink mb-3">{{ $t("documents.memo.fields.body") }}</h3>
             <div class="rich-text-content text-ui-body text-ui-text leading-relaxed" v-html="memo.body"></div>
           </section>
 
           <section v-if="memo.attachments?.length" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
-            <h3 class="text-ui-h2 text-ui-ink mb-3">Attachments</h3>
+            <h3 class="text-ui-h2 text-ui-ink mb-3">{{ $t("documents.memo.fields.attachments") }}</h3>
             <div class="space-y-2">
               <a
                 v-for="attachment in memo.attachments"
@@ -181,38 +189,38 @@ const handleDownload = async () => {
 
         <aside class="space-y-4 min-w-0">
           <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
-            <h3 class="text-ui-h3 text-ui-ink">Details</h3>
+            <h3 class="text-ui-h3 text-ui-ink">{{ $t("documents.memo.detail.details") }}</h3>
             <dl class="mt-2 divide-y divide-ui-line text-ui-small">
               <div class="flex items-center justify-between gap-3 py-2.5">
-                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><Calendar class="w-4 h-4 text-ui-faint" />Date</dt>
+                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><Calendar class="w-4 h-4 text-ui-faint" />{{ $t("common.labels.date") }}</dt>
                 <dd class="text-ui-ink text-right tabular-nums">{{ formatDate(memo.document_date) }}</dd>
               </div>
               <div class="flex items-center justify-between gap-3 py-2.5">
-                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><User class="w-4 h-4 text-ui-faint" />Sender</dt>
+                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><User class="w-4 h-4 text-ui-faint" />{{ $t("documents.memo.fields.sender") }}</dt>
                 <dd class="text-ui-ink text-right truncate">{{ memo.sender?.name || memo.creator?.name || "-" }}</dd>
               </div>
               <div class="flex items-center justify-between gap-3 py-2.5">
-                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><ShieldCheck class="w-4 h-4 text-ui-faint" />Recipient</dt>
+                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><ShieldCheck class="w-4 h-4 text-ui-faint" />{{ $t("documents.memo.fields.recipient") }}</dt>
                 <dd class="text-ui-ink text-right">Finance Manager</dd>
               </div>
               <div v-if="memo.attachments?.length" class="flex items-center justify-between gap-3 py-2.5">
-                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><Paperclip class="w-4 h-4 text-ui-faint" />Attachments</dt>
+                <dt class="flex items-center gap-2 text-ui-muted shrink-0"><Paperclip class="w-4 h-4 text-ui-faint" />{{ $t("documents.memo.fields.attachments") }}</dt>
                 <dd class="text-ui-ink text-right tabular-nums">{{ memo.attachments.length }}</dd>
               </div>
             </dl>
           </section>
 
           <section v-if="memo.submitted_at || memo.approved_at && memo.approver" class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
-            <h3 class="text-ui-h3 text-ui-ink">Activity</h3>
+            <h3 class="text-ui-h3 text-ui-ink">{{ $t("documents.memo.detail.activity") }}</h3>
             <ol class="mt-3 space-y-3">
               <li v-if="memo.submitted_at" class="flex items-start gap-2.5">
                 <span class="w-2 h-2 rounded-full bg-ui-muted mt-1.5 shrink-0" aria-hidden="true"></span>
-                <p class="text-ui-small text-ui-text">Submitted: <span class="tabular-nums text-ui-muted">{{ formatDateTime(memo.submitted_at) }}</span></p>
+                <p class="text-ui-small text-ui-text">{{ $t("documents.memo.detail.submitted") }} <span class="tabular-nums text-ui-muted">{{ formatDateTime(memo.submitted_at) }}</span></p>
               </li>
               <li v-if="memo.approved_at && memo.approver" class="flex items-start gap-2.5">
                 <span class="w-2 h-2 rounded-full mt-1.5 shrink-0" :class="memo.status === 'rejected' ? 'bg-ui-bad' : 'bg-ui-ok'" aria-hidden="true"></span>
                 <p class="text-ui-small text-ui-text">
-                  {{ memo.status === "rejected" ? "Rejected" : "Approved" }} by {{ memo.approver.name }} &middot;
+                  {{ memo.status === "rejected" ? $t("documents.memo.detail.rejectedBy", { name: memo.approver.name }) : $t("documents.memo.detail.approvedBy", { name: memo.approver.name }) }} &middot;
                   <span class="tabular-nums text-ui-muted">{{ formatDateTime(memo.approved_at) }}</span>
                 </p>
               </li>
@@ -224,18 +232,18 @@ const handleDownload = async () => {
 
     <UiModal
       v-model:open="isRejectModalOpen"
-      title="Reject Official Memo?"
-      description="Provide a rejection reason so the author knows what needs to be fixed."
+      :title="$t('documents.memo.detail.rejectTitle')"
+      :description="$t('documents.memo.detail.rejectDescription')"
     >
       <UiInput
         v-model="rejectionReason"
         :rows="4"
         required
-        label="Rejection Reason"
-        placeholder="Example: Budget doesn't match the Q3 allocation..."
+        :label="$t('documents.memo.detail.rejectionReason')"
+        :placeholder="$t('documents.memo.detail.rejectPlaceholder')"
       />
       <template #footer>
-        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="isRejectModalOpen = false">Cancel</UiButton>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="isRejectModalOpen = false">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton
           variant="destructive"
           class="flex-1 sm:flex-none"
@@ -243,7 +251,7 @@ const handleDownload = async () => {
           :disabled="busy || !rejectionReason.trim()"
           @click="handleReject"
         >
-          {{ busy ? "Rejecting..." : "Reject" }}
+          {{ busy ? $t("documents.shared.rejecting") : $t("common.actions.reject") }}
         </UiButton>
       </template>
     </UiModal>

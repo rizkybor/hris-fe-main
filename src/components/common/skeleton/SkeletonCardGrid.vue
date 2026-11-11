@@ -9,7 +9,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="grid gap-4 sm:gap-5" :class="cols" role="status" aria-label="Loading">
+  <div class="grid gap-4 sm:gap-5" :class="cols" role="status" :aria-label="$t('common.a11y.loading')">
     <div v-for="i in count" :key="i" class="bg-ui-surface border border-ui-line rounded-ui-card p-[18px] space-y-4">
       <div class="flex items-center gap-3">
         <Skeleton width="40px" height="40px" rounded="10px" />

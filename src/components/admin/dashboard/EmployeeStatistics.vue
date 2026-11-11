@@ -17,6 +17,9 @@ import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { axiosInstance } from "@/plugins/axios";
 import { useNotificationStore } from "@/stores/notification";
 import { getTimeAgo } from "@/utils/dateUtils";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const statistics = ref({
   attendance_rate: 0,
@@ -40,7 +43,7 @@ const notificationStore = useNotificationStore();
 const recentActivities = computed(() => {
   return notificationStore.notifications.map((n: any) => ({
     id: n.id,
-    title: n.data?.title ?? n.data?.message ?? "Notification",
+    title: n.data?.title ?? n.data?.message ?? t("dashboard.myOverview.notification"),
     time: getTimeAgo(n.created_at),
     icon: BellIcon,
     color: n.read_at ? "text-gray-400" : "text-blue-600",
@@ -109,47 +112,47 @@ onMounted(() => {
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <CalendarCheckIcon class="w-4 h-4 text-white/60" />
-            <p class="text-ui-small font-medium text-white/75">Attendance Rate</p>
+            <p class="text-ui-small font-medium text-white/75">{{ $t("dashboard.myOverview.attendanceRate") }}</p>
           </div>
           <span class="inline-flex items-center gap-1 h-5 px-1.5 rounded-md bg-white/10 text-ui-cap text-white/80">
-            <TrendingUpIcon class="w-3 h-3" /> This Month
+            <TrendingUpIcon class="w-3 h-3" /> {{ $t("dashboard.myOverview.thisMonth") }}
           </span>
         </div>
         <div class="my-auto py-4">
           <Skeleton v-if="loading" dark width="110px" height="38px" rounded="8px" />
           <p v-else class="text-ui-display tabular-nums">{{ statistics.attendance_rate }}%</p>
-          <p class="text-ui-small text-white/65 mt-1">{{ statistics.present_days }} of {{ currentDayOfMonth }} days</p>
+          <p class="text-ui-small text-white/65 mt-1">{{ $t("dashboard.myOverview.daysOf", { present: statistics.present_days, total: currentDayOfMonth }) }}</p>
         </div>
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-ui-cap text-white/65">
-          <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[rgb(134_239_172)]"></span>{{ onTimePercentage }}% On Time</span>
-          <span class="flex items-center gap-1"><StarIcon class="w-3 h-3" />Great Performance</span>
+          <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[rgb(134_239_172)]"></span>{{ $t("dashboard.myOverview.onTime", { n: onTimePercentage }) }}</span>
+          <span class="flex items-center gap-1"><StarIcon class="w-3 h-3" />{{ $t("dashboard.myOverview.greatPerformance") }}</span>
         </div>
       </div>
 
-      <UiStat label="Hours Worked" :value="(statistics.total_hours_worked ?? '-') + 'h'" hint="This month" :icon="ClockIcon" :loading="loading" />
-      <UiStat label="Leave Balance" :value="statistics.leave_balance ?? '-'" hint="Days remaining" :icon="CalendarCheckIcon" :loading="loading" />
+      <UiStat :label="$t('dashboard.myOverview.hoursWorked')" :value="$t('dashboard.myOverview.hoursValue', { n: statistics.total_hours_worked ?? '-' })" :hint="$t('dashboard.myOverview.thisMonthHint')" :icon="ClockIcon" :loading="loading" />
+      <UiStat :label="$t('dashboard.myOverview.leaveBalance')" :value="statistics.leave_balance ?? '-'" :hint="$t('dashboard.myOverview.daysRemaining')" :icon="CalendarCheckIcon" :loading="loading" />
 
       <QuickActions />
 
-      <UiStat label="Tasks Done" :value="statistics.tasks_done || 0" :hint="`+${statistics.tasks_done_yesterday || 0} yesterday`" :icon="CheckSquareIcon" :loading="loading" />
+      <UiStat :label="$t('dashboard.myOverview.tasksDone')" :value="statistics.tasks_done || 0" :hint="$t('dashboard.myOverview.yesterday', { n: statistics.tasks_done_yesterday || 0 })" :icon="CheckSquareIcon" :loading="loading" />
       <UiStat
-        label="Active Projects"
+        :label="$t('dashboard.myOverview.activeProjects')"
         :value="statistics.assigned_active_projects || 0"
-        :hint="`Assigned to you · Leading: ${statistics.led_active_projects || 0}`"
+        :hint="$t('dashboard.myOverview.assignedLeading', { n: statistics.led_active_projects || 0 })"
         :icon="FolderIcon"
         :loading="loading"
       />
     </div>
 
-    <DashboardWidgetCard title="Recent Activities" flush>
+    <DashboardWidgetCard :title="$t('dashboard.myOverview.recentActivities')" flush>
       <template #actions>
-        <button type="button" @click="loadMoreActivities" class="text-ui-small font-medium text-ui-accent hover:underline">View All</button>
+        <button type="button" @click="loadMoreActivities" class="text-ui-small font-medium text-ui-accent hover:underline">{{ $t("common.actions.viewAll") }}</button>
       </template>
       <SkeletonList v-if="notificationStore.loading" :rows="4" class="p-3" />
-      <UiEmpty v-else-if="recentActivities.length === 0" :icon="BellIcon" title="No recent activity" compact />
+      <UiEmpty v-else-if="recentActivities.length === 0" :icon="BellIcon" :title="$t('dashboard.myOverview.empty')" compact />
       <ul v-else class="divide-y divide-ui-line">
         <li v-for="activity in recentActivities" :key="activity.id" class="flex items-center gap-3 px-5 py-3">
-          <span class="w-2 h-2 rounded-full shrink-0" :class="activity.color === 'text-gray-400' ? 'bg-ui-line-strong' : 'bg-ui-accent'" :aria-label="activity.color === 'text-gray-400' ? 'Read' : 'Unread'"></span>
+          <span class="w-2 h-2 rounded-full shrink-0" :class="activity.color === 'text-gray-400' ? 'bg-ui-line-strong' : 'bg-ui-accent'" :aria-label="activity.color === 'text-gray-400' ? $t('dashboard.myOverview.read') : $t('dashboard.myOverview.unread')"></span>
           <p class="flex-1 min-w-0 text-ui-small text-ui-ink truncate">{{ activity.title }}</p>
           <span class="text-ui-cap text-ui-faint shrink-0">{{ activity.time }}</span>
         </li>

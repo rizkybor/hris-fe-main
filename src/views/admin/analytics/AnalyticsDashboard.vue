@@ -15,6 +15,7 @@ import {
   PlayCircle,
   Layers,
 } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
 import { useAnalyticsSourceStore } from "@/stores/analyticsSource";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
@@ -23,6 +24,7 @@ import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiPageHeader, UiButton, UiInput, UiEmpty, UiStat } from "@/components/ui";
 import AnalyticsSourceFormModal from "@/components/admin/analytics/AnalyticsSourceFormModal.vue";
 
+const { t } = useI18n();
 const store = useAnalyticsSourceStore();
 const { categories, loading, error, success } = storeToRefs(store);
 const alertModal = useAlertModalStore();
@@ -110,31 +112,31 @@ const handleSubmit = async ({ mode, id, payload }) => {
 };
 
 const handleDelete = async (source) => {
-  const ok = await alertModal.confirm(`Delete analytics source "${source.name}"? This action cannot be undone.`, {
+  const ok = await alertModal.confirm(t("analytics.delete.confirm", { name: source.name }), {
     type: "danger",
-    confirmText: "Delete",
+    confirmText: t("common.actions.delete"),
   });
   if (!ok) return;
 
   try {
     await store.deleteSource(source.id);
   } catch (err) {
-    await alertModal.alert("Failed to delete analytics source.", { type: "danger" });
+    await alertModal.alert(t("analytics.delete.failed"), { type: "danger" });
   }
 };
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Analytics" subtitle="Website traffic and behavior across every tracked site, grouped by category">
+    <UiPageHeader :title="$t('analytics.title')" :subtitle="$t('analytics.subtitle')">
       <template #actions>
-        <UiButton v-if="can('analytics-create')" :icon="Plus" @click="openAdd">Add Source</UiButton>
+        <UiButton v-if="can('analytics-create')" :icon="Plus" @click="openAdd">{{ $t("analytics.addSource") }}</UiButton>
       </template>
     </UiPageHeader>
 
     <div class="grid grid-cols-2 gap-3 ui-stagger">
-      <UiStat label="Sources" :value="totalSources" :icon="LineChart" :loading="loading" />
-      <UiStat label="Categories" :value="categories.length" :icon="Layers" :loading="loading" />
+      <UiStat :label="$t('analytics.stats.sources')" :value="totalSources" :icon="LineChart" :loading="loading" />
+      <UiStat :label="$t('analytics.stats.categories')" :value="categories.length" :icon="Layers" :loading="loading" />
     </div>
 
     <Alert type="success" :title="success" :show="!!success" @close="store.clearMessages()" />
@@ -142,7 +144,7 @@ const handleDelete = async (source) => {
 
     <!-- Toolbar -->
     <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 sm:px-5 py-3.5">
-      <UiInput v-model="search" :icon="Search" placeholder="Search by source name, category, or website..." class="w-full md:max-w-[420px]" />
+      <UiInput v-model="search" :icon="Search" :placeholder="$t('analytics.search')" class="w-full md:max-w-[420px]" />
     </div>
 
     <!-- Loading -->
@@ -166,14 +168,14 @@ const handleDelete = async (source) => {
 
     <!-- Empty state -->
     <div v-else-if="totalSources === 0" class="bg-ui-surface border border-ui-line rounded-ui-card">
-      <UiEmpty v-if="search" :icon="SearchX" title="No sources match your search" message="Try a different name, category, or website" />
+      <UiEmpty v-if="search" :icon="SearchX" :title="$t('analytics.empty.noMatch')" :message="$t('analytics.empty.noMatchHint')" />
       <UiEmpty
         v-else
         :icon="FolderOpen"
-        title="No analytics sources yet"
-        message="Add a PostHog, Google Analytics 4, or Search Console embed to start monitoring a website here."
+        :title="$t('analytics.empty.title')"
+        :message="$t('analytics.empty.message')"
       >
-        <UiButton v-if="can('analytics-create')" variant="secondary" :icon="Plus" @click="openAdd">Add your first source</UiButton>
+        <UiButton v-if="can('analytics-create')" variant="secondary" :icon="Plus" @click="openAdd">{{ $t("analytics.empty.addFirst") }}</UiButton>
       </UiEmpty>
     </div>
 
@@ -224,17 +226,17 @@ const handleDelete = async (source) => {
               </div>
 
               <div class="flex items-center gap-0.5 shrink-0">
-                <a :href="source.embed_url" target="_blank" rel="noopener" title="Open in new tab" aria-label="Open in new tab" :class="ICON_BTN">
+                <a :href="source.embed_url" target="_blank" rel="noopener" :title="$t('analytics.openInNewTab')" :aria-label="$t('analytics.openInNewTab')" :class="ICON_BTN">
                   <ExternalLink class="w-4 h-4" />
                 </a>
-                <button v-if="can('analytics-edit')" type="button" title="Edit" aria-label="Edit" :class="ICON_BTN" @click="openEdit(source)">
+                <button v-if="can('analytics-edit')" type="button" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" :class="ICON_BTN" @click="openEdit(source)">
                   <Edit class="w-4 h-4" />
                 </button>
                 <button
                   v-if="can('analytics-delete')"
                   type="button"
-                  title="Delete"
-                  aria-label="Delete"
+                  :title="$t('common.actions.delete')"
+                  :aria-label="$t('common.actions.delete')"
                   :class="[ICON_BTN, 'hover:!text-ui-bad hover:!bg-ui-bad-soft']"
                   @click="handleDelete(source)"
                 >
@@ -257,8 +259,8 @@ const handleDelete = async (source) => {
               <span class="w-12 h-12 rounded-full bg-ui-surface border border-ui-line flex items-center justify-center">
                 <PlayCircle class="w-6 h-6" />
               </span>
-              <span class="text-ui-small font-medium text-ui-ink">Click to load {{ source.type_label }}</span>
-              <span class="text-ui-cap text-ui-faint">Loads the embed on demand to save bandwidth</span>
+              <span class="text-ui-small font-medium text-ui-ink">{{ $t("analytics.clickToLoad", { type: source.type_label }) }}</span>
+              <span class="text-ui-cap text-ui-faint">{{ $t("analytics.clickToLoadHint") }}</span>
             </button>
 
             <!-- No padding on the iframe itself: it shrinks the embedded

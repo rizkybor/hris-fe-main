@@ -10,7 +10,7 @@ const widths = ["55%", "80%", "65%", "45%", "70%", "50%"];
 </script>
 
 <template>
-  <div class="overflow-x-auto rounded-ui-card border border-ui-line bg-ui-surface" role="status" aria-label="Loading">
+  <div class="overflow-x-auto rounded-ui-card border border-ui-line bg-ui-surface" role="status" :aria-label="$t('common.a11y.loading')">
     <table class="min-w-full">
       <thead>
         <tr class="border-b border-ui-line">

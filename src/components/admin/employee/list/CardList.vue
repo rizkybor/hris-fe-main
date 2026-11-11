@@ -6,6 +6,12 @@ import { useRouter } from "vue-router";
 import Avatar from "@/components/common/Avatar.vue";
 import { UiBadge, UiButton } from "@/components/ui";
 import { getJobStatusText } from "@/utils/formatUtils.js";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
+// Known enum values get a translated label; anything else keeps the old formatting.
+const enumLabel = (group, value, fallback) =>
+  value && te(`employees.enums.${group}.${value}`) ? t(`employees.enums.${group}.${value}`) : fallback;
 
 // Presentation only: job status -> badge tone.
 const STATUS_TONES = { active: "ok", on_leave: "warn", resigned: "bad" };
@@ -56,13 +62,13 @@ const goToDetail = () => {
 
     <div class="flex flex-wrap items-center gap-1.5 mt-3">
       <UiBadge v-if="data?.job_information?.skill_level" tone="neutral">
-        {{ capitalize(data?.job_information?.skill_level) }}
+        {{ enumLabel("skillLevel", data?.job_information?.skill_level, capitalize(data?.job_information?.skill_level)) }}
       </UiBadge>
       <UiBadge :tone="statusTone(data?.job_information?.status)" dot>
-        {{ getJobStatusText(data?.job_information?.status) }}
+        {{ enumLabel("jobStatus", data?.job_information?.status, getJobStatusText(data?.job_information?.status)) }}
       </UiBadge>
       <UiBadge v-if="data?.user?.is_active === false" tone="bad">
-        Login Disabled
+        {{ $t("employees.card.loginDisabled") }}
       </UiBadge>
     </div>
 
@@ -70,25 +76,25 @@ const goToDetail = () => {
     <div class="mt-3.5 pt-3.5 border-t border-ui-line flex flex-wrap gap-x-4 gap-y-1.5 sm:block sm:space-y-1.5 text-ui-small text-ui-muted">
       <div class="flex items-center gap-2 min-w-0">
         <Building class="w-3.5 h-3.5 text-ui-faint shrink-0" />
-        <span class="truncate">{{ capitalize(data?.job_information?.work_location) }}</span>
+        <span class="truncate">{{ enumLabel("workLocation", data?.job_information?.work_location, capitalize(data?.job_information?.work_location)) }}</span>
       </div>
       <div class="flex items-center gap-2">
         <User class="w-3.5 h-3.5 text-ui-faint shrink-0" />
-        <span>{{ capitalize(data?.gender) }}</span>
+        <span>{{ enumLabel("gender", data?.gender, capitalize(data?.gender)) }}</span>
       </div>
       <div class="flex items-center gap-2">
         <Calendar class="w-3.5 h-3.5 text-ui-faint shrink-0" />
-        <span class="tabular-nums">{{ data?.job_information?.years_experience }} years experience</span>
+        <span class="tabular-nums">{{ $t("employees.card.yearsExperience", { n: data?.job_information?.years_experience }, Number(data?.job_information?.years_experience) || 0) }}</span>
       </div>
     </div>
 
     <div class="flex-1"></div>
     <div class="flex gap-2 mt-4">
       <UiButton variant="secondary" size="sm" :icon="Eye" class="flex-1" @click="goToDetail">
-        View
+        {{ $t("common.actions.view") }}
       </UiButton>
       <UiButton v-if="can('employee-edit')" variant="ghost" size="sm" :icon="Edit" class="flex-1" @click="goToEdit">
-        Edit
+        {{ $t("common.actions.edit") }}
       </UiButton>
     </div>
   </div>

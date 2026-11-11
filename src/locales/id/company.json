@@ -1,0 +1,29 @@
+{
+  "title": "Tentang Perusahaan",
+  "subtitle": "Profil perusahaan yang tampil di seluruh sistem",
+  "logoAlt": "Logo perusahaan",
+  "vision": "Visi",
+  "mission": "Misi",
+  "branches": "Anak Perusahaan / Cabang",
+  "fields": {
+    "established": "Didirikan",
+    "establishedDate": "Tanggal berdiri",
+    "npwp": "NPWP",
+    "legalNameOptional": "Nama legal (opsional)",
+    "npwpOptional": "NPWP (opsional)",
+    "missionPerLine": "Misi (satu per baris)",
+    "missionPlaceholder": "Tulis satu misi per baris",
+    "branchesPlaceholder": "Tulis satu cabang per baris"
+  },
+  "empty": {
+    "title": "Belum ada data perusahaan",
+    "message": "Tambahkan profil perusahaan agar tampil di seluruh sistem."
+  },
+  "modal": {
+    "addTitle": "Tambah Informasi Perusahaan",
+    "editTitle": "Ubah Informasi Perusahaan",
+    "identity": "Identitas Perusahaan",
+    "visionMission": "Visi & Misi",
+    "contact": "Kontak & Lokasi"
+  }
+}

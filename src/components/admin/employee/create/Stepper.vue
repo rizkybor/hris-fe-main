@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { APP_VERSION_SHORT } from "@/utils/appVersion";
 import { Check } from "lucide-vue-next";
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 interface Props {
   currentStep?: number;
@@ -11,12 +15,13 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 // Presentation only: the four wizard steps shown in the rail.
-const steps = [
-  { title: "Personal Information", hint: "Basic employee details and contact info" },
-  { title: "Job Information", hint: "Role, department, and employment details" },
-  { title: "Emergency Contact", hint: "Person to contact in case of emergency" },
-  { title: "Review & Submit", hint: "Review all information before submitting" },
-];
+const steps = computed(() =>
+  ["personal", "job", "emergency", "review"].map((key) => ({
+    key,
+    title: t(`employees.wizard.steps.${key}.title`),
+    hint: t(`employees.wizard.steps.${key}.hint`),
+  }))
+);
 
 const stateOf = (index: number) => {
   const n = index + 1;
@@ -33,7 +38,7 @@ const stateOf = (index: number) => {
     <div class="h-[73px] px-5 flex items-center gap-3 border-b border-ui-line">
       <img
         src="/images/jcd-only-color.png"
-        alt="Company Logo"
+        :alt="$t('employees.wizard.companyLogo')"
         class="w-8 h-8 object-contain shrink-0"
       />
       <div class="min-w-0">
@@ -47,9 +52,9 @@ const stateOf = (index: number) => {
 
     <!-- Steps -->
     <div class="flex-1 overflow-y-auto px-3 py-5">
-      <p class="px-2 mb-2 text-ui-over uppercase text-ui-faint">Steps</p>
+      <p class="px-2 mb-2 text-ui-over uppercase text-ui-faint">{{ $t("employees.wizard.stepsLabel") }}</p>
       <ol class="space-y-0">
-        <li v-for="(step, index) in steps" :key="step.title" class="relative">
+        <li v-for="(step, index) in steps" :key="step.key" class="relative">
           <!-- connector -->
           <span
             v-if="index < steps.length - 1"

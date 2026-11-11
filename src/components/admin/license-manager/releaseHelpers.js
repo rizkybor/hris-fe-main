@@ -1,4 +1,14 @@
 import { DateTime } from "luxon";
+import { t, localeTag } from "@/i18n";
+
+// Labels are getters so they follow the interface language.
+const translatedMap = (keys) => {
+  const map = {};
+  for (const [name, key] of Object.entries(keys)) {
+    Object.defineProperty(map, name, { get: () => t(key), enumerable: true });
+  }
+  return map;
+};
 
 // Versions (releases) of a product's app: labels, colours and the form shape.
 
@@ -11,8 +21,8 @@ export const RELEASE_PLATFORM_OPTIONS = [
 export const releasePlatformLabel = (value) => RELEASE_PLATFORM_OPTIONS.find((o) => o.value === value)?.label || value || "-";
 
 export const RELEASE_STATUS_OPTIONS = [
-  { value: "published", label: "Published" },
-  { value: "draft", label: "Draft" },
+  { value: "published", get label() { return t("licenses.releases.status.published"); } },
+  { value: "draft", get label() { return t("licenses.releases.status.draft"); } },
 ];
 
 export const RELEASE_STATUS_CHIP = {
@@ -21,9 +31,17 @@ export const RELEASE_STATUS_CHIP = {
 };
 
 // Same names as the API's kind_label.
-export const KIND_LABELS = { major: "Major version", minor: "Feature update", patch: "Bug fix update" };
+export const KIND_LABELS = translatedMap({
+  major: "licenses.releases.kind.major",
+  minor: "licenses.releases.kind.minor",
+  patch: "licenses.releases.kind.patch",
+});
 // Shorter badge text for the list.
-export const KIND_BADGES = { major: "Major", minor: "Feature update", patch: "Bug fix" };
+export const KIND_BADGES = translatedMap({
+  major: "licenses.releases.kindBadge.major",
+  minor: "licenses.releases.kindBadge.minor",
+  patch: "licenses.releases.kindBadge.patch",
+});
 export const KIND_CHIP = {
   major: "bg-ui-ink text-white",
   minor: "bg-ui-accent-soft text-ui-accent",
@@ -31,9 +49,9 @@ export const KIND_CHIP = {
 };
 
 export const CHANGE_TYPES = [
-  { value: "feature", label: "New", countLabel: "new", chip: "bg-ui-ok-soft text-ui-ok" },
-  { value: "improvement", label: "Improved", countLabel: "improved", chip: "bg-ui-info-soft text-ui-info" },
-  { value: "fix", label: "Fixed", countLabel: "fixed", chip: "bg-ui-subtle text-ui-text" },
+  { value: "feature", get label() { return t("licenses.releases.change.feature"); }, countKey: "licenses.releases.changeCount.feature", chip: "bg-ui-ok-soft text-ui-ok" },
+  { value: "improvement", get label() { return t("licenses.releases.change.improvement"); }, countKey: "licenses.releases.changeCount.improvement", chip: "bg-ui-info-soft text-ui-info" },
+  { value: "fix", get label() { return t("licenses.releases.change.fix"); }, countKey: "licenses.releases.changeCount.fix", chip: "bg-ui-subtle text-ui-text" },
 ];
 
 export const VERSION_RE = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
@@ -49,8 +67,8 @@ export const kindOfVersion = (version) => {
 
 // "3 new · 1 improved · 2 fixed" (zero counts left out).
 export const changeCountsLine = (counts) =>
-  CHANGE_TYPES.filter((t) => counts?.[t.value])
-    .map((t) => `${counts[t.value]} ${t.countLabel}`)
+  CHANGE_TYPES.filter((type) => counts?.[type.value])
+    .map((type) => t(type.countKey, { n: counts[type.value] }))
     .join(" · ");
 
 // Changes grouped New / Improved / Fixed, empty groups dropped.
@@ -60,7 +78,7 @@ export const groupChanges = (changes) =>
   );
 
 // Y-m-d (a calendar date, no timezone shift).
-export const formatReleaseDate = (value) => (value ? DateTime.fromISO(value).toFormat("dd MMM yyyy") : "");
+export const formatReleaseDate = (value) => (value ? DateTime.fromISO(value).setLocale(localeTag()).toFormat("dd MMM yyyy") : "");
 
 export const todayInput = () => DateTime.now().toISODate();
 
@@ -84,8 +102,8 @@ export const INSTALLER_ACCEPT = ".dmg,.zip,.pkg";
 export const INSTALLER_MAX_BYTES = 2 * 1024 * 1024 * 1024;
 export const installerFileError = (file) => {
   if (!file) return "";
-  if (!/\.(dmg|zip|pkg)$/i.test(file.name)) return "Use a .dmg, .zip or .pkg file.";
-  if (file.size > INSTALLER_MAX_BYTES) return "The installer may not be larger than 2 GB.";
+  if (!/\.(dmg|zip|pkg)$/i.test(file.name)) return t("licenses.releases.validation.fileType");
+  if (file.size > INSTALLER_MAX_BYTES) return t("licenses.releases.validation.fileSize");
   return "";
 };
 
@@ -93,7 +111,7 @@ export const installerFileError = (file) => {
 export const needsFile = (release) =>
   release?.needs_file ?? (release?.platforms ? release.platforms !== "ipad" : true);
 
-export const PUBLISH_NEEDS_FILE = "Upload the Mac installer (.dmg) before publishing this version.";
+export const publishNeedsFileMessage = () => t("licenses.releases.validation.publishNeedsFile");
 
 export const blankChange = (type = "feature") => ({ type, area: "", text: "" });
 
@@ -124,19 +142,19 @@ const isUrl = (value) => {
 // Client checks mirroring the API rules; keys match the API's (changes.0.text).
 export const validateReleaseForm = (form) => {
   const errors = {};
-  if (blank(form.version)) errors.version = "Version is required.";
-  else if (!VERSION_RE.test(String(form.version).trim())) errors.version = "Use major.minor.patch, e.g. 1.1.0.";
-  if (!RELEASE_PLATFORM_OPTIONS.some((o) => o.value === form.platforms)) errors.platforms = "Choose the platforms.";
-  if (!RELEASE_STATUS_OPTIONS.some((o) => o.value === form.status)) errors.status = "Choose a status.";
-  if (form.status === "published" && blank(form.released_at)) errors.released_at = "A published version needs a release date.";
+  if (blank(form.version)) errors.version = t("licenses.releases.validation.versionRequired");
+  else if (!VERSION_RE.test(String(form.version).trim())) errors.version = t("licenses.releases.validation.versionFormat");
+  if (!RELEASE_PLATFORM_OPTIONS.some((o) => o.value === form.platforms)) errors.platforms = t("licenses.releases.validation.platforms");
+  if (!RELEASE_STATUS_OPTIONS.some((o) => o.value === form.status)) errors.status = t("licenses.releases.validation.status");
+  if (form.status === "published" && blank(form.released_at)) errors.released_at = t("licenses.releases.validation.releasedAt");
   if (!blank(form.build)) {
     const n = Number(form.build);
-    if (!Number.isInteger(n) || n < 0) errors.build = "Build must be a whole number.";
+    if (!Number.isInteger(n) || n < 0) errors.build = t("licenses.releases.validation.build");
   }
   if (!blank(form.download_url) && !isUrl(String(form.download_url).trim()))
-    errors.download_url = "Enter a full URL, e.g. https://example.com/OCCA.dmg";
+    errors.download_url = t("licenses.releases.validation.downloadUrl");
   (form.changes || []).forEach((change, index) => {
-    if (blank(change.text)) errors[`changes.${index}.text`] = "Describe the change.";
+    if (blank(change.text)) errors[`changes.${index}.text`] = t("licenses.releases.validation.changeText");
   });
   return errors;
 };

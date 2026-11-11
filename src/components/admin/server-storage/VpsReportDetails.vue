@@ -3,6 +3,10 @@ import { computed, ref } from "vue";
 import { HardDrive, MemoryStick, Cpu, Check, ExternalLink, RefreshCcw } from "lucide-vue-next";
 import { formatBytes, formatUptime, SITE_TYPES, sslState, copyText } from "@/utils/serverMetrics";
 import { UiBadge, UiButton } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 // What one VPS's agent last reported: usage, hosted websites, folder sizes.
 const props = defineProps({
@@ -12,10 +16,10 @@ const props = defineProps({
 const breakdownTotal = computed(() => props.server.report?.disk?.used || 0);
 const sites = computed(() => (props.server.report?.sites || []).filter((site) => !site.unlinked));
 const folders = computed(() => (props.server.report?.sites || []).filter((site) => site.unlinked));
-const siteLabel = (site) => site.domains?.[0] || (site.server ? "Situs default (tanpa domain)" : site.path);
+const siteLabel = (site) => site.domains?.[0] || (site.server ? t("servers.report.defaultSite") : site.path);
 const siteType = (site) => SITE_TYPES[site.type] || SITE_TYPES.unknown;
 const formatDateTime = (value) =>
-  value ? new Date(value).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
+  value ? new Date(value).toLocaleString(localeTag(), { dateStyle: "medium", timeStyle: "short" }) : "-";
 
 const copied = ref("");
 const copy = async (text, key) => {
@@ -42,7 +46,7 @@ const usageTiles = computed(() => {
       icon: HardDrive,
       label: `Disk (${r.disk.mount})`,
       pct: r.disk.used_percent,
-      sub: `${formatBytes(r.disk.used)} terpakai · sisa ${formatBytes(r.disk.free)} dari ${formatBytes(r.disk.total)}`,
+      sub: t("servers.report.diskSub", { used: formatBytes(r.disk.used), free: formatBytes(r.disk.free), total: formatBytes(r.disk.total) }),
     },
     {
       key: "ram",
@@ -58,7 +62,7 @@ const usageTiles = computed(() => {
       icon: Cpu,
       label: "CPU",
       pct: r.cpu.usage_percent,
-      sub: `${r.cpu.cores} core · load ${r.cpu.load1} / ${r.cpu.load5} / ${r.cpu.load15} (1/5/15 mnt)`,
+      sub: t("servers.report.cpuSub", { cores: r.cpu.cores, load1: r.cpu.load1, load5: r.cpu.load5, load15: r.cpu.load15 }),
     },
   ];
 });
@@ -67,9 +71,9 @@ const usageTiles = computed(() => {
 <template>
   <div v-if="server.report" class="space-y-5">
     <div v-if="server.agent_outdated" class="bg-ui-info-soft border border-ui-info/20 rounded-ui-control p-3 text-ui-cap text-ui-text flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
-      <span>Agen di VPS ini versi lama ({{ server.report.agent_version }}). Perbarui agar daftar website ikut terbaca. Jalankan di VPS (tanpa token baru):</span>
+      <span>{{ $t("servers.report.outdated", { version: server.report.agent_version }) }}</span>
       <UiButton variant="secondary" size="sm" class="shrink-0" :icon="copied === 'update' ? Check : RefreshCcw" @click="copy(server.update_command, 'update')">
-        {{ copied === "update" ? "Tersalin" : "Salin perintah update" }}
+        {{ copied === "update" ? $t("common.actions.copied") : $t("servers.report.copyUpdate") }}
       </UiButton>
     </div>
 
@@ -86,10 +90,10 @@ const usageTiles = computed(() => {
 
     <div v-if="server.report.sites">
       <div class="flex items-center justify-between gap-2 mb-2">
-        <p class="text-ui-h3 text-ui-ink">Website &amp; Sistem ({{ sites.length }})</p>
-        <p class="text-ui-cap text-ui-muted text-right">Dibaca dari konfigurasi nginx/apache</p>
+        <p class="text-ui-h3 text-ui-ink">{{ $t("servers.report.sitesTitle", { n: sites.length }) }}</p>
+        <p class="text-ui-cap text-ui-muted text-right">{{ $t("servers.report.sitesSource") }}</p>
       </div>
-      <p v-if="!sites.length" class="text-ui-cap text-ui-muted">Tidak ada website yang terkonfigurasi di nginx/apache.</p>
+      <p v-if="!sites.length" class="text-ui-cap text-ui-muted">{{ $t("servers.report.noSites") }}</p>
       <div v-else class="border border-ui-line rounded-ui-card divide-y divide-ui-line">
         <div v-for="site in sites" :key="siteLabel(site) + site.path" class="p-3 flex flex-col sm:flex-row sm:items-start gap-2 justify-between">
           <div class="min-w-0">
@@ -100,10 +104,10 @@ const usageTiles = computed(() => {
               <span v-else class="text-ui-small font-medium text-ui-ink">{{ siteLabel(site) }}</span>
               <UiBadge tone="outline">{{ siteType(site).label + (site.version ? ` ${site.version}` : "") }}</UiBadge>
             </div>
-            <p v-if="site.domains?.length > 1" class="text-ui-cap text-ui-muted mt-0.5 break-all">juga: {{ site.domains.slice(1).join(", ") }}</p>
+            <p v-if="site.domains?.length > 1" class="text-ui-cap text-ui-muted mt-0.5 break-all">{{ $t("servers.report.alsoDomains", { domains: site.domains.slice(1).join(", ") }) }}</p>
             <p class="text-ui-cap text-ui-muted mt-0.5 break-all">
               <template v-if="site.path"><code class="font-mono">{{ site.path }}</code></template>
-              <template v-if="site.proxy"> · proxy ke <code class="font-mono">{{ site.proxy }}</code><template v-if="site.process"> ({{ site.process }})</template></template>
+              <template v-if="site.proxy"> · {{ $t("servers.report.proxyTo") }} <code class="font-mono">{{ site.proxy }}</code><template v-if="site.process"> ({{ site.process }})</template></template>
               <template v-if="site.server"> · {{ site.server }}</template>
             </p>
           </div>
@@ -115,8 +119,8 @@ const usageTiles = computed(() => {
       </div>
 
       <template v-if="folders.length">
-        <p class="text-ui-small font-medium text-ui-ink mt-4 mb-1">Folder di /var/www tanpa domain ({{ folders.length }})</p>
-        <p class="text-ui-cap text-ui-muted mb-2">Tidak dipakai oleh konfigurasi web server mana pun. Bisa jadi sisa proyek lama yang aman dihapus; periksa dulu.</p>
+        <p class="text-ui-small font-medium text-ui-ink mt-4 mb-1">{{ $t("servers.report.foldersTitle", { n: folders.length }) }}</p>
+        <p class="text-ui-cap text-ui-muted mb-2">{{ $t("servers.report.foldersHint") }}</p>
         <div class="border border-ui-line rounded-ui-card divide-y divide-ui-line">
           <div v-for="site in folders" :key="site.path" class="px-3 py-2 flex items-center justify-between gap-2 text-ui-cap">
             <span class="min-w-0 break-all"><code class="font-mono text-ui-ink">{{ site.path }}</code>
@@ -130,8 +134,8 @@ const usageTiles = computed(() => {
 
     <div>
       <div class="flex items-center justify-between gap-2 mb-2">
-        <p class="text-ui-h3 text-ui-ink">Pemakaian Disk per Folder</p>
-        <p class="text-ui-cap text-ui-muted text-right">Diukur {{ formatDateTime(server.report.breakdown_at) }} · diperbarui tiap 6 jam</p>
+        <p class="text-ui-h3 text-ui-ink">{{ $t("servers.report.diskByFolder") }}</p>
+        <p class="text-ui-cap text-ui-muted text-right">{{ $t("servers.report.measuredAt", { date: formatDateTime(server.report.breakdown_at) }) }}</p>
       </div>
       <div v-if="server.report.breakdown?.length" class="space-y-2.5">
         <div v-for="item in server.report.breakdown" :key="item.path">
@@ -144,14 +148,14 @@ const usageTiles = computed(() => {
           </div>
         </div>
       </div>
-      <p v-else class="text-ui-cap text-ui-muted">Rincian folder belum tersedia.</p>
+      <p v-else class="text-ui-cap text-ui-muted">{{ $t("servers.report.noBreakdown") }}</p>
     </div>
 
     <dl class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-ui-line">
-      <div><dt class="text-ui-cap text-ui-muted">Sistem operasi</dt><dd class="text-ui-small font-medium text-ui-ink">{{ server.report.os || "-" }}</dd></div>
-      <div><dt class="text-ui-cap text-ui-muted">Uptime</dt><dd class="text-ui-small font-medium text-ui-ink">{{ formatUptime(server.report.uptime_seconds) }}</dd></div>
-      <div><dt class="text-ui-cap text-ui-muted">Laporan terakhir</dt><dd class="text-ui-small font-medium text-ui-ink">{{ formatDateTime(server.last_report_at) }}</dd></div>
-      <div><dt class="text-ui-cap text-ui-muted">Versi agen</dt><dd class="text-ui-small font-medium text-ui-ink font-mono">{{ server.report.agent_version || "-" }}</dd></div>
+      <div><dt class="text-ui-cap text-ui-muted">{{ $t("servers.report.os") }}</dt><dd class="text-ui-small font-medium text-ui-ink">{{ server.report.os || "-" }}</dd></div>
+      <div><dt class="text-ui-cap text-ui-muted">{{ $t("servers.report.uptime") }}</dt><dd class="text-ui-small font-medium text-ui-ink">{{ formatUptime(server.report.uptime_seconds) }}</dd></div>
+      <div><dt class="text-ui-cap text-ui-muted">{{ $t("servers.report.lastReport") }}</dt><dd class="text-ui-small font-medium text-ui-ink">{{ formatDateTime(server.last_report_at) }}</dd></div>
+      <div><dt class="text-ui-cap text-ui-muted">{{ $t("servers.report.agentVersion") }}</dt><dd class="text-ui-small font-medium text-ui-ink font-mono">{{ server.report.agent_version || "-" }}</dd></div>
     </dl>
   </div>
 </template>

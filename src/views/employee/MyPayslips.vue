@@ -18,6 +18,10 @@ import {
   Wallet,
 } from "lucide-vue-next";
 import { UiBadge, UiButton, UiCard, UiInput, UiPageHeader, UiPagination, UiSelect, UiStat, UiTable } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const router = useRouter();
 const payrollStore = usePayrollStore();
@@ -96,7 +100,7 @@ const showAmounts = ref(false);
 const maskCurrency = (value) => (showAmounts.value ? formatCurrency(value) : "Rp ••••••••");
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
   });
@@ -109,18 +113,18 @@ const totalEarnings = computed(() => {
 // Presentation only.
 const currentYear = new Date().getFullYear();
 const yearOptions = [currentYear, currentYear - 1, currentYear - 2].map((y) => ({ value: y, label: String(y) }));
-const perPageOptions = [10, 12, 24, 48].map((n) => ({ value: n, label: `${n} / page` }));
+const perPageOptions = computed(() => [10, 12, 24, 48].map((n) => ({ value: n, label: t("payslips.list.perPageOption", { n }) })));
 const perPageModel = computed({
   get: () => Number(meta.value?.per_page) || serverOptions.value.row_per_page,
   set: (n) => handlePerPageChange(n),
 });
-const columns = [
-  { key: "period", label: "Period" },
-  { key: "type", label: "Type" },
-  { key: "net_salary", label: "Net salary", align: "right" },
-  { key: "status", label: "Status" },
+const columns = computed(() => [
+  { key: "period", label: t("common.labels.period") },
+  { key: "type", label: t("common.labels.type") },
+  { key: "net_salary", label: t("payslips.list.netSalary"), align: "right" },
+  { key: "status", label: t("common.labels.status") },
   { key: "actions", label: "", align: "right", width: 120 },
-];
+]);
 
 const totalDeductions = computed(() => {
   return payslips.value.reduce(
@@ -132,39 +136,39 @@ const totalDeductions = computed(() => {
 
 <template>
   <div class="sm:px-3 sm:py-3 space-y-5 ui-anim-fade-up">
-    <UiPageHeader title="My Payslips" subtitle="Your monthly and THR payslips, with PDF download.">
+    <UiPageHeader :title="$t('payslips.list.title')" :subtitle="$t('payslips.list.subtitle')">
       <template #actions>
         <UiButton variant="secondary" :icon="showAmounts ? EyeOff : Eye" @click="showAmounts = !showAmounts">
-          {{ showAmounts ? "Hide Amounts" : "Show Amounts" }}
+          {{ showAmounts ? $t("common.actions.hideAmounts") : $t("common.actions.showAmounts") }}
         </UiButton>
       </template>
     </UiPageHeader>
 
     <!-- Statistics -->
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3 ui-stagger">
-      <UiStat class="col-span-2 md:col-span-1" label="Total Payslips" :value="meta.total || 0" :icon="FileText" :loading="loading && !payslips.length" />
-      <UiStat label="Total Earnings" :value="maskCurrency(totalEarnings)" :icon="ArrowUpRight" hint="This year" />
-      <UiStat label="Total Deductions" :value="maskCurrency(totalDeductions)" :icon="ArrowDownRight" hint="This year" />
+      <UiStat class="col-span-2 md:col-span-1" :label="$t('payslips.list.totalPayslips')" :value="meta.total || 0" :icon="FileText" :loading="loading && !payslips.length" />
+      <UiStat :label="$t('payslips.list.totalEarnings')" :value="maskCurrency(totalEarnings)" :icon="ArrowUpRight" :hint="$t('payslips.list.thisYear')" />
+      <UiStat :label="$t('payslips.list.totalDeductions')" :value="maskCurrency(totalDeductions)" :icon="ArrowDownRight" :hint="$t('payslips.list.thisYear')" />
     </div>
 
     <!-- Payslips -->
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <div class="px-4 sm:px-5 pt-4 pb-3 flex flex-col md:flex-row md:items-center gap-3 border-b border-ui-line">
         <div class="flex-1 min-w-0">
-          <h2 class="text-ui-h2 text-ui-ink">All Payslips</h2>
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t("payslips.list.allPayslips") }}</h2>
           <p class="text-ui-cap text-ui-muted tabular-nums">
-            Showing {{ meta.from || 0 }} - {{ meta.to || 0 }} of {{ meta.total || 0 }} payslips
+            {{ $t("common.pagination.showingItems", { from: meta.from || 0, to: meta.to || 0, total: meta.total || 0, items: $t("payslips.list.itemLabel") }) }}
           </p>
         </div>
         <div class="grid grid-cols-2 md:flex md:items-center gap-2">
           <UiInput
             v-model="filters.search"
             :icon="Search"
-            placeholder="Search payslips by month or year..."
+            :placeholder="$t('payslips.list.searchPlaceholder')"
             class="col-span-2 md:w-[280px]"
           />
-          <UiSelect v-model="filters.year" :options="yearOptions" class="md:w-[110px]" aria-label="Year" />
-          <UiSelect v-model="perPageModel" :options="perPageOptions" class="md:w-[120px]" aria-label="Rows per page" />
+          <UiSelect v-model="filters.year" :options="yearOptions" class="md:w-[110px]" :aria-label="$t('common.labels.year')" />
+          <UiSelect v-model="perPageModel" :options="perPageOptions" class="md:w-[120px]" :aria-label="$t('common.pagination.rowsPerPage')" />
         </div>
       </div>
 
@@ -183,17 +187,17 @@ const totalDeductions = computed(() => {
           </span>
         </template>
         <template #cell-type="{ row }">
-          <UiBadge :tone="row.type === 'thr' ? 'accent' : 'neutral'">{{ row.type === "thr" ? "THR" : "Monthly" }}</UiBadge>
+          <UiBadge :tone="row.type === 'thr' ? 'accent' : 'neutral'">{{ row.type === "thr" ? "THR" : $t("payslips.list.monthly") }}</UiBadge>
         </template>
         <template #cell-net_salary="{ row }">
           <span class="tabular-nums text-ui-ink font-medium">{{ maskCurrency(row.net_salary) }}</span>
         </template>
         <template #cell-status>
-          <UiBadge tone="ok" dot>Paid</UiBadge>
+          <UiBadge tone="ok" dot>{{ $t("payslips.paid") }}</UiBadge>
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-1">
-            <UiButton variant="ghost" size="sm" :icon="Eye" @click.stop="viewDetails(row.id)">View</UiButton>
+            <UiButton variant="ghost" size="sm" :icon="Eye" @click.stop="viewDetails(row.id)">{{ $t("common.actions.view") }}</UiButton>
             <UiButton variant="secondary" size="sm" :icon="Download" @click.stop="handleDownload(row.id)">PDF</UiButton>
           </div>
         </template>
@@ -205,7 +209,7 @@ const totalDeductions = computed(() => {
               <p class="text-ui-body font-medium text-ui-ink truncate">{{ formatDate(row.period) }}</p>
               <div class="flex items-center gap-1.5 mt-1.5">
                 <UiBadge v-if="row.type === 'thr'" tone="accent">THR</UiBadge>
-                <UiBadge tone="ok" dot>Paid</UiBadge>
+                <UiBadge tone="ok" dot>{{ $t("payslips.paid") }}</UiBadge>
               </div>
             </div>
             <div class="text-right shrink-0">
@@ -226,13 +230,13 @@ const totalDeductions = computed(() => {
             <div class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mb-3">
               <FileText class="w-5 h-5" />
             </div>
-            <p class="text-ui-body font-medium text-ui-ink">No payslips found</p>
-            <p class="text-ui-small text-ui-muted mt-1">Your payslips will appear here once they are processed</p>
+            <p class="text-ui-body font-medium text-ui-ink">{{ $t("payslips.list.empty") }}</p>
+            <p class="text-ui-small text-ui-muted mt-1">{{ $t("payslips.list.emptyHint") }}</p>
           </div>
         </template>
       </UiTable>
 
-      <UiPagination v-if="meta.total" :meta="meta" item-label="payslips" :disabled="loading" @change="handlePageChange" />
+      <UiPagination v-if="meta.total" :meta="meta" :item-label="$t('payslips.list.itemLabel')" :disabled="loading" @change="handlePageChange" />
     </section>
   </div>
 </template>

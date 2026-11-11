@@ -6,6 +6,9 @@ import { Calendar, Crown, Edit, Eye, Users, ShieldCheck, AlertTriangle, Trash2, 
 import { getProjectHealth } from "@/utils/projectHealth";
 import { UiBadge, UiButton } from "@/components/ui";
 import Avatar from "@/components/common/Avatar.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   data: {
@@ -19,22 +22,30 @@ const emit = defineEmits(["delete"]);
 const health = computed(() => getProjectHealth(props.data));
 
 const PRIORITY = {
-  high: { label: "High", tone: "bad" },
-  medium: { label: "Medium", tone: "warn" },
-  low: { label: "Low", tone: "neutral" },
+  high: { key: "high", tone: "bad" },
+  medium: { key: "medium", tone: "warn" },
+  low: { key: "low", tone: "neutral" },
 };
 
 const STATUS = {
-  draft: { label: "Draft", tone: "neutral" },
-  planning: { label: "Planning", tone: "info" },
-  active: { label: "Active", tone: "accent" },
-  on_hold: { label: "On Hold", tone: "warn" },
-  completed: { label: "Completed", tone: "ok" },
-  cancelled: { label: "Cancelled", tone: "outline" },
+  draft: { key: "draft", tone: "neutral" },
+  planning: { key: "planning", tone: "info" },
+  active: { key: "active", tone: "accent" },
+  on_hold: { key: "onHold", tone: "warn" },
+  completed: { key: "completed", tone: "ok" },
+  cancelled: { key: "cancelled", tone: "outline" },
 };
 
-const priority = computed(() => PRIORITY[props.data.priority] || PRIORITY.medium);
-const status = computed(() => STATUS[props.data.status] || { label: props.data.status, tone: "neutral" });
+const priority = computed(() => {
+  const p = PRIORITY[props.data.priority] || PRIORITY.medium;
+  return { label: t(`projects.priority.${p.key}`), tone: p.tone };
+});
+const status = computed(() => {
+  const s = STATUS[props.data.status];
+  return s
+    ? { label: t(`projects.status.${s.key}`), tone: s.tone }
+    : { label: props.data.status, tone: "neutral" };
+});
 
 const progress = computed(() => Math.max(0, Math.min(100, props.data.progress ?? 0)));
 const progressColor = computed(() => {
@@ -49,7 +60,9 @@ const HEALTH_TONE = { overdue: "bad", critical: "bad", "at-risk": "warn", behind
 const healthText = computed(() => {
   if (!health.value || health.value.level === "on-track") return null;
   const d = health.value.daysRemaining;
-  return d >= 0 ? `${health.value.label} · ${d}d left` : `${Math.abs(d)}d overdue`;
+  return d >= 0
+    ? t("projects.card.healthLeft", { label: health.value.label, n: d })
+    : t("projects.card.healthOverdue", { n: Math.abs(d) });
 });
 
 const team = computed(() => {
@@ -60,14 +73,14 @@ const team = computed(() => {
 
 const timeline = computed(() => {
   const start = props.data.start_date ? formatDate(props.data.start_date) : "-";
-  const end = props.data.end_date ? formatDate(props.data.end_date) : "No end date";
+  const end = props.data.end_date ? formatDate(props.data.end_date) : t("projects.card.noEndDate");
   return `${start} – ${end}`;
 });
 
 const aftercare = computed(() => {
   const parts = [];
-  if (props.data.warranty_period_months) parts.push(`${props.data.warranty_period_months} mo warranty`);
-  if (props.data.retention_period_months) parts.push(`${props.data.retention_period_months} mo retention`);
+  if (props.data.warranty_period_months) parts.push(t("projects.card.warrantyMonths", { n: props.data.warranty_period_months }));
+  if (props.data.retention_period_months) parts.push(t("projects.card.retentionMonths", { n: props.data.retention_period_months }));
   return parts.join(" · ");
 });
 
@@ -109,7 +122,7 @@ const initials = computed(() =>
         >{{ data.name }}</RouterLink>
         <p class="text-ui-cap text-ui-muted flex items-center gap-1 mt-0.5 min-w-0">
           <Building2 class="w-3.5 h-3.5 shrink-0" />
-          <span class="truncate">{{ data.client?.name || "No client" }}</span>
+          <span class="truncate">{{ data.client?.name || $t("projects.card.noClient") }}</span>
         </p>
       </div>
       <UiBadge :tone="status.tone" dot class="shrink-0">{{ status.label }}</UiBadge>
@@ -117,13 +130,13 @@ const initials = computed(() =>
 
     <!-- Two lines reserved so every card's progress bar lines up -->
     <p class="text-ui-cap text-ui-muted mt-3 line-clamp-2 h-8">
-      {{ data.description || "No description." }}
+      {{ data.description || $t("projects.card.noDescription") }}
     </p>
 
     <!-- Progress -->
     <div class="mt-3">
       <div class="flex items-center justify-between gap-2 mb-1.5 min-h-[22px]">
-        <span class="text-ui-cap text-ui-muted">Progress</span>
+        <span class="text-ui-cap text-ui-muted">{{ $t("projects.card.progress") }}</span>
         <div class="flex items-center gap-1.5">
           <UiBadge v-if="healthText" :tone="HEALTH_TONE[health.level] || 'warn'">
             <AlertTriangle class="w-3 h-3" />{{ healthText }}
@@ -139,26 +152,26 @@ const initials = computed(() =>
     <!-- Details: same rows on every card -->
     <dl class="mt-4 mb-4 space-y-2 text-ui-cap">
       <div class="flex items-center gap-2 min-w-0">
-        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><Users class="w-3.5 h-3.5" />Team</dt>
-        <dd class="text-ui-ink font-medium truncate" :title="team || ''">{{ team || "Not assigned" }}</dd>
+        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><Users class="w-3.5 h-3.5" />{{ $t("common.labels.team") }}</dt>
+        <dd class="text-ui-ink font-medium truncate" :title="team || ''">{{ team || $t("projects.card.notAssigned") }}</dd>
       </div>
       <div class="flex items-center gap-2 min-w-0">
-        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><Calendar class="w-3.5 h-3.5" />Timeline</dt>
+        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><Calendar class="w-3.5 h-3.5" />{{ $t("projects.card.timeline") }}</dt>
         <dd class="text-ui-ink font-medium truncate tabular-nums">{{ timeline }}</dd>
       </div>
       <div class="flex items-center gap-2 min-w-0">
-        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><ShieldCheck class="w-3.5 h-3.5" />Aftercare</dt>
-        <dd class="font-medium truncate" :class="aftercare ? 'text-ui-ink' : 'text-ui-faint'">{{ aftercare || "None" }}</dd>
+        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><ShieldCheck class="w-3.5 h-3.5" />{{ $t("projects.card.aftercare") }}</dt>
+        <dd class="font-medium truncate" :class="aftercare ? 'text-ui-ink' : 'text-ui-faint'">{{ aftercare || $t("common.labels.none") }}</dd>
       </div>
       <div class="flex items-center gap-2 min-w-0">
-        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><Flag class="w-3.5 h-3.5" />Priority</dt>
+        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><Flag class="w-3.5 h-3.5" />{{ $t("projects.fields.priority") }}</dt>
         <dd class="min-w-0"><UiBadge :tone="priority.tone">{{ priority.label }}</UiBadge></dd>
       </div>
     </dl>
 
     <!-- Leader + actions, pinned to the bottom so they line up across a row -->
     <div class="flex items-center gap-2 pt-3.5 mt-auto border-t border-ui-line">
-      <div v-if="data.leader" class="relative shrink-0 mr-1" :title="`${data.leader?.user?.name} · Project Leader`">
+      <div v-if="data.leader" class="relative shrink-0 mr-1" :title="`${data.leader?.user?.name} · ${$t('projects.fields.leader')}`">
         <Avatar :src="data.leader?.user?.profile_photo" :alt="data.leader?.user?.name" size="w-8 h-8" icon-size="w-4 h-4" />
         <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-ui-surface border border-ui-line rounded-full flex items-center justify-center">
           <Crown class="w-2.5 h-2.5 text-ui-warn" />
@@ -171,14 +184,14 @@ const initials = computed(() =>
         :icon="Eye"
         :to="{ name: 'admin.projects.detail', params: { id: data.id } }"
       >
-        View Details
+        {{ $t("common.actions.viewDetails") }}
       </UiButton>
       <RouterLink
         v-if="can('project-edit')"
         :to="{ name: 'admin.projects.edit', params: { id: data.id } }"
         class="ui-press w-[30px] h-[30px] shrink-0 inline-flex items-center justify-center border border-ui-line-strong rounded-[7px] text-ui-muted hover:text-ui-ink hover:bg-ui-subtle"
-        title="Edit"
-        aria-label="Edit project"
+        :title="$t('common.actions.edit')"
+        :aria-label="$t('projects.card.editProject')"
       >
         <Edit class="w-3.5 h-3.5" />
       </RouterLink>
@@ -187,8 +200,8 @@ const initials = computed(() =>
         type="button"
         @click="emit('delete', data)"
         class="ui-press w-[30px] h-[30px] shrink-0 inline-flex items-center justify-center border border-ui-line-strong rounded-[7px] text-ui-muted hover:text-ui-bad hover:border-ui-bad/30 hover:bg-ui-bad-soft"
-        title="Delete"
-        aria-label="Delete project"
+        :title="$t('common.actions.delete')"
+        :aria-label="$t('projects.card.deleteProject')"
       >
         <Trash2 class="w-3.5 h-3.5" />
       </button>

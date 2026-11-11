@@ -17,6 +17,9 @@ import {
 import { UiPageHeader, UiButton, UiCard, UiInput, UiAlert } from "@/components/ui";
 import { useAccountPasswordStore } from "@/stores/accountPassword";
 import { errorMessage } from "@/helpers/errorHelper";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const router = useRouter();
 const passwordStore = useAccountPasswordStore();
@@ -51,9 +54,9 @@ const passwordStrength = computed(() => {
   if (/[0-9]/.test(value)) score++;
   if (/[^A-Za-z0-9]/.test(value)) score++;
 
-  if (score <= 1) return { score: 1, label: "Lemah", color: "bg-red-500" };
-  if (score <= 3) return { score: 2, label: "Cukup", color: "bg-amber-500" };
-  return { score: 3, label: "Kuat", color: "bg-emerald-500" };
+  if (score <= 1) return { score: 1, label: t("credentials.strength.weak"), color: "bg-red-500" };
+  if (score <= 3) return { score: 2, label: t("credentials.strength.fair"), color: "bg-amber-500" };
+  return { score: 3, label: t("credentials.strength.strong"), color: "bg-emerald-500" };
 });
 
 // Strength meter segments in token colours (score 1-3 from passwordStrength).
@@ -72,7 +75,7 @@ const submit = async () => {
     !form.value.username_email ||
     !form.value.password
   ) {
-    error.value = "Password Label, Username/Email, and Password are required.";
+    error.value = t("credentials.form.createRequired");
     return;
   }
 
@@ -80,13 +83,13 @@ const submit = async () => {
   try {
     await passwordStore.createAccount(form.value);
 
-    success.value = "Credential saved successfully.";
+    success.value = t("credentials.form.saveSuccess");
 
     setTimeout(() => {
       router.push({ name: "admin.account-password.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = errorMessage(err, "Failed to save credential.");
+    error.value = errorMessage(err, t("credentials.form.saveFailed"));
   } finally {
     loading.value = false;
   }
@@ -96,23 +99,23 @@ const submit = async () => {
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <form @submit.prevent="submit" class="space-y-5">
-      <UiPageHeader title="Create Credential Account" subtitle="Save system or internal service password credentials">
+      <UiPageHeader :title="$t('credentials.form.createTitle')" :subtitle="$t('credentials.form.createSubtitle')">
         <template #eyebrow>
           <button
             type="button"
             @click="$router.back()"
             class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
-            aria-label="Back"
+            :aria-label="$t('common.actions.back')"
           >
             <ArrowLeft class="w-4 h-4" />
-            Back
+            {{ $t("common.actions.back") }}
           </button>
         </template>
         <template #actions>
           <div class="hidden sm:flex items-center gap-2">
-            <UiButton variant="secondary" @click="$router.back()">Cancel</UiButton>
+            <UiButton variant="secondary" @click="$router.back()">{{ $t("common.actions.cancel") }}</UiButton>
             <UiButton type="submit" :icon="Save" :loading="loading">
-              {{ loading ? "Saving..." : "Save Credential" }}
+              {{ loading ? $t("common.actions.saving") : $t("credentials.form.saveCredential") }}
             </UiButton>
           </div>
         </template>
@@ -133,28 +136,28 @@ const submit = async () => {
           <template #header>
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><IdCard class="w-4 h-4" /></span>
-              <h3 class="text-ui-h2 text-ui-ink">Detail Akun</h3>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("credentials.form.accountDetail") }}</h3>
             </div>
           </template>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             <UiInput
               class="md:col-span-2"
               v-model="form.label_password"
-              label="Password Label *"
+              :label="$t('credentials.form.labelRequired')"
               :icon="Tag"
-              placeholder="e.g. ERP Finance Admin, VPN Office"
+              :placeholder="$t('credentials.form.labelPlaceholder')"
             />
             <UiInput
               v-model="form.username_email"
-              label="Username / Email *"
+              :label="$t('credentials.form.usernameRequired')"
               mono
               :icon="User"
-              placeholder="e.g. admin@company.com / admin.erp"
+              :placeholder="$t('credentials.form.usernamePlaceholder')"
             />
             <UiInput
               v-model="form.website"
               type="url"
-              label="Website (Optional)"
+              :label="$t('credentials.form.websiteOptional')"
               mono
               :icon="Globe"
               placeholder="https://example.com"
@@ -167,10 +170,10 @@ const submit = async () => {
           <template #header>
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><Lock class="w-4 h-4" /></span>
-              <h3 class="text-ui-h2 text-ui-ink">Password</h3>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("credentials.fields.password") }}</h3>
             </div>
           </template>
-          <label for="credential-password" class="block text-ui-small font-medium text-ui-ink mb-1.5">Password *</label>
+          <label for="credential-password" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("credentials.form.passwordRequired") }}</label>
           <div class="relative">
             <Key class="absolute left-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
             <input
@@ -178,14 +181,14 @@ const submit = async () => {
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
               autocomplete="new-password"
-              placeholder="Enter secure password"
+              :placeholder="$t('credentials.form.passwordPlaceholder')"
               class="w-full h-[38px] pl-9 pr-10 bg-ui-surface font-mono text-ui-small text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
             />
             <button
               type="button"
               @click="togglePassword"
               class="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:text-ui-ink hover:bg-ui-hover"
-              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              :aria-label="showPassword ? $t('common.a11y.hidePassword') : $t('common.a11y.showPassword')"
               :aria-pressed="showPassword"
             >
               <Eye v-if="!showPassword" class="w-4 h-4" />
@@ -211,24 +214,24 @@ const submit = async () => {
           <template #header>
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><FileText class="w-4 h-4" /></span>
-              <h3 class="text-ui-h2 text-ui-ink">Catatan</h3>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("common.labels.notes") }}</h3>
             </div>
           </template>
           <UiInput
             v-model="form.notes"
             :rows="4"
-            label="Notes (Optional)"
+            :label="$t('credentials.form.notesOptional')"
             :icon="FileText"
-            placeholder="Additional notes or instructions..."
+            :placeholder="$t('credentials.form.notesPlaceholder')"
           />
         </UiCard>
       </div>
 
       <!-- Actions (phones) -->
       <div class="sm:hidden grid grid-cols-2 gap-2">
-        <UiButton variant="secondary" size="lg" block @click="$router.back()">Cancel</UiButton>
+        <UiButton variant="secondary" size="lg" block @click="$router.back()">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton type="submit" size="lg" block :icon="Save" :loading="loading">
-          {{ loading ? "Saving..." : "Save Credential" }}
+          {{ loading ? $t("common.actions.saving") : $t("credentials.form.saveCredential") }}
         </UiButton>
       </div>
     </form>

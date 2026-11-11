@@ -25,6 +25,10 @@ import { axiosInstance } from "@/plugins/axios";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import DashboardWidgetCard from "./DashboardWidgetCard.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t, te } = useI18n();
 
 // Key Metrics: the backend picks the set for the user's role (business for
 // Manager/Operational Director, cash for Finance, people for HR) and drops
@@ -43,10 +47,9 @@ onMounted(async () => {
   }
 });
 
-const PROFILE = {
-  business: "Business overview",
-  finance: "Finance overview",
-  people: "People overview",
+const profileLabel = (profile) => {
+  const key = `dashboard.keyMetrics.profile.${profile}`;
+  return profile && te(key) ? t(key) : t("dashboard.keyMetrics.overview");
 };
 
 const ICONS = {
@@ -81,14 +84,14 @@ const formatValue = (m, compact = false) => {
     if (!showAmount.value) return MASK;
     return compact ? formatRupiahCompact(m.value) : formatRupiah(m.value);
   }
-  if (m.format === "percent") return `${Number(m.value).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
-  return Number(m.value).toLocaleString("id-ID");
+  if (m.format === "percent") return `${Number(m.value).toLocaleString(localeTag(), { maximumFractionDigits: 1 })}%`;
+  return Number(m.value).toLocaleString(localeTag());
 };
 
 const formatDelta = (d) => {
   if (d.format === "rupiah") return showAmount.value ? formatRupiahCompact(d.value) : "Rp ••••";
-  if (d.format === "percent") return `${d.value.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
-  if (d.format === "points") return `${d.value.toLocaleString("id-ID", { maximumFractionDigits: 1 })} pts`;
+  if (d.format === "percent") return `${d.value.toLocaleString(localeTag(), { maximumFractionDigits: 1 })}%`;
+  if (d.format === "points") return t("dashboard.keyMetrics.points", { n: d.value.toLocaleString(localeTag(), { maximumFractionDigits: 1 }) });
   return `+${d.value}`;
 };
 
@@ -106,14 +109,14 @@ const toneClass = (tone) => (tone === "danger" ? "text-ui-bad" : tone === "warni
 </script>
 
 <template>
-  <DashboardWidgetCard title="Key Metrics" :subtitle="data ? `${PROFILE[data.profile] || 'Overview'} · ${data.period}` : 'Overview'">
+  <DashboardWidgetCard :title="$t('dashboard.widgets.keyMetrics')" :subtitle="data ? `${profileLabel(data.profile)} · ${data.period}` : $t('dashboard.keyMetrics.overview')">
     <template #actions>
       <button
         v-if="hasRupiah"
         type="button"
         @click="showAmount = !showAmount"
-        :aria-label="showAmount ? 'Hide amounts' : 'Show amounts'"
-        :title="showAmount ? 'Hide amounts' : 'Show amounts'"
+        :aria-label="showAmount ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
+        :title="showAmount ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
         class="w-8 h-8 -my-1 rounded-ui-control flex items-center justify-center text-ui-faint hover:text-ui-ink hover:bg-ui-hover transition-colors"
       >
         <EyeOff v-if="showAmount" class="w-4 h-4" />
@@ -126,8 +129,8 @@ const toneClass = (tone) => (tone === "danger" ? "text-ui-bad" : tone === "warni
       <Skeleton v-for="i in 4" :key="i" height="92px" rounded="12px" />
     </div>
 
-    <p v-else-if="failed" class="text-ui-small text-ui-muted py-8 text-center">Couldn't load key metrics.</p>
-    <p v-else-if="!hero" class="text-ui-small text-ui-muted py-8 text-center">No metrics available for your role.</p>
+    <p v-else-if="failed" class="text-ui-small text-ui-muted py-8 text-center">{{ $t("dashboard.keyMetrics.loadError") }}</p>
+    <p v-else-if="!hero" class="text-ui-small text-ui-muted py-8 text-center">{{ $t("dashboard.keyMetrics.empty") }}</p>
 
     <div v-else class="ui-stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       <!-- Hero: the one number this role checks first -->

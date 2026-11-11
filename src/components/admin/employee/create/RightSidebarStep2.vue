@@ -2,6 +2,8 @@
 import { Lightbulb, Check } from "lucide-vue-next";
 import { ref, onMounted, onUnmounted } from "vue";
 
+const TIP_KEYS = ["jobTitle", "department", "startDate", "employmentType", "skillLevel"];
+
 const sidebarRef = ref<HTMLElement | null>(null);
 const isSticky = ref(false);
 const sidebarTop = ref(0);
@@ -66,55 +68,19 @@ onUnmounted(() => {
           <Lightbulb class="w-4 h-4" />
         </span>
         <div class="min-w-0">
-          <h3 class="text-ui-h3 text-ui-ink">Form Tips</h3>
-          <p class="text-ui-cap text-ui-muted mt-0.5">Job Information Guidelines</p>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("employees.tips.formTips") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.tips.job.subtitle") }}</p>
         </div>
       </header>
 
       <ul class="grid gap-3.5 md:grid-cols-2 xl:grid-cols-1">
-        <li class="flex items-start gap-2.5">
+        <li v-for="key in TIP_KEYS" :key="key" class="flex items-start gap-2.5">
           <span class="w-5 h-5 mt-px shrink-0 rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center">
             <Check class="w-3 h-3" />
           </span>
           <div class="min-w-0">
-            <p class="text-ui-small font-medium text-ui-ink">Choose clear job title</p>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Use standard industry job titles</p>
-          </div>
-        </li>
-        <li class="flex items-start gap-2.5">
-          <span class="w-5 h-5 mt-px shrink-0 rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center">
-            <Check class="w-3 h-3" />
-          </span>
-          <div class="min-w-0">
-            <p class="text-ui-small font-medium text-ui-ink">Verify department assignment</p>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Choose the correct department for the role</p>
-          </div>
-        </li>
-        <li class="flex items-start gap-2.5">
-          <span class="w-5 h-5 mt-px shrink-0 rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center">
-            <Check class="w-3 h-3" />
-          </span>
-          <div class="min-w-0">
-            <p class="text-ui-small font-medium text-ui-ink">Set realistic start date</p>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Allow time for onboarding preparations</p>
-          </div>
-        </li>
-        <li class="flex items-start gap-2.5">
-          <span class="w-5 h-5 mt-px shrink-0 rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center">
-            <Check class="w-3 h-3" />
-          </span>
-          <div class="min-w-0">
-            <p class="text-ui-small font-medium text-ui-ink">Review employment type</p>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Ensure it matches the job requirements</p>
-          </div>
-        </li>
-        <li class="flex items-start gap-2.5">
-          <span class="w-5 h-5 mt-px shrink-0 rounded-full bg-ui-ok-soft text-ui-ok flex items-center justify-center">
-            <Check class="w-3 h-3" />
-          </span>
-          <div class="min-w-0">
-            <p class="text-ui-small font-medium text-ui-ink">Select appropriate skill level</p>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Match with employee's experience level</p>
+            <p class="text-ui-small font-medium text-ui-ink">{{ $t(`employees.tips.job.items.${key}.title`) }}</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t(`employees.tips.job.items.${key}.text`) }}</p>
           </div>
         </li>
       </ul>

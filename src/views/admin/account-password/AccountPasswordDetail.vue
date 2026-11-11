@@ -19,6 +19,10 @@ import {
 import { useAccountPasswordStore } from "@/stores/accountPassword";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiPageHeader, UiButton, UiCard, UiEmpty } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -31,7 +35,7 @@ const showPassword = ref(false);
 const copied = ref(false);
 
 const formatDate = (date) =>
-  new Date(date).toLocaleDateString("id-ID", {
+  new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -52,7 +56,7 @@ onMounted(async () => {
     await store.fetchAccount(route.params.id);
     account.value = store.currentAccount;
   } catch (err) {
-    error.value = "Credential data not found.";
+    error.value = t("credentials.form.notFound");
   } finally {
     loading.value = false;
   }
@@ -62,18 +66,18 @@ onMounted(async () => {
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <UiPageHeader
-      :title="account && !loading ? account.label_password || account.label : 'Account Credential Detail'"
-      subtitle="Account Credential Detail · Informasi credential (read-only)"
+      :title="account && !loading ? account.label_password || account.label : $t('credentials.detail.title')"
+      :subtitle="$t('credentials.detail.subtitle')"
     >
       <template #eyebrow>
         <button
           type="button"
           @click="router.back()"
           class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
-          aria-label="Back"
+          :aria-label="$t('common.actions.back')"
         >
           <ArrowLeft class="w-4 h-4" />
-          Back
+          {{ $t("common.actions.back") }}
         </button>
       </template>
       <template #actions>
@@ -88,7 +92,7 @@ onMounted(async () => {
             })
           "
         >
-          Edit
+          {{ $t("common.actions.edit") }}
         </UiButton>
       </template>
     </UiPageHeader>
@@ -120,13 +124,13 @@ onMounted(async () => {
           <template #header>
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><Lock class="w-4 h-4" /></span>
-              <h3 class="text-ui-h2 text-ui-ink">Credential</h3>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("credentials.columns.credential") }}</h3>
             </div>
           </template>
 
           <div class="space-y-5">
             <div>
-              <p class="text-ui-cap text-ui-muted mb-1.5">Username / Email</p>
+              <p class="text-ui-cap text-ui-muted mb-1.5">{{ $t("credentials.fields.usernameEmail") }}</p>
               <div class="flex items-center gap-2.5 min-w-0">
                 <User class="w-4 h-4 text-ui-faint shrink-0" />
                 <p class="font-mono text-ui-small text-ui-ink break-all">{{ account.username_email || account.username || "—" }}</p>
@@ -134,7 +138,7 @@ onMounted(async () => {
             </div>
 
             <div>
-              <p class="text-ui-cap text-ui-muted mb-1.5">Password</p>
+              <p class="text-ui-cap text-ui-muted mb-1.5">{{ $t("credentials.fields.password") }}</p>
               <div class="flex items-center gap-2 pl-3 pr-1.5 h-11 bg-ui-subtle border border-ui-line rounded-ui-control">
                 <Key class="w-4 h-4 text-ui-faint shrink-0" />
                 <span class="font-mono text-ui-small text-ui-ink tracking-widest flex-1 min-w-0 truncate">
@@ -144,8 +148,8 @@ onMounted(async () => {
                   type="button"
                   @click="togglePassword"
                   class="w-8 h-8 shrink-0 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
-                  :aria-label="showPassword ? 'Hide password' : 'Show password'"
-                  :title="showPassword ? 'Hide password' : 'Show password'"
+                  :aria-label="showPassword ? $t('common.a11y.hidePassword') : $t('common.a11y.showPassword')"
+                  :title="showPassword ? $t('common.a11y.hidePassword') : $t('common.a11y.showPassword')"
                 >
                   <Eye v-if="!showPassword" class="w-4 h-4" />
                   <EyeOff v-else class="w-4 h-4" />
@@ -154,14 +158,14 @@ onMounted(async () => {
                   type="button"
                   @click="copyPassword"
                   class="w-8 h-8 shrink-0 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
-                  aria-label="Copy password"
-                  title="Copy password"
+:aria-label="$t('credentials.actions.copyPassword')"
+                  :title="$t('credentials.actions.copyPassword')"
                 >
                   <Check v-if="copied" class="w-4 h-4 text-ui-ok" />
                   <Copy v-else class="w-4 h-4" />
                 </button>
               </div>
-              <p v-if="copied" class="text-ui-cap text-ui-ok mt-1.5">Password copied to clipboard</p>
+              <p v-if="copied" class="text-ui-cap text-ui-ok mt-1.5">{{ $t("credentials.detail.copied") }}</p>
             </div>
           </div>
         </UiCard>
@@ -170,13 +174,13 @@ onMounted(async () => {
           <template #header>
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <span class="w-8 h-8 shrink-0 rounded-ui-control border border-ui-line text-ui-muted inline-flex items-center justify-center"><FileText class="w-4 h-4" /></span>
-              <h3 class="text-ui-h2 text-ui-ink">Detail Tambahan</h3>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("credentials.detail.additional") }}</h3>
             </div>
           </template>
 
           <div class="space-y-5">
             <div>
-              <p class="text-ui-cap text-ui-muted mb-1">Website</p>
+              <p class="text-ui-cap text-ui-muted mb-1">{{ $t("credentials.fields.website") }}</p>
               <div class="flex items-center gap-2.5 min-w-0">
                 <Globe class="w-4 h-4 text-ui-faint shrink-0" />
                 <a
@@ -192,21 +196,21 @@ onMounted(async () => {
             </div>
 
             <div>
-              <p class="text-ui-cap text-ui-muted mb-1">Notes</p>
+              <p class="text-ui-cap text-ui-muted mb-1">{{ $t("common.labels.notes") }}</p>
               <p class="text-ui-body text-ui-ink whitespace-pre-line px-3.5 py-3 bg-ui-subtle border border-ui-line rounded-ui-control">{{ account.notes || "—" }}</p>
             </div>
           </div>
         </UiCard>
       </div>
 
-      <UiCard title="Activity">
+      <UiCard :title="$t('credentials.detail.activity')">
         <dl class="divide-y divide-ui-line">
           <div class="flex items-center justify-between gap-3 py-2.5 first:pt-0">
-            <dt class="inline-flex items-center gap-2 text-ui-small text-ui-muted"><Clock class="w-4 h-4 text-ui-faint" />Created At</dt>
+            <dt class="inline-flex items-center gap-2 text-ui-small text-ui-muted"><Clock class="w-4 h-4 text-ui-faint" />{{ $t("credentials.detail.createdAt") }}</dt>
             <dd class="text-ui-small font-medium text-ui-ink text-right">{{ formatDate(account.created_at) }}</dd>
           </div>
           <div class="flex items-center justify-between gap-3 py-2.5 last:pb-0">
-            <dt class="inline-flex items-center gap-2 text-ui-small text-ui-muted"><Clock class="w-4 h-4 text-ui-faint" />Last Updated</dt>
+            <dt class="inline-flex items-center gap-2 text-ui-small text-ui-muted"><Clock class="w-4 h-4 text-ui-faint" />{{ $t("common.labels.updatedAt") }}</dt>
             <dd class="text-ui-small font-medium text-ui-ink text-right">{{ formatDate(account.updated_at) }}</dd>
           </div>
         </dl>

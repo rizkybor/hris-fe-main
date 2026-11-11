@@ -23,6 +23,9 @@ import { can } from "@/helpers/permissionHelper";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 import { UiButton, UiEmpty, UiInput, UiPageHeader, UiSelect } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
 
 const employeeStore = useEmployeeStore();
 const { employees, meta, loading, success } = storeToRefs(employeeStore);
@@ -34,10 +37,10 @@ const showContractAlerts = ref(true);
 const alertLabel = (row) => {
   const parts = [];
   if (row.probation_days_left !== null) {
-    parts.push(`Probation berakhir dalam ${row.probation_days_left} hari`);
+    parts.push(t("employees.list.probationEnds", { n: row.probation_days_left }, row.probation_days_left));
   }
   if (row.contract_days_left !== null) {
-    parts.push(`Kontrak berakhir dalam ${row.contract_days_left} hari`);
+    parts.push(t("employees.list.contractEnds", { n: row.contract_days_left }, row.contract_days_left));
   }
   return parts.join(" • ");
 };
@@ -89,14 +92,20 @@ const handlePageChange = (page) => {
   fetchData();
 };
 
+// Known option values get a translated label; anything else keeps the API label.
+const enumLabel = (group, option) => {
+  const key = `employees.enums.${group}.${option.value}`;
+  return te(key) ? t(key) : option.label;
+};
+
 // Presentation only: filter selects with an "All" option first.
 const typeOptions = computed(() => [
-  { value: "", label: "All Types" },
-  ...(employmentTypes.value || []).map((t) => ({ value: t.value, label: t.label })),
+  { value: "", label: t("employees.list.allTypes") },
+  ...(employmentTypes.value || []).map((o) => ({ value: o.value, label: enumLabel("employmentType", o) })),
 ]);
 const statusOptions = computed(() => [
-  { value: "", label: "All Status" },
-  ...(jobStatuses.value || []).map((s) => ({ value: s.value, label: s.label })),
+  { value: "", label: t("employees.list.allStatus") },
+  ...(jobStatuses.value || []).map((s) => ({ value: s.value, label: enumLabel("jobStatus", s) })),
 ]);
 
 const handlePerPageChange = (perPage) => {
@@ -108,19 +117,19 @@ const handlePerPageChange = (perPage) => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="All Employees">
+    <UiPageHeader :title="$t('employees.list.title')">
       <template #subtitle>
-        Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} employees
+        {{ $t("employees.list.subtitle", { from: meta.from, to: meta.to, total: meta.total }) }}
       </template>
       <template #actions>
-        <UiButton variant="secondary" :icon="Upload" class="flex-1 sm:flex-none">Import CSV</UiButton>
+        <UiButton variant="secondary" :icon="Upload" class="flex-1 sm:flex-none">{{ $t("employees.list.importCsv") }}</UiButton>
         <UiButton
           v-if="can('employee-create')"
           :icon="UserPlus"
           :to="{ name: 'admin.employees.create' }"
           class="flex-1 sm:flex-none"
         >
-          Add Employee
+          {{ $t("employees.list.addEmployee") }}
         </UiButton>
       </template>
     </UiPageHeader>
@@ -137,7 +146,7 @@ const handlePerPageChange = (perPage) => {
         <AlertTriangle class="w-[18px] h-[18px] text-ui-warn shrink-0 mt-px" />
         <div class="flex-1 min-w-0">
           <h4 class="text-ui-small font-semibold text-ui-warn">
-            {{ contractAlerts.length }} karyawan akan habis masa kontrak/probation dalam 30 hari
+            {{ $t("employees.list.alertsTitle", { n: contractAlerts.length }, contractAlerts.length) }}
           </h4>
           <ul class="mt-1.5 space-y-1">
             <li v-for="row in contractAlerts" :key="row.employee_id" class="text-ui-small text-ui-text">
@@ -147,7 +156,7 @@ const handlePerPageChange = (perPage) => {
           </ul>
         </div>
         <UiButton variant="ghost" size="sm" :icon="X" class="shrink-0 -mr-1.5 -mt-1" @click="showContractAlerts = false">
-          Tutup
+          {{ $t("common.actions.close") }}
         </UiButton>
       </div>
     </div>
@@ -160,7 +169,7 @@ const handlePerPageChange = (perPage) => {
         :model-value="filters.search ?? ''"
         @update:model-value="filters.search = $event"
         :icon="Search"
-        placeholder="Search employees by name, department, role..."
+        :placeholder="$t('employees.list.searchPlaceholder')"
         class="flex-1 lg:max-w-md"
       />
       <div class="grid grid-cols-2 sm:flex sm:items-center gap-2.5">
@@ -179,7 +188,7 @@ const handlePerPageChange = (perPage) => {
     <div v-else-if="employees.length === 0" class="bg-ui-surface border border-ui-line rounded-ui-card">
       <UiEmpty
         :icon="Users"
-        title="No employees found"
+        :title="$t('employees.list.empty')"
       />
     </div>
 

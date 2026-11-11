@@ -8,7 +8,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="bg-ui-surface border border-ui-line rounded-ui-card divide-y divide-ui-line overflow-hidden" role="status" aria-label="Loading">
+  <div class="bg-ui-surface border border-ui-line rounded-ui-card divide-y divide-ui-line overflow-hidden" role="status" :aria-label="$t('common.a11y.loading')">
     <div v-for="r in rows" :key="r" class="flex items-center gap-3.5 px-4 py-3.5">
       <Skeleton width="40px" height="40px" rounded="10px" />
       <div class="flex-1 min-w-0 space-y-2">

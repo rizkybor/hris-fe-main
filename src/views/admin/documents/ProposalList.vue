@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
 import { FileText, Plus, Search, SearchX, Eye, Pencil, Copy, Trash2, Layers, Share2, ArrowLeft } from "lucide-vue-next";
 import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiChips, UiTable, UiEmpty, UiModal, UiSpinner } from "@/components/ui";
@@ -13,6 +15,7 @@ import { errorMessage } from "@/helpers/errorHelper";
 import Pagination from "@/components/common/Pagination.vue";
 import { PROPOSAL_STATUSES, proposalStatus } from "@/utils/proposalStatus";
 
+const { t } = useI18n();
 const router = useRouter();
 const store = useProposalStore();
 const clientStore = useClientStore();
@@ -35,7 +38,7 @@ const onSearchInput = () => {
 };
 
 const formatDate = (value) =>
-  value ? new Date(value).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-";
+  value ? new Date(value).toLocaleDateString(localeTag(), { day: "numeric", month: "long", year: "numeric" }) : "-";
 
 // ===== New proposal =====
 const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -69,7 +72,7 @@ const createProposal = async () => {
     router.push({ name: "admin.proposals.edit", params: { id: created.id } });
   } catch (error) {
     if (error?.response?.status === 422) formErrors.value = error.response.data.errors ?? {};
-    else await alertModal.alert(errorMessage(error, "Proposal gagal dibuat."), { type: "danger" });
+    else await alertModal.alert(errorMessage(error, t("documents.proposal.list.errors.create")), { type: "danger" });
   }
 };
 
@@ -81,15 +84,15 @@ const viewPdf = async (proposal) => {
   try {
     await store.viewPdf(proposal.id);
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "PDF gagal dibuat."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.errors.pdf")), { type: "danger" });
   } finally {
     busyId.value = null;
   }
 };
 
 const duplicate = async (proposal) => {
-  const ok = await alertModal.confirm(`Buat salinan dari "${proposal.title}"? Salinan dibuat sebagai Draft dengan tanggal hari ini.`, {
-    confirmText: "Duplikat",
+  const ok = await alertModal.confirm(t("documents.proposal.list.duplicateConfirm", { title: proposal.title }), {
+    confirmText: t("common.actions.duplicate"),
   });
   if (!ok) return;
   busyId.value = `dup-${proposal.id}`;
@@ -97,16 +100,16 @@ const duplicate = async (proposal) => {
     const copy = await store.duplicateProposal(proposal.id);
     router.push({ name: "admin.proposals.edit", params: { id: copy.id } });
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Proposal gagal diduplikat."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.list.errors.duplicate")), { type: "danger" });
   } finally {
     busyId.value = null;
   }
 };
 
 const handleDelete = async (proposal) => {
-  const ok = await alertModal.confirm(`Hapus proposal "${proposal.title}"? Tindakan ini tidak bisa dibatalkan.`, {
+  const ok = await alertModal.confirm(t("documents.proposal.list.deleteConfirm", { title: proposal.title }), {
     type: "danger",
-    confirmText: "Hapus",
+    confirmText: t("common.actions.delete"),
   });
   if (!ok) return;
   try {
@@ -114,7 +117,7 @@ const handleDelete = async (proposal) => {
     const page = proposals.value.length === 0 && meta.value.current_page > 1 ? meta.value.current_page - 1 : meta.value.current_page;
     await fetchPage(page);
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Proposal gagal dihapus."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.list.errors.delete")), { type: "danger" });
   }
 };
 
@@ -124,16 +127,19 @@ const sharingId = ref(null);
 
 // ===== Presentation only =====
 const STATUS_TONE = { draft: "neutral", sent: "info", accepted: "ok", rejected: "bad" };
-const STATUS_OPTIONS = [{ value: "", label: "Semua Status" }, ...PROPOSAL_STATUSES.map((s) => ({ value: s.value, label: s.label }))];
+const STATUS_OPTIONS = computed(() => [
+  { value: "", label: t("common.labels.allStatuses") },
+  ...PROPOSAL_STATUSES.map((s) => ({ value: s.value, label: s.label })),
+]);
 const clientOptions = computed(() => clients.value.map((c) => ({ value: c.id, label: c.name })));
-const COLUMNS = [
-  { key: "title", label: "Proposal" },
-  { key: "proposal_date", label: "Tanggal" },
-  { key: "letter_number", label: "Nomor Surat" },
-  { key: "status", label: "Status" },
-  { key: "updated_at", label: "Terakhir Diubah" },
-  { key: "actions", label: "Aksi", align: "right" },
-];
+const COLUMNS = computed(() => [
+  { key: "title", label: t("documents.proposal.list.columns.proposal") },
+  { key: "proposal_date", label: t("common.labels.date") },
+  { key: "letter_number", label: t("documents.proposal.list.columns.letterNumber") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "updated_at", label: t("common.labels.updatedAt") },
+  { key: "actions", label: t("common.labels.actions"), align: "right" },
+]);
 const iconBtn =
   "w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus disabled:opacity-50";
 const iconBtnDanger =
@@ -149,17 +155,17 @@ const onShared = (updated) => {
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <UiPageHeader
-      title="Proposal Penawaran"
-      subtitle="Susun proposal penawaran dari template standar JCD, edit per bagian, lalu unduh sebagai PDF"
+      :title="$t('documents.hub.links.proposal.title')"
+      :subtitle="$t('documents.proposal.list.subtitle')"
     >
       <template #eyebrow>
         <router-link :to="{ name: 'admin.documents.dashboard' }" class="inline-flex items-center gap-1 text-ui-small text-ui-accent hover:underline mb-1.5">
           <ArrowLeft class="w-3.5 h-3.5" />
-          Documents
+          {{ $t("documents.shared.documents") }}
         </router-link>
       </template>
       <template #actions>
-        <UiButton v-if="canCreate" :icon="Plus" class="w-full sm:w-auto" @click="openCreate">Proposal Baru</UiButton>
+        <UiButton v-if="canCreate" :icon="Plus" class="w-full sm:w-auto" @click="openCreate">{{ $t("documents.proposal.list.create") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -168,7 +174,7 @@ const onShared = (updated) => {
         <UiInput
           v-model="search"
           :icon="Search"
-          placeholder="Cari judul, klien, atau nomor surat..."
+          :placeholder="$t('documents.proposal.list.searchPlaceholder')"
           class="lg:max-w-sm w-full"
           @input="onSearchInput"
         />
@@ -196,7 +202,7 @@ const onShared = (updated) => {
             <p v-else class="font-medium text-ui-ink truncate" :title="row.title">{{ row.title }}</p>
             <p class="text-ui-cap text-ui-muted truncate">{{ row.client_name }}</p>
             <p class="text-ui-cap text-ui-faint inline-flex items-center gap-1 mt-0.5 tabular-nums">
-              <Layers class="w-3.5 h-3.5" /> {{ row.section_count }} bagian
+              <Layers class="w-3.5 h-3.5" /> {{ $t("documents.proposal.list.sectionCount", { n: row.section_count }, row.section_count) }}
             </p>
           </div>
         </template>
@@ -212,7 +218,7 @@ const onShared = (updated) => {
         <template #cell-updated_at="{ row }">
           <div class="whitespace-nowrap">
             <p class="tabular-nums">{{ formatDate(row.updated_at) }}</p>
-            <p v-if="row.updater?.name" class="text-ui-cap text-ui-muted">oleh {{ row.updater.name }}</p>
+            <p v-if="row.updater?.name" class="text-ui-cap text-ui-muted">{{ $t("documents.proposal.list.byName", { name: row.updater.name }) }}</p>
           </div>
         </template>
         <template #cell-actions="{ row }">
@@ -220,8 +226,8 @@ const onShared = (updated) => {
             <button
               type="button"
               :class="iconBtn"
-              title="Lihat PDF"
-              aria-label="Lihat PDF"
+              :title="$t('documents.shared.viewPdf')"
+              :aria-label="$t('documents.shared.viewPdf')"
               :disabled="busyId === `pdf-${row.id}`"
               @click="viewPdf(row)"
             >
@@ -232,8 +238,8 @@ const onShared = (updated) => {
               v-if="can('proposal-edit')"
               type="button"
               :class="iconBtn"
-              title="Bagikan (link, email, WhatsApp)"
-              aria-label="Bagikan"
+              :title="$t('documents.proposal.list.shareHint')"
+              :aria-label="$t('common.actions.share')"
               @click="sharingId = row.id"
             >
               <Share2 class="w-4 h-4" />
@@ -242,8 +248,8 @@ const onShared = (updated) => {
               v-if="can('proposal-edit')"
               :to="{ name: 'admin.proposals.edit', params: { id: row.id } }"
               :class="iconBtn"
-              title="Edit"
-              aria-label="Edit"
+              :title="$t('common.actions.edit')"
+              :aria-label="$t('common.actions.edit')"
             >
               <Pencil class="w-4 h-4" />
             </RouterLink>
@@ -251,8 +257,8 @@ const onShared = (updated) => {
               v-if="canCreate"
               type="button"
               :class="iconBtn"
-              title="Duplikat"
-              aria-label="Duplikat"
+              :title="$t('common.actions.duplicate')"
+              :aria-label="$t('common.actions.duplicate')"
               :disabled="busyId === `dup-${row.id}`"
               @click="duplicate(row)"
             >
@@ -262,8 +268,8 @@ const onShared = (updated) => {
               v-if="can('proposal-delete')"
               type="button"
               :class="iconBtnDanger"
-              title="Hapus"
-              aria-label="Hapus"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('common.actions.delete')"
               @click="handleDelete(row)"
             >
               <Trash2 class="w-4 h-4" />
@@ -287,27 +293,27 @@ const onShared = (updated) => {
               </div>
               <p class="text-ui-small text-ui-muted mt-0.5 truncate">{{ row.client_name }}</p>
               <p class="text-ui-cap text-ui-faint mt-1 tabular-nums">
-                {{ formatDate(row.proposal_date) }} · {{ row.section_count }} bagian
+                {{ formatDate(row.proposal_date) }} · {{ $t("documents.proposal.list.sectionCount", { n: row.section_count }, row.section_count) }}
               </p>
               <div class="flex items-center gap-0.5 mt-2 -ml-2" @click.stop>
-                <button type="button" :class="iconBtn" aria-label="Lihat PDF" :disabled="busyId === `pdf-${row.id}`" @click="viewPdf(row)">
+                <button type="button" :class="iconBtn" :aria-label="$t('documents.shared.viewPdf')" :disabled="busyId === `pdf-${row.id}`" @click="viewPdf(row)">
                   <UiSpinner v-if="busyId === `pdf-${row.id}`" size="16px" :center="false" />
                   <Eye v-else class="w-4 h-4" />
                 </button>
-                <button v-if="can('proposal-edit')" type="button" :class="iconBtn" aria-label="Bagikan" @click="sharingId = row.id">
+                <button v-if="can('proposal-edit')" type="button" :class="iconBtn" :aria-label="$t('common.actions.share')" @click="sharingId = row.id">
                   <Share2 class="w-4 h-4" />
                 </button>
                 <button
                   v-if="canCreate"
                   type="button"
                   :class="iconBtn"
-                  aria-label="Duplikat"
+                  :aria-label="$t('common.actions.duplicate')"
                   :disabled="busyId === `dup-${row.id}`"
                   @click="duplicate(row)"
                 >
                   <Copy class="w-4 h-4" />
                 </button>
-                <button v-if="can('proposal-delete')" type="button" :class="iconBtnDanger" aria-label="Hapus" @click="handleDelete(row)">
+                <button v-if="can('proposal-delete')" type="button" :class="iconBtnDanger" :aria-label="$t('common.actions.delete')" @click="handleDelete(row)">
                   <Trash2 class="w-4 h-4" />
                 </button>
               </div>
@@ -316,15 +322,15 @@ const onShared = (updated) => {
         </template>
 
         <template #empty>
-          <UiEmpty v-if="search || statusFilter" :icon="SearchX" title="Tidak ada proposal yang cocok" compact />
-          <UiEmpty v-else :icon="FileText" title="Belum ada proposal" message="Buat proposal pertama Anda dari template standar JCD." compact>
-            <UiButton v-if="canCreate" variant="secondary" size="sm" :icon="Plus" @click="openCreate">Proposal Baru</UiButton>
+          <UiEmpty v-if="search || statusFilter" :icon="SearchX" :title="$t('documents.proposal.list.noMatchTitle')" compact />
+          <UiEmpty v-else :icon="FileText" :title="$t('documents.proposal.list.emptyTitle')" :message="$t('documents.proposal.list.emptyMessage')" compact>
+            <UiButton v-if="canCreate" variant="secondary" size="sm" :icon="Plus" @click="openCreate">{{ $t("documents.proposal.list.create") }}</UiButton>
           </UiEmpty>
         </template>
       </UiTable>
 
       <div v-if="!loading && proposals.length > 0" class="px-3 sm:px-4 pb-4 border-t border-ui-line">
-        <Pagination :meta="meta" :loading="loading" item-label="proposals" @page-change="fetchPage" />
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('documents.proposal.list.itemLabel')" @page-change="fetchPage" />
       </div>
     </div>
 
@@ -333,46 +339,46 @@ const onShared = (updated) => {
     <!-- New proposal modal -->
     <UiModal
       v-model:open="showCreate"
-      title="Proposal Baru"
-      description="Isi data utama. Isi proposal dimulai dari template standar JCD."
+      :title="$t('documents.proposal.list.create')"
+      :description="$t('documents.proposal.create.description')"
     >
       <form id="proposal-create-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="createProposal">
         <UiInput
           v-model="form.title"
-          label="Judul Proyek"
+          :label="$t('documents.proposal.create.title')"
           required
-          placeholder="cth. Sistem Manajemen Order"
+          :placeholder="$t('documents.proposal.create.titlePlaceholder')"
           :error="formErrors.title?.[0] || ''"
           class="sm:col-span-2"
         />
         <UiSelect
           v-model="form.client_id"
-          label="Pilih dari Data Klien"
-          :options="[{ value: '', label: '— Klien baru / prospek (ketik di bawah) —' }, ...clientOptions]"
+          :label="$t('documents.proposal.create.pickClient')"
+          :options="[{ value: '', label: $t('documents.proposal.create.newClient') }, ...clientOptions]"
           class="sm:col-span-2"
           @change="onClientPicked"
         />
         <UiInput
           v-model="form.client_name"
-          label="Nama Klien"
+          :label="$t('documents.shared.clientName')"
           required
-          placeholder="cth. PT Misael Berkat Abadi"
+          :placeholder="$t('documents.proposal.create.clientPlaceholder')"
           :error="formErrors.client_name?.[0] || ''"
           class="sm:col-span-2"
         />
         <UiInput
           v-model="form.recipient"
-          label="Ditujukan Kepada"
-          placeholder="cth. Bapak Hendri"
-          hint="Dipakai untuk salam pembuka di bagian Pendahuluan."
+          :label="$t('documents.proposal.create.recipient')"
+          :placeholder="$t('documents.proposal.create.recipientPlaceholder')"
+          :hint="$t('documents.proposal.create.recipientHint')"
           class="sm:col-span-2"
         />
-        <UiInput v-model="form.proposal_date" type="date" label="Tanggal" required />
-        <UiInput v-model="form.letter_number" label="Nomor Surat (SPH)" placeholder="cth. 002/E/SPH-JCD/BD/X/2026" />
+        <UiInput v-model="form.proposal_date" type="date" :label="$t('common.labels.date')" required />
+        <UiInput v-model="form.letter_number" :label="$t('documents.proposal.create.letterNumber')" :placeholder="$t('documents.proposal.create.letterNumberPlaceholder')" />
       </form>
       <template #footer>
-        <UiButton variant="ghost" @click="showCreate = false">Batal</UiButton>
-        <UiButton type="submit" form="proposal-create-form" :loading="saving">Buat & Mulai Edit</UiButton>
+        <UiButton variant="ghost" @click="showCreate = false">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="proposal-create-form" :loading="saving">{{ $t("documents.proposal.create.submit") }}</UiButton>
       </template>
     </UiModal>
   </div>

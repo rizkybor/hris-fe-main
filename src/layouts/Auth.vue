@@ -1,11 +1,12 @@
 <script setup>
+import ThemeFloatingSwitch from "@/components/admin/ThemeFloatingSwitch.vue";
 // Auth pages (sign in, forgot / reset password): the form on the left,
 // a calm navy panel with the animated backdrop on the right (desktop).
 import AuthBackdrop from "@/components/auth/AuthBackdrop.vue";
 import { APP_VERSION_SHORT } from "@/utils/appVersion";
 
 const year = new Date().getFullYear();
-const POINTS = ["Attendance with photo and location", "Payroll and payslips", "Projects, documents and licenses"];
+const POINTS = ["auth.layout.points.attendance", "auth.layout.points.payroll", "auth.layout.points.projects"];
 </script>
 
 <template>
@@ -38,16 +39,17 @@ const POINTS = ["Attendance with photo and location", "Payroll and payslips", "P
     <div class="hidden lg:flex relative flex-1 bg-ui-brand overflow-hidden">
       <AuthBackdrop />
       <div class="relative z-10 flex flex-col justify-center px-16 xl:px-24 max-w-[640px]">
-        <p class="text-ui-over uppercase text-white/50">HRIS+ for growing teams</p>
+        <p class="text-ui-over uppercase text-white/50">{{ $t("auth.layout.eyebrow") }}</p>
         <h2 class="mt-4 text-[34px] leading-[44px] font-medium tracking-[-0.02em] text-white">
-          People, attendance, payroll and licenses, in one calm place.
+          {{ $t("auth.layout.headline") }}
         </h2>
         <ul class="mt-8 space-y-3">
           <li v-for="p in POINTS" :key="p" class="flex items-center gap-3 text-ui-body text-white/75">
-            <span class="w-1.5 h-1.5 rounded-full bg-ui-accent-soft"></span>{{ p }}
+            <span class="w-1.5 h-1.5 rounded-full bg-ui-accent-soft"></span>{{ $t(p) }}
           </li>
         </ul>
       </div>
     </div>
+    <ThemeFloatingSwitch :docked="false" />
   </div>
 </template>

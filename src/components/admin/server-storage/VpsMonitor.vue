@@ -26,6 +26,9 @@ import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
 import { formatBytes, STATUS, timeAgo, sslState, copyText } from "@/utils/serverMetrics";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const store = useServerMonitorStore();
 const alertModal = useAlertModalStore();
@@ -99,7 +102,7 @@ const submitForm = async () => {
     formOpen.value = false;
   } catch (e) {
     if (e?.response?.status === 422) formErrors.value = e.response.data.errors ?? {};
-    else await alertModal.alert(errorMessage(e, "VPS gagal disimpan."), { type: "danger" });
+    else await alertModal.alert(errorMessage(e, t("servers.errors.save")), { type: "danger" });
   } finally {
     saving.value = false;
   }
@@ -119,28 +122,28 @@ const copy = async (text, key) => {
 
 const regenerate = async (server) => {
   const ok = await alertModal.confirm(
-    `Buat token baru untuk "${server.name}"? Token lama langsung berhenti berlaku, jadi agen di VPS ini harus dipasang ulang dengan perintah baru.`,
-    { type: "warning", confirmText: "Buat token baru" }
+    t("servers.confirm.regenerate", { name: server.name }),
+    { type: "warning", confirmText: t("servers.actions.regenerate") }
   );
   if (!ok) return;
   try {
     showInstall(await store.regenerateToken(server.id), true);
   } catch (e) {
-    await alertModal.alert(errorMessage(e, "Token gagal dibuat ulang."), { type: "danger" });
+    await alertModal.alert(errorMessage(e, t("servers.errors.regenerate")), { type: "danger" });
   }
 };
 
 const remove = async (server) => {
   const ok = await alertModal.confirm(
-    `Hapus "${server.name}" dari pemantauan? Laporan dari VPS ini tidak akan diterima lagi. Untuk membersihkan agen di VPS, jalankan: sudo /usr/local/bin/hris-server-agent --uninstall`,
-    { type: "danger", confirmText: "Hapus" }
+    t("servers.confirm.remove", { name: server.name, command: "sudo /usr/local/bin/hris-server-agent --uninstall" }),
+    { type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
   try {
     await store.removeServer(server.id);
     detail.value = null;
   } catch (e) {
-    await alertModal.alert(errorMessage(e, "VPS gagal dihapus."), { type: "danger" });
+    await alertModal.alert(errorMessage(e, t("servers.errors.remove")), { type: "danger" });
   }
 };
 
@@ -164,10 +167,10 @@ const openDetail = (server) => (detail.value = server);
     <!-- Summary -->
     <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 ui-stagger">
       <UiStat label="VPS" :value="summary.total" :icon="Server" :loading="loading && !loaded" />
-      <UiStat label="Online" :value="summary.online" :icon="Activity" tone="ok" :loading="loading && !loaded" />
+      <UiStat :label="$t('servers.status.online')" :value="summary.online" :icon="Activity" tone="ok" :loading="loading && !loaded" />
       <UiStat
         class="col-span-2 lg:col-span-1"
-        label="Perlu perhatian"
+        :label="$t('servers.stats.attention')"
         :value="summary.attention"
         :icon="AlertTriangle"
         :tone="summary.attention ? 'bad' : ''"
@@ -181,12 +184,12 @@ const openDetail = (server) => (detail.value = server);
         <div class="flex items-center gap-2 flex-1 min-w-0">
           <h3 class="text-ui-h3 text-ui-ink">VPS</h3>
           <UiBadge tone="neutral">{{ summary.total }}</UiBadge>
-          <UiBadge tone="ok" dot>{{ summary.online }} online</UiBadge>
-          <UiBadge v-if="summary.attention" tone="bad" dot>{{ summary.attention }} perlu perhatian</UiBadge>
+          <UiBadge tone="ok" dot>{{ $t("servers.toolbar.online", { n: summary.online }) }}</UiBadge>
+          <UiBadge v-if="summary.attention" tone="bad" dot>{{ $t("servers.toolbar.attention", { n: summary.attention }) }}</UiBadge>
         </div>
         <div class="grid grid-cols-2 sm:flex gap-2">
-          <UiButton variant="secondary" :icon="RefreshCw" :loading="loading" @click="store.fetchServers()">Refresh</UiButton>
-          <UiButton v-if="canManage" :icon="Plus" @click="openAdd">Tambah VPS</UiButton>
+          <UiButton variant="secondary" :icon="RefreshCw" :loading="loading" @click="store.fetchServers()">{{ $t("common.actions.refresh") }}</UiButton>
+          <UiButton v-if="canManage" :icon="Plus" @click="openAdd">{{ $t("servers.add") }}</UiButton>
         </div>
       </div>
 
@@ -199,10 +202,10 @@ const openDetail = (server) => (detail.value = server);
         <UiEmpty
           v-else-if="loaded && servers.length === 0"
           :icon="Server"
-          title="Belum ada VPS yang dipantau"
-          message="Tambahkan VPS, lalu jalankan perintah instalasi yang diberikan di VPS tersebut. Agen akan melaporkan disk, RAM, dan CPU setiap 5 menit."
+:title="$t('servers.empty.title')"
+          :message="$t('servers.empty.message')"
         >
-          <UiButton v-if="canManage" variant="secondary" :icon="Plus" @click="openAdd">Tambah VPS pertama</UiButton>
+          <UiButton v-if="canManage" variant="secondary" :icon="Plus" @click="openAdd">{{ $t("servers.empty.addFirst") }}</UiButton>
         </UiEmpty>
 
         <!-- Cards -->
@@ -217,7 +220,7 @@ const openDetail = (server) => (detail.value = server);
             <div class="w-full flex items-start justify-between gap-2 mb-3.5">
               <div class="min-w-0">
                 <p class="text-ui-h3 text-ui-ink truncate">{{ server.name }}</p>
-                <p class="font-mono text-ui-cap text-ui-muted truncate mt-0.5">{{ server.ip_address || "IP belum diisi" }}</p>
+                <p class="font-mono text-ui-cap text-ui-muted truncate mt-0.5">{{ server.ip_address || $t("servers.noIp") }}</p>
                 <p v-if="server.report?.os" class="text-ui-cap text-ui-muted truncate">{{ server.report.os }}</p>
               </div>
               <UiBadge :tone="STATUS_TONE[server.status]" dot class="whitespace-nowrap">{{ STATUS[server.status].label }}</UiBadge>
@@ -228,7 +231,7 @@ const openDetail = (server) => (detail.value = server);
                 <div v-for="m in [
                   { key: 'disk', label: 'Disk', icon: HardDrive, pct: server.report.disk.used_percent, text: `${formatBytes(server.report.disk.used)} / ${formatBytes(server.report.disk.total)}` },
                   { key: 'ram', label: 'RAM', icon: MemoryStick, pct: server.report.memory.used_percent, text: `${formatBytes(server.report.memory.used)} / ${formatBytes(server.report.memory.total)}` },
-                  { key: 'cpu', label: 'CPU', icon: Cpu, pct: cpuPercent(server), text: `${server.report.cpu.cores} core · load ${server.report.cpu.load1}` },
+                  { key: 'cpu', label: 'CPU', icon: Cpu, pct: cpuPercent(server), text: $t('servers.metrics.coresLoad', { cores: server.report.cpu.cores, load: server.report.cpu.load1 }) },
                 ]" :key="m.key">
                   <div class="flex items-center justify-between gap-2 text-ui-cap mb-1">
                     <span class="inline-flex items-center gap-1 text-ui-muted font-medium"><component :is="m.icon" class="w-3.5 h-3.5" /> {{ m.label }}</span>
@@ -241,14 +244,14 @@ const openDetail = (server) => (detail.value = server);
               </div>
             </template>
             <p v-else class="mb-3.5 text-ui-cap text-ui-warn bg-ui-warn-soft rounded-ui-control p-2.5">
-              Belum ada laporan. Jalankan perintah instalasi agen di VPS ini.
+              {{ $t("servers.card.noReport") }}
             </p>
 
             <div class="w-full flex items-center justify-between gap-2 mt-auto pt-3 border-t border-ui-line text-ui-cap text-ui-muted">
               <span>
-                Laporan terakhir: {{ ago(server.last_report_at) }}
-                <template v-if="server.report?.sites"> · <Globe class="w-3 h-3 inline -mt-0.5" /> {{ siteCount(server) }} website</template>
-                <span v-if="sslWarnings(server)" class="text-ui-bad font-medium"> · {{ sslWarnings(server) }} SSL hampir habis</span>
+                {{ $t("servers.card.lastReport", { time: ago(server.last_report_at) }) }}
+                <template v-if="server.report?.sites"> · <Globe class="w-3 h-3 inline -mt-0.5" /> {{ $t("servers.card.websites", { n: siteCount(server) }, siteCount(server)) }}</template>
+                <span v-if="sslWarnings(server)" class="text-ui-bad font-medium"> · {{ $t("servers.card.sslExpiring", { n: sslWarnings(server) }) }}</span>
               </span>
               <ChevronRight class="w-4 h-4 shrink-0 text-ui-faint" />
             </div>
@@ -258,26 +261,26 @@ const openDetail = (server) => (detail.value = server);
     </section>
 
     <!-- Add / edit modal -->
-    <UiModal v-model:open="formOpen" :title="editing ? 'Ubah VPS' : 'Tambah VPS'" size="sm" :z-index="120">
+    <UiModal v-model:open="formOpen" :title="editing ? $t('servers.edit') : $t('servers.add')" size="sm" :z-index="120">
       <form id="vps-form" class="space-y-4" @submit.prevent="submitForm">
         <div>
-          <label for="vps-name" class="block text-ui-small font-medium text-ui-ink mb-1.5">Nama VPS <span class="text-ui-bad">*</span></label>
-          <input id="vps-name" v-model="form.name" :class="[field, 'h-[38px]']" maxlength="100" placeholder="cth. VPS Produksi HRIS" required />
+          <label for="vps-name" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("servers.form.name") }} <span class="text-ui-bad">*</span></label>
+          <input id="vps-name" v-model="form.name" :class="[field, 'h-[38px]']" maxlength="100" :placeholder="$t('servers.form.namePlaceholder')" required />
           <p v-if="formErrors.name" class="text-ui-bad text-ui-cap mt-1.5">{{ formErrors.name[0] }}</p>
         </div>
         <div>
-          <label for="vps-ip" class="block text-ui-small font-medium text-ui-ink mb-1.5">IP Address</label>
-          <input id="vps-ip" v-model="form.ip_address" :class="[field, 'h-[38px] font-mono text-ui-small']" maxlength="64" placeholder="cth. 103.10.20.30" />
+          <label for="vps-ip" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("servers.form.ip") }}</label>
+          <input id="vps-ip" v-model="form.ip_address" :class="[field, 'h-[38px] font-mono text-ui-small']" maxlength="64" :placeholder="$t('servers.form.ipPlaceholder')" />
         </div>
         <div>
-          <label for="vps-desc" class="block text-ui-small font-medium text-ui-ink mb-1.5">Keterangan</label>
-          <textarea id="vps-desc" v-model="form.description" :class="[field, 'py-2.5 resize-y']" rows="2" maxlength="500" placeholder="cth. Hosting website klien, provider IDCloudHost"></textarea>
+          <label for="vps-desc" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("servers.form.description") }}</label>
+          <textarea id="vps-desc" v-model="form.description" :class="[field, 'py-2.5 resize-y']" rows="2" maxlength="500" :placeholder="$t('servers.form.descriptionPlaceholder')"></textarea>
         </div>
-        <p v-if="!editing" class="text-ui-cap text-ui-muted">Setelah disimpan, Anda akan mendapat perintah instalasi agen untuk dijalankan di VPS ini.</p>
+        <p v-if="!editing" class="text-ui-cap text-ui-muted">{{ $t("servers.form.afterSaveHint") }}</p>
       </form>
       <template #footer>
-        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="formOpen = false">Batal</UiButton>
-        <UiButton type="submit" form="vps-form" class="flex-1 sm:flex-none" :loading="saving">{{ editing ? "Simpan" : "Simpan & Lihat Perintah" }}</UiButton>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="formOpen = false">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="vps-form" class="flex-1 sm:flex-none" :loading="saving">{{ editing ? $t("common.actions.save") : $t("servers.form.saveAndShow") }}</UiButton>
       </template>
     </UiModal>
 
@@ -287,13 +290,15 @@ const openDetail = (server) => (detail.value = server);
       persistent
       size="lg"
       :z-index="130"
-      :title="install ? `Pasang Agen di ${install.server.name}` : ''"
-      :description="install ? (install.regenerated ? 'Token baru dibuat. Pasang ulang agen dengan perintah di bawah.' : 'VPS ditambahkan. Pasang agen dengan perintah di bawah.') : ''"
+      :title="install ? $t('servers.install.title', { name: install.server.name }) : ''"
+      :description="install ? (install.regenerated ? $t('servers.install.descRegenerated') : $t('servers.install.descAdded')) : ''"
     >
       <div v-if="install" class="space-y-4 text-ui-small text-ui-text">
         <ol class="space-y-1.5 list-decimal pl-5">
-          <li>Masuk ke VPS lewat SSH dengan user yang punya akses <code class="font-mono text-ui-cap text-ui-ink">sudo</code>.</li>
-          <li>Salin dan jalankan perintah berikut (sekali saja):</li>
+          <i18n-t keypath="servers.install.step1" tag="li" scope="global">
+            <template #sudo><code class="font-mono text-ui-cap text-ui-ink">sudo</code></template>
+          </i18n-t>
+          <li>{{ $t("servers.install.step2") }}</li>
         </ol>
         <div class="relative">
           <pre class="bg-ui-ink text-white font-mono text-ui-cap rounded-ui-control p-3.5 pr-24 whitespace-pre-wrap break-all">{{ install.install_command }}</pre>
@@ -303,24 +308,34 @@ const openDetail = (server) => (detail.value = server);
             @click="copy(install.install_command, 'install')"
           >
             <Check v-if="copied === 'install'" class="w-3.5 h-3.5" /><Copy v-else class="w-3.5 h-3.5" />
-            {{ copied === "install" ? "Tersalin" : "Salin" }}
+            {{ copied === "install" ? $t("common.actions.copied") : $t("common.actions.copy") }}
           </button>
         </div>
         <ol start="3" class="space-y-1.5 list-decimal pl-5">
-          <li>Tunggu sampai muncul <em>"Selesai"</em>. Laporan pertama bisa memakan 1–2 menit karena ukuran folder diukur dulu.</li>
-          <li>Kartu VPS ini akan berubah menjadi <strong>Online</strong>, lalu diperbarui otomatis setiap 5 menit.</li>
+          <i18n-t keypath="servers.install.step3" tag="li" scope="global">
+            <template #done><em>"{{ $t("servers.install.doneWord") }}"</em></template>
+          </i18n-t>
+          <i18n-t keypath="servers.install.step4" tag="li" scope="global">
+            <template #online><strong>{{ $t("servers.status.online") }}</strong></template>
+          </i18n-t>
         </ol>
         <UiAlert tone="warn">
-          Perintah ini berisi token rahasia VPS ini dan <strong>hanya ditampilkan sekali</strong>. Jangan dibagikan. Kalau hilang, gunakan
-          <strong>Buat token baru</strong> di rincian VPS.
+          <i18n-t keypath="servers.install.secretWarning" tag="span" scope="global">
+            <template #once><strong>{{ $t("servers.install.shownOnce") }}</strong></template>
+            <template #regenerate><strong>{{ $t("servers.actions.regenerate") }}</strong></template>
+          </i18n-t>
         </UiAlert>
         <div class="text-ui-cap text-ui-muted">
-          Persyaratan: Ubuntu dengan <code class="font-mono text-ui-ink">python3</code>, <code class="font-mono text-ui-ink">curl</code>, dan <code class="font-mono text-ui-ink">cron</code> (semuanya bawaan Ubuntu). Untuk mencopot agen:
+          <i18n-t keypath="servers.install.requirements" tag="span" scope="global">
+            <template #python><code class="font-mono text-ui-ink">python3</code></template>
+            <template #curl><code class="font-mono text-ui-ink">curl</code></template>
+            <template #cron><code class="font-mono text-ui-ink">cron</code></template>
+          </i18n-t>{{ " " }}
           <code class="font-mono text-ui-ink break-all">{{ install.uninstall_command }}</code>
         </div>
       </div>
       <template #footer>
-        <UiButton class="flex-1 sm:flex-none" @click="install = null">Selesai</UiButton>
+        <UiButton class="flex-1 sm:flex-none" @click="install = null">{{ $t("common.actions.done") }}</UiButton>
       </template>
     </UiModal>
 
@@ -333,7 +348,7 @@ const openDetail = (server) => (detail.value = server);
             <UiBadge :tone="STATUS_TONE[detail.status]" dot class="shrink-0">{{ STATUS[detail.status].label }}</UiBadge>
           </div>
           <p class="text-ui-cap text-ui-muted mt-0.5">
-            <span class="font-mono">{{ detail.ip_address || "IP belum diisi" }}</span><template v-if="detail.report?.hostname"> · <span class="font-mono">{{ detail.report.hostname }}</span></template>
+            <span class="font-mono">{{ detail.ip_address || $t("servers.noIp") }}</span><template v-if="detail.report?.hostname"> · <span class="font-mono">{{ detail.report.hostname }}</span></template>
           </p>
           <p v-if="detail.description" class="text-ui-cap text-ui-muted mt-1">{{ detail.description }}</p>
         </div>
@@ -344,26 +359,26 @@ const openDetail = (server) => (detail.value = server);
           <VpsReportDetails :server="detail" />
         </template>
         <UiAlert v-else tone="warn">
-          VPS ini belum pernah melapor. Pasang agen dengan perintah instalasi yang diberikan saat VPS ditambahkan.
-          <template v-if="canManage"> Kalau perintahnya hilang, gunakan <strong>Buat token baru</strong> di bawah.</template>
+          {{ $t("servers.detail.neverReported") }}
+          <template v-if="canManage"> <i18n-t keypath="servers.detail.lostCommand" tag="span" scope="global"><template #regenerate><strong>{{ $t("servers.actions.regenerate") }}</strong></template></i18n-t></template>
         </UiAlert>
       </div>
 
       <template v-if="canManage && detail" #footer>
         <div class="flex flex-wrap gap-2 justify-between w-full">
           <div class="flex flex-wrap gap-2">
-            <UiButton variant="secondary" size="sm" :icon="Pencil" @click="openEdit(detail)">Ubah</UiButton>
-            <UiButton variant="secondary" size="sm" :icon="KeyRound" @click="regenerate(detail)">Buat token baru</UiButton>
+            <UiButton variant="secondary" size="sm" :icon="Pencil" @click="openEdit(detail)">{{ $t("common.actions.edit") }}</UiButton>
+            <UiButton variant="secondary" size="sm" :icon="KeyRound" @click="regenerate(detail)">{{ $t("servers.actions.regenerate") }}</UiButton>
             <UiButton
               variant="secondary"
               size="sm"
               :icon="copied === 'uninstall' ? Check : Terminal"
               @click="copy('sudo /usr/local/bin/hris-server-agent --uninstall', 'uninstall')"
             >
-              {{ copied === "uninstall" ? "Tersalin" : "Salin perintah copot agen" }}
+              {{ copied === "uninstall" ? $t("common.actions.copied") : $t("servers.actions.copyUninstall") }}
             </UiButton>
           </div>
-          <UiButton variant="danger" size="sm" :icon="Trash2" @click="remove(detail)">Hapus</UiButton>
+          <UiButton variant="danger" size="sm" :icon="Trash2" @click="remove(detail)">{{ $t("common.actions.delete") }}</UiButton>
         </div>
       </template>
     </UiModal>

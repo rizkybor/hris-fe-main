@@ -101,18 +101,18 @@ watch(
     <!-- Total clients -->
     <UiStat
       class="sm:col-span-2 xl:col-span-1"
-      label="Total Client"
+      :label="$t('clients.stats.total')"
       :icon="Briefcase"
       :value="totalClient"
-      hint="Registered clients"
+      :hint="$t('clients.stats.totalHint')"
       :loading="loading && !statistics"
     />
 
     <!-- By type / by field -->
     <section
       v-for="group in [
-        { title: 'Client by Type', icon: Layers, rows: clientsByType, key: 'type' },
-        { title: 'Client by Field', icon: Code, rows: clientsByField, key: 'field' },
+        { title: $t('clients.stats.byType'), icon: Layers, rows: clientsByType, key: 'type' },
+        { title: $t('clients.stats.byField'), icon: Code, rows: clientsByField, key: 'field' },
       ]"
       :key="group.key"
       class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0"
@@ -127,8 +127,8 @@ watch(
           <span class="text-ui-ink font-medium tabular-nums">{{ item.total }}</span>
         </li>
       </ul>
-      <p v-else class="text-ui-small text-ui-faint py-1.5">No data</p>
-      <p v-if="group.key === 'field' && clientsByField.length > 5" class="text-ui-cap text-ui-faint mt-1">Scroll to see more</p>
+      <p v-else class="text-ui-small text-ui-faint py-1.5">{{ $t("common.states.noData") }}</p>
+      <p v-if="group.key === 'field' && clientsByField.length > 5" class="text-ui-cap text-ui-faint mt-1">{{ $t("clients.stats.scrollMore") }}</p>
     </section>
   </div>
 </template>

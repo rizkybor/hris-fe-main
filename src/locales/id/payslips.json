@@ -1,0 +1,37 @@
+{
+  "paid": "Dibayar",
+  "list": {
+    "title": "Slip Gaji Saya",
+    "subtitle": "Slip gaji bulanan dan THR, bisa diunduh sebagai PDF.",
+    "totalPayslips": "Total Slip Gaji",
+    "totalEarnings": "Total Pendapatan",
+    "totalDeductions": "Total Potongan",
+    "thisYear": "Tahun ini",
+    "allPayslips": "Semua Slip Gaji",
+    "itemLabel": "slip gaji",
+    "searchPlaceholder": "Cari slip gaji berdasarkan bulan atau tahun...",
+    "perPageOption": "{n} / halaman",
+    "netSalary": "Gaji bersih",
+    "monthly": "Bulanan",
+    "empty": "Belum ada slip gaji",
+    "emptyHint": "Slip gaji akan tampil di sini setelah diproses"
+  },
+  "detail": {
+    "payslip": "Slip Gaji",
+    "thrPayslip": "Slip THR",
+    "paymentDate": "Tanggal Pembayaran",
+    "fullName": "Nama Lengkap",
+    "department": "Departemen",
+    "serviceLength": "Masa kerja",
+    "serviceMonths": "{n}/12 bulan",
+    "netSalary": "Gaji Bersih (Take Home)",
+    "earnings": "Pendapatan",
+    "basicSalary": "Gaji Pokok",
+    "attendanceDeduction": "Potongan Kehadiran",
+    "grossSalary": "Gaji Kotor",
+    "deductions": "Potongan",
+    "footerGenerated": "Slip gaji ini dibuat oleh sistem dan tidak memerlukan tanda tangan.",
+    "footerContact": "Untuk pertanyaan, silakan hubungi bagian HR.",
+    "notFound": "Slip gaji tidak ditemukan"
+  }
+}

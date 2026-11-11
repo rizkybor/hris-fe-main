@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { t } from "@/i18n";
 
 // Auto-close alert()-mode dialogs (informational, single OK button) after
 // this long if the user never responds -- confirm()-mode is excluded since
@@ -31,10 +32,10 @@ export const useAlertModalStore = defineStore("alertModal", {
     alert(message, options = {}) {
       return new Promise((resolve) => {
         this.mode = "alert";
-        this.title = options.title ?? "Notice";
+        this.title = options.title ?? t("common.confirm.notice");
         this.message = message;
-        this.confirmText = options.confirmText ?? "OK";
-        this.cancelText = options.cancelText ?? "Cancel";
+        this.confirmText = options.confirmText ?? t("common.confirm.ok");
+        this.cancelText = options.cancelText ?? t("common.actions.cancel");
         this.type = options.type ?? "info";
         this.visible = true;
         this.resolver = resolve;
@@ -47,10 +48,10 @@ export const useAlertModalStore = defineStore("alertModal", {
     confirm(message, options = {}) {
       return new Promise((resolve) => {
         this.mode = "confirm";
-        this.title = options.title ?? "Confirm Action";
+        this.title = options.title ?? t("common.confirm.title");
         this.message = message;
-        this.confirmText = options.confirmText ?? "Confirm";
-        this.cancelText = options.cancelText ?? "Cancel";
+        this.confirmText = options.confirmText ?? t("common.actions.confirm");
+        this.cancelText = options.cancelText ?? t("common.actions.cancel");
         this.type = options.type ?? "danger";
         this.visible = true;
         this.resolver = resolve;

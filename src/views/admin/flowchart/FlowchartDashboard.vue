@@ -2,6 +2,8 @@
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { Workflow, Plus, Search, SearchX, Eye, Pencil, Trash2, Shapes, Spline, ImageOff } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { useFlowchartStore } from "@/stores/flowchart";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can } from "@/helpers/permissionHelper";
@@ -10,6 +12,7 @@ import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue"
 import { UiPageHeader, UiButton, UiInput, UiEmpty, rowNumber } from "@/components/ui";
 import Pagination from "@/components/common/Pagination.vue";
 
+const { t } = useI18n();
 const store = useFlowchartStore();
 const alertModal = useAlertModalStore();
 const { flowcharts, meta, loading } = storeToRefs(store);
@@ -30,12 +33,12 @@ const onSearchInput = () => {
 };
 
 const formatDate = (value) =>
-  value ? new Date(value).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
+  value ? new Date(value).toLocaleString(localeTag(), { dateStyle: "medium", timeStyle: "short" }) : "-";
 
 const handleDelete = async (flowchart) => {
-  const ok = await alertModal.confirm(`Delete flowchart "${flowchart.name}"? This action cannot be undone.`, {
+  const ok = await alertModal.confirm(t("flowchart.list.deleteConfirm", { name: flowchart.name }), {
     type: "danger",
-    confirmText: "Delete",
+    confirmText: t("common.actions.delete"),
   });
   if (!ok) return;
   try {
@@ -44,16 +47,16 @@ const handleDelete = async (flowchart) => {
     const page = flowcharts.value.length === 0 && meta.value.current_page > 1 ? meta.value.current_page - 1 : meta.value.current_page;
     await fetchPage(page);
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Failed to delete flowchart."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("flowchart.list.deleteFailed")), { type: "danger" });
   }
 };
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Flowchart" subtitle="Design process flows with standard flowchart symbols and export them as JPG or PDF">
+    <UiPageHeader :title="$t('flowchart.title')" :subtitle="$t('flowchart.subtitle')">
       <template #actions>
-        <UiButton v-if="can('flowchart-create')" :icon="Plus" :to="{ name: 'admin.flowchart.create' }">New Flowchart</UiButton>
+        <UiButton v-if="can('flowchart-create')" :icon="Plus" :to="{ name: 'admin.flowchart.create' }">{{ $t("flowchart.new") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -63,12 +66,12 @@ const handleDelete = async (flowchart) => {
         <UiInput
           v-model="search"
           :icon="Search"
-          placeholder="Search by name or description..."
+          :placeholder="$t('flowchart.list.search')"
           class="w-full md:w-[320px]"
           @input="onSearchInput"
         />
         <p v-if="!loading && flowcharts.length" class="md:ml-auto text-ui-cap text-ui-muted tabular-nums">
-          {{ meta.total }} flowcharts
+          {{ $t("flowchart.list.count", { n: meta.total }, meta.total) }}
         </p>
       </div>
 
@@ -78,11 +81,11 @@ const handleDelete = async (flowchart) => {
         <UiEmpty
           v-else-if="flowcharts.length === 0"
           :icon="search ? SearchX : Workflow"
-          :title="search ? 'No flowcharts match your search' : 'No flowcharts yet'"
-          :message="search ? '' : 'Create your first flowchart to map out a process.'"
+          :title="search ? $t('flowchart.list.noMatch') : $t('flowchart.list.empty')"
+          :message="search ? '' : $t('flowchart.list.emptyHint')"
         >
           <UiButton v-if="!search && can('flowchart-create')" variant="secondary" :icon="Plus" :to="{ name: 'admin.flowchart.create' }">
-            New Flowchart
+            {{ $t("flowchart.new") }}
           </UiButton>
         </UiEmpty>
 
@@ -96,7 +99,7 @@ const handleDelete = async (flowchart) => {
             <RouterLink
               :to="{ name: 'admin.flowchart.detail', params: { id: flowchart.id } }"
               class="hidden sm:flex shrink-0 h-[140px] bg-ui-subtle border-b border-ui-line items-center justify-center p-2"
-              :aria-label="`Open ${flowchart.name}`"
+              :aria-label="$t('flowchart.list.open', { name: flowchart.name })"
             >
               <img
                 v-if="flowchart.preview_url"
@@ -123,23 +126,23 @@ const handleDelete = async (flowchart) => {
               </div>
 
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-ui-cap text-ui-text">
-                <span class="inline-flex items-center gap-1 tabular-nums"><Shapes class="w-3.5 h-3.5 text-ui-faint" /> {{ flowchart.node_count }} shapes</span>
-                <span class="inline-flex items-center gap-1 tabular-nums"><Spline class="w-3.5 h-3.5 text-ui-faint" /> {{ flowchart.edge_count }} connectors</span>
+                <span class="inline-flex items-center gap-1 tabular-nums"><Shapes class="w-3.5 h-3.5 text-ui-faint" /> {{ $t("flowchart.counts.shapes", { n: flowchart.node_count }, flowchart.node_count) }}</span>
+                <span class="inline-flex items-center gap-1 tabular-nums"><Spline class="w-3.5 h-3.5 text-ui-faint" /> {{ $t("flowchart.counts.connectors", { n: flowchart.edge_count }, flowchart.edge_count) }}</span>
               </div>
 
               <div class="mt-auto pt-3 sm:mt-3 sm:border-t sm:border-ui-line flex items-end justify-between gap-2">
                 <div class="min-w-0 text-ui-cap">
                   <p class="text-ui-muted truncate">{{ flowchart.creator?.name || "-" }}</p>
                   <p class="text-ui-faint truncate tabular-nums">
-                    {{ formatDate(flowchart.updated_at) }}<template v-if="flowchart.updater?.name"> · by {{ flowchart.updater.name }}</template>
+                    {{ formatDate(flowchart.updated_at) }}<template v-if="flowchart.updater?.name"> · {{ $t("flowchart.list.by", { name: flowchart.updater.name }) }}</template>
                   </p>
                 </div>
                 <div class="flex items-center gap-0.5 shrink-0">
                   <RouterLink
                     :to="{ name: 'admin.flowchart.detail', params: { id: flowchart.id } }"
                     :class="ICON_BTN"
-                    title="View"
-                    aria-label="View"
+                    :title="$t('common.actions.view')"
+                    :aria-label="$t('common.actions.view')"
                   >
                     <Eye class="w-4 h-4" />
                   </RouterLink>
@@ -147,8 +150,8 @@ const handleDelete = async (flowchart) => {
                     v-if="can('flowchart-edit')"
                     :to="{ name: 'admin.flowchart.edit', params: { id: flowchart.id } }"
                     :class="ICON_BTN"
-                    title="Edit"
-                    aria-label="Edit"
+                    :title="$t('common.actions.edit')"
+                    :aria-label="$t('common.actions.edit')"
                   >
                     <Pencil class="w-4 h-4" />
                   </RouterLink>
@@ -156,8 +159,8 @@ const handleDelete = async (flowchart) => {
                     v-if="can('flowchart-delete')"
                     type="button"
                     :class="[ICON_BTN, 'hover:!text-ui-bad hover:!bg-ui-bad-soft']"
-                    title="Delete"
-                    aria-label="Delete"
+                    :title="$t('common.actions.delete')"
+                    :aria-label="$t('common.actions.delete')"
                     @click="handleDelete(flowchart)"
                   >
                     <Trash2 class="w-4 h-4" />
@@ -170,7 +173,7 @@ const handleDelete = async (flowchart) => {
       </div>
 
       <div v-if="!loading && flowcharts.length > 0" class="px-4 sm:px-5 py-3 border-t border-ui-line">
-        <Pagination :meta="meta" :loading="loading" item-label="flowcharts" @page-change="fetchPage" />
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('flowchart.list.itemLabel')" @page-change="fetchPage" />
       </div>
     </section>
   </div>

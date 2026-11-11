@@ -4,6 +4,10 @@ import { Receipt, ReceiptText, Download } from "lucide-vue-next";
 import { formatRupiah } from "@/utils/formatUtils";
 import { useInvoiceStore } from "@/stores/invoice";
 import { UiBadge, UiEmpty } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 // Presentation only: invoice status -> badge tone (label from statusLabel).
 const statusTone = (status) => (status === "paid" ? "ok" : status === "cancelled" ? "bad" : "warn");
@@ -36,14 +40,14 @@ const statusClass = (status) => {
 };
 
 const statusLabel = (status) => {
-  if (status === "paid") return "Paid";
-  if (status === "cancelled") return "Cancelled";
-  return "Unpaid";
+  if (status === "paid") return t("projects.invoices.paid");
+  if (status === "cancelled") return t("projects.invoices.cancelled");
+  return t("projects.invoices.unpaid");
 };
 
 const formatDate = (date) =>
   date
-    ? new Date(date).toLocaleDateString("id-ID", {
+    ? new Date(date).toLocaleDateString(localeTag(), {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -54,16 +58,16 @@ const formatDate = (date) =>
 <template>
   <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 h-full flex flex-col">
     <div class="mb-3 shrink-0">
-      <h3 class="text-ui-h2 text-ui-ink">Invoices</h3>
-      <p class="text-ui-cap text-ui-muted mt-0.5">Optional — invoices billed against this project, if linked</p>
+      <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.invoices.title") }}</h3>
+      <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.invoices.subtitle") }}</p>
     </div>
 
     <UiEmpty
       v-if="invoices.length === 0"
       compact
       :icon="ReceiptText"
-      title="No invoices linked yet"
-      message="Invoices are optional — link one to this project from the Invoice form to see it here."
+      :title="$t('projects.invoices.emptyTitle')"
+      :message="$t('projects.invoices.emptyMessage')"
       class="bg-ui-subtle rounded-ui-control"
     />
 
@@ -83,8 +87,8 @@ const formatDate = (date) =>
             @click="handleDownload(invoice)"
             :disabled="downloadingId === invoice.id"
             class="w-8 h-8 -mr-1.5 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink disabled:opacity-50 shrink-0"
-            title="Download PDF"
-            aria-label="Download PDF"
+            :title="$t('common.actions.downloadPdf')"
+            :aria-label="$t('common.actions.downloadPdf')"
           >
             <Download class="w-4 h-4" />
           </button>
@@ -92,7 +96,7 @@ const formatDate = (date) =>
 
         <!-- Payment Receipts, if any -->
         <div v-if="invoice.receipts && invoice.receipts.length > 0" class="mt-2 space-y-1">
-          <p class="text-ui-over uppercase text-ui-faint">Payment Receipts</p>
+          <p class="text-ui-over uppercase text-ui-faint">{{ $t("projects.invoices.receipts") }}</p>
           <div
             v-for="receipt in invoice.receipts"
             :key="receipt.id"

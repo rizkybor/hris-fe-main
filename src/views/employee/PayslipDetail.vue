@@ -5,6 +5,7 @@ import { usePayrollStore } from "@/stores/payroll";
 import { useAuthStore } from "@/stores/auth";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiBadge, UiButton, UiEmpty } from "@/components/ui";
+import { localeTag } from "@/i18n";
 import {
   ArrowLeft,
   Download,
@@ -64,7 +65,7 @@ const formatCurrency = (value) => {
 };
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -72,7 +73,7 @@ const formatDate = (date) => {
 };
 
 const formatPeriod = (date) => {
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
   });
@@ -89,7 +90,7 @@ const formatPeriod = (date) => {
           class="ui-press inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline"
           @click="router.back()"
         >
-          <ArrowLeft class="w-4 h-4" />Back
+          <ArrowLeft class="w-4 h-4" />{{ $t("common.actions.back") }}
         </button>
         <div class="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
           <div class="flex-1 min-w-0">
@@ -99,17 +100,17 @@ const formatPeriod = (date) => {
             </template>
             <template v-else-if="payslip">
               <h1 class="text-ui-h1 text-ui-ink">
-                {{ payslip.type === "thr" ? "THR Payslip" : "Payslip" }} · {{ formatPeriod(payslip.period) }}
+                {{ payslip.type === "thr" ? $t("payslips.detail.thrPayslip") : $t("payslips.detail.payslip") }} · {{ formatPeriod(payslip.period) }}
               </h1>
               <p class="text-ui-small text-ui-muted mt-1">
-                Payment Date {{ formatDate(payslip.payment_date || payslip.created_at) }}
+                {{ $t("payslips.detail.paymentDate") }} {{ formatDate(payslip.payment_date || payslip.created_at) }}
               </p>
             </template>
-            <h1 v-else class="text-ui-h1 text-ui-ink">Payslip</h1>
+            <h1 v-else class="text-ui-h1 text-ui-ink">{{ $t("payslips.detail.payslip") }}</h1>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <UiButton variant="secondary" :icon="Printer" @click="handlePrint">Print</UiButton>
-            <UiButton :icon="Download" @click="handleDownload">Download PDF</UiButton>
+            <UiButton variant="secondary" :icon="Printer" @click="handlePrint">{{ $t("common.actions.print") }}</UiButton>
+            <UiButton :icon="Download" @click="handleDownload">{{ $t("common.actions.downloadPdf") }}</UiButton>
           </div>
         </div>
       </div>
@@ -138,7 +139,7 @@ const formatPeriod = (date) => {
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2">
                 <p class="text-ui-h3 text-ui-ink">{{ payslip.company_name || "JCD-HRIS+" }}</p>
-                <UiBadge tone="ok" dot>Paid</UiBadge>
+                <UiBadge tone="ok" dot>{{ $t("payslips.paid") }}</UiBadge>
                 <UiBadge v-if="payslip.type === 'thr'" tone="accent">THR</UiBadge>
               </div>
               <p class="text-ui-cap text-ui-muted">{{ payslip.company_address || "Indonesia" }}</p>
@@ -148,59 +149,59 @@ const formatPeriod = (date) => {
           <!-- Employee information -->
           <dl class="bg-ui-surface border border-ui-line md:border-0 md:bg-ui-subtle rounded-ui-card px-4 py-3.5 grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-x-6 gap-y-3">
             <div class="min-w-0">
-              <dt class="text-ui-cap text-ui-muted">Full Name</dt>
+              <dt class="text-ui-cap text-ui-muted">{{ $t("payslips.detail.fullName") }}</dt>
               <dd class="text-ui-small font-medium text-ui-ink truncate">{{ payslip.employee_name }}</dd>
             </div>
             <div class="min-w-0">
-              <dt class="text-ui-cap text-ui-muted">Department</dt>
+              <dt class="text-ui-cap text-ui-muted">{{ $t("payslips.detail.department") }}</dt>
               <dd class="text-ui-small font-medium text-ui-ink truncate">{{ payslip.department }}</dd>
             </div>
             <div class="min-w-0">
-              <dt class="text-ui-cap text-ui-muted">Email</dt>
+              <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.email") }}</dt>
               <dd class="text-ui-small font-medium text-ui-ink truncate">{{ payslip.employee_email || authStore.user?.email }}</dd>
             </div>
             <div class="min-w-0">
-              <dt class="text-ui-cap text-ui-muted">Payment Date</dt>
+              <dt class="text-ui-cap text-ui-muted">{{ $t("payslips.detail.paymentDate") }}</dt>
               <dd class="text-ui-small font-medium text-ui-ink">{{ formatDate(payslip.payment_date || payslip.created_at) }}</dd>
             </div>
             <div class="min-w-0">
-              <dt class="text-ui-cap text-ui-muted">Period</dt>
+              <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.period") }}</dt>
               <dd class="text-ui-small font-medium text-ui-ink">{{ formatPeriod(payslip.period) }}</dd>
             </div>
             <div v-if="payslip.type === 'thr' && payslip.months_of_service != null" class="min-w-0">
-              <dt class="text-ui-cap text-ui-muted">Masa kerja</dt>
-              <dd class="text-ui-small font-medium text-ui-ink tabular-nums">{{ payslip.months_of_service }}/12 bulan</dd>
+              <dt class="text-ui-cap text-ui-muted">{{ $t("payslips.detail.serviceLength") }}</dt>
+              <dd class="text-ui-small font-medium text-ui-ink tabular-nums">{{ $t("payslips.detail.serviceMonths", { n: payslip.months_of_service }) }}</dd>
             </div>
           </dl>
 
           <!-- Take-home: first on phones (as in the app), last on wider screens -->
           <div class="take-home order-first md:order-none md:hidden print:hidden bg-ui-ink text-white rounded-ui-card px-5 py-4">
-            <p class="text-ui-small text-white/70">Net Salary (Take Home)</p>
+            <p class="text-ui-small text-white/70">{{ $t("payslips.detail.netSalary") }}</p>
             <p class="text-ui-display tabular-nums mt-0.5">{{ formatCurrency(payslip.net_salary) }}</p>
           </div>
 
           <!-- Salary breakdown -->
           <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 md:gap-8">
             <section>
-              <h3 class="text-ui-over uppercase text-ui-muted md:normal-case md:text-ui-h3 md:text-ui-ink md:tracking-normal pb-2 md:border-b md:border-ui-line">Earnings</h3>
+              <h3 class="text-ui-over uppercase text-ui-muted md:normal-case md:text-ui-h3 md:text-ui-ink md:tracking-normal pb-2 md:border-b md:border-ui-line">{{ $t("payslips.detail.earnings") }}</h3>
               <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 md:border-0 md:rounded-none md:px-0 divide-y divide-ui-line">
                 <div class="flex items-center justify-between gap-3 py-3 md:py-2.5">
-                  <span class="text-ui-small text-ui-muted">Basic Salary</span>
+                  <span class="text-ui-small text-ui-muted">{{ $t("payslips.detail.basicSalary") }}</span>
                   <span class="text-ui-small text-ui-ink tabular-nums text-right">{{ formatCurrency(payslip.basic_salary) }}</span>
                 </div>
                 <div v-if="payslip.attendance_deduction > 0" class="flex items-center justify-between gap-3 py-3 md:py-2.5">
-                  <span class="text-ui-small text-ui-muted">Attendance Deduction</span>
+                  <span class="text-ui-small text-ui-muted">{{ $t("payslips.detail.attendanceDeduction") }}</span>
                   <span class="text-ui-small text-ui-bad tabular-nums text-right">- {{ formatCurrency(payslip.attendance_deduction) }}</span>
                 </div>
                 <div class="flex items-center justify-between gap-3 py-3 md:py-2.5">
-                  <span class="text-ui-small font-semibold text-ui-ink">Gross Salary</span>
+                  <span class="text-ui-small font-semibold text-ui-ink">{{ $t("payslips.detail.grossSalary") }}</span>
                   <span class="text-ui-small font-semibold text-ui-ink tabular-nums text-right">{{ formatCurrency(payslip.gross_salary) }}</span>
                 </div>
               </div>
             </section>
 
             <section>
-              <h3 class="text-ui-over uppercase text-ui-muted md:normal-case md:text-ui-h3 md:text-ui-ink md:tracking-normal pb-2 md:border-b md:border-ui-line">Deductions</h3>
+              <h3 class="text-ui-over uppercase text-ui-muted md:normal-case md:text-ui-h3 md:text-ui-ink md:tracking-normal pb-2 md:border-b md:border-ui-line">{{ $t("payslips.detail.deductions") }}</h3>
               <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 md:border-0 md:rounded-none md:px-0 divide-y divide-ui-line">
                 <div v-if="payslip.bpjs_kesehatan_employee > 0" class="flex items-center justify-between gap-3 py-3 md:py-2.5">
                   <span class="text-ui-small text-ui-muted">BPJS Kesehatan</span>
@@ -219,7 +220,7 @@ const formatPeriod = (date) => {
                   <span class="text-ui-small text-ui-bad tabular-nums text-right">{{ formatCurrency(payslip.pph21) }}</span>
                 </div>
                 <div class="flex items-center justify-between gap-3 py-3 md:py-2.5">
-                  <span class="text-ui-small font-semibold text-ui-ink">Total Deductions</span>
+                  <span class="text-ui-small font-semibold text-ui-ink">{{ $t("payslips.list.totalDeductions") }}</span>
                   <span class="text-ui-small font-semibold text-ui-bad tabular-nums text-right">{{ formatCurrency(payslip.total_deductions) }}</span>
                 </div>
               </div>
@@ -228,24 +229,24 @@ const formatPeriod = (date) => {
 
           <!-- Take-home (tablet / desktop / print) -->
           <div class="take-home hidden md:flex print:flex items-center justify-between gap-4 bg-ui-ink text-white rounded-ui-card px-5 py-4">
-            <p class="text-ui-small text-white/70">Net Salary (Take Home)</p>
+            <p class="text-ui-small text-white/70">{{ $t("payslips.detail.netSalary") }}</p>
             <p class="text-ui-display tabular-nums text-right">{{ formatCurrency(payslip.net_salary) }}</p>
           </div>
 
           <!-- Notes -->
           <div v-if="payslip.notes" class="bg-ui-surface border border-ui-line md:border-0 md:bg-ui-subtle rounded-ui-card px-4 py-3">
-            <p class="text-ui-small font-medium text-ui-ink mb-1">Notes:</p>
+            <p class="text-ui-small font-medium text-ui-ink mb-1">{{ $t("common.labels.notes") }}:</p>
             <p class="text-ui-small text-ui-text">{{ payslip.notes }}</p>
           </div>
 
           <!-- Footer -->
           <div class="md:pt-5 md:border-t md:border-ui-line text-center">
-            <p class="text-ui-cap text-ui-muted">This is a computer-generated payslip and does not require a signature.</p>
-            <p class="text-ui-cap text-ui-muted mt-1">For any queries, please contact the HR department.</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t("payslips.detail.footerGenerated") }}</p>
+            <p class="text-ui-cap text-ui-muted mt-1">{{ $t("payslips.detail.footerContact") }}</p>
           </div>
         </div>
 
-        <UiEmpty v-else :icon="FileText" title="Payslip not found" compact />
+        <UiEmpty v-else :icon="FileText" :title="$t('payslips.detail.notFound')" compact />
       </div>
     </div>
   </div>

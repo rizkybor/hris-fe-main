@@ -31,6 +31,10 @@ import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiChips, UiTable, U
 import Pagination from "@/components/common/Pagination.vue";
 import SubscriptionFormModal from "@/components/admin/subscription/SubscriptionFormModal.vue";
 import SubscriptionsRecap from "@/components/admin/subscription/SubscriptionsRecap.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t, te } = useI18n();
 
 const store = useSubscriptionStore();
 const { subscriptions, meta, loading, error, success, generatingId } = storeToRefs(store);
@@ -92,11 +96,12 @@ const STATUS_TONE = {
 // dropped as a separate status since it behaved identically to
 // "cancelled"/Not Active everywhere (both just block invoice generation),
 // so keeping both only added confusion with no functional difference.
-const STATUS_LABEL = {
-  active: "Active",
-  postponed: "Postponed",
-  cancelled: "Not Active",
-};
+const STATUS_LABEL = computed(() => ({
+  active: t("subscriptions.status.active"),
+  postponed: t("subscriptions.status.postponed"),
+  cancelled: t("subscriptions.status.cancelled"),
+}));
+const cycleLabel = (cycle) => (te(`subscriptions.cycle.${cycle}`) ? t(`subscriptions.cycle.${cycle}`) : cycle);
 
 const dueBadge = (subscription) => {
   if (subscription.status !== "active") return null;
@@ -104,8 +109,8 @@ const dueBadge = (subscription) => {
   today.setHours(0, 0, 0, 0);
   const due = new Date(subscription.next_due_date);
   const diffDays = Math.round((due - today) / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return { label: `Overdue ${Math.abs(diffDays)}d`, tone: "bad" };
-  if (diffDays <= 7) return { label: diffDays === 0 ? "Due today" : `Due in ${diffDays}d`, tone: "warn" };
+  if (diffDays < 0) return { label: t("subscriptions.list.overdueDays", { n: Math.abs(diffDays) }), tone: "bad" };
+  if (diffDays <= 7) return { label: diffDays === 0 ? t("subscriptions.list.dueToday") : t("subscriptions.list.dueInDays", { n: diffDays }), tone: "warn" };
   return null;
 };
 
@@ -133,20 +138,20 @@ const reminderSent = (subscription) =>
 const recapKey = ref(0);
 
 // Presentation only: filter options and table columns.
-const STATUS_CHIPS = [
-  { value: "", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "postponed", label: "Postponed" },
-  { value: "cancelled", label: "Not Active" },
-];
-const typeFilterOptions = computed(() => [{ value: "", label: "All Types" }, ...serviceTypeOptions.value]);
-const COLUMNS = [
-  { key: "name", label: "Subscription" },
-  { key: "status", label: "Status" },
-  { key: "amount", label: "Amount", align: "right" },
-  { key: "next_due_date", label: "Next due" },
+const STATUS_CHIPS = computed(() => [
+  { value: "", label: t("common.labels.all") },
+  { value: "active", label: t("subscriptions.status.active") },
+  { value: "postponed", label: t("subscriptions.status.postponed") },
+  { value: "cancelled", label: t("subscriptions.status.cancelled") },
+]);
+const typeFilterOptions = computed(() => [{ value: "", label: t("subscriptions.list.allTypes") }, ...serviceTypeOptions.value]);
+const COLUMNS = computed(() => [
+  { key: "name", label: t("subscriptions.list.columns.subscription") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "amount", label: t("common.labels.amount"), align: "right" },
+  { key: "next_due_date", label: t("subscriptions.list.columns.nextDue") },
   { key: "actions", label: "", align: "right" },
-];
+]);
 
 // ===== Add / Edit modal =====
 const showModal = ref(false);
@@ -195,9 +200,9 @@ const handleSubmit = async ({ mode, id, payload }) => {
 };
 
 const handleDelete = async (subscription) => {
-  const ok = await alertModal.confirm(`Delete subscription "${subscription.name}"? This action cannot be undone.`, {
+  const ok = await alertModal.confirm(t("subscriptions.list.deleteConfirm", { name: subscription.name }), {
     type: "danger",
-    confirmText: "Delete",
+    confirmText: t("common.actions.delete"),
   });
   if (!ok) return;
 
@@ -205,21 +210,21 @@ const handleDelete = async (subscription) => {
     await store.deleteSubscription(subscription.id);
     recapKey.value++;
   } catch (err) {
-    await alertModal.alert("Failed to delete subscription.", { type: "danger" });
+    await alertModal.alert(t("subscriptions.list.deleteFailed"), { type: "danger" });
   }
 };
 
 const handleGenerateInvoice = async (subscription) => {
   const periodLabel = subscription.billing_cycle === "yearly"
     ? new Date(subscription.next_due_date).getFullYear()
-    : new Date(subscription.next_due_date).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    : new Date(subscription.next_due_date).toLocaleDateString(localeTag(), { month: "long", year: "numeric" });
 
-  let message = `Generate invoice for "${subscription.name}" — ${periodLabel}, ${formatRupiah(subscription.amount)}?`;
+  let message = t("subscriptions.list.generateConfirm", { name: subscription.name, period: periodLabel, amount: formatRupiah(subscription.amount) });
   if (subscription.duplicate_invoice_number) {
-    message += `\n\nNote: An invoice for this exact period (${periodLabel}) already exists (No. ${subscription.duplicate_invoice_number}). Please review it before generating another.`;
+    message += `\n\n${t("subscriptions.list.generateDuplicate", { period: periodLabel, number: subscription.duplicate_invoice_number })}`;
   }
 
-  const ok = await alertModal.confirm(message, { confirmText: "Generate" });
+  const ok = await alertModal.confirm(message, { confirmText: t("subscriptions.list.generateAction") });
   if (!ok) return;
 
   try {
@@ -228,18 +233,18 @@ const handleGenerateInvoice = async (subscription) => {
     // backend -- reload this page to reflect them on the row.
     await fetchData();
     recapKey.value++;
-    await alertModal.alert("Invoice generated successfully.", { type: "success" });
+    await alertModal.alert(t("subscriptions.list.generated"), { type: "success" });
   } catch (err) {
-    await alertModal.alert(err?.response?.data?.message || "Failed to generate invoice.", { type: "danger" });
+    await alertModal.alert(err?.response?.data?.message || t("subscriptions.list.generateFailed"), { type: "danger" });
   }
 };
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Subscriptions" subtitle="Recurring billing -- maintenance, domain renewal, SaaS subscriptions">
+    <UiPageHeader :title="$t('subscriptions.list.title')" :subtitle="$t('subscriptions.list.subtitle')">
       <template v-if="can('subscription-create')" #actions>
-        <UiButton :icon="Plus" class="w-full sm:w-auto" @click="openAdd">Add Subscription</UiButton>
+        <UiButton :icon="Plus" class="w-full sm:w-auto" @click="openAdd">{{ $t("subscriptions.list.add") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -252,8 +257,8 @@ const handleGenerateInvoice = async (subscription) => {
       <!-- Toolbar -->
       <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line flex flex-col lg:flex-row lg:items-center gap-2.5 lg:gap-3">
         <div class="flex flex-col sm:flex-row gap-2 lg:contents">
-          <UiInput v-model="search" :icon="Search" placeholder="Search by name..." class="flex-1 lg:flex-none lg:w-[300px]" aria-label="Search subscriptions" />
-          <UiSelect v-model="serviceTypeFilter" :options="typeFilterOptions" class="sm:w-[200px] lg:order-last lg:ml-auto" aria-label="Service type" />
+          <UiInput v-model="search" :icon="Search" :placeholder="$t('subscriptions.list.searchPlaceholder')" class="flex-1 lg:flex-none lg:w-[300px]" :aria-label="$t('subscriptions.list.searchAria')" />
+          <UiSelect v-model="serviceTypeFilter" :options="typeFilterOptions" class="sm:w-[200px] lg:order-last lg:ml-auto" :aria-label="$t('subscriptions.list.serviceType')" />
         </div>
         <UiChips v-model="statusFilter" :options="STATUS_CHIPS" class="min-w-0" />
       </div>
@@ -283,7 +288,7 @@ const handleGenerateInvoice = async (subscription) => {
         </template>
         <template #cell-amount="{ row }">
           <p class="text-ui-ink font-medium tabular-nums whitespace-nowrap">{{ formatRupiah(row.amount) }}</p>
-          <p class="text-ui-cap text-ui-muted capitalize">{{ row.billing_cycle }}</p>
+          <p class="text-ui-cap text-ui-muted capitalize">{{ cycleLabel(row.billing_cycle) }}</p>
         </template>
         <template #cell-next_due_date="{ row }">
           <p class="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-ink'">
@@ -292,9 +297,9 @@ const handleGenerateInvoice = async (subscription) => {
           <p
             v-if="reminderSent(row)"
             class="text-ui-cap text-ui-ok font-medium flex items-center gap-1"
-            :title="`Reminder email sent for the ${formatDate(row.next_due_date)} due date`"
+            :title="$t('subscriptions.list.reminderTitle', { date: formatDate(row.next_due_date) })"
           >
-            <MailCheck class="w-3.5 h-3.5 shrink-0" /> Reminder emailed
+            <MailCheck class="w-3.5 h-3.5 shrink-0" /> {{ $t("subscriptions.list.reminderEmailed") }}
           </p>
         </template>
         <template #cell-actions="{ row }">
@@ -305,12 +310,12 @@ const handleGenerateInvoice = async (subscription) => {
               size="sm"
               :icon="Receipt"
               :loading="generatingId === row.id"
-              title="Generate Invoice"
-              aria-label="Generate invoice"
+              :title="$t('subscriptions.list.generateInvoice')"
+              :aria-label="$t('subscriptions.list.generateInvoice')"
               @click="handleGenerateInvoice(row)"
             />
-            <UiButton v-if="can('subscription-edit')" variant="ghost" size="sm" :icon="Edit" title="Edit" aria-label="Edit subscription" @click="openEdit(row)" />
-            <UiButton v-if="can('subscription-delete')" variant="ghost" size="sm" :icon="Trash2" class="hover:!text-ui-bad" title="Delete" aria-label="Delete subscription" @click="handleDelete(row)" />
+            <UiButton v-if="can('subscription-edit')" variant="ghost" size="sm" :icon="Edit" :title="$t('common.actions.edit')" :aria-label="$t('subscriptions.list.editSubscription')" @click="openEdit(row)" />
+            <UiButton v-if="can('subscription-delete')" variant="ghost" size="sm" :icon="Trash2" class="hover:!text-ui-bad" :title="$t('common.actions.delete')" :aria-label="$t('subscriptions.list.deleteSubscription')" @click="handleDelete(row)" />
           </div>
         </template>
 
@@ -334,14 +339,14 @@ const handleGenerateInvoice = async (subscription) => {
               </div>
               <div class="text-right shrink-0">
                 <p class="text-ui-body font-medium text-ui-ink tabular-nums">{{ formatRupiah(row.amount) }}</p>
-                <p class="text-ui-cap text-ui-muted capitalize">{{ row.billing_cycle }}</p>
+                <p class="text-ui-cap text-ui-muted capitalize">{{ cycleLabel(row.billing_cycle) }}</p>
               </div>
             </div>
             <div class="flex items-center gap-2 mt-2.5 pl-8">
               <div class="flex-1 min-w-0">
-                <p class="text-ui-cap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-muted'">Next due {{ formatDateMedium(row.next_due_date) }}</p>
+                <p class="text-ui-cap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-muted'">{{ $t("subscriptions.list.nextDueOn", { date: formatDateMedium(row.next_due_date) }) }}</p>
                 <p v-if="reminderSent(row)" class="text-ui-cap text-ui-ok font-medium flex items-center gap-1">
-                  <MailCheck class="w-3.5 h-3.5 shrink-0" /> Reminder emailed
+                  <MailCheck class="w-3.5 h-3.5 shrink-0" /> {{ $t("subscriptions.list.reminderEmailed") }}
                 </p>
               </div>
               <UiButton
@@ -350,11 +355,11 @@ const handleGenerateInvoice = async (subscription) => {
                 size="sm"
                 :icon="Receipt"
                 :loading="generatingId === row.id"
-                aria-label="Generate invoice"
+                :aria-label="$t('subscriptions.list.generateInvoice')"
                 @click="handleGenerateInvoice(row)"
               />
-              <UiButton v-if="can('subscription-edit')" variant="secondary" size="sm" :icon="Edit" aria-label="Edit subscription" @click="openEdit(row)" />
-              <UiButton v-if="can('subscription-delete')" variant="danger" size="sm" :icon="Trash2" aria-label="Delete subscription" @click="handleDelete(row)" />
+              <UiButton v-if="can('subscription-edit')" variant="secondary" size="sm" :icon="Edit" :aria-label="$t('subscriptions.list.editSubscription')" @click="openEdit(row)" />
+              <UiButton v-if="can('subscription-delete')" variant="danger" size="sm" :icon="Trash2" :aria-label="$t('subscriptions.list.deleteSubscription')" @click="handleDelete(row)" />
             </div>
           </div>
         </template>
@@ -363,24 +368,24 @@ const handleGenerateInvoice = async (subscription) => {
           <UiEmpty
             v-if="search || statusFilter || serviceTypeFilter"
             :icon="SearchX"
-            title="No subscriptions match your filters"
-            message="Try a different name, type, or status"
+            :title="$t('subscriptions.list.emptyFilteredTitle')"
+            :message="$t('subscriptions.list.emptyFilteredHint')"
             compact
           />
           <UiEmpty
             v-else
             :icon="Inbox"
-            title="No subscriptions yet"
-            message="Add a maintenance, domain renewal, or SaaS subscription to start tracking recurring billing here."
+            :title="$t('subscriptions.list.emptyTitle')"
+            :message="$t('subscriptions.list.emptyHint')"
             compact
           >
-            <UiButton v-if="can('subscription-create')" variant="secondary" :icon="Plus" @click="openAdd">Add your first subscription</UiButton>
+            <UiButton v-if="can('subscription-create')" variant="secondary" :icon="Plus" @click="openAdd">{{ $t("subscriptions.list.addFirst") }}</UiButton>
           </UiEmpty>
         </template>
       </UiTable>
 
       <div v-if="meta.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
-        <Pagination :meta="meta" :loading="loading" item-label="subscription" @page-change="fetchData" />
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('subscriptions.list.itemLabel')" @page-change="fetchData" />
       </div>
     </section>
 

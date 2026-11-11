@@ -17,6 +17,9 @@ import {
 import { UiInput, UiSelect } from "@/components/ui";
 import RightSidebarStep3 from "@/components/admin/employee/create/RightSidebarStep3.vue";
 import EmployeeFiles from "@/components/admin/employee/EmployeeFiles.vue";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
 
 interface Props {
   modelValue: {
@@ -65,7 +68,7 @@ const handlePickFiles = (event: Event) => {
     (file) => !ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE
   );
   if (invalid) {
-    pickerError.value = `"${invalid.name}" is not allowed. Only PDF, PNG, or JPEG files up to 2MB are supported.`;
+    pickerError.value = t("employees.files.notAllowed", { name: invalid.name });
     if (fileInputRef.value) fileInputRef.value.value = "";
     return;
   }
@@ -103,8 +106,11 @@ onMounted(() => {
 
 // Presentation only: keep a blank, re-selectable first option.
 const languageOptions = computed(() => [
-  { value: "", label: "Select language" },
-  ...(preferredLanguages.value || []),
+  { value: "", label: t("employees.form.fields.preferredLanguagePlaceholder") },
+  ...(preferredLanguages.value || []).map((o: any) => {
+    const key = `employees.enums.language.${o.value}`;
+    return te(key) ? { ...o, label: t(key) } : o;
+  }),
 ]);
 </script>
 
@@ -118,16 +124,16 @@ const languageOptions = computed(() => [
             <Phone class="w-4 h-4" />
           </span>
           <div class="min-w-0">
-            <h3 class="text-ui-h2 text-ui-ink">Emergency Contact</h3>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Optional -- person to contact in case of emergency. Leave blank if not available yet.</p>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.emergency.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.emergency.subtitle") }}</p>
           </div>
         </header>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
           <!-- Emergency Contact Name -->
           <UiInput
             v-model="form.emergency_contact_name"
-            label="Full Name (optional)"
-            placeholder="Emergency contact name"
+            :label="$t('employees.form.fields.contactName')"
+            :placeholder="$t('employees.form.fields.contactNamePlaceholder')"
             :icon="User"
             :error="props.errors?.['emergency_contacts.0.full_name']?.join(', ')"
           />
@@ -135,8 +141,8 @@ const languageOptions = computed(() => [
           <!-- Emergency Contact Relationship -->
           <UiInput
             v-model="form.emergency_contact_relationship"
-            label="Relationship (optional)"
-            placeholder="e.g., Spouse, Parent, Sibling"
+            :label="$t('employees.form.fields.relationship')"
+            :placeholder="$t('employees.form.fields.relationshipPlaceholder')"
             :icon="User"
             :error="props.errors?.['emergency_contacts.0.relationship']?.join(', ')"
           />
@@ -144,7 +150,7 @@ const languageOptions = computed(() => [
           <!-- Emergency Contact Phone -->
           <UiInput
             v-model="form.emergency_contact_phone"
-            label="Phone Number (optional)"
+            :label="$t('employees.form.fields.contactPhone')"
             placeholder="+62 812-3456-7890"
             :icon="Phone"
             :error="props.errors?.['emergency_contacts.0.phone']?.join(', ')"
@@ -153,7 +159,7 @@ const languageOptions = computed(() => [
           <!-- Emergency Contact Email -->
           <UiInput
             v-model="form.emergency_contact_email"
-            label="Email Address"
+            :label="$t('employees.form.fields.email')"
             placeholder="emergency@email.com"
             type="email"
             :icon="Mail"
@@ -169,15 +175,15 @@ const languageOptions = computed(() => [
             <FileText class="w-4 h-4" />
           </span>
           <div class="min-w-0">
-            <h3 class="text-ui-h2 text-ui-ink">Additional Information</h3>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Optional details and preferences</p>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.additional.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.additional.subtitle") }}</p>
           </div>
         </header>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
           <!-- Preferred Language -->
           <UiSelect
             v-model="form.preferred_language"
-            label="Preferred Language"
+            :label="$t('employees.form.fields.preferredLanguage')"
             :error="props.errors?.preferred_language?.join(', ')"
             :options="languageOptions"
           />
@@ -186,8 +192,8 @@ const languageOptions = computed(() => [
           <div class="md:col-span-2 min-w-0">
             <UiInput
               v-model="form.additional_notes"
-              label="Additional Notes"
-              placeholder="Any additional information about the employee..."
+              :label="$t('employees.form.fields.additionalNotes')"
+              :placeholder="$t('employees.form.fields.additionalNotesPlaceholder')"
               :icon="FileText"
               :error="props.errors?.additional_notes?.join(', ')"
               :rows="4"
@@ -205,8 +211,8 @@ const languageOptions = computed(() => [
             <FileText class="w-4 h-4" />
           </span>
           <div class="min-w-0">
-            <h3 class="text-ui-h2 text-ui-ink">Documents</h3>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Optional -- PDF, PNG, or JPEG, up to 2MB each. Uploaded once the employee is created.</p>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.documents.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.documents.subtitle") }}</p>
           </div>
         </header>
         <input
@@ -226,8 +232,8 @@ const languageOptions = computed(() => [
           <span class="w-9 h-9 rounded-ui-control bg-ui-surface border border-ui-line text-ui-text flex items-center justify-center">
             <Upload class="w-4 h-4" />
           </span>
-          <span class="text-ui-small font-medium text-ui-ink">Choose Files</span>
-          <span class="text-ui-cap text-ui-muted">PDF, PNG, or JPEG up to 2MB each</span>
+          <span class="text-ui-small font-medium text-ui-ink">{{ $t("employees.form.documents.choose") }}</span>
+          <span class="text-ui-cap text-ui-muted">{{ $t("employees.form.documents.rules") }}</span>
         </button>
 
         <p v-if="pickerError" class="text-ui-cap text-ui-bad mt-1.5">{{ pickerError }}</p>
@@ -249,7 +255,7 @@ const languageOptions = computed(() => [
                 @input="updateQueuedDocumentName(index, ($event.target as HTMLInputElement).value)"
                 type="text"
                 required
-                placeholder="Document name (required)"
+                :placeholder="$t('employees.form.documents.namePlaceholder')"
                 class="w-full h-8 px-2.5 bg-ui-surface text-ui-small text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
               />
             </div>
@@ -257,7 +263,7 @@ const languageOptions = computed(() => [
               type="button"
               @click="removeQueuedDocument(index)"
               class="w-8 h-8 shrink-0 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
-              aria-label="Remove document"
+              :aria-label="$t('employees.form.documents.remove')"
             >
               <X class="w-4 h-4" />
             </button>

@@ -6,6 +6,7 @@
 // Permissions: license-manager-list (page), -view (panels), -create
 // (Create license), license-manager-create / -edit / -delete (products too).
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   Package,
   ArrowRight,
@@ -36,6 +37,7 @@ import { can } from "@/helpers/permissionHelper";
 import { errorMessage } from "@/helpers/errorHelper";
 import { EXPIRING_SOON_DAYS, keyExample } from "@/components/admin/license-manager/licenseHelpers";
 
+const { t } = useI18n();
 const store = useLicenseManagerStore();
 const alertModal = useAlertModalStore();
 
@@ -57,7 +59,7 @@ const load = async () => {
   try {
     await Promise.all([store.fetchOverview(), store.fetchProducts({ force: true })]);
   } catch (err) {
-    error.value = errorMessage(err, "Failed to load the License Manager overview.");
+    error.value = errorMessage(err, t("licenses.overview.loadFailed"));
   } finally {
     loading.value = false;
   }
@@ -97,18 +99,32 @@ const all = computed(() => store.overview?.all || null);
 const soonDays = computed(() => store.overview?.expiring_soon_days ?? EXPIRING_SOON_DAYS);
 
 const kpis = computed(() => [
-  { key: "total", label: "Total licenses", value: all.value?.total, caption: `${products.value.length} product${products.value.length === 1 ? "" : "s"}`, icon: Layers, tone: "violet" },
-  { key: "active", label: "Active", value: all.value?.active, caption: "On and in period", icon: CheckCircle2, tone: "emerald" },
-  { key: "expiring_soon", label: "Expiring soon", value: all.value?.expiring_soon, caption: `≤ ${soonDays.value} days left`, icon: Hourglass, tone: "amber" },
-  { key: "expired", label: "Expired", value: all.value?.expired, caption: "Past end date", icon: CalendarX2, tone: "red" },
-  { key: "inactive", label: "Inactive", value: all.value?.inactive, caption: "Switched off", icon: PowerOff, tone: "gray" },
+  {
+    key: "total",
+    label: t("licenses.kpi.total"),
+    value: all.value?.total,
+    caption: t("licenses.overview.productCount", { n: products.value.length }, products.value.length),
+    icon: Layers,
+    tone: "violet",
+  },
+  { key: "active", label: t("licenses.status.active"), value: all.value?.active, caption: t("licenses.kpi.activeCaption"), icon: CheckCircle2, tone: "emerald" },
+  {
+    key: "expiring_soon",
+    label: t("licenses.status.expiringSoon"),
+    value: all.value?.expiring_soon,
+    caption: t("licenses.kpi.expiringCaption", { n: soonDays.value }, soonDays.value),
+    icon: Hourglass,
+    tone: "amber",
+  },
+  { key: "expired", label: t("licenses.status.expired"), value: all.value?.expired, caption: t("licenses.kpi.expiredCaption"), icon: CalendarX2, tone: "red" },
+  { key: "inactive", label: t("licenses.status.inactive"), value: all.value?.inactive, caption: t("licenses.kpi.inactiveCaption"), icon: PowerOff, tone: "gray" },
 ]);
 
 const stats = (p) => [
-  { key: "active", label: "Active", value: p.active ?? 0, dot: "bg-ui-ok" },
-  { key: "expiring_soon", label: "Expiring", value: p.expiring_soon ?? 0, dot: "bg-ui-warn" },
-  { key: "expired", label: "Expired", value: p.expired ?? 0, dot: "bg-ui-bad" },
-  { key: "inactive", label: "Inactive", value: p.inactive ?? 0, dot: "bg-ui-faint" },
+  { key: "active", label: t("licenses.status.active"), value: p.active ?? 0, dot: "bg-ui-ok" },
+  { key: "expiring_soon", label: t("licenses.overview.expiring"), value: p.expiring_soon ?? 0, dot: "bg-ui-warn" },
+  { key: "expired", label: t("licenses.status.expired"), value: p.expired ?? 0, dot: "bg-ui-bad" },
+  { key: "inactive", label: t("licenses.status.inactive"), value: p.inactive ?? 0, dot: "bg-ui-faint" },
 ];
 // Status share bar, used when the overview has no per-plan counts.
 const statusShare = (p) => {
@@ -129,7 +145,7 @@ const closeModal = () => (modal.value = { show: false, product: null });
 const onSaved = async (saved) => {
   const wasEdit = !!modal.value.product;
   closeModal();
-  flash(wasEdit ? `${saved.name} updated.` : `${saved.name} added.`);
+  flash(wasEdit ? t("licenses.overview.updated", { name: saved.name }) : t("licenses.overview.added", { name: saved.name }));
   await load();
 };
 
@@ -138,10 +154,14 @@ const toggleActive = async (product) => {
   busyCode.value = product.code;
   try {
     await store.updateProduct(product.code, { is_active: !product.is_active });
-    flash(`${product.name} ${product.is_active ? "deactivated" : "activated"}.`);
+    flash(
+      product.is_active
+        ? t("licenses.overview.deactivated", { name: product.name })
+        : t("licenses.overview.activated", { name: product.name })
+    );
     await load();
   } catch (err) {
-    error.value = errorMessage(err, "Failed to update the product.");
+    error.value = errorMessage(err, t("licenses.overview.updateFailed"));
   } finally {
     busyCode.value = null;
   }
@@ -149,19 +169,19 @@ const toggleActive = async (product) => {
 
 const remove = async (product) => {
   closeMenu();
-  const ok = await alertModal.confirm(`Delete the product "${product.name}"? This cannot be undone.`, {
-    title: "Delete Product",
+  const ok = await alertModal.confirm(t("licenses.overview.deleteConfirm", { name: product.name }), {
+    title: t("licenses.overview.deleteTitle"),
     type: "danger",
-    confirmText: "Delete",
+    confirmText: t("common.actions.delete"),
   });
   if (!ok) return;
   busyCode.value = product.code;
   try {
     await store.deleteProduct(product.code);
-    flash(`${product.name} deleted.`);
+    flash(t("licenses.overview.deleted", { name: product.name }));
     await load();
   } catch (err) {
-    await alertModal.alert(errorMessage(err, "Failed to delete the product."), { type: "danger" });
+    await alertModal.alert(errorMessage(err, t("licenses.overview.deleteFailed")), { type: "danger" });
   } finally {
     busyCode.value = null;
   }
@@ -177,9 +197,9 @@ const menuItem =
     <Alert v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
 
     <!-- Header -->
-    <UiPageHeader title="License Manager" subtitle="Licenses for all your apps">
+    <UiPageHeader :title="$t('licenses.title')" :subtitle="$t('licenses.overview.subtitle')">
       <template #actions>
-        <UiButton v-if="canCreateProduct" :icon="Plus" class="w-full sm:w-auto" @click="openAdd">Add Product</UiButton>
+        <UiButton v-if="canCreateProduct" :icon="Plus" class="w-full sm:w-auto" @click="openAdd">{{ $t("licenses.product.addTitle") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -201,8 +221,8 @@ const menuItem =
     <!-- Products -->
     <section>
       <div class="flex items-center justify-between gap-3 mb-3">
-        <h2 class="text-ui-h2 text-ui-ink">Products</h2>
-        <span v-if="!loading" class="text-ui-cap text-ui-muted tabular-nums">{{ products.length }} product{{ products.length === 1 ? "" : "s" }}</span>
+        <h2 class="text-ui-h2 text-ui-ink">{{ $t("licenses.overview.products") }}</h2>
+        <span v-if="!loading" class="text-ui-cap text-ui-muted tabular-nums">{{ $t("licenses.overview.productCount", { n: products.length }, products.length) }}</span>
       </div>
 
       <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
@@ -237,7 +257,7 @@ const menuItem =
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <h3 class="text-ui-h2 text-ui-ink truncate">{{ p.name }}</h3>
-                  <UiBadge v-if="!p.is_active" tone="neutral" class="shrink-0">Inactive</UiBadge>
+                  <UiBadge v-if="!p.is_active" tone="neutral" class="shrink-0">{{ $t("licenses.status.inactive") }}</UiBadge>
                 </div>
                 <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                   <span class="text-ui-cap font-mono text-ui-muted bg-ui-subtle border border-ui-line rounded-md px-1.5 py-px">{{ p.code }}</span>
@@ -250,7 +270,7 @@ const menuItem =
             <div class="mt-5 flex items-end justify-between gap-3">
               <div>
                 <p class="text-ui-display text-ui-ink tabular-nums">{{ p.total ?? 0 }}</p>
-                <p class="text-ui-cap text-ui-muted">license{{ p.total === 1 ? "" : "s" }}</p>
+                <p class="text-ui-cap text-ui-muted">{{ $t("licenses.overview.licenseWord", p.total ?? 0) }}</p>
               </div>
               <div class="flex flex-wrap justify-end gap-x-3 gap-y-1">
                 <span v-for="s in stats(p)" :key="s.key" class="inline-flex items-center gap-1.5 text-ui-cap" :title="s.label">
@@ -264,7 +284,7 @@ const menuItem =
             <!-- Per-plan bar (status share when the API has no plan counts) -->
             <div class="mt-4">
               <PlanDistributionBar v-if="p.by_plan" :counts="p.by_plan" :height="6" :legend="false" />
-              <div v-else class="flex w-full h-1.5 overflow-hidden rounded-full bg-ui-subtle gap-px" role="img" aria-label="Licenses by status">
+              <div v-else class="flex w-full h-1.5 overflow-hidden rounded-full bg-ui-subtle gap-px" role="img" :aria-label="$t('licenses.overview.byStatus')">
                 <template v-for="s in statusShare(p)" :key="s.key">
                   <div v-if="s.value" class="h-full" :class="s.dot" :style="{ width: `${s.pct}%` }" :title="`${s.label}: ${s.value}`"></div>
                 </template>
@@ -274,10 +294,10 @@ const menuItem =
 
           <!-- Actions -->
           <div class="px-5 pb-5 flex items-center gap-2">
-            <UiButton v-if="p.is_active" :to="dashboardRoute(p)" :icon-right="ArrowRight" class="flex-1">Open licenses</UiButton>
-            <span v-else class="flex-1 text-ui-cap text-ui-muted py-2">Switch it on to manage its licenses.</span>
-            <UiButton v-if="p.is_active && canCreateLicense" variant="secondary" :icon="Plus" :to="createRoute(p)" title="Create license">
-              <span class="hidden sm:inline">Create license</span>
+            <UiButton v-if="p.is_active" :to="dashboardRoute(p)" :icon-right="ArrowRight" class="flex-1">{{ $t("licenses.overview.openLicenses") }}</UiButton>
+            <span v-else class="flex-1 text-ui-cap text-ui-muted py-2">{{ $t("licenses.overview.switchOnHint") }}</span>
+            <UiButton v-if="p.is_active && canCreateLicense" variant="secondary" :icon="Plus" :to="createRoute(p)" :title="$t('licenses.overview.createLicense')">
+              <span class="hidden sm:inline">{{ $t("licenses.overview.createLicense") }}</span>
             </UiButton>
           </div>
 
@@ -289,7 +309,7 @@ const menuItem =
               :disabled="busyCode === p.code"
               class="w-8 h-8 flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors disabled:opacity-40"
               :class="{ 'bg-ui-hover text-ui-ink': menuCode === p.code }"
-              aria-label="Product actions"
+              :aria-label="$t('licenses.overview.productActions')"
               :aria-expanded="menuCode === p.code"
             >
               <MoreHorizontal class="w-4 h-4" />
@@ -301,17 +321,17 @@ const menuItem =
                 role="menu"
               >
                 <button v-if="canEditProduct" type="button" role="menuitem" @click="openEdit(p)" :class="[menuItem, 'text-ui-ink hover:bg-ui-hover']">
-                  <Pencil class="w-4 h-4 text-ui-muted" /> Edit
+                  <Pencil class="w-4 h-4 text-ui-muted" /> {{ $t("common.actions.edit") }}
                 </button>
                 <button v-if="canEditProduct" type="button" role="menuitem" @click="toggleActive(p)" :class="[menuItem, 'text-ui-ink hover:bg-ui-hover']">
                   <PowerOff v-if="p.is_active" class="w-4 h-4 text-ui-warn" />
                   <Power v-else class="w-4 h-4 text-ui-ok" />
-                  {{ p.is_active ? "Deactivate" : "Activate" }}
+                  {{ p.is_active ? $t("licenses.overview.deactivate") : $t("licenses.overview.activate") }}
                 </button>
                 <template v-if="canDeleteProduct">
                   <div v-if="canEditProduct" class="my-1 border-t border-ui-line"></div>
                   <!-- Wrapper keeps the tooltip working while the button is disabled -->
-                  <span class="block" :title="p.licenses_count > 0 ? 'Products with licenses cannot be deleted. Deactivate it instead.' : ''">
+                  <span class="block" :title="p.licenses_count > 0 ? $t('licenses.overview.cannotDelete') : ''">
                     <button
                       type="button"
                       role="menuitem"
@@ -319,7 +339,7 @@ const menuItem =
                       :disabled="p.licenses_count > 0"
                       :class="[menuItem, 'text-ui-bad hover:bg-ui-bad-soft disabled:hover:bg-transparent']"
                     >
-                      <Trash2 class="w-4 h-4" /> Delete
+                      <Trash2 class="w-4 h-4" /> {{ $t("common.actions.delete") }}
                     </button>
                   </span>
                 </template>
@@ -338,13 +358,13 @@ const menuItem =
           <span class="w-10 h-10 rounded-full bg-ui-surface border border-ui-line flex items-center justify-center group-hover:border-ui-line-strong transition-colors">
             <Plus class="w-5 h-5" />
           </span>
-          <span class="text-ui-small font-medium text-ui-ink">Add product</span>
-          <span class="text-ui-cap text-ui-muted">Register another app for license keys</span>
+          <span class="text-ui-small font-medium text-ui-ink">{{ $t("licenses.overview.addProduct") }}</span>
+          <span class="text-ui-cap text-ui-muted">{{ $t("licenses.overview.addProductHint") }}</span>
         </button>
       </div>
 
       <div v-else class="bg-ui-surface border border-dashed border-ui-line-strong rounded-ui-card">
-        <UiEmpty :icon="Package" title="No products yet" message="Products appear here once they are added." />
+        <UiEmpty :icon="Package" :title="$t('licenses.overview.emptyTitle')" :message="$t('licenses.overview.emptyMessage')" />
       </div>
     </section>
 

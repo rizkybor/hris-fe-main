@@ -5,7 +5,7 @@ import { UiPageHeader } from "@/components/ui";
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Server Lists" subtitle="Pemantauan disk, RAM, CPU, dan website setiap VPS yang Anda kelola" />
+    <UiPageHeader :title="$t('servers.title')" :subtitle="$t('servers.subtitle')" />
 
     <VpsMonitor />
   </div>

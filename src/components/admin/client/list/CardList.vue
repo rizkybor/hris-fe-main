@@ -33,7 +33,7 @@ const goToDetail = () => {
   <div class="flex items-start gap-3 px-4 py-3.5 cursor-pointer active:bg-ui-hover" @click.stop="goToDetail">
     <span v-if="number" class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
     <div class="flex-1 min-w-0">
-      <p class="text-ui-body font-medium text-ui-ink truncate">{{ data?.name || "Unnamed Client" }}</p>
+      <p class="text-ui-body font-medium text-ui-ink truncate">{{ data?.name || $t("clients.list.unnamed") }}</p>
       <p class="text-ui-cap text-ui-muted mt-0.5 truncate">
         {{ data?.pic_name || "-" }}<template v-if="data?.pic_phone"> · {{ data.pic_phone }}</template>
       </p>
@@ -50,8 +50,8 @@ const goToDetail = () => {
       <button
         v-if="can('clients-edit')"
         type="button"
-        title="Edit"
-        aria-label="Edit"
+        :title="$t('common.actions.edit')"
+        :aria-label="$t('common.actions.edit')"
         class="ui-press w-9 h-9 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
         @click="goToEdit"
       >
@@ -60,8 +60,8 @@ const goToDetail = () => {
       <button
         v-if="can('clients-delete')"
         type="button"
-        title="Delete"
-        aria-label="Delete"
+        :title="$t('common.actions.delete')"
+        :aria-label="$t('common.actions.delete')"
         class="ui-press w-9 h-9 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
         @click="emit('delete', data)"
       >

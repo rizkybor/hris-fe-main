@@ -2,6 +2,9 @@
 import { computed, reactive, ref, watch } from "vue";
 import { ChevronDown, Plus, Trash2 } from "lucide-vue-next";
 import { UiModal, UiInput, UiSelect, UiButton } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   show: Boolean,
@@ -20,16 +23,16 @@ const props = defineProps({
 
 const emit = defineEmits(["submit", "close"]);
 
-const BILLING_CYCLE_OPTIONS = [
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
-];
+const BILLING_CYCLE_OPTIONS = computed(() => [
+  { value: "monthly", label: t("subscriptions.cycle.monthly") },
+  { value: "yearly", label: t("subscriptions.cycle.yearly") },
+]);
 
-const STATUS_OPTIONS = [
-  { value: "active", label: "Active" },
-  { value: "postponed", label: "Postponed" },
-  { value: "cancelled", label: "Not Active" },
-];
+const STATUS_OPTIONS = computed(() => [
+  { value: "active", label: t("subscriptions.status.active") },
+  { value: "postponed", label: t("subscriptions.status.postponed") },
+  { value: "cancelled", label: t("subscriptions.status.cancelled") },
+]);
 
 const clientOptions = computed(() => props.clients.map((c) => ({ value: c.id, label: c.name })));
 const projectOptions = computed(() => props.projects.map((p) => ({ value: p.id, label: p.name })));
@@ -90,7 +93,7 @@ const handleBankNameChange = () => {
 };
 
 const handlePph23TypeChange = () => {
-  const type = props.pphTypes.find((t) => t.value === form.pph23_type);
+  const type = props.pphTypes.find((p) => p.value === form.pph23_type);
   if (type?.default_rate != null) {
     form.pph23_percent = type.default_rate;
   }
@@ -206,7 +209,7 @@ watch(
   { immediate: true }
 );
 
-const title = computed(() => (props.mode === "edit" ? "Edit Subscription" : "Add Subscription"));
+const title = computed(() => (props.mode === "edit" ? t("subscriptions.form.editTitle") : t("subscriptions.form.addTitle")));
 
 // Presentation only: token classes for the native number fields (they keep
 // their min / max / step) and the "No project" choice.
@@ -214,9 +217,9 @@ const LABEL = "block text-ui-small font-medium text-ui-ink mb-1.5";
 const FIELD =
   "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus read-only:bg-ui-subtle read-only:text-ui-muted";
 const ERR = "text-ui-cap text-ui-bad mt-1.5";
-const projectSelectOptions = computed(() => [{ value: "", label: "No project" }, ...projectOptions.value]);
+const projectSelectOptions = computed(() => [{ value: "", label: t("subscriptions.form.noProject") }, ...projectOptions.value]);
 const bankOptions = computed(() => props.bankAccounts.map((a) => ({ value: a.bank_name, label: a.bank_name })));
-const pphTypeOptions = computed(() => props.pphTypes.map((t) => ({ value: t.value, label: t.label })));
+const pphTypeOptions = computed(() => props.pphTypes.map((p) => ({ value: p.value, label: p.label })));
 
 const submit = () => {
   const payload = { ...form };
@@ -251,14 +254,14 @@ const submit = () => {
     :open="show"
     size="lg"
     :title="title"
-    description='Manual recurring billing -- click "Generate Invoice" on the list each period.'
+    :description="$t('subscriptions.form.description')"
     @close="$emit('close')"
   >
     <div class="space-y-5">
       <UiInput
         id="subscription-name"
-        label="Name"
-        placeholder="e.g. Website Maintenance - PT ABC"
+        :label="$t('common.labels.name')"
+        :placeholder="$t('subscriptions.form.namePlaceholder')"
         v-model="form.name"
         required
         :error="errors.name ? errors.name.join(', ') : ''"
@@ -268,16 +271,16 @@ const submit = () => {
       <div>
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-1.5">
-            <span class="text-ui-small font-medium text-ui-ink">Services</span>
+            <span class="text-ui-small font-medium text-ui-ink">{{ $t("subscriptions.form.services") }}</span>
             <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-md bg-ui-subtle text-ui-cap font-medium text-ui-text tabular-nums">
               {{ form.services.length }}
             </span>
           </div>
-          <UiButton variant="ghost" size="sm" :icon="Plus" class="!text-ui-accent" @click="addService">Add Service</UiButton>
+          <UiButton variant="ghost" size="sm" :icon="Plus" class="!text-ui-accent" @click="addService">{{ $t("subscriptions.form.addService") }}</UiButton>
         </div>
         <p v-if="errors.services" :class="[ERR, 'mb-2 !mt-0']">{{ errors.services.join(", ") }}</p>
         <p v-if="serviceTypeOptions.length === 0" class="text-ui-cap text-ui-muted mb-2">
-          No service types configured yet. Add one in Settings &rarr; Dropdown Options.
+          {{ $t("subscriptions.form.noServiceTypes") }}
         </p>
 
         <div class="space-y-3">
@@ -290,8 +293,8 @@ const submit = () => {
               v-if="form.services.length > 1"
               type="button"
               @click="removeService(index)"
-              title="Remove service"
-              aria-label="Remove service"
+              :title="$t('subscriptions.form.removeService')"
+              :aria-label="$t('subscriptions.form.removeService')"
               class="ui-press absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-ui-control text-ui-muted hover:text-ui-bad hover:bg-ui-bad-soft"
             >
               <Trash2 class="w-3.5 h-3.5" />
@@ -301,8 +304,8 @@ const submit = () => {
               <div :class="form.services.length > 1 ? 'pr-8 sm:pr-0' : ''">
                 <UiSelect
                   :id="`subscription-service-type-${index}`"
-                  label="Service Type"
-                  placeholder="Select a service type"
+                  :label="$t('subscriptions.form.serviceType')"
+                  :placeholder="$t('subscriptions.form.selectServiceType')"
                   v-model="service.service_type"
                   :options="serviceTypeOptions"
                   required
@@ -311,7 +314,7 @@ const submit = () => {
               </div>
 
               <div :class="form.services.length > 1 ? 'sm:pr-8' : ''">
-                <label :for="`subscription-service-amount-${index}`" :class="LABEL">Amount (Rp)<span class="text-ui-bad"> *</span></label>
+                <label :for="`subscription-service-amount-${index}`" :class="LABEL">{{ $t("subscriptions.form.amountRp") }}<span class="text-ui-bad"> *</span></label>
                 <input
                   :id="`subscription-service-amount-${index}`"
                   v-model="service.amount"
@@ -327,15 +330,15 @@ const submit = () => {
               <div v-if="service.service_type === 'saas_subscription'" class="sm:col-span-2">
                 <UiInput
                   :id="`subscription-product-name-${index}`"
-                  label="Product Name"
-                  placeholder="e.g. Ticket Management (Yaap), Jstock"
+                  :label="$t('subscriptions.form.productName')"
+                  :placeholder="$t('subscriptions.form.productNamePlaceholder')"
                   v-model="service.product_name"
                   :error="serviceErrors(index, 'product_name') ? serviceErrors(index, 'product_name').join(', ') : ''"
                 />
               </div>
 
               <div v-if="form.services.length > 1">
-                <label :for="`subscription-service-ppn-${index}`" :class="LABEL">VAT / PPN (%)</label>
+                <label :for="`subscription-service-ppn-${index}`" :class="LABEL">{{ $t("subscriptions.form.vat") }}</label>
                 <input
                   :id="`subscription-service-ppn-${index}`"
                   v-model="service.ppn_percentage"
@@ -349,7 +352,7 @@ const submit = () => {
                 <p v-if="serviceErrors(index, 'ppn_percentage')" :class="ERR">{{ serviceErrors(index, "ppn_percentage").join(", ") }}</p>
               </div>
               <div>
-                <label :for="`subscription-service-icann-${index}`" :class="LABEL">ICANN Fee (Rp)</label>
+                <label :for="`subscription-service-icann-${index}`" :class="LABEL">{{ $t("subscriptions.form.icannFeeRp") }}</label>
                 <input
                   :id="`subscription-service-icann-${index}`"
                   v-model="service.icann_fee"
@@ -364,8 +367,8 @@ const submit = () => {
 
             <p v-if="Number(service.amount) > 0" class="text-ui-cap text-ui-muted mt-3 tabular-nums">
               Rp {{ (Number(service.amount) || 0).toLocaleString("id-ID") }}
-              <template v-if="Number(service.ppn_percentage) > 0"> + VAT {{ service.ppn_percentage }}%</template>
-              <template v-if="Number(service.icann_fee) > 0"> + ICANN Fee Rp {{ Number(service.icann_fee).toLocaleString("id-ID") }}</template>
+              <template v-if="Number(service.ppn_percentage) > 0">{{ $t("subscriptions.form.plusVat", { n: service.ppn_percentage }) }}</template>
+              <template v-if="Number(service.icann_fee) > 0">{{ $t("subscriptions.form.plusIcann", { amount: Number(service.icann_fee).toLocaleString("id-ID") }) }}</template>
               <template v-if="Number(service.ppn_percentage) > 0 || Number(service.icann_fee) > 0">
                 = <span class="font-medium text-ui-ink">Rp {{ serviceTotal(service).toLocaleString("id-ID") }}</span>
               </template>
@@ -377,8 +380,8 @@ const submit = () => {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <UiSelect
           id="subscription-client"
-          label="Client"
-          placeholder="Select a client"
+          :label="$t('common.labels.client')"
+          :placeholder="$t('subscriptions.form.selectClient')"
           v-model="form.client_id"
           :options="clientOptions"
           required
@@ -388,25 +391,25 @@ const submit = () => {
         <UiSelect
           v-if="form.services.some((s) => s.service_type === 'website_maintenance')"
           id="subscription-project"
-          label="Project (optional)"
+          :label="$t('subscriptions.form.projectOptional')"
           v-model="form.project_id"
           :options="projectSelectOptions"
-          hint="Link this maintenance to the website project it covers, if any."
+          :hint="$t('subscriptions.form.projectHint')"
         />
 
         <UiSelect
           id="subscription-billing-cycle"
-          label="Billing Cycle"
+          :label="$t('subscriptions.form.billingCycle')"
           v-model="form.billing_cycle"
           :options="BILLING_CYCLE_OPTIONS"
           required
         />
 
-        <UiSelect v-if="mode === 'edit'" id="subscription-status" label="Status" v-model="form.status" :options="STATUS_OPTIONS" />
+        <UiSelect v-if="mode === 'edit'" id="subscription-status" :label="$t('common.labels.status')" v-model="form.status" :options="STATUS_OPTIONS" />
 
         <UiInput
           id="subscription-start-date"
-          label="Start Date"
+          :label="$t('subscriptions.form.startDate')"
           type="date"
           v-model="form.start_date"
           required
@@ -414,7 +417,7 @@ const submit = () => {
         />
         <UiInput
           id="subscription-next-due-date"
-          label="Next Due Date"
+          :label="$t('subscriptions.form.nextDueDate')"
           type="date"
           v-model="form.next_due_date"
           required
@@ -422,7 +425,7 @@ const submit = () => {
         />
       </div>
 
-      <UiInput v-model="form.notes" label="Notes (optional)" :rows="2" placeholder="Any internal notes about this subscription..." />
+      <UiInput v-model="form.notes" :label="$t('subscriptions.form.notesOptional')" :rows="2" :placeholder="$t('subscriptions.form.notesPlaceholder')" />
 
       <!-- Invoice configuration -->
       <div class="border border-ui-line rounded-ui-card">
@@ -433,9 +436,9 @@ const submit = () => {
           @click="showInvoiceConfig = !showInvoiceConfig"
         >
           <span class="block min-w-0">
-            <span class="block text-ui-h3 text-ui-ink">Invoice Configuration</span>
+            <span class="block text-ui-h3 text-ui-ink">{{ $t("subscriptions.form.invoiceConfig") }}</span>
             <span class="block text-ui-cap text-ui-muted mt-0.5">
-              Applied to every invoice generated from this subscription -- configure once instead of re-entering it each period.
+              {{ $t("subscriptions.form.invoiceConfigHint") }}
             </span>
           </span>
           <ChevronDown
@@ -448,7 +451,7 @@ const submit = () => {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
             <div>
               <template v-if="!isMultiService">
-                <label for="subscription-ppn" :class="LABEL">VAT / PPN (%)</label>
+                <label for="subscription-ppn" :class="LABEL">{{ $t("subscriptions.form.vat") }}</label>
                 <input
                   id="subscription-ppn"
                   v-model.number="form.ppn_percentage"
@@ -460,20 +463,20 @@ const submit = () => {
                 />
               </template>
               <template v-else>
-                <label :class="LABEL">Total VAT / PPN (%)</label>
+                <label :class="LABEL">{{ $t("subscriptions.form.totalVat") }}</label>
                 <input :value="`${totalPpnPercentage}%`" type="text" readonly :class="[FIELD, 'tabular-nums']" />
-                <p class="text-ui-cap text-ui-muted mt-1.5">Blended from each service's own VAT / PPN (%) above.</p>
+                <p class="text-ui-cap text-ui-muted mt-1.5">{{ $t("subscriptions.form.blendedHint") }}</p>
               </template>
             </div>
             <div>
-              <label for="subscription-admin-fee" :class="LABEL">Admin Fee (Rp)</label>
+              <label for="subscription-admin-fee" :class="LABEL">{{ $t("subscriptions.form.adminFeeRp") }}</label>
               <input id="subscription-admin-fee" v-model.number="form.admin_fee" type="number" min="0" :class="[FIELD, 'tabular-nums']" />
             </div>
 
             <div>
               <UiSelect
-                label="Bank Account"
-                placeholder="Select a bank account"
+                :label="$t('subscriptions.form.bankAccount')"
+                :placeholder="$t('subscriptions.form.selectBank')"
                 v-model="form.bank_name"
                 :options="bankOptions"
                 required
@@ -481,33 +484,33 @@ const submit = () => {
                 @change="handleBankNameChange"
               />
               <p v-if="bankAccounts.length === 0" class="text-ui-cap text-ui-muted mt-1.5">
-                No bank accounts configured yet. Add one in Settings &rarr; Bank Accounts.
+                {{ $t("subscriptions.form.noBanks") }}
               </p>
             </div>
             <div>
-              <label :class="LABEL">Account Number<span class="text-ui-bad"> *</span></label>
+              <label :class="LABEL">{{ $t("subscriptions.form.accountNumber") }}<span class="text-ui-bad"> *</span></label>
               <input v-model="form.bank_account" type="text" readonly required :class="[FIELD, 'tabular-nums']" />
             </div>
           </div>
 
-          <UiInput v-model="form.terms" label="Terms & Conditions" :rows="3" />
+          <UiInput v-model="form.terms" :label="$t('subscriptions.form.terms')" :rows="3" />
 
           <div>
             <label class="flex items-center gap-2.5 text-ui-small font-medium text-ui-ink cursor-pointer">
               <input type="checkbox" v-model="applyPph23" @change="toggleApplyPph23" class="w-4 h-4 accent-ui-ink" />
-              Subject to PPh 23 withholding?
+              {{ $t("subscriptions.form.pph23") }}
             </label>
             <p class="text-ui-cap text-ui-muted mt-1 pl-[26px]">
-              Informational only -- adds a note to the invoice PDF. Does not change Total Amount Due.
+              {{ $t("subscriptions.form.pph23Hint") }}
             </p>
           </div>
 
           <div v-if="applyPph23" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UiSelect label="PPh 23 Type" v-model="form.pph23_type" :options="pphTypeOptions" @change="handlePph23TypeChange" />
+            <UiSelect :label="$t('subscriptions.form.pph23Type')" v-model="form.pph23_type" :options="pphTypeOptions" @change="handlePph23TypeChange" />
             <div>
               <label :class="LABEL">PPh 23 (%)</label>
               <input v-model.number="form.pph23_percent" type="number" min="0" max="100" step="0.1" :class="[FIELD, 'tabular-nums']" />
-              <p class="text-ui-cap text-ui-muted mt-1.5 tabular-nums">Estimated: Rp {{ pph23EstimatedAmount.toLocaleString("id-ID") }}</p>
+              <p class="text-ui-cap text-ui-muted mt-1.5 tabular-nums">{{ $t("subscriptions.form.estimated", { amount: pph23EstimatedAmount.toLocaleString("id-ID") }) }}</p>
             </div>
           </div>
 
@@ -517,16 +520,16 @@ const submit = () => {
               <!-- Each service is taxed on its own amount at its own rate
                    (see the per-row total above) -- Subtotal here is the
                    sum of those, not amount and VAT summed separately. -->
-              <div class="flex justify-between gap-3"><dt>Subtotal (services incl. VAT)</dt><dd class="tabular-nums text-right">Rp {{ servicesSubtotal.toLocaleString("id-ID") }}</dd></div>
+              <div class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.subtotalServices") }}</dt><dd class="tabular-nums text-right">Rp {{ servicesSubtotal.toLocaleString("id-ID") }}</dd></div>
             </template>
             <template v-else>
-              <div class="flex justify-between gap-3"><dt>Amount</dt><dd class="tabular-nums text-right">Rp {{ totalAmount.toLocaleString("id-ID") }}</dd></div>
-              <div class="flex justify-between gap-3"><dt>VAT ({{ totalPpnPercentage }}%)</dt><dd class="tabular-nums text-right">Rp {{ ppnAmount.toLocaleString("id-ID") }}</dd></div>
+              <div class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.amount") }}</dt><dd class="tabular-nums text-right">Rp {{ totalAmount.toLocaleString("id-ID") }}</dd></div>
+              <div class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.vatN", { n: totalPpnPercentage }) }}</dt><dd class="tabular-nums text-right">Rp {{ ppnAmount.toLocaleString("id-ID") }}</dd></div>
             </template>
-            <div class="flex justify-between gap-3"><dt>Admin Fee</dt><dd class="tabular-nums text-right">Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</dd></div>
-            <div v-if="icannFeeTotal > 0" class="flex justify-between gap-3"><dt>ICANN Fee</dt><dd class="tabular-nums text-right">Rp {{ icannFeeTotal.toLocaleString("id-ID") }}</dd></div>
+            <div class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.adminFee") }}</dt><dd class="tabular-nums text-right">Rp {{ (Number(form.admin_fee) || 0).toLocaleString("id-ID") }}</dd></div>
+            <div v-if="icannFeeTotal > 0" class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.icannFee") }}</dt><dd class="tabular-nums text-right">Rp {{ icannFeeTotal.toLocaleString("id-ID") }}</dd></div>
             <div class="flex justify-between gap-3 font-semibold text-ui-ink pt-1.5 border-t border-ui-line">
-              <dt>Total per Invoice</dt><dd class="tabular-nums text-right">Rp {{ invoiceTotal.toLocaleString("id-ID") }}</dd>
+              <dt>{{ $t("subscriptions.form.totalPerInvoice") }}</dt><dd class="tabular-nums text-right">Rp {{ invoiceTotal.toLocaleString("id-ID") }}</dd>
             </div>
           </dl>
         </div>
@@ -534,8 +537,8 @@ const submit = () => {
     </div>
 
     <template #footer>
-      <UiButton variant="secondary" @click="$emit('close')">Cancel</UiButton>
-      <UiButton :loading="loading" @click="submit">{{ loading ? "Saving..." : "Save" }}</UiButton>
+      <UiButton variant="secondary" @click="$emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
+      <UiButton :loading="loading" @click="submit">{{ loading ? $t("common.actions.saving") : $t("common.actions.save") }}</UiButton>
     </template>
   </UiModal>
 </template>

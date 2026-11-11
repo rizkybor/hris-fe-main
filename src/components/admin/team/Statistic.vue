@@ -32,45 +32,45 @@ const loading = computed(() => teamStore.loadingStatistics);
   <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 ui-stagger">
     <UiStat
       class="col-span-2 lg:col-span-1"
-      label="Total Teams"
+      :label="$t('teams.stats.total')"
       :value="total"
       :icon="Users"
       :loading="loading"
     >
       <template #hint>
-        <span class="text-ui-ok">+{{ addedThisMonth }} this month</span>
+        <span class="text-ui-ok">{{ $t("teams.stats.thisMonth", { n: "+" + addedThisMonth }) }}</span>
       </template>
     </UiStat>
 
-    <UiStat label="Active Teams" :value="active" :icon="CheckCircle" :loading="loading">
+    <UiStat :label="$t('teams.stats.active')" :value="active" :icon="CheckCircle" :loading="loading">
       <template #hint>
         <span :class="activeChange >= 0 ? 'text-ui-ok' : 'text-ui-bad'">
-          {{ activeChange >= 0 ? '+' : '' }}{{ activeChange }} this week
+          {{ $t("teams.stats.thisWeek", { n: (activeChange >= 0 ? "+" : "") + activeChange }) }}
         </span>
       </template>
     </UiStat>
 
-    <UiStat label="Team Members" :value="members" :icon="UserPlus" :loading="loading">
+    <UiStat :label="$t('teams.stats.members')" :value="members" :icon="UserPlus" :loading="loading">
       <template #hint>
         <span :class="membersChange >= 0 ? 'text-ui-ok' : 'text-ui-bad'">
-          {{ membersChange >= 0 ? '+' : '' }}{{ membersChange }} this month
+          {{ $t("teams.stats.thisMonth", { n: (membersChange >= 0 ? "+" : "") + membersChange }) }}
         </span>
       </template>
     </UiStat>
 
     <UiStat
-      label="Average Team Size"
+      :label="$t('teams.stats.averageSize')"
       :value="averageSize"
       :icon="Target"
-      hint="Optimal size"
+      :hint="$t('teams.stats.optimalSize')"
       :loading="loading"
     />
 
     <UiStat
-      label="New Teams"
+      :label="$t('teams.stats.newTeams')"
       :value="newTeams"
       :icon="PlusCircle"
-      hint="This month"
+      :hint="$t('teams.stats.thisMonthHint')"
       :loading="loading"
     />
   </div>

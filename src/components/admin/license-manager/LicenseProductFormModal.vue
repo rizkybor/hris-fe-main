@@ -3,6 +3,7 @@
 // edit), key prefix, description, active, and the app icon (upload with
 // preview, replace, remove). Emits "saved" with the product from the API.
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { Trash2, Save, ImagePlus, RefreshCw, ScrollText, Eye, Code2 } from "lucide-vue-next";
 import { renderMarkdown } from "@/components/admin/license-manager/markdown";
 import Alert from "@/components/common/Alert.vue";
@@ -22,6 +23,7 @@ const props = defineProps({
 });
 const emit = defineEmits(["close", "saved"]);
 
+const { t } = useI18n();
 const store = useLicenseManagerStore();
 
 const CODE_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -99,11 +101,11 @@ const pickIcon = (event) => {
   if (!file) return;
   errors.value = { ...errors.value, icon: "" };
   if (!ICON_TYPES.includes(file.type)) {
-    errors.value = { ...errors.value, icon: "Use a PNG, JPG or WebP image." };
+    errors.value = { ...errors.value, icon: t("licenses.product.validation.iconType") };
     return;
   }
   if (file.size > ICON_MAX_BYTES) {
-    errors.value = { ...errors.value, icon: "The icon may not be larger than 1 MB." };
+    errors.value = { ...errors.value, icon: t("licenses.product.validation.iconSize") };
     return;
   }
   clearIconSelection();
@@ -120,17 +122,17 @@ const dropIcon = () => {
 const validate = () => {
   const e = {};
   if (!isEdit.value) {
-    if (!form.value.code) e.code = "Code is required.";
-    else if (!CODE_RE.test(form.value.code)) e.code = "Lowercase letters, digits and single hyphens only (e.g. map-tools-2).";
+    if (!form.value.code) e.code = t("licenses.product.validation.codeRequired");
+    else if (!CODE_RE.test(form.value.code)) e.code = t("licenses.product.validation.codeFormat");
   }
-  if (!String(form.value.name || "").trim()) e.name = "Name is required.";
-  if (!PREFIX_RE.test(String(form.value.key_prefix || "").toUpperCase())) e.key_prefix = "1-6 uppercase letters (e.g. OC).";
+  if (!String(form.value.name || "").trim()) e.name = t("licenses.product.validation.nameRequired");
+  if (!PREFIX_RE.test(String(form.value.key_prefix || "").toUpperCase())) e.key_prefix = t("licenses.product.validation.prefix");
   const version = String(form.value.terms_version || "").trim();
   if (normalizeTerms(form.value.terms)) {
-    if (!version) e.terms_version = "Give the terms a version, e.g. 1.0.";
-    else if (!VERSION_RE.test(version)) e.terms_version = "Use a version like 1.0 or 1.1.";
+    if (!version) e.terms_version = t("licenses.product.validation.termsVersionRequired");
+    else if (!VERSION_RE.test(version)) e.terms_version = t("licenses.product.validation.termsVersionFormat");
     else if (isEdit.value && termsChanged.value && props.product?.terms && version === props.product.terms_version)
-      e.terms_version = `The terms changed: give them a new version (now ${props.product.terms_version}).`;
+      e.terms_version = t("licenses.product.validation.termsVersionChanged", { version: props.product.terms_version });
   }
   return e;
 };
@@ -167,7 +169,7 @@ const save = async () => {
     emit("saved", saved);
   } catch (err) {
     errors.value = validationErrors(err);
-    error.value = errorMessage(err, "Failed to save the product.");
+    error.value = errorMessage(err, t("licenses.product.saveFailed"));
   } finally {
     saving.value = false;
   }
@@ -187,47 +189,47 @@ const onOpenChange = (value) => {
   <UiModal
     :open="show"
     size="lg"
-    :title="isEdit ? `Edit ${product?.name}` : 'Add Product'"
+    :title="isEdit ? $t('licenses.product.editTitle', { name: product?.name }) : $t('licenses.product.addTitle')"
     @update:open="onOpenChange"
   >
-    <form id="license-product-form" novalidate @submit.prevent="save" class="space-y-5" :aria-label="isEdit ? `Edit ${product?.name}` : 'Add product'">
+    <form id="license-product-form" novalidate @submit.prevent="save" class="space-y-5" :aria-label="isEdit ? $t('licenses.product.editTitle', { name: product?.name }) : $t('licenses.product.addTitle')">
       <Alert v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
 
       <!-- Icon -->
       <div data-field="icon">
         <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
-          App Icon <span class="text-ui-faint font-normal">(Optional)</span>
+          {{ $t("licenses.product.appIcon") }} <span class="text-ui-faint font-normal">({{ $t("common.states.optional") }})</span>
         </p>
         <div class="flex flex-wrap items-center gap-4">
           <ProductIcon :product="previewProduct" :size="64" />
           <div class="flex flex-wrap items-center gap-2">
             <input ref="iconInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" @change="pickIcon" />
             <UiButton variant="secondary" size="sm" :icon="hasIcon ? RefreshCw : ImagePlus" @click="iconInput?.click()">
-              {{ hasIcon ? "Replace" : "Upload icon" }}
+              {{ hasIcon ? $t("licenses.installer.replace") : $t("licenses.product.uploadIcon") }}
             </UiButton>
-            <UiButton v-if="hasIcon" variant="danger" size="sm" :icon="Trash2" @click="dropIcon">Remove</UiButton>
+            <UiButton v-if="hasIcon" variant="danger" size="sm" :icon="Trash2" @click="dropIcon">{{ $t("common.actions.remove") }}</UiButton>
             <button v-else-if="removeIcon" type="button" @click="removeIcon = false" class="text-ui-cap font-medium text-ui-accent hover:underline">
-              Undo remove
+              {{ $t("licenses.product.undoRemove") }}
             </button>
           </div>
         </div>
         <p v-if="!fieldError('icon')" class="text-ui-cap text-ui-muted mt-1.5">
-          PNG, JPG or WebP, up to 1 MB. A square image (e.g. 256 × 256) looks best.
-          <template v-if="removeIcon"> The icon is removed when you save.</template>
+          {{ $t("licenses.product.iconHint") }}
+          <template v-if="removeIcon"> {{ $t("licenses.product.iconRemoved") }}</template>
         </p>
         <p v-else class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("icon") }}</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <LicenseFormField field="name" label="Name" required :error="fieldError('name')" v-slot="{ id }">
-          <input :id="id" v-model="form.name" type="text" placeholder="e.g. OCCA" :class="inputClass('name')" />
+        <LicenseFormField field="name" :label="$t('common.labels.name')" required :error="fieldError('name')" v-slot="{ id }">
+          <input :id="id" v-model="form.name" type="text" :placeholder="$t('licenses.product.namePlaceholder')" :class="inputClass('name')" />
         </LicenseFormField>
         <LicenseFormField
           field="code"
-          label="Code"
+          :label="$t('licenses.product.code')"
           required
           :error="fieldError('code')"
-          :hint="isEdit ? 'The code cannot change: it is compiled into the app.' : 'Used in URLs and the public API path; it cannot change later.'"
+          :hint="isEdit ? $t('licenses.product.codeHintEdit') : $t('licenses.product.codeHintCreate')"
           v-slot="{ id }"
         >
           <input
@@ -235,29 +237,29 @@ const onOpenChange = (value) => {
             v-model.trim="form.code"
             type="text"
             :readonly="isEdit"
-            placeholder="e.g. map-tools-2"
+            :placeholder="$t('licenses.product.codePlaceholder')"
             :class="[inputClass('code'), 'font-mono', isEdit ? '!bg-ui-subtle text-ui-muted cursor-not-allowed' : '']"
             @input="form.code = String(form.code || '').toLowerCase()"
           />
         </LicenseFormField>
         <LicenseFormField
           field="key_prefix"
-          label="Key Prefix"
+          :label="$t('licenses.product.keyPrefix')"
           required
           :error="fieldError('key_prefix')"
-          :hint="`New keys look like ${keyPreview(form.key_prefix || 'XX', 'professional', product?.next_sequences?.mac || 1)} (Mac 31 Trial · 32 Professional · 33 Lifetime · 34 Organization; iPad 52 · 53 · 54)`"
+          :hint="$t('licenses.product.keyPrefixHint', { example: keyPreview(form.key_prefix || 'XX', 'professional', product?.next_sequences?.mac || 1) })"
           v-slot="{ id }"
         >
           <input :id="id" v-model.trim="form.key_prefix" type="text" maxlength="6" placeholder="OC" :class="[inputClass('key_prefix'), 'font-mono uppercase']" />
         </LicenseFormField>
         <div>
-          <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Status</p>
+          <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("common.labels.status") }}</p>
           <div class="flex items-center justify-between gap-4 h-[38px] px-3 border border-ui-line-strong rounded-ui-control">
-            <p class="text-ui-small text-ui-muted truncate">{{ form.is_active ? "Active: keys can be activated" : "Inactive: activation is refused" }}</p>
+            <p class="text-ui-small text-ui-muted truncate">{{ form.is_active ? $t("licenses.product.activeHint") : $t("licenses.product.inactiveHint") }}</p>
             <LicenseStatusSwitch v-model="form.is_active" />
           </div>
         </div>
-        <LicenseFormField field="description" label="Description" :error="fieldError('description')" wide v-slot="{ id }">
+        <LicenseFormField field="description" :label="$t('common.labels.description')" :error="fieldError('description')" wide v-slot="{ id }">
           <textarea :id="id" v-model="form.description" rows="2" :class="[inputClass('description'), '!h-auto py-2.5 resize-none']"></textarea>
         </LicenseFormField>
       </div>
@@ -267,8 +269,8 @@ const onOpenChange = (value) => {
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div class="flex items-center gap-2 flex-wrap">
             <ScrollText class="w-4 h-4 text-ui-faint" />
-            <h4 class="text-ui-h3 text-ui-ink">Terms &amp; Conditions</h4>
-            <span class="text-ui-cap text-ui-muted">Appendix A of the license PDF (Markdown)</span>
+            <h4 class="text-ui-h3 text-ui-ink">{{ $t("licenses.product.terms") }}</h4>
+            <span class="text-ui-cap text-ui-muted">{{ $t("licenses.product.termsHint") }}</span>
           </div>
           <div class="inline-flex p-0.5 bg-ui-subtle rounded-ui-control" role="tablist">
             <button
@@ -289,7 +291,7 @@ const onOpenChange = (value) => {
               :class="termsPreview ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted'"
               :aria-selected="termsPreview"
             >
-              <Eye class="w-3.5 h-3.5" /> Preview
+              <Eye class="w-3.5 h-3.5" /> {{ $t("licenses.product.preview") }}
             </button>
           </div>
         </div>
@@ -306,22 +308,28 @@ const onOpenChange = (value) => {
         <div
           v-else
           class="terms-preview h-[320px] overflow-y-auto px-5 py-4 border border-ui-line rounded-ui-control bg-ui-subtle text-ui-small text-ui-ink"
-          v-html="termsHtml || '<p class=&quot;text-ui-faint&quot;>No terms yet.</p>'"
+          v-html="termsHtml || `<p class=&quot;text-ui-faint&quot;>${$t('licenses.product.noTerms')}</p>`"
         ></div>
         <p v-if="fieldError('terms')" class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("terms") }}</p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <LicenseFormField
             field="terms_version"
-            label="Terms Version"
+            :label="$t('licenses.product.termsVersion')"
             :required="!!form.terms?.trim()"
             :error="fieldError('terms_version')"
-            :hint="isEdit && product?.terms_version ? `Current: v${product.terms_version}${termsChanged ? ' — the text changed, give it a new version' : ''}` : 'e.g. 1.0'"
+            :hint="
+              isEdit && product?.terms_version
+                ? termsChanged
+                  ? $t('licenses.product.termsCurrentChanged', { version: product.terms_version })
+                  : $t('licenses.product.termsCurrent', { version: product.terms_version })
+                : $t('licenses.product.termsVersionPlaceholder')
+            "
             v-slot="{ id }"
           >
             <input :id="id" v-model.trim="form.terms_version" type="text" maxlength="20" placeholder="1.0" :class="[inputClass('terms_version'), 'font-mono']" />
           </LicenseFormField>
-          <LicenseFormField field="terms_effective_at" label="Effective Date" :error="fieldError('terms_effective_at')" hint="Defaults to today when the terms change." v-slot="{ id }">
+          <LicenseFormField field="terms_effective_at" :label="$t('licenses.product.effectiveDate')" :error="fieldError('terms_effective_at')" :hint="$t('licenses.product.effectiveDateHint')" v-slot="{ id }">
             <input :id="id" v-model="form.terms_effective_at" type="date" :class="inputClass('terms_effective_at')" />
           </LicenseFormField>
         </div>
@@ -329,17 +337,17 @@ const onOpenChange = (value) => {
     </form>
 
     <template #footer>
-      <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="emit('close')">Cancel</UiButton>
+      <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
       <UiButton
         type="submit"
         form="license-product-form"
         :icon="Save"
         :loading="saving"
         :disabled="!allowed"
-        :title="allowed ? undefined : 'You do not have permission to do this.'"
+        :title="allowed ? undefined : $t('licenses.noPermission')"
         class="flex-1 sm:flex-none"
       >
-        {{ saving ? "Saving..." : isEdit ? "Save Product" : "Add Product" }}
+        {{ saving ? $t("common.actions.saving") : isEdit ? $t("licenses.product.save") : $t("licenses.product.addTitle") }}
       </UiButton>
     </template>
   </UiModal>

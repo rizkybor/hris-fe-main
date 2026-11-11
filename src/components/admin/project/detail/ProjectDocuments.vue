@@ -14,6 +14,10 @@ import { useProjectDocumentStore } from "@/stores/projectDocument";
 import { can } from "@/helpers/permissionHelper";
 import { UiButton, UiConfirmDialog, UiEmpty, UiInput, UiModal } from "@/components/ui";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   projectId: {
@@ -61,11 +65,11 @@ const handleUpload = async () => {
   formError.value = "";
 
   if (!form.value.document_name) {
-    formError.value = "Document name is required.";
+    formError.value = t("projects.documents.nameRequired");
     return;
   }
   if (!form.value.file) {
-    formError.value = "Please choose a file to upload.";
+    formError.value = t("projects.documents.fileRequired");
     return;
   }
 
@@ -82,7 +86,7 @@ const handleUpload = async () => {
     formError.value =
       typeof documentStore.error === "string"
         ? documentStore.error
-        : "Failed to upload document.";
+        : t("projects.documents.uploadFailed");
   }
 };
 
@@ -107,7 +111,7 @@ const handleDelete = async () => {
 
 const formatDate = (date) => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -123,12 +127,12 @@ onMounted(() => {
   <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 h-full flex flex-col">
     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4 shrink-0">
       <div class="min-w-0">
-        <h3 class="text-ui-h2 text-ui-ink">Project Documents</h3>
-        <p class="text-ui-cap text-ui-muted mt-0.5">Optional supporting documents (proposals, client files, etc.)</p>
+        <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.documents.title") }}</h3>
+        <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.documents.subtitle") }}</p>
       </div>
 
       <UiButton v-if="can('project-edit')" :icon="Upload" class="w-full sm:w-auto shrink-0" @click="openUploadModal">
-        Upload Document
+        {{ $t("projects.documents.upload") }}
       </UiButton>
     </div>
 
@@ -140,14 +144,14 @@ onMounted(() => {
           <Skeleton width="25%" height="12px" />
         </div>
       </div>
-      <span class="sr-only">Loading documents...</span>
+      <span class="sr-only">{{ $t("projects.documents.loading") }}</span>
     </div>
 
     <UiEmpty
       v-else-if="documents.length === 0"
       :icon="FileIcon"
-      title="No documents uploaded yet"
-      message="Documents are optional — upload proposals, client files, or other supporting files."
+      :title="$t('projects.documents.emptyTitle')"
+      :message="$t('projects.documents.emptyMessage')"
       class="bg-ui-subtle rounded-ui-control"
     />
 
@@ -178,8 +182,8 @@ onMounted(() => {
             target="_blank"
             rel="noopener"
             class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
-            title="Download / View"
-            aria-label="Download / View"
+            :title="$t('projects.documents.downloadView')"
+            :aria-label="$t('projects.documents.downloadView')"
           >
             <Download class="w-4 h-4" />
           </a>
@@ -188,8 +192,8 @@ onMounted(() => {
             type="button"
             @click="confirmDelete(document)"
             class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
-            title="Delete"
-            aria-label="Delete"
+            :title="$t('common.actions.delete')"
+            :aria-label="$t('common.actions.delete')"
           >
             <Trash2 class="w-4 h-4" />
           </button>
@@ -200,17 +204,17 @@ onMounted(() => {
     <!-- UPLOAD MODAL -->
     <UiModal
       :open="isUploadModalOpen"
-      title="Upload Document"
+      :title="$t('projects.documents.upload')"
       size="sm"
       @update:open="(value) => !value && closeUploadModal()"
     >
       <form id="project-document-upload-form" @submit.prevent="handleUpload" class="space-y-4">
-        <UiInput v-model="form.document_name" label="Document Name" required placeholder="e.g. Proposal Penawaran" />
-        <UiInput v-model="form.description" label="Description" :rows="3" placeholder="Optional notes about this document" />
+        <UiInput v-model="form.document_name" :label="$t('projects.documents.name')" required :placeholder="$t('projects.documents.namePlaceholder')" />
+        <UiInput v-model="form.description" :label="$t('common.labels.description')" :rows="3" :placeholder="$t('projects.documents.descriptionPlaceholder')" />
 
         <div>
           <label for="project-document-file" class="block text-ui-small font-medium text-ui-ink mb-1.5">
-            File<span class="text-ui-bad"> *</span>
+            {{ $t("projects.documents.file") }}<span class="text-ui-bad"> *</span>
           </label>
           <input
             id="project-document-file"
@@ -220,16 +224,16 @@ onMounted(() => {
             @change="handleFileChange"
             class="block w-full text-ui-small text-ui-text cursor-pointer file:mr-3 file:h-9 file:px-3.5 file:rounded-ui-control file:border file:border-solid file:border-ui-line-strong file:bg-ui-surface file:text-ui-small file:font-medium file:text-ui-ink hover:file:bg-ui-subtle"
           />
-          <p class="text-ui-cap text-ui-muted mt-1.5">PDF, Word, Excel, or image. Max 10MB.</p>
+          <p class="text-ui-cap text-ui-muted mt-1.5">{{ $t("projects.documents.fileHint") }}</p>
         </div>
 
         <p v-if="formError" class="text-ui-cap text-ui-bad">{{ formError }}</p>
       </form>
 
       <template #footer>
-        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="closeUploadModal">Cancel</UiButton>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="closeUploadModal">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton type="submit" form="project-document-upload-form" :icon="Upload" :loading="uploading" class="flex-1 sm:flex-none">
-          {{ uploading ? "Uploading..." : "Upload" }}
+          {{ uploading ? $t("projects.documents.uploading") : $t("common.actions.upload") }}
         </UiButton>
       </template>
     </UiModal>
@@ -238,9 +242,9 @@ onMounted(() => {
     <UiConfirmDialog
       v-model:open="isDeleteModalOpen"
       type="danger"
-      title="Delete Document?"
-      :message="`Are you sure you want to delete &quot;${documentToDelete?.document_name ?? ''}&quot;? This action cannot be undone.`"
-      :confirm-text="isDeleting ? 'Deleting...' : 'Yes, Delete'"
+      :title="$t('projects.documents.deleteTitle')"
+      :message="$t('projects.documents.deleteMessage', { name: documentToDelete?.document_name ?? '' })"
+      :confirm-text="isDeleting ? $t('common.actions.deleting') : $t('projects.documents.deleteConfirm')"
       :loading="isDeleting"
       @confirm="handleDelete"
     />

@@ -3,13 +3,14 @@
 // WhatsApp (a 7-day download link in a prefilled message). A Mac + iPad
 // bundle shares one certificate holding both keys.
 import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { Mail, MessageCircle, Send, ExternalLink, Info } from "lucide-vue-next";
 import { UiModal, UiSelect, UiInput, UiButton } from "@/components/ui";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { errorMessage } from "@/helpers/errorHelper";
 import { normalizeWhatsAppNumber } from "@/utils/proposalShareMessage";
-import { planLabel, certificateKeyOptions } from "@/components/admin/license-manager/licenseHelpers";
+import { normalizePlan, certificateKeyOptions } from "@/components/admin/license-manager/licenseHelpers";
 
 const props = defineProps({
   license: { type: Object, required: true },
@@ -21,6 +22,7 @@ const props = defineProps({
 });
 const emit = defineEmits(["close", "shared"]);
 
+const { t } = useI18n();
 const store = useLicenseManagerStore();
 const alertModal = useAlertModalStore();
 
@@ -40,16 +42,23 @@ const MAX_LISTED_KEYS = 10;
 const keyOptions = computed(() => certificateKeyOptions(props.license));
 const keyId = ref(keyOptions.value.some((k) => k.id === props.initialKeyId) ? props.initialKeyId : null);
 const selectedKey = computed(() => keyOptions.value.find((k) => k.id === keyId.value) || null);
-const keyOptionLabel = (k) => `${isBundle.value ? `${k.platform_label} ` : ""}Key ${k.position} of ${k.total} · ${k.key}${k.status === "in_use" ? " (in use)" : ""}`;
+const keyOptionLabel = (k) =>
+  `${isBundle.value ? `${k.platform_label} ` : ""}${t("licenses.share.keyOf", { position: k.position, total: k.total })} · ${k.key}${
+    k.status === "in_use" ? ` (${t("licenses.keyStatus.inUse").toLowerCase()})` : ""
+  }`;
 const contactName = computed(() => props.license.contact_name || props.license.licensee_name || "");
 
 const email = ref({ to: props.license.licensee_email || "", recipient_name: contactName.value, cc: "", message: "" });
 const wa = ref({ phone: props.license.phone || "", recipient_name: contactName.value, message: "" });
 let waEdited = false;
 
+// The message goes to the licensee, so it stays in English whatever the
+// interface language.
+const EN_PLAN_NAMES = { trial: "Trial", professional: "Professional", lifetime: "Lifetime", organization: "Organization" };
 const buildMessage = () => {
   const name = wa.value.recipient_name.trim();
-  const lines = [name ? `Dear ${name},` : "Dear Sir/Madam,", "", `Thank you for choosing ${product.value}. Here is your ${product.value} ${planLabel(props.license)} license.`, ""];
+  const plan = props.license.plan_label || EN_PLAN_NAMES[normalizePlan(props.license.plan)] || props.license.plan || "";
+  const lines = [name ? `Dear ${name},` : "Dear Sir/Madam,", "", `Thank you for choosing ${product.value}. Here is your ${product.value} ${plan} license.`, ""];
   if (selectedKey.value) {
     lines.push(`License key (key ${selectedKey.value.position} of ${selectedKey.value.total}): *${selectedKey.value.key}*`);
     lines.push(`This key works on one ${selectedKey.value.platform_label || "Mac"} only; once its device is released, it cannot be used again.`);
@@ -115,10 +124,10 @@ const sendEmail = async () => {
       key_id: keyId.value || undefined,
     });
     emit("shared", "email");
-    await alertModal.alert(`The certificate was sent to ${email.value.to.trim()}.`, { type: "success" });
+    await alertModal.alert(t("licenses.share.emailSent", { email: email.value.to.trim() }), { type: "success" });
     emit("close");
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "The email could not be sent."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("licenses.share.emailFailed")), { type: "danger" });
   } finally {
     busy.value = "";
   }
@@ -138,7 +147,7 @@ const openWhatsApp = async () => {
     emit("close");
   } catch (error) {
     win?.close();
-    await alertModal.alert(errorMessage(error, "The share link could not be created."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("licenses.share.linkFailed")), { type: "danger" });
   } finally {
     busy.value = "";
   }
@@ -149,7 +158,7 @@ const tabs = [
   { key: "whatsapp", label: "WhatsApp", icon: MessageCircle },
 ];
 const keySelectOptions = computed(() => [
-  { value: null, label: `Licensee · all keys (${props.license.licensee_name})` },
+  { value: null, label: t("licenses.share.allKeys", { name: props.license.licensee_name }) },
   ...keyOptions.value.map((k) => ({ value: k.id, label: keyOptionLabel(k) })),
 ]);
 </script>
@@ -157,7 +166,7 @@ const keySelectOptions = computed(() => [
 <template>
   <UiModal
     :open="true"
-    title="Share License Certificate"
+    :title="$t('licenses.share.title')"
     :description="`${license.licensee_name} · ${selectedKey ? selectedKey.key : keys.map((k) => k.key).join(' + ')}`"
     size="md"
     @close="emit('close')"
@@ -167,12 +176,12 @@ const keySelectOptions = computed(() => [
       <UiSelect
         v-if="keyOptions.length"
         v-model="keyId"
-        label="Certificate for"
+        :label="$t('licenses.share.certificateFor')"
         :options="keySelectOptions"
-        :hint="selectedKey ? 'A certificate with only this key, e.g. for the member who uses it.' : 'One certificate with every key, for the licensee.'"
+        :hint="selectedKey ? $t('licenses.share.hintOneKey') : $t('licenses.share.hintAllKeys')"
       />
 
-      <div class="flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="tablist" aria-label="Share by">
+      <div class="flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="tablist" :aria-label="$t('licenses.share.shareBy')">
         <button
           v-for="t in tabs"
           :key="t.key"
@@ -190,16 +199,19 @@ const keySelectOptions = computed(() => [
       <!-- Email: the PDF goes as an attachment -->
       <form v-if="tab === 'email'" id="share-email-form" class="space-y-4" @submit.prevent="sendEmail">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <UiInput v-model="email.to" label="To" required type="email" placeholder="name@example.com" autocomplete="email" />
-          <UiInput v-model="email.recipient_name" label="Recipient name" placeholder="e.g. Jane" />
+          <UiInput v-model="email.to" :label="$t('licenses.share.to')" required type="email" placeholder="name@example.com" autocomplete="email" />
+          <UiInput v-model="email.recipient_name" :label="$t('licenses.share.recipientName')" :placeholder="$t('licenses.share.recipientPlaceholder')" />
         </div>
-        <UiInput v-model="email.cc" label="CC" hint="Optional, comma separated" placeholder="finance@example.com" />
-        <UiInput v-model="email.message" label="Personal message" :rows="3" placeholder="Added above the license details" hint="Optional" />
+        <UiInput v-model="email.cc" label="CC" :hint="$t('licenses.share.ccHint')" placeholder="finance@example.com" />
+        <UiInput v-model="email.message" :label="$t('licenses.share.personalMessage')" :rows="3" :placeholder="$t('licenses.share.personalMessagePlaceholder')" :hint="$t('common.states.optional')" />
         <p class="text-ui-cap text-ui-muted flex items-start gap-1.5">
           <Info class="w-3.5 h-3.5 shrink-0 mt-px" />
           <span>
-            <template v-if="selectedKey">The certificate PDF of key {{ selectedKey.position }} is attached, with that key, plan and validity in the email.</template>
-            <template v-else>The certificate PDF is attached{{ isBundle ? " (one PDF with the Mac and iPad keys)" : "" }}, with the key{{ isBundle || perDevice ? "s" : "" }}, plan and validity in the email.</template> Replies go to the company inbox.
+            <template v-if="selectedKey">{{ $t("licenses.share.emailInfoOneKey", { n: selectedKey.position }) }}</template>
+            <template v-else-if="isBundle">{{ $t("licenses.share.emailInfoBundle") }}</template>
+            <template v-else-if="perDevice">{{ $t("licenses.share.emailInfoKeys") }}</template>
+            <template v-else>{{ $t("licenses.share.emailInfoKey") }}</template>
+            {{ $t("licenses.share.replies") }}
           </span>
         </p>
       </form>
@@ -207,11 +219,11 @@ const keySelectOptions = computed(() => [
       <!-- WhatsApp: a prefilled message with a 7-day download link -->
       <form v-else id="share-wa-form" class="space-y-4" @submit.prevent="openWhatsApp">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <UiInput v-model="wa.phone" label="WhatsApp number" type="tel" placeholder="0812 3456 7890" autocomplete="tel" />
-          <UiInput v-model="wa.recipient_name" label="Recipient name" placeholder="e.g. Jane" />
+          <UiInput v-model="wa.phone" :label="$t('licenses.share.whatsappNumber')" type="tel" placeholder="0812 3456 7890" autocomplete="tel" />
+          <UiInput v-model="wa.recipient_name" :label="$t('licenses.share.recipientName')" :placeholder="$t('licenses.share.recipientPlaceholder')" />
         </div>
         <div>
-          <label for="share-wa-message" class="block text-ui-small font-medium text-ui-ink mb-1.5">Message</label>
+          <label for="share-wa-message" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("licenses.share.message") }}</label>
           <textarea
             id="share-wa-message"
             v-model="wa.message"
@@ -220,15 +232,17 @@ const keySelectOptions = computed(() => [
             @input="waEdited = true"
           ></textarea>
           <p class="text-ui-cap text-ui-muted mt-1.5">
-            <span class="font-mono">{link}</span> becomes a download link to the certificate PDF, valid for 7 days.
+            <i18n-t keypath="licenses.share.linkHint" tag="span" scope="global">
+              <template #link><span class="font-mono">{link}</span></template>
+            </i18n-t>
           </p>
         </div>
-        <p v-if="!waNumber" class="text-ui-cap text-ui-warn">No number: WhatsApp opens so you can choose the chat.</p>
+        <p v-if="!waNumber" class="text-ui-cap text-ui-warn">{{ $t("licenses.share.noNumber") }}</p>
       </form>
     </div>
 
     <template #footer>
-      <UiButton variant="secondary" @click="emit('close')">Cancel</UiButton>
+      <UiButton variant="secondary" @click="emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
       <UiButton
         v-if="tab === 'email'"
         type="submit"
@@ -237,10 +251,10 @@ const keySelectOptions = computed(() => [
         :loading="busy === 'email'"
         :disabled="!emailValid"
       >
-        {{ busy === "email" ? "Sending..." : "Send Email" }}
+        {{ busy === "email" ? $t("licenses.share.sending") : $t("licenses.share.sendEmail") }}
       </UiButton>
       <UiButton v-else type="submit" form="share-wa-form" :icon="ExternalLink" :loading="busy === 'whatsapp'">
-        {{ busy === "whatsapp" ? "Preparing link..." : "Open WhatsApp" }}
+        {{ busy === "whatsapp" ? $t("licenses.share.preparingLink") : $t("licenses.share.openWhatsapp") }}
       </UiButton>
     </template>
   </UiModal>

@@ -4,7 +4,7 @@
 // transform/opacity animate; the blur is kept small because large blurs
 // are expensive to paint.
 withDefaults(defineProps<{ show: boolean; text?: string }>(), {
-  text: "Please wait a moment",
+  text: "", // default: common.states.pleaseWait
 });
 </script>
 
@@ -26,7 +26,7 @@ withDefaults(defineProps<{ show: boolean; text?: string }>(), {
           </div>
         </div>
         <div class="text-center">
-          <p class="text-ui-small font-medium text-ui-ink">{{ text }}</p>
+          <p class="text-ui-small font-medium text-ui-ink">{{ text || $t("common.states.pleaseWait") }}</p>
           <p class="text-ui-cap text-ui-muted mt-0.5">PT Jendela Cakra Digital</p>
         </div>
       </div>

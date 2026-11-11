@@ -43,7 +43,7 @@ const priorityTone = computed(() => PRIORITY_TONES[props.task.priority?.toLowerC
 
     <!-- Labels/Tags Row -->
     <div class="flex items-center gap-1.5 mt-2.5 flex-wrap">
-      <UiBadge :tone="priorityTone" class="capitalize">{{ task.priority }}</UiBadge>
+      <UiBadge :tone="priorityTone" class="capitalize">{{ PRIORITY_TONES[task.priority?.toLowerCase()] ? $t(`projects.priority.${task.priority.toLowerCase()}`) : task.priority }}</UiBadge>
       <span
         v-if="task.type"
         class="inline-flex items-center gap-1.5 h-[22px] px-2 rounded-md bg-ui-subtle text-ui-cap font-medium text-ui-text max-w-[140px]"
@@ -60,13 +60,13 @@ const priorityTone = computed(() => PRIORITY_TONES[props.task.priority?.toLowerC
       <div class="flex items-center gap-1.5 min-w-0">
         <Avatar
           :src="task.assignee?.user?.profile_photo"
-          :alt="task.assignee?.user?.name || 'Unassigned'"
+          :alt="task.assignee?.user?.name || $t('projects.tasks.unassigned')"
           size="w-6 h-6"
           icon-size="w-3 h-3"
           rounded="rounded-full"
         />
         <span class="text-ui-cap text-ui-muted truncate">
-          {{ task.assignee?.user?.name || "Unassigned" }}
+          {{ task.assignee?.user?.name || $t("projects.tasks.unassigned") }}
         </span>
       </div>
 

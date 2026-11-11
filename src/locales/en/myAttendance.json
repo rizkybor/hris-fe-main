@@ -1,0 +1,96 @@
+{
+  "title": "My Attendance",
+  "subtitle": "Track your daily presence and manage leave requests efficiently",
+  "requestLeave": "Request Leave",
+  "status": {
+    "present": "Present",
+    "absent": "Absent",
+    "sick_leave": "Sick Leave",
+    "weekend": "Weekend",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "leaveTypes": {
+    "annual_leave": "Annual Leave",
+    "sick_leave": "Sick Leave",
+    "personal_leave": "Personal Leave",
+    "emergency_leave": "Emergency Leave",
+    "maternity_leave": "Maternity Leave",
+    "paternity_leave": "Paternity Leave",
+    "compassionate_leave": "Compassionate Leave"
+  },
+  "stats": {
+    "thisMonth": "This Month",
+    "daysPresent": "Days present",
+    "leaveBalance": "Leave Balance",
+    "ofDays": "of {n} day | of {n} days",
+    "daysRemaining": "Days remaining",
+    "pendingRequests": "Pending Requests",
+    "awaitingApproval": "Awaiting approval",
+    "averageHours": "Average Hours",
+    "hours": "{n}h",
+    "dailyAverage": "Daily average"
+  },
+  "recent": {
+    "title": "Recent Attendance",
+    "subtitle": "Last 7 days",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "totalHours": "Total Hours",
+    "noData": "No attendance data",
+    "working": "Currently Working",
+    "empty": "No attendance records found"
+  },
+  "balance": {
+    "title": "Annual leave remaining {year}"
+  },
+  "requests": {
+    "title": "My Leave Requests",
+    "subtitle": "Recent requests",
+    "requested": "Requested {date}",
+    "empty": "No leave requests found"
+  },
+  "form": {
+    "title": "Request New Leave",
+    "description": "Submit a leave request for approval",
+    "leaveType": "Leave Type",
+    "leaveTypePlaceholder": "Select leave type",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "halfDay": "Half-day leave",
+    "totalDays": "Total Days",
+    "excludingWeekends": "Excluding weekends",
+    "reason": "Reason for Leave",
+    "reasonPlaceholder": "Please provide a detailed reason for your leave request...",
+    "emergencyContact": "Emergency Contact (Optional)",
+    "emergencyContactPlaceholder": "Phone number for emergency contact",
+    "attachment": "Attachment (doctor's note, etc.)",
+    "attachmentRequiredHint": "Required for sick leave longer than 1 day.",
+    "attachmentHint": "Format: JPG, PNG or PDF, max. 5MB.",
+    "submit": "Submit Request",
+    "errors": {
+      "startTomorrow": "Start date must be at least tomorrow.",
+      "endAfterStart": "End date must be after start date.",
+      "attachmentRequired": "A doctor's note must be attached for sick leave longer than 1 day.",
+      "submitFailed": "Failed to submit leave request. Please try again."
+    }
+  },
+  "details": {
+    "title": "Leave Request Details",
+    "description": "Complete information about this leave request",
+    "totalDuration": "Total Duration",
+    "halfDay": "Half Day",
+    "workingDays": "Working days (excluding weekends)",
+    "submitted": "Request Submitted",
+    "attachment": "Attachment",
+    "viewAttachment": "View Attachment"
+  },
+  "success": {
+    "title": "Request Submitted!",
+    "message": "Your leave request has been successfully submitted",
+    "duration": "Duration",
+    "notice": "You will receive a notification once your request has been reviewed by your manager.",
+    "gotIt": "Got it!"
+  }
+}

@@ -1,12 +1,17 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { Lightbulb, Check, Zap, Users, ChevronRight } from "lucide-vue-next";
 
-const TIPS = [
-  { title: "Define Clear Goals", text: "Set specific, measurable objectives for project success." },
-  { title: "Choose Right Leader", text: "Select someone with project management skills and domain expertise." },
-  { title: "Set Realistic Timeline", text: "Plan achievable deadlines with buffer time for unexpected issues." },
-  { title: "Assign Right Teams", text: "Match team skills with project requirements and workload." },
-];
+const { t } = useI18n();
+
+const TIPS = computed(() =>
+  ["goals", "leader", "timeline", "teams"].map((key) => ({
+    key,
+    title: t(`projects.sidebar.tips.${key}.title`),
+    text: t(`projects.sidebar.tips.${key}.text`),
+  }))
+);
 
 const browseTeams = () => {
   document
@@ -25,13 +30,13 @@ const browseTeams = () => {
           <Lightbulb class="w-4 h-4" />
         </span>
         <div class="min-w-0">
-          <h3 class="text-ui-h3 text-ui-ink">Project Creation Tips</h3>
-          <p class="text-ui-cap text-ui-muted mt-0.5">Best practices for setting up projects</p>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("projects.sidebar.tipsTitle") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.sidebar.tipsSubtitle") }}</p>
         </div>
       </div>
 
       <ul class="space-y-3.5">
-        <li v-for="tip in TIPS" :key="tip.title" class="flex items-start gap-2.5">
+        <li v-for="tip in TIPS" :key="tip.key" class="flex items-start gap-2.5">
           <Check class="w-4 h-4 text-ui-ok shrink-0 mt-0.5" />
           <div class="min-w-0">
             <p class="text-ui-small font-medium text-ui-ink">{{ tip.title }}</p>
@@ -48,8 +53,8 @@ const browseTeams = () => {
           <Zap class="w-4 h-4" />
         </span>
         <div class="min-w-0">
-          <h3 class="text-ui-h3 text-ui-ink">Quick Actions</h3>
-          <p class="text-ui-cap text-ui-muted mt-0.5">Common project setup tasks</p>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("projects.sidebar.quickActions") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.sidebar.quickActionsSubtitle") }}</p>
         </div>
       </div>
 
@@ -60,8 +65,8 @@ const browseTeams = () => {
       >
         <Users class="w-4 h-4 text-ui-muted shrink-0" />
         <div class="flex-1 min-w-0">
-          <p class="text-ui-small font-medium text-ui-ink">Browse Teams</p>
-          <p class="text-ui-cap text-ui-muted">Jump to Team Assignment below</p>
+          <p class="text-ui-small font-medium text-ui-ink">{{ $t("projects.sidebar.browseTeams") }}</p>
+          <p class="text-ui-cap text-ui-muted">{{ $t("projects.sidebar.browseTeamsHint") }}</p>
         </div>
         <ChevronRight class="w-4 h-4 text-ui-faint shrink-0" />
       </button>

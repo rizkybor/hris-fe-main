@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { ArrowLeft, FileX } from "lucide-vue-next";
 import { UiButton, UiEmpty } from "@/components/ui";
 import Alert from "@/components/common/Alert.vue";
@@ -18,6 +19,7 @@ import {
   planLabel,
 } from "@/components/admin/license-manager/licenseHelpers";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useLicenseManagerStore();
@@ -44,7 +46,7 @@ onProductReady(
       form.value = licenseToForm(license.value);
     } catch (err) {
       license.value = null;
-      error.value = errorMessage(err, "License not found.");
+      error.value = errorMessage(err, t("licenses.edit.notFound"));
     } finally {
       loadingPage.value = false;
     }
@@ -57,7 +59,7 @@ const submit = async () => {
   success.value = "";
   errors.value = validateLicenseForm(form.value);
   if (Object.keys(errors.value).length) {
-    error.value = "Please fix the highlighted fields.";
+    error.value = t("licenses.fixFields");
     return;
   }
 
@@ -65,12 +67,11 @@ const submit = async () => {
   const planChanged = form.value.plan !== license.value.plan;
   if (planChanged) {
     const devices = license.value.devices_used ?? 0;
+    const params = { from: planLabel(license.value), to: planLabel({ plan: form.value.plan }), n: devices };
+    const keys = license.value.key_mode === "per_device" ? "Keys" : "Key";
     const ok = await alertModal.confirm(
-      `Change the plan from ${planLabel(license.value)} to ${planLabel({ plan: form.value.plan })}? A new license key is generated; ` +
-        `the current key${license.value.key_mode === "per_device" ? "s" : ""} stop working` +
-        (devices ? ` and ${devices} device(s) are signed out and must activate again with the new key` : "") +
-        ". Send the licensee the new certificate.",
-      { title: "New License Key", type: "warning", confirmText: "Change plan" }
+      devices ? t(`licenses.edit.planConfirm${keys}Devices`, params, devices) : t(`licenses.edit.planConfirm${keys}`, params),
+      { title: t("licenses.edit.newKeyTitle"), type: "warning", confirmText: t("licenses.edit.changePlan") }
     );
     if (!ok) return;
   }
@@ -78,11 +79,11 @@ const submit = async () => {
   saving.value = true;
   try {
     await store.updateLicense(license.value.id, form.value);
-    success.value = planChanged ? "Plan changed. A new license key was generated." : "License updated successfully.";
+    success.value = planChanged ? t("licenses.edit.planChanged") : t("licenses.edit.updated");
     setTimeout(goToDetail, 1000);
   } catch (err) {
     errors.value = validationErrors(err);
-    error.value = errorMessage(err, "Failed to update license.");
+    error.value = errorMessage(err, t("licenses.edit.failed"));
   } finally {
     saving.value = false;
   }
@@ -110,11 +111,11 @@ const submit = async () => {
         :errors="errors"
         :is-edit="true"
         :product="product"
-        :title="`Edit ${productName} License`"
-        subtitle="Changing the plan generates a new license key"
+        :title="$t('licenses.edit.title', { product: productName })"
+        :subtitle="$t('licenses.edit.subtitle')"
         :license-key="license.key"
         :original-plan="license.plan"
-        submit-label="Save Changes"
+        :submit-label="$t('common.actions.saveChanges')"
         @submit="submit"
         @cancel="goToDetail"
       >
@@ -128,8 +129,8 @@ const submit = async () => {
         </template>
       </LicenseForm>
 
-      <UiEmpty v-else :icon="FileX" title="License not available" :message="error" class="bg-ui-surface border border-ui-line rounded-ui-card">
-        <UiButton variant="secondary" :icon="ArrowLeft" @click="goToDetail">Back</UiButton>
+      <UiEmpty v-else :icon="FileX" :title="$t('licenses.edit.unavailable')" :message="error" class="bg-ui-surface border border-ui-line rounded-ui-card">
+        <UiButton variant="secondary" :icon="ArrowLeft" @click="goToDetail">{{ $t("common.actions.back") }}</UiButton>
       </UiEmpty>
     </LicenseProductGate>
   </div>

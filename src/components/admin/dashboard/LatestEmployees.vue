@@ -33,9 +33,9 @@ const goToEmployeeDetail = (id: number) => {
 </script>
 
 <template>
-  <DashboardWidgetCard title="Latest Employees" :to="can('employee-menu') ? { name: 'admin.employees' } : null" flush>
+  <DashboardWidgetCard :title="$t('dashboard.widgets.latestEmployees')" :to="can('employee-menu') ? { name: 'admin.employees' } : null" flush>
     <SkeletonList v-if="loading" :rows="5" class="p-3" />
-    <UiEmpty v-else-if="!employees || employees.length === 0" title="No employees found" compact />
+    <UiEmpty v-else-if="!employees || employees.length === 0" :title="$t('dashboard.latestEmployees.empty')" compact />
     <ul v-else class="divide-y divide-ui-line">
       <li v-for="employee in employees" :key="employee.id">
         <button
@@ -46,10 +46,10 @@ const goToEmployeeDetail = (id: number) => {
           <Avatar :src="employee.user?.profile_photo" :alt="employee.user?.name" size="w-9 h-9" icon-size="w-4 h-4" />
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 min-w-0">
-              <p class="text-ui-body font-medium text-ui-ink truncate">{{ employee.user?.name || "Unknown" }}</p>
+              <p class="text-ui-body font-medium text-ui-ink truncate">{{ employee.user?.name || $t("dashboard.latestEmployees.unknown") }}</p>
               <UiBadge v-if="employee.job_information?.skill_level" tone="outline" class="capitalize shrink-0">{{ employee.job_information.skill_level }}</UiBadge>
             </div>
-            <p class="text-ui-cap text-ui-muted mt-0.5 truncate">{{ employee.job_information?.job_title || "N/A" }}</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5 truncate">{{ employee.job_information?.job_title || $t("dashboard.latestEmployees.noJobTitle") }}</p>
           </div>
           <span class="text-ui-cap text-ui-faint shrink-0">{{ getTimeAgo(employee.created_at) }}</span>
         </button>

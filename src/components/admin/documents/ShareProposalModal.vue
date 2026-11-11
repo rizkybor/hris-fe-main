@@ -1,5 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { Link2, Copy, Check, Mail, MessageCircle, Eye, Ban, ExternalLink } from "lucide-vue-next";
 import { UiModal, UiButton, UiBadge, UiInput, UiSelect, UiSpinner } from "@/components/ui";
 import { useProposalStore } from "@/stores/proposal";
@@ -12,6 +14,7 @@ const props = defineProps({
 });
 const emit = defineEmits(["close", "updated"]);
 
+const { t } = useI18n();
 const store = useProposalStore();
 const alertModal = useAlertModalStore();
 
@@ -21,15 +24,16 @@ const busy = ref("");
 const copied = ref(false);
 const tab = ref("email");
 
-const EXPIRY_OPTIONS = [
-  { value: "", label: "Tanpa batas waktu" },
-  { value: 7, label: "7 hari" },
-  { value: 14, label: "14 hari" },
-  { value: 30, label: "30 hari" },
-];
+const EXPIRY_OPTIONS = computed(() => [
+  { value: "", label: t("documents.proposal.share.noExpiry") },
+  ...[7, 14, 30].map((n) => ({ value: n, label: t("documents.proposal.share.days", { n }) })),
+]);
 const expiry = ref(30);
 // Presentation only: the "create link" select reads "Berlaku 30 hari".
-const EXPIRY_OPTIONS_LONG = EXPIRY_OPTIONS.map((o) => ({ value: o.value, label: `Berlaku ${o.label.toLowerCase()}` }));
+const EXPIRY_OPTIONS_LONG = computed(() => [
+  { value: "", label: t("documents.proposal.share.validNoExpiry") },
+  ...[7, 14, 30].map((n) => ({ value: n, label: t("documents.proposal.share.validDays", { n }) })),
+]);
 const tabClass = (active) => [
   "ui-press inline-flex items-center gap-1.5 h-10 px-3 -mb-px border-b-2 text-ui-small font-medium whitespace-nowrap transition-colors focus:outline-none focus-visible:shadow-ui-focus",
   active ? "border-ui-accent text-ui-ink" : "border-transparent text-ui-muted hover:text-ui-ink",
@@ -38,9 +42,9 @@ const tabClass = (active) => [
 const share = computed(() => proposal.value?.share ?? { active: false });
 
 const formatDateTime = (value) =>
-  value ? new Date(value).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-";
+  value ? new Date(value).toLocaleString(localeTag(), { dateStyle: "medium", timeStyle: "short" }) : "-";
 const formatDate = (value) =>
-  value ? new Date(value).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : null;
+  value ? new Date(value).toLocaleDateString(localeTag(), { day: "numeric", month: "long", year: "numeric" }) : null;
 
 // ----- Email / WhatsApp forms, prefilled from the client record -----
 const email = ref({ recipient_name: "", to: "", cc: "", message: "" });
@@ -68,7 +72,7 @@ const load = async () => {
     waMessageEdited = false;
     refreshWaMessage();
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Proposal tidak bisa dimuat."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.share.errors.load")), { type: "danger" });
     emit("close");
   } finally {
     loading.value = false;
@@ -90,7 +94,7 @@ const createLink = async () => {
   try {
     applyResult(await store.shareProposal(props.proposalId, expiry.value || null));
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Link gagal dibuat."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.share.errors.createLink")), { type: "danger" });
   } finally {
     busy.value = "";
   }
@@ -98,15 +102,15 @@ const createLink = async () => {
 
 const disableLink = async () => {
   const ok = await alertModal.confirm(
-    "Nonaktifkan link ini? Siapa pun yang sudah menerima link tidak akan bisa membukanya lagi. Membuat link lagi nanti akan menghasilkan alamat baru.",
-    { type: "danger", confirmText: "Nonaktifkan" }
+    t("documents.proposal.share.disableConfirm"),
+    { type: "danger", confirmText: t("documents.proposal.share.disable") }
   );
   if (!ok) return;
   busy.value = "disable";
   try {
     applyResult(await store.unshareProposal(props.proposalId));
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Link gagal dinonaktifkan."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.share.errors.disable")), { type: "danger" });
   } finally {
     busy.value = "";
   }
@@ -140,9 +144,9 @@ const sendEmail = async () => {
       ...(share.value.active ? {} : { expires_in_days: expiry.value || null }),
     });
     applyResult(updated);
-    await alertModal.alert(`Proposal terkirim ke ${email.value.to.trim()}.`, { type: "success" });
+    await alertModal.alert(t("documents.proposal.share.emailSent", { to: email.value.to.trim() }), { type: "success" });
   } catch (error) {
-    await alertModal.alert(errorMessage(error, "Email gagal dikirim."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.share.errors.email")), { type: "danger" });
   } finally {
     busy.value = "";
   }
@@ -164,7 +168,7 @@ const openWhatsApp = async () => {
     else window.open(url, "_blank");
   } catch (error) {
     tabRef?.close();
-    await alertModal.alert(errorMessage(error, "Link gagal dibuat."), { type: "danger" });
+    await alertModal.alert(errorMessage(error, t("documents.proposal.share.errors.createLink")), { type: "danger" });
   } finally {
     busy.value = "";
   }
@@ -177,10 +181,10 @@ const resetWaMessage = () => {
 </script>
 
 <template>
-  <UiModal :open="true" size="lg" title="Bagikan Proposal" @close="emit('close')">
+  <UiModal :open="true" size="lg" :title="$t('documents.proposal.share.title')" @close="emit('close')">
     <template #header>
       <div class="min-w-0 flex-1">
-        <h2 class="text-ui-h2 text-ui-ink">Bagikan Proposal</h2>
+        <h2 class="text-ui-h2 text-ui-ink">{{ $t("documents.proposal.share.title") }}</h2>
         <p class="text-ui-small text-ui-muted truncate mt-0.5">{{ proposal?.title }} · {{ proposal?.client_name }}</p>
       </div>
     </template>
@@ -192,9 +196,9 @@ const resetWaMessage = () => {
       <section class="border border-ui-line rounded-ui-card p-4">
         <div class="flex items-center gap-2 mb-3">
           <Link2 class="w-4 h-4 text-ui-faint" />
-          <p class="text-ui-h3 text-ui-ink">Link Proposal</p>
+          <p class="text-ui-h3 text-ui-ink">{{ $t("documents.proposal.share.linkTitle") }}</p>
           <UiBadge class="ml-auto" :tone="share.active ? 'ok' : 'neutral'" dot>
-            {{ share.active ? "Aktif" : "Belum dibagikan" }}
+            {{ share.active ? $t("common.labels.active") : $t("documents.proposal.share.notShared") }}
           </UiBadge>
         </div>
 
@@ -209,30 +213,30 @@ const resetWaMessage = () => {
               @focusin="$event.target.select()"
             />
             <UiButton variant="secondary" :icon="copied ? Check : Copy" @click="copyLink">
-              <span class="hidden sm:inline">{{ copied ? "Tersalin" : "Salin" }}</span>
+              <span class="hidden sm:inline">{{ copied ? $t("common.actions.copied") : $t("common.actions.copy") }}</span>
             </UiButton>
-            <UiButton variant="secondary" :icon="ExternalLink" :href="share.url" target="_blank" rel="noopener" title="Buka link" aria-label="Buka link" />
+            <UiButton variant="secondary" :icon="ExternalLink" :href="share.url" target="_blank" rel="noopener" :title="$t('documents.proposal.share.openLink')" :aria-label="$t('documents.proposal.share.openLink')" />
           </div>
           <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5 text-ui-cap text-ui-muted">
-            <span>Berlaku: <strong class="font-medium text-ui-ink">{{ share.expires_at ? `hingga ${formatDate(share.expires_at)}` : "tanpa batas waktu" }}</strong></span>
+            <span>{{ $t("documents.proposal.share.validLabel") }} <strong class="font-medium text-ui-ink">{{ share.expires_at ? $t("documents.proposal.share.until", { date: formatDate(share.expires_at) }) : $t("documents.proposal.share.noExpiryLower") }}</strong></span>
             <span class="inline-flex items-center gap-1 tabular-nums">
-              <Eye class="w-3.5 h-3.5" /> Dilihat {{ share.view_count }}×<template v-if="share.last_viewed_at"> · terakhir {{ formatDateTime(share.last_viewed_at) }}</template>
+              <Eye class="w-3.5 h-3.5" /> {{ $t("documents.proposal.share.viewed", { n: share.view_count }) }}<template v-if="share.last_viewed_at"> · {{ $t("documents.proposal.share.lastViewed", { at: formatDateTime(share.last_viewed_at) }) }}</template>
             </span>
           </div>
           <div class="flex flex-wrap items-center gap-2 mt-3">
             <UiSelect v-model="expiry" :options="EXPIRY_OPTIONS" class="w-full sm:w-48" />
-            <UiButton variant="secondary" :loading="busy === 'link'" @click="createLink">Perbarui masa berlaku</UiButton>
-            <UiButton variant="danger" :icon="Ban" :loading="busy === 'disable'" class="sm:ml-auto" @click="disableLink">Nonaktifkan</UiButton>
+            <UiButton variant="secondary" :loading="busy === 'link'" @click="createLink">{{ $t("documents.proposal.share.renew") }}</UiButton>
+            <UiButton variant="danger" :icon="Ban" :loading="busy === 'disable'" class="sm:ml-auto" @click="disableLink">{{ $t("documents.proposal.share.disable") }}</UiButton>
           </div>
         </template>
 
         <template v-else>
           <p class="text-ui-small text-ui-muted mb-3">
-            Buat link agar klien bisa membuka dan mengunduh PDF proposal tanpa login. Link selalu menampilkan versi terakhir yang disimpan.
+            {{ $t("documents.proposal.share.linkIntro") }}
           </p>
           <div class="flex flex-col sm:flex-row sm:items-center gap-2">
             <UiSelect v-model="expiry" :options="EXPIRY_OPTIONS_LONG" class="w-full sm:w-56" />
-            <UiButton :icon="Link2" :loading="busy === 'link'" @click="createLink">Buat Link</UiButton>
+            <UiButton :icon="Link2" :loading="busy === 'link'" @click="createLink">{{ $t("documents.proposal.share.createLink") }}</UiButton>
           </div>
         </template>
       </section>
@@ -241,54 +245,54 @@ const resetWaMessage = () => {
       <section>
         <div class="flex gap-1 border-b border-ui-line mb-4 overflow-x-auto [scrollbar-width:none]" role="tablist">
           <button type="button" role="tab" :aria-selected="tab === 'email'" :class="tabClass(tab === 'email')" @click="tab = 'email'">
-            <Mail class="w-4 h-4" /> Kirim via Email
+            <Mail class="w-4 h-4" /> {{ $t("documents.proposal.share.viaEmail") }}
           </button>
           <button type="button" role="tab" :aria-selected="tab === 'wa'" :class="tabClass(tab === 'wa')" @click="tab = 'wa'">
-            <MessageCircle class="w-4 h-4" /> Kirim via WhatsApp
+            <MessageCircle class="w-4 h-4" /> {{ $t("documents.proposal.share.viaWhatsApp") }}
           </button>
         </div>
 
         <form v-if="tab === 'email'" class="space-y-4" @submit.prevent="sendEmail">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UiInput v-model="email.recipient_name" label="Nama Penerima" placeholder="cth. Bapak Hendri" />
-            <UiInput v-model="email.to" type="email" required label="Email Penerima" placeholder="nama@perusahaan.com" />
+            <UiInput v-model="email.recipient_name" :label="$t('documents.proposal.share.recipientName')" :placeholder="$t('documents.proposal.create.recipientPlaceholder')" />
+            <UiInput v-model="email.to" type="email" required :label="$t('documents.proposal.share.recipientEmail')" :placeholder="$t('documents.proposal.share.emailPlaceholder')" />
           </div>
-          <UiInput v-model="email.cc" label="CC (opsional)" placeholder="pisahkan dengan koma, maks. 5 alamat" />
+          <UiInput v-model="email.cc" :label="$t('documents.proposal.share.cc')" :placeholder="$t('documents.proposal.share.ccPlaceholder')" />
           <div class="min-w-0">
-            <label for="proposal-share-email-message" class="block text-ui-small font-medium text-ui-ink mb-1.5">Pesan tambahan (opsional)</label>
+            <label for="proposal-share-email-message" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.proposal.share.extraMessage") }}</label>
             <textarea
               id="proposal-share-email-message"
               v-model="email.message"
               rows="3"
               maxlength="2000"
               class="w-full px-3 py-2.5 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control resize-y focus:outline-none focus:border-ui-accent focus:shadow-ui-focus transition-shadow"
-              placeholder="Ditampilkan di dalam email, di bawah salam pembuka."
+              :placeholder="$t('documents.proposal.share.extraMessagePlaceholder')"
             ></textarea>
           </div>
           <p class="text-ui-cap text-ui-muted">
-            Email dikirim atas nama PT Jendela Cakra Digital dan balasan klien masuk ke contact@jcdigital.co.id.
-            <template v-if="!share.active"> Link proposal dibuat otomatis.</template>
-            <template v-if="proposal?.status === 'draft'"> Status proposal akan berubah menjadi Terkirim.</template>
+            {{ $t("documents.proposal.share.emailNote", { email: "contact@jcdigital.co.id" }) }}
+            <template v-if="!share.active"> {{ $t("documents.proposal.share.emailAutoLink") }}</template>
+            <template v-if="proposal?.status === 'draft'"> {{ $t("documents.proposal.share.emailStatusNote") }}</template>
           </p>
           <div class="flex justify-end">
-            <UiButton type="submit" :icon="Mail" :loading="busy === 'email'" :disabled="!email.to.trim()" class="w-full sm:w-auto">Kirim Email</UiButton>
+            <UiButton type="submit" :icon="Mail" :loading="busy === 'email'" :disabled="!email.to.trim()" class="w-full sm:w-auto">{{ $t("documents.proposal.share.sendEmail") }}</UiButton>
           </div>
         </form>
 
         <form v-else class="space-y-4" @submit.prevent="openWhatsApp">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UiInput v-model="wa.recipient_name" label="Nama Penerima" placeholder="cth. Bapak Hendri" />
+            <UiInput v-model="wa.recipient_name" :label="$t('documents.proposal.share.recipientName')" :placeholder="$t('documents.proposal.create.recipientPlaceholder')" />
             <UiInput
               v-model="wa.phone"
-              label="Nomor WhatsApp"
-              placeholder="cth. 0812 3456 7890"
-              hint="Kosongkan untuk memilih kontak sendiri di WhatsApp."
+              :label="$t('documents.proposal.share.waNumber')"
+              :placeholder="$t('documents.proposal.share.waPlaceholder')"
+              :hint="$t('documents.proposal.share.waHint')"
             />
           </div>
           <div class="min-w-0">
             <div class="flex items-center justify-between mb-1.5">
-              <label for="proposal-share-wa-message" class="block text-ui-small font-medium text-ui-ink">Pesan</label>
-              <button type="button" class="text-ui-cap text-ui-accent hover:underline" @click="resetWaMessage">Kembalikan ke template</button>
+              <label for="proposal-share-wa-message" class="block text-ui-small font-medium text-ui-ink">{{ $t("documents.proposal.share.message") }}</label>
+              <button type="button" class="text-ui-cap text-ui-accent hover:underline" @click="resetWaMessage">{{ $t("documents.proposal.share.resetTemplate") }}</button>
             </div>
             <textarea
               id="proposal-share-wa-message"
@@ -297,10 +301,10 @@ const resetWaMessage = () => {
               class="w-full px-3 py-2.5 bg-ui-surface text-ui-small text-ui-ink border border-ui-line-strong rounded-ui-control resize-y focus:outline-none focus:border-ui-accent focus:shadow-ui-focus transition-shadow"
               @input="waMessageEdited = true"
             ></textarea>
-            <p v-if="!share.active" class="text-ui-cap text-ui-muted mt-1.5">{link} diganti otomatis dengan link proposal saat dikirim.</p>
+            <p v-if="!share.active" class="text-ui-cap text-ui-muted mt-1.5">{{ $t("documents.proposal.share.linkPlaceholderNote", { token: "{link}" }) }}</p>
           </div>
           <div class="flex justify-end">
-            <UiButton type="submit" :icon="MessageCircle" :loading="busy === 'wa'" :disabled="!wa.message.trim()" class="w-full sm:w-auto">Buka WhatsApp</UiButton>
+            <UiButton type="submit" :icon="MessageCircle" :loading="busy === 'wa'" :disabled="!wa.message.trim()" class="w-full sm:w-auto">{{ $t("documents.proposal.share.openWhatsApp") }}</UiButton>
           </div>
         </form>
       </section>

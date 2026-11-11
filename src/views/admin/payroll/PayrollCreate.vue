@@ -12,7 +12,11 @@ import {
   Check,
 } from "lucide-vue-next";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { UiAlert, UiButton, UiInput, UiPageHeader } from "@/components/ui";
+
+const { t } = useI18n();
 
 const router = useRouter();
 const route = useRoute();
@@ -33,11 +37,11 @@ const formatMonth = (month) => {
   if (!month) return "-";
   const [year, monthNum] = month.split("-");
   const date = new Date(year, monthNum - 1);
-  return date.toLocaleDateString("id-ID", { year: "numeric", month: "long" });
+  return date.toLocaleDateString(localeTag(), { year: "numeric", month: "long" });
 };
 
 const handleSubmit = async () => {
-  const label = payrollType.value === "thr" ? "THR" : "Payroll";
+  const label = payrollType.value === "thr" ? "THR" : t("payroll.common.payroll");
   const period = formatMonth(form.value.salary_month);
 
   try {
@@ -48,22 +52,22 @@ const handleSubmit = async () => {
     if (check.exists) {
       if (!check.can_regenerate) {
         await alertModal.alert(
-          `A ${label} for ${period} already exists (${check.employee_count ?? 0} employees, status: ${check.status}). Only Superadmin, Manager, or Finance can regenerate it.`,
+          t("payroll.create.existsNoPermission", { label, period, n: check.employee_count ?? 0, status: check.status }),
           { type: "warning" }
         );
         return;
       }
 
       const ok = await alertModal.confirm(
-        `A ${label} for ${period} already exists (${check.employee_count ?? 0} employees, status: ${check.status}). Generating again will REPLACE all its employee details with freshly computed ones. Continue?`,
-        { type: "warning", confirmText: "Regenerate" }
+        t("payroll.create.existsConfirm", { label, period, n: check.employee_count ?? 0, status: check.status }),
+        { type: "warning", confirmText: t("payroll.common.regenerate") }
       );
       if (!ok) return;
       regenerate = true;
     } else {
       const ok = await alertModal.confirm(
-        `Generate a new ${label} for ${period}? This is a brand-new period with no existing data.`,
-        { type: "info", confirmText: "Generate" }
+        t("payroll.create.newConfirm", { label, period }),
+        { type: "info", confirmText: t("payroll.create.generate") }
       );
       if (!ok) return;
     }
@@ -81,20 +85,20 @@ const handleSubmit = async () => {
 };
 
 // Presentation only: the two run types as option cards.
-const typeOptions = [
-  { value: "monthly", label: "Monthly Payroll", icon: Calendar },
-  { value: "thr", label: "THR (Tunjangan Hari Raya)", icon: Gift },
-];
+const typeOptions = computed(() => [
+  { value: "monthly", label: t("payroll.common.monthlyPayroll"), icon: Calendar },
+  { value: "thr", label: t("payroll.create.thrFull"), icon: Gift },
+]);
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <UiPageHeader
-      :title="payrollType === 'thr' ? 'Generate THR' : 'Generate Payroll'"
+      :title="payrollType === 'thr' ? $t('payroll.common.generateThr') : $t('payroll.common.generatePayroll')"
       :subtitle="
         payrollType === 'thr'
-          ? 'Select the month to generate THR (Tunjangan Hari Raya) for eligible employees'
-          : 'Select the salary month to generate payroll for all active employees'
+          ? $t('payroll.create.subtitleThr')
+          : $t('payroll.create.subtitle')
       "
     />
 
@@ -105,13 +109,13 @@ const typeOptions = [
         @submit.prevent="handleSubmit"
       >
         <div class="pb-4 border-b border-ui-line">
-          <h2 class="text-ui-h2 text-ui-ink">Payroll Period</h2>
-          <p class="text-ui-small text-ui-muted mt-0.5">Choose the run type and the salary month.</p>
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t("payroll.create.periodTitle") }}</h2>
+          <p class="text-ui-small text-ui-muted mt-0.5">{{ $t("payroll.create.periodSubtitle") }}</p>
         </div>
 
         <fieldset>
           <legend class="block text-ui-small font-medium text-ui-ink mb-1.5">
-            Payroll Type<span class="text-ui-bad"> *</span>
+            {{ $t("payroll.create.type") }}<span class="text-ui-bad"> *</span>
           </legend>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="radiogroup">
             <button
@@ -147,36 +151,34 @@ const typeOptions = [
         </fieldset>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UiInput v-model="form.salary_month" type="month" label="Salary Month" :icon="Calendar" required />
+          <UiInput v-model="form.salary_month" type="month" :label="$t('payroll.create.salaryMonth')" :icon="Calendar" required />
         </div>
 
-        <UiAlert v-if="payrollType === 'thr'" tone="info" title="Automatic Generation (THR)">
-          THR will be generated for every employee with at least 1 month of continuous service, prorated by
-          tenure (full amount at 12+ months). This is a separate run from the regular monthly payroll -- both
-          can exist for the same month.
+        <UiAlert v-if="payrollType === 'thr'" tone="info" :title="$t('payroll.create.autoThrTitle')">
+          {{ $t("payroll.create.autoThrBody") }}
         </UiAlert>
-        <UiAlert v-else tone="info" title="Automatic Generation">
-          Payroll will be automatically generated for all active employees based on their attendance records for the selected month. Salaries will be calculated based on attendance, sick days, and absences.
+        <UiAlert v-else tone="info" :title="$t('payroll.create.autoTitle')">
+          {{ $t("payroll.create.autoBody") }}
         </UiAlert>
 
-        <UiAlert v-if="error" tone="bad" title="Error" :message="error" />
+        <UiAlert v-if="error" tone="bad" :title="$t('payroll.create.error')" :message="error" />
       </form>
 
       <!-- Summary -->
       <aside class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 lg:sticky lg:top-6 ui-anim-fade-up">
         <div class="flex items-center gap-2">
           <Calculator class="w-4 h-4 text-ui-faint" />
-          <h3 class="text-ui-h3 text-ui-ink">Payroll Summary</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("payroll.create.summaryTitle") }}</h3>
         </div>
-        <p class="text-ui-cap text-ui-muted mt-0.5">Generation details</p>
+        <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("payroll.create.summarySubtitle") }}</p>
 
         <dl class="mt-4 divide-y divide-ui-line border-y border-ui-line">
           <div class="flex items-center justify-between gap-3 py-2.5">
-            <dt class="text-ui-small text-ui-muted">Type</dt>
-            <dd class="text-ui-small text-ui-ink text-right">{{ payrollType === "thr" ? "THR" : "Monthly Payroll" }}</dd>
+            <dt class="text-ui-small text-ui-muted">{{ $t("common.labels.type") }}</dt>
+            <dd class="text-ui-small text-ui-ink text-right">{{ payrollType === "thr" ? "THR" : $t("payroll.common.monthlyPayroll") }}</dd>
           </div>
           <div class="flex items-center justify-between gap-3 py-2.5">
-            <dt class="text-ui-small text-ui-muted">Selected Month:</dt>
+            <dt class="text-ui-small text-ui-muted">{{ $t("payroll.create.selectedMonth") }}</dt>
             <dd class="text-ui-small font-medium text-ui-ink text-right">{{ formatMonth(form.salary_month) }}</dd>
           </div>
         </dl>
@@ -189,9 +191,9 @@ const typeOptions = [
             :icon="payrollType === 'thr' ? Gift : Plus"
             @click="handleSubmit"
           >
-            {{ loading ? "Generating..." : payrollType === "thr" ? "Generate THR" : "Generate Payroll" }}
+            {{ loading ? $t("payroll.create.generating") : payrollType === "thr" ? $t("payroll.common.generateThr") : $t("payroll.common.generatePayroll") }}
           </UiButton>
-          <UiButton block variant="secondary" :icon="ArrowLeft" :disabled="loading" @click="router.back()">Cancel</UiButton>
+          <UiButton block variant="secondary" :icon="ArrowLeft" :disabled="loading" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
         </div>
       </aside>
     </div>

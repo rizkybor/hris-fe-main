@@ -4,6 +4,7 @@
 // (license-release-edit; Remove only for drafts). When a Mac version has none: a warning with a drop zone / picker.
 // Emits "updated" with the release from the API.
 import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { FileArchive, Download, RefreshCw, Trash2, Upload, AlertTriangle } from "lucide-vue-next";
 import CopyKeyButton from "@/components/admin/license-manager/CopyKeyButton.vue";
 import { UiButton, UiSpinner } from "@/components/ui";
@@ -19,6 +20,7 @@ const props = defineProps({
 });
 const emit = defineEmits(["updated"]);
 
+const { t } = useI18n();
 const store = useLicenseManagerStore();
 const alertModal = useAlertModalStore();
 
@@ -48,7 +50,7 @@ const upload = async (picked) => {
     emit("updated", updated);
   } catch (err) {
     const errors = validationErrors(err);
-    error.value = (Array.isArray(errors.file) ? errors.file[0] : errors.file) || errorMessage(err, "Failed to upload the installer.");
+    error.value = (Array.isArray(errors.file) ? errors.file[0] : errors.file) || errorMessage(err, t("licenses.installer.uploadFailed"));
   } finally {
     busy.value = false;
     progress.value = null;
@@ -73,18 +75,21 @@ const download = async () => {
   try {
     await store.downloadReleaseFile(props.release);
   } catch (err) {
-    error.value = errorMessage(err, "Failed to download the installer.");
+    error.value = errorMessage(err, t("licenses.installer.downloadFailed"));
   } finally {
     busy.value = false;
   }
 };
 
 const remove = async () => {
-  const ok = await alertModal.confirm(`Remove the installer ${file.value.name} from version ${props.release.version}?`, {
-    title: "Remove Installer",
-    type: "danger",
-    confirmText: "Remove",
-  });
+  const ok = await alertModal.confirm(
+    t("licenses.installer.removeConfirm", { name: file.value.name, version: props.release.version }),
+    {
+      title: t("licenses.installer.removeTitle"),
+      type: "danger",
+      confirmText: t("common.actions.remove"),
+    }
+  );
   if (!ok) return;
   busy.value = true;
   error.value = "";
@@ -93,7 +98,7 @@ const remove = async () => {
     emit("updated", updated || { ...props.release, file: null });
   } catch (err) {
     const errors = validationErrors(err);
-    error.value = (Array.isArray(errors.file) ? errors.file[0] : errors.file) || errorMessage(err, "Failed to remove the installer.");
+    error.value = (Array.isArray(errors.file) ? errors.file[0] : errors.file) || errorMessage(err, t("licenses.installer.removeFailed"));
   } finally {
     busy.value = false;
   }
@@ -125,7 +130,7 @@ const remove = async () => {
           <p class="text-ui-small font-medium text-ui-ink truncate" :title="file.name">{{ file.name }}</p>
           <p class="text-ui-cap text-ui-muted flex flex-wrap items-center gap-x-1.5">
             <span class="tabular-nums">{{ formatBytes(file.size) }}</span>
-            <template v-if="file.uploaded_at"><span class="text-ui-faint">·</span> Uploaded {{ formatDateTime(file.uploaded_at) }}</template>
+            <template v-if="file.uploaded_at"><span class="text-ui-faint">·</span> {{ $t("licenses.installer.uploaded", { date: formatDateTime(file.uploaded_at) }) }}</template>
             <template v-if="shortSha">
               <span class="text-ui-faint">·</span>
               <span class="inline-flex items-center gap-1">
@@ -137,9 +142,9 @@ const remove = async () => {
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-        <UiButton v-if="canDownload" variant="secondary" size="sm" :icon="Download" :disabled="busy" @click="download">Download</UiButton>
-        <UiButton v-if="canEdit" variant="secondary" size="sm" :icon="RefreshCw" :disabled="busy" @click="input?.click()">Replace</UiButton>
-        <UiButton v-if="canEdit && isDraft" variant="danger" size="sm" :icon="Trash2" :disabled="busy" @click="remove">Remove</UiButton>
+        <UiButton v-if="canDownload" variant="secondary" size="sm" :icon="Download" :disabled="busy" @click="download">{{ $t("common.actions.download") }}</UiButton>
+        <UiButton v-if="canEdit" variant="secondary" size="sm" :icon="RefreshCw" :disabled="busy" @click="input?.click()">{{ $t("licenses.installer.replace") }}</UiButton>
+        <UiButton v-if="canEdit && isDraft" variant="danger" size="sm" :icon="Trash2" :disabled="busy" @click="remove">{{ $t("common.actions.remove") }}</UiButton>
       </div>
     </div>
 
@@ -148,19 +153,19 @@ const remove = async () => {
       <div class="flex items-center gap-3 min-w-0 flex-1">
         <AlertTriangle class="w-[18px] h-[18px] text-ui-warn shrink-0" />
         <div class="min-w-0">
-          <p class="text-ui-small font-semibold text-ui-warn">No installer yet</p>
+          <p class="text-ui-small font-semibold text-ui-warn">{{ $t("licenses.installer.missingTitle") }}</p>
           <p class="text-ui-cap text-ui-text">
-            Upload the Mac installer (.dmg, .zip or .pkg, up to 2 GB)<template v-if="canEdit">, or drop it here</template>. It is needed to publish.
+            {{ canEdit ? $t("licenses.installer.missingMessageDrop") : $t("licenses.installer.missingMessage") }}
           </p>
         </div>
       </div>
-      <UiButton v-if="canEdit" variant="secondary" size="sm" :icon="Upload" :disabled="busy" @click="input?.click()">Upload</UiButton>
+      <UiButton v-if="canEdit" variant="secondary" size="sm" :icon="Upload" :disabled="busy" @click="input?.click()">{{ $t("common.actions.upload") }}</UiButton>
     </div>
 
     <!-- Upload progress -->
     <div v-if="progress !== null" class="mt-3">
       <div class="flex items-center justify-between text-ui-cap text-ui-muted mb-1">
-        <UiSpinner size="12px" label="Uploading…" :center="false" />
+        <UiSpinner size="12px" :label="$t('licenses.installer.uploading')" :center="false" />
         <span class="tabular-nums font-medium text-ui-ink">{{ progress }}%</span>
       </div>
       <div class="h-1.5 w-full rounded-full bg-ui-line overflow-hidden">

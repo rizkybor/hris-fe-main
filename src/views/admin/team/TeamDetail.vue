@@ -25,6 +25,9 @@ import Header from "@/components/admin/team/detail/Header.vue";
 import Statistic from "@/components/admin/team/detail/Statistic.vue";
 import Chart from "@/components/admin/team/detail/Chart.vue";
 import { UiBadge, UiButton, UiEmpty } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -41,6 +44,10 @@ const showAllMembers = ref(false);
 // Presentation-only: which tab of the detail page is showing. Panels use
 // v-show so the statistic/chart children mount (and fetch) exactly once.
 const activeTab = ref("overview");
+const tabs = computed(() => [
+  { key: "overview", label: t("teams.detail.tabs.overview") },
+  { key: "members", label: t("teams.detail.tabs.members"), count: (team.value.members || []).length },
+]);
 
 // The grid can get long for large teams, so only the first page is shown
 // until "View More" is clicked -- there's no separate members endpoint to
@@ -87,10 +94,7 @@ onMounted(async () => {
     <div class="border-b border-ui-line -mt-1">
       <nav class="flex gap-6 overflow-x-auto [scrollbar-width:none]" role="tablist">
         <button
-          v-for="tab in [
-            { key: 'overview', label: 'Overview' },
-            { key: 'members', label: 'Team Members', count: (team.members || []).length },
-          ]"
+          v-for="tab in tabs"
           :key="tab.key"
           type="button"
           role="tab"
@@ -121,8 +125,8 @@ onMounted(async () => {
           <div class="flex items-start gap-3 mb-4">
             <ListCheck class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
             <div>
-              <h3 class="text-ui-h2 text-ui-ink">Team Responsibilities</h3>
-              <p class="text-ui-cap text-ui-muted mt-0.5">Key duties and objectives</p>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("teams.form.responsibilities.title") }}</h3>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.detail.responsibilitiesSubtitle") }}</p>
             </div>
           </div>
           <ul class="divide-y divide-ui-line">
@@ -148,11 +152,11 @@ onMounted(async () => {
               <div class="flex items-start gap-3">
                 <Crown class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
                 <div>
-                  <h3 class="text-ui-h3 text-ui-ink">Team Lead</h3>
-                  <p class="text-ui-cap text-ui-muted mt-0.5">Team leadership and management</p>
+                  <h3 class="text-ui-h3 text-ui-ink">{{ $t("teams.form.lead.title") }}</h3>
+                  <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.detail.leadSubtitle") }}</p>
                 </div>
               </div>
-              <UiBadge tone="ok" dot>Active</UiBadge>
+              <UiBadge tone="ok" dot>{{ $t("common.labels.active") }}</UiBadge>
             </div>
 
             <div v-if="team.leader">
@@ -175,23 +179,23 @@ onMounted(async () => {
                     {{ team.leader?.employee_profile?.job_information?.job_title }}
                   </p>
                 </div>
-                <UiBadge tone="accent" class="shrink-0">Team Lead</UiBadge>
+                <UiBadge tone="accent" class="shrink-0">{{ $t("teams.form.lead.title") }}</UiBadge>
               </div>
 
               <!-- Contact Information -->
-              <h5 class="text-ui-over uppercase text-ui-faint mt-5 mb-1">Contact Information</h5>
+              <h5 class="text-ui-over uppercase text-ui-faint mt-5 mb-1">{{ $t("teams.detail.contactInfo") }}</h5>
               <dl class="divide-y divide-ui-line">
                 <div class="flex items-center gap-3 py-2.5">
                   <Mail class="w-4 h-4 text-ui-faint shrink-0" />
                   <div class="min-w-0 flex-1">
-                    <dt class="text-ui-cap text-ui-muted">Email Address</dt>
+                    <dt class="text-ui-cap text-ui-muted">{{ $t("teams.detail.emailAddress") }}</dt>
                     <dd class="text-ui-body text-ui-ink truncate">{{ team.leader.email }}</dd>
                   </div>
                 </div>
                 <div class="flex items-center gap-3 py-2.5">
                   <Phone class="w-4 h-4 text-ui-faint shrink-0" />
                   <div class="min-w-0 flex-1">
-                    <dt class="text-ui-cap text-ui-muted">Phone Number</dt>
+                    <dt class="text-ui-cap text-ui-muted">{{ $t("teams.detail.phoneNumber") }}</dt>
                     <dd class="text-ui-body text-ui-ink tabular-nums">{{ team?.leader?.employee_profile?.phone }}</dd>
                   </div>
                 </div>
@@ -208,7 +212,7 @@ onMounted(async () => {
                   params: { id: team.leader?.employee_profile?.id },
                 }"
               >
-                View Profile
+                {{ $t("teams.detail.viewProfile") }}
               </UiButton>
             </div>
 
@@ -216,8 +220,8 @@ onMounted(async () => {
               v-else
               compact
               :icon="Crown"
-              title="No Team Lead Assigned"
-              message="This team does not currently have a leader assigned."
+              :title="$t('teams.detail.noLead')"
+              :message="$t('teams.detail.noLeadHint')"
             />
           </section>
 
@@ -226,17 +230,16 @@ onMounted(async () => {
             <div class="flex items-start gap-3 mb-3">
               <AlertTriangle class="w-4 h-4 text-ui-bad mt-0.5 shrink-0" />
               <div>
-                <h3 class="text-ui-h3 text-ui-bad">Danger Zone</h3>
-                <p class="text-ui-cap text-ui-muted mt-0.5">Irreversible and destructive actions</p>
+                <h3 class="text-ui-h3 text-ui-bad">{{ $t("teams.detail.dangerZone") }}</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.detail.dangerZoneHint") }}</p>
               </div>
             </div>
-            <h4 class="text-ui-small font-medium text-ui-ink">Disband Team</h4>
+            <h4 class="text-ui-small font-medium text-ui-ink">{{ $t("teams.detail.disband") }}</h4>
             <p class="text-ui-small text-ui-muted mt-0.5 mb-3.5">
-              Permanently remove this team and reassign all members. This action
-              cannot be undone.
+              {{ $t("teams.detail.disbandHint") }}
             </p>
             <UiButton variant="danger" :icon="Trash2" class="w-full sm:w-auto" @click="showDeleteModal = true">
-              Disband Team
+              {{ $t("teams.detail.disband") }}
             </UiButton>
           </section>
         </div>
@@ -249,8 +252,8 @@ onMounted(async () => {
         <div class="flex items-start gap-3">
           <Users class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
           <div>
-            <h3 class="text-ui-h2 text-ui-ink">Team Members</h3>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Current team composition</p>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("teams.detail.tabs.members") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.detail.membersSubtitle") }}</p>
           </div>
         </div>
         <UiButton
@@ -260,7 +263,7 @@ onMounted(async () => {
           :icon="Eye"
           @click="showAllMembers = !showAllMembers"
         >
-          {{ showAllMembers ? "View Less" : "View More" }}
+          {{ showAllMembers ? $t("teams.detail.viewLess") : $t("teams.detail.viewMore") }}
         </UiButton>
       </div>
 
@@ -291,19 +294,18 @@ onMounted(async () => {
               </p>
               <UiBadge v-if="isTeamLead(member)" tone="accent" class="mt-1.5 gap-1">
                 <Crown class="w-3 h-3" />
-                Team Lead
+                {{ $t("teams.form.lead.title") }}
               </UiBadge>
             </div>
           </div>
           <div class="space-y-1 mt-3 mb-4 text-ui-small text-ui-muted">
             <div class="flex items-center gap-2">
               <Calendar class="w-3.5 h-3.5 text-ui-faint shrink-0" />
-              <span>Joined {{ formatToClientTimezone(member.joined_at) }}</span>
+              <span>{{ $t("teams.detail.joined", { date: formatToClientTimezone(member.joined_at) }) }}</span>
             </div>
             <div class="flex items-center gap-2">
               <Clock class="w-3.5 h-3.5 text-ui-faint shrink-0" />
-              <span class="tabular-nums">{{ member.employee.job_information.experience }} years
-                experience</span>
+              <span class="tabular-nums">{{ $t("teams.detail.experience", { n: member.employee.job_information.experience }, Number(member.employee.job_information.experience) || 0) }}</span>
             </div>
           </div>
           <UiButton
@@ -317,20 +319,20 @@ onMounted(async () => {
               params: { id: member.employee.id },
             }"
           >
-            View Profile
+            {{ $t("teams.detail.viewProfile") }}
           </UiButton>
         </div>
       </div>
-      <UiEmpty v-else compact :icon="Users" title="No team members" />
+      <UiEmpty v-else compact :icon="Users" :title="$t('teams.detail.noMembers')" />
     </section>
 
     <!-- Confirmation Modal -->
     <ConfirmationModal
       :show="showDeleteModal"
-      title="Disband Team"
-      :message="`Are you sure you want to disband '${team.name}'? This will permanently remove the team and reassign all members. This action cannot be undone.`"
-      confirmText="Disband Team"
-      cancelText="Cancel"
+      :title="$t('teams.detail.disband')"
+      :message="$t('teams.detail.disbandConfirm', { name: team.name })"
+      :confirmText="$t('teams.detail.disband')"
+      :cancelText="$t('common.actions.cancel')"
       type="danger"
       :loading="loading"
       @confirm="handleDeleteTeam"

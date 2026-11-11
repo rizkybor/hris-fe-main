@@ -13,6 +13,9 @@ import { UiPageHeader, UiButton, UiInput, UiSelect, UiTable, UiBadge, UiEmpty } 
 import { useClientStore } from "@/stores/client";
 import { useAlertModalStore } from "@/stores/alertModal";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const clientsStore = useClientStore();
 const { clientsData, clients, success, error, loading } = storeToRefs(clientsStore);
@@ -80,25 +83,25 @@ const clientsMeta = computed(() => clientsData.value?.meta || {});
 
 // Presentation only: table columns, filter options, row navigation.
 const router = useRouter();
-const columns = [
-  { key: "name", label: "Client" },
-  { key: "type", label: "Type" },
-  { key: "pic_name", label: "PIC" },
-  { key: "email", label: "Email" },
-  { key: "average_rating", label: "Rating", align: "right" },
+const columns = computed(() => [
+  { key: "name", label: t("common.labels.client") },
+  { key: "type", label: t("common.labels.type") },
+  { key: "pic_name", label: t("clients.list.columns.pic") },
+  { key: "email", label: t("common.labels.email") },
+  { key: "average_rating", label: t("clients.list.columns.rating"), align: "right" },
   { key: "actions", label: "", align: "right", width: 96 },
-];
-const typeSelectOptions = computed(() => [{ value: "", label: "All Types" }, ...clientTypeOptions.value.map((v) => ({ value: v, label: v }))]);
-const fieldSelectOptions = computed(() => [{ value: "", label: "All Fields" }, ...clientFieldOptions.value.map((v) => ({ value: v, label: v }))]);
+]);
+const typeSelectOptions = computed(() => [{ value: "", label: t("clients.list.allTypes") }, ...clientTypeOptions.value.map((v) => ({ value: v, label: v }))]);
+const fieldSelectOptions = computed(() => [{ value: "", label: t("clients.list.allFields") }, ...clientFieldOptions.value.map((v) => ({ value: v, label: v }))]);
 const goToDetail = (client) => router.push({ name: "admin.clients.detail", params: { id: client.id } });
 const goToEdit = (client) => router.push({ name: "admin.clients.edit", params: { id: client.id } });
 
 const handleDelete = async (client) => {
   const ok = await alertModal.confirm(
-    `Delete client "${client.name}"? This action cannot be undone.`,
+    t("clients.list.deleteConfirm", { name: client.name }),
     {
       type: "danger",
-      confirmText: "Delete",
+      confirmText: t("common.actions.delete"),
     },
   );
   if (!ok) return;
@@ -107,16 +110,16 @@ const handleDelete = async (client) => {
     await deleteClient(client.id);
     await fetchData();
   } catch (error) {
-    await alertModal.alert("Failed to delete client.", { type: "danger" });
+    await alertModal.alert(t("clients.list.deleteFailed"), { type: "danger" });
   }
 };
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="All Client" subtitle="View and manage all client information">
+    <UiPageHeader :title="$t('clients.list.title')" :subtitle="$t('clients.list.subtitle')">
       <template #actions>
-        <UiButton v-if="can('clients-create')" :icon="Plus" :to="{ name: 'admin.clients.create' }" class="w-full sm:w-auto">Add Client</UiButton>
+        <UiButton v-if="can('clients-create')" :icon="Plus" :to="{ name: 'admin.clients.create' }" class="w-full sm:w-auto">{{ $t("clients.list.add") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -130,10 +133,10 @@ const handleDelete = async (client) => {
     <!-- Clients -->
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <div class="px-4 sm:px-5 py-3.5 grid grid-cols-2 md:flex md:items-center gap-2 border-b border-ui-line">
-        <UiInput v-model="filters.search" :icon="Search" placeholder="Search clients..." class="col-span-2 md:flex-1 md:max-w-[360px]" />
+        <UiInput v-model="filters.search" :icon="Search" :placeholder="$t('clients.list.searchPlaceholder')" class="col-span-2 md:flex-1 md:max-w-[360px]" />
         <span class="hidden md:block md:flex-1"></span>
-        <UiSelect v-model="filters.type" :options="typeSelectOptions" class="md:w-[180px]" aria-label="Type" />
-        <UiSelect v-model="filters.field" :options="fieldSelectOptions" class="md:w-[180px]" aria-label="Field" />
+        <UiSelect v-model="filters.type" :options="typeSelectOptions" class="md:w-[180px]" :aria-label="$t('common.labels.type')" />
+        <UiSelect v-model="filters.field" :options="fieldSelectOptions" class="md:w-[180px]" :aria-label="$t('clients.fields.fieldShort')" />
       </div>
 
       <UiTable
@@ -146,7 +149,7 @@ const handleDelete = async (client) => {
         @row-click="goToDetail"
       >
         <template #cell-name="{ row }">
-          <p class="text-ui-body font-medium text-ui-ink truncate max-w-[280px]">{{ row.name || "Unnamed Client" }}</p>
+          <p class="text-ui-body font-medium text-ui-ink truncate max-w-[280px]">{{ row.name || $t("clients.list.unnamed") }}</p>
           <p v-if="row.field" class="text-ui-cap text-ui-muted truncate max-w-[280px]">{{ row.field }}</p>
         </template>
         <template #cell-type="{ row }">
@@ -171,8 +174,8 @@ const handleDelete = async (client) => {
             <button
               v-if="can('clients-edit')"
               type="button"
-              title="Edit"
-              aria-label="Edit"
+              :title="$t('common.actions.edit')"
+              :aria-label="$t('common.actions.edit')"
               class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
               @click="goToEdit(row)"
             >
@@ -181,8 +184,8 @@ const handleDelete = async (client) => {
             <button
               v-if="can('clients-delete')"
               type="button"
-              title="Delete"
-              aria-label="Delete"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('common.actions.delete')"
               class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
               @click="handleDelete(row)"
             >
@@ -196,7 +199,7 @@ const handleDelete = async (client) => {
         </template>
 
         <template #empty>
-          <UiEmpty :icon="SearchX" title="No clients found" message="Try adjusting your search terms or filters" compact />
+          <UiEmpty :icon="SearchX" :title="$t('clients.list.empty')" :message="$t('common.states.noResultsHint')" compact />
         </template>
       </UiTable>
 

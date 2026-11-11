@@ -43,6 +43,7 @@ onMounted(() => {
   <div class="relative">
     <button
       class="relative w-9 h-9 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
+      :aria-label="$t('common.a11y.notifications')"
       @click="toggle"
     >
       <BellIcon class="w-[18px] h-[18px]" />
@@ -65,14 +66,14 @@ onMounted(() => {
       class="ui-anim-scale absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-24px)] bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay z-[9999] max-h-[70vh] overflow-y-auto origin-top-right"
     >
       <div class="px-4 py-3 border-b border-ui-line flex items-center justify-between">
-        <p class="text-ui-small font-semibold text-ui-ink">Notifications</p>
+        <p class="text-ui-small font-semibold text-ui-ink">{{ $t("dashboard.notifications.title") }}</p>
         <button
           v-if="unreadCount > 0"
           @click="handleMarkAllRead"
           class="flex items-center gap-1 text-ui-cap text-ui-accent font-medium hover:underline"
         >
           <CheckCheckIcon class="w-3.5 h-3.5" />
-          Mark all read
+          {{ $t("dashboard.notifications.markAllRead") }}
         </button>
       </div>
 
@@ -87,7 +88,7 @@ onMounted(() => {
       </div>
 
       <div v-else-if="notifications.length === 0" class="p-6 text-center text-ui-small text-ui-muted">
-        No notifications yet
+        {{ $t("dashboard.notifications.empty") }}
       </div>
 
       <div v-else>
@@ -104,7 +105,7 @@ onMounted(() => {
           ></span>
           <div class="flex-1 min-w-0">
             <p class="text-ui-small font-medium text-ui-ink truncate">
-              {{ notification.data?.title ?? "Notification" }}
+              {{ notification.data?.title ?? $t("dashboard.notifications.fallbackTitle") }}
             </p>
             <p class="text-ui-cap text-ui-muted line-clamp-2">
               {{ notification.data?.message }}

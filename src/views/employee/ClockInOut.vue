@@ -23,6 +23,10 @@ import { useAlertModalStore } from "@/stores/alertModal";
 import { storeToRefs } from "pinia";
 import { haversineDistanceMeters } from "@/utils/attendanceUtils";
 import { UiAlert, UiBadge, UiButton, UiPageHeader, UiSpinner } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const attendanceStore = useAttendanceStore();
 const alertModal = useAlertModalStore();
@@ -62,8 +66,11 @@ const currentStream = ref(null);
 const capturedPhotoData = ref(null);
 const currentLocation = ref(null);
 const locationStatus = ref("default");
-const locationName = ref("Location not detected");
-const locationAddress = ref("Click 'Get Location' to detect your current position");
+// Location title/subtitle are kept as message keys (with params) so they
+// follow the language switch; a reverse-geocoded address is shown as-is.
+const locationName = ref({ key: "clock.location.notDetected" });
+const locationAddress = ref({ key: "clock.location.notDetectedHint" });
+const showLocationText = (entry) => (entry?.key ? t(entry.key, entry.params || {}) : entry?.text || "");
 const locationCoords = ref("");
 const isGettingLocation = ref(false);
 
@@ -111,7 +118,7 @@ const elapsedWorkMinutes = computed(() => {
 const workingHours = computed(() => {
   const hours = Math.floor(elapsedWorkMinutes.value / 60);
   const minutes = elapsedWorkMinutes.value % 60;
-  return `${hours}h ${minutes}m`;
+  return t("clock.duration.hm", { h: hours, m: minutes });
 });
 
 const remainingUntilCheckOut = computed(() => {
@@ -119,7 +126,7 @@ const remainingUntilCheckOut = computed(() => {
   if (remaining <= 0) return null;
   const hours = Math.floor(remaining / 60);
   const minutes = remaining % 60;
-  return `${hours}h ${minutes}m`;
+  return t("clock.duration.hm", { h: hours, m: minutes });
 });
 
 const canCheckIn = computed(() => {
@@ -142,13 +149,13 @@ const lateInfo = computed(() => {
   const minutes = todayAttendance.value.late_minutes;
   const hours = Math.floor(minutes / 60);
   const remaining = minutes % 60;
-  const duration = hours > 0 ? `${hours}h ${remaining}m` : `${remaining}m`;
-  return `Terlambat ${duration} (batas jam masuk 09:00 WIB)`;
+  const duration = hours > 0 ? t("clock.duration.hm", { h: hours, m: remaining }) : t("clock.duration.m", { m: remaining });
+  return t("clock.late.notice", { duration });
 });
 
 const checkInTime = computed(() => {
   if (!todayAttendance.value?.check_in) return "--:--";
-  return new Date(todayAttendance.value.check_in).toLocaleTimeString("id-ID", {
+  return new Date(todayAttendance.value.check_in).toLocaleTimeString(localeTag(), {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
@@ -157,7 +164,7 @@ const checkInTime = computed(() => {
 
 const checkOutTime = computed(() => {
   if (!todayAttendance.value?.check_out) return "--:--";
-  return new Date(todayAttendance.value.check_out).toLocaleTimeString("id-ID", {
+  return new Date(todayAttendance.value.check_out).toLocaleTimeString(localeTag(), {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
@@ -166,32 +173,32 @@ const checkOutTime = computed(() => {
 
 const attendanceStatus = computed(() => {
   if (!todayAttendance.value) {
-    return { text: "Not Clocked In", class: "bg-red-100 text-red-700" };
+    return { key: "notClockedIn", class: "bg-red-100 text-red-700" };
   }
   if (todayAttendance.value.status === "overtime") {
-    return { text: "Overtime (Lembur)", class: "bg-purple-100 text-purple-700" };
+    return { key: "overtime", class: "bg-purple-100 text-purple-700" };
   }
   if (todayAttendance.value.check_in && !todayAttendance.value.check_out) {
     return todayAttendance.value.status === "late"
-      ? { text: "Clocked In (Late)", class: "bg-amber-100 text-amber-700" }
-      : { text: "Clocked In", class: "bg-green-100 text-green-700" };
+      ? { key: "clockedInLate", class: "bg-amber-100 text-amber-700" }
+      : { key: "clockedIn", class: "bg-green-100 text-green-700" };
   }
   if (todayAttendance.value.check_in && todayAttendance.value.check_out) {
-    return { text: "Completed", class: "bg-blue-100 text-blue-700" };
+    return { key: "completed", class: "bg-blue-100 text-blue-700" };
   }
-  return { text: "Not Clocked In", class: "bg-red-100 text-red-700" };
+  return { key: "notClockedIn", class: "bg-red-100 text-red-700" };
 });
 
 // Presentation only: badge tone per status label, and the live clock split
 // into hours:minutes and the (muted) seconds.
 const STATUS_TONE = {
-  "Not Clocked In": "neutral",
-  "Overtime (Lembur)": "accent",
-  "Clocked In (Late)": "warn",
-  "Clocked In": "ok",
-  Completed: "info",
+  notClockedIn: "neutral",
+  overtime: "accent",
+  clockedInLate: "warn",
+  clockedIn: "ok",
+  completed: "info",
 };
-const attendanceStatusTone = computed(() => STATUS_TONE[attendanceStatus.value.text] || "neutral");
+const attendanceStatusTone = computed(() => STATUS_TONE[attendanceStatus.value.key] || "neutral");
 const clockMain = computed(() => currentTime.value.slice(0, 5));
 const clockSeconds = computed(() => currentTime.value.slice(5));
 const LOCATION_TONE = {
@@ -219,26 +226,18 @@ const updateClock = () => {
     day: "numeric",
   };
 
-  currentTime.value = now.toLocaleTimeString("id-ID", timeOptions);
-  currentDate.value = now.toLocaleDateString("id-ID", dateOptions);
+  currentTime.value = now.toLocaleTimeString(localeTag(), timeOptions);
+  currentDate.value = now.toLocaleDateString(localeTag(), dateOptions);
 };
 
 // Location functions
 const getCurrentLocation = async () => {
   if (!navigator.geolocation) {
-    updateLocationDisplay(
-      "error",
-      "Geolocation not supported",
-      "Your browser does not support location services"
-    );
+    updateLocationDisplay("error", { key: "clock.location.unsupported" }, { key: "clock.location.unsupportedHint" });
     return;
   }
 
-  updateLocationDisplay(
-    "loading",
-    "Getting location...",
-    "Please wait while we detect your position"
-  );
+  updateLocationDisplay("loading", { key: "clock.location.getting" }, { key: "clock.location.gettingHint" });
   isGettingLocation.value = true;
 
   const options = {
@@ -259,8 +258,8 @@ const getCurrentLocation = async () => {
 
       updateLocationDisplay(
         "success",
-        "Location detected",
-        `Accuracy: ±${Math.round(coords.accuracy)}m`
+        { key: "clock.location.detected" },
+        { key: "clock.location.accuracy", params: { m: Math.round(coords.accuracy) } }
       );
 
       locationCoords.value = `Lat: ${coords.latitude.toFixed(6)}, Lng: ${coords.longitude.toFixed(6)}`;
@@ -275,23 +274,23 @@ const getCurrentLocation = async () => {
       isGettingLocation.value = false;
     },
     (error) => {
-      let errorMessage = "";
+      let errorKey = "";
       switch (error.code) {
         case error.PERMISSION_DENIED:
-          errorMessage = "Location access denied. Please enable location permissions.";
+          errorKey = "clock.location.errors.denied";
           break;
         case error.POSITION_UNAVAILABLE:
-          errorMessage = "Location information unavailable.";
+          errorKey = "clock.location.errors.unavailable";
           break;
         case error.TIMEOUT:
-          errorMessage = "Location request timed out. Please try again.";
+          errorKey = "clock.location.errors.timeout";
           break;
         default:
-          errorMessage = "An unknown error occurred while retrieving location.";
+          errorKey = "clock.location.errors.unknown";
           break;
       }
 
-      updateLocationDisplay("error", "Location failed", errorMessage);
+      updateLocationDisplay("error", { key: "clock.location.failed" }, { key: errorKey });
       isGettingLocation.value = false;
     },
     options
@@ -313,7 +312,7 @@ const reverseGeocode = async (lat, lng) => {
     if (data && data.display_name) {
       const parts = data.display_name.split(",");
       const shortAddress = parts.slice(0, 3).join(",").trim();
-      locationAddress.value = shortAddress;
+      locationAddress.value = { text: shortAddress };
     }
   } catch (error) {
     console.error("Reverse geocoding failed:", error);
@@ -335,7 +334,7 @@ const startCamera = async () => {
     video.srcObject = stream;
   } catch (error) {
     console.error("Error accessing camera:", error);
-    await alertModal.alert("Unable to access camera. Please check permissions and try again.", {
+    await alertModal.alert(t("clock.camera.error"), {
       type: "danger",
     });
   }
@@ -370,12 +369,12 @@ const retakePhoto = () => {
 // Attendance actions
 const handleCheckIn = async () => {
   if (!currentLocation.value) {
-    await alertModal.alert("Please get your current location first!", { type: "warning" });
+    await alertModal.alert(t("clock.alerts.needLocation"), { type: "warning" });
     return;
   }
 
   if (!capturedPhotoData.value) {
-    await alertModal.alert("Please take a photo before clocking in.", { type: "warning" });
+    await alertModal.alert(t("clock.alerts.needPhotoIn"), { type: "warning" });
     return;
   }
 
@@ -387,29 +386,29 @@ const handleCheckIn = async () => {
     });
 
     if (attendance?.status === "overtime") {
-      await alertModal.alert("Clocked in for overtime (lembur) -- today is a weekend.", { type: "success" });
+      await alertModal.alert(t("clock.alerts.overtimeIn"), { type: "success" });
     } else if (attendance?.status === "late" && attendance?.late_minutes) {
-      await alertModal.alert(`Clocked in, but you're late by ${attendance.late_minutes} minute(s) (cut-off is 09:00 WIB).`, { type: "warning" });
+      await alertModal.alert(t("clock.alerts.lateIn", { n: attendance.late_minutes }, attendance.late_minutes), { type: "warning" });
     } else {
-      await alertModal.alert("Successfully clocked in!", { type: "success" });
+      await alertModal.alert(t("clock.alerts.successIn"), { type: "success" });
     }
     resetForNextAction();
     await fetchTodayAttendance();
   } catch (error) {
     console.error("Check in failed:", error);
-    const message = error?.response?.data?.message || "Failed to check in. Please try again.";
+    const message = error?.response?.data?.message || t("clock.alerts.failedIn");
     await alertModal.alert(message, { type: "danger" });
   }
 };
 
 const handleCheckOut = async () => {
   if (!currentLocation.value) {
-    await alertModal.alert("Please get your current location first!", { type: "warning" });
+    await alertModal.alert(t("clock.alerts.needLocation"), { type: "warning" });
     return;
   }
 
   if (!capturedPhotoData.value) {
-    await alertModal.alert("Please take a photo before clocking out.", { type: "warning" });
+    await alertModal.alert(t("clock.alerts.needPhotoOut"), { type: "warning" });
     return;
   }
 
@@ -420,12 +419,12 @@ const handleCheckOut = async () => {
       check_out_photo: capturedPhotoData.value,
     });
 
-    await alertModal.alert("Successfully clocked out!", { type: "success" });
+    await alertModal.alert(t("clock.alerts.successOut"), { type: "success" });
     resetForNextAction();
     await fetchTodayAttendance();
   } catch (error) {
     console.error("Check out failed:", error);
-    const message = error?.response?.data?.message || "Failed to check out. Please try again.";
+    const message = error?.response?.data?.message || t("clock.alerts.failedOut");
     await alertModal.alert(message, { type: "danger" });
   }
 };
@@ -433,11 +432,7 @@ const handleCheckOut = async () => {
 const resetForNextAction = () => {
   retakePhoto();
   currentLocation.value = null;
-  updateLocationDisplay(
-    "default",
-    "Location not detected",
-    "Please get location again for next attendance action"
-  );
+  updateLocationDisplay("default", { key: "clock.location.notDetected" }, { key: "clock.location.againHint" });
   locationCoords.value = "";
 };
 
@@ -463,13 +458,13 @@ onUnmounted(() => {
   <!-- Bottom padding below lg: main's own bottom padding (room for the tab
        bar) is lost once the page overflows its h-full wrapper. -->
   <div class="p-1 sm:p-3 lg:p-5 space-y-4 sm:space-y-5">
-    <UiPageHeader title="Clock In/Out" class="ui-anim-fade-up">
+    <UiPageHeader :title="$t('clock.title')" class="ui-anim-fade-up">
       <template #subtitle>
         {{ currentDate }}
         <span class="inline-flex items-center gap-1 ml-1.5 text-ui-faint"><Globe class="w-3.5 h-3.5" /> GMT+7</span>
       </template>
       <template #actions>
-        <UiBadge :tone="attendanceStatusTone" dot>{{ attendanceStatus.text }}</UiBadge>
+        <UiBadge :tone="attendanceStatusTone" dot>{{ $t(`clock.status.${attendanceStatus.key}`) }}</UiBadge>
       </template>
     </UiPageHeader>
 
@@ -494,7 +489,7 @@ onUnmounted(() => {
           v-if="capturedPhotoData"
           :src="capturedPhotoData"
           class="absolute inset-0 w-full h-full object-cover"
-          alt="Captured photo"
+          :alt="$t('clock.camera.capturedAlt')"
         />
 
         <!-- Face guide -->
@@ -507,23 +502,23 @@ onUnmounted(() => {
             aria-hidden="true"
           ></div>
           <p v-if="!currentStream" class="text-ui-small text-white/70 text-center px-4 flex items-center gap-1.5">
-            <Camera class="w-4 h-4 shrink-0" /> Camera preview will appear here
+            <Camera class="w-4 h-4 shrink-0" /> {{ $t("clock.camera.previewHint") }}
           </p>
         </div>
 
         <div v-if="capturedPhotoData" class="absolute top-3 left-3">
-          <UiBadge tone="ok" dot>Photo captured</UiBadge>
+          <UiBadge tone="ok" dot>{{ $t("clock.camera.captured") }}</UiBadge>
         </div>
 
         <!-- Camera controls -->
         <div class="absolute inset-x-0 bottom-0 p-3 sm:p-4 flex justify-center">
           <UiButton v-if="!capturedPhotoData && !currentStream" variant="secondary" :icon="Video" @click="startCamera">
-            Start Camera
+            {{ $t("clock.camera.start") }}
           </UiButton>
           <UiButton v-else-if="!capturedPhotoData && currentStream" variant="secondary" size="lg" :icon="Camera" @click="capturePhoto">
-            Take Photo
+            {{ $t("clock.camera.take") }}
           </UiButton>
-          <UiButton v-else variant="secondary" :icon="RotateCcw" @click="retakePhoto">Retake Photo</UiButton>
+          <UiButton v-else variant="secondary" :icon="RotateCcw" @click="retakePhoto">{{ $t("clock.camera.retake") }}</UiButton>
         </div>
       </div>
 
@@ -533,7 +528,7 @@ onUnmounted(() => {
         <div class="flex items-end justify-between gap-3">
           <div class="min-w-0">
             <p class="text-ui-over uppercase text-ui-faint flex items-center gap-1.5">
-              <Clock class="w-3.5 h-3.5" /> Live Clock &middot; Jakarta
+              <Clock class="w-3.5 h-3.5" /> {{ $t("clock.liveClock") }} &middot; Jakarta
             </p>
             <p class="text-ui-display text-ui-ink tabular-nums mt-1">
               {{ clockMain }}<span class="text-ui-faint">{{ clockSeconds }}</span>
@@ -543,18 +538,18 @@ onUnmounted(() => {
 
         <!-- Today's status -->
         <div>
-          <p class="text-ui-over uppercase text-ui-faint mb-2">Today's Status</p>
+          <p class="text-ui-over uppercase text-ui-faint mb-2">{{ $t("clock.todayStatus") }}</p>
           <div class="grid grid-cols-3 gap-2">
             <div class="bg-ui-subtle rounded-ui-control px-3 py-2.5 min-w-0">
-              <p class="text-ui-cap text-ui-muted">Clock In</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("clock.clockIn") }}</p>
               <p class="text-ui-h3 text-ui-ink tabular-nums mt-0.5 truncate">{{ checkInTime }}</p>
             </div>
             <div class="bg-ui-subtle rounded-ui-control px-3 py-2.5 min-w-0">
-              <p class="text-ui-cap text-ui-muted">Clock Out</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("clock.clockOut") }}</p>
               <p class="text-ui-h3 text-ui-ink tabular-nums mt-0.5 truncate">{{ checkOutTime }}</p>
             </div>
             <div class="bg-ui-subtle rounded-ui-control px-3 py-2.5 min-w-0">
-              <p class="text-ui-cap text-ui-muted">Worked</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("clock.worked") }}</p>
               <p class="text-ui-h3 text-ui-ink tabular-nums mt-0.5 truncate">{{ workingHours }}</p>
             </div>
           </div>
@@ -572,8 +567,8 @@ onUnmounted(() => {
               <MapPin v-else class="w-[18px] h-[18px]" />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-ui-h3 text-ui-ink break-words">{{ locationName }}</p>
-              <p class="text-ui-small text-ui-muted break-words">{{ locationAddress }}</p>
+              <p class="text-ui-h3 text-ui-ink break-words">{{ showLocationText(locationName) }}</p>
+              <p class="text-ui-small text-ui-muted break-words">{{ showLocationText(locationAddress) }}</p>
               <p v-if="locationCoords" class="text-ui-cap text-ui-faint font-mono mt-1 break-words">{{ locationCoords }}</p>
             </div>
           </div>
@@ -590,23 +585,23 @@ onUnmounted(() => {
               <Building class="w-[18px] h-[18px]" />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-ui-h3 text-ui-ink">Office Radius: {{ attendanceSetting.office_radius_meters ?? 150 }}m</p>
+              <p class="text-ui-h3 text-ui-ink">{{ $t("clock.office.radius", { m: attendanceSetting.office_radius_meters ?? 150 }) }}</p>
               <p
                 v-if="distanceFromOffice !== null"
                 class="text-ui-small break-words"
                 :class="isWithinOfficeRadius ? 'text-ui-ok' : 'text-ui-bad'"
               >
-                You're {{ distanceFromOffice }}m from the office --
-                {{ isWithinOfficeRadius ? "within range" : "outside the allowed radius" }}
+                {{ $t("clock.office.distance", { m: distanceFromOffice }) }} --
+                {{ isWithinOfficeRadius ? $t("clock.office.withinRange") : $t("clock.office.outsideRange") }}
               </p>
               <p v-else class="text-ui-small text-ui-muted break-words">
-                Get your location to check distance from the office
+                {{ $t("clock.office.getLocationHint") }}
               </p>
             </div>
           </div>
 
           <UiButton variant="secondary" block :icon="MapPin" :loading="isGettingLocation" @click="getCurrentLocation">
-            {{ isGettingLocation ? "Getting Location..." : currentLocation ? "Refresh Location" : "Get Current Location" }}
+            {{ isGettingLocation ? $t("clock.location.gettingButton") : currentLocation ? $t("clock.location.refresh") : $t("clock.location.get") }}
           </UiButton>
         </div>
 
@@ -619,7 +614,7 @@ onUnmounted(() => {
             <CheckCircle2 v-if="currentLocation" class="w-[18px] h-[18px] text-ui-ok shrink-0" />
             <Circle v-else class="w-[18px] h-[18px] text-ui-faint shrink-0" />
             <span class="text-ui-small font-medium" :class="currentLocation ? 'text-ui-ok' : 'text-ui-muted'">
-              Location detected
+              {{ $t("clock.location.detected") }}
             </span>
           </li>
           <li
@@ -629,20 +624,20 @@ onUnmounted(() => {
             <CheckCircle2 v-if="capturedPhotoData" class="w-[18px] h-[18px] text-ui-ok shrink-0" />
             <Circle v-else class="w-[18px] h-[18px] text-ui-faint shrink-0" />
             <span class="text-ui-small font-medium" :class="capturedPhotoData ? 'text-ui-ok' : 'text-ui-muted'">
-              Photo captured
-              <span v-if="!capturedPhotoData" class="font-normal text-ui-bad">(required)</span>
+              {{ $t("clock.camera.captured") }}
+              <span v-if="!capturedPhotoData" class="font-normal text-ui-bad">{{ $t("clock.requiredTag") }}</span>
             </span>
           </li>
         </ul>
 
         <!-- Weekend blocked notice -->
         <UiAlert v-if="weekendCheckInBlocked && !isCheckedIn" tone="bad">
-          Clock In tidak tersedia hari ini (Sabtu/Minggu). Hubungi Superadmin/Manager di menu Settings jika Anda perlu masuk lembur.
+          {{ $t("clock.weekend.blocked") }}
         </UiAlert>
 
         <!-- Overtime notice (weekend, but allowed) -->
         <UiAlert v-else-if="isWeekend && !isCheckedIn" tone="info">
-          Hari ini Sabtu/Minggu -- clock in akan tercatat sebagai lembur (overtime).
+          {{ $t("clock.weekend.overtime") }}
         </UiAlert>
 
         <!-- Late arrival notice -->
@@ -656,10 +651,10 @@ onUnmounted(() => {
         >
           <div class="flex items-baseline justify-between gap-3">
             <h2 class="text-ui-h2 text-ui-ink">
-              {{ isCheckedIn ? "Ready to Clock Out?" : "Ready to Clock In?" }}
+              {{ isCheckedIn ? $t("clock.ready.out") : $t("clock.ready.in") }}
             </h2>
             <p class="hidden sm:block text-ui-small text-ui-muted text-right">
-              {{ isCheckedIn ? "Mark your departure with location" : "Mark your attendance with location" }}
+              {{ isCheckedIn ? $t("clock.ready.outHint") : $t("clock.ready.inHint") }}
             </p>
           </div>
 
@@ -673,7 +668,7 @@ onUnmounted(() => {
             :disabled="!canCheckIn"
             @click="handleCheckIn"
           >
-            {{ loading ? "Processing..." : "Clock In" }}
+            {{ loading ? $t("clock.processing") : $t("clock.clockIn") }}
           </UiButton>
           <UiButton
             v-else
@@ -685,16 +680,16 @@ onUnmounted(() => {
             :disabled="!canCheckOut"
             @click="handleCheckOut"
           >
-            {{ loading ? "Processing..." : "Clock Out" }}
+            {{ loading ? $t("clock.processing") : $t("clock.clockOut") }}
           </UiButton>
 
           <p v-if="isCheckedIn && remainingUntilCheckOut" class="text-ui-small text-ui-warn text-center flex items-center justify-center gap-1.5">
             <Timer class="w-4 h-4 shrink-0" />
-            Clock Out available in {{ remainingUntilCheckOut }} (min. 8 hours worked)
+            {{ $t("clock.checkOutAvailableIn", { duration: remainingUntilCheckOut }) }}
           </p>
           <p class="text-ui-cap text-ui-muted text-center flex items-center justify-center gap-1.5">
             <Info class="w-3.5 h-3.5 shrink-0" />
-            Please get your location and take a photo before clocking in/out
+            {{ $t("clock.footerHint") }}
           </p>
         </div>
       </div>

@@ -4,6 +4,9 @@ import { ServerIcon, PaletteIcon } from "lucide-vue-next";
 import { UiModal, UiButton, UiAlert } from "@/components/ui";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const emit = defineEmits(["close", "saved"]);
 const store = useProjectCalculatorStore();
@@ -34,7 +37,7 @@ const submit = async () => {
   } catch (error) {
     const data = error?.response?.data;
     errorMessage.value =
-      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal menyimpan konfigurasi Landing Page.");
+      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t("calculator.lpModal.saveFailed"));
   }
 };
 
@@ -47,8 +50,8 @@ const fieldClass =
   <UiModal
     :open="true"
     size="md"
-    title="Landing Page Rate Setup"
-    description="Configure the package pricing used by the Landing Page scenario"
+    :title="$t('calculator.dashboard.lpRate.title')"
+    :description="$t('calculator.lpModal.description')"
     @close="emit('close')"
   >
     <div class="space-y-5">
@@ -57,15 +60,15 @@ const fieldClass =
       <div>
         <div class="flex items-center gap-1.5 mb-2">
           <ServerIcon class="w-4 h-4 text-ui-faint" />
-          <h3 class="text-ui-h3 text-ui-ink">Server</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("calculator.lpModal.server") }}</h3>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <label class="block">
-            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">Dedicated (Rp)</span>
+            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.lpModal.dedicated") }}</span>
             <input v-model.number="form.server_dedicated_price" type="number" min="0" step="10000" :class="fieldClass" />
           </label>
           <label class="block">
-            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">Shared (Rp)</span>
+            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.lpModal.shared") }}</span>
             <input v-model.number="form.server_shared_price" type="number" min="0" step="10000" :class="fieldClass" />
           </label>
         </div>
@@ -74,15 +77,15 @@ const fieldClass =
       <div>
         <div class="flex items-center gap-1.5 mb-2">
           <PaletteIcon class="w-4 h-4 text-ui-faint" />
-          <h3 class="text-ui-h3 text-ui-ink">Design</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("calculator.lpModal.design") }}</h3>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <label class="block">
-            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">Dedicated (Rp)</span>
+            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.lpModal.dedicated") }}</span>
             <input v-model.number="form.design_dedicated_price" type="number" min="0" step="10000" :class="fieldClass" />
           </label>
           <label class="block">
-            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">Template (Rp)</span>
+            <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.lpModal.template") }}</span>
             <input v-model.number="form.design_template_price" type="number" min="0" step="10000" :class="fieldClass" />
           </label>
         </div>
@@ -90,8 +93,8 @@ const fieldClass =
     </div>
 
     <template #footer>
-      <UiButton variant="secondary" :disabled="saving" @click="emit('close')">Cancel</UiButton>
-      <UiButton :loading="saving" @click="submit">{{ saving ? "Saving..." : "Save Configuration" }}</UiButton>
+      <UiButton variant="secondary" :disabled="saving" @click="emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
+      <UiButton :loading="saving" @click="submit">{{ saving ? $t("common.actions.saving") : $t("calculator.lpModal.save") }}</UiButton>
     </template>
   </UiModal>
 </template>

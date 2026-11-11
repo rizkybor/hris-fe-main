@@ -27,9 +27,9 @@ const goToTeamDetail = (id: number) => {
 </script>
 
 <template>
-  <DashboardWidgetCard title="Latest Teams" :to="can('team-menu') ? { name: 'admin.teams' } : null" flush>
+  <DashboardWidgetCard :title="$t('dashboard.widgets.latestTeams')" :to="can('team-menu') ? { name: 'admin.teams' } : null" flush>
     <SkeletonList v-if="loading" :rows="5" class="p-3" />
-    <UiEmpty v-else-if="!latestTeams || latestTeams.length === 0" title="No teams found" compact />
+    <UiEmpty v-else-if="!latestTeams || latestTeams.length === 0" :title="$t('dashboard.latestTeams.empty')" compact />
     <ul v-else class="divide-y divide-ui-line">
       <li v-for="team in latestTeams" :key="team.id">
         <button
@@ -43,9 +43,9 @@ const goToTeamDetail = (id: number) => {
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 min-w-0">
               <p class="text-ui-body font-medium text-ui-ink truncate">{{ team.name }}</p>
-              <UiBadge v-if="team.status" :tone="team.status === 'active' ? 'ok' : 'neutral'" dot class="capitalize shrink-0">{{ team.status }}</UiBadge>
+              <UiBadge v-if="team.status" :tone="team.status === 'active' ? 'ok' : 'neutral'" dot class="capitalize shrink-0">{{ ["active", "inactive"].includes(team.status) ? $t(`common.labels.${team.status}`) : team.status }}</UiBadge>
             </div>
-            <p class="text-ui-cap text-ui-muted mt-0.5">{{ team.members_count || 0 }} members</p>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("dashboard.latestTeams.members", { n: team.members_count || 0 }, team.members_count || 0) }}</p>
           </div>
           <span class="text-ui-cap text-ui-faint shrink-0">{{ getTimeAgo(team.created_at) }}</span>
         </button>

@@ -1,5 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
 import { Receipt, Plus, Download, FileText, Pencil, CheckCircle2, Ban, Trash2, Search, ArrowLeft, Wallet, CircleCheck } from "lucide-vue-next";
 import { useInvoiceStore } from "@/stores/invoice";
@@ -8,6 +10,7 @@ import { can } from "@/helpers/permissionHelper";
 import { UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiPageHeader, UiPagination, UiChips, UiTable } from "@/components/ui";
 import { useAlertModalStore } from "@/stores/alertModal";
 
+const { t } = useI18n();
 const store = useInvoiceStore();
 const alertModal = useAlertModalStore();
 const { invoices, meta, loading } = storeToRefs(store);
@@ -56,9 +59,9 @@ const handleMarkPaid = async (invoice) => {
 
 const handleCancel = async (invoice) => {
   if (
-    !(await alertModal.confirm(`Cancel Invoice "${invoice.invoice_number}"?`, {
+    !(await alertModal.confirm(t("documents.invoice.list.cancelConfirm", { number: invoice.invoice_number }), {
       type: "warning",
-      confirmText: "Cancel",
+      confirmText: t("documents.invoice.list.cancelInvoice"),
     }))
   )
     return;
@@ -85,21 +88,21 @@ const statusTone = (status) => {
 };
 
 const statusLabel = (status) => {
-  if (status === "paid") return "Paid";
-  if (status === "cancelled") return "Cancelled";
-  return "Unpaid";
+  if (status === "paid") return t("documents.shared.status.paid");
+  if (status === "cancelled") return t("documents.shared.status.cancelled");
+  return t("documents.shared.status.unpaid");
 };
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "short", day: "numeric" }) : "-";
 
 // Presentation only.
 const statusOptions = computed(() =>
   [
-    { value: "", label: "All" },
-    { value: "unpaid", label: "Unpaid" },
-    { value: "paid", label: "Paid" },
-    { value: "cancelled", label: "Cancelled" },
+    { value: "", label: t("common.labels.all") },
+    { value: "unpaid", label: t("documents.shared.status.unpaid") },
+    { value: "paid", label: t("documents.shared.status.paid") },
+    { value: "cancelled", label: t("documents.shared.status.cancelled") },
   ].map((o) => ({ ...o, count: o.value === statusFilter.value && !loading.value ? meta.value.total : undefined }))
 );
 const onStatusChip = (value) => {
@@ -107,31 +110,31 @@ const onStatusChip = (value) => {
   handleFilterChange();
 };
 const sumBy = (status) => invoices.value.filter((i) => i.status === status).reduce((sum, i) => sum + (Number(i.total) || 0), 0);
-const columns = [
-  { key: "invoice_number", label: "Invoice No. / Payment Receipt No." },
-  { key: "client_name", label: "Client / Project" },
-  { key: "date", label: "Date" },
-  { key: "total", label: "Total", align: "right" },
-  { key: "status", label: "Status" },
+const columns = computed(() => [
+  { key: "invoice_number", label: t("documents.invoice.list.columns.number") },
+  { key: "client_name", label: t("documents.invoice.list.columns.client") },
+  { key: "date", label: t("common.labels.date") },
+  { key: "total", label: t("common.labels.total"), align: "right" },
+  { key: "status", label: t("common.labels.status") },
   { key: "actions", label: "", align: "right" },
-];
+]);
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Invoice" subtitle="Manage client invoices">
+    <UiPageHeader :title="$t('documents.invoice.list.title')" :subtitle="$t('documents.invoice.list.subtitle')">
       <template #eyebrow>
         <router-link
           :to="{ name: 'admin.documents.dashboard' }"
           class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
-          aria-label="Back to Documents"
-          title="Back to Documents"
+          :aria-label="$t('documents.shared.backToDocuments')"
+          :title="$t('documents.shared.backToDocuments')"
         >
-          <ArrowLeft class="w-4 h-4" />Documents
+          <ArrowLeft class="w-4 h-4" />{{ $t("documents.shared.documents") }}
         </router-link>
       </template>
       <template #actions>
-        <UiButton v-if="can('invoice-create')" :to="{ name: 'admin.invoices.create' }" :icon="Plus">Create Invoice</UiButton>
+        <UiButton v-if="can('invoice-create')" :to="{ name: 'admin.invoices.create' }" :icon="Plus">{{ $t("documents.invoice.list.create") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -141,7 +144,7 @@ const columns = [
         <UiInput
           v-model="search"
           :icon="Search"
-          placeholder="Search invoice number, client..."
+          :placeholder="$t('documents.invoice.list.searchPlaceholder')"
           class="w-full lg:w-[300px]"
           @keyup.enter="handleSearch"
         />
@@ -172,12 +175,12 @@ const columns = [
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5">
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="FileText" :loading="viewingId === row.id" title="View PDF" aria-label="View PDF" @click="handleViewPdf(row)" />
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" title="Download PDF" aria-label="Download PDF" @click="handleDownload(row)" />
-            <UiButton v-if="can('invoice-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.invoices.edit', params: { id: row.id } }" title="Edit" aria-label="Edit" />
-            <UiButton v-if="can('invoice-edit') && row.status === 'unpaid'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-ok" :icon="CheckCircle2" title="Mark as Paid" aria-label="Mark as Paid" @click="handleMarkPaid(row)" />
-            <UiButton v-if="can('invoice-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" title="Cancel" aria-label="Cancel" @click="handleCancel(row)" />
-            <UiButton v-if="can('invoice-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-bad" :icon="Trash2" title="Delete" aria-label="Delete" @click="confirmDelete(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="FileText" :loading="viewingId === row.id" :title="$t('documents.shared.viewPdf')" :aria-label="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('common.actions.downloadPdf')" @click="handleDownload(row)" />
+            <UiButton v-if="can('invoice-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.invoices.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
+            <UiButton v-if="can('invoice-edit') && row.status === 'unpaid'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-ok" :icon="CheckCircle2" :title="$t('documents.invoice.list.markPaid')" :aria-label="$t('documents.invoice.list.markPaid')" @click="handleMarkPaid(row)" />
+            <UiButton v-if="can('invoice-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" :title="$t('documents.invoice.list.cancelInvoice')" :aria-label="$t('documents.invoice.list.cancelInvoice')" @click="handleCancel(row)" />
+            <UiButton v-if="can('invoice-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
           </div>
         </template>
 
@@ -198,34 +201,34 @@ const columns = [
                 <span v-if="row.project" class="text-ui-cap text-ui-muted truncate">· {{ row.project.name }}</span>
               </div>
               <p v-if="row.receipts?.length" class="mt-1 text-ui-cap text-ui-muted truncate">
-                Receipt: <span class="font-mono">{{ row.receipts.map((r) => r.receipt_number).join(", ") }}</span>
+                {{ $t("documents.invoice.list.receiptPrefix") }} <span class="font-mono">{{ row.receipts.map((r) => r.receipt_number).join(", ") }}</span>
               </p>
               <div class="flex items-center gap-0.5 mt-2 -ml-2">
-                <UiButton variant="ghost" size="sm" :icon="FileText" :loading="viewingId === row.id" @click="handleViewPdf(row)">View</UiButton>
+                <UiButton variant="ghost" size="sm" :icon="FileText" :loading="viewingId === row.id" @click="handleViewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
                 <UiButton variant="ghost" size="sm" :icon="Download" :loading="downloadingId === row.id" @click="handleDownload(row)">PDF</UiButton>
-                <UiButton v-if="can('invoice-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.invoices.edit', params: { id: row.id } }" title="Edit" aria-label="Edit" />
-                <UiButton v-if="can('invoice-edit') && row.status === 'unpaid'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="CheckCircle2" title="Mark as Paid" aria-label="Mark as Paid" @click="handleMarkPaid(row)" />
-                <UiButton v-if="can('invoice-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" title="Cancel" aria-label="Cancel" @click="handleCancel(row)" />
-                <UiButton v-if="can('invoice-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 text-ui-bad" :icon="Trash2" title="Delete" aria-label="Delete" @click="confirmDelete(row)" />
+                <UiButton v-if="can('invoice-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.invoices.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
+                <UiButton v-if="can('invoice-edit') && row.status === 'unpaid'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="CheckCircle2" :title="$t('documents.invoice.list.markPaid')" :aria-label="$t('documents.invoice.list.markPaid')" @click="handleMarkPaid(row)" />
+                <UiButton v-if="can('invoice-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" :title="$t('documents.invoice.list.cancelInvoice')" :aria-label="$t('documents.invoice.list.cancelInvoice')" @click="handleCancel(row)" />
+                <UiButton v-if="can('invoice-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
               </div>
             </div>
           </div>
         </template>
 
         <template #empty>
-          <UiEmpty :icon="Receipt" title="No Invoices yet" compact />
+          <UiEmpty :icon="Receipt" :title="$t('documents.invoice.list.emptyTitle')" compact />
         </template>
       </UiTable>
 
-      <UiPagination v-if="meta.total" :meta="meta" item-label="invoice" :disabled="loading" @change="load" />
+      <UiPagination v-if="meta.total" :meta="meta" :item-label="$t('documents.invoice.list.itemLabel')" :disabled="loading" @change="load" />
     </section>
 
     <UiConfirmDialog
       :open="isDeleteModalOpen"
-      title="Delete Invoice?"
-      :message="`&quot;${invoiceToDelete?.invoice_number}&quot; will be permanently deleted.`"
+      :title="$t('documents.invoice.list.deleteTitle')"
+      :message="$t('documents.shared.deleteMessage', { number: invoiceToDelete?.invoice_number })"
       type="danger"
-      confirm-text="Yes, Delete"
+      :confirm-text="$t('documents.shared.yesDelete')"
       @cancel="isDeleteModalOpen = false"
       @confirm="handleDelete"
     />

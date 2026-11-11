@@ -5,6 +5,7 @@
 // -create, -edit (edit action + status switch), -delete.
 import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { debounce } from "lodash-es";
 import {
@@ -68,6 +69,7 @@ import {
   remainingLabel,
 } from "@/components/admin/license-manager/licenseHelpers";
 
+const { t } = useI18n();
 const router = useRouter();
 const store = useLicenseManagerStore();
 const { code: productCode, product, productName, state: productState } = useLicenseProduct();
@@ -88,11 +90,11 @@ const togglingId = ref(null);
 const summaryLoading = ref(true);
 const loadedOnce = ref(false);
 
-const SORTS = [
-  { value: "", label: "Newest" },
-  { value: "expires_at:asc", label: "Expiring first" },
-  { value: "expires_at:desc", label: "Expiring last" },
-];
+const SORTS = computed(() => [
+  { value: "", label: t("licenses.dashboard.sort.newest") },
+  { value: "expires_at:asc", label: t("licenses.dashboard.sort.expiringFirst") },
+  { value: "expires_at:desc", label: t("licenses.dashboard.sort.expiringLast") },
+]);
 
 const fetchData = async () => {
   const [sortBy, sortDir] = (filters.value.sort || "").split(":");
@@ -127,18 +129,18 @@ const totalLicenses = computed(() => summary.value?.total ?? meta.value?.total ?
 
 // KPI cards; clicking one filters the table by that status.
 const kpis = computed(() => [
-  { key: "", label: "Total", value: summary.value?.total, caption: "All licenses", icon: Layers, tone: "violet" },
-  { key: "active", label: "Active", value: summary.value?.active, caption: "On and in period", icon: CheckCircle2, tone: "emerald" },
+  { key: "", label: t("common.labels.total"), value: summary.value?.total, caption: t("licenses.dashboard.allLicenses"), icon: Layers, tone: "violet" },
+  { key: "active", label: t("licenses.status.active"), value: summary.value?.active, caption: t("licenses.kpi.activeCaption"), icon: CheckCircle2, tone: "emerald" },
   {
     key: "expiring_soon",
-    label: "Expiring soon",
+    label: t("licenses.status.expiringSoon"),
     value: summary.value?.expiring_soon,
-    caption: `≤ ${soonDays.value} days left`,
+    caption: t("licenses.kpi.expiringCaption", { n: soonDays.value }, soonDays.value),
     icon: Hourglass,
     tone: "amber",
   },
-  { key: "expired", label: "Expired", value: summary.value?.expired, caption: "Past end date", icon: CalendarX2, tone: "red" },
-  { key: "inactive", label: "Inactive", value: summary.value?.inactive, caption: "Switched off", icon: PowerOff, tone: "gray" },
+  { key: "expired", label: t("licenses.status.expired"), value: summary.value?.expired, caption: t("licenses.kpi.expiredCaption"), icon: CalendarX2, tone: "red" },
+  { key: "inactive", label: t("licenses.status.inactive"), value: summary.value?.inactive, caption: t("licenses.kpi.inactiveCaption"), icon: PowerOff, tone: "gray" },
 ]);
 
 const filterByStatus = (status) => {
@@ -223,8 +225,8 @@ const isOrganization = (license) => planCategory(license) === "organization";
 const remainingText = (license) => {
   if (isLifetimeLicense(license)) return "∞";
   const days = license.remaining_days;
-  if (license.status === "expired" || days === null || days === undefined || days <= 0) return "Expired";
-  return `${days} day${days === 1 ? "" : "s"}`;
+  if (license.status === "expired" || days === null || days === undefined || days <= 0) return t("licenses.status.expired");
+  return t("licenses.period.days", { n: days }, days);
 };
 
 const elapsed = (license) => Math.min(100, Math.max(0, Number(license.elapsed_percent ?? 0)));
@@ -283,10 +285,10 @@ const toggleActive = async (license, value) => {
     // license of the bundle (the row's own last, so its data is fresh).
     for (const sibling of license.bundle || []) await store.setActive(sibling.id, value);
     await store.setActive(license.id, value);
-    flash(`License ${value ? "activated" : "deactivated"}.`);
+    flash(value ? t("licenses.dashboard.activated") : t("licenses.dashboard.deactivated"));
     store.fetchSummary();
   } catch (err) {
-    error.value = errorMessage(err, "Failed to update license status.");
+    error.value = errorMessage(err, t("licenses.dashboard.statusFailed"));
   } finally {
     togglingId.value = null;
   }
@@ -296,23 +298,27 @@ const handleDelete = async (license) => {
   const keys = lanes(license).map((l) => `${l.key} (${l.platform_label})`);
   const ok = await alertModal.confirm(
     keys.length > 1
-      ? `Delete the Mac + iPad licenses ${keys.join(" and ")} for "${license.licensee_name}"? Devices using them will lose access. This action cannot be undone.`
-      : `Delete license ${license.key} for "${license.licensee_name}"? Devices using it will lose access. This action cannot be undone.`,
-    { title: keys.length > 1 ? "Delete Licenses" : "Delete License", type: "danger", confirmText: "Delete" }
+      ? t("licenses.dashboard.deleteBundleConfirm", { keys: keys.join(t("licenses.dashboard.and")), name: license.licensee_name })
+      : t("licenses.dashboard.deleteConfirm", { key: license.key, name: license.licensee_name }),
+    {
+      title: keys.length > 1 ? t("licenses.dashboard.deleteBundleTitle") : t("licenses.dashboard.deleteTitle"),
+      type: "danger",
+      confirmText: t("common.actions.delete"),
+    }
   );
   if (!ok) return;
 
   try {
     for (const sibling of license.bundle || []) await store.deleteLicense(sibling.id);
     await store.deleteLicense(license.id);
-    flash("License deleted.");
+    flash(t("licenses.dashboard.deleted"));
     store.fetchSummary();
     if (licenses.value.length === 0 && serverOptions.value.page > 1) {
       serverOptions.value.page -= 1;
     }
     await fetchData();
   } catch (err) {
-    await alertModal.alert(errorMessage(err, "Failed to delete license."), { type: "danger" });
+    await alertModal.alert(errorMessage(err, t("licenses.dashboard.deleteFailed")), { type: "danger" });
   }
 };
 
@@ -320,13 +326,18 @@ const handleDelete = async (license) => {
 
 // Status of the period (active / expiring / expired / inactive) as a badge.
 const STATUS_TONE = { active: "ok", expiring_soon: "warn", expired: "bad", inactive: "neutral" };
-const STATUS_SHORT = { active: "Active", expiring_soon: "Expiring", expired: "Expired", inactive: "Inactive" };
+const STATUS_SHORT = {
+  active: "licenses.status.active",
+  expiring_soon: "licenses.overview.expiring",
+  expired: "licenses.status.expired",
+  inactive: "licenses.status.inactive",
+};
 const statusKey = (license) => (STATUS_TONE[license.status] ? license.status : license.is_active ? "active" : "inactive");
 const statusTone = (license) => STATUS_TONE[statusKey(license)];
-const statusText = (license) => STATUS_SHORT[statusKey(license)];
+const statusText = (license) => t(STATUS_SHORT[statusKey(license)]);
 const statusCaption = (license) => {
-  if (!license.is_active) return "Switched off";
-  if (isLifetimeLicense(license)) return "Lifetime";
+  if (!license.is_active) return t("licenses.kpi.inactiveCaption");
+  if (isLifetimeLicense(license)) return t("licenses.plans.lifetime.label");
   return remainingLabel(license.remaining_days);
 };
 
@@ -336,13 +347,16 @@ const shortKey = (key) => {
   return parts.length > 2 ? `${parts[0]}-•••••${parts[parts.length - 1]}` : maskKey(key);
 };
 const platformIcon = (platform) => (platform === "ipad" ? Tablet : Laptop);
-const PLATFORM_FILTERS = [{ value: "", label: "All platforms" }, ...PLATFORM_OPTIONS];
+const PLATFORM_FILTERS = computed(() => [{ value: "", label: t("licenses.dashboard.allPlatforms") }, ...PLATFORM_OPTIONS]);
 const planChipOptions = computed(() => [
-  { value: "", label: "All", count: summary.value?.total ?? undefined },
+  { value: "", label: t("common.labels.all"), count: summary.value?.total ?? undefined },
   ...PLAN_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label, count: summary.value?.by_plan?.[opt.value] ?? undefined })),
 ]);
 const setPlan = (value) => (value ? filterByPlan(value) : (filters.value.plan = ""));
-const statusSelectOptions = [{ value: "", label: "All statuses" }, ...STATUS_OPTIONS];
+const statusSelectOptions = computed(() => [
+  { value: "", label: t("common.labels.allStatuses") },
+  ...STATUS_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label })),
+]);
 const startNumber = computed(() => firstRowNumber(paginationMeta.value));
 
 // Phones: the filters live in a bottom sheet.
@@ -358,11 +372,11 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
         <Alert v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
 
         <!-- Header -->
-        <UiPageHeader :title="`${productName} Licenses`">
+        <UiPageHeader :title="$t('licenses.dashboard.title', { product: productName })">
           <template #eyebrow>
             <div class="flex items-center gap-2 mb-2">
               <ProductIcon :product="product" :size="24" />
-              <RouterLink :to="{ name: 'admin.license-manager.overview' }" class="text-ui-small text-ui-muted hover:text-ui-ink">License Manager</RouterLink>
+              <RouterLink :to="{ name: 'admin.license-manager.overview' }" class="text-ui-small text-ui-muted hover:text-ui-ink">{{ $t("licenses.title") }}</RouterLink>
               <span class="text-ui-faint">/</span>
               <span class="text-ui-small text-ui-ink font-medium truncate">{{ productName }}</span>
             </div>
@@ -376,11 +390,11 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                 <KeyRound class="w-3 h-3 text-ui-faint" />{{ product.key_prefix }}
               </span>
               <span v-if="product?.key_prefix" class="text-ui-faint">·</span>
-              <span class="tabular-nums">{{ totalLicenses }} license{{ totalLicenses === 1 ? "" : "s" }}</span>
+              <span class="tabular-nums">{{ $t("licenses.dashboard.licenseCount", { n: totalLicenses }, totalLicenses) }}</span>
             </span>
           </template>
           <template #actions>
-            <UiButton variant="secondary" :icon="LayoutGrid" :to="{ name: 'admin.license-manager.overview' }" class="flex-1 sm:flex-none">Overview</UiButton>
+            <UiButton variant="secondary" :icon="LayoutGrid" :to="{ name: 'admin.license-manager.overview' }" class="flex-1 sm:flex-none">{{ $t("licenses.dashboard.overview") }}</UiButton>
             <UiButton
               v-if="canSeeVersions"
               variant="secondary"
@@ -388,7 +402,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
               :to="{ name: 'admin.license-manager.versions', params: { product: productCode } }"
               class="flex-1 sm:flex-none"
             >
-              Versions
+              {{ $t("licenses.dashboard.versions") }}
             </UiButton>
             <UiButton
               v-if="canCreate"
@@ -396,7 +410,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
               :to="{ name: 'admin.license-manager.licenses.create', params: { product: productCode } }"
               class="w-full sm:w-auto"
             >
-              Create License
+              {{ $t("licenses.create.submit") }}
             </UiButton>
           </template>
         </UiPageHeader>
@@ -424,9 +438,9 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
           <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2">
               <PieChart class="w-4 h-4 text-ui-faint" />
-              <h2 class="text-ui-h3 text-ui-ink">Plan distribution</h2>
+              <h2 class="text-ui-h3 text-ui-ink">{{ $t("licenses.dashboard.planDistribution") }}</h2>
             </div>
-            <span v-if="summary?.by_plan" class="text-ui-cap text-ui-muted tabular-nums">{{ summary.total ?? 0 }} total</span>
+            <span v-if="summary?.by_plan" class="text-ui-cap text-ui-muted tabular-nums">{{ $t("licenses.dashboard.totalCount", { n: summary.total ?? 0 }) }}</span>
           </div>
           <Skeleton v-if="summaryLoading" height="8px" rounded="999px" />
           <PlanDistributionBar
@@ -436,7 +450,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
             selectable
             @select="filterByPlan"
           />
-          <p v-else class="text-ui-cap text-ui-muted">No plan data yet.</p>
+          <p v-else class="text-ui-cap text-ui-muted">{{ $t("licenses.dashboard.noPlanData") }}</p>
         </section>
 
         <!-- Toolbar + table -->
@@ -445,13 +459,13 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
             <div class="flex flex-col lg:flex-row lg:items-center gap-2">
               <div class="flex items-center gap-2 lg:w-[280px] shrink-0">
                 <div class="relative flex-1 min-w-0">
-                  <UiInput v-model="filters.search" :icon="Search" placeholder="Search key, name or email..." aria-label="Search licenses" />
+                  <UiInput v-model="filters.search" :icon="Search" :placeholder="$t('licenses.dashboard.searchPlaceholder')" :aria-label="$t('licenses.dashboard.searchLabel')" />
                   <button
                     v-if="filters.search"
                     type="button"
                     @click="filters.search = ''"
                     class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink"
-                    aria-label="Clear search"
+                    :aria-label="$t('licenses.dashboard.clearSearch')"
                   >
                     <X class="w-3.5 h-3.5" />
                   </button>
@@ -461,7 +475,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                   type="button"
                   @click="showFilters = true"
                   class="md:hidden relative shrink-0 w-[38px] h-[38px] inline-flex items-center justify-center rounded-ui-control border border-ui-line-strong bg-ui-surface text-ui-ink"
-                  aria-label="Filters"
+                  :aria-label="$t('licenses.dashboard.filters')"
                 >
                   <SlidersHorizontal class="w-4 h-4" />
                   <span
@@ -472,7 +486,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
               </div>
 
               <div class="hidden md:flex items-center gap-2 flex-1 min-w-0">
-                <div class="inline-flex items-center p-0.5 rounded-ui-control bg-ui-subtle shrink-0" role="tablist" aria-label="Filter by platform">
+                <div class="inline-flex items-center p-0.5 rounded-ui-control bg-ui-subtle shrink-0" role="tablist" :aria-label="$t('licenses.dashboard.filterPlatform')">
                   <button
                     v-for="opt in PLATFORM_FILTERS"
                     :key="opt.value || 'all'"
@@ -487,28 +501,26 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                   </button>
                 </div>
                 <div class="flex-1"></div>
-                <UiSelect v-model="filters.status" :options="statusSelectOptions" class="w-40" aria-label="Filter by status" />
-                <UiSelect v-model="filters.sort" :options="SORTS" class="w-40" aria-label="Sort" />
+                <UiSelect v-model="filters.status" :options="statusSelectOptions" class="w-40" :aria-label="$t('licenses.dashboard.filterStatus')" />
+                <UiSelect v-model="filters.sort" :options="SORTS" class="w-40" :aria-label="$t('licenses.dashboard.sortLabel')" />
               </div>
             </div>
 
             <div class="flex items-center gap-3">
               <!-- Plan chips (scroll sideways on phones) -->
-              <UiChips :model-value="filters.plan" :options="planChipOptions" size="sm" class="flex-1 min-w-0" aria-label="Filter by plan" @update:model-value="setPlan" />
+              <UiChips :model-value="filters.plan" :options="planChipOptions" size="sm" class="flex-1 min-w-0" :aria-label="$t('licenses.dashboard.filterPlan')" @update:model-value="setPlan" />
               <div class="hidden sm:flex items-center gap-3 text-ui-cap text-ui-muted shrink-0">
-                <button v-if="hasFilters" type="button" @click="clearFilters" class="font-medium text-ui-accent hover:underline">Clear filters</button>
-                <span class="tabular-nums">
-                  <span class="font-medium text-ui-ink">{{ meta.total ?? 0 }}</span>
-                  result{{ meta.total === 1 ? "" : "s" }}
-                </span>
+                <button v-if="hasFilters" type="button" @click="clearFilters" class="font-medium text-ui-accent hover:underline">{{ $t("common.actions.clearFilters") }}</button>
+                <i18n-t keypath="licenses.dashboard.results" :plural="meta.total ?? 0" tag="span" scope="global" class="tabular-nums">
+                  <template #n><span class="font-medium text-ui-ink">{{ meta.total ?? 0 }}</span></template>
+                </i18n-t>
               </div>
             </div>
             <div class="sm:hidden flex items-center justify-between gap-3 text-ui-cap text-ui-muted">
-              <span class="tabular-nums">
-                <span class="font-medium text-ui-ink">{{ meta.total ?? 0 }}</span>
-                result{{ meta.total === 1 ? "" : "s" }}
-              </span>
-              <button v-if="hasFilters" type="button" @click="clearFilters" class="font-medium text-ui-accent hover:underline">Clear filters</button>
+              <i18n-t keypath="licenses.dashboard.results" :plural="meta.total ?? 0" tag="span" scope="global" class="tabular-nums">
+                <template #n><span class="font-medium text-ui-ink">{{ meta.total ?? 0 }}</span></template>
+              </i18n-t>
+              <button v-if="hasFilters" type="button" @click="clearFilters" class="font-medium text-ui-accent hover:underline">{{ $t("common.actions.clearFilters") }}</button>
             </div>
           </div>
 
@@ -531,16 +543,16 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
           <UiEmpty
             v-else-if="!licenses.length"
             :icon="hasFilters ? SearchX : KeyRound"
-            :title="hasFilters ? 'No matching licenses' : 'No licenses yet'"
-            :message="hasFilters ? 'Try another search term or clear the filters.' : `Create the first ${productName} license to get started.`"
+            :title="hasFilters ? $t('licenses.dashboard.emptyFilteredTitle') : $t('licenses.dashboard.emptyTitle')"
+            :message="hasFilters ? $t('licenses.dashboard.emptyFilteredMessage') : $t('licenses.dashboard.emptyMessage', { product: productName })"
           >
-            <UiButton v-if="hasFilters" variant="secondary" :icon="X" @click="clearFilters">Clear filters</UiButton>
+            <UiButton v-if="hasFilters" variant="secondary" :icon="X" @click="clearFilters">{{ $t("common.actions.clearFilters") }}</UiButton>
             <UiButton
               v-else-if="canCreate"
               :icon="Plus"
               :to="{ name: 'admin.license-manager.licenses.create', params: { product: productCode } }"
             >
-              Create License
+              {{ $t("licenses.create.submit") }}
             </UiButton>
           </UiEmpty>
 
@@ -552,13 +564,13 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                 <thead>
                   <tr class="text-left">
                     <th class="w-11 pl-5 pr-0 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">#</th>
-                    <th class="px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">Licensee</th>
-                    <th class="w-[108px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">Plan</th>
-                    <th class="w-[300px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line whitespace-nowrap">License key &middot; devices</th>
-                    <th class="w-[196px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line whitespace-nowrap">Active period</th>
-                    <th class="w-[108px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">Status</th>
-                    <th class="hidden 2xl:table-cell w-[112px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line whitespace-nowrap">Last activity</th>
-                    <th class="w-[150px] pl-2 pr-4 h-10 border-b border-ui-line"><span class="sr-only">Actions</span></th>
+                    <th class="px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">{{ $t("licenses.form.licensee") }}</th>
+                    <th class="w-[108px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">{{ $t("licenses.form.plan") }}</th>
+                    <th class="w-[300px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line whitespace-nowrap">{{ $t("licenses.dashboard.keyDevices") }}</th>
+                    <th class="w-[196px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line whitespace-nowrap">{{ $t("licenses.form.activePeriod") }}</th>
+                    <th class="w-[108px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line">{{ $t("common.labels.status") }}</th>
+                    <th class="hidden 2xl:table-cell w-[112px] px-3 h-10 text-ui-cap font-medium text-ui-muted border-b border-ui-line whitespace-nowrap">{{ $t("licenses.dashboard.lastActivity") }}</th>
+                    <th class="w-[150px] pl-2 pr-4 h-10 border-b border-ui-line"><span class="sr-only">{{ $t("common.labels.actions") }}</span></th>
                   </tr>
                 </thead>
                 <tbody class="ui-stagger">
@@ -585,9 +597,11 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                           <!-- Last activity folds under the name below 2xl -->
                           <p class="2xl:hidden text-ui-cap text-ui-faint truncate">
                             <template v-if="lastActivity(license)">
-                              Active <span :title="formatDateTime(lastActivity(license))">{{ relativeTime(lastActivity(license)) }}</span>
+                              <i18n-t keypath="licenses.dashboard.activeAgo" tag="span" scope="global">
+                                <template #time><span :title="formatDateTime(lastActivity(license))">{{ relativeTime(lastActivity(license)) }}</span></template>
+                              </i18n-t>
                             </template>
-                            <template v-else>No activity yet</template>
+                            <template v-else>{{ $t("licenses.dashboard.noActivity") }}</template>
                           </p>
                         </div>
                       </div>
@@ -600,7 +614,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                           {{ planLabel({ plan: commonPlan(license) }) }}
                         </span>
                         <span class="text-ui-cap text-ui-muted whitespace-nowrap">{{ platformsText(license) }}</span>
-                        <span v-if="isOrganization(license)" class="text-ui-cap text-ui-faint whitespace-nowrap truncate max-w-full">Org · {{ organizationTypeLabel(license.organization_type) }}</span>
+                        <span v-if="isOrganization(license)" class="text-ui-cap text-ui-faint whitespace-nowrap truncate max-w-full">{{ $t("licenses.dashboard.org", { type: organizationTypeLabel(license.organization_type) }) }}</span>
                       </div>
                       <!-- A bundle whose licenses have different plans -->
                       <div v-else class="flex flex-col items-start gap-1">
@@ -612,7 +626,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                         >
                           {{ lane.platform_label }} &middot; {{ planLabel({ plan: lane.plan }) }}
                         </span>
-                        <span v-if="isOrganization(license)" class="text-ui-cap text-ui-faint whitespace-nowrap truncate max-w-full">Org · {{ organizationTypeLabel(license.organization_type) }}</span>
+                        <span v-if="isOrganization(license)" class="text-ui-cap text-ui-faint whitespace-nowrap truncate max-w-full">{{ $t("licenses.dashboard.org", { type: organizationTypeLabel(license.organization_type) }) }}</span>
                       </div>
                     </td>
 
@@ -634,7 +648,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                               <div class="h-full rounded-full" :class="laneFull(lane) ? 'bg-ui-warn' : 'bg-ui-ink'" :style="{ width: `${lanePercent(lane)}%` }"></div>
                             </div>
                             <span class="text-ui-cap text-ui-muted whitespace-nowrap tabular-nums">
-                              <span class="font-medium" :class="laneFull(lane) ? 'text-ui-warn' : 'text-ui-ink'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> devices<template v-if="lane.keys_summary"> &middot; {{ lane.keys_summary.total }} keys, {{ laneUsed(lane) }} used</template>
+                              <span class="font-medium" :class="laneFull(lane) ? 'text-ui-warn' : 'text-ui-ink'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> {{ $t("licenses.dashboard.devices") }}<template v-if="lane.keys_summary"> &middot; {{ $t("licenses.dashboard.keysUsed", { total: lane.keys_summary.total, used: laneUsed(lane) }) }}</template>
                             </span>
                           </div>
                         </div>
@@ -644,8 +658,8 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                     <!-- Period -->
                     <td class="px-3 py-3.5 border-b border-ui-line group-last:border-b-0">
                       <div v-if="isLifetimeLicense(license)" class="whitespace-nowrap">
-                        <p class="text-ui-small text-ui-text">Since {{ formatDate(license.starts_at || license.created_at) }}</p>
-                        <p class="inline-flex items-center gap-1 text-ui-cap text-ui-muted mt-0.5"><InfinityIcon class="w-3.5 h-3.5" /> Lifetime</p>
+                        <p class="text-ui-small text-ui-text">{{ $t("licenses.period.since", { date: formatDate(license.starts_at || license.created_at) }) }}</p>
+                        <p class="inline-flex items-center gap-1 text-ui-cap text-ui-muted mt-0.5"><InfinityIcon class="w-3.5 h-3.5" /> {{ $t("licenses.plans.lifetime.label") }}</p>
                       </div>
                       <div v-else class="w-full">
                         <p class="flex items-center gap-1 text-ui-small text-ui-text whitespace-nowrap tabular-nums">
@@ -653,7 +667,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                           <ArrowRight class="w-3 h-3 text-ui-faint shrink-0" />
                           <span :class="license.status === 'expired' ? 'text-ui-bad font-medium' : ''">{{ formatDate(license.expires_at) }}</span>
                         </p>
-                        <div class="mt-1.5 h-1 w-full rounded-full bg-ui-subtle overflow-hidden" :title="`${elapsed(license)}% of the period used`">
+                        <div class="mt-1.5 h-1 w-full rounded-full bg-ui-subtle overflow-hidden" :title="$t('licenses.dashboard.periodUsed', { n: elapsed(license) })">
                           <div class="h-full rounded-full transition-all" :class="periodBarClass(license)" :style="{ width: `${elapsed(license)}%` }"></div>
                         </div>
                       </div>
@@ -664,7 +678,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                       <UiBadge :tone="statusTone(license)" dot>{{ statusText(license) }}</UiBadge>
                       <p
                         class="text-ui-cap text-ui-muted mt-1 whitespace-nowrap tabular-nums"
-                        :title="isLifetimeLicense(license) ? 'No end date' : `${elapsed(license)}% of the period used`"
+                        :title="isLifetimeLicense(license) ? $t('licenses.timeline.noEndDate') : $t('licenses.dashboard.periodUsed', { n: elapsed(license) })"
                       >
                         {{ statusCaption(license) }}
                       </p>
@@ -673,7 +687,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                     <!-- Last activity -->
                     <td class="hidden 2xl:table-cell px-3 py-3.5 whitespace-nowrap text-ui-cap text-ui-muted border-b border-ui-line group-last:border-b-0">
                       <span v-if="lastActivity(license)" :title="formatDateTime(lastActivity(license))">{{ relativeTime(lastActivity(license)) }}</span>
-                      <span v-else class="text-ui-faint">Never</span>
+                      <span v-else class="text-ui-faint">{{ $t("licenses.dashboard.never") }}</span>
                     </td>
 
                     <!-- On/off switch (license-manager-edit) + actions (revealed on hover from lg) -->
@@ -693,8 +707,8 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                             :to="detailRoute(license)"
                             @click.stop
                             class="w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-subtle hover:text-ui-ink"
-                            title="View license"
-                            aria-label="View license"
+                            :title="$t('licenses.dashboard.viewLicense')"
+                            :aria-label="$t('licenses.dashboard.viewLicense')"
                           >
                             <Eye class="w-4 h-4" />
                           </RouterLink>
@@ -703,8 +717,8 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                             :to="editRoute(license)"
                             @click.stop
                             class="w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-subtle hover:text-ui-ink"
-                            title="Edit license"
-                            aria-label="Edit license"
+                            :title="$t('licenses.dashboard.editLicense')"
+                            :aria-label="$t('licenses.dashboard.editLicense')"
                           >
                             <Pencil class="w-4 h-4" />
                           </RouterLink>
@@ -713,8 +727,8 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                             type="button"
                             @click.stop="handleDelete(license)"
                             class="w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
-                            title="Delete license"
-                            aria-label="Delete license"
+                            :title="$t('licenses.dashboard.deleteLicense')"
+                            :aria-label="$t('licenses.dashboard.deleteLicense')"
                           >
                             <Trash2 class="w-4 h-4" />
                           </button>
@@ -755,7 +769,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                     </div>
 
                     <div v-if="isOrganization(license)" class="mt-2">
-                      <UiBadge tone="outline">Org · {{ organizationTypeLabel(license.organization_type) }}</UiBadge>
+                      <UiBadge tone="outline">{{ $t("licenses.dashboard.org", { type: organizationTypeLabel(license.organization_type) }) }}</UiBadge>
                     </div>
 
                     <div class="mt-2.5 pt-2.5 border-t border-ui-line space-y-1.5">
@@ -767,11 +781,11 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                           <span class="font-mono text-ui-cap font-medium text-ui-ink whitespace-nowrap shrink-0" :title="maskKey(lane.key)">{{ shortKey(lane.key) }}</span>
                           <CopyKeyButton :value="lane.key" />
                           <span class="ml-auto min-w-0 truncate text-ui-cap text-ui-muted whitespace-nowrap tabular-nums">
-                            <span :class="laneFull(lane) ? 'text-ui-warn font-medium' : 'text-ui-ink font-medium'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> devices
+                            <span :class="laneFull(lane) ? 'text-ui-warn font-medium' : 'text-ui-ink font-medium'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> {{ $t("licenses.dashboard.devices") }}
                           </span>
                         </div>
                         <p v-if="lane.keys_summary" class="text-ui-cap text-ui-faint pl-[54px] tabular-nums">
-                          {{ lane.keys_summary.total }} keys, {{ laneUsed(lane) }} used
+                          {{ $t("licenses.dashboard.keysUsed", { total: lane.keys_summary.total, used: laneUsed(lane) }) }}
                         </p>
                       </div>
                     </div>
@@ -788,10 +802,10 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
 
                     <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5 text-ui-cap text-ui-muted">
                       <span class="inline-flex items-center gap-1">
-                        <Clock class="w-3.5 h-3.5" /> {{ lastActivity(license) ? relativeTime(lastActivity(license)) : "Never" }}
+                        <Clock class="w-3.5 h-3.5" /> {{ lastActivity(license) ? relativeTime(lastActivity(license)) : $t("licenses.dashboard.never") }}
                       </span>
                       <span v-if="isLifetimeLicense(license)" class="inline-flex items-center gap-1 text-ui-ink font-medium">
-                        <InfinityIcon class="w-3.5 h-3.5" /> Lifetime
+                        <InfinityIcon class="w-3.5 h-3.5" /> {{ $t("licenses.plans.lifetime.label") }}
                       </span>
                       <div class="ml-auto flex items-center gap-3">
                         <LicenseStatusSwitch
@@ -801,7 +815,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                           @update:model-value="(value) => toggleActive(license, value)"
                         />
                         <RouterLink v-if="canEdit" :to="editRoute(license)" @click.stop class="inline-flex items-center gap-1 font-medium text-ui-accent">
-                          <Pencil class="w-3.5 h-3.5" /> Edit
+                          <Pencil class="w-3.5 h-3.5" /> {{ $t("common.actions.edit") }}
                         </RouterLink>
                       </div>
                     </div>
@@ -815,7 +829,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
             <Pagination
               :meta="paginationMeta"
               :loading="loading"
-              item-label="licenses"
+              :item-label="$t('licenses.dashboard.itemLabel')"
               :show-per-page="true"
               @page-change="handlePageChange"
               @per-page-change="handlePerPageChange"
@@ -825,17 +839,17 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
       </div>
 
       <!-- Phones: filter sheet -->
-      <UiModal v-model:open="showFilters" title="Filter">
+      <UiModal v-model:open="showFilters" :title="$t('common.actions.filter')">
         <template #header>
           <div class="flex-1 flex items-center gap-3 min-w-0">
-            <button type="button" class="text-ui-small font-medium text-ui-accent" @click="clearFilters">Reset</button>
-            <h2 class="flex-1 text-center text-ui-h2 text-ui-ink">Filter</h2>
+            <button type="button" class="text-ui-small font-medium text-ui-accent" @click="clearFilters">{{ $t("common.actions.reset") }}</button>
+            <h2 class="flex-1 text-center text-ui-h2 text-ui-ink">{{ $t("common.actions.filter") }}</h2>
           </div>
         </template>
         <div class="space-y-5">
           <div>
-            <p class="text-ui-over uppercase text-ui-muted mb-2">Platform</p>
-            <div class="grid grid-cols-3 p-0.5 rounded-ui-control bg-ui-subtle" role="tablist" aria-label="Filter by platform">
+            <p class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("licenses.form.platform") }}</p>
+            <div class="grid grid-cols-3 p-0.5 rounded-ui-control bg-ui-subtle" role="tablist" :aria-label="$t('licenses.dashboard.filterPlatform')">
               <button
                 v-for="opt in PLATFORM_FILTERS"
                 :key="opt.value || 'all'"
@@ -846,12 +860,12 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                 :class="filters.platform === opt.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted'"
                 :aria-selected="filters.platform === opt.value"
               >
-                {{ opt.value ? opt.label : "All" }}
+                {{ opt.value ? opt.label : $t("common.labels.all") }}
               </button>
             </div>
           </div>
           <div>
-            <p class="text-ui-over uppercase text-ui-muted mb-2">Plan</p>
+            <p class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("licenses.form.plan") }}</p>
             <div class="flex flex-wrap gap-1.5">
               <button
                 v-for="opt in planChipOptions"
@@ -867,8 +881,8 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
             </div>
           </div>
           <div>
-            <p class="text-ui-over uppercase text-ui-muted mb-2">Status</p>
-            <div class="border border-ui-line rounded-ui-card divide-y divide-ui-line overflow-hidden" role="radiogroup" aria-label="Filter by status">
+            <p class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("common.labels.status") }}</p>
+            <div class="border border-ui-line rounded-ui-card divide-y divide-ui-line overflow-hidden" role="radiogroup" :aria-label="$t('licenses.dashboard.filterStatus')">
               <button
                 v-for="opt in statusSelectOptions"
                 :key="opt.value || 'all'"
@@ -884,13 +898,13 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
             </div>
           </div>
           <div>
-            <p class="text-ui-over uppercase text-ui-muted mb-2">Sort</p>
-            <UiSelect v-model="filters.sort" :options="SORTS" aria-label="Sort" />
+            <p class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("licenses.dashboard.sortLabel") }}</p>
+            <UiSelect v-model="filters.sort" :options="SORTS" :aria-label="$t('licenses.dashboard.sortLabel')" />
           </div>
         </div>
         <template #footer>
           <UiButton block size="lg" :loading="loading" @click="showFilters = false">
-            Show {{ meta.total ?? 0 }} license{{ meta.total === 1 ? "" : "s" }}
+            {{ $t("licenses.dashboard.showCount", { n: meta.total ?? 0 }, meta.total ?? 0) }}
           </UiButton>
         </template>
       </UiModal>

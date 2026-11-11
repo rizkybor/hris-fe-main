@@ -18,6 +18,9 @@ import Alert from "@/components/common/Alert.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 import { errorMessage } from "@/helpers/errorHelper";
 import { UiPageHeader, UiButton, UiBadge, UiInput } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const router = useRouter();
 const archiveStore = useFilesCompanyStore();
@@ -78,7 +81,7 @@ const submit = async () => {
   if (!form.value.file) fileError.value = true;
 
   if (nameError.value || fileError.value) {
-    error.value = "File Name and File are required.";
+    error.value = t("files.form.nameAndFileRequired");
     return;
   }
 
@@ -92,13 +95,13 @@ const submit = async () => {
   loading.value = true;
   try {
     await archiveStore.createArchive(payload);
-    success.value = "File uploaded successfully.";
+    success.value = t("files.form.uploadSuccess");
 
     setTimeout(() => {
       router.push({ name: "admin.files-company.dashboard" });
     }, 1200);
   } catch (err) {
-    error.value = errorMessage(err, "Failed to upload file.");
+    error.value = errorMessage(err, t("files.form.uploadFailed"));
   } finally {
     loading.value = false;
   }
@@ -107,23 +110,23 @@ const submit = async () => {
 
 <template>
   <form class="p-1 sm:p-3 lg:p-5 space-y-5" @submit.prevent="submit">
-    <UiPageHeader title="Upload Document File" subtitle="Store a permanent company document">
+    <UiPageHeader :title="$t('files.create.title')" :subtitle="$t('files.create.subtitle')">
       <template #eyebrow>
         <button
           type="button"
           @click="$router.back()"
           class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
-          aria-label="Back"
+          :aria-label="$t('common.actions.back')"
         >
           <ArrowLeft class="w-4 h-4" />
-          Back
+          {{ $t("common.actions.back") }}
         </button>
       </template>
       <template #actions>
         <div class="hidden sm:flex items-center gap-2">
-          <UiButton variant="secondary" @click="$router.back()">Cancel</UiButton>
+          <UiButton variant="secondary" @click="$router.back()">{{ $t("common.actions.cancel") }}</UiButton>
           <UiButton type="submit" :icon="Upload" :loading="loading">
-            {{ loading ? "Uploading..." : "Upload File" }}
+            {{ loading ? $t("files.form.uploading") : $t("files.form.uploadFile") }}
           </UiButton>
         </div>
       </template>
@@ -154,22 +157,22 @@ const submit = async () => {
           <div class="w-8 h-8 rounded-ui-control border border-ui-line text-ui-muted flex items-center justify-center shrink-0">
             <Info class="w-4 h-4" />
           </div>
-          <h2 class="text-ui-h2 text-ui-ink">Informasi File</h2>
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t("files.form.infoSection") }}</h2>
         </div>
 
         <div class="space-y-5">
           <UiInput
             id="file_name"
-            label="File Name *"
-            placeholder="e.g. Company NDA Template, HR Policy 2026"
+:label="$t('files.form.nameRequiredLabel')"
+            :placeholder="$t('files.form.namePlaceholder')"
             v-model="form.file_name"
-            :error="nameError ? 'File name is required.' : ''"
+            :error="nameError ? $t('files.form.nameRequired') : ''"
           />
 
           <UiInput
             id="description"
-            label="Description (Optional)"
-            placeholder="Additional notes about this file..."
+:label="$t('files.form.descriptionOptional')"
+            :placeholder="$t('files.form.descriptionPlaceholder')"
             v-model="form.description"
             :rows="4"
           />
@@ -182,11 +185,11 @@ const submit = async () => {
           <div class="w-8 h-8 rounded-ui-control border border-ui-line text-ui-muted flex items-center justify-center shrink-0">
             <Paperclip class="w-4 h-4" />
           </div>
-          <h2 class="text-ui-h2 text-ui-ink">File</h2>
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t("files.form.fileSection") }}</h2>
         </div>
 
         <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
-          Upload File <span class="text-ui-bad">*</span>
+          {{ $t("files.form.uploadFile") }} <span class="text-ui-bad">*</span>
         </p>
         <label
           class="flex flex-col items-center justify-center gap-2 w-full py-10 px-4 border border-dashed rounded-ui-card cursor-pointer text-center transition-colors focus-within:shadow-ui-focus"
@@ -196,25 +199,25 @@ const submit = async () => {
             <component :is="form.file ? selectedFileMeta.icon : FileUp" class="w-5 h-5" />
           </div>
           <span class="text-ui-body text-ui-ink font-medium break-all">
-            {{ form.file ? form.file.name : "Click to choose a file" }}
+            {{ form.file ? form.file.name : $t("files.form.chooseFile") }}
           </span>
           <span v-if="form.file" class="flex items-center gap-1.5">
             <UiBadge tone="outline" class="font-mono">{{ fileExt(form.file) }}</UiBadge>
             <span class="text-ui-cap text-ui-muted tabular-nums">{{ formatSize(form.file.size) }}</span>
           </span>
-          <span v-else class="text-ui-cap text-ui-muted">or drag and drop</span>
+          <span v-else class="text-ui-cap text-ui-muted">{{ $t("files.form.dragDrop") }}</span>
           <input type="file" class="sr-only" @change="onFileChange" />
         </label>
-        <p v-if="fileError" class="mt-1.5 text-ui-cap text-ui-bad">File is required.</p>
+        <p v-if="fileError" class="mt-1.5 text-ui-cap text-ui-bad">{{ $t("files.form.fileRequired") }}</p>
       </section>
     </div>
 
     <!-- Phones: actions at the end of the form, full width -->
     <div class="sm:hidden flex flex-col gap-2">
       <UiButton type="submit" size="lg" block :icon="Upload" :loading="loading">
-        {{ loading ? "Uploading..." : "Upload File" }}
+        {{ loading ? $t("files.form.uploading") : $t("files.form.uploadFile") }}
       </UiButton>
-      <UiButton variant="ghost" size="lg" block @click="$router.back()">Cancel</UiButton>
+      <UiButton variant="ghost" size="lg" block @click="$router.back()">{{ $t("common.actions.cancel") }}</UiButton>
     </div>
   </form>
 </template>

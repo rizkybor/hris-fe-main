@@ -13,7 +13,7 @@ defineProps({
     class="flex items-center gap-2.5 text-ui-muted"
     :class="center ? 'justify-center py-12' : ''"
     role="status"
-    :aria-label="label || 'Loading'"
+    :aria-label="label || $t('common.a11y.loading')"
   >
     <svg class="ui-spinner shrink-0" :style="{ width: size, height: size }" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="12" r="9.5" stroke="rgb(var(--ui-line))" stroke-width="2.5" />

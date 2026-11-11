@@ -5,6 +5,10 @@ import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import RecapTile from "@/components/common/RecapTile.vue";
 import { uiColor, uiChartBase } from "@/utils/uiColor";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
@@ -25,8 +29,9 @@ onMounted(() => {
 });
 onBeforeUnmount(() => mq?.removeEventListener("change", onMq));
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-const monthLabel = (m, i) => (narrow.value && i % 2 ? "" : MONTHS[Number(m.slice(5, 7)) - 1] + (props.data?.per_month?.length > 12 ? ` ${m.slice(2, 4)}` : ""));
+// Short month name in the selected language (id: Jan … Mei … Des).
+const shortMonth = (n) => new Date(2000, n - 1, 1).toLocaleDateString(localeTag(), { month: "short" });
+const monthLabel = (m, i) => (narrow.value && i % 2 ? "" : shortMonth(Number(m.slice(5, 7))) + (props.data?.per_month?.length > 12 ? ` ${m.slice(2, 4)}` : ""));
 // Token colours (read at render time). Categorical order: accent, ink, …;
 // status colours (ok / warn / bad) only where the bar means a status.
 const AXIS = () => uiChartBase().axisLabel;
@@ -38,21 +43,21 @@ const s = computed(() => props.data?.summary || {});
 const ready = computed(() => props.data && Array.isArray(props.data.types));
 
 const tiles = computed(() => [
-  { key: "docs", label: "Total documents", value: s.value.total_documents ?? 0, sub: "In this date range", icon: Files, },
+  { key: "docs", label: t("reports.documents.totalDocuments"), value: s.value.total_documents ?? 0, sub: t("reports.documents.inRange"), icon: Files, },
   {
     key: "invoiced",
-    label: "Invoiced",
+    label: t("reports.documents.invoiced"),
     value: formatRupiah(s.value.invoice_total ?? 0),
-    sub: "Excluding cancelled invoices",
-    alert: s.value.invoice_unpaid_count ? `${formatRupiahCompact(s.value.invoice_unpaid)} unpaid (${s.value.invoice_unpaid_count})` : null,
+    sub: t("reports.documents.excludingCancelled"),
+    alert: s.value.invoice_unpaid_count ? t("reports.documents.unpaidAlert", { amount: formatRupiahCompact(s.value.invoice_unpaid), n: s.value.invoice_unpaid_count }) : null,
     icon: ReceiptText
   },
-  { key: "received", label: "Payments received", value: formatRupiah(s.value.received_total ?? 0), sub: `${s.value.receipt_count ?? 0} payment receipt${s.value.receipt_count === 1 ? "" : "s"}`, icon: Wallet },
+  { key: "received", label: t("reports.documents.paymentsReceived"), value: formatRupiah(s.value.received_total ?? 0), sub: t("reports.documents.receiptCount", { n: s.value.receipt_count ?? 0 }, s.value.receipt_count ?? 0), icon: Wallet },
   {
     key: "win",
-    label: "Proposal win rate",
+    label: t("reports.documents.winRate"),
     value: s.value.proposal_win_rate !== null && s.value.proposal_win_rate !== undefined ? `${s.value.proposal_win_rate}%` : "-",
-    sub: s.value.proposal_decided ? `Of ${s.value.proposal_decided} accepted or rejected` : "No proposal decided yet",
+    sub: s.value.proposal_decided ? t("reports.documents.ofDecided", { n: s.value.proposal_decided }) : t("reports.documents.noneDecided"),
     icon: Trophy
   },
 ]);
@@ -71,7 +76,7 @@ const perMonthOptions = computed(() => ({
   states: { hover: { filter: { type: "darken", value: 0.9 } } },
   xaxis: { categories: perMonth.value.map((m, i) => monthLabel(m.month, i)), axisBorder: { show: false }, axisTicks: { show: false }, labels: { rotate: 0, style: AXIS() } },
   yaxis: { tickAmount: 3, forceNiceScale: true, labels: { formatter: (v) => Math.round(v), style: AXIS() } },
-  tooltip: { x: { formatter: (_, { dataPointIndex }) => perMonth.value[dataPointIndex]?.month }, y: { formatter: (v) => `${v} document${v === 1 ? "" : "s"}` } },
+  tooltip: { x: { formatter: (_, { dataPointIndex }) => perMonth.value[dataPointIndex]?.month }, y: { formatter: (v) => t("reports.documents.documentCount", { n: v }, v) } },
 }));
 
 // ----- Invoiced vs received (two series, same unit) -----
@@ -89,13 +94,17 @@ const moneyOptions = computed(() => ({
   tooltip: { shared: true, intersect: false, y: { formatter: (v) => formatRupiah(v) } },
 }));
 const moneySeries = computed(() => [
-  { name: "Invoiced", data: money.value.map((m) => m.invoiced) },
-  { name: "Received", data: money.value.map((m) => m.received) },
+  { name: t("reports.documents.invoiced"), data: money.value.map((m) => m.invoiced) },
+  { name: t("reports.documents.received"), data: money.value.map((m) => m.received) },
 ]);
 
 // ----- Invoice status (donut by amount) -----
-const INVOICE_STATUS = { unpaid: { label: "Unpaid", color: uiColor("warn") }, paid: { label: "Paid", color: GREEN }, cancelled: { label: "Cancelled", color: uiColor("line-strong") } };
-const invoiceSlices = computed(() => (props.data?.invoice_status || []).filter((x) => x.count > 0).map((x) => ({ ...x, ...INVOICE_STATUS[x.status] })));
+const INVOICE_STATUS = { unpaid: { color: uiColor("warn") }, paid: { color: GREEN }, cancelled: { color: uiColor("line-strong") } };
+const invoiceSlices = computed(() =>
+  (props.data?.invoice_status || [])
+    .filter((x) => x.count > 0)
+    .map((x) => ({ ...x, ...INVOICE_STATUS[x.status], label: INVOICE_STATUS[x.status] ? t(`reports.documents.invoiceStatus.${x.status}`) : x.status }))
+);
 const invoiceCount = computed(() => invoiceSlices.value.reduce((n, x) => n + x.count, 0));
 const donutOptions = computed(() => ({
   chart: { type: "donut", fontFamily: "inherit", animations: { enabled: false } },
@@ -112,7 +121,7 @@ const donutOptions = computed(() => ({
           show: true,
           name: { show: true, offsetY: 18, color: uiColor("muted"), fontSize: "11px" },
           value: { show: true, offsetY: -14, color: uiColor("ink"), fontSize: "18px", fontWeight: 600 },
-          total: { show: true, label: "invoices", color: uiColor("muted"), fontSize: "11px", formatter: () => invoiceCount.value },
+          total: { show: true, label: t("reports.documents.invoicesLower"), color: uiColor("muted"), fontSize: "11px", formatter: () => invoiceCount.value },
         },
       },
     },
@@ -153,8 +162,8 @@ const breakdownTypes = computed(() => (props.data?.types || []).filter((t) => ![
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
       <!-- Per type -->
       <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-        <h3 class="text-ui-h3 text-ui-ink">Documents per type</h3>
-        <p class="text-ui-cap text-ui-muted mb-4">Number created in this range</p>
+        <h3 class="text-ui-h3 text-ui-ink">{{ $t('reports.documents.perType') }}</h3>
+        <p class="text-ui-cap text-ui-muted mb-4">{{ $t('reports.documents.perTypeSub') }}</p>
         <div class="space-y-2.5">
           <div v-for="t in types" :key="t.key" class="grid grid-cols-[110px_1fr_32px] sm:grid-cols-[130px_1fr_36px] items-center gap-2 text-ui-cap">
             <span class="text-ui-text font-medium truncate">{{ t.label }}</span>
@@ -168,19 +177,19 @@ const breakdownTypes = computed(() => (props.data?.types || []).filter((t) => ![
 
       <!-- Per month -->
       <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-        <h3 class="text-ui-h3 text-ui-ink">Documents per month</h3>
-        <p class="text-ui-cap text-ui-muted">All document types together</p>
+        <h3 class="text-ui-h3 text-ui-ink">{{ $t('reports.documents.perMonth') }}</h3>
+        <p class="text-ui-cap text-ui-muted">{{ $t('reports.documents.perMonthSub') }}</p>
         <div class="-mx-2">
-          <VueApexCharts type="bar" height="220" :options="perMonthOptions" :series="[{ name: 'Documents', data: perMonth.map((m) => m.count) }]" />
+          <VueApexCharts type="bar" height="220" :options="perMonthOptions" :series="[{ name: $t('reports.documents.documentsSeries'), data: perMonth.map((m) => m.count) }]" />
         </div>
       </section>
     </div>
 
     <!-- Money -->
     <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-      <h3 class="text-ui-h3 text-ui-ink">Invoiced vs received</h3>
-      <p class="text-ui-cap text-ui-muted">Invoice totals (excl. cancelled) and payment receipts, by document date</p>
-      <p v-if="!hasMoney" class="text-ui-small text-ui-muted py-10 text-center">No invoices or payment receipts in this range.</p>
+      <h3 class="text-ui-h3 text-ui-ink">{{ $t('reports.documents.money') }}</h3>
+      <p class="text-ui-cap text-ui-muted">{{ $t('reports.documents.moneySub') }}</p>
+      <p v-if="!hasMoney" class="text-ui-small text-ui-muted py-10 text-center">{{ $t('reports.documents.noMoney') }}</p>
       <div v-else class="-mx-2">
         <VueApexCharts type="bar" height="240" :options="moneyOptions" :series="moneySeries" />
       </div>
@@ -189,9 +198,9 @@ const breakdownTypes = computed(() => (props.data?.types || []).filter((t) => ![
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
       <!-- Invoice status -->
       <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-        <h3 class="text-ui-h3 text-ui-ink">Invoice status</h3>
-        <p class="text-ui-cap text-ui-muted mb-2">How many invoices, and their value</p>
-        <p v-if="!invoiceSlices.length" class="text-ui-small text-ui-muted py-10 text-center">No invoices in this range.</p>
+        <h3 class="text-ui-h3 text-ui-ink">{{ $t('reports.documents.invoiceStatusTitle') }}</h3>
+        <p class="text-ui-cap text-ui-muted mb-2">{{ $t('reports.documents.invoiceStatusSub') }}</p>
+        <p v-if="!invoiceSlices.length" class="text-ui-small text-ui-muted py-10 text-center">{{ $t('reports.documents.noInvoices') }}</p>
         <div v-else class="flex flex-col sm:flex-row items-center gap-4">
           <div class="w-44 shrink-0">
             <VueApexCharts type="donut" height="190" :options="donutOptions" :series="invoiceSlices.map((x) => x.count)" />
@@ -209,9 +218,9 @@ const breakdownTypes = computed(() => (props.data?.types || []).filter((t) => ![
 
       <!-- Proposal pipeline -->
       <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-        <h3 class="text-ui-h3 text-ui-ink">Proposal pipeline</h3>
-        <p class="text-ui-cap text-ui-muted mb-4">Proposals by status</p>
-        <p v-if="!proposal?.count" class="text-ui-small text-ui-muted py-10 text-center">No proposals in this range.</p>
+        <h3 class="text-ui-h3 text-ui-ink">{{ $t('reports.documents.pipeline') }}</h3>
+        <p class="text-ui-cap text-ui-muted mb-4">{{ $t('reports.documents.pipelineSub') }}</p>
+        <p v-if="!proposal?.count" class="text-ui-small text-ui-muted py-10 text-center">{{ $t('reports.documents.noProposals') }}</p>
         <div v-else class="space-y-2.5">
           <div v-for="b in proposal.breakdown" :key="b.value" class="grid grid-cols-[80px_1fr_32px] items-center gap-2 text-ui-cap">
             <span class="text-ui-text font-medium">{{ b.label }}</span>
@@ -226,8 +235,8 @@ const breakdownTypes = computed(() => (props.data?.types || []).filter((t) => ![
 
     <!-- Status per type -->
     <section v-if="breakdownTypes.length" class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-      <h3 class="text-ui-h3 text-ui-ink">Breakdown per document type</h3>
-      <p class="text-ui-cap text-ui-muted mb-4">Status or internal/external split of the other documents</p>
+      <h3 class="text-ui-h3 text-ui-ink">{{ $t('reports.documents.breakdown') }}</h3>
+      <p class="text-ui-cap text-ui-muted mb-4">{{ $t('reports.documents.breakdownSub') }}</p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
         <div v-for="t in breakdownTypes" :key="t.key">
           <div class="flex items-baseline justify-between text-ui-cap mb-1">

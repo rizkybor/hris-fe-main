@@ -27,12 +27,22 @@ import {
   calculateWorkingHours,
   calculateWorkingDays,
 } from "@/utils/dateUtils";
-import { getStatusConfig, formatLeaveType } from "@/utils/attendanceUtils";
+import { formatLeaveType } from "@/utils/attendanceUtils";
 import AttendanceStatsCards from "@/components/employee/attendance/AttendanceStatsCards.vue";
 import LeaveRequestSuccessModal from "@/components/employee/attendance/LeaveRequestSuccessModal.vue";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import { UiBadge, UiButton, UiCard, UiEmpty, UiInput, UiModal, UiPageHeader, UiSelect, UiSwitch, UiTable } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
+
+// Display labels for API enum values (the values themselves are unchanged).
+// Unknown statuses fall back to "Present", same as getStatusConfig().
+const statusLabel = (status) =>
+  te(`myAttendance.status.${status}`) ? t(`myAttendance.status.${status}`) : t("myAttendance.status.present");
+const leaveTypeLabel = (type) =>
+  type && te(`myAttendance.leaveTypes.${type}`) ? t(`myAttendance.leaveTypes.${type}`) : formatLeaveType(type);
 
 const attendanceStore = useAttendanceStore();
 const alertModal = useAlertModalStore();
@@ -54,7 +64,9 @@ const { user } = storeToRefs(authStore);
 // (backend rejects it too -- this just keeps the UI from showing a dead end).
 const isIntern = computed(() => user.value?.employee_profile?.job_information?.employment_type === "intern");
 const availableLeaveTypes = computed(() =>
-  isIntern.value ? leaveTypes.value.filter((type) => type.value !== "annual_leave") : leaveTypes.value
+  (isIntern.value ? leaveTypes.value.filter((type) => type.value !== "annual_leave") : leaveTypes.value).map(
+    (type) => ({ ...type, label: te(`myAttendance.leaveTypes.${type.value}`) ? t(`myAttendance.leaveTypes.${type.value}`) : type.label })
+  )
 );
 
 // State
@@ -145,18 +157,18 @@ const submitLeaveRequest = async () => {
   today.setHours(0, 0, 0, 0);
 
   if (startDate <= today) {
-    await alertModal.alert("Start date must be at least tomorrow.", { type: "warning" });
+    await alertModal.alert(t("myAttendance.form.errors.startTomorrow"), { type: "warning" });
     return;
   }
 
   if (endDate < startDate) {
-    await alertModal.alert("End date must be after start date.", { type: "warning" });
+    await alertModal.alert(t("myAttendance.form.errors.endAfterStart"), { type: "warning" });
     return;
   }
 
   if (attachmentRequired.value && !leaveForm.value.attachment) {
     await alertModal.alert(
-      "Lampiran surat keterangan dokter wajib diunggah untuk cuti sakit lebih dari 1 hari.",
+      t("myAttendance.form.errors.attachmentRequired"),
       { type: "warning" }
     );
     return;
@@ -183,7 +195,7 @@ const submitLeaveRequest = async () => {
   } catch (error) {
     console.error("Failed to submit leave request:", error);
     await alertModal.alert(
-      error?.response?.data?.message || "Failed to submit leave request. Please try again.",
+      error?.response?.data?.message || t("myAttendance.form.errors.submitFailed"),
       { type: "danger" }
     );
   }
@@ -231,13 +243,13 @@ const STATUS_TONE = {
   weekend: "neutral",
 };
 const statusTone = (status) => STATUS_TONE[status] || "ok"; // getStatusConfig falls back to "Present"
-const attendanceColumns = [
-  { key: "date", label: "Date" },
-  { key: "status", label: "Status" },
-  { key: "check_in", label: "Check-in" },
-  { key: "check_out", label: "Check-out" },
-  { key: "total", label: "Total Hours", align: "right" },
-];
+const attendanceColumns = computed(() => [
+  { key: "date", label: t("common.labels.date") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "check_in", label: t("myAttendance.recent.checkIn") },
+  { key: "check_out", label: t("myAttendance.recent.checkOut") },
+  { key: "total", label: t("myAttendance.recent.totalHours"), align: "right" },
+]);
 const fieldClass =
   "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus disabled:bg-ui-subtle disabled:text-ui-muted disabled:cursor-not-allowed";
 
@@ -258,12 +270,12 @@ onMounted(async () => {
        bar) is lost once the page overflows its h-full wrapper. -->
   <div class="p-1 sm:p-3 lg:p-5 space-y-4 sm:space-y-5">
     <UiPageHeader
-      title="My Attendance"
-      subtitle="Track your daily presence and manage leave requests efficiently"
+      :title="$t('myAttendance.title')"
+      :subtitle="$t('myAttendance.subtitle')"
       class="ui-anim-fade-up"
     >
       <template #actions>
-        <UiButton :icon="Plus" @click="openLeaveRequestModal">Request Leave</UiButton>
+        <UiButton :icon="Plus" @click="openLeaveRequestModal">{{ $t("myAttendance.requestLeave") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -280,8 +292,8 @@ onMounted(async () => {
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5 items-start">
       <!-- Recent Attendance -->
       <UiCard
-        title="Recent Attendance"
-        subtitle="Last 7 days"
+        :title="$t('myAttendance.recent.title')"
+        :subtitle="$t('myAttendance.recent.subtitle')"
         :padded="false"
         class="xl:col-span-2 ui-anim-fade-up overflow-hidden"
       >
@@ -301,15 +313,15 @@ onMounted(async () => {
             <p class="text-ui-cap text-ui-muted">{{ formatDateShort(row.date) }}</p>
           </template>
           <template #cell-status="{ row }">
-            <UiBadge :tone="statusTone(row.status)" dot>{{ getStatusConfig(row.status).text }}</UiBadge>
+            <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
           </template>
           <template #cell-check_in="{ row }">
             <span v-if="row.check_in" class="tabular-nums text-ui-ink font-medium">{{ formatTime(row.check_in) }}</span>
-            <span v-else class="text-ui-muted italic">No attendance data</span>
+            <span v-else class="text-ui-muted italic">{{ $t("myAttendance.recent.noData") }}</span>
           </template>
           <template #cell-check_out="{ row }">
             <span v-if="row.check_in && row.check_out" class="tabular-nums text-ui-ink font-medium">{{ formatTime(row.check_out) }}</span>
-            <UiBadge v-else-if="row.check_in" tone="info" dot>Currently Working</UiBadge>
+            <UiBadge v-else-if="row.check_in" tone="info" dot>{{ $t("myAttendance.recent.working") }}</UiBadge>
             <span v-else class="text-ui-faint">—</span>
           </template>
           <template #cell-total="{ row }">
@@ -328,36 +340,36 @@ onMounted(async () => {
                   <p class="text-ui-h3 text-ui-ink">{{ getDayName(row.date) }}</p>
                   <p class="text-ui-cap text-ui-muted">{{ formatDateShort(row.date) }}</p>
                 </div>
-                <UiBadge :tone="statusTone(row.status)" dot>{{ getStatusConfig(row.status).text }}</UiBadge>
+                <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
               </div>
               <dl v-if="row.check_in" class="grid grid-cols-3 gap-2 mt-3 pl-8">
                 <div>
-                  <dt class="text-ui-cap text-ui-muted">Check-in</dt>
+                  <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.recent.checkIn") }}</dt>
                   <dd class="text-ui-small font-medium text-ui-ink tabular-nums">{{ formatTime(row.check_in) }}</dd>
                 </div>
                 <template v-if="row.check_out">
                   <div>
-                    <dt class="text-ui-cap text-ui-muted">Check-out</dt>
+                    <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.recent.checkOut") }}</dt>
                     <dd class="text-ui-small font-medium text-ui-ink tabular-nums">{{ formatTime(row.check_out) }}</dd>
                   </div>
                   <div>
-                    <dt class="text-ui-cap text-ui-muted">Total Hours</dt>
+                    <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.recent.totalHours") }}</dt>
                     <dd class="text-ui-small font-medium text-ui-ink tabular-nums">
                       {{ calculateWorkingHours(row.check_in, row.check_out) }}
                     </dd>
                   </div>
                 </template>
                 <div v-else class="col-span-2">
-                  <dt class="text-ui-cap text-ui-muted">Status</dt>
-                  <dd><UiBadge tone="info" dot>Currently Working</UiBadge></dd>
+                  <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.status") }}</dt>
+                  <dd><UiBadge tone="info" dot>{{ $t("myAttendance.recent.working") }}</UiBadge></dd>
                 </div>
               </dl>
-              <p v-else class="text-ui-small text-ui-muted italic mt-2 pl-8">No attendance data</p>
+              <p v-else class="text-ui-small text-ui-muted italic mt-2 pl-8">{{ $t("myAttendance.recent.noData") }}</p>
             </div>
           </template>
 
           <template #empty>
-            <UiEmpty :icon="CalendarCheck" title="No attendance records found" compact />
+            <UiEmpty :icon="CalendarCheck" :title="$t('myAttendance.recent.empty')" compact />
           </template>
         </UiTable>
       </UiCard>
@@ -369,10 +381,10 @@ onMounted(async () => {
           class="ui-anim-fade-up bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 flex items-center justify-between gap-4"
         >
           <div class="min-w-0">
-            <p class="text-ui-small text-ui-muted">Sisa Cuti Tahunan {{ myLeaveBalance.year }}</p>
+            <p class="text-ui-small text-ui-muted">{{ $t("myAttendance.balance.title", { year: myLeaveBalance.year }) }}</p>
             <p class="text-ui-h1 text-ui-ink tabular-nums mt-1">
               {{ myLeaveBalance.remaining }}
-              <span class="text-ui-body font-normal text-ui-muted">/ {{ myLeaveBalance.quota }} hari</span>
+              <span class="text-ui-body font-normal text-ui-muted">/ {{ $t("common.duration.day", { n: myLeaveBalance.quota }, myLeaveBalance.quota) }}</span>
             </p>
           </div>
           <div class="w-10 h-10 rounded-ui-control bg-ui-accent-soft text-ui-accent flex items-center justify-center shrink-0">
@@ -381,7 +393,7 @@ onMounted(async () => {
         </div>
 
         <!-- Leave Requests -->
-        <UiCard title="My Leave Requests" subtitle="Recent requests" :padded="false" class="ui-anim-fade-up overflow-hidden">
+        <UiCard :title="$t('myAttendance.requests.title')" :subtitle="$t('myAttendance.requests.subtitle')" :padded="false" class="ui-anim-fade-up overflow-hidden">
           <template #actions>
             <CalendarX class="w-[18px] h-[18px] text-ui-faint" />
           </template>
@@ -395,24 +407,24 @@ onMounted(async () => {
               <li v-for="request in myLeaveRequests" :key="request.id" class="px-5 py-3.5">
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
-                    <p class="text-ui-h3 text-ui-ink truncate">{{ formatLeaveType(request.leave_type) }}</p>
+                    <p class="text-ui-h3 text-ui-ink truncate">{{ leaveTypeLabel(request.leave_type) }}</p>
                     <p class="text-ui-cap text-ui-muted mt-0.5">
                       {{ formatDateShort(request.start_date) }} – {{ formatDateShort(request.end_date) }}
-                      &middot; {{ request.total_days }} {{ request.total_days === 1 ? "day" : "days" }}
+                      &middot; {{ $t("common.duration.day", { n: request.total_days }, request.total_days) }}
                     </p>
                   </div>
-                  <UiBadge :tone="statusTone(request.status)" dot>{{ getStatusConfig(request.status).text }}</UiBadge>
+                  <UiBadge :tone="statusTone(request.status)" dot>{{ statusLabel(request.status) }}</UiBadge>
                 </div>
                 <div class="flex items-center justify-between gap-3 mt-2">
-                  <p class="text-ui-cap text-ui-faint truncate">Requested {{ formatRequestDate(request.created_at) }}</p>
+                  <p class="text-ui-cap text-ui-faint truncate">{{ $t("myAttendance.requests.requested", { date: formatRequestDate(request.created_at) }) }}</p>
                   <UiButton variant="ghost" size="sm" :icon="Eye" class="-mr-2.5" @click="openLeaveDetailsModal(request.id)">
-                    View Details
+                    {{ $t("common.actions.viewDetails") }}
                   </UiButton>
                 </div>
               </li>
             </ul>
 
-            <UiEmpty v-else :icon="CalendarX" title="No leave requests found" compact />
+            <UiEmpty v-else :icon="CalendarX" :title="$t('myAttendance.requests.empty')" compact />
           </div>
         </UiCard>
       </div>
@@ -421,8 +433,8 @@ onMounted(async () => {
     <!-- Leave Request Modal -->
     <UiModal
       v-model:open="showLeaveRequestModal"
-      title="Request New Leave"
-      description="Submit a leave request for approval"
+      :title="$t('myAttendance.form.title')"
+      :description="$t('myAttendance.form.description')"
       size="lg"
       @close="closeLeaveRequestModal"
     >
@@ -432,8 +444,8 @@ onMounted(async () => {
           <UiSelect
             v-model="leaveForm.leave_type"
             class="md:col-span-2"
-            label="Leave Type"
-            placeholder="Select leave type"
+            :label="$t('myAttendance.form.leaveType')"
+            :placeholder="$t('myAttendance.form.leaveTypePlaceholder')"
             :options="availableLeaveTypes"
             required
           />
@@ -441,7 +453,7 @@ onMounted(async () => {
           <!-- Start Date -->
           <div>
             <label for="leave-start-date" class="block text-ui-small font-medium text-ui-ink mb-1.5">
-              Start Date<span class="text-ui-bad"> *</span>
+              {{ $t("myAttendance.form.startDate") }}<span class="text-ui-bad"> *</span>
             </label>
             <input
               id="leave-start-date"
@@ -456,7 +468,7 @@ onMounted(async () => {
           <!-- End Date -->
           <div>
             <label for="leave-end-date" class="block text-ui-small font-medium text-ui-ink mb-1.5">
-              End Date<span class="text-ui-bad"> *</span>
+              {{ $t("myAttendance.form.endDate") }}<span class="text-ui-bad"> *</span>
             </label>
             <input
               id="leave-end-date"
@@ -472,7 +484,7 @@ onMounted(async () => {
           <!-- Half Day -->
           <UiSwitch
             class="md:col-span-2"
-            label="Cuti Setengah Hari (Half Day)"
+            :label="$t('myAttendance.form.halfDay')"
             :model-value="leaveForm.is_half_day"
             @update:model-value="toggleHalfDay"
           />
@@ -483,11 +495,10 @@ onMounted(async () => {
               <Clock class="w-[18px] h-[18px]" />
             </div>
             <div>
-              <p class="text-ui-cap text-ui-muted">Total Days</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("myAttendance.form.totalDays") }}</p>
               <p class="text-ui-h3 text-ui-ink">
-                {{ totalDaysCalculated }}
-                {{ totalDaysCalculated === 1 ? "day" : "days" }}
-                <span class="text-ui-cap font-normal text-ui-muted">&middot; Excluding weekends</span>
+                {{ $t("common.duration.day", { n: totalDaysCalculated }, totalDaysCalculated) }}
+                <span class="text-ui-cap font-normal text-ui-muted">&middot; {{ $t("myAttendance.form.excludingWeekends") }}</span>
               </p>
             </div>
           </div>
@@ -497,26 +508,26 @@ onMounted(async () => {
           <!-- Reason -->
           <UiInput
             v-model="leaveForm.reason"
-            label="Reason for Leave"
+            :label="$t('myAttendance.form.reason')"
             :rows="4"
             required
-            placeholder="Please provide a detailed reason for your leave request..."
+            :placeholder="$t('myAttendance.form.reasonPlaceholder')"
           />
 
           <!-- Emergency Contact -->
           <UiInput
             v-model="leaveForm.emergency_contact"
             type="tel"
-            label="Emergency Contact (Optional)"
-            placeholder="Phone number for emergency contact"
+            :label="$t('myAttendance.form.emergencyContact')"
+            :placeholder="$t('myAttendance.form.emergencyContactPlaceholder')"
           />
 
           <!-- Attachment -->
           <div>
             <label for="leave-attachment" class="block text-ui-small font-medium text-ui-ink mb-1.5">
-              Lampiran (Surat Keterangan Dokter, dll.)
+              {{ $t("myAttendance.form.attachment") }}
               <span v-if="attachmentRequired" class="text-ui-bad"> *</span>
-              <span v-else class="text-ui-muted font-normal ml-1">(Optional)</span>
+              <span v-else class="text-ui-muted font-normal ml-1">({{ $t("common.states.optional") }})</span>
             </label>
             <input
               id="leave-attachment"
@@ -528,46 +539,46 @@ onMounted(async () => {
             />
             <p v-if="attachmentRequired" class="text-ui-cap text-ui-bad mt-1.5 flex items-center gap-1">
               <Paperclip class="w-3.5 h-3.5" />
-              Wajib diunggah untuk cuti sakit lebih dari 1 hari.
+              {{ $t("myAttendance.form.attachmentRequiredHint") }}
             </p>
-            <p v-else class="text-ui-cap text-ui-muted mt-1.5">Format: JPG, PNG, atau PDF, maks. 5MB.</p>
+            <p v-else class="text-ui-cap text-ui-muted mt-1.5">{{ $t("myAttendance.form.attachmentHint") }}</p>
           </div>
         </div>
       </form>
 
       <template #footer="{ close }">
-        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="close">Cancel</UiButton>
-        <UiButton type="submit" form="leaveRequestForm" class="flex-1 sm:flex-none">Submit Request</UiButton>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="close">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="leaveRequestForm" class="flex-1 sm:flex-none">{{ $t("myAttendance.form.submit") }}</UiButton>
       </template>
     </UiModal>
 
     <!-- Leave Details Modal -->
     <UiModal
       v-model:open="showLeaveDetailsModal"
-      title="Leave Request Details"
-      description="Complete information about this leave request"
+      :title="$t('myAttendance.details.title')"
+      :description="$t('myAttendance.details.description')"
       @close="closeLeaveDetailsModal"
     >
       <div v-if="selectedLeaveRequest" class="space-y-5">
         <dl class="grid grid-cols-2 gap-x-4 gap-y-4">
           <div>
-            <dt class="text-ui-cap text-ui-muted">Leave Type</dt>
-            <dd class="text-ui-body font-medium text-ui-ink mt-0.5">{{ formatLeaveType(selectedLeaveRequest.leave_type) }}</dd>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.form.leaveType") }}</dt>
+            <dd class="text-ui-body font-medium text-ui-ink mt-0.5">{{ leaveTypeLabel(selectedLeaveRequest.leave_type) }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Status</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.status") }}</dt>
             <dd class="mt-1">
               <UiBadge :tone="statusTone(selectedLeaveRequest.status)" dot>
-                {{ getStatusConfig(selectedLeaveRequest.status).text }}
+                {{ statusLabel(selectedLeaveRequest.status) }}
               </UiBadge>
             </dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Start Date</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.form.startDate") }}</dt>
             <dd class="text-ui-body font-medium text-ui-ink mt-0.5">{{ formatDateLong(selectedLeaveRequest.start_date) }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">End Date</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("myAttendance.form.endDate") }}</dt>
             <dd class="text-ui-body font-medium text-ui-ink mt-0.5">{{ formatDateLong(selectedLeaveRequest.end_date) }}</dd>
           </div>
           <div class="col-span-2 flex items-center gap-3 px-4 py-3 bg-ui-subtle rounded-ui-control">
@@ -575,12 +586,11 @@ onMounted(async () => {
               <Clock class="w-[18px] h-[18px]" />
             </div>
             <div>
-              <p class="text-ui-cap text-ui-muted">Total Duration</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("myAttendance.details.totalDuration") }}</p>
               <p class="text-ui-h3 text-ui-ink">
-                {{ selectedLeaveRequest.total_days }}
-                {{ selectedLeaveRequest.total_days === 1 ? "day" : "days" }}
-                <span v-if="selectedLeaveRequest.is_half_day" class="text-ui-accent">(Half Day)</span>
-                <span class="block text-ui-cap font-normal text-ui-muted">Working days (excluding weekends)</span>
+                {{ $t("common.duration.day", { n: selectedLeaveRequest.total_days }, selectedLeaveRequest.total_days) }}
+                <span v-if="selectedLeaveRequest.is_half_day" class="text-ui-accent">({{ $t("myAttendance.details.halfDay") }})</span>
+                <span class="block text-ui-cap font-normal text-ui-muted">{{ $t("myAttendance.details.workingDays") }}</span>
               </p>
             </div>
           </div>
@@ -588,15 +598,15 @@ onMounted(async () => {
 
         <div class="pt-5 border-t border-ui-line space-y-4">
           <div>
-            <p class="text-ui-cap text-ui-muted">Reason for Leave</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t("myAttendance.form.reason") }}</p>
             <p class="text-ui-body text-ui-ink mt-1 whitespace-pre-line">{{ selectedLeaveRequest.reason }}</p>
           </div>
           <div>
-            <p class="text-ui-cap text-ui-muted">Request Submitted</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t("myAttendance.details.submitted") }}</p>
             <p class="text-ui-body text-ui-ink mt-0.5">{{ formatRequestDateLong(selectedLeaveRequest.created_at) }}</p>
           </div>
           <div v-if="selectedLeaveRequest.attachment_url">
-            <p class="text-ui-cap text-ui-muted mb-1.5">Lampiran</p>
+            <p class="text-ui-cap text-ui-muted mb-1.5">{{ $t("myAttendance.details.attachment") }}</p>
             <a
               :href="selectedLeaveRequest.attachment_url"
               target="_blank"
@@ -605,7 +615,7 @@ onMounted(async () => {
             >
               <Paperclip class="w-4 h-4 shrink-0" />
               <span class="text-ui-small font-medium truncate">{{
-                selectedLeaveRequest.attachment_original_name || "Lihat Lampiran"
+                selectedLeaveRequest.attachment_original_name || $t("myAttendance.details.viewAttachment")
               }}</span>
             </a>
           </div>
@@ -613,7 +623,7 @@ onMounted(async () => {
       </div>
 
       <template #footer="{ close }">
-        <UiButton variant="secondary" class="w-full sm:w-auto" @click="close">Close</UiButton>
+        <UiButton variant="secondary" class="w-full sm:w-auto" @click="close">{{ $t("common.actions.close") }}</UiButton>
       </template>
     </UiModal>
 

@@ -59,6 +59,9 @@ import Avatar from "@/components/common/Avatar.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiBadge, UiButton, UiCard, UiEmpty } from "@/components/ui";
 import { useScrollFade } from "@/composables/useScrollFade";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const id = route.params.id;
@@ -197,13 +200,31 @@ const HEALTH_TONES = {
   behind: { box: "bg-ui-warn-soft border-ui-warn/20", ink: "text-ui-warn" },
   "on-track": { box: "bg-ui-ok-soft border-ui-ok/20", ink: "text-ui-ok" },
 };
-const TASK_STATUS_TILES = [
-  { status: "todo", label: "To Do" },
-  { status: "in_progress", label: "In Progress" },
-  { status: "review", label: "Review" },
-  { status: "done", label: "Done" },
-  { status: "cancelled", label: "Cancelled" },
-];
+const TASK_STATUS_TILES = computed(() => [
+  { status: "todo", label: t("projects.taskStatus.todo") },
+  { status: "in_progress", label: t("projects.taskStatus.inProgress") },
+  { status: "review", label: t("projects.taskStatus.review") },
+  { status: "done", label: t("projects.taskStatus.done") },
+  { status: "cancelled", label: t("projects.taskStatus.cancelled") },
+]);
+const PROJECT_STATUS_KEYS = {
+  draft: "draft",
+  planning: "planning",
+  active: "active",
+  on_hold: "onHold",
+  "on-hold": "onHold",
+  completed: "completed",
+  cancelled: "cancelled",
+};
+const projectStatusLabel = (status) => {
+  if (status === "overdue") return t("projects.health.overdue");
+  const key = PROJECT_STATUS_KEYS[status];
+  return key ? t(`projects.status.${key}`) : capitalize(status);
+};
+const priorityLabel = (priority) =>
+  ["low", "medium", "high", "urgent"].includes(priority)
+    ? t(`projects.priority.${priority}`)
+    : capitalize(priority);
 const taskCount = (status) => currentProjectTasks.value.filter((task) => task.status === status).length;
 
 const hasAccessLinks = computed(() => {
@@ -221,13 +242,13 @@ const activeTab = ref(route.query.task ? "board" : "overview");
 const { scrollRef: tabScrollRef, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
 const tabs = computed(() => {
   const list = [
-    { id: "overview", label: "Overview", icon: LayoutGrid },
-    { id: "board", label: "Board", icon: KanbanSquare },
-    { id: "documents", label: "Documents", icon: FileText },
+    { id: "overview", label: t("projects.detail.tabs.overview"), icon: LayoutGrid },
+    { id: "board", label: t("projects.detail.tabs.board"), icon: KanbanSquare },
+    { id: "documents", label: t("projects.detail.tabs.documents"), icon: FileText },
   ];
-  if (can("project-expense-list")) list.push({ id: "billing", label: "Billing", icon: ReceiptText });
-  if (can("maintenance-menu") || can("maintenance-list")) list.push({ id: "maintenance", label: "Maintenance", icon: Wrench });
-  if (hasAccessLinks.value) list.push({ id: "access", label: "Access", icon: Link2 });
+  if (can("project-expense-list")) list.push({ id: "billing", label: t("projects.detail.tabs.billing"), icon: ReceiptText });
+  if (can("maintenance-menu") || can("maintenance-list")) list.push({ id: "maintenance", label: t("projects.detail.tabs.maintenance"), icon: Wrench });
+  if (hasAccessLinks.value) list.push({ id: "access", label: t("projects.detail.tabs.access"), icon: Link2 });
   return list;
 });
 
@@ -240,7 +261,7 @@ onMounted(async () => {
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <!-- Loading -->
-    <div v-if="!pageReady" role="status" aria-label="Loading project..." class="space-y-5">
+    <div v-if="!pageReady" role="status" :aria-label="$t('projects.detail.loading')" class="space-y-5">
       <div class="flex items-center gap-4">
         <Skeleton width="56px" height="56px" rounded="12px" />
         <div class="flex-1 space-y-2.5">
@@ -257,7 +278,7 @@ onMounted(async () => {
           <Skeleton v-for="i in 4" :key="i" height="16px" />
         </div>
       </div>
-      <span class="sr-only">Loading project...</span>
+      <span class="sr-only">{{ $t("projects.detail.loading") }}</span>
     </div>
 
     <template v-else>
@@ -267,30 +288,30 @@ onMounted(async () => {
           :to="{ name: 'admin.projects' }"
           class="inline-flex items-center gap-1 text-ui-small text-ui-accent hover:underline"
         >
-          <ChevronLeft class="w-4 h-4" /> Projects
+          <ChevronLeft class="w-4 h-4" /> {{ $t("projects.detail.back") }}
         </RouterLink>
 
         <div class="flex flex-col md:flex-row md:items-center gap-4">
           <div class="flex items-center gap-3.5 flex-1 min-w-0">
             <img
               :src="project.photo || '/images/og-image.png'"
-              alt="Project Image"
+              :alt="$t('projects.detail.imageAlt')"
               class="w-12 h-12 sm:w-14 sm:h-14 rounded-ui-card object-cover border border-ui-line bg-ui-subtle shrink-0"
             />
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                 <h1 class="text-ui-h1 text-ui-ink break-words">{{ project.name }}</h1>
                 <UiBadge v-if="project.status" :tone="PROJECT_STATUS_TONES[project.status] || 'neutral'" dot>
-                  {{ capitalize(project.status) }}
+                  {{ projectStatusLabel(project.status) }}
                 </UiBadge>
                 <UiBadge v-if="project.priority" tone="outline">
-                  <Flag class="w-3 h-3 text-ui-faint" />{{ capitalize(project.priority) }}
+                  <Flag class="w-3 h-3 text-ui-faint" />{{ priorityLabel(project.priority) }}
                 </UiBadge>
               </div>
               <p class="text-ui-small text-ui-muted mt-1 flex flex-wrap gap-x-1.5">
                 <span v-if="project.client">{{ project.client.name }} ·</span>
-                <span v-if="project.leader">Lead {{ project.leader?.user?.name }} ·</span>
-                <span class="tabular-nums">{{ formatDate(project.start_date) || "N/A" }} – {{ formatDate(project.end_date) || "N/A" }}</span>
+                <span v-if="project.leader">{{ $t("projects.detail.leadBy", { name: project.leader?.user?.name }) }} ·</span>
+                <span class="tabular-nums">{{ formatDate(project.start_date) || $t("common.duration.na") }} – {{ formatDate(project.end_date) || $t("common.duration.na") }}</span>
               </p>
             </div>
           </div>
@@ -299,14 +320,14 @@ onMounted(async () => {
             <!-- Progress (desktop; phones get the Progress card) -->
             <div class="hidden md:block w-48">
               <div class="flex items-center justify-between text-ui-cap">
-                <span class="text-ui-muted">Progress</span>
+                <span class="text-ui-muted">{{ $t("projects.card.progress") }}</span>
                 <span class="text-ui-ink font-medium tabular-nums">{{ projectProgress }}%</span>
               </div>
               <div class="h-1.5 rounded-full bg-ui-subtle mt-1.5 overflow-hidden">
                 <div class="h-full rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${projectProgress}%` }"></div>
               </div>
               <p class="text-ui-cap text-ui-faint mt-1 truncate">
-                {{ projectHealth ? `Expected ${projectHealth.expectedProgress}% by now` : "Project completion" }}
+                {{ projectHealth ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}
               </p>
             </div>
             <UiButton
@@ -317,7 +338,7 @@ onMounted(async () => {
               class="w-full md:w-auto"
               @click="handleExportProgress"
             >
-              {{ exporting ? "Exporting..." : "Export Progress" }}
+              {{ exporting ? $t("projects.detail.exporting") : $t("projects.detail.exportProgress") }}
             </UiButton>
           </div>
         </div>
@@ -335,10 +356,10 @@ onMounted(async () => {
           <div class="flex flex-wrap items-center gap-2">
             <h4 class="text-ui-small font-semibold" :class="HEALTH_TONES[projectHealth.level].ink">{{ projectHealth.label }}</h4>
             <span class="px-1.5 rounded-md bg-ui-surface/70 text-ui-cap font-medium tabular-nums" :class="HEALTH_TONES[projectHealth.level].ink">
-              {{ projectHealth.daysRemaining >= 0 ? `${projectHealth.daysRemaining}d left` : `${Math.abs(projectHealth.daysRemaining)}d overdue` }}
+              {{ projectHealth.daysRemaining >= 0 ? $t("projects.detail.daysLeft", { n: projectHealth.daysRemaining }) : $t("projects.card.healthOverdue", { n: Math.abs(projectHealth.daysRemaining) }) }}
             </span>
             <span class="px-1.5 rounded-md bg-ui-surface/70 text-ui-cap font-medium tabular-nums" :class="HEALTH_TONES[projectHealth.level].ink">
-              {{ projectHealth.actualProgress }}% done &middot; expected {{ projectHealth.expectedProgress }}%
+              {{ $t("projects.detail.doneVsExpected", { done: projectHealth.actualProgress, expected: projectHealth.expectedProgress }) }}
             </span>
           </div>
           <p class="text-ui-small text-ui-text mt-1">{{ projectHealth.message }}</p>
@@ -388,80 +409,80 @@ onMounted(async () => {
           <!-- Progress (phones) -->
           <div class="md:hidden bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5">
             <div class="flex items-center justify-between">
-              <span class="text-ui-small font-medium text-ui-ink">Progress</span>
+              <span class="text-ui-small font-medium text-ui-ink">{{ $t("projects.card.progress") }}</span>
               <span class="text-ui-small text-ui-ink tabular-nums">{{ projectProgress }}%</span>
             </div>
             <div class="h-1.5 rounded-full bg-ui-subtle mt-2 overflow-hidden">
               <div class="h-full rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${projectProgress}%` }"></div>
             </div>
             <p class="text-ui-cap text-ui-muted mt-1.5">
-              {{ projectHealth ? `Expected ${projectHealth.expectedProgress}% by now` : "Project completion" }}
+              {{ projectHealth ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}
             </p>
           </div>
 
           <!-- Project Information -->
-          <UiCard title="Project Information" subtitle="Complete project overview">
+          <UiCard :title="$t('projects.detail.info.title')" :subtitle="$t('projects.detail.info.subtitle')">
             <template #actions>
               <UiButton
                 variant="ghost"
                 size="sm"
                 :icon="isBudgetVisible ? EyeOff : Eye"
-                :title="isBudgetVisible ? 'Hide budget' : 'Show budget'"
+                :title="isBudgetVisible ? $t('projects.stats.hideBudget') : $t('projects.stats.showBudget')"
                 @click="toggleBudgetVisibility"
               >
-                {{ isBudgetVisible ? "Hide budget" : "Show budget" }}
+                {{ isBudgetVisible ? $t("projects.stats.hideBudget") : $t("projects.stats.showBudget") }}
               </UiButton>
             </template>
             <dl class="grid grid-cols-1 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-5 divide-y divide-ui-line sm:divide-y-0 -my-3 sm:my-0">
               <div class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
-                <dt class="text-ui-small text-ui-muted shrink-0">Budget</dt>
+                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.fields.budget") }}</dt>
                 <dd class="text-right sm:text-left sm:mt-1 min-w-0">
                   <span class="block text-ui-body font-medium text-ui-ink tabular-nums break-words">
                     {{ isBudgetVisible ? formatRupiah(project.budget) : "Rp ••••••••" }}
                   </span>
-                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">Project budget</span>
+                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.budgetHint") }}</span>
                 </dd>
               </div>
               <div class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
-                <dt class="text-ui-small text-ui-muted shrink-0">Start Date</dt>
+                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.fields.startDate") }}</dt>
                 <dd class="text-right sm:text-left sm:mt-1 min-w-0">
-                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ formatDate(project.start_date) || "N/A" }}</span>
-                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">Project kickoff</span>
+                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ formatDate(project.start_date) || $t("common.duration.na") }}</span>
+                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.startHint") }}</span>
                 </dd>
               </div>
               <div class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
-                <dt class="text-ui-small text-ui-muted shrink-0">End Date</dt>
+                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.fields.endDate") }}</dt>
                 <dd class="text-right sm:text-left sm:mt-1 min-w-0">
-                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ formatDate(project.end_date) || "N/A" }}</span>
-                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">Project deadline</span>
+                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ formatDate(project.end_date) || $t("common.duration.na") }}</span>
+                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.endHint") }}</span>
                 </dd>
               </div>
               <div class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
-                <dt class="text-ui-small text-ui-muted shrink-0">Duration</dt>
+                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.detail.info.duration") }}</dt>
                 <dd class="text-right sm:text-left sm:mt-1 min-w-0">
                   <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ calculateDuration(project.start_date, project.end_date) }}</span>
-                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">Project timeline</span>
+                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.durationHint") }}</span>
                 </dd>
               </div>
               <div v-if="project.warranty_period_months" class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
-                <dt class="text-ui-small text-ui-muted shrink-0">Warranty Period</dt>
+                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.fields.warrantyPeriod") }}</dt>
                 <dd class="text-right sm:text-left sm:mt-1 min-w-0">
-                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ project.warranty_period_months }} months</span>
-                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">After project completion</span>
+                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ $t("projects.detail.info.months", { n: project.warranty_period_months }, project.warranty_period_months) }}</span>
+                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.warrantyHint") }}</span>
                 </dd>
               </div>
               <div v-if="project.retention_period_months" class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
-                <dt class="text-ui-small text-ui-muted shrink-0">Retention Period</dt>
+                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("projects.fields.retentionPeriod") }}</dt>
                 <dd class="text-right sm:text-left sm:mt-1 min-w-0">
-                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ project.retention_period_months }} months</span>
-                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">Contract term</span>
+                  <span class="block text-ui-body font-medium text-ui-ink tabular-nums">{{ $t("projects.detail.info.months", { n: project.retention_period_months }, project.retention_period_months) }}</span>
+                  <span class="hidden sm:block text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.detail.info.retentionHint") }}</span>
                 </dd>
               </div>
             </dl>
 
             <!-- About Project -->
             <div class="mt-5 pt-4 border-t border-ui-line">
-              <h5 class="text-ui-h3 text-ui-ink mb-1.5">About Project</h5>
+              <h5 class="text-ui-h3 text-ui-ink mb-1.5">{{ $t("projects.detail.info.about") }}</h5>
               <div v-if="aboutParagraphs.length" class="text-ui-body text-ui-text leading-relaxed space-y-3">
                 <p v-for="(paragraph, index) in aboutParagraphs" :key="index">{{ paragraph }}</p>
               </div>
@@ -470,9 +491,9 @@ onMounted(async () => {
           </UiCard>
 
           <!-- Tasks summary -->
-          <UiCard title="Tasks">
+          <UiCard :title="$t('projects.detail.tasks.title')">
             <template #actions>
-              <button type="button" class="text-ui-small font-medium text-ui-accent hover:underline mt-1" @click="activeTab = 'board'">Open board</button>
+              <button type="button" class="text-ui-small font-medium text-ui-accent hover:underline mt-1" @click="activeTab = 'board'">{{ $t("projects.detail.tasks.openBoard") }}</button>
             </template>
             <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
               <button
@@ -500,14 +521,14 @@ onMounted(async () => {
         <!-- Right column -->
         <div class="space-y-4 sm:space-y-5 min-w-0 ui-stagger">
           <!-- Team -->
-          <UiCard title="Team">
+          <UiCard :title="$t('common.labels.team')">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
               <!-- Project Leader -->
               <div class="flex items-center gap-3 min-w-0">
                 <template v-if="project.leader">
                   <Avatar :src="project.leader.user.profile_photo" :alt="project.leader.user.name" size="w-10 h-10" icon-size="w-4 h-4" />
                   <div class="flex-1 min-w-0">
-                    <p class="text-ui-cap text-ui-muted">Project Leader</p>
+                    <p class="text-ui-cap text-ui-muted">{{ $t("projects.fields.leader") }}</p>
                     <p class="text-ui-body font-medium text-ui-ink truncate">{{ project.leader?.user?.name }}</p>
                     <p class="text-ui-cap text-ui-muted truncate">{{ project.leader?.job_information?.job_title }}</p>
                   </div>
@@ -517,13 +538,13 @@ onMounted(async () => {
                     :icon="User"
                     :to="{ name: 'admin.employees.detail', params: { id: project.leader.id } }"
                     class="shrink-0"
-                  >Profile</UiButton>
+                  >{{ $t("projects.detail.team.profile") }}</UiButton>
                 </template>
                 <template v-else>
                   <span class="w-10 h-10 rounded-full bg-ui-subtle text-ui-faint flex items-center justify-center shrink-0"><UserX class="w-4 h-4" /></span>
                   <div class="min-w-0">
-                    <p class="text-ui-cap text-ui-muted">Project Leader</p>
-                    <p class="text-ui-small text-ui-faint">No leader assigned</p>
+                    <p class="text-ui-cap text-ui-muted">{{ $t("projects.fields.leader") }}</p>
+                    <p class="text-ui-small text-ui-faint">{{ $t("projects.detail.team.noLeader") }}</p>
                   </div>
                 </template>
               </div>
@@ -533,7 +554,7 @@ onMounted(async () => {
                 <span class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center shrink-0"><Building2 class="w-4 h-4" /></span>
                 <template v-if="project.client">
                   <div class="flex-1 min-w-0">
-                    <p class="text-ui-cap text-ui-muted">Client</p>
+                    <p class="text-ui-cap text-ui-muted">{{ $t("common.labels.client") }}</p>
                     <p class="text-ui-body font-medium text-ui-ink truncate">{{ project.client.name }}</p>
                     <p class="text-ui-cap text-ui-muted truncate">{{ project.client.pic_name || project.client.email || "-" }}</p>
                   </div>
@@ -542,19 +563,19 @@ onMounted(async () => {
                     size="sm"
                     :to="{ name: 'admin.clients.detail', params: { id: project.client.id } }"
                     class="shrink-0"
-                  >View</UiButton>
+                  >{{ $t("common.actions.view") }}</UiButton>
                 </template>
                 <div v-else class="min-w-0">
-                  <p class="text-ui-cap text-ui-muted">Client</p>
-                  <p class="text-ui-small text-ui-faint">No client linked</p>
+                  <p class="text-ui-cap text-ui-muted">{{ $t("common.labels.client") }}</p>
+                  <p class="text-ui-small text-ui-faint">{{ $t("projects.detail.team.noClient") }}</p>
                 </div>
               </div>
             </div>
 
             <!-- Assigned Members Section (By Employee mode) -->
             <div v-if="project.team_assignment_mode === 'employee'" class="mt-5 pt-4 border-t border-ui-line">
-              <h5 class="text-ui-h3 text-ui-ink mb-2.5">Project Members</h5>
-              <UiEmpty v-if="!project.members || project.members.length === 0" compact :icon="Users" title="No members assigned" class="bg-ui-subtle rounded-ui-control" />
+              <h5 class="text-ui-h3 text-ui-ink mb-2.5">{{ $t("projects.detail.team.members") }}</h5>
+              <UiEmpty v-if="!project.members || project.members.length === 0" compact :icon="Users" :title="$t('projects.detail.team.noMembers')" class="bg-ui-subtle rounded-ui-control" />
               <div v-else class="flex flex-wrap gap-2">
                 <span
                   v-for="member in project.members"
@@ -569,8 +590,8 @@ onMounted(async () => {
 
             <!-- Assigned Teams Section (By Team mode) -->
             <div v-else class="mt-5 pt-4 border-t border-ui-line">
-              <h5 class="text-ui-h3 text-ui-ink mb-2.5">Assigned Teams</h5>
-              <UiEmpty v-if="!project.teams || project.teams.length === 0" compact :icon="UsersRound" title="No teams assigned" class="bg-ui-subtle rounded-ui-control" />
+              <h5 class="text-ui-h3 text-ui-ink mb-2.5">{{ $t("projects.detail.team.teams") }}</h5>
+              <UiEmpty v-if="!project.teams || project.teams.length === 0" compact :icon="UsersRound" :title="$t('projects.detail.team.noTeams')" class="bg-ui-subtle rounded-ui-control" />
               <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
                 <div v-for="team in project.teams" :key="team.id" class="border border-ui-line rounded-ui-control p-3.5">
                   <div class="flex items-center gap-2.5">
@@ -579,7 +600,7 @@ onMounted(async () => {
                     </span>
                     <div class="flex-1 min-w-0">
                       <p class="text-ui-small font-medium text-ui-ink truncate">{{ team.name }}</p>
-                      <p class="text-ui-cap text-ui-muted tabular-nums">{{ team.members_count }} Members</p>
+                      <p class="text-ui-cap text-ui-muted tabular-nums">{{ $t("projects.detail.team.memberCount", { n: team.members_count }, team.members_count) }}</p>
                     </div>
                   </div>
                   <div class="mt-3 pt-3 border-t border-ui-line">
@@ -587,11 +608,11 @@ onMounted(async () => {
                       <Avatar :src="team.leader.profile_photo" :alt="team.leader.name" size="w-7 h-7" icon-size="w-3.5 h-3.5" />
                       <div class="flex-1 min-w-0">
                         <p class="text-ui-small font-medium text-ui-ink truncate">{{ team.leader.name }}</p>
-                        <p class="text-ui-cap text-ui-muted">Team Leader</p>
+                        <p class="text-ui-cap text-ui-muted">{{ $t("projects.detail.team.teamLeader") }}</p>
                       </div>
                     </div>
                     <p v-else class="flex items-center gap-1.5 text-ui-cap text-ui-faint">
-                      <UserX class="w-3.5 h-3.5" /> No Leader
+                      <UserX class="w-3.5 h-3.5" /> {{ $t("projects.detail.team.noTeamLeader") }}
                     </p>
                   </div>
                 </div>

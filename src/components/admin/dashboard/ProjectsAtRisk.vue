@@ -38,9 +38,9 @@ const HEALTH_TONES = { overdue: "bad", critical: "bad", "at-risk": "warn", behin
 </script>
 
 <template>
-  <DashboardWidgetCard title="Projects at Risk" subtitle="Behind schedule or close to deadline" :to="{ name: 'admin.projects' }" flush>
+  <DashboardWidgetCard :title="$t('dashboard.widgets.projectsAtRisk')" :subtitle="$t('dashboard.projectsAtRisk.subtitle')" :to="{ name: 'admin.projects' }" flush>
     <SkeletonList v-if="loading" :rows="3" class="p-3" />
-    <UiEmpty v-else-if="atRiskProjects.length === 0" :icon="ShieldCheck" title="No active projects are at risk right now" compact />
+    <UiEmpty v-else-if="atRiskProjects.length === 0" :icon="ShieldCheck" :title="$t('dashboard.projectsAtRisk.empty')" compact />
     <ul v-else class="divide-y divide-ui-line">
       <li v-for="{ project, health } in atRiskProjects" :key="project.id">
         <button
@@ -55,11 +55,11 @@ const HEALTH_TONES = { overdue: "bad", critical: "bad", "at-risk": "warn", behin
                 <div class="absolute inset-y-0 left-0 bg-ui-line-strong" :style="{ width: `${Math.min(health.expectedProgress, 100)}%` }"></div>
                 <div class="absolute inset-y-0 left-0 bg-ui-ink rounded-full" :style="{ width: `${Math.min(health.actualProgress, 100)}%` }"></div>
               </div>
-              <span class="text-ui-cap text-ui-muted tabular-nums">{{ health.actualProgress }}% · expected {{ health.expectedProgress }}%</span>
+              <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("dashboard.projectsAtRisk.progress", { actual: health.actualProgress, expected: health.expectedProgress }) }}</span>
             </div>
           </div>
           <UiBadge :tone="HEALTH_TONES[health.level] || 'neutral'" dot class="shrink-0">
-            {{ health.label }} · {{ health.daysRemaining >= 0 ? `${health.daysRemaining}d left` : `${Math.abs(health.daysRemaining)}d overdue` }}
+            {{ health.label }} · {{ health.daysRemaining >= 0 ? $t("dashboard.projectsAtRisk.daysLeft", { n: health.daysRemaining }) : $t("dashboard.projectsAtRisk.daysOverdue", { n: Math.abs(health.daysRemaining) }) }}
           </UiBadge>
         </button>
       </li>

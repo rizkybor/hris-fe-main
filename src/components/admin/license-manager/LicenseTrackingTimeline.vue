@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
 import { Activity, ChevronDown, ChevronRight, Globe, UserCog, Laptop } from "lucide-vue-next";
 import { eventIcon } from "@/components/admin/license-manager/licenseEventIcons";
 import { useLoadOnScroll } from "@/components/admin/license-manager/useLoadOnScroll";
@@ -23,6 +24,7 @@ const props = defineProps({
   licenseId: { type: [Number, String], required: true },
 });
 
+const { t } = useI18n();
 const store = useLicenseManagerStore();
 const { eventsMeta } = storeToRefs(store);
 
@@ -39,11 +41,13 @@ const scroller = ref(null);
 const sentinel = ref(null);
 const hasMore = computed(() => page.value < lastPage.value);
 
-// Filter options grouped as Admin / App / Denied.
+// Filter options grouped as Admin / App / Denied (group labels translated).
+const GROUP_KEYS = { Admin: "licenses.timeline.groups.admin", App: "licenses.timeline.groups.app", Denied: "licenses.timeline.groups.denied" };
 const filterGroups = computed(() => {
   const groups = {};
   for (const [value, def] of Object.entries(EVENT_TYPES)) {
-    (groups[def.group] ||= []).push({ value, label: def.label });
+    const group = GROUP_KEYS[def.group] ? t(GROUP_KEYS[def.group]) : def.group;
+    (groups[group] ||= []).push({ value, label: def.label });
   }
   return groups;
 });
@@ -94,7 +98,7 @@ const isDenied = (event) => event.event?.startsWith("denied_");
 
 const formatValue = (field, value) => {
   if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "boolean") return value ? t("common.labels.yes") : t("common.labels.no");
   if (field === "starts_at" || field === "expires_at") return formatDate(value);
   return String(value);
 };
@@ -103,20 +107,22 @@ const formatValue = (field, value) => {
 const summaryLine = (event) => {
   const meta = event.meta || {};
   if (event.event === "extended") {
-    return `${meta.old_expires_at ? formatDate(meta.old_expires_at) : "No end date"} → ${meta.new_expires_at ? formatDate(meta.new_expires_at) : "No end date"}`;
+    const noEnd = t("licenses.timeline.noEndDate");
+    return `${meta.old_expires_at ? formatDate(meta.old_expires_at) : noEnd} → ${meta.new_expires_at ? formatDate(meta.new_expires_at) : noEnd}`;
   }
   if (event.event === "plan_changed") {
     const parts = [`${planLabel({ plan: meta.old_plan })} → ${planLabel({ plan: meta.new_plan })}`];
     // Since a plan change replaces the key.
-    if (meta.new_key) parts.push(`new key ${meta.new_key}`);
-    if (meta.devices_signed_out) parts.push(`${meta.devices_signed_out} device(s) signed out`);
+    if (meta.new_key) parts.push(t("licenses.timeline.newKey", { key: meta.new_key }));
+    if (meta.devices_signed_out)
+      parts.push(t("licenses.timeline.devicesSignedOut", { n: meta.devices_signed_out }, meta.devices_signed_out));
     return parts.join(" · ");
   }
   if (event.event === "created" && meta.plan) {
     const parts = [planLabel({ plan: meta.plan })];
-    parts.push(meta.expires_at ? `until ${formatDate(meta.expires_at)}` : "lifetime");
-    if (meta.max_devices) parts.push(`${meta.max_devices} device(s)`);
-    if (meta.source === "cli") parts.push("via command line");
+    parts.push(meta.expires_at ? t("licenses.timeline.until", { date: formatDate(meta.expires_at) }) : t("licenses.timeline.lifetime"));
+    if (meta.max_devices) parts.push(t("licenses.timeline.devices", { n: meta.max_devices }, meta.max_devices));
+    if (meta.source === "cli") parts.push(t("licenses.timeline.viaCli"));
     return parts.join(" · ");
   }
   if (event.event === "app_updated" && (meta.from || meta.to)) {
@@ -137,16 +143,16 @@ const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.va
   <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
     <div class="flex flex-col sm:flex-row sm:items-center gap-3 px-5 pt-5 sm:px-6 pb-3">
       <div class="flex items-baseline gap-2 flex-1">
-        <h3 class="text-ui-h2 text-ui-ink">Activity</h3>
+        <h3 class="text-ui-h2 text-ui-ink">{{ $t("licenses.timeline.title") }}</h3>
         <span class="text-ui-small text-ui-muted tabular-nums">{{ eventsMeta.total ?? 0 }}</span>
       </div>
       <div class="relative w-full sm:w-56">
         <select
           v-model="filter"
           class="w-full h-9 pl-3 pr-8 appearance-none bg-ui-surface text-ui-small text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
-          aria-label="Filter by event type"
+          :aria-label="$t('licenses.timeline.filterLabel')"
         >
-          <option value="">All events</option>
+          <option value="">{{ $t("licenses.timeline.allEvents") }}</option>
           <optgroup v-for="(options, group) in filterGroups" :key="group" :label="group">
             <option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </optgroup>
@@ -163,8 +169,8 @@ const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.va
       v-else-if="!events.length"
       compact
       :icon="Activity"
-      :title="`No events ${filter ? 'of this type' : 'yet'}`"
-      message="Admin changes, device activity and denied attempts appear here."
+      :title="filter ? $t('licenses.timeline.emptyFiltered') : $t('licenses.timeline.empty')"
+      :message="$t('licenses.timeline.emptyMessage')"
       class="pb-6"
     />
 
@@ -199,7 +205,7 @@ const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.va
                 </span>
               </span>
               <span v-if="event.user_name || event.user_id" class="inline-flex items-center gap-1">
-                <UserCog class="w-3.5 h-3.5" /> {{ event.user_name || `User #${event.user_id}` }}
+                <UserCog class="w-3.5 h-3.5" /> {{ event.user_name || $t("licenses.timeline.userId", { id: event.user_id }) }}
               </span>
               <span v-if="event.ip" class="inline-flex items-center gap-1 font-mono">
                 <Globe class="w-3.5 h-3.5" /> {{ event.ip }}
@@ -215,15 +221,15 @@ const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.va
                 :aria-expanded="!!expanded[event.id]"
               >
                 <component :is="expanded[event.id] ? ChevronDown : ChevronRight" class="w-3.5 h-3.5" />
-                {{ expanded[event.id] ? "Hide changes" : "Show changes" }}
+                {{ expanded[event.id] ? $t("licenses.timeline.hideChanges") : $t("licenses.timeline.showChanges") }}
               </button>
               <div v-if="expanded[event.id]" class="mt-2 overflow-x-auto border border-ui-line rounded-ui-control">
                 <table class="min-w-full text-ui-cap">
                   <thead class="bg-ui-subtle">
                     <tr class="text-left text-ui-muted">
-                      <th class="py-1.5 px-3 font-medium">Field</th>
-                      <th class="py-1.5 px-3 font-medium">Old</th>
-                      <th class="py-1.5 px-3 font-medium">New</th>
+                      <th class="py-1.5 px-3 font-medium">{{ $t("licenses.timeline.field") }}</th>
+                      <th class="py-1.5 px-3 font-medium">{{ $t("licenses.timeline.old") }}</th>
+                      <th class="py-1.5 px-3 font-medium">{{ $t("licenses.timeline.new") }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -241,10 +247,10 @@ const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.va
       </ol>
       <div ref="sentinel" class="h-px"></div>
       <p v-if="loadingMore" class="flex items-center justify-center gap-2 py-3 text-ui-cap text-ui-muted">
-        <UiSpinner size="14px" :center="false" label="Loading more events..." />
+        <UiSpinner size="14px" :center="false" :label="$t('licenses.timeline.loadingMore')" />
       </p>
       <p v-else-if="!hasMore && events.length > PER_PAGE" class="py-3 text-center text-ui-cap text-ui-faint">
-        All {{ events.length }} events loaded
+        {{ $t("licenses.timeline.allLoaded", { n: events.length }) }}
       </p>
     </div>
   </section>

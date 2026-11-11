@@ -1,6 +1,7 @@
 <script setup>
 import UsageStatusFields from "./UsageStatusFields.vue";
 import { UiModal, UiInput, UiButton } from "@/components/ui";
+import { useI18n } from "vue-i18n";
 import { reactive, watch, computed } from "vue";
 
 const props = defineProps({
@@ -17,6 +18,7 @@ const props = defineProps({
 });
 
 
+const { t } = useI18n();
 const emit = defineEmits(["submit", "close"]);
 
 const form = reactive({
@@ -105,12 +107,12 @@ const validate = () => {
 
   errors.tech_stack_component = form.tech_stack_component
     ? ""
-    : "Tech Stack is required";
-  errors.vendor = form.vendor !== "" ? "" : "Vendor is required";
+    : t("finance.modals.validation.techStackRequired");
+  errors.vendor = form.vendor !== "" ? "" : t("finance.modals.validation.vendorRequired");
   // Expired is required while the item is in use (mirrors the API rule).
-  errors.status = form.status ? "" : "Status wajib dipilih";
+  errors.status = form.status ? "" : t("finance.modals.validation.statusRequired");
   errors.expired_date =
-    form.status === "active" && !form.expired_date ? "Expired wajib diisi untuk item yang Digunakan" : "";
+    form.status === "active" && !form.expired_date ? t("finance.modals.validation.expiredRequired") : "";
 
   Object.values(errors).forEach((e) => {
     if (e) valid = false;
@@ -135,16 +137,16 @@ const submit = () => {
 <template>
   <UiModal
     :open="show"
-    :title="props.mode === 'add' ? 'Add Infrastructure Tool' : props.mode === 'edit' ? 'Edit Infrastructure Tool' : 'Infrastructure Detail'"
-    :description="props.mode === 'add' ? 'create a new infra tools record.' : props.mode === 'edit' ? 'modify the infra tools details.' : 'details of the selected infra tools.'"
+    :title="$t(`finance.modals.infra.title.${props.mode}`)"
+    :description="$t(`finance.modals.infra.description.${props.mode}`)"
     size="lg"
     @update:open="(v) => !v && $emit('close')"
   >
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <UiInput
         id="tech"
-        label="Tech Stack Component"
-        placeholder="add your tech stack item"
+        :label="$t('finance.modals.fields.techStack')"
+        :placeholder="$t('finance.modals.fields.techStackPlaceholder')"
         v-model="form.tech_stack_component"
         :readonly="props.mode === 'view'"
         :required="props.mode !== 'view'"
@@ -153,8 +155,8 @@ const submit = () => {
 
       <UiInput
         id="vendor"
-        label="Vendor"
-        placeholder="add vendor item"
+        :label="$t('finance.modals.fields.vendor')"
+        :placeholder="$t('finance.modals.fields.vendorPlaceholder')"
         v-model="form.vendor"
         :readonly="props.mode === 'view'"
         :required="props.mode !== 'view'"
@@ -163,8 +165,8 @@ const submit = () => {
 
       <UiInput
         id="monthly"
-        label="Monthly Fee (Rp.)"
-        placeholder="add price monthly fee item"
+        :label="$t('finance.modals.fields.monthlyFee')"
+        :placeholder="$t('finance.modals.fields.monthlyFeePlaceholder')"
         v-model="monthlyModel"
         :readonly="props.mode === 'view'"
         class="[&_input]:tabular-nums"
@@ -172,8 +174,8 @@ const submit = () => {
 
       <UiInput
         id="annual"
-        label="Annual Fee (Rp.)"
-        placeholder="add price annual fee item"
+        :label="$t('finance.modals.fields.annualFee')"
+        :placeholder="$t('finance.modals.fields.annualFeePlaceholder')"
         v-model="annualModel"
         :readonly="props.mode === 'view'"
         class="[&_input]:tabular-nums"
@@ -188,8 +190,8 @@ const submit = () => {
 
       <UiInput
         id="notes"
-        label="Notes"
-        placeholder="add notes item"
+        :label="$t('common.labels.notes')"
+        :placeholder="$t('finance.modals.fields.notesPlaceholder')"
         v-model="form.notes"
         :readonly="props.mode === 'view'"
         class="sm:col-span-2"
@@ -198,10 +200,10 @@ const submit = () => {
 
     <template #footer>
       <UiButton variant="secondary" @click="$emit('close')">
-        {{ props.mode === "view" ? "Close" : "Cancel" }}
+        {{ props.mode === "view" ? $t("common.actions.close") : $t("common.actions.cancel") }}
       </UiButton>
       <UiButton v-if="props.mode !== 'view'" :loading="loading" :disabled="loading" @click="submit">
-        Save
+        {{ $t("common.actions.save") }}
       </UiButton>
     </template>
   </UiModal>

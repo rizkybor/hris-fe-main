@@ -1,5 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
 import { ShoppingCart, Plus, Download, FileText, Pencil, Ban, Trash2, Search, ArrowLeft, Wallet } from "lucide-vue-next";
 import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
@@ -8,6 +10,7 @@ import { can } from "@/helpers/permissionHelper";
 import { UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiPageHeader, UiPagination, UiChips, UiTable } from "@/components/ui";
 import { useAlertModalStore } from "@/stores/alertModal";
 
+const { t } = useI18n();
 const store = usePurchaseOrderStore();
 const alertModal = useAlertModalStore();
 const { orders, meta, loading } = storeToRefs(store);
@@ -55,8 +58,8 @@ const handleViewPdf = async (order) => {
 const handleCancel = async (order) => {
   if (
     !(await alertModal.confirm(
-      `Cancel PO "${order.po_number}"? The number stays recorded and cannot be reused.`,
-      { type: "warning", confirmText: "Cancel" }
+      t("documents.purchaseOrder.list.cancelConfirm", { number: order.po_number }),
+      { type: "warning", confirmText: t("documents.purchaseOrder.list.cancelPo") }
     ))
   )
     return;
@@ -77,17 +80,17 @@ const handleDelete = async () => {
 
 // Presentation only: status -> badge tone (always shown with its label).
 const statusTone = (status) => (status === "cancelled" ? "neutral" : "ok");
-const statusLabel = (status) => (status === "cancelled" ? "Cancelled" : "Active");
+const statusLabel = (status) => (status === "cancelled" ? t("documents.shared.status.cancelled") : t("common.labels.active"));
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "short", day: "numeric" }) : "-";
 
 // Presentation only.
 const statusOptions = computed(() =>
   [
-    { value: "", label: "All" },
-    { value: "active", label: "Active" },
-    { value: "cancelled", label: "Cancelled" },
+    { value: "", label: t("common.labels.all") },
+    { value: "active", label: t("common.labels.active") },
+    { value: "cancelled", label: t("documents.shared.status.cancelled") },
   ].map((o) => ({ ...o, count: o.value === statusFilter.value && !loading.value ? meta.value.total : undefined }))
 );
 const onStatusChip = (value) => {
@@ -96,32 +99,32 @@ const onStatusChip = (value) => {
 };
 const activeSum = computed(() => orders.value.filter((r) => r.status !== "cancelled").reduce((sum, r) => sum + (Number(r.total) || 0), 0));
 const cancelledCount = computed(() => orders.value.filter((r) => r.status === "cancelled").length);
-const columns = [
-  { key: "po_number", label: "PO No." },
-  { key: "client_name", label: "Client" },
-  { key: "title", label: "Title" },
-  { key: "date", label: "Date" },
-  { key: "total", label: "Total", align: "right" },
-  { key: "status", label: "Status" },
+const columns = computed(() => [
+  { key: "po_number", label: t("documents.purchaseOrder.list.columns.number") },
+  { key: "client_name", label: t("common.labels.client") },
+  { key: "title", label: t("documents.purchaseOrder.fields.title") },
+  { key: "date", label: t("common.labels.date") },
+  { key: "total", label: t("common.labels.total"), align: "right" },
+  { key: "status", label: t("common.labels.status") },
   { key: "actions", label: "", align: "right" },
-];
+]);
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Purchase Order" subtitle="Manage Purchase Order (PO) Documents">
+    <UiPageHeader :title="$t('documents.purchaseOrder.list.title')" :subtitle="$t('documents.purchaseOrder.list.subtitle')">
       <template #eyebrow>
         <router-link
           :to="{ name: 'admin.documents.dashboard' }"
           class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
-          aria-label="Back to Documents"
-          title="Back to Documents"
+          :aria-label="$t('documents.shared.backToDocuments')"
+          :title="$t('documents.shared.backToDocuments')"
         >
-          <ArrowLeft class="w-4 h-4" />Documents
+          <ArrowLeft class="w-4 h-4" />{{ $t("documents.shared.documents") }}
         </router-link>
       </template>
       <template #actions>
-        <UiButton v-if="can('purchase-order-create')" :to="{ name: 'admin.purchase-orders.create' }" :icon="Plus">Create New PO</UiButton>
+        <UiButton v-if="can('purchase-order-create')" :to="{ name: 'admin.purchase-orders.create' }" :icon="Plus">{{ $t("documents.purchaseOrder.list.create") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -131,7 +134,7 @@ const columns = [
         <UiInput
           v-model="search"
           :icon="Search"
-          placeholder="Search PO number, client, title..."
+          :placeholder="$t('documents.purchaseOrder.list.searchPlaceholder')"
           class="w-full lg:w-[300px]"
           @keyup.enter="handleSearch"
         />
@@ -159,11 +162,11 @@ const columns = [
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5">
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="FileText" :loading="viewingId === row.id" title="View PDF" aria-label="View PDF" @click="handleViewPdf(row)" />
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" title="Download PDF" aria-label="Download PDF" @click="handleDownload(row)" />
-            <UiButton v-if="can('purchase-order-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.purchase-orders.edit', params: { id: row.id } }" title="Edit" aria-label="Edit" />
-            <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" title="Cancel" aria-label="Cancel" @click="handleCancel(row)" />
-            <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-bad" :icon="Trash2" title="Delete" aria-label="Delete" @click="confirmDelete(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="FileText" :loading="viewingId === row.id" :title="$t('documents.shared.viewPdf')" :aria-label="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('common.actions.downloadPdf')" @click="handleDownload(row)" />
+            <UiButton v-if="can('purchase-order-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.purchase-orders.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
+            <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" :title="$t('documents.purchaseOrder.list.cancelPo')" :aria-label="$t('documents.purchaseOrder.list.cancelPo')" @click="handleCancel(row)" />
+            <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
           </div>
         </template>
 
@@ -184,30 +187,30 @@ const columns = [
                 <span class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(row.date) }}</span>
               </div>
               <div class="flex items-center gap-0.5 mt-2 -ml-2">
-                <UiButton variant="ghost" size="sm" :icon="FileText" :loading="viewingId === row.id" @click="handleViewPdf(row)">View</UiButton>
+                <UiButton variant="ghost" size="sm" :icon="FileText" :loading="viewingId === row.id" @click="handleViewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
                 <UiButton variant="ghost" size="sm" :icon="Download" :loading="downloadingId === row.id" @click="handleDownload(row)">PDF</UiButton>
-                <UiButton v-if="can('purchase-order-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.purchase-orders.edit', params: { id: row.id } }" title="Edit" aria-label="Edit" />
-                <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" title="Cancel" aria-label="Cancel" @click="handleCancel(row)" />
-                <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 text-ui-bad" :icon="Trash2" title="Delete" aria-label="Delete" @click="confirmDelete(row)" />
+                <UiButton v-if="can('purchase-order-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.purchase-orders.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
+                <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" :title="$t('documents.purchaseOrder.list.cancelPo')" :aria-label="$t('documents.purchaseOrder.list.cancelPo')" @click="handleCancel(row)" />
+                <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
               </div>
             </div>
           </div>
         </template>
 
         <template #empty>
-          <UiEmpty :icon="ShoppingCart" title="No purchase orders found." compact />
+          <UiEmpty :icon="ShoppingCart" :title="$t('documents.purchaseOrder.list.emptyTitle')" compact />
         </template>
       </UiTable>
 
-      <UiPagination v-if="meta.total" :meta="meta" item-label="PO" :disabled="loading" @change="load" />
+      <UiPagination v-if="meta.total" :meta="meta" :item-label="$t('documents.purchaseOrder.list.itemLabel')" :disabled="loading" @change="load" />
     </section>
 
     <UiConfirmDialog
       :open="isDeleteModalOpen"
-      title="Delete Purchase Order?"
-      :message="`&quot;${orderToDelete?.po_number}&quot; will be permanently deleted.`"
+      :title="$t('documents.purchaseOrder.list.deleteTitle')"
+      :message="$t('documents.shared.deleteMessage', { number: orderToDelete?.po_number })"
       type="danger"
-      confirm-text="Yes, Delete"
+      :confirm-text="$t('documents.shared.yesDelete')"
       @cancel="isDeleteModalOpen = false"
       @confirm="handleDelete"
     />

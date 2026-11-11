@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref, computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import {
   ShieldCheck,
@@ -31,6 +32,30 @@ const ROLE_COLORS = {
 };
 const DEFAULT_COLOR = { bg: "bg-gray-100", text: "text-gray-700" };
 
+const { t, te } = useI18n();
+
+// Display labels for the API's permission groups. The API sends English
+// module/section/action labels; these map them to the current language by
+// module key / action suffix, falling back to the API text for anything new.
+// Permission names (what gets saved) are never translated.
+const camelKey = (value) => String(value).replace(/[-_ ]+([a-z0-9])/gi, (_, c) => c.toUpperCase());
+const translated = (key, fallback) => (te(key) ? t(key) : fallback);
+const moduleLabel = (group) => translated(`settings.permissions.modules.${camelKey(group.key)}`, group.label);
+const sectionLabel = (section) => {
+  const key = camelKey(section.charAt(0).toLowerCase() + section.slice(1));
+  return translated(`settings.permissions.sections.${key}`, section);
+};
+const actionLabel = (group, perm) => {
+  const suffix = perm.name.startsWith(`${group.key}-`) ? perm.name.slice(group.key.length + 1) : perm.name;
+  return translated(`settings.permissions.actions.${camelKey(suffix)}`, perm.action);
+};
+const matchesQuery = (group, perm, query) =>
+  group.label.toLowerCase().includes(query) ||
+  moduleLabel(group).toLowerCase().includes(query) ||
+  perm.action.toLowerCase().includes(query) ||
+  actionLabel(group, perm).toLowerCase().includes(query) ||
+  perm.name.toLowerCase().includes(query);
+
 const roleStore = useRoleStore();
 const { roles, permissionGroups, loading, error, success } = storeToRefs(roleStore);
 
@@ -58,7 +83,7 @@ const permissionMeta = computed(() => {
   const map = new Map();
   for (const group of permissionGroups.value) {
     for (const perm of group.permissions) {
-      map.set(perm.name, { moduleLabel: group.label, action: perm.action });
+      map.set(perm.name, { group });
     }
   }
   return map;
@@ -81,7 +106,7 @@ const roleModuleSummary = (role) => {
   const modules = new Set();
   for (const perm of role.permissions) {
     const meta = permissionMeta.value.get(perm.name);
-    if (meta) modules.add(meta.moduleLabel);
+    if (meta) modules.add(moduleLabel(meta.group));
   }
   return Array.from(modules).sort();
 };
@@ -115,12 +140,7 @@ const filteredGroups = computed(() => {
   const query = permissionSearch.value.trim().toLowerCase();
   if (!query) return permissionGroups.value;
 
-  return permissionGroups.value.filter((group) => {
-    if (group.label.toLowerCase().includes(query)) return true;
-    return group.permissions.some(
-      (p) => p.action.toLowerCase().includes(query) || p.name.toLowerCase().includes(query)
-    );
-  });
+  return permissionGroups.value.filter((group) => group.permissions.some((p) => matchesQuery(group, p, query)));
 });
 
 // filteredGroups already arrives ordered by section then label (backend
@@ -200,17 +220,23 @@ function confirmDelete(role) {
 
 // Presentation only: the permission matrix lays common actions out as
 // columns; anything else lands in the "Other" column.
+// `label` is the API's action text (used for matching); the display text
+// comes from the i18n keys.
 const MATRIX_ACTIONS = [
-  { label: "Menu Access", short: "Menu" },
-  { label: "List", short: "List" },
-  { label: "View", short: "View" },
-  { label: "Create", short: "Create" },
-  { label: "Edit", short: "Edit" },
-  { label: "Delete", short: "Delete" },
+  { label: "Menu Access", key: "menu", shortKey: "menuShort" },
+  { label: "List", key: "list", shortKey: "list" },
+  { label: "View", key: "view", shortKey: "view" },
+  { label: "Create", key: "create", shortKey: "create" },
+  { label: "Edit", key: "edit", shortKey: "edit" },
+  { label: "Delete", key: "delete", shortKey: "delete" },
 ];
 const MATRIX_LABELS = MATRIX_ACTIONS.map((a) => a.label);
 const matrixColumns = computed(() =>
-  MATRIX_ACTIONS.filter((a) => permissionGroups.value.some((g) => g.permissions.some((p) => p.action === a.label)))
+  MATRIX_ACTIONS.filter((a) => permissionGroups.value.some((g) => g.permissions.some((p) => p.action === a.label))).map((a) => ({
+    ...a,
+    name: t(`settings.permissions.actions.${a.key}`),
+    short: t(`settings.permissions.actions.${a.shortKey}`),
+  }))
 );
 const permByAction = (group, label) => group.permissions.find((p) => p.action === label);
 const otherPerms = (group) => group.permissions.filter((p) => !MATRIX_LABELS.includes(p.action));
@@ -218,13 +244,13 @@ const groupState = (group) => {
   const n = selectedInGroup(group);
   return n === 0 ? "none" : n === group.permissions.length ? "all" : "some";
 };
-const roleColumns = [
-  { key: "role", label: "Role" },
-  { key: "users", label: "Users", align: "right", width: 90 },
-  { key: "coverage", label: "Permissions", width: 220 },
-  { key: "modules", label: "Modules" },
+const roleColumns = computed(() => [
+  { key: "role", label: t("settings.roles.columns.role") },
+  { key: "users", label: t("settings.roles.columns.users"), align: "right", width: 90 },
+  { key: "coverage", label: t("settings.roles.columns.permissions"), width: 220 },
+  { key: "modules", label: t("settings.roles.columns.modules") },
   { key: "actions", label: "", align: "right", width: 110 },
-];
+]);
 
 async function handleDelete() {
   if (!roleToDelete.value) return;
@@ -243,14 +269,14 @@ async function handleDelete() {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Roles & Permissions" subtitle="Control which modules and actions each role can access">
+    <UiPageHeader :title="$t('settings.roles.title')" :subtitle="$t('settings.roles.subtitle')">
       <template #eyebrow>
-        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" aria-label="Back to Settings" title="Back to Settings">
-          <ArrowLeft class="w-4 h-4" /> Settings
+        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" :aria-label="$t('settings.backToSettings')" :title="$t('settings.backToSettings')">
+          <ArrowLeft class="w-4 h-4" /> {{ $t("settings.settings") }}
         </router-link>
       </template>
       <template #actions>
-        <UiButton :icon="Plus" @click="openCreateForm">Add Role</UiButton>
+        <UiButton :icon="Plus" @click="openCreateForm">{{ $t("settings.roles.add") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -259,8 +285,8 @@ async function handleDelete() {
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
       <div class="px-4 sm:px-5 pt-4 pb-3 border-b border-ui-line flex items-center gap-3">
         <div class="flex-1 min-w-0">
-          <h2 class="text-ui-h2 text-ui-ink">Roles</h2>
-          <p class="text-ui-cap text-ui-muted tabular-nums">{{ visibleRoles.length }} roles · {{ totalPermissionCount }} permissions available</p>
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t("settings.roles.listTitle") }}</h2>
+          <p class="text-ui-cap text-ui-muted tabular-nums">{{ $t("settings.roles.summary", { roles: visibleRoles.length, permissions: totalPermissionCount }) }}</p>
         </div>
       </div>
 
@@ -273,7 +299,7 @@ async function handleDelete() {
                 {{ roleLabel(row) }}
                 <Lock v-if="isSystemRole(row)" class="w-3 h-3 text-ui-faint shrink-0" />
               </p>
-              <p class="text-ui-cap text-ui-muted">{{ isSystemRole(row) ? "System role" : "Custom role" }}</p>
+              <p class="text-ui-cap text-ui-muted">{{ isSystemRole(row) ? $t("settings.roles.systemRole") : $t("settings.roles.customRole") }}</p>
             </div>
           </div>
         </template>
@@ -283,7 +309,7 @@ async function handleDelete() {
         <template #cell-coverage="{ row }">
           <div class="min-w-[160px]">
             <div class="flex items-center justify-between text-ui-cap mb-1">
-              <span class="text-ui-muted tabular-nums">{{ row.permissions.length }} permission{{ row.permissions.length === 1 ? "" : "s" }} · {{ roleModuleSummary(row).length }} modules</span>
+              <span class="text-ui-muted tabular-nums">{{ $t("settings.roles.permissionCount", { n: row.permissions.length }, row.permissions.length) }} · {{ $t("settings.roles.moduleCount", { n: roleModuleSummary(row).length }, roleModuleSummary(row).length) }}</span>
               <span class="text-ui-ink font-medium tabular-nums">{{ roleCoverage(row) }}%</span>
             </div>
             <div class="w-full bg-ui-subtle rounded-full h-1.5">
@@ -294,15 +320,15 @@ async function handleDelete() {
         <template #cell-modules="{ row }">
           <div class="flex flex-wrap gap-1">
             <UiBadge v-for="mod in roleModuleSummary(row).slice(0, 3)" :key="mod">{{ mod }}</UiBadge>
-            <UiBadge v-if="roleModuleSummary(row).length > 3" tone="outline">+{{ roleModuleSummary(row).length - 3 }} more</UiBadge>
-            <span v-if="roleModuleSummary(row).length === 0" class="text-ui-cap text-ui-faint italic">No permissions granted</span>
+            <UiBadge v-if="roleModuleSummary(row).length > 3" tone="outline">{{ $t("settings.roles.more", { n: roleModuleSummary(row).length - 3 }) }}</UiBadge>
+            <span v-if="roleModuleSummary(row).length === 0" class="text-ui-cap text-ui-faint italic">{{ $t("settings.roles.noPermissions") }}</span>
           </div>
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-1">
-            <UiButton variant="ghost" size="sm" :icon="Pencil" title="Edit role" aria-label="Edit role" @click="openEditForm(row)" />
-            <UiButton v-if="!isSystemRole(row)" variant="ghost" size="sm" :icon="Trash2" title="Delete role" aria-label="Delete role" class="hover:text-ui-bad" @click="confirmDelete(row)" />
-            <span v-else title="System role — cannot be deleted" class="w-8 h-8 inline-flex items-center justify-center text-ui-faint opacity-40 cursor-not-allowed">
+            <UiButton variant="ghost" size="sm" :icon="Pencil" :title="$t('settings.roles.editAria')" :aria-label="$t('settings.roles.editAria')" @click="openEditForm(row)" />
+            <UiButton v-if="!isSystemRole(row)" variant="ghost" size="sm" :icon="Trash2" :title="$t('settings.roles.deleteAria')" :aria-label="$t('settings.roles.deleteAria')" class="hover:text-ui-bad" @click="confirmDelete(row)" />
+            <span v-else :title="$t('settings.roles.cannotDelete')" class="w-8 h-8 inline-flex items-center justify-center text-ui-faint opacity-40 cursor-not-allowed">
               <Trash2 class="w-4 h-4" />
             </span>
           </div>
@@ -318,21 +344,21 @@ async function handleDelete() {
                 <Lock v-if="isSystemRole(row)" class="w-3 h-3 text-ui-faint shrink-0" />
               </p>
               <p class="text-ui-cap text-ui-muted tabular-nums flex items-center gap-1">
-                <Users class="w-3 h-3" />{{ row.users_count }} user{{ row.users_count === 1 ? "" : "s" }} · {{ row.permissions.length }} permissions · {{ roleCoverage(row) }}%
+                <Users class="w-3 h-3" />{{ $t("settings.roles.userCount", { n: row.users_count }, row.users_count) }} · {{ $t("settings.roles.permissionCount", { n: row.permissions.length }, row.permissions.length) }} · {{ roleCoverage(row) }}%
               </p>
               <div class="w-full bg-ui-subtle rounded-full h-1 mt-2">
                 <div class="h-1 rounded-full bg-ui-ink" :style="{ width: `${roleCoverage(row)}%` }"></div>
               </div>
             </div>
             <div class="flex items-center gap-0.5 shrink-0">
-              <UiButton variant="ghost" size="sm" :icon="Pencil" aria-label="Edit role" @click="openEditForm(row)" />
-              <UiButton v-if="!isSystemRole(row)" variant="ghost" size="sm" :icon="Trash2" aria-label="Delete role" @click="confirmDelete(row)" />
+              <UiButton variant="ghost" size="sm" :icon="Pencil" :aria-label="$t('settings.roles.editAria')" @click="openEditForm(row)" />
+              <UiButton v-if="!isSystemRole(row)" variant="ghost" size="sm" :icon="Trash2" :aria-label="$t('settings.roles.deleteAria')" @click="confirmDelete(row)" />
             </div>
           </div>
         </template>
 
         <template #empty>
-          <UiEmpty :icon="ShieldCheck" title="No roles found" compact />
+          <UiEmpty :icon="ShieldCheck" :title="$t('settings.roles.empty')" compact />
         </template>
       </UiTable>
     </section>
@@ -341,28 +367,28 @@ async function handleDelete() {
     <UiModal
       v-model:open="isFormOpen"
       size="lg"
-      :title="form.id ? 'Edit Role' : 'Add New Role'"
-      :description="`${form.permissions.length} of ${totalPermissionCount} permissions selected`"
+      :title="form.id ? $t('settings.roles.edit') : $t('settings.roles.addNew')"
+      :description="$t('settings.roles.selectedOf', { selected: form.permissions.length, total: totalPermissionCount })"
     >
       <div class="space-y-5">
         <UiInput
           v-model="form.name"
-          label="Role Name"
+          :label="$t('settings.roles.roleName')"
           required
-          placeholder="e.g. supervisor"
+          :placeholder="$t('settings.roles.roleNamePlaceholder')"
           :disabled="!!(form.id && SYSTEM_ROLES.includes(form.name))"
         />
 
         <div>
           <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
-            <p class="flex-1 text-ui-small font-medium text-ui-ink">Permissions</p>
+            <p class="flex-1 text-ui-small font-medium text-ui-ink">{{ $t("settings.roles.permissions") }}</p>
             <div class="flex items-center gap-1">
-              <UiButton variant="ghost" size="sm" :icon="CheckSquare" @click="selectAll">Select all</UiButton>
-              <UiButton variant="ghost" size="sm" :icon="Square" @click="clearAll">Clear all</UiButton>
+              <UiButton variant="ghost" size="sm" :icon="CheckSquare" @click="selectAll">{{ $t("common.actions.selectAll") }}</UiButton>
+              <UiButton variant="ghost" size="sm" :icon="Square" @click="clearAll">{{ $t("settings.roles.clearAll") }}</UiButton>
             </div>
           </div>
 
-          <UiInput v-model="permissionSearch" :icon="Search" placeholder="Search modules or actions..." class="mb-4" />
+          <UiInput v-model="permissionSearch" :icon="Search" :placeholder="$t('settings.permissions.searchPlaceholder')" class="mb-4" />
 
           <!-- Desktop: module x action matrix -->
           <div v-if="filteredGroups.length" class="hidden sm:block border border-ui-line rounded-ui-card">
@@ -370,15 +396,15 @@ async function handleDelete() {
               <thead>
                 <tr>
                   <th class="sticky -top-5 z-10 bg-ui-surface w-10 pl-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line rounded-tl-ui-card">#</th>
-                  <th class="sticky -top-5 z-10 bg-ui-surface px-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line">Module</th>
+                  <th class="sticky -top-5 z-10 bg-ui-surface px-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line">{{ $t("settings.roles.module") }}</th>
                   <th v-for="col in matrixColumns" :key="col.label" class="sticky -top-5 z-10 bg-ui-surface px-2 h-10 text-center text-ui-cap font-medium text-ui-muted border-b border-ui-line w-[60px]">{{ col.short }}</th>
-                  <th class="sticky -top-5 z-10 bg-ui-surface px-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line rounded-tr-ui-card">Other</th>
+                  <th class="sticky -top-5 z-10 bg-ui-surface px-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line rounded-tr-ui-card">{{ $t("settings.roles.other") }}</th>
                 </tr>
               </thead>
               <tbody v-for="(section, sIndex) in sectionedGroups" :key="section.section">
                 <tr>
                   <th :colspan="matrixColumns.length + 3" class="px-3 pt-3 pb-1.5 text-left text-ui-over uppercase tracking-wider text-ui-faint bg-ui-subtle/60 border-b border-ui-line">
-                    {{ section.section }}
+                    {{ sectionLabel(section.section) }}
                   </th>
                 </tr>
                 <tr v-for="(group, gIndex) in section.groups" :key="group.key" class="hover:bg-ui-subtle/60 transition-colors">
@@ -394,7 +420,7 @@ async function handleDelete() {
                         :indeterminate.prop="groupState(group) === 'some'"
                         @change="toggleGroup(group)"
                       />
-                      <span class="flex-1 min-w-0 truncate">{{ group.label }}</span>
+                      <span class="flex-1 min-w-0 truncate">{{ moduleLabel(group) }}</span>
                       <span class="text-ui-cap text-ui-faint font-normal tabular-nums">{{ selectedInGroup(group) }}/{{ group.permissions.length }}</span>
                     </label>
                   </td>
@@ -403,7 +429,7 @@ async function handleDelete() {
                       v-if="permByAction(group, col.label)"
                       type="checkbox"
                       class="w-4 h-4 align-middle accent-[rgb(var(--ui-ink))]"
-                      :aria-label="`${group.label}: ${col.label}`"
+                      :aria-label="`${moduleLabel(group)}: ${col.name}`"
                       :checked="form.permissions.includes(permByAction(group, col.label).name)"
                       @change="togglePermission(permByAction(group, col.label).name)"
                     />
@@ -418,7 +444,7 @@ async function handleDelete() {
                           :checked="form.permissions.includes(perm.name)"
                           @change="togglePermission(perm.name)"
                         />
-                        {{ perm.action }}
+                        {{ actionLabel(group, perm) }}
                       </label>
                     </div>
                   </td>
@@ -430,7 +456,7 @@ async function handleDelete() {
           <!-- Phones: stacked module cards -->
           <div v-if="filteredGroups.length" class="sm:hidden space-y-4">
             <div v-for="section in sectionedGroups" :key="section.section">
-              <p class="text-ui-over uppercase tracking-wider text-ui-faint mb-2">{{ section.section }}</p>
+              <p class="text-ui-over uppercase tracking-wider text-ui-faint mb-2">{{ sectionLabel(section.section) }}</p>
               <div class="space-y-2">
                 <div v-for="group in section.groups" :key="group.key" class="border border-ui-line rounded-ui-card">
                   <label class="flex items-center gap-2.5 px-3 py-2.5 border-b border-ui-line">
@@ -441,7 +467,7 @@ async function handleDelete() {
                       :indeterminate.prop="groupState(group) === 'some'"
                       @change="toggleGroup(group)"
                     />
-                    <span class="flex-1 min-w-0 text-ui-body font-medium text-ui-ink truncate">{{ group.label }}</span>
+                    <span class="flex-1 min-w-0 text-ui-body font-medium text-ui-ink truncate">{{ moduleLabel(group) }}</span>
                     <span class="text-ui-cap text-ui-faint tabular-nums">{{ selectedInGroup(group) }}/{{ group.permissions.length }}</span>
                   </label>
                   <div class="grid grid-cols-2 gap-x-3 gap-y-2 px-3 py-2.5">
@@ -452,7 +478,7 @@ async function handleDelete() {
                         :checked="form.permissions.includes(perm.name)"
                         @change="togglePermission(perm.name)"
                       />
-                      <span class="truncate">{{ perm.action }}</span>
+                      <span class="truncate">{{ actionLabel(group, perm) }}</span>
                     </label>
                   </div>
                 </div>
@@ -461,19 +487,19 @@ async function handleDelete() {
           </div>
 
           <p v-if="filteredGroups.length === 0" class="text-center py-8 text-ui-small text-ui-muted">
-            No modules match "{{ permissionSearch }}"
+            {{ $t("settings.roles.noMatch", { query: permissionSearch }) }}
           </p>
         </div>
 
         <p v-if="error" class="text-ui-small text-ui-bad">
-          {{ typeof error === "string" ? error : "Please check the form." }}
+          {{ typeof error === "string" ? error : $t("settings.roles.checkForm") }}
         </p>
       </div>
 
       <template #footer>
-        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="closeForm">Cancel</UiButton>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="closeForm">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton class="flex-1 sm:flex-none" :loading="isSaving" :disabled="isSaving || !form.name" @click="handleSubmit">
-          {{ isSaving ? "Saving..." : "Save Role" }}
+          {{ isSaving ? $t("common.actions.saving") : $t("settings.roles.save") }}
         </UiButton>
       </template>
     </UiModal>
@@ -481,9 +507,9 @@ async function handleDelete() {
     <!-- DELETE MODAL -->
     <UiConfirmDialog
       v-model:open="isDeleteModalOpen"
-      title="Delete Role?"
-      :message="`Are you sure you want to delete &quot;${roleToDelete?.name}&quot;? This action cannot be undone.`"
-      :confirm-text="isDeleting ? 'Deleting...' : 'Yes, Delete'"
+      :title="$t('settings.roles.deleteConfirm.title')"
+      :message="$t('settings.roles.deleteConfirm.message', { name: roleToDelete?.name })"
+      :confirm-text="isDeleting ? $t('common.actions.deleting') : $t('settings.roles.deleteConfirm.confirm')"
       :loading="isDeleting"
       @confirm="handleDelete"
       @cancel="isDeleteModalOpen = false"

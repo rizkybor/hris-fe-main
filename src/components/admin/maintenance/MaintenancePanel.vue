@@ -36,8 +36,8 @@ const createQuery = () => ({ new: 1, ...(props.clientId ? { client_id: props.cli
       <div class="flex items-start gap-2.5 min-w-0">
         <Wrench class="w-4 h-4 text-ui-faint shrink-0 mt-1" />
         <div class="min-w-0">
-          <h4 class="text-ui-h2 text-ui-ink">Maintenance</h4>
-          <p class="text-ui-cap text-ui-muted">Optional — monthly maintenance hour quota</p>
+          <h4 class="text-ui-h2 text-ui-ink">{{ $t("maintenance.panel.title") }}</h4>
+          <p class="text-ui-cap text-ui-muted">{{ $t("maintenance.panel.subtitle") }}</p>
         </div>
       </div>
       <router-link
@@ -45,13 +45,13 @@ const createQuery = () => ({ new: 1, ...(props.clientId ? { client_id: props.cli
         :to="{ name: 'admin.maintenance.dashboard', query: createQuery() }"
         class="text-ui-small font-medium text-ui-accent inline-flex items-center gap-1 hover:underline shrink-0"
       >
-        <Plus class="w-3.5 h-3.5" /> New contract
+        <Plus class="w-3.5 h-3.5" /> {{ $t("maintenance.panel.newContract") }}
       </router-link>
     </div>
 
     <Skeleton v-if="!loaded" height="72px" rounded="12px" />
     <div v-else-if="!contracts.length" class="rounded-ui-card border border-dashed border-ui-line-strong">
-      <UiEmpty :icon="Wrench" title="No maintenance contract" compact />
+      <UiEmpty :icon="Wrench" :title="$t('maintenance.panel.empty')" compact />
     </div>
     <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <router-link
@@ -66,14 +66,14 @@ const createQuery = () => ({ new: 1, ...(props.clientId ? { client_id: props.cli
         </div>
         <template v-if="c.current_period">
           <p class="text-ui-cap text-ui-muted">
-            <strong class="text-ui-small font-medium text-ui-ink tabular-nums">{{ formatHours(c.current_period.remaining) }}</strong> left of {{ formatHours(c.current_period.total) }} · {{ formatMonth(c.current_period.month) }}
+            <strong class="text-ui-small font-medium text-ui-ink tabular-nums">{{ formatHours(c.current_period.remaining) }}</strong> {{ $t("maintenance.common.leftOf", { total: formatHours(c.current_period.total) }) }} · {{ formatMonth(c.current_period.month) }}
           </p>
           <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden mt-1.5">
             <div class="h-full rounded-full" :style="{ width: `${Math.min(c.current_period.used_percent, 100)}%`, backgroundColor: usageColor(c.current_period) }"></div>
           </div>
         </template>
         <div class="flex items-center justify-between text-ui-cap text-ui-muted mt-2.5">
-          <span class="inline-flex items-center gap-1 tabular-nums"><PiggyBank class="w-3.5 h-3.5" /> {{ formatHours(c.balance_hours) }} balance</span>
+          <span class="inline-flex items-center gap-1 tabular-nums"><PiggyBank class="w-3.5 h-3.5" /> {{ $t("maintenance.common.balance", { hours: formatHours(c.balance_hours) }) }}</span>
           <ChevronRight class="w-4 h-4 text-ui-faint group-hover:text-ui-ink" />
         </div>
       </router-link>

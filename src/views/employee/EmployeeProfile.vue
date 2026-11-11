@@ -43,6 +43,13 @@ import {
 import { useScrollFade } from "@/composables/useScrollFade";
 import { UiBadge, UiButton, UiCard, UiEmpty, UiStat } from "@/components/ui";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
+// Display label for an API enum value (gender, work location, job/team
+// status); unknown values keep the old capitalize() rendering.
+const enumLabel = (group: string, value: any) =>
+  value && te(`profile.enums.${group}.${value}`) ? t(`profile.enums.${group}.${value}`) : capitalize(value);
 
 const employeeStore = useEmployeeStore();
 const { loading, performanceStatistics } = storeToRefs(employeeStore);
@@ -124,14 +131,14 @@ const idCardNameLines = computed(() => {
 
 const activeTab = ref("overview");
 const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
-const tabs = [
-  { id: "overview", label: "Overview", icon: LayoutGrid },
-  { id: "employment", label: "Employment & Team", icon: Wallet },
-  { id: "emergency", label: "Emergency Contact", icon: Phone },
-  { id: "tasks", label: "Tasks", icon: ListChecks },
-  { id: "more", label: "Assets & Reviews", icon: Star },
-  { id: "idcard", label: "ID Card", icon: CreditCardIcon },
-];
+const tabs = computed(() => [
+  { id: "overview", label: t("profile.view.tabs.overview"), icon: LayoutGrid },
+  { id: "employment", label: t("profile.view.tabs.employment"), icon: Wallet },
+  { id: "emergency", label: t("profile.view.tabs.emergency"), icon: Phone },
+  { id: "tasks", label: t("profile.view.tabs.tasks"), icon: ListChecks },
+  { id: "more", label: t("profile.view.tabs.more"), icon: Star },
+  { id: "idcard", label: t("profile.view.tabs.idcard"), icon: CreditCardIcon },
+]);
 
 const downloadingIdCard = ref(false);
 const downloadIdCard = async () => {
@@ -159,12 +166,9 @@ const loadProfile = async () => {
   }
 };
 
-const taskStatusLabels: Record<string, string> = {
-  todo: "To Do",
-  in_progress: "In Progress",
-  review: "Waiting",
-  done: "Completed",
-};
+// Status -> message key (profile.view.taskStatus.*); the tone map below
+// is keyed by the same status values.
+const TASK_STATUS_KEYS = ["todo", "in_progress", "review", "done"];
 
 const taskStatusClasses: Record<string, string> = {
   todo: "bg-gray-100 text-gray-600",
@@ -178,10 +182,11 @@ const latestTasks = computed(() =>
     id: task.id,
     title: task.name,
     description: task.description,
-    status: taskStatusLabels[task.status] ?? task.status,
+    status: TASK_STATUS_KEYS.includes(task.status) ? t(`profile.view.taskStatus.${task.status}`) : task.status,
+    statusKey: task.status,
     statusClass: taskStatusClasses[task.status] ?? "bg-gray-100 text-gray-600",
-    dueDate: task.due_date ? formatDate(task.due_date) : "No due date",
-    project: task.project?.name ?? "N/A",
+    dueDate: task.due_date ? formatDate(task.due_date) : t("profile.view.tasks.noDueDate"),
+    project: task.project?.name ?? t("common.duration.na"),
   }))
 );
 
@@ -206,8 +211,8 @@ const JOB_STATUS_TONES: Record<string, string> = { active: "ok", on_leave: "warn
 const jobStatusTone = computed(
   () => JOB_STATUS_TONES[String(profile.value?.job_information?.status || "").toLowerCase()] || "neutral"
 );
-const TASK_TONES: Record<string, string> = { "To Do": "neutral", "In Progress": "warn", Waiting: "info", Completed: "ok" };
-const taskTone = (label: string) => TASK_TONES[label] || "neutral";
+const TASK_TONES: Record<string, string> = { todo: "neutral", in_progress: "warn", review: "info", done: "ok" };
+const taskTone = (status: string) => TASK_TONES[status] || "neutral";
 const assetConditionTone = (condition: string) => {
   const c = String(condition || "").toLowerCase();
   if (["good", "new", "excellent"].includes(c)) return "ok";
@@ -217,36 +222,36 @@ const assetConditionTone = (condition: string) => {
 };
 
 const personalRows = computed(() => [
-  { label: "Email", value: profile.value?.user?.email },
-  { label: "Phone", value: profile.value?.phone || "-" },
-  { label: "Date of Birth", value: formatDate(profile.value?.date_of_birth) },
-  { label: "Employee ID", value: profile.value?.code },
-  { label: "Office Location", value: capitalize(profile.value?.job_information?.work_location) },
-  { label: "Hobbies", value: profile.value?.hobby || "-" },
+  { label: t("common.labels.email"), value: profile.value?.user?.email },
+  { label: t("common.labels.phone"), value: profile.value?.phone || "-" },
+  { label: t("profile.fields.dateOfBirth"), value: formatDate(profile.value?.date_of_birth) },
+  { label: t("profile.fields.employeeId"), value: profile.value?.code },
+  { label: t("profile.fields.officeLocation"), value: enumLabel("workLocation", profile.value?.job_information?.work_location) },
+  { label: t("profile.fields.hobbies"), value: profile.value?.hobby || "-" },
 ]);
 const locationRows = computed(() => [
-  { label: "Gender", value: capitalize(profile.value?.gender) },
-  { label: "Place of Birth", value: profile.value?.place_of_birth || "-" },
-  { label: "Address", value: profile.value?.address || "-" },
-  { label: "City", value: profile.value?.city || "-" },
-  { label: "Post Code", value: profile.value?.postal_code || "-" },
-  { label: "Country", value: "Indonesia" },
+  { label: t("profile.fields.gender"), value: enumLabel("gender", profile.value?.gender) },
+  { label: t("profile.fields.placeOfBirth"), value: profile.value?.place_of_birth || "-" },
+  { label: t("common.labels.address"), value: profile.value?.address || "-" },
+  { label: t("common.labels.city"), value: profile.value?.city || "-" },
+  { label: t("profile.fields.postCode"), value: profile.value?.postal_code || "-" },
+  { label: t("profile.fields.country"), value: "Indonesia" },
 ]);
 const employmentRows = computed(() => [
-  { label: "Job Title", value: capitalize(profile.value?.job_information?.job_title) },
-  { label: "Start Date", value: formatDate(profile.value?.job_information?.start_date) },
-  { label: "Employment Type", value: capitalize(profile.value?.job_information?.employment_type) },
-  { label: "Monthly Salary", value: formatCurrency(profile.value?.job_information?.monthly_salary) },
-  { label: "Skill Level", value: capitalize(profile.value?.job_information?.skill_level), badge: true },
-  { label: "Work Location", value: capitalize(profile.value?.job_information?.work_location) },
+  { label: t("profile.fields.jobTitle"), value: capitalize(profile.value?.job_information?.job_title) },
+  { label: t("common.labels.startDate"), value: formatDate(profile.value?.job_information?.start_date) },
+  { label: t("profile.fields.employmentType"), value: capitalize(profile.value?.job_information?.employment_type) },
+  { label: t("profile.fields.monthlySalary"), value: formatCurrency(profile.value?.job_information?.monthly_salary) },
+  { label: t("profile.fields.skillLevel"), value: capitalize(profile.value?.job_information?.skill_level), badge: true },
+  { label: t("profile.fields.workLocation"), value: enumLabel("workLocation", profile.value?.job_information?.work_location) },
 ]);
 const emergencyRows = computed(() => {
   const c = profile.value?.emergency_contacts?.[0];
   return [
-    { label: "Contact Name", value: c?.full_name || "-" },
-    { label: "Relationship", value: capitalize(c?.relationship) },
-    { label: "Phone Number", value: c?.phone || "-" },
-    { label: "Email", value: c?.email || "-" },
+    { label: t("profile.fields.contactName"), value: c?.full_name || "-" },
+    { label: t("profile.fields.relationship"), value: capitalize(c?.relationship) },
+    { label: t("profile.fields.phoneNumber"), value: c?.phone || "-" },
+    { label: t("common.labels.email"), value: c?.email || "-" },
   ];
 });
 
@@ -261,7 +266,7 @@ onMounted(() => {
 <template>
   <div class="px-1 py-2 sm:px-4 sm:py-4 lg:px-5">
   <!-- Loading -->
-  <div v-if="loading" role="status" aria-label="Loading">
+  <div v-if="loading" role="status" :aria-label="$t('common.a11y.loading')">
     <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 mb-6">
       <Skeleton width="64px" height="64px" rounded="9999px" class="self-center sm:self-auto" />
       <div class="flex-1 space-y-2.5 flex flex-col items-center sm:items-start">
@@ -293,31 +298,31 @@ onMounted(() => {
       <div class="flex-1 min-w-0 text-center sm:text-left">
         <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1.5">
           <h1 class="text-ui-h1 text-ui-ink break-words">{{ profile?.user?.name }}</h1>
-          <UiBadge :tone="jobStatusTone" dot>{{ capitalize(profile?.job_information?.status) }}</UiBadge>
+          <UiBadge :tone="jobStatusTone" dot>{{ enumLabel("jobStatus", profile?.job_information?.status) }}</UiBadge>
           <UiBadge v-if="profile?.job_information?.skill_level" tone="outline">
             {{ capitalize(profile?.job_information?.skill_level) }}
           </UiBadge>
         </div>
         <p class="text-ui-small text-ui-muted mt-1">{{ capitalize(profile?.job_information?.job_title) }}</p>
         <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 mt-2 text-ui-small text-ui-muted">
-          <span class="inline-flex items-center gap-1.5"><Building class="w-3.5 h-3.5 text-ui-faint" />{{ capitalize(profile?.job_information?.work_location) }}</span>
+          <span class="inline-flex items-center gap-1.5"><Building class="w-3.5 h-3.5 text-ui-faint" />{{ enumLabel("workLocation", profile?.job_information?.work_location) }}</span>
           <span class="inline-flex items-center gap-1.5"><User class="w-3.5 h-3.5 text-ui-faint" />{{ profile?.code }}</span>
-          <span class="inline-flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />Joined {{ formatDate(profile?.job_information?.start_date) }}</span>
+          <span class="inline-flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />{{ $t("profile.view.joined", { date: formatDate(profile?.job_information?.start_date) }) }}</span>
         </div>
       </div>
       <div class="flex justify-center sm:justify-end shrink-0">
         <UiButton variant="secondary" :icon="Edit" :to="{ name: 'employee.profile.edit' }" class="w-full sm:w-auto">
-          Edit Profile
+          {{ $t("profile.view.editProfile") }}
         </UiButton>
       </div>
     </div>
 
     <!-- Statistics -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 ui-stagger">
-      <UiStat label="Tasks Completed" :icon="CheckCircle" :value="performanceStatistics?.tasks_completed || 0" hint="This month" />
-      <UiStat label="Attendance Rate" :icon="CalendarCheck" :value="`${performanceStatistics?.attendance_rate || 0}%`" hint="Above average" />
-      <UiStat label="Active Projects" :icon="Folder" :value="performanceStatistics?.projects_count || 0" hint="Current projects" />
-      <UiStat label="Performance" :icon="TrendingUp" :value="`${performanceStatistics?.performance_score || 0}%`" hint="Excellent rating" />
+      <UiStat :label="$t('profile.view.stats.tasksCompleted')" :icon="CheckCircle" :value="performanceStatistics?.tasks_completed || 0" :hint="$t('profile.view.stats.thisMonth')" />
+      <UiStat :label="$t('profile.view.stats.attendanceRate')" :icon="CalendarCheck" :value="`${performanceStatistics?.attendance_rate || 0}%`" :hint="$t('profile.view.stats.aboveAverage')" />
+      <UiStat :label="$t('profile.view.stats.activeProjects')" :icon="Folder" :value="performanceStatistics?.projects_count || 0" :hint="$t('profile.view.stats.currentProjects')" />
+      <UiStat :label="$t('profile.view.stats.performance')" :icon="TrendingUp" :value="`${performanceStatistics?.performance_score || 0}%`" :hint="$t('profile.view.stats.excellentRating')" />
     </div>
 
     <!-- Tabs: underline on desktop, scrolling chips on phones -->
@@ -363,7 +368,7 @@ onMounted(() => {
 
     <!-- Overview Tab -->
     <div v-show="activeTab === 'overview'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mb-6 items-start ui-stagger">
-      <UiCard title="Personal Information" subtitle="Your contact and profile details">
+      <UiCard :title="$t('profile.view.personal.title')" :subtitle="$t('profile.view.personal.subtitle')">
         <template #actions><Contact class="w-4 h-4 text-ui-faint mt-1" /></template>
         <dl class="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-5 divide-y divide-ui-line sm:divide-y-0 -my-3 sm:my-0">
           <div v-for="row in personalRows" :key="row.label" class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
@@ -373,7 +378,7 @@ onMounted(() => {
         </dl>
       </UiCard>
 
-      <UiCard title="Location Details" subtitle="Address and location information">
+      <UiCard :title="$t('profile.view.location.title')" :subtitle="$t('profile.view.location.subtitle')">
         <template #actions><MapPin class="w-4 h-4 text-ui-faint mt-1" /></template>
         <dl class="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-5 divide-y divide-ui-line sm:divide-y-0 -my-3 sm:my-0">
           <div v-for="row in locationRows" :key="row.label" class="flex justify-between gap-4 py-3 sm:block sm:py-0 min-w-0">
@@ -386,7 +391,7 @@ onMounted(() => {
 
     <!-- Employment & Team Tab -->
     <div v-show="activeTab === 'employment'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mb-6 items-start ui-stagger">
-      <UiCard title="Employment Details" subtitle="Work and compensation information">
+      <UiCard :title="$t('profile.view.employment.title')" :subtitle="$t('profile.view.employment.subtitle')">
         <template #actions><Briefcase class="w-4 h-4 text-ui-faint mt-1" /></template>
         <dl class="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-5 divide-y divide-ui-line sm:divide-y-0 -my-3 sm:my-0">
           <div v-for="row in employmentRows" :key="row.label" class="flex justify-between items-center sm:items-start gap-4 py-3 sm:block sm:py-0 min-w-0">
@@ -399,9 +404,9 @@ onMounted(() => {
         </dl>
       </UiCard>
 
-      <UiCard v-if="profile?.job_information?.team" title="My Team" subtitle="Team information">
+      <UiCard v-if="profile?.job_information?.team" :title="$t('profile.view.team.title')" :subtitle="$t('profile.view.team.subtitle')">
         <template #actions>
-          <UiButton variant="secondary" size="sm" :icon="Users" @click="goToMyTeam">View Team</UiButton>
+          <UiButton variant="secondary" size="sm" :icon="Users" @click="goToMyTeam">{{ $t("profile.view.team.viewTeam") }}</UiButton>
         </template>
         <div class="flex items-center gap-3 p-3 mb-4 rounded-[10px] bg-ui-subtle border border-ui-line">
           <div class="w-10 h-10 rounded-[10px] bg-ui-surface border border-ui-line flex items-center justify-center shrink-0">
@@ -410,23 +415,23 @@ onMounted(() => {
           <div class="min-w-0">
             <p class="text-ui-h3 text-ui-ink truncate">{{ profile.job_information.team.name }}</p>
             <p class="text-ui-cap text-ui-muted">
-              {{ profile.job_information.team.members_count ?? 0 }} members •
-              {{ capitalize(profile.job_information.team.status) }}
+              {{ $t("profile.view.team.members", { n: profile.job_information.team.members_count ?? 0 }, profile.job_information.team.members_count ?? 0) }} •
+              {{ enumLabel("teamStatus", profile.job_information.team.status) }}
             </p>
           </div>
         </div>
         <dl class="divide-y divide-ui-line">
           <div class="flex justify-between gap-4 py-2.5">
-            <dt class="text-ui-small text-ui-muted">Team Lead</dt>
+            <dt class="text-ui-small text-ui-muted">{{ $t("profile.view.team.lead") }}</dt>
             <dd class="text-ui-body text-ui-ink text-right">{{ profile.job_information.team.leader?.name || "-" }}</dd>
           </div>
           <div class="flex justify-between gap-4 py-2.5">
-            <dt class="text-ui-small text-ui-muted">Department</dt>
+            <dt class="text-ui-small text-ui-muted">{{ $t("profile.fields.department") }}</dt>
             <dd class="text-ui-body text-ui-ink text-right">{{ capitalize(profile.job_information.team.department) }}</dd>
           </div>
           <div class="flex justify-between gap-4 pt-2.5">
-            <dt class="text-ui-small text-ui-muted">Team Size</dt>
-            <dd class="text-ui-body text-ui-ink text-right">{{ profile.job_information.team.members_count ?? 0 }} members</dd>
+            <dt class="text-ui-small text-ui-muted">{{ $t("profile.view.team.size") }}</dt>
+            <dd class="text-ui-body text-ui-ink text-right">{{ $t("profile.view.team.members", { n: profile.job_information.team.members_count ?? 0 }, profile.job_information.team.members_count ?? 0) }}</dd>
           </div>
         </dl>
       </UiCard>
@@ -434,7 +439,7 @@ onMounted(() => {
 
     <!-- Emergency Contact Tab -->
     <div v-show="activeTab === 'emergency'" class="mb-6 ui-anim-fade-up">
-      <UiCard title="Emergency Contact" subtitle="Person to contact in case of emergency">
+      <UiCard :title="$t('profile.view.emergency.title')" :subtitle="$t('profile.view.emergency.subtitle')">
         <template #actions><Phone class="w-4 h-4 text-ui-faint mt-1" /></template>
         <dl
           v-if="profile?.emergency_contacts && profile.emergency_contacts.length > 0"
@@ -445,16 +450,16 @@ onMounted(() => {
             <dd class="text-ui-body text-ui-ink text-right sm:text-left sm:mt-1 break-words min-w-0">{{ row.value }}</dd>
           </div>
         </dl>
-        <UiEmpty v-else compact :icon="Phone" title="No emergency contact added" />
+        <UiEmpty v-else compact :icon="Phone" :title="$t('profile.view.emergency.empty')" />
       </UiCard>
     </div>
 
     <!-- Tasks Tab -->
     <div v-show="activeTab === 'tasks'" class="mb-6 ui-anim-fade-up">
-      <UiCard title="Latest Tasks" subtitle="Recently assigned tasks" :padded="false">
+      <UiCard :title="$t('profile.view.tasks.title')" :subtitle="$t('profile.view.tasks.subtitle')" :padded="false">
         <template #actions>
           <button type="button" @click="goToAllTasks" class="text-ui-small font-medium text-ui-accent hover:underline mt-1">
-            View All
+            {{ $t("common.actions.viewAll") }}
           </button>
         </template>
 
@@ -462,13 +467,13 @@ onMounted(() => {
           <SkeletonList :rows="3" />
         </div>
 
-        <UiEmpty v-else-if="latestTasks.length === 0" compact :icon="ListChecks" title="No active tasks assigned" />
+        <UiEmpty v-else-if="latestTasks.length === 0" compact :icon="ListChecks" :title="$t('profile.view.tasks.empty')" />
 
         <ul v-else class="divide-y divide-ui-line border-t border-ui-line ui-stagger">
           <li v-for="task in latestTasks" :key="task.id" class="px-5 sm:px-6 py-4">
             <div class="flex items-start justify-between gap-3">
               <h4 class="text-ui-h3 text-ui-ink min-w-0 break-words">{{ task.title }}</h4>
-              <UiBadge :tone="taskTone(task.status)" dot class="shrink-0">{{ task.status }}</UiBadge>
+              <UiBadge :tone="taskTone(task.statusKey)" dot class="shrink-0">{{ task.status }}</UiBadge>
             </div>
             <p v-if="task.description" class="text-ui-small text-ui-muted mt-1 line-clamp-2">{{ task.description }}</p>
             <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-ui-cap text-ui-muted">
@@ -483,7 +488,7 @@ onMounted(() => {
     <!-- Assets & Reviews Tab -->
     <div v-show="activeTab === 'more'" class="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start ui-stagger">
       <!-- My Assets -->
-      <UiCard v-if="myAssets.length > 0" title="My Assets" subtitle="Company equipment assigned to you" :padded="false">
+      <UiCard v-if="myAssets.length > 0" :title="$t('profile.view.assets.title')" :subtitle="$t('profile.view.assets.subtitle')" :padded="false">
         <template #actions><Laptop class="w-4 h-4 text-ui-faint mt-1" /></template>
         <ul class="divide-y divide-ui-line border-t border-ui-line">
           <li v-for="asset in myAssets" :key="asset.id" class="px-5 sm:px-6 py-3.5 flex items-center justify-between gap-3">
@@ -497,13 +502,13 @@ onMounted(() => {
       </UiCard>
 
       <!-- My Performance Reviews -->
-      <UiCard v-if="myReviews.length > 0" title="My Performance Reviews" subtitle="Feedback and ratings from your reviewer" :padded="false">
+      <UiCard v-if="myReviews.length > 0" :title="$t('profile.view.reviews.title')" :subtitle="$t('profile.view.reviews.subtitle')" :padded="false">
         <template #actions><Star class="w-4 h-4 text-ui-faint mt-1" /></template>
         <ul class="divide-y divide-ui-line border-t border-ui-line">
           <li v-for="review in myReviews" :key="review.id" class="px-5 sm:px-6 py-4">
             <div class="flex items-center justify-between gap-3 mb-2">
               <p class="text-ui-h3 text-ui-ink">{{ review.period }}</p>
-              <span class="flex items-center gap-0.5 shrink-0" :aria-label="`Rating ${review.overall_rating} of 5`">
+              <span class="flex items-center gap-0.5 shrink-0" :aria-label="$t('profile.view.reviews.rating', { n: review.overall_rating })">
                 <Star
                   v-for="i in 5"
                   :key="i"
@@ -515,9 +520,9 @@ onMounted(() => {
               </span>
             </div>
             <div class="space-y-1 text-ui-small text-ui-text">
-              <p v-if="review.strengths"><span class="font-medium text-ui-ink">Strengths:</span> {{ review.strengths }}</p>
-              <p v-if="review.areas_for_improvement"><span class="font-medium text-ui-ink">To Improve:</span> {{ review.areas_for_improvement }}</p>
-              <p v-if="review.goals_next_period"><span class="font-medium text-ui-ink">Goals:</span> {{ review.goals_next_period }}</p>
+              <p v-if="review.strengths"><span class="font-medium text-ui-ink">{{ $t("profile.view.reviews.strengths") }}:</span> {{ review.strengths }}</p>
+              <p v-if="review.areas_for_improvement"><span class="font-medium text-ui-ink">{{ $t("profile.view.reviews.toImprove") }}:</span> {{ review.areas_for_improvement }}</p>
+              <p v-if="review.goals_next_period"><span class="font-medium text-ui-ink">{{ $t("profile.view.reviews.goals") }}:</span> {{ review.goals_next_period }}</p>
             </div>
             <div class="mt-3">
               <UiButton
@@ -527,9 +532,9 @@ onMounted(() => {
                 :icon="CheckCircle"
                 @click="acknowledgeReview(review.id)"
               >
-                Mark as Read
+                {{ $t("profile.view.reviews.markRead") }}
               </UiButton>
-              <UiBadge v-else tone="ok" dot>Acknowledged</UiBadge>
+              <UiBadge v-else tone="ok" dot>{{ $t("profile.view.reviews.acknowledged") }}</UiBadge>
             </div>
           </li>
         </ul>
@@ -540,7 +545,7 @@ onMounted(() => {
         v-if="myAssets.length === 0 && myReviews.length === 0"
         class="lg:col-span-2 bg-ui-surface border border-ui-line rounded-ui-card"
       >
-        <UiEmpty :icon="Star" title="No asset & reviews assigned" />
+        <UiEmpty :icon="Star" :title="$t('profile.view.assets.empty')" />
       </div>
     </div>
 
@@ -553,8 +558,8 @@ onMounted(() => {
         <section class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden">
           <header class="flex items-start gap-3 px-5 pt-[18px] pb-3.5 border-b border-ui-line">
             <div class="flex-1 min-w-0">
-              <h3 class="text-ui-h2 text-ui-ink">Digital ID Card</h3>
-              <p class="text-ui-cap text-ui-muted mt-0.5">Front and back at true size — 54 × 85.6 mm, as printed</p>
+              <h3 class="text-ui-h2 text-ui-ink">{{ $t("profile.view.idCard.title") }}</h3>
+              <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("profile.view.idCard.subtitle") }}</p>
             </div>
           </header>
           <div class="bg-ui-subtle/60 px-4 py-8 overflow-x-auto">
@@ -580,14 +585,14 @@ onMounted(() => {
                   <div class="idcard-row" style="top: 216pt"><span class="idcard-label">Phone</span><span class="idcard-value">{{ idCardPhone }}</span></div>
                   <div class="idcard-row" style="top: 228pt"><span class="idcard-label">Email</span><span class="idcard-value">{{ idCardEmail }}</span></div>
                 </div>
-                <figcaption class="text-ui-over uppercase text-ui-muted mt-3">Front</figcaption>
+                <figcaption class="text-ui-over uppercase text-ui-muted mt-3">{{ $t("profile.view.idCard.front") }}</figcaption>
               </figure>
 
               <figure class="text-center">
                 <div class="idcard relative overflow-hidden shadow-ui-overlay">
                   <img src="/images/idcard-back-bg.png" alt="" class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
                 </div>
-                <figcaption class="text-ui-over uppercase text-ui-muted mt-3">Back</figcaption>
+                <figcaption class="text-ui-over uppercase text-ui-muted mt-3">{{ $t("profile.view.idCard.back") }}</figcaption>
               </figure>
             </div>
           </div>
@@ -595,44 +600,44 @@ onMounted(() => {
 
         <!-- Details and download -->
         <aside class="space-y-5 xl:sticky xl:top-0">
-          <UiCard title="On the card" subtitle="Taken from your profile">
+          <UiCard :title="$t('profile.view.idCard.onCard')" :subtitle="$t('profile.view.idCard.onCardSubtitle')">
             <dl class="divide-y divide-ui-line -my-1">
               <div class="flex items-center justify-between gap-3 py-2.5">
-                <dt class="text-ui-small text-ui-muted">Photo</dt>
+                <dt class="text-ui-small text-ui-muted">{{ $t("profile.view.idCard.photo") }}</dt>
                 <dd class="text-ui-small text-right">
-                  <UiBadge v-if="idCardPhoto && !idCardPhotoFailed" tone="ok" dot>Profile photo</UiBadge>
-                  <UiBadge v-else tone="neutral">No photo</UiBadge>
+                  <UiBadge v-if="idCardPhoto && !idCardPhotoFailed" tone="ok" dot>{{ $t("profile.view.idCard.profilePhoto") }}</UiBadge>
+                  <UiBadge v-else tone="neutral">{{ $t("profile.view.idCard.noPhoto") }}</UiBadge>
                 </dd>
               </div>
               <div class="flex items-center justify-between gap-3 py-2.5">
-                <dt class="text-ui-small text-ui-muted">Employee ID</dt>
+                <dt class="text-ui-small text-ui-muted">{{ $t("profile.fields.employeeId") }}</dt>
                 <dd class="text-ui-small font-medium text-ui-ink font-mono">{{ profile?.code || "-" }}</dd>
               </div>
               <div class="flex items-center justify-between gap-3 py-2.5">
-                <dt class="text-ui-small text-ui-muted shrink-0">Job title</dt>
+                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("profile.fields.jobTitle") }}</dt>
                 <dd class="text-ui-small font-medium text-ui-ink truncate">{{ idCardJobTitle }}</dd>
               </div>
               <div class="flex items-center justify-between gap-3 py-2.5">
-                <dt class="text-ui-small text-ui-muted shrink-0">Phone</dt>
+                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("common.labels.phone") }}</dt>
                 <dd class="text-ui-small font-medium text-ui-ink truncate">{{ idCardPhone }}</dd>
               </div>
               <div class="flex items-center justify-between gap-3 py-2.5">
-                <dt class="text-ui-small text-ui-muted shrink-0">Email</dt>
+                <dt class="text-ui-small text-ui-muted shrink-0">{{ $t("common.labels.email") }}</dt>
                 <dd class="text-ui-small font-medium text-ui-ink truncate">{{ idCardEmail }}</dd>
               </div>
             </dl>
             <p class="text-ui-cap text-ui-muted mt-4">
-              {{ idCardPhoto && !idCardPhotoFailed ? "Want a different photo?" : "No profile photo yet — the card is printed without one." }}
+              {{ idCardPhoto && !idCardPhotoFailed ? $t("profile.view.idCard.differentPhoto") : $t("profile.view.idCard.noPhotoHint") }}
               <RouterLink :to="{ name: 'employee.profile.edit' }" class="font-medium text-ui-accent hover:underline">
-                {{ idCardPhoto && !idCardPhotoFailed ? "Change it in Edit Profile" : "Add one in Edit Profile" }}
+                {{ idCardPhoto && !idCardPhotoFailed ? $t("profile.view.idCard.changeIt") : $t("profile.view.idCard.addOne") }}
               </RouterLink>
             </p>
           </UiCard>
 
           <UiButton :icon="Download" :loading="downloadingIdCard" block size="lg" @click="downloadIdCard">
-            {{ downloadingIdCard ? "Preparing..." : "Download PDF" }}
+            {{ downloadingIdCard ? $t("profile.view.idCard.preparing") : $t("common.actions.downloadPdf") }}
           </UiButton>
-          <p class="text-ui-cap text-ui-muted text-center -mt-2">Print at 100% on card stock, then cut along the edge.</p>
+          <p class="text-ui-cap text-ui-muted text-center -mt-2">{{ $t("profile.view.idCard.printHint") }}</p>
         </aside>
       </div>
     </div>
@@ -642,8 +647,8 @@ onMounted(() => {
   <div v-else-if="profileNotFound" class="bg-ui-surface border border-ui-line rounded-ui-card ui-anim-fade-up">
     <UiEmpty
       :icon="User"
-      title="No profile to show"
-      message="This account doesn't have an employee profile -- that's expected for system accounts like Super Admin."
+      :title="$t('profile.view.notFound.title')"
+      :message="$t('profile.view.notFound.message')"
     />
   </div>
   </div>

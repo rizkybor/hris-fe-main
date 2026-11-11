@@ -6,6 +6,9 @@ import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
 import { ref, provide, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
@@ -62,20 +65,9 @@ provide("goToStep", goToStep);
 provide("nextStep", nextStep);
 provide("previousStep", previousStep);
 
-const getStepTitle = () => {
-  switch (currentStep.value) {
-    case 1:
-      return "Personal Information";
-    case 2:
-      return "Job Information";
-    case 3:
-      return "Emergency Contact";
-    case 4:
-      return "Review & Submit";
-    default:
-      return "Personal Information";
-  }
-};
+const STEP_KEYS = { 1: "personal", 2: "job", 3: "emergency", 4: "review" };
+const getStepTitle = () =>
+  t(`employees.wizard.steps.${STEP_KEYS[currentStep.value] || "personal"}.title`);
 
 // Reset step when route changes
 watch(
@@ -102,24 +94,24 @@ watch(
               type="button"
               @click="previousStep"
               class="ui-press h-9 shrink-0 inline-flex items-center gap-1.5 px-2.5 sm:px-3 rounded-ui-control border border-ui-line-strong bg-ui-surface text-ui-ink hover:bg-ui-subtle focus:outline-none focus-visible:shadow-ui-focus"
-              aria-label="Back"
+              :aria-label="$t('common.actions.back')"
             >
               <ArrowLeft class="w-4 h-4" />
-              <span class="text-ui-small font-medium hidden sm:inline">Back</span>
+              <span class="text-ui-small font-medium hidden sm:inline">{{ $t("common.actions.back") }}</span>
             </button>
             <div class="min-w-0">
               <h1 class="text-ui-h3 sm:text-ui-h2 text-ui-ink truncate">
-                {{ isEditing ? "Edit Employee" : "Add New Employee" }}
+                {{ isEditing ? $t("employees.wizard.editTitle") : $t("employees.wizard.addTitle") }}
               </h1>
               <p class="text-ui-cap sm:text-ui-small text-ui-muted truncate">
-                Step {{ currentStep }} of {{ totalSteps }} &middot; {{ getStepTitle() }}
+                {{ $t("employees.wizard.stepOf", { current: currentStep, total: totalSteps }) }} &middot; {{ getStepTitle() }}
               </p>
             </div>
           </div>
 
           <!-- Compact step counter (phones) -->
           <span class="sm:hidden shrink-0 text-ui-cap font-medium text-ui-muted tabular-nums">
-            {{ currentStep }} of {{ totalSteps }}
+            {{ $t("employees.wizard.stepCounter", { current: currentStep, total: totalSteps }) }}
           </span>
 
           <!-- User Profile -->
@@ -148,7 +140,7 @@ watch(
           :aria-valuenow="currentStep"
           aria-valuemin="1"
           :aria-valuemax="totalSteps"
-          :aria-label="`Step ${currentStep} of ${totalSteps}`"
+          :aria-label="$t('employees.wizard.stepOf', { current: currentStep, total: totalSteps })"
         >
           <div
             v-for="step in totalSteps"

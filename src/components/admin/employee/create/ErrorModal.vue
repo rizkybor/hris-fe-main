@@ -15,9 +15,9 @@ const emit = defineEmits(["close"]);
     :open="show"
     mode="alert"
     type="danger"
-    title="Oops! Something's Not Right"
-    message="Please check your data again and make sure all required fields are filled correctly."
-    confirm-text="OK, I'll Fix It"
+    :title="$t('employees.errorModal.title')"
+    :message="$t('employees.errorModal.message')"
+    :confirm-text="$t('employees.errorModal.confirm')"
     @confirm="emit('close')"
     @cancel="emit('close')"
   />

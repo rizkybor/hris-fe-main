@@ -83,7 +83,7 @@ onBeforeUnmount(() => {
               v-if="!persistent"
               type="button"
               class="w-8 h-8 -mr-1.5 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
-              aria-label="Close"
+              :aria-label="$t('common.a11y.close')"
               @click="close"
             >
               <X class="w-[18px] h-[18px]" />

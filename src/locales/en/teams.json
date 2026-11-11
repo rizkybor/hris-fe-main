@@ -1,0 +1,175 @@
+{
+  "status": {
+    "active": "Active",
+    "forming": "Forming",
+    "planning": "Planning",
+    "dormant": "Dormant"
+  },
+  "list": {
+    "title": "All Teams",
+    "itemLabel": "teams",
+    "importCsv": "Import CSV",
+    "addTeam": "Add Team",
+    "searchPlaceholder": "Search teams by name, lead, status...",
+    "allDepartments": "All Departments",
+    "empty": "No teams found"
+  },
+  "card": {
+    "members": "{n} member | {n} members",
+    "teamLeader": "Team Leader",
+    "noLeader": "No Leader",
+    "responsibilities": "{n} responsibility | {n} responsibilities",
+    "activeProjects": "{n} active project | {n} active projects",
+    "completedTasks": "{n} completed task | {n} completed tasks"
+  },
+  "stats": {
+    "total": "Total Teams",
+    "active": "Active Teams",
+    "members": "Team Members",
+    "averageSize": "Average Team Size",
+    "newTeams": "New Teams",
+    "optimalSize": "Optimal size",
+    "thisMonth": "{n} this month",
+    "thisWeek": "{n} this week",
+    "thisMonthHint": "This month"
+  },
+  "tips": {
+    "title": "Team Creation Tips",
+    "subtitle": "Best practices for setting up teams",
+    "name": {
+      "title": "Choose a Clear Name",
+      "text": "Pick a descriptive name that reflects the team's purpose and function."
+    },
+    "lead": {
+      "title": "Select Right Lead",
+      "text": "Choose someone with leadership experience and domain expertise."
+    },
+    "goals": {
+      "title": "Define Clear Goals",
+      "text": "Write a clear description of what the team will achieve."
+    },
+    "growth": {
+      "title": "Plan for Growth",
+      "text": "Consider how the team will scale and evolve over time."
+    }
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "subtitle": "Common team setup tasks",
+    "browse": "Browse Employees",
+    "browseHint": "Find potential team members"
+  },
+  "create": {
+    "title": "Create New Team",
+    "subtitle": "Set up a new team and assign a leader",
+    "submit": "Create Team",
+    "membersSubtitle": "Pick employees who will be part of this team"
+  },
+  "edit": {
+    "title": "Edit Team",
+    "subtitle": "Update team details and leadership",
+    "submit": "Update Team",
+    "membersSubtitle": "Add or remove employees from this team"
+  },
+  "form": {
+    "info": {
+      "title": "Team Information",
+      "subtitle": "Basic team details and description"
+    },
+    "icon": {
+      "label": "Team Icon",
+      "upload": "Upload Icon",
+      "remove": "Remove Icon",
+      "hint": "SVG, PNG up to 1MB (recommended: icon format)"
+    },
+    "name": "Name",
+    "namePlaceholder": "Enter team name",
+    "department": "Department",
+    "departmentPlaceholder": "Select department",
+    "expectedSize": "Expected Team Size",
+    "expectedSizePlaceholder": "Enter expected team size",
+    "purpose": "Team Purpose",
+    "purposePlaceholder": "Describe the team's purpose and goals...",
+    "searchEmployees": "Search employees...",
+    "lead": {
+      "title": "Team Lead",
+      "subtitle": "Assign a team leader to manage this team",
+      "select": "Select Team Lead",
+      "placeholder": "Select team lead",
+      "remove": "Remove team lead",
+      "modalSubtitle": "Choose an employee to lead this team",
+      "noEmployees": "No employees found",
+      "noEmployeesHint": "Try adjusting your search terms"
+    },
+    "members": {
+      "title": "Team Members",
+      "label": "Members",
+      "selected": "{n} selected",
+      "empty": "No staff data yet.",
+      "noMatch": "No employees match \"{q}\"."
+    },
+    "responsibilities": {
+      "title": "Team Responsibilities",
+      "subtitle": "Define the key responsibilities and duties for this team",
+      "item": "Responsibility {n}",
+      "placeholder": "e.g., Develop and maintain software applications",
+      "additionalPlaceholder": "Enter additional responsibility",
+      "remove": "Remove responsibility",
+      "add": "Add Another Responsibility"
+    },
+    "settings": {
+      "title": "Team Settings",
+      "subtitle": "Configure team status",
+      "initialStatus": "Initial Team Status",
+      "selected": "Selected"
+    }
+  },
+  "detail": {
+    "tabs": {
+      "overview": "Overview",
+      "members": "Team Members"
+    },
+    "verified": "Verified",
+    "membersOf": "{n}/{size} members",
+    "share": "Share Team",
+    "edit": "Edit Team",
+    "responsibilitiesSubtitle": "Key duties and objectives",
+    "leadSubtitle": "Team leadership and management",
+    "contactInfo": "Contact Information",
+    "emailAddress": "Email Address",
+    "phoneNumber": "Phone Number",
+    "viewProfile": "View Profile",
+    "noLead": "No Team Lead Assigned",
+    "noLeadHint": "This team does not currently have a leader assigned.",
+    "dangerZone": "Danger Zone",
+    "dangerZoneHint": "Irreversible and destructive actions",
+    "disband": "Disband Team",
+    "disbandHint": "Permanently remove this team and reassign all members. This action cannot be undone.",
+    "disbandConfirm": "Are you sure you want to disband '{name}'? This will permanently remove the team and reassign all members. This action cannot be undone.",
+    "membersSubtitle": "Current team composition",
+    "viewMore": "View More",
+    "viewLess": "View Less",
+    "joined": "Joined {date}",
+    "experience": "{n} year experience | {n} years experience",
+    "noMembers": "No team members",
+    "stats": {
+      "activeMembers": "Active Members",
+      "fullCapacity": "Full capacity",
+      "membersNeeded": "{n} member needed | {n} members needed",
+      "projectsAssigned": "Projects Assigned",
+      "inProgress": "{n} in progress",
+      "performance": "Team Performance",
+      "aboveTarget": "Above target",
+      "belowTarget": "Below target",
+      "completionRate": "Completion Rate"
+    },
+    "chart": {
+      "teamGrowth": "Team Growth",
+      "teamGrowthHint": "New members joining over past 4 months",
+      "tasksGrowth": "Tasks Growth",
+      "tasksGrowthHint": "Tasks assigned to team over past 4 months",
+      "newMembers": "New Members",
+      "tasksAssigned": "Tasks Assigned"
+    }
+  }
+}

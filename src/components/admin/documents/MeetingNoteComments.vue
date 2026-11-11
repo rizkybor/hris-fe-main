@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { MessageSquare, Send, Trash2, AtSign, Smile, CornerUpLeft, X } from "lucide-vue-next";
 import { useMeetingNoteCommentStore } from "@/stores/meetingNoteComment";
 import { useAuthStore } from "@/stores/auth";
@@ -27,6 +28,7 @@ const props = defineProps({
   },
 });
 
+const { t } = useI18n();
 const commentStore = useMeetingNoteCommentStore();
 const { comments, loading, submitting } = storeToRefs(commentStore);
 
@@ -218,7 +220,7 @@ const submitComment = async () => {
 };
 
 const handleDelete = async (comment) => {
-  if (await alertModal.confirm("Delete this comment?")) {
+  if (await alertModal.confirm(t("documents.comments.deleteConfirm"))) {
     try {
       await commentStore.deleteComment(comment.id);
     } catch (error) {
@@ -342,7 +344,7 @@ watch(
     <div class="flex items-center gap-2 mb-4">
       <MessageSquare class="w-4 h-4 text-ui-faint" />
       <h3 class="text-ui-h3 text-ui-ink">
-        Comments
+        {{ $t("documents.comments.title") }}
         <span v-if="comments.length" class="text-ui-muted font-normal tabular-nums">({{ comments.length }})</span>
       </h3>
     </div>
@@ -360,7 +362,7 @@ watch(
 
     <div v-else-if="threads.length === 0" class="text-center py-6 mb-4 bg-ui-subtle rounded-ui-card">
       <MessageSquare class="w-5 h-5 text-ui-faint mx-auto mb-1.5" />
-      <p class="text-ui-small text-ui-muted">No comments yet. Start the conversation.</p>
+      <p class="text-ui-small text-ui-muted">{{ $t("documents.comments.empty") }}</p>
     </div>
 
     <div v-else class="space-y-5 mb-5 max-h-80 overflow-y-auto pr-1">
@@ -383,8 +385,8 @@ watch(
                     type="button"
                     @click="startReply(thread.root)"
                     class="w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
-                    title="Reply"
-                    aria-label="Reply"
+                    :title="$t('documents.comments.reply')"
+                    :aria-label="$t('documents.comments.reply')"
                   >
                     <CornerUpLeft class="w-3.5 h-3.5" />
                   </button>
@@ -393,8 +395,8 @@ watch(
                     type="button"
                     @click="handleDelete(thread.root)"
                     class="w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus"
-                    title="Delete comment"
-                    aria-label="Delete comment"
+                    :title="$t('documents.comments.delete')"
+                    :aria-label="$t('documents.comments.delete')"
                   >
                     <Trash2 class="w-3.5 h-3.5" />
                   </button>
@@ -438,8 +440,8 @@ watch(
                     type="button"
                     @click="startReply(reply)"
                     class="w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
-                    title="Reply"
-                    aria-label="Reply"
+                    :title="$t('documents.comments.reply')"
+                    :aria-label="$t('documents.comments.reply')"
                   >
                     <CornerUpLeft class="w-3.5 h-3.5" />
                   </button>
@@ -448,8 +450,8 @@ watch(
                     type="button"
                     @click="handleDelete(reply)"
                     class="w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus"
-                    title="Delete comment"
-                    aria-label="Delete comment"
+                    :title="$t('documents.comments.delete')"
+                    :aria-label="$t('documents.comments.delete')"
                   >
                     <Trash2 class="w-3.5 h-3.5" />
                   </button>
@@ -459,7 +461,7 @@ watch(
                   v-if="reply.reply_to && reply.reply_to.id !== thread.root.id"
                   class="text-ui-cap text-ui-muted border-l-2 border-ui-line-strong pl-2 mt-1 mb-1 truncate"
                 >
-                  Replying to <span class="font-medium text-ui-text">{{ reply.reply_to.user_name }}</span>: {{ reply.reply_to.snippet }}
+                  {{ $t("documents.comments.replyingTo") }} <span class="font-medium text-ui-text">{{ reply.reply_to.user_name }}</span>: {{ reply.reply_to.snippet }}
                 </p>
                 <p class="text-ui-small text-ui-text leading-relaxed whitespace-pre-wrap break-words mt-0.5">
               <template v-for="(segment, idx) in renderSegments(reply)" :key="idx">
@@ -487,7 +489,7 @@ watch(
     <div v-if="!canComment" class="flex items-center gap-2.5 bg-ui-subtle border border-ui-line rounded-ui-control px-3.5 py-3">
       <MessageSquare class="w-4 h-4 text-ui-faint shrink-0" />
       <p class="text-ui-cap text-ui-muted">
-        Only employees checked in as Internal Attendees can comment or mention others here.
+        {{ $t("documents.comments.notEligible") }}
       </p>
     </div>
 
@@ -498,9 +500,9 @@ watch(
         <!-- Replying-to banner -->
         <div v-if="replyingTo" class="flex items-center justify-between gap-2 bg-ui-accent-soft rounded-ui-control px-3 py-1.5 mb-2">
           <p class="text-ui-cap text-ui-accent">
-            Replying to <span class="font-medium">{{ replyingTo.userName }}</span>
+            {{ $t("documents.comments.replyingTo") }} <span class="font-medium">{{ replyingTo.userName }}</span>
           </p>
-          <button type="button" @click="cancelReply" class="text-ui-accent/70 hover:text-ui-accent transition-colors" aria-label="Cancel reply">
+          <button type="button" @click="cancelReply" class="text-ui-accent/70 hover:text-ui-accent transition-colors" :aria-label="$t('documents.comments.cancelReply')">
             <X class="w-3.5 h-3.5" />
           </button>
         </div>
@@ -511,7 +513,7 @@ watch(
           @input="handleInput"
           @keydown.enter.exact.prevent="submitComment"
           rows="2"
-          placeholder="Write a comment... use @ to mention someone"
+          :placeholder="$t('documents.comments.placeholder')"
           class="block w-full bg-ui-surface rounded-ui-control px-3 pt-2.5 pb-11 text-ui-small text-ui-ink placeholder:text-ui-faint border border-ui-line-strong focus:border-ui-accent focus:shadow-ui-focus transition-shadow resize-none outline-none"
         ></textarea>
 
@@ -523,8 +525,8 @@ watch(
             @click="toggleEmojiPicker"
             class="meeting-note-comment-emoji-toggle w-8 h-8 rounded-ui-control flex items-center justify-center transition-colors"
             :class="showEmojiPicker ? 'text-ui-accent bg-ui-accent-soft' : 'text-ui-faint hover:text-ui-ink hover:bg-ui-hover'"
-            title="Insert emoji"
-            aria-label="Insert emoji"
+            :title="$t('documents.comments.insertEmoji')"
+            :aria-label="$t('documents.comments.insertEmoji')"
           >
             <Smile class="w-4 h-4" />
           </button>
@@ -533,8 +535,8 @@ watch(
             @click="submitComment"
             :disabled="submitting || !newComment.trim()"
             class="ui-press w-8 h-8 rounded-ui-control flex items-center justify-center bg-ui-ink text-white hover:bg-ui-ink/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            :title="replyingTo ? 'Reply' : 'Comment'"
-            :aria-label="replyingTo ? 'Reply' : 'Comment'"
+            :title="replyingTo ? $t('documents.comments.reply') : $t('documents.comments.comment')"
+            :aria-label="replyingTo ? $t('documents.comments.reply') : $t('documents.comments.comment')"
           >
             <Send class="w-4 h-4" />
           </button>

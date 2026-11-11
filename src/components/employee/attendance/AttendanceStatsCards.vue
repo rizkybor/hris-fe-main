@@ -21,29 +21,29 @@ const props = defineProps({
 <template>
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ui-stagger">
     <UiStat
-      label="This Month"
+      :label="$t('myAttendance.stats.thisMonth')"
       :icon="CalendarCheck"
       :value="`${statistics.present_days}/${statistics.total_days}`"
-      hint="Days present"
+      :hint="$t('myAttendance.stats.daysPresent')"
     />
     <UiStat
-      label="Leave Balance"
+      :label="$t('myAttendance.stats.leaveBalance')"
       :icon="CalendarDays"
       :value="leaveBalance ? leaveBalance.remaining : '-'"
-      :hint="leaveBalance ? `of ${leaveBalance.quota} days` : 'Days remaining'"
+      :hint="leaveBalance ? $t('myAttendance.stats.ofDays', { n: leaveBalance.quota }, leaveBalance.quota) : $t('myAttendance.stats.daysRemaining')"
     />
     <UiStat
-      label="Pending Requests"
+      :label="$t('myAttendance.stats.pendingRequests')"
       :icon="Clock"
       :value="pendingRequestsCount"
       :tone="pendingRequestsCount > 0 ? 'warn' : ''"
-      hint="Awaiting approval"
+      :hint="$t('myAttendance.stats.awaitingApproval')"
     />
     <UiStat
-      label="Average Hours"
+      :label="$t('myAttendance.stats.averageHours')"
       :icon="Clock3"
-      :value="`${statistics.average_hours || 0}h`"
-      hint="Daily average"
+      :value="$t('myAttendance.stats.hours', { n: statistics.average_hours || 0 })"
+      :hint="$t('myAttendance.stats.dailyAverage')"
     />
   </div>
 </template>

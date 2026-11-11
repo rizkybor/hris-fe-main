@@ -4,6 +4,9 @@ import { ClipboardCheck, Pencil, X } from "lucide-vue-next";
 import { useProjectStore } from "@/stores/project";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import { UiButton, UiEmpty } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   projectId: {
@@ -62,7 +65,7 @@ const handleSave = async () => {
     editing.value = false;
     emit("updated", updated?.inspect_note ?? draft.value);
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to save the note.";
+    errorMessage.value = error?.response?.data?.message || t("projects.inspect.saveFailed");
   } finally {
     saving.value = false;
   }
@@ -73,12 +76,12 @@ const handleSave = async () => {
   <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 h-full flex flex-col">
     <div class="flex items-start justify-between gap-3 mb-4 shrink-0">
       <div class="min-w-0">
-        <h3 class="text-ui-h2 text-ui-ink">Project Inspect</h3>
-        <p class="text-ui-cap text-ui-muted mt-0.5">Optional — only the Project Leader can write this note</p>
+        <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.inspect.title") }}</h3>
+        <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.inspect.subtitle") }}</p>
       </div>
 
       <UiButton v-if="isLeader && !editing" variant="ghost" size="sm" :icon="Pencil" class="shrink-0" @click="startEditing">
-        {{ note ? "Edit Note" : "Add Note" }}
+        {{ note ? $t("projects.inspect.editNote") : $t("projects.inspect.addNote") }}
       </UiButton>
     </div>
 
@@ -86,13 +89,13 @@ const handleSave = async () => {
          like the read-only view below) so actively writing a long note
          isn't cramped into a tiny scroll box. -->
     <div v-if="editing">
-      <RichTextEditor v-model="draft" placeholder="Write your inspection notes here..." />
+      <RichTextEditor v-model="draft" :placeholder="$t('projects.inspect.placeholder')" />
       <p v-if="errorMessage" class="text-ui-cap text-ui-bad mt-1.5">{{ errorMessage }}</p>
       <div class="flex items-center gap-2 mt-3">
         <UiButton :loading="saving" class="flex-1 sm:flex-none" @click="handleSave">
-          {{ saving ? "Saving..." : "Save Note" }}
+          {{ saving ? $t("common.actions.saving") : $t("projects.inspect.saveNote") }}
         </UiButton>
-        <UiButton variant="secondary" :icon="X" :disabled="saving" class="flex-1 sm:flex-none" @click="cancelEditing">Cancel</UiButton>
+        <UiButton variant="secondary" :icon="X" :disabled="saving" class="flex-1 sm:flex-none" @click="cancelEditing">{{ $t("common.actions.cancel") }}</UiButton>
       </div>
     </div>
 
@@ -107,8 +110,8 @@ const handleSave = async () => {
       v-else
       compact
       :icon="ClipboardCheck"
-      title="No inspection notes yet"
-      :message="isLeader ? 'Optional — add a note whenever you inspect this project.' : 'Only the Project Leader can add one.'"
+      :title="$t('projects.inspect.emptyTitle')"
+      :message="isLeader ? $t('projects.inspect.emptyLeader') : $t('projects.inspect.emptyOther')"
       class="bg-ui-subtle rounded-ui-control"
     />
   </section>

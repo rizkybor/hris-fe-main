@@ -34,9 +34,9 @@ const staffWithOverrides = computed(
 
 <template>
   <div class="ui-stagger grid grid-cols-1 sm:grid-cols-2 gap-3">
-    <UiStat label="System Roles" :value="roles.length" hint="Configured roles" :icon="ShieldCheck" />
-    <UiStat label="Permissions" :value="totalPermissions" hint="Across all modules" :icon="KeyRound" />
-    <UiStat label="Staff Accounts" :value="staffAccounts.length" :hint="`${staffWithOverrides} with extra permissions`" :icon="UserCog" />
-    <UiStat label="Activity Today" :value="activityStats.today ?? 0" :hint="`${activityStats.this_week ?? 0} this week`" :icon="ShieldAlert" />
+    <UiStat :label="$t('dashboard.systemStats.roles')" :value="roles.length" :hint="$t('dashboard.systemStats.rolesHint')" :icon="ShieldCheck" />
+    <UiStat :label="$t('dashboard.systemStats.permissions')" :value="totalPermissions" :hint="$t('dashboard.systemStats.permissionsHint')" :icon="KeyRound" />
+    <UiStat :label="$t('dashboard.systemStats.staffAccounts')" :value="staffAccounts.length" :hint="$t('dashboard.systemStats.staffHint', { n: staffWithOverrides })" :icon="UserCog" />
+    <UiStat :label="$t('dashboard.systemStats.activityToday')" :value="activityStats.today ?? 0" :hint="$t('dashboard.systemStats.thisWeek', { n: activityStats.this_week ?? 0 })" :icon="ShieldAlert" />
   </div>
 </template>

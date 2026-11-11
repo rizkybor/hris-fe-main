@@ -64,8 +64,8 @@ const deletePhoto = () => {
             <Camera class="w-4 h-4" />
           </span>
           <div class="min-w-0">
-            <h3 class="text-ui-h2 text-ui-ink">Profile Photo</h3>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Upload employee photo</p>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.photo.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.photo.subtitle") }}</p>
           </div>
         </header>
       <div class="flex flex-row xl:flex-col items-center gap-5 xl:gap-4 xl:text-center">
@@ -80,14 +80,14 @@ const deletePhoto = () => {
           <template v-else>
             <img
               :src="form.profile_photo_url"
-              alt="Profile"
+              :alt="$t('employees.form.photo.alt')"
               class="w-24 h-24 rounded-full object-cover border border-ui-line"
             />
             <button
               type="button"
               @click="deletePhoto"
               class="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-ui-surface border border-ui-line-strong text-ui-bad hover:bg-ui-bad-soft flex items-center justify-center focus:outline-none focus-visible:shadow-ui-focus"
-              aria-label="Remove photo"
+              :aria-label="$t('employees.form.photo.remove')"
             >
               <X class="w-3.5 h-3.5" />
             </button>
@@ -103,10 +103,10 @@ const deletePhoto = () => {
             @change="handlePhotoSelect"
           />
           <UiButton variant="secondary" :icon="FolderOpen" @click="profilePhotoInput?.click()">
-            Browse Photo
+            {{ $t("employees.form.photo.browse") }}
           </UiButton>
           <p class="text-ui-cap text-ui-muted">
-            JPG, PNG up to 2MB<br />Recommended: 400x400px
+            {{ $t("employees.form.photo.rules") }}<br />{{ $t("employees.form.photo.recommended") }}
           </p>
         </div>
       </div>
@@ -121,8 +121,8 @@ const deletePhoto = () => {
             <Lock class="w-4 h-4" />
           </span>
           <div class="min-w-0">
-            <h3 class="text-ui-h2 text-ui-ink">Account Credentials</h3>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Login information and account details</p>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.account.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.account.subtitle") }}</p>
           </div>
         </header>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
@@ -131,8 +131,8 @@ const deletePhoto = () => {
             name="name"
             type="text"
             v-model="form.name"
-            label="Full Name"
-            placeholder="Enter full name"
+            :label="$t('employees.form.fields.fullName')"
+            :placeholder="$t('employees.form.fields.fullNamePlaceholder')"
             :icon="User"
             :error="errors?.name?.join(', ')"
             required
@@ -142,7 +142,7 @@ const deletePhoto = () => {
             name="email"
             type="email"
             v-model="form.email"
-            label="Email Address"
+            :label="$t('employees.form.fields.email')"
             placeholder="employee@company.com"
             :icon="Mail"
             :error="errors?.email?.join(', ')"
@@ -154,11 +154,11 @@ const deletePhoto = () => {
             type="password"
             autocomplete="new-password"
             v-model="form.password"
-            :label="isEditing ? 'New Password (optional)' : 'Password'"
-            :placeholder="isEditing ? 'Leave blank to keep current password' : 'Enter password'"
+            :label="isEditing ? $t('employees.form.fields.newPassword') : $t('employees.form.fields.password')"
+            :placeholder="isEditing ? $t('employees.form.fields.passwordKeepPlaceholder') : $t('employees.form.fields.passwordPlaceholder')"
             :icon="Lock"
             :error="errors?.password?.join(', ')"
-            hint="Min. 8 characters, a mix of upper/lowercase letters, numbers, and symbols. Must not be a password exposed in a known data breach."
+            :hint="$t('employees.form.fields.passwordHint')"
             :required="!isEditing"
           />
           <UiInput
@@ -167,8 +167,8 @@ const deletePhoto = () => {
             type="password"
             autocomplete="new-password"
             v-model="form.password_confirmation"
-            :label="isEditing ? 'Confirm New Password' : 'Confirm Password'"
-            placeholder="Confirm password"
+            :label="isEditing ? $t('employees.form.fields.confirmNewPassword') : $t('employees.form.fields.confirmPassword')"
+            :placeholder="$t('employees.form.fields.confirmPasswordPlaceholder')"
             :icon="Lock"
             :error="errors?.password_confirmation?.join(', ')"
             :required="!isEditing"
@@ -178,8 +178,8 @@ const deletePhoto = () => {
             name="identity_number"
             type="text"
             v-model="form.identity_number"
-            label="Identity Number (NIK/KTP)"
-            placeholder="Enter identity number"
+            :label="$t('employees.form.fields.identityNumber')"
+            :placeholder="$t('employees.form.fields.identityNumberPlaceholder')"
             :icon="Hash"
             :error="errors?.identity_number?.join(', ')"
             required
@@ -189,7 +189,7 @@ const deletePhoto = () => {
             name="npwp"
             type="text"
             v-model="form.npwp"
-            label="NPWP (optional)"
+            :label="$t('employees.form.fields.npwp')"
             placeholder="00.000.000.0-000.000"
             :icon="Hash"
             :error="errors?.npwp?.join(', ')"
@@ -204,8 +204,8 @@ const deletePhoto = () => {
             <User class="w-4 h-4" />
           </span>
           <div class="min-w-0">
-            <h3 class="text-ui-h2 text-ui-ink">Personal Information</h3>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Basic employee details and contact information</p>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.personal.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.personal.subtitle") }}</p>
           </div>
         </header>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
@@ -214,7 +214,7 @@ const deletePhoto = () => {
             name="phone"
             type="tel"
             v-model="form.phone"
-            label="Phone Number"
+            :label="$t('employees.form.fields.phone')"
             placeholder="+62 812-3456-7890"
             :icon="Phone"
             :error="errors?.phone?.join(', ')"
@@ -225,7 +225,7 @@ const deletePhoto = () => {
             name="date_of_birth"
             type="date"
             v-model="form.date_of_birth"
-            label="Date of Birth"
+            :label="$t('employees.form.fields.dateOfBirth')"
             :icon="Calendar"
             :error="errors?.date_of_birth?.join(', ')"
             required
@@ -235,8 +235,8 @@ const deletePhoto = () => {
             name="hobby"
             type="text"
             v-model="form.hobby"
-            label="Hobby"
-            placeholder="e.g. Reading, Swimming, Gaming"
+            :label="$t('employees.form.fields.hobby')"
+            :placeholder="$t('employees.form.fields.hobbyPlaceholder')"
             :icon="Heart"
             :error="errors?.hobby?.join(', ')"
           />
@@ -245,8 +245,8 @@ const deletePhoto = () => {
             name="place_of_birth"
             type="text"
             v-model="form.place_of_birth"
-            label="Place of Birth"
-            placeholder="e.g. Jakarta, Indonesia"
+            :label="$t('employees.form.fields.placeOfBirth')"
+            :placeholder="$t('employees.form.fields.placeOfBirthPlaceholder')"
             :icon="MapPin"
             :error="errors?.place_of_birth?.join(', ')"
             required
@@ -254,7 +254,7 @@ const deletePhoto = () => {
 
           <!-- Gender (Full Width) -->
           <fieldset class="md:col-span-2 min-w-0">
-            <legend class="block text-ui-small font-medium text-ui-ink mb-1.5">Gender<span class="text-ui-bad"> *</span></legend>
+            <legend class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("employees.form.fields.gender") }}<span class="text-ui-bad"> *</span></legend>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label
               class="group relative flex items-center justify-between gap-3 w-full min-h-[56px] rounded-ui-card bg-ui-surface border border-ui-line-strong px-3.5 py-3 cursor-pointer transition-colors duration-ui-base hover:bg-ui-subtle has-[:checked]:border-ui-accent has-[:checked]:bg-ui-accent-soft/40 has-[:focus-visible]:shadow-ui-focus"
@@ -263,7 +263,7 @@ const deletePhoto = () => {
                 <span class="w-8 h-8 rounded-ui-control bg-ui-subtle text-ui-text flex items-center justify-center">
                   <User class="w-4 h-4" />
                 </span>
-                <span class="text-ui-body font-medium text-ui-ink">Male</span>
+                <span class="text-ui-body font-medium text-ui-ink">{{ $t("employees.enums.gender.male") }}</span>
               </span>
               <span class="flex items-center gap-1.5 h-7 shrink-0 rounded-full border border-ui-line px-2.5 bg-ui-surface">
                 <input
@@ -276,9 +276,9 @@ const deletePhoto = () => {
                 <span
                   class="flex size-4 rounded-full border border-ui-line-strong group-has-[:checked]:border-[5px] group-has-[:checked]:border-ui-accent transition-all duration-ui-base"
                 ></span>
-                <span
-                  class="text-ui-cap font-medium text-ui-muted group-has-[:checked]:text-ui-accent after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                ></span>
+                <span class="text-ui-cap font-medium text-ui-muted group-has-[:checked]:text-ui-accent">
+                  {{ form.gender === "male" ? $t("employees.form.selected") : $t("employees.form.select") }}
+                </span>
               </span>
             </label>
             <label
@@ -288,7 +288,7 @@ const deletePhoto = () => {
                 <span class="w-8 h-8 rounded-ui-control bg-ui-subtle text-ui-text flex items-center justify-center">
                   <User class="w-4 h-4" />
                 </span>
-                <span class="text-ui-body font-medium text-ui-ink">Female</span>
+                <span class="text-ui-body font-medium text-ui-ink">{{ $t("employees.enums.gender.female") }}</span>
               </span>
               <span class="flex items-center gap-1.5 h-7 shrink-0 rounded-full border border-ui-line px-2.5 bg-ui-surface">
                 <input
@@ -301,9 +301,9 @@ const deletePhoto = () => {
                 <span
                   class="flex size-4 rounded-full border border-ui-line-strong group-has-[:checked]:border-[5px] group-has-[:checked]:border-ui-accent transition-all duration-ui-base"
                 ></span>
-                <span
-                  class="text-ui-cap font-medium text-ui-muted group-has-[:checked]:text-ui-accent after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                ></span>
+                <span class="text-ui-cap font-medium text-ui-muted group-has-[:checked]:text-ui-accent">
+                  {{ form.gender === "female" ? $t("employees.form.selected") : $t("employees.form.select") }}
+                </span>
               </span>
             </label>
             </div>
@@ -315,8 +315,8 @@ const deletePhoto = () => {
             id="address"
             name="address"
             v-model="form.address"
-            label="Address"
-            placeholder="Enter full address"
+            :label="$t('employees.form.fields.address')"
+            :placeholder="$t('employees.form.fields.addressPlaceholder')"
             :icon="MapPin"
             :error="errors?.address?.join(', ')"
             :rows="5"
@@ -330,8 +330,8 @@ const deletePhoto = () => {
             name="city"
             type="text"
             v-model="form.city"
-            label="City"
-            placeholder="e.g. Jakarta"
+            :label="$t('employees.form.fields.city')"
+            :placeholder="$t('employees.form.fields.cityPlaceholder')"
             :icon="Building2"
             :error="errors?.city?.join(', ')"
             required
@@ -341,8 +341,8 @@ const deletePhoto = () => {
             name="postal_code"
             type="text"
             v-model="form.postal_code"
-            label="Postal Code"
-            placeholder="e.g. 12345"
+            :label="$t('employees.form.fields.postalCode')"
+            :placeholder="$t('employees.form.fields.postalCodePlaceholder')"
             :icon="Hash"
             :error="errors?.postal_code?.join(', ')"
             required

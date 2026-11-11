@@ -1,5 +1,6 @@
 <script setup>
 import { computed, reactive, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { UiModal, UiInput, UiSelect, UiButton } from "@/components/ui";
 
 const props = defineProps({
@@ -14,6 +15,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["submit", "close"]);
+const { t } = useI18n();
 
 const TYPE_OPTIONS = [
   { value: "posthog", label: "PostHog" },
@@ -50,10 +52,9 @@ watch(
   { immediate: true }
 );
 
-const title = computed(() => (props.mode === "edit" ? "Edit Analytics Source" : "Add Analytics Source"));
+const title = computed(() => (props.mode === "edit" ? t("analytics.form.editTitle") : t("analytics.form.addTitle")));
 
-const EMBED_HINT =
-  'PostHog: use its own "Embed" share link. Google Analytics 4 / Search Console don\'t offer a direct embed link -- connect them to a Looker Studio report instead, share it as "Anyone with the link", and paste that report\'s Embed URL here.';
+const EMBED_HINT = computed(() => t("analytics.form.embedHint"));
 
 const fieldError = (key) => (props.errors?.[key] ? [].concat(props.errors[key]).join(", ") : "");
 
@@ -70,15 +71,15 @@ const submit = () => {
   <UiModal
     :open="show"
     :title="title"
-    description="Sources sharing the same Category are grouped together on the Analytics page."
+    :description="$t('analytics.form.description')"
     @close="$emit('close')"
   >
     <div class="space-y-4">
       <UiInput
         id="analytics-name"
         v-model="form.name"
-        label="Name"
-        placeholder="e.g. Landing Page PostHog"
+        :label="$t('common.labels.name')"
+        :placeholder="$t('analytics.form.namePlaceholder')"
         required
         :error="fieldError('name')"
       />
@@ -86,7 +87,7 @@ const submit = () => {
       <UiInput
         id="analytics-website-url"
         v-model="form.website_url"
-        label="Website URL (optional)"
+        :label="$t('analytics.form.websiteUrl')"
         placeholder="https://example.com"
         :error="fieldError('website_url')"
       />
@@ -94,8 +95,8 @@ const submit = () => {
       <UiSelect
         id="analytics-type"
         v-model="form.type"
-        label="Type"
-        placeholder="Select a source type"
+        :label="$t('common.labels.type')"
+        :placeholder="$t('analytics.form.typePlaceholder')"
         :options="TYPE_OPTIONS"
         required
         :error="fieldError('type')"
@@ -103,13 +104,13 @@ const submit = () => {
 
       <div class="min-w-0">
         <label for="analytics-category" class="block text-ui-small font-medium text-ui-ink mb-1.5">
-          Category<span class="text-ui-bad"> *</span>
+          {{ $t("common.labels.category") }}<span class="text-ui-bad"> *</span>
         </label>
         <input
           id="analytics-category"
           v-model="form.category"
           list="analytics-category-suggestions"
-          placeholder="e.g. Landing Page Jendela Cakra Digital Analytics"
+          :placeholder="$t('analytics.form.categoryPlaceholder')"
           class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
           :class="fieldError('category') ? 'border-ui-bad/50' : 'border-ui-line-strong'"
         />
@@ -122,10 +123,10 @@ const submit = () => {
       <UiInput
         id="analytics-embed-url"
         v-model="form.embed_url"
-        label="Embed URL"
+        :label="$t('analytics.form.embedUrl')"
         :rows="3"
         required
-        placeholder="https://us.posthog.com/embedded/... or a Looker Studio /embed/ report URL"
+        :placeholder="$t('analytics.form.embedUrlPlaceholder')"
         :error="fieldError('embed_url')"
         :hint="EMBED_HINT"
       />
@@ -133,8 +134,8 @@ const submit = () => {
     </div>
 
     <template #footer>
-      <UiButton variant="secondary" @click="$emit('close')">Cancel</UiButton>
-      <UiButton :loading="loading" @click="submit">{{ loading ? "Saving..." : "Save" }}</UiButton>
+      <UiButton variant="secondary" @click="$emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
+      <UiButton :loading="loading" @click="submit">{{ loading ? $t("common.actions.saving") : $t("common.actions.save") }}</UiButton>
     </template>
   </UiModal>
 </template>

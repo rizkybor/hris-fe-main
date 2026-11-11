@@ -11,6 +11,10 @@ import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useTeamStore } from "@/stores/team";
 import { getRoleLabel } from "@/utils/badgeUtils";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t, te } = useI18n();
 
 interface Props {
   step1Data: any;
@@ -23,7 +27,7 @@ const props = defineProps<Props>();
 // Format date to readable format
 const formatDate = (date: string) => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -47,6 +51,12 @@ const formatText = (text: string) => {
   return text.charAt(0).toUpperCase() + text.slice(1).replace(/-/g, " ");
 };
 
+// Known enum values get a translated label; anything else keeps formatText.
+const enumText = (group: string, value: string) => {
+  const key = `employees.enums.${group}.${value}`;
+  return value && te(key) ? t(key) : formatText(value);
+};
+
 // Presentation only: show the team's name (teams are already loaded by the
 // Job step) instead of its raw id, and the role's display label.
 const { teams } = storeToRefs(useTeamStore());
@@ -68,9 +78,9 @@ const roleLabel = computed(() => (props.step2Data.role ? getRoleLabel(props.step
           <CheckCircle class="w-4 h-4" />
         </span>
         <div class="min-w-0">
-          <h3 class="text-ui-h2 text-ui-ink">Review Employee Information</h3>
+          <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.review.title") }}</h3>
           <p class="text-ui-small text-ui-muted mt-0.5">
-            Please review all information before submitting
+            {{ $t("employees.review.subtitle") }}
           </p>
         </div>
       </div>
@@ -78,7 +88,7 @@ const roleLabel = computed(() => (props.step2Data.role ? getRoleLabel(props.step
       <div class="mt-5 flex items-center gap-4 p-4 rounded-ui-control bg-ui-subtle border border-ui-line">
         <Avatar :src="step1Data.profile_photo_url" :alt="step1Data.name" size="w-14 h-14" />
         <div class="min-w-0">
-          <p class="text-ui-cap text-ui-muted">Profile Photo</p>
+          <p class="text-ui-cap text-ui-muted">{{ $t("employees.review.profilePhoto") }}</p>
           <p class="text-ui-h3 text-ui-ink truncate">{{ step1Data.name || "-" }}</p>
           <p class="text-ui-small text-ui-muted truncate">
             {{ step2Data.job_title || "-" }} &middot; {{ step1Data.email || "-" }}
@@ -95,53 +105,53 @@ const roleLabel = computed(() => (props.step2Data.role ? getRoleLabel(props.step
           <User class="w-4 h-4" />
         </span>
         <div class="min-w-0">
-          <h3 class="text-ui-h2 text-ui-ink">Personal Information</h3>
-          <p class="text-ui-cap text-ui-muted mt-0.5">Employee basic details</p>
+          <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.review.personal.title") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.review.personal.subtitle") }}</p>
         </div>
       </header>
       <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Full Name</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.review.fullName") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step1Data.name || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Email Address</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.review.email") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step1Data.email || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Identity Number</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.review.identityNumber") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words tabular-nums mt-0.5">{{ step1Data.identity_number || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Phone Number</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.review.phone") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words tabular-nums mt-0.5">{{ step1Data.phone || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Gender</dt>
-            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ formatText(step1Data.gender) }}</dd>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.gender") }}</dt>
+            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ enumText("gender", step1Data.gender) }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Date of Birth</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.dateOfBirth") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ formatDate(step1Data.date_of_birth) }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Place of Birth</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.placeOfBirth") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step1Data.place_of_birth || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Hobby</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.hobby") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step1Data.hobby || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line sm:col-span-2">
-            <dt class="text-ui-cap text-ui-muted">Address</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.address") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step1Data.address || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">City</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.city") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step1Data.city || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Postal Code</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.postalCode") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words tabular-nums mt-0.5">{{ step1Data.postal_code || "-" }}</dd>
           </div>
       </dl>
@@ -154,50 +164,50 @@ const roleLabel = computed(() => (props.step2Data.role ? getRoleLabel(props.step
           <Briefcase class="w-4 h-4" />
         </span>
         <div class="min-w-0">
-          <h3 class="text-ui-h2 text-ui-ink">Job Information</h3>
-          <p class="text-ui-cap text-ui-muted mt-0.5">Position and employment details</p>
+          <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.review.job.title") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.review.job.subtitle") }}</p>
         </div>
       </header>
       <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Job Title</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.jobTitle") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step2Data.job_title || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Role</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.role") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ roleLabel }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Team</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.team") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ teamLabel }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Years of Experience</dt>
-            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step2Data.years_experience ? `${step2Data.years_experience} years` : "-" }}</dd>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.detail.fields.yearsExperience") }}</dt>
+            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step2Data.years_experience ? $t("employees.review.years", { n: step2Data.years_experience }, Number(step2Data.years_experience) || 0) : "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Status</dt>
-            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ formatText(step2Data.status) }}</dd>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.status") }}</dt>
+            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ enumText("jobStatus", step2Data.status) }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Employment Type</dt>
-            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ formatText(step2Data.employment_type) }}</dd>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.employmentType") }}</dt>
+            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ enumText("employmentType", step2Data.employment_type) }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Work Location</dt>
-            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ formatText(step2Data.work_location) }}</dd>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.workLocation") }}</dt>
+            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ enumText("workLocation", step2Data.work_location) }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Start Date</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.startDate") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ formatDate(step2Data.start_date) }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Monthly Salary</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.detail.fields.monthlySalary") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words tabular-nums mt-0.5">{{ formatCurrency(step2Data.monthly_salary) }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Skill Level</dt>
-            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ formatText(step2Data.skill_level) }}</dd>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.skillLevel") }}</dt>
+            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ enumText("skillLevel", step2Data.skill_level) }}</dd>
           </div>
       </dl>
     </section>
@@ -209,30 +219,30 @@ const roleLabel = computed(() => (props.step2Data.role ? getRoleLabel(props.step
           <CreditCard class="w-4 h-4" />
         </span>
         <div class="min-w-0">
-          <h3 class="text-ui-h2 text-ui-ink">Bank Information</h3>
-          <p class="text-ui-cap text-ui-muted mt-0.5">Banking details for payroll</p>
+          <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.review.bank.title") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.review.bank.subtitle") }}</p>
         </div>
       </header>
       <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Bank Name</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.detail.fields.bankName") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ formatText(step2Data.bank_name) }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Account Number</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.detail.fields.accountNumber") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words tabular-nums mt-0.5">{{ step2Data.account_number || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Account Holder Name</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.review.accountHolder") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step2Data.account_holder_name || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Bank Branch</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.review.bankBranch") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step2Data.bank_branch || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Account Type</dt>
-            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ formatText(step2Data.account_type) }}</dd>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.detail.fields.accountType") }}</dt>
+            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ enumText("accountType", step2Data.account_type) }}</dd>
           </div>
       </dl>
     </section>
@@ -244,33 +254,33 @@ const roleLabel = computed(() => (props.step2Data.role ? getRoleLabel(props.step
           <Phone class="w-4 h-4" />
         </span>
         <div class="min-w-0">
-          <h3 class="text-ui-h2 text-ui-ink">Emergency Contact</h3>
-          <p class="text-ui-cap text-ui-muted mt-0.5">Person to contact in emergency</p>
+          <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.review.emergency.title") }}</h3>
+          <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.review.emergency.subtitle") }}</p>
         </div>
       </header>
       <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Full Name</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.review.fullName") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step3Data.emergency_contact_name || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Relationship</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.review.relationship") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step3Data.emergency_contact_relationship || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Phone Number</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.review.phone") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words tabular-nums mt-0.5">{{ step3Data.emergency_contact_phone || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Email Address</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.review.email") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step3Data.emergency_contact_email || "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line">
-            <dt class="text-ui-cap text-ui-muted">Preferred Language</dt>
-            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step3Data.preferred_language ? formatText(step3Data.preferred_language) : "-" }}</dd>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.preferredLanguage") }}</dt>
+            <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step3Data.preferred_language ? enumText("language", step3Data.preferred_language) : "-" }}</dd>
           </div>
           <div class="min-w-0 py-3 border-b border-ui-line sm:col-span-2" v-if="step3Data.additional_notes">
-            <dt class="text-ui-cap text-ui-muted">Additional Notes</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("employees.form.fields.additionalNotes") }}</dt>
             <dd class="text-ui-body text-ui-ink break-words mt-0.5">{{ step3Data.additional_notes }}</dd>
           </div>
       </dl>

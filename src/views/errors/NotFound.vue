@@ -24,12 +24,12 @@ const goBack = () => (window.history.length > 1 ? router.back() : router.push("/
   >
     <div class="w-full max-w-md text-center ui-anim-fade-up">
       <p class="text-[72px] leading-[80px] font-semibold tracking-[-0.04em] text-ui-line-strong tabular-nums">404</p>
-      <h1 class="text-ui-h1 text-ui-ink mt-2">Halaman tidak ditemukan</h1>
-      <p class="text-ui-small text-ui-muted mt-2">Alamat yang Anda buka tidak tersedia, sudah dipindahkan, atau Anda tidak memiliki akses.</p>
+      <h1 class="text-ui-h1 text-ui-ink mt-2">{{ $t("errors.notFound.title") }}</h1>
+      <p class="text-ui-small text-ui-muted mt-2">{{ $t("errors.notFound.message") }}</p>
       <p class="font-mono text-ui-cap text-ui-faint mt-2 break-all">{{ path }}</p>
       <div class="flex flex-col sm:flex-row gap-2.5 justify-center mt-7">
-        <UiButton variant="secondary" :icon="ArrowLeft" @click="goBack">Kembali</UiButton>
-        <UiButton to="/admin/dashboard" :icon="LayoutDashboard">Ke Dashboard</UiButton>
+        <UiButton variant="secondary" :icon="ArrowLeft" @click="goBack">{{ $t("errors.notFound.back") }}</UiButton>
+        <UiButton to="/admin/dashboard" :icon="LayoutDashboard">{{ $t("errors.notFound.toDashboard") }}</UiButton>
       </div>
     </div>
   </div>

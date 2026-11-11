@@ -6,6 +6,10 @@ import { useEmployeeFileStore } from "@/stores/employeeFile";
 import { can } from "@/helpers/permissionHelper";
 import { UiAlert, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiModal } from "@/components/ui";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   employeeId: {
@@ -44,7 +48,7 @@ const handleFileChange = (event) => {
     (file) => !ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE
   );
   if (invalid) {
-    uploadError.value = `"${invalid.name}" is not allowed. Only PDF, PNG, or JPEG files up to 2MB are supported.`;
+    uploadError.value = t("employees.files.notAllowed", { name: invalid.name });
     if (fileInputRef.value) fileInputRef.value.value = "";
     return;
   }
@@ -66,7 +70,7 @@ const cancelPendingUpload = () => {
 
 const confirmUpload = async () => {
   if (pendingNames.value.some((name) => !name || !name.trim())) {
-    nameError.value = "Please give every file a name.";
+    nameError.value = t("employees.files.nameRequired");
     return;
   }
 
@@ -78,7 +82,7 @@ const confirmUpload = async () => {
     pendingNames.value = [];
   } catch (err) {
     uploadError.value =
-      typeof fileStore.error === "string" ? fileStore.error : "Failed to upload file(s).";
+      typeof fileStore.error === "string" ? fileStore.error : t("employees.files.uploadFailed");
   }
 };
 
@@ -105,7 +109,7 @@ const isImage = (mimeType) => mimeType?.startsWith("image/");
 
 const formatDate = (date) => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -121,8 +125,8 @@ onMounted(() => {
   <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
     <header class="flex flex-col sm:flex-row sm:items-center gap-3 px-5 pt-[18px] sm:px-6 pb-4 border-b border-ui-line">
       <div class="flex-1 min-w-0">
-        <h3 class="text-ui-h2 text-ui-ink">Documents</h3>
-        <p class="text-ui-cap text-ui-muted mt-0.5">Optional -- PDF, PNG, or JPEG, up to 2MB each</p>
+        <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.files.title") }}</h3>
+        <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.files.subtitle") }}</p>
       </div>
       <UiButton
         v-if="can('employee-edit')"
@@ -131,7 +135,7 @@ onMounted(() => {
         class="w-full sm:w-auto"
         @click="openFilePicker"
       >
-        {{ uploading ? "Uploading..." : "Upload File" }}
+        {{ uploading ? $t("employees.files.uploading") : $t("employees.files.uploadFile") }}
       </UiButton>
       <input
         ref="fileInputRef"
@@ -151,8 +155,8 @@ onMounted(() => {
       <UiEmpty
         v-else-if="files.length === 0"
         :icon="FileText"
-        title="No files uploaded yet"
-        message="Optional -- upload ID scans, certificates, or other supporting documents."
+        :title="$t('employees.files.empty')"
+        :message="$t('employees.files.emptyHint')"
         class="border border-dashed border-ui-line-strong rounded-ui-card"
       />
 
@@ -174,7 +178,7 @@ onMounted(() => {
             <div class="flex items-center gap-x-2 gap-y-0.5 mt-1 flex-wrap text-ui-cap text-ui-faint">
               <span v-if="file.size_file" class="tabular-nums">{{ file.size_file }}</span>
               <span class="tabular-nums">{{ formatDate(file.created_at) }}</span>
-              <span v-if="file.uploader?.name">by {{ file.uploader.name }}</span>
+              <span v-if="file.uploader?.name">{{ $t("employees.files.uploadedBy", { name: file.uploader.name }) }}</span>
             </div>
           </div>
           <div class="flex items-center gap-1 shrink-0">
@@ -183,8 +187,8 @@ onMounted(() => {
               target="_blank"
               rel="noopener"
               class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control border border-ui-line text-ui-muted hover:text-ui-ink hover:bg-ui-hover focus:outline-none focus-visible:shadow-ui-focus"
-              title="View"
-              aria-label="View"
+              :title="$t('common.actions.view')"
+              :aria-label="$t('common.actions.view')"
             >
               <Download class="w-4 h-4" />
             </a>
@@ -193,8 +197,8 @@ onMounted(() => {
               type="button"
               @click="confirmDelete(file)"
               class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control border border-ui-line text-ui-muted hover:text-ui-bad hover:bg-ui-bad-soft focus:outline-none focus-visible:shadow-ui-focus"
-              title="Delete"
-              aria-label="Delete"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('common.actions.delete')"
             >
               <Trash2 class="w-4 h-4" />
             </button>
@@ -206,11 +210,11 @@ onMounted(() => {
     <!-- DELETE MODAL -->
     <UiConfirmDialog
       v-model:open="isDeleteModalOpen"
-      title="Delete File?"
-      :message="`Are you sure you want to delete \x22${fileToDelete?.display_name || fileToDelete?.original_name}\x22? This action cannot be undone.`"
+      :title="$t('employees.files.deleteTitle')"
+      :message="$t('employees.files.deleteMessage', { name: fileToDelete?.display_name || fileToDelete?.original_name })"
       type="danger"
-      cancel-text="Cancel"
-      :confirm-text="isDeleting ? 'Deleting...' : 'Yes, Delete'"
+      :cancel-text="$t('common.actions.cancel')"
+      :confirm-text="isDeleting ? $t('common.actions.deleting') : $t('employees.files.confirmDelete')"
       :loading="isDeleting"
       @confirm="handleDelete"
     />
@@ -218,8 +222,8 @@ onMounted(() => {
     <!-- NAME FILES MODAL -->
     <UiModal
       :open="isNameModalOpen"
-      title="Name your file(s)"
-      description="Give each file a name so it's easy to recognize in the list."
+      :title="$t('employees.files.nameModalTitle')"
+      :description="$t('employees.files.nameModalDescription')"
       @update:open="(value) => { if (!value) cancelPendingUpload(); }"
     >
       <div class="space-y-3">
@@ -228,15 +232,15 @@ onMounted(() => {
           <UiInput
             v-model="pendingNames[index]"
             required
-            placeholder="e.g. KTP, Ijazah, Sertifikat..."
+            :placeholder="$t('employees.files.namePlaceholder')"
           />
         </div>
         <UiAlert v-if="nameError" tone="bad" :message="nameError" />
       </div>
       <template #footer>
-        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="cancelPendingUpload">Cancel</UiButton>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="cancelPendingUpload">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton :loading="uploading" class="flex-1 sm:flex-none" @click="confirmUpload">
-          {{ uploading ? "Uploading..." : "Upload" }}
+          {{ uploading ? $t("employees.files.uploading") : $t("common.actions.upload") }}
         </UiButton>
       </template>
     </UiModal>

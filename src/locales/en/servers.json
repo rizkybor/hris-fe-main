@@ -1,0 +1,117 @@
+{
+  "title": "Server Lists",
+  "subtitle": "Monitor disk, RAM, CPU, and websites on every VPS you manage",
+  "add": "Add VPS",
+  "edit": "Edit VPS",
+  "noIp": "IP not set",
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "pending": "Awaiting report"
+  },
+  "stats": {
+    "attention": "Needs attention"
+  },
+  "toolbar": {
+    "online": "{n} online",
+    "attention": "{n} need attention"
+  },
+  "empty": {
+    "title": "No VPS monitored yet",
+    "message": "Add a VPS, then run the install command you're given on that VPS. The agent reports disk, RAM, and CPU every 5 minutes.",
+    "addFirst": "Add your first VPS"
+  },
+  "metrics": {
+    "coresLoad": "{cores} cores · load {load}"
+  },
+  "card": {
+    "noReport": "No report yet. Run the agent install command on this VPS.",
+    "lastReport": "Last report: {time}",
+    "websites": "{n} website | {n} websites",
+    "sslExpiring": "{n} SSL expiring soon"
+  },
+  "time": {
+    "never": "never",
+    "justNow": "just now",
+    "minutesAgo": "{n} minute ago | {n} minutes ago",
+    "hoursAgo": "{n} hour ago | {n} hours ago",
+    "daysAgo": "{n} day ago | {n} days ago"
+  },
+  "uptime": {
+    "daysHours": "{days} d {hours} h",
+    "hoursMinutes": "{hours} h {minutes} min"
+  },
+  "siteTypes": {
+    "proxy": "App (proxy)",
+    "static": "Static site",
+    "folder": "Folder",
+    "unknown": "Other"
+  },
+  "ssl": {
+    "none": "No SSL",
+    "expired": "SSL expired",
+    "until": "SSL until {date}",
+    "withDays": "{label} ({n} day) | {label} ({n} days)"
+  },
+  "form": {
+    "name": "VPS Name",
+    "namePlaceholder": "e.g. HRIS Production VPS",
+    "ip": "IP Address",
+    "ipPlaceholder": "e.g. 103.10.20.30",
+    "description": "Description",
+    "descriptionPlaceholder": "e.g. Client website hosting, IDCloudHost provider",
+    "afterSaveHint": "Once saved, you'll get an agent install command to run on this VPS.",
+    "saveAndShow": "Save & Show Command"
+  },
+  "install": {
+    "title": "Install Agent on {name}",
+    "descRegenerated": "New token created. Reinstall the agent with the command below.",
+    "descAdded": "VPS added. Install the agent with the command below.",
+    "step1": "Sign in to the VPS over SSH with a user that has {sudo} access.",
+    "step2": "Copy and run the following command (once only):",
+    "step3": "Wait until {done} appears. The first report can take 1–2 minutes because folder sizes are measured first.",
+    "doneWord": "Selesai",
+    "step4": "This VPS card will change to {online}, then refresh automatically every 5 minutes.",
+    "secretWarning": "This command contains this VPS's secret token and is {once}. Don't share it. If it's lost, use {regenerate} in the VPS details.",
+    "shownOnce": "shown only once",
+    "requirements": "Requirements: Ubuntu with {python}, {curl}, and {cron} (all included in Ubuntu). To remove the agent:"
+  },
+  "detail": {
+    "neverReported": "This VPS hasn't reported yet. Install the agent with the install command you got when the VPS was added.",
+    "lostCommand": "If the command is lost, use {regenerate} below."
+  },
+  "actions": {
+    "regenerate": "Create new token",
+    "copyUninstall": "Copy agent uninstall command"
+  },
+  "confirm": {
+    "regenerate": "Create a new token for \"{name}\"? The old token stops working immediately, so the agent on this VPS must be reinstalled with the new command.",
+    "remove": "Remove \"{name}\" from monitoring? Reports from this VPS will no longer be accepted. To clean up the agent on the VPS, run: {command}"
+  },
+  "errors": {
+    "save": "Failed to save VPS.",
+    "regenerate": "Failed to regenerate token.",
+    "remove": "Failed to remove VPS."
+  },
+  "report": {
+    "defaultSite": "Default site (no domain)",
+    "diskSub": "{used} used · {free} free of {total}",
+    "cpuSub": "{cores} cores · load {load1} / {load5} / {load15} (1/5/15 min)",
+    "outdated": "The agent on this VPS is outdated ({version}). Update it so the website list can be read. Run on the VPS (no new token needed):",
+    "copyUpdate": "Copy update command",
+    "sitesTitle": "Websites & Systems ({n})",
+    "sitesSource": "Read from nginx/apache configuration",
+    "noSites": "No websites configured in nginx/apache.",
+    "alsoDomains": "also: {domains}",
+    "proxyTo": "proxy to",
+    "foldersTitle": "Folders in /var/www without a domain ({n})",
+    "foldersHint": "Not used by any web server configuration. They may be leftovers from old projects that are safe to delete; check first.",
+    "diskByFolder": "Disk Usage by Folder",
+    "measuredAt": "Measured {date} · refreshed every 6 hours",
+    "noBreakdown": "Folder breakdown not available yet.",
+    "os": "Operating system",
+    "uptime": "Uptime",
+    "lastReport": "Last report",
+    "agentVersion": "Agent version"
+  }
+}

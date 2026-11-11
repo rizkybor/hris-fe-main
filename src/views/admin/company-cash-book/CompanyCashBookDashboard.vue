@@ -28,8 +28,11 @@ import { useProjectStore } from "@/stores/project";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
 import Pagination from "@/components/common/Pagination.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiTable, UiEmpty, UiModal, UiConfirmDialog, UiAlert } from "@/components/ui";
 
+const { t } = useI18n();
 const store = useCompanyCashTransactionStore();
 const {
   transactions,
@@ -70,14 +73,14 @@ const resetFilters = () => (filters.value = emptyFilters());
 
 // Quick ranges for the date filter (WIB calendar days).
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-const PERIODS = [
-  { key: "this_month", label: "This month", range: (n) => [new Date(n.getFullYear(), n.getMonth(), 1), new Date(n.getFullYear(), n.getMonth() + 1, 0)] },
-  { key: "last_month", label: "Last month", range: (n) => [new Date(n.getFullYear(), n.getMonth() - 1, 1), new Date(n.getFullYear(), n.getMonth(), 0)] },
-  { key: "this_year", label: "This year", range: (n) => [new Date(n.getFullYear(), 0, 1), new Date(n.getFullYear(), 11, 31)] },
-];
+const PERIODS = computed(() => [
+  { key: "this_month", label: t("finance.cashBook.periods.thisMonth"), range: (n) => [new Date(n.getFullYear(), n.getMonth(), 1), new Date(n.getFullYear(), n.getMonth() + 1, 0)] },
+  { key: "last_month", label: t("finance.cashBook.periods.lastMonth"), range: (n) => [new Date(n.getFullYear(), n.getMonth() - 1, 1), new Date(n.getFullYear(), n.getMonth(), 0)] },
+  { key: "this_year", label: t("finance.cashBook.periods.thisYear"), range: (n) => [new Date(n.getFullYear(), 0, 1), new Date(n.getFullYear(), 11, 31)] },
+]);
 const activePeriod = computed(() => {
   const now = new Date();
-  return PERIODS.find((p) => {
+  return PERIODS.value.find((p) => {
     const [a, b] = p.range(now).map(ymd);
     return filters.value.start_date === a && filters.value.end_date === b;
   })?.key;
@@ -161,11 +164,11 @@ const onProofSelected = (event) => {
   event.target.value = "";
   if (!file) return;
   if (!PROOF_TYPES.includes(file.type)) {
-    formError.value = "The proof must be a JPG, PNG, WEBP or PDF file.";
+    formError.value = t("finance.cashBook.errors.proofType");
     return;
   }
   if (file.size > PROOF_MAX_BYTES) {
-    formError.value = "The proof may not be larger than 5 MB.";
+    formError.value = t("finance.cashBook.errors.proofSize");
     return;
   }
   formError.value = "";
@@ -229,11 +232,11 @@ const handleSubmit = async () => {
   formError.value = "";
 
   if (!form.value.description || !form.value.amount || !form.value.transaction_date) {
-    formError.value = "Description, amount, and date are required.";
+    formError.value = t("finance.cashBook.errors.required");
     return;
   }
   if (isSpendingForm.value && !form.value.employee_id) {
-    formError.value = "Choose who this spending is on behalf of.";
+    formError.value = t("finance.cashBook.errors.employeeRequired");
     return;
   }
 
@@ -253,7 +256,7 @@ const handleSubmit = async () => {
     closeFormModal();
   } catch (err) {
     formError.value =
-      typeof store.error === "string" ? store.error : "Failed to save the transaction.";
+      typeof store.error === "string" ? store.error : t("finance.cashBook.errors.saveFailed");
   }
 };
 
@@ -283,7 +286,7 @@ const displayedTransactions = computed(() => transactions.value);
 
 const formatDate = (date) => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("en-GB", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -294,7 +297,7 @@ const formatDate = (date) => {
 const openingBalanceStamp = computed(() => {
   if (!openingBalanceUpdatedAt.value) return null;
   const date = new Date(openingBalanceUpdatedAt.value);
-  const text = new Intl.DateTimeFormat("en-GB", {
+  const text = new Intl.DateTimeFormat(localeTag(), {
     timeZone: "Asia/Jakarta",
     day: "numeric",
     month: "short",
@@ -302,7 +305,7 @@ const openingBalanceStamp = computed(() => {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
-  return { text: `${text} WIB`, by: openingBalanceUpdatedBy.value, full: date.toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }) };
+  return { text: `${text} WIB`, by: openingBalanceUpdatedBy.value, full: date.toLocaleString(localeTag(), { timeZone: "Asia/Jakarta" }) };
 });
 
 // --- Opening balance editor ---
@@ -323,7 +326,7 @@ const handleBalanceSubmit = async () => {
     isBalanceModalOpen.value = false;
   } catch (err) {
     balanceError.value =
-      typeof store.error === "string" ? store.error : "Failed to update the opening balance.";
+      typeof store.error === "string" ? store.error : t("finance.cashBook.errors.balanceFailed");
   }
 };
 
@@ -337,39 +340,39 @@ onMounted(() => {
 const isBalanceVisible = ref(false);
 
 // ----- Presentation only -----
-const TABS = [
-  { key: "all", label: "All Transactions", icon: Landmark },
-  { key: "spending", label: "Spending", icon: Wallet },
-];
+const TABS = computed(() => [
+  { key: "all", label: t("finance.cashBook.tabs.all"), icon: Landmark },
+  { key: "spending", label: t("finance.cashBook.tabs.spending"), icon: Wallet },
+]);
 const masked = (value) => (isBalanceVisible.value ? formatRupiah(value) : "Rp ••••••");
-const filteredSuffix = computed(() => (hasFilters.value || isSpendingTab.value ? " · filtered" : ""));
-const employeeFilterOptions = computed(() => [{ value: "", label: "Everyone" }, ...employeeOptions.value.map((e) => ({ value: e.id, label: e.name }))]);
-const projectFilterOptions = computed(() => [{ value: "", label: "All projects" }, ...(projects.value || []).map((p) => ({ value: p.id, label: p.name }))]);
-const TYPE_FILTER_OPTIONS = [
-  { value: "", label: "Debit & Credit" },
-  { value: "debit", label: "Debit (In)" },
-  { value: "credit", label: "Credit (Out)" },
-];
-const SOURCE_FILTER_OPTIONS = [
-  { value: "", label: "All sources" },
-  { value: "manual", label: "Manual" },
-  { value: "project", label: "From projects" },
-];
+const filteredSuffix = computed(() => (hasFilters.value || isSpendingTab.value ? ` · ${t("finance.cashBook.filtered")}` : ""));
+const employeeFilterOptions = computed(() => [{ value: "", label: t("finance.cashBook.filters.everyone") }, ...employeeOptions.value.map((e) => ({ value: e.id, label: e.name }))]);
+const projectFilterOptions = computed(() => [{ value: "", label: t("finance.cashBook.filters.allProjects") }, ...(projects.value || []).map((p) => ({ value: p.id, label: p.name }))]);
+const TYPE_FILTER_OPTIONS = computed(() => [
+  { value: "", label: t("finance.cashBook.filters.allTypes") },
+  { value: "debit", label: t("finance.cashBook.debitIn") },
+  { value: "credit", label: t("finance.cashBook.creditOut") },
+]);
+const SOURCE_FILTER_OPTIONS = computed(() => [
+  { value: "", label: t("finance.cashBook.filters.allSources") },
+  { value: "manual", label: t("finance.cashBook.manual") },
+  { value: "project", label: t("finance.cashBook.filters.fromProjects") },
+]);
 const employeeFormOptions = computed(() => employeeOptions.value.map((e) => ({ value: e.id, label: e.name })));
 const tableColumns = computed(() => [
-  { key: "transaction_date", label: "Date", width: 120 },
-  { key: "description", label: "Description" },
-  { key: "source", label: isSpendingTab.value ? "On behalf of" : "Source" },
-  { key: "debit", label: "Debit", align: "right" },
-  ...(isSpendingTab.value ? [] : [{ key: "credit", label: "Credit", align: "right" }]),
-  { key: "balance", label: "Balance", align: "right" },
-  ...(canManage.value ? [{ key: "actions", label: "Actions", align: "right" }] : []),
+  { key: "transaction_date", label: t("common.labels.date"), width: 120 },
+  { key: "description", label: t("common.labels.description") },
+  { key: "source", label: isSpendingTab.value ? t("finance.cashBook.onBehalfOf") : t("finance.cashBook.source") },
+  { key: "debit", label: t("finance.cashBook.debit"), align: "right" },
+  ...(isSpendingTab.value ? [] : [{ key: "credit", label: t("finance.cashBook.credit"), align: "right" }]),
+  { key: "balance", label: t("finance.cashBook.balance"), align: "right" },
+  ...(canManage.value ? [{ key: "actions", label: t("common.labels.actions"), align: "right" }] : []),
 ]);
 const formTitle = computed(() =>
-  isSpendingForm.value ? (editingId.value ? "Edit Spending" : "Add Spending") : editingId.value ? "Edit Transaction" : "Add Cash Transaction"
+  isSpendingForm.value ? (editingId.value ? t("finance.cashBook.form.editSpending") : t("finance.cashBook.addSpending")) : editingId.value ? t("finance.cashBook.form.editTransaction") : t("finance.cashBook.form.addTransaction")
 );
 const deleteMessage = computed(
-  () => `Are you sure you want to delete "${transactionToDelete.value?.description ?? ""}"? This action cannot be undone.`
+  () => t("finance.cashBook.delete.message", { name: transactionToDelete.value?.description ?? "" })
 );
 const fieldClass =
   "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink tabular-nums placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
@@ -378,56 +381,56 @@ const fieldClass =
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <UiPageHeader
-      title="Company Cash Book"
-      subtitle="Real debit/credit transactions as they actually happen -- auto-synced from every project's own cash ledger, plus manual entries"
+      :title="$t('finance.cashBook.title')"
+      :subtitle="$t('finance.cashBook.subtitle')"
     >
       <template #actions>
         <UiButton
           variant="secondary"
           :icon="isBalanceVisible ? EyeOff : Eye"
-          :title="isBalanceVisible ? 'Hide amounts' : 'Show amounts'"
-          :aria-label="isBalanceVisible ? 'Hide amounts' : 'Show amounts'"
+          :title="isBalanceVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
+          :aria-label="isBalanceVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
           class="!px-2.5"
           @click="isBalanceVisible = !isBalanceVisible"
         />
-        <UiButton v-if="canManage" variant="secondary" :icon="Settings2" class="flex-1 sm:flex-none" @click="openBalanceModal">Set Opening Balance</UiButton>
-        <UiButton v-if="canManage" variant="secondary" :icon="Wallet" class="flex-1 sm:flex-none" @click="openCreateModal(true)">Add Spending</UiButton>
-        <UiButton v-if="canManage" :icon="Plus" class="w-full sm:w-auto" @click="openCreateModal">Add Transaction</UiButton>
+        <UiButton v-if="canManage" variant="secondary" :icon="Settings2" class="flex-1 sm:flex-none" @click="openBalanceModal">{{ $t('finance.cashBook.setOpeningBalance') }}</UiButton>
+        <UiButton v-if="canManage" variant="secondary" :icon="Wallet" class="flex-1 sm:flex-none" @click="openCreateModal(true)">{{ $t('finance.cashBook.addSpending') }}</UiButton>
+        <UiButton v-if="canManage" :icon="Plus" class="w-full sm:w-auto" @click="openCreateModal">{{ $t('finance.cashBook.addTransaction') }}</UiButton>
       </template>
     </UiPageHeader>
 
     <!-- Balance summary -->
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 ui-stagger">
       <div class="col-span-2 lg:col-span-1 bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
-        <p class="text-ui-small text-ui-muted truncate">Opening Balance</p>
+        <p class="text-ui-small text-ui-muted truncate">{{ $t('finance.cashBook.openingBalance') }}</p>
         <p class="text-ui-h2 text-ui-ink tabular-nums mt-1 truncate">{{ masked(openingBalance) }}</p>
         <p
           class="text-ui-cap text-ui-muted mt-1 flex items-start gap-1"
-          :title="openingBalanceStamp ? `Last updated ${openingBalanceStamp.full}${openingBalanceStamp.by ? ' by ' + openingBalanceStamp.by : ''}` : ''"
+          :title="openingBalanceStamp ? (openingBalanceStamp.by ? $t('finance.cashBook.stamp.fullBy', { date: openingBalanceStamp.full, name: openingBalanceStamp.by }) : $t('finance.cashBook.stamp.full', { date: openingBalanceStamp.full })) : ''"
         >
           <History class="w-3 h-3 shrink-0 mt-0.5 text-ui-faint" />
           <span v-if="openingBalanceStamp" class="min-w-0">
-            Updated {{ openingBalanceStamp.text }}<span v-if="openingBalanceStamp.by" class="hidden sm:inline"> · {{ openingBalanceStamp.by }}</span>
+            {{ $t('finance.cashBook.stamp.updated', { date: openingBalanceStamp.text }) }}<span v-if="openingBalanceStamp.by" class="hidden sm:inline"> · {{ openingBalanceStamp.by }}</span>
           </span>
-          <span v-else>Never set</span>
+          <span v-else>{{ $t('finance.cashBook.stamp.never') }}</span>
         </p>
       </div>
       <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
-        <p class="text-ui-small text-ui-muted truncate" :title="`Total Debit${filteredSuffix}`">Total Debit<span v-if="filteredSuffix" class="text-ui-faint">{{ filteredSuffix }}</span></p>
+        <p class="text-ui-small text-ui-muted truncate" :title="$t('finance.cashBook.totalDebit') + filteredSuffix">{{ $t('finance.cashBook.totalDebit') }}<span v-if="filteredSuffix" class="text-ui-faint">{{ filteredSuffix }}</span></p>
         <p class="text-ui-h2 text-ui-ok tabular-nums mt-1 truncate">{{ masked(debitOnly) }}</p>
-        <p class="text-ui-cap text-ui-muted mt-1 truncate">Excluding spending</p>
+        <p class="text-ui-cap text-ui-muted mt-1 truncate">{{ $t('finance.cashBook.excludingSpending') }}</p>
       </div>
       <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
-        <p class="text-ui-small text-ui-muted truncate" :title="`Total Debit + Spending${filteredSuffix}`">Total Debit + Spending<span v-if="filteredSuffix" class="text-ui-faint">{{ filteredSuffix }}</span></p>
+        <p class="text-ui-small text-ui-muted truncate" :title="$t('finance.cashBook.totalDebitSpending') + filteredSuffix">{{ $t('finance.cashBook.totalDebitSpending') }}<span v-if="filteredSuffix" class="text-ui-faint">{{ filteredSuffix }}</span></p>
         <p class="text-ui-h2 text-ui-ok tabular-nums mt-1 truncate">{{ masked(totalDebit) }}</p>
-        <p class="text-ui-cap text-ui-muted mt-1 truncate">Spending <span class="tabular-nums">{{ masked(totalSpending) }}</span></p>
+        <p class="text-ui-cap text-ui-muted mt-1 truncate">{{ $t('finance.cashBook.tabs.spending') }} <span class="tabular-nums">{{ masked(totalSpending) }}</span></p>
       </div>
       <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
-        <p class="text-ui-small text-ui-muted truncate" :title="`Total Credit (Out)${filteredSuffix}`">Total Credit (Out)<span v-if="filteredSuffix" class="text-ui-faint">{{ filteredSuffix }}</span></p>
+        <p class="text-ui-small text-ui-muted truncate" :title="$t('finance.cashBook.totalCredit') + filteredSuffix">{{ $t('finance.cashBook.totalCredit') }}<span v-if="filteredSuffix" class="text-ui-faint">{{ filteredSuffix }}</span></p>
         <p class="text-ui-h2 text-ui-bad tabular-nums mt-1 truncate">{{ masked(totalCredit) }}</p>
       </div>
       <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3.5 min-w-0">
-        <p class="text-ui-small text-ui-muted truncate">Closing Balance</p>
+        <p class="text-ui-small text-ui-muted truncate">{{ $t('finance.cashBook.closingBalance') }}</p>
         <p class="text-ui-h2 text-ui-ink tabular-nums mt-1 truncate">{{ masked(closingBalance) }}</p>
       </div>
     </div>
@@ -461,8 +464,8 @@ const fieldClass =
         <!-- Spending per person: click a card to show only their spending. -->
         <div v-if="isSpendingTab">
           <div class="flex items-center justify-between gap-3 mb-2">
-            <p class="text-ui-small font-medium text-ui-ink">Spending by person<span v-if="filters.start_date || filters.end_date || filters.search" class="text-ui-faint font-normal"> · filtered</span></p>
-            <p class="text-ui-cap text-ui-muted">Total <span class="tabular-nums text-ui-ink font-medium">{{ masked(spendingTotal) }}</span></p>
+            <p class="text-ui-small font-medium text-ui-ink">{{ $t('finance.cashBook.spendingByPerson') }}<span v-if="filters.start_date || filters.end_date || filters.search" class="text-ui-faint font-normal"> · {{ $t('finance.cashBook.filtered') }}</span></p>
+            <p class="text-ui-cap text-ui-muted">{{ $t("common.labels.total") }} <span class="tabular-nums text-ui-ink font-medium">{{ masked(spendingTotal) }}</span></p>
           </div>
           <div v-if="spendingByEmployee.length" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 ui-stagger">
             <button
@@ -478,7 +481,7 @@ const fieldClass =
                 <UserRound class="w-3.5 h-3.5 text-ui-faint shrink-0" /> {{ person.name }}
               </p>
               <p class="text-ui-h3 text-ui-ink tabular-nums mt-1 truncate">{{ masked(person.total) }}</p>
-              <p class="text-ui-cap text-ui-muted tabular-nums">{{ person.count }} {{ person.count === 1 ? "entry" : "entries" }}</p>
+              <p class="text-ui-cap text-ui-muted tabular-nums">{{ $t('finance.cashBook.entries', { n: person.count }, person.count) }}</p>
             </button>
           </div>
         </div>
@@ -492,22 +495,22 @@ const fieldClass =
           <UiInput
             v-model="filters.search"
             :icon="Search"
-            :placeholder="isSpendingTab ? 'Search description, notes, person...' : 'Search description, notes, project...'"
+            :placeholder="isSpendingTab ? $t('finance.cashBook.search.spending') : $t('finance.cashBook.search.all')"
             class="col-span-2 lg:col-span-1"
           />
-          <UiSelect v-if="isSpendingTab" v-model="filters.employee_id" :options="employeeFilterOptions" class="col-span-2 lg:col-span-1" aria-label="On behalf of" />
+          <UiSelect v-if="isSpendingTab" v-model="filters.employee_id" :options="employeeFilterOptions" class="col-span-2 lg:col-span-1" :aria-label="$t('finance.cashBook.onBehalfOf')" />
           <template v-else>
-            <UiSelect v-model="filters.project_id" :options="projectFilterOptions" class="col-span-2 lg:col-span-1" aria-label="Project" />
-            <UiSelect v-model="filters.type" :options="TYPE_FILTER_OPTIONS" aria-label="Type" />
-            <UiSelect v-model="filters.source" :options="SOURCE_FILTER_OPTIONS" aria-label="Source" />
+            <UiSelect v-model="filters.project_id" :options="projectFilterOptions" class="col-span-2 lg:col-span-1" :aria-label="$t('common.labels.project')" />
+            <UiSelect v-model="filters.type" :options="TYPE_FILTER_OPTIONS" :aria-label="$t('common.labels.type')" />
+            <UiSelect v-model="filters.source" :options="SOURCE_FILTER_OPTIONS" :aria-label="$t('finance.cashBook.source')" />
           </template>
         </div>
 
         <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
           <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 lg:w-[340px]">
-            <input v-model="filters.start_date" type="date" :class="fieldClass" aria-label="From date" />
-            <span class="text-ui-cap text-ui-muted">to</span>
-            <input v-model="filters.end_date" type="date" :min="filters.start_date || undefined" :class="fieldClass" aria-label="To date" />
+            <input v-model="filters.start_date" type="date" :class="fieldClass" :aria-label="$t('finance.cashBook.fromDate')" />
+            <span class="text-ui-cap text-ui-muted">{{ $t('finance.cashBook.to') }}</span>
+            <input v-model="filters.end_date" type="date" :min="filters.start_date || undefined" :class="fieldClass" :aria-label="$t('finance.cashBook.toDate')" />
           </div>
           <div class="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] -mx-1 px-1">
             <button
@@ -521,19 +524,19 @@ const fieldClass =
             >
               {{ p.label }}
             </button>
-            <UiButton v-if="hasFilters" variant="ghost" size="sm" :icon="RotateCcw" class="shrink-0" @click="resetFilters">Reset</UiButton>
+            <UiButton v-if="hasFilters" variant="ghost" size="sm" :icon="RotateCcw" class="shrink-0" @click="resetFilters">{{ $t("common.actions.reset") }}</UiButton>
           </div>
-          <p v-if="hasFilters && !loading" class="text-ui-cap text-ui-muted tabular-nums lg:ml-auto">{{ meta.total }} matching {{ meta.total === 1 ? "transaction" : "transactions" }}</p>
+          <p v-if="hasFilters && !loading" class="text-ui-cap text-ui-muted tabular-nums lg:ml-auto">{{ $t('finance.cashBook.matching', { n: meta.total }, meta.total) }}</p>
         </div>
       </div>
 
       <UiEmpty
         v-if="!loading && transactions.length === 0"
         :icon="Landmark"
-        :title="hasFilters ? 'No transactions match the filters' : isSpendingTab ? 'No spending yet' : 'No cash transactions yet'"
-        :message="hasFilters ? '' : isSpendingTab ? 'Record spending on behalf of an employee with Add Spending.' : 'Recording a transaction on any project\'s own Cash Ledger will automatically appear here too.'"
+        :title="hasFilters ? $t('finance.cashBook.empty.filtered') : isSpendingTab ? $t('finance.cashBook.empty.spending') : $t('finance.cashBook.empty.all')"
+        :message="hasFilters ? '' : isSpendingTab ? $t('finance.cashBook.empty.spendingHint') : $t('finance.cashBook.empty.allHint')"
       >
-        <UiButton v-if="hasFilters" variant="secondary" size="sm" :icon="RotateCcw" @click="resetFilters">Reset filters</UiButton>
+        <UiButton v-if="hasFilters" variant="secondary" size="sm" :icon="RotateCcw" @click="resetFilters">{{ $t("common.actions.clearFilters") }}</UiButton>
       </UiEmpty>
 
       <UiTable v-else :columns="tableColumns" :rows="displayedTransactions" :meta="meta" :loading="loading" :skeleton-rows="6">
@@ -550,20 +553,20 @@ const fieldClass =
               class="mt-1 inline-flex items-center gap-1 text-ui-cap font-medium text-ui-accent hover:underline"
               @click="openProof(row.proof)"
             >
-              <Paperclip class="w-3 h-3" /> View proof
+              <Paperclip class="w-3 h-3" /> {{ $t('finance.cashBook.viewProof') }}
             </button>
           </div>
         </template>
         <template #cell-source="{ row }">
-          <UiBadge v-if="row.category === 'spending'" tone="warn" :title="`Spending on behalf of ${row.employee?.name || 'an employee'}`">
+          <UiBadge v-if="row.category === 'spending'" tone="warn" :title="$t('finance.cashBook.spendingOnBehalf', { name: row.employee?.name || $t('finance.cashBook.anEmployee') })">
             <Wallet v-if="!isSpendingTab" class="w-3 h-3" />
             <UserRound v-else class="w-3 h-3" />
-            {{ isSpendingTab ? row.employee?.name || "-" : `Spending · ${row.employee?.name || "-"}` }}
+            {{ isSpendingTab ? row.employee?.name || "-" : `${$t("finance.cashBook.tabs.spending")} · ${row.employee?.name || "-"}` }}
           </UiBadge>
-          <UiBadge v-else-if="row.is_synced" tone="info" :title="`Auto-synced from ${row.project_name}'s cash ledger`">
+          <UiBadge v-else-if="row.is_synced" tone="info" :title="$t('finance.cashBook.autoSynced', { project: row.project_name })">
             <Link2 class="w-3 h-3" /> {{ row.project_name }}
           </UiBadge>
-          <UiBadge v-else tone="neutral">Manual</UiBadge>
+          <UiBadge v-else tone="neutral">{{ $t('finance.cashBook.manual') }}</UiBadge>
         </template>
         <template #cell-debit="{ row }">
           <span v-if="row.type === 'debit'" class="inline-flex items-center gap-1 justify-end text-ui-ok tabular-nums whitespace-nowrap">
@@ -584,14 +587,14 @@ const fieldClass =
         </template>
         <template #cell-actions="{ row }">
           <div v-if="!row.is_synced" class="flex justify-end gap-0.5">
-            <button type="button" @click="openEditModal(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" title="Edit" aria-label="Edit">
+            <button type="button" @click="openEditModal(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')">
               <Pencil class="w-4 h-4" />
             </button>
-            <button type="button" @click="confirmDelete(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" title="Delete" aria-label="Delete">
+            <button type="button" @click="confirmDelete(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')">
               <Trash2 class="w-4 h-4" />
             </button>
           </div>
-          <p v-else class="text-right text-ui-cap text-ui-faint whitespace-nowrap" title="Edit this from the project's own Cash Ledger">via Project</p>
+          <p v-else class="text-right text-ui-cap text-ui-faint whitespace-nowrap" :title="$t('finance.cashBook.viaProjectHint')">{{ $t('finance.cashBook.viaProject') }}</p>
         </template>
 
         <template #mobile="{ row, number }">
@@ -612,27 +615,27 @@ const fieldClass =
                     <ArrowDownCircle v-else class="w-3.5 h-3.5" />
                     {{ masked(row.amount) }}
                   </p>
-                  <p class="text-ui-cap text-ui-muted">{{ row.type === "debit" ? "Debit" : "Credit" }}</p>
+                  <p class="text-ui-cap text-ui-muted">{{ row.type === "debit" ? $t('finance.cashBook.debit') : $t('finance.cashBook.credit') }}</p>
                 </div>
               </div>
               <p v-if="row.notes" class="text-ui-cap text-ui-muted mt-1">{{ row.notes }}</p>
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
                 <UiBadge v-if="row.category === 'spending'" tone="warn">
                   <UserRound class="w-3 h-3" />
-                  {{ isSpendingTab ? row.employee?.name || "-" : `Spending · ${row.employee?.name || "-"}` }}
+                  {{ isSpendingTab ? row.employee?.name || "-" : `${$t("finance.cashBook.tabs.spending")} · ${row.employee?.name || "-"}` }}
                 </UiBadge>
                 <UiBadge v-else-if="row.is_synced" tone="info"><Link2 class="w-3 h-3" /> {{ row.project_name }}</UiBadge>
-                <UiBadge v-else tone="neutral">Manual</UiBadge>
-                <span class="text-ui-cap text-ui-muted">Balance <span class="tabular-nums font-medium text-ui-ink">{{ masked(row.balance) }}</span></span>
+                <UiBadge v-else tone="neutral">{{ $t('finance.cashBook.manual') }}</UiBadge>
+                <span class="text-ui-cap text-ui-muted">{{ $t('finance.cashBook.balance') }} <span class="tabular-nums font-medium text-ui-ink">{{ masked(row.balance) }}</span></span>
               </div>
               <div v-if="row.proof || canManage" class="flex items-center gap-1 mt-2 -ml-2">
-                <UiButton v-if="row.proof" variant="ghost" size="sm" :icon="Paperclip" @click="openProof(row.proof)">View proof</UiButton>
+                <UiButton v-if="row.proof" variant="ghost" size="sm" :icon="Paperclip" @click="openProof(row.proof)">{{ $t('finance.cashBook.viewProof') }}</UiButton>
                 <template v-if="canManage">
                   <template v-if="!row.is_synced">
-                    <UiButton variant="ghost" size="sm" :icon="Pencil" @click="openEditModal(row)">Edit</UiButton>
-                    <UiButton variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="confirmDelete(row)">Delete</UiButton>
+                    <UiButton variant="ghost" size="sm" :icon="Pencil" @click="openEditModal(row)">{{ $t("common.actions.edit") }}</UiButton>
+                    <UiButton variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="confirmDelete(row)">{{ $t("common.actions.delete") }}</UiButton>
                   </template>
-                  <span v-else class="text-ui-cap text-ui-faint px-2" title="Edit this from the project's own Cash Ledger">via Project</span>
+                  <span v-else class="text-ui-cap text-ui-faint px-2" :title="$t('finance.cashBook.viaProjectHint')">{{ $t('finance.cashBook.viaProject') }}</span>
                 </template>
               </div>
             </div>
@@ -644,7 +647,7 @@ const fieldClass =
         <Pagination
           :meta="meta"
           :loading="loading"
-          item-label="transactions"
+          :item-label="$t('finance.cashBook.itemLabel')"
           @page-change="fetchData"
           @per-page-change="handlePerPageChange"
         />
@@ -657,21 +660,21 @@ const fieldClass =
         <!-- Spending: on whose behalf; always recorded as Debit -->
         <div v-if="isSpendingForm" class="sm:col-span-2">
           <!-- No native `required`: handleSubmit shows its own message. -->
-          <label for="cb-employee" class="block text-ui-small font-medium text-ui-ink mb-1.5">On behalf of<span class="text-ui-bad"> *</span></label>
+          <label for="cb-employee" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t('finance.cashBook.onBehalfOf') }}<span class="text-ui-bad"> *</span></label>
           <UiSelect
             id="cb-employee"
             v-model="form.employee_id"
-            placeholder="Choose an employee"
+            :placeholder="$t('finance.cashBook.form.chooseEmployee')"
             :options="employeeFormOptions"
           />
           <p class="text-ui-cap text-ui-muted mt-1.5 flex items-center gap-1">
-            <ArrowUpCircle class="w-3 h-3 text-ui-ok" /> Recorded as Debit in the cash book.
+            <ArrowUpCircle class="w-3 h-3 text-ui-ok" /> {{ $t('finance.cashBook.form.recordedAsDebit') }}
           </p>
         </div>
 
         <div v-else class="sm:col-span-2">
-          <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Type</p>
-          <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Type">
+          <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("common.labels.type") }}</p>
+          <div class="grid grid-cols-2 gap-2" role="radiogroup" :aria-label="$t('common.labels.type')">
             <button
               type="button"
               role="radio"
@@ -680,7 +683,7 @@ const fieldClass =
               class="ui-press h-[38px] inline-flex items-center justify-center gap-1.5 rounded-ui-control border text-ui-small font-medium transition-colors"
               :class="form.type === 'debit' ? 'border-ui-ok/40 bg-ui-ok-soft text-ui-ok' : 'border-ui-line-strong bg-ui-surface text-ui-muted hover:bg-ui-subtle'"
             >
-              <ArrowUpCircle class="w-4 h-4" /> Debit (In)
+              <ArrowUpCircle class="w-4 h-4" /> {{ $t('finance.cashBook.debitIn') }}
             </button>
             <button
               type="button"
@@ -690,58 +693,58 @@ const fieldClass =
               class="ui-press h-[38px] inline-flex items-center justify-center gap-1.5 rounded-ui-control border text-ui-small font-medium transition-colors"
               :class="form.type === 'credit' ? 'border-ui-bad/40 bg-ui-bad-soft text-ui-bad' : 'border-ui-line-strong bg-ui-surface text-ui-muted hover:bg-ui-subtle'"
             >
-              <ArrowDownCircle class="w-4 h-4" /> Credit (Out)
+              <ArrowDownCircle class="w-4 h-4" /> {{ $t('finance.cashBook.creditOut') }}
             </button>
           </div>
         </div>
 
         <div class="sm:col-span-2 min-w-0">
-          <label for="cb-description" class="block text-ui-small font-medium text-ui-ink mb-1.5">Description<span class="text-ui-bad"> *</span></label>
+          <label for="cb-description" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("common.labels.description") }}<span class="text-ui-bad"> *</span></label>
           <UiInput
             id="cb-description"
             v-model="form.description"
-            :placeholder="isSpendingForm ? 'e.g. Taxi to client meeting' : 'e.g. Consulting income'"
+            :placeholder="isSpendingForm ? $t('finance.cashBook.form.spendingPlaceholder') : $t('finance.cashBook.form.descriptionPlaceholder')"
           />
         </div>
 
         <div class="min-w-0">
-          <label for="cb-amount" class="block text-ui-small font-medium text-ui-ink mb-1.5">Amount (Rp)<span class="text-ui-bad"> *</span></label>
+          <label for="cb-amount" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t('finance.cashBook.form.amount') }}<span class="text-ui-bad"> *</span></label>
           <input id="cb-amount" v-model.number="form.amount" type="number" min="0" placeholder="0" :class="[fieldClass, 'text-right']" />
         </div>
         <div class="min-w-0">
-          <label for="cb-date" class="block text-ui-small font-medium text-ui-ink mb-1.5">Date<span class="text-ui-bad"> *</span></label>
+          <label for="cb-date" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("common.labels.date") }}<span class="text-ui-bad"> *</span></label>
           <UiInput id="cb-date" v-model="form.transaction_date" type="date" />
         </div>
 
-        <UiInput v-model="form.notes" label="Notes" :rows="2" placeholder="Optional notes" class="sm:col-span-2" />
+        <UiInput v-model="form.notes" :label="$t('common.labels.notes')" :rows="2" :placeholder="$t('finance.cashBook.form.notesPlaceholder')" class="sm:col-span-2" />
 
         <!-- Proof of transaction -->
         <div class="sm:col-span-2">
           <p class="block text-ui-small font-medium text-ui-ink mb-1.5">
-            Proof of transaction <span class="text-ui-muted font-normal">(optional)</span>
+            {{ $t('finance.cashBook.proof.title') }} <span class="text-ui-muted font-normal">({{ $t('finance.cashBook.proof.optional') }})</span>
           </p>
 
           <!-- New file picked -->
           <div v-if="form.proof" class="flex items-center gap-3 p-2.5 border border-ui-line rounded-ui-control">
-            <img v-if="proofPreviewUrl" :src="proofPreviewUrl" alt="Preview" class="w-12 h-12 rounded-md object-cover border border-ui-line" />
+            <img v-if="proofPreviewUrl" :src="proofPreviewUrl" :alt="$t('finance.cashBook.proof.preview')" class="w-12 h-12 rounded-md object-cover border border-ui-line" />
             <div v-else class="w-12 h-12 rounded-md bg-ui-subtle flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-ui-muted" /></div>
             <div class="min-w-0 flex-1">
               <p class="text-ui-small text-ui-ink font-medium truncate">{{ form.proof.name }}</p>
-              <p class="text-ui-cap text-ui-muted">Uploaded when you save</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t('finance.cashBook.proof.uploadedOnSave') }}</p>
             </div>
-            <UiButton variant="ghost" size="sm" @click="clearNewProof">Cancel</UiButton>
+            <UiButton variant="ghost" size="sm" @click="clearNewProof">{{ $t("common.actions.cancel") }}</UiButton>
           </div>
 
           <!-- Proof already saved on this transaction -->
           <div v-else-if="existingProof && !form.remove_proof" class="flex items-center gap-3 p-2.5 border border-ui-line rounded-ui-control">
-            <img v-if="existingProof.is_image" :src="existingProof.url" alt="Proof" class="w-12 h-12 rounded-md object-cover border border-ui-line" />
+            <img v-if="existingProof.is_image" :src="existingProof.url" :alt="$t('finance.cashBook.proof.title')" class="w-12 h-12 rounded-md object-cover border border-ui-line" />
             <div v-else class="w-12 h-12 rounded-md bg-ui-subtle flex items-center justify-center shrink-0"><FileText class="w-5 h-5 text-ui-muted" /></div>
             <div class="min-w-0 flex-1">
-              <p class="text-ui-small text-ui-ink font-medium truncate">{{ existingProof.name || "Proof of transaction" }}</p>
-              <button type="button" class="text-ui-cap font-medium text-ui-accent hover:underline" @click="openProof(existingProof)">View</button>
+              <p class="text-ui-small text-ui-ink font-medium truncate">{{ existingProof.name || $t('finance.cashBook.proof.title') }}</p>
+              <button type="button" class="text-ui-cap font-medium text-ui-accent hover:underline" @click="openProof(existingProof)">{{ $t("common.actions.view") }}</button>
             </div>
-            <UiButton variant="ghost" size="sm" @click="proofInput?.click()">Replace</UiButton>
-            <UiButton variant="ghost" size="sm" class="!text-ui-bad" @click="removeExistingProof">Remove</UiButton>
+            <UiButton variant="ghost" size="sm" @click="proofInput?.click()">{{ $t('finance.cashBook.proof.replace') }}</UiButton>
+            <UiButton variant="ghost" size="sm" class="!text-ui-bad" @click="removeExistingProof">{{ $t("common.actions.remove") }}</UiButton>
           </div>
 
           <!-- Nothing attached -->
@@ -751,11 +754,11 @@ const fieldClass =
             class="ui-press w-full flex items-center justify-center gap-2 px-3.5 py-3 border border-dashed border-ui-line-strong rounded-ui-control text-ui-small text-ui-muted hover:border-ui-accent hover:text-ui-accent transition-colors"
             @click="proofInput?.click()"
           >
-            <Upload class="w-4 h-4" /> Upload proof (JPG, PNG, WEBP, PDF · max 5 MB)
+            <Upload class="w-4 h-4" /> {{ $t('finance.cashBook.proof.upload') }}
           </button>
           <p v-if="existingProof && form.remove_proof && !form.proof" class="text-ui-cap text-ui-muted mt-1.5">
-            The current proof will be removed when you save.
-            <button type="button" class="font-medium text-ui-accent hover:underline" @click="form.remove_proof = false">Undo</button>
+            {{ $t('finance.cashBook.proof.willBeRemoved') }}
+            <button type="button" class="font-medium text-ui-accent hover:underline" @click="form.remove_proof = false">{{ $t('finance.cashBook.proof.undo') }}</button>
           </p>
           <input ref="proofInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="hidden" @change="onProofSelected" />
         </div>
@@ -764,42 +767,42 @@ const fieldClass =
       </form>
 
       <template #footer>
-        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="closeFormModal">Cancel</UiButton>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="closeFormModal">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton type="submit" form="cash-book-form" :loading="saving" :disabled="saving" class="flex-1 sm:flex-none">
-          {{ saving ? "Saving..." : "Save" }}
+          {{ saving ? $t("common.actions.saving") : $t("common.actions.save") }}
         </UiButton>
       </template>
     </UiModal>
 
     <!-- PROOF VIEWER (kept small) -->
-    <UiModal :open="!!viewingProof" title="Proof of transaction" :description="viewingProof?.name || ''" size="sm" :z-index="150" @update:open="(v) => !v && (viewingProof = null)">
+    <UiModal :open="!!viewingProof" :title="$t('finance.cashBook.proof.title')" :description="viewingProof?.name || ''" size="sm" :z-index="150" @update:open="(v) => !v && (viewingProof = null)">
       <div v-if="viewingProof?.is_image" class="bg-ui-subtle border border-ui-line rounded-ui-control flex items-center justify-center p-2">
         <img :src="viewingProof?.url" :alt="viewingProof?.name" class="max-w-full object-contain rounded" style="max-height: 320px" />
       </div>
       <div v-else class="bg-ui-subtle border border-ui-line rounded-ui-control flex flex-col items-center justify-center py-8">
         <FileText class="w-10 h-10 text-ui-muted mb-2" />
-        <p class="text-ui-cap text-ui-muted">PDF document</p>
+        <p class="text-ui-cap text-ui-muted">{{ $t('finance.cashBook.proof.pdfDocument') }}</p>
       </div>
       <template #footer>
         <UiButton variant="secondary" :href="viewingProof?.url" target="_blank" rel="noopener" :icon="ExternalLink" class="w-full">
-          {{ viewingProof?.is_image ? "Open full size" : "Open PDF" }}
+          {{ viewingProof?.is_image ? $t('finance.cashBook.proof.openFull') : $t('finance.cashBook.proof.openPdf') }}
         </UiButton>
       </template>
     </UiModal>
 
     <!-- OPENING BALANCE MODAL -->
-    <UiModal v-model:open="isBalanceModalOpen" title="Set Opening Balance" size="sm">
+    <UiModal v-model:open="isBalanceModalOpen" :title="$t('finance.cashBook.setOpeningBalance')" size="sm">
       <form id="cash-book-balance-form" @submit.prevent="handleBalanceSubmit" class="space-y-4">
         <div>
-          <label for="cb-opening-balance" class="block text-ui-small font-medium text-ui-ink mb-1.5">Opening Balance (Rp)</label>
+          <label for="cb-opening-balance" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t('finance.cashBook.openingBalanceRp') }}</label>
           <input id="cb-opening-balance" v-model.number="balanceDraft" type="number" min="0" :class="[fieldClass, 'text-right']" />
         </div>
         <UiAlert v-if="balanceError" tone="bad" :message="balanceError" />
       </form>
       <template #footer>
-        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="isBalanceModalOpen = false">Cancel</UiButton>
+        <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="isBalanceModalOpen = false">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton type="submit" form="cash-book-balance-form" :loading="saving" :disabled="saving" class="flex-1 sm:flex-none">
-          {{ saving ? "Saving..." : "Save" }}
+          {{ saving ? $t("common.actions.saving") : $t("common.actions.save") }}
         </UiButton>
       </template>
     </UiModal>
@@ -808,10 +811,10 @@ const fieldClass =
     <UiConfirmDialog
       v-model:open="isDeleteModalOpen"
       type="danger"
-      :title="transactionToDelete?.category === 'spending' ? 'Delete Spending?' : 'Delete Transaction?'"
+      :title="transactionToDelete?.category === 'spending' ? $t('finance.cashBook.delete.spendingTitle') : $t('finance.cashBook.delete.transactionTitle')"
       :message="deleteMessage"
-      confirm-text="Yes, Delete"
-      cancel-text="Cancel"
+      :confirm-text="$t('finance.cashBook.delete.confirm')"
+      :cancel-text="$t('common.actions.cancel')"
       :loading="isDeleting"
       @confirm="handleDelete"
     />

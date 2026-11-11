@@ -32,9 +32,9 @@ const toggle = () => {
 <template>
   <section class="mb-4 sm:mb-5">
     <button type="button" class="w-full flex items-center justify-between gap-2 mb-2.5 text-left group" :aria-expanded="open" @click="toggle">
-      <span class="text-ui-over uppercase text-ui-muted">Recap</span>
+      <span class="text-ui-over uppercase text-ui-muted">{{ $t("editor.recap.title") }}</span>
       <span class="text-ui-cap font-medium text-ui-muted inline-flex items-center gap-1 group-hover:text-ui-ink">
-        {{ open ? "Hide" : "Show" }}
+        {{ open ? $t("editor.recap.hide") : $t("editor.recap.show") }}
         <ChevronDown class="w-3.5 h-3.5 transition-transform duration-ui-fast" :class="{ '-rotate-90': !open }" />
       </span>
     </button>
@@ -47,7 +47,7 @@ const toggle = () => {
         <Skeleton height="240px" rounded="12px" />
       </div>
       <p v-else-if="failed" class="text-ui-small text-ui-muted bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3">
-        Couldn't load the recap. <button type="button" class="text-ui-accent font-medium hover:underline" @click="emit('retry')">Try again</button>
+        {{ $t("editor.recap.loadFailed") }} <button type="button" class="text-ui-accent font-medium hover:underline" @click="emit('retry')">{{ $t("editor.recap.retry") }}</button>
       </p>
       <div v-else class="ui-anim-fade space-y-3"><slot /></div>
     </template>

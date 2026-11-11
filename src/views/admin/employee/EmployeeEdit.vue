@@ -305,19 +305,19 @@ onMounted(() => {
             <p class="text-ui-small font-medium text-ui-ink">
               {{
                 currentStep === 4
-                  ? "Ready to update this employee?"
-                  : `Step ${currentStep} of ${totalSteps}`
+                  ? $t("employees.wizard.edit.ready")
+                  : $t("employees.wizard.stepOf", { current: currentStep, total: totalSteps })
               }}
             </p>
             <p class="text-ui-cap text-ui-muted mt-0.5">
               {{
                 currentStep === 4
-                  ? "Review and confirm all information before updating"
+                  ? $t("employees.wizard.edit.reviewHint")
                   : currentStep === 1
-                  ? "Update the personal information"
+                  ? $t("employees.wizard.edit.personalHint")
                   : currentStep === 2
-                  ? "Update the job information"
-                  : "Update the emergency contact information"
+                  ? $t("employees.wizard.edit.jobHint")
+                  : $t("employees.wizard.edit.emergencyHint")
               }}
             </p>
           </div>
@@ -327,11 +327,11 @@ onMounted(() => {
               variant="secondary"
               size="lg"
               :icon="ArrowLeft"
-              aria-label="Previous"
+              :aria-label="$t('common.actions.previous')"
               class="shrink-0 w-11 !px-0 sm:w-auto sm:!px-3.5 sm:h-9 sm:px-3.5 sm:text-ui-small"
               @click="previousStep"
             >
-              <span class="hidden sm:inline">Previous</span>
+              <span class="hidden sm:inline">{{ $t("common.actions.previous") }}</span>
             </UiButton>
             <UiButton
               v-else
@@ -340,7 +340,7 @@ onMounted(() => {
               class="flex-1 sm:flex-none sm:h-9 sm:px-3.5 sm:text-ui-small"
               @click="router.push({ name: 'admin.employees' })"
             >
-              Cancel
+              {{ $t("common.actions.cancel") }}
             </UiButton>
 
             <UiButton
@@ -350,13 +350,12 @@ onMounted(() => {
               class="flex-1 min-w-0 sm:flex-none sm:h-9 sm:px-3.5 sm:text-ui-small"
               @click="nextStep"
             >
-              Next:
               {{
-                currentStep === 1
-                  ? "Job Info"
-                  : currentStep === 2
-                  ? "Emergency Contact"
-                  : "Review"
+                $t("employees.wizard.next", {
+                  step: $t(
+                    `employees.wizard.nextSteps.${currentStep === 1 ? "job" : currentStep === 2 ? "emergency" : "review"}`
+                  ),
+                })
               }}
             </UiButton>
             <UiButton
@@ -367,7 +366,7 @@ onMounted(() => {
               :loading="loading"
               class="flex-1 min-w-0 sm:flex-none sm:h-9 sm:px-3.5 sm:text-ui-small"
             >
-              {{ loading ? "Updating..." : "Update Employee" }}
+              {{ loading ? $t("employees.wizard.edit.submitting") : $t("employees.wizard.edit.submit") }}
             </UiButton>
           </div>
         </div>

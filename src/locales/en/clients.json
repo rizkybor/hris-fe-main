@@ -1,0 +1,113 @@
+{
+  "list": {
+    "title": "All Clients",
+    "subtitle": "View and manage all client information",
+    "add": "Add Client",
+    "searchPlaceholder": "Search clients...",
+    "allTypes": "All Types",
+    "allFields": "All Fields",
+    "columns": {
+      "pic": "PIC",
+      "rating": "Rating"
+    },
+    "unnamed": "Unnamed Client",
+    "empty": "No clients found",
+    "deleteConfirm": "Delete client \"{name}\"? This action cannot be undone.",
+    "deleteFailed": "Failed to delete client."
+  },
+  "stats": {
+    "total": "Total Clients",
+    "totalHint": "Registered clients",
+    "byType": "Clients by Type",
+    "byField": "Clients by Field",
+    "scrollMore": "Scroll to see more"
+  },
+  "fields": {
+    "name": "Client Name",
+    "type": "Client Type",
+    "field": "Client Field",
+    "picName": "PIC Name",
+    "picPhone": "PIC Phone",
+    "npwp": "NPWP",
+    "siup": "SIUP Number",
+    "nib": "NIB Number",
+    "fieldShort": "Field"
+  },
+  "form": {
+    "createTitle": "Add Client",
+    "createSubtitle": "Register a new client or partner company",
+    "editTitle": "Edit Client",
+    "editSubtitle": "Update client information",
+    "save": "Save Client",
+    "sections": {
+      "company": "Company Information",
+      "pic": "PIC Contact (Person in Charge)",
+      "legal": "Legal (Optional)",
+      "legalHint": "Leave blank if the client is an individual, not a registered business.",
+      "additional": "Additional Details"
+    },
+    "placeholders": {
+      "name": "e.g. PT. Sumber Teknologi",
+      "type": "e.g. Technology, Logistics",
+      "field": "e.g. Software Development",
+      "picName": "Contact person name",
+      "address": "Client address",
+      "notes": "Additional notes about this client...",
+      "siup": "e.g. SIUP-123/2020",
+      "nib": "e.g. 1234567890123"
+    },
+    "summary": "Summary",
+    "newClient": "New client",
+    "clientFallback": "Client",
+    "requiredFields": "Required fields",
+    "requiredCount": "{done} of {total}",
+    "required": "Client Name, PIC Name, and PIC Phone are required.",
+    "saved": "Client saved successfully.",
+    "saveFailed": "Failed to save client.",
+    "updated": "Client updated successfully.",
+    "updateFailed": "Failed to update client.",
+    "notFound": "Client not found.",
+    "loadFailed": "Failed to load client data."
+  },
+  "detail": {
+    "title": "Client Detail",
+    "readOnly": "Client information (read-only)",
+    "loading": "Loading client detail...",
+    "loadFailed": "Failed to load client detail.",
+    "tabs": {
+      "overview": "Overview",
+      "evaluations": "Rating & Evaluation",
+      "projects": "Projects"
+    },
+    "legal": "Legal",
+    "legalHint": "Optional — blank if the client is an individual",
+    "projectsCount": "Projects",
+    "ratingSummary": "{avg}/5 from {n} evaluation | {avg}/5 from {n} evaluations",
+    "noEvaluations": "No evaluations yet",
+    "viewEvaluations": "Rating & Evaluation →",
+    "addEvaluation": "Add Evaluation",
+    "noEvaluationsForClient": "No evaluations for this client yet",
+    "by": "by {name}",
+    "deleteEvaluation": "Delete evaluation",
+    "projectsHint": "Optional — projects contracted through this client",
+    "noProjects": "No projects linked yet",
+    "projectStatus": {
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "on-hold": "On hold",
+      "overdue": "Overdue"
+    },
+    "evaluationModal": {
+      "title": "Add Client Evaluation",
+      "rating": "Rating",
+      "date": "Evaluation Date",
+      "notes": "Notes (Optional)",
+      "notesPlaceholder": "Work quality, punctuality, etc.",
+      "save": "Save Evaluation"
+    },
+    "saveEvaluationFailed": "Failed to save evaluation.",
+    "deleteEvaluationConfirm": "Delete this evaluation? This cannot be undone.",
+    "deleteEvaluationFailed": "Failed to delete evaluation."
+  }
+}

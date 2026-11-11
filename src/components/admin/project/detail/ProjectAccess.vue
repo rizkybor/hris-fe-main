@@ -40,8 +40,8 @@ const COLOR_CLASSES = {
 <template>
   <section v-if="links.length > 0" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
     <div class="mb-4">
-      <h3 class="text-ui-h2 text-ui-ink">Project Access</h3>
-      <p class="text-ui-cap text-ui-muted mt-0.5">Optional — quick links for this project</p>
+      <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.access.title") }}</h3>
+      <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.access.subtitle") }}</p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 ui-stagger">

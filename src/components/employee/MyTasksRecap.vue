@@ -1,6 +1,9 @@
 <script setup>
 import { computed, defineAsyncComponent } from "vue";
 import RecapSection from "@/components/common/RecapSection.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
@@ -25,14 +28,14 @@ const tokenColor = (name) => {
 
 // Status, not identity -- same meaning as the badges in the list.
 const STATUSES = [
-  { key: "todo", label: "To Do", token: "faint", swatch: "bg-ui-faint" },
-  { key: "in_progress", label: "In Progress", token: "warn", swatch: "bg-ui-warn" },
-  { key: "review", label: "Review", token: "info", swatch: "bg-ui-info" },
-  { key: "done", label: "Done", token: "ok", swatch: "bg-ui-ok" },
-  { key: "cancelled", label: "Cancelled", token: "line-strong", swatch: "bg-ui-line-strong" },
+  { key: "todo", token: "faint", swatch: "bg-ui-faint" },
+  { key: "in_progress", token: "warn", swatch: "bg-ui-warn" },
+  { key: "review", token: "info", swatch: "bg-ui-info" },
+  { key: "done", token: "ok", swatch: "bg-ui-ok" },
+  { key: "cancelled", token: "line-strong", swatch: "bg-ui-line-strong" },
 ].map((s) => ({ ...s, color: tokenColor(s.token) }));
 const byStatus = computed(() =>
-  STATUSES.map((s) => ({ ...s, count: props.items.filter((i) => i.status === s.key).length })).filter((s) => s.count > 0)
+  STATUSES.map((s) => ({ ...s, label: t(`myTasks.status.${s.key}`), count: props.items.filter((i) => i.status === s.key).length })).filter((s) => s.count > 0)
 );
 const total = computed(() => props.items.length);
 const doneCount = computed(() => props.items.filter((i) => i.status === "done").length);
@@ -52,7 +55,7 @@ const donutOptions = computed(() => ({
           show: true,
           name: { show: true, offsetY: 18, color: tokenColor("muted"), fontSize: "11px" },
           value: { show: true, offsetY: -14, color: tokenColor("ink"), fontSize: "17px", fontWeight: 600 },
-          total: { show: true, label: "done", color: tokenColor("muted"), fontSize: "11px", formatter: () => `${total.value ? Math.round((doneCount.value / total.value) * 100) : 0}%` },
+          total: { show: true, label: t("myTasks.recap.doneLabel"), color: tokenColor("muted"), fontSize: "11px", formatter: () => `${total.value ? Math.round((doneCount.value / total.value) * 100) : 0}%` },
         },
       },
     },
@@ -70,7 +73,7 @@ const groups = computed(() => {
     .filter((i) => !["done", "cancelled"].includes(i.status))
     .forEach((i) => {
       const key = i.source === "assigned" ? "__assigned" : `p-${i.projectId ?? "none"}`;
-      const name = i.source === "assigned" ? "Assigned tasks" : i.projectName;
+      const name = i.source === "assigned" ? t("myTasks.recap.assignedTasks") : i.projectName;
       const g = map.get(key) || { key, name, open: 0, overdue: 0, assigned: i.source === "assigned" };
       g.open++;
       if (i.due && i.due < today) g.overdue++;
@@ -86,9 +89,9 @@ const maxOpen = computed(() => Math.max(1, ...groups.value.map((g) => g.open)));
   <RecapSection storage-key="my-tasks-recap-open" :loading="loading" :failed="false" :tiles="0">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
       <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
-        <p class="text-ui-h3 text-ui-ink">Where my tasks stand</p>
-        <p class="text-ui-cap text-ui-muted mb-2">Project and assigned tasks together</p>
-        <p v-if="!total" class="text-ui-small text-ui-muted py-10 text-center">No tasks yet.</p>
+        <p class="text-ui-h3 text-ui-ink">{{ $t("myTasks.recap.standTitle") }}</p>
+        <p class="text-ui-cap text-ui-muted mb-2">{{ $t("myTasks.recap.standSubtitle") }}</p>
+        <p v-if="!total" class="text-ui-small text-ui-muted py-10 text-center">{{ $t("myTasks.recap.noTasks") }}</p>
         <div v-else class="flex flex-col sm:flex-row items-center gap-4">
           <div class="w-44 shrink-0">
             <VueApexCharts type="donut" height="190" :options="donutOptions" :series="byStatus.map((s) => s.count)" />
@@ -105,16 +108,16 @@ const maxOpen = computed(() => Math.max(1, ...groups.value.map((g) => g.open)));
       </div>
 
       <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
-        <p class="text-ui-h3 text-ui-ink">Open tasks by project</p>
-        <p class="text-ui-cap text-ui-muted mb-3">Most open first</p>
-        <p v-if="!groups.length" class="text-ui-small text-ui-muted py-10 text-center">Nothing open. Nice work!</p>
+        <p class="text-ui-h3 text-ui-ink">{{ $t("myTasks.recap.byProjectTitle") }}</p>
+        <p class="text-ui-cap text-ui-muted mb-3">{{ $t("myTasks.recap.byProjectSubtitle") }}</p>
+        <p v-if="!groups.length" class="text-ui-small text-ui-muted py-10 text-center">{{ $t("myTasks.recap.nothingOpen") }}</p>
         <div v-else class="space-y-3">
           <div v-for="g in shown" :key="g.key">
             <div class="flex items-baseline justify-between gap-2 text-ui-cap mb-1">
               <span class="font-medium truncate" :class="g.assigned ? 'text-ui-muted italic' : 'text-ui-text'">{{ g.name }}</span>
               <span class="shrink-0 text-ui-muted tabular-nums">
-                <strong class="text-ui-ink font-medium">{{ g.open }}</strong> open
-                <span v-if="g.overdue" class="text-ui-bad font-medium"> · {{ g.overdue }} overdue</span>
+                <i18n-t keypath="myTasks.recap.openCount" tag="span" scope="global"><template #n><strong class="text-ui-ink font-medium">{{ g.open }}</strong></template></i18n-t>
+                <span v-if="g.overdue" class="text-ui-bad font-medium"> · {{ $t("myTasks.recap.overdueCount", { n: g.overdue }) }}</span>
               </span>
             </div>
             <div class="w-full h-2 bg-ui-subtle rounded-full overflow-hidden flex gap-0.5">
@@ -123,9 +126,9 @@ const maxOpen = computed(() => Math.max(1, ...groups.value.map((g) => g.open)));
             </div>
           </div>
           <p class="text-ui-cap text-ui-muted flex flex-wrap gap-x-3 gap-y-1">
-            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-ui-bad"></span>Overdue</span>
-            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-ui-accent"></span>Open</span>
-            <span v-if="groups.length > shown.length">+ {{ groups.length - shown.length }} more</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-ui-bad"></span>{{ $t("myTasks.buckets.overdue") }}</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-ui-accent"></span>{{ $t("myTasks.summary.open") }}</span>
+            <span v-if="groups.length > shown.length">{{ $t("myTasks.recap.more", { n: groups.length - shown.length }) }}</span>
           </p>
         </div>
       </div>

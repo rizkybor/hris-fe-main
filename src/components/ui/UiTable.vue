@@ -17,7 +17,7 @@ const props = defineProps({
   numbered: { type: Boolean, default: true },
   loading: { type: Boolean, default: false },
   skeletonRows: { type: Number, default: 5 },
-  emptyText: { type: String, default: "No data yet." },
+  emptyText: { type: String, default: "" },
   clickable: { type: Boolean, default: false },
   // Rows rise in when the data changes (first 8 staggered, CSS only).
   animated: { type: Boolean, default: true },
@@ -38,7 +38,7 @@ const onRow = (row) => props.clickable && emit("row-click", row);
       <template v-if="loading">
         <li v-for="i in 3" :key="`m-skel-${i}`" class="px-4 py-3.5"><div class="h-4 w-2/3 rounded bg-ui-subtle animate-pulse"></div></li>
       </template>
-      <li v-else-if="!rows.length" class="px-4 py-8 text-center text-ui-small text-ui-muted"><slot name="empty">{{ emptyText }}</slot></li>
+      <li v-else-if="!rows.length" class="px-4 py-8 text-center text-ui-small text-ui-muted"><slot name="empty">{{ emptyText || $t("common.table.empty") }}</slot></li>
       <template v-else>
         <li v-for="(row, index) in rows" :key="keyOf(row, index)" :class="clickable ? 'cursor-pointer active:bg-ui-hover' : ''" @click="onRow(row)">
           <slot name="mobile" :row="row" :number="start + index" :index="index" />
@@ -67,7 +67,7 @@ const onRow = (row) => props.clickable && emit("row-click", row);
             </tr>
           </template>
           <tr v-else-if="!rows.length">
-            <td :colspan="colCount" class="px-4 py-10 text-center text-ui-small text-ui-muted"><slot name="empty">{{ emptyText }}</slot></td>
+            <td :colspan="colCount" class="px-4 py-10 text-center text-ui-small text-ui-muted"><slot name="empty">{{ emptyText || $t("common.table.empty") }}</slot></td>
           </tr>
           <template v-else>
           <tr

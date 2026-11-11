@@ -27,15 +27,18 @@ import { useAlertModalStore } from "@/stores/alertModal";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 import { UiPageHeader, UiButton, UiChips, UiEmpty } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 // Same status values the old select sent.
-const STATUS_OPTIONS = [
-  { value: "", label: "All Status" },
-  { value: "active", label: "Active" },
-  { value: "completed", label: "Completed" },
-  { value: "on-hold", label: "On Hold" },
-  { value: "overdue", label: "Overdue" },
-];
+const STATUS_OPTIONS = computed(() => [
+  { value: "", label: t("common.labels.allStatuses") },
+  { value: "active", label: t("projects.status.active") },
+  { value: "completed", label: t("projects.status.completed") },
+  { value: "on-hold", label: t("projects.status.onHold") },
+  { value: "overdue", label: t("projects.health.overdue") },
+]);
 
 const projectStore = useProjectStore();
 const { projects, meta, loading, success } = storeToRefs(projectStore);
@@ -93,10 +96,10 @@ const clearFilters = () => {
 
 const handleDelete = async (project) => {
   const ok = await alertModal.confirm(
-    `Delete project "${project.name}"? This action cannot be undone.`,
+    t("projects.list.deleteConfirm", { name: project.name }),
     {
       type: "danger",
-      confirmText: "Delete",
+      confirmText: t("common.actions.delete"),
     },
   );
   if (!ok) return;
@@ -105,14 +108,14 @@ const handleDelete = async (project) => {
     await deleteProject(project.id);
     await fetchData();
   } catch (error) {
-    await alertModal.alert("Failed to delete project.", { type: "danger" });
+    await alertModal.alert(t("projects.list.deleteFailed"), { type: "danger" });
   }
 };
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="All Projects" subtitle="View and manage all project information">
+    <UiPageHeader :title="$t('projects.list.title')" :subtitle="$t('projects.list.subtitle')">
       <template #actions>
         <UiButton
           v-if="can('project-create')"
@@ -120,7 +123,7 @@ const handleDelete = async (project) => {
           :to="{ name: 'admin.projects.create' }"
           class="w-full sm:w-auto"
         >
-          Add Project
+          {{ $t("projects.list.add") }}
         </UiButton>
       </template>
     </UiPageHeader>
@@ -145,15 +148,15 @@ const handleDelete = async (project) => {
           <input
             type="text"
             class="w-full h-[38px] pl-9 pr-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus transition-shadow"
-            placeholder="Search projects..."
-            aria-label="Search projects"
+            :placeholder="$t('projects.list.searchPlaceholder')"
+            :aria-label="$t('projects.list.searchLabel')"
             v-model="filters.search"
           />
         </div>
         <div class="flex items-center gap-2 min-w-0 flex-1">
           <UiChips v-model="filters.status" :options="STATUS_OPTIONS" class="min-w-0 flex-1" />
           <UiButton v-if="hasActiveFilters" variant="ghost" size="sm" :icon="X" class="shrink-0" @click="clearFilters">
-            Clear
+            {{ $t("common.actions.clear") }}
           </UiButton>
         </div>
       </div>
@@ -182,16 +185,16 @@ const handleDelete = async (project) => {
           <UiEmpty
             v-if="hasActiveFilters"
             :icon="SearchX"
-            title="No projects match your filters"
-            message="Try adjusting your search terms or status filter"
+            :title="$t('projects.list.emptyFilteredTitle')"
+            :message="$t('projects.list.emptyFilteredMessage')"
           >
-            <UiButton variant="secondary" size="sm" :icon="X" @click="clearFilters">Clear filters</UiButton>
+            <UiButton variant="secondary" size="sm" :icon="X" @click="clearFilters">{{ $t("common.actions.clearFilters") }}</UiButton>
           </UiEmpty>
           <UiEmpty
             v-else
             :icon="FolderPlus"
-            title="No projects yet"
-            message="Create your first project to start tracking tasks and progress"
+            :title="$t('projects.list.emptyTitle')"
+            :message="$t('projects.list.emptyMessage')"
           >
             <UiButton
               v-if="can('project-create')"
@@ -199,7 +202,7 @@ const handleDelete = async (project) => {
               :icon="Plus"
               :to="{ name: 'admin.projects.create' }"
             >
-              Add Project
+              {{ $t("projects.list.add") }}
             </UiButton>
           </UiEmpty>
         </template>

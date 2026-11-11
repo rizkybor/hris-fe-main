@@ -6,6 +6,7 @@
 // -download (installer).
 import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
 import { debounce } from "lodash-es";
 import {
   Plus,
@@ -48,7 +49,7 @@ import {
   RELEASE_STATUS_CHIP,
   KIND_BADGES,
   KIND_CHIP,
-  PUBLISH_NEEDS_FILE,
+  publishNeedsFileMessage,
   releasePlatformLabel,
   changeCountsLine,
   groupChanges,
@@ -57,6 +58,7 @@ import {
   needsFile,
 } from "@/components/admin/license-manager/releaseHelpers";
 
+const { t } = useI18n();
 const store = useLicenseManagerStore();
 const { code: productCode, product, productName, state: productState } = useLicenseProduct();
 const { releases, releasesInfo, releasesLoading } = storeToRefs(store);
@@ -78,7 +80,7 @@ const load = async () => {
   try {
     await store.fetchReleases(filters.value);
   } catch (err) {
-    error.value = errorMessage(err, "Failed to load the versions.");
+    error.value = errorMessage(err, t("licenses.versions.loadFailed"));
   } finally {
     loadedOnce.value = true;
   }
@@ -130,7 +132,8 @@ const areas = computed(() => {
   return [...set];
 });
 const toggle = (id) => (expanded.value = { ...expanded.value, [id]: !expanded.value[id] });
-const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+// "3 devices" / "1 license" (word: device | license).
+const plural = (n, word) => t(`licenses.versions.count.${word}`, { n }, n);
 const canPublish = (release) => !needsFile(release) || !!release.file;
 
 const replaceRelease = (updated) => {
@@ -153,7 +156,7 @@ const onSaved = (saved) => {
   const wasEdit = !!editing.value;
   showForm.value = false;
   editing.value = null;
-  flash(wasEdit ? `Version ${saved.version} saved.` : `Version ${saved.version} added.`);
+  flash(wasEdit ? t("licenses.versions.saved", { version: saved.version }) : t("licenses.versions.added", { version: saved.version }));
   load();
 };
 // A failed installer upload may still have saved the version.
@@ -175,20 +178,20 @@ const openPublish = (release) => {
 };
 const confirmPublish = async () => {
   if (!publishDate.value) {
-    publishError.value = "Pick the release date.";
+    publishError.value = t("licenses.versions.pickDate");
     return;
   }
   publishSaving.value = true;
   publishError.value = "";
   try {
     const updated = await store.updateRelease(publishing.value.id, { status: "published", released_at: publishDate.value });
-    flash(`Version ${updated.version} published.`);
+    flash(t("licenses.versions.published", { version: updated.version }));
     publishing.value = null;
     load();
   } catch (err) {
     const errors = validationErrors(err);
     const first = Object.values(errors).flat()[0];
-    publishError.value = first || errorMessage(err, "Failed to publish the version.");
+    publishError.value = first || errorMessage(err, t("licenses.versions.publishFailed"));
   } finally {
     publishSaving.value = false;
   }
@@ -197,30 +200,32 @@ const confirmPublish = async () => {
 /* ---------- Delete ---------- */
 const handleDelete = async (release) => {
   const ok = await alertModal.confirm(
-    `Delete version ${release.version}${release.file ? " and its installer" : ""}? This action cannot be undone.`,
-    { title: "Delete Version", type: "danger", confirmText: "Delete" }
+    release.file
+      ? t("licenses.versions.deleteConfirmFile", { version: release.version })
+      : t("licenses.versions.deleteConfirm", { version: release.version }),
+    { title: t("licenses.versions.deleteTitle"), type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
   try {
     await store.deleteRelease(release.id);
-    flash(`Version ${release.version} deleted.`);
+    flash(t("licenses.versions.deleted", { version: release.version }));
     load();
   } catch (err) {
-    await alertModal.alert(errorMessage(err, "Failed to delete the version."), { type: "danger" });
+    await alertModal.alert(errorMessage(err, t("licenses.versions.deleteFailed")), { type: "danger" });
   }
 };
 
 /* ---------- Presentation ---------- */
-const STATUS_FILTERS = [
-  { value: "", label: "All" },
-  { value: "published", label: "Published" },
-  { value: "draft", label: "Draft" },
-];
-const PLATFORM_FILTERS = [
-  { value: "", label: "All platforms" },
+const STATUS_FILTERS = computed(() => [
+  { value: "", label: t("common.labels.all") },
+  { value: "published", label: t("licenses.releases.status.published") },
+  { value: "draft", label: t("licenses.releases.status.draft") },
+]);
+const PLATFORM_FILTERS = computed(() => [
+  { value: "", label: t("licenses.dashboard.allPlatforms") },
   { value: "mac", label: "Mac" },
   { value: "ipad", label: "iPad" },
-];
+]);
 const devicesReporting = computed(() => versionsInUse.value.reduce((sum, item) => sum + (Number(item.devices) || 0), 0));
 // The publish modal's open state follows `publishing`.
 const onPublishOpenChange = (value) => {
@@ -236,20 +241,20 @@ const onPublishOpenChange = (value) => {
         <Alert v-if="error" type="danger" :title="error" message="" :show="!!error" @close="error = ''" />
 
         <!-- Header -->
-        <UiPageHeader :title="`${productName} Versions`">
+        <UiPageHeader :title="$t('licenses.versions.title', { product: productName })">
           <template #eyebrow>
             <div class="flex items-center gap-2 mb-2">
               <ProductIcon :product="product" :size="24" />
-              <RouterLink :to="{ name: 'admin.license-manager.overview' }" class="text-ui-small text-ui-muted hover:text-ui-ink">License Manager</RouterLink>
+              <RouterLink :to="{ name: 'admin.license-manager.overview' }" class="text-ui-small text-ui-muted hover:text-ui-ink">{{ $t("licenses.title") }}</RouterLink>
               <span class="text-ui-faint">/</span>
               <span class="text-ui-small text-ui-ink font-medium truncate">{{ productName }}</span>
             </div>
           </template>
           <template #subtitle>
-            Current version on sale:
+            {{ $t("licenses.versions.onSale") }}:
             <span class="font-mono font-medium text-ui-ink">{{ latestVersion || "—" }}</span>
             <span class="text-ui-faint mx-1">·</span>
-            Lifetime licenses sold now cover
+            {{ $t("licenses.versions.lifetimeCoverNow") }}
             <span class="font-medium text-ui-ink">{{ productName }} {{ currentMajor ?? "—" }}.x</span>
           </template>
           <template #actions>
@@ -260,18 +265,18 @@ const onPublishOpenChange = (value) => {
               :to="{ name: 'admin.license-manager.licenses.dashboard', params: { product: productCode } }"
               class="flex-1 sm:flex-none"
             >
-              Licenses
+              {{ $t("licenses.licenses") }}
             </UiButton>
-            <UiButton v-if="canCreate" :icon="Plus" class="flex-1 sm:flex-none" @click="openCreate">New version</UiButton>
+            <UiButton v-if="canCreate" :icon="Plus" class="flex-1 sm:flex-none" @click="openCreate">{{ $t("licenses.versions.new") }}</UiButton>
           </template>
         </UiPageHeader>
 
         <!-- KPI tiles -->
         <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 ui-stagger">
-          <UiStat label="Current version on sale" :value="latestVersion || '—'" :icon="Tag" :loading="!loadedOnce" />
-          <UiStat label="Lifetime licenses cover" :value="`${currentMajor ?? '—'}.x`" :icon="InfinityIcon" :loading="!loadedOnce" />
-          <UiStat label="Versions" :value="sortedReleases.length" :icon="Layers" :loading="!loadedOnce" />
-          <UiStat label="Devices reporting" :value="plural(devicesReporting, 'device')" hint="As reported by the apps" :icon="Monitor" :loading="!loadedOnce" />
+          <UiStat :label="$t('licenses.versions.onSale')" :value="latestVersion || '—'" :icon="Tag" :loading="!loadedOnce" />
+          <UiStat :label="$t('licenses.versions.lifetimeCover')" :value="`${currentMajor ?? '—'}.x`" :icon="InfinityIcon" :loading="!loadedOnce" />
+          <UiStat :label="$t('licenses.dashboard.versions')" :value="sortedReleases.length" :icon="Layers" :loading="!loadedOnce" />
+          <UiStat :label="$t('licenses.versions.devicesReporting')" :value="plural(devicesReporting, 'device')" :hint="$t('licenses.versions.asReported')" :icon="Monitor" :loading="!loadedOnce" />
         </div>
 
         <!-- Versions in use -->
@@ -279,14 +284,14 @@ const onPublishOpenChange = (value) => {
           <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2">
               <Monitor class="w-4 h-4 text-ui-faint" />
-              <h2 class="text-ui-h3 text-ui-ink">Versions in use</h2>
+              <h2 class="text-ui-h3 text-ui-ink">{{ $t("licenses.versions.inUse") }}</h2>
             </div>
-            <span class="text-ui-cap text-ui-muted">As reported by the apps</span>
+            <span class="text-ui-cap text-ui-muted">{{ $t("licenses.versions.asReported") }}</span>
           </div>
           <div v-if="!loadedOnce" class="flex flex-wrap gap-2">
             <Skeleton v-for="i in 3" :key="i" width="160px" height="30px" rounded="8px" />
           </div>
-          <p v-else-if="!versionsInUse.length" class="text-ui-cap text-ui-muted">No device has reported a version yet.</p>
+          <p v-else-if="!versionsInUse.length" class="text-ui-cap text-ui-muted">{{ $t("licenses.versions.noneReported") }}</p>
           <div v-else class="flex flex-wrap gap-2">
             <span
               v-for="item in versionsInUse"
@@ -307,20 +312,20 @@ const onPublishOpenChange = (value) => {
         <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
           <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line flex flex-col lg:flex-row lg:items-center gap-3">
             <div class="relative lg:w-[300px] shrink-0">
-              <UiInput v-model="filters.search" :icon="Search" placeholder="Search version, title or change..." aria-label="Search versions" />
+              <UiInput v-model="filters.search" :icon="Search" :placeholder="$t('licenses.versions.searchPlaceholder')" :aria-label="$t('licenses.versions.searchLabel')" />
               <button
                 v-if="filters.search"
                 type="button"
                 @click="filters.search = ''"
                 class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink"
-                aria-label="Clear search"
+                :aria-label="$t('licenses.dashboard.clearSearch')"
               >
                 <X class="w-3.5 h-3.5" />
               </button>
             </div>
             <div class="flex items-center gap-2 min-w-0 overflow-x-auto [scrollbar-width:none]">
-              <UiChips v-model="filters.status" :options="STATUS_FILTERS" class="shrink-0" aria-label="Filter by status" />
-              <div class="inline-flex items-center p-0.5 rounded-ui-control bg-ui-subtle shrink-0" role="tablist" aria-label="Filter by platform">
+              <UiChips v-model="filters.status" :options="STATUS_FILTERS" class="shrink-0" :aria-label="$t('licenses.dashboard.filterStatus')" />
+              <div class="inline-flex items-center p-0.5 rounded-ui-control bg-ui-subtle shrink-0" role="tablist" :aria-label="$t('licenses.dashboard.filterPlatform')">
                 <button
                   v-for="opt in PLATFORM_FILTERS"
                   :key="opt.value || 'all'"
@@ -336,7 +341,7 @@ const onPublishOpenChange = (value) => {
               </div>
             </div>
             <button v-if="hasFilters" type="button" @click="clearFilters" class="lg:ml-auto self-start lg:self-auto text-ui-cap font-medium text-ui-accent hover:underline">
-              Clear filters
+              {{ $t("common.actions.clearFilters") }}
             </button>
           </div>
 
@@ -353,11 +358,11 @@ const onPublishOpenChange = (value) => {
           <UiEmpty
             v-else-if="!sortedReleases.length"
             :icon="hasFilters ? SearchX : History"
-            :title="hasFilters ? 'No matching versions' : 'No versions yet'"
-            :message="hasFilters ? 'Try another search term or clear the filters.' : `Add the first ${productName} version and its release notes.`"
+            :title="hasFilters ? $t('licenses.versions.emptyFilteredTitle') : $t('licenses.versions.emptyTitle')"
+            :message="hasFilters ? $t('licenses.dashboard.emptyFilteredMessage') : $t('licenses.versions.emptyMessage', { product: productName })"
           >
-            <UiButton v-if="hasFilters" variant="secondary" :icon="X" @click="clearFilters">Clear filters</UiButton>
-            <UiButton v-else-if="canCreate" :icon="Plus" @click="openCreate">New version</UiButton>
+            <UiButton v-if="hasFilters" variant="secondary" :icon="X" @click="clearFilters">{{ $t("common.actions.clearFilters") }}</UiButton>
+            <UiButton v-else-if="canCreate" :icon="Plus" @click="openCreate">{{ $t("licenses.versions.new") }}</UiButton>
           </UiEmpty>
 
           <!-- Numbered release list (newest first) -->
@@ -376,27 +381,27 @@ const onPublishOpenChange = (value) => {
                         {{ KIND_BADGES[release.kind] || release.kind_label }}
                       </span>
                       <UiBadge :tone="release.status === 'published' ? 'ok' : 'neutral'" dot>
-                        {{ release.status === "published" ? "Published" : "Draft" }}
+                        {{ release.status === "published" ? $t("licenses.releases.status.published") : $t("licenses.releases.status.draft") }}
                       </UiBadge>
-                      <UiBadge v-if="release.is_critical" tone="bad"><AlertTriangle class="w-3 h-3" /> Critical</UiBadge>
+                      <UiBadge v-if="release.is_critical" tone="bad"><AlertTriangle class="w-3 h-3" /> {{ $t("licenses.versions.critical") }}</UiBadge>
                       <span class="inline-flex items-center h-[22px] px-2 rounded-md text-ui-cap font-medium" :class="platformChipClass(release.platforms)">
                         {{ releasePlatformLabel(release.platforms) }}
                       </span>
                       <span class="inline-flex items-center gap-1 text-ui-cap text-ui-muted ml-1">
                         <CalendarDays class="w-3.5 h-3.5" />
-                        {{ release.released_at ? formatReleaseDate(release.released_at) : "Unreleased" }}
+                        {{ release.released_at ? formatReleaseDate(release.released_at) : $t("licenses.versions.unreleased") }}
                       </span>
                     </div>
                     <p v-if="release.title" class="text-ui-small font-medium text-ui-ink mt-1.5">{{ release.title }}</p>
 
                     <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-ui-cap text-ui-muted">
                       <span v-if="changeCountsLine(release.change_counts)">{{ changeCountsLine(release.change_counts) }}</span>
-                      <span v-else class="text-ui-faint">No changes listed</span>
-                      <span class="tabular-nums">Covers {{ plural(release.licenses_covered ?? 0, "license") }}</span>
+                      <span v-else class="text-ui-faint">{{ $t("licenses.versions.noChanges") }}</span>
+                      <span class="tabular-nums">{{ $t("licenses.versions.covers", { count: plural(release.licenses_covered ?? 0, "license") }) }}</span>
                       <span v-if="release.licenses_needing_upgrade > 0" class="tabular-nums font-medium text-ui-warn">
-                        {{ release.licenses_needing_upgrade }} Lifetime license{{ release.licenses_needing_upgrade === 1 ? " needs" : "s need" }} an upgrade
+                        {{ $t("licenses.versions.needUpgrade", { n: release.licenses_needing_upgrade }, release.licenses_needing_upgrade) }}
                       </span>
-                      <span class="tabular-nums">{{ plural(release.devices_on_version ?? 0, "device") }} on this version</span>
+                      <span class="tabular-nums">{{ $t("licenses.versions.onThisVersion", { count: plural(release.devices_on_version ?? 0, "device") }) }}</span>
                     </div>
                   </div>
 
@@ -408,18 +413,18 @@ const onPublishOpenChange = (value) => {
                       size="sm"
                       :icon="Send"
                       :disabled="!canPublish(release)"
-                      :title="canPublish(release) ? 'Publish version' : PUBLISH_NEEDS_FILE"
+                      :title="canPublish(release) ? $t('licenses.versions.publishVersion') : publishNeedsFileMessage()"
                       @click="openPublish(release)"
                     >
-                      Publish
+                      {{ $t("licenses.versions.publish") }}
                     </UiButton>
                     <button
                       v-if="canEdit"
                       type="button"
                       @click="openEdit(release)"
                       class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-subtle hover:text-ui-ink"
-                      title="Edit version"
-                      aria-label="Edit version"
+                      :title="$t('licenses.versions.editVersion')"
+                      :aria-label="$t('licenses.versions.editVersion')"
                     >
                       <Pencil class="w-4 h-4" />
                     </button>
@@ -428,8 +433,8 @@ const onPublishOpenChange = (value) => {
                       type="button"
                       @click="handleDelete(release)"
                       class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
-                      title="Delete version"
-                      aria-label="Delete version"
+                      :title="$t('licenses.versions.deleteVersion')"
+                      :aria-label="$t('licenses.versions.deleteVersion')"
                     >
                       <Trash2 class="w-4 h-4" />
                     </button>
@@ -437,7 +442,7 @@ const onPublishOpenChange = (value) => {
                 </div>
 
                 <p v-if="canEdit && release.status === 'draft' && !canPublish(release)" class="text-ui-cap text-ui-warn mt-1.5">
-                  {{ PUBLISH_NEEDS_FILE }}
+                  {{ publishNeedsFileMessage() }}
                 </p>
 
                 <!-- Installer -->
@@ -452,7 +457,7 @@ const onPublishOpenChange = (value) => {
                   :aria-expanded="!!expanded[release.id]"
                 >
                   <component :is="expanded[release.id] ? ChevronDown : ChevronRight" class="w-3.5 h-3.5" />
-                  {{ expanded[release.id] ? "Hide changes" : "Show changes" }}
+                  {{ expanded[release.id] ? $t("licenses.timeline.hideChanges") : $t("licenses.timeline.showChanges") }}
                 </button>
                 <div v-if="expanded[release.id]" class="mt-2 space-y-3 ui-anim-fade-up">
                   <div v-for="group in groupChanges(release.changes)" :key="group.value">
@@ -473,7 +478,7 @@ const onPublishOpenChange = (value) => {
                     </p>
                     <p v-if="release.notes" class="flex items-start gap-1.5">
                       <FileText class="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                      <span class="whitespace-pre-line"><span class="font-medium text-ui-text">Internal:</span> {{ release.notes }}</span>
+                      <span class="whitespace-pre-line"><span class="font-medium text-ui-text">{{ $t("licenses.versions.internal") }}</span> {{ release.notes }}</span>
                     </p>
                   </div>
                 </div>
@@ -497,13 +502,13 @@ const onPublishOpenChange = (value) => {
         :open="!!publishing"
         size="sm"
         :persistent="publishSaving"
-        :title="publishing ? `Publish ${productName} ${publishing.version}` : ''"
-        description="The apps will see it in their version history."
+        :title="publishing ? $t('licenses.versions.publishTitle', { product: productName, version: publishing.version }) : ''"
+        :description="$t('licenses.versions.publishDescription')"
         @update:open="onPublishOpenChange"
       >
-        <form id="publish-form" novalidate @submit.prevent="confirmPublish" :aria-label="publishing ? `Publish version ${publishing.version}` : undefined">
+        <form id="publish-form" novalidate @submit.prevent="confirmPublish" :aria-label="publishing ? $t('licenses.versions.publishAria', { version: publishing.version }) : undefined">
           <label for="publish-date" class="block text-ui-small font-medium text-ui-ink mb-1.5">
-            Release Date <span class="text-ui-bad">*</span>
+            {{ $t("licenses.releaseForm.releaseDate") }} <span class="text-ui-bad">*</span>
           </label>
           <div class="relative">
             <input
@@ -517,9 +522,9 @@ const onPublishOpenChange = (value) => {
           <p v-if="publishError" class="text-ui-cap text-ui-bad mt-1.5">{{ publishError }}</p>
         </form>
         <template #footer>
-          <UiButton variant="secondary" :disabled="publishSaving" class="flex-1 sm:flex-none" @click="publishing = null">Cancel</UiButton>
+          <UiButton variant="secondary" :disabled="publishSaving" class="flex-1 sm:flex-none" @click="publishing = null">{{ $t("common.actions.cancel") }}</UiButton>
           <UiButton type="submit" form="publish-form" :icon="Send" :loading="publishSaving" class="flex-1 sm:flex-none">
-            {{ publishSaving ? "Publishing..." : "Publish" }}
+            {{ publishSaving ? $t("licenses.versions.publishing") : $t("licenses.versions.publish") }}
           </UiButton>
         </template>
       </UiModal>

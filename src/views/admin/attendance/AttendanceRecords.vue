@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { Users, Search, Clock, ArrowLeft, ChevronDown, Pencil, ClipboardList } from "lucide-vue-next";
 import { useRouter } from "vue-router";
@@ -14,6 +15,7 @@ import EditAttendanceModal from "@/components/admin/attendance/EditAttendanceMod
 import { can } from "@/helpers/permissionHelper";
 import { UiPageHeader, UiTable, UiBadge, UiButton, UiInput, UiChips } from "@/components/ui";
 
+const { t, te } = useI18n();
 const router = useRouter();
 const store = useAttendanceStore();
 const { attendances, meta, loading } = storeToRefs(store);
@@ -64,28 +66,23 @@ const formatDate = (date) => (date ? formatDateShort(date) : "N/A");
 const formatTime = (time) => (time ? formatTimeUtil(time) : "-");
 
 // Presentation only: table columns, status chips and badge tones.
-const STATUS_OPTIONS = [
-  { value: "", label: "All Statuses" },
-  { value: "present", label: "Present" },
-  { value: "late", label: "Late" },
-  { value: "absent", label: "Absent" },
-  { value: "remote", label: "Remote" },
-  { value: "overtime", label: "Overtime" },
-  { value: "sick_leave", label: "Sick" },
-];
+const STATUS_OPTIONS = computed(() => [
+  { value: "", label: t("common.labels.allStatuses") },
+  ...["present", "late", "absent", "remote", "overtime", "sick_leave"].map((value) => ({ value, label: t(`attendance.status.${value}`) })),
+]);
 const STATUS_TONE = { present: "ok", late: "warn", absent: "bad", remote: "info", overtime: "accent", sick_leave: "bad" };
 const statusTone = (status) => STATUS_TONE[status] || "neutral";
-const statusLabel = (status) => (status === "sick_leave" ? "Sick" : capitalize(status) || "-");
-const columns = [
-  { key: "employee", label: "Employee" },
-  { key: "team", label: "Team" },
-  { key: "date", label: "Date" },
-  { key: "check_in", label: "Check-in" },
-  { key: "check_out", label: "Check-out" },
-  { key: "total_hours", label: "Total Hours", align: "right" },
-  { key: "status", label: "Status" },
-  ...(canEdit ? [{ key: "action", label: "Action", align: "right" }] : []),
-];
+const statusLabel = (status) => (status && te(`attendance.status.${status}`) ? t(`attendance.status.${status}`) : capitalize(status) || "-");
+const columns = computed(() => [
+  { key: "employee", label: t("common.labels.employee") },
+  { key: "team", label: t("common.labels.team") },
+  { key: "date", label: t("common.labels.date") },
+  { key: "check_in", label: t("attendance.records.checkIn") },
+  { key: "check_out", label: t("attendance.records.checkOut") },
+  { key: "total_hours", label: t("attendance.records.totalHours"), align: "right" },
+  { key: "status", label: t("common.labels.status") },
+  ...(canEdit ? [{ key: "action", label: t("common.labels.actions"), align: "right" }] : []),
+]);
 
 const statusBadgeClass = (status) => {
   switch (status) {
@@ -109,15 +106,15 @@ const statusBadgeClass = (status) => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Attendance Records" subtitle="Full attendance history across the company" class="ui-anim-fade-up">
+    <UiPageHeader :title="$t('attendance.records.title')" :subtitle="$t('attendance.records.subtitle')" class="ui-anim-fade-up">
       <template #eyebrow>
         <button
           type="button"
           class="ui-press inline-flex items-center gap-1 mb-1.5 text-ui-small font-medium text-ui-accent hover:underline"
-          aria-label="Back"
+          :aria-label="$t('common.actions.back')"
           @click="router.back()"
         >
-          <ArrowLeft class="w-4 h-4" />Back
+          <ArrowLeft class="w-4 h-4" />{{ $t("common.actions.back") }}
         </button>
       </template>
     </UiPageHeader>
@@ -129,7 +126,7 @@ const statusBadgeClass = (status) => {
           <UiInput
             v-model="search"
             :icon="Search"
-            placeholder="Search employee name..."
+            :placeholder="$t('attendance.searchEmployee')"
             class="md:w-[280px]"
             @keyup.enter="handleSearch"
           />
@@ -137,15 +134,15 @@ const statusBadgeClass = (status) => {
             <input
               v-model="startDate"
               type="date"
-              aria-label="Start date"
+              :aria-label="$t('common.labels.startDate')"
               class="flex-1 md:flex-none min-w-0 h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
               @change="handleFilterChange"
             />
-            <span class="text-ui-small text-ui-muted">to</span>
+            <span class="text-ui-small text-ui-muted">{{ $t("attendance.records.to") }}</span>
             <input
               v-model="endDate"
               type="date"
-              aria-label="End date"
+              :aria-label="$t('common.labels.endDate')"
               :min="startDate || undefined"
               class="flex-1 md:flex-none min-w-0 h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
               @change="handleFilterChange"
@@ -187,9 +184,9 @@ const statusBadgeClass = (status) => {
             variant="secondary"
             size="sm"
             :icon="Pencil"
-            :aria-label="`Edit attendance of ${row.employee?.user?.name || 'employee'}`"
+            :aria-label="$t('attendance.records.editAria', { name: row.employee?.user?.name || '-' })"
             @click.stop="openEdit(row)"
-          >Edit</UiButton>
+          >{{ $t("common.actions.edit") }}</UiButton>
         </template>
 
         <!-- Phones: one card per record -->
@@ -218,10 +215,10 @@ const statusBadgeClass = (status) => {
                   v-if="canEdit"
                   type="button"
                   class="ui-press inline-flex items-center gap-1 text-ui-cap font-medium text-ui-accent"
-                  :aria-label="`Edit attendance of ${row.employee?.user?.name || 'employee'}`"
+                  :aria-label="$t('attendance.records.editAria', { name: row.employee?.user?.name || '-' })"
                   @click.stop="openEdit(row)"
                 >
-                  <Pencil class="w-3.5 h-3.5" />Edit
+                  <Pencil class="w-3.5 h-3.5" />{{ $t("common.actions.edit") }}
                 </button>
               </div>
             </div>
@@ -233,13 +230,13 @@ const statusBadgeClass = (status) => {
             <div class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mb-3">
               <ClipboardList class="w-5 h-5" />
             </div>
-            <p class="text-ui-body font-medium text-ui-ink">No Attendance records yet</p>
+            <p class="text-ui-body font-medium text-ui-ink">{{ $t("attendance.records.empty") }}</p>
           </div>
         </template>
       </UiTable>
 
       <div class="px-4 sm:px-5 pb-4">
-        <Pagination :meta="meta" :loading="loading" item-label="records" @page-change="load" />
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('attendance.records.itemLabel')" @page-change="load" />
       </div>
     </section>
 

@@ -4,6 +4,7 @@
 // summary" on the right (4/12). Below lg everything stacks and a sticky
 // bottom bar carries the primary button. The parent owns submission.
 import { computed, nextTick, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   IdCard,
   User,
@@ -70,7 +71,7 @@ const form = defineModel({ type: Object, required: true });
 const props = defineProps({
   loading: { type: Boolean, default: false },
   errors: { type: Object, default: () => ({}) },
-  submitLabel: { type: String, default: "Save License" },
+  submitLabel: { type: String, default: "" },
   isEdit: { type: Boolean, default: false },
   // The product comes from the URL; shown read-only.
   product: { type: Object, default: null },
@@ -84,6 +85,9 @@ const props = defineProps({
 
 const emit = defineEmits(["submit", "cancel"]);
 
+const { t } = useI18n();
+const submitText = computed(() => props.submitLabel || t("licenses.form.saveLicense"));
+
 const formEl = ref(null);
 
 const fieldError = (field) => {
@@ -96,7 +100,7 @@ const isOrganization = computed(() => category.value === "organization");
 const isLifetimePlan = computed(() => planType(form.value.plan) === "lifetime");
 // iPad has no Trial, so its picker shows one card less.
 const planGroups = computed(() => planGroupsFor(form.value.platform));
-const individualCount = computed(() => planGroups.value.find((g) => g.label === "Individual")?.plans.length || 0);
+const individualCount = computed(() => planGroups.value.find((g) => g.plans[0]?.category === "individual")?.plans.length || 0);
 // Create offers Mac, iPad, or both at once; edit shows the fixed platform.
 const platformChoices = computed(() => (props.isEdit ? PLATFORM_OPTIONS : PLATFORM_CHOICES));
 const platformInfo = computed(() => PLATFORM_CHOICES.find((p) => p.value === form.value.platform) || null);
@@ -216,11 +220,11 @@ const checklist = computed(() => {
   if (!isLifetimePlan.value) {
     items.push({
       field: "duration",
-      label: "Duration",
+      label: t("licenses.form.duration"),
       done: !liveErrors.value.duration && !liveErrors.value.expires_at,
     });
   }
-  items.push({ field: "max_devices", label: "Max devices", done: !liveErrors.value.max_devices });
+  items.push({ field: "max_devices", label: t("licenses.fields.maxDevices"), done: !liveErrors.value.max_devices });
   return items;
 });
 const doneCount = computed(() => checklist.value.filter((i) => i.done).length);
@@ -241,16 +245,24 @@ const optionCard = (selected) => [
   "relative flex text-left rounded-ui-card border bg-ui-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
   selected ? "border-ui-ink ring-1 ring-ui-ink" : "border-ui-line hover:border-ui-line-strong hover:bg-ui-subtle/60",
 ];
-const sections = {
-  plan: { icon: ShieldCheck, title: "Platform & plan", subtitle: "The platform is part of the key and cannot change later." },
-  licensee: { icon: IdCard, title: "Licensee", subtitle: "Shown on the certificate." },
-  location: { icon: MapPin, title: "Location", subtitle: "Indonesian addresses use the region list." },
-  organization: { icon: Building2, title: "Organization", subtitle: "Shown on the certificate." },
-  contact: { icon: Contact, title: "Contact Person", subtitle: "Receives the certificate and renewal reminders." },
-  address: { icon: MapPin, title: "Address", subtitle: "Indonesian addresses use the region list." },
-  terms: { icon: CalendarClock, title: "License Terms", subtitle: "Duration, devices and how keys are handed out." },
-  notes: { icon: FileText, title: "Notes", subtitle: "Internal only, not on the certificate." },
+const SECTION_ICONS = {
+  plan: ShieldCheck,
+  licensee: IdCard,
+  location: MapPin,
+  organization: Building2,
+  contact: Contact,
+  address: MapPin,
+  terms: CalendarClock,
+  notes: FileText,
 };
+const sections = computed(() =>
+  Object.fromEntries(
+    Object.entries(SECTION_ICONS).map(([key, icon]) => [
+      key,
+      { icon, title: t(`licenses.form.sections.${key}.title`), subtitle: t(`licenses.form.sections.${key}.subtitle`) },
+    ])
+  )
+);
 </script>
 
 <template>
@@ -267,8 +279,8 @@ const sections = {
         </span>
       </template>
       <template #actions>
-        <UiButton variant="secondary" @click="emit('cancel')">Cancel</UiButton>
-        <UiButton type="submit" :icon="Check" :loading="loading">{{ loading ? "Saving..." : submitLabel }}</UiButton>
+        <UiButton variant="secondary" @click="emit('cancel')">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" :icon="Check" :loading="loading">{{ loading ? $t("common.actions.saving") : submitText }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -292,7 +304,7 @@ const sections = {
 
           <!-- Platform: Mac, iPad or both; fixed after create -->
           <div data-field="platform" class="mb-4">
-            <div class="flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="radiogroup" aria-label="Platform">
+            <div class="flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="radiogroup" :aria-label="$t('licenses.form.platform')">
               <button
                 v-for="option in platformChoices"
                 :key="option.value"
@@ -311,7 +323,7 @@ const sections = {
               </button>
             </div>
             <p class="text-ui-cap text-ui-muted mt-2">
-              <template v-if="isEdit">The platform is part of the key, so it cannot be changed.</template>
+              <template v-if="isEdit">{{ $t("licenses.form.platformFixed") }}</template>
               <template v-else-if="platformInfo">{{ platformInfo.label }}: {{ platformInfo.note }}</template>
             </p>
             <p v-if="fieldError('platform')" class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("platform") }}</p>
@@ -319,8 +331,8 @@ const sections = {
 
           <!-- Group labels above their cards (md and up) -->
           <div class="hidden md:grid gap-3 mb-2" :class="individualCount === 3 ? 'grid-cols-4' : 'grid-cols-3'">
-            <p class="text-ui-over uppercase text-ui-muted" :class="individualCount === 3 ? 'col-span-3' : 'col-span-2'">Individual</p>
-            <p class="text-ui-over uppercase text-ui-muted">Organization</p>
+            <p class="text-ui-over uppercase text-ui-muted" :class="individualCount === 3 ? 'col-span-3' : 'col-span-2'">{{ $t("licenses.category.individual") }}</p>
+            <p class="text-ui-over uppercase text-ui-muted">{{ $t("licenses.category.organization") }}</p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" :class="individualCount === 3 ? 'md:grid-cols-4' : 'md:grid-cols-3'">
             <template v-for="group in planGroups" :key="group.label">
@@ -344,9 +356,9 @@ const sections = {
           <div v-if="planChanged" class="mt-3 flex items-start gap-2.5 p-3 rounded-ui-card border border-ui-warn/20 bg-ui-warn-soft text-ui-warn">
             <KeyRound class="w-4 h-4 shrink-0 mt-0.5" />
             <p class="text-ui-cap">
-              <span class="font-semibold">A new license key will be generated.</span>
-              The current key{{ perDevice ? "s" : "" }} stop working and every device has to activate again with the new key.
-              Send the licensee the new certificate after saving.
+              <span class="font-semibold">{{ $t("licenses.form.planChangeTitle") }}</span>
+              {{ perDevice ? $t("licenses.form.planChangeKeys") : $t("licenses.form.planChangeKey") }}
+              {{ $t("licenses.form.planChangeSend") }}
             </p>
           </div>
         </section>
@@ -364,20 +376,20 @@ const sections = {
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5">
-              <LicenseFormField field="licensee_name" label="Full Name" :required="required('licensee_name')" :error="fieldError('licensee_name')" :icon="User" v-slot="{ id }">
-                <input :id="id" v-model="form.licensee_name" type="text" autocomplete="name" placeholder="e.g. Jane Orienteer" :class="inputClass('licensee_name')" />
+              <LicenseFormField field="licensee_name" :label="$t('licenses.form.fullName')" :required="required('licensee_name')" :error="fieldError('licensee_name')" :icon="User" v-slot="{ id }">
+                <input :id="id" v-model="form.licensee_name" type="text" autocomplete="name" :placeholder="$t('licenses.form.fullNamePlaceholder')" :class="inputClass('licensee_name')" />
               </LicenseFormField>
-              <LicenseFormField field="licensee_email" label="Email" :required="required('licensee_email')" :error="fieldError('licensee_email')" :icon="Mail" v-slot="{ id }">
+              <LicenseFormField field="licensee_email" :label="$t('common.labels.email')" :required="required('licensee_email')" :error="fieldError('licensee_email')" :icon="Mail" v-slot="{ id }">
                 <input :id="id" v-model="form.licensee_email" type="email" autocomplete="email" placeholder="name@example.com" :class="inputClass('licensee_email')" />
               </LicenseFormField>
-              <LicenseFormField field="phone" label="Phone / WhatsApp" :required="required('phone')" :error="fieldError('phone')" :icon="Phone" v-slot="{ id }">
+              <LicenseFormField field="phone" :label="$t('licenses.checklist.phone')" :required="required('phone')" :error="fieldError('phone')" :icon="Phone" v-slot="{ id }">
                 <input :id="id" v-model="form.phone" type="tel" autocomplete="tel" placeholder="+62 812-3456-7890" :class="inputClass('phone')" />
               </LicenseFormField>
-              <LicenseFormField field="occupation" label="Occupation" :required="required('occupation')" :error="fieldError('occupation')" :icon="Briefcase" hint="e.g. Mapper, Course setter, Coach" v-slot="{ id }">
-                <input :id="id" v-model="form.occupation" type="text" placeholder="Mapper" :class="inputClass('occupation')" />
+              <LicenseFormField field="occupation" :label="$t('licenses.fields.occupation')" :required="required('occupation')" :error="fieldError('occupation')" :icon="Briefcase" :hint="$t('licenses.form.occupationHint')" v-slot="{ id }">
+                <input :id="id" v-model="form.occupation" type="text" :placeholder="$t('licenses.form.occupationPlaceholder')" :class="inputClass('occupation')" />
               </LicenseFormField>
-              <LicenseFormField field="affiliation" label="Affiliation" :required="required('affiliation')" :error="fieldError('affiliation')" :icon="GraduationCap" hint="Club or school" wide v-slot="{ id }">
-                <input :id="id" v-model="form.affiliation" type="text" placeholder="e.g. Jakarta Orienteering Club" :class="inputClass('affiliation')" />
+              <LicenseFormField field="affiliation" :label="$t('licenses.fields.affiliation')" :required="required('affiliation')" :error="fieldError('affiliation')" :icon="GraduationCap" :hint="$t('licenses.form.affiliationHint')" wide v-slot="{ id }">
+                <input :id="id" v-model="form.affiliation" type="text" :placeholder="$t('licenses.form.clubPlaceholder')" :class="inputClass('affiliation')" />
               </LicenseFormField>
             </div>
           </section>
@@ -409,24 +421,24 @@ const sections = {
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-5">
-              <LicenseFormField field="licensee_name" label="Organization Name" :required="required('licensee_name')" :error="fieldError('licensee_name')" :icon="Building2" class="md:col-span-3" v-slot="{ id }">
-                <input :id="id" v-model="form.licensee_name" type="text" autocomplete="organization" placeholder="e.g. Jakarta Orienteering Club" :class="inputClass('licensee_name')" />
+              <LicenseFormField field="licensee_name" :label="$t('licenses.form.organizationName')" :required="required('licensee_name')" :error="fieldError('licensee_name')" :icon="Building2" class="md:col-span-3" v-slot="{ id }">
+                <input :id="id" v-model="form.licensee_name" type="text" autocomplete="organization" :placeholder="$t('licenses.form.clubPlaceholder')" :class="inputClass('licensee_name')" />
               </LicenseFormField>
 
-              <LicenseFormField field="organization_type" label="Type" :required="required('organization_type')" :error="fieldError('organization_type')" v-slot="{ id }">
+              <LicenseFormField field="organization_type" :label="$t('licenses.form.orgType')" :required="required('organization_type')" :error="fieldError('organization_type')" v-slot="{ id }">
                 <select :id="id" v-model="form.organization_type" :class="[inputClass('organization_type', false), 'appearance-none pr-9', form.organization_type ? '' : 'text-ui-faint']">
-                  <option value="" disabled>Choose a type</option>
+                  <option value="" disabled>{{ $t("licenses.form.chooseType") }}</option>
                   <option v-for="opt in ORGANIZATION_TYPE_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                 </select>
                 <ChevronDown class="absolute right-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
               </LicenseFormField>
-              <LicenseFormField field="member_count" label="Member Count" :required="required('member_count')" :error="fieldError('member_count')" :icon="Users" v-slot="{ id }">
-                <input :id="id" v-model.number="form.member_count" type="number" min="1" step="1" placeholder="e.g. 120" :class="[inputClass('member_count'), 'tabular-nums']" />
+              <LicenseFormField field="member_count" :label="$t('licenses.form.memberCount')" :required="required('member_count')" :error="fieldError('member_count')" :icon="Users" v-slot="{ id }">
+                <input :id="id" v-model.number="form.member_count" type="number" min="1" step="1" :placeholder="$t('licenses.form.memberCountPlaceholder')" :class="[inputClass('member_count'), 'tabular-nums']" />
               </LicenseFormField>
-              <LicenseFormField field="website" label="Website" :required="required('website')" :error="fieldError('website')" :icon="Link2" v-slot="{ id }">
+              <LicenseFormField field="website" :label="$t('licenses.fields.website')" :required="required('website')" :error="fieldError('website')" :icon="Link2" v-slot="{ id }">
                 <input :id="id" v-model="form.website" type="url" placeholder="https://example.org" :class="inputClass('website')" />
               </LicenseFormField>
-              <LicenseFormField field="tax_id" label="Tax ID (NPWP)" :required="required('tax_id')" :error="fieldError('tax_id')" :icon="Receipt" v-slot="{ id }">
+              <LicenseFormField field="tax_id" :label="$t('licenses.form.taxId')" :required="required('tax_id')" :error="fieldError('tax_id')" :icon="Receipt" v-slot="{ id }">
                 <input :id="id" v-model="form.tax_id" type="text" placeholder="00.000.000.0-000.000" :class="inputClass('tax_id')" />
               </LicenseFormField>
             </div>
@@ -443,16 +455,16 @@ const sections = {
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5">
-              <LicenseFormField field="contact_name" label="Name" :required="required('contact_name')" :error="fieldError('contact_name')" :icon="User" v-slot="{ id }">
-                <input :id="id" v-model="form.contact_name" type="text" autocomplete="name" placeholder="e.g. Budi Santoso" :class="inputClass('contact_name')" />
+              <LicenseFormField field="contact_name" :label="$t('common.labels.name')" :required="required('contact_name')" :error="fieldError('contact_name')" :icon="User" v-slot="{ id }">
+                <input :id="id" v-model="form.contact_name" type="text" autocomplete="name" :placeholder="$t('licenses.form.contactNamePlaceholder')" :class="inputClass('contact_name')" />
               </LicenseFormField>
-              <LicenseFormField field="contact_position" label="Position" :required="required('contact_position')" :error="fieldError('contact_position')" :icon="Briefcase" v-slot="{ id }">
-                <input :id="id" v-model="form.contact_position" type="text" placeholder="e.g. Secretary" :class="inputClass('contact_position')" />
+              <LicenseFormField field="contact_position" :label="$t('licenses.form.position')" :required="required('contact_position')" :error="fieldError('contact_position')" :icon="Briefcase" v-slot="{ id }">
+                <input :id="id" v-model="form.contact_position" type="text" :placeholder="$t('licenses.form.positionPlaceholder')" :class="inputClass('contact_position')" />
               </LicenseFormField>
-              <LicenseFormField field="licensee_email" label="Email" :required="required('licensee_email')" :error="fieldError('licensee_email')" :icon="Mail" v-slot="{ id }">
+              <LicenseFormField field="licensee_email" :label="$t('common.labels.email')" :required="required('licensee_email')" :error="fieldError('licensee_email')" :icon="Mail" v-slot="{ id }">
                 <input :id="id" v-model="form.licensee_email" type="email" autocomplete="email" placeholder="contact@example.org" :class="inputClass('licensee_email')" />
               </LicenseFormField>
-              <LicenseFormField field="phone" label="Phone / WhatsApp" :required="required('phone')" :error="fieldError('phone')" :icon="Phone" v-slot="{ id }">
+              <LicenseFormField field="phone" :label="$t('licenses.checklist.phone')" :required="required('phone')" :error="fieldError('phone')" :icon="Phone" v-slot="{ id }">
                 <input :id="id" v-model="form.phone" type="tel" autocomplete="tel" placeholder="+62 812-3456-7890" :class="inputClass('phone')" />
               </LicenseFormField>
             </div>
@@ -487,8 +499,8 @@ const sections = {
           <div v-if="isLifetimePlan" data-field="type" class="flex items-center gap-3 p-3.5 mb-5 rounded-ui-card border border-ui-accent/20 bg-ui-accent-soft">
             <InfinityIcon class="w-5 h-5 text-ui-accent shrink-0" />
             <div>
-              <p class="text-ui-h3 text-ui-ink">Lifetime &middot; never expires</p>
-              <p class="text-ui-cap text-ui-muted">One-time payment; no duration or expiry date.</p>
+              <p class="text-ui-h3 text-ui-ink">{{ $t("licenses.form.lifetimeNeverExpires") }}</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("licenses.form.lifetimeHint") }}</p>
             </div>
           </div>
 
@@ -496,9 +508,9 @@ const sections = {
             <div v-if="isLifetimePlan">
               <LicenseFormField
                 field="updates_major"
-                label="Covers Major Version"
+                :label="$t('licenses.form.coversMajor')"
                 :error="fieldError('updates_major')"
-                hint="Lifetime covers one major version and its updates; raise it after a paid upgrade."
+                :hint="$t('licenses.form.coversMajorHint')"
                 v-slot="{ id }"
               >
                 <input
@@ -515,9 +527,9 @@ const sections = {
             </div>
 
             <div v-else data-field="duration" class="min-w-0">
-              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Duration <span class="text-ui-bad">*</span></p>
+              <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("licenses.form.duration") }} <span class="text-ui-bad">*</span></p>
               <!-- Segmented control: the plan's main presets -->
-              <div class="flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="radiogroup" aria-label="Duration">
+              <div class="flex p-1 bg-ui-subtle border border-ui-line rounded-ui-card" role="radiogroup" :aria-label="$t('licenses.form.duration')">
                 <button
                   v-for="opt in durations.primary"
                   :key="opt.value"
@@ -532,7 +544,7 @@ const sections = {
                 </button>
               </div>
               <div v-if="durations.secondary.length" class="flex items-center gap-1.5 mt-2">
-                <span class="text-ui-cap text-ui-muted">or</span>
+                <span class="text-ui-cap text-ui-muted">{{ $t("licenses.form.or") }}</span>
                 <button
                   v-for="opt in durations.secondary"
                   :key="opt.value"
@@ -547,13 +559,14 @@ const sections = {
               </div>
 
               <p v-if="period.end && form.duration !== 'custom'" class="text-ui-cap text-ui-muted mt-2">
-                {{ isEdit ? "New expiry" : "Expires" }} on approximately
-                <span class="font-medium text-ui-ink">{{ period.end }}</span> (counted from today).
+                <i18n-t :keypath="isEdit ? 'licenses.form.newExpiryOn' : 'licenses.form.expiresOn'" tag="span" scope="global">
+                  <template #date><span class="font-medium text-ui-ink">{{ period.end }}</span></template>
+                </i18n-t>
               </p>
 
               <div v-if="form.duration === 'custom'" data-field="expires_at" class="mt-3">
                 <label for="license-expires_at" class="block text-ui-small font-medium text-ui-ink mb-1.5">
-                  Expiry Date <span class="text-ui-bad">*</span>
+                  {{ $t("licenses.form.expiryDate") }} <span class="text-ui-bad">*</span>
                 </label>
                 <div class="relative">
                   <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
@@ -574,7 +587,7 @@ const sections = {
 
             <div data-field="max_devices">
               <label for="license-max_devices" class="block text-ui-small font-medium text-ui-ink mb-1.5">
-                Max Devices <span class="text-ui-bad">*</span>
+                {{ $t("licenses.form.maxDevices") }} <span class="text-ui-bad">*</span>
               </label>
               <div
                 class="inline-flex items-center border rounded-ui-control bg-ui-surface overflow-hidden"
@@ -585,7 +598,7 @@ const sections = {
                   @click="stepDevices(-1)"
                   :disabled="Number(form.max_devices) <= 1"
                   class="w-10 h-[38px] flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink disabled:opacity-40"
-                  aria-label="One device fewer"
+                  :aria-label="$t('licenses.form.deviceFewer')"
                 >
                   <Minus class="w-4 h-4" />
                 </button>
@@ -603,7 +616,7 @@ const sections = {
                   @click="stepDevices(1)"
                   :disabled="Number(form.max_devices) >= 100"
                   class="w-10 h-[38px] flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink disabled:opacity-40"
-                  aria-label="One device more"
+                  :aria-label="$t('licenses.form.deviceMore')"
                 >
                   <Plus class="w-4 h-4" />
                 </button>
@@ -612,9 +625,9 @@ const sections = {
                 {{
                   perDevice
                     ? isEdit
-                      ? "One key per device; raising it adds keys."
-                      : `${Number(form.max_devices) || 0} unique key(s) are generated, one per device.`
-                    : "Devices that can use this key at once."
+                      ? $t("licenses.form.maxDevicesHintEdit")
+                      : $t("licenses.form.maxDevicesHintCreate", { n: Number(form.max_devices) || 0 }, Number(form.max_devices) || 0)
+                    : $t("licenses.form.maxDevicesHintShared")
                 }}
               </p>
               <p v-else class="text-ui-cap text-ui-bad mt-1.5">{{ fieldError("max_devices") }}</p>
@@ -624,7 +637,7 @@ const sections = {
 
           <!-- Key mode: one key per device or one shared key -->
           <div data-field="key_mode" class="mb-4">
-            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Keys</p>
+            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("licenses.form.keys") }}</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 v-for="option in KEY_MODE_OPTIONS"
@@ -644,7 +657,7 @@ const sections = {
                 <Check v-else-if="form.key_mode === option.value" class="w-4 h-4 text-ui-ink shrink-0" />
               </button>
             </div>
-            <p v-if="isEdit" class="text-ui-cap text-ui-muted mt-2">The key mode is set when the license is created.</p>
+            <p v-if="isEdit" class="text-ui-cap text-ui-muted mt-2">{{ $t("licenses.form.keyModeFixed") }}</p>
             <p v-if="fieldError('key_mode')" class="text-ui-cap text-ui-bad mt-2">{{ fieldError("key_mode") }}</p>
           </div>
 
@@ -652,8 +665,8 @@ const sections = {
             <div class="flex items-center gap-3 min-w-0">
               <Power class="w-4 h-4 text-ui-muted shrink-0" />
               <div class="min-w-0">
-                <p class="text-ui-h3 text-ui-ink">{{ form.is_active ? "Active" : "Inactive" }}</p>
-                <p class="text-ui-cap text-ui-muted">Inactive keys are rejected on the next check.</p>
+                <p class="text-ui-h3 text-ui-ink">{{ form.is_active ? $t("common.labels.active") : $t("common.labels.inactive") }}</p>
+                <p class="text-ui-cap text-ui-muted">{{ $t("licenses.form.inactiveHint") }}</p>
               </div>
             </div>
             <LicenseStatusSwitch v-model="form.is_active" :label="null" />
@@ -671,12 +684,12 @@ const sections = {
               <p class="text-ui-cap text-ui-muted">{{ sections.notes.subtitle }}</p>
             </div>
           </div>
-          <LicenseFormField field="notes" label="Internal Notes" :error="fieldError('notes')" v-slot="{ id }">
+          <LicenseFormField field="notes" :label="$t('licenses.releaseForm.internalNotes')" :error="fieldError('notes')" v-slot="{ id }">
             <textarea
               :id="id"
               v-model="form.notes"
               rows="3"
-              placeholder="Invoice number, event, payment..."
+              :placeholder="$t('licenses.form.notesPlaceholder')"
               :class="[inputClass('notes', false), 'resize-y']"
             ></textarea>
           </LicenseFormField>
@@ -689,61 +702,71 @@ const sections = {
           <div class="flex items-center gap-3 mb-2">
             <ProductIcon :product="product" :size="32" />
             <div class="min-w-0">
-              <p class="text-ui-cap text-ui-muted">Summary</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("licenses.form.summary") }}</p>
               <p class="text-ui-h3 text-ui-ink truncate">{{ product?.name || "—" }}</p>
             </div>
           </div>
 
           <dl class="divide-y divide-ui-line text-ui-small">
             <div class="flex items-center justify-between gap-3 py-2.5">
-              <dt class="text-ui-muted">Platform</dt>
+              <dt class="text-ui-muted">{{ $t("licenses.form.platform") }}</dt>
               <dd class="text-ui-ink">{{ platformInfo?.label || "—" }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 py-2.5">
-              <dt class="text-ui-muted">Plan</dt>
+              <dt class="text-ui-muted">{{ $t("licenses.form.plan") }}</dt>
               <dd class="text-ui-ink text-right">
                 {{ planInfo?.label || "—" }}<span v-if="!isOrganization" class="text-ui-muted"> &middot; {{ categoryLabel({ plan: form.plan }) }}</span>
               </dd>
             </div>
             <div class="flex items-start justify-between gap-3 py-2.5">
-              <dt class="text-ui-muted shrink-0">{{ isOrganization ? "Organization" : "Licensee" }}</dt>
+              <dt class="text-ui-muted shrink-0">{{ isOrganization ? $t("licenses.category.organization") : $t("licenses.form.licensee") }}</dt>
               <dd class="text-right min-w-0 break-words" :class="form.licensee_name ? 'text-ui-ink' : 'text-ui-faint'">{{ display(form.licensee_name) }}</dd>
             </div>
             <div class="flex items-start justify-between gap-3 py-2.5">
-              <dt class="text-ui-muted shrink-0">Email</dt>
+              <dt class="text-ui-muted shrink-0">{{ $t("common.labels.email") }}</dt>
               <dd class="text-right min-w-0 break-all" :class="form.licensee_email ? 'text-ui-ink' : 'text-ui-faint'">{{ display(form.licensee_email) }}</dd>
             </div>
             <div class="flex items-start justify-between gap-3 py-2.5">
-              <dt class="text-ui-muted shrink-0">Phone</dt>
+              <dt class="text-ui-muted shrink-0">{{ $t("common.labels.phone") }}</dt>
               <dd class="text-right min-w-0" :class="form.phone ? 'text-ui-ink' : 'text-ui-faint'">{{ display(form.phone) }}</dd>
             </div>
             <div class="flex items-start justify-between gap-3 py-2.5">
-              <dt class="text-ui-muted shrink-0">Address</dt>
+              <dt class="text-ui-muted shrink-0">{{ $t("common.labels.address") }}</dt>
               <dd class="text-right min-w-0 break-words" :class="fullAddress ? 'text-ui-ink' : 'text-ui-faint'">{{ display(fullAddress) }}</dd>
             </div>
             <div class="flex items-start justify-between gap-3 py-2.5">
-              <dt class="text-ui-muted shrink-0">Active period</dt>
-              <dd v-if="period.lifetime" class="text-ui-ink text-right">Lifetime &middot; never expires</dd>
+              <dt class="text-ui-muted shrink-0">{{ $t("licenses.form.activePeriod") }}</dt>
+              <dd v-if="period.lifetime" class="text-ui-ink text-right">{{ $t("licenses.form.lifetimeNeverExpires") }}</dd>
               <dd v-else class="text-ui-ink text-right tabular-nums">
                 {{ period.start }} &rarr;
                 <template v-if="period.end">{{ period.end }}</template>
-                <span v-else class="text-ui-faint">pick a date</span>
-                <span v-if="period.days !== null" class="block text-ui-cap text-ui-muted">{{ period.days }} days</span>
+                <span v-else class="text-ui-faint">{{ $t("licenses.form.pickDate") }}</span>
+                <span v-if="period.days !== null" class="block text-ui-cap text-ui-muted">{{ $t("licenses.period.days", { n: period.days }, period.days) }}</span>
               </dd>
             </div>
             <div class="flex items-center justify-between gap-3 py-2.5">
-              <dt class="text-ui-muted">Max devices</dt>
+              <dt class="text-ui-muted">{{ $t("licenses.fields.maxDevices") }}</dt>
               <dd class="text-ui-ink tabular-nums">{{ display(form.max_devices) }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 py-2.5">
-              <dt class="text-ui-muted">Keys</dt>
-              <dd class="text-ui-ink text-right">{{ perDevice ? `${display(form.max_devices)}, one per device` : "One shared key" }}</dd>
+              <dt class="text-ui-muted">{{ $t("licenses.form.keys") }}</dt>
+              <dd class="text-ui-ink text-right">{{ perDevice ? $t("licenses.form.keysPerDevice", { n: display(form.max_devices) }) : $t("licenses.keyMode.shared.label") }}</dd>
             </div>
           </dl>
 
           <div class="pt-3 border-t border-ui-line">
             <p class="text-ui-over uppercase text-ui-muted mb-1.5">
-              {{ licenseKey ? (perDevice ? "Key 1" : "Key") : keyPreviews.length > 1 ? "Key previews (2 platforms)" : perDevice ? "Key 1 preview" : "Key preview" }}
+              {{
+                licenseKey
+                  ? perDevice
+                    ? $t("licenses.form.key1")
+                    : $t("licenses.form.key")
+                  : keyPreviews.length > 1
+                    ? $t("licenses.form.keyPreviews2")
+                    : perDevice
+                      ? $t("licenses.form.key1Preview")
+                      : $t("licenses.form.keyPreview")
+              }}
             </p>
             <div class="space-y-1.5">
               <p
@@ -755,7 +778,11 @@ const sections = {
               </p>
             </div>
             <p v-if="perDevice && !licenseKey && Number(form.max_devices) > 1" class="text-ui-cap text-ui-muted mt-1.5">
-              + {{ Number(form.max_devices) - 1 }} more key(s){{ keyPreviews.length > 1 ? " per platform" : "" }} with the same number.
+              {{
+                keyPreviews.length > 1
+                  ? $t("licenses.form.moreKeysPerPlatform", { n: Number(form.max_devices) - 1 }, Number(form.max_devices) - 1)
+                  : $t("licenses.form.moreKeys", { n: Number(form.max_devices) - 1 }, Number(form.max_devices) - 1)
+              }}
             </p>
           </div>
         </section>
@@ -763,12 +790,12 @@ const sections = {
         <!-- Required fields -->
         <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 min-w-0">
           <div class="flex items-center justify-between gap-2 mb-2.5">
-            <h3 class="text-ui-h3 text-ui-ink">Required fields</h3>
+            <h3 class="text-ui-h3 text-ui-ink">{{ $t("licenses.form.requiredFields") }}</h3>
             <span class="text-ui-cap font-medium px-2 py-0.5 rounded-full tabular-nums" :class="allDone ? 'bg-ui-ok-soft text-ui-ok' : 'bg-ui-warn-soft text-ui-warn'">
-              {{ doneCount }} of {{ checklist.length }}
+              {{ $t("licenses.form.doneOf", { done: doneCount, total: checklist.length }) }}
             </span>
           </div>
-          <div class="h-1 w-full bg-ui-subtle rounded-full overflow-hidden mb-3" role="progressbar" :aria-valuenow="doneCount" aria-valuemin="0" :aria-valuemax="checklist.length" aria-label="Required fields complete">
+          <div class="h-1 w-full bg-ui-subtle rounded-full overflow-hidden mb-3" role="progressbar" :aria-valuenow="doneCount" aria-valuemin="0" :aria-valuemax="checklist.length" :aria-label="$t('licenses.form.requiredComplete')">
             <div class="h-full rounded-full transition-all duration-ui-slow" :class="allDone ? 'bg-ui-ok' : 'bg-ui-ink'" :style="{ width: `${(doneCount / checklist.length) * 100}%` }"></div>
           </div>
           <ul class="grid grid-cols-2 gap-x-3 gap-y-1.5">
@@ -780,7 +807,7 @@ const sections = {
           </ul>
         </section>
 
-        <UiButton type="submit" size="lg" block :icon="Check" :loading="loading">{{ loading ? "Saving..." : submitLabel }}</UiButton>
+        <UiButton type="submit" size="lg" block :icon="Check" :loading="loading">{{ loading ? $t("common.actions.saving") : submitText }}</UiButton>
       </aside>
     </div>
   </form>

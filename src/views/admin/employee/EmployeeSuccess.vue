@@ -35,25 +35,25 @@ const addAnotherEmployee = () => {
           </div>
         </div>
 
-        <h1 class="text-ui-h1 text-ui-ink mt-5">Added Successfully!</h1>
+        <h1 class="text-ui-h1 text-ui-ink mt-5">{{ $t("employees.success.title") }}</h1>
         <p class="text-ui-body text-ui-muted mt-2">
-          The new employee has been successfully added to your system.
+          {{ $t("employees.success.message") }}
         </p>
 
         <div class="flex flex-col gap-2.5 mt-7">
           <UiButton size="lg" block :icon-right="Users" @click="goToEmployees">
-            View All Employees
+            {{ $t("employees.success.viewAll") }}
           </UiButton>
           <UiButton variant="secondary" size="lg" block :icon-right="Plus" @click="addAnotherEmployee">
-            Add Another Employee
+            {{ $t("employees.success.addAnother") }}
           </UiButton>
         </div>
       </div>
 
       <!-- Quick Stats -->
       <div class="grid grid-cols-2 gap-3 sm:gap-4 ui-stagger">
-        <UiStat label="Total Employees" :icon="Users" :value="statistics.total" :loading="loadingStatistics" />
-        <UiStat label="Added This Month" :icon="UserPlus" :value="statistics.added_this_month" :loading="loadingStatistics" />
+        <UiStat :label="$t('employees.success.totalEmployees')" :icon="Users" :value="statistics.total" :loading="loadingStatistics" />
+        <UiStat :label="$t('employees.success.addedThisMonth')" :icon="UserPlus" :value="statistics.added_this_month" :loading="loadingStatistics" />
       </div>
     </div>
   </div>

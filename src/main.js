@@ -6,6 +6,7 @@ import './assets/css/main.css'
 import App from './App.vue'
 import router from './router'
 import { initTheme } from './composables/useTheme'
+import { i18n } from './i18n'
 
 // vue3-apexcharts's own onMounted hook calls its internal init() (async,
 // returns the chart's render() promise) without awaiting or catching it --
@@ -22,6 +23,7 @@ window.addEventListener('unhandledrejection', (event) => {
 })
 
 const app = createApp(App)
+app.use(i18n)
 
 app.use(createPinia())
 app.use(router)

@@ -18,7 +18,7 @@ const runAction = (toast) => {
 
 <template>
   <div
-    class="fixed z-[110] left-4 right-4 bottom-[96px] sm:bottom-6 sm:left-auto sm:right-6 sm:w-[380px] flex flex-col gap-2 pointer-events-none"
+    class="fixed z-[110] left-4 right-4 bottom-[calc(140px+env(safe-area-inset-bottom))] lg:bottom-[76px] sm:left-auto sm:right-6 sm:w-[380px] flex flex-col gap-2 pointer-events-none"
     aria-live="polite"
     role="status"
   >
@@ -36,7 +36,7 @@ const runAction = (toast) => {
         <button v-if="toast.action" type="button" class="text-ui-small font-medium text-white/80 hover:text-white" @click="runAction(toast)">
           {{ toast.action.label }}
         </button>
-        <button type="button" class="text-white/50 hover:text-white" aria-label="Dismiss" @click="store.dismiss(toast.id)">
+        <button type="button" class="text-white/50 hover:text-white" :aria-label="$t('common.a11y.close')" @click="store.dismiss(toast.id)">
           <X class="w-4 h-4" />
         </button>
       </div>

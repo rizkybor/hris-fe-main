@@ -39,7 +39,7 @@ watch(() => props.team?.id, async (newId) => {
 <template>
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ui-stagger">
     <UiStat
-      label="Active Members"
+      :label="$t('teams.detail.stats.activeMembers')"
       :icon="Users"
       :value="teamStatistics.active_members || 0"
       :loading="loadingTeamStatistics"
@@ -49,44 +49,44 @@ watch(() => props.team?.id, async (newId) => {
           class="text-ui-ok"
           v-if="!loadingTeamStatistics && teamStatistics.active_members >= team.expected_size"
         >
-          Full capacity
+          {{ $t("teams.detail.stats.fullCapacity") }}
         </span>
         <span
           class="text-ui-bad"
           v-if="!loadingTeamStatistics && teamStatistics.active_members < team.expected_size"
         >
-          {{ team.expected_size - teamStatistics.active_members }} members needed
+          {{ $t("teams.detail.stats.membersNeeded", { n: team.expected_size - teamStatistics.active_members }, team.expected_size - teamStatistics.active_members) }}
         </span>
       </template>
     </UiStat>
 
     <UiStat
-      label="Projects Assigned"
+      :label="$t('teams.detail.stats.projectsAssigned')"
       :icon="Folder"
       :value="teamStatistics.projects_assigned || 0"
       :loading="loadingTeamStatistics"
-      :hint="`${teamStatistics.projects_in_progress || 0} in progress`"
+      :hint="$t('teams.detail.stats.inProgress', { n: teamStatistics.projects_in_progress || 0 })"
     />
 
     <UiStat
-      label="Team Performance"
+      :label="$t('teams.detail.stats.performance')"
       :icon="TrendingUp"
       :value="`${teamStatistics.team_performance || 0}%`"
       :loading="loadingTeamStatistics"
     >
       <template #hint>
         <span :class="(teamStatistics.team_performance || 0) >= 80 ? 'text-ui-ok' : 'text-ui-warn'">
-          {{ (teamStatistics.team_performance || 0) >= 80 ? 'Above target' : 'Below target' }}
+          {{ (teamStatistics.team_performance || 0) >= 80 ? $t('teams.detail.stats.aboveTarget') : $t('teams.detail.stats.belowTarget') }}
         </span>
       </template>
     </UiStat>
 
     <UiStat
-      label="Completion Rate"
+      :label="$t('teams.detail.stats.completionRate')"
       :icon="CheckCircle"
       :value="`${teamStatistics.completion_rate || 0}%`"
       :loading="loadingTeamStatistics"
-      hint="This month"
+      :hint="$t('teams.stats.thisMonthHint')"
     />
   </div>
 </template>

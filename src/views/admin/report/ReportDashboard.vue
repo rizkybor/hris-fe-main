@@ -35,6 +35,10 @@ import AttendanceDetailModal from "@/components/admin/attendance/AttendanceDetai
 import DocumentReport from "@/components/admin/report/DocumentReport.vue";
 import { formatTime as formatTimeUtil } from "@/utils/dateUtils";
 import { formatHours, CONTRACT_STATUS, LEFTOVER_POLICY, usageColor } from "@/utils/maintenance";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t, te } = useI18n();
 
 const router = useRouter();
 const reportStore = useReportStore();
@@ -61,22 +65,22 @@ const {
   downloadingPdf,
 } = storeToRefs(reportStore);
 
-const tabs = [
-  { key: "attendance", label: "Attendance", icon: ClockIcon },
-  { key: "payroll", label: "Payroll", icon: Wallet },
-  { key: "employee", label: "Employee", icon: Users },
-  { key: "finance", label: "Finance", icon: Building2Icon },
+const tabs = computed(() => [
+  { key: "attendance", label: t("reports.tabs.attendance"), icon: ClockIcon },
+  { key: "payroll", label: t("reports.tabs.payroll"), icon: Wallet },
+  { key: "employee", label: t("reports.tabs.employee"), icon: Users },
+  { key: "finance", label: t("reports.tabs.finance"), icon: Building2Icon },
   { key: "pph21", label: "PPh 21", icon: ReceiptIcon },
   { key: "pph23", label: "PPh 23", icon: ReceiptIcon },
   { key: "ppn", label: "PPN", icon: PercentIcon },
-  { key: "project", label: "Project", icon: FolderKanban },
-  { key: "subscription", label: "Subscription Lists", icon: RefreshCw },
-  { key: "maintenance", label: "Maintenance Lists", icon: Wrench },
-  { key: "documents", label: "Document Reports", icon: FileTextIcon },
-  { key: "staff_raport", label: "Staff Raport", icon: Star, permission: "staff-raport-menu" },
-];
+  { key: "project", label: t("reports.tabs.project"), icon: FolderKanban },
+  { key: "subscription", label: t("reports.tabs.subscription"), icon: RefreshCw },
+  { key: "maintenance", label: t("reports.tabs.maintenance"), icon: Wrench },
+  { key: "documents", label: t("reports.tabs.documents"), icon: FileTextIcon },
+  { key: "staff_raport", label: t("reports.tabs.staffRaport"), icon: Star, permission: "staff-raport-menu" },
+]);
 
-const visibleTabs = computed(() => tabs.filter((t) => !t.permission || can(t.permission)));
+const visibleTabs = computed(() => tabs.value.filter((tab) => !tab.permission || can(tab.permission)));
 
 // Only tabs backed by exactly one real, deletable record -- not Finance
 // (three tables merged into fake rows), PPh 21 or Staff Raport (both
@@ -95,14 +99,14 @@ const rowIdField = (row) => row.id ?? row.employee_id;
 
 const handleDeleteRow = async (row) => {
   const id = rowIdField(row);
-  if (!(await alertModal.confirm("Delete this record? This deletes the actual underlying record, not just its appearance in this report.", { type: "danger", confirmText: "Delete" }))) return;
+  if (!(await alertModal.confirm(t("reports.delete.rowConfirm"), { type: "danger", confirmText: t("common.actions.delete") }))) return;
 
   deletingRowId.value = id;
   try {
     await reportStore.deleteRow(activeTab.value, id);
     await loadReport(reportMeta.value?.current_page || 1);
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Failed to delete record.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || t("reports.delete.rowFailed"), { type: "danger" });
   } finally {
     deletingRowId.value = null;
   }
@@ -126,12 +130,12 @@ const closeDeleteRangeModal = () => {
 
 const handleDeleteRange = async () => {
   if (!deleteRangeStart.value || !deleteRangeEnd.value) return;
-  const tabLabel = tabs.find((t) => t.key === activeTab.value)?.label ?? activeTab.value;
+  const tabLabel = tabs.value.find((tab) => tab.key === activeTab.value)?.label ?? activeTab.value;
 
   if (
     !(await alertModal.confirm(
-      `Delete every "${tabLabel}" record between ${deleteRangeStart.value} and ${deleteRangeEnd.value}? This deletes the actual underlying records and cannot be undone from this screen.`,
-      { type: "danger", confirmText: "Delete Range" }
+      t("reports.delete.rangeConfirm", { tab: tabLabel, start: deleteRangeStart.value, end: deleteRangeEnd.value }),
+      { type: "danger", confirmText: t("reports.delete.range") }
     ))
   )
     return;
@@ -141,10 +145,10 @@ const handleDeleteRange = async () => {
     const result = await reportStore.deleteByRange(activeTab.value, deleteRangeStart.value, deleteRangeEnd.value);
     showDeleteRangeModal.value = false;
     await loadReport(1);
-    const skippedNote = result?.skipped?.length ? ` ${result.skipped.length} record(s) were skipped (e.g. already-paid Payroll).` : "";
-    await alertModal.alert(`${result?.deleted ?? 0} record(s) deleted.${skippedNote}`, { type: "success" });
+    const skippedNote = result?.skipped?.length ? ` ${t("reports.delete.skipped", { n: result.skipped.length }, result.skipped.length)}` : "";
+    await alertModal.alert(`${t("reports.delete.deleted", { n: result?.deleted ?? 0 }, result?.deleted ?? 0)}${skippedNote}`, { type: "success" });
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Failed to delete records in this range.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || t("reports.delete.rangeFailed"), { type: "danger" });
   } finally {
     deletingRange.value = false;
   }
@@ -170,10 +174,10 @@ const staffRaportEmploymentType = ref("");
 const canExport = computed(() => can("report-export"));
 
 // Finance tab has two sources: the Company Cash Book (default) or Operational Cost.
-const FINANCE_SOURCES = [
-  { key: "cash_book", label: "Company Cash Book" },
-  { key: "operational_cost", label: "Operational Cost" },
-];
+const FINANCE_SOURCES = computed(() => [
+  { key: "cash_book", label: t("reports.finance.cashBook") },
+  { key: "operational_cost", label: t("reports.finance.operationalCost") },
+]);
 const financeSource = ref("cash_book");
 const isOperationalCost = computed(() => activeTab.value === "finance" && financeSource.value === "operational_cost");
 const setFinanceSource = (key) => {
@@ -289,12 +293,12 @@ const raportAttendanceBoxes = computed(() => {
   const a = staffRaportDetail.value?.attendance;
   if (!a) return [];
   const missed = (a.absent ?? 0) + (a.no_record ?? 0);
-  const t = a.late_tiers || {};
+  const tiers = a.late_tiers || {};
   return [
-    { label: "On time", value: (a.present ?? 0) + (a.remote ?? 0), sub: a.remote ? `incl. ${a.remote} remote` : null },
-    { label: "Late", value: a.late ?? 0, class: a.late ? "text-ui-warn" : null, sub: a.late ? `${a.late_minutes} min total · ${t.severe || 0} over 1 h` : null },
-    { label: "Absent / no check-in", value: missed, class: missed ? "text-ui-bad" : null, sub: a.no_record ? `${a.no_record} without any record` : null },
-    { label: "Not counted", value: (a.sick_leave ?? 0) + (a.leave ?? 0) + (a.holidays ?? 0), sub: `${a.sick_leave ?? 0} sick · ${a.leave ?? 0} leave · ${a.holidays ?? 0} holiday` },
+    { label: t("reports.raport.onTime"), value: (a.present ?? 0) + (a.remote ?? 0), sub: a.remote ? t("reports.raport.inclRemote", { n: a.remote }) : null },
+    { label: t("reports.raport.late"), value: a.late ?? 0, class: a.late ? "text-ui-warn" : null, sub: a.late ? t("reports.raport.lateSub", { minutes: a.late_minutes, severe: tiers.severe || 0 }) : null },
+    { label: t("reports.raport.absent"), value: missed, class: missed ? "text-ui-bad" : null, sub: a.no_record ? t("reports.raport.noRecord", { n: a.no_record }) : null },
+    { label: t("reports.raport.notCounted"), value: (a.sick_leave ?? 0) + (a.leave ?? 0) + (a.holidays ?? 0), sub: t("reports.raport.notCountedSub", { sick: a.sick_leave ?? 0, leave: a.leave ?? 0, holiday: a.holidays ?? 0 }) },
   ];
 });
 
@@ -334,95 +338,95 @@ const summaryCards = computed(() => {
   switch (activeTab.value) {
     case "attendance":
       return [
-        { label: "Total Records", value: summary.total_records ?? 0 },
-        { label: "Present", value: summary.present ?? 0 },
-        { label: "Late", value: summary.late ?? 0 },
-        { label: "Absent", value: summary.absent ?? 0 },
+        { label: t("reports.summary.totalRecords"), value: summary.total_records ?? 0 },
+        { label: t("reports.summary.present"), value: summary.present ?? 0 },
+        { label: t("reports.summary.late"), value: summary.late ?? 0 },
+        { label: t("reports.summary.absent"), value: summary.absent ?? 0 },
       ];
     case "payroll":
       return [
-        { label: "Payroll Runs", value: summary.total_payroll_runs ?? 0 },
-        { label: "Employees Paid", value: summary.total_employees_paid ?? 0 },
+        { label: t("reports.summary.payrollRuns"), value: summary.total_payroll_runs ?? 0 },
+        { label: t("reports.summary.employeesPaid"), value: summary.total_employees_paid ?? 0 },
         {
-          label: "Total Original Salary",
+          label: t("reports.summary.totalOriginalSalary"),
           value: formatCurrency(summary.total_original_salary),
         },
         {
-          label: "Total Final Salary",
+          label: t("reports.summary.totalFinalSalary"),
           value: formatCurrency(summary.total_final_salary),
         },
       ];
     case "employee":
       return [
-        { label: "Total Employees", value: summary.total_employees ?? 0 },
-        { label: "Active", value: summary.active ?? 0 },
-        { label: "Inactive", value: summary.inactive ?? 0 },
+        { label: t("reports.summary.totalEmployees"), value: summary.total_employees ?? 0 },
+        { label: t("reports.summary.active"), value: summary.active ?? 0 },
+        { label: t("reports.summary.inactive"), value: summary.inactive ?? 0 },
       ];
     case "finance":
       if (summary.items_total !== undefined) {
         return [
-          { label: "Fixed Cost / bulan", value: formatCurrency(summary.fixed_cost) },
-          { label: "SDM / bulan", value: formatCurrency(summary.sdm) },
-          { label: "Infrastructure / bulan", value: formatCurrency(summary.infrastructure_monthly) },
-          { label: "Infrastructure / tahun", value: formatCurrency(summary.infrastructure_annual) },
+          { label: t("reports.summary.fixedCostMonth"), value: formatCurrency(summary.fixed_cost) },
+          { label: t("reports.summary.sdmMonth"), value: formatCurrency(summary.sdm) },
+          { label: t("reports.summary.infraMonth"), value: formatCurrency(summary.infrastructure_monthly) },
+          { label: t("reports.summary.infraYear"), value: formatCurrency(summary.infrastructure_annual) },
         ];
       }
       return [
-        { label: "Saldo Awal Periode", value: formatCurrency(summary.period_opening) },
-        { label: "Total Debit (Masuk)", value: formatCurrency(summary.total_debit) },
-        { label: "Total Kredit (Keluar)", value: formatCurrency(summary.total_credit) },
-        { label: "Saldo Akhir Periode", value: formatCurrency(summary.period_closing) },
+        { label: t("reports.summary.periodOpening"), value: formatCurrency(summary.period_opening) },
+        { label: t("reports.summary.totalDebit"), value: formatCurrency(summary.total_debit) },
+        { label: t("reports.summary.totalCredit"), value: formatCurrency(summary.total_credit) },
+        { label: t("reports.summary.periodClosing"), value: formatCurrency(summary.period_closing) },
       ];
     case "pph21":
       return [
-        { label: "Employees Taxed", value: summary.total_employees_taxed ?? 0 },
+        { label: t("reports.summary.employeesTaxed"), value: summary.total_employees_taxed ?? 0 },
         {
-          label: "Total Gross Salary",
+          label: t("reports.summary.totalGrossSalary"),
           value: formatCurrency(summary.total_gross_salary),
         },
-        { label: "Total PPh 21", value: formatCurrency(summary.total_pph21) },
+        { label: t("reports.summary.totalPph21"), value: formatCurrency(summary.total_pph21) },
       ];
     case "ppn":
       return [
-        { label: "Invoices", value: summary.total_invoices ?? 0 },
-        { label: "Total DPP", value: formatCurrency(summary.total_dpp) },
-        { label: "Total PPN", value: formatCurrency(summary.total_ppn) },
+        { label: t("reports.summary.invoices"), value: summary.total_invoices ?? 0 },
+        { label: t("reports.summary.totalDpp"), value: formatCurrency(summary.total_dpp) },
+        { label: t("reports.summary.totalPpn"), value: formatCurrency(summary.total_ppn) },
       ];
     case "project": {
       const counts = summary.billing_status_counts || {};
       const paidPct = summary.total_invoiced ? Math.round((summary.total_paid / summary.total_invoiced) * 100) : null;
       return [
-        { label: "Projects", value: summary.total_projects ?? 0, sub: `${summary.active_projects ?? 0} active · ${summary.completed_projects ?? 0} completed`, subClass: "text-ui-muted" },
-        { label: "Total Budget", value: formatCurrency(summary.total_budget), sub: `Not invoiced yet ${formatCurrency(summary.total_not_invoiced)}`, subClass: "text-ui-muted" },
-        { label: "Invoiced", value: formatCurrency(summary.total_invoiced), sub: `Paid ${formatCurrency(summary.total_paid)}${paidPct !== null ? ` (${paidPct}%)` : ""}`, subClass: "text-ui-ok" },
+        { label: t("reports.summary.projects"), value: summary.total_projects ?? 0, sub: t("reports.summary.projectsSub", { active: summary.active_projects ?? 0, completed: summary.completed_projects ?? 0 }), subClass: "text-ui-muted" },
+        { label: t("reports.summary.totalBudget"), value: formatCurrency(summary.total_budget), sub: t("reports.summary.notInvoicedYet", { amount: formatCurrency(summary.total_not_invoiced) }), subClass: "text-ui-muted" },
+        { label: t("reports.summary.invoiced"), value: formatCurrency(summary.total_invoiced), sub: `${t("reports.summary.paidSub", { amount: formatCurrency(summary.total_paid) })}${paidPct !== null ? ` (${paidPct}%)` : ""}`, subClass: "text-ui-ok" },
         {
-          label: "Outstanding",
+          label: t("reports.summary.outstanding"),
           value: formatCurrency(summary.total_outstanding),
-          sub: `${counts.settled ?? 0} settled · ${counts.outstanding ?? 0} outstanding${counts.overpaid ? ` · ${counts.overpaid} overpaid` : ""}`,
+          sub: `${t("reports.summary.outstandingSub", { settled: counts.settled ?? 0, outstanding: counts.outstanding ?? 0 })}${counts.overpaid ? t("reports.summary.overpaidSub", { n: counts.overpaid }) : ""}`,
           subClass: summary.total_outstanding > 0 ? "text-ui-warn" : "text-ui-muted",
         },
       ];
     }
     case "pph23":
       return [
-        { label: "Receipts", value: summary.total_receipts ?? 0 },
-        { label: "Total Gross", value: formatCurrency(summary.total_gross) },
-        { label: "Total PPh 23 Withheld", value: formatCurrency(summary.total_pph23) },
-        { label: "Total Net Received", value: formatCurrency(summary.total_net_received) },
+        { label: t("reports.summary.receipts"), value: summary.total_receipts ?? 0 },
+        { label: t("reports.summary.totalGross"), value: formatCurrency(summary.total_gross) },
+        { label: t("reports.summary.totalPph23"), value: formatCurrency(summary.total_pph23) },
+        { label: t("reports.summary.totalNet"), value: formatCurrency(summary.total_net_received) },
       ];
     case "subscription":
       return [
-        { label: "MRR (Monthly Recurring Revenue)", value: formatCurrency(summary.mrr) },
-        { label: "ARR (Annual Recurring Revenue)", value: formatCurrency(summary.arr) },
-        { label: "Active Subscriptions", value: summary.active_count ?? 0 },
-        { label: "Upcoming Renewals (30d)", value: summary.upcoming_renewals_count ?? 0 },
+        { label: t("reports.summary.mrr"), value: formatCurrency(summary.mrr) },
+        { label: t("reports.summary.arr"), value: formatCurrency(summary.arr) },
+        { label: t("reports.summary.activeSubscriptions"), value: summary.active_count ?? 0 },
+        { label: t("reports.summary.upcomingRenewals"), value: summary.upcoming_renewals_count ?? 0 },
       ];
     case "maintenance":
       return [
-        { label: "Active Contracts", value: `${summary.active_count ?? 0} / ${summary.total_count ?? 0}` },
-        { label: `Hours Used · ${maintenanceMonthLabel.value}`, value: `${formatHours(summary.used)} / ${formatHours(summary.available)}` },
-        { label: "Over Quota", value: summary.over_count ?? 0 },
-        { label: "Development Balance", value: formatHours(summary.balance), sub: summary.expiring ? `${formatHours(summary.expiring)} expiring in 30 days` : null },
+        { label: t("reports.summary.activeContracts"), value: `${summary.active_count ?? 0} / ${summary.total_count ?? 0}` },
+        { label: t("reports.summary.hoursUsed", { month: maintenanceMonthLabel.value }), value: `${formatHours(summary.used)} / ${formatHours(summary.available)}` },
+        { label: t("reports.summary.overQuota"), value: summary.over_count ?? 0 },
+        { label: t("reports.summary.devBalance"), value: formatHours(summary.balance), sub: summary.expiring ? t("reports.summary.expiring", { hours: formatHours(summary.expiring) }) : null },
       ];
     case "staff_raport": {
       const rows = staffRaport.value.rows || [];
@@ -430,10 +434,10 @@ const summaryCards = computed(() => {
       const avg = (key) =>
         withScore.length ? Math.round((withScore.reduce((s, r) => s + (r[key] ?? 0), 0) / withScore.length) * 10) / 10 : 0;
       return [
-        { label: "Total Staff (this page)", value: rows.length },
-        { label: "Avg. Attendance Rate", value: `${avg("attendance_rate")}%` },
-        { label: "Avg. Task Completion", value: `${avg("task_completion_rate")}%` },
-        { label: "Avg. Overall Score", value: `${avg("overall_score")}%` },
+        { label: t("reports.summary.totalStaff"), value: rows.length },
+        { label: t("reports.summary.avgAttendance"), value: `${avg("attendance_rate")}%` },
+        { label: t("reports.summary.avgTasks"), value: `${avg("task_completion_rate")}%` },
+        { label: t("reports.summary.avgScore"), value: `${avg("overall_score")}%` },
       ];
     }
     default:
@@ -452,12 +456,12 @@ const tableRows = computed(() => {
 });
 
 // Project tab: invoiced vs paid per project (see ProjectBillingService).
-const BILLING_STATUS = {
-  settled: { label: "Settled", tone: "ok" },
-  outstanding: { label: "Outstanding", tone: "warn" },
-  overpaid: { label: "Overpaid", tone: "bad" },
-  not_invoiced: { label: "Not invoiced", tone: "neutral" },
-};
+const BILLING_STATUS = computed(() => ({
+  settled: { label: t("reports.billing.settled"), tone: "ok" },
+  outstanding: { label: t("reports.billing.outstanding"), tone: "warn" },
+  overpaid: { label: t("reports.billing.overpaid"), tone: "bad" },
+  not_invoiced: { label: t("reports.billing.notInvoiced"), tone: "neutral" },
+}));
 
 const subscriptionStatusTone = {
   active: "ok",
@@ -467,11 +471,17 @@ const subscriptionStatusTone = {
 
 const contractStatusTone = { active: "ok", paused: "warn", ended: "neutral" };
 
-const subscriptionStatusLabel = {
-  active: "Active",
-  postponed: "Postponed",
-  cancelled: "Not Active",
-};
+const subscriptionStatusLabel = computed(() => ({
+  active: t("reports.subscriptionStatus.active"),
+  postponed: t("reports.subscriptionStatus.postponed"),
+  cancelled: t("reports.subscriptionStatus.cancelled"),
+}));
+
+// Display label for an enum value: translated when the key exists,
+// otherwise the value in Title Case.
+const enumLabel = (group, v) => (v && te(`reports.${group}.${v}`) ? t(`reports.${group}.${v}`) : titleCase(v));
+const contractStatusLabel = (v) => (te(`reports.contractStatus.${v}`) ? t(`reports.contractStatus.${v}`) : CONTRACT_STATUS[v]?.label ?? v);
+const leftoverLabel = (v) => (te(`reports.leftover.${v}`) ? t(`reports.leftover.${v}`) : LEFTOVER_POLICY[v]?.short ?? v);
 
 // A subscription can bundle several services -- list them all instead of
 // the single service_type this column used to show.
@@ -491,7 +501,7 @@ function subscriptionIcannFeeTotal(subscription) {
 
 const maintenanceMonthLabel = computed(() => {
   const m = maintenance.value?.month;
-  return m ? new Date(`${m}-01T00:00:00`).toLocaleDateString("id-ID", { month: "short", year: "numeric" }) : "this month";
+  return m ? new Date(`${m}-01T00:00:00`).toLocaleDateString(localeTag(), { month: "short", year: "numeric" }) : t("reports.thisMonth");
 });
 
 function formatCurrency(value) {
@@ -505,7 +515,7 @@ function formatCurrency(value) {
 
 function formatDate(value) {
   if (!value) return "-";
-  return new Date(value).toLocaleDateString("id-ID", {
+  return new Date(value).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -611,119 +621,119 @@ onMounted(() => {
 // ----- Presentation only: table columns, row keys, row clicks and the
 // phone card for each report. -----
 const R = "right";
-const COLUMNS = {
+const COLUMNS = computed(() => ({
   attendance: [
-    { key: "date", label: "Date" },
-    { key: "employee", label: "Employee" },
-    { key: "check_in", label: "Check In" },
-    { key: "check_out", label: "Check Out" },
-    { key: "status", label: "Status" },
+    { key: "date", label: t("reports.columns.date") },
+    { key: "employee", label: t("reports.columns.employee") },
+    { key: "check_in", label: t("reports.columns.checkIn") },
+    { key: "check_out", label: t("reports.columns.checkOut") },
+    { key: "status", label: t("reports.columns.status") },
   ],
   payroll: [
-    { key: "period", label: "Period" },
-    { key: "employee", label: "Employee" },
-    { key: "original_salary", label: "Original Salary", align: R },
-    { key: "final_salary", label: "Final Salary", align: R },
-    { key: "status", label: "Status" },
+    { key: "period", label: t("reports.columns.period") },
+    { key: "employee", label: t("reports.columns.employee") },
+    { key: "original_salary", label: t("reports.columns.originalSalary"), align: R },
+    { key: "final_salary", label: t("reports.columns.finalSalary"), align: R },
+    { key: "status", label: t("reports.columns.status") },
   ],
   employee: [
-    { key: "code", label: "Code" },
-    { key: "name", label: "Name" },
-    { key: "job_title", label: "Job Title" },
-    { key: "team", label: "Team" },
-    { key: "status", label: "Status" },
+    { key: "code", label: t("reports.columns.code") },
+    { key: "name", label: t("reports.columns.name") },
+    { key: "job_title", label: t("reports.columns.jobTitle") },
+    { key: "team", label: t("reports.columns.team") },
+    { key: "status", label: t("reports.columns.status") },
   ],
   operational_cost: [
-    { key: "category", label: "Category" },
-    { key: "item", label: "Item" },
-    { key: "monthly", label: "Biaya / Bulan", align: R },
-    { key: "annual", label: "Biaya / Tahun", align: R },
-    { key: "status", label: "Status" },
+    { key: "category", label: t("reports.columns.category") },
+    { key: "item", label: t("reports.columns.item") },
+    { key: "monthly", label: t("reports.columns.costPerMonth"), align: R },
+    { key: "annual", label: t("reports.columns.costPerYear"), align: R },
+    { key: "status", label: t("reports.columns.status") },
   ],
   finance: [
-    { key: "date", label: "Tanggal" },
-    { key: "description", label: "Keterangan" },
-    { key: "source", label: "Sumber" },
-    { key: "debit", label: "Debit", align: R },
-    { key: "credit", label: "Kredit", align: R },
-    { key: "balance", label: "Saldo", align: R },
+    { key: "date", label: t("reports.columns.date") },
+    { key: "description", label: t("reports.columns.description") },
+    { key: "source", label: t("reports.columns.source") },
+    { key: "debit", label: t("reports.columns.debit"), align: R },
+    { key: "credit", label: t("reports.columns.credit"), align: R },
+    { key: "balance", label: t("reports.columns.balance"), align: R },
   ],
   pph21: [
-    { key: "period", label: "Period" },
-    { key: "employee", label: "Employee" },
-    { key: "npwp", label: "NPWP" },
-    { key: "ptkp", label: "PTKP Status" },
-    { key: "gross", label: "Gross Salary", align: R },
-    { key: "pph21", label: "PPh 21", align: R },
+    { key: "period", label: t("reports.columns.period") },
+    { key: "employee", label: t("reports.columns.employee") },
+    { key: "npwp", label: t("reports.columns.npwp") },
+    { key: "ptkp", label: t("reports.columns.ptkp") },
+    { key: "gross", label: t("reports.columns.grossSalary"), align: R },
+    { key: "pph21", label: t("reports.columns.pph21"), align: R },
   ],
   ppn: [
-    { key: "date", label: "Date" },
-    { key: "faktur", label: "Faktur Pajak No." },
-    { key: "invoice", label: "Invoice No." },
-    { key: "client", label: "Client" },
-    { key: "dpp", label: "DPP", align: R },
-    { key: "ppn", label: "PPN", align: R },
+    { key: "date", label: t("reports.columns.date") },
+    { key: "faktur", label: t("reports.columns.faktur") },
+    { key: "invoice", label: t("reports.columns.invoiceNo") },
+    { key: "client", label: t("reports.columns.client") },
+    { key: "dpp", label: t("reports.columns.dpp"), align: R },
+    { key: "ppn", label: t("reports.columns.ppn"), align: R },
   ],
   project: [
-    { key: "name", label: "Project Name" },
-    { key: "leader", label: "Leader" },
-    { key: "status", label: "Status" },
-    { key: "priority", label: "Priority" },
-    { key: "start_date", label: "Start Date" },
-    { key: "end_date", label: "End Date" },
-    { key: "budget", label: "Budget", align: R },
-    { key: "tasks", label: "Tasks Done" },
-    { key: "invoiced", label: "Invoiced", align: R },
-    { key: "paid", label: "Paid", align: R },
-    { key: "outstanding", label: "Outstanding", align: R },
-    { key: "billing", label: "Billing" },
+    { key: "name", label: t("reports.columns.projectName") },
+    { key: "leader", label: t("reports.columns.leader") },
+    { key: "status", label: t("reports.columns.status") },
+    { key: "priority", label: t("reports.columns.priority") },
+    { key: "start_date", label: t("reports.columns.startDate") },
+    { key: "end_date", label: t("reports.columns.endDate") },
+    { key: "budget", label: t("reports.columns.budget"), align: R },
+    { key: "tasks", label: t("reports.columns.tasksDone") },
+    { key: "invoiced", label: t("reports.columns.invoiced"), align: R },
+    { key: "paid", label: t("reports.columns.paid"), align: R },
+    { key: "outstanding", label: t("reports.columns.outstanding"), align: R },
+    { key: "billing", label: t("reports.columns.billing") },
   ],
   pph23: [
-    { key: "date", label: "Date" },
-    { key: "receipt", label: "Receipt No." },
-    { key: "invoice", label: "Invoice No." },
-    { key: "client", label: "Client" },
-    { key: "percent", label: "% PPh 23", align: R },
-    { key: "gross", label: "Gross Amount", align: R },
-    { key: "withheld", label: "PPh 23 Withheld", align: R },
-    { key: "net", label: "Net Received", align: R },
+    { key: "date", label: t("reports.columns.date") },
+    { key: "receipt", label: t("reports.columns.receiptNo") },
+    { key: "invoice", label: t("reports.columns.invoiceNo") },
+    { key: "client", label: t("reports.columns.client") },
+    { key: "percent", label: t("reports.columns.pph23Percent"), align: R },
+    { key: "gross", label: t("reports.columns.grossAmount"), align: R },
+    { key: "withheld", label: t("reports.columns.pph23Withheld"), align: R },
+    { key: "net", label: t("reports.columns.netReceived"), align: R },
   ],
   subscription: [
-    { key: "name", label: "Name" },
-    { key: "client", label: "Client" },
-    { key: "services", label: "Services" },
-    { key: "cycle", label: "Billing Cycle" },
-    { key: "amount", label: "Amount", align: R },
-    { key: "status", label: "Status" },
-    { key: "next_due", label: "Next Due Date" },
+    { key: "name", label: t("reports.columns.name") },
+    { key: "client", label: t("reports.columns.client") },
+    { key: "services", label: t("reports.columns.services") },
+    { key: "cycle", label: t("reports.columns.billingCycle") },
+    { key: "amount", label: t("reports.columns.amount"), align: R },
+    { key: "status", label: t("reports.columns.status") },
+    { key: "next_due", label: t("reports.columns.nextDue") },
   ],
   maintenance: [
-    { key: "contract", label: "Contract" },
-    { key: "client", label: "Client / Project" },
-    { key: "quota", label: "Quota / Month", align: R },
-    { key: "used", label: "Used", class: "min-w-[170px]" },
-    { key: "leftover", label: "Leftover" },
-    { key: "balance", label: "Dev. Balance", align: R },
-    { key: "status", label: "Status" },
+    { key: "contract", label: t("reports.columns.contract") },
+    { key: "client", label: t("reports.columns.clientProject") },
+    { key: "quota", label: t("reports.columns.quotaMonth"), align: R },
+    { key: "used", label: t("reports.columns.used"), class: "min-w-[170px]" },
+    { key: "leftover", label: t("reports.columns.leftover") },
+    { key: "balance", label: t("reports.columns.devBalance"), align: R },
+    { key: "status", label: t("reports.columns.status") },
   ],
   staff_raport: [
-    { key: "name", label: "Name" },
-    { key: "job_title", label: "Job Title" },
-    { key: "employment_type", label: "Employment Type" },
-    { key: "attendance", label: "Attendance", align: R },
-    { key: "tasks", label: "Tasks Done", align: R },
-    { key: "rating", label: "Rating" },
+    { key: "name", label: t("reports.columns.name") },
+    { key: "job_title", label: t("reports.columns.jobTitle") },
+    { key: "employment_type", label: t("reports.columns.employmentType") },
+    { key: "attendance", label: t("reports.columns.attendance"), align: R },
+    { key: "tasks", label: t("reports.columns.tasksDone"), align: R },
+    { key: "rating", label: t("reports.columns.rating") },
     { key: "view", label: "" },
   ],
-};
+}));
 
 const tableColumns = computed(() => {
   const key = isOperationalCost.value ? "operational_cost" : activeTab.value;
-  let cols = COLUMNS[key] || [];
+  let cols = COLUMNS.value[key] || [];
   if (activeTab.value === "maintenance") {
-    cols = cols.map((c) => (c.key === "used" ? { ...c, label: `Used (${maintenanceMonthLabel.value})` } : c));
+    cols = cols.map((c) => (c.key === "used" ? { ...c, label: t("reports.columns.usedMonth", { month: maintenanceMonthLabel.value }) } : c));
   }
-  return showDeleteColumn.value ? [...cols, { key: "actions", label: "Actions", align: R, width: 72 }] : cols;
+  return showDeleteColumn.value ? [...cols, { key: "actions", label: t("common.labels.actions"), align: R, width: 72 }] : cols;
 });
 
 const tableRowKey = (row) => {
@@ -755,7 +765,7 @@ const onRowClick = (row) => {
 };
 
 const titleCase = (v) => (v ? String(v).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "-");
-const lateLabel = (m) => `late by ${Math.floor(m / 60) > 0 ? `${Math.floor(m / 60)}h ` : ""}${m % 60}m`;
+const lateLabel = (m) => t("reports.lateBy", { duration: `${Math.floor(m / 60) > 0 ? `${Math.floor(m / 60)}h ` : ""}${m % 60}m` });
 
 // Phone card: kicker line, title, sub line, amount on the right and a badge.
 const mobileCard = (row) => {
@@ -764,38 +774,38 @@ const mobileCard = (row) => {
       return {
         kicker: formatDate(row.date),
         title: row.employee?.user?.name ?? "N/A",
-        sub: `In ${row.check_in ? formatTimeUtil(row.check_in) : "-"} · Out ${row.check_out ? formatTimeUtil(row.check_out) : "-"}${row.status === "late" && row.late_minutes ? ` · ${lateLabel(row.late_minutes)}` : ""}`,
-        badge: { tone: attendanceStatusTone[row.status] || "neutral", label: titleCase(row.status) },
+        sub: `${t("reports.mobile.in")} ${row.check_in ? formatTimeUtil(row.check_in) : "-"} · ${t("reports.mobile.out")} ${row.check_out ? formatTimeUtil(row.check_out) : "-"}${row.status === "late" && row.late_minutes ? ` · ${lateLabel(row.late_minutes)}` : ""}`,
+        badge: { tone: attendanceStatusTone[row.status] || "neutral", label: enumLabel("attendanceStatus", row.status) },
       };
     case "payroll":
       return {
         kicker: formatDate(row.salary_month),
         title: row.employee?.user?.name ?? "N/A",
-        sub: `Original ${formatCurrency(row.original_salary)}`,
+        sub: t("reports.mobile.original", { amount: formatCurrency(row.original_salary) }),
         amount: formatCurrency(row.final_salary),
-        badge: { tone: row.payment_status === "paid" ? "ok" : "warn", label: row.payment_status === "paid" ? "Paid" : "Pending" },
+        badge: { tone: row.payment_status === "paid" ? "ok" : "warn", label: row.payment_status === "paid" ? t("reports.paymentStatus.paid") : t("reports.paymentStatus.pending") },
       };
     case "employee":
       return {
         kicker: row.code,
         title: row.user?.name ?? "N/A",
         sub: [row.job_information?.job_title, row.job_information?.team?.name].filter(Boolean).join(" · ") || "N/A",
-        badge: { tone: "neutral", label: titleCase(row.job_information?.status ?? "N/A") },
+        badge: { tone: "neutral", label: enumLabel("employeeStatus", row.job_information?.status ?? "N/A") },
       };
     case "finance":
       if (isOperationalCost.value) {
         return {
           kicker: row.category,
           title: row.name,
-          sub: row.annual !== null ? `${formatCurrency(row.annual)} / tahun` : null,
+          sub: row.annual !== null ? t("reports.mobile.perYear", { amount: formatCurrency(row.annual) }) : null,
           amount: formatCurrency(row.monthly),
-          badge: { tone: row.in_use ? "ok" : "neutral", label: row.in_use ? "Digunakan" : "Tidak Digunakan" },
+          badge: { tone: row.in_use ? "ok" : "neutral", label: row.in_use ? t("finance.usageStatus.active") : t("finance.usageStatus.inactive") },
         };
       }
       return {
         kicker: `${formatDate(row.transaction_date)} · ${row.source}`,
         title: row.description,
-        sub: `Saldo ${formatCurrency(row.balance)}`,
+        sub: t("reports.mobile.balance", { amount: formatCurrency(row.balance) }),
         amount: `${row.type === "debit" ? "+" : "−"}${formatCurrency(row.amount)}`,
         amountClass: row.type === "debit" ? "text-ui-ok" : "text-ui-bad",
       };
@@ -803,48 +813,48 @@ const mobileCard = (row) => {
       return {
         kicker: formatDate(row.salary_month),
         title: row.employee?.user?.name ?? "N/A",
-        sub: `${row.employee?.job_information?.ptkp_status ?? "TK/0"} · Gross ${formatCurrency(row.gross_salary)}`,
+        sub: `${row.employee?.job_information?.ptkp_status ?? "TK/0"} · ${t("reports.mobile.gross", { amount: formatCurrency(row.gross_salary) })}`,
         amount: formatCurrency(row.pph21),
       };
     case "ppn":
       return { kicker: row.invoice_number, mono: true, title: row.client_name, sub: `DPP ${formatCurrency(row.subtotal)} · ${formatDate(row.date)}`, amount: formatCurrency(row.ppn_amount) };
     case "project":
       return {
-        kicker: titleCase(row.status),
+        kicker: enumLabel("projectStatus", row.status),
         title: row.name,
-        sub: `${row.project_leader?.user?.name ?? "N/A"} · ${row.tasks_done_count}/${row.tasks_total_count} tasks`,
+        sub: `${row.project_leader?.user?.name ?? "N/A"} · ${t("reports.mobile.tasks", { done: row.tasks_done_count, total: row.tasks_total_count })}`,
         amount: formatCurrency(row.billing?.invoiced_total),
-        badge: { tone: BILLING_STATUS[row.billing?.status]?.tone || "neutral", label: BILLING_STATUS[row.billing?.status]?.label ?? "-" },
+        badge: { tone: BILLING_STATUS.value[row.billing?.status]?.tone || "neutral", label: BILLING_STATUS.value[row.billing?.status]?.label ?? "-" },
       };
     case "pph23":
       return {
         kicker: row.receipt_number,
         mono: true,
         title: row.invoice?.client_name ?? row.received_from,
-        sub: `${Number(row.pph23_percent)}% · Net ${formatCurrency(row.amount)}`,
+        sub: `${Number(row.pph23_percent)}% · ${t("reports.mobile.net", { amount: formatCurrency(row.amount) })}`,
         amount: formatCurrency(row.pph23_amount),
       };
     case "subscription":
       return {
-        kicker: `${titleCase(row.billing_cycle)} · due ${formatDate(row.next_due_date)}`,
+        kicker: `${enumLabel("billingCycle", row.billing_cycle)} · ${t("reports.mobile.due", { date: formatDate(row.next_due_date) })}`,
         title: row.name,
         sub: row.client?.name ?? "-",
         amount: formatCurrency(row.amount),
-        badge: { tone: subscriptionStatusTone[row.status] || "neutral", label: subscriptionStatusLabel[row.status] || row.status },
+        badge: { tone: subscriptionStatusTone[row.status] || "neutral", label: subscriptionStatusLabel.value[row.status] || row.status },
       };
     case "maintenance":
       return {
         kicker: row.client ?? "-",
         title: row.name,
-        sub: row.period ? `${formatHours(row.period.used)} / ${formatHours(row.period.total)} used · ${Math.round(row.period.used_percent)}%` : "Not running this month",
+        sub: row.period ? t("reports.mobile.hoursUsed", { used: formatHours(row.period.used), total: formatHours(row.period.total), pct: Math.round(row.period.used_percent) }) : t("reports.maintenance.notRunning"),
         amount: formatHours(row.balance),
-        badge: { tone: contractStatusTone[row.status] || "neutral", label: CONTRACT_STATUS[row.status]?.label ?? row.status },
+        badge: { tone: contractStatusTone[row.status] || "neutral", label: contractStatusLabel(row.status) },
       };
     case "staff_raport":
       return {
         kicker: row.job_title ?? "-",
         title: row.name ?? "N/A",
-        sub: `Attendance ${row.attendance_rate !== null ? `${row.attendance_rate}%` : "-"} · Tasks ${row.task_completion_rate !== null ? `${row.task_completion_rate}%` : "-"}`,
+        sub: `${t("reports.columns.attendance")} ${row.attendance_rate !== null ? `${row.attendance_rate}%` : "-"} · ${t("reports.mobile.tasksLabel")} ${row.task_completion_rate !== null ? `${row.task_completion_rate}%` : "-"}`,
         stars: row.stars,
       };
     default:
@@ -857,8 +867,8 @@ const mobileCard = (row) => {
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <div class="lg:flex lg:items-start lg:gap-6">
       <!-- Desktop: report rail -->
-      <aside class="hidden lg:block w-[208px] shrink-0 sticky top-0" aria-label="Report type">
-        <p class="text-ui-over uppercase text-ui-faint px-2.5 mb-2">{{ visibleTabs.length }} Reports</p>
+      <aside class="hidden lg:block w-[208px] shrink-0 sticky top-0" :aria-label="$t('reports.reportType')">
+        <p class="text-ui-over uppercase text-ui-faint px-2.5 mb-2">{{ $t('reports.count', { n: visibleTabs.length }, visibleTabs.length) }}</p>
         <nav class="flex flex-col gap-0.5" role="tablist" aria-orientation="vertical">
           <button
             v-for="tab in visibleTabs"
@@ -882,11 +892,11 @@ const mobileCard = (row) => {
 
       <!-- Report content -->
       <div class="flex-1 min-w-0 space-y-5">
-        <UiPageHeader title="Reports" subtitle="Company-wide reports across HR modules.">
+        <UiPageHeader :title="$t('reports.title')" :subtitle="$t('reports.subtitle')">
           <template #actions>
-            <UiButton v-if="showDeleteColumn" variant="danger" :icon="CalendarRange" @click="openDeleteRangeModal">Delete by Date Range</UiButton>
+            <UiButton v-if="showDeleteColumn" variant="danger" :icon="CalendarRange" @click="openDeleteRangeModal">{{ $t('reports.delete.byRange') }}</UiButton>
             <UiButton v-if="canExport && activeTab !== 'staff_raport'" :icon="Download" :loading="exporting" @click="handleExport">
-              {{ exporting ? "Exporting..." : "Export Excel" }}
+              {{ exporting ? $t('reports.exporting') : $t("common.actions.exportExcel") }}
             </UiButton>
           </template>
         </UiPageHeader>
@@ -894,7 +904,7 @@ const mobileCard = (row) => {
         <!-- Phones / tablets: scrolling chips -->
         <div class="relative lg:hidden">
           <div ref="tabScrollRef" @scroll="updateTabFade" class="overflow-x-auto [scrollbar-width:none]">
-            <div class="flex items-center gap-1.5 min-w-max pr-10" role="tablist" aria-label="Report type">
+            <div class="flex items-center gap-1.5 min-w-max pr-10" role="tablist" :aria-label="$t('reports.reportType')">
               <button
                 v-for="tab in visibleTabs"
                 :key="tab.key"
@@ -924,19 +934,19 @@ const mobileCard = (row) => {
         <!-- When this data appears / disclaimers -->
         <div v-if="['pph21', 'ppn', 'pph23'].includes(activeTab)" class="space-y-2">
           <UiAlert v-if="activeTab === 'pph21'" tone="info">
-            Data muncul setelah ada Payroll yang sudah di-Run untuk periode terkait, dan hasil perhitungannya menghasilkan PPh 21 terutang (gaji karyawan melebihi PTKP). Belum ada Payroll berjalan pada periode ini = tabel akan kosong.
+            {{ $t('reports.notices.pph21') }}
           </UiAlert>
           <UiAlert v-if="activeTab === 'ppn'" tone="info">
-            Data muncul setelah ada Invoice yang dibuat pada periode terkait dengan PPN (%) diisi lebih dari 0 saat pembuatan Invoice. Invoice tanpa PPN tidak akan muncul di sini.
+            {{ $t('reports.notices.ppn') }}
           </UiAlert>
           <UiAlert v-if="activeTab === 'pph23'" tone="info">
-            Data muncul setelah ada Payment Receipt yang dibuat pada periode terkait dengan PPh 23 diisi (checkbox "Dipotong PPh 23?" saat membuat Payment Receipt). Payment Receipt tanpa PPh 23 tidak akan muncul di sini.
+            {{ $t('reports.notices.pph23') }}
           </UiAlert>
           <UiAlert v-if="activeTab === 'pph21'" tone="warn">
-            PPh 21 dihitung dengan metode tahunan (Pasal 17), belum menggunakan metode TER bulanan DJP. Gunakan sebagai draft rekap, verifikasi ulang sebelum diinput ke Coretax.
+            {{ $t('reports.notices.pph21Method') }}
           </UiAlert>
           <p class="text-ui-cap text-ui-muted bg-ui-subtle border border-ui-line rounded-ui-control px-3.5 py-2.5">
-            Laporan ini adalah rekap siap ekspor untuk membantu pengisian Coretax secara manual, bukan integrasi otomatis ke sistem DJP.
+            {{ $t('reports.notices.coretax') }}
           </p>
         </div>
 
@@ -944,8 +954,8 @@ const mobileCard = (row) => {
         <div v-if="activeTab === 'finance' || (activeTab !== 'employee' && !isOperationalCost)" class="space-y-2">
           <div class="flex flex-col lg:flex-row lg:flex-wrap lg:items-end gap-3">
             <div v-if="activeTab === 'finance'" class="min-w-0">
-              <p class="text-ui-small font-medium text-ui-ink mb-1.5 hidden lg:block">Source</p>
-              <div class="grid grid-cols-2 bg-ui-subtle border border-ui-line rounded-ui-control p-0.5 w-full sm:w-auto sm:inline-grid" role="tablist" aria-label="Finance data source">
+              <p class="text-ui-small font-medium text-ui-ink mb-1.5 hidden lg:block">{{ $t('reports.finance.source') }}</p>
+              <div class="grid grid-cols-2 bg-ui-subtle border border-ui-line rounded-ui-control p-0.5 w-full sm:w-auto sm:inline-grid" role="tablist" :aria-label="$t('reports.finance.sourceAria')">
                 <button
                   v-for="src in FINANCE_SOURCES"
                   :key="src.key"
@@ -962,26 +972,26 @@ const mobileCard = (row) => {
             </div>
 
             <div v-if="activeTab !== 'employee' && !isOperationalCost" class="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-end gap-2 sm:gap-3">
-              <UiInput v-if="activeTab === 'maintenance'" v-model="maintenanceMonth" type="month" label="Month" class="sm:w-[180px]" @change="loadReport(1)" />
+              <UiInput v-if="activeTab === 'maintenance'" v-model="maintenanceMonth" :label="$t('common.labels.month')" type="month" class="sm:w-[180px]" @change="loadReport(1)" />
               <UiSelect
                 v-if="activeTab === 'maintenance'"
                 v-model="maintenanceStatus"
-                label="Status"
-                :options="[{ value: '', label: 'All Statuses' }, ...Object.entries(CONTRACT_STATUS).map(([key, st]) => ({ value: key, label: st.label }))]"
+                :label="$t('common.labels.status')"
+                :options="[{ value: '', label: $t('common.labels.allStatuses') }, ...Object.keys(CONTRACT_STATUS).map((key) => ({ value: key, label: contractStatusLabel(key) }))]"
                 class="sm:w-[180px]"
                 @change="loadReport(1)"
               />
-              <UiInput v-if="!['subscription', 'maintenance'].includes(activeTab)" v-model="startDate" type="date" label="Start Date" class="sm:w-[170px]" @change="loadReport(1)" />
-              <UiInput v-if="!['subscription', 'maintenance'].includes(activeTab)" v-model="endDate" type="date" label="End Date" class="sm:w-[170px]" @change="loadReport(1)" />
+              <UiInput v-if="!['subscription', 'maintenance'].includes(activeTab)" v-model="startDate" :label="$t('common.labels.startDate')" type="date" class="sm:w-[170px]" @change="loadReport(1)" />
+              <UiInput v-if="!['subscription', 'maintenance'].includes(activeTab)" v-model="endDate" :label="$t('common.labels.endDate')" type="date" class="sm:w-[170px]" @change="loadReport(1)" />
               <UiSelect
                 v-if="activeTab === 'subscription'"
                 v-model="subscriptionStatus"
-                label="Status"
+                :label="$t('common.labels.status')"
                 :options="[
-                  { value: '', label: 'All Statuses' },
-                  { value: 'active', label: 'Active' },
-                  { value: 'postponed', label: 'Postponed' },
-                  { value: 'cancelled', label: 'Not Active' },
+                  { value: '', label: $t('common.labels.allStatuses') },
+                  { value: 'active', label: subscriptionStatusLabel.active },
+                  { value: 'postponed', label: subscriptionStatusLabel.postponed },
+                  { value: 'cancelled', label: subscriptionStatusLabel.cancelled },
                 ]"
                 class="col-span-2 sm:w-[200px]"
                 @change="loadReport(1)"
@@ -989,15 +999,10 @@ const mobileCard = (row) => {
               <UiSelect
                 v-if="activeTab === 'project'"
                 v-model="projectStatus"
-                label="Status"
+                :label="$t('common.labels.status')"
                 :options="[
-                  { value: '', label: 'All Statuses' },
-                  { value: 'draft', label: 'Draft' },
-                  { value: 'planning', label: 'Planning' },
-                  { value: 'active', label: 'Active' },
-                  { value: 'on_hold', label: 'On Hold' },
-                  { value: 'completed', label: 'Completed' },
-                  { value: 'cancelled', label: 'Cancelled' },
+                  { value: '', label: $t('common.labels.allStatuses') },
+                  ...['draft', 'planning', 'active', 'on_hold', 'completed', 'cancelled'].map((v) => ({ value: v, label: enumLabel('projectStatus', v) })),
                 ]"
                 class="col-span-2 sm:w-[180px]"
                 @change="loadReport(1)"
@@ -1005,17 +1010,17 @@ const mobileCard = (row) => {
               <UiInput
                 v-if="activeTab === 'staff_raport'"
                 v-model="staffRaportSearch"
-                label="Name"
+                :label="$t('common.labels.name')"
                 :icon="Search"
-                placeholder="Search staff name..."
+                :placeholder="$t('reports.staff.searchPlaceholder')"
                 class="col-span-2 sm:w-[240px]"
                 @input="loadReport(1)"
               />
               <UiSelect
                 v-if="activeTab === 'staff_raport'"
                 v-model="staffRaportEmploymentType"
-                label="Employment Type"
-                :options="[{ value: '', label: 'All Employment Types' }, ...(employmentTypes || [])]"
+                :label="$t('reports.columns.employmentType')"
+                :options="[{ value: '', label: $t('reports.staff.allEmploymentTypes') }, ...(employmentTypes || [])]"
                 class="col-span-2 sm:w-[220px]"
                 @change="loadReport(1)"
               />
@@ -1024,17 +1029,17 @@ const mobileCard = (row) => {
 
           <p v-if="activeTab === 'finance'" class="text-ui-cap text-ui-muted">
             <template v-if="financeSource === 'cash_book'">
-              Transaksi kas nyata (manual + otomatis dari Cash Ledger tiap project) dalam rentang tanggal ini. Saldo dihitung berjalan dari Saldo Awal Company Cash Book.
+              {{ $t('reports.finance.cashBookHint') }}
             </template>
             <template v-else>
-              Biaya operasional yang berlaku saat ini, sama seperti halaman Operational Cost. Total hanya menghitung item berstatus Digunakan; tidak terikat rentang tanggal.
+              {{ $t('reports.finance.operationalCostHint') }}
             </template>
           </p>
           <p v-if="activeTab === 'staff_raport'" class="text-ui-cap text-ui-muted">
-            Attendance rate and task completion (and the resulting score/stars) are calculated for this date range. Click a row to view full details and download a PDF for a different period.
+            {{ $t('reports.staff.hint') }}
           </p>
           <p v-if="activeTab === 'project'" class="text-ui-cap text-ui-muted">
-            Filtered by each project's Start Date falling within this range. Invoiced and Paid cover all invoices linked to each project (cancelled excluded; paid includes PPh 23 withheld). Click a project for its invoice details.
+            {{ $t('reports.projectHint') }}
           </p>
         </div>
 
@@ -1065,18 +1070,18 @@ const mobileCard = (row) => {
           <!-- Status Breakdown & Upcoming Renewals (Subscription only) -->
           <div v-if="!loading && activeTab === 'subscription'" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5">
-              <h2 class="text-ui-h3 text-ui-ink mb-3">Status Breakdown</h2>
+              <h2 class="text-ui-h3 text-ui-ink mb-3">{{ $t('reports.subscription.statusBreakdown') }}</h2>
               <div class="space-y-2.5">
                 <div v-for="item in subscription.status_breakdown" :key="item.status" class="flex items-center justify-between gap-3">
                   <UiBadge :tone="subscriptionStatusTone[item.status] || 'neutral'" dot>{{ subscriptionStatusLabel[item.status] || item.status }}</UiBadge>
-                  <span class="text-ui-small text-ui-ink font-medium tabular-nums">{{ item.count }} subscription{{ item.count === 1 ? "" : "s" }}</span>
+                  <span class="text-ui-small text-ui-ink font-medium tabular-nums">{{ $t('reports.subscription.count', { n: item.count }, item.count) }}</span>
                 </div>
-                <p v-if="!subscription.status_breakdown?.length" class="text-ui-small text-ui-muted">No subscriptions yet.</p>
+                <p v-if="!subscription.status_breakdown?.length" class="text-ui-small text-ui-muted">{{ $t('reports.subscription.none') }}</p>
               </div>
             </section>
 
             <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5">
-              <h2 class="text-ui-h3 text-ui-ink mb-3">Upcoming Renewals (next 30 days)</h2>
+              <h2 class="text-ui-h3 text-ui-ink mb-3">{{ $t('reports.subscription.upcoming') }}</h2>
               <div class="max-h-48 overflow-y-auto divide-y divide-ui-line">
                 <div v-for="row in subscription.upcoming_renewals" :key="row.id" class="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
                   <div class="min-w-0">
@@ -1088,7 +1093,7 @@ const mobileCard = (row) => {
                     <p class="text-ui-cap text-ui-muted">{{ formatDate(row.next_due_date) }}</p>
                   </div>
                 </div>
-                <p v-if="!subscription.upcoming_renewals?.length" class="text-ui-small text-ui-muted">No renewals due in the next 30 days.</p>
+                <p v-if="!subscription.upcoming_renewals?.length" class="text-ui-small text-ui-muted">{{ $t('reports.subscription.noUpcoming') }}</p>
               </div>
             </section>
           </div>
@@ -1114,8 +1119,8 @@ const mobileCard = (row) => {
                   :icon="Trash2"
                   :loading="deletingRowId === rowIdField(row)"
                   :disabled="deletingRowId === rowIdField(row)"
-                  title="Delete"
-                  aria-label="Delete"
+                  :title="$t('common.actions.delete')"
+                  :aria-label="$t('common.actions.delete')"
                   class="hover:text-ui-bad"
                   @click.stop="handleDeleteRow(row)"
                 />
@@ -1157,13 +1162,13 @@ const mobileCard = (row) => {
               </template>
               <template #cell-team="{ row }">{{ row.job_information?.team?.name ?? "N/A" }}</template>
               <template #cell-status="{ row }">
-                <UiBadge v-if="activeTab === 'attendance'" :tone="attendanceStatusTone[row.status] || 'neutral'" dot>{{ titleCase(row.status) }}</UiBadge>
-                <UiBadge v-else-if="activeTab === 'payroll'" :tone="row.payment_status === 'paid' ? 'ok' : 'warn'" dot>{{ row.payment_status === "paid" ? "Paid" : "Pending" }}</UiBadge>
-                <UiBadge v-else-if="activeTab === 'employee'" tone="neutral">{{ titleCase(row.job_information?.status ?? "N/A") }}</UiBadge>
-                <UiBadge v-else-if="isOperationalCost" :tone="row.in_use ? 'ok' : 'neutral'" dot class="whitespace-nowrap">{{ row.in_use ? "Digunakan" : "Tidak Digunakan" }}</UiBadge>
-                <span v-else-if="activeTab === 'project'" class="whitespace-nowrap">{{ titleCase(row.status) }}</span>
+                <UiBadge v-if="activeTab === 'attendance'" :tone="attendanceStatusTone[row.status] || 'neutral'" dot>{{ enumLabel('attendanceStatus', row.status) }}</UiBadge>
+                <UiBadge v-else-if="activeTab === 'payroll'" :tone="row.payment_status === 'paid' ? 'ok' : 'warn'" dot>{{ row.payment_status === "paid" ? $t('reports.paymentStatus.paid') : $t('reports.paymentStatus.pending') }}</UiBadge>
+                <UiBadge v-else-if="activeTab === 'employee'" tone="neutral">{{ enumLabel("employeeStatus", row.job_information?.status ?? "N/A") }}</UiBadge>
+                <UiBadge v-else-if="isOperationalCost" :tone="row.in_use ? 'ok' : 'neutral'" dot class="whitespace-nowrap">{{ row.in_use ? $t("finance.usageStatus.active") : $t("finance.usageStatus.inactive") }}</UiBadge>
+                <span v-else-if="activeTab === 'project'" class="whitespace-nowrap">{{ enumLabel("projectStatus", row.status) }}</span>
                 <UiBadge v-else-if="activeTab === 'subscription'" :tone="subscriptionStatusTone[row.status] || 'neutral'" dot>{{ subscriptionStatusLabel[row.status] || row.status }}</UiBadge>
-                <UiBadge v-else-if="activeTab === 'maintenance'" :tone="contractStatusTone[row.status] || 'neutral'" dot>{{ CONTRACT_STATUS[row.status]?.label ?? row.status }}</UiBadge>
+                <UiBadge v-else-if="activeTab === 'maintenance'" :tone="contractStatusTone[row.status] || 'neutral'" dot>{{ contractStatusLabel(row.status) }}</UiBadge>
               </template>
 
               <!-- Finance -->
@@ -1197,7 +1202,7 @@ const mobileCard = (row) => {
               <template #cell-balance="{ row }">
                 <template v-if="activeTab === 'maintenance'">
                   <span class="tabular-nums whitespace-nowrap">{{ formatHours(row.balance) }}</span>
-                  <p v-if="row.expiring" class="text-ui-cap text-ui-warn whitespace-nowrap">{{ formatHours(row.expiring) }} expiring</p>
+                  <p v-if="row.expiring" class="text-ui-cap text-ui-warn whitespace-nowrap">{{ $t('reports.maintenance.expiring', { hours: formatHours(row.expiring) }) }}</p>
                 </template>
                 <span v-else class="tabular-nums whitespace-nowrap font-medium text-ui-ink">{{ formatCurrency(row.balance) }}</span>
               </template>
@@ -1249,7 +1254,7 @@ const mobileCard = (row) => {
 
               <!-- Project -->
               <template #cell-leader="{ row }"><span class="whitespace-nowrap">{{ row.project_leader?.user?.name ?? "N/A" }}</span></template>
-              <template #cell-priority="{ row }">{{ titleCase(row.priority) }}</template>
+              <template #cell-priority="{ row }">{{ enumLabel("priority", row.priority) }}</template>
               <template #cell-start_date="{ row }">
                 <span class="whitespace-nowrap">{{ formatDate(row.start_date) }}</span>
               </template>
@@ -1266,7 +1271,7 @@ const mobileCard = (row) => {
               </template>
               <template #cell-invoiced="{ row }">
                 <span class="tabular-nums whitespace-nowrap">{{ formatCurrency(row.billing?.invoiced_total) }}</span>
-                <p v-if="row.billing?.invoiced_percent !== null && row.billing?.invoiced_percent !== undefined" class="text-ui-cap text-ui-muted whitespace-nowrap">{{ row.billing.invoiced_percent }}% of value</p>
+                <p v-if="row.billing?.invoiced_percent !== null && row.billing?.invoiced_percent !== undefined" class="text-ui-cap text-ui-muted whitespace-nowrap">{{ $t('reports.ofValue', { pct: row.billing.invoiced_percent }) }}</p>
               </template>
               <template #cell-paid="{ row }">
                 <span class="tabular-nums whitespace-nowrap text-ui-ok">{{ formatCurrency(row.billing?.paid_total) }}</span>
@@ -1283,7 +1288,7 @@ const mobileCard = (row) => {
                   <AlertTriangle
                     v-if="row.billing?.mismatch_count"
                     class="w-3.5 h-3.5 text-ui-warn"
-                    :title="`${row.billing.mismatch_count} invoice(s) marked Paid/Unpaid differently from their receipts`"
+                    :title="$t('reports.billing.mismatch', { n: row.billing.mismatch_count }, row.billing.mismatch_count)"
                   />
                 </span>
               </template>
@@ -1293,7 +1298,7 @@ const mobileCard = (row) => {
                 <span class="capitalize">{{ subscriptionServicesLabel(row.services) }}</span>
               </template>
               <template #cell-cycle="{ row }">
-                <span class="capitalize">{{ row.billing_cycle }}</span>
+                <span>{{ enumLabel("billingCycle", row.billing_cycle) }}</span>
               </template>
               <template #cell-amount="{ row }">
                 <span class="tabular-nums whitespace-nowrap text-ui-ink font-medium">{{ formatCurrency(row.amount) }}</span>
@@ -1321,12 +1326,12 @@ const mobileCard = (row) => {
                   <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
                     <div class="h-full rounded-full" :style="{ width: `${Math.min(100, Math.max(2, row.period.used_percent))}%`, backgroundColor: usageColor(row.period) }"></div>
                   </div>
-                  <p v-if="row.period.overage > 0" class="text-ui-cap text-ui-bad mt-0.5">{{ formatHours(row.period.overage) }} over quota</p>
+                  <p v-if="row.period.overage > 0" class="text-ui-cap text-ui-bad mt-0.5">{{ $t('reports.maintenance.overQuota', { hours: formatHours(row.period.overage) }) }}</p>
                 </div>
-                <span v-else class="text-ui-cap text-ui-muted">Not running this month</span>
+                <span v-else class="text-ui-cap text-ui-muted">{{ $t('reports.maintenance.notRunning') }}</span>
               </template>
               <template #cell-leftover="{ row }">
-                <span class="text-ui-cap whitespace-nowrap">{{ LEFTOVER_POLICY[row.leftover_policy]?.short ?? row.leftover_policy }}</span>
+                <span class="text-ui-cap whitespace-nowrap">{{ leftoverLabel(row.leftover_policy) }}</span>
               </template>
 
               <!-- Staff raport -->
@@ -1337,7 +1342,7 @@ const mobileCard = (row) => {
                 <span class="tabular-nums">{{ row.attendance_rate !== null ? `${row.attendance_rate}%` : "-" }}</span>
               </template>
               <template #cell-rating="{ row }">
-                <span class="flex items-center gap-0.5" :aria-label="`${row.stars} of 5 stars`">
+                <span class="flex items-center gap-0.5" :aria-label="$t('reports.stars', { n: row.stars })">
                   <Star
                     v-for="i in 5"
                     :key="i"
@@ -1348,7 +1353,7 @@ const mobileCard = (row) => {
                 </span>
               </template>
               <template #cell-view>
-                <span class="text-ui-cap font-medium text-ui-accent whitespace-nowrap">View Detail</span>
+                <span class="text-ui-cap font-medium text-ui-accent whitespace-nowrap">{{ $t('reports.viewDetail') }}</span>
               </template>
 
               <!-- Phones: stacked row cards -->
@@ -1379,19 +1384,19 @@ const mobileCard = (row) => {
                       :disabled="deletingRowId === rowIdField(row)"
                       @click.stop="handleDeleteRow(row)"
                     >
-                      <Trash2 class="w-3.5 h-3.5" />Delete
+                      <Trash2 class="w-3.5 h-3.5" />{{ $t("common.actions.delete") }}
                     </button>
                   </div>
                 </div>
               </template>
 
               <template #empty>
-                <UiEmpty :icon="FileTextIcon" title="No data found" message="Try adjusting the date range or filters" compact />
+                <UiEmpty :icon="FileTextIcon" :title="$t('reports.empty.title')" :message="$t('reports.empty.message')" compact />
               </template>
             </UiTable>
 
             <div v-if="reportMeta && reportMeta.total > 0" class="px-4 pb-3 border-t border-ui-line">
-              <Pagination :meta="reportMeta" :loading="loading" item-label="records" @page-change="loadReport" />
+              <Pagination :meta="reportMeta" :loading="loading" :item-label="$t('reports.itemLabel')" @page-change="loadReport" />
             </div>
           </section>
         </template>
@@ -1400,7 +1405,7 @@ const mobileCard = (row) => {
     </div>
 
     <!-- Staff Raport Detail Modal -->
-    <UiModal v-model:open="showRaportDetail" title="Staff Raport" size="lg" @close="closeRaportDetail">
+    <UiModal v-model:open="showRaportDetail" :title="$t('reports.tabs.staffRaport')" size="lg" @close="closeRaportDetail">
       <div v-if="loadingDetail">
         <SkeletonStatCards :count="3" cols="grid-cols-3" />
       </div>
@@ -1415,21 +1420,21 @@ const mobileCard = (row) => {
           </p>
           <p class="text-ui-cap text-ui-muted mt-0.5 capitalize">
             {{ (staffRaportDetail.employee.employment_type || "-").replace("_", " ") }}
-            <span v-if="staffRaportDetail.employee.start_date"> • Joined {{ formatDate(staffRaportDetail.employee.start_date) }}</span>
+            <span v-if="staffRaportDetail.employee.start_date"> • {{ $t('reports.raport.joined') }} {{ formatDate(staffRaportDetail.employee.start_date) }}</span>
           </p>
           <div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 bg-ui-subtle border border-ui-line rounded-ui-control px-3 py-2">
             <p class="text-ui-cap text-ui-text flex-1">
-              Period: <strong class="text-ui-ink font-semibold">{{ staffRaportDetail.period_label }}</strong>
+              {{ $t('common.labels.period') }}: <strong class="text-ui-ink font-semibold">{{ staffRaportDetail.period_label }}</strong>
               <span class="text-ui-muted">({{ formatDate(staffRaportDetail.period.start_date) }} – {{ formatDate(staffRaportDetail.period.end_date) }})</span>
             </p>
             <UiSelect
               v-model="raportPeriod"
-              aria-label="Raport period"
+              :aria-label="$t('reports.raport.periodAria')"
               :options="[
-                { value: 'filter', label: 'Report filter period' },
-                { value: 'week', label: 'This Week' },
-                { value: 'month', label: 'This Month' },
-                { value: 'all', label: 'All Time' },
+                { value: 'filter', label: $t('reports.raport.periods.filter') },
+                { value: 'week', label: $t('reports.raport.periods.week') },
+                { value: 'month', label: $t('reports.raport.periods.month') },
+                { value: 'all', label: $t('reports.raport.periods.all') },
               ]"
               class="sm:w-48"
               @change="loadRaportDetail"
@@ -1443,28 +1448,28 @@ const mobileCard = (row) => {
               :class="i <= staffRaportDetail.stars ? 'text-ui-warn' : 'text-ui-line-strong'"
               :fill="i <= staffRaportDetail.stars ? 'currentColor' : 'none'"
             />
-            <span class="text-ui-small text-ui-muted ml-1 tabular-nums">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : "No data" }}</span>
+            <span class="text-ui-small text-ui-muted ml-1 tabular-nums">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : $t('reports.raport.noData') }}</span>
           </div>
         </div>
 
         <div class="grid grid-cols-3 gap-2 sm:gap-3">
           <div class="bg-ui-subtle rounded-ui-control p-3 min-w-0">
             <p class="text-ui-h3 sm:text-ui-h2 text-ui-ink tabular-nums">{{ staffRaportDetail.attendance_rate !== null ? `${staffRaportDetail.attendance_rate}%` : "-" }}</p>
-            <p class="text-ui-cap text-ui-muted">Attendance ({{ staffRaportDetail.attendance.total }} working days)</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t('reports.raport.attendanceDays', { n: staffRaportDetail.attendance.total }) }}</p>
           </div>
           <div class="bg-ui-subtle rounded-ui-control p-3 min-w-0">
             <p class="text-ui-h3 sm:text-ui-h2 text-ui-ink tabular-nums">{{ staffRaportDetail.task_completion_rate !== null ? `${staffRaportDetail.task_completion_rate}%` : "-" }}</p>
-            <p class="text-ui-cap text-ui-muted">Tasks Done ({{ staffRaportDetail.tasks.done }}/{{ staffRaportDetail.tasks.total }} due)</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t('reports.raport.tasksDue', { done: staffRaportDetail.tasks.done, total: staffRaportDetail.tasks.total }) }}</p>
           </div>
           <div class="bg-ui-subtle rounded-ui-control p-3 min-w-0">
             <p class="text-ui-h3 sm:text-ui-h2 text-ui-ink tabular-nums">{{ staffRaportDetail.overall_score !== null ? `${staffRaportDetail.overall_score}%` : "-" }}</p>
-            <p class="text-ui-cap text-ui-muted">Overall Score</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t('reports.raport.overallScore') }}</p>
           </div>
         </div>
 
         <!-- How the attendance score was reached, day by day -->
         <div v-if="staffRaportDetail.attendance.working_days !== undefined">
-          <h4 class="text-ui-h3 text-ui-ink mb-2">Attendance &amp; Punctuality</h4>
+          <h4 class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.raport.punctuality') }}</h4>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div v-for="b in raportAttendanceBoxes" :key="b.label" class="border border-ui-line rounded-ui-control px-3 py-2 min-w-0">
               <p class="text-ui-cap text-ui-muted">{{ b.label }}</p>
@@ -1473,31 +1478,30 @@ const mobileCard = (row) => {
             </div>
           </div>
           <p class="text-ui-cap text-ui-muted mt-2">
-            Each working day is scored: on time / remote 100, late up to 15 min 90, 16–60 min 75, over 60 min 50, absent or no check-in 0.
-            Sick days, approved leave and holidays aren't counted.
-            <span v-if="staffRaportDetail.tasks.upcoming"> {{ staffRaportDetail.tasks.upcoming }} task(s) not yet due are left out of the task rate.</span>
-            <span v-if="staffRaportDetail.tasks.staff_done_late" class="text-ui-warn"> {{ staffRaportDetail.tasks.staff_done_late }} staff task(s) were completed after the due date.</span>
+            {{ $t('reports.raport.scoring') }}
+            <span v-if="staffRaportDetail.tasks.upcoming"> {{ $t('reports.raport.upcomingTasks', { n: staffRaportDetail.tasks.upcoming }, staffRaportDetail.tasks.upcoming) }}</span>
+            <span v-if="staffRaportDetail.tasks.staff_done_late" class="text-ui-warn"> {{ $t('reports.raport.lateTasks', { n: staffRaportDetail.tasks.staff_done_late }, staffRaportDetail.tasks.staff_done_late) }}</span>
           </p>
         </div>
 
         <div>
-          <h4 class="text-ui-h3 text-ui-ink mb-2">Completed Tasks ({{ staffRaportDetail.completed_tasks.length }})</h4>
+          <h4 class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.raport.completedTasks', { n: staffRaportDetail.completed_tasks.length }) }}</h4>
           <div v-if="staffRaportDetail.completed_tasks.length" class="border border-ui-line rounded-ui-control divide-y divide-ui-line max-h-48 overflow-y-auto">
             <div v-for="(task, idx) in staffRaportDetail.completed_tasks" :key="idx" class="flex items-center justify-between gap-3 px-3.5 py-2.5 text-ui-small">
               <span class="text-ui-ink">{{ task.title }}<span v-if="task.project_name" class="text-ui-muted"> ({{ task.project_name }})</span></span>
               <span class="text-ui-cap text-ui-muted shrink-0">{{ formatDate(task.due_date) }}</span>
             </div>
           </div>
-          <p v-else class="text-ui-small text-ui-muted">No completed tasks due in this period.</p>
+          <p v-else class="text-ui-small text-ui-muted">{{ $t('reports.raport.noCompleted') }}</p>
         </div>
 
         <div v-if="staffRaportDetail.performance_review" class="border-t border-ui-line pt-4">
-          <h4 class="text-ui-h3 text-ui-ink mb-2">Latest Performance Review</h4>
+          <h4 class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.raport.latestReview') }}</h4>
           <div class="bg-ui-subtle rounded-ui-control p-3.5 space-y-2">
             <div class="flex items-center justify-between gap-2 text-ui-cap text-ui-muted">
               <span>
                 {{ staffRaportDetail.performance_review.period }}
-                <span v-if="staffRaportDetail.performance_review.reviewer_name"> • Reviewed by {{ staffRaportDetail.performance_review.reviewer_name }}</span>
+                <span v-if="staffRaportDetail.performance_review.reviewer_name"> • {{ $t('reports.raport.reviewedBy', { name: staffRaportDetail.performance_review.reviewer_name }) }}</span>
               </span>
               <span class="flex items-center gap-0.5 shrink-0">
                 <Star
@@ -1515,20 +1519,20 @@ const mobileCard = (row) => {
                 {{ category.replace("_", " ") }}: {{ score }}/5
               </UiBadge>
             </div>
-            <p v-if="staffRaportDetail.performance_review.strengths" class="text-ui-cap text-ui-text"><strong class="text-ui-ink">Strengths:</strong> {{ staffRaportDetail.performance_review.strengths }}</p>
-            <p v-if="staffRaportDetail.performance_review.areas_for_improvement" class="text-ui-cap text-ui-text"><strong class="text-ui-ink">Areas for Improvement:</strong> {{ staffRaportDetail.performance_review.areas_for_improvement }}</p>
+            <p v-if="staffRaportDetail.performance_review.strengths" class="text-ui-cap text-ui-text"><strong class="text-ui-ink">{{ $t('reports.raport.strengths') }}</strong> {{ staffRaportDetail.performance_review.strengths }}</p>
+            <p v-if="staffRaportDetail.performance_review.areas_for_improvement" class="text-ui-cap text-ui-text"><strong class="text-ui-ink">{{ $t('reports.raport.improvements') }}</strong> {{ staffRaportDetail.performance_review.areas_for_improvement }}</p>
           </div>
         </div>
 
         <div class="pt-4 border-t border-ui-line">
-          <p class="text-ui-h3 text-ui-ink mb-2">Download PDF</p>
+          <p class="text-ui-h3 text-ui-ink mb-2">{{ $t("common.actions.downloadPdf") }}</p>
           <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-            <p class="text-ui-cap text-ui-muted flex-1">Uses the period above: <strong class="text-ui-ink font-semibold">{{ staffRaportDetail.period_label }}</strong></p>
+            <p class="text-ui-cap text-ui-muted flex-1">{{ $t('reports.raport.usesPeriod') }} <strong class="text-ui-ink font-semibold">{{ staffRaportDetail.period_label }}</strong></p>
             <UiButton :icon="Download" :loading="downloadingPdf" class="shrink-0" @click="handleDownloadPdf">
-              {{ downloadingPdf ? "Downloading..." : "Download PDF" }}
+              {{ downloadingPdf ? $t('reports.downloading') : $t("common.actions.downloadPdf") }}
             </UiButton>
           </div>
-          <SignatureToggle v-model="raportUseSignature" class="mt-3" hint="Stamps the Director's signature onto the PDF." />
+          <SignatureToggle v-model="raportUseSignature" class="mt-3" :hint="$t('reports.raport.signatureHint')" />
         </div>
       </div>
     </UiModal>
@@ -1537,7 +1541,7 @@ const mobileCard = (row) => {
     <UiModal
       :open="showSubscriptionDetail && !!selectedSubscription"
       :title="selectedSubscription?.name || ''"
-      description="Subscription Detail"
+      :description="$t('reports.subscription.detail')"
       @close="closeSubscriptionDetail"
     >
       <div v-if="selectedSubscription" class="space-y-4">
@@ -1553,25 +1557,25 @@ const mobileCard = (row) => {
 
         <dl class="grid grid-cols-2 gap-4">
           <div>
-            <dt class="text-ui-cap text-ui-muted">Billing Cycle</dt>
-            <dd class="text-ui-small text-ui-ink font-medium capitalize">{{ selectedSubscription.billing_cycle }}</dd>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.columns.billingCycle') }}</dt>
+            <dd class="text-ui-small text-ui-ink font-medium">{{ enumLabel("billingCycle", selectedSubscription.billing_cycle) }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Next Due Date</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.columns.nextDue') }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ formatDate(selectedSubscription.next_due_date) }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Last Invoiced</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.subscription.lastInvoiced') }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ selectedSubscription.last_invoiced_at ? formatDate(selectedSubscription.last_invoiced_at) : "-" }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Bank Account</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.bankAccount') }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ selectedSubscription.bank_name ?? "-" }}</dd>
           </div>
         </dl>
 
         <div>
-          <p class="text-ui-h3 text-ui-ink mb-2">Services</p>
+          <p class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.columns.services') }}</p>
           <div class="space-y-2">
             <div v-for="service in selectedSubscription.services" :key="service.id" class="flex items-center justify-between gap-3 bg-ui-subtle rounded-ui-control px-3 py-2">
               <div class="min-w-0">
@@ -1582,17 +1586,17 @@ const mobileCard = (row) => {
               </div>
               <p class="text-ui-small text-ui-ink font-medium tabular-nums shrink-0">{{ formatCurrency(service.amount) }}</p>
             </div>
-            <p v-if="!selectedSubscription.services?.length" class="text-ui-small text-ui-muted">No services on this subscription.</p>
+            <p v-if="!selectedSubscription.services?.length" class="text-ui-small text-ui-muted">{{ $t('reports.subscription.noServices') }}</p>
           </div>
         </div>
 
         <div class="bg-ui-subtle rounded-ui-control p-4 text-ui-small text-ui-text space-y-1">
-          <div class="flex justify-between gap-3"><span>Amount</span><span class="tabular-nums">{{ formatCurrency(selectedSubscription.amount) }}</span></div>
+          <div class="flex justify-between gap-3"><span>{{ $t('reports.columns.amount') }}</span><span class="tabular-nums">{{ formatCurrency(selectedSubscription.amount) }}</span></div>
           <div class="flex justify-between gap-3">
-            <span>{{ selectedSubscription.services?.length > 1 ? "Total VAT / PPN" : "VAT / PPN" }} ({{ selectedSubscription.ppn_percentage || 0 }}%)</span>
+            <span>{{ selectedSubscription.services?.length > 1 ? $t('reports.subscription.totalVat') : $t('reports.subscription.vat') }} ({{ selectedSubscription.ppn_percentage || 0 }}%)</span>
             <span class="tabular-nums">{{ formatCurrency(Math.round((Number(selectedSubscription.amount) || 0) * ((Number(selectedSubscription.ppn_percentage) || 0) / 100))) }}</span>
           </div>
-          <div class="flex justify-between gap-3"><span>Admin Fee</span><span class="tabular-nums">{{ formatCurrency(selectedSubscription.admin_fee) }}</span></div>
+          <div class="flex justify-between gap-3"><span>{{ $t('reports.adminFee') }}</span><span class="tabular-nums">{{ formatCurrency(selectedSubscription.admin_fee) }}</span></div>
           <div v-if="subscriptionIcannFeeTotal(selectedSubscription) > 0" class="flex justify-between gap-3">
             <span>ICANN Fee</span><span class="tabular-nums">{{ formatCurrency(subscriptionIcannFeeTotal(selectedSubscription)) }}</span>
           </div>
@@ -1600,7 +1604,7 @@ const mobileCard = (row) => {
         </div>
 
         <div v-if="selectedSubscription.terms">
-          <p class="text-ui-small text-ui-ink font-medium mb-1">Terms & Conditions</p>
+          <p class="text-ui-small text-ui-ink font-medium mb-1">{{ $t('reports.terms') }}</p>
           <p class="text-ui-cap text-ui-muted whitespace-pre-line">{{ selectedSubscription.terms }}</p>
         </div>
       </div>
@@ -1610,21 +1614,21 @@ const mobileCard = (row) => {
     <UiModal
       :open="showInvoiceDetail && !!selectedInvoice"
       :title="selectedInvoice?.invoice_number || ''"
-      description="Invoice Detail"
+      :description="$t('reports.invoiceDetail')"
       @close="closeInvoiceDetail"
     >
       <div v-if="selectedInvoice" class="space-y-4">
         <dl class="grid grid-cols-2 gap-4">
           <div>
-            <dt class="text-ui-cap text-ui-muted">Date</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.date") }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ formatDate(selectedInvoice.date) }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Faktur Pajak No.</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.columns.faktur') }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ selectedInvoice.faktur_pajak_number ?? "-" }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Client</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.client") }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ selectedInvoice.client_name }}</dd>
           </div>
           <div>
@@ -1634,7 +1638,7 @@ const mobileCard = (row) => {
         </dl>
 
         <div v-if="selectedInvoice.items?.length">
-          <p class="text-ui-h3 text-ui-ink mb-2">Items</p>
+          <p class="text-ui-h3 text-ui-ink mb-2">{{ $t('reports.items') }}</p>
           <div class="space-y-2">
             <div v-for="(item, idx) in selectedInvoice.items" :key="idx" class="flex items-center justify-between gap-3 bg-ui-subtle rounded-ui-control px-3 py-2 text-ui-small">
               <span class="min-w-0 truncate text-ui-text">{{ item.description }}</span>
@@ -1644,29 +1648,29 @@ const mobileCard = (row) => {
         </div>
 
         <div class="bg-ui-subtle rounded-ui-control p-4 text-ui-small text-ui-text space-y-1">
-          <div class="flex justify-between gap-3"><span>DPP (Subtotal)</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.subtotal) }}</span></div>
+          <div class="flex justify-between gap-3"><span>{{ $t('reports.dppSubtotal') }}</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.subtotal) }}</span></div>
           <div class="flex justify-between gap-3"><span>PPN ({{ selectedInvoice.ppn_percentage || 0 }}%)</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.ppn_amount) }}</span></div>
-          <div v-if="selectedInvoice.admin_fee > 0" class="flex justify-between gap-3"><span>Admin Fee</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.admin_fee) }}</span></div>
+          <div v-if="selectedInvoice.admin_fee > 0" class="flex justify-between gap-3"><span>{{ $t('reports.adminFee') }}</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.admin_fee) }}</span></div>
           <div v-if="selectedInvoice.icann_fee > 0" class="flex justify-between gap-3"><span>ICANN Fee</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.icann_fee) }}</span></div>
           <div v-if="selectedInvoice.pph23_type" class="flex justify-between gap-3"><span>PPh 23</span><span class="tabular-nums">{{ selectedInvoice.pph23_percent }}%</span></div>
           <div class="flex justify-between gap-3 font-semibold text-ui-ink pt-1.5 mt-1 border-t border-ui-line">
-            <span>Total Amount Due</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.total) }}</span>
+            <span>{{ $t('reports.totalDue') }}</span><span class="tabular-nums">{{ formatCurrency(selectedInvoice.total) }}</span>
           </div>
         </div>
 
         <dl v-if="selectedInvoice.bank_name" class="grid grid-cols-2 gap-4">
           <div>
-            <dt class="text-ui-cap text-ui-muted">Bank</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.bank') }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ selectedInvoice.bank_name }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Account Number</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.accountNumber') }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium tabular-nums">{{ selectedInvoice.bank_account ?? "-" }}</dd>
           </div>
         </dl>
 
         <div v-if="selectedInvoice.terms">
-          <p class="text-ui-small text-ui-ink font-medium mb-1">Terms & Conditions</p>
+          <p class="text-ui-small text-ui-ink font-medium mb-1">{{ $t('reports.terms') }}</p>
           <p class="text-ui-cap text-ui-muted whitespace-pre-line">{{ selectedInvoice.terms }}</p>
         </div>
       </div>
@@ -1676,43 +1680,43 @@ const mobileCard = (row) => {
     <UiModal
       :open="showReceiptDetail && !!selectedReceipt"
       :title="selectedReceipt?.receipt_number || ''"
-      description="Payment Receipt Detail"
+      :description="$t('reports.receiptDetail')"
       @close="closeReceiptDetail"
     >
       <div v-if="selectedReceipt" class="space-y-4">
         <dl class="grid grid-cols-2 gap-4">
           <div>
-            <dt class="text-ui-cap text-ui-muted">Date</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.date") }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ formatDate(selectedReceipt.date) }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Invoice No.</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.columns.invoiceNo') }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ selectedReceipt.invoice?.invoice_number ?? "-" }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Received From</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.receivedFrom') }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ selectedReceipt.invoice?.client_name ?? selectedReceipt.received_from }}</dd>
           </div>
           <div>
-            <dt class="text-ui-cap text-ui-muted">Recipient</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('reports.recipient') }}</dt>
             <dd class="text-ui-small text-ui-ink font-medium">{{ selectedReceipt.recipient_name ?? "-" }}</dd>
           </div>
         </dl>
 
         <div v-if="selectedReceipt.for_payment_of">
-          <p class="text-ui-small text-ui-ink font-medium mb-1">For Payment Of</p>
+          <p class="text-ui-small text-ui-ink font-medium mb-1">{{ $t('reports.forPaymentOf') }}</p>
           <p class="text-ui-cap text-ui-muted whitespace-pre-line">{{ selectedReceipt.for_payment_of }}</p>
         </div>
 
         <div class="bg-ui-subtle rounded-ui-control p-4 text-ui-small text-ui-text space-y-1">
           <div class="flex justify-between gap-3">
-            <span>Gross Amount</span><span class="tabular-nums">{{ formatCurrency(Number(selectedReceipt.amount) + Number(selectedReceipt.pph23_amount)) }}</span>
+            <span>{{ $t('reports.columns.grossAmount') }}</span><span class="tabular-nums">{{ formatCurrency(Number(selectedReceipt.amount) + Number(selectedReceipt.pph23_amount)) }}</span>
           </div>
           <div class="flex justify-between gap-3">
-            <span>PPh 23 Withheld ({{ Number(selectedReceipt.pph23_percent) }}%)</span><span class="tabular-nums">{{ formatCurrency(selectedReceipt.pph23_amount) }}</span>
+            <span>{{ $t('reports.columns.pph23Withheld') }} ({{ Number(selectedReceipt.pph23_percent) }}%)</span><span class="tabular-nums">{{ formatCurrency(selectedReceipt.pph23_amount) }}</span>
           </div>
           <div class="flex justify-between gap-3 font-semibold text-ui-ink pt-1.5 mt-1 border-t border-ui-line">
-            <span>Net Received</span><span class="tabular-nums">{{ formatCurrency(selectedReceipt.amount) }}</span>
+            <span>{{ $t('reports.columns.netReceived') }}</span><span class="tabular-nums">{{ formatCurrency(selectedReceipt.amount) }}</span>
           </div>
         </div>
 
@@ -1726,20 +1730,20 @@ const mobileCard = (row) => {
     <AttendanceDetailModal :show="showAttendanceDetail" :attendance="selectedAttendance" @close="closeAttendanceDetail" />
 
     <!-- Delete by Date Range Modal -->
-    <UiModal v-model:open="showDeleteRangeModal" title="Delete by Date Range" size="sm" @close="closeDeleteRangeModal">
+    <UiModal v-model:open="showDeleteRangeModal" :title="$t('reports.delete.byRange')" size="sm" @close="closeDeleteRangeModal">
       <div class="space-y-4">
         <UiAlert tone="bad">
-          This permanently deletes every underlying record in this range, not just its appearance in the report. This cannot be undone from this screen.
+          {{ $t('reports.delete.rangeWarning') }}
         </UiAlert>
         <div class="grid grid-cols-2 gap-3">
-          <UiInput v-model="deleteRangeStart" type="date" label="Start Date" />
-          <UiInput v-model="deleteRangeEnd" type="date" label="End Date" />
+          <UiInput v-model="deleteRangeStart" type="date" :label="$t('common.labels.startDate')" />
+          <UiInput v-model="deleteRangeEnd" type="date" :label="$t('common.labels.endDate')" />
         </div>
       </div>
       <template #footer>
-        <UiButton variant="secondary" @click="closeDeleteRangeModal">Cancel</UiButton>
+        <UiButton variant="secondary" @click="closeDeleteRangeModal">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton variant="destructive" :loading="deletingRange" :disabled="!deleteRangeStart || !deleteRangeEnd" @click="handleDeleteRange">
-          {{ deletingRange ? "Deleting..." : "Delete Range" }}
+          {{ deletingRange ? $t("common.actions.deleting") : $t('reports.delete.range') }}
         </UiButton>
       </template>
     </UiModal>

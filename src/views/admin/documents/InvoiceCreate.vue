@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { Plus, Trash2, ArrowLeft, Check } from "lucide-vue-next";
 import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader, UiSelect, UiSwitch } from "@/components/ui";
@@ -9,6 +10,7 @@ import { useBankAccountStore } from "@/stores/bankAccount";
 import { useProjectStore } from "@/stores/project";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 
+const { t } = useI18n();
 const store = useInvoiceStore();
 const router = useRouter();
 const route = useRoute();
@@ -57,7 +59,7 @@ onMounted(async () => {
         applyPph23.value = true;
       }
     } catch (error) {
-      errorMessage.value = "Failed to load invoice.";
+      errorMessage.value = t("documents.invoice.form.errors.load");
     }
   }
 });
@@ -168,7 +170,7 @@ const handleSubmit = async () => {
     router.push({ name: "admin.invoices.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : `Failed to ${isEditMode.value ? "update" : "create"} Invoice.`);
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t(isEditMode.value ? "documents.invoice.form.errors.update" : "documents.invoice.form.errors.create"));
   } finally {
     submitting.value = false;
   }
@@ -180,7 +182,7 @@ const field =
 const lbl = "block text-ui-small font-medium text-ui-ink mb-1.5";
 const hintCls = "text-ui-cap text-ui-muted mt-1.5";
 const rp = (n) => `Rp ${(Number(n) || 0).toLocaleString("id-ID")}`;
-const projectOptions = computed(() => [{ value: "", label: "No project" }, ...projects.value.map((p) => ({ value: p.id, label: p.name }))]);
+const projectOptions = computed(() => [{ value: "", label: t("documents.invoice.form.noProject") }, ...projects.value.map((p) => ({ value: p.id, label: p.name }))]);
 const bankOptions = computed(() => bankAccounts.value.map((a) => ({ value: a.bank_name, label: a.bank_name })));
 const pphTypeOptions = computed(() => pphTypes.value.map((t) => ({ value: t.value, label: t.label })));
 const onApplyPph23 = (value) => {
@@ -191,20 +193,20 @@ const onApplyPph23 = (value) => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader :title="isEditMode ? 'Edit Invoice' : 'Create Invoice'">
+    <UiPageHeader :title="isEditMode ? $t('documents.invoice.form.editTitle') : $t('documents.invoice.list.create')">
       <template #eyebrow>
         <router-link :to="{ name: 'admin.invoices.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1">
-          <ArrowLeft class="w-4 h-4" />Invoice
+          <ArrowLeft class="w-4 h-4" />{{ $t("documents.invoice.list.title") }}
         </router-link>
       </template>
       <template #subtitle>
-        <span :class="isEditMode ? 'font-mono' : ''">{{ isEditMode ? existingInvoiceNumber : (form.numbering_mode === "manual" ? "Invoice number will be used exactly as entered" : "Invoice number will be generated automatically when saved") }}</span>
+        <span :class="isEditMode ? 'font-mono' : ''">{{ isEditMode ? existingInvoiceNumber : (form.numbering_mode === "manual" ? $t("documents.invoice.form.manualNumber") : $t("documents.invoice.form.autoNumber")) }}</span>
       </template>
       <template #actions>
         <div class="hidden sm:flex items-center gap-2">
-          <UiButton variant="secondary" :to="{ name: 'admin.invoices.dashboard' }">Cancel</UiButton>
+          <UiButton variant="secondary" :to="{ name: 'admin.invoices.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
           <UiButton type="submit" form="invoice-form" :icon="Check" :loading="submitting">
-            {{ submitting ? "Saving..." : (isEditMode ? "Update Invoice" : "Save Invoice") }}
+            {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.invoice.form.update") : $t("documents.invoice.form.save")) }}
           </UiButton>
         </div>
       </template>
@@ -212,16 +214,16 @@ const onApplyPph23 = (value) => {
 
     <form id="invoice-form" @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start">
       <div class="lg:col-span-2 space-y-4 sm:space-y-5 min-w-0 ui-stagger">
-        <UiCard title="Project Link (Optional)">
-          <UiSelect v-model="form.project_id" :options="projectOptions" label="Project" hint="Link this invoice to a project so it shows up on that project's page." />
+        <UiCard :title="$t('documents.invoice.form.projectLink')">
+          <UiSelect v-model="form.project_id" :options="projectOptions" :label="$t('common.labels.project')" :hint="$t('documents.invoice.form.projectHint')" />
         </UiCard>
 
-        <UiCard title="Client Information">
+        <UiCard :title="$t('documents.shared.clientInfo')">
           <div v-if="!isEditMode" class="mb-4">
-            <p :class="lbl">Invoice Numbering</p>
+            <p :class="lbl">{{ $t("documents.invoice.form.numbering") }}</p>
             <div class="inline-flex p-0.5 rounded-ui-control bg-ui-subtle border border-ui-line" role="radiogroup">
               <label
-                v-for="mode in [{ value: 'automatic', label: 'Automatic' }, { value: 'manual', label: 'Manual' }]"
+                v-for="mode in [{ value: 'automatic', label: $t('documents.shared.numberingAuto') }, { value: 'manual', label: $t('documents.shared.numberingManual') }]"
                 :key="mode.value"
                 class="px-3 h-8 inline-flex items-center rounded-[6px] text-ui-small font-medium transition-colors"
                 :class="form.numbering_mode === mode.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
@@ -235,41 +237,41 @@ const onApplyPph23 = (value) => {
             <UiInput
               v-if="isEditMode || form.numbering_mode === 'automatic'"
               v-model="form.client_code"
-              label="Client Code"
+              :label="$t('documents.invoice.form.clientCode')"
               required
-              placeholder="e.g. ZACO"
+              :placeholder="$t('documents.invoice.form.clientCodePlaceholder')"
               class="[&_input]:uppercase"
-              :hint="!isEditMode ? 'A short code only (no &quot;/&quot;) — combined with the date and sequence, e.g. INV/JCD-ZACO/1805/26.001' : ''"
+              :hint="!isEditMode ? $t('documents.invoice.form.clientCodeHint') : ''"
             />
             <UiInput
               v-else
               v-model="form.invoice_number"
-              label="Invoice Number"
+              :label="$t('documents.invoice.form.invoiceNumber')"
               required
-              placeholder="e.g. INV/JCD-FASTTRACK/1805/26.001"
-              hint="Used exactly as entered — must be unique."
+              :placeholder="$t('documents.invoice.form.invoiceNumberPlaceholder')"
+              :hint="$t('documents.shared.manualNumberHint')"
             />
-            <UiInput v-model="form.date" type="date" label="Date" required />
-            <UiInput v-model="form.client_name" label="Client Name" required />
+            <UiInput v-model="form.date" type="date" :label="$t('common.labels.date')" required />
+            <UiInput v-model="form.client_name" :label="$t('documents.shared.clientName')" required />
             <UiInput v-model="form.client_pic" label="PIC" />
-            <UiInput v-model="form.client_email" type="email" label="Email (optional)" />
-            <UiInput v-model="form.client_phone" label="Phone" />
-            <UiInput v-model="form.client_npwp" label="Client NPWP (optional)" placeholder="00.000.000.0-000.000" />
-            <UiInput v-model="form.faktur_pajak_number" label="Faktur Pajak Number (optional)" placeholder="010.000-26.00000001" />
+            <UiInput v-model="form.client_email" type="email" :label="$t('documents.invoice.form.emailOptional')" />
+            <UiInput v-model="form.client_phone" :label="$t('common.labels.phone')" />
+            <UiInput v-model="form.client_npwp" :label="$t('documents.invoice.form.npwp')" placeholder="00.000.000.0-000.000" />
+            <UiInput v-model="form.faktur_pajak_number" :label="$t('documents.invoice.form.fakturPajak')" placeholder="010.000-26.00000001" />
           </div>
         </UiCard>
 
         <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
           <header class="flex items-center gap-3 px-5 sm:px-6 pt-[18px] pb-3.5">
-            <h3 class="flex-1 text-ui-h2 text-ui-ink">Billing Items</h3>
-            <span class="text-ui-cap text-ui-muted tabular-nums">{{ form.items.length }} {{ form.items.length === 1 ? "item" : "items" }}</span>
+            <h3 class="flex-1 text-ui-h2 text-ui-ink">{{ $t("documents.invoice.form.itemsTitle") }}</h3>
+            <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("documents.shared.itemCount", { n: form.items.length }, form.items.length) }}</span>
           </header>
           <div class="hidden md:grid grid-cols-[28px_minmax(0,2.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.3fr)_32px] gap-3 px-5 sm:px-6 h-9 items-center border-y border-ui-line bg-ui-subtle/50 text-ui-cap font-medium text-ui-muted">
             <span>#</span>
-            <span>Description <span class="text-ui-bad">*</span></span>
-            <span>Qty</span>
-            <span>Rate</span>
-            <span class="text-right">Total (Rp) <span class="text-ui-bad">*</span></span>
+            <span>{{ $t("common.labels.description") }} <span class="text-ui-bad">*</span></span>
+            <span>{{ $t("documents.shared.qty") }}</span>
+            <span>{{ $t("documents.shared.rate") }}</span>
+            <span class="text-right">{{ $t("documents.shared.totalRp") }} <span class="text-ui-bad">*</span></span>
             <span></span>
           </div>
           <ul class="divide-y divide-ui-line border-t border-ui-line md:border-t-0">
@@ -283,24 +285,24 @@ const onApplyPph23 = (value) => {
                 <span class="md:hidden pt-2.5 text-ui-cap text-ui-faint tabular-nums w-4">{{ i + 1 }}</span>
                 <textarea
                   v-model="item.description"
-                  placeholder="Description"
+                  :placeholder="$t('common.labels.description')"
                   required
                   rows="1"
-                  aria-label="Description"
+                  :aria-label="$t('common.labels.description')"
                   class="w-full min-h-[38px] px-3 py-2 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control resize-y focus:outline-none focus:border-ui-accent focus:shadow-ui-focus"
                 ></textarea>
               </div>
-              <input v-model="item.quantity" type="text" placeholder="Qty (e.g. 1 tahun)" aria-label="Qty" :class="field" />
-              <input v-model="item.rate" type="text" placeholder="Rate" aria-label="Rate" :class="field" />
-              <input v-model.number="item.total" type="number" min="0" placeholder="Total (Rp)" required aria-label="Total (Rp)" :class="[field, 'text-right tabular-nums']" />
+              <input v-model="item.quantity" type="text" :placeholder="$t('documents.invoice.form.qtyPlaceholder')" :aria-label="$t('documents.shared.qty')" :class="field" />
+              <input v-model="item.rate" type="text" :placeholder="$t('documents.shared.rate')" :aria-label="$t('documents.shared.rate')" :class="field" />
+              <input v-model.number="item.total" type="number" min="0" :placeholder="$t('documents.shared.totalRp')" required :aria-label="$t('documents.shared.totalRp')" :class="[field, 'text-right tabular-nums']" />
               <div class="flex justify-end md:pt-1">
                 <button
                   v-if="form.items.length > 1"
                   type="button"
                   @click="removeItem(i)"
                   class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-faint hover:text-ui-bad hover:bg-ui-bad-soft"
-                  title="Remove item"
-                  aria-label="Remove item"
+                  :title="$t('documents.shared.removeLine')"
+                  :aria-label="$t('documents.shared.removeLine')"
                 >
                   <Trash2 class="w-4 h-4" />
                 </button>
@@ -308,49 +310,49 @@ const onApplyPph23 = (value) => {
             </li>
           </ul>
           <div class="px-3 sm:px-4 py-2 border-t border-ui-line">
-            <UiButton variant="ghost" size="sm" :icon="Plus" @click="addItem">Add Item</UiButton>
+            <UiButton variant="ghost" size="sm" :icon="Plus" @click="addItem">{{ $t("documents.shared.addItem") }}</UiButton>
           </div>
         </section>
 
-        <UiCard title="Payment & Tax">
+        <UiCard :title="$t('documents.invoice.form.paymentTax')">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label :class="lbl" for="inv-ppn">VAT (%)</label>
+              <label :class="lbl" for="inv-ppn">{{ $t("documents.invoice.form.vatPercent") }}</label>
               <input id="inv-ppn" v-model.number="form.ppn_percentage" type="number" min="0" max="100" step="0.01" :class="[field, 'tabular-nums']" />
             </div>
             <div>
-              <label :class="lbl" for="inv-admin">Admin Fee (Rp)</label>
+              <label :class="lbl" for="inv-admin">{{ $t("documents.invoice.form.adminFeeRp") }}</label>
               <input id="inv-admin" v-model.number="form.admin_fee" type="number" min="0" :class="[field, 'tabular-nums']" />
             </div>
             <div>
-              <label :class="lbl" for="inv-icann">ICANN Fee (Rp) (optional)</label>
+              <label :class="lbl" for="inv-icann">{{ $t("documents.invoice.form.icannFeeRp") }}</label>
               <input id="inv-icann" v-model.number="form.icann_fee" type="number" min="0" placeholder="0" :class="[field, 'tabular-nums']" />
-              <p :class="hintCls">Pass-through registrar fee, e.g. for a domain -- not part of VAT.</p>
+              <p :class="hintCls">{{ $t("documents.invoice.form.icannHint") }}</p>
             </div>
             <UiSelect
               v-model="form.bank_name"
               :options="bankOptions"
-              label="Bank Name"
-              placeholder="Select a bank"
-              :hint="bankAccounts.length === 0 ? 'No bank accounts configured yet. Add one in Settings → Bank Accounts.' : ''"
+              :label="$t('documents.shared.bankName')"
+              :placeholder="$t('documents.shared.selectBank')"
+              :hint="bankAccounts.length === 0 ? $t('documents.shared.noBankAccounts') : ''"
               @change="handleBankNameChange"
             />
-            <UiInput v-model="form.bank_account" label="Account Number" readonly mono />
-            <UiInput v-model="form.terms" :rows="3" label="Terms & Conditions" class="md:col-span-2" />
+            <UiInput v-model="form.bank_account" :label="$t('documents.shared.accountNumber')" readonly mono />
+            <UiInput v-model="form.terms" :rows="3" :label="$t('documents.invoice.form.terms')" class="md:col-span-2" />
             <div class="md:col-span-2 rounded-ui-control border border-ui-line p-3.5">
               <UiSwitch
                 :model-value="applyPph23"
-                label="Subject to PPh 23 withholding?"
-                description="Informational only — adds a note to the PDF that the client is expected to withhold PPh 23 on payment. Does not change Total Amount Due; the actual withholding is recorded later on the Payment Receipt."
+                :label="$t('documents.invoice.form.pph23Switch')"
+                :description="$t('documents.invoice.form.pph23Description')"
                 @update:model-value="onApplyPph23"
               />
             </div>
             <template v-if="applyPph23">
-              <UiSelect v-model="form.pph23_type" :options="pphTypeOptions" label="PPh 23 Type" @change="handlePph23TypeChange" />
+              <UiSelect v-model="form.pph23_type" :options="pphTypeOptions" :label="$t('documents.shared.pph23Type')" @change="handlePph23TypeChange" />
               <div>
                 <label :class="lbl" for="inv-pph">PPh 23 (%)</label>
                 <input id="inv-pph" v-model.number="form.pph23_percent" type="number" min="0" max="100" step="0.1" :class="[field, 'tabular-nums']" />
-                <p :class="hintCls">Estimated withholding: <span class="tabular-nums">Rp {{ pph23EstimatedAmount.toLocaleString("id-ID") }}</span></p>
+                <p :class="hintCls">{{ $t("documents.invoice.form.estimatedWithholding") }} <span class="tabular-nums">Rp {{ pph23EstimatedAmount.toLocaleString("id-ID") }}</span></p>
               </div>
             </template>
           </div>
@@ -358,24 +360,24 @@ const onApplyPph23 = (value) => {
       </div>
 
       <aside class="lg:sticky lg:top-4 space-y-4 min-w-0">
-        <UiCard title="Summary">
+        <UiCard :title="$t('documents.shared.summary')">
           <dl class="text-ui-small space-y-2.5">
             <div class="flex justify-between gap-3"><dt class="text-ui-muted">Subtotal</dt><dd class="text-ui-ink tabular-nums">{{ rp(subtotal) }}</dd></div>
-            <div class="flex justify-between gap-3"><dt class="text-ui-muted">VAT ({{ form.ppn_percentage || 0 }}%)</dt><dd class="text-ui-ink tabular-nums">{{ rp(ppnAmount) }}</dd></div>
-            <div class="flex justify-between gap-3"><dt class="text-ui-muted">Admin Fee</dt><dd class="text-ui-ink tabular-nums">{{ rp(form.admin_fee) }}</dd></div>
-            <div v-if="Number(form.icann_fee) > 0" class="flex justify-between gap-3"><dt class="text-ui-muted">ICANN Fee</dt><dd class="text-ui-ink tabular-nums">{{ rp(form.icann_fee) }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-ui-muted">{{ $t("documents.invoice.form.vatLine", { pct: form.ppn_percentage || 0 }) }}</dt><dd class="text-ui-ink tabular-nums">{{ rp(ppnAmount) }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-ui-muted">{{ $t("documents.invoice.form.adminFee") }}</dt><dd class="text-ui-ink tabular-nums">{{ rp(form.admin_fee) }}</dd></div>
+            <div v-if="Number(form.icann_fee) > 0" class="flex justify-between gap-3"><dt class="text-ui-muted">{{ $t("documents.invoice.form.icannFee") }}</dt><dd class="text-ui-ink tabular-nums">{{ rp(form.icann_fee) }}</dd></div>
             <div class="flex items-baseline justify-between gap-3 pt-3 mt-1 border-t border-ui-line">
-              <dt class="text-ui-body font-medium text-ui-ink">Total</dt>
+              <dt class="text-ui-body font-medium text-ui-ink">{{ $t("common.labels.total") }}</dt>
               <dd class="text-ui-h2 text-ui-ink tabular-nums">{{ rp(total) }}</dd>
             </div>
-            <p v-if="applyPph23" class="text-ui-cap text-ui-muted">PPh 23 note on PDF · est. withholding <span class="tabular-nums">Rp {{ pph23EstimatedAmount.toLocaleString("id-ID") }}</span></p>
+            <p v-if="applyPph23" class="text-ui-cap text-ui-muted">{{ $t("documents.invoice.form.pph23Note") }} <span class="tabular-nums">Rp {{ pph23EstimatedAmount.toLocaleString("id-ID") }}</span></p>
           </dl>
           <UiAlert v-if="errorMessage" tone="bad" :title="errorMessage" class="mt-4" />
           <div class="mt-5 grid gap-2">
             <UiButton type="submit" size="lg" block :icon="Check" :loading="submitting">
-              {{ submitting ? "Saving..." : (isEditMode ? "Update Invoice" : "Save Invoice") }}
+              {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.invoice.form.update") : $t("documents.invoice.form.save")) }}
             </UiButton>
-            <UiButton variant="secondary" block :to="{ name: 'admin.invoices.dashboard' }">Cancel</UiButton>
+            <UiButton variant="secondary" block :to="{ name: 'admin.invoices.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
           </div>
         </UiCard>
       </aside>

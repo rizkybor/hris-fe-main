@@ -1,0 +1,17 @@
+{
+  "title": "Organization Chart",
+  "subtitle": "Company structure by department and team",
+  "empty": "No active teams available.",
+  "department": "Department",
+  "teamCount": "{n} team | {n} teams",
+  "lead": "Lead: {name}",
+  "noMembers": "No members yet",
+  "departments": {
+    "development": "Development",
+    "design": "Design",
+    "marketing": "Marketing",
+    "sales": "Sales",
+    "support": "Support",
+    "management": "Management"
+  }
+}

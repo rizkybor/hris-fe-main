@@ -5,6 +5,9 @@ import { useProjectStore } from "@/stores/project";
 import { storeToRefs } from "pinia";
 import { uiColor } from "@/utils/uiColor";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const projectStore = useProjectStore();
 const { loadingStatistics } = storeToRefs(projectStore);
@@ -40,7 +43,7 @@ const chartOptions = computed(() => ({
   fill: { type: "solid" },
   colors: [completionRate.value >= 100 ? uiColor("ok") : uiColor("ink")],
   stroke: { lineCap: "round" },
-  labels: ["Task Completion"],
+  labels: [t("projects.charts.taskCompletion")],
 }));
 
 const chartSeries = computed(() => [completionRate.value]);
@@ -49,12 +52,12 @@ const chartSeries = computed(() => [completionRate.value]);
 <template>
   <div class="h-full bg-ui-surface border border-ui-line rounded-ui-card p-5">
     <div class="mb-3">
-      <h3 class="text-ui-h2 text-ui-ink">Project Progress</h3>
+      <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.charts.progressTitle") }}</h3>
       <p class="text-ui-cap text-ui-muted mt-0.5 tabular-nums">
         {{
           loadingStatistics
-            ? "Loading..."
-            : `${completedTasks} of ${totalTasks} tasks completed across all projects`
+            ? $t("common.states.loading")
+            : $t("projects.charts.progressSummary", { done: completedTasks, total: totalTasks }, totalTasks)
         }}
       </p>
     </div>

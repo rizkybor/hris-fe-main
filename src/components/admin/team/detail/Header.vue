@@ -21,7 +21,7 @@ const props = defineProps({
           v-if="team.icon"
           class="w-7 h-7 sm:w-8 sm:h-8 object-contain"
           :src="team.icon"
-          alt="Team Icon"
+          :alt="$t('teams.form.icon.label')"
         />
         <Users2 v-else class="w-7 h-7" />
       </div>
@@ -31,18 +31,18 @@ const props = defineProps({
           <h1 class="text-ui-h1 text-ui-ink break-words min-w-0">
             {{ team.name }}
           </h1>
-          <UiBadge tone="info" dot>Verified</UiBadge>
+          <UiBadge tone="info" dot>{{ $t("teams.detail.verified") }}</UiBadge>
         </div>
         <div
           class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-ui-small text-ui-muted"
         >
           <span class="inline-flex items-center gap-1.5">
             <Users class="w-3.5 h-3.5 text-ui-faint" />
-            <span class="tabular-nums">{{ team.members_count }}/{{ team.expected_size }} members</span>
+            <span class="tabular-nums">{{ $t("teams.detail.membersOf", { n: team.members_count, size: team.expected_size }) }}</span>
           </span>
           <span class="inline-flex items-center gap-1.5">
             <Building class="w-3.5 h-3.5 text-ui-faint" />
-            {{ capitalize(team.department) }}
+            {{ team.department && $te(`orgchart.departments.${team.department}`) ? $t(`orgchart.departments.${team.department}`) : capitalize(team.department) }}
           </span>
           <span class="inline-flex items-center gap-1.5">
             <Calendar class="w-3.5 h-3.5 text-ui-faint" />
@@ -54,14 +54,14 @@ const props = defineProps({
 
     <div class="flex gap-2 shrink-0">
       <UiButton variant="secondary" :icon="Share" class="flex-1 sm:flex-none">
-        Share Team
+        {{ $t("teams.detail.share") }}
       </UiButton>
       <UiButton
         :icon="Edit"
         :to="{ name: 'admin.team.edit', params: { id: team.id } }"
         class="flex-1 sm:flex-none"
       >
-        Edit Team
+        {{ $t("teams.detail.edit") }}
       </UiButton>
     </div>
   </div>

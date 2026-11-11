@@ -17,7 +17,7 @@ const toggle = () => {
     type="button"
     role="switch"
     :aria-checked="modelValue"
-    :aria-label="label || (modelValue ? 'Active' : 'Inactive')"
+    :aria-label="label || (modelValue ? $t('common.labels.active') : $t('common.labels.inactive'))"
     :disabled="disabled"
     @click.stop="toggle"
     class="inline-flex items-center gap-2 disabled:opacity-50"
@@ -26,7 +26,7 @@ const toggle = () => {
       <span class="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-ui-raised transition-transform duration-ui-base ease-ui-out" :class="modelValue ? 'translate-x-4' : 'translate-x-0'"></span>
     </span>
     <span v-if="label !== null" class="text-ui-cap font-medium" :class="modelValue ? 'text-ui-ok' : 'text-ui-muted'">
-      {{ label || (modelValue ? "Active" : "Inactive") }}
+      {{ label || (modelValue ? $t("common.labels.active") : $t("common.labels.inactive")) }}
     </span>
   </button>
 </template>

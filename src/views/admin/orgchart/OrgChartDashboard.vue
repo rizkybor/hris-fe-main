@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { Network, Crown, User, Users } from "lucide-vue-next";
 import { useTeamStore } from "@/stores/team";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -10,14 +11,9 @@ const teamStore = useTeamStore();
 const departments = ref([]);
 const loading = ref(true);
 
-const departmentLabels = {
-  development: "Development",
-  design: "Design",
-  marketing: "Marketing",
-  sales: "Sales",
-  support: "Support",
-  management: "Management",
-};
+const { t, te } = useI18n();
+// Display label for a department value; unknown values show as sent.
+const departmentLabel = (dept) => (te(`orgchart.departments.${dept}`) ? t(`orgchart.departments.${dept}`) : dept);
 
 onMounted(async () => {
   try {
@@ -32,7 +28,7 @@ onMounted(async () => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Organization Chart" subtitle="Company structure by department and team" class="ui-anim-fade-up" />
+    <UiPageHeader :title="$t('orgchart.title')" :subtitle="$t('orgchart.subtitle')" class="ui-anim-fade-up" />
 
     <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <div v-for="i in 4" :key="i" class="space-y-2.5">
@@ -44,7 +40,7 @@ onMounted(async () => {
     <UiEmpty
       v-else-if="departments.length === 0"
       :icon="Network"
-      title="No active teams available."
+      :title="$t('orgchart.empty')"
       class="bg-ui-surface border border-ui-line rounded-ui-card"
     />
 
@@ -52,13 +48,13 @@ onMounted(async () => {
       <section v-for="dept in departments" :key="dept.department" class="min-w-0">
         <!-- Phones: section label (app list style) -->
         <h2 class="sm:hidden px-1 mb-2 text-ui-over uppercase text-ui-muted">
-          {{ departmentLabels[dept.department] ?? dept.department }} · {{ dept.teams.length }} teams
+          {{ departmentLabel(dept.department) }} · {{ $t("orgchart.teamCount", { n: dept.teams.length }, dept.teams.length) }}
         </h2>
         <!-- Tablet / desktop: department node -->
         <header class="hidden sm:block bg-ui-surface border border-ui-ink rounded-ui-card px-4 py-3.5">
-          <p class="text-ui-over uppercase text-ui-muted">Department</p>
-          <h2 class="text-ui-h2 text-ui-ink truncate mt-0.5">{{ departmentLabels[dept.department] ?? dept.department }}</h2>
-          <p class="text-ui-cap text-ui-muted mt-1 tabular-nums">{{ dept.teams.length }} teams</p>
+          <p class="text-ui-over uppercase text-ui-muted">{{ $t("orgchart.department") }}</p>
+          <h2 class="text-ui-h2 text-ui-ink truncate mt-0.5">{{ departmentLabel(dept.department) }}</h2>
+          <p class="text-ui-cap text-ui-muted mt-1 tabular-nums">{{ $t("orgchart.teamCount", { n: dept.teams.length }, dept.teams.length) }}</p>
         </header>
 
         <!-- Teams: grouped card on phones, a branch of cards from sm up -->
@@ -71,7 +67,7 @@ onMounted(async () => {
                 <p class="text-ui-h3 text-ui-ink truncate">{{ team.name }}</p>
                 <p class="flex items-center gap-1.5 mt-1 text-ui-cap text-ui-muted min-w-0">
                   <Crown class="w-3.5 h-3.5 text-ui-faint shrink-0" />
-                  <span class="truncate">Lead: {{ team.lead ?? '-' }}</span>
+                  <span class="truncate">{{ $t("orgchart.lead", { name: team.lead ?? '-' }) }}</span>
                 </p>
               </div>
               <span class="inline-flex items-center gap-1 text-ui-cap text-ui-muted tabular-nums shrink-0">
@@ -89,7 +85,7 @@ onMounted(async () => {
               </li>
             </ul>
             <p v-else class="mt-3 pt-3 border-t border-ui-line flex items-center gap-1.5 text-ui-cap text-ui-faint">
-              <User class="w-3.5 h-3.5" />No members yet
+              <User class="w-3.5 h-3.5" />{{ $t("orgchart.noMembers") }}
             </p>
           </li>
         </ul>

@@ -1,6 +1,7 @@
 <script setup>
 import UsageStatusFields from "./UsageStatusFields.vue";
 import { UiModal, UiInput, UiSelect, UiButton } from "@/components/ui";
+import { useI18n } from "vue-i18n";
 import { reactive, watch, computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useSdmFieldStore } from "@/stores/sdmField";
@@ -27,6 +28,7 @@ onMounted(() => {
 
 const fieldOptions = computed(() => fields.value.map((f) => ({ value: f.id, label: f.name })));
 
+const { t } = useI18n();
 const emit = defineEmits(["submit", "close"]);
 
 const form = reactive({
@@ -105,13 +107,13 @@ const actualModel = computed({
 const validate = () => {
   let valid = true;
 
-  errors.sdm_field_id = form.sdm_field_id ? "" : "Bidang is required";
+  errors.sdm_field_id = form.sdm_field_id ? "" : t("finance.modals.validation.fieldRequired");
   errors.productive_hours_per_month =
-    form.productive_hours_per_month !== "" ? "" : "Jam Produktif / Bulan is required";
+    form.productive_hours_per_month !== "" ? "" : t("finance.modals.validation.hoursRequired");
   // Expired is required while the item is in use (mirrors the API rule).
-  errors.status = form.status ? "" : "Status wajib dipilih";
+  errors.status = form.status ? "" : t("finance.modals.validation.statusRequired");
   errors.expired_date =
-    form.status === "active" && !form.expired_date ? "Expired wajib diisi untuk item yang Digunakan" : "";
+    form.status === "active" && !form.expired_date ? t("finance.modals.validation.expiredRequired") : "";
 
   Object.values(errors).forEach((e) => {
     if (e) valid = false;
@@ -137,16 +139,16 @@ const submit = () => {
 <template>
   <UiModal
     :open="show"
-    :title="props.mode === 'add' ? 'Add SDM Resource' : props.mode === 'edit' ? 'Edit SDM Resource' : 'SDM Resource Detail'"
-    :description="props.mode === 'add' ? 'add a team member as an SDM resource record.' : props.mode === 'edit' ? 'modify the sdm resource details.' : 'details of the selected sdm resource.'"
+    :title="$t(`finance.modals.sdm.title.${props.mode}`)"
+    :description="$t(`finance.modals.sdm.description.${props.mode}`)"
     size="lg"
     @update:open="(v) => !v && $emit('close')"
   >
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <UiSelect
         id="sdm_field_id"
-        label="Bidang"
-        placeholder="Select bidang / role"
+        :label="$t('finance.modals.fields.field')"
+        :placeholder="$t('finance.modals.fields.fieldPlaceholder')"
         v-model="form.sdm_field_id"
         :options="fieldOptions"
         :required="props.mode !== 'view'"
@@ -156,8 +158,8 @@ const submit = () => {
 
       <UiInput
         id="productive_hours_per_month"
-        label="Jam Produktif / Bulan"
-        placeholder="cth. 120"
+        :label="$t('finance.modals.fields.hours')"
+        :placeholder="$t('finance.modals.fields.hoursPlaceholder')"
         v-model="form.productive_hours_per_month"
         :readonly="props.mode === 'view'"
         :required="props.mode !== 'view'"
@@ -167,8 +169,8 @@ const submit = () => {
 
       <UiInput
         id="actual"
-        label="Actual (Rp.)"
-        placeholder="add price actual item"
+        :label="$t('finance.modals.fields.actual')"
+        :placeholder="$t('finance.modals.fields.actualPlaceholder')"
         v-model="actualModel"
         :readonly="props.mode === 'view'"
         class="[&_input]:tabular-nums"
@@ -183,8 +185,8 @@ const submit = () => {
 
       <UiInput
         id="notes"
-        label="Notes"
-        placeholder="add notes item"
+        :label="$t('common.labels.notes')"
+        :placeholder="$t('finance.modals.fields.notesPlaceholder')"
         v-model="form.notes"
         :readonly="props.mode === 'view'"
         class="sm:col-span-2"
@@ -193,10 +195,10 @@ const submit = () => {
 
     <template #footer>
       <UiButton variant="secondary" @click="$emit('close')">
-        {{ props.mode === "view" ? "Close" : "Cancel" }}
+        {{ props.mode === "view" ? $t("common.actions.close") : $t("common.actions.cancel") }}
       </UiButton>
       <UiButton v-if="props.mode !== 'view'" :loading="loading" :disabled="loading" @click="submit">
-        Save
+        {{ $t("common.actions.save") }}
       </UiButton>
     </template>
   </UiModal>

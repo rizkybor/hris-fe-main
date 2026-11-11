@@ -7,6 +7,10 @@ import { axiosInstance } from "@/plugins/axios";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { uiColor } from "@/utils/uiColor";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
@@ -31,12 +35,13 @@ onMounted(async () => {
 const showAmount = ref(false);
 const money = (value, full = false) => (showAmount.value ? (full ? formatRupiah(value) : formatRupiahCompact(value)) : "Rp ••••••••");
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-const monthLabel = (ym) => MONTHS[Number(ym.slice(5, 7)) - 1];
+// Short month name in the interface language ("Mei"/"May").
+const monthName = (m) => new Date(2000, Number(m) - 1, 1).toLocaleDateString(localeTag(), { month: "short" });
+const monthLabel = (ym) => monthName(ym.slice(5, 7));
 const forecast = computed(() => data.value?.forecast ?? []);
 const yearTotal = computed(() => forecast.value.reduce((sum, f) => sum + f.amount, 0));
 
-const series = computed(() => [{ name: "Expected billing", data: forecast.value.map((f) => f.amount) }]);
+const series = computed(() => [{ name: t("dashboard.subscriptions.expectedBilling"), data: forecast.value.map((f) => f.amount) }]);
 const chartOptions = computed(() => {
   // Read here (not only inside the formatter) so toggling re-renders the axis.
   const shown = showAmount.value;
@@ -62,26 +67,26 @@ const chartOptions = computed(() => {
         const f = forecast.value[dataPointIndex];
         const [y, m] = f.month.split("-");
         return `<div style="padding:8px 10px;font-size:12px;color:${uiColor("ink")}">
-          <div style="color:${uiColor("muted")}">${MONTHS[Number(m) - 1]} ${y}</div>
+          <div style="color:${uiColor("muted")}">${monthName(m)} ${y}</div>
           <div style="font-weight:700">${money(f.amount, true)}</div>
-          <div style="color:${uiColor("muted")}">${f.count} subscription${f.count === 1 ? "" : "s"} due</div></div>`;
+          <div style="color:${uiColor("muted")}">${t("dashboard.subscriptions.countDue", { n: f.count }, f.count)}</div></div>`;
       },
     },
   };
 });
 
-const formatDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+const formatDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString(localeTag(), { day: "numeric", month: "short" });
 </script>
 
 <template>
-  <DashboardWidgetCard title="Subscriptions" subtitle="Expected billing over the next 12 months" :to="{ name: 'admin.subscriptions.dashboard' }">
+  <DashboardWidgetCard :title="$t('dashboard.widgets.subscriptions')" :subtitle="$t('dashboard.subscriptions.subtitle')" :to="{ name: 'admin.subscriptions.dashboard' }">
     <template #actions>
       <button
         v-if="data?.active_count"
         type="button"
         @click="showAmount = !showAmount"
-        :aria-label="showAmount ? 'Hide amounts' : 'Show amounts'"
-        :title="showAmount ? 'Hide amounts' : 'Show amounts'"
+        :aria-label="showAmount ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
+        :title="showAmount ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
         class="w-8 h-8 -my-1 rounded-ui-control flex items-center justify-center text-ui-faint hover:text-ui-ink hover:bg-ui-hover transition-colors"
       >
         <EyeOff v-if="showAmount" class="w-4 h-4" />
@@ -93,37 +98,37 @@ const formatDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString("
       <Skeleton height="64px" rounded="10px" />
       <Skeleton height="180px" rounded="10px" />
     </div>
-    <p v-else-if="failed" class="text-ui-small text-ui-muted py-8 text-center">Couldn't load subscriptions.</p>
-    <UiEmpty v-else-if="!data.active_count" :icon="RefreshCw" title="No active subscriptions yet." compact />
+    <p v-else-if="failed" class="text-ui-small text-ui-muted py-8 text-center">{{ $t("dashboard.subscriptions.loadError") }}</p>
+    <UiEmpty v-else-if="!data.active_count" :icon="RefreshCw" :title="$t('dashboard.subscriptions.empty')" compact />
 
     <template v-else>
       <div class="grid grid-cols-3 gap-2 mb-3">
         <div class="rounded-ui-control bg-ui-subtle px-3 py-2.5 min-w-0">
-          <p class="text-ui-cap text-ui-muted">Active</p>
+          <p class="text-ui-cap text-ui-muted">{{ $t("dashboard.subscriptions.active") }}</p>
           <p class="text-ui-h3 text-ui-ink tabular-nums mt-0.5">{{ data.active_count }}</p>
-          <p v-if="data.postponed_count" class="text-ui-cap text-ui-muted truncate">{{ data.postponed_count }} postponed</p>
+          <p v-if="data.postponed_count" class="text-ui-cap text-ui-muted truncate">{{ $t("dashboard.subscriptions.postponed", { n: data.postponed_count }) }}</p>
         </div>
-        <div class="rounded-ui-control bg-ui-subtle px-3 py-2.5 min-w-0" title="Yearly subscriptions counted as 1/12 per month">
-          <p class="text-ui-cap text-ui-muted">Per month</p>
+        <div class="rounded-ui-control bg-ui-subtle px-3 py-2.5 min-w-0" :title="$t('dashboard.subscriptions.perMonthHint')">
+          <p class="text-ui-cap text-ui-muted">{{ $t("dashboard.subscriptions.perMonth") }}</p>
           <p class="text-ui-h3 text-ui-ink tabular-nums mt-0.5 truncate">{{ money(data.monthly_value) }}</p>
         </div>
         <div class="rounded-ui-control bg-ui-subtle px-3 py-2.5 min-w-0">
-          <p class="text-ui-cap text-ui-muted truncate">Due in 30 days</p>
+          <p class="text-ui-cap text-ui-muted truncate">{{ $t("dashboard.subscriptions.dueIn30") }}</p>
           <p class="text-ui-h3 text-ui-ink tabular-nums mt-0.5">{{ data.due_soon_count }}</p>
           <p v-if="data.due_soon_count" class="text-ui-cap text-ui-muted truncate">{{ money(data.due_soon_amount) }}</p>
         </div>
       </div>
 
       <div class="flex items-baseline justify-between gap-2 text-ui-cap text-ui-muted">
-        <span>Projected billing per month</span>
-        <span>12-month total <strong class="text-ui-ink font-medium tabular-nums">{{ money(yearTotal) }}</strong></span>
+        <span>{{ $t("dashboard.subscriptions.projected") }}</span>
+        <span>{{ $t("dashboard.subscriptions.yearTotal") }} <strong class="text-ui-ink font-medium tabular-nums">{{ money(yearTotal) }}</strong></span>
       </div>
       <div class="-mx-2">
         <VueApexCharts type="bar" height="200" :options="chartOptions" :series="series" />
       </div>
 
       <div v-if="data.due_soon.length" class="border-t border-ui-line pt-3 mt-1">
-        <p class="text-ui-over uppercase text-ui-muted mb-2">Due soon</p>
+        <p class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("dashboard.subscriptions.dueSoon") }}</p>
         <ul class="space-y-2.5">
           <li v-for="s in data.due_soon" :key="s.id" class="flex items-center justify-between gap-3">
             <div class="min-w-0">
@@ -133,7 +138,7 @@ const formatDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString("
             <div class="text-right shrink-0">
               <p class="text-ui-small font-medium text-ui-ink tabular-nums">{{ money(s.amount) }}</p>
               <p class="text-ui-cap flex items-center justify-end gap-1" :class="s.overdue ? 'text-ui-bad font-medium' : 'text-ui-muted'">
-                <AlertCircle v-if="s.overdue" class="w-3 h-3" />{{ s.overdue ? "Overdue · " : "" }}{{ formatDate(s.next_due_date) }}
+                <AlertCircle v-if="s.overdue" class="w-3 h-3" />{{ s.overdue ? `${$t("dashboard.subscriptions.overdue")} · ` : "" }}{{ formatDate(s.next_due_date) }}
               </p>
             </div>
           </li>

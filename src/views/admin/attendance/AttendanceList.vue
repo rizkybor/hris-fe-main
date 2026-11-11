@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { RouterLink } from "vue-router";
 import {
   TrendingUp,
@@ -30,6 +31,11 @@ import { can } from "@/helpers/permissionHelper";
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import Avatar from "@/components/common/Avatar.vue";
 import { UiPageHeader, UiStat, UiBadge, UiButton, UiEmpty, UiConfirmDialog } from "@/components/ui";
+
+const { t, te } = useI18n();
+// Display labels for API values (the values themselves stay unchanged).
+const leaveTypeLabel = (type) => (type && te(`attendance.leaveType.${type.toLowerCase()}`) ? t(`attendance.leaveType.${type.toLowerCase()}`) : capitalize(type));
+const leaveStatusLabel = (status) => (status && te(`attendance.leaveStatus.${status.toLowerCase()}`) ? t(`attendance.leaveStatus.${status.toLowerCase()}`) : capitalize(status));
 
 const attendanceStore = useAttendanceStore();
 const leaveRequestStore = useLeaveRequestStore();
@@ -181,49 +187,49 @@ onMounted(async () => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Attendance Summary" subtitle="Review clock in/out records" class="ui-anim-fade-up">
+    <UiPageHeader :title="$t('attendance.summary.title')" :subtitle="$t('attendance.summary.subtitle')" class="ui-anim-fade-up">
       <template #actions>
-        <UiButton variant="secondary" :icon="CalendarClock" :to="{ name: 'admin.leave-requests.dashboard' }">Leave Requests</UiButton>
-        <UiButton :icon="Users" :to="{ name: 'admin.attendances.records' }">Attendance Records</UiButton>
+        <UiButton variant="secondary" :icon="CalendarClock" :to="{ name: 'admin.leave-requests.dashboard' }">{{ $t('attendance.leave.title') }}</UiButton>
+        <UiButton :icon="Users" :to="{ name: 'admin.attendances.records' }">{{ $t('attendance.records.title') }}</UiButton>
       </template>
     </UiPageHeader>
 
     <!-- KPI tiles -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 ui-stagger">
-      <UiStat class="col-span-2" label="Present Today" :value="statistics.present_today || 0" :icon="CheckCircle" tone="ok">
+      <UiStat class="col-span-2" :label="$t('attendance.summary.stats.presentToday')" :value="statistics.present_today || 0" :icon="CheckCircle" tone="ok">
         <template #hint>
-          <span class="tabular-nums">+{{ statistics.present_change || 0 }} from yesterday</span>
-          <span class="text-ui-faint"> · Active employees · Real-time</span>
+          <span class="tabular-nums">{{ $t("attendance.summary.stats.fromYesterday", { n: "+" + (statistics.present_change || 0) }) }}</span>
+          <span class="text-ui-faint"> · {{ $t("attendance.summary.stats.activeEmployees") }} · {{ $t("attendance.summary.stats.realTime") }}</span>
         </template>
       </UiStat>
       <UiStat
-        label="Absent Today"
+        :label="$t('attendance.summary.stats.absentToday')"
         :value="statistics.absent_today || 0"
         :icon="XCircle"
         :tone="statistics.absent_today ? 'bad' : ''"
-        :hint="`${signed(statistics.absent_change)} from yesterday`"
+        :hint="$t('attendance.summary.stats.fromYesterday', { n: signed(statistics.absent_change) })"
       />
       <UiStat
-        label="Late Arrivals"
+        :label="$t('attendance.summary.stats.lateArrivals')"
         :value="statistics.late_today || 0"
         :icon="Clock"
         :tone="statistics.late_today ? 'warn' : ''"
-        hint="After 9:00 AM"
+        :hint="$t('attendance.summary.stats.after9')"
       />
-      <UiStat label="On Leave" :value="statistics.on_leave_today || 0" :icon="CalendarX" hint="Approved requests" />
-      <UiStat label="Remote Workers" :value="statistics.remote_today || 0" :icon="Laptop" hint="Working from home" />
+      <UiStat :label="$t('attendance.summary.stats.onLeave')" :value="statistics.on_leave_today || 0" :icon="CalendarX" :hint="$t('attendance.summary.stats.approvedRequests')" />
+      <UiStat :label="$t('attendance.summary.stats.remoteWorkers')" :value="statistics.remote_today || 0" :icon="Laptop" :hint="$t('attendance.summary.stats.workingFromHome')" />
       <UiStat
-        label="Attendance Rate"
+        :label="$t('attendance.summary.stats.attendanceRate')"
         :value="`${statistics.attendance_rate || 0}%`"
         :icon="TrendingUp"
-        :hint="`${signed(statistics.rate_change)}% from last week`"
+        :hint="$t('attendance.summary.stats.fromLastWeek', { n: signed(statistics.rate_change) + '%' })"
       />
       <UiStat
-        label="Pending Requests"
+        :label="$t('attendance.summary.stats.pendingRequests')"
         :value="statistics.pending_requests || 0"
         :icon="Clock4"
         :tone="statistics.pending_requests ? 'warn' : ''"
-        hint="Awaiting approval"
+        :hint="$t('attendance.summary.stats.awaitingApproval')"
         :to="{ name: 'admin.leave-requests.dashboard' }"
       />
     </div>
@@ -234,10 +240,10 @@ onMounted(async () => {
       <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
         <header class="flex items-center gap-3 px-4 sm:px-5 py-3.5 border-b border-ui-line">
           <div class="flex-1 min-w-0">
-            <h2 class="text-ui-h2 text-ui-ink">Latest Leave Requests</h2>
-            <p class="text-ui-cap text-ui-muted">Recent 5 leave applications</p>
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("attendance.summary.latestLeave") }}</h2>
+            <p class="text-ui-cap text-ui-muted">{{ $t("attendance.summary.latestLeaveHint") }}</p>
           </div>
-          <UiButton variant="ghost" size="sm" :icon-right="ArrowRight" :to="{ name: 'admin.leave-requests.dashboard' }">View All</UiButton>
+          <UiButton variant="ghost" size="sm" :icon-right="ArrowRight" :to="{ name: 'admin.leave-requests.dashboard' }">{{ $t('common.actions.viewAll') }}</UiButton>
         </header>
 
         <div v-if="loadingLeaveRequests" class="p-4 sm:p-5"><SkeletonList :rows="3" /></div>
@@ -252,9 +258,9 @@ onMounted(async () => {
             <div class="flex-1 min-w-0">
               <p class="text-ui-h3 text-ui-ink truncate">{{ request.employee?.user?.name }}</p>
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-                <UiBadge :tone="leaveTypeTone(request.type)">{{ capitalize(request.type) }}</UiBadge>
+                <UiBadge :tone="leaveTypeTone(request.type)">{{ leaveTypeLabel(request.type) }}</UiBadge>
                 <span class="text-ui-cap text-ui-muted tabular-nums">
-                  {{ formatDate(request.start_date) }} - {{ formatDate(request.end_date) }} ({{ request.days }} days)
+                  {{ formatDate(request.start_date) }} - {{ formatDate(request.end_date) }} ({{ $t("attendance.leave.days", { n: request.days }, Number(request.days) || 0) }})
                 </span>
               </div>
             </div>
@@ -262,15 +268,15 @@ onMounted(async () => {
               v-if="request.status === 'pending' && can('leave-request-approve')"
               class="flex flex-col sm:flex-row gap-1.5 shrink-0"
             >
-              <UiButton variant="secondary" size="sm" :icon="Check" @click="showApproveModal(request)">Approve</UiButton>
-              <UiButton variant="danger" size="sm" :icon="X" @click="showRejectModal(request)">Reject</UiButton>
+              <UiButton variant="secondary" size="sm" :icon="Check" @click="showApproveModal(request)">{{ $t("common.actions.approve") }}</UiButton>
+              <UiButton variant="danger" size="sm" :icon="X" @click="showRejectModal(request)">{{ $t("common.actions.reject") }}</UiButton>
             </div>
-            <UiBadge v-else :tone="leaveStatusTone(request.status)" dot class="shrink-0">{{ capitalize(request.status) }}</UiBadge>
+            <UiBadge v-else :tone="leaveStatusTone(request.status)" dot class="shrink-0">{{ leaveStatusLabel(request.status) }}</UiBadge>
           </li>
 
           <!-- Empty State -->
           <li v-if="!loadingLeaveRequests && leaveRequests.length === 0">
-            <UiEmpty compact :icon="CalendarClock" title="No leave requests found" />
+            <UiEmpty compact :icon="CalendarClock" :title="$t('attendance.leave.empty')" />
           </li>
         </ul>
       </section>
@@ -279,10 +285,10 @@ onMounted(async () => {
       <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden ui-anim-fade-up">
         <header class="flex items-center gap-3 px-4 sm:px-5 py-3.5 border-b border-ui-line">
           <div class="flex-1 min-w-0">
-            <h2 class="text-ui-h2 text-ui-ink">Today's Attendance</h2>
-            <p class="text-ui-cap text-ui-muted">Who's in the office today</p>
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("attendance.summary.today") }}</h2>
+            <p class="text-ui-cap text-ui-muted">{{ $t("attendance.summary.todayHint") }}</p>
           </div>
-          <UiButton variant="ghost" size="sm" :icon-right="ArrowRight" :to="{ name: 'admin.attendances.records' }">View All</UiButton>
+          <UiButton variant="ghost" size="sm" :icon-right="ArrowRight" :to="{ name: 'admin.attendances.records' }">{{ $t('common.actions.viewAll') }}</UiButton>
         </header>
 
         <div v-if="loadingAttendances" class="p-4 sm:p-5"><SkeletonList :rows="3" /></div>
@@ -299,21 +305,21 @@ onMounted(async () => {
               <p class="text-ui-cap text-ui-muted truncate mt-0.5">
                 {{ attendance.employee?.job_information?.job_title }}
                 <span class="text-ui-faint">·</span>
-                Team {{ attendance.employee?.job_information?.team?.name || "N/A" }}
+                {{ $t("attendance.summary.teamName", { name: attendance.employee?.job_information?.team?.name || "N/A" }) }}
               </p>
             </div>
             <div class="text-right shrink-0">
               <p class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-ink tabular-nums">
                 <Clock class="w-3.5 h-3.5 text-ui-faint" />{{ formatTime(attendance.check_in) }}
               </p>
-              <p class="text-ui-cap text-ui-muted">Check-in time</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("attendance.summary.checkInTime") }}</p>
             </div>
-            <UiBadge tone="ok" dot class="shrink-0 hidden sm:inline-flex">Present</UiBadge>
+            <UiBadge tone="ok" dot class="shrink-0 hidden sm:inline-flex">{{ $t("attendance.status.present") }}</UiBadge>
           </li>
 
           <!-- Empty State -->
           <li v-if="!loadingAttendances && todayAttendances.length === 0">
-            <UiEmpty compact :icon="Users" title="No attendance records yet" />
+            <UiEmpty compact :icon="Users" :title="$t('attendance.records.empty')" />
           </li>
         </ul>
       </section>
@@ -323,18 +329,18 @@ onMounted(async () => {
     <UiConfirmDialog
       v-model:open="showApproveModalState"
       type="success"
-      title="Approve Leave Request"
-      message="Confirm approval for this leave request"
-      :confirm-text="processingAction ? 'Approving...' : 'Approve'"
+      :title="$t('attendance.leave.approveTitle')"
+      :message="$t('attendance.leave.approveMessage')"
+      :confirm-text="processingAction ? $t('attendance.leave.approving') : $t('common.actions.approve')"
       :loading="processingAction"
       @cancel="closeApproveModal"
       @confirm="confirmApprove"
     >
       <div v-if="selectedLeaveRequest" class="border border-ui-line rounded-ui-card p-3.5 space-y-1.5">
         <p class="text-ui-h3 text-ui-ink">{{ selectedLeaveRequest.employee?.user?.name }}</p>
-        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ capitalize(selectedLeaveRequest.type) }}</UiBadge>
+        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ leaveTypeLabel(selectedLeaveRequest.type) }}</UiBadge>
         <p class="text-ui-small text-ui-text tabular-nums">
-          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ selectedLeaveRequest.days }} days)
+          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ $t("attendance.leave.days", { n: selectedLeaveRequest.days }, Number(selectedLeaveRequest.days) || 0) }})
         </p>
         <p class="text-ui-small text-ui-muted">{{ selectedLeaveRequest.reason }}</p>
       </div>
@@ -344,18 +350,18 @@ onMounted(async () => {
     <UiConfirmDialog
       v-model:open="showRejectModalState"
       type="danger"
-      title="Reject Leave Request"
-      message="Confirm rejection for this leave request"
-      :confirm-text="processingAction ? 'Rejecting...' : 'Reject'"
+      :title="$t('attendance.leave.rejectTitle')"
+      :message="$t('attendance.leave.rejectMessage')"
+      :confirm-text="processingAction ? $t('attendance.leave.rejecting') : $t('common.actions.reject')"
       :loading="processingAction"
       @cancel="closeRejectModal"
       @confirm="confirmReject"
     >
       <div v-if="selectedLeaveRequest" class="border border-ui-line rounded-ui-card p-3.5 space-y-1.5">
         <p class="text-ui-h3 text-ui-ink">{{ selectedLeaveRequest.employee?.user?.name }}</p>
-        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ selectedLeaveRequest.type }}</UiBadge>
+        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ leaveTypeLabel(selectedLeaveRequest.type) }}</UiBadge>
         <p class="text-ui-small text-ui-text tabular-nums">
-          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ selectedLeaveRequest.days }} days)
+          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ $t("attendance.leave.days", { n: selectedLeaveRequest.days }, Number(selectedLeaveRequest.days) || 0) }})
         </p>
         <p class="text-ui-small text-ui-muted">{{ selectedLeaveRequest.reason }}</p>
       </div>

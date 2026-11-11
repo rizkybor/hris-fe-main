@@ -1,11 +1,13 @@
 <script setup>
 import { onMounted, ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { Award, Save, Upload, Trash2, ImageIcon, Info, ArrowLeft } from "lucide-vue-next";
 import { useCertificateStore } from "@/stores/certificate";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { UiAlert, UiButton, UiEmpty, UiInput, UiPageHeader, UiTable } from "@/components/ui";
 
+const { t } = useI18n();
 const store = useCertificateStore();
 const alertModal = useAlertModalStore();
 const { settings, templates } = storeToRefs(store);
@@ -47,9 +49,9 @@ const handleSaveSettings = async () => {
   savingSettings.value = true;
   try {
     await store.updateSettings(form.value);
-    settingsSuccess.value = "Certificate settings saved successfully.";
+    settingsSuccess.value = t("settings.certificate.saved");
   } catch (error) {
-    settingsError.value = error?.response?.data?.message || "Failed to save settings.";
+    settingsError.value = error?.response?.data?.message || t("settings.certificate.saveFailed");
   } finally {
     savingSettings.value = false;
   }
@@ -62,7 +64,7 @@ const onFileChange = (event) => {
 const handleUploadTemplate = async () => {
   templateError.value = "";
   if (!newTemplate.value.name || !newTemplate.value.file) {
-    templateError.value = "Template name and background file are required.";
+    templateError.value = t("settings.certificate.templateRequired");
     return;
   }
   const formData = new FormData();
@@ -76,30 +78,30 @@ const handleUploadTemplate = async () => {
     const input = document.getElementById("template-file-input");
     if (input) input.value = "";
   } catch (error) {
-    templateError.value = error?.response?.data?.message || "Failed to upload template.";
+    templateError.value = error?.response?.data?.message || t("settings.certificate.uploadFailed");
   } finally {
     uploadingTemplate.value = false;
   }
 };
 
 // Presentation only.
-const templateColumns = [
-  { key: "name", label: "Template" },
+const templateColumns = computed(() => [
+  { key: "name", label: t("settings.certificate.templateColumn") },
   { key: "actions", label: "", align: "right", width: 64 },
-];
+]);
 
 const handleDeleteTemplate = async (template) => {
-  if (!(await alertModal.confirm(`Delete template "${template.name}"?`))) return;
+  if (!(await alertModal.confirm(t("settings.certificate.deleteTemplateConfirm", { name: template.name })))) return;
   await store.deleteTemplate(template.id);
 };
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Certificate Configuration" subtitle="Automatic numbering format and certificate background template settings">
+    <UiPageHeader :title="$t('settings.certificate.title')" :subtitle="$t('settings.certificate.subtitle')">
       <template #eyebrow>
-        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" aria-label="Back to Settings" title="Back to Settings">
-          <ArrowLeft class="w-4 h-4" /> Settings
+        <router-link :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" :aria-label="$t('settings.backToSettings')" :title="$t('settings.backToSettings')">
+          <ArrowLeft class="w-4 h-4" /> {{ $t("settings.settings") }}
         </router-link>
       </template>
     </UiPageHeader>
@@ -110,18 +112,18 @@ const handleDeleteTemplate = async (template) => {
         <div>
           <div class="flex items-center gap-2">
             <Award class="w-4 h-4 text-ui-muted" />
-            <h2 class="text-ui-h2 text-ui-ink">Certificate Numbering</h2>
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("settings.certificate.numberingTitle") }}</h2>
           </div>
-          <p class="text-ui-small text-ui-muted mt-1">The automatic number printed on every certificate.</p>
+          <p class="text-ui-small text-ui-muted mt-1">{{ $t("settings.certificate.numberingHint") }}</p>
         </div>
 
         <form @submit.prevent="handleSaveSettings" class="space-y-4 min-w-0">
           <div class="sm:max-w-[240px]">
-            <label for="cert-company-code" class="block text-ui-small font-medium text-ui-ink mb-1.5">Company Code<span class="text-ui-bad"> *</span></label>
-            <input id="cert-company-code" v-model="form.company_code" type="text" required maxlength="20" placeholder="e.g. JCD" class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus uppercase" />
+            <label for="cert-company-code" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("settings.certificate.companyCode") }}<span class="text-ui-bad"> *</span></label>
+            <input id="cert-company-code" v-model="form.company_code" type="text" required maxlength="20" :placeholder="$t('settings.certificate.companyCodePlaceholder')" class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus uppercase" />
           </div>
           <div>
-            <UiInput v-model="form.number_format" label="Number Format" required mono placeholder="{company}/{category}/{program}/{year}/{month_roman}/{sequence}" />
+            <UiInput v-model="form.number_format" :label="$t('settings.certificate.numberFormat')" required mono placeholder="{company}/{category}/{program}/{year}/{month_roman}/{sequence}" />
             <div class="flex flex-wrap gap-1.5 mt-2">
               <button
                 v-for="token in tokens"
@@ -136,7 +138,7 @@ const handleDeleteTemplate = async (template) => {
           </div>
 
           <UiAlert tone="info">
-            Example result: <span class="font-mono font-semibold text-ui-ink break-all">{{ previewFormat }}</span>
+            {{ $t("settings.certificate.exampleResult") }} <span class="font-mono font-semibold text-ui-ink break-all">{{ previewFormat }}</span>
           </UiAlert>
 
           <UiAlert v-if="settingsError" tone="bad" :message="settingsError" />
@@ -144,7 +146,7 @@ const handleDeleteTemplate = async (template) => {
 
           <div class="flex justify-end">
             <UiButton type="submit" :icon="Save" :loading="savingSettings" :disabled="savingSettings">
-              {{ savingSettings ? "Saving..." : "Save Settings" }}
+              {{ savingSettings ? $t("common.actions.saving") : $t("settings.certificate.saveSettings") }}
             </UiButton>
           </div>
         </form>
@@ -157,19 +159,16 @@ const handleDeleteTemplate = async (template) => {
         <div>
           <div class="flex items-center gap-2">
             <ImageIcon class="w-4 h-4 text-ui-muted" />
-            <h2 class="text-ui-h2 text-ui-ink">Template Background</h2>
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("settings.certificate.templateTitle") }}</h2>
           </div>
-          <p class="text-ui-small text-ui-muted mt-1">
-            Without a specific template, certificates use the default premium template provided by the system.
-            Upload an image to use your own background. (size guide : 297 X 210 mm)
-          </p>
+          <p class="text-ui-small text-ui-muted mt-1">{{ $t("settings.certificate.templateHint") }}</p>
         </div>
 
         <div class="space-y-4 min-w-0">
           <div class="border border-dashed border-ui-line-strong rounded-ui-card p-4 space-y-3">
-            <UiInput v-model="newTemplate.name" label="Template Name" placeholder="e.g. Premium Gold Template" />
+            <UiInput v-model="newTemplate.name" :label="$t('settings.certificate.templateName')" :placeholder="$t('settings.certificate.templateNamePlaceholder')" />
             <div>
-              <label for="template-file-input" class="block text-ui-small font-medium text-ui-ink mb-1.5">Background Image (JPEG/PNG/WEBP, max 5MB)</label>
+              <label for="template-file-input" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("settings.certificate.backgroundImage") }}</label>
               <input
                 id="template-file-input"
                 @change="onFileChange"
@@ -180,7 +179,7 @@ const handleDeleteTemplate = async (template) => {
             </div>
             <p v-if="templateError" class="text-ui-cap text-ui-bad">{{ templateError }}</p>
             <UiButton :icon="Upload" :loading="uploadingTemplate" :disabled="uploadingTemplate" @click="handleUploadTemplate">
-              {{ uploadingTemplate ? "Uploading..." : "Upload Template" }}
+              {{ uploadingTemplate ? $t("settings.certificate.uploading") : $t("settings.certificate.uploadTemplate") }}
             </UiButton>
           </div>
 
@@ -196,7 +195,7 @@ const handleDeleteTemplate = async (template) => {
                 </div>
               </template>
               <template #cell-actions="{ row }">
-                <UiButton variant="ghost" size="sm" :icon="Trash2" aria-label="Delete template" @click="handleDeleteTemplate(row)" />
+                <UiButton variant="ghost" size="sm" :icon="Trash2" :aria-label="$t('settings.certificate.deleteTemplateAria')" @click="handleDeleteTemplate(row)" />
               </template>
               <template #mobile="{ row, number }">
                 <div class="flex items-center gap-3 px-3 py-2.5">
@@ -206,11 +205,11 @@ const handleDeleteTemplate = async (template) => {
                     <ImageIcon class="w-4 h-4 text-ui-faint" />
                   </div>
                   <span class="flex-1 min-w-0 text-ui-small font-medium text-ui-ink truncate">{{ row.name }}</span>
-                  <UiButton variant="ghost" size="sm" :icon="Trash2" aria-label="Delete template" @click="handleDeleteTemplate(row)" />
+                  <UiButton variant="ghost" size="sm" :icon="Trash2" :aria-label="$t('settings.certificate.deleteTemplateAria')" @click="handleDeleteTemplate(row)" />
                 </div>
               </template>
               <template #empty>
-                <UiEmpty :icon="ImageIcon" title="No custom templates available." message="Certificates will use the default template." compact />
+                <UiEmpty :icon="ImageIcon" :title="$t('settings.certificate.emptyTitle')" :message="$t('settings.certificate.emptyMessage')" compact />
               </template>
             </UiTable>
           </div>

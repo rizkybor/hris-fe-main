@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { CalendarClock, Search, Check, X, ArrowLeft, ChevronDown, Paperclip } from "lucide-vue-next";
 import { useRouter } from "vue-router";
@@ -41,24 +42,28 @@ const handleSearch = () => load(1);
 const handleFilterChange = () => load(1);
 
 // Presentation only: table columns, status chips and badge tones.
-const STATUS_OPTIONS = [
-  { value: "", label: "All Statuses" },
-  { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
-];
+const { t, te } = useI18n();
+// Display labels for API values (the values themselves stay unchanged).
+const leaveTypeLabel = (type) => (type && te(`attendance.leaveType.${type.toLowerCase()}`) ? t(`attendance.leaveType.${type.toLowerCase()}`) : capitalize(type));
+const leaveStatusLabel = (status) => (status && te(`attendance.leaveStatus.${status.toLowerCase()}`) ? t(`attendance.leaveStatus.${status.toLowerCase()}`) : capitalize(status));
+const STATUS_OPTIONS = computed(() => [
+  { value: "", label: t("common.labels.allStatuses") },
+  { value: "pending", label: t("attendance.leaveStatus.pending") },
+  { value: "approved", label: t("attendance.leaveStatus.approved") },
+  { value: "rejected", label: t("attendance.leaveStatus.rejected") },
+]);
 const LEAVE_STATUS_TONE = { pending: "warn", approved: "ok", rejected: "bad" };
 const LEAVE_TYPE_TONE = { annual: "info", sick: "bad", personal: "accent", emergency: "warn", maternity: "accent" };
 const leaveStatusTone = (status) => LEAVE_STATUS_TONE[status?.toLowerCase()] || "neutral";
 const leaveTypeTone = (type) => LEAVE_TYPE_TONE[type?.toLowerCase()] || "neutral";
-const columns = [
-  { key: "employee", label: "Employee" },
-  { key: "type", label: "Type" },
-  { key: "period", label: "Period" },
-  { key: "reason", label: "Reason" },
-  { key: "status", label: "Status" },
-  { key: "actions", label: "Actions", align: "right" },
-];
+const columns = computed(() => [
+  { key: "employee", label: t("common.labels.employee") },
+  { key: "type", label: t("common.labels.type") },
+  { key: "period", label: t("common.labels.period") },
+  { key: "reason", label: t("attendance.leave.reason") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "actions", label: t("common.labels.actions"), align: "right" },
+]);
 
 const formatDate = (date) => (date ? formatDateShort(date) : "N/A");
 
@@ -106,15 +111,15 @@ const confirmReject = async () => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Leave Requests" subtitle="All leave applications across the company" class="ui-anim-fade-up">
+    <UiPageHeader :title="$t('attendance.leave.title')" :subtitle="$t('attendance.leave.subtitle')" class="ui-anim-fade-up">
       <template #eyebrow>
         <button
           type="button"
           class="ui-press inline-flex items-center gap-1 mb-1.5 text-ui-small font-medium text-ui-accent hover:underline"
-          aria-label="Back"
+          :aria-label="$t('common.actions.back')"
           @click="router.back()"
         >
-          <ArrowLeft class="w-4 h-4" />Back
+          <ArrowLeft class="w-4 h-4" />{{ $t("common.actions.back") }}
         </button>
       </template>
     </UiPageHeader>
@@ -125,7 +130,7 @@ const confirmReject = async () => {
         <UiInput
           v-model="search"
           :icon="Search"
-          placeholder="Search employee name..."
+          :placeholder="$t('attendance.searchEmployee')"
           class="md:w-[280px]"
           @keyup.enter="handleSearch"
         />
@@ -140,13 +145,13 @@ const confirmReject = async () => {
           </div>
         </template>
         <template #cell-type="{ row }">
-          <UiBadge :tone="leaveTypeTone(row.type)">{{ capitalize(row.type) }}</UiBadge>
+          <UiBadge :tone="leaveTypeTone(row.type)">{{ leaveTypeLabel(row.type) }}</UiBadge>
         </template>
         <template #cell-period="{ row }">
           <span class="inline-flex items-center gap-1 whitespace-nowrap">
             <span class="tabular-nums text-ui-ink">{{ formatDate(row.start_date) }} - {{ formatDate(row.end_date) }}</span>
-            <span class="text-ui-muted">({{ row.days }} days)</span>
-            <UiBadge v-if="row.is_half_day" tone="accent">Half</UiBadge>
+            <span class="text-ui-muted">({{ $t("attendance.leave.days", { n: row.days }, Number(row.days) || 0) }})</span>
+            <UiBadge v-if="row.is_half_day" tone="accent">{{ $t("attendance.leave.half") }}</UiBadge>
             <Paperclip v-if="row.attachment_url" class="w-3.5 h-3.5 text-ui-faint" />
           </span>
         </template>
@@ -154,12 +159,12 @@ const confirmReject = async () => {
           <span class="block max-w-[240px] truncate" :title="row.reason">{{ row.reason || "-" }}</span>
         </template>
         <template #cell-status="{ row }">
-          <UiBadge :tone="leaveStatusTone(row.status)" dot>{{ capitalize(row.status) }}</UiBadge>
+          <UiBadge :tone="leaveStatusTone(row.status)" dot>{{ leaveStatusLabel(row.status) }}</UiBadge>
         </template>
         <template #cell-actions="{ row }">
           <div v-if="row.status === 'pending' && can('leave-request-approve')" class="flex items-center justify-end gap-1.5">
-            <UiButton variant="secondary" size="sm" :icon="Check" title="Approve" @click="showApproveModal(row)">Approve</UiButton>
-            <UiButton variant="danger" size="sm" :icon="X" title="Reject" @click="showRejectModal(row)">Reject</UiButton>
+            <UiButton variant="secondary" size="sm" :icon="Check" :title="$t('common.actions.approve')" @click="showApproveModal(row)">{{ $t("common.actions.approve") }}</UiButton>
+            <UiButton variant="danger" size="sm" :icon="X" :title="$t('common.actions.reject')" @click="showRejectModal(row)">{{ $t("common.actions.reject") }}</UiButton>
           </div>
         </template>
 
@@ -171,20 +176,20 @@ const confirmReject = async () => {
             <div class="flex-1 min-w-0">
               <div class="flex items-start justify-between gap-2">
                 <p class="text-ui-h3 text-ui-ink truncate">{{ row.employee?.user?.name || "-" }}</p>
-                <UiBadge :tone="leaveStatusTone(row.status)" dot class="shrink-0">{{ capitalize(row.status) }}</UiBadge>
+                <UiBadge :tone="leaveStatusTone(row.status)" dot class="shrink-0">{{ leaveStatusLabel(row.status) }}</UiBadge>
               </div>
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-                <UiBadge :tone="leaveTypeTone(row.type)">{{ capitalize(row.type) }}</UiBadge>
+                <UiBadge :tone="leaveTypeTone(row.type)">{{ leaveTypeLabel(row.type) }}</UiBadge>
                 <span class="text-ui-cap text-ui-muted tabular-nums">
-                  {{ formatDate(row.start_date) }} - {{ formatDate(row.end_date) }} ({{ row.days }} days)
+                  {{ formatDate(row.start_date) }} - {{ formatDate(row.end_date) }} ({{ $t("attendance.leave.days", { n: row.days }, Number(row.days) || 0) }})
                 </span>
-                <span v-if="row.is_half_day" class="text-ui-cap font-medium text-ui-accent">Half</span>
+                <span v-if="row.is_half_day" class="text-ui-cap font-medium text-ui-accent">{{ $t("attendance.leave.half") }}</span>
                 <Paperclip v-if="row.attachment_url" class="w-3.5 h-3.5 text-ui-faint" />
               </div>
               <p v-if="row.reason" class="text-ui-cap text-ui-muted mt-1.5 line-clamp-2">{{ row.reason }}</p>
               <div v-if="row.status === 'pending' && can('leave-request-approve')" class="grid grid-cols-2 gap-2 mt-3">
-                <UiButton variant="secondary" size="sm" :icon="Check" @click="showApproveModal(row)">Approve</UiButton>
-                <UiButton variant="danger" size="sm" :icon="X" @click="showRejectModal(row)">Reject</UiButton>
+                <UiButton variant="secondary" size="sm" :icon="Check" @click="showApproveModal(row)">{{ $t("common.actions.approve") }}</UiButton>
+                <UiButton variant="danger" size="sm" :icon="X" @click="showRejectModal(row)">{{ $t("common.actions.reject") }}</UiButton>
               </div>
             </div>
           </div>
@@ -195,13 +200,13 @@ const confirmReject = async () => {
             <div class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mb-3">
               <CalendarClock class="w-5 h-5" />
             </div>
-            <p class="text-ui-body font-medium text-ui-ink">No Leave Requests yet</p>
+            <p class="text-ui-body font-medium text-ui-ink">{{ $t("attendance.leave.emptyYet") }}</p>
           </div>
         </template>
       </UiTable>
 
       <div class="px-4 sm:px-5 pb-4">
-        <Pagination :meta="meta" :loading="loading" item-label="pengajuan" @page-change="load" />
+        <Pagination :meta="meta" :loading="loading" :item-label="$t('attendance.leave.itemLabel')" @page-change="load" />
       </div>
     </section>
 
@@ -209,19 +214,19 @@ const confirmReject = async () => {
     <UiConfirmDialog
       v-model:open="showApproveModalState"
       type="success"
-      title="Approve Leave Request"
-      message="Confirm approval for this leave request"
-      :confirm-text="processingAction ? 'Approving...' : 'Approve'"
+      :title="$t('attendance.leave.approveTitle')"
+      :message="$t('attendance.leave.approveMessage')"
+      :confirm-text="processingAction ? $t('attendance.leave.approving') : $t('common.actions.approve')"
       :loading="processingAction"
       @cancel="closeApproveModal"
       @confirm="confirmApprove"
     >
       <div v-if="selectedLeaveRequest" class="border border-ui-line rounded-ui-card p-3.5 space-y-1.5">
         <p class="text-ui-h3 text-ui-ink">{{ selectedLeaveRequest.employee?.user?.name }}</p>
-        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ capitalize(selectedLeaveRequest.type) }}</UiBadge>
+        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ leaveTypeLabel(selectedLeaveRequest.type) }}</UiBadge>
         <p class="text-ui-small text-ui-text tabular-nums">
-          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ selectedLeaveRequest.days }} days)
-          <span v-if="selectedLeaveRequest.is_half_day" class="text-ui-accent font-medium">(Half Day)</span>
+          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ $t("attendance.leave.days", { n: selectedLeaveRequest.days }, Number(selectedLeaveRequest.days) || 0) }})
+          <span v-if="selectedLeaveRequest.is_half_day" class="text-ui-accent font-medium">({{ $t("attendance.leave.halfDay") }})</span>
         </p>
         <p class="text-ui-small text-ui-muted">{{ selectedLeaveRequest.reason }}</p>
         <a
@@ -232,7 +237,7 @@ const confirmReject = async () => {
           class="inline-flex items-center gap-1.5 pt-1 text-ui-small font-medium text-ui-accent hover:underline"
         >
           <Paperclip class="w-3.5 h-3.5" />
-          {{ selectedLeaveRequest.attachment_original_name || "Lihat Lampiran" }}
+          {{ selectedLeaveRequest.attachment_original_name || $t("attendance.leave.viewAttachment") }}
         </a>
       </div>
     </UiConfirmDialog>
@@ -241,19 +246,19 @@ const confirmReject = async () => {
     <UiConfirmDialog
       v-model:open="showRejectModalState"
       type="danger"
-      title="Reject Leave Request"
-      message="Confirm rejection for this leave request"
-      :confirm-text="processingAction ? 'Rejecting...' : 'Reject'"
+      :title="$t('attendance.leave.rejectTitle')"
+      :message="$t('attendance.leave.rejectMessage')"
+      :confirm-text="processingAction ? $t('attendance.leave.rejecting') : $t('common.actions.reject')"
       :loading="processingAction"
       @cancel="closeRejectModal"
       @confirm="confirmReject"
     >
       <div v-if="selectedLeaveRequest" class="border border-ui-line rounded-ui-card p-3.5 space-y-1.5">
         <p class="text-ui-h3 text-ui-ink">{{ selectedLeaveRequest.employee?.user?.name }}</p>
-        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ capitalize(selectedLeaveRequest.type) }}</UiBadge>
+        <UiBadge :tone="leaveTypeTone(selectedLeaveRequest.type)">{{ leaveTypeLabel(selectedLeaveRequest.type) }}</UiBadge>
         <p class="text-ui-small text-ui-text tabular-nums">
-          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ selectedLeaveRequest.days }} days)
-          <span v-if="selectedLeaveRequest.is_half_day" class="text-ui-accent font-medium">(Half Day)</span>
+          {{ formatDate(selectedLeaveRequest.start_date) }} - {{ formatDate(selectedLeaveRequest.end_date) }} ({{ $t("attendance.leave.days", { n: selectedLeaveRequest.days }, Number(selectedLeaveRequest.days) || 0) }})
+          <span v-if="selectedLeaveRequest.is_half_day" class="text-ui-accent font-medium">({{ $t("attendance.leave.halfDay") }})</span>
         </p>
         <p class="text-ui-small text-ui-muted">{{ selectedLeaveRequest.reason }}</p>
         <a
@@ -264,7 +269,7 @@ const confirmReject = async () => {
           class="inline-flex items-center gap-1.5 pt-1 text-ui-small font-medium text-ui-accent hover:underline"
         >
           <Paperclip class="w-3.5 h-3.5" />
-          {{ selectedLeaveRequest.attachment_original_name || "Lihat Lampiran" }}
+          {{ selectedLeaveRequest.attachment_original_name || $t("attendance.leave.viewAttachment") }}
         </a>
       </div>
     </UiConfirmDialog>

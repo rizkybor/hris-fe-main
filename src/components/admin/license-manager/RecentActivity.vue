@@ -3,6 +3,7 @@
 // endpoint is missing or failing it shows a quiet "Not available yet"
 // state (no toast).
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { Activity, PlugZap, RefreshCw, Inbox } from "lucide-vue-next";
 import { useLoadOnScroll } from "@/components/admin/license-manager/useLoadOnScroll";
@@ -24,6 +25,7 @@ const props = defineProps({
   limit: { type: Number, default: 10 },
 });
 
+const { t } = useI18n();
 const store = useLicenseManagerStore();
 const router = useRouter();
 
@@ -68,7 +70,7 @@ defineExpose({ reload: load });
 
 // Who / where: the admin for admin actions, else the device.
 const actor = (e) => {
-  if (e.admin?.name) return `by ${e.admin.name}`;
+  if (e.admin?.name) return t("licenses.activity.byAdmin", { name: e.admin.name });
   const parts = [e.device_name, e.platform ? platformLabel(e.platform) : null].filter(Boolean);
   return parts.join(" · ");
 };
@@ -87,8 +89,8 @@ const open = (e) => {
       <div class="flex items-center gap-2.5 min-w-0">
         <Activity class="w-4 h-4 text-ui-faint shrink-0" />
         <div class="min-w-0">
-          <h4 class="text-ui-h2 text-ui-ink">Recent activity</h4>
-          <p class="text-ui-cap text-ui-muted">Latest events across all products</p>
+          <h4 class="text-ui-h2 text-ui-ink">{{ $t("licenses.activity.title") }}</h4>
+          <p class="text-ui-cap text-ui-muted">{{ $t("licenses.activity.subtitle") }}</p>
         </div>
       </div>
       <button
@@ -96,8 +98,8 @@ const open = (e) => {
         type="button"
         @click="load"
         class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
-        title="Refresh"
-        aria-label="Refresh activity"
+        :title="$t('common.actions.refresh')"
+        :aria-label="$t('licenses.activity.refresh')"
       >
         <RefreshCw class="w-3.5 h-3.5" />
       </button>
@@ -114,13 +116,17 @@ const open = (e) => {
       </div>
     </div>
 
-    <UiEmpty v-else-if="state === 'unavailable'" :icon="PlugZap" title="Not available yet" message="This panel will fill in once the server supports it." compact>
+    <UiEmpty v-else-if="state === 'unavailable'" :icon="PlugZap" 
+      :title="$t('licenses.panel.unavailableTitle')"
+      :message="$t('licenses.panel.unavailableMessage')"
+      compact
+    >
       <button type="button" @click="load" class="inline-flex items-center gap-1.5 text-ui-small font-medium text-ui-accent hover:underline">
-        <RefreshCw class="w-3.5 h-3.5" /> Try again
+        <RefreshCw class="w-3.5 h-3.5" /> {{ $t("common.actions.retry") }}
       </button>
     </UiEmpty>
 
-    <UiEmpty v-else-if="!items.length" :icon="Inbox" title="No activity yet" message="Activations and admin changes will show up here." compact />
+    <UiEmpty v-else-if="!items.length" :icon="Inbox" :title="$t('licenses.activity.emptyTitle')" :message="$t('licenses.activity.emptyMessage')" compact />
 
     <div v-else ref="scroller" class="max-h-[460px] overflow-y-auto scroll-soft">
     <ul class="divide-y divide-ui-line">
@@ -152,9 +158,9 @@ const open = (e) => {
     </ul>
       <div ref="sentinel" class="h-px"></div>
       <div v-if="loadingMore" class="py-3">
-        <UiSpinner size="16px" label="Loading more..." :center="false" class="justify-center" />
+        <UiSpinner size="16px" :label="$t('licenses.activity.loadingMore')" :center="false" class="justify-center" />
       </div>
-      <p v-else-if="!hasMore && items.length > limit" class="py-3 text-center text-ui-cap text-ui-faint">That's all the activity</p>
+      <p v-else-if="!hasMore && items.length > limit" class="py-3 text-center text-ui-cap text-ui-faint">{{ $t("licenses.activity.end") }}</p>
     </div>
   </section>
 </template>

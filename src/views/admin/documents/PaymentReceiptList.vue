@@ -1,5 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
 import { FileCheck2, Plus, Download, FileText, Pencil, Ban, Trash2, Search, ArrowLeft, Wallet } from "lucide-vue-next";
 import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
@@ -8,6 +10,7 @@ import { can } from "@/helpers/permissionHelper";
 import { UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiPageHeader, UiPagination, UiChips, UiTable } from "@/components/ui";
 import { useAlertModalStore } from "@/stores/alertModal";
 
+const { t } = useI18n();
 const store = usePaymentReceiptStore();
 const alertModal = useAlertModalStore();
 const { receipts, meta, loading } = storeToRefs(store);
@@ -52,9 +55,9 @@ const handleViewPdf = async (receipt) => {
 
 const handleCancel = async (receipt) => {
   if (
-    !(await alertModal.confirm(`Cancel Payment Receipt "${receipt.receipt_number}"?`, {
+    !(await alertModal.confirm(t("documents.receipt.list.cancelConfirm", { number: receipt.receipt_number }), {
       type: "warning",
-      confirmText: "Cancel",
+      confirmText: t("documents.receipt.list.cancelReceipt"),
     }))
   )
     return;
@@ -75,17 +78,17 @@ const handleDelete = async () => {
 
 // Presentation only: status -> badge tone (always shown with its label).
 const statusTone = (status) => (status === "cancelled" ? "neutral" : "ok");
-const statusLabel = (status) => (status === "cancelled" ? "Cancelled" : "Active");
+const statusLabel = (status) => (status === "cancelled" ? t("documents.shared.status.cancelled") : t("common.labels.active"));
 
 const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "-";
+  date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "short", day: "numeric" }) : "-";
 
 // Presentation only.
 const statusOptions = computed(() =>
   [
-    { value: "", label: "All" },
-    { value: "active", label: "Active" },
-    { value: "cancelled", label: "Cancelled" },
+    { value: "", label: t("common.labels.all") },
+    { value: "active", label: t("common.labels.active") },
+    { value: "cancelled", label: t("documents.shared.status.cancelled") },
   ].map((o) => ({ ...o, count: o.value === statusFilter.value && !loading.value ? meta.value.total : undefined }))
 );
 const onStatusChip = (value) => {
@@ -94,31 +97,31 @@ const onStatusChip = (value) => {
 };
 const activeSum = computed(() => receipts.value.filter((r) => r.status !== "cancelled").reduce((sum, r) => sum + (Number(r.amount) || 0), 0));
 const cancelledCount = computed(() => receipts.value.filter((r) => r.status === "cancelled").length);
-const columns = [
-  { key: "receipt_number", label: "Receipt No." },
-  { key: "received_from", label: "Received From" },
-  { key: "date", label: "Date" },
-  { key: "amount", label: "Amount", align: "right" },
-  { key: "status", label: "Status" },
+const columns = computed(() => [
+  { key: "receipt_number", label: t("documents.receipt.list.columns.number") },
+  { key: "received_from", label: t("documents.receipt.fields.receivedFrom") },
+  { key: "date", label: t("common.labels.date") },
+  { key: "amount", label: t("common.labels.amount"), align: "right" },
+  { key: "status", label: t("common.labels.status") },
   { key: "actions", label: "", align: "right" },
-];
+]);
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Payment Receipt" subtitle="Manage payment receipts">
+    <UiPageHeader :title="$t('documents.receipt.list.title')" :subtitle="$t('documents.receipt.list.subtitle')">
       <template #eyebrow>
         <router-link
           :to="{ name: 'admin.documents.dashboard' }"
           class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
-          aria-label="Back to Documents"
-          title="Back to Documents"
+          :aria-label="$t('documents.shared.backToDocuments')"
+          :title="$t('documents.shared.backToDocuments')"
         >
-          <ArrowLeft class="w-4 h-4" />Documents
+          <ArrowLeft class="w-4 h-4" />{{ $t("documents.shared.documents") }}
         </router-link>
       </template>
       <template #actions>
-        <UiButton v-if="can('payment-receipt-create')" :to="{ name: 'admin.payment-receipts.create' }" :icon="Plus">Create Receipt</UiButton>
+        <UiButton v-if="can('payment-receipt-create')" :to="{ name: 'admin.payment-receipts.create' }" :icon="Plus">{{ $t("documents.receipt.list.create") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -128,7 +131,7 @@ const columns = [
         <UiInput
           v-model="search"
           :icon="Search"
-          placeholder="Search receipt number, recipient..."
+          :placeholder="$t('documents.receipt.list.searchPlaceholder')"
           class="w-full lg:w-[300px]"
           @keyup.enter="handleSearch"
         />
@@ -153,11 +156,11 @@ const columns = [
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5">
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="FileText" :loading="viewingId === row.id" title="View PDF" aria-label="View PDF" @click="handleViewPdf(row)" />
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" title="Download PDF" aria-label="Download PDF" @click="handleDownload(row)" />
-            <UiButton v-if="can('payment-receipt-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.payment-receipts.edit', params: { id: row.id } }" title="Edit" aria-label="Edit" />
-            <UiButton v-if="can('payment-receipt-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" title="Cancel" aria-label="Cancel" @click="handleCancel(row)" />
-            <UiButton v-if="can('payment-receipt-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-bad" :icon="Trash2" title="Delete" aria-label="Delete" @click="confirmDelete(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="FileText" :loading="viewingId === row.id" :title="$t('documents.shared.viewPdf')" :aria-label="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('common.actions.downloadPdf')" @click="handleDownload(row)" />
+            <UiButton v-if="can('payment-receipt-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.payment-receipts.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
+            <UiButton v-if="can('payment-receipt-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" :title="$t('documents.receipt.list.cancelReceipt')" :aria-label="$t('documents.receipt.list.cancelReceipt')" @click="handleCancel(row)" />
+            <UiButton v-if="can('payment-receipt-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
           </div>
         </template>
 
@@ -177,30 +180,30 @@ const columns = [
                 <span class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(row.date) }}</span>
               </div>
               <div class="flex items-center gap-0.5 mt-2 -ml-2">
-                <UiButton variant="ghost" size="sm" :icon="FileText" :loading="viewingId === row.id" @click="handleViewPdf(row)">View</UiButton>
+                <UiButton variant="ghost" size="sm" :icon="FileText" :loading="viewingId === row.id" @click="handleViewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
                 <UiButton variant="ghost" size="sm" :icon="Download" :loading="downloadingId === row.id" @click="handleDownload(row)">PDF</UiButton>
-                <UiButton v-if="can('payment-receipt-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.payment-receipts.edit', params: { id: row.id } }" title="Edit" aria-label="Edit" />
-                <UiButton v-if="can('payment-receipt-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" title="Cancel" aria-label="Cancel" @click="handleCancel(row)" />
-                <UiButton v-if="can('payment-receipt-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 text-ui-bad" :icon="Trash2" title="Delete" aria-label="Delete" @click="confirmDelete(row)" />
+                <UiButton v-if="can('payment-receipt-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.payment-receipts.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
+                <UiButton v-if="can('payment-receipt-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" :title="$t('documents.receipt.list.cancelReceipt')" :aria-label="$t('documents.receipt.list.cancelReceipt')" @click="handleCancel(row)" />
+                <UiButton v-if="can('payment-receipt-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
               </div>
             </div>
           </div>
         </template>
 
         <template #empty>
-          <UiEmpty :icon="FileCheck2" title="No Payment Receipts yet" compact />
+          <UiEmpty :icon="FileCheck2" :title="$t('documents.receipt.list.emptyTitle')" compact />
         </template>
       </UiTable>
 
-      <UiPagination v-if="meta.total" :meta="meta" item-label="receipt" :disabled="loading" @change="load" />
+      <UiPagination v-if="meta.total" :meta="meta" :item-label="$t('documents.receipt.list.itemLabel')" :disabled="loading" @change="load" />
     </section>
 
     <UiConfirmDialog
       :open="isDeleteModalOpen"
-      title="Delete Payment Receipt?"
-      :message="`&quot;${receiptToDelete?.receipt_number}&quot; will be permanently deleted.`"
+      :title="$t('documents.receipt.list.deleteTitle')"
+      :message="$t('documents.shared.deleteMessage', { number: receiptToDelete?.receipt_number })"
       type="danger"
-      confirm-text="Yes, Delete"
+      :confirm-text="$t('documents.shared.yesDelete')"
       @cancel="isDeleteModalOpen = false"
       @confirm="handleDelete"
     />

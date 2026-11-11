@@ -1,6 +1,8 @@
 <script setup>
 import { UiInput, UiSelect } from "@/components/ui";
-import { OPERATIONAL_COST_STATUSES } from "@/utils/operationalCostStatus";
+import { computed } from "vue";
+import { operationalCostStatuses } from "@/utils/operationalCostStatus";
+import { useI18n } from "vue-i18n";
 
 // Status + Expired pair used by every Operational Cost form. Expired is
 // required only while the item is in use ("Digunakan").
@@ -11,25 +13,28 @@ defineProps({
 
 const status = defineModel("status", { type: String, default: "active" });
 const expiredDate = defineModel("expiredDate", { type: String, default: "" });
+
+const { locale } = useI18n();
+const statusOptions = computed(() => (locale.value, operationalCostStatuses()));
 </script>
 
 <template>
   <UiSelect
     id="usage_status"
-    label="Status"
-    placeholder="Pilih status"
+    :label="$t('common.labels.status')"
+    :placeholder="$t('finance.modals.usage.statusPlaceholder')"
     v-model="status"
-    :options="OPERATIONAL_COST_STATUSES"
+    :options="statusOptions"
     :required="!readonly"
     :disabled="readonly"
     :error="errors.status"
-    :hint="readonly ? '' : 'Hanya item berstatus Digunakan yang dihitung ke total Operational Cost.'"
+    :hint="readonly ? '' : $t('finance.modals.usage.statusHint')"
   />
 
   <UiInput
     id="expired_date"
     type="date"
-    :label="status === 'active' ? 'Expired' : 'Expired (opsional)'"
+    :label="status === 'active' ? $t('finance.modals.usage.expired') : $t('finance.modals.usage.expiredOptional')"
     v-model="expiredDate"
     :readonly="readonly"
     :required="!readonly && status === 'active'"

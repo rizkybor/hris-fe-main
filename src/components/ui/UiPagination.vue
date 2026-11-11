@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-vue-next";
 
 const props = defineProps({
   meta: { type: Object, required: true },
-  itemLabel: { type: String, default: "results" },
+  itemLabel: { type: String, default: "" },
   disabled: { type: Boolean, default: false },
 });
 const emit = defineEmits(["change"]);
@@ -43,12 +43,12 @@ const btn = "inline-flex items-center justify-center h-8 min-w-8 px-2 rounded-ui
 <template>
   <nav class="flex items-center gap-3 px-4 py-3 border-t border-ui-line" aria-label="Pagination">
     <p class="text-ui-small text-ui-muted tabular-nums">
-      <span class="hidden sm:inline">Showing {{ from }}–{{ to }} of {{ total }} {{ itemLabel }}</span>
-      <span class="sm:hidden">Page {{ page }} of {{ last }}</span>
+      <span class="hidden sm:inline">{{ $t("common.pagination.showingItems", { from, to, total, items: itemLabel || $t("common.pagination.items") }) }}</span>
+      <span class="sm:hidden">{{ $t("common.pagination.page", { page, last }) }}</span>
     </p>
     <div class="ml-auto flex items-center gap-1">
       <button type="button" :class="[btn, 'border-ui-line-strong bg-ui-surface text-ui-ink hover:bg-ui-subtle gap-1 px-2.5']" :disabled="page <= 1 || disabled" @click="go(page - 1)">
-        <ChevronLeft class="w-4 h-4" /><span class="sm:hidden">Previous</span>
+        <ChevronLeft class="w-4 h-4" /><span class="sm:hidden">{{ $t("common.pagination.previous") }}</span>
       </button>
       <template v-for="(p, i) in pages" :key="`${p}-${i}`">
         <span v-if="p === '…'" class="hidden sm:inline px-1 text-ui-faint">…</span>
@@ -62,7 +62,7 @@ const btn = "inline-flex items-center justify-center h-8 min-w-8 px-2 rounded-ui
         >{{ p }}</button>
       </template>
       <button type="button" :class="[btn, 'border-ui-line-strong bg-ui-surface text-ui-ink hover:bg-ui-subtle gap-1 px-2.5']" :disabled="page >= last || disabled" @click="go(page + 1)">
-        <span class="sm:hidden">Next</span><ChevronRight class="w-4 h-4" />
+        <span class="sm:hidden">{{ $t("common.pagination.next") }}</span><ChevronRight class="w-4 h-4" />
       </button>
     </div>
   </nav>

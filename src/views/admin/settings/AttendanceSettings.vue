@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { CalendarClock, ArrowLeft, MapPinned } from "lucide-vue-next";
 import { useAttendanceSettingStore } from "@/stores/attendanceSetting";
@@ -7,6 +8,7 @@ import { RouterLink } from "vue-router";
 import HolidayManager from "@/components/admin/attendance/HolidayManager.vue";
 import { UiAlert, UiButton, UiPageHeader, UiSkeleton, UiSwitch } from "@/components/ui";
 
+const { t } = useI18n();
 const store = useAttendanceSettingStore();
 const { setting, loading } = storeToRefs(store);
 
@@ -48,9 +50,9 @@ const handleToggle = async () => {
   saving.value = true;
   try {
     await store.updateSetting({ allow_weekend_check_in: !setting.value.allow_weekend_check_in });
-    successMessage.value = "Attendance setting saved successfully.";
+    successMessage.value = t("settings.attendance.saved");
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to save setting.";
+    errorMessage.value = error?.response?.data?.message || t("settings.saveFailed");
   } finally {
     saving.value = false;
   }
@@ -66,9 +68,9 @@ const handleGeofenceSave = async () => {
       office_longitude: geofenceForm.value.office_longitude,
       office_radius_meters: geofenceForm.value.office_radius_meters,
     });
-    geofenceSuccess.value = "Office location saved successfully.";
+    geofenceSuccess.value = t("settings.attendance.locationSaved");
   } catch (error) {
-    geofenceError.value = error?.response?.data?.message || "Failed to save office location.";
+    geofenceError.value = error?.response?.data?.message || t("settings.attendance.locationFailed");
   } finally {
     geofenceSaving.value = false;
   }
@@ -88,10 +90,10 @@ const useCurrentLocation = () => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Attendance Settings" subtitle="Control whether staff can Clock In/Out on Saturday & Sunday">
+    <UiPageHeader :title="$t('settings.attendance.title')" :subtitle="$t('settings.attendance.subtitle')">
       <template #eyebrow>
-        <RouterLink :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" aria-label="Back to Settings" title="Back to Settings">
-          <ArrowLeft class="w-4 h-4" /> Settings
+        <RouterLink :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" :aria-label="$t('settings.backToSettings')" :title="$t('settings.backToSettings')">
+          <ArrowLeft class="w-4 h-4" /> {{ $t("settings.settings") }}
         </RouterLink>
       </template>
     </UiPageHeader>
@@ -102,30 +104,29 @@ const useCurrentLocation = () => {
         <div>
           <div class="flex items-center gap-2">
             <CalendarClock class="w-4 h-4 text-ui-muted" />
-            <h2 class="text-ui-h2 text-ui-ink">Weekend attendance</h2>
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("settings.attendance.weekendTitle") }}</h2>
           </div>
-          <p class="text-ui-small text-ui-muted mt-1">Saturday & Sunday Clock In/Out.</p>
+          <p class="text-ui-small text-ui-muted mt-1">{{ $t("settings.attendance.weekendHint") }}</p>
         </div>
         <div>
           <UiSkeleton v-if="loading" height="64px" />
           <div v-else class="rounded-ui-card border border-ui-line px-4 py-3.5">
             <div class="flex items-start gap-4">
               <div class="flex-1 min-w-0">
-                <p class="text-ui-body font-medium text-ui-ink">Allow Weekend Clock In/Out</p>
+                <p class="text-ui-body font-medium text-ui-ink">{{ $t("settings.attendance.allowWeekend") }}</p>
                 <p class="text-ui-small text-ui-muted mt-0.5">
-                  By default, Clock In/Out is disabled every Saturday & Sunday since those aren't scheduled work
-                  days. Turning this on lets staff clock in on weekends -- it's automatically recorded as
-                  <strong class="text-ui-text font-medium">overtime (lembur)</strong>, not counted toward their regular attendance rate.
+                  {{ $t("settings.attendance.weekendBefore") }}
+                  <strong class="text-ui-text font-medium">{{ $t("settings.attendance.weekendOvertime") }}</strong>{{ $t("settings.attendance.weekendAfter") }}
                 </p>
                 <p v-if="setting.updated_by?.name" class="text-ui-cap text-ui-faint mt-2">
-                  Last changed by {{ setting.updated_by.name }}
+                  {{ $t("settings.lastChangedBy", { name: setting.updated_by.name }) }}
                 </p>
               </div>
               <UiSwitch
                 class="mt-0.5"
                 :model-value="!!setting.allow_weekend_check_in"
                 :disabled="saving"
-                aria-label="Allow Weekend Clock In/Out"
+                :aria-label="$t('settings.attendance.allowWeekend')"
                 @update:model-value="handleToggle"
               />
             </div>
@@ -143,11 +144,11 @@ const useCurrentLocation = () => {
         <div>
           <div class="flex items-center gap-2">
             <MapPinned class="w-4 h-4 text-ui-muted" />
-            <h2 class="text-ui-h2 text-ui-ink">Office Location & Radius</h2>
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("settings.attendance.officeTitle") }}</h2>
           </div>
           <p class="text-ui-small text-ui-muted mt-1">
-            Employees whose Work Location is set to <strong class="text-ui-text font-medium">Office</strong> must Clock In within this radius of
-            the office coordinates below. Remote/Hybrid employees are never checked against this.
+            {{ $t("settings.attendance.officeBefore") }} <strong class="text-ui-text font-medium">{{ $t("settings.attendance.officeWord") }}</strong>
+            {{ $t("settings.attendance.officeAfter") }}
           </p>
         </div>
 
@@ -156,24 +157,24 @@ const useCurrentLocation = () => {
           <div v-else class="space-y-4">
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label for="office-latitude" class="block text-ui-small font-medium text-ui-ink mb-1.5">Latitude</label>
+                <label for="office-latitude" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("settings.attendance.latitude") }}</label>
                 <input id="office-latitude" v-model="geofenceForm.office_latitude" type="number" step="0.00000001" placeholder="-6.34660080" class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus tabular-nums" />
               </div>
               <div>
-                <label for="office-longitude" class="block text-ui-small font-medium text-ui-ink mb-1.5">Longitude</label>
+                <label for="office-longitude" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("settings.attendance.longitude") }}</label>
                 <input id="office-longitude" v-model="geofenceForm.office_longitude" type="number" step="0.00000001" placeholder="106.76173940" class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus tabular-nums" />
               </div>
             </div>
 
             <div class="sm:max-w-[240px]">
-              <label for="office-radius" class="block text-ui-small font-medium text-ui-ink mb-1.5">Radius (meters)</label>
+              <label for="office-radius" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("settings.attendance.radius") }}</label>
               <input id="office-radius" v-model="geofenceForm.office_radius_meters" type="number" step="1" min="10" max="5000" placeholder="150" class="w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus tabular-nums" />
             </div>
 
             <div class="flex flex-col-reverse sm:flex-row sm:items-center gap-2 pt-1">
-              <UiButton variant="secondary" :icon="MapPinned" @click="useCurrentLocation">Use My Current Location</UiButton>
+              <UiButton variant="secondary" :icon="MapPinned" @click="useCurrentLocation">{{ $t("settings.attendance.useCurrentLocation") }}</UiButton>
               <UiButton :loading="geofenceSaving" :disabled="geofenceSaving" @click="handleGeofenceSave">
-                {{ geofenceSaving ? "Saving..." : "Save Location" }}
+                {{ geofenceSaving ? $t("common.actions.saving") : $t("settings.attendance.saveLocation") }}
               </UiButton>
             </div>
 

@@ -7,7 +7,7 @@ defineProps({
   subtitle: { type: String, default: "" },
   meta: { type: String, default: "" },
   to: { type: [String, Object], default: null },
-  linkText: { type: String, default: "View all" },
+  linkText: { type: String, default: "" }, // defaults to "View all"
   flush: { type: Boolean, default: false }, // body without padding (lists)
 });
 </script>
@@ -22,7 +22,7 @@ defineProps({
       <div class="flex items-center gap-2 shrink-0 pt-0.5">
         <slot name="actions" />
         <span v-if="meta" class="text-ui-cap text-ui-muted tabular-nums">{{ meta }}</span>
-        <RouterLink v-if="to" :to="to" class="text-ui-small font-medium text-ui-accent hover:underline">{{ linkText }}</RouterLink>
+        <RouterLink v-if="to" :to="to" class="text-ui-small font-medium text-ui-accent hover:underline">{{ linkText || $t("common.actions.viewAll") }}</RouterLink>
       </div>
     </header>
     <div class="flex-1 min-h-0" :class="flush ? '' : 'px-5 pb-5 pt-3.5'">

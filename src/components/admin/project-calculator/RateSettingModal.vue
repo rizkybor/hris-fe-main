@@ -5,6 +5,9 @@ import { UiModal, UiButton, UiAlert, UiBadge, UiSpinner } from "@/components/ui"
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { storeToRefs } from "pinia";
 import { formatRupiah } from "@/utils/formatUtils";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const emit = defineEmits(["close", "saved"]);
 const store = useProjectCalculatorStore();
@@ -28,7 +31,7 @@ onMounted(async () => {
   try {
     options.value = await store.fetchRateSettingOptions();
   } catch (error) {
-    errorMessage.value = "Gagal memuat daftar item Operational Cost.";
+    errorMessage.value = t("calculator.rateModal.loadFailed");
   } finally {
     loadingStatistics.value = false;
   }
@@ -90,7 +93,7 @@ const submit = async () => {
   } catch (error) {
     const data = error?.response?.data;
     errorMessage.value =
-      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Gagal menyimpan rate setup.");
+      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t("calculator.rateModal.saveFailed"));
   }
 };
 
@@ -98,9 +101,9 @@ const submit = async () => {
 const fieldClass =
   "w-full h-[38px] px-3 text-right tabular-nums bg-ui-surface text-ui-body text-ui-ink border border-ui-line-strong rounded-ui-control focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
 const pickers = computed(() => [
-  { key: "fixed", title: "Fixed Cost", icon: WalletIcon, items: fixedCostItems.value, list: form.value.selected_fixed_cost_ids, name: "financial_items", amount: (i) => formatRupiah(i.actual), empty: "No Fixed Cost items yet" },
-  { key: "sdm", title: "SDM Resource", icon: LayersIcon, items: sdmResourceItems.value, list: form.value.selected_sdm_resource_ids, name: "sdm_component", amount: (i) => formatRupiah(i.actual), hours: true, empty: "No SDM Resource yet" },
-  { key: "infra", title: "Infrastructure Tools", icon: ServerIcon, items: infrastructureItems.value, list: form.value.selected_infrastructure_tool_ids, name: "tech_stack_component", amount: (i) => `${formatRupiah(i.monthly_fee)}/bln`, empty: "No Infrastructure Tool yet" },
+  { key: "fixed", title: t("calculator.rateModal.fixedCost"), icon: WalletIcon, items: fixedCostItems.value, list: form.value.selected_fixed_cost_ids, name: "financial_items", amount: (i) => formatRupiah(i.actual), empty: t("calculator.rateModal.emptyFixed") },
+  { key: "sdm", title: t("calculator.rateModal.sdm"), icon: LayersIcon, items: sdmResourceItems.value, list: form.value.selected_sdm_resource_ids, name: "sdm_component", amount: (i) => formatRupiah(i.actual), hours: true, empty: t("calculator.rateModal.emptySdm") },
+  { key: "infra", title: t("calculator.rateModal.infra"), icon: ServerIcon, items: infrastructureItems.value, list: form.value.selected_infrastructure_tool_ids, name: "tech_stack_component", amount: (i) => t("calculator.rateModal.perMonth", { amount: formatRupiah(i.monthly_fee) }), empty: t("calculator.rateModal.emptyInfra") },
 ]);
 </script>
 
@@ -108,15 +111,15 @@ const pickers = computed(() => [
   <UiModal
     :open="true"
     size="lg"
-    title="Team Rate Setup"
-    description="Select items from Operational Cost to build the team cost"
+    :title="$t('calculator.dashboard.teamRate.title')"
+    :description="$t('calculator.rateModal.description')"
     @close="emit('close')"
   >
     <div class="space-y-5">
       <UiAlert v-if="errorMessage" tone="bad">{{ errorMessage }}</UiAlert>
 
       <div v-if="loadingStatistics" class="flex items-center justify-center gap-2 py-6 text-ui-small text-ui-muted">
-        <UiSpinner size="16px" :center="false" /> Memuat data Operational Cost...
+        <UiSpinner size="16px" :center="false" /> {{ $t("calculator.rateModal.loading") }}
       </div>
 
       <template v-else>
@@ -140,8 +143,8 @@ const pickers = computed(() => [
                   class="w-4 h-4 rounded border-ui-line-strong text-ui-accent focus:ring-ui-accent shrink-0"
                 />
                 <span class="text-ui-small text-ui-ink font-medium truncate">{{ item[picker.name] }}</span>
-                <span v-if="picker.hours && item.productive_hours_per_month" class="text-ui-cap text-ui-faint shrink-0 tabular-nums">({{ item.productive_hours_per_month }} jam/bln)</span>
-                <UiBadge v-if="item.status === 'inactive'" class="shrink-0" title="Tidak Digunakan di Operational Cost (tetap bisa dipilih)">Tidak Digunakan</UiBadge>
+                <span v-if="picker.hours && item.productive_hours_per_month" class="text-ui-cap text-ui-faint shrink-0 tabular-nums">({{ $t("calculator.rateModal.hoursPerMonth", { n: item.productive_hours_per_month }) }})</span>
+                <UiBadge v-if="item.status === 'inactive'" class="shrink-0" :title="$t('calculator.rateModal.notUsedHint')">{{ $t("calculator.rateModal.notUsed") }}</UiBadge>
               </span>
               <span class="text-ui-cap text-ui-muted tabular-nums shrink-0">{{ picker.amount(item) }}</span>
             </label>
@@ -152,15 +155,15 @@ const pickers = computed(() => [
 
       <div class="grid grid-cols-2 gap-3 pt-4 border-t border-ui-line">
         <label class="block">
-          <span class="block text-ui-small font-medium text-ui-ink mb-1.5">Multiplier Margin Jual</span>
+          <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.rateModal.margin") }}</span>
           <input v-model.number="form.margin_multiplier" type="number" min="1" step="0.1" :class="fieldClass" />
         </label>
         <label class="block">
-          <span class="block text-ui-small font-medium text-ui-ink mb-1.5">PM Overhead Default (%)</span>
+          <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.rateModal.pmOverhead") }}</span>
           <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" :class="fieldClass" />
         </label>
         <label class="block col-span-2">
-          <span class="block text-ui-small font-medium text-ui-ink mb-1.5">Default Infrastructure Setup Cost (Rp)</span>
+          <span class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("calculator.rateModal.infraSetup") }}</span>
           <input v-model.number="form.default_infra_setup_cost" type="number" min="0" :class="fieldClass" />
         </label>
       </div>
@@ -168,27 +171,27 @@ const pickers = computed(() => [
       <!-- Live preview -->
       <dl class="grid grid-cols-2 gap-px bg-ui-line border border-ui-line rounded-ui-card overflow-hidden">
         <div class="bg-ui-subtle px-3.5 py-3 min-w-0">
-          <dt class="text-ui-cap text-ui-muted">Total Team Operational Cost / Month</dt>
+          <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.rateModal.previewCost") }}</dt>
           <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5 truncate">{{ formatRupiah(previewTeamMonthlyCost) }}</dd>
         </div>
         <div class="bg-ui-subtle px-3.5 py-3 min-w-0">
-          <dt class="text-ui-cap text-ui-muted flex items-center gap-1"><ClockIcon class="w-3 h-3" /> Total Jam Produktif Tim / Bulan</dt>
-          <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5">{{ previewProductiveHours }} jam &middot; {{ previewTeamSize }} orang</dd>
+          <dt class="text-ui-cap text-ui-muted flex items-center gap-1"><ClockIcon class="w-3 h-3" /> {{ $t("calculator.rateModal.previewHours") }}</dt>
+          <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5">{{ $t("calculator.rateModal.previewHoursValue", { hours: previewProductiveHours, people: previewTeamSize }) }}</dd>
         </div>
         <div class="bg-ui-subtle px-3.5 py-3 min-w-0">
-          <dt class="text-ui-cap text-ui-muted">Rate Cost / Jam (preview)</dt>
+          <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.rateModal.previewRateCost") }}</dt>
           <dd class="text-ui-body font-medium text-ui-ink tabular-nums mt-0.5 truncate">{{ formatRupiah(previewRateCost) }}</dd>
         </div>
         <div class="bg-ui-subtle px-3.5 py-3 min-w-0">
-          <dt class="text-ui-cap text-ui-muted">Rate Jual / Jam (preview)</dt>
+          <dt class="text-ui-cap text-ui-muted">{{ $t("calculator.rateModal.previewRateSell") }}</dt>
           <dd class="text-ui-body font-semibold text-ui-accent tabular-nums mt-0.5 truncate">{{ formatRupiah(previewRateSell) }}</dd>
         </div>
       </dl>
     </div>
 
     <template #footer>
-      <UiButton variant="secondary" :disabled="saving" @click="emit('close')">Cancel</UiButton>
-      <UiButton :loading="saving" @click="submit">{{ saving ? "Saving..." : "Save Rate Setup" }}</UiButton>
+      <UiButton variant="secondary" :disabled="saving" @click="emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
+      <UiButton :loading="saving" @click="submit">{{ saving ? $t("common.actions.saving") : $t("calculator.rateModal.save") }}</UiButton>
     </template>
   </UiModal>
 </template>

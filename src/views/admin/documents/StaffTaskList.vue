@@ -11,6 +11,10 @@ import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import StaffTaskComments from "@/components/admin/documents/StaffTaskComments.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
 import StaffTasksRecap from "@/components/admin/documents/StaffTasksRecap.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const store = useStaffTaskStore();
 const alertModal = useAlertModalStore();
@@ -22,20 +26,20 @@ const { user } = storeToRefs(authStore);
 const filters = ref({ search: "" });
 
 // Same tones as My Tasks (the assignee side): to do = neutral, working = warn, done = ok.
-const STATUS_LABELS = {
-  todo: { label: "To Do", tone: "neutral" },
-  in_progress: { label: "In Progress", tone: "warn" },
-  done: { label: "Done", tone: "ok" },
-};
+const STATUS_LABELS = computed(() => ({
+  todo: { label: t("staffTasks.status.todo"), tone: "neutral" },
+  in_progress: { label: t("staffTasks.status.inProgress"), tone: "warn" },
+  done: { label: t("staffTasks.status.done"), tone: "ok" },
+}));
 
 // Presentation only: table columns (UiTable adds the "#" column).
-const COLUMNS = [
-  { key: "title", label: "Task" },
-  { key: "assignment_mode", label: "Assigned to", width: 150 },
-  { key: "due_date", label: "Due", width: 190 },
-  { key: "progress", label: "Progress", width: 190 },
+const COLUMNS = computed(() => [
+  { key: "title", label: t("staffTasks.cols.task") },
+  { key: "assignment_mode", label: t("staffTasks.cols.assignedTo"), width: 150 },
+  { key: "due_date", label: t("staffTasks.cols.due"), width: 190 },
+  { key: "progress", label: t("staffTasks.cols.progress"), width: 190 },
   { key: "actions", label: "", align: "right", width: 96 },
-];
+]);
 const progressPct = (task) => (task.progress?.total ? (task.progress.done / task.progress.total) * 100 : 0);
 
 const showFormModal = ref(false);
@@ -61,7 +65,7 @@ const recapKey = ref(0);
 
 const formatDate = (dateString) => {
   if (!dateString) return "-";
-  return new Date(dateString).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(dateString).toLocaleDateString(localeTag(), { day: "numeric", month: "short", year: "numeric" });
 };
 
 const isOverdue = (task) => {
@@ -118,19 +122,19 @@ const handleSubmit = async () => {
     await fetchData();
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to save task.");
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t("staffTasks.saveFailed"));
   } finally {
     submitting.value = false;
   }
 };
 
 const handleDelete = async (id) => {
-  if (!(await alertModal.confirm("Delete this task? Every assignee's progress on it will be removed too."))) return;
+  if (!(await alertModal.confirm(t("staffTasks.deleteConfirm")))) return;
   try {
     await store.deleteStaffTask(id);
     recapKey.value++;
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Failed to delete task.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || t("staffTasks.deleteFailed"), { type: "danger" });
   }
 };
 
@@ -173,9 +177,9 @@ onMounted(fetchData);
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Staff Tasks" subtitle="Assign daily tasks to all staff or hand-picked staff">
+    <UiPageHeader :title="$t('staffTasks.title')" :subtitle="$t('staffTasks.subtitle')">
       <template #actions>
-        <UiButton v-if="can('staff-task-create')" :icon="Plus" class="w-full sm:w-auto" @click="openCreateModal">Add Task</UiButton>
+        <UiButton v-if="can('staff-task-create')" :icon="Plus" class="w-full sm:w-auto" @click="openCreateModal">{{ $t("staffTasks.add") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -186,7 +190,7 @@ onMounted(fetchData);
         <UiInput
           :model-value="filters.search"
           :icon="Search"
-          placeholder="Search task title..."
+          :placeholder="$t('staffTasks.searchPlaceholder')"
           class="sm:max-w-sm"
           @update:model-value="(v) => { filters.search = v; fetchData(); }"
         />
@@ -196,20 +200,20 @@ onMounted(fetchData);
         <template #cell-title="{ row }">
           <div class="min-w-0 max-w-[420px]">
             <p class="text-ui-small font-medium text-ui-ink truncate">{{ row.title }}</p>
-            <p v-if="row.creator" class="text-ui-cap text-ui-muted truncate">by {{ row.creator.name }}</p>
+            <p v-if="row.creator" class="text-ui-cap text-ui-muted truncate">{{ $t("staffTasks.by", { name: row.creator.name }) }}</p>
           </div>
         </template>
         <template #cell-assignment_mode="{ row }">
           <UiBadge :tone="row.assignment_mode === 'all_staff' ? 'neutral' : 'outline'">
             <Users v-if="row.assignment_mode === 'all_staff'" class="w-3 h-3" />
             <User v-else class="w-3 h-3" />
-            {{ row.assignment_mode === "all_staff" ? "All Staff" : `${row.assignees?.length || 0} Selected` }}
+            {{ row.assignment_mode === "all_staff" ? $t("staffTasks.allStaff") : $t("staffTasks.selectedCount", { n: row.assignees?.length || 0 }) }}
           </UiBadge>
         </template>
         <template #cell-due_date="{ row }">
           <div class="flex items-center gap-2 whitespace-nowrap">
             <span class="tabular-nums" :class="isOverdue(row) ? 'text-ui-bad font-medium' : 'text-ui-text'">{{ formatDate(row.due_date) }}</span>
-            <UiBadge v-if="isOverdue(row)" tone="bad"><AlertTriangle class="w-3 h-3" />Overdue</UiBadge>
+            <UiBadge v-if="isOverdue(row)" tone="bad"><AlertTriangle class="w-3 h-3" />{{ $t("staffTasks.overdue") }}</UiBadge>
           </div>
         </template>
         <template #cell-progress="{ row }">
@@ -217,7 +221,7 @@ onMounted(fetchData);
             <div class="flex-1 max-w-[110px] h-1.5 bg-ui-subtle rounded-full overflow-hidden">
               <div class="h-full bg-ui-ok rounded-full transition-all" :style="{ width: `${progressPct(row)}%` }"></div>
             </div>
-            <span class="text-ui-cap text-ui-muted tabular-nums whitespace-nowrap">{{ row.progress.done }}/{{ row.progress.total }} done</span>
+            <span class="text-ui-cap text-ui-muted tabular-nums whitespace-nowrap">{{ $t("staffTasks.progressDone", { done: row.progress.done, total: row.progress.total }) }}</span>
           </div>
           <span v-else class="text-ui-faint">—</span>
         </template>
@@ -227,8 +231,8 @@ onMounted(fetchData);
               v-if="can('staff-task-edit')"
               type="button"
               class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
-              :aria-label="`Edit ${row.title}`"
-              title="Edit"
+              :aria-label="$t('staffTasks.editLabel', { title: row.title })"
+              :title="$t('common.actions.edit')"
               @click="openEditModal(row)"
             >
               <Pencil class="w-4 h-4" />
@@ -237,8 +241,8 @@ onMounted(fetchData);
               v-if="can('staff-task-delete')"
               type="button"
               class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus"
-              :aria-label="`Delete ${row.title}`"
-              title="Delete"
+              :aria-label="$t('staffTasks.deleteLabel', { title: row.title })"
+              :title="$t('common.actions.delete')"
               @click="handleDelete(row.id)"
             >
               <Trash2 class="w-4 h-4" />
@@ -253,21 +257,21 @@ onMounted(fetchData);
             <div class="flex-1 min-w-0">
               <p class="text-ui-body font-medium text-ui-ink break-words">{{ row.title }}</p>
               <p class="text-ui-cap text-ui-muted mt-0.5">
-                Due <span class="tabular-nums">{{ formatDate(row.due_date) }}</span><span v-if="row.creator"> • by {{ row.creator.name }}</span>
+                {{ $t("staffTasks.due") }} <span class="tabular-nums">{{ formatDate(row.due_date) }}</span><span v-if="row.creator"> • {{ $t("staffTasks.by", { name: row.creator.name }) }}</span>
               </p>
               <div class="flex items-center gap-1.5 flex-wrap mt-2">
                 <UiBadge :tone="row.assignment_mode === 'all_staff' ? 'neutral' : 'outline'">
                   <Users v-if="row.assignment_mode === 'all_staff'" class="w-3 h-3" />
                   <User v-else class="w-3 h-3" />
-                  {{ row.assignment_mode === "all_staff" ? "All Staff" : `${row.assignees?.length || 0} Selected` }}
+                  {{ row.assignment_mode === "all_staff" ? $t("staffTasks.allStaff") : $t("staffTasks.selectedCount", { n: row.assignees?.length || 0 }) }}
                 </UiBadge>
-                <UiBadge v-if="isOverdue(row)" tone="bad"><AlertTriangle class="w-3 h-3" />Overdue</UiBadge>
+                <UiBadge v-if="isOverdue(row)" tone="bad"><AlertTriangle class="w-3 h-3" />{{ $t("staffTasks.overdue") }}</UiBadge>
               </div>
               <div v-if="row.progress" class="flex items-center gap-2.5 mt-2.5">
                 <div class="flex-1 h-1.5 bg-ui-subtle rounded-full overflow-hidden">
                   <div class="h-full bg-ui-ok rounded-full transition-all" :style="{ width: `${progressPct(row)}%` }"></div>
                 </div>
-                <span class="text-ui-cap text-ui-muted tabular-nums whitespace-nowrap">{{ row.progress.done }}/{{ row.progress.total }} done</span>
+                <span class="text-ui-cap text-ui-muted tabular-nums whitespace-nowrap">{{ $t("staffTasks.progressDone", { done: row.progress.done, total: row.progress.total }) }}</span>
               </div>
             </div>
             <div class="flex flex-col items-center gap-1 shrink-0 -mr-1.5 -mt-1" @click.stop>
@@ -275,7 +279,7 @@ onMounted(fetchData);
                 v-if="can('staff-task-edit')"
                 type="button"
                 class="w-9 h-9 inline-flex items-center justify-center rounded-ui-control text-ui-muted active:bg-ui-hover"
-                :aria-label="`Edit ${row.title}`"
+                :aria-label="$t('staffTasks.editLabel', { title: row.title })"
                 @click="openEditModal(row)"
               >
                 <Pencil class="w-4 h-4" />
@@ -284,7 +288,7 @@ onMounted(fetchData);
                 v-if="can('staff-task-delete')"
                 type="button"
                 class="w-9 h-9 inline-flex items-center justify-center rounded-ui-control text-ui-muted active:bg-ui-bad-soft active:text-ui-bad"
-                :aria-label="`Delete ${row.title}`"
+                :aria-label="$t('staffTasks.deleteLabel', { title: row.title })"
                 @click="handleDelete(row.id)"
               >
                 <Trash2 class="w-4 h-4" />
@@ -294,27 +298,27 @@ onMounted(fetchData);
         </template>
 
         <template #empty>
-          <UiEmpty v-if="filters.search" :icon="SearchX" title="No tasks match your search" message="Try another task title." compact />
-          <UiEmpty v-else :icon="ListChecksIcon" title="No staff tasks yet." compact>
-            <UiButton v-if="can('staff-task-create')" variant="secondary" size="sm" :icon="Plus" @click="openCreateModal">Add Task</UiButton>
+          <UiEmpty v-if="filters.search" :icon="SearchX" :title="$t('staffTasks.emptySearchTitle')" :message="$t('staffTasks.emptySearchMessage')" compact />
+          <UiEmpty v-else :icon="ListChecksIcon" :title="$t('staffTasks.emptyTitle')" compact>
+            <UiButton v-if="can('staff-task-create')" variant="secondary" size="sm" :icon="Plus" @click="openCreateModal">{{ $t("staffTasks.add") }}</UiButton>
           </UiEmpty>
         </template>
       </UiTable>
     </div>
 
     <!-- Create/Edit Modal -->
-    <UiModal :open="showFormModal" size="lg" :title="editingId ? 'Edit Task' : 'Add Task'" @close="closeFormModal">
+    <UiModal :open="showFormModal" size="lg" :title="editingId ? $t('staffTasks.edit') : $t('staffTasks.add')" @close="closeFormModal">
       <form id="staff-task-form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4" @submit.prevent="handleSubmit">
-        <UiInput v-model="form.title" label="Task Title" required placeholder="e.g. Submit weekly report" />
-        <UiInput v-model="form.due_date" label="Due Date" type="date" required />
+        <UiInput v-model="form.title" :label="$t('staffTasks.form.title')" required :placeholder="$t('staffTasks.form.titlePlaceholder')" />
+        <UiInput v-model="form.due_date" :label="$t('staffTasks.form.dueDate')" type="date" required />
 
         <div class="sm:col-span-2 min-w-0">
-          <label class="block text-ui-small font-medium text-ui-ink mb-1.5">Description</label>
-          <RichTextEditor v-model="form.description" placeholder="Task details, instructions, links..." />
+          <label class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("common.labels.description") }}</label>
+          <RichTextEditor v-model="form.description" :placeholder="$t('staffTasks.form.descriptionPlaceholder')" />
         </div>
 
         <fieldset class="sm:col-span-2 min-w-0">
-          <legend class="block text-ui-small font-medium text-ui-ink mb-1.5">Assign To<span class="text-ui-bad"> *</span></legend>
+          <legend class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("staffTasks.form.assignTo") }}<span class="text-ui-bad"> *</span></legend>
           <div class="grid grid-cols-2 gap-2.5">
             <label
               class="flex items-center gap-2.5 h-11 px-3 border rounded-ui-control text-ui-small cursor-pointer transition-colors"
@@ -322,7 +326,7 @@ onMounted(fetchData);
             >
               <input type="radio" v-model="form.assignment_mode" value="all_staff" class="accent-ui-accent" />
               <Users class="w-4 h-4 text-ui-muted" />
-              All Staff
+              {{ $t("staffTasks.allStaff") }}
             </label>
             <label
               class="flex items-center gap-2.5 h-11 px-3 border rounded-ui-control text-ui-small cursor-pointer transition-colors"
@@ -330,7 +334,7 @@ onMounted(fetchData);
             >
               <input type="radio" v-model="form.assignment_mode" value="selected" class="accent-ui-accent" />
               <User class="w-4 h-4 text-ui-muted" />
-              Select Staff
+              {{ $t("staffTasks.form.selectStaff") }}
             </label>
           </div>
 
@@ -345,7 +349,7 @@ onMounted(fetchData);
                 <span class="truncate">{{ opt.name }}</span>
               </label>
             </div>
-            <p v-if="staffOptions.length === 0" class="text-ui-cap text-ui-muted text-center py-3">No staff members found.</p>
+            <p v-if="staffOptions.length === 0" class="text-ui-cap text-ui-muted text-center py-3">{{ $t("staffTasks.form.noStaff") }}</p>
           </div>
         </fieldset>
 
@@ -353,8 +357,8 @@ onMounted(fetchData);
       </form>
 
       <template #footer>
-        <UiButton variant="ghost" @click="closeFormModal">Cancel</UiButton>
-        <UiButton type="submit" form="staff-task-form" :loading="submitting">{{ submitting ? "Saving..." : "Save" }}</UiButton>
+        <UiButton variant="ghost" @click="closeFormModal">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton type="submit" form="staff-task-form" :loading="submitting">{{ submitting ? $t("common.actions.saving") : $t("common.actions.save") }}</UiButton>
       </template>
     </UiModal>
 
@@ -363,14 +367,14 @@ onMounted(fetchData);
       <template #header>
         <div class="flex-1 min-w-0">
           <h2 class="text-ui-h2 text-ui-ink break-words">{{ detailTask?.title }}</h2>
-          <p class="text-ui-small text-ui-muted mt-0.5">Due {{ formatDate(detailTask?.due_date) }} • by {{ detailTask?.creator?.name }}</p>
+          <p class="text-ui-small text-ui-muted mt-0.5">{{ $t("staffTasks.due") }} {{ formatDate(detailTask?.due_date) }} • {{ $t("staffTasks.by", { name: detailTask?.creator?.name }) }}</p>
           <div v-if="detailTask" class="flex items-center gap-1.5 flex-wrap mt-2">
             <UiBadge :tone="detailTask.assignment_mode === 'all_staff' ? 'neutral' : 'outline'">
               <Users v-if="detailTask.assignment_mode === 'all_staff'" class="w-3 h-3" />
               <User v-else class="w-3 h-3" />
-              {{ detailTask.assignment_mode === "all_staff" ? "All Staff" : `${detailTask.assignees?.length || 0} Selected` }}
+              {{ detailTask.assignment_mode === "all_staff" ? $t("staffTasks.allStaff") : $t("staffTasks.selectedCount", { n: detailTask.assignees?.length || 0 }) }}
             </UiBadge>
-            <UiBadge v-if="isOverdue(detailTask)" tone="bad"><AlertTriangle class="w-3 h-3" />Overdue</UiBadge>
+            <UiBadge v-if="isOverdue(detailTask)" tone="bad"><AlertTriangle class="w-3 h-3" />{{ $t("staffTasks.overdue") }}</UiBadge>
           </div>
         </div>
       </template>
@@ -379,7 +383,7 @@ onMounted(fetchData);
         <div v-if="detailTask.description" class="rich-text-content text-ui-body text-ui-text" v-html="detailTask.description"></div>
 
         <section>
-          <h3 class="text-ui-h3 text-ui-ink mb-2">Assignee Progress</h3>
+          <h3 class="text-ui-h3 text-ui-ink mb-2">{{ $t("staffTasks.assigneeProgress") }}</h3>
           <ul class="border border-ui-line rounded-ui-card divide-y divide-ui-line">
             <li v-for="assignee in detailTask.assignees" :key="assignee.id" class="flex items-center justify-between gap-3 px-3.5 py-2.5">
               <div class="flex items-center gap-2.5 min-w-0">

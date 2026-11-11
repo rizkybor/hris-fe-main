@@ -26,12 +26,12 @@ const colorFor = (index) => NOTE_COLORS[index % NOTE_COLORS.length];
 </script>
 
 <template>
-  <DashboardWidgetCard v-if="can('meeting-note-pin')" title="Sticky Notes" subtitle="Pinned meeting notes">
+  <DashboardWidgetCard v-if="can('meeting-note-pin')" :title="$t('dashboard.widgets.stickyNotes')" :subtitle="$t('dashboard.stickyNotes.subtitle')">
     <UiEmpty
       v-if="pinnedMeetingNotes.length === 0"
       :icon="Pin"
-      title="No pinned notes"
-      message="Pin an important note from Business Documents so it shows up here."
+      :title="$t('dashboard.stickyNotes.empty')"
+      :message="$t('dashboard.stickyNotes.emptyHint')"
       compact
     />
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -46,7 +46,7 @@ const colorFor = (index) => NOTE_COLORS[index % NOTE_COLORS.length];
           <p class="text-ui-h3 text-ui-ink truncate">{{ note.title }}</p>
           <ChevronRight class="w-4 h-4 text-ui-faint group-hover:text-ui-ink shrink-0" />
         </div>
-        <p class="text-ui-cap text-ui-muted line-clamp-3">{{ previewText(note.body) || "Tidak ada catatan." }}</p>
+        <p class="text-ui-cap text-ui-muted line-clamp-3">{{ previewText(note.body) || $t("dashboard.stickyNotes.noNotes") }}</p>
       </RouterLink>
     </div>
   </DashboardWidgetCard>

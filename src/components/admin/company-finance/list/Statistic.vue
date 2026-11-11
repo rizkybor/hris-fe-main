@@ -7,6 +7,10 @@ import { uiColor } from "@/utils/uiColor";
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
 import { storeToRefs } from "pinia";
 import { formatRupiahCompact } from "@/utils/formatUtils";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 // Store
 const store = useCompanyFinanceStore();
@@ -82,7 +86,7 @@ const isInfrastructureVisible = ref(false);
 
 const chartSeries = computed(() => [
   {
-    name: "Fixed Cost",
+    name: t("finance.categories.fixedCost"),
     data: normalizeByYear(
       statisticsData.value.fixed_cost_byMonth,
       "total_actual",
@@ -91,7 +95,7 @@ const chartSeries = computed(() => [
     color: uiColor("accent"),
   },
   {
-    name: "SDM Resource",
+    name: t("finance.categories.sdmResource"),
     data: normalizeByYear(
       statisticsData.value.sdm_resource_byMonth,
       "total_actual",
@@ -100,7 +104,7 @@ const chartSeries = computed(() => [
     color: uiColor("warn"),
   },
   {
-    name: "Infrastructure",
+    name: t("finance.categories.infrastructure"),
     data: normalizeByYear(
       statisticsData.value.infrastructure_byMonth,
       "total_monthly_fee",
@@ -128,20 +132,10 @@ const MONTHS = [
   "12",
 ];
 
-const MONTH_LABELS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "Mei",
-  "Jun",
-  "Jul",
-  "Agu",
-  "Sep",
-  "Okt",
-  "Nov",
-  "Des",
-];
+// Short month names in the selected language (id: Jan … Mei … Des).
+const monthLabels = computed(() =>
+  MONTHS.map((m) => new Date(2000, Number(m) - 1, 1).toLocaleDateString(localeTag(), { month: "short" }))
+);
 
 const normalizeByYear = (data: any[], valueKey: string, year: number) => {
   const map = new Map<string, number>();
@@ -172,7 +166,7 @@ const chartOptions = computed(() => ({
     padding: { top: 8, right: 8, bottom: 0, left: 8 },
   },
   xaxis: {
-    categories: MONTH_LABELS,
+    categories: monthLabels.value,
     axisBorder: { show: false },
     axisTicks: { show: false },
     labels: { style: { colors: uiColor("muted"), fontSize: "11px" } },
@@ -218,13 +212,13 @@ const yearOptions = [2025, 2026, 2027, 2028, 2029, 2030];
       <div class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0">
         <div class="flex items-center gap-2">
           <Briefcase class="w-4 h-4 text-ui-faint shrink-0" />
-          <p class="text-ui-small text-ui-muted truncate flex-1">Fixed Cost</p>
+          <p class="text-ui-small text-ui-muted truncate flex-1">{{ $t("finance.categories.fixedCost") }}</p>
           <button
             type="button"
             @click="isFixedCostVisible = !isFixedCostVisible"
             class="ui-press w-7 h-7 -mr-1.5 -my-1 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
-            :title="isFixedCostVisible ? 'Hide amounts' : 'Show amounts'"
-            :aria-label="isFixedCostVisible ? 'Hide amounts' : 'Show amounts'"
+            :title="isFixedCostVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
+            :aria-label="isFixedCostVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
           >
             <Eye v-if="!isFixedCostVisible" class="w-4 h-4" />
             <EyeOff v-else class="w-4 h-4" />
@@ -233,11 +227,11 @@ const yearOptions = [2025, 2026, 2027, 2028, 2029, 2030];
         <template v-if="isFixedCostVisible">
           <UiSkeleton v-if="loadingStatistics" class="mt-2" width="140px" height="28px" rounded="6px" />
           <p v-else class="text-ui-h1 text-ui-ink tabular-nums mt-1.5 truncate">{{ formatRp(fixedActual) }}</p>
-          <p class="text-ui-cap text-ui-muted mt-1 truncate">Actual · item Digunakan</p>
+          <p class="text-ui-cap text-ui-muted mt-1 truncate">{{ $t("finance.stats.actualInUse") }}</p>
         </template>
         <template v-else>
           <p class="text-ui-h1 text-ui-ink tabular-nums mt-1.5 tracking-widest truncate">Rp ••••••</p>
-          <p class="text-ui-cap text-ui-muted mt-1 truncate">Actual · item Digunakan</p>
+          <p class="text-ui-cap text-ui-muted mt-1 truncate">{{ $t("finance.stats.actualInUse") }}</p>
         </template>
       </div>
 
@@ -245,13 +239,13 @@ const yearOptions = [2025, 2026, 2027, 2028, 2029, 2030];
       <div class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0">
         <div class="flex items-center gap-2">
           <PlayCircle class="w-4 h-4 text-ui-faint shrink-0" />
-          <p class="text-ui-small text-ui-muted truncate flex-1">SDM Resources</p>
+          <p class="text-ui-small text-ui-muted truncate flex-1">{{ $t("finance.categories.sdmResources") }}</p>
           <button
             type="button"
             @click="isSdmResourceVisible = !isSdmResourceVisible"
             class="ui-press w-7 h-7 -mr-1.5 -my-1 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
-            :title="isSdmResourceVisible ? 'Hide amounts' : 'Show amounts'"
-            :aria-label="isSdmResourceVisible ? 'Hide amounts' : 'Show amounts'"
+            :title="isSdmResourceVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
+            :aria-label="isSdmResourceVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
           >
             <Eye v-if="!isSdmResourceVisible" class="w-4 h-4" />
             <EyeOff v-else class="w-4 h-4" />
@@ -262,20 +256,20 @@ const yearOptions = [2025, 2026, 2027, 2028, 2029, 2030];
           <p v-else class="text-ui-h1 text-ui-ink tabular-nums mt-1.5 truncate">{{ formatRp(sdmActual) }}</p>
         </template>
         <p v-else class="text-ui-h1 text-ui-ink tabular-nums mt-1.5 tracking-widest truncate">Rp ••••••</p>
-        <p class="text-ui-cap text-ui-muted mt-1 truncate">Actual · item Digunakan</p>
+        <p class="text-ui-cap text-ui-muted mt-1 truncate">{{ $t("finance.stats.actualInUse") }}</p>
       </div>
 
       <!-- Infrastructure -->
       <div class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0">
         <div class="flex items-center gap-2">
           <Server class="w-4 h-4 text-ui-faint shrink-0" />
-          <p class="text-ui-small text-ui-muted truncate flex-1">Infrastructure</p>
+          <p class="text-ui-small text-ui-muted truncate flex-1">{{ $t("finance.categories.infrastructure") }}</p>
           <button
             type="button"
             @click="isInfrastructureVisible = !isInfrastructureVisible"
             class="ui-press w-7 h-7 -mr-1.5 -my-1 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
-            :title="isInfrastructureVisible ? 'Hide amounts' : 'Show amounts'"
-            :aria-label="isInfrastructureVisible ? 'Hide amounts' : 'Show amounts'"
+            :title="isInfrastructureVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
+            :aria-label="isInfrastructureVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
           >
             <Eye v-if="!isInfrastructureVisible" class="w-4 h-4" />
             <EyeOff v-else class="w-4 h-4" />
@@ -283,19 +277,19 @@ const yearOptions = [2025, 2026, 2027, 2028, 2029, 2030];
         </div>
         <dl class="mt-2 space-y-1">
           <div class="flex items-baseline justify-between gap-3">
-            <dt class="text-ui-cap text-ui-muted">Monthly:</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("finance.stats.monthly") }}</dt>
             <dd class="text-ui-h3 text-ui-ink tabular-nums text-right truncate" :class="isInfrastructureVisible ? '' : 'tracking-widest'">
               {{ isInfrastructureVisible ? (loadingStatistics ? "-" : formatRp(infraMonthly)) : "Rp ••••••" }}
             </dd>
           </div>
           <div class="flex items-baseline justify-between gap-3">
-            <dt class="text-ui-cap text-ui-muted">Annual:</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("finance.stats.annual") }}</dt>
             <dd class="text-ui-h3 text-ui-ink tabular-nums text-right truncate" :class="isInfrastructureVisible ? '' : 'tracking-widest'">
               {{ isInfrastructureVisible ? (loadingStatistics ? "-" : formatRp(infraAnnual)) : "Rp ••••••" }}
             </dd>
           </div>
         </dl>
-        <UiBadge class="mt-2" tone="neutral">Infrastructure Digunakan: <span class="tabular-nums">{{ infraActive }}</span></UiBadge>
+        <UiBadge class="mt-2" tone="neutral">{{ $t("finance.stats.infraInUse") }} <span class="tabular-nums">{{ infraActive }}</span></UiBadge>
       </div>
     </div>
 
@@ -305,11 +299,11 @@ const yearOptions = [2025, 2026, 2027, 2028, 2029, 2030];
         <div class="flex items-center gap-2 min-w-0">
           <TrendingUp class="w-4 h-4 text-ui-faint shrink-0" />
           <div class="min-w-0">
-            <h3 class="text-ui-h3 text-ui-ink">Operational Cost Trend</h3>
-            <p class="text-ui-cap text-ui-muted">Monthly cost overview by category</p>
+            <h3 class="text-ui-h3 text-ui-ink">{{ $t("finance.stats.trendTitle") }}</h3>
+            <p class="text-ui-cap text-ui-muted">{{ $t("finance.stats.trendSubtitle") }}</p>
           </div>
         </div>
-        <UiSelect v-model="selectedYear" :options="yearOptions" class="w-full sm:w-[110px]" aria-label="Year" />
+        <UiSelect v-model="selectedYear" :options="yearOptions" class="w-full sm:w-[110px]" :aria-label="$t('common.labels.year')" />
       </div>
       <div class="relative w-full" style="height: 250px">
         <VueApexCharts

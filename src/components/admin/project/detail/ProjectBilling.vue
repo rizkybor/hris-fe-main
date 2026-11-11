@@ -6,6 +6,10 @@ import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
 import { UiAlert, UiBadge, UiButton, UiEmpty, UiStat, rowNumber } from "@/components/ui";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 // Project detail: is what the client was invoiced for this project matched by
 // what they paid (payment receipts)? Replaces the old project cash ledger.
@@ -32,19 +36,19 @@ watch(() => props.projectId, load);
 const visible = ref(false);
 const money = (v) => (visible.value ? formatRupiah(v ?? 0) : "Rp ••••••");
 
-const STATUS = {
-  settled: { label: "Settled — every invoice is fully paid", class: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 },
-  outstanding: { label: "Not settled — there is still an outstanding balance", class: "bg-amber-50 text-amber-800 border-amber-200", icon: Clock },
-  overpaid: { label: "Overpaid — payments exceed the invoiced amount", class: "bg-red-50 text-red-700 border-red-200", icon: AlertTriangle },
-  not_invoiced: { label: "No invoices for this project yet", class: "bg-gray-50 text-gray-600 border-[#DCDEDD]", icon: ReceiptText },
-};
-const INVOICE_STATE = {
-  paid: { label: "Paid", class: "bg-green-50 text-green-700" },
-  partial: { label: "Partially paid", class: "bg-amber-50 text-amber-700" },
-  unpaid: { label: "Unpaid", class: "bg-red-50 text-red-700" },
-  overpaid: { label: "Overpaid", class: "bg-red-50 text-red-700" },
-  cancelled: { label: "Cancelled", class: "bg-gray-100 text-gray-500" },
-};
+const STATUS = computed(() => ({
+  settled: { label: t("projects.billing.verdict.settled"), class: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 },
+  outstanding: { label: t("projects.billing.verdict.outstanding"), class: "bg-amber-50 text-amber-800 border-amber-200", icon: Clock },
+  overpaid: { label: t("projects.billing.verdict.overpaid"), class: "bg-red-50 text-red-700 border-red-200", icon: AlertTriangle },
+  not_invoiced: { label: t("projects.billing.verdict.notInvoiced"), class: "bg-gray-50 text-gray-600 border-[#DCDEDD]", icon: ReceiptText },
+}));
+const INVOICE_STATE = computed(() => ({
+  paid: { label: t("projects.billing.state.paid"), class: "bg-green-50 text-green-700" },
+  partial: { label: t("projects.billing.state.partial"), class: "bg-amber-50 text-amber-700" },
+  unpaid: { label: t("projects.billing.state.unpaid"), class: "bg-red-50 text-red-700" },
+  overpaid: { label: t("projects.billing.state.overpaid"), class: "bg-red-50 text-red-700" },
+  cancelled: { label: t("projects.billing.state.cancelled"), class: "bg-gray-100 text-gray-500" },
+}));
 
 // Presentation only: verdict / invoice state -> tone (labels stay above).
 const STATUS_TONE = { settled: "ok", outstanding: "warn", overpaid: "bad", not_invoiced: "neutral" };
@@ -58,7 +62,7 @@ const INVOICE_TONE = { paid: "ok", partial: "warn", unpaid: "bad", overpaid: "ba
 const verdictBox = computed(() => VERDICT_BOX[STATUS_TONE[data.value?.status] || "neutral"]);
 const outstandingClass = (v) => (v > 0 ? "text-ui-warn font-medium" : v < 0 ? "text-ui-bad font-medium" : "text-ui-faint");
 
-const status = computed(() => STATUS[data.value?.status] || STATUS.not_invoiced);
+const status = computed(() => STATUS.value[data.value?.status] || STATUS.value.not_invoiced);
 
 // Project value split into paid / invoiced-unpaid / not invoiced (before tax
 // shares, so the bar adds up to the project value).
@@ -73,7 +77,7 @@ const bar = computed(() => {
 });
 
 const openInvoice = ref(null);
-const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-");
+const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(localeTag(), { day: "numeric", month: "short", year: "numeric" }) : "-");
 </script>
 
 <template>
@@ -81,36 +85,36 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
     <!-- Heading + amount visibility toggle -->
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
-        <h3 class="text-ui-h2 text-ui-ink">Billing &amp; Payments</h3>
-        <p class="text-ui-cap text-ui-muted mt-0.5">This project's invoices compared with payments from Payment Receipts</p>
+        <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.billing.title") }}</h3>
+        <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("projects.billing.subtitle") }}</p>
       </div>
       <UiButton
         variant="secondary"
         size="sm"
         :icon="visible ? EyeOff : Eye"
         class="shrink-0"
-        :title="visible ? 'Hide amounts' : 'Show amounts'"
-        :aria-label="visible ? 'Hide amounts' : 'Show amounts'"
+        :title="visible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
+        :aria-label="visible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
         @click="visible = !visible"
       >
-        <span class="hidden sm:inline">{{ visible ? "Hide amounts" : "Show amounts" }}</span>
+        <span class="hidden sm:inline">{{ visible ? $t("common.actions.hideAmounts") : $t("common.actions.showAmounts") }}</span>
       </UiButton>
     </div>
 
     <!-- Loading -->
     <template v-if="loading && !data">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <UiStat v-for="l in ['Project Value', 'Total Invoiced', 'Total Paid', 'Outstanding']" :key="l" :label="l" loading />
+        <UiStat v-for="l in ['projectValue', 'totalInvoiced', 'totalPaid', 'outstanding']" :key="l" :label="$t(`projects.billing.stats.${l}`)" loading />
       </div>
       <div class="bg-ui-surface border border-ui-line rounded-ui-card p-5 space-y-3" aria-busy="true">
         <Skeleton v-for="i in 3" :key="i" height="18px" />
-        <span class="sr-only">Loading billing data...</span>
+        <span class="sr-only">{{ $t("projects.billing.loading") }}</span>
       </div>
     </template>
 
     <div v-else-if="failed" class="bg-ui-surface border border-ui-line rounded-ui-card">
-      <UiEmpty compact :icon="AlertTriangle" title="Couldn't load billing data.">
-        <UiButton variant="secondary" size="sm" @click="load">Try again</UiButton>
+      <UiEmpty compact :icon="AlertTriangle" :title="$t('projects.billing.loadFailed')">
+        <UiButton variant="secondary" size="sm" @click="load">{{ $t("common.actions.retry") }}</UiButton>
       </UiEmpty>
     </div>
 
@@ -123,33 +127,33 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
 
       <!-- Figures -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ui-stagger">
-        <UiStat label="Project Value" :value="money(data.project_value)" :hint="`Not invoiced yet ${money(data.not_invoiced)}`" />
-        <UiStat label="Total Invoiced" :value="money(data.invoiced_total)">
-          <template #hint>DPP {{ money(data.invoiced_subtotal) }}<template v-if="data.invoiced_percent !== null"> · {{ data.invoiced_percent }}% of project value</template></template>
+        <UiStat :label="$t('projects.billing.stats.projectValue')" :value="money(data.project_value)" :hint="$t('projects.billing.stats.notInvoicedHint', { amount: money(data.not_invoiced) })" />
+        <UiStat :label="$t('projects.billing.stats.totalInvoiced')" :value="money(data.invoiced_total)">
+          <template #hint>DPP {{ money(data.invoiced_subtotal) }}<template v-if="data.invoiced_percent !== null"> · {{ $t("projects.billing.stats.percentOfValue", { n: data.invoiced_percent }) }}</template></template>
         </UiStat>
-        <UiStat label="Total Paid" tone="ok" :value="money(data.paid_total)">
+        <UiStat :label="$t('projects.billing.stats.totalPaid')" tone="ok" :value="money(data.paid_total)">
           <template #hint>
-            <template v-if="data.paid_percent !== null">{{ data.paid_percent }}% of invoiced</template>
-            <template v-if="data.pph23_withheld"> · incl. PPh 23 {{ money(data.pph23_withheld) }}</template>
+            <template v-if="data.paid_percent !== null">{{ $t("projects.billing.stats.percentOfInvoiced", { n: data.paid_percent }) }}</template>
+            <template v-if="data.pph23_withheld"> · {{ $t("projects.billing.stats.inclPph23", { amount: money(data.pph23_withheld) }) }}</template>
           </template>
         </UiStat>
         <UiStat
-          :label="data.outstanding < 0 ? 'Overpaid' : 'Outstanding'"
+          :label="data.outstanding < 0 ? $t('projects.billing.state.overpaid') : $t('projects.billing.stats.outstanding')"
           :tone="data.outstanding > 0 ? 'warn' : data.outstanding < 0 ? 'bad' : ''"
           :value="money(Math.abs(data.outstanding))"
-          hint="Invoiced − paid"
+          :hint="$t('projects.billing.stats.outstandingHint')"
         />
       </div>
 
       <UiAlert v-if="data.mismatch_count" tone="warn">
-        {{ data.mismatch_count }} invoice{{ data.mismatch_count === 1 ? " is" : "s are" }} marked Paid/Unpaid differently from {{ data.mismatch_count === 1 ? "its" : "their" }} Payment Receipts — please check and update the invoice status.
+        {{ $t("projects.billing.mismatchAlert", { n: data.mismatch_count }, data.mismatch_count) }}
       </UiAlert>
 
       <section class="bg-ui-surface border border-ui-line rounded-ui-card">
         <div class="px-5 sm:px-6 pt-5 pb-4 space-y-3">
           <div class="flex items-center justify-between gap-3">
-            <h3 class="text-ui-h2 text-ui-ink">Invoices &amp; receipts</h3>
-            <span class="text-ui-cap text-ui-muted tabular-nums">{{ data.invoices.length }} invoice{{ data.invoices.length === 1 ? "" : "s" }}</span>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.billing.invoicesTitle") }}</h3>
+            <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("projects.billing.invoiceCount", { n: data.invoices.length }, data.invoices.length) }}</span>
           </div>
 
           <!-- Progress of the project value -->
@@ -159,9 +163,9 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
               <div v-if="bar.invoiced" class="h-full bg-ui-warn" :style="{ width: `${bar.invoiced}%` }"></div>
             </div>
             <p class="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-ui-cap text-ui-muted tabular-nums">
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-ui-ok"></span>Paid {{ Math.round(bar.paid) }}%</span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-ui-warn"></span>Invoiced, not yet paid {{ Math.round(bar.invoiced) }}%</span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-ui-line-strong"></span>Not invoiced yet {{ Math.round(bar.rest) }}%</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-ui-ok"></span>{{ $t("projects.billing.bar.paid", { n: Math.round(bar.paid) }) }}</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-ui-warn"></span>{{ $t("projects.billing.bar.invoiced", { n: Math.round(bar.invoiced) }) }}</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-ui-line-strong"></span>{{ $t("projects.billing.bar.rest", { n: Math.round(bar.rest) }) }}</span>
             </p>
           </div>
         </div>
@@ -170,8 +174,8 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
         <UiEmpty
           v-if="!data.invoices.length"
           :icon="ReceiptText"
-          title="No invoices yet"
-          message="Select this project when creating an Invoice for it to appear here."
+          :title="$t('projects.billing.emptyTitle')"
+          :message="$t('projects.billing.emptyMessage')"
           class="border-t border-ui-line"
         />
 
@@ -182,11 +186,11 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
               <thead>
                 <tr class="text-ui-cap font-medium text-ui-muted">
                   <th scope="col" class="w-11 pl-5 pr-0 h-10 text-left font-medium">#</th>
-                  <th scope="col" class="px-4 h-10 text-left font-medium">Invoice</th>
-                  <th scope="col" class="px-4 h-10 text-right font-medium">Invoiced</th>
-                  <th scope="col" class="px-4 h-10 text-right font-medium">Paid</th>
-                  <th scope="col" class="px-4 h-10 text-right font-medium">Outstanding</th>
-                  <th scope="col" class="pl-4 pr-5 h-10 text-left font-medium">Status</th>
+                  <th scope="col" class="px-4 h-10 text-left font-medium">{{ $t("projects.billing.cols.invoice") }}</th>
+                  <th scope="col" class="px-4 h-10 text-right font-medium">{{ $t("projects.billing.cols.invoiced") }}</th>
+                  <th scope="col" class="px-4 h-10 text-right font-medium">{{ $t("projects.billing.cols.paid") }}</th>
+                  <th scope="col" class="px-4 h-10 text-right font-medium">{{ $t("projects.billing.stats.outstanding") }}</th>
+                  <th scope="col" class="pl-4 pr-5 h-10 text-left font-medium">{{ $t("common.labels.status") }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -203,7 +207,7 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
                         <ChevronDown class="w-4 h-4 text-ui-faint shrink-0 transition-transform" :class="{ 'rotate-180': openInvoice === inv.id }" />
                         <div class="min-w-0">
                           <p class="text-ui-small font-mono text-ui-ink truncate">{{ inv.invoice_number }}</p>
-                          <p class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(inv.date) }} · {{ inv.receipts.length }} receipt{{ inv.receipts.length === 1 ? "" : "s" }}</p>
+                          <p class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(inv.date) }} · {{ $t("projects.billing.receiptCount", { n: inv.receipts.length }, inv.receipts.length) }}</p>
                         </div>
                       </div>
                     </td>
@@ -215,7 +219,7 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
                     <td class="pl-4 pr-5">
                       <span class="inline-flex items-center gap-1.5">
                         <UiBadge :tone="INVOICE_TONE[inv.state] || 'neutral'" dot>{{ INVOICE_STATE[inv.state].label }}</UiBadge>
-                        <AlertTriangle v-if="inv.status_mismatch" class="w-3.5 h-3.5 text-ui-warn" :title="`Invoice status: ${inv.invoice_status}`" />
+                        <AlertTriangle v-if="inv.status_mismatch" class="w-3.5 h-3.5 text-ui-warn" :title="$t('projects.billing.invoiceStatus', { status: inv.invoice_status === 'paid' ? $t('projects.billing.state.paid') : $t('projects.billing.state.unpaid') })" />
                       </span>
                     </td>
                   </tr>
@@ -223,9 +227,12 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
                     <td></td>
                     <td colspan="5" class="px-4 pb-3 pt-1 text-ui-cap">
                       <p v-if="inv.status_mismatch" class="text-ui-warn mb-2">
-                        The invoice is marked <strong>{{ inv.invoice_status === "paid" ? "Paid" : "Unpaid" }}</strong>, but according to its Payment Receipts it is <strong>{{ INVOICE_STATE[inv.state].label }}</strong>.
+                        <i18n-t keypath="projects.billing.mismatchDetail" scope="global">
+                    <template #marked><strong>{{ inv.invoice_status === "paid" ? $t("projects.billing.state.paid") : $t("projects.billing.state.unpaid") }}</strong></template>
+                    <template #actual><strong>{{ INVOICE_STATE[inv.state].label }}</strong></template>
+                  </i18n-t>
                       </p>
-                      <p v-if="!inv.receipts.length" class="text-ui-muted py-1">No Payment Receipts for this invoice yet.</p>
+                      <p v-if="!inv.receipts.length" class="text-ui-muted py-1">{{ $t("projects.billing.noReceipts") }}</p>
                       <ul v-else class="divide-y divide-ui-line">
                         <li v-for="r in inv.receipts" :key="r.id" class="flex flex-wrap items-center justify-between gap-x-3 py-1.5">
                           <span class="inline-flex items-center gap-2 text-ui-text">
@@ -243,7 +250,7 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
                         v-if="can('invoice-edit')"
                         :to="{ name: 'admin.invoices.edit', params: { id: inv.id } }"
                         class="inline-block mt-2 text-ui-accent font-medium hover:underline"
-                      >Open invoice →</RouterLink>
+                      >{{ $t("projects.billing.openInvoice") }} →</RouterLink>
                     </td>
                   </tr>
                 </template>
@@ -264,23 +271,26 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
                   <span class="text-ui-cap text-ui-faint tabular-nums w-5 shrink-0 pt-px">{{ rowNumber(index) }}</span>
                   <div class="flex-1 min-w-0">
                     <p class="text-ui-small font-mono text-ui-ink truncate">{{ inv.invoice_number }}</p>
-                    <p class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(inv.date) }} · {{ inv.receipts.length }} receipt{{ inv.receipts.length === 1 ? "" : "s" }}</p>
+                    <p class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(inv.date) }} · {{ $t("projects.billing.receiptCount", { n: inv.receipts.length }, inv.receipts.length) }}</p>
                   </div>
                   <UiBadge :tone="INVOICE_TONE[inv.state] || 'neutral'" dot>{{ INVOICE_STATE[inv.state].label }}</UiBadge>
-                  <AlertTriangle v-if="inv.status_mismatch" class="w-3.5 h-3.5 text-ui-warn mt-1" :title="`Invoice status: ${inv.invoice_status}`" />
+                  <AlertTriangle v-if="inv.status_mismatch" class="w-3.5 h-3.5 text-ui-warn mt-1" :title="$t('projects.billing.invoiceStatus', { status: inv.invoice_status === 'paid' ? $t('projects.billing.state.paid') : $t('projects.billing.state.unpaid') })" />
                   <ChevronDown class="w-4 h-4 text-ui-faint mt-0.5 transition-transform" :class="{ 'rotate-180': openInvoice === inv.id }" />
                 </div>
                 <dl class="grid grid-cols-3 gap-2 mt-2.5 pl-7 text-ui-cap">
-                  <div><dt class="text-ui-muted">Invoiced</dt><dd class="text-ui-ink tabular-nums">{{ money(inv.total) }}</dd></div>
-                  <div><dt class="text-ui-muted">Paid</dt><dd class="text-ui-ok tabular-nums">{{ money(inv.paid) }}</dd></div>
-                  <div class="text-right"><dt class="text-ui-muted">Outstanding</dt><dd class="tabular-nums" :class="outstandingClass(inv.outstanding)">{{ inv.outstanding === 0 ? "—" : money(inv.outstanding) }}</dd></div>
+                  <div><dt class="text-ui-muted">{{ $t("projects.billing.cols.invoiced") }}</dt><dd class="text-ui-ink tabular-nums">{{ money(inv.total) }}</dd></div>
+                  <div><dt class="text-ui-muted">{{ $t("projects.billing.cols.paid") }}</dt><dd class="text-ui-ok tabular-nums">{{ money(inv.paid) }}</dd></div>
+                  <div class="text-right"><dt class="text-ui-muted">{{ $t("projects.billing.stats.outstanding") }}</dt><dd class="tabular-nums" :class="outstandingClass(inv.outstanding)">{{ inv.outstanding === 0 ? "—" : money(inv.outstanding) }}</dd></div>
                 </dl>
               </button>
               <div v-if="openInvoice === inv.id" class="px-4 pb-3.5 pl-11 text-ui-cap">
                 <p v-if="inv.status_mismatch" class="text-ui-warn mb-2">
-                  The invoice is marked <strong>{{ inv.invoice_status === "paid" ? "Paid" : "Unpaid" }}</strong>, but according to its Payment Receipts it is <strong>{{ INVOICE_STATE[inv.state].label }}</strong>.
+                  <i18n-t keypath="projects.billing.mismatchDetail" scope="global">
+                    <template #marked><strong>{{ inv.invoice_status === "paid" ? $t("projects.billing.state.paid") : $t("projects.billing.state.unpaid") }}</strong></template>
+                    <template #actual><strong>{{ INVOICE_STATE[inv.state].label }}</strong></template>
+                  </i18n-t>
                 </p>
-                <p v-if="!inv.receipts.length" class="text-ui-muted">No Payment Receipts for this invoice yet.</p>
+                <p v-if="!inv.receipts.length" class="text-ui-muted">{{ $t("projects.billing.noReceipts") }}</p>
                 <ul v-else class="space-y-1">
                   <li v-for="r in inv.receipts" :key="r.id" class="flex flex-wrap justify-between gap-x-3 bg-ui-subtle rounded-md px-2.5 py-1.5">
                     <span class="text-ui-text"><span class="font-mono">{{ r.receipt_number }}</span> <span class="text-ui-muted">· {{ formatDate(r.date) }}</span></span>
@@ -294,7 +304,7 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-
                   v-if="can('invoice-edit')"
                   :to="{ name: 'admin.invoices.edit', params: { id: inv.id } }"
                   class="inline-block mt-2 text-ui-accent font-medium hover:underline"
-                >Open invoice →</RouterLink>
+                >{{ $t("projects.billing.openInvoice") }} →</RouterLink>
               </div>
             </li>
           </ul>

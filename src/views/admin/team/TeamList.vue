@@ -7,6 +7,7 @@ import { useOptionStore } from "@/stores/option";
 import { storeToRefs } from "pinia";
 import { computed, onMounted, ref, watch } from "vue";
 import { debounce } from "lodash-es";
+import { useI18n } from "vue-i18n";
 import { Upload, Plus, SearchIcon, Users2 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
@@ -64,28 +65,29 @@ const handlePerPageChange = (perPage) => {
 };
 
 // Presentation-only option lists for the filter controls.
-const statusOptions = [
-  { value: "", label: "All Status" },
-  { value: "active", label: "Active" },
-  { value: "forming", label: "Forming" },
-  { value: "planning", label: "Planning" },
-  { value: "dormant", label: "Dormant" },
-];
+const { t } = useI18n();
+const statusOptions = computed(() => [
+  { value: "", label: t("common.labels.allStatuses") },
+  { value: "active", label: t("teams.status.active") },
+  { value: "forming", label: t("teams.status.forming") },
+  { value: "planning", label: t("teams.status.planning") },
+  { value: "dormant", label: t("teams.status.dormant") },
+]);
 const departmentOptions = computed(() => [
-  { value: "", label: "All Departments" },
+  { value: "", label: t("teams.list.allDepartments") },
   ...(departments.value || []).map((d) => ({ value: d.value, label: d.label })),
 ]);
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="All Teams">
+    <UiPageHeader :title="$t('teams.list.title')">
       <template #subtitle>
-        Showing {{ meta.from }} - {{ meta.to }} of {{ meta.total }} teams
+        {{ $t("common.pagination.showingItems", { from: meta.from, to: meta.to, total: meta.total, items: $t("teams.list.itemLabel") }) }}
       </template>
       <template #actions>
-        <UiButton variant="secondary" :icon="Upload" class="flex-1 sm:flex-none">Import CSV</UiButton>
-        <UiButton :icon="Plus" :to="{ name: 'admin.team.create' }" class="flex-1 sm:flex-none">Add Team</UiButton>
+        <UiButton variant="secondary" :icon="Upload" class="flex-1 sm:flex-none">{{ $t("teams.list.importCsv") }}</UiButton>
+        <UiButton :icon="Plus" :to="{ name: 'admin.team.create' }" class="flex-1 sm:flex-none">{{ $t("teams.list.addTeam") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -100,7 +102,7 @@ const departmentOptions = computed(() => [
         <UiInput
           v-model="filters.search"
           :icon="SearchIcon"
-          placeholder="Search teams by name, lead, status..."
+          :placeholder="$t('teams.list.searchPlaceholder')"
           class="lg:w-80"
         />
         <UiChips v-model="filters.status" :options="statusOptions" class="flex-1" />
@@ -119,7 +121,7 @@ const departmentOptions = computed(() => [
 
       <!-- Empty State -->
       <div v-else class="bg-ui-surface border border-ui-line rounded-ui-card">
-        <UiEmpty :icon="Users2" title="No teams found" />
+        <UiEmpty :icon="Users2" :title="$t('teams.list.empty')" />
       </div>
 
       <!-- Pagination -->

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute, RouterLink } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { Settings, Plus, Trash2, Info, CheckCircle2, ArrowLeft, Save } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
@@ -10,6 +11,7 @@ import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import { UiPageHeader, UiButton, UiCard, UiInput, UiSelect, UiSwitch, UiAlert, UiSpinner } from "@/components/ui";
 
+const { t } = useI18n();
 const store = useLetterStore();
 const { letterCodes, divisionCodes } = storeToRefs(store);
 const employeeStore = useEmployeeStore();
@@ -117,10 +119,10 @@ const form = ref({
   use_signature: false,
 });
 
-const TEMPLATE_OPTIONS = [
-  { value: "primary", label: "Primary", preview: "/images/template-letter-primary.png" },
-  { value: "secondary", label: "Secondary", preview: "/images/template-letter-secondary.png" },
-];
+const TEMPLATE_OPTIONS = computed(() => [
+  { value: "primary", label: t("documents.letter.form.templatePrimary"), preview: "/images/template-letter-primary.png" },
+  { value: "secondary", label: t("documents.letter.form.templateSecondary"), preview: "/images/template-letter-secondary.png" },
+]);
 
 const useItems = ref(false);
 const useSecondParty = ref(false);
@@ -172,7 +174,7 @@ onMounted(async () => {
         useSecondParty.value = true;
       }
     } catch (error) {
-      errorMessage.value = "Failed to load letter.";
+      errorMessage.value = t("documents.letter.form.errors.load");
     } finally {
       loadingLetter.value = false;
     }
@@ -211,7 +213,7 @@ const handleSubmit = async () => {
   errorMessage.value = "";
 
   if (isBodyEmpty()) {
-    errorMessage.value = "Letter content is required.";
+    errorMessage.value = t("documents.letter.form.errors.bodyRequired");
     return;
   }
 
@@ -255,32 +257,32 @@ const handleSubmit = async () => {
     router.push({ name: "admin.letters.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
-    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : `Failed to ${isEditMode.value ? "update" : "create"} Letter.`);
+    errorMessage.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t(isEditMode.value ? "documents.letter.form.errors.update" : "documents.letter.form.errors.create"));
   } finally {
     submitting.value = false;
   }
 };
 
 // Presentation only: select options and the summary panel.
-const TYPE_OPTIONS = [
-  { value: "I", label: "Internal (I)" },
-  { value: "E", label: "External (E)" },
-];
+const TYPE_OPTIONS = computed(() => [
+  { value: "I", label: t("documents.purchaseOrder.types.I") },
+  { value: "E", label: t("documents.purchaseOrder.types.E") },
+]);
 const letterCodeOptions = computed(() => letterCodes.value.map((c) => ({ value: c.id, label: `${c.code} - ${c.name}` })));
 const divisionCodeOptions = computed(() => divisionCodes.value.map((c) => ({ value: c.id, label: `${c.code} - ${c.name}` })));
 const employeeOptions = computed(() => [
-  { value: "", label: "Not addressed to a specific employee" },
+  { value: "", label: t("documents.letter.form.noEmployee") },
   ...employees.value.map((emp) => ({ value: emp.id, label: `${emp.user?.name} (${emp.code})` })),
 ]);
 const summaryRows = computed(() => {
   const division = divisionCodes.value.find((c) => c.id === Number(form.value.division_code_id));
   return [
-    { label: "Letter Code", value: selectedCode.value },
-    { label: "Division Code", value: division?.code },
-    { label: "Type", value: TYPE_OPTIONS.find((t) => t.value === form.value.type)?.label },
-    { label: "Date", value: form.value.date },
-    { label: "Items", value: useItems.value ? `${items.value.filter((i) => i.description).length}` : "—" },
-    { label: "Second Party", value: useSecondParty.value ? form.value.second_party_name || "Yes" : "—" },
+    { label: t("documents.letter.fields.letterCode"), value: selectedCode.value },
+    { label: t("documents.letter.fields.divisionCode"), value: division?.code },
+    { label: t("common.labels.type"), value: TYPE_OPTIONS.value.find((o) => o.value === form.value.type)?.label },
+    { label: t("common.labels.date"), value: form.value.date },
+    { label: t("documents.shared.items"), value: useItems.value ? `${items.value.filter((i) => i.description).length}` : "—" },
+    { label: t("documents.letter.form.secondParty"), value: useSecondParty.value ? form.value.second_party_name || t("common.labels.yes") : "—" },
   ];
 });
 const nativeField =
@@ -290,24 +292,24 @@ const nativeField =
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <UiPageHeader
-      :title="isEditMode ? 'Edit Letter' : 'Create Letter'"
-      :subtitle="isEditMode ? existingLetterNumber : 'Letter number will be generated automatically when saved'"
+      :title="isEditMode ? $t('documents.letter.form.editTitle') : $t('documents.letter.list.create')"
+      :subtitle="isEditMode ? existingLetterNumber : $t('documents.letter.form.autoNumber')"
       class="ui-anim-fade-up"
     >
       <template #eyebrow>
         <router-link
           :to="{ name: 'admin.letters.dashboard' }"
           class="ui-press inline-flex items-center gap-1 mb-1.5 text-ui-small font-medium text-ui-accent hover:underline"
-          aria-label="Back to Letters"
+          :aria-label="$t('documents.letter.form.back')"
         >
-          <ArrowLeft class="w-4 h-4" />Letters
+          <ArrowLeft class="w-4 h-4" />{{ $t("documents.letter.list.title") }}
         </router-link>
       </template>
       <template #actions>
-        <UiButton v-if="can('letter-menu')" variant="ghost" :icon="Settings" :to="{ name: 'admin.settings.document-codes' }">Manage Letter Codes</UiButton>
+        <UiButton v-if="can('letter-menu')" variant="ghost" :icon="Settings" :to="{ name: 'admin.settings.document-codes' }">{{ $t("documents.letter.form.manageCodes") }}</UiButton>
         <div class="hidden sm:flex items-center gap-2">
-          <UiButton variant="secondary" :to="{ name: 'admin.letters.dashboard' }">Cancel</UiButton>
-          <UiButton type="submit" form="letter-form" :icon="Save" :loading="submitting">{{ submitting ? "Saving..." : (isEditMode ? "Update Letter" : "Save Letter") }}</UiButton>
+          <UiButton variant="secondary" :to="{ name: 'admin.letters.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
+          <UiButton type="submit" form="letter-form" :icon="Save" :loading="submitting">{{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.letter.form.update") : $t("documents.letter.form.save")) }}</UiButton>
         </div>
       </template>
     </UiPageHeader>
@@ -319,67 +321,67 @@ const nativeField =
     <form id="letter-form" v-show="!loadingLetter" class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start" @submit.prevent="handleSubmit">
       <div class="lg:col-span-2 space-y-5 min-w-0 ui-stagger">
         <!-- Classification -->
-        <UiCard title="Letter Classification" :subtitle="isEditMode ? 'Letter Code, Division Code, Type, and Date are locked after creation -- they\'re baked into the already-issued letter number.' : ''">
+        <UiCard :title="$t('documents.letter.form.classification')" :subtitle="isEditMode ? $t('documents.letter.form.classificationLocked') : ''">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="min-w-0">
               <UiSelect
                 v-model="form.letter_code_id"
-                label="Letter Code"
-                placeholder="Select letter code"
+                :label="$t('documents.letter.fields.letterCode')"
+                :placeholder="$t('documents.letter.form.selectLetterCode')"
                 :options="letterCodeOptions"
                 required
                 :disabled="isEditMode"
                 @change="applyTemplate"
               />
               <p v-if="!isEditMode && TEMPLATES[selectedCode]" class="text-ui-cap text-ui-accent mt-1.5 flex items-start gap-1">
-                <Info class="w-3.5 h-3.5 shrink-0 mt-px" /> A reference template has been auto-filled into Letter Content, please adjust as needed.
+                <Info class="w-3.5 h-3.5 shrink-0 mt-px" /> {{ $t("documents.letter.form.templateApplied") }}
               </p>
             </div>
             <UiSelect
               v-model="form.division_code_id"
-              label="Division Code"
-              placeholder="Select division code"
+              :label="$t('documents.letter.fields.divisionCode')"
+              :placeholder="$t('documents.letter.form.selectDivisionCode')"
               :options="divisionCodeOptions"
               required
               :disabled="isEditMode"
             />
-            <UiSelect v-model="form.type" label="Type" :options="TYPE_OPTIONS" required :disabled="isEditMode" />
-            <UiInput v-model="form.date" type="date" label="Date" required :disabled="isEditMode" />
+            <UiSelect v-model="form.type" :label="$t('common.labels.type')" :options="TYPE_OPTIONS" required :disabled="isEditMode" />
+            <UiInput v-model="form.date" type="date" :label="$t('common.labels.date')" required :disabled="isEditMode" />
           </div>
         </UiCard>
 
         <!-- Content -->
-        <UiCard title="Letter Content">
+        <UiCard :title="$t('documents.letter.fields.body')">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UiInput v-model="form.subject" label="Subject" required class="md:col-span-2" />
+            <UiInput v-model="form.subject" :label="$t('documents.letter.fields.subject')" required class="md:col-span-2" />
             <UiInput
               v-if="form.template !== 'secondary'"
               v-model="form.recipient"
               :rows="2"
-              label="To (optional)"
-              placeholder="e.g. All Employees&#10;PT. Jendela Cakra Digital"
+              :label="$t('documents.letter.form.to')"
+              :placeholder="$t('documents.letter.form.toPlaceholder')"
             />
             <p v-else class="text-ui-cap text-ui-muted md:self-center">
-              The Secondary template's Surat Keterangan-style layout doesn't address a specific recipient, so this field is hidden.
+              {{ $t("documents.letter.form.toHidden") }}
             </p>
             <div class="min-w-0">
               <UiSelect
                 v-model="form.employee_id"
-                :label="requiresEmployee ? 'Related Employee' : 'Related Employee (optional)'"
+                :label="requiresEmployee ? $t('documents.letter.form.relatedEmployee') : $t('documents.letter.form.relatedEmployeeOptional')"
                 :options="employeeOptions"
                 :required="requiresEmployee"
               />
               <p v-if="requiresEmployee" class="text-ui-cap text-ui-warn mt-1.5">
-                Required for warning letters so it's recorded in the employee's history.
+                {{ $t("documents.letter.form.employeeRequiredHint") }}
               </p>
             </div>
             <div class="md:col-span-2 min-w-0">
-              <label class="block text-ui-small font-medium text-ui-ink mb-1.5">Letter Content<span class="text-ui-bad"> *</span></label>
-              <RichTextEditor v-model="form.body" placeholder="Dear Sir/Madam, ..." />
+              <label class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("documents.letter.fields.body") }}<span class="text-ui-bad"> *</span></label>
+              <RichTextEditor v-model="form.body" :placeholder="$t('documents.letter.form.bodyPlaceholder')" />
             </div>
-            <UiInput v-model="form.signatory_name" label="Signatory Name (First Party)" />
-            <UiInput v-model="form.signatory_title" label="Position" />
-            <SignatureToggle v-model="form.use_signature" hint="Stamps the first party's signature onto the PDF." class="md:col-span-2" />
+            <UiInput v-model="form.signatory_name" :label="$t('documents.letter.form.signatoryFirst')" />
+            <UiInput v-model="form.signatory_title" :label="$t('documents.shared.position')" />
+            <SignatureToggle v-model="form.use_signature" :hint="$t('documents.letter.form.signatureHint')" class="md:col-span-2" />
           </div>
         </UiCard>
 
@@ -388,38 +390,38 @@ const nativeField =
           <div class="px-5 sm:px-6 py-[18px]">
             <UiSwitch
               v-model="useItems"
-              label="Add Item Table"
-              description="For BAST (handed-over goods) or Offer Letters (offered items/services). Leave price blank if not relevant (e.g. BAST)."
+              :label="$t('documents.letter.form.itemTable')"
+              :description="$t('documents.letter.form.itemTableHint')"
             />
           </div>
           <div v-if="useItems" class="border-t border-ui-line px-5 sm:px-6 py-4 space-y-3 ui-anim-fade-up">
             <div v-for="(item, i) in items" :key="i" class="flex items-start gap-3 rounded-ui-control border border-ui-line p-3 sm:p-4">
               <span class="w-5 pt-2.5 text-ui-cap text-ui-faint tabular-nums shrink-0">{{ i + 1 }}</span>
               <div class="flex-1 min-w-0 grid grid-cols-2 md:grid-cols-4 gap-3">
-                <UiInput v-model="item.description" placeholder="Description" class="col-span-2" />
-                <UiInput v-model="item.qty" placeholder="Qty" />
+                <UiInput v-model="item.description" :placeholder="$t('common.labels.description')" class="col-span-2" />
+                <UiInput v-model="item.qty" :placeholder="$t('documents.shared.qty')" />
                 <input
                   v-model.number="item.price"
                   type="number"
                   min="0"
-                  placeholder="Price (Rp, optional)"
-                  aria-label="Price (Rp, optional)"
+                  :placeholder="$t('documents.letter.form.priceOptional')"
+                  :aria-label="$t('documents.letter.form.priceOptional')"
                   :class="[nativeField, 'text-right tabular-nums']"
                 />
-                <UiInput v-model="item.specification" :rows="2" placeholder="Notes / specification" class="col-span-2 md:col-span-4" />
+                <UiInput v-model="item.specification" :rows="2" :placeholder="$t('documents.letter.form.specPlaceholder')" class="col-span-2 md:col-span-4" />
               </div>
               <button
                 v-if="items.length > 1"
                 type="button"
                 class="w-9 h-9 shrink-0 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus"
-                title="Remove item"
-                aria-label="Remove item"
+                :title="$t('documents.shared.removeLine')"
+                :aria-label="$t('documents.shared.removeLine')"
                 @click="removeItem(i)"
               >
                 <Trash2 class="w-4 h-4" />
               </button>
             </div>
-            <UiButton variant="secondary" :icon="Plus" class="w-full sm:w-auto" @click="addItem">Add Item</UiButton>
+            <UiButton variant="secondary" :icon="Plus" class="w-full sm:w-auto" @click="addItem">{{ $t("documents.shared.addItem") }}</UiButton>
           </div>
         </section>
 
@@ -428,14 +430,14 @@ const nativeField =
           <div class="px-5 sm:px-6 py-[18px]">
             <UiSwitch
               v-model="useSecondParty"
-              label="Two-Party Signature (Second Party)"
-              description="For BAST or NDA signed by both parties. If unchecked, the letter only uses the company's signature."
+              :label="$t('documents.letter.form.twoParty')"
+              :description="$t('documents.letter.form.twoPartyHint')"
             />
           </div>
           <div v-if="useSecondParty" class="border-t border-ui-line px-5 sm:px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4 ui-anim-fade-up">
-            <UiInput v-model="form.second_party_name" label="Company/Second Party Name" />
-            <UiInput v-model="form.second_party_signatory_name" label="Signatory Name" />
-            <UiInput v-model="form.second_party_signatory_title" label="Position" />
+            <UiInput v-model="form.second_party_name" :label="$t('documents.letter.form.secondPartyName')" />
+            <UiInput v-model="form.second_party_signatory_name" :label="$t('documents.letter.form.signatoryName')" />
+            <UiInput v-model="form.second_party_signatory_title" :label="$t('documents.shared.position')" />
           </div>
         </section>
       </div>
@@ -443,7 +445,7 @@ const nativeField =
       <!-- Side panel: letterhead preview, summary, actions -->
       <aside class="space-y-4 lg:sticky lg:top-4 min-w-0">
         <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
-          <h3 class="text-ui-h3 text-ui-ink mb-3">Letterhead Template</h3>
+          <h3 class="text-ui-h3 text-ui-ink mb-3">{{ $t("documents.letter.form.letterhead") }}</h3>
           <div class="grid grid-cols-2 gap-3">
             <label
               v-for="opt in TEMPLATE_OPTIONS"
@@ -464,11 +466,11 @@ const nativeField =
         </section>
 
         <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5">
-          <h3 class="text-ui-h3 text-ui-ink">Summary</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("documents.shared.summary") }}</h3>
           <p class="font-mono text-ui-small text-ui-ink mt-2 break-all">{{ isEditMode ? existingLetterNumber : "—" }}</p>
-          <p v-if="!isEditMode" class="text-ui-cap text-ui-muted">Letter number will be generated automatically when saved</p>
+          <p v-if="!isEditMode" class="text-ui-cap text-ui-muted">{{ $t("documents.letter.form.autoNumber") }}</p>
           <dl class="mt-3 divide-y divide-ui-line text-ui-small">
-            <div v-for="row in summaryRows" :key="row.label" class="flex items-center justify-between gap-3 py-2">
+            <div v-for="(row, ri) in summaryRows" :key="ri" class="flex items-center justify-between gap-3 py-2">
               <dt class="text-ui-muted shrink-0">{{ row.label }}</dt>
               <dd class="text-ui-ink truncate text-right tabular-nums">{{ row.value || "—" }}</dd>
             </div>
@@ -478,8 +480,8 @@ const nativeField =
         <UiAlert v-if="errorMessage" tone="bad" :message="errorMessage" />
 
         <div class="flex flex-col gap-2">
-          <UiButton type="submit" size="lg" block :icon="Save" :loading="submitting">{{ submitting ? "Saving..." : (isEditMode ? "Update Letter" : "Save Letter") }}</UiButton>
-          <UiButton variant="secondary" size="lg" block class="sm:hidden" :to="{ name: 'admin.letters.dashboard' }">Cancel</UiButton>
+          <UiButton type="submit" size="lg" block :icon="Save" :loading="submitting">{{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.letter.form.update") : $t("documents.letter.form.save")) }}</UiButton>
+          <UiButton variant="secondary" size="lg" block class="sm:hidden" :to="{ name: 'admin.letters.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
         </div>
       </aside>
     </form>

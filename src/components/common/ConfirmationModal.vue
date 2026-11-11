@@ -5,10 +5,10 @@ import UiConfirmDialog from "@/components/ui/UiConfirmDialog.vue";
 
 defineProps({
   show: { type: Boolean, default: false },
-  title: { type: String, default: "Confirm Action" },
-  message: { type: String, default: "Are you sure you want to proceed?" },
-  confirmText: { type: String, default: "Confirm" },
-  cancelText: { type: String, default: "Cancel" },
+  title: { type: String, default: "" },
+  message: { type: String, default: "" },
+  confirmText: { type: String, default: "" },
+  cancelText: { type: String, default: "" },
   loading: { type: Boolean, default: false },
   type: { type: String, default: "danger" }, // danger, warning, info
 });
@@ -20,7 +20,7 @@ const emit = defineEmits(["confirm", "cancel"]);
   <UiConfirmDialog
     :open="show"
     :title="title"
-    :message="message"
+    :message="message || $t('common.confirm.message')"
     :confirm-text="confirmText"
     :cancel-text="cancelText"
     :loading="loading"

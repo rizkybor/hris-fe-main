@@ -11,7 +11,7 @@
         <p v-if="title" class="text-ui-h3 text-ui-ink">{{ title }}</p>
         <p v-if="message" class="text-ui-small text-ui-text mt-0.5">{{ message }}</p>
       </div>
-      <button @click="close" type="button" aria-label="Close" class="w-7 h-7 -mr-1 -mt-0.5 rounded-md flex items-center justify-center text-ui-muted hover:text-ui-ink hover:bg-black/5">
+      <button @click="close" type="button" :aria-label="$t('common.a11y.close')" class="w-7 h-7 -mr-1 -mt-0.5 rounded-md flex items-center justify-center text-ui-muted hover:text-ui-ink hover:bg-black/5">
         <X class="w-4 h-4" />
       </button>
     </div>

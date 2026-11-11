@@ -28,16 +28,21 @@ import { storeToRefs } from "pinia";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { UiBadge, UiButton, UiInput, UiModal, UiSelect } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 // Presentation only: priority -> badge tone, status -> badge tone, options.
 const PRIORITY_TONES = { urgent: "bad", high: "warn", medium: "info", low: "neutral" };
 const STATUS_TONES = { todo: "neutral", in_progress: "accent", review: "warn", done: "ok", cancelled: "outline" };
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
-];
+const PRIORITY_OPTIONS = computed(() =>
+  ["low", "medium", "high", "urgent"].map((value) => ({ value, label: t(`projects.priority.${value}`) }))
+);
+const TASK_STATUS_KEYS = { todo: "todo", in_progress: "inProgress", review: "review", done: "done", cancelled: "cancelled" };
+const taskStatusLabel = (status) =>
+  TASK_STATUS_KEYS[status] ? t(`projects.taskStatus.${TASK_STATUS_KEYS[status]}`) : (status || "").replace("_", " ");
+const priorityLabel = (priority) =>
+  PRIORITY_TONES[priority] ? t(`projects.priority.${priority}`) : priority;
 const fieldClass =
   "w-full bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
 
@@ -134,11 +139,11 @@ const handleImageSelect = (event) => {
   if (!file) return;
 
   if (!file.type.startsWith("image/")) {
-    imageError.value = "File must be an image.";
+    imageError.value = t("projects.tasks.form.imageNotImage");
     return;
   }
   if (file.size > MAX_IMAGE_SIZE) {
-    imageError.value = "Image must be 2MB or smaller.";
+    imageError.value = t("projects.tasks.form.imageTooLarge");
     return;
   }
 
@@ -158,7 +163,7 @@ const removeImageInEditor = () => {
 
 const handleSaveDetails = async () => {
   if (!editedName.value.trim()) {
-    detailsError.value = "Task name is required.";
+    detailsError.value = t("projects.tasks.detail.nameRequired");
     return;
   }
 
@@ -184,7 +189,7 @@ const handleSaveDetails = async () => {
     isEditingDetails.value = false;
   } catch (error) {
     detailsError.value =
-      typeof taskStore.error === "string" ? taskStore.error : "Failed to update task.";
+      typeof taskStore.error === "string" ? taskStore.error : t("projects.tasks.detail.updateFailed");
   } finally {
     isSavingDetails.value = false;
   }
@@ -192,7 +197,7 @@ const handleSaveDetails = async () => {
 
 // Quick delete for the current image, without entering full edit mode.
 const handleDeleteImage = async () => {
-  if (!(await alertModal.confirm("Delete this task's image?"))) return;
+  if (!(await alertModal.confirm(t("projects.tasks.detail.deleteImageConfirm")))) return;
 
   isDeletingImage.value = true;
   try {
@@ -207,7 +212,7 @@ const handleDeleteImage = async () => {
 };
 
 const handleDelete = async () => {
-  if (await alertModal.confirm("Are you sure you want to delete this task?")) {
+  if (await alertModal.confirm(t("projects.tasks.detail.deleteConfirm"))) {
     emit("deleted", props.task.id);
     closeModal();
   }
@@ -363,13 +368,13 @@ watch(
           v-if="isEditingDetails"
           v-model="editedName"
           type="text"
-          aria-label="Task name"
+          :aria-label="$t('projects.tasks.form.name')"
           :class="[fieldClass, 'h-10 px-3 text-ui-h2 font-semibold']"
         />
         <h2 v-else class="text-ui-h2 text-ui-ink break-words">{{ task.name }}</h2>
         <div class="flex items-center gap-2 mt-1.5 flex-wrap">
           <p class="text-ui-cap text-ui-muted">
-            in list <span class="font-medium text-ui-text capitalize">{{ task.status.replace("_", " ") }}</span>
+            {{ $t("projects.tasks.detail.inList") }} <span class="font-medium text-ui-text capitalize">{{ taskStatusLabel(task.status) }}</span>
           </p>
           <span
             v-if="task.type && !isEditingDetails"
@@ -388,16 +393,16 @@ watch(
         <!-- Labels/Priority -->
         <div>
           <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
-            <Tag class="w-3.5 h-3.5" /> Priority
+            <Tag class="w-3.5 h-3.5" /> {{ $t("projects.fields.priority") }}
           </h3>
           <UiSelect v-if="isEditingDetails" v-model="editedPriority" :options="PRIORITY_OPTIONS" class="sm:max-w-[220px]" />
-          <UiBadge v-else :tone="PRIORITY_TONES[task.priority] || 'neutral'" dot class="capitalize">{{ task.priority }}</UiBadge>
+          <UiBadge v-else :tone="PRIORITY_TONES[task.priority] || 'neutral'" dot class="capitalize">{{ priorityLabel(task.priority) }}</UiBadge>
         </div>
 
         <!-- Task Type & Color -->
         <div>
           <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
-            <Tag class="w-3.5 h-3.5" /> Task Type
+            <Tag class="w-3.5 h-3.5" /> {{ $t("projects.tasks.form.type") }}
           </h3>
           <template v-if="isEditingDetails">
             <div class="relative mb-3">
@@ -406,8 +411,8 @@ watch(
                 type="text"
                 list="task-type-suggestions-edit"
                 maxlength="100"
-                aria-label="Task type"
-                placeholder="e.g. Bug, Feature, Design, Copywriting..."
+                :aria-label="$t('projects.tasks.form.type')"
+                :placeholder="$t('projects.tasks.form.typePlaceholder')"
                 :class="[fieldClass, 'h-[38px] px-3']"
               />
               <datalist id="task-type-suggestions-edit">
@@ -419,14 +424,14 @@ watch(
                 v-for="swatch in TASK_TYPE_COLORS"
                 :key="swatch.key"
                 type="button"
-                :title="swatch.label"
-                :aria-label="swatch.label"
+                :title="$t(`projects.colors.${swatch.key}`)"
+                :aria-label="$t(`projects.colors.${swatch.key}`)"
                 :aria-pressed="editedColor === swatch.key"
                 @click="editedColor = editedColor === swatch.key ? null : swatch.key"
                 class="ui-press w-6 h-6 rounded-full"
                 :class="[swatch.dot, editedColor === swatch.key ? `ring-2 ring-offset-2 ${swatch.ring}` : 'opacity-60 hover:opacity-100']"
               ></button>
-              <span v-if="editedColor" class="text-ui-cap font-medium text-ui-text ml-1">{{ editedTypeColor.label }}</span>
+              <span v-if="editedColor" class="text-ui-cap font-medium text-ui-text ml-1">{{ $t(`projects.colors.${editedTypeColor.key}`) }}</span>
             </div>
           </template>
           <span
@@ -436,13 +441,13 @@ watch(
             <span v-if="task.color" class="w-1.5 h-1.5 rounded-full" :class="taskTypeColor.dot" aria-hidden="true"></span>
             {{ task.type }}
           </span>
-          <p v-else class="text-ui-small text-ui-faint">No type set</p>
+          <p v-else class="text-ui-small text-ui-faint">{{ $t("projects.tasks.detail.noType") }}</p>
         </div>
 
         <!-- Image (Optional) -->
         <div>
           <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
-            <ImageIcon class="w-3.5 h-3.5" /> Image <span class="normal-case tracking-normal font-normal text-ui-faint">(optional)</span>
+            <ImageIcon class="w-3.5 h-3.5" /> {{ $t("projects.tasks.form.image") }} <span class="normal-case tracking-normal font-normal text-ui-faint">{{ $t("projects.tasks.form.optional") }}</span>
           </h3>
 
           <input
@@ -458,7 +463,7 @@ watch(
             <div v-if="imagePreviewUrl" class="relative w-full sm:w-48">
               <img
                 :src="imagePreviewUrl"
-                alt="Task image"
+                :alt="$t('projects.tasks.form.imageAlt')"
                 class="w-full h-32 object-cover rounded-ui-control border border-ui-line cursor-pointer"
                 @click="lightboxOpen = true"
               />
@@ -467,7 +472,7 @@ watch(
                   type="button"
                   @click="lightboxOpen = true"
                   class="w-7 h-7 rounded-full bg-ui-surface/90 hover:bg-ui-surface flex items-center justify-center shadow-ui-raised text-ui-text"
-                  title="View image"
+                  :title="$t('projects.tasks.form.viewImage')"
                 >
                   <Eye class="w-3.5 h-3.5" />
                 </button>
@@ -475,7 +480,7 @@ watch(
                   type="button"
                   @click="removeImageInEditor"
                   class="w-7 h-7 rounded-full bg-ui-surface/90 hover:bg-ui-bad-soft flex items-center justify-center shadow-ui-raised text-ui-bad"
-                  title="Remove image"
+                  :title="$t('projects.tasks.form.removeImage')"
                 >
                   <X class="w-3.5 h-3.5" />
                 </button>
@@ -490,8 +495,8 @@ watch(
               <span class="w-8 h-8 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center">
                 <Upload class="w-4 h-4" />
               </span>
-              <span class="text-ui-small font-medium text-ui-ink">Upload Image</span>
-              <span class="text-ui-cap text-ui-muted">PNG, JPG, WEBP up to 2MB</span>
+              <span class="text-ui-small font-medium text-ui-ink">{{ $t("projects.tasks.form.uploadImage") }}</span>
+              <span class="text-ui-cap text-ui-muted">{{ $t("projects.tasks.form.imageHint") }}</span>
             </button>
             <p v-if="imageError" class="text-ui-cap text-ui-bad mt-1.5">{{ imageError }}</p>
           </template>
@@ -501,7 +506,7 @@ watch(
             <div v-if="task.image" class="relative w-full sm:w-48">
               <img
                 :src="task.image"
-                alt="Task image"
+                :alt="$t('projects.tasks.form.imageAlt')"
                 class="w-full h-32 object-cover rounded-ui-control border border-ui-line cursor-pointer"
                 @click="lightboxOpen = true"
               />
@@ -510,7 +515,7 @@ watch(
                   type="button"
                   @click="lightboxOpen = true"
                   class="w-7 h-7 rounded-full bg-ui-surface/90 hover:bg-ui-surface flex items-center justify-center shadow-ui-raised text-ui-text"
-                  title="View image"
+                  :title="$t('projects.tasks.form.viewImage')"
                 >
                   <Eye class="w-3.5 h-3.5" />
                 </button>
@@ -520,34 +525,34 @@ watch(
                   @click="handleDeleteImage"
                   :disabled="isDeletingImage"
                   class="w-7 h-7 rounded-full bg-ui-surface/90 hover:bg-ui-bad-soft flex items-center justify-center shadow-ui-raised text-ui-bad disabled:opacity-50"
-                  title="Delete image"
+                  :title="$t('projects.tasks.detail.deleteImage')"
                 >
                   <Trash2 class="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
-            <p v-else class="text-ui-small text-ui-faint">No image attached</p>
+            <p v-else class="text-ui-small text-ui-faint">{{ $t("projects.tasks.detail.noImage") }}</p>
           </template>
         </div>
 
         <!-- Description -->
         <div>
           <h3 class="flex items-center gap-1.5 text-ui-over uppercase text-ui-muted mb-2">
-            <AlignLeft class="w-3.5 h-3.5" /> Description
+            <AlignLeft class="w-3.5 h-3.5" /> {{ $t("common.labels.description") }}
           </h3>
-          <UiInput v-if="isEditingDetails" v-model="editedDescription" :rows="4" placeholder="Add a description..." />
+          <UiInput v-if="isEditingDetails" v-model="editedDescription" :rows="4" :placeholder="$t('projects.tasks.detail.descriptionPlaceholder')" />
           <div v-else class="bg-ui-subtle rounded-ui-control px-3.5 py-3 text-ui-body text-ui-text leading-relaxed min-h-[72px] whitespace-pre-line break-words">
             <p v-if="task.description">{{ task.description }}</p>
-            <p v-else class="text-ui-faint">No description added</p>
+            <p v-else class="text-ui-faint">{{ $t("projects.tasks.detail.noDescription") }}</p>
           </div>
 
           <p v-if="detailsError" class="text-ui-cap text-ui-bad mt-2">{{ detailsError }}</p>
 
           <div v-if="isEditingDetails" class="flex gap-2 mt-3">
             <UiButton :loading="isSavingDetails" class="flex-1 sm:flex-none" @click="handleSaveDetails">
-              {{ isSavingDetails ? "Saving..." : "Save Changes" }}
+              {{ isSavingDetails ? $t("common.actions.saving") : $t("common.actions.saveChanges") }}
             </UiButton>
-            <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="cancelEditDetails">Cancel</UiButton>
+            <UiButton variant="secondary" class="flex-1 sm:flex-none" @click="cancelEditDetails">{{ $t("common.actions.cancel") }}</UiButton>
           </div>
         </div>
 
@@ -564,7 +569,7 @@ watch(
       <div class="order-first md:order-none space-y-5 md:border-l md:border-ui-line md:pl-6">
         <!-- Assignee -->
         <div v-if="!isEditingDetails" class="relative">
-          <h3 class="text-ui-over uppercase text-ui-muted mb-2">Assignee</h3>
+          <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("projects.tasks.detail.assignee") }}</h3>
 
           <!-- Selected Assignee Display -->
           <div v-if="selectedAssignee" class="flex items-center gap-2.5 mb-2">
@@ -583,13 +588,13 @@ watch(
               type="button"
               @click="handleRemoveAssignee"
               class="w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-bad-soft hover:text-ui-bad shrink-0"
-              title="Remove assignee"
-              aria-label="Remove assignee"
+              :title="$t('projects.tasks.detail.removeAssignee')"
+              :aria-label="$t('projects.tasks.detail.removeAssignee')"
             >
               <X class="w-3.5 h-3.5" />
             </button>
           </div>
-          <p v-else class="text-ui-small text-ui-faint mb-2">Unassigned</p>
+          <p v-else class="text-ui-small text-ui-faint mb-2">{{ $t("projects.tasks.unassigned") }}</p>
 
           <!-- Dropdown Toggle Button -->
           <button
@@ -601,7 +606,7 @@ watch(
           >
             <UserCheck class="w-4 h-4 text-ui-faint" />
             <span class="text-ui-small font-medium text-ui-ink flex-1">
-              {{ selectedAssignee ? "Change assignee" : "Select assignee" }}
+              {{ selectedAssignee ? $t("projects.tasks.detail.changeAssignee") : $t("projects.tasks.detail.selectAssignee") }}
             </span>
             <ChevronDown class="w-4 h-4 text-ui-faint transition-transform duration-200" :class="{ 'rotate-180': assigneeDropdown }" />
           </button>
@@ -619,7 +624,7 @@ watch(
                   <input
                     type="text"
                     v-model="searchAssignee"
-                    placeholder="Search employees..."
+                    :placeholder="$t('projects.tasks.detail.searchEmployees')"
                     :class="[fieldClass, 'h-8 pl-8 pr-3 text-ui-small']"
                   />
                 </div>
@@ -644,7 +649,7 @@ watch(
                 <!-- No Results -->
                 <div v-if="employees.length === 0" class="p-5 text-center">
                   <SearchX class="w-5 h-5 text-ui-faint mx-auto mb-1.5" />
-                  <p class="text-ui-cap text-ui-muted">No employees found</p>
+                  <p class="text-ui-cap text-ui-muted">{{ $t("projects.tasks.detail.noEmployees") }}</p>
                 </div>
               </div>
             </div>
@@ -654,14 +659,14 @@ watch(
         <!-- Due Date -->
         <div>
           <div class="flex items-center justify-between mb-2">
-            <h3 class="text-ui-over uppercase text-ui-muted">Due Date</h3>
+            <h3 class="text-ui-over uppercase text-ui-muted">{{ $t("projects.tasks.form.dueDate") }}</h3>
             <button
               v-if="!dueDateEditing && can('task-edit')"
               type="button"
               @click="toggleDueDateEdit"
               class="w-7 h-7 -mr-1.5 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink"
-              title="Edit due date"
-              aria-label="Edit due date"
+              :title="$t('projects.tasks.detail.editDueDate')"
+              :aria-label="$t('projects.tasks.detail.editDueDate')"
             >
               <Pencil class="w-3.5 h-3.5" />
             </button>
@@ -677,27 +682,27 @@ watch(
           <div v-else class="space-y-2">
             <UiInput v-model="editedDueDate" type="date" />
             <div class="flex gap-2">
-              <UiButton size="sm" :icon="Check" class="flex-1" @click="handleUpdateDueDate">Save</UiButton>
-              <UiButton size="sm" variant="secondary" class="flex-1" @click="cancelDueDateEdit">Cancel</UiButton>
+              <UiButton size="sm" :icon="Check" class="flex-1" @click="handleUpdateDueDate">{{ $t("common.actions.save") }}</UiButton>
+              <UiButton size="sm" variant="secondary" class="flex-1" @click="cancelDueDateEdit">{{ $t("common.actions.cancel") }}</UiButton>
             </div>
           </div>
         </div>
 
         <!-- Status -->
         <div v-if="!isEditingDetails">
-          <h3 class="text-ui-over uppercase text-ui-muted mb-2">Status</h3>
-          <UiBadge :tone="STATUS_TONES[task.status] || 'neutral'" dot class="capitalize">{{ task.status.replace("_", " ") }}</UiBadge>
+          <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("common.labels.status") }}</h3>
+          <UiBadge :tone="STATUS_TONES[task.status] || 'neutral'" dot class="capitalize">{{ taskStatusLabel(task.status) }}</UiBadge>
         </div>
 
         <!-- Actions -->
         <div v-if="(can('task-edit') && !isEditingDetails) || can('task-delete')">
-          <h3 class="text-ui-over uppercase text-ui-muted mb-2">Actions</h3>
+          <h3 class="text-ui-over uppercase text-ui-muted mb-2">{{ $t("common.labels.actions") }}</h3>
           <div class="flex md:flex-col gap-2">
             <UiButton v-if="can('task-edit') && !isEditingDetails" :icon="Pencil" class="flex-1 md:flex-none md:w-full" @click="toggleEditDetails">
-              Edit Task
+              {{ $t("projects.tasks.detail.edit") }}
             </UiButton>
             <UiButton v-if="can('task-delete')" variant="danger" :icon="Trash2" class="flex-1 md:flex-none md:w-full" @click="handleDelete">
-              Delete Task
+              {{ $t("projects.tasks.detail.delete") }}
             </UiButton>
           </div>
         </div>
@@ -718,13 +723,13 @@ watch(
           type="button"
           @click="lightboxOpen = false"
           class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white z-10"
-          aria-label="Close"
+          :aria-label="$t('common.actions.close')"
         >
           <X class="w-5 h-5" />
         </button>
         <img
           :src="isEditingDetails ? imagePreviewUrl : task?.image"
-          alt="Task image"
+          :alt="$t('projects.tasks.form.imageAlt')"
           class="relative w-[min(90vw,900px)] max-h-[85vh] rounded-ui-card object-contain"
         />
       </div>

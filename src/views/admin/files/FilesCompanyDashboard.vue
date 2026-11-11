@@ -27,6 +27,7 @@ import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 import { UiPageHeader, UiButton, UiBadge, UiStat, UiInput, UiEmpty, UiPagination, UiConfirmDialog } from "@/components/ui";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
+import { localeTag } from "@/i18n";
 
 const archiveStore = useFilesCompanyStore();
 const { archives, statistics, loading, success, error, pagination } =
@@ -40,7 +41,7 @@ const isDeleting = ref(false);
 
 const formatDate = (date) => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -145,25 +146,25 @@ const handleDelete = async () => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Document Files" subtitle="Company document storage">
+    <UiPageHeader :title="$t('files.title')" :subtitle="$t('files.subtitle')">
       <template #actions>
-        <UiButton :to="{ name: 'admin.files-company.create' }" :icon="Upload" class="w-full sm:w-auto">Upload</UiButton>
+        <UiButton :to="{ name: 'admin.files-company.create' }" :icon="Upload" class="w-full sm:w-auto">{{ $t("common.actions.upload") }}</UiButton>
       </template>
     </UiPageHeader>
 
     <!-- ================= STATS ================= -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 ui-stagger">
       <UiStat
-        label="Total Archived Files"
+        :label="$t('files.stats.total')"
         :value="statistics.total_archives"
-        hint="Secure Archive"
+        :hint="$t('files.stats.totalHint')"
         :icon="Archive"
         :loading="loading"
       />
       <UiStat
-        label="Last Upload"
+        :label="$t('files.stats.lastUpload')"
         :value="statistics.last_uploaded ? formatDate(statistics.last_uploaded) : '—'"
-        hint="Latest archive"
+        :hint="$t('files.stats.lastUploadHint')"
         :icon="Calendar"
       />
     </div>
@@ -191,10 +192,10 @@ const handleDelete = async () => {
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <div class="px-4 sm:px-5 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3 border-b border-ui-line">
         <div class="flex-1 min-w-0">
-          <h2 class="text-ui-h2 text-ui-ink">File Archives</h2>
-          <p class="text-ui-cap text-ui-muted tabular-nums">{{ pagination.total }} total files</p>
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t("files.listTitle") }}</h2>
+          <p class="text-ui-cap text-ui-muted tabular-nums">{{ $t("files.totalFiles", { n: pagination.total }, pagination.total) }}</p>
         </div>
-        <UiInput v-model="searchQuery" :icon="Search" placeholder="Search archives..." class="w-full sm:w-72" />
+        <UiInput v-model="searchQuery" :icon="Search" :placeholder="$t('files.searchPlaceholder')" class="w-full sm:w-72" />
       </div>
 
       <div class="p-4 sm:p-5">
@@ -225,13 +226,13 @@ const handleDelete = async () => {
             </div>
 
             <div class="flex items-center gap-2 mt-4 pt-3 border-t border-ui-line">
-              <p class="text-ui-cap text-ui-muted flex-1 min-w-0 truncate">Uploaded {{ formatDate(archive.created_at) }}</p>
+              <p class="text-ui-cap text-ui-muted flex-1 min-w-0 truncate">{{ $t("files.uploadedOn", { date: formatDate(archive.created_at) }) }}</p>
               <div class="flex items-center gap-0.5 -mr-1.5">
                 <button
                   type="button"
                   :class="iconBtn"
-                  title="Download File"
-                  aria-label="Download File"
+:title="$t('files.actions.download')"
+                  :aria-label="$t('files.actions.download')"
                   @click="archiveStore.downloadArchive(archive)"
                 >
                   <Download class="w-4 h-4" />
@@ -239,24 +240,24 @@ const handleDelete = async () => {
                 <router-link
                   :to="{ name: 'admin.files-company.detail', params: { id: archive.id } }"
                   :class="iconBtn"
-                  title="View File"
-                  aria-label="View File"
+:title="$t('files.actions.view')"
+                  :aria-label="$t('files.actions.view')"
                 >
                   <Eye class="w-4 h-4" />
                 </router-link>
                 <router-link
                   :to="{ name: 'admin.files-company.edit', params: { id: archive.id } }"
                   :class="iconBtn"
-                  title="Edit File"
-                  aria-label="Edit File"
+:title="$t('files.actions.edit')"
+                  :aria-label="$t('files.actions.edit')"
                 >
                   <Pencil class="w-4 h-4" />
                 </router-link>
                 <button
                   type="button"
                   class="ui-press w-8 h-8 rounded-ui-control flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad"
-                  title="Delete File"
-                  aria-label="Delete File"
+:title="$t('files.actions.delete')"
+                  :aria-label="$t('files.actions.delete')"
                   @click="confirmDelete(archive)"
                 >
                   <Trash2 class="w-4 h-4" />
@@ -270,26 +271,26 @@ const handleDelete = async () => {
         <UiEmpty
           v-else-if="searchQuery"
           :icon="Search"
-          title="No results found"
-          :message="`Try searching with a different keyword for &quot;${searchQuery}&quot;`"
+          :title="$t('common.states.noResults')"
+          :message="$t('files.noResultsFor', { query: searchQuery })"
         />
-        <UiEmpty v-else :icon="Archive" title="No archived files found" message="Upload your first document to get started">
-          <UiButton :to="{ name: 'admin.files-company.create' }" :icon="Upload" variant="secondary">Upload</UiButton>
+        <UiEmpty v-else :icon="Archive" :title="$t('files.empty.title')" :message="$t('files.empty.message')">
+          <UiButton :to="{ name: 'admin.files-company.create' }" :icon="Upload" variant="secondary">{{ $t("common.actions.upload") }}</UiButton>
         </UiEmpty>
       </div>
 
       <!-- Pagination -->
-      <UiPagination v-if="archives.length > 0" :meta="pagination" item-label="files" :disabled="loading" @change="goToPage" />
+      <UiPagination v-if="archives.length > 0" :meta="pagination" :item-label="$t('files.itemLabel')" :disabled="loading" @change="goToPage" />
     </section>
 
     <!-- Delete Confirmation Modal -->
     <UiConfirmDialog
       v-model:open="isDeleteModalOpen"
       type="danger"
-      title="Delete File?"
-      :message="`Are you sure you want to delete &quot;${archiveToDelete?.document_name ?? ''}&quot;? This action cannot be undone.`"
-      :confirm-text="isDeleting ? 'Deleting...' : 'Yes, Delete'"
-      cancel-text="Cancel"
+      :title="$t('files.delete.title')"
+      :message="$t('files.delete.message', { name: archiveToDelete?.document_name ?? '' })"
+      :confirm-text="isDeleting ? $t('common.actions.deleting') : $t('files.delete.confirm')"
+      :cancel-text="$t('common.actions.cancel')"
       :loading="isDeleting"
       @confirm="handleDelete"
     />

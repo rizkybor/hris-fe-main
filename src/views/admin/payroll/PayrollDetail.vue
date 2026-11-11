@@ -25,6 +25,10 @@ import { can, hasAnyRole } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { UiAlert, UiBadge, UiButton, UiInput, UiModal, UiPageHeader, UiSelect, UiStat, UiTable } from "@/components/ui";
 import Avatar from "@/components/common/Avatar.vue";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -255,7 +259,7 @@ const deductionBreakdown = (emp) => {
   const attendanceDeduction =
     emp.deductions - emp.bpjs_kesehatan_employee - emp.bpjs_jht_employee - emp.bpjs_jp_employee - emp.pph21;
   return [
-    `Potongan Absensi: ${formatRupiah(Math.max(0, attendanceDeduction))}`,
+    `${t("payroll.detail.attendanceDeduction")}: ${formatRupiah(Math.max(0, attendanceDeduction))}`,
     `BPJS Kesehatan: ${formatRupiah(emp.bpjs_kesehatan_employee)}`,
     `BPJS JHT: ${formatRupiah(emp.bpjs_jht_employee)}`,
     `BPJS JP: ${formatRupiah(emp.bpjs_jp_employee)}`,
@@ -268,7 +272,7 @@ const exportExcel = async () => {
     await payrollStore.exportExcel(route.params.id);
   } catch (error) {
     console.error("Error exporting Excel:", error);
-    await alertModal.alert("Failed to export Excel file. Please try again.", { type: "danger" });
+    await alertModal.alert(t("payroll.detail.exportFailed"), { type: "danger" });
   }
 };
 
@@ -350,11 +354,11 @@ const handleSaveEdit = async () => {
     await fetchPayrollDetails(pagination.value.current_page);
     await fetchPayrollStatistics();
     closeEditModal();
-    await alertModal.alert("Payroll detail updated successfully.", { type: "success" });
+    await alertModal.alert(t("payroll.detail.updated"), { type: "success" });
   } catch (error) {
     console.error("Error updating payroll detail:", error);
     await alertModal.alert(
-      error?.response?.data?.message || "Failed to update payroll detail.",
+      error?.response?.data?.message || t("payroll.detail.updateFailed"),
       { type: "danger" }
     );
   } finally {
@@ -375,10 +379,10 @@ const handleMarkAsPaid = async () => {
     await fetchPayrollDetails(pagination.value.current_page);
 
     closeMarkAsPaidModal();
-    await alertModal.alert("Payroll marked as paid successfully!", { type: "success" });
+    await alertModal.alert(t("payroll.detail.markedPaid"), { type: "success" });
   } catch (error) {
     console.error("Error marking payroll as paid:", error);
-    await alertModal.alert("Failed to mark payroll as paid. Please try again.", { type: "danger" });
+    await alertModal.alert(t("payroll.detail.markPaidFailed"), { type: "danger" });
   } finally {
     markingAsPaid.value = false;
   }
@@ -386,8 +390,8 @@ const handleMarkAsPaid = async () => {
 
 const handleDeleteDetail = async (emp) => {
   const ok = await alertModal.confirm(
-    `Delete ${emp.name}'s payroll entry for this period? This cannot be undone.`,
-    { type: "danger", confirmText: "Delete" }
+    t("payroll.detail.deleteDetailConfirm", { name: emp.name }),
+    { type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
 
@@ -398,17 +402,17 @@ const handleDeleteDetail = async (emp) => {
   } catch (error) {
     console.error("Error deleting payroll detail:", error);
     await alertModal.alert(
-      error?.response?.data?.message || "Failed to delete payroll detail.",
+      error?.response?.data?.message || t("payroll.detail.deleteDetailFailed"),
       { type: "danger" }
     );
   }
 };
 
 const handleDeletePayroll = async () => {
-  const label = isThr.value ? "THR" : "Payroll";
+  const label = isThr.value ? "THR" : t("payroll.common.payroll");
   const ok = await alertModal.confirm(
-    `Delete this entire ${label} period? This permanently removes it and all its employee details.`,
-    { type: "danger", confirmText: "Delete" }
+    t("payroll.detail.deletePayrollConfirm", { label }),
+    { type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
 
@@ -418,7 +422,7 @@ const handleDeletePayroll = async () => {
   } catch (error) {
     console.error("Error deleting payroll:", error);
     await alertModal.alert(
-      error?.response?.data?.message || "Failed to delete payroll.",
+      error?.response?.data?.message || t("payroll.dashboard.deleteFailed"),
       { type: "danger" }
     );
   }
@@ -427,10 +431,10 @@ const handleDeletePayroll = async () => {
 const regenerating = ref(false);
 
 const handleRegenerate = async () => {
-  const label = isThr.value ? "THR" : "Payroll";
+  const label = isThr.value ? "THR" : t("payroll.common.payroll");
   const ok = await alertModal.confirm(
-    `Re-generate this ${label} period? This replaces all existing employee details with freshly computed ones.`,
-    { type: "warning", confirmText: "Regenerate" }
+    t("payroll.detail.regenerateConfirm", { label }),
+    { type: "warning", confirmText: t("payroll.common.regenerate") }
   );
   if (!ok) return;
 
@@ -445,7 +449,7 @@ const handleRegenerate = async () => {
       await payrollStore.generatePayroll(payload);
     }
     await alertModal.alert(
-      `${label} regeneration is being processed in the background. Please check back shortly.`,
+      t("payroll.dashboard.regenerateQueued", { label }),
       { type: "success" }
     );
     await fetchPayrollSummary();
@@ -454,7 +458,7 @@ const handleRegenerate = async () => {
   } catch (error) {
     console.error("Error regenerating payroll:", error);
     await alertModal.alert(
-      error?.response?.data?.message || `Failed to regenerate ${label}.`,
+      error?.response?.data?.message || t("payroll.dashboard.regenerateFailed", { label }),
       { type: "danger" }
     );
   } finally {
@@ -463,27 +467,30 @@ const handleRegenerate = async () => {
 };
 
 // ---- Presentation only -------------------------------------------------
-const STATUS = {
-  draft: { tone: "neutral", label: "Draft" },
-  pending: { tone: "warn", label: "Pending" },
-  processing: { tone: "warn", label: "Processing" },
-  approved: { tone: "info", label: "Approved" },
-  paid: { tone: "ok", label: "Paid" },
-  cancelled: { tone: "bad", label: "Cancelled" },
+const STATUS_TONES = {
+  draft: "neutral",
+  pending: "warn",
+  processing: "warn",
+  approved: "info",
+  paid: "ok",
+  cancelled: "bad",
 };
-const statusOf = (status) => STATUS[status] || { tone: "neutral", label: status || "Pending" };
+const statusOf = (status) =>
+  STATUS_TONES[status]
+    ? { tone: STATUS_TONES[status], label: t(`payroll.status.${status}`) }
+    : { tone: "neutral", label: status || t("payroll.status.pending") };
 
 const formatPeriod = (date) =>
-  date ? new Date(date).toLocaleDateString("id-ID", { year: "numeric", month: "long" }) : "";
+  date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "long" }) : "";
 
 const pageTitle = computed(() => {
   const period = formatPeriod(payroll.value?.period || payroll.value?.salary_month);
-  return `${isThr.value ? "THR" : "Payroll"}${period ? ` · ${period}` : ""}`;
+  return `${isThr.value ? "THR" : t("payroll.common.payroll")}${period ? ` · ${period}` : ""}`;
 });
 
 const processedOn = computed(() =>
   payroll.value?.created_at
-    ? new Date(payroll.value.created_at).toLocaleDateString("id-ID", { month: "short", day: "numeric" })
+    ? new Date(payroll.value.created_at).toLocaleDateString(localeTag(), { month: "short", day: "numeric" })
     : "-"
 );
 const processedYear = computed(() =>
@@ -491,7 +498,7 @@ const processedYear = computed(() =>
 );
 
 const positionOptions = computed(() => [
-  { value: "", label: "All Positions" },
+  { value: "", label: t("payroll.detail.allPositions") },
   ...positions.value.map((p) => ({ value: p, label: p })),
 ]);
 
@@ -504,14 +511,14 @@ const projectOptions = computed(() =>
 
 const showActionsColumn = computed(() => canEditPayroll.value || canManagePayroll.value);
 const columns = computed(() => [
-  { key: "employee", label: "Employee" },
-  { key: "position", label: "Job Position", class: "hidden 2xl:table-cell" },
-  { key: "bank", label: "Bank Account" },
-  { key: "attendance", label: isThr.value ? "Months of Service" : "Attendance", align: "center" },
-  { key: "basic_salary", label: isThr.value ? "Gross THR" : "Basic Salary", align: "right" },
-  { key: "deductions", label: "Deductions", align: "right" },
-  { key: "net_salary", label: "Net Salary", align: "right" },
-  { key: "status", label: "Status" },
+  { key: "employee", label: t("common.labels.employee") },
+  { key: "position", label: t("payroll.detail.columns.position"), class: "hidden 2xl:table-cell" },
+  { key: "bank", label: t("payroll.detail.bankAccount") },
+  { key: "attendance", label: isThr.value ? t("payroll.detail.monthsOfService") : t("payroll.detail.attendance"), align: "center" },
+  { key: "basic_salary", label: isThr.value ? t("payroll.detail.grossThr") : t("payroll.detail.basicSalary"), align: "right" },
+  { key: "deductions", label: t("payroll.detail.deductions"), align: "right" },
+  { key: "net_salary", label: t("payroll.detail.netSalary"), align: "right" },
+  { key: "status", label: t("common.labels.status") },
   ...(showActionsColumn.value ? [{ key: "actions", label: "", align: "right", width: 88 }] : []),
 ]);
 
@@ -536,7 +543,7 @@ const breakdownDeductions = computed(() => {
   const attendanceDeduction =
     emp.deductions - emp.bpjs_kesehatan_employee - emp.bpjs_jht_employee - emp.bpjs_jp_employee - emp.pph21;
   return [
-    { label: "Potongan Absensi", value: Math.max(0, attendanceDeduction) },
+    { label: t("payroll.detail.attendanceDeduction"), value: Math.max(0, attendanceDeduction) },
     { label: "BPJS Kesehatan", value: emp.bpjs_kesehatan_employee },
     { label: "BPJS JHT", value: emp.bpjs_jht_employee },
     { label: "BPJS JP", value: emp.bpjs_jp_employee },
@@ -568,32 +575,32 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
           class="ui-press inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-2"
           @click="router.back()"
         >
-          <ArrowLeft class="w-4 h-4" />Back
+          <ArrowLeft class="w-4 h-4" />{{ $t("common.actions.back") }}
         </button>
       </template>
       <template #subtitle>
         <span class="inline-flex flex-wrap items-center gap-2">
           <UiBadge v-if="payroll" :tone="statusOf(payroll.status).tone" dot>{{ statusOf(payroll.status).label }}</UiBadge>
           <UiBadge v-if="isThr" tone="accent">THR</UiBadge>
-          <span>Complete payroll breakdown by employee</span>
+          <span>{{ $t('payroll.detail.subtitle') }}</span>
         </span>
       </template>
       <template #actions>
         <UiButton variant="ghost" :icon="showAmounts ? EyeOff : Eye" @click="showAmounts = !showAmounts">
-          {{ showAmounts ? "Hide Amounts" : "Show Amounts" }}
+          {{ showAmounts ? $t("common.actions.hideAmounts") : $t("common.actions.showAmounts") }}
         </UiButton>
         <UiButton v-if="canManagePayroll" variant="ghost" :icon="RefreshCw" :loading="regenerating" @click="handleRegenerate">
-          {{ regenerating ? "Regenerating..." : "Regenerate" }}
+          {{ regenerating ? $t('payroll.detail.regenerating') : $t("payroll.common.regenerate") }}
         </UiButton>
-        <UiButton v-if="canManagePayroll" variant="danger" :icon="Trash2" @click="handleDeletePayroll">Delete Payroll</UiButton>
-        <UiButton v-if="can('payroll-list')" variant="secondary" :icon="Download" @click="exportExcel">Export Excel</UiButton>
+        <UiButton v-if="canManagePayroll" variant="danger" :icon="Trash2" @click="handleDeletePayroll">{{ $t('payroll.detail.deletePayroll') }}</UiButton>
+        <UiButton v-if="can('payroll-list')" variant="secondary" :icon="Download" @click="exportExcel">{{ $t("common.actions.exportExcel") }}</UiButton>
         <UiButton
           v-if="can('payroll-process') && payroll?.status !== 'paid'"
           :icon="CheckCircle"
           class="order-first sm:order-none w-full sm:w-auto"
           @click="openMarkAsPaidModal"
         >
-          Mark as Paid
+          {{ $t('payroll.detail.markAsPaid') }}
         </UiButton>
       </template>
     </UiPageHeader>
@@ -601,28 +608,28 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
     <!-- Summary -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 ui-stagger">
       <UiStat
-        label="Total Employees"
+        :label="$t('payroll.detail.stats.totalEmployees')"
         :icon="Users"
         :loading="loading || loadingStatistics"
         :value="payrollStatistics?.total_employees || 0"
-        hint="All departments"
+        :hint="$t('payroll.detail.stats.allDepartments')"
       />
       <UiStat
-        label="Total Payroll"
+        :label="$t('payroll.detail.stats.totalPayroll')"
         :icon="DollarSign"
         :loading="loading || loadingStatistics"
         :value="maskRupiah(formatRupiahCompact(payrollStatistics?.total_amount || 0))"
-        hint="This period"
+        :hint="$t('payroll.detail.stats.thisPeriod')"
       />
       <UiStat
-        label="Average Salary"
+        :label="$t('payroll.dashboard.stats.averageSalary')"
         :icon="Banknote"
         :loading="loading || loadingStatistics"
         :value="maskRupiah(formatRupiahCompact(payrollStatistics?.average_salary || 0))"
-        hint="Per employee"
+        :hint="$t('payroll.dashboard.stats.perEmployee')"
       />
       <UiStat
-        label="Processed On"
+        :label="$t('payroll.detail.stats.processedOn')"
         :icon="CalendarCheck"
         :loading="loading || loadingStatistics"
         :value="processedOn"
@@ -634,14 +641,14 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <div class="px-4 sm:px-5 pt-4 pb-3 flex flex-col md:flex-row md:items-center gap-3 border-b border-ui-line">
         <div class="flex-1 min-w-0">
-          <h2 class="text-ui-h2 text-ui-ink">Employee Details</h2>
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t('payroll.detail.employeeDetails') }}</h2>
           <p class="text-ui-cap text-ui-muted tabular-nums">
-            {{ pagination.total || 0 }} employees in this period
+            {{ $t('payroll.detail.employeesInPeriod', { n: pagination.total || 0 }, pagination.total || 0) }}
           </p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:flex md:items-center gap-2">
-          <UiInput v-model="searchQuery" :icon="Search" placeholder="Search employees..." class="md:w-[260px]" />
-          <UiSelect v-model="departmentFilter" :options="positionOptions" class="md:w-[200px]" aria-label="Position" />
+          <UiInput v-model="searchQuery" :icon="Search" :placeholder="$t('payroll.detail.searchEmployees')" class="md:w-[260px]" />
+          <UiSelect v-model="departmentFilter" :options="positionOptions" class="md:w-[200px]" :aria-label="$t('payroll.detail.columns.position')" />
         </div>
       </div>
 
@@ -683,33 +690,33 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
           <span
             v-if="row.payment_mode === 'project_percentage'"
             class="text-ui-muted"
-            title="Not applicable -- paid as a percentage of a project's budget, not the attendance-based formula"
-          >N/A</span>
+            :title="$t('payroll.detail.notApplicableHint')"
+          >{{ $t("common.duration.na") }}</span>
           <span
             v-else
             class="tabular-nums text-ui-bad whitespace-nowrap cursor-help underline decoration-dotted underline-offset-2"
-            :title="showAmounts ? deductionBreakdown(row) : 'Click Show Amounts to see the breakdown'"
+            :title="showAmounts ? deductionBreakdown(row) : $t('payroll.detail.showAmountsHint')"
           >{{ maskRupiah(formatRupiah(row.deductions)) }}</span>
         </template>
         <template #cell-net_salary="{ row }">
           <span class="block tabular-nums font-semibold text-ui-ink whitespace-nowrap">{{ maskRupiah(formatRupiah(row.net_salary)) }}</span>
           <span v-if="row.payment_mode === 'project_percentage'" class="block text-ui-cap text-ui-accent mt-0.5">
-            {{ row.project_percentage }}% of {{ row.source_project?.name || "project" }}
+            {{ $t('payroll.detail.percentOfProject', { pct: row.project_percentage, project: row.source_project?.name || $t('payroll.detail.project') }) }}
           </span>
         </template>
         <template #cell-status="{ row }">
-          <UiBadge :tone="row.status === 'paid' ? 'ok' : 'warn'" dot>{{ row.status === "paid" ? "Paid" : "Pending" }}</UiBadge>
+          <UiBadge :tone="row.status === 'paid' ? 'ok' : 'warn'" dot>{{ row.status === "paid" ? $t("payroll.status.paid") : $t("payroll.status.pending") }}</UiBadge>
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-1">
-            <UiButton v-if="canEditPayroll" variant="ghost" size="sm" :icon="Pencil" title="Edit" aria-label="Edit" @click.stop="openEditModal(row)" />
+            <UiButton v-if="canEditPayroll" variant="ghost" size="sm" :icon="Pencil" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" @click.stop="openEditModal(row)" />
             <UiButton
               v-if="canManagePayroll"
               variant="ghost"
               size="sm"
               :icon="Trash2"
-              title="Delete"
-              aria-label="Delete"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('common.actions.delete')"
               class="!text-ui-bad"
               @click.stop="handleDeleteDetail(row)"
             />
@@ -723,12 +730,12 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
             <div class="flex-1 min-w-0">
               <p class="text-ui-body font-medium text-ui-ink truncate">{{ row.name }}</p>
               <p class="text-ui-cap text-ui-muted truncate tabular-nums">
-                {{ isThr ? "Gross THR" : "Basic" }} {{ maskRupiah(formatRupiah(row.basic_salary)) }}
+                {{ isThr ? $t('payroll.detail.grossThr') : $t('payroll.detail.basic') }} {{ maskRupiah(formatRupiah(row.basic_salary)) }}
               </p>
             </div>
             <div class="text-right shrink-0">
               <p class="text-ui-body font-semibold text-ui-ink tabular-nums">{{ maskRupiah(formatRupiah(row.net_salary)) }}</p>
-              <UiBadge class="mt-1" :tone="row.status === 'paid' ? 'ok' : 'warn'" dot>{{ row.status === "paid" ? "Paid" : "Pending" }}</UiBadge>
+              <UiBadge class="mt-1" :tone="row.status === 'paid' ? 'ok' : 'warn'" dot>{{ row.status === "paid" ? $t("payroll.status.paid") : $t("payroll.status.pending") }}</UiBadge>
             </div>
           </div>
         </template>
@@ -738,8 +745,8 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
             <div class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mb-3">
               <Users class="w-5 h-5" />
             </div>
-            <p class="text-ui-body font-medium text-ui-ink">No employees found</p>
-            <p class="text-ui-small text-ui-muted mt-1">Try a different search or position filter</p>
+            <p class="text-ui-body font-medium text-ui-ink">{{ $t('payroll.detail.empty.title') }}</p>
+            <p class="text-ui-small text-ui-muted mt-1">{{ $t('payroll.detail.empty.message') }}</p>
           </div>
         </template>
       </UiTable>
@@ -758,12 +765,12 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
       <div v-if="breakdownEmp" class="space-y-5">
         <dl class="bg-ui-subtle rounded-ui-card px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-3">
           <div class="min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Bank Account</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('payroll.detail.bankAccount') }}</dt>
             <dd class="text-ui-small font-medium text-ui-ink truncate">{{ breakdownEmp.bank_name }}</dd>
             <dd class="text-ui-cap text-ui-muted tabular-nums truncate">{{ breakdownEmp.account_number }}</dd>
           </div>
           <div class="min-w-0">
-            <dt class="text-ui-cap text-ui-muted">{{ isThr ? "Months of Service" : "Attendance" }}</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ isThr ? $t('payroll.detail.monthsOfService') : $t('payroll.detail.attendance') }}</dt>
             <dd v-if="isThr" class="text-ui-small font-medium text-ui-ink tabular-nums">{{ breakdownEmp.months_of_service ?? "-" }}/12</dd>
             <dd v-else class="text-ui-small font-medium tabular-nums">
               <span :class="attendanceTone(breakdownEmp)">{{ getAttendancePercentage(breakdownEmp.attended_days, breakdownEmp.total_work_days) }}%</span>
@@ -771,37 +778,37 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
             </dd>
           </div>
           <div class="min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Status</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t("common.labels.status") }}</dt>
             <dd class="mt-0.5">
-              <UiBadge :tone="breakdownEmp.status === 'paid' ? 'ok' : 'warn'" dot>{{ breakdownEmp.status === "paid" ? "Paid" : "Pending" }}</UiBadge>
+              <UiBadge :tone="breakdownEmp.status === 'paid' ? 'ok' : 'warn'" dot>{{ breakdownEmp.status === "paid" ? $t("payroll.status.paid") : $t("payroll.status.pending") }}</UiBadge>
             </dd>
           </div>
           <div v-if="breakdownEmp.payment_mode === 'project_percentage'" class="min-w-0">
-            <dt class="text-ui-cap text-ui-muted">Payment Mode</dt>
+            <dt class="text-ui-cap text-ui-muted">{{ $t('payroll.detail.paymentMode') }}</dt>
             <dd class="text-ui-small font-medium text-ui-ink">
-              {{ breakdownEmp.project_percentage }}% of {{ breakdownEmp.source_project?.name || "project" }}
+              {{ $t('payroll.detail.percentOfProject', { pct: breakdownEmp.project_percentage, project: breakdownEmp.source_project?.name || $t('payroll.detail.project') }) }}
             </dd>
           </div>
         </dl>
 
         <section>
-          <h3 class="text-ui-over uppercase text-ui-muted pb-1">Earnings</h3>
+          <h3 class="text-ui-over uppercase text-ui-muted pb-1">{{ $t('payroll.detail.earnings') }}</h3>
           <div class="divide-y divide-ui-line">
             <div class="flex items-center justify-between gap-3 py-2.5">
-              <span class="text-ui-small text-ui-muted">{{ isThr ? "Gross THR" : "Basic Salary" }}</span>
+              <span class="text-ui-small text-ui-muted">{{ isThr ? $t('payroll.detail.grossThr') : $t('payroll.detail.basicSalary') }}</span>
               <span class="text-ui-small text-ui-ink tabular-nums text-right">{{ maskRupiah(formatRupiah(breakdownEmp.basic_salary)) }}</span>
             </div>
             <div class="flex items-center justify-between gap-3 py-2.5">
-              <span class="text-ui-small font-semibold text-ui-ink">Gross Salary</span>
+              <span class="text-ui-small font-semibold text-ui-ink">{{ $t('payroll.detail.grossSalary') }}</span>
               <span class="text-ui-small font-semibold text-ui-ink tabular-nums text-right">{{ maskRupiah(formatRupiah(breakdownEmp.gross_salary)) }}</span>
             </div>
           </div>
         </section>
 
         <section>
-          <h3 class="text-ui-over uppercase text-ui-muted pb-1">Deductions</h3>
+          <h3 class="text-ui-over uppercase text-ui-muted pb-1">{{ $t('payroll.detail.deductions') }}</h3>
           <p v-if="breakdownEmp.payment_mode === 'project_percentage'" class="text-ui-small text-ui-muted py-2.5">
-            Not applicable -- paid as a percentage of a project's budget, not the attendance-based formula
+            {{ $t('payroll.detail.notApplicableHint') }}
           </p>
           <div v-else class="divide-y divide-ui-line">
             <div v-for="line in breakdownDeductions" :key="line.label" class="flex items-center justify-between gap-3 py-2.5">
@@ -809,45 +816,44 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
               <span class="text-ui-small text-ui-bad tabular-nums text-right">{{ maskRupiah(formatRupiah(line.value)) }}</span>
             </div>
             <div class="flex items-center justify-between gap-3 py-2.5">
-              <span class="text-ui-small font-semibold text-ui-ink">Total Deductions</span>
+              <span class="text-ui-small font-semibold text-ui-ink">{{ $t('payroll.detail.totalDeductions') }}</span>
               <span class="text-ui-small font-semibold text-ui-bad tabular-nums text-right">{{ maskRupiah(formatRupiah(breakdownEmp.deductions)) }}</span>
             </div>
           </div>
         </section>
 
         <div class="flex items-center justify-between gap-4 bg-ui-ink text-white rounded-ui-card px-5 py-4">
-          <p class="text-ui-small text-white/70">Net Salary (Take Home)</p>
+          <p class="text-ui-small text-white/70">{{ $t('payroll.detail.netTakeHome') }}</p>
           <p class="text-ui-h1 tabular-nums text-right">{{ maskRupiah(formatRupiah(breakdownEmp.net_salary)) }}</p>
         </div>
 
         <div v-if="breakdownEmp.notes" class="bg-ui-subtle rounded-ui-card px-4 py-3">
-          <p class="text-ui-small font-medium text-ui-ink mb-1">Notes:</p>
+          <p class="text-ui-small font-medium text-ui-ink mb-1">{{ $t('payroll.detail.notesLabel') }}</p>
           <p class="text-ui-small text-ui-text">{{ breakdownEmp.notes }}</p>
         </div>
       </div>
       <template v-if="breakdownEmp && showActionsColumn" #footer>
-        <UiButton v-if="canManagePayroll" variant="danger" :icon="Trash2" class="mr-auto" @click="deleteFromBreakdown(breakdownEmp)">Delete</UiButton>
-        <UiButton v-if="canEditPayroll" :icon="Pencil" @click="editFromBreakdown(breakdownEmp)">Edit</UiButton>
+        <UiButton v-if="canManagePayroll" variant="danger" :icon="Trash2" class="mr-auto" @click="deleteFromBreakdown(breakdownEmp)">{{ $t("common.actions.delete") }}</UiButton>
+        <UiButton v-if="canEditPayroll" :icon="Pencil" @click="editFromBreakdown(breakdownEmp)">{{ $t("common.actions.edit") }}</UiButton>
       </template>
     </UiModal>
 
     <!-- Mark as Paid -->
     <UiModal
       v-model:open="showMarkAsPaidModal"
-      title="Mark Payroll as Paid"
+      :title="$t('payroll.detail.markPaid.title')"
       size="sm"
       :persistent="markingAsPaid"
       @close="closeMarkAsPaidModal"
     >
       <p class="text-ui-small text-ui-muted mb-4">
-        Confirm that you want to mark this payroll as paid. This action
-        will update the status and record the payment date.
+        {{ $t('payroll.detail.markPaid.message') }}
       </p>
-      <UiInput v-model="paymentDate" type="date" label="Payment Date" required />
+      <UiInput v-model="paymentDate" type="date" :label="$t('payroll.detail.markPaid.paymentDate')" required />
       <template #footer>
-        <UiButton variant="secondary" :disabled="markingAsPaid" @click="closeMarkAsPaidModal">Cancel</UiButton>
+        <UiButton variant="secondary" :disabled="markingAsPaid" @click="closeMarkAsPaidModal">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton :icon="CheckCircle" :loading="markingAsPaid" @click="handleMarkAsPaid">
-          {{ markingAsPaid ? "Processing..." : "Confirm Payment" }}
+          {{ markingAsPaid ? $t('payroll.detail.markPaid.processing') : $t('payroll.detail.markPaid.confirm') }}
         </UiButton>
       </template>
     </UiModal>
@@ -855,19 +861,19 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
     <!-- Edit Payroll Detail -->
     <UiModal
       v-model:open="showEditModal"
-      :title="`Edit Payroll — ${editingEmployee?.name || ''}`"
-      description="Override this employee's automatically generated figures when their actual situation differs -- e.g. a fixed manual amount, or a cut of a project instead."
+      :title="$t('payroll.detail.edit.title', { name: editingEmployee?.name || '' })"
+      :description="$t('payroll.detail.edit.description')"
       :persistent="savingEdit"
       @close="closeEditModal"
     >
       <div class="space-y-4">
         <fieldset>
-          <legend :class="labelClass">Payment Mode</legend>
+          <legend :class="labelClass">{{ $t('payroll.detail.paymentMode') }}</legend>
           <div class="grid grid-cols-2 gap-1 p-1 bg-ui-subtle rounded-ui-control" role="radiogroup">
             <button
               v-for="mode in [
-                { value: 'manual', label: 'Fixed Amount (Rp)' },
-                { value: 'project_percentage', label: '% of a Project' },
+                { value: 'manual', label: $t('payroll.detail.edit.fixedAmount') },
+                { value: 'project_percentage', label: $t('payroll.detail.edit.percentOfProject') },
               ]"
               :key="mode.value"
               type="button"
@@ -887,11 +893,11 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
         <template v-if="editForm.payment_mode === 'manual'">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="pd-final" :class="labelClass">Final Salary (Take-home)</label>
+              <label for="pd-final" :class="labelClass">{{ $t('payroll.detail.edit.finalSalary') }}</label>
               <input id="pd-final" type="number" min="0" v-model.number="editForm.final_salary" :class="fieldClass" />
             </div>
             <div>
-              <label for="pd-gross" :class="labelClass">Gross Salary</label>
+              <label for="pd-gross" :class="labelClass">{{ $t('payroll.detail.grossSalary') }}</label>
               <input id="pd-gross" type="number" min="0" v-model.number="editForm.gross_salary" :class="fieldClass" />
             </div>
             <div>
@@ -911,7 +917,7 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
               <input id="pd-pph21" type="number" min="0" v-model.number="editForm.pph21" :class="fieldClass" />
             </div>
             <div class="sm:col-span-2">
-              <label for="pd-total-ded" :class="labelClass">Total Deduction</label>
+              <label for="pd-total-ded" :class="labelClass">{{ $t('payroll.detail.edit.totalDeduction') }}</label>
               <input id="pd-total-ded" type="number" min="0" v-model.number="editForm.total_deduction" :class="fieldClass" />
             </div>
           </div>
@@ -920,25 +926,25 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
         <template v-else>
           <UiSelect
             v-model="editForm.source_project_id"
-            label="Project"
+            :label="$t('common.labels.project')"
             :options="projectOptions"
-            :placeholder="loadingProjects ? 'Loading projects...' : 'Select a project'"
+            :placeholder="loadingProjects ? $t('payroll.detail.edit.loadingProjects') : $t('payroll.detail.edit.selectProject')"
           />
           <div>
-            <label for="pd-pct" :class="labelClass">Percentage (%)</label>
+            <label for="pd-pct" :class="labelClass">{{ $t('payroll.detail.edit.percentage') }}</label>
             <input id="pd-pct" type="number" min="0" max="100" step="0.1" v-model.number="editForm.project_percentage" :class="fieldClass" />
           </div>
-          <UiAlert tone="info" :title="`Estimated payout: ${formatRupiah(projectPercentagePreview)}`">
-            Recalculated from the project's current budget when you save.
+          <UiAlert tone="info" :title="$t('payroll.detail.edit.estimated', { amount: formatRupiah(projectPercentagePreview) })">
+            {{ $t('payroll.detail.edit.recalculated') }}
           </UiAlert>
         </template>
 
-        <UiInput v-model="editForm.notes" label="Notes" :rows="2" placeholder="Optional reason for this override..." />
+        <UiInput v-model="editForm.notes" :label="$t('common.labels.notes')" :rows="2" :placeholder="$t('payroll.detail.edit.notesPlaceholder')" />
       </div>
 
       <template #footer>
-        <UiButton variant="secondary" :disabled="savingEdit" @click="closeEditModal">Cancel</UiButton>
-        <UiButton :loading="savingEdit" @click="handleSaveEdit">{{ savingEdit ? "Saving..." : "Save Changes" }}</UiButton>
+        <UiButton variant="secondary" :disabled="savingEdit" @click="closeEditModal">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton :loading="savingEdit" @click="handleSaveEdit">{{ savingEdit ? $t("common.actions.saving") : $t("common.actions.saveChanges") }}</UiButton>
       </template>
     </UiModal>
   </div>

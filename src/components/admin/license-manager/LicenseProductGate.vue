@@ -28,19 +28,21 @@ defineProps({
       <component :is="state === 'missing' ? PackageX : PowerOff" class="w-6 h-6" />
     </div>
     <h3 class="text-ui-h2 text-ui-ink mb-1.5">
-      {{ state === "missing" ? "Product not found" : `${productName} is inactive` }}
+      {{ state === "missing" ? $t("licenses.gate.notFoundTitle") : $t("licenses.gate.inactiveTitle", { name: productName }) }}
     </h3>
     <p class="text-ui-small text-ui-muted mb-6">
       <template v-if="state === 'missing'">
-        There is no product with the code <span class="font-mono font-medium text-ui-ink">{{ code }}</span>.
+        <i18n-t keypath="licenses.gate.notFoundMessage" tag="span" scope="global">
+          <template #code><span class="font-mono font-medium text-ui-ink">{{ code }}</span></template>
+        </i18n-t>
       </template>
       <template v-else>
-        This product is switched off: its keys cannot be activated. Switch it on in the License Manager overview to manage its licenses.
+        {{ $t("licenses.gate.inactiveMessage") }}
       </template>
     </p>
     <div class="flex flex-col sm:flex-row items-center justify-center gap-2">
-      <UiButton variant="secondary" :icon="ArrowLeft" :to="{ name: 'admin.license-manager.overview' }">License Manager</UiButton>
-      <UiButton v-if="can('license-manager-edit')" :to="{ name: 'admin.license-manager.overview' }">Manage products</UiButton>
+      <UiButton variant="secondary" :icon="ArrowLeft" :to="{ name: 'admin.license-manager.overview' }">{{ $t("licenses.title") }}</UiButton>
+      <UiButton v-if="can('license-manager-edit')" :to="{ name: 'admin.license-manager.overview' }">{{ $t("licenses.gate.manageProducts") }}</UiButton>
     </div>
   </div>
 

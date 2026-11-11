@@ -232,19 +232,19 @@ const closeErrorModal = () => {
             <p class="text-ui-small font-medium text-ui-ink">
               {{
                 currentStep === 4
-                  ? "Ready to add this employee?"
-                  : `Step ${currentStep} of ${totalSteps}`
+                  ? $t("employees.wizard.create.ready")
+                  : $t("employees.wizard.stepOf", { current: currentStep, total: totalSteps })
               }}
             </p>
             <p class="text-ui-cap text-ui-muted mt-0.5">
               {{
                 currentStep === 4
-                  ? "Review and confirm all information before submitting"
+                  ? $t("employees.wizard.create.reviewHint")
                   : currentStep === 1
-                  ? "Fill in the personal information"
+                  ? $t("employees.wizard.create.personalHint")
                   : currentStep === 2
-                  ? "Fill in the job information"
-                  : "Fill in the emergency contact information"
+                  ? $t("employees.wizard.create.jobHint")
+                  : $t("employees.wizard.create.emergencyHint")
               }}
             </p>
           </div>
@@ -254,11 +254,11 @@ const closeErrorModal = () => {
               variant="secondary"
               size="lg"
               :icon="ArrowLeft"
-              aria-label="Previous"
+              :aria-label="$t('common.actions.previous')"
               class="shrink-0 w-11 !px-0 sm:w-auto sm:!px-3.5 sm:h-9 sm:px-3.5 sm:text-ui-small"
               @click="previousStep"
             >
-              <span class="hidden sm:inline">Previous</span>
+              <span class="hidden sm:inline">{{ $t("common.actions.previous") }}</span>
             </UiButton>
             <UiButton
               v-else
@@ -267,7 +267,7 @@ const closeErrorModal = () => {
               class="flex-1 sm:flex-none sm:h-9 sm:px-3.5 sm:text-ui-small"
               @click="previousStep"
             >
-              Cancel
+              {{ $t("common.actions.cancel") }}
             </UiButton>
 
             <UiButton
@@ -277,13 +277,12 @@ const closeErrorModal = () => {
               class="flex-1 min-w-0 sm:flex-none sm:h-9 sm:px-3.5 sm:text-ui-small"
               @click="nextStep"
             >
-              Next:
               {{
-                currentStep === 1
-                  ? "Job Info"
-                  : currentStep === 2
-                  ? "Emergency Contact"
-                  : "Review"
+                $t("employees.wizard.next", {
+                  step: $t(
+                    `employees.wizard.nextSteps.${currentStep === 1 ? "job" : currentStep === 2 ? "emergency" : "review"}`
+                  ),
+                })
               }}
             </UiButton>
             <UiButton
@@ -294,7 +293,7 @@ const closeErrorModal = () => {
               :loading="loading"
               class="flex-1 min-w-0 sm:flex-none sm:h-9 sm:px-3.5 sm:text-ui-small"
             >
-              {{ loading ? "Adding..." : "Add Employee" }}
+              {{ loading ? $t("employees.wizard.create.submitting") : $t("employees.wizard.create.submit") }}
             </UiButton>
           </div>
         </div>

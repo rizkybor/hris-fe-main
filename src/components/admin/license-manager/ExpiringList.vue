@@ -54,8 +54,8 @@ const open = (license) => {
       <div class="flex items-center gap-2.5 min-w-0">
         <Hourglass class="w-4 h-4 text-ui-faint shrink-0" />
         <div class="min-w-0">
-          <h4 class="text-ui-h2 text-ui-ink">Expiring soon</h4>
-          <p class="text-ui-cap text-ui-muted">Active licenses ending within {{ days }} days</p>
+          <h4 class="text-ui-h2 text-ui-ink">{{ $t("licenses.status.expiringSoon") }}</h4>
+          <p class="text-ui-cap text-ui-muted">{{ $t("licenses.expiring.subtitle", { n: days }, days) }}</p>
         </div>
       </div>
       <span
@@ -77,17 +77,21 @@ const open = (license) => {
       </div>
     </div>
 
-    <UiEmpty v-else-if="state === 'unavailable'" :icon="PlugZap" title="Not available yet" message="This panel will fill in once the server supports it." compact>
+    <UiEmpty v-else-if="state === 'unavailable'" :icon="PlugZap" 
+      :title="$t('licenses.panel.unavailableTitle')"
+      :message="$t('licenses.panel.unavailableMessage')"
+      compact
+    >
       <button type="button" @click="load" class="inline-flex items-center gap-1.5 text-ui-small font-medium text-ui-accent hover:underline">
-        <RefreshCw class="w-3.5 h-3.5" /> Try again
+        <RefreshCw class="w-3.5 h-3.5" /> {{ $t("common.actions.retry") }}
       </button>
     </UiEmpty>
 
     <UiEmpty
       v-else-if="!items.length"
       :icon="CalendarClock"
-      title="Nothing expiring"
-      :message="`No active license ends in the next ${days} days.`"
+      :title="$t('licenses.expiring.emptyTitle')"
+      :message="$t('licenses.expiring.emptyMessage', { n: days }, days)"
       compact
     />
 
@@ -107,7 +111,7 @@ const open = (license) => {
               </span>
             </div>
             <p class="text-ui-cap text-ui-muted truncate">
-              {{ license.product?.name || "-" }} · ends {{ formatDate(license.expires_at) }}
+              {{ license.product?.name || "-" }} · {{ $t("licenses.expiring.ends", { date: formatDate(license.expires_at) }) }}
             </p>
           </div>
           <span class="inline-flex items-center h-[22px] px-2 rounded-md text-ui-cap font-medium whitespace-nowrap tabular-nums" :class="remainingBadgeClass(license)">

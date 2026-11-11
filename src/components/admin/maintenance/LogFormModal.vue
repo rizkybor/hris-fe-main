@@ -64,49 +64,49 @@ const employeeOptions = computed(() => [{ value: "", label: "-" }, ...props.empl
 <template>
   <UiModal
     :open="show"
-    :title="log ? 'Edit Work Log' : 'Log Work'"
-    :description="feature ? `Feature &quot;${feature.title}&quot; · paid from the development balance` : 'Counts against the quota of the month it was done in'"
+    :title="log ? $t('maintenance.logForm.editTitle') : $t('maintenance.logForm.newTitle')"
+    :description="feature ? $t('maintenance.logForm.featureDescription', { title: feature.title }) : $t('maintenance.logForm.quotaDescription')"
     :z-index="110"
     @close="emit('close')"
   >
     <form id="maintenance-log-form" class="space-y-4" @submit.prevent="submit">
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label for="ml-date" :class="LABEL">Date<span class="text-ui-bad"> *</span></label>
+          <label for="ml-date" :class="LABEL">{{ $t("common.labels.date") }}<span class="text-ui-bad"> *</span></label>
           <input id="ml-date" v-model="form.work_date" type="date" :max="localToday()" :class="FIELD" required />
           <p v-if="err('work_date')" :class="ERR">{{ err("work_date") }}</p>
         </div>
         <div>
-          <label for="ml-hours" :class="LABEL">Hours<span class="text-ui-bad"> *</span></label>
+          <label for="ml-hours" :class="LABEL">{{ $t("maintenance.logForm.hours") }}<span class="text-ui-bad"> *</span></label>
           <input id="ml-hours" v-model="form.hours" type="number" min="0.1" max="24" step="any" :class="[FIELD, 'tabular-nums']" required />
           <p v-if="err('hours')" :class="ERR">{{ err("hours") }}</p>
         </div>
       </div>
       <div>
-        <label for="ml-title" :class="LABEL">Work done<span class="text-ui-bad"> *</span></label>
-        <input id="ml-title" v-model="form.title" :class="FIELD" maxlength="255" placeholder="e.g. Fix product photo upload" required />
+        <label for="ml-title" :class="LABEL">{{ $t("maintenance.logForm.workDone") }}<span class="text-ui-bad"> *</span></label>
+        <input id="ml-title" v-model="form.title" :class="FIELD" maxlength="255" :placeholder="$t('maintenance.logForm.workDonePlaceholder')" required />
         <p v-if="err('title')" :class="ERR">{{ err("title") }}</p>
       </div>
       <div>
-        <label for="ml-details" :class="LABEL">Details</label>
-        <textarea id="ml-details" v-model="form.description" rows="3" maxlength="2000" :class="FIELD" placeholder="What was changed, for whom, any follow-up..."></textarea>
+        <label for="ml-details" :class="LABEL">{{ $t("maintenance.logForm.details") }}</label>
+        <textarea id="ml-details" v-model="form.description" rows="3" maxlength="2000" :class="FIELD" :placeholder="$t('maintenance.logForm.detailsPlaceholder')"></textarea>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <UiSelect id="ml-category" v-model="form.category" label="Category" :options="LOG_CATEGORIES" />
-        <UiSelect id="ml-by" v-model="form.performed_by" label="Done by" :options="employeeOptions" />
+        <UiSelect id="ml-category" v-model="form.category" :label="$t('common.labels.category')" :options="LOG_CATEGORIES" />
+        <UiSelect id="ml-by" v-model="form.performed_by" :label="$t('maintenance.logForm.doneBy')" :options="employeeOptions" />
       </div>
       <label class="flex items-start gap-2.5 cursor-pointer">
         <input v-model="form.visible_to_client" type="checkbox" class="mt-0.5 w-4 h-4 accent-ui-ink" />
         <span class="text-ui-small font-medium text-ui-ink">
-          Show to client
-          <span class="block text-ui-cap font-normal text-ui-muted">Untick for internal work the client shouldn't see listed (the hours still count).</span>
+          {{ $t("maintenance.logForm.showToClient") }}
+          <span class="block text-ui-cap font-normal text-ui-muted">{{ $t("maintenance.logForm.showToClientHint") }}</span>
         </span>
       </label>
     </form>
 
     <template #footer>
-      <UiButton variant="secondary" @click="emit('close')">Cancel</UiButton>
-      <UiButton type="submit" form="maintenance-log-form" :loading="loading">{{ log ? "Save" : "Log Work" }}</UiButton>
+      <UiButton variant="secondary" @click="emit('close')">{{ $t("common.actions.cancel") }}</UiButton>
+      <UiButton type="submit" form="maintenance-log-form" :loading="loading">{{ log ? $t("common.actions.save") : $t("maintenance.logForm.submit") }}</UiButton>
     </template>
   </UiModal>
 </template>

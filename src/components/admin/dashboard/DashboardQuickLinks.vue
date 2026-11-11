@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-vue-next";
 import { can } from "@/helpers/permissionHelper";
 
 const props = defineProps({
-  title: { type: String, default: "Quick Access" },
+  title: { type: String, default: "" }, // defaults to "Quick Access"
   links: { type: Array, required: true },
 });
 
@@ -15,7 +15,7 @@ const visibleLinks = computed(() =>
 </script>
 
 <template>
-  <DashboardWidgetCard :title="title" flush>
+  <DashboardWidgetCard :title="title || $t('dashboard.widgets.quickAccess')" flush>
     <nav v-if="visibleLinks.length" class="p-2 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-0.5">
       <RouterLink
         v-for="link in visibleLinks"
@@ -28,6 +28,6 @@ const visibleLinks = computed(() =>
         <ChevronRight class="w-3.5 h-3.5 text-ui-faint opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
       </RouterLink>
     </nav>
-    <p v-else class="text-ui-small text-ui-muted text-center py-6">No quick links available.</p>
+    <p v-else class="text-ui-small text-ui-muted text-center py-6">{{ $t("dashboard.quickLinks.empty") }}</p>
   </DashboardWidgetCard>
 </template>

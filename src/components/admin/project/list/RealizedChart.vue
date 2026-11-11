@@ -7,6 +7,10 @@ import { storeToRefs } from "pinia";
 import { uiColor } from "@/utils/uiColor";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
+import { localeTag } from "@/i18n";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   compact: { type: Boolean, default: false },
@@ -28,7 +32,11 @@ const currentYear = new Date().getFullYear();
 const selectedYear = ref(currentYear);
 
 const MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const MONTH_LABELS = computed(() =>
+  MONTHS.map((m) =>
+    new Date(2000, Number(m) - 1, 1).toLocaleDateString(localeTag(), { month: "short" })
+  )
+);
 
 const availableYears = computed(() => {
   const years = new Set(realizedByMonth.value.map((item) => Number(item.month.split("-")[0])));
@@ -55,7 +63,7 @@ const yearlySeriesEntries = computed(() => {
 });
 
 const chartCategories = computed(() =>
-  viewMode.value === "monthly" ? MONTH_LABELS : yearlySeriesEntries.value.map(([y]) => y)
+  viewMode.value === "monthly" ? MONTH_LABELS.value : yearlySeriesEntries.value.map(([y]) => y)
 );
 
 const chartSeriesData = computed(() =>
@@ -101,7 +109,7 @@ const chartOptions = computed(() => ({
   },
 }));
 
-const chartSeries = computed(() => [{ name: "Realized", data: chartSeriesData.value }]);
+const chartSeries = computed(() => [{ name: t("projects.charts.realizedSeries"), data: chartSeriesData.value }]);
 </script>
 
 <template>
@@ -111,15 +119,15 @@ const chartSeries = computed(() => [{ name: "Realized", data: chartSeriesData.va
     <div class="flex flex-col gap-3 mb-3">
       <div class="flex items-start gap-3">
         <div class="flex-1 min-w-0">
-          <h3 class="text-ui-h2 text-ui-ink">Project Realized</h3>
+          <h3 class="text-ui-h2 text-ui-ink">{{ $t("projects.charts.realizedTitle") }}</h3>
           <Skeleton v-if="loadingStatistics" width="140px" height="14px" rounded="4px" class="mt-1" />
           <p v-else class="text-ui-cap text-ui-muted flex items-center flex-wrap gap-1.5 mt-0.5">
-            Total Payment Receipts collected on project invoices:
+            {{ $t("projects.charts.realizedTotal") }}
             <span class="text-ui-ink font-medium tabular-nums">{{ showAmount ? formatRupiah(totalRealized) : "Rp ••••••••" }}</span>
             <button
               type="button"
               @click="showAmount = !showAmount"
-              :aria-label="showAmount ? 'Hide amount' : 'Show amount'"
+              :aria-label="showAmount ? $t('projects.charts.hideAmount') : $t('projects.charts.showAmount')"
               class="text-ui-faint hover:text-ui-ink transition-colors"
             >
               <EyeOff v-if="showAmount" class="w-3.5 h-3.5" />
@@ -137,7 +145,7 @@ const chartSeries = computed(() => [{ name: "Realized", data: chartSeriesData.va
             :class="viewMode === 'monthly' ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
             class="h-7 px-3 rounded-[6px] text-ui-cap font-medium transition-colors"
           >
-            Monthly
+            {{ $t("projects.charts.monthly") }}
           </button>
           <button
             type="button"
@@ -145,7 +153,7 @@ const chartSeries = computed(() => [{ name: "Realized", data: chartSeriesData.va
             :class="viewMode === 'yearly' ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
             class="h-7 px-3 rounded-[6px] text-ui-cap font-medium transition-colors"
           >
-            Yearly
+            {{ $t("projects.charts.yearly") }}
           </button>
         </div>
 
@@ -167,7 +175,7 @@ const chartSeries = computed(() => [{ name: "Realized", data: chartSeriesData.va
       <Skeleton v-if="loadingStatistics" width="100%" height="100%" rounded="12px" />
       <div v-else-if="!hasData" class="flex flex-col items-center justify-center h-full text-center">
         <span class="w-10 h-10 rounded-full bg-ui-subtle text-ui-muted flex items-center justify-center mb-3"><BanknoteIcon class="w-5 h-5" /></span>
-        <p class="text-ui-small text-ui-muted">No realized value for this {{ viewMode === "monthly" ? "year" : "period" }} yet</p>
+        <p class="text-ui-small text-ui-muted">{{ viewMode === "monthly" ? $t("projects.charts.realizedEmptyYear") : $t("projects.charts.realizedEmptyPeriod") }}</p>
       </div>
       <VueApexCharts
         v-else

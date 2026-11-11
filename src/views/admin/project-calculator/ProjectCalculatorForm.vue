@@ -23,6 +23,9 @@ import { calculateMarketingFee } from "@/utils/marketingFee";
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiSwitch, UiModal, UiEmpty } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -174,7 +177,7 @@ const applyReference = async (reference) => {
     form.value.scenario === "landing_page"
       ? !!Number(form.value.estimated_hours)
       : form.value.items.some((item) => item.name?.trim());
-  if (hasExistingWork && !(await alertModal.confirm(`Replace the current items with those from "${reference.name}"? This can't be undone.`))) {
+  if (hasExistingWork && !(await alertModal.confirm(t("calculator.form.replaceConfirm", { name: reference.name })))) {
     return;
   }
 
@@ -284,7 +287,7 @@ onMounted(async () => {
               ),
       };
     } catch (error) {
-      errorMessage.value = "Estimate not found.";
+      errorMessage.value = t("calculator.detail.notFound");
     } finally {
       loadingCalculation.value = false;
     }
@@ -478,12 +481,21 @@ const canSave = computed(() => {
 });
 
 // ---- Presentation-only helpers (no calculation logic) ----
-const scenarioCards = [
-  { value: "feature", label: "New Feature", desc: "Adding features to the existing system", icon: PuzzleIcon },
-  { value: "build", label: "Build from Scratch", desc: "Building a new application, per module", icon: Layers3Icon },
-  { value: "landing_page", label: "Landing Page", desc: "Server, Design, and Development package", icon: Globe },
-];
-const scenarioLabel = (s) => (s === "feature" ? "New Feature" : s === "build" ? "Build from Scratch" : "Landing Page");
+const scenarioCards = computed(() => [
+  { value: "feature", label: t("calculator.scenario.feature"), desc: t("calculator.form.scenarioDesc.feature"), icon: PuzzleIcon },
+  { value: "build", label: t("calculator.scenario.build"), desc: t("calculator.form.scenarioDesc.build"), icon: Layers3Icon },
+  { value: "landing_page", label: t("calculator.scenario.landingPage"), desc: t("calculator.form.scenarioDesc.landingPage"), icon: Globe },
+]);
+const scenarioLabel = (s) =>
+  s === "feature" ? t("calculator.scenario.feature") : s === "build" ? t("calculator.scenario.build") : t("calculator.scenario.landingPage");
+const serverOptions = computed(() => [
+  { value: "dedicated", label: t("calculator.form.lp.dedicated"), price: landingPageRateSetting.value.server_dedicated_price },
+  { value: "shared", label: t("calculator.form.lp.shared"), price: landingPageRateSetting.value.server_shared_price },
+]);
+const designOptions = computed(() => [
+  { value: "dedicated", label: t("calculator.form.lp.dedicated"), price: landingPageRateSetting.value.design_dedicated_price },
+  { value: "template", label: t("calculator.form.lp.template"), price: landingPageRateSetting.value.design_template_price },
+]);
 const pphOptions = computed(() =>
   pphTypes.value.map((type) => ({
     value: type.value,
@@ -506,7 +518,7 @@ const iconBtn =
 const submit = async () => {
   errorMessage.value = "";
   if (!canSave.value) {
-    errorMessage.value = "Estimate name and each item name are required.";
+    errorMessage.value = t("calculator.form.requiredError");
     return;
   }
 
@@ -519,7 +531,7 @@ const submit = async () => {
   } catch (error) {
     const data = error?.response?.data;
     errorMessage.value =
-      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Failed to save estimate.");
+      data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t("calculator.form.saveFailed"));
   }
 };
 </script>
@@ -527,23 +539,23 @@ const submit = async () => {
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <UiPageHeader
-      :title="isEditing ? 'Edit Estimate' : 'Create New Estimate'"
-      subtitle="Fill in the details below, the total will be calculated automatically"
+      :title="isEditing ? $t('calculator.form.editTitle') : $t('calculator.dashboard.createNew')"
+      :subtitle="$t('calculator.form.subtitle')"
     >
       <template #eyebrow>
         <button
           type="button"
           class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
-          aria-label="Back"
+          :aria-label="$t('common.actions.back')"
           @click="router.back()"
         >
-          <ArrowLeft class="w-4 h-4" /> Back
+          <ArrowLeft class="w-4 h-4" /> {{ $t("common.actions.back") }}
         </button>
       </template>
       <template #actions>
-        <UiButton variant="secondary" @click="router.back()">Cancel</UiButton>
+        <UiButton variant="secondary" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton :icon="SaveIcon" :loading="saving" :disabled="!canSave" @click="submit">
-          {{ saving ? "Saving..." : isEditing ? "Save Changes" : "Save Estimate" }}
+          {{ saving ? $t("common.actions.saving") : isEditing ? $t("common.actions.saveChanges") : $t("calculator.form.saveEstimate") }}
         </UiButton>
       </template>
     </UiPageHeader>
@@ -566,15 +578,15 @@ const submit = async () => {
       <div class="space-y-5 min-w-0">
         <!-- Basic info -->
         <section class="bg-ui-surface border border-ui-line rounded-ui-card px-4 sm:px-6 py-5 space-y-5">
-          <h2 class="text-ui-h2 text-ui-ink">Estimate details</h2>
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t("calculator.form.details") }}</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UiInput v-model="form.name" label="Project Name Example" required placeholder="example: Added WA Monitoring Featured" />
-            <UiInput v-model="form.client_name" label="Client Name (Optional)" placeholder="example: PT. Client Name" />
+            <UiInput v-model="form.name" :label="$t('calculator.form.name')" required :placeholder="$t('calculator.form.namePlaceholder')" />
+            <UiInput v-model="form.client_name" :label="$t('calculator.form.clientName')" :placeholder="$t('calculator.form.clientPlaceholder')" />
           </div>
 
           <!-- Scenario toggle -->
           <div>
-            <p :class="fieldLabel">Scenario</p>
+            <p :class="fieldLabel">{{ $t("calculator.dashboard.columns.scenario") }}</p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <button
                 v-for="card in scenarioCards"
@@ -621,21 +633,21 @@ const submit = async () => {
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center gap-2">
-                <h2 class="text-ui-h2 text-ui-ink">{{ form.scenario === "feature" ? "Feature List" : "Module List" }}</h2>
+                <h2 class="text-ui-h2 text-ui-ink">{{ form.scenario === "feature" ? $t("calculator.form.featureList") : $t("calculator.form.moduleList") }}</h2>
                 <UiBadge class="tabular-nums">{{ form.items.length }}</UiBadge>
               </div>
               <div class="flex items-center gap-1.5">
                 <UiButton v-if="!isEditing" variant="secondary" size="sm" :icon="History" @click="openReferenceModal">
-                  Load from Previous Estimate
+                  {{ $t("calculator.form.loadPrevious") }}
                 </UiButton>
                 <UiButton variant="secondary" size="sm" :icon="PlusIcon" @click="addItem">
-                  {{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}
+                  {{ form.scenario === "feature" ? $t("calculator.form.addFeature") : $t("calculator.form.addModule") }}
                 </UiButton>
               </div>
             </div>
             <p class="flex items-start gap-1.5 text-ui-cap text-ui-muted mt-2">
               <InfoIcon class="w-3.5 h-3.5 shrink-0 mt-px" />
-              Complexity Factor: Simple = 1.0 &middot; Medium = 1.3&ndash;1.5 &middot; Complex = 1.8&ndash;2.2. Typical risk buffer 15&ndash;20%.
+              {{ $t("calculator.form.complexityHint") }}
             </p>
           </div>
 
@@ -658,19 +670,19 @@ const submit = async () => {
                 <tr class="text-ui-cap font-medium text-ui-muted align-bottom">
                   <th class="pl-5 pr-0 py-2.5 text-left font-medium border-b border-ui-line">#</th>
                   <th class="px-2 py-2.5 text-left font-medium border-b border-ui-line">
-                    {{ form.scenario === "feature" ? "Feature name" : "Module name" }}
+                    {{ form.scenario === "feature" ? $t("calculator.form.featureName") : $t("calculator.form.moduleName") }}
                   </th>
                   <template v-if="form.scenario === 'feature'">
-                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Analysis Hours</th>
-                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Development Hours</th>
-                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Testing Hours</th>
-                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Deployment Hours</th>
+                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">{{ $t("calculator.form.hours.analysis") }}</th>
+                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">{{ $t("calculator.form.hours.development") }}</th>
+                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">{{ $t("calculator.form.hours.testing") }}</th>
+                    <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">{{ $t("calculator.form.hours.deployment") }}</th>
                   </template>
-                  <th v-else class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Estimated Hours</th>
-                  <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Complexity Factor</th>
-                  <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">Buffer Risk %</th>
-                  <th class="px-2 py-2.5 text-right font-medium border-b border-ui-line">Final Price</th>
-                  <th class="pr-3 py-2.5 border-b border-ui-line"><span class="sr-only">Remove</span></th>
+                  <th v-else class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">{{ $t("calculator.form.hours.estimated") }}</th>
+                  <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">{{ $t("calculator.form.complexity") }}</th>
+                  <th class="px-1 py-2.5 text-right font-medium border-b border-ui-line leading-tight">{{ $t("calculator.form.bufferPercent") }}</th>
+                  <th class="px-2 py-2.5 text-right font-medium border-b border-ui-line">{{ $t("calculator.form.finalPrice") }}</th>
+                  <th class="pr-3 py-2.5 border-b border-ui-line"><span class="sr-only">{{ $t("common.actions.remove") }}</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -680,22 +692,22 @@ const submit = async () => {
                     <input
                       v-model="item.name"
                       type="text"
-                      :placeholder="form.scenario === 'feature' ? 'Feature name' : 'Module name'"
-                      :aria-label="form.scenario === 'feature' ? 'Feature name' : 'Module name'"
+                      :placeholder="form.scenario === 'feature' ? $t('calculator.form.featureName') : $t('calculator.form.moduleName')"
+                      :aria-label="form.scenario === 'feature' ? $t('calculator.form.featureName') : $t('calculator.form.moduleName')"
                       :class="cellText"
                     />
                   </td>
                   <template v-if="form.scenario === 'feature'">
-                    <td class="px-1 py-2.5"><input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" aria-label="Analysis Hours" :class="cellInput" /></td>
-                    <td class="px-1 py-2.5"><input v-model.number="item.dev_hours" type="number" min="0" step="0.5" aria-label="Development Hours" :class="cellInput" /></td>
-                    <td class="px-1 py-2.5"><input v-model.number="item.testing_hours" type="number" min="0" step="0.5" aria-label="Testing Hours" :class="cellInput" /></td>
-                    <td class="px-1 py-2.5"><input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" aria-label="Deployment Hours" :class="cellInput" /></td>
+                    <td class="px-1 py-2.5"><input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" :aria-label="$t('calculator.form.hours.analysis')" :class="cellInput" /></td>
+                    <td class="px-1 py-2.5"><input v-model.number="item.dev_hours" type="number" min="0" step="0.5" :aria-label="$t('calculator.form.hours.development')" :class="cellInput" /></td>
+                    <td class="px-1 py-2.5"><input v-model.number="item.testing_hours" type="number" min="0" step="0.5" :aria-label="$t('calculator.form.hours.testing')" :class="cellInput" /></td>
+                    <td class="px-1 py-2.5"><input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" :aria-label="$t('calculator.form.hours.deployment')" :class="cellInput" /></td>
                   </template>
                   <td v-else class="px-1 py-2.5">
-                    <input v-model.number="item.estimated_hours" type="number" min="0" step="0.5" aria-label="Estimated Hours" :class="cellInput" />
+                    <input v-model.number="item.estimated_hours" type="number" min="0" step="0.5" :aria-label="$t('calculator.form.hours.estimated')" :class="cellInput" />
                   </td>
-                  <td class="px-1 py-2.5"><input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" aria-label="Complexity Factor" :class="cellInput" /></td>
-                  <td class="px-1 py-2.5"><input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" aria-label="Buffer Risk %" :class="cellInput" /></td>
+                  <td class="px-1 py-2.5"><input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" :aria-label="$t('calculator.form.complexity')" :class="cellInput" /></td>
+                  <td class="px-1 py-2.5"><input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" :aria-label="$t('calculator.form.bufferPercent')" :class="cellInput" /></td>
                   <td class="px-2 py-2 text-right tabular-nums whitespace-nowrap">
                     <span class="block text-ui-small font-semibold text-ui-ink">{{ formatRupiah(computedItems[index]?.finalPrice ?? 0) }}</span>
                     <span class="block text-ui-cap text-ui-muted">{{ computedItems[index]?.totalHoursUsed.toFixed(1) }}h</span>
@@ -705,8 +717,8 @@ const submit = async () => {
                       type="button"
                       :class="iconBtn"
                       :disabled="form.items.length === 1"
-                      aria-label="Remove"
-                      title="Remove"
+                      :aria-label="$t('common.actions.remove')"
+                      :title="$t('common.actions.remove')"
                       @click="removeItem(index)"
                     >
                       <Trash2 class="w-4 h-4" />
@@ -725,15 +737,15 @@ const submit = async () => {
                 <input
                   v-model="item.name"
                   type="text"
-                  :placeholder="form.scenario === 'feature' ? 'Feature name' : 'Module name'"
-                  :aria-label="form.scenario === 'feature' ? 'Feature name' : 'Module name'"
+                  :placeholder="form.scenario === 'feature' ? $t('calculator.form.featureName') : $t('calculator.form.moduleName')"
+                  :aria-label="form.scenario === 'feature' ? $t('calculator.form.featureName') : $t('calculator.form.moduleName')"
                   :class="[cellText, 'h-[38px] flex-1']"
                 />
                 <button
                   type="button"
                   :class="iconBtn"
                   :disabled="form.items.length === 1"
-                  aria-label="Remove"
+                  :aria-label="$t('common.actions.remove')"
                   @click="removeItem(index)"
                 >
                   <Trash2 class="w-4 h-4" />
@@ -741,20 +753,20 @@ const submit = async () => {
               </div>
               <div class="grid grid-cols-2 gap-2.5 pl-7">
                 <template v-if="form.scenario === 'feature'">
-                  <label><span :class="cellLabel">Analysis Hours</span><input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
-                  <label><span :class="cellLabel">Development Hours</span><input v-model.number="item.dev_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
-                  <label><span :class="cellLabel">Testing Hours</span><input v-model.number="item.testing_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
-                  <label><span :class="cellLabel">Deployment Hours</span><input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
+                  <label><span :class="cellLabel">{{ $t("calculator.form.hours.analysis") }}</span><input v-model.number="item.analysis_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
+                  <label><span :class="cellLabel">{{ $t("calculator.form.hours.development") }}</span><input v-model.number="item.dev_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
+                  <label><span :class="cellLabel">{{ $t("calculator.form.hours.testing") }}</span><input v-model.number="item.testing_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
+                  <label><span :class="cellLabel">{{ $t("calculator.form.hours.deployment") }}</span><input v-model.number="item.deploy_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" /></label>
                 </template>
                 <label v-else class="col-span-2">
-                  <span :class="cellLabel">Estimated Hours</span>
+                  <span :class="cellLabel">{{ $t("calculator.form.hours.estimated") }}</span>
                   <input v-model.number="item.estimated_hours" type="number" min="0" step="0.5" :class="[cellInput, 'h-[38px]']" />
                 </label>
-                <label><span :class="cellLabel">Complexity Factor</span><input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" :class="[cellInput, 'h-[38px]']" /></label>
-                <label><span :class="cellLabel">Buffer Risk %</span><input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" :class="[cellInput, 'h-[38px]']" /></label>
+                <label><span :class="cellLabel">{{ $t("calculator.form.complexity") }}</span><input v-model.number="item.complexity_factor" type="number" min="0.1" step="0.1" :class="[cellInput, 'h-[38px]']" /></label>
+                <label><span :class="cellLabel">{{ $t("calculator.form.bufferPercent") }}</span><input v-model.number="item.buffer_percent" type="number" min="0" max="100" step="1" :class="[cellInput, 'h-[38px]']" /></label>
               </div>
               <div class="flex items-center justify-between pl-7 text-ui-small">
-                <span class="text-ui-muted tabular-nums">{{ computedItems[index]?.totalHoursUsed.toFixed(1) }} usage history</span>
+                <span class="text-ui-muted tabular-nums">{{ $t("calculator.form.hoursUsed", { n: computedItems[index]?.totalHoursUsed.toFixed(1) }) }}</span>
                 <span class="text-ui-ink font-semibold tabular-nums">{{ formatRupiah(computedItems[index]?.finalPrice ?? 0) }}</span>
               </div>
             </li>
@@ -762,7 +774,7 @@ const submit = async () => {
 
           <div class="border-t border-ui-line px-3 sm:px-4 py-2">
             <UiButton variant="ghost" size="sm" :icon="PlusIcon" @click="addItem">
-              {{ form.scenario === "feature" ? "Add Feature" : "Add Module" }}
+              {{ form.scenario === "feature" ? $t("calculator.form.addFeature") : $t("calculator.form.addModule") }}
             </UiButton>
           </div>
         </section>
@@ -770,20 +782,17 @@ const submit = async () => {
         <!-- Landing Page Configuration -->
         <section v-if="form.scenario === 'landing_page'" class="bg-ui-surface border border-ui-line rounded-ui-card">
           <div class="px-4 sm:px-6 pt-5 pb-4 border-b border-ui-line">
-            <h2 class="text-ui-h2 text-ui-ink">Landing Page Configuration</h2>
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("calculator.form.lp.title") }}</h2>
           </div>
 
           <div class="px-4 sm:px-6 py-5 space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <!-- Server -->
               <div>
-                <p :class="fieldLabel">Server</p>
+                <p :class="fieldLabel">{{ $t("calculator.lpModal.server") }}</p>
                 <div class="grid grid-cols-2 gap-2.5">
                   <button
-                    v-for="opt in [
-                      { value: 'dedicated', label: 'Dedicated', price: landingPageRateSetting.server_dedicated_price },
-                      { value: 'shared', label: 'Shared', price: landingPageRateSetting.server_shared_price },
-                    ]"
+                    v-for="opt in serverOptions"
                     :key="opt.value"
                     type="button"
                     :aria-pressed="form.server_type === opt.value"
@@ -799,13 +808,10 @@ const submit = async () => {
 
               <!-- Design -->
               <div>
-                <p :class="fieldLabel">Design</p>
+                <p :class="fieldLabel">{{ $t("calculator.lpModal.design") }}</p>
                 <div class="grid grid-cols-2 gap-2.5">
                   <button
-                    v-for="opt in [
-                      { value: 'dedicated', label: 'Dedicated', price: landingPageRateSetting.design_dedicated_price },
-                      { value: 'template', label: 'Template', price: landingPageRateSetting.design_template_price },
-                    ]"
+                    v-for="opt in designOptions"
                     :key="opt.value"
                     type="button"
                     :aria-pressed="form.design_type === opt.value"
@@ -822,23 +828,23 @@ const submit = async () => {
 
             <!-- Development -->
             <div>
-              <p class="text-ui-h3 text-ui-ink mb-2.5">Development</p>
+              <p class="text-ui-h3 text-ui-ink mb-2.5">{{ $t("calculator.form.lp.development") }}</p>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <label class="block">
-                  <span :class="fieldLabel">Estimate Final Time (hours)</span>
+                  <span :class="fieldLabel">{{ $t("calculator.form.lp.estimatedHours") }}</span>
                   <input v-model.number="form.estimated_hours" type="number" min="0" step="0.5" :class="fieldInput" />
                 </label>
                 <label class="block">
-                  <span :class="fieldLabel">Rate Developer (Rp/jam)</span>
+                  <span :class="fieldLabel">{{ $t("calculator.form.lp.rateDeveloper") }}</span>
                   <input v-model.number="form.rate_developer" type="number" min="0" step="1000" :class="fieldInput" />
                 </label>
                 <label class="block">
-                  <span :class="fieldLabel">Jumlah Developer</span>
+                  <span :class="fieldLabel">{{ $t("calculator.form.lp.developerCount") }}</span>
                   <input v-model.number="form.developer_count" type="number" min="1" step="1" :class="fieldInput" />
                 </label>
               </div>
               <div class="flex items-center justify-between mt-3 pt-3 border-t border-ui-line text-ui-small">
-                <span class="text-ui-muted">Development Cost</span>
+                <span class="text-ui-muted">{{ $t("calculator.form.lp.developmentCost") }}</span>
                 <span class="text-ui-ink font-semibold tabular-nums">{{ formatRupiah(landingPageDevelopmentCost) }}</span>
               </div>
             </div>
@@ -846,20 +852,20 @@ const submit = async () => {
             <!-- Additional Items (optional) -->
             <div>
               <div class="flex items-center justify-between gap-2 mb-2.5">
-                <p class="text-ui-h3 text-ui-ink">Additional Items (Optional)</p>
-                <UiButton variant="secondary" size="sm" :icon="PlusIcon" @click="addAdditionalItem">Add Item</UiButton>
+                <p class="text-ui-h3 text-ui-ink">{{ $t("calculator.form.lp.additionalOptional") }}</p>
+                <UiButton variant="secondary" size="sm" :icon="PlusIcon" @click="addAdditionalItem">{{ $t("calculator.form.lp.addItem") }}</UiButton>
               </div>
 
               <div
                 v-if="form.additional_items.length === 0"
                 class="text-ui-cap text-ui-muted border border-dashed border-ui-line-strong rounded-ui-control py-4 px-3 text-center"
               >
-                No additional items -- optional extras like domain, third-party integration, or extra revisions.
+                {{ $t("calculator.form.lp.noAdditional") }}
               </div>
 
               <div v-else class="border border-ui-line rounded-ui-control overflow-hidden">
                 <div class="hidden sm:grid grid-cols-[28px_minmax(0,1fr)_88px_150px_120px_32px] gap-2 items-center px-3 h-9 bg-ui-subtle text-ui-cap font-medium text-ui-muted border-b border-ui-line">
-                  <span>#</span><span>Description</span><span class="text-right">Amount</span><span class="text-right">Price (Rp)</span><span class="text-right">Subtotal</span><span></span>
+                  <span>#</span><span>{{ $t("common.labels.description") }}</span><span class="text-right">{{ $t("calculator.form.lp.qty") }}</span><span class="text-right">{{ $t("calculator.form.lp.price") }}</span><span class="text-right">{{ $t("calculator.form.subtotal") }}</span><span></span>
                 </div>
                 <div
                   v-for="(item, index) in form.additional_items"
@@ -867,16 +873,16 @@ const submit = async () => {
                   class="grid grid-cols-[28px_minmax(0,1fr)_32px] sm:grid-cols-[28px_minmax(0,1fr)_88px_150px_120px_32px] gap-2 items-center px-3 py-2.5 border-b border-ui-line last:border-b-0"
                 >
                   <span class="text-ui-cap text-ui-faint tabular-nums">{{ index + 1 }}</span>
-                  <input v-model="item.description" type="text" placeholder="e.g. Domain .com (1 year)" aria-label="Description" :class="cellText" />
-                  <button type="button" :class="[iconBtn, 'sm:order-last']" aria-label="Remove" title="Remove" @click="removeAdditionalItem(index)">
+                  <input v-model="item.description" type="text" :placeholder="$t('calculator.form.lp.itemPlaceholder')" :aria-label="$t('common.labels.description')" :class="cellText" />
+                  <button type="button" :class="[iconBtn, 'sm:order-last']" :aria-label="$t('common.actions.remove')" :title="$t('common.actions.remove')" @click="removeAdditionalItem(index)">
                     <Trash2 class="w-4 h-4" />
                   </button>
                   <label class="col-start-2 sm:col-start-auto">
-                    <span class="sm:sr-only text-ui-cap text-ui-muted">Amount</span>
+                    <span class="sm:sr-only text-ui-cap text-ui-muted">{{ $t("calculator.form.lp.qty") }}</span>
                     <input v-model.number="item.amount" type="number" min="0" step="1" :class="cellInput" />
                   </label>
                   <label class="col-start-2 sm:col-start-auto">
-                    <span class="sm:sr-only text-ui-cap text-ui-muted">Price (Rp)</span>
+                    <span class="sm:sr-only text-ui-cap text-ui-muted">{{ $t("calculator.form.lp.price") }}</span>
                     <input v-model.number="item.price" type="number" min="0" step="1000" :class="cellInput" />
                   </label>
                   <span class="col-start-2 sm:col-start-auto text-right text-ui-small font-medium text-ui-ink tabular-nums whitespace-nowrap">
@@ -884,7 +890,7 @@ const submit = async () => {
                   </span>
                 </div>
                 <div class="flex items-center justify-between px-3 py-2.5 bg-ui-subtle text-ui-small border-t border-ui-line">
-                  <span class="text-ui-muted">Additional Items Total</span>
+                  <span class="text-ui-muted">{{ $t("calculator.form.lp.additionalTotal") }}</span>
                   <span class="text-ui-ink font-semibold tabular-nums">{{ formatRupiah(landingPageAdditionalItemsTotal) }}</span>
                 </div>
               </div>
@@ -893,11 +899,11 @@ const submit = async () => {
             <!-- Margin -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
               <label class="block">
-                <span :class="fieldLabel">Margin Jual (%)</span>
+                <span :class="fieldLabel">{{ $t("calculator.form.lp.marginPercent") }}</span>
                 <input v-model.number="form.margin_percent" type="number" min="0" step="1" :class="fieldInput" />
               </label>
               <p class="flex items-center justify-between sm:justify-end gap-2 h-[38px] text-ui-small text-ui-muted">
-                Margin Amount: <strong class="text-ui-ink font-semibold tabular-nums">{{ formatRupiah(landingPageMarginTotal) }}</strong>
+                {{ $t("calculator.form.lp.marginAmount") }}: <strong class="text-ui-ink font-semibold tabular-nums">{{ formatRupiah(landingPageMarginTotal) }}</strong>
               </p>
             </div>
           </div>
@@ -905,14 +911,14 @@ const submit = async () => {
 
         <!-- Build-only extra fields -->
         <section v-if="form.scenario === 'build'" class="bg-ui-surface border border-ui-line rounded-ui-card px-4 sm:px-6 py-5">
-          <h2 class="text-ui-h2 text-ui-ink mb-4">Project overhead</h2>
+          <h2 class="text-ui-h2 text-ui-ink mb-4">{{ $t("calculator.form.overhead.title") }}</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label class="block">
-              <span :class="fieldLabel">PM Overhead (%)</span>
+              <span :class="fieldLabel">{{ $t("calculator.form.overhead.pmPercent") }}</span>
               <input v-model.number="form.pm_overhead_percent" type="number" min="0" max="100" step="0.5" :class="fieldInput" />
             </label>
             <label class="block">
-              <span :class="fieldLabel">Infrastructure Setup Cost (Rp)</span>
+              <span :class="fieldLabel">{{ $t("calculator.form.overhead.infraSetup") }}</span>
               <input v-model.number="form.infra_setup_cost" type="number" min="0" :class="fieldInput" />
             </label>
           </div>
@@ -920,15 +926,15 @@ const submit = async () => {
 
         <!-- Tax + Notes -->
         <section class="bg-ui-surface border border-ui-line rounded-ui-card px-4 sm:px-6 py-5 space-y-4">
-          <h2 class="text-ui-h2 text-ui-ink">Tax &amp; notes</h2>
+          <h2 class="text-ui-h2 text-ui-ink">{{ $t("calculator.form.tax.title") }}</h2>
 
           <div class="border border-ui-line rounded-ui-control divide-y divide-ui-line">
             <div class="px-4 py-3">
               <div class="flex items-center justify-between gap-3">
-                <UiSwitch v-model="form.include_ppn" label="Include PPN" class="flex-1" />
+                <UiSwitch v-model="form.include_ppn" :label="$t('calculator.form.tax.includePpn')" class="flex-1" />
               </div>
               <div v-if="form.include_ppn" class="flex items-center gap-2 mt-3">
-                <span class="w-24"><input v-model.number="form.ppn_percent" type="number" min="0" max="100" step="0.5" aria-label="PPN %" :class="fieldInput" /></span>
+                <span class="w-24"><input v-model.number="form.ppn_percent" type="number" min="0" max="100" step="0.5" :aria-label="$t('calculator.form.tax.ppnPercent')" :class="fieldInput" /></span>
                 <span class="text-ui-small text-ui-muted">%</span>
               </div>
             </div>
@@ -936,19 +942,19 @@ const submit = async () => {
             <div class="px-4 py-3">
               <UiSwitch
                 v-model="form.include_pph"
-                label="Include PPh (dipotong klien)"
-                description="PPh dipotong oleh klien dari pembayaran -- mengurangi yang diterima, bukan menambah tagihan."
+                :label="$t('calculator.form.tax.includePph')"
+                :description="$t('calculator.form.tax.includePphHint')"
               />
               <div v-if="form.include_pph" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <UiSelect
                   v-model="form.pph_type"
-                  label="Jenis PPh"
-                  placeholder="Pilih jenis PPh..."
+                  :label="$t('calculator.form.tax.pphType')"
+                  :placeholder="$t('calculator.form.tax.pphTypePlaceholder')"
                   :options="pphOptions"
                   @update:model-value="handlePphTypeChange"
                 />
                 <label class="block">
-                  <span :class="fieldLabel">Tarif PPh (%)</span>
+                  <span :class="fieldLabel">{{ $t("calculator.form.tax.pphRate") }}</span>
                   <input
                     v-model.number="form.pph_percent"
                     type="number"
@@ -963,7 +969,7 @@ const submit = async () => {
             </div>
           </div>
 
-          <UiInput v-model="form.notes" label="Notes (Optional)" :rows="3" placeholder="Additional notes for this estimate..." />
+          <UiInput v-model="form.notes" :label="$t('calculator.form.notes')" :rows="3" :placeholder="$t('calculator.form.notesPlaceholder')" />
         </section>
       </div>
 
@@ -971,58 +977,58 @@ const submit = async () => {
       <aside class="space-y-4 xl:sticky xl:top-4">
         <section class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4">
           <div class="flex items-center justify-between gap-2 mb-3">
-            <h2 class="text-ui-h3 text-ui-ink">Summary</h2>
+            <h2 class="text-ui-h3 text-ui-ink">{{ $t("calculator.form.summary.title") }}</h2>
             <UiBadge tone="outline">{{ scenarioLabel(form.scenario) }}</UiBadge>
           </div>
 
           <dl class="space-y-2 text-ui-small">
             <div v-if="form.scenario !== 'landing_page'" class="flex items-center justify-between gap-3 pb-2 border-b border-ui-line">
-              <dt class="text-ui-muted">Rate Sell / Hour</dt>
+              <dt class="text-ui-muted">{{ $t("calculator.form.summary.rateSell") }}</dt>
               <dd class="text-ui-ink font-medium tabular-nums">{{ formatRupiah(rateSetting.rate_sell_per_hour) }}</dd>
             </div>
             <template v-if="form.scenario === 'landing_page'">
               <div class="flex items-center justify-between gap-3">
-                <dt class="text-ui-muted">Server ({{ form.server_type === "dedicated" ? "Dedicated" : "Shared" }})</dt>
+                <dt class="text-ui-muted">{{ $t("calculator.lpModal.server") }} ({{ form.server_type === "dedicated" ? $t("calculator.form.lp.dedicated") : $t("calculator.form.lp.shared") }})</dt>
                 <dd class="text-ui-ink tabular-nums">{{ formatRupiah(landingPageServerCost) }}</dd>
               </div>
               <div class="flex items-center justify-between gap-3">
-                <dt class="text-ui-muted">Design ({{ form.design_type === "dedicated" ? "Dedicated" : "Template" }})</dt>
+                <dt class="text-ui-muted">{{ $t("calculator.lpModal.design") }} ({{ form.design_type === "dedicated" ? $t("calculator.form.lp.dedicated") : $t("calculator.form.lp.template") }})</dt>
                 <dd class="text-ui-ink tabular-nums">{{ formatRupiah(landingPageDesignCost) }}</dd>
               </div>
               <div class="flex items-center justify-between gap-3">
-                <dt class="text-ui-muted">Development</dt>
+                <dt class="text-ui-muted">{{ $t("calculator.form.lp.development") }}</dt>
                 <dd class="text-ui-ink tabular-nums">{{ formatRupiah(landingPageDevelopmentCost) }}</dd>
               </div>
               <div v-if="form.additional_items.length > 0" class="flex items-center justify-between gap-3">
-                <dt class="text-ui-muted">Additional Items ({{ form.additional_items.length }})</dt>
+                <dt class="text-ui-muted">{{ $t("calculator.form.lp.additional") }} ({{ form.additional_items.length }})</dt>
                 <dd class="text-ui-ink tabular-nums">{{ formatRupiah(landingPageAdditionalItemsTotal) }}</dd>
               </div>
             </template>
             <div class="flex items-center justify-between gap-3">
-              <dt class="text-ui-muted">Subtotal</dt>
+              <dt class="text-ui-muted">{{ $t("calculator.form.subtotal") }}</dt>
               <dd class="text-ui-ink tabular-nums">{{ formatRupiah(subtotalSum) }}</dd>
             </div>
             <div v-if="form.scenario !== 'landing_page'" class="flex items-center justify-between gap-3">
-              <dt class="text-ui-muted">Buffer Risk</dt>
+              <dt class="text-ui-muted">{{ $t("calculator.form.summary.buffer") }}</dt>
               <dd class="text-ui-ink tabular-nums">{{ formatRupiah(bufferSum) }}</dd>
             </div>
             <div v-if="form.scenario === 'build'" class="flex items-center justify-between gap-3">
-              <dt class="text-ui-muted">PM Overhead</dt>
+              <dt class="text-ui-muted">{{ $t("calculator.form.summary.pmOverhead") }}</dt>
               <dd class="text-ui-ink tabular-nums">{{ formatRupiah(pmOverheadTotal) }}</dd>
             </div>
             <div v-if="form.scenario === 'build'" class="flex items-center justify-between gap-3">
-              <dt class="text-ui-muted">Infrastructure Setup Cost</dt>
+              <dt class="text-ui-muted">{{ $t("calculator.form.summary.infraSetup") }}</dt>
               <dd class="text-ui-ink tabular-nums">{{ formatRupiah(form.infra_setup_cost) }}</dd>
             </div>
             <div v-if="form.scenario === 'landing_page'" class="flex items-center justify-between gap-3">
-              <dt class="text-ui-muted">Margin Jual ({{ form.margin_percent }}%)</dt>
+              <dt class="text-ui-muted">{{ $t("calculator.form.summary.margin") }} ({{ form.margin_percent }}%)</dt>
               <dd class="text-ui-ink tabular-nums">{{ formatRupiah(landingPageMarginTotal) }}</dd>
             </div>
           </dl>
 
           <div class="mt-3 pt-3 border-t border-ui-line space-y-1.5">
             <div class="flex items-baseline justify-between gap-3">
-              <span class="text-ui-h3 text-ui-ink">Estimate Total</span>
+              <span class="text-ui-h3 text-ui-ink">{{ $t("calculator.form.summary.total") }}</span>
               <span class="text-ui-h2 text-ui-ink tabular-nums">{{ formatRupiah(grandTotal) }}</span>
             </div>
             <div v-if="form.include_ppn" class="flex items-center justify-between gap-3 text-ui-cap text-ui-muted">
@@ -1030,7 +1036,7 @@ const submit = async () => {
               <span class="tabular-nums">{{ formatRupiah(ppnAmount) }}</span>
             </div>
             <div v-if="form.include_ppn" class="flex items-baseline justify-between gap-3">
-              <span class="text-ui-h3 text-ui-ink">Total + PPN</span>
+              <span class="text-ui-h3 text-ui-ink">{{ $t("calculator.form.summary.totalPpn") }}</span>
               <span class="text-ui-h2 text-ui-ink tabular-nums">{{ formatRupiah(totalWithPpn) }}</span>
             </div>
           </div>
@@ -1041,14 +1047,14 @@ const submit = async () => {
               <span class="tabular-nums">{{ formatRupiah(pphAmount) }}</span>
             </div>
             <div class="flex items-baseline justify-between gap-3">
-              <span class="text-ui-h3 text-ui-ok">Diterima Bersih</span>
+              <span class="text-ui-h3 text-ui-ok">{{ $t("calculator.form.summary.netReceived") }}</span>
               <span class="text-ui-h3 text-ui-ok tabular-nums">{{ formatRupiah(netReceived) }}</span>
             </div>
-            <p class="text-ui-cap text-ui-faint">Setelah dipotong PPh oleh klien</p>
+            <p class="text-ui-cap text-ui-faint">{{ $t("calculator.form.summary.afterPph") }}</p>
           </div>
 
           <UiButton class="mt-4 hidden xl:flex" block :icon="SaveIcon" :loading="saving" :disabled="!canSave" @click="submit">
-            {{ saving ? "Saving..." : isEditing ? "Save Changes" : "Save Estimate" }}
+            {{ saving ? $t("common.actions.saving") : isEditing ? $t("common.actions.saveChanges") : $t("calculator.form.saveEstimate") }}
           </UiButton>
         </section>
 
@@ -1056,24 +1062,24 @@ const submit = async () => {
           <div class="flex items-start gap-2 text-ui-small">
             <ClockIcon class="w-4 h-4 text-ui-faint shrink-0 mt-px" />
             <span v-if="form.scenario === 'landing_page'" class="text-ui-text">
-              Estimate Duration: <strong class="font-semibold text-ui-ink tabular-nums">{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
+              {{ $t("calculator.form.duration.label") }}: <strong class="font-semibold text-ui-ink tabular-nums">{{ $t("calculator.dashboard.weeks", { n: estimatedDurationWeeks ?? "-" }) }}</strong>
               <span class="block text-ui-cap text-ui-muted tabular-nums">
-                ({{ totalHoursSum.toFixed(1) }} hours &middot; {{ form.developer_count }} developer{{ form.developer_count > 1 ? "s" : "" }})
+                ({{ $t("calculator.form.duration.hours", { n: totalHoursSum.toFixed(1) }) }} &middot; {{ $t("calculator.form.duration.developers", { n: form.developer_count }, Number(form.developer_count) || 1) }})
               </span>
             </span>
             <span v-else class="text-ui-text">
-              Estimate Duration: <strong class="font-semibold text-ui-ink tabular-nums">{{ estimatedDurationWeeks ?? "-" }} weeks</strong>
-              <template v-if="estimatedDurationMonths"> (&asymp; {{ estimatedDurationMonths }} months)</template>
+              {{ $t("calculator.form.duration.label") }}: <strong class="font-semibold text-ui-ink tabular-nums">{{ $t("calculator.dashboard.weeks", { n: estimatedDurationWeeks ?? "-" }) }}</strong>
+              <template v-if="estimatedDurationMonths"> (&asymp; {{ $t("calculator.dashboard.months", { n: estimatedDurationMonths }) }})</template>
               <span class="block text-ui-cap text-ui-muted tabular-nums">
-                {{ totalHoursSum.toFixed(1) }} hours &middot; {{ form.allocated_developers }} developer{{ form.allocated_developers > 1 ? "s" : "" }}
-                &middot; {{ Math.round(allocatedCapacityPerMonth) }} hours/month
+                {{ $t("calculator.form.duration.hours", { n: totalHoursSum.toFixed(1) }) }} &middot; {{ $t("calculator.form.duration.developers", { n: form.allocated_developers }, Number(form.allocated_developers) || 1) }}
+                &middot; {{ $t("calculator.form.duration.hoursPerMonth", { n: Math.round(allocatedCapacityPerMonth) }) }}
               </span>
             </span>
           </div>
 
           <div v-if="form.scenario !== 'landing_page'" class="pt-3 border-t border-ui-line">
             <label class="flex items-center justify-between gap-3 text-ui-small font-medium text-ui-ink">
-              Developer dialokasikan
+              {{ $t("calculator.form.allocated.label") }}
               <span class="w-16 shrink-0">
                 <input
                   v-model.number="form.allocated_developers"
@@ -1086,16 +1092,15 @@ const submit = async () => {
               </span>
             </label>
             <p class="text-ui-cap text-ui-muted mt-1.5">
-              Orang yang benar-benar mengerjakan proyek ini, dari {{ rateSetting.team_size || 0 }} orang di Team Rate Setup
-              (&asymp; {{ Math.round(hoursPerPerson) }} jam/orang/bulan). Hanya memengaruhi durasi, bukan harga.
+              {{ $t("calculator.form.allocated.hint", { team: rateSetting.team_size || 0, hours: Math.round(hoursPerPerson) }) }}
             </p>
           </div>
         </section>
 
         <section class="bg-ui-subtle border border-ui-line rounded-ui-card px-5 py-3.5 flex items-start justify-between gap-3">
           <div class="min-w-0">
-            <p class="text-ui-small font-medium text-ui-ink">Fee Marketing / B2B-B2C Sales</p>
-            <p class="text-ui-cap text-ui-muted">Reference only, not added to total</p>
+            <p class="text-ui-small font-medium text-ui-ink">{{ $t("calculator.fee.title") }}</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t("calculator.fee.hint") }}</p>
           </div>
           <div class="text-right shrink-0">
             <p class="text-ui-small font-semibold text-ui-ink tabular-nums">{{ marketingFee.percent }}%</p>
@@ -1104,7 +1109,7 @@ const submit = async () => {
         </section>
 
         <UiButton class="xl:hidden" size="lg" block :icon="SaveIcon" :loading="saving" :disabled="!canSave" @click="submit">
-          {{ saving ? "Saving..." : isEditing ? "Save Changes" : "Save Estimate" }}
+          {{ saving ? $t("common.actions.saving") : isEditing ? $t("common.actions.saveChanges") : $t("calculator.form.saveEstimate") }}
         </UiButton>
       </aside>
     </div>
@@ -1113,15 +1118,15 @@ const submit = async () => {
     <UiModal
       v-model:open="referenceModal"
       size="lg"
-      title="Load from Previous Estimate"
-      description="Reuse a saved estimate's item list as a starting point"
+      :title="$t('calculator.form.loadPrevious')"
+      :description="$t('calculator.form.reference.description')"
     >
-      <UiInput v-model="referenceSearch" :icon="Search" placeholder="Search by estimate or client name..." class="mb-3" />
+      <UiInput v-model="referenceSearch" :icon="Search" :placeholder="$t('calculator.form.reference.search')" class="mb-3" />
 
       <div v-if="loadingReferences" class="space-y-2">
         <Skeleton v-for="i in 3" :key="i" height="60px" rounded="10px" />
       </div>
-      <UiEmpty v-else-if="filteredReferences.length === 0" compact :icon="History" title="No saved estimates found." />
+      <UiEmpty v-else-if="filteredReferences.length === 0" compact :icon="History" :title="$t('calculator.form.reference.empty')" />
       <ul v-else class="border border-ui-line rounded-ui-control divide-y divide-ui-line overflow-hidden">
         <li v-for="(reference, index) in filteredReferences" :key="reference.id">
           <button
@@ -1134,15 +1139,9 @@ const submit = async () => {
             <span class="flex-1 min-w-0">
               <span class="block text-ui-small font-medium text-ui-ink truncate">{{ reference.name }}</span>
               <span class="block text-ui-cap text-ui-muted truncate">
-                {{ reference.client_name || "No client" }} &middot;
-                {{
-                  reference.scenario === "feature"
-                    ? "New Feature"
-                    : reference.scenario === "build"
-                      ? "Build from Scratch"
-                      : "Landing Page"
-                }} &middot;
-                {{ reference.scenario === "landing_page" ? "Package" : `${reference.items?.length ?? 0} items` }}
+                {{ reference.client_name || $t("calculator.form.reference.noClient") }} &middot;
+                {{ scenarioLabel(reference.scenario) }} &middot;
+                {{ reference.scenario === "landing_page" ? $t("calculator.form.reference.package") : $t("calculator.form.reference.items", { n: reference.items?.length ?? 0 }, reference.items?.length ?? 0) }}
               </span>
             </span>
             <span class="text-ui-small font-medium text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(reference.grand_total) }}</span>

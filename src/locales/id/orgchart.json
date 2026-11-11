@@ -1,0 +1,17 @@
+{
+  "title": "Struktur Organisasi",
+  "subtitle": "Struktur perusahaan per departemen dan tim",
+  "empty": "Belum ada tim aktif.",
+  "department": "Departemen",
+  "teamCount": "{n} tim",
+  "lead": "Ketua: {name}",
+  "noMembers": "Belum ada anggota",
+  "departments": {
+    "development": "Pengembangan",
+    "design": "Desain",
+    "marketing": "Pemasaran",
+    "sales": "Penjualan",
+    "support": "Dukungan",
+    "management": "Manajemen"
+  }
+}

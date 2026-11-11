@@ -1,6 +1,7 @@
 <script setup>
 import UsageStatusFields from "./UsageStatusFields.vue";
 import { UiModal, UiInput, UiButton } from "@/components/ui";
+import { useI18n } from "vue-i18n";
 import { reactive, watch, computed } from "vue";
 
 // Props
@@ -16,6 +17,8 @@ const props = defineProps({
     default: () => ({}),
   },
 });
+
+const { t } = useI18n();
 
 // Emit
 const emit = defineEmits(["submit", "close"]);
@@ -99,12 +102,12 @@ const actualModel = computed({
 const validate = () => {
   let valid = true;
 
-  errors.financial_items = form.financial_items ? "" : "Item is required";
-  errors.description = form.description ? "" : "Description is required";
+  errors.financial_items = form.financial_items ? "" : t("finance.modals.validation.itemRequired");
+  errors.description = form.description ? "" : t("finance.modals.validation.descriptionRequired");
   // Expired is required while the item is in use (mirrors the API rule).
-  errors.status = form.status ? "" : "Status wajib dipilih";
+  errors.status = form.status ? "" : t("finance.modals.validation.statusRequired");
   errors.expired_date =
-    form.status === "active" && !form.expired_date ? "Expired wajib diisi untuk item yang Digunakan" : "";
+    form.status === "active" && !form.expired_date ? t("finance.modals.validation.expiredRequired") : "";
 
   Object.values(errors).forEach((e) => {
     if (e) valid = false;
@@ -131,16 +134,16 @@ const validate = () => {
 <template>
   <UiModal
     :open="show"
-    :title="props.mode === 'add' ? 'Add Fixed Cost' : props.mode === 'edit' ? 'Edit Fixed Cost' : 'Fixed Cost Detail'"
-    :description="props.mode === 'add' ? 'create a new fixed cost record.' : props.mode === 'edit' ? 'modify the fixed cost details.' : 'details of the selected fixed cost.'"
+    :title="$t(`finance.modals.fixedCost.title.${props.mode}`)"
+    :description="$t(`finance.modals.fixedCost.description.${props.mode}`)"
     size="lg"
     @update:open="(v) => !v && $emit('close')"
   >
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <UiInput
         id="financial_items"
-        label="Item"
-        placeholder="add your financial item"
+        :label="$t('finance.modals.fields.item')"
+        :placeholder="$t('finance.modals.fields.itemPlaceholder')"
         v-model="form.financial_items"
         :readonly="props.mode === 'view'"
         :required="props.mode !== 'view'"
@@ -149,8 +152,8 @@ const validate = () => {
 
       <UiInput
         id="description"
-        label="Description"
-        placeholder="add description item"
+        :label="$t('common.labels.description')"
+        :placeholder="$t('finance.modals.fields.descriptionPlaceholder')"
         v-model="form.description"
         :readonly="props.mode === 'view'"
         :required="props.mode !== 'view'"
@@ -159,8 +162,8 @@ const validate = () => {
 
       <UiInput
         id="actual"
-        label="Actual (Rp.)"
-        placeholder="add price actual item"
+        :label="$t('finance.modals.fields.actual')"
+        :placeholder="$t('finance.modals.fields.actualPlaceholder')"
         v-model="actualModel"
         :readonly="props.mode === 'view'"
         class="[&_input]:tabular-nums"
@@ -175,8 +178,8 @@ const validate = () => {
 
       <UiInput
         id="notes"
-        label="Notes"
-        placeholder="add notes item"
+        :label="$t('common.labels.notes')"
+        :placeholder="$t('finance.modals.fields.notesPlaceholder')"
         v-model="form.notes"
         :readonly="props.mode === 'view'"
       />
@@ -184,10 +187,10 @@ const validate = () => {
 
     <template #footer>
       <UiButton variant="secondary" @click="$emit('close')">
-        {{ props.mode === "view" ? "Close" : "Cancel" }}
+        {{ props.mode === "view" ? $t("common.actions.close") : $t("common.actions.cancel") }}
       </UiButton>
       <UiButton v-if="props.mode !== 'view'" :loading="loading" :disabled="loading" @click="submit">
-        Save
+        {{ $t("common.actions.save") }}
       </UiButton>
     </template>
   </UiModal>

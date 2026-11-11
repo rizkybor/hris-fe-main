@@ -39,21 +39,21 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <LoadingOverlay :show="loading" text="Authenticating user..." />
+  <LoadingOverlay :show="loading" :text="$t('auth.login.authenticating')" />
 
   <div class="space-y-7">
     <div>
-      <h1 class="text-ui-display text-ui-ink">Sign in</h1>
-      <p class="text-ui-body text-ui-muted mt-1.5">Welcome back. Use your work email to continue.</p>
+      <h1 class="text-ui-display text-ui-ink">{{ $t("auth.login.title") }}</h1>
+      <p class="text-ui-body text-ui-muted mt-1.5">{{ $t("auth.login.subtitle") }}</p>
     </div>
 
     <UiAlert
       v-if="error === 'Unauthorized'"
       tone="bad"
-      title="Invalid Credentials"
-      message="The email or password you entered is incorrect. Please try again."
+      :title="$t('auth.login.invalidTitle')"
+      :message="$t('auth.login.invalidMessage')"
     />
-    <UiAlert v-else-if="typeof error === 'string'" tone="bad" title="Too Many Attempts" :message="error" />
+    <UiAlert v-else-if="typeof error === 'string'" tone="bad" :title="$t('auth.login.tooManyTitle')" :message="error" />
 
     <form class="space-y-5" @submit.prevent="handleSubmit">
       <UiInput
@@ -61,8 +61,8 @@ const handleSubmit = async () => {
         name="email"
         type="email"
         v-model="form.email"
-        label="Email Address"
-        placeholder="name@company.com"
+        :label="$t('auth.login.email')"
+        :placeholder="$t('auth.login.emailPlaceholder')"
         autocomplete="username"
         required
         :icon="AtSign"
@@ -75,8 +75,8 @@ const handleSubmit = async () => {
           name="password"
           type="password"
           v-model="form.password"
-          label="Password"
-          placeholder="Enter your password"
+          :label="$t('auth.login.password')"
+          :placeholder="$t('auth.login.passwordPlaceholder')"
           autocomplete="current-password"
           required
           :icon="Lock"
@@ -90,15 +90,15 @@ const handleSubmit = async () => {
               name="remember"
               class="w-4 h-4 rounded border-ui-line-strong text-ui-ink focus:ring-ui-accent"
             />
-            Remember me
+            {{ $t("auth.login.remember") }}
           </label>
           <RouterLink :to="{ name: 'forgot-password' }" class="text-ui-small font-medium text-ui-accent hover:underline">
-            Forgot password?
+            {{ $t("auth.login.forgot") }}
           </RouterLink>
         </div>
       </div>
 
-      <UiButton type="submit" size="lg" block :loading="loading">Sign in</UiButton>
+      <UiButton type="submit" size="lg" block :loading="loading">{{ $t("auth.login.submit") }}</UiButton>
     </form>
   </div>
 </template>

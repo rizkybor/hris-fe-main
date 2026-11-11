@@ -10,6 +10,9 @@ import TaskCard from "./TaskCard.vue";
 import TaskDetailModal from "./TaskDetailModal.vue";
 import TaskCreateModal from "./TaskCreateModal.vue";
 import { UiAlert, UiButton, UiInput, UiSelect } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -23,11 +26,11 @@ const { fetchProjectTasks, moveTask, createTask, deleteTask } = taskStore;
 // TaskStatus value that previously had no column at all -- tasks set to
 // it just vanished from the board.
 const COLUMNS = [
-  { status: "todo", label: "To Do", bg: "bg-gray-50/70", border: "border-gray-200", bar: "bg-gray-400", dot: "bg-gray-400", countBg: "bg-gray-200", countText: "text-gray-700", emptyText: "text-gray-400" },
-  { status: "in_progress", label: "In Progress", bg: "bg-blue-50/60", border: "border-blue-100", bar: "bg-blue-500", dot: "bg-blue-500", countBg: "bg-blue-200", countText: "text-blue-700", emptyText: "text-blue-300" },
-  { status: "review", label: "Review", bg: "bg-amber-50/60", border: "border-amber-100", bar: "bg-amber-500", dot: "bg-amber-500", countBg: "bg-amber-200", countText: "text-amber-700", emptyText: "text-amber-300" },
-  { status: "done", label: "Done", bg: "bg-green-50/60", border: "border-green-100", bar: "bg-green-500", dot: "bg-green-500", countBg: "bg-green-200", countText: "text-green-700", emptyText: "text-green-300" },
-  { status: "cancelled", label: "Cancelled", bg: "bg-slate-100/70", border: "border-slate-200", bar: "bg-slate-500", dot: "bg-slate-500", countBg: "bg-slate-300", countText: "text-slate-700", emptyText: "text-slate-400" },
+  { status: "todo", labelKey: "projects.taskStatus.todo", bg: "bg-gray-50/70", border: "border-gray-200", bar: "bg-gray-400", dot: "bg-gray-400", countBg: "bg-gray-200", countText: "text-gray-700", emptyText: "text-gray-400" },
+  { status: "in_progress", labelKey: "projects.taskStatus.inProgress", bg: "bg-blue-50/60", border: "border-blue-100", bar: "bg-blue-500", dot: "bg-blue-500", countBg: "bg-blue-200", countText: "text-blue-700", emptyText: "text-blue-300" },
+  { status: "review", labelKey: "projects.taskStatus.review", bg: "bg-amber-50/60", border: "border-amber-100", bar: "bg-amber-500", dot: "bg-amber-500", countBg: "bg-amber-200", countText: "text-amber-700", emptyText: "text-amber-300" },
+  { status: "done", labelKey: "projects.taskStatus.done", bg: "bg-green-50/60", border: "border-green-100", bar: "bg-green-500", dot: "bg-green-500", countBg: "bg-green-200", countText: "text-green-700", emptyText: "text-green-300" },
+  { status: "cancelled", labelKey: "projects.taskStatus.cancelled", bg: "bg-slate-100/70", border: "border-slate-200", bar: "bg-slate-500", dot: "bg-slate-500", countBg: "bg-slate-300", countText: "text-slate-700", emptyText: "text-slate-400" },
 ];
 
 // Cards actually rendered per column, at any one time -- capped and grown
@@ -38,13 +41,13 @@ const PAGE_SIZE = 40;
 
 // Presentation only: column status dot (the label always sits next to it).
 const COLUMN_DOT = { todo: "bg-ui-faint", in_progress: "bg-ui-accent", review: "bg-ui-warn", done: "bg-ui-ok", cancelled: "bg-ui-line-strong" };
-const PRIORITY_FILTER_OPTIONS = [
-  { value: "", label: "All Priorities" },
-  { value: "urgent", label: "Urgent" },
-  { value: "high", label: "High" },
-  { value: "medium", label: "Medium" },
-  { value: "low", label: "Low" },
-];
+const PRIORITY_FILTER_OPTIONS = computed(() => [
+  { value: "", label: t("projects.tasks.allPriorities") },
+  { value: "urgent", label: t("projects.priority.urgent") },
+  { value: "high", label: t("projects.priority.high") },
+  { value: "medium", label: t("projects.priority.medium") },
+  { value: "low", label: t("projects.priority.low") },
+]);
 const visibleCounts = reactive(Object.fromEntries(COLUMNS.map((c) => [c.status, PAGE_SIZE])));
 
 const searchQuery = ref("");
@@ -192,7 +195,7 @@ const handleCreateTask = async (taskData) => {
     await createTask(taskData);
     await fetchProjectTasks(route.params.id);
   } catch {
-    actionError.value = typeof taskStore.error === "string" ? taskStore.error : "Failed to create task.";
+    actionError.value = typeof taskStore.error === "string" ? taskStore.error : t("projects.tasks.createFailed");
   }
 };
 
@@ -202,7 +205,7 @@ const handleDeleteTask = async (taskId) => {
     await deleteTask(taskId);
     await fetchProjectTasks(route.params.id);
   } catch {
-    actionError.value = typeof taskStore.error === "string" ? taskStore.error : "Failed to delete task.";
+    actionError.value = typeof taskStore.error === "string" ? taskStore.error : t("projects.tasks.deleteFailed");
   }
 };
 
@@ -231,7 +234,7 @@ const onColumnChange = async (status, event) => {
       await fetchProjectTasks(route.params.id);
       syncAllColumns();
     } catch {
-      actionError.value = typeof taskStore.error === "string" ? taskStore.error : "Failed to move task. Reverting.";
+      actionError.value = typeof taskStore.error === "string" ? taskStore.error : t("projects.tasks.moveFailed");
       await fetchProjectTasks(route.params.id);
       syncAllColumns();
     }
@@ -257,7 +260,7 @@ const onColumnChange = async (status, event) => {
   try {
     await moveTask(task.id, { status, position });
   } catch {
-    actionError.value = typeof taskStore.error === "string" ? taskStore.error : "Failed to move task. Reverting.";
+    actionError.value = typeof taskStore.error === "string" ? taskStore.error : t("projects.tasks.moveFailed");
     await fetchProjectTasks(route.params.id);
     syncAllColumns();
   }
@@ -306,7 +309,7 @@ onUnmounted(() => sentinelObserver?.disconnect());
       <UiInput
         v-model="searchQuery"
         :icon="Search"
-        placeholder="Search tasks by name, description, type, or assignee..."
+        :placeholder="$t('projects.tasks.searchPlaceholder')"
         class="flex-1 min-w-0 lg:max-w-md"
       />
 
@@ -315,14 +318,14 @@ onUnmounted(() => sentinelObserver?.disconnect());
         <UiSelect
           v-if="typeSuggestions.length"
           v-model="typeFilter"
-          :options="[{ value: '', label: 'All Types' }, ...typeSuggestions.map((s) => ({ value: s.type, label: s.type }))]"
+          :options="[{ value: '', label: $t('projects.tasks.allTypes') }, ...typeSuggestions.map((s) => ({ value: s.type, label: s.type }))]"
           class="w-40 shrink-0"
         />
-        <UiButton v-if="hasActiveFilters" variant="ghost" :icon="X" class="shrink-0" @click="clearFilters">Clear</UiButton>
+        <UiButton v-if="hasActiveFilters" variant="ghost" :icon="X" class="shrink-0" @click="clearFilters">{{ $t("common.actions.clear") }}</UiButton>
       </div>
 
       <UiButton v-if="can('task-create')" :icon="Plus" class="w-full lg:w-auto lg:ml-auto shrink-0" @click="openCreateModal">
-        Create New Task
+        {{ $t("projects.tasks.createNew") }}
       </UiButton>
     </div>
 
@@ -332,7 +335,7 @@ onUnmounted(() => sentinelObserver?.disconnect());
         type="button"
         @click="actionError = ''"
         class="absolute top-2 right-2 w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-bad/70 hover:text-ui-bad hover:bg-ui-bad/10"
-        aria-label="Dismiss"
+        :aria-label="$t('projects.tasks.dismiss')"
       >
         <X class="w-4 h-4" />
       </button>
@@ -347,14 +350,14 @@ onUnmounted(() => sentinelObserver?.disconnect());
       >
         <div class="flex items-center gap-2 px-3.5 pt-3.5 pb-2.5">
           <span class="w-2 h-2 rounded-full shrink-0" :class="COLUMN_DOT[column.status]" aria-hidden="true"></span>
-          <h4 class="text-ui-h3 text-ui-ink">{{ column.label }}</h4>
+          <h4 class="text-ui-h3 text-ui-ink">{{ $t(column.labelKey) }}</h4>
           <span class="text-ui-cap text-ui-muted tabular-nums">{{ columnTasks(column.status).length }}</span>
           <button
             v-if="can('task-create')"
             type="button"
             class="ml-auto w-7 h-7 inline-flex items-center justify-center rounded-md text-ui-faint hover:bg-ui-hover hover:text-ui-ink"
-            title="Create New Task"
-            aria-label="Create New Task"
+            :title="$t('projects.tasks.createNew')"
+            :aria-label="$t('projects.tasks.createNew')"
             @click="openCreateModal"
           >
             <Plus class="w-4 h-4" />
@@ -383,7 +386,7 @@ onUnmounted(() => sentinelObserver?.disconnect());
             class="flex flex-col items-center justify-center py-8 text-center rounded-ui-card border border-dashed border-ui-line-strong"
           >
             <Inbox class="w-5 h-5 mb-1.5 text-ui-faint" />
-            <p class="text-ui-cap text-ui-muted">No tasks here</p>
+            <p class="text-ui-cap text-ui-muted">{{ $t("projects.tasks.emptyColumn") }}</p>
           </div>
 
           <!-- Load-more sentinel + fallback button, only when this column has more than what's rendered -->
@@ -395,7 +398,7 @@ onUnmounted(() => sentinelObserver?.disconnect());
               class="ui-press w-full flex items-center justify-center gap-1.5 h-9 rounded-ui-control border border-dashed border-ui-line-strong bg-ui-surface/60 hover:bg-ui-surface text-ui-cap font-medium text-ui-muted hover:text-ui-ink tabular-nums"
             >
               <ChevronDown class="w-3.5 h-3.5" />
-              Load more ({{ visibleCounts[column.status] }} of {{ columnTasks(column.status).length }})
+              {{ $t("projects.tasks.loadMore", { shown: visibleCounts[column.status], total: columnTasks(column.status).length }) }}
             </button>
           </template>
         </VueDraggableNext>

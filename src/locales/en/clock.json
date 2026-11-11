@@ -1,0 +1,84 @@
+{
+  "title": "Clock In/Out",
+  "liveClock": "Live Clock",
+  "todayStatus": "Today's Status",
+  "clockIn": "Clock In",
+  "clockOut": "Clock Out",
+  "worked": "Worked",
+  "processing": "Processing...",
+  "requiredTag": "(required)",
+  "checkOutAvailableIn": "Clock Out available in {duration} (min. 8 hours worked)",
+  "footerHint": "Please get your location and take a photo before clocking in/out",
+  "duration": {
+    "hm": "{h}h {m}m",
+    "m": "{m}m"
+  },
+  "status": {
+    "notClockedIn": "Not Clocked In",
+    "overtime": "Overtime",
+    "clockedInLate": "Clocked In (Late)",
+    "clockedIn": "Clocked In",
+    "completed": "Completed"
+  },
+  "late": {
+    "notice": "Late by {duration} (clock-in cut-off is 09:00 WIB)"
+  },
+  "location": {
+    "notDetected": "Location not detected",
+    "notDetectedHint": "Click 'Get Current Location' to detect your current position",
+    "againHint": "Please get location again for next attendance action",
+    "unsupported": "Geolocation not supported",
+    "unsupportedHint": "Your browser does not support location services",
+    "getting": "Getting location...",
+    "gettingHint": "Please wait while we detect your position",
+    "gettingButton": "Getting Location...",
+    "detected": "Location detected",
+    "accuracy": "Accuracy: ±{m}m",
+    "failed": "Location failed",
+    "refresh": "Refresh Location",
+    "get": "Get Current Location",
+    "errors": {
+      "denied": "Location access denied. Please enable location permissions.",
+      "unavailable": "Location information unavailable.",
+      "timeout": "Location request timed out. Please try again.",
+      "unknown": "An unknown error occurred while retrieving location."
+    }
+  },
+  "office": {
+    "radius": "Office Radius: {m}m",
+    "distance": "You're {m}m from the office",
+    "withinRange": "within range",
+    "outsideRange": "outside the allowed radius",
+    "getLocationHint": "Get your location to check distance from the office"
+  },
+  "camera": {
+    "previewHint": "Camera preview will appear here",
+    "captured": "Photo captured",
+    "capturedAlt": "Captured photo",
+    "start": "Start Camera",
+    "take": "Take Photo",
+    "retake": "Retake Photo",
+    "error": "Unable to access camera. Please check permissions and try again."
+  },
+  "weekend": {
+    "blocked": "Clock In isn't available today (Saturday/Sunday). Contact a Superadmin/Manager in Settings if you need to clock in for overtime.",
+    "overtime": "Today is Saturday/Sunday — clocking in will be recorded as overtime."
+  },
+  "ready": {
+    "in": "Ready to Clock In?",
+    "out": "Ready to Clock Out?",
+    "inHint": "Mark your attendance with location",
+    "outHint": "Mark your departure with location"
+  },
+  "alerts": {
+    "needLocation": "Please get your current location first!",
+    "needPhotoIn": "Please take a photo before clocking in.",
+    "needPhotoOut": "Please take a photo before clocking out.",
+    "overtimeIn": "Clocked in for overtime — today is a weekend.",
+    "lateIn": "Clocked in, but you're late by {n} minute (cut-off is 09:00 WIB). | Clocked in, but you're late by {n} minutes (cut-off is 09:00 WIB).",
+    "successIn": "Successfully clocked in!",
+    "successOut": "Successfully clocked out!",
+    "failedIn": "Failed to clock in. Please try again.",
+    "failedOut": "Failed to clock out. Please try again."
+  }
+}

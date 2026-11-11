@@ -23,7 +23,11 @@ import Alert from "@/components/common/Alert.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import { can, hasAnyRole } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { UiBadge, UiButton, UiEmpty, UiPageHeader, UiStat, UiTable } from "@/components/ui";
+
+const { t } = useI18n();
 
 const router = useRouter();
 const payrollStore = usePayrollStore();
@@ -43,10 +47,10 @@ onMounted(async () => {
 const canManagePayroll = computed(() => hasAnyRole(["superadmin", "manager", "finance"]));
 
 const handleDeletePayroll = async (payroll) => {
-  const label = payroll.type === "thr" ? "THR" : "Payroll";
+  const label = payroll.type === "thr" ? "THR" : t("payroll.common.payroll");
   const ok = await alertModal.confirm(
-    `Delete this ${label} period (${formatDate(payroll.period || payroll.salary_month)})? This permanently removes it and all its employee details.`,
-    { type: "danger", confirmText: "Delete" }
+    t("payroll.dashboard.deleteConfirm", { label, period: formatDate(payroll.period || payroll.salary_month) }),
+    { type: "danger", confirmText: t("common.actions.delete") }
   );
   if (!ok) return;
 
@@ -56,17 +60,17 @@ const handleDeletePayroll = async (payroll) => {
     await fetchList();
   } catch (error) {
     await alertModal.alert(
-      error?.response?.data?.message || "Failed to delete payroll.",
+      error?.response?.data?.message || t("payroll.dashboard.deleteFailed"),
       { type: "danger" }
     );
   }
 };
 
 const handleRegenerate = async (payroll) => {
-  const label = payroll.type === "thr" ? "THR" : "Payroll";
+  const label = payroll.type === "thr" ? "THR" : t("payroll.common.payroll");
   const ok = await alertModal.confirm(
-    `Re-generate ${label} for ${formatDate(payroll.period || payroll.salary_month)}? This replaces the existing employee details for this period with freshly computed ones.`,
-    { type: "warning", confirmText: "Regenerate" }
+    t("payroll.dashboard.regenerateConfirm", { label, period: formatDate(payroll.period || payroll.salary_month) }),
+    { type: "warning", confirmText: t("payroll.common.regenerate") }
   );
   if (!ok) return;
 
@@ -80,14 +84,14 @@ const handleRegenerate = async (payroll) => {
       await payrollStore.generatePayroll(payload);
     }
     await alertModal.alert(
-      `${label} regeneration is being processed in the background. Please check back shortly.`,
+      t("payroll.dashboard.regenerateQueued", { label }),
       { type: "success" }
     );
     await payrollStore.fetchStatistics();
     await fetchList();
   } catch (error) {
     await alertModal.alert(
-      error?.response?.data?.message || `Failed to regenerate ${label}.`,
+      error?.response?.data?.message || t("payroll.dashboard.regenerateFailed", { label }),
       { type: "danger" }
     );
   }
@@ -98,14 +102,14 @@ const isTotalAmountVisible = ref(false);
 const isAverageSalaryVisible = ref(false);
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
   });
 };
 
 const formatProcessedDate = (date) => {
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -113,27 +117,30 @@ const formatProcessedDate = (date) => {
 };
 
 // Presentation only: payroll status -> badge tone + label.
-const STATUS = {
-  draft: { tone: "neutral", label: "Draft" },
-  pending: { tone: "warn", label: "Pending" },
-  processing: { tone: "warn", label: "Processing" },
-  approved: { tone: "info", label: "Approved" },
-  paid: { tone: "ok", label: "Paid" },
-  cancelled: { tone: "bad", label: "Cancelled" },
+const STATUS_TONES = {
+  draft: "neutral",
+  pending: "warn",
+  processing: "warn",
+  approved: "info",
+  paid: "ok",
+  cancelled: "bad",
 };
-const statusOf = (status) => STATUS[status] || { tone: "neutral", label: status || "Pending" };
+const statusOf = (status) =>
+  STATUS_TONES[status]
+    ? { tone: STATUS_TONES[status], label: t(`payroll.status.${status}`) }
+    : { tone: "neutral", label: status || t("payroll.status.pending") };
 
 const salaryChangeHint = computed(() => {
   const change = statistics.value?.salary_change ?? 0;
-  return `${change >= 0 ? "+" : ""}${change}% this month`;
+  return t("payroll.dashboard.changeThisMonth", { change: `${change >= 0 ? "+" : ""}${change}` });
 });
 
 const columns = computed(() => [
-  { key: "period", label: "Period" },
-  { key: "employees", label: "Employees" },
-  { key: "processed", label: "Processed on" },
-  { key: "status", label: "Status" },
-  { key: "total_amount", label: "Total payroll", align: "right" },
+  { key: "period", label: t("common.labels.period") },
+  { key: "employees", label: t("payroll.dashboard.columns.employees") },
+  { key: "processed", label: t("payroll.dashboard.columns.processed") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "total_amount", label: t("payroll.dashboard.columns.total"), align: "right" },
   ...(canManagePayroll.value ? [{ key: "actions", label: "", align: "right", width: 96 }] : []),
 ]);
 
@@ -144,16 +151,16 @@ const viewDetails = (id) => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Payroll" subtitle="Monthly payroll and THR periods, with totals and approval status.">
+    <UiPageHeader :title="$t('payroll.dashboard.title')" :subtitle="$t('payroll.dashboard.subtitle')">
       <template #actions>
-        <UiButton variant="secondary" :icon="FileText" :to="{ name: 'admin.report.dashboard' }">Generate Reports</UiButton>
+        <UiButton variant="secondary" :icon="FileText" :to="{ name: 'admin.report.dashboard' }">{{ $t("payroll.dashboard.generateReports") }}</UiButton>
         <UiButton
           v-if="can('payroll-create')"
           variant="secondary"
           :icon="Gift"
           :to="{ name: 'admin.payroll.create', query: { type: 'thr' } }"
-        >Generate THR</UiButton>
-        <UiButton v-if="can('payroll-create')" :icon="Plus" :to="{ name: 'admin.payroll.create' }">Create New Payroll</UiButton>
+        >{{ $t("payroll.common.generateThr") }}</UiButton>
+        <UiButton v-if="can('payroll-create')" :icon="Plus" :to="{ name: 'admin.payroll.create' }">{{ $t("payroll.dashboard.createNew") }}</UiButton>
       </template>
     </UiPageHeader>
 
@@ -161,7 +168,7 @@ const viewDetails = (id) => {
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 ui-stagger">
       <UiStat
         class="col-span-2 lg:col-span-1"
-        label="Total Payroll Amount"
+        :label="$t('payroll.dashboard.stats.totalAmount')"
         :icon="DollarSign"
         :loading="loading"
         :hint="salaryChangeHint"
@@ -171,38 +178,38 @@ const viewDetails = (id) => {
           <button
             type="button"
             class="ui-press w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
-            :title="isTotalAmountVisible ? 'Hide amount' : 'Show amount'"
-            :aria-label="isTotalAmountVisible ? 'Hide amount' : 'Show amount'"
+            :title="isTotalAmountVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
+            :aria-label="isTotalAmountVisible ? $t('common.actions.hideAmounts') : $t('common.actions.showAmounts')"
             @click="isTotalAmountVisible = !isTotalAmountVisible"
           >
             <EyeOff v-if="isTotalAmountVisible" class="w-4 h-4" /><Eye v-else class="w-4 h-4" />
           </button>
         </span>
       </UiStat>
-      <UiStat label="Employees Paid" :icon="UserCheck" :loading="loading" :value="statistics.total_payroll ?? 0" hint="This month" />
+      <UiStat :label="$t('payroll.dashboard.stats.employeesPaid')" :icon="UserCheck" :loading="loading" :value="statistics.total_payroll ?? 0" :hint="$t('payroll.dashboard.stats.thisMonth')" />
       <UiStat
-        label="Pending Payments"
+        :label="$t('payroll.dashboard.stats.pending')"
         :icon="Clock"
         :loading="loading"
         :value="statistics.pending_review ?? 0"
         :tone="statistics.pending_review ? 'warn' : ''"
-        hint="Need approval"
+        :hint="$t('payroll.dashboard.stats.needApproval')"
       />
-      <UiStat label="Average Salary" :icon="Banknote" :loading="loading" hint="Per employee">
+      <UiStat :label="$t('payroll.dashboard.stats.averageSalary')" :icon="Banknote" :loading="loading" :hint="$t('payroll.dashboard.stats.perEmployee')">
         <span class="inline-flex items-center gap-1.5">
           <span>{{ isAverageSalaryVisible ? formatRupiahCompact(statistics.average_salary) : "Rp ••••••" }}</span>
           <button
             type="button"
             class="ui-press w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
-            :title="isAverageSalaryVisible ? 'Hide salary' : 'Show salary'"
-            :aria-label="isAverageSalaryVisible ? 'Hide salary' : 'Show salary'"
+            :title="isAverageSalaryVisible ? $t('payroll.dashboard.hideSalary') : $t('payroll.dashboard.showSalary')"
+            :aria-label="isAverageSalaryVisible ? $t('payroll.dashboard.hideSalary') : $t('payroll.dashboard.showSalary')"
             @click="isAverageSalaryVisible = !isAverageSalaryVisible"
           >
             <EyeOff v-if="isAverageSalaryVisible" class="w-4 h-4" /><Eye v-else class="w-4 h-4" />
           </button>
         </span>
       </UiStat>
-      <UiStat label="Finalized" :icon="CheckCircle" :loading="loading" :value="statistics.finalized ?? 0" hint="This month" />
+      <UiStat :label="$t('payroll.dashboard.stats.finalized')" :icon="CheckCircle" :loading="loading" :value="statistics.finalized ?? 0" :hint="$t('payroll.dashboard.stats.thisMonth')" />
     </div>
 
     <Alert type="success" :title="success" :show="success" @close="payrollStore.clearMessages()" />
@@ -210,8 +217,8 @@ const viewDetails = (id) => {
     <!-- Monthly Payroll Periods -->
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <div class="px-4 sm:px-5 pt-4 pb-3 border-b border-ui-line">
-        <h2 class="text-ui-h2 text-ui-ink">Monthly Payroll Periods</h2>
-        <p class="text-ui-cap text-ui-muted">All departments · click a period to open its employee breakdown</p>
+        <h2 class="text-ui-h2 text-ui-ink">{{ $t("payroll.dashboard.periodsTitle") }}</h2>
+        <p class="text-ui-cap text-ui-muted">{{ $t("payroll.dashboard.periodsSubtitle") }}</p>
       </div>
 
       <UiTable
@@ -231,7 +238,7 @@ const viewDetails = (id) => {
         </template>
         <template #cell-employees="{ row }">
           <span class="inline-flex items-center gap-1.5 tabular-nums">
-            <Users class="w-3.5 h-3.5 text-ui-faint" />{{ row.employee_count || 0 }} employees
+            <Users class="w-3.5 h-3.5 text-ui-faint" />{{ $t("payroll.common.employeesCount", { n: row.employee_count || 0 }, row.employee_count || 0) }}
           </span>
         </template>
         <template #cell-processed="{ row }">
@@ -245,8 +252,8 @@ const viewDetails = (id) => {
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-1">
-            <UiButton variant="ghost" size="sm" :icon="RefreshCw" title="Regenerate" aria-label="Regenerate" @click.stop="handleRegenerate(row)" />
-            <UiButton variant="ghost" size="sm" :icon="Trash2" title="Delete" aria-label="Delete" class="!text-ui-bad" @click.stop="handleDeletePayroll(row)" />
+            <UiButton variant="ghost" size="sm" :icon="RefreshCw" :title="$t('payroll.common.regenerate')" :aria-label="$t('payroll.common.regenerate')" @click.stop="handleRegenerate(row)" />
+            <UiButton variant="ghost" size="sm" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" class="!text-ui-bad" @click.stop="handleDeletePayroll(row)" />
           </div>
         </template>
 
@@ -256,7 +263,7 @@ const viewDetails = (id) => {
             <div class="flex-1 min-w-0">
               <p class="text-ui-body font-medium text-ui-ink truncate">{{ formatDate(row.period) }}</p>
               <p class="text-ui-cap text-ui-muted mt-0.5 tabular-nums">
-                {{ row.employee_count || 0 }} employees · {{ formatProcessedDate(row.created_at) }}
+                {{ $t("payroll.common.employeesCount", { n: row.employee_count || 0 }, row.employee_count || 0) }} · {{ formatProcessedDate(row.created_at) }}
               </p>
               <div class="flex items-center gap-1.5 mt-1.5">
                 <UiBadge v-if="row.type === 'thr'" tone="accent">THR</UiBadge>
@@ -271,8 +278,8 @@ const viewDetails = (id) => {
                 <button
                   type="button"
                   class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover"
-                  title="Regenerate"
-                  aria-label="Regenerate"
+                  :title="$t('payroll.common.regenerate')"
+                  :aria-label="$t('payroll.common.regenerate')"
                   @click.stop="handleRegenerate(row)"
                 >
                   <RefreshCw class="w-4 h-4" />
@@ -280,8 +287,8 @@ const viewDetails = (id) => {
                 <button
                   type="button"
                   class="ui-press w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-bad hover:bg-ui-bad-soft"
-                  title="Delete"
-                  aria-label="Delete"
+                  :title="$t('common.actions.delete')"
+                  :aria-label="$t('common.actions.delete')"
                   @click.stop="handleDeletePayroll(row)"
                 >
                   <Trash2 class="w-4 h-4" />
@@ -292,8 +299,8 @@ const viewDetails = (id) => {
         </template>
 
         <template #empty>
-          <UiEmpty :icon="Calendar" title="No payroll data found" message="Create your first payroll to get started" compact>
-            <UiButton v-if="can('payroll-create')" :icon="Plus" size="sm" :to="{ name: 'admin.payroll.create' }">Create New Payroll</UiButton>
+          <UiEmpty :icon="Calendar" :title="$t('payroll.dashboard.empty.title')" :message="$t('payroll.dashboard.empty.message')" compact>
+            <UiButton v-if="can('payroll-create')" :icon="Plus" size="sm" :to="{ name: 'admin.payroll.create' }">{{ $t("payroll.dashboard.createNew") }}</UiButton>
           </UiEmpty>
         </template>
       </UiTable>

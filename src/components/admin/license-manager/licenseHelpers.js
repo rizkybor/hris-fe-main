@@ -1,38 +1,48 @@
 import { DateTime } from "luxon";
-import { formatToClientTimezone } from "@/helpers/format";
+import { t, localeTag } from "@/i18n";
+
+// Labels are getters so they follow the interface language; the values,
+// class maps and shapes stay the same.
+const translatedMap = (keys) => {
+  const map = {};
+  for (const [name, key] of Object.entries(keys)) {
+    Object.defineProperty(map, name, { get: () => t(key), enumerable: true });
+  }
+  return map;
+};
 
 export const TYPE_OPTIONS = [
-  { value: "lifetime", label: "Lifetime" },
-  { value: "term", label: "Term" },
+  { value: "lifetime", get label() { return t("licenses.type.lifetime"); } },
+  { value: "term", get label() { return t("licenses.type.term"); } },
 ];
 
 // Plans a license can have.
 export const PLAN_OPTIONS = [
   {
     value: "trial",
-    label: "Trial",
-    note: "Individual · try every feature for a limited time",
+    get label() { return t("licenses.plans.trial.label"); },
+    get note() { return t("licenses.plans.trial.note"); },
     category: "individual",
     defaultMaxDevices: 1,
   },
   {
     value: "professional",
-    label: "Professional",
-    note: "Individual · paid per period",
+    get label() { return t("licenses.plans.professional.label"); },
+    get note() { return t("licenses.plans.professional.note"); },
     category: "individual",
     defaultMaxDevices: 2,
   },
   {
     value: "lifetime",
-    label: "Lifetime",
-    note: "Individual · one-time payment",
+    get label() { return t("licenses.plans.lifetime.label"); },
+    get note() { return t("licenses.plans.lifetime.note"); },
     category: "individual",
     defaultMaxDevices: 5,
   },
   {
     value: "organization",
-    label: "Organization",
-    note: "Team, community, club, or federation",
+    get label() { return t("licenses.plans.organization.label"); },
+    get note() { return t("licenses.plans.organization.note"); },
     category: "organization",
     defaultMaxDevices: 10,
   },
@@ -43,8 +53,8 @@ const planOption = (value) => PLAN_OPTIONS.find((p) => p.value === value);
 
 // Picker layout: Individual (Trial, Professional, Lifetime) and Organization.
 export const PLAN_GROUPS = [
-  { label: "Individual", plans: ["trial", "professional", "lifetime"].map(planOption) },
-  { label: "Organization", plans: [planOption("organization")] },
+  { get label() { return t("licenses.category.individual"); }, plans: ["trial", "professional", "lifetime"].map(planOption) },
+  { get label() { return t("licenses.category.organization"); }, plans: [planOption("organization")] },
 ];
 
 // The device platform a license is for, fixed at creation (mirrors
@@ -52,7 +62,7 @@ export const PLAN_GROUPS = [
 // on an iPad. iPad has no Trial.
 export const PLATFORM_OPTIONS = [
   { value: "mac", label: "Mac", note: "macOS", plans: ["trial", "professional", "lifetime", "organization"] },
-  { value: "ipad", label: "iPad", note: "iPadOS · no Trial", plans: ["professional", "lifetime", "organization"] },
+  { value: "ipad", label: "iPad", get note() { return t("licenses.platform.ipadNote"); }, plans: ["professional", "lifetime", "organization"] },
 ];
 
 // Create-only choice: a Mac and an iPad key generated together (one
@@ -60,7 +70,7 @@ export const PLATFORM_OPTIONS = [
 export const PLATFORM_BOTH = "both";
 export const PLATFORM_CHOICES = [
   ...PLATFORM_OPTIONS,
-  { value: PLATFORM_BOTH, label: "Mac + iPad", note: "Two keys at once · no Trial", plans: ["professional", "lifetime", "organization"] },
+  { value: PLATFORM_BOTH, label: "Mac + iPad", get note() { return t("licenses.platform.bothNote"); }, plans: ["professional", "lifetime", "organization"] },
 ];
 
 const platformOption = (value) => PLATFORM_CHOICES.find((p) => p.value === value);
@@ -90,13 +100,16 @@ export const PLATFORM_CHIP = {
 
 export const platformChipClass = (platform) => PLATFORM_CHIP[normalizePlatform(platform)];
 
-export const CATEGORY_LABELS = { individual: "Individual", organization: "Organization" };
+export const CATEGORY_LABELS = translatedMap({
+  individual: "licenses.category.individual",
+  organization: "licenses.category.organization",
+});
 
 // Older records may still carry the draft value "pro".
 export const normalizePlan = (plan) => (plan === "pro" ? "professional" : plan || "professional");
 
 export const planLabel = (license) =>
-  license?.plan_label || planOption(normalizePlan(license?.plan))?.label || license?.plan || "-";
+  planOption(normalizePlan(license?.plan))?.label || license?.plan_label || license?.plan || "-";
 
 export const planCategory = (license) =>
   license?.category || planOption(normalizePlan(license?.plan))?.category || "individual";
@@ -168,11 +181,11 @@ export const maskLicenseKey = (key) => {
 export const planType = (plan) => (normalizePlan(plan) === "lifetime" ? "lifetime" : "term");
 
 export const DURATION_OPTIONS = [
-  { value: "14_days", label: "14 days" },
-  { value: "30_days", label: "30 days" },
-  { value: "6_months", label: "6 months" },
-  { value: "1_year", label: "1 year" },
-  { value: "custom", label: "Custom date" },
+  { value: "14_days", get label() { return t("licenses.duration.days14"); } },
+  { value: "30_days", get label() { return t("licenses.duration.days30"); } },
+  { value: "6_months", get label() { return t("licenses.duration.months6"); } },
+  { value: "1_year", get label() { return t("licenses.duration.year1"); } },
+  { value: "custom", get label() { return t("licenses.duration.custom"); } },
 ];
 
 const durationOption = (value) => DURATION_OPTIONS.find((d) => d.value === value);
@@ -191,10 +204,10 @@ export const durationOptionsFor = (plan) => {
 export const defaultDurationFor = (plan) => (normalizePlan(plan) === "trial" ? "14_days" : "1_year");
 
 export const ORGANIZATION_TYPE_OPTIONS = [
-  { value: "team", label: "Team" },
-  { value: "community", label: "Community" },
-  { value: "club", label: "Club" },
-  { value: "federation", label: "Federation" },
+  { value: "team", get label() { return t("licenses.orgType.team"); } },
+  { value: "community", get label() { return t("licenses.orgType.community"); } },
+  { value: "club", get label() { return t("licenses.orgType.club"); } },
+  { value: "federation", get label() { return t("licenses.orgType.federation"); } },
 ];
 
 export const organizationTypeLabel = (value) =>
@@ -275,16 +288,16 @@ export const isRequiredField = (category, field, country = DEFAULT_COUNTRY) =>
   requiredFields(category, country).includes(field);
 
 export const STATUS_OPTIONS = [
-  { value: "active", label: "Active" },
-  { value: "expiring_soon", label: "Expiring soon" },
-  { value: "expired", label: "Expired" },
-  { value: "inactive", label: "Inactive" },
+  { value: "active", get label() { return t("licenses.status.active"); } },
+  { value: "expiring_soon", get label() { return t("licenses.status.expiringSoon"); } },
+  { value: "expired", get label() { return t("licenses.status.expired"); } },
+  { value: "inactive", get label() { return t("licenses.status.inactive"); } },
 ];
 
 export const SORT_OPTIONS = [
-  { value: "", label: "Newest first" },
-  { value: "expires_at:asc", label: "Expires soonest" },
-  { value: "expires_at:desc", label: "Expires latest" },
+  { value: "", get label() { return t("licenses.sort.newest"); } },
+  { value: "expires_at:asc", get label() { return t("licenses.sort.expiresSoonest"); } },
+  { value: "expires_at:desc", get label() { return t("licenses.sort.expiresLatest"); } },
 ];
 
 export const EXPIRING_SOON_DAYS = 14;
@@ -299,8 +312,9 @@ const PLATFORM_LABELS = {
   mac_catalyst: "macOS (Catalyst)",
 };
 
+// In the browser's timezone, month names in the interface language.
 export const formatDate = (value, format = "dd MMM yyyy") =>
-  value ? formatToClientTimezone(value, format) : "-";
+  value ? DateTime.fromISO(value, { zone: "utc" }).toLocal().setLocale(localeTag()).toFormat(format) : "-";
 
 export const formatDateTime = (value) => formatDate(value, "dd MMM yyyy HH:mm");
 
@@ -324,10 +338,11 @@ export const toDateInput = (value) =>
 // computes the authoritative expiry.
 export const previewExpiry = (duration) => {
   const now = DateTime.now();
-  if (duration === "14_days") return now.plus({ days: 14 }).toFormat("dd MMM yyyy");
-  if (duration === "30_days") return now.plus({ days: 30 }).toFormat("dd MMM yyyy");
-  if (duration === "6_months") return now.plus({ months: 6 }).toFormat("dd MMM yyyy");
-  if (duration === "1_year") return now.plus({ years: 1 }).toFormat("dd MMM yyyy");
+  const fmt = (date) => date.setLocale(localeTag()).toFormat("dd MMM yyyy");
+  if (duration === "14_days") return fmt(now.plus({ days: 14 }));
+  if (duration === "30_days") return fmt(now.plus({ days: 30 }));
+  if (duration === "6_months") return fmt(now.plus({ months: 6 }));
+  if (duration === "1_year") return fmt(now.plus({ years: 1 }));
   return null;
 };
 
@@ -392,26 +407,28 @@ const isUrl = (value) => {
   }
 };
 
+// Keys under licenses.validation.required (per category where it differs).
 const REQUIRED_MESSAGES = {
-  licensee_name: { individual: "Full name is required.", organization: "Organization name is required." },
-  licensee_email: { individual: "Email is required.", organization: "Contact email is required." },
-  phone: { individual: "Phone / WhatsApp is required.", organization: "Contact phone / WhatsApp is required." },
-  country: "Choose a country.",
-  province: "State / province is required.",
-  regency: "City is required.",
-  postal_code: "Postal code is required.",
-  province_code: "Choose a province.",
-  regency_code: "Choose a city / regency.",
-  district_code: "Choose a district.",
-  village_code: "Choose a village.",
-  organization_type: "Choose the organization type.",
-  contact_name: "Contact person is required.",
-  address: "Street address is required.",
+  licensee_name: { individual: "fullName", organization: "organizationName" },
+  licensee_email: { individual: "email", organization: "contactEmail" },
+  phone: { individual: "phone", organization: "contactPhone" },
+  country: "country",
+  province: "province",
+  regency: "city",
+  postal_code: "postalCode",
+  province_code: "provinceCode",
+  regency_code: "regencyCode",
+  district_code: "districtCode",
+  village_code: "villageCode",
+  organization_type: "organizationType",
+  contact_name: "contactName",
+  address: "address",
 };
 
 const requiredMessage = (field, category) => {
   const msg = REQUIRED_MESSAGES[field];
-  return typeof msg === "string" ? msg : msg?.[category] || "This field is required.";
+  const key = typeof msg === "string" ? msg : msg?.[category] || "generic";
+  return t(`licenses.validation.required.${key}`);
 };
 
 // Client-side checks mirroring the API rules; returns {field: message}.
@@ -420,10 +437,13 @@ export const validateLicenseForm = (form) => {
   const category = categoryOfPlan(form.plan);
   const blank = (v) => v === null || v === undefined || String(v).trim() === "";
 
-  if (!PLATFORM_CHOICES.some((p) => p.value === form.platform)) errors.platform = "Choose Mac, iPad, or Mac + iPad.";
-  if (!PLAN_OPTIONS.some((p) => p.value === form.plan)) errors.plan = "Choose a plan.";
+  if (!PLATFORM_CHOICES.some((p) => p.value === form.platform)) errors.platform = t("licenses.validation.platform");
+  if (!PLAN_OPTIONS.some((p) => p.value === form.plan)) errors.plan = t("licenses.validation.plan");
   else if (!errors.platform && !planAllowedOn(form.platform, form.plan))
-    errors.plan = `The ${planOption(form.plan).label} plan is not available for ${platformOption(form.platform).label} licenses.`;
+    errors.plan = t("licenses.validation.planNotOnPlatform", {
+      plan: planOption(form.plan).label,
+      platform: platformOption(form.platform).label,
+    });
 
   for (const field of requiredFields(category, form.country)) {
     if (blank(form[field])) errors[field] = requiredMessage(field, category);
@@ -431,35 +451,35 @@ export const validateLicenseForm = (form) => {
   if (!errors.postal_code && !blank(form.postal_code)) {
     const postal = String(form.postal_code).trim();
     if (isIndonesia(form.country) ? !/^[0-9]{5}$/.test(postal) : !/^[A-Za-z0-9][A-Za-z0-9 -]{1,19}$/.test(postal))
-      errors.postal_code = isIndonesia(form.country) ? "Use the 5-digit postal code." : "Use 2-20 letters, digits, spaces or \"-\".";
+      errors.postal_code = isIndonesia(form.country) ? t("licenses.validation.postalCodeId") : t("licenses.validation.postalCodeOther");
   }
 
   if (!errors.licensee_email && !EMAIL_RE.test(String(form.licensee_email).trim()))
-    errors.licensee_email = "Enter a valid email address.";
+    errors.licensee_email = t("licenses.validation.email");
   if (!errors.phone && !PHONE_RE.test(String(form.phone).trim()))
-    errors.phone = 'Use 6-20 digits; spaces, "+" and "-" are allowed.';
+    errors.phone = t("licenses.validation.phone");
 
   if (category === "organization") {
     if (!blank(form.website) && !isUrl(String(form.website).trim()))
-      errors.website = "Enter a full URL, e.g. https://example.org";
+      errors.website = t("licenses.validation.website");
     if (!blank(form.member_count)) {
       const n = Number(form.member_count);
-      if (!Number.isInteger(n) || n < 1) errors.member_count = "Member count must be a whole number of at least 1.";
+      if (!Number.isInteger(n) || n < 1) errors.member_count = t("licenses.validation.memberCount");
     }
   }
 
   if (planType(form.plan) === "term") {
-    if (!form.duration) errors.duration = "Choose a duration.";
-    if (form.duration === "custom" && !form.expires_at) errors.expires_at = "Pick an expiry date.";
+    if (!form.duration) errors.duration = t("licenses.validation.duration");
+    if (form.duration === "custom" && !form.expires_at) errors.expires_at = t("licenses.validation.expiresAt");
   }
 
   if (planType(form.plan) === "lifetime" && !blank(form.updates_major)) {
     const major = Number(form.updates_major);
-    if (!Number.isInteger(major) || major < 1 || major > 99) errors.updates_major = "Use a whole number from 1 to 99.";
+    if (!Number.isInteger(major) || major < 1 || major > 99) errors.updates_major = t("licenses.validation.updatesMajor");
   }
 
   const max = Number(form.max_devices);
-  if (!Number.isInteger(max) || max < 1 || max > 100) errors.max_devices = "Max devices must be between 1 and 100.";
+  if (!Number.isInteger(max) || max < 1 || max > 100) errors.max_devices = t("licenses.validation.maxDevices");
   return errors;
 };
 
@@ -474,9 +494,9 @@ export const validationErrors = (error) =>
 export const isLifetimeLicense = (license) => license?.type === "lifetime" || !license?.expires_at;
 
 export const remainingLabel = (days) => {
-  if (days === null || days === undefined) return "Lifetime";
-  if (days <= 0) return "Expired";
-  return `${days} day${days === 1 ? "" : "s"} left`;
+  if (days === null || days === undefined) return t("licenses.plans.lifetime.label");
+  if (days <= 0) return t("licenses.status.expired");
+  return t("licenses.period.daysLeft", { n: days }, days);
 };
 
 // Badge colour for the remaining-days column.
@@ -492,18 +512,18 @@ export const formatDuration = (days) => {
   if (days === null || days === undefined) return "-";
   if (days >= 365 && days % 365 <= 2) {
     const years = Math.round(days / 365);
-    return `${years} year${years === 1 ? "" : "s"} (${days} days)`;
+    return t("licenses.period.yearsWithDays", { n: years, days }, years);
   }
   if (days >= 28) {
     const months = Math.round(days / 30.44);
-    return `${months} month${months === 1 ? "" : "s"} (${days} days)`;
+    return t("licenses.period.monthsWithDays", { n: months, days }, months);
   }
-  return `${days} day${days === 1 ? "" : "s"}`;
+  return t("licenses.period.days", { n: days }, days);
 };
 
 // "2 hours ago", "in 3 days".
 export const relativeTime = (value) =>
-  value ? DateTime.fromISO(value).toRelative({ locale: "en" }) || "-" : "-";
+  value ? DateTime.fromISO(value).toRelative({ locale: localeTag() }) || "-" : "-";
 
 /* ------------------------------------------------------------------
  * Tracking events
@@ -511,36 +531,44 @@ export const relativeTime = (value) =>
 
 // tone: badge colour; group: used by the timeline filter.
 export const EVENT_TYPES = {
-  created: { label: "License created", tone: "violet", group: "Admin" },
-  updated: { label: "Details updated", tone: "blue", group: "Admin" },
-  activated_by_admin: { label: "Switched on by admin", tone: "emerald", group: "Admin" },
-  deactivated_by_admin: { label: "Switched off by admin", tone: "gray", group: "Admin" },
-  extended: { label: "Expiry changed", tone: "indigo", group: "Admin" },
-  plan_changed: { label: "Plan changed", tone: "fuchsia", group: "Admin" },
-  device_released_by_admin: { label: "Device released by admin", tone: "amber", group: "Admin" },
-  deleted: { label: "License deleted", tone: "red", group: "Admin" },
-  certificate_downloaded: { label: "Certificate PDF downloaded", tone: "violet", group: "Admin" },
-  certificate_emailed: { label: "Certificate sent by email", tone: "violet", group: "Admin" },
-  certificate_shared_whatsapp: { label: "Certificate shared via WhatsApp", tone: "emerald", group: "Admin" },
-  certificate_link_opened: { label: "Certificate opened from a shared link", tone: "sky", group: "App" },
-  device_activated: { label: "Device activated", tone: "emerald", group: "App" },
-  device_reactivated: { label: "Device re-activated", tone: "teal", group: "App" },
-  refreshed: { label: "License refreshed", tone: "sky", group: "App" },
-  device_released: { label: "Device released from the app", tone: "amber", group: "App" },
-  app_updated: { label: "App updated", tone: "indigo", group: "App" },
-  denied_device_limit: { label: "Denied: device limit reached", tone: "red", group: "Denied" },
-  denied_inactive: { label: "Denied: license switched off", tone: "red", group: "Denied" },
-  denied_expired: { label: "Denied: license expired", tone: "red", group: "Denied" },
-  denied_wrong_platform: { label: "Denied: wrong platform", tone: "red", group: "Denied" },
-  denied_key_used: { label: "Denied: key already used", tone: "red", group: "Denied" },
-  denied_key_in_use: { label: "Denied: key in use on another device", tone: "red", group: "Denied" },
-  denied_key_replaced: { label: "Denied: old key (replaced after a plan change)", tone: "red", group: "Denied" },
+  created: { get label() { return t("licenses.events.created"); }, tone: "violet", group: "Admin" },
+  updated: { get label() { return t("licenses.events.updated"); }, tone: "blue", group: "Admin" },
+  activated_by_admin: { get label() { return t("licenses.events.activatedByAdmin"); }, tone: "emerald", group: "Admin" },
+  deactivated_by_admin: { get label() { return t("licenses.events.deactivatedByAdmin"); }, tone: "gray", group: "Admin" },
+  extended: { get label() { return t("licenses.events.extended"); }, tone: "indigo", group: "Admin" },
+  plan_changed: { get label() { return t("licenses.events.planChanged"); }, tone: "fuchsia", group: "Admin" },
+  device_released_by_admin: { get label() { return t("licenses.events.deviceReleasedByAdmin"); }, tone: "amber", group: "Admin" },
+  deleted: { get label() { return t("licenses.events.deleted"); }, tone: "red", group: "Admin" },
+  certificate_downloaded: { get label() { return t("licenses.events.certificateDownloaded"); }, tone: "violet", group: "Admin" },
+  certificate_emailed: { get label() { return t("licenses.events.certificateEmailed"); }, tone: "violet", group: "Admin" },
+  certificate_shared_whatsapp: { get label() { return t("licenses.events.certificateSharedWhatsapp"); }, tone: "emerald", group: "Admin" },
+  certificate_link_opened: { get label() { return t("licenses.events.certificateLinkOpened"); }, tone: "sky", group: "App" },
+  device_activated: { get label() { return t("licenses.events.deviceActivated"); }, tone: "emerald", group: "App" },
+  device_reactivated: { get label() { return t("licenses.events.deviceReactivated"); }, tone: "teal", group: "App" },
+  refreshed: { get label() { return t("licenses.events.refreshed"); }, tone: "sky", group: "App" },
+  device_released: { get label() { return t("licenses.events.deviceReleased"); }, tone: "amber", group: "App" },
+  app_updated: { get label() { return t("licenses.events.appUpdated"); }, tone: "indigo", group: "App" },
+  denied_device_limit: { get label() { return t("licenses.events.deniedDeviceLimit"); }, tone: "red", group: "Denied" },
+  denied_inactive: { get label() { return t("licenses.events.deniedInactive"); }, tone: "red", group: "Denied" },
+  denied_expired: { get label() { return t("licenses.events.deniedExpired"); }, tone: "red", group: "Denied" },
+  denied_wrong_platform: { get label() { return t("licenses.events.deniedWrongPlatform"); }, tone: "red", group: "Denied" },
+  denied_key_used: { get label() { return t("licenses.events.deniedKeyUsed"); }, tone: "red", group: "Denied" },
+  denied_key_in_use: { get label() { return t("licenses.events.deniedKeyInUse"); }, tone: "red", group: "Denied" },
+  denied_key_replaced: { get label() { return t("licenses.events.deniedKeyReplaced"); }, tone: "red", group: "Denied" },
 };
 
 // Key modes, offered on create only.
 export const KEY_MODE_OPTIONS = [
-  { value: "per_device", label: "One key per device", note: "Each device gets its own key; a released key can't be used again." },
-  { value: "shared", label: "One shared key", note: "Every device uses the same key, up to Max devices." },
+  {
+    value: "per_device",
+    get label() { return t("licenses.keyMode.perDevice.label"); },
+    get note() { return t("licenses.keyMode.perDevice.note"); },
+  },
+  {
+    value: "shared",
+    get label() { return t("licenses.keyMode.shared.label"); },
+    get note() { return t("licenses.keyMode.shared.note"); },
+  },
 ];
 
 // Keys a one-key certificate can be made for: every key of the license
@@ -561,9 +589,9 @@ export const certificateKeyOptions = (license) => {
 
 // Per-device key status: label + dot/text classes.
 export const KEY_STATUS = {
-  available: { label: "Available", dot: "bg-ui-ok", text: "text-ui-ok", chip: "bg-ui-ok-soft text-ui-ok" },
-  in_use: { label: "In use", dot: "bg-ui-accent", text: "text-ui-accent", chip: "bg-ui-accent-soft text-ui-accent" },
-  used: { label: "Used", dot: "bg-ui-faint", text: "text-ui-muted", chip: "bg-ui-subtle text-ui-muted" },
+  available: { get label() { return t("licenses.keyStatus.available"); }, dot: "bg-ui-ok", text: "text-ui-ok", chip: "bg-ui-ok-soft text-ui-ok" },
+  in_use: { get label() { return t("licenses.keyStatus.inUse"); }, dot: "bg-ui-accent", text: "text-ui-accent", chip: "bg-ui-accent-soft text-ui-accent" },
+  used: { get label() { return t("licenses.keyStatus.used"); }, dot: "bg-ui-faint", text: "text-ui-muted", chip: "bg-ui-subtle text-ui-muted" },
 };
 
 // Activity icon tints: quiet by default; only events that carry a state
@@ -588,35 +616,35 @@ export const eventLabel = (event) => EVENT_TYPES[event?.event]?.label || event?.
 export const eventToneClass = (event) => EVENT_TONE_CLASS[EVENT_TYPES[event?.event]?.tone] || EVENT_TONE_CLASS.gray;
 
 // Readable field names for the "updated" diff.
-export const FIELD_LABELS = {
-  licensee_name: "Name",
-  licensee_email: "Email",
-  phone: "Phone",
-  country: "Country",
-  province: "Province",
-  regency: "City / Regency",
-  district: "District",
-  village: "Village",
-  postal_code: "Postal code",
-  province_code: "Province code",
-  regency_code: "City / regency code",
-  district_code: "District code",
-  village_code: "Village code",
-  occupation: "Occupation",
-  affiliation: "Affiliation",
-  organization_type: "Organization type",
-  contact_name: "Contact person",
-  contact_position: "Contact position",
-  address: "Street address",
-  website: "Website",
-  tax_id: "Tax ID",
-  member_count: "Member count",
-  type: "Type",
-  starts_at: "Starts",
-  max_devices: "Max devices",
-  updates_major: "Covers major version",
-  notes: "Notes",
-};
+export const FIELD_LABELS = translatedMap({
+  licensee_name: "licenses.fields.licenseeName",
+  licensee_email: "licenses.fields.licenseeEmail",
+  phone: "licenses.fields.phone",
+  country: "licenses.fields.country",
+  province: "licenses.fields.province",
+  regency: "licenses.fields.regency",
+  district: "licenses.fields.district",
+  village: "licenses.fields.village",
+  postal_code: "licenses.fields.postalCode",
+  province_code: "licenses.fields.provinceCode",
+  regency_code: "licenses.fields.regencyCode",
+  district_code: "licenses.fields.districtCode",
+  village_code: "licenses.fields.villageCode",
+  occupation: "licenses.fields.occupation",
+  affiliation: "licenses.fields.affiliation",
+  organization_type: "licenses.fields.organizationType",
+  contact_name: "licenses.fields.contactName",
+  contact_position: "licenses.fields.contactPosition",
+  address: "licenses.fields.address",
+  website: "licenses.fields.website",
+  tax_id: "licenses.fields.taxId",
+  member_count: "licenses.fields.memberCount",
+  type: "licenses.fields.type",
+  starts_at: "licenses.fields.startsAt",
+  max_devices: "licenses.fields.maxDevices",
+  updates_major: "licenses.fields.updatesMajor",
+  notes: "licenses.fields.notes",
+});
 
 /* ------------------------------------------------------------------
  * Live preview of the active period (form summary)
@@ -645,31 +673,33 @@ export const periodPreview = (form) => {
 
   return {
     lifetime: false,
-    start: start.toFormat("dd MMM yyyy"),
-    end: end ? end.toFormat("dd MMM yyyy") : null,
+    start: start.setLocale(localeTag()).toFormat("dd MMM yyyy"),
+    end: end ? end.setLocale(localeTag()).toFormat("dd MMM yyyy") : null,
     days: end ? Math.round(end.diff(start, "days").days) : null,
   };
 };
 
 // Labels for the "Required fields" checklist.
+// Keys under licenses.checklist (per category where it differs).
 const CHECKLIST_LABELS = {
-  licensee_name: { individual: "Full name", organization: "Organization name" },
-  licensee_email: { individual: "Email", organization: "Contact email" },
-  phone: { individual: "Phone / WhatsApp", organization: "Contact phone" },
-  organization_type: "Organization type",
-  contact_name: "Contact person",
-  country: "Country",
-  province: "State / province",
-  regency: "City",
-  postal_code: "Postal code",
-  province_code: "Province",
-  regency_code: "City / regency",
-  district_code: "District",
-  village_code: "Village",
-  address: "Street address",
+  licensee_name: { individual: "fullName", organization: "organizationName" },
+  licensee_email: { individual: "email", organization: "contactEmail" },
+  phone: { individual: "phone", organization: "contactPhone" },
+  organization_type: "organizationType",
+  contact_name: "contactName",
+  country: "country",
+  province: "province",
+  regency: "city",
+  postal_code: "postalCode",
+  province_code: "provinceCode",
+  regency_code: "regencyCode",
+  district_code: "districtCode",
+  village_code: "villageCode",
+  address: "address",
 };
 
 export const requiredFieldLabel = (field, category) => {
   const label = CHECKLIST_LABELS[field];
-  return typeof label === "string" ? label : label?.[category] || field;
+  const key = typeof label === "string" ? label : label?.[category];
+  return key ? t(`licenses.checklist.${key}`) : field;
 };

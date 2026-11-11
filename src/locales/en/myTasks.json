@@ -1,0 +1,60 @@
+{
+  "title": "Task Collection (Assigned/Project)",
+  "subtitle": "Your project tasks and the tasks your supervisor assigned you, sorted by what's due first.",
+  "searchPlaceholder": "Search tasks, projects or who assigned it...",
+  "allProjects": "All Projects",
+  "noProject": "No Project",
+  "assignedBy": "Assigned by {name}",
+  "statusOf": "Status of {title}",
+  "source": {
+    "assigned": "Assigned"
+  },
+  "status": {
+    "todo": "To Do",
+    "in_progress": "In Progress",
+    "review": "Review",
+    "done": "Done",
+    "cancelled": "Cancelled"
+  },
+  "priority": {
+    "urgent": "Urgent",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "buckets": {
+    "overdue": "Overdue",
+    "today": "Due today",
+    "week": "Next 7 days",
+    "later": "Later",
+    "nodate": "No due date",
+    "completed": "Completed"
+  },
+  "summary": {
+    "open": "Open"
+  },
+  "empty": {
+    "filteredTitle": "No tasks match your filters",
+    "filteredMessage": "Try another search, status, project or tab",
+    "showAll": "Show all tasks",
+    "title": "No tasks yet",
+    "message": "Tasks from your projects and from your supervisor will show up here."
+  },
+  "detail": {
+    "dueBy": "Due {date} • by {name}",
+    "yourStatus": "Your Status"
+  },
+  "recap": {
+    "standTitle": "Where my tasks stand",
+    "standSubtitle": "Project and assigned tasks together",
+    "noTasks": "No tasks yet.",
+    "doneLabel": "done",
+    "byProjectTitle": "Open tasks by project",
+    "byProjectSubtitle": "Most open first",
+    "nothingOpen": "Nothing open. Nice work!",
+    "assignedTasks": "Assigned tasks",
+    "openCount": "{n} open",
+    "overdueCount": "{n} overdue",
+    "more": "+ {n} more"
+  }
+}

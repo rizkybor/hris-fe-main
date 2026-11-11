@@ -6,6 +6,8 @@ import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiPageHeader, UiButton, UiModal, UiInput, UiEmpty, UiBadge } from "@/components/ui";
 import { can } from "@/helpers/permissionHelper";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import {
   Building2,
   Pencil,
@@ -24,6 +26,7 @@ import {
 } from "lucide-vue-next";
 
 // Pinia store
+const { t } = useI18n();
 const companyStore = useCompanyAboutStore();
 const { company, loading, success, error } = storeToRefs(companyStore);
 
@@ -63,13 +66,21 @@ const cleanedBranches = computed(() => {
 // Format tanggal
 const formattedDate = computed(() =>
   company.value?.established_date
-    ? new Date(company.value.established_date).toLocaleDateString("id-ID", {
+    ? new Date(company.value.established_date).toLocaleDateString(localeTag(), {
         year: "numeric",
         month: "long",
         day: "numeric",
       })
     : "-"
 );
+
+const overviewItems = computed(() => [
+  { key: "established", icon: CalendarDays, label: t("company.fields.established"), value: formattedDate.value },
+  { key: "npwp", icon: Hash, label: t("company.fields.npwp"), value: company.value?.npwp },
+  { key: "email", icon: Mail, label: t("common.labels.email"), value: company.value?.email },
+  { key: "phone", icon: Phone, label: t("common.labels.phone"), value: company.value?.phone },
+  { key: "address", icon: MapPin, label: t("common.labels.address"), value: company.value?.address, wide: true },
+]);
 
 // --- Modal state
 const showModal = ref(false);
@@ -172,10 +183,10 @@ const saveCompany = async () => {
     <Alert type="error" :title="error" :show="!!error" />
 
     <!-- Page Header -->
-    <UiPageHeader title="Company About" subtitle="Company profile shown across the system">
+    <UiPageHeader :title="$t('company.title')" :subtitle="$t('company.subtitle')">
       <template #actions>
         <UiButton v-if="can('company-about-edit') && company" :icon="Pencil" class="w-full sm:w-auto" @click="openModal(true)">
-          Edit
+          {{ $t("common.actions.edit") }}
         </UiButton>
       </template>
     </UiPageHeader>
@@ -207,7 +218,7 @@ const saveCompany = async () => {
       <section class="bg-ui-surface border border-ui-line rounded-ui-card lg:col-span-2 min-w-0">
         <div class="p-5 sm:p-6 flex items-start gap-4">
           <div class="w-14 h-14 bg-ui-surface border border-ui-line rounded-ui-card flex items-center justify-center shrink-0">
-            <img src="/images/jcd-only-color.png" alt="Company Logo" class="w-9 h-9 object-contain" />
+            <img src="/images/jcd-only-color.png" :alt="$t('company.logoAlt')" class="w-9 h-9 object-contain" />
           </div>
           <div class="min-w-0 flex-1">
             <h2 class="text-ui-h1 text-ui-ink truncate">{{ company.name || "-" }}</h2>
@@ -223,14 +234,8 @@ const saveCompany = async () => {
         </div>
 
         <dl class="border-t border-ui-line px-5 sm:px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-          <div v-for="item in [
-              { icon: CalendarDays, label: 'Established', value: formattedDate },
-              { icon: Hash, label: 'NPWP', value: company.npwp },
-              { icon: Mail, label: 'Email', value: company.email },
-              { icon: Phone, label: 'Phone', value: company.phone },
-              { icon: MapPin, label: 'Address', value: company.address, wide: true },
-            ]"
-            :key="item.label"
+          <div v-for="item in overviewItems"
+            :key="item.key"
             class="flex items-start gap-3 min-w-0"
             :class="item.wide ? 'sm:col-span-2' : ''"
           >
@@ -249,7 +254,7 @@ const saveCompany = async () => {
       <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
         <div class="flex items-center gap-2.5 mb-3">
           <Target class="w-4 h-4 text-ui-muted" />
-          <h3 class="text-ui-h3 text-ui-ink">Vision</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("company.vision") }}</h3>
         </div>
         <p class="text-ui-body text-ui-text whitespace-pre-line">{{ company.vision || "-" }}</p>
       </section>
@@ -258,7 +263,7 @@ const saveCompany = async () => {
       <section v-if="cleanedMission.length" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 lg:col-span-2 min-w-0">
         <div class="flex items-center gap-2.5 mb-3">
           <Flag class="w-4 h-4 text-ui-muted" />
-          <h3 class="text-ui-h3 text-ui-ink">Mission</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("company.mission") }}</h3>
           <UiBadge class="ml-auto">{{ cleanedMission.length }}</UiBadge>
         </div>
         <ol class="divide-y divide-ui-line">
@@ -273,7 +278,7 @@ const saveCompany = async () => {
       <section v-if="cleanedBranches.length" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0" :class="cleanedMission.length ? '' : 'lg:col-span-2'">
         <div class="flex items-center gap-2.5 mb-3">
           <Network class="w-4 h-4 text-ui-muted" />
-          <h3 class="text-ui-h3 text-ui-ink">Sub-companies / Branches</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("company.branches") }}</h3>
           <UiBadge class="ml-auto">{{ cleanedBranches.length }}</UiBadge>
         </div>
         <ul class="divide-y divide-ui-line">
@@ -287,8 +292,8 @@ const saveCompany = async () => {
 
     <!-- Empty State -->
     <div v-else class="bg-ui-surface border border-ui-line rounded-ui-card">
-      <UiEmpty :icon="Building2" title="No company data yet" message="Add your company profile so it appears across the system.">
-        <UiButton v-if="can('company-about-edit')" :icon="Plus" @click="openModal(false)">Add Company Information</UiButton>
+      <UiEmpty :icon="Building2" :title="$t('company.empty.title')" :message="$t('company.empty.message')">
+        <UiButton v-if="can('company-about-edit')" :icon="Plus" @click="openModal(false)">{{ $t("company.modal.addTitle") }}</UiButton>
       </UiEmpty>
     </div>
 
@@ -296,62 +301,62 @@ const saveCompany = async () => {
     <UiModal
       v-model:open="showModal"
       size="lg"
-      :title="isEditing ? 'Edit Company Information' : 'Add Company Information'"
+      :title="isEditing ? $t('company.modal.editTitle') : $t('company.modal.addTitle')"
     >
       <form id="company-about-form" class="space-y-6" @submit.prevent="saveCompany">
         <!-- Identity -->
         <fieldset class="space-y-4">
-          <legend class="sr-only">Identitas Perusahaan</legend>
+          <legend class="sr-only">{{ $t("company.modal.identity") }}</legend>
           <p class="flex items-center gap-2 text-ui-over uppercase text-ui-muted">
-            <Type class="w-3.5 h-3.5" />Identitas Perusahaan
+            <Type class="w-3.5 h-3.5" />{{ $t("company.modal.identity") }}
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UiInput v-model="form.name" label="Name" :icon="Building2" class="sm:col-span-2" />
-            <UiInput v-model="form.description" label="Description" :rows="2" class="sm:col-span-2" />
-            <UiInput v-model="form.legal_name" label="Legal Name (optional)" placeholder="PT ..." />
-            <UiInput v-model="form.npwp" label="NPWP (optional)" placeholder="00.000.000.0-000.000" />
+            <UiInput v-model="form.name" :label="$t('common.labels.name')" :icon="Building2" class="sm:col-span-2" />
+            <UiInput v-model="form.description" :label="$t('common.labels.description')" :rows="2" class="sm:col-span-2" />
+            <UiInput v-model="form.legal_name" :label="$t('company.fields.legalNameOptional')" placeholder="PT ..." />
+            <UiInput v-model="form.npwp" :label="$t('company.fields.npwpOptional')" placeholder="00.000.000.0-000.000" />
           </div>
         </fieldset>
 
         <!-- Vision & Mission -->
         <fieldset class="space-y-4 pt-5 border-t border-ui-line">
-          <legend class="sr-only">Visi &amp; Misi</legend>
+          <legend class="sr-only">{{ $t("company.modal.visionMission") }}</legend>
           <p class="flex items-center gap-2 text-ui-over uppercase text-ui-muted">
-            <Target class="w-3.5 h-3.5" />Visi &amp; Misi
+            <Target class="w-3.5 h-3.5" />{{ $t("company.modal.visionMission") }}
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UiInput v-model="form.vision" label="Vision" :rows="3" />
-            <UiInput v-model="form.mission" label="Mission (one per line)" :rows="3" placeholder="Enter one mission per line" />
+            <UiInput v-model="form.vision" :label="$t('company.vision')" :rows="3" />
+            <UiInput v-model="form.mission" :label="$t('company.fields.missionPerLine')" :rows="3" :placeholder="$t('company.fields.missionPlaceholder')" />
           </div>
         </fieldset>
 
         <!-- Contact -->
         <fieldset class="space-y-4 pt-5 border-t border-ui-line">
-          <legend class="sr-only">Kontak &amp; Lokasi</legend>
+          <legend class="sr-only">{{ $t("company.modal.contact") }}</legend>
           <p class="flex items-center gap-2 text-ui-over uppercase text-ui-muted">
-            <Phone class="w-3.5 h-3.5" />Kontak &amp; Lokasi
+            <Phone class="w-3.5 h-3.5" />{{ $t("company.modal.contact") }}
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UiInput v-model="form.established_date" type="date" label="Established Date" :icon="CalendarDays" />
-            <UiInput v-model="form.phone" label="Phone" :icon="Phone" />
-            <UiInput v-model="form.address" label="Address" :icon="MapPin" class="sm:col-span-2" />
-            <UiInput v-model="form.email" type="email" label="Email" :icon="Mail" class="sm:col-span-2" />
+            <UiInput v-model="form.established_date" type="date" :label="$t('company.fields.establishedDate')" :icon="CalendarDays" />
+            <UiInput v-model="form.phone" :label="$t('common.labels.phone')" :icon="Phone" />
+            <UiInput v-model="form.address" :label="$t('common.labels.address')" :icon="MapPin" class="sm:col-span-2" />
+            <UiInput v-model="form.email" type="email" :label="$t('common.labels.email')" :icon="Mail" class="sm:col-span-2" />
           </div>
         </fieldset>
 
         <!-- Branches -->
         <fieldset class="space-y-4 pt-5 border-t border-ui-line">
-          <legend class="sr-only">Sub-companies / Branches</legend>
+          <legend class="sr-only">{{ $t("company.branches") }}</legend>
           <p class="flex items-center gap-2 text-ui-over uppercase text-ui-muted">
-            <Network class="w-3.5 h-3.5" />Sub-companies / Branches
+            <Network class="w-3.5 h-3.5" />{{ $t("company.branches") }}
           </p>
-          <UiInput v-model="form.branches" :rows="3" placeholder="Enter one branch per line" aria-label="Sub-companies / Branches" />
+          <UiInput v-model="form.branches" :rows="3" :placeholder="$t('company.fields.branchesPlaceholder')" :aria-label="$t('company.branches')" />
         </fieldset>
       </form>
 
       <template #footer>
-        <UiButton variant="secondary" @click="showModal = false">Cancel</UiButton>
-        <UiButton :icon="Save" :loading="saving" @click="saveCompany">{{ saving ? "Saving..." : "Save" }}</UiButton>
+        <UiButton variant="secondary" @click="showModal = false">{{ $t("common.actions.cancel") }}</UiButton>
+        <UiButton :icon="Save" :loading="saving" @click="saveCompany">{{ saving ? $t("common.actions.saving") : $t("common.actions.save") }}</UiButton>
       </template>
     </UiModal>
   </div>

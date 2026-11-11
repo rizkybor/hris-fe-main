@@ -30,6 +30,9 @@ import { useRoleStore } from "@/stores/role";
 import { getRoleLabel } from "@/utils/badgeUtils";
 import { storeToRefs } from "pinia";
 import RightSidebarStep2 from "@/components/admin/employee/create/RightSidebarStep2.vue";
+import { useI18n } from "vue-i18n";
+
+const { t, te } = useI18n();
 
 interface Props {
   modelValue: any;
@@ -133,17 +136,26 @@ const withBlank = (placeholder: string, options: any[]) => [
   { value: "", label: placeholder },
   ...(options || []),
 ];
-const accountTypeOptions = [
-  { value: "savings", label: "Savings Account" },
-  { value: "checking", label: "Checking Account" },
-  { value: "current", label: "Current Account" },
-];
-const skillOptions = [
-  { value: "beginner", label: "Beginner", icon: PlayCircle },
-  { value: "intermediate", label: "Intermediate", icon: Zap },
-  { value: "advanced", label: "Advanced", icon: Award },
-  { value: "expert", label: "Expert", icon: Crown },
-];
+// Known option values get a translated label; anything else keeps the API label.
+const translateOptions = (group: string, options: any[]) =>
+  (options || []).map((o: any) => {
+    const key = `employees.enums.${group}.${o.value}`;
+    return te(key) ? { ...o, label: t(key) } : o;
+  });
+const jobStatusOptions = computed(() => translateOptions("jobStatus", jobStatuses.value));
+const employmentTypeOptions = computed(() => translateOptions("employmentType", employmentTypes.value));
+const workLocationOptions = computed(() => translateOptions("workLocation", workLocations.value));
+const accountTypeOptions = computed(() =>
+  ["savings", "checking", "current"].map((value) => ({ value, label: t(`employees.enums.accountType.${value}`) }))
+);
+const skillOptions = computed(() =>
+  [
+    { value: "beginner", icon: PlayCircle },
+    { value: "intermediate", icon: Zap },
+    { value: "advanced", icon: Award },
+    { value: "expert", icon: Crown },
+  ].map((o) => ({ ...o, label: t(`employees.enums.skillLevel.${o.value}`) }))
+);
 // Show the picked team; when editing, fall back to the team matching team_id.
 const displayTeam = computed(
   () =>
@@ -164,8 +176,8 @@ const displayTeam = computed(
             <Briefcase class="w-4 h-4" />
           </span>
           <div class="min-w-0">
-            <h3 class="text-ui-h2 text-ui-ink">Job Information</h3>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Role, department, and employment details</p>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.job.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.job.subtitle") }}</p>
           </div>
         </header>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
@@ -174,8 +186,8 @@ const displayTeam = computed(
             name="job_title"
             type="text"
             v-model="form.job_title"
-            label="Job Title"
-            placeholder="e.g. Senior Developer"
+            :label="$t('employees.form.fields.jobTitle')"
+            :placeholder="$t('employees.form.fields.jobTitlePlaceholder')"
             :icon="Briefcase"
             :error="errors?.job_title?.join(', ')"
             required
@@ -185,8 +197,8 @@ const displayTeam = computed(
           <UiSelect
             id="role"
             v-model="form.role"
-            label="Role"
-            placeholder="Select role"
+            :label="$t('employees.form.fields.role')"
+            :placeholder="$t('employees.form.fields.rolePlaceholder')"
             :options="roleOptions"
             :error="errors?.role?.join(', ')"
             required
@@ -194,7 +206,7 @@ const displayTeam = computed(
 
           <!-- Team -->
           <div class="min-w-0">
-            <label for="team_picker" class="block text-ui-small font-medium text-ui-ink mb-1.5">Team</label>
+            <label for="team_picker" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("employees.form.fields.team") }}</label>
             <button
               id="team_picker"
               type="button"
@@ -203,7 +215,7 @@ const displayTeam = computed(
             >
               <Building2 class="absolute left-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
               <span class="block truncate" :class="displayTeam ? 'text-ui-ink' : 'text-ui-faint'">
-                {{ displayTeam ? displayTeam.name : "Select team" }}
+                {{ displayTeam ? displayTeam.name : $t("employees.form.fields.teamPlaceholder") }}
               </span>
               <ChevronDown class="absolute right-3 top-[11px] w-4 h-4 text-ui-faint pointer-events-none" />
             </button>
@@ -218,13 +230,13 @@ const displayTeam = computed(
               </span>
               <div class="flex-1 min-w-0">
                 <p class="text-ui-small font-medium text-ui-ink truncate">{{ displayTeam.name }}</p>
-                <p class="text-ui-cap text-ui-muted">{{ displayTeam.members_count || 0 }} members</p>
+                <p class="text-ui-cap text-ui-muted">{{ $t("employees.form.membersCount", { n: displayTeam.members_count || 0 }, displayTeam.members_count || 0) }}</p>
               </div>
               <button
                 type="button"
                 @click="handleRemoveTeam"
                 class="w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
-                aria-label="Remove team"
+                :aria-label="$t('employees.form.fields.removeTeam')"
               >
                 <X class="w-4 h-4" />
               </button>
@@ -236,8 +248,8 @@ const displayTeam = computed(
             name="years_experience"
             type="number"
             v-model="form.years_experience"
-            label="Years of Experience"
-            placeholder="e.g. 3"
+            :label="$t('employees.form.fields.yearsExperience')"
+            :placeholder="$t('employees.form.fields.yearsExperiencePlaceholder')"
             :icon="Calendar"
             :error="errors?.years_experience?.join(', ')"
             required
@@ -245,27 +257,27 @@ const displayTeam = computed(
           <UiSelect
             id="status"
             v-model="form.status"
-            label="Status"
-            placeholder="Select status"
-            :options="jobStatuses"
+            :label="$t('employees.form.fields.status')"
+            :placeholder="$t('employees.form.fields.statusPlaceholder')"
+            :options="jobStatusOptions"
             :error="errors?.status?.join(', ')"
             required
           />
           <UiSelect
             id="employment_type"
             v-model="form.employment_type"
-            label="Employment Type"
-            placeholder="Select employment type"
-            :options="employmentTypes"
+            :label="$t('employees.form.fields.employmentType')"
+            :placeholder="$t('employees.form.fields.employmentTypePlaceholder')"
+            :options="employmentTypeOptions"
             :error="errors?.employment_type?.join(', ')"
             required
           />
           <UiSelect
             id="work_location"
             v-model="form.work_location"
-            label="Work Location"
-            placeholder="Select work location"
-            :options="workLocations"
+            :label="$t('employees.form.fields.workLocation')"
+            :placeholder="$t('employees.form.fields.workLocationPlaceholder')"
+            :options="workLocationOptions"
             :error="errors?.work_location?.join(', ')"
             required
           />
@@ -274,7 +286,7 @@ const displayTeam = computed(
             name="start_date"
             type="date"
             v-model="form.start_date"
-            label="Start Date"
+            :label="$t('employees.form.fields.startDate')"
             :icon="CalendarPlus"
             :error="errors?.start_date?.join(', ')"
             required
@@ -284,7 +296,7 @@ const displayTeam = computed(
             name="monthly_salary"
             type="text"
             v-model="form.monthly_salary"
-            label="Monthly Salary (optional)"
+            :label="$t('employees.form.fields.monthlySalary')"
             placeholder="Rp 5.000.000"
             :icon="RpPrefix"
             :error="errors?.monthly_salary?.join(', ')"
@@ -292,8 +304,8 @@ const displayTeam = computed(
           <UiSelect
             id="ptkp_status"
             v-model="form.ptkp_status"
-            label="PTKP Status (for PPh21 Tax)"
-            :options="withBlank('Select PTKP status', ptkpStatuses)"
+            :label="$t('employees.form.fields.ptkpStatus')"
+            :options="withBlank($t('employees.form.fields.ptkpStatusPlaceholder'), ptkpStatuses)"
             :error="errors?.ptkp_status?.join(', ')"
           />
           <UiInput
@@ -301,7 +313,7 @@ const displayTeam = computed(
             name="annual_leave_quota"
             type="number"
             v-model="form.annual_leave_quota"
-            label="Annual Leave Quota (days)"
+            :label="$t('employees.form.fields.annualLeaveQuota')"
             placeholder="12"
             :icon="Calendar"
           />
@@ -310,7 +322,7 @@ const displayTeam = computed(
             name="probation_end_date"
             type="date"
             v-model="form.probation_end_date"
-            label="Probation End Date (optional)"
+            :label="$t('employees.form.fields.probationEndDate')"
             :icon="CalendarPlus"
           />
           <UiInput
@@ -318,13 +330,13 @@ const displayTeam = computed(
             name="contract_end_date"
             type="date"
             v-model="form.contract_end_date"
-            label="Contract End Date (optional)"
+            :label="$t('employees.form.fields.contractEndDate')"
             :icon="CalendarPlus"
           />
 
           <!-- Skill Level (Full Width) -->
           <fieldset class="md:col-span-2 min-w-0">
-            <legend class="block text-ui-small font-medium text-ui-ink mb-1.5">Skill Level<span class="text-ui-bad"> *</span></legend>
+            <legend class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("employees.form.fields.skillLevel") }}<span class="text-ui-bad"> *</span></legend>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label
                 v-for="opt in skillOptions"
@@ -348,9 +360,9 @@ const displayTeam = computed(
                   <span
                     class="flex size-4 rounded-full border border-ui-line-strong group-has-[:checked]:border-[5px] group-has-[:checked]:border-ui-accent transition-all duration-ui-base"
                   ></span>
-                  <span
-                    class="text-ui-cap font-medium text-ui-muted group-has-[:checked]:text-ui-accent after:content-['Select'] group-has-[:checked]:after:content-['Selected']"
-                  ></span>
+                  <span class="text-ui-cap font-medium text-ui-muted group-has-[:checked]:text-ui-accent">
+                    {{ form.skill_level === opt.value ? $t("employees.form.selected") : $t("employees.form.select") }}
+                  </span>
                 </span>
               </label>
             </div>
@@ -366,16 +378,16 @@ const displayTeam = computed(
             <CreditCard class="w-4 h-4" />
           </span>
           <div class="min-w-0">
-            <h3 class="text-ui-h2 text-ui-ink">Bank Information</h3>
-            <p class="text-ui-cap text-ui-muted mt-0.5">Optional -- employee banking details for payroll processing. Can be left blank for interns/students without a payroll account yet.</p>
+            <h3 class="text-ui-h2 text-ui-ink">{{ $t("employees.form.bank.title") }}</h3>
+            <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("employees.form.bank.subtitle") }}</p>
           </div>
         </header>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
           <UiSelect
             id="bank_name"
             v-model="form.bank_name"
-            label="Bank Name (optional)"
-            :options="withBlank('Select bank', bankNames)"
+            :label="$t('employees.form.fields.bankName')"
+            :options="withBlank($t('employees.form.fields.bankNamePlaceholder'), bankNames)"
             :error="errors?.bank_name?.join(', ')"
           />
           <UiInput
@@ -383,11 +395,11 @@ const displayTeam = computed(
             name="account_number"
             type="text"
             v-model="form.account_number"
-            label="Account Number (optional)"
-            placeholder="e.g. 1234567890"
+            :label="$t('employees.form.fields.accountNumber')"
+            :placeholder="$t('employees.form.fields.accountNumberPlaceholder')"
             :icon="Hash"
             :error="errors?.account_number?.join(', ')"
-            hint="Enter only numbers (8-20 digits)"
+            :hint="$t('employees.form.fields.accountNumberHint')"
           />
           <div class="md:col-span-2 min-w-0">
             <UiInput
@@ -395,11 +407,11 @@ const displayTeam = computed(
             name="account_holder_name"
             type="text"
             v-model="form.account_holder_name"
-            label="Account Holder Name (optional)"
-            placeholder="e.g. Andy Saputra"
+            :label="$t('employees.form.fields.accountHolder')"
+            :placeholder="$t('employees.form.fields.accountHolderPlaceholder')"
             :icon="User"
             :error="errors?.account_holder_name?.join(', ')"
-            hint="Name should match the bank account holder exactly"
+            :hint="$t('employees.form.fields.accountHolderHint')"
           />
           </div>
           <UiInput
@@ -407,16 +419,16 @@ const displayTeam = computed(
             name="bank_branch"
             type="text"
             v-model="form.bank_branch"
-            label="Bank Branch (optional)"
-            placeholder="e.g. Jakarta Pusat"
+            :label="$t('employees.form.fields.bankBranch')"
+            :placeholder="$t('employees.form.fields.bankBranchPlaceholder')"
             :icon="MapPin"
             :error="errors?.bank_branch?.join(', ')"
           />
           <UiSelect
             id="account_type"
             v-model="form.account_type"
-            label="Account Type (optional)"
-            :options="withBlank('Select account type', accountTypeOptions)"
+            :label="$t('employees.form.fields.accountType')"
+            :options="withBlank($t('employees.form.fields.accountTypePlaceholder'), accountTypeOptions)"
             :error="errors?.account_type?.join(', ')"
           />
         </div>
@@ -430,14 +442,14 @@ const displayTeam = computed(
   <!-- Team Selection Modal -->
   <UiModal
     v-model:open="teamModal"
-    title="Select Team"
-    description="Choose the team for this employee"
+    :title="$t('employees.form.teamModal.title')"
+    :description="$t('employees.form.teamModal.description')"
     size="lg"
   >
     <UiInput
       v-model="searchTeam"
       type="text"
-      placeholder="Search teams..."
+      :placeholder="$t('employees.form.teamModal.search')"
       :icon="Search"
     />
 
@@ -455,7 +467,7 @@ const displayTeam = computed(
         </span>
         <span class="flex-1 min-w-0">
           <span class="block text-ui-small font-medium text-ui-ink truncate">{{ team.name }}</span>
-          <span class="block text-ui-cap text-ui-muted">{{ team.members_count || 0 }} members</span>
+          <span class="block text-ui-cap text-ui-muted">{{ $t("employees.form.membersCount", { n: team.members_count || 0 }, team.members_count || 0) }}</span>
         </span>
       </button>
     </div>
@@ -463,8 +475,8 @@ const displayTeam = computed(
     <!-- No Results Message -->
     <div class="text-center py-8" v-if="filteredTeams.length === 0">
       <SearchX class="w-8 h-8 text-ui-faint mx-auto mb-2" />
-      <h4 class="text-ui-h3 text-ui-ink">No teams found</h4>
-      <p class="text-ui-small text-ui-muted mt-0.5">Try adjusting your search terms</p>
+      <h4 class="text-ui-h3 text-ui-ink">{{ $t("employees.form.teamModal.empty") }}</h4>
+      <p class="text-ui-small text-ui-muted mt-0.5">{{ $t("employees.form.teamModal.emptyHint") }}</p>
     </div>
   </UiModal>
 </template>

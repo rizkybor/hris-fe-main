@@ -1,0 +1,546 @@
+{
+  "enums": {
+    "jobStatus": {
+      "active": "Aktif",
+      "on_leave": "Sedang Cuti",
+      "resigned": "Mengundurkan Diri",
+      "terminated": "Diberhentikan"
+    },
+    "employmentType": {
+      "full_time": "Penuh waktu",
+      "part_time": "Paruh waktu",
+      "contract": "Kontrak",
+      "intern": "Magang"
+    },
+    "workLocation": {
+      "office": "Kantor",
+      "remote": "Jarak jauh",
+      "hybrid": "Hybrid"
+    },
+    "skillLevel": {
+      "beginner": "Pemula",
+      "intermediate": "Menengah",
+      "advanced": "Mahir",
+      "expert": "Ahli"
+    },
+    "gender": {
+      "male": "Laki-laki",
+      "female": "Perempuan"
+    },
+    "accountType": {
+      "savings": "Tabungan",
+      "checking": "Giro",
+      "current": "Rekening Koran"
+    },
+    "teamStatus": {
+      "active": "Aktif",
+      "forming": "Dibentuk",
+      "planning": "Perencanaan",
+      "dormant": "Tidak aktif"
+    },
+    "language": {
+      "en": "Inggris",
+      "id": "Indonesia",
+      "es": "Spanyol",
+      "fr": "Prancis"
+    }
+  },
+  "list": {
+    "title": "Semua Karyawan",
+    "subtitle": "Menampilkan {from} - {to} dari {total} karyawan",
+    "importCsv": "Impor CSV",
+    "addEmployee": "Tambah Karyawan",
+    "alertsTitle": "{n} karyawan akan habis masa kontrak/probation dalam 30 hari",
+    "probationEnds": "Probation berakhir dalam {n} hari",
+    "contractEnds": "Kontrak berakhir dalam {n} hari",
+    "searchPlaceholder": "Cari karyawan berdasarkan nama, departemen, jabatan...",
+    "allTypes": "Semua Tipe",
+    "allStatus": "Semua Status",
+    "empty": "Karyawan tidak ditemukan"
+  },
+  "card": {
+    "loginDisabled": "Login Dinonaktifkan",
+    "yearsExperience": "{n} tahun pengalaman"
+  },
+  "stats": {
+    "totalEmployees": "Total Karyawan",
+    "addedThisMonth": "+{n} bulan ini",
+    "activeEmployees": "Karyawan Aktif",
+    "thisWeek": "{n} minggu ini",
+    "newHires": "Karyawan Baru",
+    "thisMonth": "Bulan ini",
+    "averageSalary": "Rata-rata Gaji",
+    "showSalary": "Tampilkan gaji",
+    "hideSalary": "Sembunyikan gaji",
+    "companyAverage": "Rata-rata perusahaan",
+    "onLeave": "Sedang Cuti",
+    "fromLastWeek": "{n} dari minggu lalu"
+  },
+  "success": {
+    "title": "Berhasil Ditambahkan!",
+    "message": "Karyawan baru berhasil ditambahkan ke sistem.",
+    "viewAll": "Lihat Semua Karyawan",
+    "addAnother": "Tambah Karyawan Lain",
+    "totalEmployees": "Total Karyawan",
+    "addedThisMonth": "Ditambahkan Bulan Ini"
+  },
+  "wizard": {
+    "addTitle": "Tambah Karyawan Baru",
+    "editTitle": "Ubah Karyawan",
+    "stepOf": "Langkah {current} dari {total}",
+    "stepCounter": "{current} dari {total}",
+    "stepsLabel": "Langkah",
+    "companyLogo": "Logo Perusahaan",
+    "steps": {
+      "personal": {
+        "title": "Informasi Pribadi",
+        "hint": "Data dasar dan kontak karyawan"
+      },
+      "job": {
+        "title": "Informasi Pekerjaan",
+        "hint": "Jabatan, departemen, dan detail kepegawaian"
+      },
+      "emergency": {
+        "title": "Kontak Darurat",
+        "hint": "Orang yang dihubungi saat darurat"
+      },
+      "review": {
+        "title": "Tinjau & Kirim",
+        "hint": "Tinjau semua informasi sebelum mengirim"
+      }
+    },
+    "create": {
+      "ready": "Siap menambahkan karyawan ini?",
+      "reviewHint": "Tinjau dan pastikan semua informasi sebelum mengirim",
+      "personalHint": "Isi informasi pribadi",
+      "jobHint": "Isi informasi pekerjaan",
+      "emergencyHint": "Isi informasi kontak darurat",
+      "submit": "Tambah Karyawan",
+      "submitting": "Menambahkan..."
+    },
+    "edit": {
+      "ready": "Siap memperbarui karyawan ini?",
+      "reviewHint": "Tinjau dan pastikan semua informasi sebelum memperbarui",
+      "personalHint": "Perbarui informasi pribadi",
+      "jobHint": "Perbarui informasi pekerjaan",
+      "emergencyHint": "Perbarui informasi kontak darurat",
+      "submit": "Perbarui Karyawan",
+      "submitting": "Memperbarui..."
+    },
+    "next": "Berikutnya: {step}",
+    "nextSteps": {
+      "job": "Info Pekerjaan",
+      "emergency": "Kontak Darurat",
+      "review": "Tinjau"
+    }
+  },
+  "errorModal": {
+    "title": "Ada yang Belum Tepat",
+    "message": "Periksa kembali data Anda dan pastikan semua kolom wajib terisi dengan benar.",
+    "confirm": "Oke, Saya Perbaiki"
+  },
+  "form": {
+    "select": "Pilih",
+    "selected": "Dipilih",
+    "membersCount": "{n} anggota",
+    "photo": {
+      "title": "Foto Profil",
+      "subtitle": "Unggah foto karyawan",
+      "alt": "Profil",
+      "remove": "Hapus foto",
+      "browse": "Pilih Foto",
+      "rules": "JPG, PNG maks. 2MB",
+      "recommended": "Disarankan: 400x400px"
+    },
+    "account": {
+      "title": "Kredensial Akun",
+      "subtitle": "Informasi login dan detail akun"
+    },
+    "personal": {
+      "title": "Informasi Pribadi",
+      "subtitle": "Data dasar dan informasi kontak karyawan"
+    },
+    "fields": {
+      "fullName": "Nama Lengkap",
+      "fullNamePlaceholder": "Masukkan nama lengkap",
+      "email": "Alamat Email",
+      "password": "Kata Sandi",
+      "newPassword": "Kata Sandi Baru (opsional)",
+      "passwordPlaceholder": "Masukkan kata sandi",
+      "passwordKeepPlaceholder": "Kosongkan jika tidak diubah",
+      "passwordHint": "Min. 8 karakter, kombinasi huruf besar/kecil, angka, dan simbol. Tidak boleh kata sandi yang pernah bocor dalam kebocoran data.",
+      "confirmPassword": "Konfirmasi Kata Sandi",
+      "confirmNewPassword": "Konfirmasi Kata Sandi Baru",
+      "confirmPasswordPlaceholder": "Konfirmasi kata sandi",
+      "identityNumber": "Nomor Identitas (NIK/KTP)",
+      "identityNumberPlaceholder": "Masukkan nomor identitas",
+      "npwp": "NPWP (opsional)",
+      "phone": "Nomor Telepon",
+      "dateOfBirth": "Tanggal Lahir",
+      "hobby": "Hobi",
+      "hobbyPlaceholder": "mis. Membaca, Berenang, Bermain gim",
+      "placeOfBirth": "Tempat Lahir",
+      "placeOfBirthPlaceholder": "mis. Jakarta, Indonesia",
+      "gender": "Jenis Kelamin",
+      "address": "Alamat",
+      "addressPlaceholder": "Masukkan alamat lengkap",
+      "city": "Kota",
+      "cityPlaceholder": "mis. Jakarta",
+      "postalCode": "Kode Pos",
+      "postalCodePlaceholder": "mis. 12345",
+      "jobTitle": "Jabatan",
+      "jobTitlePlaceholder": "mis. Senior Developer",
+      "role": "Peran",
+      "rolePlaceholder": "Pilih peran",
+      "team": "Tim",
+      "teamPlaceholder": "Pilih tim",
+      "removeTeam": "Hapus tim",
+      "yearsExperience": "Lama Pengalaman (tahun)",
+      "yearsExperiencePlaceholder": "mis. 3",
+      "status": "Status",
+      "statusPlaceholder": "Pilih status",
+      "employmentType": "Tipe Kepegawaian",
+      "employmentTypePlaceholder": "Pilih tipe kepegawaian",
+      "workLocation": "Lokasi Kerja",
+      "workLocationPlaceholder": "Pilih lokasi kerja",
+      "startDate": "Tanggal Mulai",
+      "monthlySalary": "Gaji Bulanan (opsional)",
+      "ptkpStatus": "Status PTKP (untuk PPh21)",
+      "ptkpStatusPlaceholder": "Pilih status PTKP",
+      "annualLeaveQuota": "Kuota Cuti Tahunan (hari)",
+      "probationEndDate": "Akhir Masa Probation (opsional)",
+      "contractEndDate": "Akhir Kontrak (opsional)",
+      "skillLevel": "Tingkat Keahlian",
+      "bankName": "Nama Bank (opsional)",
+      "bankNamePlaceholder": "Pilih bank",
+      "accountNumber": "Nomor Rekening (opsional)",
+      "accountNumberPlaceholder": "mis. 1234567890",
+      "accountNumberHint": "Hanya angka (8-20 digit)",
+      "accountHolder": "Nama Pemilik Rekening (opsional)",
+      "accountHolderPlaceholder": "mis. Andy Saputra",
+      "accountHolderHint": "Nama harus sama persis dengan pemilik rekening bank",
+      "bankBranch": "Cabang Bank (opsional)",
+      "bankBranchPlaceholder": "mis. Jakarta Pusat",
+      "accountType": "Jenis Rekening (opsional)",
+      "accountTypePlaceholder": "Pilih jenis rekening",
+      "contactName": "Nama Lengkap (opsional)",
+      "contactNamePlaceholder": "Nama kontak darurat",
+      "relationship": "Hubungan (opsional)",
+      "relationshipPlaceholder": "mis. Pasangan, Orang tua, Saudara",
+      "contactPhone": "Nomor Telepon (opsional)",
+      "preferredLanguage": "Bahasa Pilihan",
+      "preferredLanguagePlaceholder": "Pilih bahasa",
+      "additionalNotes": "Catatan Tambahan",
+      "additionalNotesPlaceholder": "Informasi tambahan tentang karyawan..."
+    },
+    "job": {
+      "title": "Informasi Pekerjaan",
+      "subtitle": "Jabatan, departemen, dan detail kepegawaian"
+    },
+    "bank": {
+      "title": "Informasi Bank",
+      "subtitle": "Opsional -- data rekening karyawan untuk proses penggajian. Boleh dikosongkan untuk magang/pelajar yang belum punya rekening gaji."
+    },
+    "teamModal": {
+      "title": "Pilih Tim",
+      "description": "Pilih tim untuk karyawan ini",
+      "search": "Cari tim...",
+      "empty": "Tim tidak ditemukan",
+      "emptyHint": "Coba ubah kata kunci pencarian"
+    },
+    "emergency": {
+      "title": "Kontak Darurat",
+      "subtitle": "Opsional -- orang yang dihubungi saat darurat. Kosongkan jika belum ada."
+    },
+    "additional": {
+      "title": "Informasi Tambahan",
+      "subtitle": "Detail dan preferensi opsional"
+    },
+    "documents": {
+      "title": "Dokumen",
+      "subtitle": "Opsional -- PDF, PNG, atau JPEG, maks. 2MB per file. Diunggah setelah karyawan dibuat.",
+      "choose": "Pilih File",
+      "rules": "PDF, PNG, atau JPEG maks. 2MB per file",
+      "namePlaceholder": "Nama dokumen (wajib)",
+      "remove": "Hapus dokumen"
+    }
+  },
+  "review": {
+    "title": "Tinjau Informasi Karyawan",
+    "subtitle": "Tinjau semua informasi sebelum mengirim",
+    "profilePhoto": "Foto Profil",
+    "personal": {
+      "title": "Informasi Pribadi",
+      "subtitle": "Data dasar karyawan"
+    },
+    "job": {
+      "title": "Informasi Pekerjaan",
+      "subtitle": "Posisi dan detail kepegawaian"
+    },
+    "bank": {
+      "title": "Informasi Bank",
+      "subtitle": "Data rekening untuk penggajian"
+    },
+    "emergency": {
+      "title": "Kontak Darurat",
+      "subtitle": "Orang yang dihubungi saat darurat"
+    },
+    "fullName": "Nama Lengkap",
+    "email": "Alamat Email",
+    "identityNumber": "Nomor Identitas",
+    "phone": "Nomor Telepon",
+    "accountHolder": "Nama Pemilik Rekening",
+    "bankBranch": "Cabang Bank",
+    "relationship": "Hubungan",
+    "years": "{n} tahun"
+  },
+  "tips": {
+    "formTips": "Tips Pengisian",
+    "job": {
+      "subtitle": "Panduan Informasi Pekerjaan",
+      "items": {
+        "jobTitle": {
+          "title": "Gunakan jabatan yang jelas",
+          "text": "Pakai nama jabatan yang umum di industri"
+        },
+        "department": {
+          "title": "Periksa penempatan departemen",
+          "text": "Pilih departemen yang sesuai dengan peran"
+        },
+        "startDate": {
+          "title": "Tentukan tanggal mulai yang realistis",
+          "text": "Sisihkan waktu untuk persiapan onboarding"
+        },
+        "employmentType": {
+          "title": "Periksa tipe kepegawaian",
+          "text": "Pastikan sesuai dengan kebutuhan pekerjaan"
+        },
+        "skillLevel": {
+          "title": "Pilih tingkat keahlian yang tepat",
+          "text": "Sesuaikan dengan pengalaman karyawan"
+        }
+      }
+    },
+    "emergency": {
+      "subtitle": "Panduan Kontak Darurat",
+      "items": {
+        "reliable": {
+          "title": "Pilih kontak yang dapat diandalkan",
+          "text": "Pilih orang yang mudah dihubungi"
+        },
+        "verify": {
+          "title": "Periksa informasi kontak",
+          "text": "Cek ulang nomor telepon dan email"
+        },
+        "relationship": {
+          "title": "Cantumkan hubungan",
+          "text": "Jelaskan hubungannya dengan karyawan"
+        },
+        "multiple": {
+          "title": "Pertimbangkan beberapa kontak",
+          "text": "Kontak darurat utama dan cadangan"
+        },
+        "review": {
+          "title": "Tinjau semua data",
+          "text": "Pemeriksaan akhir sebelum mengirim formulir"
+        }
+      }
+    }
+  },
+  "files": {
+    "title": "Dokumen",
+    "subtitle": "Opsional -- PDF, PNG, atau JPEG, maks. 2MB per file",
+    "uploadFile": "Unggah File",
+    "uploading": "Mengunggah...",
+    "notAllowed": "\"{name}\" tidak diizinkan. Hanya file PDF, PNG, atau JPEG maks. 2MB yang didukung.",
+    "nameRequired": "Beri nama untuk setiap file.",
+    "uploadFailed": "Gagal mengunggah file.",
+    "empty": "Belum ada file yang diunggah",
+    "emptyHint": "Opsional -- unggah scan identitas, sertifikat, atau dokumen pendukung lain.",
+    "uploadedBy": "oleh {name}",
+    "deleteTitle": "Hapus File?",
+    "deleteMessage": "Yakin ingin menghapus \"{name}\"? Tindakan ini tidak dapat dibatalkan.",
+    "confirmDelete": "Ya, Hapus",
+    "nameModalTitle": "Beri nama file",
+    "nameModalDescription": "Beri nama setiap file agar mudah dikenali di daftar.",
+    "namePlaceholder": "mis. KTP, Ijazah, Sertifikat..."
+  },
+  "detail": {
+    "loading": "Memuat data karyawan...",
+    "loginDisabled": "Login Dinonaktifkan",
+    "joined": "Bergabung {date}",
+    "shareProfile": "Bagikan Profil",
+    "editProfile": "Ubah Profil",
+    "stats": {
+      "tasksCompleted": "Tugas Selesai",
+      "thisMonth": "Bulan ini",
+      "attendanceRate": "Tingkat Kehadiran",
+      "aboveAverage": "Di atas rata-rata",
+      "belowAverage": "Di bawah rata-rata",
+      "projects": "Proyek",
+      "activeProjects": "Proyek aktif",
+      "performance": "Kinerja",
+      "excellent": "Sangat baik",
+      "good": "Baik",
+      "needsImprovement": "Perlu ditingkatkan"
+    },
+    "tabs": {
+      "overview": "Ringkasan",
+      "employment": "Kepegawaian & Bank",
+      "emergency": "Kontak Darurat",
+      "documents": "Dokumen",
+      "performance": "Kinerja",
+      "offboarding": "Offboarding"
+    },
+    "sections": {
+      "team": {
+        "title": "Informasi Tim",
+        "subtitle": "Tim saat ini dan struktur pelaporan"
+      },
+      "contact": {
+        "title": "Detail Kontak",
+        "subtitle": "Cara menghubungi karyawan ini"
+      },
+      "personal": {
+        "title": "Informasi Pribadi",
+        "subtitle": "Data kelahiran dan pribadi"
+      },
+      "address": {
+        "title": "Informasi Alamat",
+        "subtitle": "Lokasi dan kode pos"
+      },
+      "employment": {
+        "title": "Detail Kepegawaian",
+        "subtitle": "Pengaturan kerja dan kompensasi"
+      },
+      "bank": {
+        "title": "Informasi Bank",
+        "subtitle": "Data rekening untuk penggajian"
+      },
+      "admin": {
+        "title": "Informasi Administratif",
+        "subtitle": "Detail sistem dan preferensi"
+      },
+      "emergency": {
+        "title": "Kontak Darurat",
+        "subtitle": "Orang yang dihubungi saat darurat"
+      }
+    },
+    "fields": {
+      "team": "Tim",
+      "teamMembers": "Anggota Tim",
+      "membersCount": "{n} anggota",
+      "teamStatus": "Status Tim",
+      "identityNumber": "Nomor Identitas",
+      "dateOfBirth": "Tanggal Lahir",
+      "placeOfBirth": "Tempat Lahir",
+      "gender": "Jenis Kelamin",
+      "hobby": "Hobi",
+      "postCode": "Kode Pos",
+      "yearsExperience": "Lama Pengalaman",
+      "years": "{n} tahun",
+      "employmentType": "Tipe Kepegawaian",
+      "startDate": "Tanggal Mulai",
+      "monthlySalary": "Gaji Bulanan",
+      "bankName": "Nama Bank",
+      "accountNumber": "Nomor Rekening",
+      "accountHolder": "Pemilik Rekening",
+      "accountType": "Jenis Rekening",
+      "employeeId": "ID Karyawan",
+      "preferredLanguage": "Bahasa Pilihan",
+      "additionalNotes": "Catatan Tambahan",
+      "contactName": "Nama Kontak",
+      "relationship": "Hubungan"
+    },
+    "noEmergencyContact": "Belum ada informasi kontak darurat",
+    "reviews": {
+      "title": "Penilaian Kinerja",
+      "subtitle": "Riwayat penilaian kinerja karyawan",
+      "create": "Buat Penilaian",
+      "empty": "Belum ada penilaian kinerja.",
+      "ratingOf": "{rating} dari 5",
+      "strengths": "Kelebihan:",
+      "improvements": "Area Perbaikan:",
+      "by": "Oleh {name}",
+      "acknowledged": "Sudah dibaca karyawan",
+      "awaiting": "Menunggu dibaca karyawan",
+      "saveFailed": "Gagal menyimpan review.",
+      "modalTitle": "Buat Penilaian Kinerja",
+      "period": "Periode",
+      "periodPlaceholder": "mis. Q1 2026",
+      "periodStart": "Mulai Periode",
+      "periodEnd": "Akhir Periode",
+      "overallRating": "Nilai Keseluruhan (1-5)",
+      "strengthsLabel": "Kelebihan",
+      "improvementsLabel": "Area Perbaikan",
+      "goalsLabel": "Target Periode Berikutnya",
+      "save": "Simpan Penilaian"
+    },
+    "warnings": {
+      "title": "Riwayat Surat Peringatan",
+      "subtitle": "SP1 / SP2 / SP3 yang pernah diterbitkan",
+      "empty": "Tidak ada riwayat surat peringatan."
+    },
+    "offboarding": {
+      "title": "Pengunduran Diri / Pemberhentian",
+      "subtitle": "Proses offboarding karyawan",
+      "start": "Mulai Proses Pengunduran Diri/Pemberhentian",
+      "resignation": "Pengunduran Diri",
+      "termination": "Pemberhentian",
+      "completed": "Selesai",
+      "inProgress": "Dalam Proses",
+      "reason": "Alasan: {reason}",
+      "submittedOn": "Tanggal Pengajuan: {date}",
+      "lastWorkingDay": "Hari Kerja Terakhir: {date}",
+      "assetsToReturn": "Aset yang Harus Dikembalikan:",
+      "noAssets": "Tidak ada aset yang perlu dikembalikan.",
+      "complete": "Selesaikan Offboarding",
+      "confirmComplete": "Tandai proses offboarding sebagai selesai?",
+      "completeFailed": "Gagal menyelesaikan proses offboarding.",
+      "processFailed": "Gagal memproses pengunduran diri/pemberhentian.",
+      "modalTitle": "Proses Pengunduran Diri / Pemberhentian",
+      "typeLabel": "Jenis",
+      "reasonLabel": "Alasan",
+      "submissionDate": "Tanggal Pengajuan",
+      "lastWorkingDayLabel": "Hari Kerja Terakhir",
+      "processing": "Memproses...",
+      "process": "Proses"
+    },
+    "account": {
+      "title": "Akses Login Akun",
+      "active": "Aktif",
+      "deactivated": "Dinonaktifkan",
+      "canLogin": "Akun ini saat ini dapat login.",
+      "cannotLogin": "Akun ini dinonaktifkan dan tidak dapat login.",
+      "processing": "Memproses...",
+      "deactivate": "Nonaktifkan Akun",
+      "activate": "Aktifkan Akun",
+      "superadminOnly": "Hanya Superadmin yang dapat mengubah status akun ini.",
+      "confirmDeactivate": "Nonaktifkan akun {name}? Pengguna akan langsung keluar dan tidak dapat login sampai diaktifkan kembali.",
+      "confirmActivate": "Aktifkan akun {name}? Pengguna akan dapat login kembali.",
+      "deactivateShort": "Nonaktifkan",
+      "activateShort": "Aktifkan",
+      "deactivatedOk": "Akun berhasil dinonaktifkan.",
+      "activatedOk": "Akun berhasil diaktifkan.",
+      "deactivateFailed": "Gagal menonaktifkan akun.",
+      "activateFailed": "Gagal mengaktifkan akun."
+    },
+    "danger": {
+      "title": "Zona Berbahaya",
+      "subtitle": "Tindakan permanen yang tidak dapat dibatalkan",
+      "deleteTitle": "Hapus Profil Karyawan",
+      "deleteText": "Hapus karyawan ini beserta semua datanya secara permanen. Tindakan ini tidak dapat dibatalkan.",
+      "backup": "Cadangkan Data",
+      "delete": "Hapus Karyawan",
+      "deleteConfirm": "Yakin ingin menghapus '{name}'? Tindakan ini tidak dapat dibatalkan."
+    },
+    "share": {
+      "copied": "Tautan profil disalin ke clipboard!"
+    },
+    "backup": {
+      "confirm": "Buat cadangan untuk {name}? Semua data karyawan akan diunduh.",
+      "confirmText": "Buat Cadangan",
+      "soon": "Fitur cadangan akan segera tersedia."
+    }
+  }
+}

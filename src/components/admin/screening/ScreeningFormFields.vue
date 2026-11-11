@@ -35,7 +35,7 @@ const error = (key) => props.errors?.[`answers.${key}`]?.[0];
   <div class="space-y-5">
     <section v-for="(section, si) in sections" :key="section.key" class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
       <header class="px-5 sm:px-6 py-4 border-b border-ui-line">
-        <p class="text-ui-over uppercase text-ui-muted">Section {{ si + 1 }}</p>
+        <p class="text-ui-over uppercase text-ui-muted">{{ $t("screening.sectionN", { n: si + 1 }) }}</p>
         <h3 class="text-ui-h2 text-ui-ink">{{ section.title }}</h3>
         <p v-if="section.description" class="text-ui-cap text-ui-muted mt-0.5">{{ section.description }}</p>
       </header>

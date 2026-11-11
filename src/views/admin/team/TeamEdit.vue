@@ -39,6 +39,7 @@ import {
   Check,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { debounce } from "lodash-es";
 import { useTeamStore } from "@/stores/team";
 import { useOptionStore } from "@/stores/option";
@@ -53,12 +54,13 @@ const route = useRoute();
 const id = route.params.id;
 
 // Presentation-only: the four status option cards (value, label, icon, tint).
-const statusChoices = [
-  { value: "active", label: "Active", icon: CheckCircle, tint: "bg-ui-ok-soft text-ui-ok" },
-  { value: "forming", label: "Forming", icon: UsersRound, tint: "bg-ui-info-soft text-ui-info" },
-  { value: "planning", label: "Planning", icon: ClipboardList, tint: "bg-ui-warn-soft text-ui-warn" },
-  { value: "dormant", label: "Dormant", icon: PauseCircle, tint: "bg-ui-subtle text-ui-muted" },
-];
+const { t } = useI18n();
+const statusChoices = computed(() => [
+  { value: "active", label: t("teams.status.active"), icon: CheckCircle, tint: "bg-ui-ok-soft text-ui-ok" },
+  { value: "forming", label: t("teams.status.forming"), icon: UsersRound, tint: "bg-ui-info-soft text-ui-info" },
+  { value: "planning", label: t("teams.status.planning"), icon: ClipboardList, tint: "bg-ui-warn-soft text-ui-warn" },
+  { value: "dormant", label: t("teams.status.dormant"), icon: PauseCircle, tint: "bg-ui-subtle text-ui-muted" },
+]);
 
 const teamStore = useTeamStore();
 const { loading, error, success } = storeToRefs(teamStore);
@@ -237,12 +239,12 @@ watch(
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Edit Team" subtitle="Update team details and leadership">
+    <UiPageHeader :title="$t('teams.edit.title')" :subtitle="$t('teams.edit.subtitle')">
       <template #actions>
         <div class="hidden sm:flex items-center gap-2">
-          <UiButton variant="secondary" @click="router.back()">Cancel</UiButton>
+          <UiButton variant="secondary" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
           <UiButton type="submit" form="team-form" :loading="loading" :icon-right="Check" :disabled="initialLoading">
-            Update Team
+            {{ $t("teams.edit.submit") }}
           </UiButton>
         </div>
       </template>
@@ -257,7 +259,7 @@ watch(
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start">
       <!-- Form Section -->
       <div class="lg:col-span-2 min-w-0">
-        <div v-if="initialLoading" class="space-y-4 sm:space-y-5" role="status" aria-label="Loading">
+        <div v-if="initialLoading" class="space-y-4 sm:space-y-5" role="status" :aria-label="$t('common.a11y.loading')">
           <div v-for="i in 2" :key="i" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 space-y-4">
             <Skeleton width="200px" height="20px" />
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
@@ -275,15 +277,15 @@ watch(
                 <User class="w-4 h-4" />
               </span>
               <div class="min-w-0">
-                <h3 class="text-ui-h2 text-ui-ink">Team Information</h3>
-                <p class="text-ui-cap text-ui-muted mt-0.5">Basic team details and description</p>
+                <h3 class="text-ui-h2 text-ui-ink">{{ $t("teams.form.info.title") }}</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.form.info.subtitle") }}</p>
               </div>
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
               <!-- Team Icon -->
               <div class="md:col-span-2">
-                <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Team Icon</p>
+                <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("teams.form.icon.label") }}</p>
                 <div class="flex items-center gap-4">
                   <div class="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
                     <!-- Icon Display (uploaded or default) -->
@@ -294,7 +296,7 @@ watch(
                       <img
                         id="uploadedTeamIcon"
                         :src="form.icon_url"
-                        alt="Team Icon"
+                        :alt="$t('teams.form.icon.label')"
                         class="w-7 h-7 sm:w-10 sm:h-10 object-contain"
                         v-if="form.icon_url"
                       />
@@ -304,7 +306,7 @@ watch(
                     <!-- Upload overlay (shown on hover) -->
                     <button
                       type="button"
-                      aria-label="Upload Icon"
+                      :aria-label="$t('teams.form.icon.upload')"
                       class="absolute inset-0 rounded-full flex items-center justify-center cursor-pointer group bg-ui-scrim/0 hover:bg-ui-scrim/40 transition-colors focus:outline-none focus-visible:shadow-ui-focus"
                       @click="teamIconInput?.click()"
                     >
@@ -322,7 +324,7 @@ watch(
                     />
                     <div class="flex flex-wrap gap-2">
                       <UiButton variant="secondary" size="sm" :icon="Upload" @click="teamIconInput?.click()">
-                        Upload Icon
+                        {{ $t("teams.form.icon.upload") }}
                       </UiButton>
                       <UiButton
                         v-if="form.icon_url"
@@ -331,11 +333,11 @@ watch(
                         :icon="X"
                         @click="handleRemoveIcon"
                       >
-                        Remove Icon
+                        {{ $t("teams.form.icon.remove") }}
                       </UiButton>
                     </div>
                     <p class="text-ui-cap text-ui-muted">
-                      SVG, PNG up to 1MB (recommended: icon format)
+                      {{ $t("teams.form.icon.hint") }}
                     </p>
                   </div>
                 </div>
@@ -348,8 +350,8 @@ watch(
                 name="name"
                 type="text"
                 v-model="form.name"
-                label="Name *"
-                placeholder="Enter team name "
+                :label="$t('teams.form.name') + ' *'"
+                :placeholder="$t('teams.form.namePlaceholder')"
                 :icon="Users"
                 :error="error?.name?.join(', ')"
               />
@@ -358,8 +360,8 @@ watch(
               <UiSelect
                 id="department"
                 v-model="form.department"
-                label="Department *"
-                placeholder="Select department"
+                :label="$t('teams.form.department') + ' *'"
+                :placeholder="$t('teams.form.departmentPlaceholder')"
                 :options="departments"
                 :error="error?.department?.join(', ')"
               />
@@ -370,8 +372,8 @@ watch(
                 name="expected_size"
                 type="number"
                 v-model="form.expected_size"
-                label="Expected Team Size"
-                placeholder="Enter expected team size"
+                :label="$t('teams.form.expectedSize')"
+                :placeholder="$t('teams.form.expectedSizePlaceholder')"
                 :icon="UserPlus"
                 :error="error?.expected_size?.join(', ')"
               />
@@ -383,8 +385,8 @@ watch(
                 name="team_purpose"
                 :rows="4"
                 v-model="form.description"
-                label="Team Purpose"
-                placeholder="Describe the team's purpose and goals..."
+                :label="$t('teams.form.purpose')"
+                :placeholder="$t('teams.form.purposePlaceholder')"
                 :error="error?.description?.join(', ')"
               />
             </div>
@@ -397,12 +399,12 @@ watch(
                 <Crown class="w-4 h-4" />
               </span>
               <div class="min-w-0">
-                <h3 class="text-ui-h2 text-ui-ink">Team Lead</h3>
-                <p class="text-ui-cap text-ui-muted mt-0.5">Assign a team leader to manage this team</p>
+                <h3 class="text-ui-h2 text-ui-ink">{{ $t("teams.form.lead.title") }}</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.form.lead.subtitle") }}</p>
               </div>
             </header>
 
-            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Select Team Lead</p>
+            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("teams.form.lead.select") }}</p>
             <button
               type="button"
               class="w-full h-[38px] bg-ui-surface border border-ui-line-strong rounded-ui-control hover:bg-ui-hover transition-colors px-3 flex items-center gap-2.5 text-left focus:outline-none focus-visible:border-ui-accent focus-visible:shadow-ui-focus"
@@ -413,7 +415,7 @@ watch(
                 class="text-ui-body flex-1 truncate"
                 :class="selectedLead?.user?.name ? 'text-ui-ink' : 'text-ui-faint'"
               >
-                {{ selectedLead?.user?.name || "Select team lead" }}
+                {{ selectedLead?.user?.name || $t("teams.form.lead.placeholder") }}
               </span>
               <ChevronDown class="w-4 h-4 text-ui-faint shrink-0" />
             </button>
@@ -440,7 +442,7 @@ watch(
                 <button
                   type="button"
                   @click="handleRemoveLead"
-                  aria-label="Remove team lead"
+                  :aria-label="$t('teams.form.lead.remove')"
                   class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink"
                 >
                   <X class="w-4 h-4" />
@@ -456,16 +458,16 @@ watch(
                 <Users class="w-4 h-4" />
               </span>
               <div class="min-w-0 flex-1">
-                <h3 class="text-ui-h2 text-ui-ink">Team Members</h3>
-                <p class="text-ui-cap text-ui-muted mt-0.5">Add or remove employees from this team</p>
+                <h3 class="text-ui-h2 text-ui-ink">{{ $t("teams.form.members.title") }}</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.edit.membersSubtitle") }}</p>
               </div>
             </header>
 
             <div class="flex items-center justify-between mb-1.5">
-              <p class="text-ui-small font-medium text-ui-ink">Members</p>
+              <p class="text-ui-small font-medium text-ui-ink">{{ $t("teams.form.members.label") }}</p>
               <UiBadge v-if="form.member_employee_ids.length" tone="accent" class="tabular-nums">
                 <Users class="w-3.5 h-3.5" />
-                {{ form.member_employee_ids.length }} selected
+                {{ $t("teams.form.members.selected", { n: form.member_employee_ids.length }) }}
               </UiBadge>
             </div>
             <div class="border border-ui-line rounded-ui-control overflow-hidden">
@@ -476,7 +478,7 @@ watch(
                 <UiInput
                   v-model="memberSearch"
                   :icon="Search"
-                  placeholder="Search employees..."
+                  :placeholder="$t('teams.form.searchEmployees')"
                 />
               </div>
               <div class="p-1.5 max-h-64 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-x-2">
@@ -501,13 +503,13 @@ watch(
                   v-if="selectableMemberCandidates.length === 0"
                   class="sm:col-span-2 text-ui-small text-ui-faint px-2.5 py-2"
                 >
-                  No staff data yet.
+                  {{ $t("teams.form.members.empty") }}
                 </p>
                 <p
                   v-else-if="filteredMemberCandidates.length === 0"
                   class="sm:col-span-2 text-ui-small text-ui-faint px-2.5 py-2"
                 >
-                  No employees match "{{ memberSearch }}".
+                  {{ $t("teams.form.members.noMatch", { q: memberSearch }) }}
                 </p>
               </div>
             </div>
@@ -520,8 +522,8 @@ watch(
                 <ListCheck class="w-4 h-4" />
               </span>
               <div class="min-w-0">
-                <h3 class="text-ui-h2 text-ui-ink">Team Responsibilities</h3>
-                <p class="text-ui-cap text-ui-muted mt-0.5">Define the key responsibilities and duties for this team</p>
+                <h3 class="text-ui-h2 text-ui-ink">{{ $t("teams.form.responsibilities.title") }}</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.form.responsibilities.subtitle") }}</p>
               </div>
             </header>
 
@@ -536,11 +538,11 @@ watch(
                   :name="`responsibility_${index - 1}`"
                   type="text"
                   v-model="form.responsibilities[index - 1]"
-                  :label="`Responsibility ${index}`"
+                  :label="$t('teams.form.responsibilities.item', { n: index })"
                   :error="error?.responsibilities?.[index - 1]?.join(', ')"
                   :required="true"
                   :icon="CheckCircle"
-                  placeholder="e.g., Develop and maintain software applications"
+                  :placeholder="$t('teams.form.responsibilities.placeholder')"
                 />
               </div>
             </div>
@@ -561,16 +563,16 @@ watch(
                       :name="`responsibility_${index}`"
                       type="text"
                       v-model="form.responsibilities[index]"
-                      :label="`Responsibility ${index + 1}`"
+                      :label="$t('teams.form.responsibilities.item', { n: index + 1 })"
                       :error="error?.responsibilities?.[index]?.join(', ')"
                       :required="true"
                       :icon="CheckCircle"
-                      placeholder="Enter additional responsibility"
+                      :placeholder="$t('teams.form.responsibilities.additionalPlaceholder')"
                       class="flex-1"
                     />
                     <button
                       type="button"
-                      aria-label="Remove responsibility"
+                      :aria-label="$t('teams.form.responsibilities.remove')"
                       class="ui-press w-[38px] h-[38px] mt-[26px] shrink-0 border border-ui-line-strong rounded-ui-control text-ui-muted hover:text-ui-bad hover:bg-ui-bad-soft hover:border-ui-bad/30 transition-colors flex items-center justify-center"
                       @click="removeResponsibility(index)"
                     >
@@ -588,7 +590,7 @@ watch(
               @click="addNewResponsibility()"
             >
               <PlusCircle class="w-4 h-4 text-ui-muted" />
-              Add Another Responsibility
+              {{ $t("teams.form.responsibilities.add") }}
             </button>
           </section>
 
@@ -599,12 +601,12 @@ watch(
                 <Settings class="w-4 h-4" />
               </span>
               <div class="min-w-0">
-                <h3 class="text-ui-h2 text-ui-ink">Team Settings</h3>
-                <p class="text-ui-cap text-ui-muted mt-0.5">Configure team status</p>
+                <h3 class="text-ui-h2 text-ui-ink">{{ $t("teams.form.settings.title") }}</h3>
+                <p class="text-ui-cap text-ui-muted mt-0.5">{{ $t("teams.form.settings.subtitle") }}</p>
               </div>
             </header>
 
-            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Initial Team Status</p>
+            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("teams.form.settings.initialStatus") }}</p>
             <div class="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-3">
               <label
                 v-for="option in statusChoices"
@@ -635,7 +637,7 @@ watch(
                     class="block text-ui-cap"
                     :class="form.status === option.value ? 'text-ui-accent' : 'text-ui-muted'"
                   >
-                    {{ form.status === option.value ? "Selected" : "Select" }}
+                    {{ form.status === option.value ? $t("teams.form.settings.selected") : $t("common.actions.select") }}
                   </span>
                 </span>
                 <span
@@ -650,7 +652,7 @@ watch(
           <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <!-- Cancel -->
             <UiButton variant="secondary" class="w-full sm:w-auto" size="lg" @click="router.back()">
-              Cancel
+              {{ $t("common.actions.cancel") }}
             </UiButton>
             <!-- Update Team -->
             <UiButton
@@ -660,7 +662,7 @@ watch(
               :loading="loading"
               :icon-right="Check"
             >
-              Update Team
+              {{ $t("teams.edit.submit") }}
             </UiButton>
           </div>
         </form>
@@ -673,14 +675,14 @@ watch(
     <UiModal
       v-model:open="leadModal"
       size="lg"
-      title="Select Team Lead"
-      description="Choose an employee to lead this team"
+      :title="$t('teams.form.lead.select')"
+      :description="$t('teams.form.lead.modalSubtitle')"
     >
       <!-- Search Bar -->
       <UiInput
         id="leadSearch"
         :icon="Search"
-        placeholder="Search employees..."
+        :placeholder="$t('teams.form.searchEmployees')"
         v-model="searchLead"
       />
 
@@ -718,8 +720,8 @@ watch(
         v-if="employees.length === 0"
         compact
         :icon="SearchX"
-        title="No employees found"
-        message="Try adjusting your search terms"
+        :title="$t('teams.form.lead.noEmployees')"
+        :message="$t('teams.form.lead.noEmployeesHint')"
       />
     </UiModal>
   </div>

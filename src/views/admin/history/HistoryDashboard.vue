@@ -14,6 +14,8 @@ import {
   Trash2,
   CalendarRange,
 } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { useActivityLogStore } from "@/stores/activityLog";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { hasAnyRole } from "@/helpers/permissionHelper";
@@ -22,6 +24,7 @@ import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import Avatar from "@/components/common/Avatar.vue";
 import { UiPageHeader, UiButton, UiInput, UiSelect, UiStat, UiBadge, UiEmpty, UiModal, UiAlert, rowNumber } from "@/components/ui";
 
+const { t } = useI18n();
 const store = useActivityLogStore();
 const alertModal = useAlertModalStore();
 const { activities, categories, statistics, meta, loading, loadingStatistics } =
@@ -55,24 +58,24 @@ const EVENT_TONES = {
 const eventTone = (event) => EVENT_TONES[event] || "neutral";
 
 const categoryOptions = computed(() => [
-  { value: "", label: "All Categories" },
+  { value: "", label: t("history.filters.allCategories") },
   ...categories.value.map((c) => ({ value: c, label: c })),
 ]);
 
-const eventLabels = {
-  created: "Created",
-  updated: "Updated",
-  deleted: "Deleted",
-  login: "Login",
-  login_failed: "Failed Login",
-  logout: "Logout",
-  role_created: "Role Created",
-  role_updated: "Role Updated",
-  role_deleted: "Role Deleted",
-  backup_downloaded: "Backup Downloaded",
+const EVENT_KEYS = {
+  created: "created",
+  updated: "updated",
+  deleted: "deleted",
+  login: "login",
+  login_failed: "loginFailed",
+  logout: "logout",
+  role_created: "roleCreated",
+  role_updated: "roleUpdated",
+  role_deleted: "roleDeleted",
+  backup_downloaded: "backupDownloaded",
 };
 
-const eventLabel = (event) => eventLabels[event] || event || "-";
+const eventLabel = (event) => (EVENT_KEYS[event] ? t(`history.events.${EVENT_KEYS[event]}`) : event || "-");
 
 const fetchData = async (page = 1) => {
   await store.fetchActivities({
@@ -88,14 +91,14 @@ const fetchData = async (page = 1) => {
 const handlePageChange = (page) => fetchData(page);
 
 const handleDeleteRow = async (activity) => {
-  if (!(await alertModal.confirm("Delete this activity log entry? This is a permanent hard delete and cannot be undone.", { type: "danger", confirmText: "Delete" }))) return;
+  if (!(await alertModal.confirm(t("history.deleteRow.confirm"), { type: "danger", confirmText: t("common.actions.delete") }))) return;
 
   deletingRowId.value = activity.id;
   try {
     await store.deleteRow(activity.id);
     await fetchData(meta.value.current_page);
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Failed to delete activity log entry.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || t("history.deleteRow.failed"), { type: "danger" });
   } finally {
     deletingRowId.value = null;
   }
@@ -122,8 +125,8 @@ const handleDeleteRange = async () => {
 
   if (
     !(await alertModal.confirm(
-      `Delete every activity log entry between ${deleteRangeStart.value} and ${deleteRangeEnd.value}? This is a permanent hard delete and cannot be undone.`,
-      { type: "danger", confirmText: "Delete Range" }
+      t("history.deleteRange.confirm", { start: deleteRangeStart.value, end: deleteRangeEnd.value }),
+      { type: "danger", confirmText: t("history.deleteRange.submit") }
     ))
   )
     return;
@@ -134,9 +137,9 @@ const handleDeleteRange = async () => {
     showDeleteRangeModal.value = false;
     await store.fetchStatistics();
     await fetchData(1);
-    await alertModal.alert(`${result?.deleted ?? 0} activity log entr${result?.deleted === 1 ? "y" : "ies"} deleted.`, { type: "success" });
+    await alertModal.alert(t("history.deleteRange.deleted", { n: result?.deleted ?? 0 }, result?.deleted ?? 0), { type: "success" });
   } catch (error) {
-    await alertModal.alert(error?.response?.data?.message || "Failed to delete entries in this range.", { type: "danger" });
+    await alertModal.alert(error?.response?.data?.message || t("history.deleteRange.failed"), { type: "danger" });
   } finally {
     deletingRange.value = false;
   }
@@ -153,7 +156,7 @@ const hasProperties = (properties) => {
 };
 
 const formatDate = (date) =>
-  new Date(date).toLocaleString("id-ID", {
+  new Date(date).toLocaleString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -172,23 +175,23 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Activity Log" subtitle="Every create, update, delete and sign-in across the system.">
+    <UiPageHeader :title="$t('history.title')" :subtitle="$t('history.subtitle')">
       <template #actions>
         <UiButton v-if="canDeleteHistory" variant="danger" :icon="CalendarRange" @click="openDeleteRangeModal">
-          Delete by Date Range
+          {{ $t("history.deleteRange.title") }}
         </UiButton>
       </template>
     </UiPageHeader>
 
     <!-- Stats -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 ui-stagger">
-      <UiStat label="Total Activities" :value="statistics.total" :icon="Activity" hint="All-time system events" :loading="loadingStatistics" />
-      <UiStat label="Today" :value="statistics.today" :icon="CalendarDays" hint="Events today" :loading="loadingStatistics" />
-      <UiStat label="This Week" :value="statistics.this_week" :icon="Clock" hint="Since Monday" :loading="loadingStatistics" />
+      <UiStat :label="$t('history.stats.total')" :value="statistics.total" :icon="Activity" :hint="$t('history.stats.totalHint')" :loading="loadingStatistics" />
+      <UiStat :label="$t('common.labels.today')" :value="statistics.today" :icon="CalendarDays" :hint="$t('history.stats.todayHint')" :loading="loadingStatistics" />
+      <UiStat :label="$t('history.stats.thisWeek')" :value="statistics.this_week" :icon="Clock" :hint="$t('history.stats.thisWeekHint')" :loading="loadingStatistics" />
       <div class="bg-ui-surface border border-ui-line rounded-ui-card px-5 py-4 min-w-0">
         <div class="flex items-center gap-2 mb-2">
           <Tag class="w-4 h-4 text-ui-faint shrink-0" />
-          <p class="text-ui-small text-ui-muted">Categories</p>
+          <p class="text-ui-small text-ui-muted">{{ $t("history.stats.categories") }}</p>
         </div>
         <div v-if="loadingStatistics" class="space-y-1.5">
           <Skeleton width="100%" height="12px" />
@@ -206,12 +209,12 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
     <!-- Filters + List -->
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <div class="px-4 sm:px-5 py-3.5 flex flex-col lg:flex-row lg:items-center gap-3 border-b border-ui-line">
-        <h2 class="text-ui-h2 text-ui-ink shrink-0">All Activity</h2>
+        <h2 class="text-ui-h2 text-ui-ink shrink-0">{{ $t("history.list.title") }}</h2>
         <div class="grid grid-cols-2 md:flex md:items-center gap-2 lg:ml-auto">
           <UiInput
             v-model="searchQuery"
             :icon="Search"
-            placeholder="Search activity..."
+            :placeholder="$t('history.filters.search')"
             class="col-span-2 md:w-[240px]"
             @input="debouncedSearch"
           />
@@ -219,11 +222,11 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
             v-model="categoryFilter"
             :options="categoryOptions"
             class="col-span-2 md:w-[180px]"
-            aria-label="Category"
+            :aria-label="$t('common.labels.category')"
             @change="fetchData(1)"
           />
-          <UiInput v-model="dateFrom" type="date" class="md:w-[150px]" aria-label="From date" @change="fetchData(1)" />
-          <UiInput v-model="dateTo" type="date" class="md:w-[150px]" aria-label="To date" @change="fetchData(1)" />
+          <UiInput v-model="dateFrom" type="date" class="md:w-[150px]" :aria-label="$t('history.filters.dateFrom')" @change="fetchData(1)" />
+          <UiInput v-model="dateTo" type="date" class="md:w-[150px]" :aria-label="$t('history.filters.dateTo')" @change="fetchData(1)" />
         </div>
       </div>
 
@@ -233,17 +236,17 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
       </div>
 
       <!-- Empty -->
-      <UiEmpty v-else-if="activities.length === 0" :icon="History" title="No activity found" message="Try adjusting your search or filters" />
+      <UiEmpty v-else-if="activities.length === 0" :icon="History" :title="$t('history.list.empty')" :message="$t('common.states.noResultsHint')" />
 
       <!-- List -->
       <template v-else>
         <!-- Column heads (desktop) -->
         <div class="hidden md:grid hist-grid items-center gap-4 px-4 sm:px-5 h-10 border-b border-ui-line text-ui-cap font-medium text-ui-muted">
           <span>#</span>
-          <span>Activity</span>
-          <span>Category</span>
-          <span>When</span>
-          <span class="sr-only">Actions</span>
+          <span>{{ $t("history.list.activity") }}</span>
+          <span>{{ $t("common.labels.category") }}</span>
+          <span>{{ $t("history.list.when") }}</span>
+          <span class="sr-only">{{ $t("common.labels.actions") }}</span>
         </div>
 
         <ul class="divide-y divide-ui-line ui-stagger">
@@ -253,10 +256,10 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
 
               <!-- Actor + description -->
               <div class="flex items-start md:items-center gap-3 min-w-0 flex-1">
-                <Avatar :alt="activity.causer?.name || 'System'" size="w-8 h-8" icon-size="w-4 h-4" class="shrink-0 mt-0.5 md:mt-0 text-ui-cap" />
+                <Avatar :alt="activity.causer?.name || $t('history.list.system')" size="w-8 h-8" icon-size="w-4 h-4" class="shrink-0 mt-0.5 md:mt-0 text-ui-cap" />
                 <div class="min-w-0 flex-1">
                   <p class="text-ui-small text-ui-text">
-                    <span class="font-medium text-ui-ink">{{ activity.causer?.name || "System" }}</span>
+                    <span class="font-medium text-ui-ink">{{ activity.causer?.name || $t("history.list.system") }}</span>
                     {{ activity.description }}
                     <span v-if="activity.subject_type" class="text-ui-faint">
                       &middot; {{ activity.subject_type }}<template v-if="activity.subject_id"> #{{ activity.subject_id }}</template>
@@ -284,7 +287,7 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
                   v-if="hasProperties(activity.properties)"
                   type="button"
                   class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted transition-colors hover:bg-ui-hover hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
-                  :aria-label="expandedId === activity.id ? 'Hide details' : 'Show details'"
+                  :aria-label="expandedId === activity.id ? $t('history.list.hideDetails') : $t('history.list.showDetails')"
                   :aria-expanded="expandedId === activity.id"
                   @click="toggleExpand(activity.id)"
                 >
@@ -294,8 +297,8 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
                 <button
                   v-if="canDeleteHistory"
                   type="button"
-                  title="Delete"
-                  aria-label="Delete"
+                  :title="$t('common.actions.delete')"
+                  :aria-label="$t('common.actions.delete')"
                   :disabled="deletingRowId === activity.id"
                   class="w-8 h-8 inline-flex items-center justify-center rounded-ui-control text-ui-muted transition-colors hover:bg-ui-bad-soft hover:text-ui-bad focus:outline-none focus-visible:shadow-ui-focus disabled:opacity-50"
                   @click="handleDeleteRow(activity)"
@@ -311,11 +314,11 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
                 class="mt-3 md:ml-[60px] grid grid-cols-1 md:grid-cols-2 gap-3"
               >
                 <div v-if="activity.properties.old" class="min-w-0">
-                  <p class="text-ui-over uppercase text-ui-muted mb-1">Before</p>
+                  <p class="text-ui-over uppercase text-ui-muted mb-1">{{ $t("history.list.before") }}</p>
                   <pre class="text-ui-cap font-mono bg-ui-bad-soft text-ui-bad border border-ui-bad/15 rounded-ui-control p-3 overflow-x-auto">{{ JSON.stringify(activity.properties.old, null, 2) }}</pre>
                 </div>
                 <div v-if="activity.properties.attributes" class="min-w-0">
-                  <p class="text-ui-over uppercase text-ui-muted mb-1">After</p>
+                  <p class="text-ui-over uppercase text-ui-muted mb-1">{{ $t("history.list.after") }}</p>
                   <pre class="text-ui-cap font-mono bg-ui-ok-soft text-ui-ok border border-ui-ok/15 rounded-ui-control p-3 overflow-x-auto">{{ JSON.stringify(activity.properties.attributes, null, 2) }}</pre>
                 </div>
                 <div v-if="!activity.properties.old && !activity.properties.attributes" class="md:col-span-2 min-w-0">
@@ -333,39 +336,39 @@ const debouncedSearch = debounce(() => fetchData(1), 400);
         class="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-t border-ui-line"
       >
         <span class="text-ui-small text-ui-muted tabular-nums">
-          Page {{ meta.current_page }} of {{ meta.last_page }}
-          <span class="hidden sm:inline">&middot; {{ meta.total }} total activities</span>
+          {{ $t("common.pagination.page", { page: meta.current_page, last: meta.last_page }) }}
+          <span class="hidden sm:inline">&middot; {{ $t("history.list.totalActivities", { n: meta.total }, meta.total) }}</span>
         </span>
         <div class="flex gap-2">
           <UiButton variant="secondary" size="sm" :disabled="meta.current_page === 1" @click="handlePageChange(meta.current_page - 1)">
-            Prev
+            {{ $t("common.pagination.previous") }}
           </UiButton>
           <UiButton variant="secondary" size="sm" :disabled="meta.current_page === meta.last_page" @click="handlePageChange(meta.current_page + 1)">
-            Next
+            {{ $t("common.pagination.next") }}
           </UiButton>
         </div>
       </div>
     </section>
 
     <!-- Delete by Date Range Modal -->
-    <UiModal v-model:open="showDeleteRangeModal" title="Delete by Date Range" size="sm" @close="closeDeleteRangeModal">
+    <UiModal v-model:open="showDeleteRangeModal" :title="$t('history.deleteRange.title')" size="sm" @close="closeDeleteRangeModal">
       <div class="space-y-4">
         <UiAlert
           tone="bad"
-          message="This permanently deletes every activity log entry created in this range. There is no soft-delete/undo for log entries."
+          :message="$t('history.deleteRange.warning')"
         />
-        <UiInput v-model="deleteRangeStart" type="date" label="Start Date" />
-        <UiInput v-model="deleteRangeEnd" type="date" label="End Date" />
+        <UiInput v-model="deleteRangeStart" type="date" :label="$t('common.labels.startDate')" />
+        <UiInput v-model="deleteRangeEnd" type="date" :label="$t('common.labels.endDate')" />
       </div>
       <template #footer>
-        <UiButton variant="secondary" @click="closeDeleteRangeModal">Cancel</UiButton>
+        <UiButton variant="secondary" @click="closeDeleteRangeModal">{{ $t("common.actions.cancel") }}</UiButton>
         <UiButton
           variant="destructive"
           :loading="deletingRange"
           :disabled="deletingRange || !deleteRangeStart || !deleteRangeEnd"
           @click="handleDeleteRange"
         >
-          {{ deletingRange ? "Deleting..." : "Delete Range" }}
+          {{ deletingRange ? $t("common.actions.deleting") : $t("history.deleteRange.submit") }}
         </UiButton>
       </template>
     </UiModal>

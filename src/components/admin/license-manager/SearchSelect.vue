@@ -9,14 +9,14 @@ import { UiSpinner } from "@/components/ui";
 const props = defineProps({
   modelValue: { type: [String, Number], default: "" },
   options: { type: Array, default: () => [] },
-  placeholder: { type: String, default: "Select..." },
-  searchPlaceholder: { type: String, default: "Search..." },
+  placeholder: { type: String, default: "" },
+  searchPlaceholder: { type: String, default: "" },
   disabled: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
   id: { type: String, default: undefined },
   icon: { type: [Object, Function], default: null },
-  emptyText: { type: String, default: "No matches" },
+  emptyText: { type: String, default: "" },
 });
 const emit = defineEmits(["update:modelValue", "change"]);
 
@@ -114,7 +114,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
     >
       <component v-if="icon" :is="icon" class="absolute left-3 w-4 h-4 text-ui-faint" />
       <span class="flex-1 truncate" :class="selected ? 'text-ui-ink' : 'text-ui-faint'">
-        {{ selected ? selected.label : placeholder }}
+        {{ selected ? selected.label : placeholder || $t("licenses.select.placeholder") }}
       </span>
       <UiSpinner v-if="loading" size="14px" :center="false" />
       <ChevronDown v-else class="w-4 h-4 text-ui-faint shrink-0 transition-transform" :class="{ 'rotate-180': open }" />
@@ -131,7 +131,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
             ref="searchInput"
             v-model="query"
             type="text"
-            :placeholder="searchPlaceholder"
+            :placeholder="searchPlaceholder || $t('licenses.select.searchPlaceholder')"
             class="w-full pl-9 pr-3 py-2.5 bg-ui-surface text-ui-small text-ui-ink placeholder:text-ui-faint focus:outline-none"
             @keydown="onKey"
             role="combobox"
@@ -140,7 +140,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
           />
         </div>
         <ul ref="listEl" class="max-h-64 overflow-y-auto scroll-soft p-1" role="listbox">
-          <li v-if="!filtered.length" class="px-3 py-2 text-ui-small text-ui-muted">{{ loading ? "Loading..." : emptyText }}</li>
+          <li v-if="!filtered.length" class="px-3 py-2 text-ui-small text-ui-muted">{{ loading ? $t("common.states.loading") : emptyText || $t("licenses.select.noMatches") }}</li>
           <li
             v-for="(option, index) in filtered"
             :key="option.value"

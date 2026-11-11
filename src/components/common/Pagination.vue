@@ -21,7 +21,7 @@ const props = defineProps({
   },
   itemLabel: {
     type: String,
-    default: "items",
+    default: "",
   },
   showPerPage: {
     type: Boolean,
@@ -99,16 +99,16 @@ const btn = "inline-flex items-center justify-center h-8 min-w-8 px-2 rounded-ui
 <template>
   <nav v-if="total > 0" class="flex flex-wrap items-center gap-3 pt-4" aria-label="Pagination">
     <div class="flex items-center gap-3">
-      <p class="text-ui-small text-ui-muted tabular-nums">Showing {{ from }}–{{ to }} of {{ total }} {{ itemLabel }}</p>
+      <p class="text-ui-small text-ui-muted tabular-nums">{{ $t("common.pagination.showingItems", { from, to, total, items: itemLabel || $t("common.pagination.items") }) }}</p>
       <div v-if="showPerPage" class="flex items-center gap-2">
-        <span class="text-ui-small text-ui-muted">Show</span>
+        <span class="text-ui-small text-ui-muted">{{ $t("common.pagination.show") }}</span>
         <div class="relative">
           <select
             :value="perPage"
             @change="handlePerPageChange(parseInt($event.target.value))"
             :disabled="loading"
             class="select-soft !w-auto"
-            aria-label="Rows per page"
+            :aria-label="$t('common.pagination.rowsPerPage')"
           >
             <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
           </select>
@@ -117,8 +117,8 @@ const btn = "inline-flex items-center justify-center h-8 min-w-8 px-2 rounded-ui
       </div>
     </div>
     <div v-if="lastPage > 1" class="ml-auto flex items-center gap-1">
-      <button type="button" @click="goToPrevious" :disabled="currentPage <= 1 || loading" :class="[btn, 'border-ui-line-strong bg-ui-surface text-ui-ink hover:bg-ui-subtle gap-1 px-2.5']" aria-label="Previous page">
-        <ChevronLeft class="w-4 h-4" /><span class="sm:hidden">Previous</span>
+      <button type="button" @click="goToPrevious" :disabled="currentPage <= 1 || loading" :class="[btn, 'border-ui-line-strong bg-ui-surface text-ui-ink hover:bg-ui-subtle gap-1 px-2.5']" :aria-label="$t('common.pagination.previousPage')">
+        <ChevronLeft class="w-4 h-4" /><span class="sm:hidden">{{ $t("common.pagination.previous") }}</span>
       </button>
       <template v-for="(page, i) in visiblePages" :key="`${page}-${i}`">
         <span v-if="page === '...'" class="hidden sm:inline px-1 text-ui-faint">…</span>
@@ -132,8 +132,8 @@ const btn = "inline-flex items-center justify-center h-8 min-w-8 px-2 rounded-ui
         >{{ page }}</button>
       </template>
       <span class="sm:hidden text-ui-small text-ui-muted tabular-nums px-2">{{ currentPage }} / {{ lastPage }}</span>
-      <button type="button" @click="goToNext" :disabled="currentPage >= lastPage || loading" :class="[btn, 'border-ui-line-strong bg-ui-surface text-ui-ink hover:bg-ui-subtle gap-1 px-2.5']" aria-label="Next page">
-        <span class="sm:hidden">Next</span><ChevronRight class="w-4 h-4" />
+      <button type="button" @click="goToNext" :disabled="currentPage >= lastPage || loading" :class="[btn, 'border-ui-line-strong bg-ui-surface text-ui-ink hover:bg-ui-subtle gap-1 px-2.5']" :aria-label="$t('common.pagination.nextPage')">
+        <span class="sm:hidden">{{ $t("common.pagination.next") }}</span><ChevronRight class="w-4 h-4" />
       </button>
     </div>
   </nav>

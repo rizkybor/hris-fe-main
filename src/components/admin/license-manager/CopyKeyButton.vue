@@ -30,8 +30,8 @@ onBeforeUnmount(() => clearTimeout(timer));
     @click.stop="copy"
     class="inline-flex justify-center items-center rounded-ui-control border border-ui-line bg-ui-surface text-ui-muted hover:text-ui-ink hover:bg-ui-subtle transition-colors shrink-0"
     :class="size === 'md' ? 'w-9 h-9' : 'w-7 h-7'"
-    :title="copied ? 'Copied' : 'Copy key'"
-    :aria-label="copied ? 'Copied' : 'Copy key'"
+    :title="copied ? $t('common.actions.copied') : $t('licenses.copyKey')"
+    :aria-label="copied ? $t('common.actions.copied') : $t('licenses.copyKey')"
   >
     <Check v-if="copied" :class="size === 'md' ? 'w-4 h-4' : 'w-3.5 h-3.5'" class="text-ui-ok" />
     <Copy v-else :class="size === 'md' ? 'w-4 h-4' : 'w-3.5 h-3.5'" />

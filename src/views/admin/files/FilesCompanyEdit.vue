@@ -19,6 +19,9 @@ import Alert from "@/components/common/Alert.vue";
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 import { errorMessage } from "@/helpers/errorHelper";
 import { UiPageHeader, UiButton, UiBadge, UiInput, UiSpinner, UiEmpty } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const archiveStore = useFilesCompanyStore();
 const route = useRoute();
@@ -50,7 +53,7 @@ const fetchArchive = async () => {
     const archive = archiveStore.currentArchive;
 
     if (!archive) {
-      loadError.value = "Archive not found.";
+      loadError.value = t("files.edit.notFound");
       return;
     }
 
@@ -65,7 +68,7 @@ const fetchArchive = async () => {
     }
   } catch (err) {
     console.error(err);
-    loadError.value = "Failed to load archive.";
+    loadError.value = t("files.edit.loadFailed");
   } finally {
     loading.value = false;
   }
@@ -107,7 +110,7 @@ const submit = async () => {
 
   if (!form.value.document_name) {
     fileNameError.value = true;
-    error.value = "File name is required.";
+    error.value = t("files.form.nameRequired");
     return;
   }
 
@@ -131,14 +134,14 @@ const submit = async () => {
     form.value.document_name = updatedArchive.document_name;
     form.value.description = updatedArchive.description;
 
-    success.value = "File updated successfully.";
+    success.value = t("files.edit.updateSuccess");
 
     setTimeout(() => {
       router.push({ name: "admin.files-company.dashboard" });
     }, 1200);
   } catch (err) {
     console.error(err);
-    error.value = errorMessage(err, "Failed to update file.");
+    error.value = errorMessage(err, t("files.edit.updateFailed"));
   } finally {
     submitting.value = false;
   }
@@ -180,23 +183,23 @@ const fileExt = (name, mime) => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Edit Document File" subtitle="Update file metadata or replace the attached document">
+    <UiPageHeader :title="$t('files.edit.title')" :subtitle="$t('files.edit.subtitle')">
       <template #eyebrow>
         <button
           type="button"
           @click="router.back()"
           class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
-          aria-label="Back"
+          :aria-label="$t('common.actions.back')"
         >
           <ArrowLeft class="w-4 h-4" />
-          Back
+          {{ $t("common.actions.back") }}
         </button>
       </template>
       <template v-if="!loading && !loadError" #actions>
         <div class="hidden sm:flex items-center gap-2">
-          <UiButton variant="secondary" @click="router.back()">Cancel</UiButton>
+          <UiButton variant="secondary" @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
           <UiButton type="submit" form="files-company-edit-form" :icon="Save" :loading="submitting">
-            {{ submitting ? "Saving..." : "Save Changes" }}
+            {{ submitting ? $t("common.actions.saving") : $t("common.actions.saveChanges") }}
           </UiButton>
         </div>
       </template>
@@ -221,7 +224,7 @@ const fileExt = (name, mime) => {
     </div>
 
     <!-- Loading -->
-    <UiSpinner v-if="loading" label="Loading archive data..." class="!py-20" />
+    <UiSpinner v-if="loading" :label="$t('files.edit.loading')" class="!py-20" />
 
     <!-- Load error -->
     <div v-else-if="loadError" class="bg-ui-surface border border-ui-line rounded-ui-card">
@@ -237,22 +240,22 @@ const fileExt = (name, mime) => {
             <div class="w-8 h-8 rounded-ui-control border border-ui-line text-ui-muted flex items-center justify-center shrink-0">
               <Info class="w-4 h-4" />
             </div>
-            <h2 class="text-ui-h2 text-ui-ink">Informasi File</h2>
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("files.form.infoSection") }}</h2>
           </div>
 
           <div class="space-y-5">
             <UiInput
               id="document_name"
-              label="File Name *"
-              placeholder="Enter file name"
+:label="$t('files.form.nameRequiredLabel')"
+              :placeholder="$t('files.edit.namePlaceholder')"
               v-model="form.document_name"
-              :error="fileNameError ? 'File name is required.' : ''"
+              :error="fileNameError ? $t('files.form.nameRequired') : ''"
             />
 
             <UiInput
               id="description"
-              label="Description (Optional)"
-              placeholder="Enter a description"
+:label="$t('files.form.descriptionOptional')"
+              :placeholder="$t('files.edit.descriptionPlaceholder')"
               v-model="form.description"
               :rows="4"
             />
@@ -265,12 +268,12 @@ const fileExt = (name, mime) => {
             <div class="w-8 h-8 rounded-ui-control border border-ui-line text-ui-muted flex items-center justify-center shrink-0">
               <Paperclip class="w-4 h-4" />
             </div>
-            <h2 class="text-ui-h2 text-ui-ink">File</h2>
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("files.form.fileSection") }}</h2>
           </div>
 
           <!-- Current / Preview File -->
           <div v-if="previewFile" class="mb-5">
-            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">File Preview</p>
+            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("files.edit.filePreview") }}</p>
 
             <div
               v-if="!form.new_file && !form.remove_file"
@@ -289,14 +292,14 @@ const fileExt = (name, mime) => {
               <UiBadge tone="outline" class="font-mono shrink-0">
                 {{ fileExt(archiveStore.currentArchive.document_path, archiveStore.currentArchive.type_file) }}
               </UiBadge>
-              <UiButton variant="danger" size="sm" :icon="X" class="shrink-0" @click="removeFile">Remove</UiButton>
+              <UiButton variant="danger" size="sm" :icon="X" class="shrink-0" @click="removeFile">{{ $t("common.actions.remove") }}</UiButton>
             </div>
 
             <div class="w-full max-h-[400px] overflow-auto border border-ui-line rounded-ui-card bg-ui-subtle p-1">
               <img
                 v-if="isImage(form.new_file?.type || archiveStore.currentArchive?.type_file)"
                 :src="previewFile"
-                alt="File Preview"
+                :alt="$t('files.edit.filePreview')"
                 class="w-full object-contain rounded-ui-control"
               />
               <iframe
@@ -309,7 +312,7 @@ const fileExt = (name, mime) => {
 
           <!-- Upload New File -->
           <div>
-            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">Replace File (Optional)</p>
+            <p class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("files.edit.replaceFile") }}</p>
             <label
               class="flex flex-col items-center justify-center gap-2 w-full py-8 px-4 border border-dashed border-ui-line-strong bg-ui-subtle/50 rounded-ui-card cursor-pointer text-center transition-colors hover:border-ui-accent hover:bg-ui-accent-soft/40 focus-within:shadow-ui-focus"
             >
@@ -317,7 +320,7 @@ const fileExt = (name, mime) => {
                 <component :is="form.new_file ? newFileMeta.icon : FileUp" class="w-5 h-5" />
               </div>
               <span class="text-ui-body text-ui-ink font-medium break-all">
-                {{ form.new_file ? form.new_file.name : "Click to choose a new file" }}
+                {{ form.new_file ? form.new_file.name : $t("files.edit.chooseNewFile") }}
               </span>
               <UiBadge v-if="form.new_file" tone="outline" class="font-mono">{{ fileExt(form.new_file.name, form.new_file.type) }}</UiBadge>
               <input type="file" class="sr-only" @change="onFileChange" />
@@ -329,9 +332,9 @@ const fileExt = (name, mime) => {
       <!-- Phones: actions at the end of the form, full width -->
       <div class="sm:hidden flex flex-col gap-2">
         <UiButton type="submit" size="lg" block :icon="Save" :loading="submitting">
-          {{ submitting ? "Saving..." : "Save Changes" }}
+          {{ submitting ? $t("common.actions.saving") : $t("common.actions.saveChanges") }}
         </UiButton>
-        <UiButton variant="ghost" size="lg" block @click="router.back()">Cancel</UiButton>
+        <UiButton variant="ghost" size="lg" block @click="router.back()">{{ $t("common.actions.cancel") }}</UiButton>
       </div>
     </form>
   </div>

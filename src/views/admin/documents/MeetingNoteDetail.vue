@@ -2,6 +2,8 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
 import { NotebookPen, Pencil, Trash2, Pin, PinOff, FileText, Users, Calendar, Building2, CheckSquare, Square, ArrowLeft, FileDown } from "lucide-vue-next";
 import { UiButton, UiBadge } from "@/components/ui";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
@@ -12,6 +14,7 @@ import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import PresenceIndicator from "@/components/common/PresenceIndicator.vue";
 import MeetingNoteComments from "@/components/admin/documents/MeetingNoteComments.vue";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useMeetingNoteStore();
@@ -45,7 +48,7 @@ const downloadPdf = async () => {
   try {
     await store.downloadPdf(note.value.id, note.value.document_number);
   } catch {
-    await alertModal.alert("PDF gagal dibuat. Coba lagi beberapa saat.", { type: "danger" });
+    await alertModal.alert(t("documents.meetingNote.detail.pdfFailed"), { type: "danger" });
   } finally {
     pdfBusy.value = false;
   }
@@ -68,10 +71,10 @@ onUnmounted(() => {
   if (heartbeatTimer) clearInterval(heartbeatTimer);
 });
 
-const TYPE_LABEL = { internal: "Internal", external: "External" };
+const TYPE_LABEL = computed(() => ({ internal: t("documents.meetingNote.types.internal"), external: t("documents.meetingNote.types.external") }));
 const TYPE_TONE = { internal: "accent", external: "outline" };
 const formatDateTime = (date) =>
-  date ? new Date(date).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" }) : "-";
+  date ? new Date(date).toLocaleString(localeTag(), { dateStyle: "full", timeStyle: "short" }) : "-";
 
 const togglePin = async () => {
   pinBusy.value = true;
@@ -84,9 +87,9 @@ const togglePin = async () => {
 
 const handleDelete = async () => {
   if (
-    !(await alertModal.confirm(`Delete Meeting Note "${note.value.document_number}"? This action cannot be undone.`, {
+    !(await alertModal.confirm(t("documents.meetingNote.list.deleteConfirm", { number: note.value.document_number }), {
       type: "danger",
-      confirmText: "Delete",
+      confirmText: t("common.actions.delete"),
     }))
   )
     return;
@@ -97,7 +100,7 @@ const handleDelete = async () => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <div v-if="loading" class="space-y-5" role="status" aria-label="Loading">
+    <div v-if="loading" class="space-y-5" role="status" :aria-label="$t('common.a11y.loading')">
       <div class="flex items-center gap-4">
         <Skeleton width="48px" height="48px" rounded="12px" />
         <div class="flex-1 space-y-2">
@@ -124,7 +127,7 @@ const handleDelete = async () => {
           class="inline-flex items-center gap-1 text-ui-small text-ui-accent hover:underline mb-3"
         >
           <ArrowLeft class="w-3.5 h-3.5" />
-          Back to Meeting Notes
+          {{ $t("documents.meetingNote.detail.back") }}
         </router-link>
 
         <div class="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -136,7 +139,7 @@ const handleDelete = async () => {
               <div class="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
                 <h1 class="text-ui-h1 text-ui-ink break-words">{{ note.title }}</h1>
                 <UiBadge :tone="TYPE_TONE[note.meeting_type] || 'neutral'">{{ TYPE_LABEL[note.meeting_type] }}</UiBadge>
-                <UiBadge v-if="note.is_pinned" tone="warn"><Pin class="w-3 h-3" />Pinned</UiBadge>
+                <UiBadge v-if="note.is_pinned" tone="warn"><Pin class="w-3 h-3" />{{ $t("documents.meetingNote.list.pinnedBadge") }}</UiBadge>
               </div>
               <p class="text-ui-small text-ui-muted mt-1">
                 <span class="font-mono">{{ note.document_number }}</span>
@@ -152,24 +155,24 @@ const handleDelete = async () => {
               variant="secondary"
               :icon="FileDown"
               :loading="pdfBusy"
-              title="Unduh Meeting Note ini sebagai PDF (Notulen Rapat)"
+              :title="$t('documents.meetingNote.detail.downloadHint')"
               @click="downloadPdf"
-            >Download PDF</UiButton>
+            >{{ $t("common.actions.downloadPdf") }}</UiButton>
             <UiButton
               v-if="can('meeting-note-pin') && isCreator"
               variant="secondary"
               :icon="note.is_pinned ? PinOff : Pin"
               :loading="pinBusy"
-              title="Pinning also adds this note to every Internal Attendee's dashboard"
+              :title="$t('documents.meetingNote.detail.pinHint')"
               @click="togglePin"
-            >{{ note.is_pinned ? "Unpin" : "Pin to Dashboard" }}</UiButton>
+            >{{ note.is_pinned ? $t("documents.meetingNote.detail.unpin") : $t("documents.meetingNote.list.pin") }}</UiButton>
             <UiButton
               v-if="can('meeting-note-edit')"
               variant="secondary"
               :icon="Pencil"
               :to="{ name: 'admin.meeting-notes.edit', params: { id: note.id } }"
-            >Edit</UiButton>
-            <UiButton v-if="can('meeting-note-delete')" variant="danger" :icon="Trash2" @click="handleDelete">Delete</UiButton>
+            >{{ $t("common.actions.edit") }}</UiButton>
+            <UiButton v-if="can('meeting-note-delete')" variant="danger" :icon="Trash2" @click="handleDelete">{{ $t("common.actions.delete") }}</UiButton>
           </div>
         </div>
       </div>
@@ -177,28 +180,28 @@ const handleDelete = async () => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start ui-stagger">
         <div class="lg:col-span-2 space-y-4 sm:space-y-5 min-w-0">
           <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5">
-            <h2 class="text-ui-h2 text-ui-ink mb-3">Notes Content</h2>
+            <h2 class="text-ui-h2 text-ui-ink mb-3">{{ $t("documents.meetingNote.fields.body") }}</h2>
             <div v-if="note.body" class="rich-text-content text-ui-body text-ui-text leading-relaxed" v-html="note.body"></div>
-            <p v-else class="text-ui-small text-ui-muted">No notes yet.</p>
+            <p v-else class="text-ui-small text-ui-muted">{{ $t("documents.meetingNote.detail.noBody") }}</p>
           </section>
 
           <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5">
-            <h2 class="text-ui-h2 text-ui-ink mb-3">Action Items</h2>
+            <h2 class="text-ui-h2 text-ui-ink mb-3">{{ $t("documents.meetingNote.fields.actionItems") }}</h2>
             <ul v-if="note.action_items?.length" class="divide-y divide-ui-line -my-1">
               <li v-for="(item, index) in note.action_items" :key="index" class="flex items-start gap-2.5 py-2.5 text-ui-body">
-                <CheckSquare v-if="item.done" class="w-4 h-4 text-ui-ok shrink-0 mt-0.5" aria-label="Done" />
-                <Square v-else class="w-4 h-4 text-ui-faint shrink-0 mt-0.5" aria-label="Open" />
+                <CheckSquare v-if="item.done" class="w-4 h-4 text-ui-ok shrink-0 mt-0.5" :aria-label="$t('common.actions.done')" />
+                <Square v-else class="w-4 h-4 text-ui-faint shrink-0 mt-0.5" :aria-label="$t('documents.meetingNote.detail.open')" />
                 <div class="flex-1 min-w-0 sm:flex sm:items-start sm:gap-3">
                   <span class="block flex-1 break-words" :class="item.done ? 'line-through text-ui-muted' : 'text-ui-ink'">{{ item.text }}</span>
-                  <span v-if="item.assignee" class="block text-ui-cap text-ui-muted mt-0.5 sm:mt-0.5 shrink-0">Assignee: {{ item.assignee }}</span>
+                  <span v-if="item.assignee" class="block text-ui-cap text-ui-muted mt-0.5 sm:mt-0.5 shrink-0">{{ $t("documents.meetingNote.detail.assignee", { name: item.assignee }) }}</span>
                 </div>
               </li>
             </ul>
-            <p v-else class="text-ui-small text-ui-muted">No action items yet.</p>
+            <p v-else class="text-ui-small text-ui-muted">{{ $t("documents.meetingNote.form.noActionItems") }}</p>
           </section>
 
           <section v-if="note.attachments?.length" class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5">
-            <h2 class="text-ui-h2 text-ui-ink mb-3">Attachments</h2>
+            <h2 class="text-ui-h2 text-ui-ink mb-3">{{ $t("documents.memo.fields.attachments") }}</h2>
             <div class="space-y-2">
               <a
                 v-for="attachment in note.attachments"
@@ -222,21 +225,21 @@ const handleDelete = async () => {
 
         <aside class="space-y-4 sm:space-y-5 min-w-0">
           <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 space-y-4">
-            <h2 class="text-ui-h3 text-ui-ink">Meeting</h2>
+            <h2 class="text-ui-h3 text-ui-ink">{{ $t("documents.meetingNote.detail.meeting") }}</h2>
             <div>
-              <p class="text-ui-cap text-ui-muted flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />Date & time</p>
+              <p class="text-ui-cap text-ui-muted flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-ui-faint" />{{ $t("documents.meetingNote.detail.dateTime") }}</p>
               <p class="text-ui-body text-ui-ink mt-1 tabular-nums">{{ formatDateTime(note.meeting_date) }}</p>
             </div>
 
             <div v-if="note.attendees?.length">
-              <p class="text-ui-cap text-ui-muted flex items-center gap-1.5"><Users class="w-3.5 h-3.5 text-ui-faint" />Internal Attendees:</p>
+              <p class="text-ui-cap text-ui-muted flex items-center gap-1.5"><Users class="w-3.5 h-3.5 text-ui-faint" />{{ $t("documents.meetingNote.fields.internalAttendees") }}:</p>
               <div class="flex flex-wrap gap-1.5 mt-1.5">
                 <UiBadge v-for="attendee in note.attendees" :key="attendee.id" tone="accent">{{ attendee.name }}</UiBadge>
               </div>
             </div>
 
             <div v-if="note.external_attendees?.length">
-              <p class="text-ui-cap text-ui-muted flex items-center gap-1.5"><Building2 class="w-3.5 h-3.5 text-ui-faint" />External Attendees:</p>
+              <p class="text-ui-cap text-ui-muted flex items-center gap-1.5"><Building2 class="w-3.5 h-3.5 text-ui-faint" />{{ $t("documents.meetingNote.fields.externalAttendees") }}:</p>
               <div class="flex flex-wrap gap-1.5 mt-1.5">
                 <UiBadge v-for="(att, index) in note.external_attendees" :key="index" tone="neutral"
                   >{{ att.name }}<span v-if="att.organization">&nbsp;({{ att.organization }})</span></UiBadge
@@ -247,11 +250,11 @@ const handleDelete = async () => {
 
           <section class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 space-y-2.5 text-ui-small">
             <div class="flex items-center justify-between gap-3">
-              <span class="text-ui-muted">Created by:</span>
+              <span class="text-ui-muted">{{ $t("common.labels.createdBy") }}:</span>
               <span class="text-ui-ink font-medium text-right truncate">{{ note.creator?.name || "-" }}</span>
             </div>
             <div class="flex items-center justify-between gap-3">
-              <span class="text-ui-muted">Last edited by:</span>
+              <span class="text-ui-muted">{{ $t("documents.meetingNote.detail.lastEditedBy") }}</span>
               <span class="text-ui-ink font-medium text-right truncate">{{ note.updater?.name || "-" }}</span>
             </div>
           </section>

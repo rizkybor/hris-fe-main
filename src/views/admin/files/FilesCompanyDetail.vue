@@ -15,6 +15,10 @@ import {
 import { useFilesCompanyStore } from "@/stores/filesCompany";
 import Spinner from "@/components/common/skeleton/Spinner.vue";
 import { UiPageHeader, UiButton, UiBadge, UiEmpty } from "@/components/ui";
+import { useI18n } from "vue-i18n";
+import { localeTag } from "@/i18n";
+
+const { t } = useI18n();
 
 const archiveStore = useFilesCompanyStore();
 const route = useRoute();
@@ -26,7 +30,7 @@ const error = ref("");
 
 const formatDate = (date) => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("id-ID", {
+  return new Date(date).toLocaleDateString(localeTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -45,7 +49,7 @@ onMounted(async () => {
     await archiveStore.fetchArchiveById(archiveId);
   } catch (err) {
     console.error(err);
-    error.value = "Failed to load archive detail.";
+    error.value = t("files.detail.loadFailed");
   }
 });
 
@@ -68,27 +72,27 @@ const fileExt = (name, mime) => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Document File Detail" subtitle="Informasi file (read-only)">
+    <UiPageHeader :title="$t('files.detail.title')" :subtitle="$t('files.detail.subtitle')">
       <template #eyebrow>
         <button
           type="button"
           @click="router.back()"
           class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1"
-          aria-label="Back"
+          :aria-label="$t('common.actions.back')"
         >
           <ArrowLeft class="w-4 h-4" />
-          Back
+          {{ $t("common.actions.back") }}
         </button>
       </template>
       <template #actions>
         <UiButton :to="{ name: 'admin.files-company.edit', params: { id: archiveId } }" :icon="Pencil" class="w-full sm:w-auto">
-          Edit
+          {{ $t("common.actions.edit") }}
         </UiButton>
       </template>
     </UiPageHeader>
 
     <!-- Loading -->
-    <Spinner v-if="loading" label="Loading archive detail..." class="!py-20" />
+    <Spinner v-if="loading" :label="$t('files.detail.loading')" class="!py-20" />
 
     <!-- Error -->
     <div v-else-if="error" class="bg-ui-surface border border-ui-line rounded-ui-card">
@@ -113,26 +117,26 @@ const fileExt = (name, mime) => {
           </div>
         </div>
         <p class="px-5 sm:px-6 pb-5 text-ui-body text-ui-text whitespace-pre-line">
-          {{ archiveStore.currentArchive.description || "No description" }}
+          {{ archiveStore.currentArchive.description || $t("files.detail.noDescription") }}
         </p>
 
         <dl class="border-t border-ui-line px-5 sm:px-6 py-2 divide-y divide-ui-line">
           <div class="flex items-center justify-between gap-4 py-2.5">
-            <dt class="flex items-center gap-2 text-ui-small text-ui-muted"><FileType class="w-4 h-4" />File Type</dt>
+            <dt class="flex items-center gap-2 text-ui-small text-ui-muted"><FileType class="w-4 h-4" />{{ $t("files.detail.fileType") }}</dt>
             <dd class="text-ui-small text-ui-ink truncate text-right">{{ archiveStore.currentArchive.type_file || "—" }}</dd>
           </div>
           <div class="flex items-center justify-between gap-4 py-2.5">
-            <dt class="flex items-center gap-2 text-ui-small text-ui-muted"><HardDrive class="w-4 h-4" />File Size</dt>
+            <dt class="flex items-center gap-2 text-ui-small text-ui-muted"><HardDrive class="w-4 h-4" />{{ $t("files.detail.fileSize") }}</dt>
             <dd class="text-ui-small text-ui-ink tabular-nums text-right">{{ formatSize(archiveStore.currentArchive.size_file) }}</dd>
           </div>
           <div class="flex items-center justify-between gap-4 py-2.5">
-            <dt class="flex items-center gap-2 text-ui-small text-ui-muted"><Clock class="w-4 h-4" />Upload Date</dt>
+            <dt class="flex items-center gap-2 text-ui-small text-ui-muted"><Clock class="w-4 h-4" />{{ $t("files.detail.uploadDate") }}</dt>
             <dd class="text-ui-small text-ui-ink text-right">{{ formatDate(archiveStore.currentArchive.created_at) }}</dd>
           </div>
         </dl>
 
         <div class="px-5 sm:px-6 pb-5 pt-2">
-          <UiButton :icon="Download" block @click="downloadFile">Download File</UiButton>
+          <UiButton :icon="Download" block @click="downloadFile">{{ $t("files.actions.download") }}</UiButton>
         </div>
       </section>
 
@@ -140,7 +144,7 @@ const fileExt = (name, mime) => {
       <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 lg:col-span-2 lg:order-1">
         <div class="flex items-center gap-2 px-5 sm:px-6 py-4 border-b border-ui-line">
           <Eye class="w-4 h-4 text-ui-muted" />
-          <h3 class="text-ui-h3 text-ui-ink">Preview</h3>
+          <h3 class="text-ui-h3 text-ui-ink">{{ $t("files.detail.preview") }}</h3>
         </div>
 
         <div
@@ -149,7 +153,7 @@ const fileExt = (name, mime) => {
         >
           <img
             :src="archiveStore.currentArchive.document_path"
-            alt="File Preview"
+            :alt="$t('files.detail.preview')"
             class="max-w-full max-h-[70vh] object-contain rounded-ui-control"
           />
         </div>
@@ -164,17 +168,17 @@ const fileExt = (name, mime) => {
         <UiEmpty
           v-else
           :icon="FileText"
-          title="No preview available"
+          :title="$t('files.detail.noPreview')"
           :message="archiveStore.currentArchive.type_file || ''"
         >
-          <UiButton variant="secondary" :icon="Download" @click="downloadFile">Download File</UiButton>
+          <UiButton variant="secondary" :icon="Download" @click="downloadFile">{{ $t("files.actions.download") }}</UiButton>
         </UiEmpty>
       </section>
     </div>
 
     <!-- Fallback -->
     <div v-else class="bg-ui-surface border border-ui-line rounded-ui-card">
-      <UiEmpty :icon="Archive" title="Archive data not available." />
+      <UiEmpty :icon="Archive" :title="$t('files.detail.notAvailable')" />
     </div>
   </div>
 </template>

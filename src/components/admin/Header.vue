@@ -7,11 +7,9 @@ import {
   ReceiptIcon,
   SettingsIcon,
   LogOutIcon,
-  Sun,
-  Moon,
-  Monitor,
 } from "lucide-vue-next";
-import { useTheme } from "@/composables/useTheme";
+import { useI18n } from "vue-i18n";
+import LanguageSwitch from "@/components/admin/LanguageSwitch.vue";
 import ConfirmActionModal from "@/components/common/ConfirmationModal.vue";
 import NotificationBell from "@/components/admin/NotificationBell.vue";
 import Avatar from "@/components/common/Avatar.vue";
@@ -22,6 +20,7 @@ import { useRoute, RouterLink } from "vue-router";
 import { join } from "lodash-es";
 import { useLicenseManagerStore } from "@/stores/licenseManager";
 
+const { t, te } = useI18n();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 const { logout } = authStore;
@@ -455,37 +454,36 @@ const pageInfo = computed(() => {
   if (licensePage) {
     const code = String(route.params.product || "");
     const productName = licenseStore.productByCode(code)?.name || code.toUpperCase();
-    return { title: `${productName} · ${licensePage[0]}`, subtitle: licensePage[1] };
+    const licenseKey = { "admin.license-manager.licenses.dashboard": "licenses", "admin.license-manager.licenses.create": "create", "admin.license-manager.licenses.detail": "detail", "admin.license-manager.licenses.edit": "edit", "admin.license-manager.versions": "versions" }[name];
+    const label = licenseKey ? t(`nav.licensePages.${licenseKey}`) : licensePage[0];
+    return { title: `${productName} · ${label}`, subtitle: licensePage[1] };
   }
-  return titles[name] || titles["admin.dashboard"];
+  const entry = titles[name] || titles["admin.dashboard"];
+  const key = `nav.pages.${(titles[name] ? name : "admin.dashboard").replace(/\./g, "_")}`;
+  return { title: te(key) ? t(key) : entry.title, subtitle: entry.subtitle };
 });
 
 const pageTitle = computed(() => pageInfo.value.title);
 
-// Appearance switch in the user menu.
-const { mode: themeMode, setMode: setThemeMode } = useTheme();
-const THEME_OPTIONS = [
-  { value: "light", label: "Terang", icon: Sun },
-  { value: "dark", label: "Gelap", icon: Moon },
-  { value: "system", label: "Sistem", icon: Monitor },
-];
+
 
 // Breadcrumb section, named like the sidebar groups. First matching
 // route-name prefix wins; the dashboard has no section.
 const SECTION_RULES = [
-  ["License Manager", ["admin.license-manager"]],
-  ["Settings", ["admin.settings"]],
-  ["General", ["employee.attendance.clock", "employee.attendance.my-attendances", "employee.payslips"]],
-  ["My Workspace", ["employee.profile", "employee.team", "employee.tasks", "admin.staff-tasks", "admin.screening", "admin.projects", "admin.subscriptions", "admin.maintenance", "admin.server-storage", "admin.attendances", "admin.leave-requests"]],
-  ["Administration", ["admin.employee", "admin.team", "admin.clients", "admin.documents", "admin.purchase-orders", "admin.invoices", "admin.payment-receipts", "admin.letters", "admin.certificates", "admin.official-memos", "admin.meeting-notes", "admin.proposals", "admin.orgchart"]],
-  ["Finance", ["admin.company-finance", "admin.company-cash-book", "admin.payroll", "admin.report"]],
-  ["Tools", ["admin.project-calculator", "admin.flowchart"]],
-  ["Company", ["admin.company-about", "admin.assets", "admin.files-company", "admin.account-password", "admin.announcements"]],
-  ["Insights", ["admin.analytics", "admin.history"]],
+  ["licenseManager", ["admin.license-manager"]],
+  ["settings", ["admin.settings"]],
+  ["general", ["employee.attendance.clock", "employee.attendance.my-attendances", "employee.payslips"]],
+  ["myWorkspace", ["employee.profile", "employee.team", "employee.tasks", "admin.staff-tasks", "admin.screening", "admin.projects", "admin.subscriptions", "admin.maintenance", "admin.server-storage", "admin.attendances", "admin.leave-requests"]],
+  ["administration", ["admin.employee", "admin.team", "admin.clients", "admin.documents", "admin.purchase-orders", "admin.invoices", "admin.payment-receipts", "admin.letters", "admin.certificates", "admin.official-memos", "admin.meeting-notes", "admin.proposals", "admin.orgchart"]],
+  ["finance", ["admin.company-finance", "admin.company-cash-book", "admin.payroll", "admin.report"]],
+  ["tools", ["admin.project-calculator", "admin.flowchart"]],
+  ["company", ["admin.company-about", "admin.assets", "admin.files-company", "admin.account-password", "admin.announcements"]],
+  ["insights", ["admin.analytics", "admin.history"]],
 ];
 const pageSection = computed(() => {
   const name = route.name?.toString() || "";
-  return SECTION_RULES.find(([, prefixes]) => prefixes.some((p) => name.startsWith(p)))?.[0] || "";
+  const key = SECTION_RULES.find(([, prefixes]) => prefixes.some((p) => name.startsWith(p)))?.[0];
+  return key ? t(`nav.sections.${key}`) : "";
 });
 const pageSubtitle = computed(() => pageInfo.value.subtitle);
 
@@ -508,7 +506,7 @@ const confirmLogout = async () => {
     <!-- Breadcrumb: the page itself carries the big title and description
          (UiPageHeader), so the bar only says where you are. On phones it
          reads as an app bar title. -->
-    <nav aria-label="Breadcrumb" class="flex-1 min-w-0 flex items-center gap-1.5">
+    <nav :aria-label="t('common.a11y.breadcrumb')" class="flex-1 min-w-0 flex items-center gap-1.5">
       <template v-if="pageSection">
         <span class="hidden sm:inline text-ui-small text-ui-muted truncate shrink-0 max-w-[40%]">{{ pageSection }}</span>
         <ChevronRight class="hidden sm:block w-3.5 h-3.5 text-ui-faint shrink-0" aria-hidden="true" />
@@ -517,11 +515,12 @@ const confirmLogout = async () => {
     </nav>
 
     <div class="flex items-center gap-1">
+      <LanguageSwitch />
       <NotificationBell />
       <RouterLink
         :to="{ name: 'admin.settings.dashboard' }"
         class="hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-ui-control text-ui-muted hover:bg-ui-hover hover:text-ui-ink transition-colors"
-        aria-label="Settings"
+        :aria-label="t('common.a11y.settings')"
       >
         <SettingsIcon class="w-[18px] h-[18px]" />
       </RouterLink>
@@ -564,36 +563,8 @@ const confirmLogout = async () => {
             @click="isOpen = false"
           >
             <UserIcon class="w-4 h-4 text-ui-muted" />
-            Profil Pengguna
+            {{ t("common.user.profile") }}
           </RouterLink>
-          <RouterLink
-            :to="{ name: 'admin.settings.dashboard' }"
-            role="menuitem"
-            class="flex items-center gap-2.5 h-9 px-2.5 rounded-ui-control text-ui-small text-ui-text hover:bg-ui-hover hover:text-ui-ink transition-colors"
-            @click="isOpen = false"
-          >
-            <SettingsIcon class="w-4 h-4 text-ui-muted" />
-            Pengaturan Sistem
-          </RouterLink>
-          <!-- Appearance: stays open so the change is visible right away. -->
-          <div class="px-2.5 pt-2 pb-1.5">
-            <p class="text-ui-cap text-ui-muted mb-1.5">Tampilan</p>
-            <div class="grid grid-cols-3 gap-0.5 p-0.5 bg-ui-subtle border border-ui-line rounded-ui-control" role="radiogroup" aria-label="Tampilan">
-              <button
-                v-for="opt in THEME_OPTIONS"
-                :key="opt.value"
-                type="button"
-                role="radio"
-                :aria-checked="themeMode === opt.value"
-                class="h-8 rounded-[6px] flex items-center justify-center gap-1 text-ui-cap font-medium transition-colors"
-                :class="themeMode === opt.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
-                @click.stop="setThemeMode(opt.value)"
-              >
-                <component :is="opt.icon" class="w-3.5 h-3.5" />
-                {{ opt.label }}
-              </button>
-            </div>
-          </div>
           <div class="h-px bg-ui-line my-1"></div>
           <button
             type="button"
@@ -602,7 +573,7 @@ const confirmLogout = async () => {
             @click="isOpen = false; handleLogout()"
           >
             <LogOutIcon class="w-4 h-4" />
-            Keluar
+            {{ t("common.actions.signOut") }}
           </button>
         </div>
       </Transition>
@@ -610,10 +581,10 @@ const confirmLogout = async () => {
 
     <ConfirmActionModal
       :show="showLogoutModal"
-      title="Keluar dari Sistem"
-      message="Anda yakin ingin keluar? Semua sesi aktif akan dihentikan."
-      confirm-text="Keluar"
-      cancel-text="Batal"
+      :title="t('common.user.signOutTitle')"
+      :message="t('common.user.signOutMessage')"
+      :confirm-text="t('common.actions.signOut')"
+      :cancel-text="t('common.actions.cancel')"
       type="danger"
       :loading="logoutLoading"
       @cancel="showLogoutModal = false"

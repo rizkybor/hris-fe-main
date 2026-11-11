@@ -1,11 +1,13 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { RouterLink } from "vue-router";
 import { ArrowLeft, FileSignature, Check } from "lucide-vue-next";
 import { useDocumentSettingStore } from "@/stores/documentSetting";
 import { UiAlert, UiPageHeader, UiSkeleton } from "@/components/ui";
 
+const { t } = useI18n();
 const store = useDocumentSettingStore();
 const { setting, loading } = storeToRefs(store);
 
@@ -14,20 +16,20 @@ const errorMessage = ref("");
 const successMessage = ref("");
 
 // Same example the PDFs would print, so the choice is concrete.
-const options = [
+const options = computed(() => [
   {
     value: true,
-    title: "Name with degree",
-    description: "Prints the signatory name exactly as typed on the document.",
+    title: t("settings.documents.withDegree.title"),
+    description: t("settings.documents.withDegree.description"),
     example: "Rizky Ajie Kurniawan, S.Kom",
   },
   {
     value: false,
-    title: "Name only",
-    description: "Drops titles before the name (Dr., Ir., Prof., ...) and degrees after the comma.",
+    title: t("settings.documents.nameOnly.title"),
+    description: t("settings.documents.nameOnly.description"),
     example: "Rizky Ajie Kurniawan",
   },
-];
+]);
 
 onMounted(() => store.fetchSetting());
 
@@ -38,9 +40,9 @@ const choose = async (value) => {
   saving.value = true;
   try {
     await store.updateSetting({ signatory_show_degree: value });
-    successMessage.value = "Document setting saved. It applies to PDFs generated from now on.";
+    successMessage.value = t("settings.documents.saved");
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to save setting.";
+    errorMessage.value = error?.response?.data?.message || t("settings.saveFailed");
   } finally {
     saving.value = false;
   }
@@ -49,10 +51,10 @@ const choose = async (value) => {
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader title="Document Settings" subtitle="How generated PDF documents are printed">
+    <UiPageHeader :title="$t('settings.documents.title')" :subtitle="$t('settings.documents.subtitle')">
       <template #eyebrow>
-        <RouterLink :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" aria-label="Back to Settings" title="Back to Settings">
-          <ArrowLeft class="w-4 h-4" /> Settings
+        <RouterLink :to="{ name: 'admin.settings.dashboard' }" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1" :aria-label="$t('settings.backToSettings')" :title="$t('settings.backToSettings')">
+          <ArrowLeft class="w-4 h-4" /> {{ $t("settings.settings") }}
         </RouterLink>
       </template>
     </UiPageHeader>
@@ -62,19 +64,16 @@ const choose = async (value) => {
         <div>
           <div class="flex items-center gap-2">
             <FileSignature class="w-4 h-4 text-ui-muted" />
-            <h2 class="text-ui-h2 text-ui-ink">Signatory Name</h2>
+            <h2 class="text-ui-h2 text-ui-ink">{{ $t("settings.documents.signatoryName") }}</h2>
           </div>
-          <p class="text-ui-small text-ui-muted mt-1">
-            Applies to every signature block: Letters, BAST, Official Memo, Purchase Order, Payment Receipt,
-            Proposal, Certificate and Staff Raport.
-          </p>
+          <p class="text-ui-small text-ui-muted mt-1">{{ $t("settings.documents.signatoryHint") }}</p>
         </div>
 
         <div>
           <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <UiSkeleton height="120px" /><UiSkeleton height="120px" />
           </div>
-          <div v-else role="radiogroup" aria-label="Signatory Name" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div v-else role="radiogroup" :aria-label="$t('settings.documents.signatoryName')" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               v-for="option in options"
               :key="String(option.value)"

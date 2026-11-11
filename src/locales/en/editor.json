@@ -1,0 +1,71 @@
+{
+  "format": {
+    "label": "Text format",
+    "normal": "Normal text",
+    "title": "Title",
+    "subtitle": "Subtitle",
+    "heading": "Heading",
+    "subHeading": "Sub heading"
+  },
+  "toolbar": {
+    "undo": "Undo",
+    "redo": "Redo",
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "strikethrough": "Strikethrough",
+    "bulletList": "Bullet list",
+    "numberedList": "Numbered list",
+    "quote": "Quote",
+    "alignLeft": "Align left",
+    "alignCenter": "Align center",
+    "alignRight": "Align right",
+    "justify": "Justify",
+    "removeLink": "Remove link",
+    "horizontalLine": "Horizontal line",
+    "clearFormatting": "Clear formatting",
+    "insertImage": "Insert image",
+    "insertFlowchart": "Insert flowchart",
+    "insertLink": "Insert link",
+    "insertTable": "Insert table"
+  },
+  "table": {
+    "rows": "Rows",
+    "cols": "Columns",
+    "addRowBelow": "Add row below",
+    "deleteRow": "Delete current row",
+    "addColRight": "Add column right",
+    "deleteCol": "Delete current column",
+    "deleteTable": "Delete table",
+    "columnColor": "Column color",
+    "rowColor": "Row color"
+  },
+  "colors": {
+    "none": "No color",
+    "gray": "Gray",
+    "red": "Red",
+    "yellow": "Yellow",
+    "green": "Green",
+    "blue": "Blue",
+    "purple": "Purple"
+  },
+  "image": {
+    "label": "Image:",
+    "width": "Width {n}%",
+    "full": "Full",
+    "setWidth": "Set width",
+    "alignLeft": "Align left",
+    "center": "Center",
+    "alignRight": "Align right",
+    "remove": "Remove image",
+    "done": "Done",
+    "uploadFailed": "Image upload failed."
+  },
+  "recap": {
+    "title": "Recap",
+    "hide": "Hide",
+    "show": "Show",
+    "loadFailed": "Couldn't load the recap.",
+    "retry": "Try again"
+  }
+}

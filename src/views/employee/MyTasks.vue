@@ -25,6 +25,9 @@ import { UiBadge, UiButton, UiChips, UiEmpty, UiInput, UiModal, UiPageHeader, Ui
 import SkeletonList from "@/components/common/skeleton/SkeletonList.vue";
 import StaffTaskComments from "@/components/admin/documents/StaffTaskComments.vue";
 import MyTasksRecap from "@/components/employee/MyTasksRecap.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const router = useRouter();
 const route = useRoute();
@@ -39,14 +42,12 @@ const { myStaffTasks, loading: staffTasksLoading } = storeToRefs(staffTaskStore)
 
 // Same 5 statuses/labels as the Kanban board's columns (TaskBoard.vue);
 // Assigned Tasks only use To Do / In Progress / Done.
-const STATUS_OPTIONS = [
-  { value: "todo", label: "To Do" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "review", label: "Review" },
-  { value: "done", label: "Done" },
-  { value: "cancelled", label: "Cancelled" },
-];
-const STAFF_TASK_STATUS_OPTIONS = STATUS_OPTIONS.filter((o) => ["todo", "in_progress", "done"].includes(o.value));
+const STATUS_OPTIONS = computed(() =>
+  ["todo", "in_progress", "review", "done", "cancelled"].map((value) => ({ value, label: t(`myTasks.status.${value}`) }))
+);
+const STAFF_TASK_STATUS_OPTIONS = computed(() =>
+  STATUS_OPTIONS.value.filter((o) => ["todo", "in_progress", "done"].includes(o.value))
+);
 
 // Presentation only: status -> token colours (the select always shows the label).
 const STATUS_CLASS = {
@@ -79,18 +80,18 @@ const today = localDate();
 const inAWeek = localDate(new Date(Date.now() + 7 * 86400000));
 
 const items = computed(() => [
-  ...myTasks.value.map((t) => ({
-    uid: `p-${t.id}`,
+  ...myTasks.value.map((task) => ({
+    uid: `p-${task.id}`,
     source: "project",
-    id: t.id,
-    title: t.name,
-    description: stripHtml(t.description),
-    status: t.status,
-    due: t.due_date ? String(t.due_date).slice(0, 10) : null,
-    projectId: t.project?.id ?? null,
-    projectName: t.project?.name ?? "No Project",
-    priority: t.priority,
-    raw: t,
+    id: task.id,
+    title: task.name,
+    description: stripHtml(task.description),
+    status: task.status,
+    due: task.due_date ? String(task.due_date).slice(0, 10) : null,
+    projectId: task.project?.id ?? null,
+    projectName: task.project?.name ?? t("myTasks.noProject"),
+    priority: task.priority,
+    raw: task,
   })),
   ...myStaffTasks.value.map((t) => ({
     uid: `a-${t.id}`,
@@ -118,13 +119,14 @@ const bucketOf = (item) => {
   return "later";
 };
 
+// Group labels come from myTasks.buckets.<key>.
 const BUCKETS = [
-  { key: "overdue", label: "Overdue", icon: AlertTriangle, tone: "text-ui-bad" },
-  { key: "today", label: "Due today", icon: CalendarClock, tone: "text-ui-warn" },
-  { key: "week", label: "Next 7 days", icon: CalendarRange, tone: "text-ui-accent" },
-  { key: "later", label: "Later", icon: Calendar, tone: "text-ui-muted" },
-  { key: "nodate", label: "No due date", icon: CircleDot, tone: "text-ui-muted" },
-  { key: "completed", label: "Completed", icon: CheckCircle2, tone: "text-ui-ok" },
+  { key: "overdue", icon: AlertTriangle, tone: "text-ui-bad" },
+  { key: "today", icon: CalendarClock, tone: "text-ui-warn" },
+  { key: "week", icon: CalendarRange, tone: "text-ui-accent" },
+  { key: "later", icon: Calendar, tone: "text-ui-muted" },
+  { key: "nodate", icon: CircleDot, tone: "text-ui-muted" },
+  { key: "completed", icon: CheckCircle2, tone: "text-ui-ok" },
 ];
 
 // ----- Filters -----
@@ -166,6 +168,7 @@ const clearFilters = () => {
 const groups = computed(() =>
   BUCKETS.map((b) => ({
     ...b,
+    label: t(`myTasks.buckets.${b.key}`),
     items: filtered.value
       .filter((i) => bucketOf(i) === b.key)
       .sort(
@@ -180,19 +183,19 @@ const groups = computed(() =>
 const summary = computed(() => {
   const by = (key) => items.value.filter((i) => bucketOf(i) === key).length;
   return [
-    { key: "overdue", label: "Overdue", short: "Overdue", value: by("overdue"), icon: AlertTriangle, tone: "bad" },
-    { key: "today", label: "Due today", short: "Today", value: by("today"), icon: CalendarClock, tone: "warn" },
-    { key: "week", label: "Next 7 days", short: "7 days", value: by("week"), icon: CalendarRange, tone: "" },
-    { key: "open", label: "Open", short: "Open", value: items.value.filter((i) => !isClosed(i)).length, icon: ListChecks, tone: "" },
-    { key: "completed", label: "Completed", short: "Done", value: by("completed"), icon: CheckCircle2, tone: "" },
+    { key: "overdue", label: t("myTasks.buckets.overdue"), value: by("overdue"), icon: AlertTriangle, tone: "bad" },
+    { key: "today", label: t("myTasks.buckets.today"), value: by("today"), icon: CalendarClock, tone: "warn" },
+    { key: "week", label: t("myTasks.buckets.week"), value: by("week"), icon: CalendarRange, tone: "" },
+    { key: "open", label: t("myTasks.summary.open"), value: items.value.filter((i) => !isClosed(i)).length, icon: ListChecks, tone: "" },
+    { key: "completed", label: t("myTasks.buckets.completed"), value: by("completed"), icon: CheckCircle2, tone: "" },
   ];
 });
 
 // Presentation only: source tabs as filter chips with counts.
 const sourceTabs = computed(() => [
-  { value: "all", label: "All", count: counts.value.all },
-  { value: "assigned", label: "Assigned", count: counts.value.assigned },
-  { value: "project", label: "Project", count: counts.value.project },
+  { value: "all", label: t("common.labels.all"), count: counts.value.all },
+  { value: "assigned", label: t("myTasks.source.assigned"), count: counts.value.assigned },
+  { value: "project", label: t("common.labels.project"), count: counts.value.project },
 ]);
 
 const showCompleted = ref(false);
@@ -227,8 +230,8 @@ const openItem = (item) => {
 };
 
 const dueLabel = (item) => {
-  if (!item.due) return "No due date";
-  if (item.due === today) return "Today";
+  if (!item.due) return t("myTasks.buckets.nodate");
+  if (item.due === today) return t("common.labels.today");
   return formatDate(item.due);
 };
 
@@ -281,8 +284,8 @@ onMounted(async () => {
   <!-- The admin layout already pads the page, so phones get little extra. -->
   <div class="sm:px-3 sm:py-3 space-y-5 ui-anim-fade-up">
     <UiPageHeader
-      title="Task Collection (Assigned/Project)"
-      subtitle="Your project tasks and the tasks your supervisor assigned you, sorted by what's due first."
+      :title="$t('myTasks.title')"
+      :subtitle="$t('myTasks.subtitle')"
     />
 
     <!-- Summary: scrolls sideways on phones, five across on desktop. -->
@@ -307,25 +310,25 @@ onMounted(async () => {
       <UiInput
         v-model="searchQuery"
         :icon="Search"
-        placeholder="Search tasks, projects or who assigned it..."
+        :placeholder="$t('myTasks.searchPlaceholder')"
         class="flex-1"
       />
       <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 shrink-0">
         <UiSelect
           v-if="sourceTab !== 'assigned' && projects.length"
           v-model="projectFilter"
-          :options="[{ value: '', label: 'All Projects' }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))]"
+          :options="[{ value: '', label: $t('myTasks.allProjects') }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))]"
           class="sm:w-[180px]"
-          aria-label="Project"
+          :aria-label="$t('common.labels.project')"
         />
         <UiSelect
           v-model="statusFilter"
-          :options="[{ value: '', label: 'All Status' }, ...STATUS_OPTIONS]"
+          :options="[{ value: '', label: $t('common.labels.allStatuses') }, ...STATUS_OPTIONS]"
           :class="sourceTab === 'assigned' || !projects.length ? 'col-span-2 sm:w-[160px]' : 'sm:w-[160px]'"
-          aria-label="Status"
+          :aria-label="$t('common.labels.status')"
         />
         <UiButton v-if="hasActiveFilters" variant="ghost" size="sm" class="col-span-2 sm:col-span-1" @click="clearFilters">
-          Clear filters
+          {{ $t("common.actions.clearFilters") }}
         </UiButton>
       </div>
     </div>
@@ -338,16 +341,16 @@ onMounted(async () => {
       <UiEmpty
         v-if="hasActiveFilters || sourceTab !== 'all'"
         :icon="SearchX"
-        title="No tasks match your filters"
-        message="Try another search, status, project or tab"
+        :title="$t('myTasks.empty.filteredTitle')"
+        :message="$t('myTasks.empty.filteredMessage')"
       >
-        <UiButton variant="secondary" size="sm" @click="clearFilters(), (sourceTab = 'all')">Show all tasks</UiButton>
+        <UiButton variant="secondary" size="sm" @click="clearFilters(), (sourceTab = 'all')">{{ $t("myTasks.empty.showAll") }}</UiButton>
       </UiEmpty>
       <UiEmpty
         v-else
         :icon="Inbox"
-        title="No tasks yet"
-        message="Tasks from your projects and from your supervisor will show up here."
+        :title="$t('myTasks.empty.title')"
+        :message="$t('myTasks.empty.message')"
       />
     </div>
 
@@ -398,10 +401,10 @@ onMounted(async () => {
                   <Folder class="w-3 h-3 shrink-0" /><span class="truncate">{{ item.projectName }}</span>
                 </UiBadge>
                 <UiBadge v-else tone="neutral" class="max-w-full sm:max-w-[240px]">
-                  <ClipboardList class="w-3 h-3 shrink-0" /><span class="truncate">Assigned{{ item.creatorName ? ` by ${item.creatorName}` : "" }}</span>
+                  <ClipboardList class="w-3 h-3 shrink-0" /><span class="truncate">{{ item.creatorName ? $t("myTasks.assignedBy", { name: item.creatorName }) : $t("myTasks.source.assigned") }}</span>
                 </UiBadge>
                 <UiBadge v-if="item.priority" :tone="PRIORITY_TONE[item.priority] || 'neutral'" class="capitalize">
-                  {{ item.priority }}
+                  {{ $te(`myTasks.priority.${item.priority}`) ? $t(`myTasks.priority.${item.priority}`) : item.priority }}
                 </UiBadge>
                 <UiBadge :tone="group.key === 'overdue' ? 'bad' : group.key === 'today' ? 'warn' : 'outline'">
                   <AlertTriangle v-if="group.key === 'overdue'" class="w-3 h-3" />
@@ -419,7 +422,7 @@ onMounted(async () => {
                 :disabled="updatingUid === item.uid"
                 :class="STATUS_CLASS[item.status]"
                 class="appearance-none h-7 pl-2.5 pr-7 rounded-full text-ui-cap font-medium border border-transparent cursor-pointer transition-shadow focus:outline-none focus:shadow-ui-focus disabled:opacity-50 disabled:cursor-wait"
-                :aria-label="`Status of ${item.title}`"
+                :aria-label="$t('myTasks.statusOf', { title: item.title })"
                 @change="changeStatus(item, $event)"
               >
                 <option v-for="opt in item.source === 'assigned' ? STAFF_TASK_STATUS_OPTIONS : STATUS_OPTIONS" :key="opt.value" :value="opt.value">
@@ -439,8 +442,7 @@ onMounted(async () => {
         <div class="flex-1 min-w-0">
           <h2 class="text-ui-h2 text-ui-ink break-words">{{ detailStaffTask?.title }}</h2>
           <p class="text-ui-small text-ui-muted mt-0.5">
-            Due {{ formatDate(detailStaffTask?.due_date) }} • by
-            {{ detailStaffTask?.creator?.name }}
+            {{ $t("myTasks.detail.dueBy", { date: formatDate(detailStaffTask?.due_date), name: detailStaffTask?.creator?.name }) }}
           </p>
         </div>
       </template>
@@ -453,7 +455,7 @@ onMounted(async () => {
         ></div>
 
         <div class="sm:max-w-[240px]">
-          <label for="my-task-detail-status" class="block text-ui-small font-medium text-ui-ink mb-1.5">Your Status</label>
+          <label for="my-task-detail-status" class="block text-ui-small font-medium text-ui-ink mb-1.5">{{ $t("myTasks.detail.yourStatus") }}</label>
           <div class="relative">
             <select
               id="my-task-detail-status"

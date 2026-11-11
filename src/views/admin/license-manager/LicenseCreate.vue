@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { ChevronLeft, CheckCircle2, Eye, Plus, Download } from "lucide-vue-next";
 import { UiPageHeader, UiButton } from "@/components/ui";
 import { can } from "@/helpers/permissionHelper";
@@ -22,6 +23,7 @@ import {
   categoryLabel,
 } from "@/components/admin/license-manager/licenseHelpers";
 
+const { t } = useI18n();
 const router = useRouter();
 const store = useLicenseManagerStore();
 const { code: productCode, product, productName, state: productState } = useLicenseProduct();
@@ -39,7 +41,7 @@ const submit = async () => {
   error.value = "";
   errors.value = validateLicenseForm(form.value);
   if (Object.keys(errors.value).length) {
-    error.value = "Please fix the highlighted fields.";
+    error.value = t("licenses.fixFields");
     return;
   }
 
@@ -52,7 +54,7 @@ const submit = async () => {
     if (can("license-manager-view")) downloadPdf();
   } catch (err) {
     errors.value = validationErrors(err);
-    error.value = errorMessage(err, "Failed to create license.");
+    error.value = errorMessage(err, t("licenses.create.failed"));
   } finally {
     loading.value = false;
   }
@@ -84,7 +86,7 @@ const downloadPdf = async () => {
     const keys = createdKeys.value.map((license) => license.key).join("_");
     await store.downloadCertificate(created.value.id, `${productName.value}-License-${keys}.pdf`);
   } catch (err) {
-    downloadError.value = errorMessage(err, "The license PDF could not be downloaded.");
+    downloadError.value = errorMessage(err, t("licenses.create.pdfFailed"));
   } finally {
     downloading.value = false;
   }
@@ -102,10 +104,10 @@ const createAnother = () => {
     <LicenseProductGate :state="productState" :code="productCode" :product-name="productName">
       <!-- Generated key -->
       <div v-if="created" class="space-y-5">
-        <UiPageHeader :title="`Create ${productName} License`" subtitle="The license key has been generated" class="ui-anim-fade-up">
+        <UiPageHeader :title="$t('licenses.create.title', { product: productName })" :subtitle="$t('licenses.create.generated')" class="ui-anim-fade-up">
           <template #eyebrow>
             <button type="button" @click="toDashboard" class="inline-flex items-center gap-1 text-ui-small font-medium text-ui-accent hover:underline mb-1.5">
-              <ChevronLeft class="w-4 h-4" /> {{ productName }} &middot; Licenses
+              <ChevronLeft class="w-4 h-4" /> {{ productName }} &middot; {{ $t("licenses.licenses") }}
             </button>
           </template>
         </UiPageHeader>
@@ -115,7 +117,7 @@ const createAnother = () => {
             <div class="w-12 h-12 rounded-full bg-ui-ok-soft flex items-center justify-center mb-3">
               <CheckCircle2 class="w-6 h-6 text-ui-ok" />
             </div>
-            <p class="text-ui-h1 text-ui-ink">License created for {{ created.licensee_name }}</p>
+            <p class="text-ui-h1 text-ui-ink">{{ $t("licenses.create.createdFor", { name: created.licensee_name }) }}</p>
             <div class="flex flex-wrap items-center justify-center gap-2 mt-2 mb-7">
               <ProductIcon :product="product" :size="20" />
               <span class="text-ui-small text-ui-muted">{{ productName }}</span>
@@ -127,7 +129,7 @@ const createAnother = () => {
             <div class="w-full max-w-3xl space-y-5">
               <div v-for="license in createdKeys" :key="license.id" class="flex flex-col items-center max-w-full">
                 <p class="text-ui-over uppercase text-ui-muted mb-2">
-                  {{ createdKeys.length > 1 ? `${license.platform_label} License Key` : "License Key" }}<template v-if="perDevice && license.keys?.length"> &middot; key 1 of {{ license.keys.length }}</template>
+                  {{ createdKeys.length > 1 ? $t("licenses.create.platformKey", { platform: license.platform_label }) : $t("licenses.create.licenseKey") }}<template v-if="perDevice && license.keys?.length"> &middot; {{ $t("licenses.create.key1Of", { total: license.keys.length }) }}</template>
                 </p>
                 <div class="flex items-center gap-3 bg-ui-subtle border border-ui-line rounded-ui-card pl-5 pr-2 py-3 max-w-full">
                   <span class="font-mono text-ui-h1 sm:text-ui-display font-semibold tracking-wider text-ui-ink break-all select-all">
@@ -147,35 +149,49 @@ const createAnother = () => {
                   </div>
                 </div>
                 <p v-if="perDevice && otherKeys(license).length > MAX_SHOWN_KEYS - 1" class="text-ui-cap text-ui-muted mt-2">
-                  + {{ otherKeys(license).length - (MAX_SHOWN_KEYS - 1) }} more keys on the license page and the certificate.
+                  {{ $t("licenses.create.moreKeys", { n: otherKeys(license).length - (MAX_SHOWN_KEYS - 1) }) }}
                 </p>
               </div>
             </div>
 
             <p class="text-ui-small text-ui-muted mt-6 max-w-xl">
               <template v-if="createdKeys.length > 1">
-                Send both keys to the licensee: the Mac key activates {{ productName }} {{ planLabel(created) }} on a Mac, the iPad key on an iPad.
+                {{ $t("licenses.create.sendBoth", { product: productName, plan: planLabel(created) }) }}
               </template>
               <template v-else>
-                Send this key to the licensee to activate {{ productName }} {{ planLabel(created) }} on {{ created.platform_label || "Mac" }}.
+                {{ $t("licenses.create.sendOne", { product: productName, plan: planLabel(created), platform: created.platform_label || "Mac" }) }}
               </template>
               <template v-if="created.type === 'term' && created.expires_at">
-                Valid until {{ formatDate(created.expires_at) }}.
+                {{ $t("licenses.create.validUntil", { date: formatDate(created.expires_at) }) }}
               </template>
-              <template v-else>Lifetime license, never expires.</template>
+              <template v-else>{{ $t("licenses.create.lifetime") }}</template>
               <template v-if="perDevice">
-                {{ created.max_devices }} unique key(s){{ createdKeys.length > 1 ? " per platform" : "" }}, one per device; a released key can't be used again.
+                {{
+                  createdKeys.length > 1
+                    ? $t("licenses.create.uniqueKeysPerPlatform", { n: created.max_devices }, created.max_devices)
+                    : $t("licenses.create.uniqueKeys", { n: created.max_devices }, created.max_devices)
+                }}
               </template>
-              <template v-else>Up to {{ created.max_devices }} device(s){{ createdKeys.length > 1 ? " per key" : "" }}.</template>
+              <template v-else>{{
+                createdKeys.length > 1
+                  ? $t("licenses.create.upToDevicesPerKey", { n: created.max_devices }, created.max_devices)
+                  : $t("licenses.create.upToDevices", { n: created.max_devices }, created.max_devices)
+              }}</template>
             </p>
 
             <UiButton v-if="can('license-manager-view')" size="lg" :icon="Download" :loading="downloading" class="mt-6 w-full sm:w-auto" @click="downloadPdf">
-              {{ downloading ? "Preparing PDF..." : createdKeys.length > 1 ? "Download License PDF (Mac + iPad)" : "Download License PDF" }}
+              {{
+                downloading
+                  ? $t("licenses.create.preparingPdf")
+                  : createdKeys.length > 1
+                    ? $t("licenses.create.downloadPdfBoth")
+                    : $t("licenses.create.downloadPdf")
+              }}
             </UiButton>
             <p v-if="downloadError" class="text-ui-cap text-ui-bad mt-2">{{ downloadError }}</p>
 
             <div class="flex flex-col sm:flex-row gap-2 mt-3 w-full sm:w-auto">
-              <UiButton variant="secondary" size="lg" :icon="Plus" class="w-full sm:w-auto" @click="createAnother">Create Another</UiButton>
+              <UiButton variant="secondary" size="lg" :icon="Plus" class="w-full sm:w-auto" @click="createAnother">{{ $t("licenses.create.another") }}</UiButton>
               <UiButton
                 v-if="can('license-manager-view')"
                 variant="secondary"
@@ -184,7 +200,7 @@ const createAnother = () => {
                 class="w-full sm:w-auto"
                 @click="router.push({ name: 'admin.license-manager.licenses.detail', params: { product: productCode, id: created.id } })"
               >
-                View License
+                {{ $t("licenses.create.view") }}
               </UiButton>
             </div>
           </div>
@@ -197,9 +213,9 @@ const createAnother = () => {
         :loading="loading"
         :errors="errors"
         :product="product"
-        :title="`Create ${productName} License`"
-        subtitle="The license key is generated automatically"
-        submit-label="Create License"
+        :title="$t('licenses.create.title', { product: productName })"
+        :subtitle="$t('licenses.create.subtitle')"
+        :submit-label="$t('licenses.create.submit')"
         @submit="submit"
         @cancel="toDashboard"
       >
