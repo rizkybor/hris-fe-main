@@ -47,7 +47,9 @@
     "deleteConfirm": "Delete project \"{name}\"? This action cannot be undone.",
     "deleteFailed": "Failed to delete project.",
     "deleted": "Project \"{name}\" deleted",
-    "refreshing": "Updating projects…"
+    "refreshing": "Updating projects…",
+    "showAnalysis": "Show analysis",
+    "hideAnalysis": "Hide analysis"
   },
   "stats": {
     "total": "Total Projects",

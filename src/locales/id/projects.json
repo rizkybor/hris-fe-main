@@ -47,7 +47,9 @@
     "deleteConfirm": "Hapus proyek \"{name}\"? Tindakan ini tidak dapat dibatalkan.",
     "deleteFailed": "Gagal menghapus proyek.",
     "deleted": "Proyek \"{name}\" dihapus",
-    "refreshing": "Memperbarui proyek…"
+    "refreshing": "Memperbarui proyek…",
+    "showAnalysis": "Lihat analisis",
+    "hideAnalysis": "Sembunyikan analisis"
   },
   "stats": {
     "total": "Total Proyek",

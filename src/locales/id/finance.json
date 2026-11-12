@@ -22,12 +22,29 @@
     "infraTools": "Tool Infrastruktur"
   },
   "stats": {
-    "actualInUse": "Aktual · item Digunakan",
-    "monthly": "Bulanan:",
-    "annual": "Tahunan:",
-    "infraInUse": "Infrastruktur Digunakan:",
     "trendTitle": "Tren Biaya Operasional",
     "trendSubtitle": "Ringkasan biaya bulanan per kategori"
+  },
+  "recap": {
+    "totalMonthly": "Total per bulan",
+    "totalHint": "Biaya tetap + SDM + infrastruktur",
+    "itemsInUse": "{n} item digunakan",
+    "inUseOnly": "Hanya item yang digunakan",
+    "infraSub": "{amount} / tahun · {n} digunakan",
+    "showAnalysis": "Lihat analisis",
+    "hideAnalysis": "Sembunyikan analisis"
+  },
+  "list": {
+    "add": {
+      "fixed": "Tambah biaya tetap",
+      "sdm": "Tambah sumber daya SDM",
+      "infra": "Tambah tool infrastruktur"
+    },
+    "perYear": "{amount} / tahun",
+    "emptyHint": "Hanya item berstatus Digunakan yang dihitung ke total di atas.",
+    "emptyFilteredTitle": "Tidak ada yang cocok dengan pencarian",
+    "emptyFilteredHint": "Coba kata kunci lain, atau hapus pencarian.",
+    "clearSearch": "Hapus pencarian"
   },
   "search": {
     "fixedCost": "Cari biaya tetap...",
@@ -38,14 +55,8 @@
     "item": "Item",
     "actual": "Aktual",
     "expired": "Kedaluwarsa",
-    "field": "Bidang",
-    "hoursPerMonth": "Jam/Bulan",
     "hoursPerMonthValue": "{n} Jam/Bulan",
-    "techStack": "Tech Stack",
-    "vendor": "Vendor",
     "monthly": "Bulanan",
-    "annual": "Tahunan",
-    "annualValue": "Tahunan {amount}",
     "expShort": "Exp. {date}",
     "inactiveHint": "Tidak Digunakan — tidak dihitung ke total",
     "empty": "Belum ada data {kind}."

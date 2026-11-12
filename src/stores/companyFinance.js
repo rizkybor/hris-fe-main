@@ -40,6 +40,8 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
 
     loading: false,
     loadingStatistics: false,
+    // The last statistic request failed (the recap offers a retry).
+    statisticsFailed: false,
     error: null,
     success: null,
     fixedCostData: {
@@ -145,7 +147,9 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
         const response = await axiosInstance.get("/company-finances/statistic");
 
         this.statistics = response.data.data;
+        this.statisticsFailed = false;
       } catch (error) {
+        this.statisticsFailed = true;
         this.error = handleError(error);
       } finally {
         this.loadingStatistics = false;

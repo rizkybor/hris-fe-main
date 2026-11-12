@@ -2166,6 +2166,10 @@ button:disabled,
   max-width: 420px;
 }
 
+.max-w-\[460px\] {
+  max-width: 460px;
+}
+
 .max-w-\[640px\] {
   max-width: 640px;
 }
@@ -7935,6 +7939,10 @@ html {
     width: 248px;
   }
 
+  .lg\:w-\[260px\] {
+    width: 260px;
+  }
+
   .lg\:w-\[280px\] {
     width: 280px;
   }
@@ -8068,8 +8076,16 @@ html {
     align-items: center;
   }
 
+  .lg\:items-stretch {
+    align-items: stretch;
+  }
+
   .lg\:justify-center {
     justify-content: center;
+  }
+
+  .lg\:justify-between {
+    justify-content: space-between;
   }
 
   .lg\:gap-10 {
@@ -8118,6 +8134,10 @@ html {
     align-self: auto;
   }
 
+  .lg\:self-center {
+    align-self: center;
+  }
+
   .lg\:overflow-y-auto {
     overflow-y: auto;
   }
@@ -8134,8 +8154,21 @@ html {
     border-width: 0px;
   }
 
+  .lg\:border-b {
+    border-bottom-width: 1px;
+  }
+
+  .lg\:border-b-0 {
+    border-bottom-width: 0px;
+  }
+
   .lg\:border-t-0 {
     border-top-width: 0px;
+  }
+
+  .lg\:border-ui-line {
+    --tw-border-opacity: 1;
+    border-color: rgb(var(--ui-line) / var(--tw-border-opacity, 1));
   }
 
   .lg\:bg-transparent {
@@ -8178,6 +8211,11 @@ html {
   .lg\:px-5 {
     padding-left: 1.25rem;
     padding-right: 1.25rem;
+  }
+
+  .lg\:py-2 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
   }
 
   .lg\:py-3\.5 {
