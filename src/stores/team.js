@@ -3,6 +3,8 @@ import { axiosInstance } from '@/plugins/axios';
 import { handleError } from "@/helpers/errorHelper";
 import { toRequestBody } from "@/helpers/formDataHelper";
 
+let listReq = 0; // latest fetchTeamsPaginated call
+
 export const useTeamStore = defineStore("team", {
     state: () => ({
         teams: [],
@@ -40,6 +42,13 @@ export const useTeamStore = defineStore("team", {
         loadingStatistics: false,
         loadingTeamStatistics: false,
         loadingTeamChart: false,
+        // Which team teamStatistics / teamChartData belong to, so the detail
+        // page doesn't show another team's numbers while the new ones load.
+        teamStatisticsId: null,
+        teamChartId: null,
+        // Params of the request that filled `teams` from the paginated list
+        // (null when `teams` was last filled by fetchTeams, e.g. a picker).
+        teamsListKey: null,
         error: null,
         success: null,
     }),
@@ -52,6 +61,7 @@ export const useTeamStore = defineStore("team", {
                 const response = await axiosInstance.get(`teams`, { params })
 
                 this.teams = response.data.data
+                this.teamsListKey = null
             } catch (error) {
                 this.error = handleError(error)
             } finally {
@@ -61,12 +71,17 @@ export const useTeamStore = defineStore("team", {
 
         async fetchTeamsPaginated(params) {
             this.loading = true;
+            // Only the latest request writes the list (filters can change
+            // while an older request is still in flight).
+            const req = ++listReq;
 
             try {
                 const response = await axiosInstance.get('/teams/all/paginated', { params });
+                if (req !== listReq) return;
 
-                this.teams = response.data.data.data;
-                this.meta = response.data.data.meta;
+                this.teams = response.data?.data?.data ?? [];
+                this.meta = response.data?.data?.meta ?? this.meta;
+                this.teamsListKey = JSON.stringify(params ?? {});
             } catch (error) {
                 this.error = handleError(error);
             } finally {
@@ -186,6 +201,7 @@ export const useTeamStore = defineStore("team", {
                 const response = await axiosInstance.get(`/teams/${teamId}/statistics`);
 
                 this.teamStatistics = response.data.data;
+                this.teamStatisticsId = String(teamId);
             } catch (error) {
                 this.error = handleError(error);
             } finally {
@@ -201,6 +217,7 @@ export const useTeamStore = defineStore("team", {
                 const response = await axiosInstance.get(`/teams/${teamId}/chart-data`);
 
                 this.teamChartData = response.data.data;
+                this.teamChartId = String(teamId);
             } catch (error) {
                 this.error = handleError(error);
             } finally {

@@ -483,7 +483,10 @@ const SECTION_RULES = [
 const pageSection = computed(() => {
   const name = route.name?.toString() || "";
   const key = SECTION_RULES.find(([, prefixes]) => prefixes.some((p) => name.startsWith(p)))?.[0];
-  return key ? t(`nav.sections.${key}`) : "";
+  const section = key ? t(`nav.sections.${key}`) : "";
+  // A section named like the page itself ("Pengaturan › Pengaturan") adds
+  // nothing: show the page title alone.
+  return section && section.trim().toLowerCase() === (pageTitle.value || "").trim().toLowerCase() ? "" : section;
 });
 const pageSubtitle = computed(() => pageInfo.value.subtitle);
 

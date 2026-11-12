@@ -132,13 +132,15 @@ const sectionsBeforeLicense = computed(() => SECTIONS.value.filter((s) => s.key 
 const sectionsAfterLicense = computed(() => SECTIONS.value.filter((s) => s.key === "insights" && s.show));
 
 const itemClass = (active) => [
-  "nav-item group flex items-center gap-2.5 h-8 px-2.5 rounded-[7px] text-ui-small border transition-colors duration-ui-fast",
+  "nav-item group relative flex items-center gap-2.5 h-8 px-2.5 rounded-[7px] text-ui-small border transition-colors duration-ui-fast",
+  // Active page: accent tint, accent text/icon and a bar on the left edge,
+  // so the current menu stands out at a glance (light and dark).
   active
-    ? "bg-ui-surface border-ui-line text-ui-ink font-semibold shadow-ui-raised"
+    ? "bg-ui-accent-soft border-ui-accent/25 text-ui-accent font-semibold before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-r-full before:bg-ui-accent"
     : "border-transparent text-ui-text hover:bg-ui-hover hover:text-ui-ink",
   collapsed.value ? "lg:justify-center lg:px-0 lg:h-9" : "",
 ];
-const iconClass = (active) => ["w-4 h-4 shrink-0", active ? "text-ui-ink" : "text-ui-muted group-hover:text-ui-ink"];
+const iconClass = (active) => ["w-4 h-4 shrink-0", active ? "text-ui-accent" : "text-ui-muted group-hover:text-ui-ink"];
 const labelClass = computed(() => ["nav-label truncate", collapsed.value ? "lg:hidden" : ""]);
 </script>
 

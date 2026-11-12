@@ -49,6 +49,15 @@
     "empty": {
       "title": "Belum ada data penggajian",
       "message": "Buat penggajian pertama untuk memulai"
+    },
+    "refreshing": "Memperbarui…",
+    "searchPlaceholder": "Cari nama atau kode karyawan",
+    "itemLabel": "periode",
+    "deleted": "Periode {label} dihapus.",
+    "emptySearch": {
+      "title": "Tidak ada periode dengan karyawan ini",
+      "message": "Coba nama atau kode karyawan lain.",
+      "clear": "Hapus pencarian"
     }
   },
   "create": {
@@ -145,5 +154,17 @@
       "recalculated": "Dihitung ulang dari anggaran proyek saat ini ketika disimpan.",
       "notesPlaceholder": "Alasan penyesuaian (opsional)..."
     }
+  },
+  "generation": {
+    "queuedTitle": "{label} sedang dibuat",
+    "queuedMessage": "Proses berjalan di latar belakang. Halaman ini diperbarui otomatis dan memberi tahu saat selesai.",
+    "doneTitle": "{label} sudah siap",
+    "doneMessage": "Periode {period} selesai dibuat.",
+    "slowTitle": "Masih diproses",
+    "slowMessage": "Periode {period} memakan waktu lebih lama dari biasanya. Silakan cek lagi nanti.",
+    "runningTitle": "Sedang dibuat di latar belakang",
+    "runningHint": "Daftar diperbarui otomatis saat selesai.",
+    "detailRunningTitle": "Periode ini sedang dibuat ulang",
+    "detailRunningHint": "Detail karyawan sedang dihitung ulang di latar belakang. Halaman ini memuatnya kembali otomatis saat selesai; perubahan yang dibuat sekarang akan diganti."
   }
 }

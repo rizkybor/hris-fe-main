@@ -49,6 +49,15 @@
     "empty": {
       "title": "No payroll data found",
       "message": "Create your first payroll to get started"
+    },
+    "refreshing": "Refreshing…",
+    "searchPlaceholder": "Search by employee name or code",
+    "itemLabel": "periods",
+    "deleted": "{label} period deleted.",
+    "emptySearch": {
+      "title": "No periods with this employee",
+      "message": "Try another name or employee code.",
+      "clear": "Clear search"
     }
   },
   "create": {
@@ -145,5 +154,17 @@
       "recalculated": "Recalculated from the project's current budget when you save.",
       "notesPlaceholder": "Optional reason for this override..."
     }
+  },
+  "generation": {
+    "queuedTitle": "{label} is being generated",
+    "queuedMessage": "It runs in the background. This page updates by itself and tells you when it's done.",
+    "doneTitle": "{label} is ready",
+    "doneMessage": "{period} has finished generating.",
+    "slowTitle": "Still generating",
+    "slowMessage": "{period} is taking longer than usual. Check back later.",
+    "runningTitle": "Generating in the background",
+    "runningHint": "The list updates by itself when it's done.",
+    "detailRunningTitle": "Regenerating this period",
+    "detailRunningHint": "Employee details are being recalculated in the background. This page reloads them by itself when it's done; changes made now will be replaced."
   }
 }

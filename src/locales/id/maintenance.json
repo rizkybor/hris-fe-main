@@ -103,7 +103,9 @@
     "byCategoryHint": "Pekerjaan tercatat bulan ini, per kategori",
     "noWork": "Belum ada pekerjaan tercatat bulan ini.",
     "trend": "Jam tersedia vs terpakai, 6 bulan terakhir",
-    "trendHint": "Tersedia = kuota + jam dibawa + penyesuaian, dari semua kontrak"
+    "trendHint": "Tersedia = kuota + jam dibawa + penyesuaian, dari semua kontrak",
+    "showAnalysis": "Lihat analisis",
+    "hideAnalysis": "Sembunyikan analisis"
   },
   "contractForm": {
     "editTitle": "Ubah Kontrak Maintenance",

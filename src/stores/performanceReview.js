@@ -22,6 +22,7 @@ export const usePerformanceReviewStore = defineStore("performanceReview", {
 
                 this.reviews = response.data.data?.data ?? [];
                 this.meta = response.data.data?.meta ?? this.meta;
+                return this.reviews;
             } catch (error) {
                 this.error = handleError(error);
             } finally {

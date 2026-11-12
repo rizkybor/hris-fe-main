@@ -57,13 +57,15 @@ onMounted(() => {
 
     <div
       v-if="isOpen"
-      class="fixed inset-0 z-[9998]"
+      class="fixed inset-0 z-[9998] bg-ui-scrim/20 sm:bg-transparent"
       @click="isOpen = false"
     ></div>
 
+    <!-- Phones: a full-width panel under the header (anchored to the bell it
+         would run off the left edge). Wider screens: a dropdown under the bell. -->
     <div
       v-if="isOpen"
-      class="ui-anim-scale absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-24px)] bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay z-[9999] max-h-[70vh] overflow-y-auto origin-top-right"
+      class="ui-anim-scale fixed inset-x-3 top-[60px] max-h-[calc(100dvh-76px)] origin-top sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 sm:max-h-[70vh] sm:origin-top-right bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay z-[9999] overflow-y-auto"
     >
       <div class="px-4 py-3 border-b border-ui-line flex items-center justify-between">
         <p class="text-ui-small font-semibold text-ui-ink">{{ $t("dashboard.notifications.title") }}</p>

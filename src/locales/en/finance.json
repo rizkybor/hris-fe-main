@@ -22,12 +22,29 @@
     "infraTools": "Infrastructure Tools"
   },
   "stats": {
-    "actualInUse": "Actual · items in use",
-    "monthly": "Monthly:",
-    "annual": "Annual:",
-    "infraInUse": "Infrastructure in use:",
     "trendTitle": "Operational Cost Trend",
     "trendSubtitle": "Monthly cost overview by category"
+  },
+  "recap": {
+    "totalMonthly": "Total per month",
+    "totalHint": "Fixed cost + SDM + infrastructure",
+    "itemsInUse": "{n} item in use | {n} items in use",
+    "inUseOnly": "Items in use only",
+    "infraSub": "{amount} / year · {n} in use",
+    "showAnalysis": "Show analysis",
+    "hideAnalysis": "Hide analysis"
+  },
+  "list": {
+    "add": {
+      "fixed": "Add fixed cost",
+      "sdm": "Add SDM resource",
+      "infra": "Add infrastructure tool"
+    },
+    "perYear": "{amount} / year",
+    "emptyHint": "Only items marked In use count toward the totals above.",
+    "emptyFilteredTitle": "Nothing matches your search",
+    "emptyFilteredHint": "Try another keyword, or clear the search.",
+    "clearSearch": "Clear search"
   },
   "search": {
     "fixedCost": "Search fixed cost...",
@@ -38,14 +55,8 @@
     "item": "Item",
     "actual": "Actual",
     "expired": "Expired",
-    "field": "Field",
-    "hoursPerMonth": "Hours/Month",
     "hoursPerMonthValue": "{n} hrs/month",
-    "techStack": "Tech Stack",
-    "vendor": "Vendor",
     "monthly": "Monthly",
-    "annual": "Annual",
-    "annualValue": "Annual {amount}",
     "expShort": "Exp. {date}",
     "inactiveHint": "Not in use — not counted in the total",
     "empty": "No {kind} data found."

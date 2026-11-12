@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { ref, inject } from "vue";
+import { ref, inject, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useEmployeeStore } from "@/stores/employee";
 import { useEmployeeFileStore } from "@/stores/employeeFile";
 import { storeToRefs } from "pinia";
 import { ArrowRight, ArrowLeft, UserPlus } from "lucide-vue-next";
 import { UiButton } from "@/components/ui";
+import { useLookupStore } from "@/stores/lookups";
+import { invalidate } from "@/composables/useStaleFetch";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
+import { loadWizardLookups } from "@/components/admin/employee/create/wizardLookups";
 
 import Step1PersonalInfo from "@/components/admin/employee/create/steps/Step1PersonalInfo.vue";
 import Step2JobInfo from "@/components/admin/employee/create/steps/Step2JobInfo.vue";
@@ -86,6 +90,22 @@ const normalizeRupiah = (value: any) => {
   if (value === null || value === undefined) return "";
   return String(value).replace(/[^0-9]/g, "");
 };
+
+// Teams, roles and option lists for every step, in parallel, once.
+onMounted(() => {
+  loadWizardLookups();
+});
+
+// Ask before leaving a wizard with typed-in data (not after saving).
+const saved = ref(false);
+const serializeForm = () =>
+  JSON.stringify([
+    step1Data.value,
+    { ...step2Data.value, monthly_salary: normalizeRupiah(step2Data.value.monthly_salary) },
+    { ...step3Data.value, documents: step3Data.value.documents.map((f: File) => f.name) },
+  ]);
+const initialForm = serializeForm();
+useUnsavedGuard(() => !saved.value && serializeForm() !== initialForm);
 
 // Form submission
 const handleSubmit = async () => {
@@ -175,8 +195,18 @@ const handleSubmit = async () => {
       }
     }
 
-    // Redirect to success page on success
-    router.push({ name: "admin.employees.success" });
+    // Lists that contain employees are stale now.
+    invalidate("adm-employees:");
+    const lookups = useLookupStore();
+    lookups.invalidate("employees");
+    lookups.invalidate("teams"); // member counts
+
+    // Redirect to success page on success (with the new id for "View profile").
+    saved.value = true;
+    router.push({
+      name: "admin.employees.success",
+      query: createdEmployee?.id ? { id: String(createdEmployee.id) } : {},
+    });
   } catch (err) {
     console.error("Error creating employee:", err);
     // Show error modal when validation fails

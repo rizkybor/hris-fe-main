@@ -2,7 +2,8 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { usePayrollStore } from "@/stores/payroll";
-import { useProjectStore } from "@/stores/project";
+import { useLookupStore } from "@/stores/lookups";
+import { useToastStore } from "@/stores/toast";
 import {
   ArrowLeft,
   Users,
@@ -17,12 +18,16 @@ import {
   EyeOff,
   Trash2,
   RefreshCw,
+  Loader2,
 } from "lucide-vue-next";
 import { debounce } from "lodash-es";
 import Pagination from "@/components/admin/payroll/Pagination.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import { can, hasAnyRole } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useListState } from "@/composables/useListState";
+import { usePolling } from "@/composables/usePolling";
+import { invalidate } from "@/composables/useStaleFetch";
 import { UiAlert, UiBadge, UiButton, UiInput, UiModal, UiPageHeader, UiSelect, UiStat, UiTable } from "@/components/ui";
 import Avatar from "@/components/common/Avatar.vue";
 import { useI18n } from "vue-i18n";
@@ -33,16 +38,26 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const payrollStore = usePayrollStore();
-const projectStore = useProjectStore();
+const lookups = useLookupStore();
+const toast = useToastStore();
 const alertModal = useAlertModalStore();
 
 const payroll = ref(null);
 const payrollStatistics = ref(null);
 const employees = ref([]);
 const positions = ref([]);
+
+// Search, position filter, page and page size in the URL (per payroll, so
+// not remembered across periods).
+const list = useListState("payroll-detail", { q: "", position: "", page: 1, per: 50 }, { remember: false });
+const searchInput = ref(list.q);
+const pushSearch = debounce((v) => { list.q = v.trim(); }, 300);
+watch(searchInput, (v) => pushSearch(v));
+watch(() => list.q, (v) => { if (v !== searchInput.value.trim()) searchInput.value = v; });
+
 const pagination = ref({
-  current_page: 1,
-  per_page: 50,
+  current_page: list.page,
+  per_page: list.per,
   total: 0,
   last_page: 1,
   from: 0,
@@ -51,8 +66,6 @@ const pagination = ref({
 const loading = ref(true);
 const loadingStatistics = ref(true);
 const loadingDetails = ref(false);
-const searchQuery = ref("");
-const departmentFilter = ref("");
 const showMarkAsPaidModal = ref(false);
 const paymentDate = ref(new Date().toISOString().split("T")[0]);
 const markingAsPaid = ref(false);
@@ -84,9 +97,17 @@ const loadingProjects = ref(false);
 const showAmounts = ref(false);
 const maskRupiah = (formatted) => (showAmounts.value ? formatted : "Rp ••••••");
 
-const fetchPayrollSummary = async () => {
+// The dashboard's cached list/statistics are stale after a change here; its
+// next visit refreshes them quietly.
+const invalidateDashboard = () => {
+  invalidate("payroll-list");
+  invalidate("payroll-stats");
+};
+
+// `quiet` refreshes keep what's on screen (no skeleton).
+const fetchPayrollSummary = async ({ quiet = false } = {}) => {
   try {
-    loading.value = true;
+    if (!quiet) loading.value = true;
     payroll.value = await payrollStore.fetchPayroll(route.params.id);
   } catch (error) {
     console.error("Error fetching payroll summary:", error);
@@ -95,9 +116,9 @@ const fetchPayrollSummary = async () => {
   }
 };
 
-const fetchPayrollStatistics = async () => {
+const fetchPayrollStatistics = async ({ quiet = false } = {}) => {
   try {
-    loadingStatistics.value = true;
+    if (!quiet) loadingStatistics.value = true;
     payrollStatistics.value = await payrollStore.fetchPayrollStatistics(route.params.id);
   } catch (error) {
     console.error("Error fetching payroll statistics:", error);
@@ -114,69 +135,78 @@ const fetchPositions = async () => {
   }
 };
 
-const fetchPayrollDetails = async (page = 1) => {
+// API detail -> table row. Working days and the paid status come from the
+// statistics / summary (see `rows`), so all mount requests can run at once.
+// `prev` fills what an update response leaves out (it doesn't load the
+// employee's bank information).
+const toRow = (detail, prev = {}) => {
+  const emp = detail.employee || {};
+  const bank = emp.bank_information;
+  return {
+    ...prev,
+    detail_id: detail.id,
+    id: emp.id ?? prev.id,
+    name: emp.user?.name || prev.name || "N/A",
+    employee_id: emp.code || emp.id || prev.employee_id,
+    position: emp.job_information?.job_title || prev.position || "N/A",
+    department: emp.job_information?.team?.name || prev.department || "N/A",
+    profile_photo: emp.user ? emp.user.profile_photo || null : prev.profile_photo ?? null,
+    attended_days: detail.attended_days || 0,
+    sick_days: detail.sick_days || 0,
+    absent_days: detail.absent_days || 0,
+    months_of_service: detail.months_of_service,
+    basic_salary: parseFloat(detail.original_salary) || 0,
+    deductions:
+      parseFloat(detail.original_salary) -
+      parseFloat(detail.final_salary) || 0,
+    net_salary: parseFloat(detail.final_salary) || 0,
+    gross_salary: parseFloat(detail.gross_salary) || 0,
+    bpjs_kesehatan_employee: parseFloat(detail.bpjs_kesehatan_employee) || 0,
+    bpjs_jht_employee: parseFloat(detail.bpjs_jht_employee) || 0,
+    bpjs_jp_employee: parseFloat(detail.bpjs_jp_employee) || 0,
+    bpjs_kesehatan_company: parseFloat(detail.bpjs_kesehatan_company) || 0,
+    bpjs_jht_company: parseFloat(detail.bpjs_jht_company) || 0,
+    bpjs_jp_company: parseFloat(detail.bpjs_jp_company) || 0,
+    bpjs_jkk_company: parseFloat(detail.bpjs_jkk_company) || 0,
+    bpjs_jkm_company: parseFloat(detail.bpjs_jkm_company) || 0,
+    pph21: parseFloat(detail.pph21) || 0,
+    total_deduction: parseFloat(detail.total_deduction) || 0,
+    notes: detail.notes,
+    payment_mode: detail.payment_mode || "manual",
+    source_project_id: detail.source_project_id,
+    project_percentage: detail.project_percentage,
+    source_project: detail.source_project ?? prev.source_project,
+    bank_name: bank ? bank.bank_name || "N/A" : prev.bank_name || "N/A",
+    account_number: bank ? bank.account_number || "N/A" : prev.account_number || "N/A",
+    account_holder_name: bank ? bank.account_holder_name || "N/A" : prev.account_holder_name || "N/A",
+  };
+};
+
+let detailsRequest = 0;
+const fetchPayrollDetails = async ({ quiet = false } = {}) => {
+  const id = ++detailsRequest;
   try {
-    loadingDetails.value = true;
+    if (!quiet) loadingDetails.value = true;
 
     // Build filter params
     const filterParams = {};
-    if (searchQuery.value) {
-      filterParams.search = searchQuery.value;
+    if (list.q) {
+      filterParams.search = list.q;
     }
-    if (departmentFilter.value) {
-      filterParams.position = departmentFilter.value;
+    if (list.position) {
+      filterParams.position = list.position;
     }
 
     const response = await payrollStore.fetchPayrollDetails(
       route.params.id,
-      page,
-      pagination.value.per_page,
+      list.page,
+      list.per,
       filterParams
     );
+    // A newer search/page answered first: ignore this one.
+    if (id !== detailsRequest) return;
 
-    // Map payroll_details to employees format
-    employees.value =
-      response.data?.map((detail) => ({
-        detail_id: detail.id,
-        id: detail.employee?.id,
-        name: detail.employee?.user?.name || "N/A",
-        employee_id: detail.employee?.code || detail.employee?.id,
-        position: detail.employee?.job_information?.job_title || "N/A",
-        department: detail.employee?.job_information?.team?.name || "N/A",
-        profile_photo: detail.employee?.user?.profile_photo || null,
-        total_work_days: payrollStatistics.value?.working_days || 0,
-        attended_days: detail.attended_days || 0,
-        sick_days: detail.sick_days || 0,
-        absent_days: detail.absent_days || 0,
-        months_of_service: detail.months_of_service,
-        basic_salary: parseFloat(detail.original_salary) || 0,
-        deductions:
-          parseFloat(detail.original_salary) -
-          parseFloat(detail.final_salary) || 0,
-        net_salary: parseFloat(detail.final_salary) || 0,
-        gross_salary: parseFloat(detail.gross_salary) || 0,
-        bpjs_kesehatan_employee: parseFloat(detail.bpjs_kesehatan_employee) || 0,
-        bpjs_jht_employee: parseFloat(detail.bpjs_jht_employee) || 0,
-        bpjs_jp_employee: parseFloat(detail.bpjs_jp_employee) || 0,
-        bpjs_kesehatan_company: parseFloat(detail.bpjs_kesehatan_company) || 0,
-        bpjs_jht_company: parseFloat(detail.bpjs_jht_company) || 0,
-        bpjs_jp_company: parseFloat(detail.bpjs_jp_company) || 0,
-        bpjs_jkk_company: parseFloat(detail.bpjs_jkk_company) || 0,
-        bpjs_jkm_company: parseFloat(detail.bpjs_jkm_company) || 0,
-        pph21: parseFloat(detail.pph21) || 0,
-        total_deduction: parseFloat(detail.total_deduction) || 0,
-        status: payroll.value?.status === "paid" ? "paid" : "pending",
-        notes: detail.notes,
-        payment_mode: detail.payment_mode || "manual",
-        source_project_id: detail.source_project_id,
-        project_percentage: detail.project_percentage,
-        source_project: detail.source_project,
-        bank_name: detail.employee?.bank_information?.bank_name || "N/A",
-        account_number:
-          detail.employee?.bank_information?.account_number || "N/A",
-        account_holder_name:
-          detail.employee?.bank_information?.account_holder_name || "N/A",
-      })) || [];
+    employees.value = response.data?.map((detail) => toRow(detail)) || [];
 
     // Update pagination meta from response
     if (response.meta) {
@@ -192,30 +222,35 @@ const fetchPayrollDetails = async (page = 1) => {
   } catch (error) {
     console.error("Error fetching payroll details:", error);
   } finally {
-    loadingDetails.value = false;
+    if (id === detailsRequest) loadingDetails.value = false;
   }
 };
 
 const handlePageChange = (page) => {
-  pagination.value.current_page = page;
-  fetchPayrollDetails(page);
+  list.page = page;
 };
 
 const handlePerPageChange = (perPage) => {
-  pagination.value.per_page = perPage;
-  pagination.value.current_page = 1;
-  fetchPayrollDetails(1);
+  list.per = perPage; // a change other than page resets page to 1
 };
 
-onMounted(async () => {
-  await fetchPayrollSummary();
-  await fetchPayrollStatistics();
-  await fetchPayrollDetails(1);
-  await fetchPositions();
+// The four requests are independent: start them together.
+onMounted(() => {
+  Promise.all([fetchPayrollSummary(), fetchPayrollStatistics(), fetchPayrollDetails(), fetchPositions()]);
 });
 
-// Server-side filtering is now handled by the API
-const filteredEmployees = computed(() => employees.value);
+// Search (debounced above), position filter, page or page size changed.
+watch(
+  () => [list.q, list.position, list.page, list.per],
+  () => fetchPayrollDetails()
+);
+
+// Working days and the paid status are per payroll, not per row.
+const filteredEmployees = computed(() => {
+  const workDays = payrollStatistics.value?.working_days || 0;
+  const status = payroll.value?.status === "paid" ? "paid" : "pending";
+  return employees.value.map((e) => ({ ...e, total_work_days: workDays, status }));
+});
 
 // THR rows have no attendance data (eligibility is tenure-based, not
 // attendance-based -- see PayrollRepository::generateThrPayroll()), so the
@@ -230,21 +265,43 @@ const canEditPayroll = computed(() => can("payroll-edit") && payroll.value?.stat
 // the roles the backend itself trusts to do that.
 const canManagePayroll = computed(() => hasAnyRole(["superadmin", "manager", "finance"]));
 
-// Watch for search query changes with debounce
-watch(
-  searchQuery,
-  debounce(() => {
-    pagination.value.current_page = 1;
-    fetchPayrollDetails(1);
-  }, 300)
-);
+// ---- Queued (re)generation: refresh quietly until it's done ---------------
+const generating = computed(() => payrollStore.isGenerating(payroll.value));
 
-// Watch for department filter changes
-watch(departmentFilter, () => {
-  pagination.value.current_page = 1;
-  fetchPayrollDetails(1);
+const onGenerationDone = async () => {
+  const label = isThr.value ? "THR" : t("payroll.common.payroll");
+  toast.success(t("payroll.generation.doneTitle", { label }), t("payroll.generation.doneMessage", { period: formatPeriod(payroll.value?.period || payroll.value?.salary_month) }));
+  invalidateDashboard();
+  // Every employee row was replaced: reload them behind what's shown.
+  await Promise.all([fetchPayrollStatistics({ quiet: true }), fetchPayrollDetails({ quiet: true }), fetchPositions()]);
+};
+
+let polling = false;
+const pollTick = async () => {
+  if (polling || !payroll.value) return;
+  polling = true;
+  try {
+    const mine = (g) => String(g.id) === String(payroll.value.id);
+    if (payrollStore.pendingGenerations.some(mine)) {
+      const { finished } = await payrollStore.checkGenerations();
+      const done = finished.find(mine);
+      if (done) {
+        payroll.value = { ...payroll.value, ...done.payroll };
+        await onGenerationDone();
+      }
+    } else if (payroll.value.status === "processing") {
+      await fetchPayrollSummary({ quiet: true });
+      if (payroll.value?.status !== "processing") await onGenerationDone();
+    }
+  } finally {
+    polling = false;
+  }
+};
+const poller = usePolling(pollTick, 5000);
+onMounted(() => {
+  if (!generating.value) poller.pause();
 });
-
+watch(generating, (on) => (on ? poller.resume() : poller.pause()));
 
 const getAttendancePercentage = (attendedDays, totalDays) => {
   if (!totalDays) return 0;
@@ -302,15 +359,16 @@ const openEditModal = async (emp) => {
   };
   showEditModal.value = true;
 
-  if (projectStore.projects.length === 0) {
-    loadingProjects.value = true;
-    try {
-      await projectStore.fetchProjects();
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-    } finally {
-      loadingProjects.value = false;
-    }
+  // The complete project list (with budget) from the shared lookup cache --
+  // not projectStore.projects, which is whatever page the Projects screen
+  // last loaded. No request while the cache is fresh.
+  if (!lookups.projects.length) loadingProjects.value = true;
+  try {
+    await lookups.ensure("projects");
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+  } finally {
+    loadingProjects.value = false;
   }
 };
 
@@ -322,7 +380,7 @@ const closeEditModal = () => {
 // Client-side preview only -- the authoritative figure is always
 // recomputed server-side from the project's current budget.
 const projectPercentagePreview = computed(() => {
-  const project = projectStore.projects.find((p) => p.id === editForm.value.source_project_id);
+  const project = lookups.projects.find((p) => String(p.id) === String(editForm.value.source_project_id));
   if (!project || !editForm.value.project_percentage) return 0;
   return (parseFloat(project.budget) || 0) * (parseFloat(editForm.value.project_percentage) / 100);
 });
@@ -350,11 +408,18 @@ const handleSaveEdit = async () => {
 
   try {
     savingEdit.value = true;
-    await payrollStore.updatePayrollDetail(editingEmployee.value.detail_id, payload);
-    await fetchPayrollDetails(pagination.value.current_page);
-    await fetchPayrollStatistics();
+    const detailId = editingEmployee.value.detail_id;
+    const updated = await payrollStore.updatePayrollDetail(detailId, payload);
+    payrollStore.clearMessages();
+    // Patch the row from the response (server-computed figures); only the
+    // period totals need the server again.
+    const i = employees.value.findIndex((e) => e.detail_id === detailId);
+    if (updated && i !== -1) employees.value.splice(i, 1, toRow(updated, employees.value[i]));
+    else fetchPayrollDetails({ quiet: true });
     closeEditModal();
-    await alertModal.alert(t("payroll.detail.updated"), { type: "success" });
+    toast.success(t("payroll.detail.updated"));
+    invalidateDashboard();
+    fetchPayrollStatistics({ quiet: true });
   } catch (error) {
     console.error("Error updating payroll detail:", error);
     await alertModal.alert(
@@ -369,17 +434,21 @@ const handleSaveEdit = async () => {
 const handleMarkAsPaid = async () => {
   try {
     markingAsPaid.value = true;
-    await payrollStore.markAsPaid(route.params.id, {
+    const updated = await payrollStore.markAsPaid(route.params.id, {
       payment_date: paymentDate.value,
     });
+    payrollStore.clearMessages();
 
-    // Refresh payroll data
-    await fetchPayrollSummary();
-    await fetchPayrollStatistics();
-    await fetchPayrollDetails(pagination.value.current_page);
+    // The response is the payroll itself: patch it (rows read their status
+    // from it) and refresh only the period statistics.
+    if (updated) payroll.value = { ...payroll.value, ...updated };
+    else fetchPayrollSummary({ quiet: true });
+    payrollStore.patchPayroll(route.params.id, { status: "paid", payment_date: updated?.payment_date ?? paymentDate.value });
+    invalidateDashboard();
+    fetchPayrollStatistics({ quiet: true });
 
     closeMarkAsPaidModal();
-    await alertModal.alert(t("payroll.detail.markedPaid"), { type: "success" });
+    toast.success(t("payroll.detail.markedPaid"));
   } catch (error) {
     console.error("Error marking payroll as paid:", error);
     await alertModal.alert(t("payroll.detail.markPaidFailed"), { type: "danger" });
@@ -397,8 +466,12 @@ const handleDeleteDetail = async (emp) => {
 
   try {
     await payrollStore.deletePayrollDetail(emp.detail_id);
-    await fetchPayrollDetails(pagination.value.current_page);
-    await fetchPayrollStatistics();
+    payrollStore.clearMessages();
+    employees.value = employees.value.filter((e) => e.detail_id !== emp.detail_id);
+    pagination.value = { ...pagination.value, total: Math.max(0, (pagination.value.total || 0) - 1) };
+    invalidateDashboard();
+    if (!employees.value.length && list.page > 1) list.page -= 1; // the watcher loads it
+    else Promise.all([fetchPayrollDetails({ quiet: true }), fetchPayrollStatistics({ quiet: true })]);
   } catch (error) {
     console.error("Error deleting payroll detail:", error);
     await alertModal.alert(
@@ -418,6 +491,10 @@ const handleDeletePayroll = async () => {
 
   try {
     await payrollStore.deletePayroll(route.params.id);
+    payrollStore.clearMessages();
+    payrollStore.payrolls = payrollStore.payrolls.filter((p) => String(p.id) !== String(route.params.id));
+    invalidateDashboard();
+    toast.success(t("payroll.dashboard.deleted", { label }));
     router.push({ name: "admin.payroll.dashboard" });
   } catch (error) {
     console.error("Error deleting payroll:", error);
@@ -438,7 +515,7 @@ const handleRegenerate = async () => {
   );
   if (!ok) return;
 
-  const salaryMonth = new Date(payroll.value.salary_month).toISOString().slice(0, 7);
+  const salaryMonth = String(payroll.value.salary_month).slice(0, 7);
   const payload = { salary_month: salaryMonth, regenerate: true };
 
   try {
@@ -448,13 +525,16 @@ const handleRegenerate = async () => {
     } else {
       await payrollStore.generatePayroll(payload);
     }
-    await alertModal.alert(
-      t("payroll.dashboard.regenerateQueued", { label }),
-      { type: "success" }
-    );
-    await fetchPayrollSummary();
-    await fetchPayrollStatistics();
-    await fetchPayrollDetails(pagination.value.current_page);
+    payrollStore.clearMessages();
+    // Queued: this page polls until the run has replaced the details.
+    payrollStore.trackGeneration({
+      type: payroll.value.type || "monthly",
+      month: salaryMonth,
+      id: payroll.value.id,
+      baseline: payroll.value.updated_at,
+    });
+    invalidateDashboard();
+    toast.info(t("payroll.generation.queuedTitle", { label }), t("payroll.generation.queuedMessage"));
   } catch (error) {
     console.error("Error regenerating payroll:", error);
     await alertModal.alert(
@@ -502,12 +582,16 @@ const positionOptions = computed(() => [
   ...positions.value.map((p) => ({ value: p, label: p })),
 ]);
 
-const projectOptions = computed(() =>
-  projectStore.projects.map((project) => ({
+const projectOptions = computed(() => {
+  const all = [...lookups.projects];
+  // Keep the row's current project selectable even if it's no longer listed.
+  const current = editingEmployee.value?.source_project;
+  if (current && !all.some((p) => String(p.id) === String(current.id))) all.push(current);
+  return all.map((project) => ({
     value: project.id,
     label: `${project.name} — ${formatRupiah(project.budget)}`,
-  }))
-);
+  }));
+});
 
 const showActionsColumn = computed(() => canEditPayroll.value || canManagePayroll.value);
 const columns = computed(() => [
@@ -580,7 +664,10 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
       </template>
       <template #subtitle>
         <span class="inline-flex flex-wrap items-center gap-2">
-          <UiBadge v-if="payroll" :tone="statusOf(payroll.status).tone" dot>{{ statusOf(payroll.status).label }}</UiBadge>
+          <UiBadge v-if="payroll && generating" tone="warn">
+            <Loader2 class="w-3 h-3 animate-spin" />{{ $t("payroll.status.processing") }}
+          </UiBadge>
+          <UiBadge v-else-if="payroll" :tone="statusOf(payroll.status).tone" dot>{{ statusOf(payroll.status).label }}</UiBadge>
           <UiBadge v-if="isThr" tone="accent">THR</UiBadge>
           <span>{{ $t('payroll.detail.subtitle') }}</span>
         </span>
@@ -589,7 +676,7 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
         <UiButton variant="ghost" :icon="showAmounts ? EyeOff : Eye" @click="showAmounts = !showAmounts">
           {{ showAmounts ? $t("common.actions.hideAmounts") : $t("common.actions.showAmounts") }}
         </UiButton>
-        <UiButton v-if="canManagePayroll" variant="ghost" :icon="RefreshCw" :loading="regenerating" @click="handleRegenerate">
+        <UiButton v-if="canManagePayroll" variant="ghost" :icon="RefreshCw" :loading="regenerating" :disabled="generating" @click="handleRegenerate">
           {{ regenerating ? $t('payroll.detail.regenerating') : $t("payroll.common.regenerate") }}
         </UiButton>
         <UiButton v-if="canManagePayroll" variant="danger" :icon="Trash2" @click="handleDeletePayroll">{{ $t('payroll.detail.deletePayroll') }}</UiButton>
@@ -604,6 +691,10 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
         </UiButton>
       </template>
     </UiPageHeader>
+
+    <UiAlert v-if="generating" tone="info" :title="$t('payroll.generation.detailRunningTitle')">
+      {{ $t("payroll.generation.detailRunningHint") }}
+    </UiAlert>
 
     <!-- Summary -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 ui-stagger">
@@ -647,8 +738,8 @@ const labelClass = "block text-ui-small font-medium text-ui-ink mb-1.5";
           </p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:flex md:items-center gap-2">
-          <UiInput v-model="searchQuery" :icon="Search" :placeholder="$t('payroll.detail.searchEmployees')" class="md:w-[260px]" />
-          <UiSelect v-model="departmentFilter" :options="positionOptions" class="md:w-[200px]" :aria-label="$t('payroll.detail.columns.position')" />
+          <UiInput v-model="searchInput" :icon="Search" :placeholder="$t('payroll.detail.searchEmployees')" class="md:w-[260px]" />
+          <UiSelect v-model="list.position" :options="positionOptions" class="md:w-[200px]" :aria-label="$t('payroll.detail.columns.position')" />
         </div>
       </div>
 

@@ -1,843 +1,484 @@
+<script>
+// Which search/page each list in the store was loaded for (store state
+// outlives the page; this tells a revisit whether it still matches).
+const shownKey = {};
+</script>
+
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { debounce } from "lodash-es";
-import Alert from "@/components/common/Alert.vue";
 import { can } from "@/helpers/permissionHelper";
-import Statistics from "@/components/admin/company-finance/list/Statistic.vue";
+import OperationalCostRecap from "@/components/admin/company-finance/OperationalCostRecap.vue";
 import FixedCostsModal from "@/components/admin/company-finance/modals/FixedCostsModal.vue";
 import SdmResourcesModal from "@/components/admin/company-finance/modals/SdmResourcesModal.vue";
 import InfraToolsModal from "@/components/admin/company-finance/modals/InfraToolsModal.vue";
 import DeleteConfirmationModal from "@/components/common/ConfirmationModal.vue";
-import { Eye, Edit, Trash2, Wallet, Users, Server, Search, Plus } from "lucide-vue-next";
-import { UiPageHeader, UiInput, UiButton, UiBadge, UiTable } from "@/components/ui";
+import { Trash2, Wallet, Users, Server, Search, SearchX, Inbox, Plus } from "lucide-vue-next";
+import { UiPageHeader, UiInput, UiButton, UiBadge, UiTable, UiEmpty } from "@/components/ui";
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
+import { useSdmFieldStore } from "@/stores/sdmField";
+import { useToastStore } from "@/stores/toast";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch, invalidate } from "@/composables/useStaleFetch";
+import { useVisitedTabs } from "@/composables/useVisitedTabs";
 import Pagination from "@/components/common/Pagination.vue";
 import { operationalCostStatusLabel, expiryState } from "@/utils/operationalCostStatus";
+import { formatRupiah } from "@/utils/formatUtils";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
 
 const { t } = useI18n();
 
 const store = useCompanyFinanceStore();
+const sdmFieldStore = useSdmFieldStore();
+const toast = useToastStore();
 
+const TAB_KEYS = ["fixed", "sdm", "infra"];
+// Tab, each tab's search and page, and the chart year survive leaving the
+// page and a reload (URL query + remembered per browser).
+const list = useListState("operational-costs", {
+  tab: "fixed",
+  fixedQ: "",
+  sdmQ: "",
+  infraQ: "",
+  fixedPage: 1,
+  sdmPage: 1,
+  infraPage: 1,
+  year: new Date().getFullYear(),
+});
+if (!TAB_KEYS.includes(list.tab)) list.tab = "fixed";
+const activeTab = computed({
+  get: () => list.tab,
+  set: (tab) => (list.tab = tab),
+});
+// Only the tabs that have been opened load their list.
+const visited = useVisitedTabs(() => list.tab);
+
+/* =======================
+   TABS -- the three lists share one table layout ("one idea per cell"):
+   item + one muted line · status · amount · expiry · delete. A row click
+   opens Edit (or the read-only view without edit rights).
+======================= */
+const hoursLabel = (row) => t("finance.table.hoursPerMonthValue", { n: row.productive_hours_per_month ?? "-" });
+const TABS = {
+  fixed: {
+    icon: Wallet,
+    kind: () => t("finance.categories.fixedCost"),
+    search: () => t("finance.search.fixedCost"),
+    add: () => t("finance.list.add.fixed"),
+    perm: "fixed-cost",
+    name: (row) => row.financial_items,
+    sub: (row) => row.notes || row.description || "",
+    amount: (row) => row.actual,
+    amountSub: () => "",
+    amountLabel: () => t("finance.table.actual"),
+  },
+  sdm: {
+    icon: Users,
+    kind: () => t("finance.categories.sdmResource"),
+    search: () => t("finance.search.sdmResource"),
+    add: () => t("finance.list.add.sdm"),
+    perm: "sdm-resource",
+    name: (row) => row.sdm_field_name ?? row.sdm_component,
+    sub: (row) => [hoursLabel(row), row.notes].filter(Boolean).join(" · "),
+    amount: (row) => row.actual,
+    amountSub: () => "",
+    amountLabel: () => t("finance.table.actual"),
+  },
+  infra: {
+    icon: Server,
+    kind: () => t("finance.categories.infraTool"),
+    search: () => t("finance.search.infra"),
+    add: () => t("finance.list.add.infra"),
+    perm: "infrastructure-tool",
+    name: (row) => row.tech_stack_component,
+    sub: (row) => [row.vendor, row.notes].filter(Boolean).join(" · "),
+    amount: (row) => row.monthly_fee,
+    amountSub: (row) => t("finance.list.perYear", { amount: formatRupiah(row.annual_fee) }),
+    amountLabel: () => t("finance.table.monthly"),
+  },
+};
 const tabs = computed(() => [
   { key: "fixed", label: t("finance.categories.fixedCost"), icon: Wallet },
   { key: "sdm", label: t("finance.categories.sdmResource"), icon: Users },
   { key: "infra", label: t("finance.categories.infraTools"), icon: Server },
 ]);
-const activeTab = ref("fixed");
+const tab = computed(() => TABS[activeTab.value]);
+const canDo = (action, key = activeTab.value) => can(`${TABS[key].perm}-${action}`);
+
+const columns = computed(() => [
+  { key: "name", label: t("finance.table.item") },
+  { key: "status", label: t("common.labels.status") },
+  { key: "amount", label: tab.value.amountLabel(), align: "right" },
+  { key: "expired_date", label: t("finance.table.expired") },
+  { key: "actions", label: "", align: "right" },
+]);
 
 // ----- Presentation only -----
 const statusTone = (status) => (status === "active" ? "ok" : "neutral");
-// expiryState() returns a legacy colour class; map it onto tokens.
-const expiryTextClass = (state) => (state?.class?.includes("red") ? "text-ui-bad" : "text-ui-warn");
-const inactiveTitle = (item) => (item.status !== "active" ? t("finance.table.inactiveHint") : "");
-const fixedColumns = computed(() => [
-  { key: "financial_items", label: t("finance.table.item") },
-  { key: "actual", label: t("finance.table.actual"), align: "right" },
-  { key: "expired_date", label: t("finance.table.expired") },
-  { key: "status", label: t("common.labels.status") },
-  { key: "notes", label: t("common.labels.notes") },
-  { key: "actions", label: t("common.labels.actions"), align: "right" },
-]);
-const sdmColumns = computed(() => [
-  { key: "field", label: t("finance.table.field") },
-  { key: "productive_hours_per_month", label: t("finance.table.hoursPerMonth"), align: "right" },
-  { key: "actual", label: t("finance.table.actual"), align: "right" },
-  { key: "expired_date", label: t("finance.table.expired") },
-  { key: "status", label: t("common.labels.status") },
-  { key: "notes", label: t("common.labels.notes") },
-  { key: "actions", label: t("common.labels.actions"), align: "right" },
-]);
-const infraColumns = computed(() => [
-  { key: "tech_stack_component", label: t("finance.table.techStack") },
-  { key: "vendor", label: t("finance.table.vendor") },
-  { key: "monthly_fee", label: t("finance.table.monthly"), align: "right" },
-  { key: "annual_fee", label: t("finance.table.annual"), align: "right" },
-  { key: "expired_date", label: t("finance.table.expired") },
-  { key: "status", label: t("common.labels.status") },
-  { key: "actions", label: t("common.labels.actions"), align: "right" },
-]);
-
-const showSectionAlert = (section, type, title, message) => {
-  section.value = {
-    show: true,
-    type,
-    title,
-    message,
-  };
-
-  setTimeout(() => {
-    section.value.show = false;
-  }, 3000);
-};
-
-// Fetch data ketika komponen di-mount
-onMounted(() => {
-  fetchFixedCostData();
-  fetchSdmResourcesData();
-  fetchInfraToolsData();
-});
-
-/* ================= FIX COST ACTION METHODS ================= */
-const fetchFixedCostData = async (page = 1) => {
-  await store.fetchFixedCostPaginated({
-    page,
-    per_page: perPage,
-    search: fixedSearch.value,
-  });
-  fixedPage.value = page;
-};
-
-const addFixedCost = () => {
-  fixedCostMode.value = "add";
-  selectedFixedCost.value = null;
-  showAddFixedCost.value = true;
-};
-
-const submitFixedCost = async ({ mode, id, payload }) => {
-  try {
-    loading.value = true;
-
-    if (mode === "add") {
-      await store.createFixedCost(payload);
-      showSectionAlert(
-        fixedAlert,
-        "success",
-        t("finance.alerts.createdTitle", { kind: t("finance.categories.fixedCost") }),
-        t("finance.alerts.createdMessage", { kind: t("finance.categories.fixedCost") })
-      );
-    }
-
-    if (mode === "edit") {
-      await store.updateFixedCost(id, payload);
-      showSectionAlert(
-        fixedAlert,
-        "success",
-        t("finance.alerts.updatedTitle", { kind: t("finance.categories.fixedCost") }),
-        t("finance.alerts.updatedMessage", { kind: t("finance.categories.fixedCost") })
-      );
-    }
-
-    await fetchFixedCostData();
-    showAddFixedCost.value = false;
-  } catch (error) {
-    showSectionAlert(
-      fixedAlert,
-      "danger",
-      t("finance.alerts.failed"),
-      t("finance.alerts.saveFailed", { kind: t("finance.categories.fixedCost") })
-    );
-  } finally {
-    loading.value = false;
-  }
-};
-
-const viewFixedCost = (item) => {
-  fixedCostMode.value = "view";
-  selectedFixedCost.value = item;
-  showAddFixedCost.value = true;
-};
-
-const editFixedCost = (item) => {
-  fixedCostMode.value = "edit";
-  selectedFixedCost.value = item;
-  showAddFixedCost.value = true;
-};
-
-const deleteFixedCostHandler = (item) => {
-  openDeleteModal({
-    title: t("finance.delete.title", { kind: t("finance.categories.fixedCost") }),
-    message: t("finance.delete.message", { name: item.financial_items }),
-    type: "danger",
-    onConfirm: async () => {
-      try {
-        await store.deleteFixedCost(item.id);
-
-        showSectionAlert(
-          fixedAlert,
-          "success",
-          t("finance.alerts.deleted"),
-          t("finance.alerts.deletedMessage", { kind: t("finance.categories.fixedCost"), name: item.financial_items })
-        );
-      } catch (error) {
-        showSectionAlert(
-          fixedAlert,
-          "danger",
-          t("finance.alerts.failed"),
-          t("finance.alerts.deleteFailed", { name: item.financial_items })
-        );
-        console.error(error);
-      }
-    },
-  });
-};
-
-/* ================= SDM ACTION METHODS ================= */
-const fetchSdmResourcesData = async (page = 1) => {
-  await store.fetchSdmResourcePaginated({
-    page,
-    per_page: perPage,
-    search: sdmSearch.value,
-  });
-  sdmPage.value = page;
-};
-
-const addSdm = () => {
-  sdmResourceMode.value = "add";
-  selectedSdmResource.value = null;
-  showAddSdmResource.value = true;
-};
-
-const submitSdm = async ({ mode, id, payload }) => {
-  try {
-    loading.value = true;
-    if (mode === "add") {
-      await store.createSdmResource(payload);
-      showSectionAlert(
-        sdmAlert,
-        "success",
-        t("finance.alerts.createdTitle", { kind: t("finance.categories.sdmResource") }),
-        t("finance.alerts.createdMessage", { kind: t("finance.categories.sdmResource") })
-      );
-    }
-
-    if (mode === "edit") {
-      await store.updateSdmResource(id, payload);
-      showSectionAlert(
-        sdmAlert,
-        "success",
-        t("finance.alerts.updatedTitle", { kind: t("finance.categories.sdmResource") }),
-        t("finance.alerts.updatedMessage", { kind: t("finance.categories.sdmResource") })
-      );
-    }
-
-    await fetchSdmResourcesData();
-    showAddSdmResource.value = false;
-  } catch (error) {
-    showSectionAlert(
-      sdmAlert,
-      "danger",
-      t("finance.alerts.failed"),
-      t("finance.alerts.saveFailed", { kind: t("finance.categories.sdmResource") })
-    );
-  } finally {
-    loading.value = false;
-  }
-};
-
-const viewSdm = (item) => {
-  sdmResourceMode.value = "view";
-  selectedSdmResource.value = item;
-  showAddSdmResource.value = true;
-};
-
-const editSdm = (item) => {
-  sdmResourceMode.value = "edit";
-  selectedSdmResource.value = item;
-  showAddSdmResource.value = true;
-};
-
-const deleteSdmHandler = (item) => {
-  openDeleteModal({
-    title: t("finance.delete.title", { kind: t("finance.categories.sdmResource") }),
-    message: t("finance.delete.message", { name: item.sdm_component }),
-    type: "danger",
-    onConfirm: async () => {
-      try {
-        await store.deleteSdmResource(item.id);
-
-        showSectionAlert(
-          sdmAlert,
-          "success",
-          t("finance.alerts.deleted"),
-          t("finance.alerts.deletedMessage", { kind: t("finance.categories.sdmResource"), name: item.sdm_component })
-        );
-      } catch (error) {
-        showSectionAlert(
-          sdmAlert,
-          "danger",
-          t("finance.alerts.failed"),
-          t("finance.alerts.deleteFailed", { name: item.sdm_component })
-        );
-        console.error(error);
-      }
-    },
-  });
-};
-
-/* ================= INFRA ACTION METHODS ================= */
-const fetchInfraToolsData = async (page = 1) => {
-  await store.fetchInfraToolsPaginated({
-    page,
-    per_page: perPage,
-    search: infraSearch.value,
-  });
-  infraPage.value = page;
-};
-
-const addInfra = () => {
-  infraMode.value = "add";
-  selectedInfra.value = null;
-  showAddInfra.value = true;
-};
-
-const submitInfra = async ({ mode, id, payload }) => {
-  try {
-    loading.value = true;
-
-    if (mode === "add") {
-      await store.createInfraTools(payload);
-      showSectionAlert(
-        infraAlert,
-        "success",
-        t("finance.alerts.createdTitle", { kind: t("finance.categories.infraTool") }),
-        t("finance.alerts.createdMessage", { kind: t("finance.categories.infraTool") })
-      );
-    }
-
-    if (mode === "edit") {
-      await store.updateInfraTools(id, payload);
-      showSectionAlert(
-        infraAlert,
-        "success",
-        t("finance.alerts.updatedTitle", { kind: t("finance.categories.infraTool") }),
-        t("finance.alerts.updatedMessage", { kind: t("finance.categories.infraTool") })
-      );
-    }
-
-    await fetchInfraToolsData();
-    showAddInfra.value = false;
-  } catch (error) {
-    showSectionAlert(
-      infraAlert,
-      "danger",
-      t("finance.alerts.failed"),
-      t("finance.alerts.saveFailed", { kind: t("finance.categories.infraTool") })
-    );
-  } finally {
-    loading.value = false;
-  }
-};
-
-const viewInfra = (item) => {
-  infraMode.value = "view";
-  selectedInfra.value = item;
-  showAddInfra.value = true;
-};
-
-const editInfra = (item) => {
-  infraMode.value = "edit";
-  selectedInfra.value = item;
-  showAddInfra.value = true;
-};
-
-const deleteInfraHandler = (item) => {
-  openDeleteModal({
-    title: t("finance.delete.title", { kind: t("finance.categories.infraTool") }),
-    message: t("finance.delete.message", { name: item.tech_stack_component }),
-    type: "danger",
-    onConfirm: async () => {
-      try {
-        await store.deleteInfraTools(item.id);
-
-        showSectionAlert(
-          infraAlert,
-          "success",
-          t("finance.alerts.deleted"),
-          t("finance.alerts.deletedMessage", { kind: t("finance.categories.infraTool"), name: item.tech_stack_component })
-        );
-      } catch (error) {
-        showSectionAlert(
-          infraAlert,
-          "danger",
-          t("finance.alerts.failed"),
-          t("finance.alerts.deleteFailed", { name: item.tech_stack_component })
-        );
-        console.error(error);
-      }
-    },
-  });
-};
-
-/* =======================
-   STATE
-======================= */
-const loading = ref(false);
-const showAddFixedCost = ref(false);
-const fixedCostMode = ref("add");
-const selectedFixedCost = ref(null);
-const showAddSdmResource = ref(false);
-const sdmResourceMode = ref("add");
-const selectedSdmResource = ref(null);
-const showAddInfra = ref(false);
-const infraMode = ref("add");
-const selectedInfra = ref(null);
-const fixedAlert = ref({
-  show: false,
-  type: "success",
-  title: "",
-  message: "",
-});
-
-const sdmAlert = ref({
-  show: false,
-  type: "success",
-  title: "",
-  message: "",
-});
-
-const infraAlert = ref({
-  show: false,
-  type: "success",
-  title: "",
-  message: "",
-});
-const showDeleteModal = ref(false);
-const deleteLoading = ref(false);
-const deletePayload = ref({
-  title: "",
-  message: "",
-  type: "danger",
-  onConfirm: null,
-});
-
-/* =======================
-   PAGINATION STATE
-======================= */
-const perPage = 5;
-const fixedPage = ref(1);
-const sdmPage = ref(1);
-const infraPage = ref(1);
-
-/* =======================
-   SEARCH STATE
-======================= */
-const fixedSearch = ref("");
-const sdmSearch = ref("");
-const infraSearch = ref("");
-
-/* =======================
-   HELPERS
-======================= */
-const paginate = (data, page) =>
-  data.slice((page - 1) * perPage, page * perPage);
-
-const pageCount = (data) => Math.ceil(data.length / perPage);
-
+const inactive = (row) => row.status !== "active";
+const inactiveTitle = (row) => (inactive(row) ? t("finance.table.inactiveHint") : "");
+const expiryClass = (row) => expiryState(row)?.class ?? "text-ui-text";
 const formatDate = (date) => {
   if (!date) return "-";
   return new Date(`${String(date).slice(0, 10)}T00:00:00`).toLocaleDateString(localeTag(), { day: "numeric", month: "short", year: "numeric" });
 };
 
-const openDeleteModal = ({ title, message, type = "danger", onConfirm }) => {
-  deletePayload.value = { title, message, type, onConfirm };
-  showDeleteModal.value = true;
+/* =======================
+   LISTS (one stale-while-revalidate fetch per tab, own loading flags)
+======================= */
+const perPage = 5;
+const LISTS = {
+  fixed: { data: () => store.fixedCostData, store: "fixedCostData", fetch: (p) => store.fetchFixedCostPaginated(p), q: "fixedQ", page: "fixedPage" },
+  sdm: { data: () => store.sdmResourceData, store: "sdmResourceData", fetch: (p) => store.fetchSdmResourcePaginated(p), q: "sdmQ", page: "sdmPage" },
+  infra: { data: () => store.infraToolsData, store: "infraToolsData", fetch: (p) => store.fetchInfraToolsPaginated(p), q: "infraQ", page: "infraPage" },
+};
+const listParams = (key) => ({ page: list[LISTS[key].page], per_page: perPage, search: list[LISTS[key].q] });
+const listKey = (key) => JSON.stringify(listParams(key));
+const fetchTab = async (key) => {
+  if (!visited.has(key)) return;
+  const k = listKey(key);
+  await LISTS[key].fetch(listParams(key));
+  if (k === listKey(key)) shownKey[key] = k;
+};
+const useTabList = (key) =>
+  useStaleFetch(() => fetchTab(key), {
+    // Idle until the tab is first opened; then refetches on search/page.
+    key: () => (visited.has(key) ? ["op-costs", key, listParams(key)] : `op-costs:${key}:idle`),
+    hasData: () => visited.has(key) && (LISTS[key].data().items?.length ?? 0) > 0,
+  });
+const STATE = { fixed: useTabList("fixed"), sdm: useTabList("sdm"), infra: useTabList("infra") };
+const REFRESH = (key, opts) => STATE[key].refresh(opts);
+const BUSY = (key) => STATE[key].loading.value || STATE[key].refreshing.value;
+// The store may hold another search/page for this tab (fresh by age):
+// keep it on screen dimmed and load the right one.
+onMounted(() => {
+  const key = list.tab;
+  if (!BUSY(key) && LISTS[key].data().items?.length && shownKey[key] !== listKey(key)) REFRESH(key, { force: true });
+});
+
+const tabData = computed(() => LISTS[activeTab.value].data());
+const rows = computed(() => tabData.value.items || []);
+const tabLoading = computed(() => STATE[activeTab.value].loading.value);
+const tabRefreshing = computed(() => STATE[activeTab.value].refreshing.value);
+const tabPage = computed(() => list[LISTS[activeTab.value].page]);
+const goToPage = (key, page) => (list[LISTS[key].page] = page);
+
+// After a mutation: other pages of this tab are stale; the current page is
+// refreshed quietly (create) or only when the row couldn't be patched.
+const afterSave = (key, { mode, patched }) => {
+  invalidate(`"op-costs","${key}"`);
+  if (mode === "add" || !patched) REFRESH(key, { force: true });
+};
+const afterDelete = (key) => {
+  invalidate(`"op-costs","${key}"`);
+  const data = LISTS[key].data();
+  const page = list[LISTS[key].page];
+  if (!data.items.length && page > 1) goToPage(key, page - 1);
+  else if ((data.meta?.total ?? 0) > page * perPage - 1 && data.items.length < perPage) REFRESH(key, { force: true });
+};
+const hasRow = (key, id) => LISTS[key].data().items.some((item) => item.id === id);
+
+/* =======================
+   SEARCH (one box for the active tab, debounced into that tab's list
+   state; resets that tab's page)
+======================= */
+const searches = { fixed: ref(list.fixedQ), sdm: ref(list.sdmQ), infra: ref(list.infraQ) };
+TAB_KEYS.forEach((key) =>
+  watch(
+    searches[key],
+    debounce((value) => {
+      const v = value.trim();
+      if (v === list[LISTS[key].q]) return;
+      list[LISTS[key].q] = v;
+      list[LISTS[key].page] = 1;
+    }, 300)
+  )
+);
+const search = computed({
+  get: () => searches[activeTab.value].value,
+  set: (v) => (searches[activeTab.value].value = v),
+});
+const searching = computed(() => !!list[LISTS[activeTab.value].q]);
+
+/* =======================
+   ADD / VIEW / EDIT (one modal per category)
+======================= */
+const modal = ref({ tab: null, mode: "add", row: null });
+const saving = ref(false);
+const openModal = (key, mode, row = null) => (modal.value = { tab: key, mode, row });
+const closeModal = () => (modal.value = { ...modal.value, tab: null });
+const openRow = (row) => openModal(activeTab.value, canDo("edit") ? "edit" : "view", row);
+
+const MUTATIONS = {
+  fixed: { create: (p) => store.createFixedCost(p), update: (id, p) => store.updateFixedCost(id, p), remove: (id) => store.deleteFixedCost(id) },
+  sdm: { create: (p) => store.createSdmResource(p), update: (id, p) => store.updateSdmResource(id, p), remove: (id) => store.deleteSdmResource(id) },
+  infra: { create: (p) => store.createInfraTools(p), update: (id, p) => store.updateInfraTools(id, p), remove: (id) => store.deleteInfraTools(id) },
 };
 
-const confirmDelete = async () => {
-  if (!deletePayload.value.onConfirm) return;
-
+const submit = (key) => async ({ mode, id, payload }) => {
+  const kind = TABS[key].kind();
+  let patched = false;
+  saving.value = true;
   try {
-    deleteLoading.value = true;
-    await deletePayload.value.onConfirm();
+    if (mode === "add") {
+      await MUTATIONS[key].create(payload);
+      toast.success(t("finance.alerts.createdTitle", { kind }), t("finance.alerts.createdMessage", { kind }));
+    } else {
+      const row = await MUTATIONS[key].update(id, payload);
+      patched = !!row && hasRow(key, id);
+      if (key === "sdm") {
+        // The API may return the old field relation; name it from the picked field.
+        const field = sdmFieldStore.fields.find((f) => f.id === payload.sdm_field_id);
+        if (patched && field) store.patchRow("sdmResourceData", { id, sdm_field_name: field.name });
+      }
+      toast.success(t("finance.alerts.updatedTitle", { kind }), t("finance.alerts.updatedMessage", { kind }));
+    }
+    afterSave(key, { mode, patched });
+    closeModal();
+  } catch {
+    toast.error(t("finance.alerts.failed"), t("finance.alerts.saveFailed", { kind }));
+  } finally {
+    saving.value = false;
+  }
+};
+const submitFixed = submit("fixed");
+const submitSdm = submit("sdm");
+const submitInfra = submit("infra");
+
+/* =======================
+   DELETE
+======================= */
+const showDeleteModal = ref(false);
+const deleteLoading = ref(false);
+const deleteTarget = ref(null);
+const askDelete = (row) => {
+  deleteTarget.value = { key: activeTab.value, row };
+  showDeleteModal.value = true;
+};
+const deleteTitle = computed(() => (deleteTarget.value ? t("finance.delete.title", { kind: TABS[deleteTarget.value.key].kind() }) : ""));
+const deleteMessage = computed(() => (deleteTarget.value ? t("finance.delete.message", { name: TABS[deleteTarget.value.key].name(deleteTarget.value.row) }) : ""));
+const confirmDelete = async () => {
+  if (!deleteTarget.value) return;
+  const { key, row } = deleteTarget.value;
+  const name = TABS[key].name(row);
+  deleteLoading.value = true;
+  try {
+    await MUTATIONS[key].remove(row.id);
+    afterDelete(key);
+    toast.success(t("finance.alerts.deleted"), t("finance.alerts.deletedMessage", { kind: TABS[key].kind(), name }));
+  } catch (error) {
+    toast.error(t("finance.alerts.failed"), t("finance.alerts.deleteFailed", { name }));
+    console.error(error);
   } finally {
     deleteLoading.value = false;
     showDeleteModal.value = false;
   }
 };
-
-/* =======================
-   COMPUTED
-======================= */
-const filteredFixed = computed(() => {
-  if (store.fixedCostData && store.fixedCostData.items) {
-    return store.fixedCostData.items.filter((item) =>
-      item.financial_items
-        .toLowerCase()
-        .includes(fixedSearch.value.toLowerCase())
-    );
-  }
-  return [];
-});
-
-const filteredSdm = computed(() => {
-  if (store.sdmResourceData && store.sdmResourceData.items) {
-    return store.sdmResourceData.items.filter((item) =>
-      item.sdm_component.toLowerCase().includes(sdmSearch.value.toLowerCase())
-    );
-  }
-  return [];
-});
-
-const filteredInfra = computed(() => {
-  if (store.infraToolsData && store.infraToolsData.items) {
-    return store.infraToolsData.items.filter((item) =>
-      item.tech_stack_component
-        .toLowerCase()
-        .includes(infraSearch.value.toLowerCase())
-    );
-  }
-  return [];
-});
-
-const fixedPageCount = computed(
-  () => store.fixedCostData?.meta?.last_page || 1
-);
-
-const fixedCostPaginated = computed(() => store.fixedCostData.items || []);
-const sdmResourcePaginated = computed(() => store.sdmResourceData.items || []);
-const infraPaginated = computed(() => store.infraToolsData.items || []);
-
-/* =======================
-   WATCH SEARCH DEBOUNCE
-======================= */
-watch(
-  fixedSearch,
-  debounce(() => {
-    fetchFixedCostData(1);
-  }, 300)
-);
-watch(
-  sdmSearch,
-  debounce(() => {
-    fetchSdmResourcesData(1);
-  }, 300)
-);
-watch(
-  infraSearch,
-  debounce(() => {
-    fetchInfraToolsData(1);
-  }, 300)
-);
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
-    <UiPageHeader :title="$t('finance.page.title')" :subtitle="$t('finance.page.subtitle')" />
+    <UiPageHeader :title="$t('finance.page.title')" :subtitle="$t('finance.page.subtitle')">
+      <template v-if="canDo('create')" #actions>
+        <UiButton :icon="Plus" class="w-full sm:w-auto" @click="openModal(activeTab, 'add')">{{ tab.add() }}</UiButton>
+      </template>
+    </UiPageHeader>
 
-    <Statistics v-if="can('company-finance-statistic')" />
+    <OperationalCostRecap v-if="can('company-finance-statistic')" v-model:year="list.year" />
 
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
-      <!-- Tabs: underline on desktop, scrolling chips on phones -->
-      <div class="px-4 sm:px-5 pt-4 sm:pt-3 sm:border-b sm:border-ui-line">
-        <div class="tabs-scroll overflow-x-auto -mx-1 px-1">
-          <div class="flex items-center gap-1.5 sm:gap-6 min-w-max" role="tablist">
+      <!-- Toolbar: tabs · search -- one line on desktop; tabs are chips on phones -->
+      <div class="lg:flex lg:items-stretch lg:justify-between lg:gap-4 lg:px-5 lg:border-b lg:border-ui-line">
+        <div class="px-4 sm:px-5 lg:px-0 pt-4 sm:pt-3 sm:border-b sm:border-ui-line lg:border-b-0">
+          <div class="tabs-scroll overflow-x-auto -mx-1 px-1">
+            <div class="flex items-center gap-1.5 sm:gap-6 min-w-max" role="tablist">
+              <button
+                v-for="item in tabs"
+                :key="item.key"
+                type="button"
+                role="tab"
+                :aria-selected="activeTab === item.key"
+                @click="activeTab = item.key"
+                :class="[
+                  'ui-press shrink-0 inline-flex items-center gap-2 whitespace-nowrap font-medium focus:outline-none focus-visible:shadow-ui-focus',
+                  'h-8 px-3 rounded-full border text-ui-small',
+                  'sm:h-auto sm:px-0.5 sm:pt-2 sm:pb-3 sm:rounded-none sm:border-0 sm:border-b-2 sm:-mb-px sm:text-ui-body',
+                  activeTab === item.key
+                    ? 'bg-ui-ink text-white border-ui-ink sm:bg-transparent sm:text-ui-ink sm:border-ui-ink'
+                    : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover sm:bg-transparent sm:text-ui-muted sm:border-transparent sm:hover:bg-transparent sm:hover:text-ui-ink',
+                ]"
+              >
+                <component :is="item.icon" class="w-4 h-4 hidden sm:block" />
+                {{ item.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="px-4 sm:px-5 lg:px-0 py-3 lg:py-2 border-b border-ui-line lg:border-b-0 lg:self-center">
+          <UiInput v-model="search" :icon="Search" :placeholder="tab.search()" :aria-label="tab.search()" class="w-full sm:w-[280px] lg:w-[260px]" />
+        </div>
+      </div>
+
+      <UiTable
+        :key="activeTab"
+        :columns="columns"
+        :rows="rows"
+        :meta="{ current_page: tabPage, per_page: perPage }"
+        :loading="tabLoading"
+        :skeleton-rows="4"
+        clickable
+        :class="tabRefreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
+        @row-click="openRow"
+      >
+        <template #cell-name="{ row }">
+          <div class="min-w-0 max-w-[460px] py-2" :title="inactiveTitle(row)">
+            <!-- The name is the keyboard way into the row (rows open it on click). -->
             <button
-              v-for="tab in tabs"
-              :key="tab.key"
               type="button"
-              role="tab"
-              :aria-selected="activeTab === tab.key"
-              @click="activeTab = tab.key"
-              :class="[
-                'ui-press shrink-0 inline-flex items-center gap-2 whitespace-nowrap font-medium focus:outline-none focus-visible:shadow-ui-focus',
-                'h-8 px-3 rounded-full border text-ui-small',
-                'sm:h-auto sm:px-0.5 sm:pt-2 sm:pb-3 sm:rounded-none sm:border-0 sm:border-b-2 sm:-mb-px sm:text-ui-body',
-                activeTab === tab.key
-                  ? 'bg-ui-ink text-white border-ui-ink sm:bg-transparent sm:text-ui-ink sm:border-ui-ink'
-                  : 'bg-ui-surface text-ui-text border-ui-line hover:bg-ui-hover sm:bg-transparent sm:text-ui-muted sm:border-transparent sm:hover:bg-transparent sm:hover:text-ui-ink',
-              ]"
-            >
-              <component :is="tab.icon" class="w-4 h-4 hidden sm:block" />
-              {{ tab.label }}
-            </button>
+              class="block max-w-full text-left font-medium truncate rounded-sm hover:underline underline-offset-2 focus:outline-none focus-visible:shadow-ui-focus"
+              :class="inactive(row) ? 'text-ui-muted' : 'text-ui-ink'"
+              :title="canDo('edit') ? $t('common.actions.edit') : $t('common.actions.view')"
+              @click.stop="openRow(row)"
+            >{{ tab.name(row) }}</button>
+            <p v-if="tab.sub(row)" class="mt-0.5 text-ui-cap text-ui-muted truncate" :title="tab.sub(row)">{{ tab.sub(row) }}</p>
           </div>
-        </div>
-      </div>
-
-      <!-- ================= FIXED COST ================= -->
-      <div v-if="activeTab === 'fixed'" class="ui-anim-fade-up">
-        <div class="px-4 sm:px-5 py-3 space-y-3 border-b border-ui-line">
-          <Alert
-            v-if="fixedAlert.show"
-            :type="fixedAlert.type"
-            :title="fixedAlert.title"
-            :message="fixedAlert.message"
-            :show="fixedAlert.show"
-          />
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <UiInput v-model="fixedSearch" :icon="Search" :placeholder="$t('finance.search.fixedCost')" class="w-full sm:w-[280px]" />
-            <UiButton v-if="can('fixed-cost-create')" :icon="Plus" class="w-full sm:w-auto" @click="addFixedCost">{{ $t("finance.categories.fixedCost") }}</UiButton>
+        </template>
+        <template #cell-status="{ row }">
+          <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
+        </template>
+        <template #cell-amount="{ row }">
+          <p class="font-medium tabular-nums whitespace-nowrap" :class="inactive(row) ? 'text-ui-faint' : 'text-ui-ink'">{{ formatRupiah(tab.amount(row)) }}</p>
+          <p v-if="tab.amountSub(row)" class="text-ui-cap text-ui-muted tabular-nums whitespace-nowrap">{{ tab.amountSub(row) }}</p>
+        </template>
+        <template #cell-expired_date="{ row }">
+          <div class="whitespace-nowrap">
+            <p class="tabular-nums" :class="[expiryClass(row), expiryState(row) ? 'font-medium' : '']">{{ formatDate(row.expired_date) }}</p>
+            <p v-if="expiryState(row)" class="text-ui-cap" :class="expiryClass(row)">{{ expiryState(row).label }}</p>
           </div>
-        </div>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex justify-end" @click.stop>
+            <UiButton
+              v-if="canDo('delete')"
+              variant="ghost"
+              size="sm"
+              :icon="Trash2"
+              class="!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft"
+              :title="$t('common.actions.delete')"
+              :aria-label="`${$t('common.actions.delete')} ${tab.name(row)}`"
+              @click="askDelete(row)"
+            />
+          </div>
+        </template>
 
-        <UiTable
-          :columns="fixedColumns"
-          :rows="fixedCostPaginated"
-          :meta="{ current_page: fixedPage, per_page: perPage }"
-          :loading="store.loading"
-          :skeleton-rows="4"
-          :empty-text="$t('finance.table.empty', { kind: $t('finance.categories.fixedCost') })"
-        >
-          <template #cell-financial_items="{ row }">
-            <span class="font-medium" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-muted'" :title="inactiveTitle(row)">{{ row.financial_items }}</span>
-          </template>
-          <template #cell-actual="{ row }">
-            <span class="tabular-nums whitespace-nowrap" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-faint'">Rp {{ row.actual.toLocaleString() }}</span>
-          </template>
-          <template #cell-expired_date="{ row }">
-            <div class="whitespace-nowrap">
-              <p class="tabular-nums">{{ formatDate(row.expired_date) }}</p>
-              <p v-if="expiryState(row)" class="text-ui-cap font-medium" :class="expiryTextClass(expiryState(row))">{{ expiryState(row).label }}</p>
-            </div>
-          </template>
-          <template #cell-status="{ row }">
-            <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
-          </template>
-          <template #cell-notes="{ row }">
-            <span class="text-ui-muted">{{ row.notes }}</span>
-          </template>
-          <template #cell-actions="{ row }">
-            <div class="flex justify-end gap-0.5">
-              <button type="button" @click="viewFixedCost(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.view')" :aria-label="$t('common.actions.view')"><Eye class="w-4 h-4" /></button>
-              <button v-if="can('fixed-cost-edit')" type="button" @click="editFixedCost(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')"><Edit class="w-4 h-4" /></button>
-              <button v-if="can('fixed-cost-delete')" type="button" @click="deleteFixedCostHandler(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')"><Trash2 class="w-4 h-4" /></button>
-            </div>
-          </template>
-
-          <template #mobile="{ row, number }">
-            <div class="flex items-start gap-3 px-4 py-3.5" :title="inactiveTitle(row)">
-              <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
+        <!-- Phones: the same simplified row as a card -->
+        <template #mobile="{ row, number }">
+          <div class="px-4 py-3.5" :title="inactiveTitle(row)">
+            <div class="flex items-start gap-3">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
               <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-3">
-                  <p class="text-ui-body font-medium truncate" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-muted'">{{ row.financial_items }}</p>
-                  <p class="text-ui-body font-medium tabular-nums text-right shrink-0" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-faint'">Rp {{ row.actual.toLocaleString() }}</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
-                  <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
-                  <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("finance.table.expShort", { date: formatDate(row.expired_date) }) }}</span>
-                  <span v-if="expiryState(row)" class="text-ui-cap font-medium" :class="expiryTextClass(expiryState(row))">{{ expiryState(row).label }}</span>
-                </div>
-                <p v-if="row.notes" class="text-ui-cap text-ui-muted mt-1 line-clamp-2">{{ row.notes }}</p>
-                <div class="flex items-center gap-1 mt-2 -ml-2">
-                  <UiButton variant="ghost" size="sm" :icon="Eye" @click="viewFixedCost(row)">{{ $t("common.actions.view") }}</UiButton>
-                  <UiButton v-if="can('fixed-cost-edit')" variant="ghost" size="sm" :icon="Edit" @click="editFixedCost(row)">{{ $t("common.actions.edit") }}</UiButton>
-                  <UiButton v-if="can('fixed-cost-delete')" variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="deleteFixedCostHandler(row)">{{ $t("common.actions.delete") }}</UiButton>
-                </div>
+                <p class="text-ui-body font-medium line-clamp-2 break-words" :class="inactive(row) ? 'text-ui-muted' : 'text-ui-ink'">{{ tab.name(row) }}</p>
+                <p v-if="tab.sub(row)" class="text-ui-cap text-ui-muted truncate mt-0.5">{{ tab.sub(row) }}</p>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-ui-body font-medium tabular-nums" :class="inactive(row) ? 'text-ui-faint' : 'text-ui-ink'">{{ formatRupiah(tab.amount(row)) }}</p>
+                <p v-if="tab.amountSub(row)" class="text-ui-cap text-ui-muted tabular-nums">{{ tab.amountSub(row) }}</p>
               </div>
             </div>
-          </template>
-        </UiTable>
-
-        <div v-if="store.fixedCostData.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
-          <Pagination :meta="store.fixedCostData.meta" :loading="store.loading" :item-label="$t('finance.itemLabel')" @page-change="fetchFixedCostData" />
-        </div>
-      </div>
-
-      <!-- ================= SDM ================= -->
-      <div v-if="activeTab === 'sdm'" class="ui-anim-fade-up">
-        <div class="px-4 sm:px-5 py-3 space-y-3 border-b border-ui-line">
-          <Alert
-            v-if="sdmAlert.show"
-            :type="sdmAlert.type"
-            :title="sdmAlert.title"
-            :message="sdmAlert.message"
-            :show="sdmAlert.show"
-          />
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <UiInput v-model="sdmSearch" :icon="Search" :placeholder="$t('finance.search.sdmResource')" class="w-full sm:w-[280px]" />
-            <UiButton v-if="can('sdm-resource-create')" :icon="Plus" class="w-full sm:w-auto" @click="addSdm">{{ $t("finance.categories.sdmResource") }}</UiButton>
-          </div>
-        </div>
-
-        <UiTable
-          :columns="sdmColumns"
-          :rows="sdmResourcePaginated"
-          :meta="{ current_page: sdmPage, per_page: perPage }"
-          :loading="store.loading"
-          :skeleton-rows="4"
-          :empty-text="$t('finance.table.empty', { kind: $t('finance.categories.sdmResource') })"
-        >
-          <template #cell-field="{ row }">
-            <span class="font-medium" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-muted'" :title="inactiveTitle(row)">{{ row.sdm_field_name ?? row.sdm_component }}</span>
-          </template>
-          <template #cell-productive_hours_per_month="{ row }">
-            <span class="tabular-nums">{{ row.productive_hours_per_month ?? "-" }}</span>
-          </template>
-          <template #cell-actual="{ row }">
-            <span class="tabular-nums whitespace-nowrap" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-faint'">Rp {{ row.actual.toLocaleString() }}</span>
-          </template>
-          <template #cell-expired_date="{ row }">
-            <div class="whitespace-nowrap">
-              <p class="tabular-nums">{{ formatDate(row.expired_date) }}</p>
-              <p v-if="expiryState(row)" class="text-ui-cap font-medium" :class="expiryTextClass(expiryState(row))">{{ expiryState(row).label }}</p>
-            </div>
-          </template>
-          <template #cell-status="{ row }">
-            <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
-          </template>
-          <template #cell-notes="{ row }">
-            <span class="text-ui-muted">{{ row.notes }}</span>
-          </template>
-          <template #cell-actions="{ row }">
-            <div class="flex justify-end gap-0.5">
-              <button type="button" @click="viewSdm(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.view')" :aria-label="$t('common.actions.view')"><Eye class="w-4 h-4" /></button>
-              <button v-if="can('sdm-resource-edit')" type="button" @click="editSdm(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')"><Edit class="w-4 h-4" /></button>
-              <button v-if="can('sdm-resource-delete')" type="button" @click="deleteSdmHandler(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')"><Trash2 class="w-4 h-4" /></button>
-            </div>
-          </template>
-
-          <template #mobile="{ row, number }">
-            <div class="flex items-start gap-3 px-4 py-3.5" :title="inactiveTitle(row)">
-              <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-3">
-                  <p class="text-ui-body font-medium truncate" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-muted'">{{ row.sdm_field_name ?? row.sdm_component }}</p>
-                  <p class="text-ui-body font-medium tabular-nums text-right shrink-0" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-faint'">Rp {{ row.actual.toLocaleString() }}</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
-                  <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
-                  <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("finance.table.hoursPerMonthValue", { n: row.productive_hours_per_month ?? "-" }) }}</span>
-                  <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("finance.table.expShort", { date: formatDate(row.expired_date) }) }}</span>
-                  <span v-if="expiryState(row)" class="text-ui-cap font-medium" :class="expiryTextClass(expiryState(row))">{{ expiryState(row).label }}</span>
-                </div>
-                <p v-if="row.notes" class="text-ui-cap text-ui-muted mt-1 line-clamp-2">{{ row.notes }}</p>
-                <div class="flex items-center gap-1 mt-2 -ml-2">
-                  <UiButton variant="ghost" size="sm" :icon="Eye" @click="viewSdm(row)">{{ $t("common.actions.view") }}</UiButton>
-                  <UiButton v-if="can('sdm-resource-edit')" variant="ghost" size="sm" :icon="Edit" @click="editSdm(row)">{{ $t("common.actions.edit") }}</UiButton>
-                  <UiButton v-if="can('sdm-resource-delete')" variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="deleteSdmHandler(row)">{{ $t("common.actions.delete") }}</UiButton>
-                </div>
+            <div class="flex items-center gap-2 mt-2 pl-8">
+              <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
+                <span v-if="row.expired_date" class="text-ui-cap tabular-nums" :class="expiryState(row) ? [expiryClass(row), 'font-medium'] : 'text-ui-muted'">
+                  {{ $t("finance.table.expShort", { date: formatDate(row.expired_date) }) }}<template v-if="expiryState(row)"> · {{ expiryState(row).label }}</template>
+                </span>
+              </div>
+              <div class="shrink-0" @click.stop>
+                <UiButton
+                  v-if="canDo('delete')"
+                  variant="ghost"
+                  size="sm"
+                  :icon="Trash2"
+                  class="!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft"
+                  :aria-label="`${$t('common.actions.delete')} ${tab.name(row)}`"
+                  @click="askDelete(row)"
+                />
               </div>
             </div>
-          </template>
-        </UiTable>
-
-        <div v-if="store.sdmResourceData.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
-          <Pagination :meta="store.sdmResourceData.meta" :loading="store.loading" :item-label="$t('finance.itemLabel')" @page-change="fetchSdmResourcesData" />
-        </div>
-      </div>
-
-      <!-- ================= INFRA ================= -->
-      <div v-if="activeTab === 'infra'" class="ui-anim-fade-up">
-        <div class="px-4 sm:px-5 py-3 space-y-3 border-b border-ui-line">
-          <Alert
-            v-if="infraAlert.show"
-            :type="infraAlert.type"
-            :title="infraAlert.title"
-            :message="infraAlert.message"
-            :show="infraAlert.show"
-          />
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <UiInput v-model="infraSearch" :icon="Search" :placeholder="$t('finance.search.infra')" class="w-full sm:w-[280px]" />
-            <UiButton v-if="can('infrastructure-tool-create')" :icon="Plus" class="w-full sm:w-auto" @click="addInfra">{{ $t("finance.categories.infraTool") }}</UiButton>
           </div>
-        </div>
+        </template>
 
-        <UiTable
-          :columns="infraColumns"
-          :rows="infraPaginated"
-          :meta="{ current_page: infraPage, per_page: perPage }"
-          :loading="store.loading"
-          :skeleton-rows="4"
-          :empty-text="$t('finance.table.empty', { kind: $t('finance.categories.infraTools') })"
-        >
-          <template #cell-tech_stack_component="{ row }">
-            <span class="font-medium" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-muted'" :title="inactiveTitle(row)">{{ row.tech_stack_component }}</span>
-          </template>
-          <template #cell-monthly_fee="{ row }">
-            <span class="tabular-nums whitespace-nowrap" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-faint'">Rp {{ row.monthly_fee.toLocaleString() }}</span>
-          </template>
-          <template #cell-annual_fee="{ row }">
-            <span class="tabular-nums whitespace-nowrap" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-faint'">Rp {{ row.annual_fee.toLocaleString() }}</span>
-          </template>
-          <template #cell-expired_date="{ row }">
-            <div class="whitespace-nowrap">
-              <p class="tabular-nums">{{ formatDate(row.expired_date) }}</p>
-              <p v-if="expiryState(row)" class="text-ui-cap font-medium" :class="expiryTextClass(expiryState(row))">{{ expiryState(row).label }}</p>
-            </div>
-          </template>
-          <template #cell-status="{ row }">
-            <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
-          </template>
-          <template #cell-actions="{ row }">
-            <div class="flex justify-end gap-0.5">
-              <button type="button" @click="viewInfra(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.view')" :aria-label="$t('common.actions.view')"><Eye class="w-4 h-4" /></button>
-              <button v-if="can('infrastructure-tool-edit')" type="button" @click="editInfra(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-hover hover:text-ui-ink" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')"><Edit class="w-4 h-4" /></button>
-              <button v-if="can('infrastructure-tool-delete')" type="button" @click="deleteInfraHandler(row)" class="ui-press w-8 h-8 rounded-ui-control inline-flex items-center justify-center text-ui-muted hover:bg-ui-bad-soft hover:text-ui-bad" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')"><Trash2 class="w-4 h-4" /></button>
-            </div>
-          </template>
+        <template #empty>
+          <UiEmpty
+            v-if="searching"
+            :icon="SearchX"
+            :title="$t('finance.list.emptyFilteredTitle')"
+            :message="$t('finance.list.emptyFilteredHint')"
+            compact
+          >
+            <UiButton variant="secondary" @click="search = ''">{{ $t("finance.list.clearSearch") }}</UiButton>
+          </UiEmpty>
+          <UiEmpty
+            v-else
+            :icon="Inbox"
+            :title="$t('finance.table.empty', { kind: tab.kind() })"
+            :message="$t('finance.list.emptyHint')"
+            compact
+          >
+            <UiButton v-if="canDo('create')" variant="secondary" :icon="Plus" @click="openModal(activeTab, 'add')">{{ tab.add() }}</UiButton>
+          </UiEmpty>
+        </template>
+      </UiTable>
 
-          <template #mobile="{ row, number }">
-            <div class="flex items-start gap-3 px-4 py-3.5" :title="inactiveTitle(row)">
-              <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-ui-body font-medium truncate" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-muted'">{{ row.tech_stack_component }}</p>
-                    <p class="text-ui-cap text-ui-muted truncate">{{ row.vendor }}</p>
-                  </div>
-                  <div class="text-right shrink-0">
-                    <p class="text-ui-body font-medium tabular-nums" :class="row.status === 'active' ? 'text-ui-ink' : 'text-ui-faint'">Rp {{ row.monthly_fee.toLocaleString() }}</p>
-                    <p class="text-ui-cap text-ui-muted tabular-nums">{{ $t("finance.table.annualValue", { amount: `Rp ${row.annual_fee.toLocaleString()}` }) }}</p>
-                  </div>
-                </div>
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
-                  <UiBadge :tone="statusTone(row.status)" dot>{{ operationalCostStatusLabel(row.status) }}</UiBadge>
-                  <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("finance.table.expShort", { date: formatDate(row.expired_date) }) }}</span>
-                  <span v-if="expiryState(row)" class="text-ui-cap font-medium" :class="expiryTextClass(expiryState(row))">{{ expiryState(row).label }}</span>
-                </div>
-                <div class="flex items-center gap-1 mt-2 -ml-2">
-                  <UiButton variant="ghost" size="sm" :icon="Eye" @click="viewInfra(row)">{{ $t("common.actions.view") }}</UiButton>
-                  <UiButton v-if="can('infrastructure-tool-edit')" variant="ghost" size="sm" :icon="Edit" @click="editInfra(row)">{{ $t("common.actions.edit") }}</UiButton>
-                  <UiButton v-if="can('infrastructure-tool-delete')" variant="ghost" size="sm" :icon="Trash2" class="!text-ui-bad" @click="deleteInfraHandler(row)">{{ $t("common.actions.delete") }}</UiButton>
-                </div>
-              </div>
-            </div>
-          </template>
-        </UiTable>
-
-        <div v-if="store.infraToolsData.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
-          <Pagination :meta="store.infraToolsData.meta" :loading="store.loading" :item-label="$t('finance.itemLabel')" @page-change="fetchInfraToolsData" />
-        </div>
+      <div v-if="tabData.meta?.total && rows.length" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
+        <Pagination :meta="tabData.meta" :loading="tabLoading" :item-label="$t('finance.itemLabel')" @page-change="(page) => goToPage(activeTab, page)" />
       </div>
     </section>
 
     <FixedCostsModal
-      :show="showAddFixedCost"
-      :loading="loading"
-      :mode="fixedCostMode"
-      :data="selectedFixedCost"
-      @close="showAddFixedCost = false"
-      @submit="submitFixedCost"
+      :show="modal.tab === 'fixed'"
+      :loading="saving"
+      :mode="modal.mode"
+      :data="modal.row"
+      @close="closeModal"
+      @submit="submitFixed"
     />
 
     <SdmResourcesModal
-      :show="showAddSdmResource"
-      :loading="loading"
-      :mode="sdmResourceMode"
-      :data="selectedSdmResource"
-      @close="showAddSdmResource = false"
+      :show="modal.tab === 'sdm'"
+      :loading="saving"
+      :mode="modal.mode"
+      :data="modal.row"
+      @close="closeModal"
       @submit="submitSdm"
     />
 
     <InfraToolsModal
-      :show="showAddInfra"
-      :loading="loading"
-      :mode="infraMode"
-      :data="selectedInfra"
-      @close="showAddInfra = false"
+      :show="modal.tab === 'infra'"
+      :loading="saving"
+      :mode="modal.mode"
+      :data="modal.row"
+      @close="closeModal"
       @submit="submitInfra"
     />
 
     <DeleteConfirmationModal
       :show="showDeleteModal"
-      :title="deletePayload.title"
-      :message="deletePayload.message"
+      :title="deleteTitle"
+      :message="deleteMessage"
       :loading="deleteLoading"
-      :type="deletePayload.type"
+      type="danger"
       :confirmText="$t('common.actions.delete')"
       :cancelText="$t('common.actions.cancel')"
       @confirm="confirmDelete"
       @cancel="showDeleteModal = false"
-    >
-    </DeleteConfirmationModal>
+    />
   </div>
 </template>
 
 <style scoped>
-/* 3 finance tabs no longer risk overflowing the card on narrow screens --
-   they scroll horizontally in one row instead, scrollbar hidden. */
+/* The finance tabs scroll horizontally in one row on narrow screens,
+   scrollbar hidden. */
 .tabs-scroll {
   scrollbar-width: none;
   -ms-overflow-style: none;

@@ -49,6 +49,7 @@
     --ui-bg: 245 247 250;          /* #F5F7FA page background */
     --ui-surface: 255 255 255;     /* #FFFFFF cards, inputs */
     --ui-subtle: 240 243 247;      /* #F0F3F7 quiet fills */
+    --ui-tray: 238 241 246;        /* #EEF1F6 area holding cards inside a card */
     --ui-hover: 234 238 244;       /* #EAEEF4 row / item hover */
     --ui-line: 227 232 239;        /* #E3E8EF borders, dividers */
     --ui-line-strong: 205 213 224; /* #CDD5E0 input borders */
@@ -81,6 +82,7 @@
     --ui-bg: 11 16 24;             /* #0B1018 */
     --ui-surface: 18 24 35;        /* #121823 */
     --ui-subtle: 24 32 45;         /* #18202D */
+    --ui-tray: 11 16 24;           /* #0B1018 darker than a card */
     --ui-hover: 30 39 54;          /* #1E2736 */
     --ui-line: 37 47 64;           /* #252F40 */
     --ui-line-strong: 54 66 86;    /* #364256 */
@@ -406,6 +408,13 @@ html {
 .ui-list-enter-active, .ui-list-leave-active { transition: opacity var(--ui-dur-base) var(--ui-ease-out), transform var(--ui-dur-base) var(--ui-ease-out); }
 .ui-list-enter-from, .ui-list-leave-to { opacity: 0; transform: translateY(6px); }
 .ui-list-move { transition: transform var(--ui-dur-slow) var(--ui-ease-out); }
+
+/* Tray: the area that holds cards inside a card. A shade darker than a
+   card in both themes (--ui-tray), so the inner cards read as
+   separate objects instead of blending into their container. */
+@layer utilities {
+    .ui-tray { background-color: rgb(var(--ui-tray)); }
+}
 
 /* Small feedback: press (buttons) and lift (clickable cards) */
 .ui-press {

@@ -3,6 +3,8 @@ import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
 import { toRequestBody } from "@/helpers/formDataHelper";
 
+let fetchSeq = 0; // only the latest fetchAll may write the list
+
 export const useCompanyCashTransactionStore = defineStore("companyCashTransaction", {
   state: () => ({
     transactions: [],
@@ -21,14 +23,19 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
     meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 },
     lastParams: {},
     loading: false,
+    // A quiet refetch (after a mutation): content stays, no skeleton.
+    refreshing: false,
     saving: false,
     error: null,
     success: null,
   }),
 
   actions: {
-    async fetchAll(params = {}) {
-      this.loading = true;
+    // quiet: set `refreshing` instead of `loading` (keeps the table on screen).
+    async fetchAll(params = {}, { quiet = false } = {}) {
+      const id = ++fetchSeq;
+      if (quiet) this.refreshing = true;
+      else this.loading = true;
       this.error = null;
       // Remembered so create/update/delete can refresh the same filtered
       // page the user is currently looking at, instead of silently
@@ -36,6 +43,7 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
       this.lastParams = params;
       try {
         const { data } = await axiosInstance.get("/company-cash-transactions", { params });
+        if (id !== fetchSeq) return;
         this.transactions = data.data.items;
         this.openingBalance = data.data.opening_balance;
         this.openingBalanceUpdatedAt = data.data.opening_balance_updated_at ?? null;
@@ -47,9 +55,12 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
         this.spendingByEmployee = data.data.spending_by_employee ?? [];
         this.meta = data.data.meta;
       } catch (error) {
-        this.error = handleError(error);
+        if (id === fetchSeq) this.error = handleError(error);
       } finally {
-        this.loading = false;
+        if (id === fetchSeq) {
+          this.loading = false;
+          this.refreshing = false;
+        }
       }
     },
 
@@ -69,7 +80,8 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
         // Multipart when a proof file is attached, plain JSON otherwise.
         const { data } = await axiosInstance.post("/company-cash-transactions", toRequestBody(payload));
         this.success = data.message;
-        await this.fetchAll(this.lastParams);
+        // Running balances are computed server-side: refetch, quietly.
+        await this.fetchAll(this.lastParams, { quiet: true });
         return data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -87,7 +99,8 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
         // multipart bodies on a real PUT).
         const { data } = await axiosInstance.post(`/company-cash-transactions/${id}`, toRequestBody({ ...payload, _method: "PUT" }));
         this.success = data.message;
-        await this.fetchAll(this.lastParams);
+        // Running balances are computed server-side: refetch, quietly.
+        await this.fetchAll(this.lastParams, { quiet: true });
         return data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -102,7 +115,8 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
       try {
         const { data } = await axiosInstance.delete(`/company-cash-transactions/${id}`);
         this.success = data.message;
-        await this.fetchAll(this.lastParams);
+        // Running balances are computed server-side: refetch, quietly.
+        await this.fetchAll(this.lastParams, { quiet: true });
       } catch (error) {
         this.error = handleError(error);
         throw error;
@@ -117,7 +131,8 @@ export const useCompanyCashTransactionStore = defineStore("companyCashTransactio
           opening_balance: openingBalance,
         });
         this.success = data.message;
-        await this.fetchAll(this.lastParams);
+        // Running balances are computed server-side: refetch, quietly.
+        await this.fetchAll(this.lastParams, { quiet: true });
         return data.data;
       } catch (error) {
         this.error = handleError(error);

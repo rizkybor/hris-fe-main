@@ -53,7 +53,7 @@ const createQuery = () => ({ new: 1, ...(props.clientId ? { client_id: props.cli
     <div v-else-if="!contracts.length" class="rounded-ui-card border border-dashed border-ui-line-strong">
       <UiEmpty :icon="Wrench" :title="$t('maintenance.panel.empty')" compact />
     </div>
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div v-else class="ui-tray rounded-ui-control p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
       <router-link
         v-for="c in contracts"
         :key="c.id"

@@ -8,8 +8,7 @@ import {
 } from "lucide-vue-next";
 import Avatar from "@/components/common/Avatar.vue";
 import { computed } from "vue";
-import { storeToRefs } from "pinia";
-import { useTeamStore } from "@/stores/team";
+import { useLookupStore } from "@/stores/lookups";
 import { getRoleLabel } from "@/utils/badgeUtils";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
@@ -57,9 +56,10 @@ const enumText = (group: string, value: string) => {
   return value && te(key) ? t(key) : formatText(value);
 };
 
-// Presentation only: show the team's name (teams are already loaded by the
-// Job step) instead of its raw id, and the role's display label.
-const { teams } = storeToRefs(useTeamStore());
+// Presentation only: show the team's name (from the lookups cache the wizard
+// loads) instead of its raw id, and the role's display label.
+const lookups = useLookupStore();
+const teams = computed<any[]>(() => lookups.teams);
 const teamLabel = computed(() => {
   const id = props.step2Data.team_id;
   if (!id) return "-";

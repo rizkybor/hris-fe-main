@@ -1,13 +1,12 @@
 <script setup>
 import CardList from "@/components/admin/project/list/CardList.vue";
 import Statistics from "@/components/admin/project/list/Statistics.vue";
-import BudgetChart from "@/components/admin/project/list/BudgetChart.vue";
-import RealizedChart from "@/components/admin/project/list/RealizedChart.vue";
-import ProjectProgressChart from "@/components/admin/project/list/ProjectProgressChart.vue";
+import RecapSection from "@/components/common/RecapSection.vue";
 import { useProjectStore } from "@/stores/project";
+import { useAuthStore } from "@/stores/auth";
 import { storeToRefs } from "pinia";
-import { Plus, Search, SearchX, X, FolderPlus } from "lucide-vue-next";
-import { computed, ref, watch } from "vue";
+import { Plus, Search, SearchX, X, FolderPlus, ChartPie, ChevronDown } from "lucide-vue-next";
+import { computed, defineAsyncComponent, ref, watch } from "vue";
 import Pagination from "@/components/admin/team/Pagination.vue";
 import { debounce } from "lodash-es";
 import { can } from "@/helpers/permissionHelper";
@@ -20,6 +19,29 @@ import { useStaleFetch } from "@/composables/useStaleFetch";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
+
+// The charts sit behind "Show analysis" (closed by default). They load only
+// once it is opened, so a closed analysis costs no chart code or apexcharts.
+const ProjectProgressChart = defineAsyncComponent(() => import("@/components/admin/project/list/ProjectProgressChart.vue"));
+const BudgetChart = defineAsyncComponent(() => import("@/components/admin/project/list/BudgetChart.vue"));
+const RealizedChart = defineAsyncComponent(() => import("@/components/admin/project/list/RealizedChart.vue"));
+// Open/closed is remembered per user on this browser.
+const recapKey = `projects-recap:${useAuthStore().user?.id ?? "anon"}`;
+const ANALYSIS_KEY = "projects-recap-analysis-open";
+const analysisOpen = ref(false);
+try {
+  analysisOpen.value = localStorage.getItem(ANALYSIS_KEY) === "1";
+} catch {
+  /* storage unavailable */
+}
+const toggleAnalysis = () => {
+  analysisOpen.value = !analysisOpen.value;
+  try {
+    localStorage.setItem(ANALYSIS_KEY, analysisOpen.value ? "1" : "0");
+  } catch {
+    /* storage unavailable */
+  }
+};
 
 // Same status values the old select sent.
 const STATUS_OPTIONS = computed(() => [
@@ -79,11 +101,6 @@ const clearFilters = () => {
   list.status = "";
 };
 
-// KPI tiles that map onto the status filter: Total -> all, Active -> active.
-const onStatFilter = (status) => {
-  list.status = list.status === status ? "" : status;
-};
-
 const handleDelete = async (project) => {
   const ok = await alertModal.confirm(
     t("projects.list.deleteConfirm", { name: project.name }),
@@ -127,14 +144,29 @@ const handleDelete = async (project) => {
       </template>
     </UiPageHeader>
 
-    <template v-if="can('project-statistic')">
-      <Statistics selectable :active-status="list.status" @filter="onStatFilter" />
-      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 ui-stagger">
+    <!-- Recap, same as Subscriptions/Maintenance: KPI tiles always visible
+         (a plain summary; the status chips below are the one filter), the
+         charts behind "Show analysis" -- closed by default, remembered, and
+         not loaded at all until opened. -->
+    <RecapSection v-if="can('project-statistic')" :storage-key="recapKey" :tiles="0" class="!mb-0">
+      <Statistics />
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 h-8 -ml-1 px-1 rounded-ui-control text-ui-cap font-medium text-ui-muted hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
+        :aria-expanded="analysisOpen"
+        aria-controls="projects-recap-analysis"
+        @click="toggleAnalysis"
+      >
+        <ChartPie class="w-3.5 h-3.5" />
+        {{ analysisOpen ? $t("projects.list.hideAnalysis") : $t("projects.list.showAnalysis") }}
+        <ChevronDown class="w-3.5 h-3.5 transition-transform duration-ui-fast" :class="{ 'rotate-180': analysisOpen }" />
+      </button>
+      <div v-if="analysisOpen" id="projects-recap-analysis" class="ui-anim-fade grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
         <ProjectProgressChart />
         <BudgetChart compact />
         <RealizedChart compact />
       </div>
-    </template>
+    </RecapSection>
 
     <!-- Projects Grid Section -->
     <section class="sm:bg-ui-surface sm:border sm:border-ui-line sm:rounded-ui-card">
@@ -158,7 +190,7 @@ const handleDelete = async (project) => {
         </div>
       </div>
 
-      <div class="pt-4 sm:p-5">
+      <div class="pt-4 sm:p-5 sm:ui-tray">
         <p v-if="refreshing" class="sr-only" role="status">{{ $t("projects.list.refreshing") }}</p>
         <SkeletonCardGrid
           v-if="loading"
@@ -207,7 +239,7 @@ const handleDelete = async (project) => {
         </template>
       </div>
 
-      <div class="pt-4 sm:pt-0 sm:px-5 sm:pb-5">
+      <div class="pt-4 sm:py-3.5 sm:px-5 sm:border-t sm:border-ui-line">
         <Pagination
           :meta="meta"
           :loading="loading || refreshing"

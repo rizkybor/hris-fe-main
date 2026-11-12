@@ -5,6 +5,8 @@ import { Briefcase, Save, User, Phone, Mail, MapPin, Tag, Layers, FileText, Buil
 import { UiPageHeader, UiButton, UiInput, UiBadge, UiEmpty } from "@/components/ui";
 import Alert from "@/components/common/Alert.vue";
 import { useClientStore } from "@/stores/client";
+import { useLookupStore } from "@/stores/lookups";
+import { invalidate } from "@/composables/useStaleFetch";
 import { errorMessage } from "@/helpers/errorHelper";
 import { useI18n } from "vue-i18n";
 
@@ -12,6 +14,7 @@ const { t } = useI18n();
 
 const router = useRouter();
 const clientsStore = useClientStore();
+const lookups = useLookupStore();
 
 const loading = ref(false);
 const error = ref("");
@@ -22,12 +25,14 @@ const success = ref("");
 // "recommend but allow a new value" requirement for free) -- no dedicated
 // backend endpoint needed since the full client list is already fetched
 // for pickers elsewhere.
+// The values come from the light /clients/statistic summary (grouped
+// counts), not the full client list with its relations.
 onMounted(() => {
-  if (clientsStore.clients.length === 0) clientsStore.fetchAllClient();
+  if (!clientsStore.statistics && !clientsStore.loadingStatistics) clientsStore.fetchClientStatistics();
 });
 
 const uniqueValues = (key) =>
-  [...new Set(clientsStore.clients.map((c) => c[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  [...new Set((clientsStore.statistics?.[`by_${key}`] || []).map((c) => c[key]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
 
 const clientTypeOptions = computed(() => uniqueValues("type"));
 const clientFieldOptions = computed(() => uniqueValues("field"));
@@ -57,7 +62,18 @@ const submit = async () => {
 
   loading.value = true;
   try {
-    await clientsStore.createClient(form.value);
+    clientsStore.error = null;
+    const saved = await clientsStore.createClient(form.value);
+    if (!saved) {
+      // The store keeps the error instead of throwing.
+      const e = clientsStore.error;
+      error.value = (typeof e === "string" && e) || (e && typeof e === "object" && Object.values(e).flat().join(" ")) || t("clients.form.saveFailed");
+      return;
+    }
+    // Pickers and filters elsewhere pick the change up without a reload:
+    // the store patched clientsStore.clients; mark the cached lists stale.
+    lookups.invalidate("clients");
+    invalidate("clients");
     success.value = t("clients.form.saved");
 
     setTimeout(() => {

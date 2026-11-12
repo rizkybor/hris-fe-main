@@ -2,20 +2,7 @@
 import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { debounce } from "lodash-es";
-import {
-  RefreshCw,
-  Plus,
-  Search,
-  SearchX,
-  Inbox,
-  Edit,
-  Trash2,
-  Receipt,
-  Building2,
-  FolderKanban,
-  MailCheck,
-  CalendarClock,
-} from "lucide-vue-next";
+import { Plus, Search, SearchX, Inbox, Trash2, Receipt, MailCheck } from "lucide-vue-next";
 import { useSubscriptionStore } from "@/stores/subscription";
 import { useLookupStore } from "@/stores/lookups";
 import { useAlertModalStore } from "@/stores/alertModal";
@@ -24,7 +11,7 @@ import { useListState } from "@/composables/useListState";
 import { useStaleFetch } from "@/composables/useStaleFetch";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
-import { formatDateLong as formatDate, formatDate as formatDateMedium } from "@/utils/dateUtils";
+import { formatDate } from "@/utils/dateUtils";
 import Alert from "@/components/common/Alert.vue";
 import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiChips, UiTable, UiEmpty } from "@/components/ui";
 import Pagination from "@/components/common/Pagination.vue";
@@ -122,10 +109,39 @@ const dueBadge = (subscription) => {
   return null;
 };
 
-// H-30: highlights the whole card once a subscription is within 30 days
-// of (or past) its next due date -- a wider heads-up than dueBadge's 7-day
-// badge, which stays as-is for the tighter "about to renew" callout.
+// One badge per row: the due callout when there is one (it only appears
+// for active subscriptions, so it already says "active, and due soon"),
+// otherwise the plain status.
+const rowBadge = (subscription) =>
+  dueBadge(subscription) || {
+    label: STATUS_LABEL.value[subscription.status] || subscription.status,
+    tone: STATUS_TONE[subscription.status] || "neutral",
+  };
+
+// H-30: the due date turns amber once a subscription is within 30 days of
+// (or past) it -- a wider heads-up than dueBadge's 7-day callout.
 const isNearDue = (subscription) => subscription.status === "active" && daysUntil(subscription) <= 30;
+
+// The muted line under the name: client and the first service type, with
+// "+N" for the rest. The full list (with product names and the project)
+// stays in its tooltip and in the edit modal.
+const serviceName = (service) => serviceTypeLabel.value[service.service_type] || service.service_type;
+const rowContext = (subscription) => {
+  const services = subscription.services || [];
+  return {
+    client: subscription.client?.name || "-",
+    service: services.length ? serviceName(services[0]) : "",
+    more: Math.max(0, services.length - 1),
+  };
+};
+const rowContextTitle = (subscription) =>
+  [
+    subscription.client?.name,
+    subscription.project?.name,
+    ...(subscription.services || []).map((s) => (s.product_name ? `${serviceName(s)} · ${s.product_name}` : serviceName(s))),
+  ]
+    .filter(Boolean)
+    .join("\n");
 
 // The backend's daily H-30 job records which due date it already emailed
 // contact@ about; once that matches the current next_due_date, this cycle's
@@ -154,7 +170,7 @@ const COLUMNS = computed(() => [
   { key: "status", label: t("common.labels.status") },
   { key: "amount", label: t("common.labels.amount"), align: "right" },
   { key: "next_due_date", label: t("subscriptions.list.columns.nextDue") },
-  { key: "actions", label: "", align: "right" },
+  { key: "actions", label: "", align: "right", width: 96 },
 ]);
 
 // ===== Add / Edit modal =====
@@ -290,13 +306,13 @@ const onRowClick = (subscription) => can("subscription-edit") && openEdit(subscr
     <Alert type="danger" :title="typeof error === 'string' ? error : ''" :show="!!error && typeof error === 'string'" @close="store.clearMessages()" />
 
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
-      <!-- Toolbar -->
-      <div class="px-4 sm:px-5 py-3.5 border-b border-ui-line flex flex-col lg:flex-row lg:items-center gap-2.5 lg:gap-3">
+      <!-- Toolbar: search · status chips · type, one line on desktop -->
+      <div class="px-4 sm:px-5 py-3 border-b border-ui-line flex flex-col lg:flex-row lg:items-center gap-2.5 lg:gap-3">
         <div class="flex flex-col sm:flex-row gap-2 lg:contents">
-          <UiInput v-model="search" :icon="Search" :placeholder="$t('subscriptions.list.searchPlaceholder')" class="flex-1 lg:flex-none lg:w-[300px]" :aria-label="$t('subscriptions.list.searchAria')" />
-          <UiSelect v-model="serviceTypeFilter" :options="typeFilterOptions" class="sm:w-[200px] lg:order-last lg:ml-auto" :aria-label="$t('subscriptions.list.serviceType')" />
+          <UiInput v-model="search" :icon="Search" :placeholder="$t('subscriptions.list.searchPlaceholder')" class="flex-1 lg:flex-none lg:w-[240px]" :aria-label="$t('subscriptions.list.searchAria')" />
+          <UiSelect v-model="serviceTypeFilter" :options="typeFilterOptions" class="sm:w-[180px] lg:order-last lg:ml-auto shrink-0" :aria-label="$t('subscriptions.list.serviceType')" />
         </div>
-        <UiChips v-model="statusFilter" :options="STATUS_CHIPS" class="min-w-0" />
+        <UiChips v-model="statusFilter" :options="STATUS_CHIPS" size="sm" class="min-w-0 lg:flex-1" />
       </div>
 
       <UiTable
@@ -310,45 +326,43 @@ const onRowClick = (subscription) => can("subscription-edit") && openEdit(subscr
         @row-click="onRowClick"
       >
         <template #cell-name="{ row }">
-          <div class="min-w-0 max-w-[420px] py-2">
-            <p class="text-ui-ink font-medium truncate" :title="row.name">{{ row.name }}</p>
-            <div class="flex items-center gap-x-3 gap-y-1 flex-wrap mt-1 text-ui-cap text-ui-muted">
-              <span v-for="service in row.services" :key="service.id" class="inline-flex items-center px-1.5 h-5 rounded bg-ui-subtle text-ui-text max-w-full truncate">
-                {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
-              </span>
-              <span class="inline-flex items-center gap-1 min-w-0 max-w-full">
-                <Building2 class="w-3 h-3 shrink-0 text-ui-faint" /><span class="truncate">{{ row.client?.name || "-" }}</span>
-              </span>
-              <span v-if="row.project" class="inline-flex items-center gap-1 min-w-0 max-w-full">
-                <FolderKanban class="w-3 h-3 shrink-0 text-ui-faint" /><span class="truncate">{{ row.project.name }}</span>
-              </span>
-            </div>
+          <div class="min-w-0 max-w-[420px] py-2.5">
+            <!-- The name is the keyboard way into "edit" (rows open it on click). -->
+            <button
+              v-if="can('subscription-edit')"
+              type="button"
+              class="block max-w-full text-left text-ui-ink font-medium truncate rounded-sm hover:underline underline-offset-2 focus:outline-none focus-visible:shadow-ui-focus"
+              :title="$t('subscriptions.list.editSubscription')"
+              @click.stop="openEdit(row)"
+            >{{ row.name }}</button>
+            <p v-else class="text-ui-ink font-medium truncate" :title="row.name">{{ row.name }}</p>
+            <p class="mt-0.5 text-ui-cap text-ui-muted truncate" :title="rowContextTitle(row)">
+              {{ rowContext(row).client }}<template v-if="rowContext(row).service"> · {{ rowContext(row).service }}</template>
+              <span v-if="rowContext(row).more" class="text-ui-faint">&nbsp;{{ $t("subscriptions.list.moreServices", { n: rowContext(row).more }) }}</span>
+            </p>
           </div>
         </template>
         <template #cell-status="{ row }">
-          <div class="flex flex-col items-start gap-1">
-            <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot>{{ STATUS_LABEL[row.status] || row.status }}</UiBadge>
-            <UiBadge v-if="dueBadge(row)" :tone="dueBadge(row).tone">{{ dueBadge(row).label }}</UiBadge>
-          </div>
+          <UiBadge :tone="rowBadge(row).tone" dot>{{ rowBadge(row).label }}</UiBadge>
         </template>
         <template #cell-amount="{ row }">
           <p class="text-ui-ink font-medium tabular-nums whitespace-nowrap">{{ formatRupiah(row.amount) }}</p>
-          <p class="text-ui-cap text-ui-muted capitalize">{{ cycleLabel(row.billing_cycle) }}</p>
+          <p class="text-ui-cap text-ui-muted">{{ cycleLabel(row.billing_cycle) }}</p>
         </template>
         <template #cell-next_due_date="{ row }">
-          <p class="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-ink'">
-            <CalendarClock v-if="isNearDue(row)" class="w-3.5 h-3.5 shrink-0" />{{ formatDate(row.next_due_date) }}
-          </p>
-          <p
-            v-if="reminderSent(row)"
-            class="text-ui-cap text-ui-ok font-medium flex items-center gap-1"
-            :title="$t('subscriptions.list.reminderTitle', { date: formatDate(row.next_due_date) })"
-          >
-            <MailCheck class="w-3.5 h-3.5 shrink-0" /> {{ $t("subscriptions.list.reminderEmailed") }}
-          </p>
+          <span class="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-text'">
+            {{ formatDate(row.next_due_date) }}
+            <MailCheck
+              v-if="reminderSent(row)"
+              class="w-3.5 h-3.5 shrink-0 text-ui-ok"
+              role="img"
+              :aria-label="$t('subscriptions.list.reminderEmailed')"
+              :title="$t('subscriptions.list.reminderTitle', { date: formatDate(row.next_due_date) })"
+            />
+          </span>
         </template>
         <template #cell-actions="{ row }">
-          <div class="flex items-center justify-end gap-1" @click.stop>
+          <div class="flex items-center justify-end gap-0.5" @click.stop>
             <UiButton
               v-if="can('subscription-generate-invoice') && row.status === 'active'"
               variant="secondary"
@@ -359,41 +373,51 @@ const onRowClick = (subscription) => can("subscription-edit") && openEdit(subscr
               :aria-label="$t('subscriptions.list.generateInvoice')"
               @click="handleGenerateInvoice(row)"
             />
-            <UiButton v-if="can('subscription-edit')" variant="ghost" size="sm" :icon="Edit" :title="$t('common.actions.edit')" :aria-label="$t('subscriptions.list.editSubscription')" @click="openEdit(row)" />
-            <UiButton v-if="can('subscription-delete')" variant="ghost" size="sm" :icon="Trash2" class="hover:!text-ui-bad" :title="$t('common.actions.delete')" :aria-label="$t('subscriptions.list.deleteSubscription')" @click="handleDelete(row)" />
+            <UiButton
+              v-if="can('subscription-delete')"
+              variant="ghost"
+              size="sm"
+              :icon="Trash2"
+              class="!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('subscriptions.list.deleteSubscription')"
+              @click="handleDelete(row)"
+            />
           </div>
         </template>
 
-        <!-- Phones: stacked row cards -->
+        <!-- Phones: the same simplified row as a card -->
         <template #mobile="{ row, number }">
-          <div class="px-4 py-3.5" :class="isNearDue(row) ? 'bg-ui-warn-soft/60' : ''">
+          <div class="px-4 py-3.5">
             <div class="flex items-start gap-3">
               <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
               <div class="flex-1 min-w-0">
                 <p class="text-ui-body font-medium text-ui-ink line-clamp-2 break-words">{{ row.name }}</p>
                 <p class="text-ui-cap text-ui-muted truncate mt-0.5">
-                  {{ row.client?.name || "-" }}<template v-if="row.project"> · {{ row.project.name }}</template>
+                  {{ rowContext(row).client }}<template v-if="rowContext(row).service"> · {{ rowContext(row).service }}</template>
+                  <span v-if="rowContext(row).more" class="text-ui-faint">&nbsp;{{ $t("subscriptions.list.moreServices", { n: rowContext(row).more }) }}</span>
                 </p>
-                <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
-                  <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot>{{ STATUS_LABEL[row.status] || row.status }}</UiBadge>
-                  <UiBadge v-if="dueBadge(row)" :tone="dueBadge(row).tone">{{ dueBadge(row).label }}</UiBadge>
-                  <span v-for="service in row.services" :key="service.id" class="inline-flex items-center px-1.5 h-5 rounded bg-ui-subtle text-ui-cap text-ui-text max-w-full truncate">
-                    {{ serviceTypeLabel[service.service_type] || service.service_type }}{{ service.product_name ? ` · ${service.product_name}` : "" }}
-                  </span>
-                </div>
               </div>
               <div class="text-right shrink-0">
                 <p class="text-ui-body font-medium text-ui-ink tabular-nums">{{ formatRupiah(row.amount) }}</p>
-                <p class="text-ui-cap text-ui-muted capitalize">{{ cycleLabel(row.billing_cycle) }}</p>
+                <p class="text-ui-cap text-ui-muted">{{ cycleLabel(row.billing_cycle) }}</p>
               </div>
             </div>
-            <div class="flex items-center gap-2 mt-2.5 pl-8" @click.stop>
-              <div class="flex-1 min-w-0">
-                <p class="text-ui-cap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-muted'">{{ $t("subscriptions.list.nextDueOn", { date: formatDateMedium(row.next_due_date) }) }}</p>
-                <p v-if="reminderSent(row)" class="text-ui-cap text-ui-ok font-medium flex items-center gap-1">
-                  <MailCheck class="w-3.5 h-3.5 shrink-0" /> {{ $t("subscriptions.list.reminderEmailed") }}
-                </p>
+            <div class="flex items-center gap-2 mt-2 pl-8">
+              <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                <UiBadge :tone="rowBadge(row).tone" dot>{{ rowBadge(row).label }}</UiBadge>
+                <span class="inline-flex items-center gap-1 text-ui-cap tabular-nums" :class="isNearDue(row) ? 'text-ui-warn font-medium' : 'text-ui-muted'">
+                  {{ $t("subscriptions.list.nextDueOn", { date: formatDate(row.next_due_date) }) }}
+                  <MailCheck
+                    v-if="reminderSent(row)"
+                    class="w-3.5 h-3.5 shrink-0 text-ui-ok"
+                    role="img"
+                    :aria-label="$t('subscriptions.list.reminderEmailed')"
+                    :title="$t('subscriptions.list.reminderTitle', { date: formatDate(row.next_due_date) })"
+                  />
+                </span>
               </div>
+              <div class="flex items-center gap-1 shrink-0" @click.stop>
               <UiButton
                 v-if="can('subscription-generate-invoice') && row.status === 'active'"
                 variant="secondary"
@@ -403,8 +427,16 @@ const onRowClick = (subscription) => can("subscription-edit") && openEdit(subscr
                 :aria-label="$t('subscriptions.list.generateInvoice')"
                 @click="handleGenerateInvoice(row)"
               />
-              <UiButton v-if="can('subscription-edit')" variant="secondary" size="sm" :icon="Edit" :aria-label="$t('subscriptions.list.editSubscription')" @click="openEdit(row)" />
-              <UiButton v-if="can('subscription-delete')" variant="danger" size="sm" :icon="Trash2" :aria-label="$t('subscriptions.list.deleteSubscription')" @click="handleDelete(row)" />
+              <UiButton
+                v-if="can('subscription-delete')"
+                variant="ghost"
+                size="sm"
+                :icon="Trash2"
+                class="!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft"
+                :aria-label="$t('subscriptions.list.deleteSubscription')"
+                @click="handleDelete(row)"
+              />
+              </div>
             </div>
           </div>
         </template>

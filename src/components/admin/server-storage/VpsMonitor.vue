@@ -250,7 +250,7 @@ const step = (delta) => {
         </div>
       </div>
 
-      <div class="p-4 sm:p-5">
+      <div class="p-4 sm:p-5 ui-tray rounded-b-ui-card">
         <UiAlert v-if="error" tone="bad" :title="error" class="mb-4" />
 
         <UiSpinner v-if="loading && !loaded" />
