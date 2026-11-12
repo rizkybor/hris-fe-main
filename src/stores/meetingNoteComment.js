@@ -2,26 +2,37 @@ import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
 
+let fetchSeq = 0;
+
 export const useMeetingNoteCommentStore = defineStore("meetingNoteComment", {
     state: () => ({
         comments: [],
+        // The note `comments` belong to.
+        noteId: null,
         loading: false,
         submitting: false,
         error: null,
     }),
 
     actions: {
+        // Coming back to the same note shows its thread at once and refreshes
+        // quietly; another note's thread is never shown while this one loads.
         async fetchComments(meetingNoteId) {
-            this.loading = true;
+            const seq = ++fetchSeq;
+            if (String(this.noteId) !== String(meetingNoteId)) {
+                this.comments = [];
+                this.noteId = meetingNoteId;
+                this.loading = true;
+            }
             this.error = null;
 
             try {
                 const response = await axiosInstance.get(`meeting-notes/${meetingNoteId}/comments`);
-                this.comments = response.data.data;
+                if (seq === fetchSeq) this.comments = response.data.data;
             } catch (error) {
-                this.error = handleError(error);
+                if (seq === fetchSeq) this.error = handleError(error);
             } finally {
-                this.loading = false;
+                if (seq === fetchSeq) this.loading = false;
             }
         },
 

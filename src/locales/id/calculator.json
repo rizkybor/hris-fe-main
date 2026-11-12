@@ -30,7 +30,8 @@
       "byScenario": "rincian per skenario",
       "features": "Fitur",
       "builds": "Build",
-      "landingPages": "Landing Page"
+      "landingPages": "Landing Page",
+      "scenarioSplit": "Fitur · Bangun · Landing Page"
     },
     "teamRate": {
       "title": "Pengaturan Rate Tim",
@@ -64,7 +65,17 @@
       "title": "Belum ada estimasi",
       "message": "Buat estimasi proyek pertama untuk mulai membangun riwayat penawaran."
     },
-    "itemLabel": "estimasi"
+    "itemLabel": "estimasi",
+    "refreshing": "Memperbarui…",
+    "noClient": "Tanpa klien",
+    "editItem": "Ubah {name}",
+    "viewItem": "Lihat {name}",
+    "deleteItem": "Hapus {name}",
+    "deleted": "Estimasi dihapus",
+    "noMatch": {
+      "title": "Tidak ada estimasi yang cocok",
+      "message": "Coba kata kunci atau skenario lain."
+    }
   },
   "lpModal": {
     "description": "Atur harga paket untuk skenario Landing Page",

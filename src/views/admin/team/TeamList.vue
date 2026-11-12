@@ -8,7 +8,7 @@ import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
 import { debounce } from "lodash-es";
 import { useI18n } from "vue-i18n";
-import { Upload, Plus, SearchIcon, Users2 } from "lucide-vue-next";
+import { Plus, SearchIcon, Users2 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 import { UiPageHeader, UiButton, UiInput, UiChips, UiSelect, UiEmpty, UiSpinner } from "@/components/ui";
@@ -77,7 +77,6 @@ const departmentOptions = computed(() => [
         {{ $t("common.pagination.showingItems", { from: meta.from, to: meta.to, total: meta.total, items: $t("teams.list.itemLabel") }) }}
       </template>
       <template #actions>
-        <UiButton variant="secondary" :icon="Upload" class="flex-1 sm:flex-none">{{ $t("teams.list.importCsv") }}</UiButton>
         <UiButton :icon="Plus" :to="{ name: 'admin.team.create' }" class="flex-1 sm:flex-none">{{ $t("teams.list.addTeam") }}</UiButton>
       </template>
     </UiPageHeader>

@@ -1,55 +1,63 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
-import { ShoppingCart, Plus, Download, FileText, Pencil, Ban, Trash2, Search, ArrowLeft, Wallet } from "lucide-vue-next";
+import { debounce } from "lodash-es";
+import { ShoppingCart, Plus, Download, FileText, Ban, Trash2, Search, SearchX, ArrowLeft } from "lucide-vue-next";
 import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
-import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
+import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
-import { UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiPageHeader, UiPagination, UiChips, UiTable } from "@/components/ui";
+import { UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiPageHeader, UiPagination, UiChips, UiTable, UiSpinner } from "@/components/ui";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useToastStore } from "@/stores/toast";
 
 const { t } = useI18n();
+const router = useRouter();
 const store = usePurchaseOrderStore();
 const alertModal = useAlertModalStore();
-const { orders, meta, loading } = storeToRefs(store);
+const toast = useToastStore();
+const { orders, meta } = storeToRefs(store);
 
-const search = ref("");
-const statusFilter = ref("");
-const isDeleteModalOpen = ref(false);
-const orderToDelete = ref(null);
+// Search, status and page live in the URL and are remembered, so coming
+// back from a purchase order restores the same view; the list shows what the
+// store already has and refreshes quietly.
+const list = useListState("purchase-orders", { q: "", status: "", page: 1 });
+const search = ref(list.q);
+watch(search, debounce((v) => (list.q = v.trim()), 300));
+watch(() => list.q, (v) => v !== search.value.trim() && (search.value = v));
+
+const params = computed(() => ({ search: list.q || undefined, status: list.status || undefined, page: list.page }));
+const { loading, refreshing, refresh } = useStaleFetch(() => store.fetchOrders(params.value), {
+  key: () => ["purchase-orders-list", params.value],
+  hasData: () => store.listKey !== null,
+});
+
+const failed = (error) => toast.error(t("common.toast.error"), error?.response?.data?.message || "");
+
 const downloadingId = ref(null);
-
-const load = (page = 1) => {
-  store.fetchOrders({
-    search: search.value || undefined,
-    status: statusFilter.value || undefined,
-    page,
-  });
-};
-
-onMounted(() => load());
-
-const handleSearch = () => load(1);
-const handleFilterChange = () => load(1);
-
 const handleDownload = async (order) => {
   downloadingId.value = order.id;
   try {
     await store.downloadPdf(order.id, order.po_number);
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    toast.error(t("documents.shared.pdfFailed"));
   } finally {
     downloadingId.value = null;
   }
 };
 
+// store.viewPdf opens the tab synchronously, inside this click.
 const viewingId = ref(null);
 const handleViewPdf = async (order) => {
   viewingId.value = order.id;
   try {
     await store.viewPdf(order.id);
+  } catch (error) {
+    toast.error(t("documents.shared.pdfFailed"));
   } finally {
     viewingId.value = null;
   }
@@ -57,57 +65,71 @@ const handleViewPdf = async (order) => {
 
 const handleCancel = async (order) => {
   if (
-    !(await alertModal.confirm(
-      t("documents.purchaseOrder.list.cancelConfirm", { number: order.po_number }),
-      { type: "warning", confirmText: t("documents.purchaseOrder.list.cancelPo") }
-    ))
+    !(await alertModal.confirm(t("documents.purchaseOrder.list.cancelConfirm", { number: order.po_number }), {
+      type: "warning",
+      confirmText: t("documents.purchaseOrder.list.cancelPo"),
+    }))
   )
     return;
-  await store.cancelOrder(order.id);
+  try {
+    await store.cancelOrder(order.id);
+    toast.success(t("documents.purchaseOrder.list.toast.cancelled"), order.po_number);
+  } catch (error) {
+    failed(error);
+  }
 };
 
+const isDeleteModalOpen = ref(false);
+const orderToDelete = ref(null);
 const confirmDelete = (order) => {
   orderToDelete.value = order;
   isDeleteModalOpen.value = true;
 };
 
+// The row leaves the page in place (no reload); an emptied later page
+// steps back one.
 const handleDelete = async () => {
   if (!orderToDelete.value) return;
-  await store.deleteOrder(orderToDelete.value.id);
-  isDeleteModalOpen.value = false;
-  orderToDelete.value = null;
+  try {
+    await store.deleteOrder(orderToDelete.value.id);
+    toast.success(t("documents.purchaseOrder.list.toast.deleted"), orderToDelete.value.po_number);
+    if (!orders.value.length) {
+      if (list.page > 1) list.page -= 1;
+      else if (meta.value.total) refresh({ force: true });
+    }
+  } catch (error) {
+    failed(error);
+  } finally {
+    isDeleteModalOpen.value = false;
+    orderToDelete.value = null;
+  }
 };
 
-// Presentation only: status -> badge tone (always shown with its label).
+// The row opens it for editing; without that right, its PDF.
+const openOrder = (order) => (can("purchase-order-edit") ? router.push({ name: "admin.purchase-orders.edit", params: { id: order.id } }) : handleViewPdf(order));
+
+// ===== Presentation only =====
 const statusTone = (status) => (status === "cancelled" ? "neutral" : "ok");
 const statusLabel = (status) => (status === "cancelled" ? t("documents.shared.status.cancelled") : t("common.labels.active"));
-
 const formatDate = (date) =>
   date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "short", day: "numeric" }) : "-";
 
-// Presentation only.
 const statusOptions = computed(() =>
   [
     { value: "", label: t("common.labels.all") },
     { value: "active", label: t("common.labels.active") },
     { value: "cancelled", label: t("documents.shared.status.cancelled") },
-  ].map((o) => ({ ...o, count: o.value === statusFilter.value && !loading.value ? meta.value.total : undefined }))
+  ].map((o) => ({ ...o, count: o.value === list.status && !loading.value && !refreshing.value ? meta.value.total : undefined }))
 );
-const onStatusChip = (value) => {
-  statusFilter.value = value;
-  handleFilterChange();
-};
-const activeSum = computed(() => orders.value.filter((r) => r.status !== "cancelled").reduce((sum, r) => sum + (Number(r.total) || 0), 0));
-const cancelledCount = computed(() => orders.value.filter((r) => r.status === "cancelled").length);
+const statusFilter = computed({ get: () => list.status, set: (v) => (list.status = v) });
 const columns = computed(() => [
-  { key: "po_number", label: t("documents.purchaseOrder.list.columns.number") },
   { key: "client_name", label: t("common.labels.client") },
-  { key: "title", label: t("documents.purchaseOrder.fields.title") },
   { key: "date", label: t("common.labels.date") },
   { key: "total", label: t("common.labels.total"), align: "right" },
   { key: "status", label: t("common.labels.status") },
   { key: "actions", label: "", align: "right" },
 ]);
+const quietDelete = "!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft";
 </script>
 
 <template>
@@ -124,85 +146,106 @@ const columns = computed(() => [
         </router-link>
       </template>
       <template #actions>
-        <UiButton v-if="can('purchase-order-create')" :to="{ name: 'admin.purchase-orders.create' }" :icon="Plus">{{ $t("documents.purchaseOrder.list.create") }}</UiButton>
+        <UiButton v-if="can('purchase-order-create')" :to="{ name: 'admin.purchase-orders.create' }" :icon="Plus" class="w-full sm:w-auto">{{ $t("documents.purchaseOrder.list.create") }}</UiButton>
       </template>
     </UiPageHeader>
 
-
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
-      <div class="px-4 sm:px-5 py-3.5 flex flex-col lg:flex-row lg:items-center gap-3 border-b border-ui-line">
+      <!-- Toolbar: search · status chips, one line on desktop -->
+      <div class="px-4 sm:px-5 py-3 border-b border-ui-line flex flex-col lg:flex-row lg:items-center gap-2.5 lg:gap-3">
         <UiInput
           v-model="search"
+          type="search"
           :icon="Search"
           :placeholder="$t('documents.purchaseOrder.list.searchPlaceholder')"
-          class="w-full lg:w-[300px]"
-          @keyup.enter="handleSearch"
+          :aria-label="$t('documents.purchaseOrder.list.searchPlaceholder')"
+          class="w-full lg:w-[280px] shrink-0"
         />
-        <UiChips :model-value="statusFilter" :options="statusOptions" @update:model-value="onStatusChip" />
+        <UiChips v-model="statusFilter" :options="statusOptions" size="sm" class="min-w-0 lg:flex-1" />
+        <span v-if="refreshing" class="inline-flex items-center gap-1.5 text-ui-cap text-ui-muted shrink-0" role="status">
+          <UiSpinner size="14px" :center="false" />{{ $t("documents.shared.refreshing") }}
+        </span>
       </div>
 
-      <UiTable :columns="columns" :rows="orders" :meta="meta" :loading="loading" :skeleton-rows="6">
-        <template #cell-po_number="{ row }">
-          <span class="font-mono text-ui-cap text-ui-ink whitespace-nowrap">{{ row.po_number }}</span>
-        </template>
+      <UiTable
+        :columns="columns"
+        :rows="orders"
+        :meta="meta"
+        :loading="loading"
+        :skeleton-rows="6"
+        :clickable="true"
+        :class="refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
+        @row-click="openOrder"
+      >
         <template #cell-client_name="{ row }">
-          <span class="text-ui-body text-ui-ink">{{ row.client_name }}</span>
-        </template>
-        <template #cell-title="{ row }">
-          <span class="text-ui-small text-ui-text">{{ row.title }}</span>
+          <div class="min-w-0 max-w-[400px] py-2">
+            <RouterLink
+              v-if="can('purchase-order-edit')"
+              :to="{ name: 'admin.purchase-orders.edit', params: { id: row.id } }"
+              class="block text-ui-ink font-medium truncate hover:underline underline-offset-2"
+              :title="$t('documents.shared.editItem', { number: row.po_number })"
+              @click.stop
+            >{{ row.client_name }}</RouterLink>
+            <p v-else class="text-ui-ink font-medium truncate">{{ row.client_name }}</p>
+            <p class="mt-0.5 text-ui-cap text-ui-muted truncate" :title="row.title"><span class="font-mono">{{ row.po_number }}</span><template v-if="row.title"> · {{ row.title }}</template></p>
+          </div>
         </template>
         <template #cell-date="{ row }">
           <span class="text-ui-small text-ui-text tabular-nums whitespace-nowrap">{{ formatDate(row.date) }}</span>
         </template>
         <template #cell-total="{ row }">
-          <span class="text-ui-body font-medium text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(row.total) }}</span>
+          <p class="text-ui-body font-medium text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(row.total) }}</p>
         </template>
         <template #cell-status="{ row }">
           <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
         </template>
         <template #cell-actions="{ row }">
-          <div class="flex items-center justify-end gap-0.5">
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="FileText" :loading="viewingId === row.id" :title="$t('documents.shared.viewPdf')" :aria-label="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)" />
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('common.actions.downloadPdf')" @click="handleDownload(row)" />
-            <UiButton v-if="can('purchase-order-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.purchase-orders.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
-            <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" :title="$t('documents.purchaseOrder.list.cancelPo')" :aria-label="$t('documents.purchaseOrder.list.cancelPo')" @click="handleCancel(row)" />
-            <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
+          <div class="flex items-center justify-end gap-0.5" @click.stop>
+            <!-- Status actions first, so View and Delete line up on the right -->
+            <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" :title="$t('documents.purchaseOrder.list.cancelPo')" :aria-label="$t('documents.shared.cancelItem', { number: row.po_number })" @click="handleCancel(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.po_number })" @click="handleDownload(row)" />
+            <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.po_number })" :title="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)">{{ $t("documents.shared.pdf") }}</UiButton>
+            <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" :class="['w-[30px] !px-0', quietDelete]" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('documents.shared.deleteItem', { number: row.po_number })" @click="confirmDelete(row)" />
           </div>
         </template>
 
+        <!-- Phones: the same row as a card -->
         <template #mobile="{ row, number }">
-          <div class="flex items-start gap-3 px-4 py-3.5">
-            <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <p class="text-ui-body font-medium text-ui-ink truncate">{{ row.client_name }}</p>
-                  <p class="font-mono text-ui-cap text-ui-muted truncate">{{ row.po_number }}</p>
-                </div>
-                <p class="text-ui-body font-medium text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(row.total) }}</p>
+          <div class="px-4 py-3.5">
+            <div class="flex items-start gap-3">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-ui-body font-medium text-ui-ink line-clamp-2 break-words">{{ row.client_name }}</p>
+                <p class="text-ui-cap text-ui-muted truncate mt-0.5"><span class="font-mono">{{ row.po_number }}</span><template v-if="row.title"> · {{ row.title }}</template></p>
               </div>
-              <p v-if="row.title" class="mt-1 text-ui-cap text-ui-muted truncate">{{ row.title }}</p>
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
-                <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
-                <span class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(row.date) }}</span>
+              <div class="text-right shrink-0">
+                <p class="text-ui-body font-medium text-ui-ink tabular-nums">{{ formatRupiah(row.total) }}</p>
+                <p class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(row.date) }}</p>
               </div>
-              <div class="flex items-center gap-0.5 mt-2 -ml-2">
-                <UiButton variant="ghost" size="sm" :icon="FileText" :loading="viewingId === row.id" @click="handleViewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
-                <UiButton variant="ghost" size="sm" :icon="Download" :loading="downloadingId === row.id" @click="handleDownload(row)">PDF</UiButton>
-                <UiButton v-if="can('purchase-order-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.purchase-orders.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
-                <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" :title="$t('documents.purchaseOrder.list.cancelPo')" :aria-label="$t('documents.purchaseOrder.list.cancelPo')" @click="handleCancel(row)" />
-                <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
-              </div>
+            </div>
+            <div class="flex items-center gap-2 mt-2 pl-8 flex-wrap">
+              <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
+            </div>
+            <div class="flex items-center gap-1 mt-2 pl-8" @click.stop>
+              <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.po_number })" @click="handleViewPdf(row)">{{ $t("documents.shared.pdf") }}</UiButton>
+              <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.po_number })" @click="handleDownload(row)" />
+              <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" :aria-label="$t('documents.shared.cancelItem', { number: row.po_number })" @click="handleCancel(row)" />
+              <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" :class="['w-[30px] !px-0 ml-auto', quietDelete]" :icon="Trash2" :aria-label="$t('documents.shared.deleteItem', { number: row.po_number })" @click="confirmDelete(row)" />
             </div>
           </div>
         </template>
 
         <template #empty>
-          <UiEmpty :icon="ShoppingCart" :title="$t('documents.purchaseOrder.list.emptyTitle')" compact />
+          <UiEmpty v-if="list.isDirty" :icon="SearchX" :title="$t('documents.shared.noMatchTitle')" :message="$t('documents.shared.noMatchHint')" compact>
+            <UiButton variant="secondary" @click="(search = ''), list.reset()">{{ $t("common.actions.clearFilters") }}</UiButton>
+          </UiEmpty>
+          <UiEmpty v-else :icon="ShoppingCart" :title="$t('documents.purchaseOrder.list.emptyTitle')" compact>
+            <UiButton v-if="can('purchase-order-create')" variant="secondary" :icon="Plus" :to="{ name: 'admin.purchase-orders.create' }">{{ $t("documents.purchaseOrder.list.create") }}</UiButton>
+          </UiEmpty>
         </template>
       </UiTable>
 
-      <UiPagination v-if="meta.total" :meta="meta" :item-label="$t('documents.purchaseOrder.list.itemLabel')" :disabled="loading" @change="load" />
+      <UiPagination v-if="meta.total" :meta="meta" :item-label="$t('documents.purchaseOrder.list.itemLabel')" :disabled="loading" @change="(p) => (list.page = p)" />
     </section>
 
     <UiConfirmDialog

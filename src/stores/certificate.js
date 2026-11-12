@@ -1,6 +1,9 @@
 import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
+import { openBlobPdf } from "@/utils/pdfTab";
+
+let listSeq = 0;
 
 const filenameFromDisposition = (disposition, fallback) => {
   if (!disposition) return fallback;
@@ -11,10 +14,14 @@ const filenameFromDisposition = (disposition, fallback) => {
 export const useCertificateStore = defineStore("certificate", {
   state: () => ({
     certificates: [],
+    // Params of the list now shown (null until the first load).
+    listKey: null,
     meta: { current_page: 1, last_page: 1, per_page: 10, total: 0 },
     statistics: { total_certificates: 0, total_batches: 0, this_month: 0 },
+    statisticsLoaded: false,
     settings: { company_code: "", number_format: "" },
     templates: [],
+    templatesLoaded: false,
     loading: false,
     error: null,
     success: null,
@@ -22,18 +29,22 @@ export const useCertificateStore = defineStore("certificate", {
 
   actions: {
     async fetchCertificates(params = {}) {
+      const seq = ++listSeq;
       this.loading = true;
       this.error = null;
       try {
         const { data } = await axiosInstance.get("/certificates", {
           params: { row_per_page: 10, ...params },
         });
+        // A response that comes back after a newer request is dropped.
+        if (seq !== listSeq) return;
         this.certificates = data.data.data;
         this.meta = data.data.meta;
+        this.listKey = JSON.stringify(params);
       } catch (error) {
-        this.error = handleError(error);
+        if (seq === listSeq) this.error = handleError(error);
       } finally {
-        this.loading = false;
+        if (seq === listSeq) this.loading = false;
       }
     },
 
@@ -45,6 +56,7 @@ export const useCertificateStore = defineStore("certificate", {
     async fetchStatistics() {
       const { data } = await axiosInstance.get("/certificates/statistics");
       this.statistics = data.data;
+      this.statisticsLoaded = true;
     },
 
     async fetchSettings() {
@@ -68,6 +80,13 @@ export const useCertificateStore = defineStore("certificate", {
     async fetchTemplates() {
       const { data } = await axiosInstance.get("/certificate-templates");
       this.templates = data.data;
+      this.templatesLoaded = true;
+    },
+
+    // For pickers: the list Settings keeps in step (create/delete update
+    // it), so it's fetched once per session.
+    async ensureTemplates() {
+      if (!this.templatesLoaded) await this.fetchTemplates();
     },
 
     async createTemplate(formData) {
@@ -150,9 +169,19 @@ export const useCertificateStore = defineStore("certificate", {
       window.URL.revokeObjectURL(url);
     },
 
+    // Opens the certificate PDF in the browser's own viewer in a new tab.
+    // Call it straight from the click handler, without awaiting first.
+    viewPdf(id, tab = window.open("", "_blank")) {
+      return openBlobPdf(tab, () => axiosInstance.get(`/certificates/${id}/download`, { responseType: "blob" }));
+    },
+
     async deleteCertificate(id) {
       await axiosInstance.delete(`/certificates/${id}`);
+      const before = this.certificates.length;
       this.certificates = this.certificates.filter((c) => c.id !== id);
+      if (this.certificates.length < before && this.meta?.total) {
+        this.meta = { ...this.meta, total: this.meta.total - 1, to: this.meta.to ? this.meta.to - 1 : this.meta.to };
+      }
     },
   },
 });

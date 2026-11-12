@@ -6,6 +6,7 @@ import { Plus, Trash2, ArrowLeft, Check } from "lucide-vue-next";
 import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader, UiSelect } from "@/components/ui";
 import { usePurchaseOrderStore } from "@/stores/purchaseOrder";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
 
 const { t } = useI18n();
 const store = usePurchaseOrderStore();
@@ -46,6 +47,13 @@ const removeTerm = (i) => form.value.payment_terms.splice(i, 1);
 
 const totalPreview = () => form.value.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
 
+// Leaving with unsaved edits asks first.
+const loadingRecord = ref(isEditMode.value);
+const snapshot = () => JSON.stringify(form.value);
+const savedState = ref(snapshot());
+const markSaved = () => (savedState.value = snapshot());
+useUnsavedGuard(() => !loadingRecord.value && snapshot() !== savedState.value);
+
 onMounted(async () => {
   if (!isEditMode.value) return;
 
@@ -70,6 +78,9 @@ onMounted(async () => {
     form.value.use_signature = !!order.use_signature;
   } catch (error) {
     errorMessage.value = t("documents.purchaseOrder.form.errors.load");
+  } finally {
+    loadingRecord.value = false;
+    markSaved();
   }
 });
 
@@ -78,10 +89,12 @@ const handleSubmit = async () => {
   submitting.value = true;
   try {
     if (isEditMode.value) {
-      await store.updateOrder(editingId.value, form.value);
+      // The list shows the saved row without reloading.
+      store.patchRow(editingId.value, await store.updateOrder(editingId.value, form.value));
     } else {
       await store.createOrder(form.value);
     }
+    markSaved();
     router.push({ name: "admin.purchase-orders.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
@@ -118,7 +131,7 @@ const termsTotal = computed(() => form.value.payment_terms.reduce((sum, t) => su
       <template #actions>
         <div class="hidden sm:flex items-center gap-2">
           <UiButton variant="secondary" :to="{ name: 'admin.purchase-orders.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
-          <UiButton type="submit" form="po-form" :icon="Check" :loading="submitting">
+          <UiButton type="submit" form="po-form" :icon="Check" :loading="submitting" :disabled="loadingRecord">
             {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.purchaseOrder.form.update") : $t("documents.purchaseOrder.form.save")) }}
           </UiButton>
         </div>
@@ -257,7 +270,7 @@ const termsTotal = computed(() => form.value.payment_terms.reduce((sum, t) => su
           </dl>
           <UiAlert v-if="errorMessage" tone="bad" :title="errorMessage" class="mt-4" />
           <div class="mt-5 grid gap-2">
-            <UiButton type="submit" size="lg" block :icon="Check" :loading="submitting">
+            <UiButton type="submit" size="lg" block :icon="Check" :loading="submitting" :disabled="loadingRecord">
               {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.purchaseOrder.form.update") : $t("documents.purchaseOrder.form.save")) }}
             </UiButton>
             <UiButton variant="secondary" block :to="{ name: 'admin.purchase-orders.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>

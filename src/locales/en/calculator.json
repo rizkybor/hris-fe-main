@@ -30,7 +30,8 @@
       "byScenario": "breakdown by scenario",
       "features": "Features",
       "builds": "Builds",
-      "landingPages": "Landing Pages"
+      "landingPages": "Landing Pages",
+      "scenarioSplit": "Features · Builds · Landing Pages"
     },
     "teamRate": {
       "title": "Team Rate Setup",
@@ -64,7 +65,17 @@
       "title": "No estimates found",
       "message": "Create your first project estimate to start building your quotation history."
     },
-    "itemLabel": "estimates"
+    "itemLabel": "estimates",
+    "refreshing": "Updating…",
+    "noClient": "No client",
+    "editItem": "Edit {name}",
+    "viewItem": "View {name}",
+    "deleteItem": "Delete {name}",
+    "deleted": "Estimate deleted",
+    "noMatch": {
+      "title": "No estimates match these filters",
+      "message": "Try another keyword or scenario."
+    }
   },
   "lpModal": {
     "description": "Configure the package pricing used by the Landing Page scenario",

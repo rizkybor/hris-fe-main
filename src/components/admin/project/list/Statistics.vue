@@ -6,14 +6,7 @@ import { storeToRefs } from "pinia";
 import { UiStat } from "@/components/ui";
 import { formatRupiah } from "@/utils/formatUtils";
 
-// With `selectable`, the Total/Active tiles filter the list: they emit
-// `filter` with "" (all) or "active"; `activeStatus` highlights Active.
-const props = defineProps({
-  selectable: { type: Boolean, default: false },
-  activeStatus: { type: String, default: null },
-});
-defineEmits(["filter"]);
-
+// A plain summary: the status chips on the project list are the one filter.
 const projectStore = useProjectStore();
 const { loadingStatistics } = storeToRefs(projectStore);
 
@@ -40,8 +33,6 @@ onMounted(() => {
       :icon="Briefcase"
       :hint="$t('projects.stats.totalHint')"
       :loading="loadingStatistics"
-      :selectable="props.selectable"
-      @select="$emit('filter', '')"
     >
       <span id="totalProjects">{{ total }}</span>
     </UiStat>
@@ -51,9 +42,6 @@ onMounted(() => {
       :icon="PlayCircle"
       :hint="$t('projects.stats.activeHint')"
       :loading="loadingStatistics"
-      :selectable="props.selectable"
-      :active="props.selectable && props.activeStatus === 'active'"
-      @select="$emit('filter', 'active')"
     >
       <span id="activeProjects">{{ active }}</span>
     </UiStat>

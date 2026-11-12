@@ -16,6 +16,8 @@ import {
 } from "lucide-vue-next";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useLookupStore } from "@/stores/lookups";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
 import { storeToRefs } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { formatRupiah } from "@/utils/formatUtils";
@@ -31,7 +33,10 @@ const route = useRoute();
 const router = useRouter();
 const store = useProjectCalculatorStore();
 const alertModal = useAlertModalStore();
-const { rateSetting, landingPageRateSetting, loadingRateSetting, loadingLandingPageRateSetting, saving, pphTypes } = storeToRefs(store);
+const lookups = useLookupStore();
+const { rateSetting, landingPageRateSetting, loadingRateSetting, loadingLandingPageRateSetting, saving } = storeToRefs(store);
+// PPh types come from the shared lookups cache (also used by the documents).
+const pphTypes = computed(() => lookups.pphTypes);
 
 const isEditing = computed(() => !!route.params.id);
 const loadingCalculation = ref(false);
@@ -226,17 +231,31 @@ const applyReference = async (reference) => {
   }
 };
 
+// Unsaved-changes guard: compares the form with how it looked once loaded
+// (or right after saving).
+const baseline = ref(null);
+const markClean = () => (baseline.value = JSON.stringify(form.value));
+useUnsavedGuard(() => baseline.value !== null && JSON.stringify(form.value) !== baseline.value);
+
 onMounted(async () => {
-  await Promise.all([store.fetchRateSetting(), store.fetchLandingPageRateSetting(), store.fetchPphTypes()]);
+  // One wave: rate setups (reused when the dashboard just loaded them), PPh
+  // types (shared cache) and, when editing, the estimate (reused when it was
+  // just opened or saved).
+  if (isEditing.value) loadingCalculation.value = true;
+  const [, , calcResult] = await Promise.allSettled([
+    store.ensureRateSettings(),
+    lookups.ensure("pphTypes"),
+    isEditing.value ? store.fetchCalculation(route.params.id, { maxAge: 30_000 }) : null,
+  ]);
   form.value.pm_overhead_percent = rateSetting.value.pm_overhead_percent;
   form.value.infra_setup_cost = rateSetting.value.default_infra_setup_cost;
   form.value.rate_developer = DEFAULT_RATE_DEVELOPER;
   form.value.margin_percent = DEFAULT_MARGIN_PERCENT;
 
   if (isEditing.value) {
-    loadingCalculation.value = true;
     try {
-      const calc = await store.fetchCalculation(route.params.id);
+      if (calcResult.status === "rejected") throw calcResult.reason;
+      const calc = calcResult.value;
       const lp = calc.scenario === "landing_page" ? (calc.items?.[0] ?? {}) : null;
 
       form.value = {
@@ -292,6 +311,7 @@ onMounted(async () => {
       loadingCalculation.value = false;
     }
   }
+  markClean();
 });
 
 const switchScenario = (scenario) => {
@@ -527,6 +547,7 @@ const submit = async () => {
       ? await store.updateCalculation(route.params.id, form.value)
       : await store.createCalculation(form.value);
 
+    markClean();
     router.push({ name: "admin.project-calculator.detail", params: { id: saved.id } });
   } catch (error) {
     const data = error?.response?.data;

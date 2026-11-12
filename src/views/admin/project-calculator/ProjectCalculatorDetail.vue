@@ -10,7 +10,7 @@ import {
   CalendarIcon,
 } from "lucide-vue-next";
 import { useProjectCalculatorStore } from "@/stores/projectCalculator";
-import { storeToRefs } from "pinia";
+import { useLookupStore } from "@/stores/lookups";
 import { can } from "@/helpers/permissionHelper";
 import { formatRupiah } from "@/utils/formatUtils";
 import { calculateMarketingFee } from "@/utils/marketingFee";
@@ -25,10 +25,13 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useProjectCalculatorStore();
-const { pphTypes } = storeToRefs(store);
+const lookups = useLookupStore();
 
-const calc = ref(null);
-const loading = ref(true);
+// Opened from the list or right after saving, the store already holds the
+// full record: it shows at once (a just-saved/just-opened one makes no
+// request, a list row is refreshed quietly behind it).
+const calc = ref(store.cachedCalculation(route.params.id));
+const loading = ref(!calc.value);
 
 // Infrastructure Tools can be shown per month or per year. Snapshots saved
 // before annual_fee was captured (or a tool with only one of the two fees
@@ -51,17 +54,22 @@ const infraTotal = computed(() =>
 const infraUnit = computed(() => (infraPeriod.value === "annual" ? "/thn" : "/bln"));
 
 onMounted(async () => {
-  loading.value = true;
+  // PPh labels only matter when the estimate withholds PPh.
+  const needsPph = (c) => c?.include_pph && lookups.ensure("pphTypes").catch(() => {});
+  if (calc.value) needsPph(calc.value);
   try {
-    const [calculation] = await Promise.all([store.fetchCalculation(route.params.id), store.fetchPphTypes()]);
-    calc.value = calculation;
+    const fresh = await store.fetchCalculation(route.params.id, { maxAge: 30_000 });
+    if (!calc.value) needsPph(fresh);
+    calc.value = fresh;
+  } catch {
+    // Keep showing a list copy if there is one; otherwise "not found".
   } finally {
     loading.value = false;
   }
 });
 
 const pphTypeLabel = computed(
-  () => pphTypes.value.find((t) => t.value === calc.value?.pph_type)?.label ?? "PPh"
+  () => lookups.pphTypes.find((t) => t.value === calc.value?.pph_type)?.label ?? "PPh"
 );
 
 const scenarioMeta = {

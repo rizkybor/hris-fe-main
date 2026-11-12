@@ -1,11 +1,17 @@
 import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
+import { invalidate } from "@/composables/useStaleFetch";
+import { openBlobPdf } from "@/utils/pdfTab";
+
+let listSeq = 0; // latest list request
 
 export const usePurchaseOrderStore = defineStore("purchaseOrder", {
   state: () => ({
     orders: [],
     meta: { current_page: 1, last_page: 1, per_page: 10, total: 0 },
+    // Params of the list currently held (null until the first load).
+    listKey: null,
     loading: false,
     error: null,
     success: null,
@@ -13,12 +19,16 @@ export const usePurchaseOrderStore = defineStore("purchaseOrder", {
 
   actions: {
     async fetchOrders(params = {}) {
+      // Only the latest request writes the list (search and filters can
+      // change while an older request is still in flight).
+      const seq = ++listSeq;
       this.loading = true;
       this.error = null;
       try {
         const { data } = await axiosInstance.get("/purchase-orders", {
           params: { row_per_page: 10, ...params },
         });
+        if (seq !== listSeq) return;
         this.orders = data.data.data;
         this.meta = {
           current_page: data.data.current_page,
@@ -26,11 +36,19 @@ export const usePurchaseOrderStore = defineStore("purchaseOrder", {
           per_page: data.data.per_page,
           total: data.data.total,
         };
+        this.listKey = JSON.stringify(params);
       } catch (error) {
-        this.error = handleError(error);
+        if (seq === listSeq) this.error = handleError(error);
       } finally {
-        this.loading = false;
+        if (seq === listSeq) this.loading = false;
       }
+    },
+
+    // Puts the saved fields into the listed row (keeps relations the
+    // response doesn't carry).
+    patchRow(id, fields) {
+      const row = this.orders.find((r) => String(r.id) === String(id));
+      if (row && fields) Object.assign(row, fields);
     },
 
     async fetchOrder(id) {
@@ -43,6 +61,8 @@ export const usePurchaseOrderStore = defineStore("purchaseOrder", {
       try {
         const { data } = await axiosInstance.post("/purchase-orders", payload);
         this.success = data.message;
+        // The new one belongs at the top.
+        invalidate("purchase-orders-list");
         return data.data;
       } catch (error) {
         this.error = handleError(error);
@@ -64,13 +84,15 @@ export const usePurchaseOrderStore = defineStore("purchaseOrder", {
 
     async cancelOrder(id) {
       const { data } = await axiosInstance.post(`/purchase-orders/${id}/cancel`);
-      const idx = this.orders.findIndex((o) => o.id === id);
-      if (idx !== -1) this.orders[idx] = data.data;
+      this.patchRow(id, data.data);
     },
 
     async deleteOrder(id) {
       await axiosInstance.delete(`/purchase-orders/${id}`);
+      const before = this.orders.length;
       this.orders = this.orders.filter((o) => o.id !== id);
+      if (this.orders.length < before) this.meta = { ...this.meta, total: Math.max(0, this.meta.total - 1) };
+      invalidate("purchase-orders-list"); // other pages shift by one
     },
 
     async downloadPdf(id, number) {
@@ -87,15 +109,12 @@ export const usePurchaseOrderStore = defineStore("purchaseOrder", {
       window.URL.revokeObjectURL(url);
     },
 
-    // Opens the PDF inline in a new tab (browser's own viewer) instead of
-    // forcing a save-as -- the API route needs an auth header, so this
-    // can't just be a plain <a href> to the endpoint like a public file.
-    async viewPdf(id) {
-      const response = await axiosInstance.get(`/purchase-orders/${id}/export-pdf`, {
-        responseType: "blob",
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
-      window.open(url, "_blank");
+    // Opens the PDF inline in a new tab (browser's own viewer). The API
+    // route needs an auth header, so the tab is opened right away (part of
+    // the click, so pop-up blockers allow it) and pointed at the PDF once
+    // it arrives. Call it straight from the click handler, before any await.
+    viewPdf(id, tab = window.open("", "_blank")) {
+      return openBlobPdf(tab, () => axiosInstance.get(`/purchase-orders/${id}/export-pdf`, { responseType: "blob" }));
     },
   },
 });

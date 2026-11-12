@@ -1,60 +1,75 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
 import { storeToRefs } from "pinia";
-import { Receipt, Plus, Download, FileText, Pencil, CheckCircle2, Ban, Trash2, Search, ArrowLeft, Wallet, CircleCheck } from "lucide-vue-next";
+import { debounce } from "lodash-es";
+import { Receipt, Plus, Download, FileText, CheckCircle2, Ban, Trash2, Search, SearchX, ArrowLeft } from "lucide-vue-next";
 import { useInvoiceStore } from "@/stores/invoice";
-import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
+import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
-import { UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiPageHeader, UiPagination, UiChips, UiTable } from "@/components/ui";
+import { UiBadge, UiButton, UiConfirmDialog, UiEmpty, UiInput, UiPageHeader, UiPagination, UiChips, UiTable, UiSpinner } from "@/components/ui";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useToastStore } from "@/stores/toast";
 
 const { t } = useI18n();
+const router = useRouter();
 const store = useInvoiceStore();
 const alertModal = useAlertModalStore();
-const { invoices, meta, loading } = storeToRefs(store);
+const toast = useToastStore();
+const { invoices, meta } = storeToRefs(store);
 
-const search = ref("");
-const statusFilter = ref("");
-const isDeleteModalOpen = ref(false);
-const invoiceToDelete = ref(null);
+// Search, status and page live in the URL and are remembered, so coming
+// back from an invoice restores the same view; the list shows what the
+// store already has and refreshes quietly.
+const list = useListState("invoices", { q: "", status: "", page: 1 });
+const search = ref(list.q);
+watch(search, debounce((v) => (list.q = v.trim()), 300));
+watch(() => list.q, (v) => v !== search.value.trim() && (search.value = v));
+
+const params = computed(() => ({ search: list.q || undefined, status: list.status || undefined, page: list.page }));
+const { loading, refreshing, refresh } = useStaleFetch(() => store.fetchInvoices(params.value), {
+  key: () => ["invoices-list", params.value],
+  hasData: () => store.listKey !== null,
+});
+
+const failed = (error) => toast.error(t("common.toast.error"), error?.response?.data?.message || "");
+
 const downloadingId = ref(null);
-
-const load = (page = 1) => {
-  store.fetchInvoices({
-    search: search.value || undefined,
-    status: statusFilter.value || undefined,
-    page,
-  });
-};
-
-onMounted(() => load());
-
-const handleSearch = () => load(1);
-const handleFilterChange = () => load(1);
-
 const handleDownload = async (invoice) => {
   downloadingId.value = invoice.id;
   try {
     await store.downloadPdf(invoice.id, invoice.invoice_number);
+  } catch (error) {
+    toast.error(t("documents.shared.pdfFailed"));
   } finally {
     downloadingId.value = null;
   }
 };
 
+// store.viewPdf opens the tab synchronously, inside this click.
 const viewingId = ref(null);
 const handleViewPdf = async (invoice) => {
   viewingId.value = invoice.id;
   try {
     await store.viewPdf(invoice.id);
+  } catch (error) {
+    toast.error(t("documents.shared.pdfFailed"));
   } finally {
     viewingId.value = null;
   }
 };
 
 const handleMarkPaid = async (invoice) => {
-  await store.markAsPaid(invoice.id);
+  try {
+    await store.markAsPaid(invoice.id);
+    toast.success(t("documents.invoice.list.toast.markedPaid"), invoice.invoice_number);
+  } catch (error) {
+    failed(error);
+  }
 };
 
 const handleCancel = async (invoice) => {
@@ -65,59 +80,82 @@ const handleCancel = async (invoice) => {
     }))
   )
     return;
-  await store.cancelInvoice(invoice.id);
+  try {
+    await store.cancelInvoice(invoice.id);
+    toast.success(t("documents.invoice.list.toast.cancelled"), invoice.invoice_number);
+  } catch (error) {
+    failed(error);
+  }
 };
 
+const isDeleteModalOpen = ref(false);
+const invoiceToDelete = ref(null);
 const confirmDelete = (invoice) => {
   invoiceToDelete.value = invoice;
   isDeleteModalOpen.value = true;
 };
 
+// The row leaves the page in place (no reload); an emptied later page
+// steps back one.
 const handleDelete = async () => {
   if (!invoiceToDelete.value) return;
-  await store.deleteInvoice(invoiceToDelete.value.id);
-  isDeleteModalOpen.value = false;
-  invoiceToDelete.value = null;
+  try {
+    await store.deleteInvoice(invoiceToDelete.value.id);
+    toast.success(t("documents.invoice.list.toast.deleted"), invoiceToDelete.value.invoice_number);
+    if (!invoices.value.length) {
+      if (list.page > 1) list.page -= 1;
+      else if (meta.value.total) refresh({ force: true });
+    }
+  } catch (error) {
+    failed(error);
+  } finally {
+    isDeleteModalOpen.value = false;
+    invoiceToDelete.value = null;
+  }
 };
 
-// Presentation only: status -> badge tone (always shown with its label).
+// The row opens it for editing; without that right, its PDF.
+const openInvoice = (invoice) => (can("invoice-edit") ? router.push({ name: "admin.invoices.edit", params: { id: invoice.id } }) : handleViewPdf(invoice));
+
+// ===== Presentation only =====
 const statusTone = (status) => {
   if (status === "paid") return "ok";
   if (status === "cancelled") return "neutral";
   return "warn";
 };
-
 const statusLabel = (status) => {
   if (status === "paid") return t("documents.shared.status.paid");
   if (status === "cancelled") return t("documents.shared.status.cancelled");
   return t("documents.shared.status.unpaid");
 };
-
 const formatDate = (date) =>
   date ? new Date(date).toLocaleDateString(localeTag(), { year: "numeric", month: "short", day: "numeric" }) : "-";
+// One muted line under the client: invoice number · project.
+const subline = (row) => [row.invoice_number, row.project?.name].filter(Boolean).join(" · ");
+// One note under the status: the receipt it was paid with (+N more).
+const receiptNote = (row) => {
+  const receipts = row.receipts || [];
+  if (!receipts.length) return "";
+  return `${receipts[0].receipt_number}${receipts.length > 1 ? ` +${receipts.length - 1}` : ""}`;
+};
 
-// Presentation only.
 const statusOptions = computed(() =>
   [
     { value: "", label: t("common.labels.all") },
     { value: "unpaid", label: t("documents.shared.status.unpaid") },
     { value: "paid", label: t("documents.shared.status.paid") },
     { value: "cancelled", label: t("documents.shared.status.cancelled") },
-  ].map((o) => ({ ...o, count: o.value === statusFilter.value && !loading.value ? meta.value.total : undefined }))
+  ].map((o) => ({ ...o, count: o.value === list.status && !loading.value && !refreshing.value ? meta.value.total : undefined }))
 );
-const onStatusChip = (value) => {
-  statusFilter.value = value;
-  handleFilterChange();
-};
-const sumBy = (status) => invoices.value.filter((i) => i.status === status).reduce((sum, i) => sum + (Number(i.total) || 0), 0);
+const statusFilter = computed({ get: () => list.status, set: (v) => (list.status = v) });
 const columns = computed(() => [
-  { key: "invoice_number", label: t("documents.invoice.list.columns.number") },
   { key: "client_name", label: t("documents.invoice.list.columns.client") },
   { key: "date", label: t("common.labels.date") },
   { key: "total", label: t("common.labels.total"), align: "right" },
   { key: "status", label: t("common.labels.status") },
   { key: "actions", label: "", align: "right" },
 ]);
+const quietDelete = "!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft";
 </script>
 
 <template>
@@ -134,35 +172,49 @@ const columns = computed(() => [
         </router-link>
       </template>
       <template #actions>
-        <UiButton v-if="can('invoice-create')" :to="{ name: 'admin.invoices.create' }" :icon="Plus">{{ $t("documents.invoice.list.create") }}</UiButton>
+        <UiButton v-if="can('invoice-create')" :to="{ name: 'admin.invoices.create' }" :icon="Plus" class="w-full sm:w-auto">{{ $t("documents.invoice.list.create") }}</UiButton>
       </template>
     </UiPageHeader>
 
-
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
-      <div class="px-4 sm:px-5 py-3.5 flex flex-col lg:flex-row lg:items-center gap-3 border-b border-ui-line">
+      <!-- Toolbar: search · status chips, one line on desktop -->
+      <div class="px-4 sm:px-5 py-3 border-b border-ui-line flex flex-col lg:flex-row lg:items-center gap-2.5 lg:gap-3">
         <UiInput
           v-model="search"
+          type="search"
           :icon="Search"
           :placeholder="$t('documents.invoice.list.searchPlaceholder')"
-          class="w-full lg:w-[300px]"
-          @keyup.enter="handleSearch"
+          :aria-label="$t('documents.invoice.list.searchPlaceholder')"
+          class="w-full lg:w-[280px] shrink-0"
         />
-        <UiChips :model-value="statusFilter" :options="statusOptions" @update:model-value="onStatusChip" />
+        <UiChips v-model="statusFilter" :options="statusOptions" size="sm" class="min-w-0 lg:flex-1" />
+        <span v-if="refreshing" class="inline-flex items-center gap-1.5 text-ui-cap text-ui-muted shrink-0" role="status">
+          <UiSpinner size="14px" :center="false" />{{ $t("documents.shared.refreshing") }}
+        </span>
       </div>
 
-      <UiTable :columns="columns" :rows="invoices" :meta="meta" :loading="loading" :skeleton-rows="6">
-        <template #cell-invoice_number="{ row }">
-          <p class="font-mono text-ui-cap text-ui-ink whitespace-nowrap">{{ row.invoice_number }}</p>
-          <template v-if="row.receipts?.length">
-            <p v-for="receipt in row.receipts" :key="receipt.id" class="font-mono text-ui-cap text-ui-muted whitespace-nowrap mt-0.5">{{ receipt.receipt_number }}</p>
-          </template>
-          <p v-else class="text-ui-cap text-ui-faint mt-0.5">&mdash;</p>
-        </template>
+      <UiTable
+        :columns="columns"
+        :rows="invoices"
+        :meta="meta"
+        :loading="loading"
+        :skeleton-rows="6"
+        :clickable="true"
+        :class="refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
+        @row-click="openInvoice"
+      >
         <template #cell-client_name="{ row }">
-          <p class="text-ui-body text-ui-ink">{{ row.client_name }}</p>
-          <p v-if="row.project" class="text-ui-cap text-ui-muted mt-0.5">{{ row.project.name }}</p>
-          <p v-else class="text-ui-cap text-ui-faint mt-0.5">&mdash;</p>
+          <div class="min-w-0 max-w-[400px] py-2">
+            <RouterLink
+              v-if="can('invoice-edit')"
+              :to="{ name: 'admin.invoices.edit', params: { id: row.id } }"
+              class="block text-ui-ink font-medium truncate hover:underline underline-offset-2"
+              :title="$t('documents.shared.editItem', { number: row.invoice_number })"
+              @click.stop
+            >{{ row.client_name }}</RouterLink>
+            <p v-else class="text-ui-ink font-medium truncate">{{ row.client_name }}</p>
+            <p class="mt-0.5 text-ui-cap text-ui-muted truncate" :title="subline(row)"><span class="font-mono">{{ row.invoice_number }}</span><template v-if="row.project"> · {{ row.project.name }}</template></p>
+          </div>
         </template>
         <template #cell-date="{ row }">
           <span class="text-ui-small text-ui-text tabular-nums whitespace-nowrap">{{ formatDate(row.date) }}</span>
@@ -172,55 +224,60 @@ const columns = computed(() => [
         </template>
         <template #cell-status="{ row }">
           <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
+          <p v-if="receiptNote(row)" class="mt-1 text-ui-cap text-ui-muted whitespace-nowrap">{{ $t("documents.invoice.list.receiptPrefix") }} <span class="font-mono">{{ receiptNote(row) }}</span></p>
         </template>
         <template #cell-actions="{ row }">
-          <div class="flex items-center justify-end gap-0.5">
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="FileText" :loading="viewingId === row.id" :title="$t('documents.shared.viewPdf')" :aria-label="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)" />
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('common.actions.downloadPdf')" @click="handleDownload(row)" />
-            <UiButton v-if="can('invoice-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.invoices.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
+          <div class="flex items-center justify-end gap-0.5" @click.stop>
+            <!-- Status actions first, so View and Delete line up on the right -->
             <UiButton v-if="can('invoice-edit') && row.status === 'unpaid'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-ok" :icon="CheckCircle2" :title="$t('documents.invoice.list.markPaid')" :aria-label="$t('documents.invoice.list.markPaid')" @click="handleMarkPaid(row)" />
-            <UiButton v-if="can('invoice-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" :title="$t('documents.invoice.list.cancelInvoice')" :aria-label="$t('documents.invoice.list.cancelInvoice')" @click="handleCancel(row)" />
-            <UiButton v-if="can('invoice-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
+            <UiButton v-if="can('invoice-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" :title="$t('documents.invoice.list.cancelInvoice')" :aria-label="$t('documents.shared.cancelItem', { number: row.invoice_number })" @click="handleCancel(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.invoice_number })" @click="handleDownload(row)" />
+            <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.invoice_number })" :title="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)">{{ $t("documents.shared.pdf") }}</UiButton>
+            <UiButton v-if="can('invoice-delete')" variant="ghost" size="sm" :class="['w-[30px] !px-0', quietDelete]" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('documents.shared.deleteItem', { number: row.invoice_number })" @click="confirmDelete(row)" />
           </div>
         </template>
 
+        <!-- Phones: the same row as a card -->
         <template #mobile="{ row, number }">
-          <div class="flex items-start gap-3 px-4 py-3.5">
-            <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5">{{ number }}</span>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <p class="text-ui-body font-medium text-ui-ink truncate">{{ row.client_name }}</p>
-                  <p class="font-mono text-ui-cap text-ui-muted truncate">{{ row.invoice_number }}</p>
-                </div>
-                <p class="text-ui-body font-medium text-ui-ink tabular-nums whitespace-nowrap">{{ formatRupiah(row.total) }}</p>
+          <div class="px-4 py-3.5">
+            <div class="flex items-start gap-3">
+              <span class="text-ui-cap text-ui-faint tabular-nums w-5 pt-0.5 shrink-0">{{ number }}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-ui-body font-medium text-ui-ink line-clamp-2 break-words">{{ row.client_name }}</p>
+                <p class="text-ui-cap text-ui-muted truncate mt-0.5"><span class="font-mono">{{ row.invoice_number }}</span><template v-if="row.project"> · {{ row.project.name }}</template></p>
               </div>
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
+              <div class="text-right shrink-0">
+                <p class="text-ui-body font-medium text-ui-ink tabular-nums">{{ formatRupiah(row.total) }}</p>
+                <p class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(row.date) }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 mt-2 pl-8">
+              <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                 <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
-                <span class="text-ui-cap text-ui-muted tabular-nums">{{ formatDate(row.date) }}</span>
-                <span v-if="row.project" class="text-ui-cap text-ui-muted truncate">· {{ row.project.name }}</span>
+                <span v-if="receiptNote(row)" class="text-ui-cap text-ui-muted truncate">{{ $t("documents.invoice.list.receiptPrefix") }} <span class="font-mono">{{ receiptNote(row) }}</span></span>
               </div>
-              <p v-if="row.receipts?.length" class="mt-1 text-ui-cap text-ui-muted truncate">
-                {{ $t("documents.invoice.list.receiptPrefix") }} <span class="font-mono">{{ row.receipts.map((r) => r.receipt_number).join(", ") }}</span>
-              </p>
-              <div class="flex items-center gap-0.5 mt-2 -ml-2">
-                <UiButton variant="ghost" size="sm" :icon="FileText" :loading="viewingId === row.id" @click="handleViewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
-                <UiButton variant="ghost" size="sm" :icon="Download" :loading="downloadingId === row.id" @click="handleDownload(row)">PDF</UiButton>
-                <UiButton v-if="can('invoice-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Pencil" :to="{ name: 'admin.invoices.edit', params: { id: row.id } }" :title="$t('common.actions.edit')" :aria-label="$t('common.actions.edit')" />
-                <UiButton v-if="can('invoice-edit') && row.status === 'unpaid'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="CheckCircle2" :title="$t('documents.invoice.list.markPaid')" :aria-label="$t('documents.invoice.list.markPaid')" @click="handleMarkPaid(row)" />
-                <UiButton v-if="can('invoice-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" :title="$t('documents.invoice.list.cancelInvoice')" :aria-label="$t('documents.invoice.list.cancelInvoice')" @click="handleCancel(row)" />
-                <UiButton v-if="can('invoice-delete')" variant="ghost" size="sm" class="w-[30px] !px-0 text-ui-bad" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('common.actions.delete')" @click="confirmDelete(row)" />
-              </div>
+            </div>
+            <div class="flex items-center gap-1 mt-2 pl-8" @click.stop>
+              <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.invoice_number })" @click="handleViewPdf(row)">{{ $t("documents.shared.pdf") }}</UiButton>
+              <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.invoice_number })" @click="handleDownload(row)" />
+              <UiButton v-if="can('invoice-edit') && row.status === 'unpaid'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="CheckCircle2" :aria-label="$t('documents.invoice.list.markPaid')" @click="handleMarkPaid(row)" />
+              <UiButton v-if="can('invoice-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" :aria-label="$t('documents.shared.cancelItem', { number: row.invoice_number })" @click="handleCancel(row)" />
+              <UiButton v-if="can('invoice-delete')" variant="ghost" size="sm" :class="['w-[30px] !px-0 ml-auto', quietDelete]" :icon="Trash2" :aria-label="$t('documents.shared.deleteItem', { number: row.invoice_number })" @click="confirmDelete(row)" />
             </div>
           </div>
         </template>
 
         <template #empty>
-          <UiEmpty :icon="Receipt" :title="$t('documents.invoice.list.emptyTitle')" compact />
+          <UiEmpty v-if="list.isDirty" :icon="SearchX" :title="$t('documents.shared.noMatchTitle')" :message="$t('documents.shared.noMatchHint')" compact>
+            <UiButton variant="secondary" @click="(search = ''), list.reset()">{{ $t("common.actions.clearFilters") }}</UiButton>
+          </UiEmpty>
+          <UiEmpty v-else :icon="Receipt" :title="$t('documents.invoice.list.emptyTitle')" compact>
+            <UiButton v-if="can('invoice-create')" variant="secondary" :icon="Plus" :to="{ name: 'admin.invoices.create' }">{{ $t("documents.invoice.list.create") }}</UiButton>
+          </UiEmpty>
         </template>
       </UiTable>
 
-      <UiPagination v-if="meta.total" :meta="meta" :item-label="$t('documents.invoice.list.itemLabel')" :disabled="loading" @change="load" />
+      <UiPagination v-if="meta.total" :meta="meta" :item-label="$t('documents.invoice.list.itemLabel')" :disabled="loading" @change="(p) => (list.page = p)" />
     </section>
 
     <UiConfirmDialog

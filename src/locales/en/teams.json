@@ -8,7 +8,6 @@
   "list": {
     "title": "All Teams",
     "itemLabel": "teams",
-    "importCsv": "Import CSV",
     "addTeam": "Add Team",
     "searchPlaceholder": "Search teams by name, lead, status...",
     "allDepartments": "All Departments",

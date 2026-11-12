@@ -1,10 +1,12 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
 import { NotebookPen, Pencil, Trash2, Pin, PinOff, FileText, Users, Calendar, Building2, CheckSquare, Square, ArrowLeft, FileDown } from "lucide-vue-next";
+import { usePolling } from "@/composables/usePolling";
+import { useToastStore } from "@/stores/toast";
 import { UiButton, UiBadge } from "@/components/ui";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
 import { useAuthStore } from "@/stores/auth";
@@ -20,6 +22,7 @@ const router = useRouter();
 const store = useMeetingNoteStore();
 const alertModal = useAlertModalStore();
 const authStore = useAuthStore();
+const toast = useToastStore();
 
 const { currentMeetingNote: note, loading, activeViewers } = storeToRefs(store);
 
@@ -53,23 +56,35 @@ const downloadPdf = async () => {
     pdfBusy.value = false;
   }
 };
-let heartbeatTimer = null;
 
-const load = () => store.fetchMeetingNote(route.params.id);
+// Opened straight from the click (no await before it) so the new tab isn't
+// treated as a popup.
+const viewingPdf = ref(false);
+const viewPdf = async () => {
+  viewingPdf.value = true;
+  try {
+    await store.viewPdf(note.value.id);
+  } catch {
+    toast.error(t("documents.meetingNote.detail.pdfFailed"));
+  } finally {
+    viewingPdf.value = false;
+  }
+};
 
-onMounted(() => {
-  load();
+// A note already in the store (just saved, or opened before) shows at once
+// and refreshes quietly; the skeleton is only for a note not loaded yet.
+const load = () => store.fetchMeetingNote(route.params.id).catch(() => {});
+
+// Presence: who else has this note open. Paused while the browser tab is
+// hidden, stopped when the page closes.
+const pingPresence = () => {
   store.sendHeartbeat(route.params.id, false);
   store.fetchActiveViewers(route.params.id);
-  heartbeatTimer = setInterval(() => {
-    store.sendHeartbeat(route.params.id, false);
-    store.fetchActiveViewers(route.params.id);
-  }, 8000);
-});
+};
+usePolling(pingPresence, 8000, { immediate: true });
 
-onUnmounted(() => {
-  if (heartbeatTimer) clearInterval(heartbeatTimer);
-});
+onMounted(load);
+watch(() => route.params.id, (id) => id && (load(), pingPresence()));
 
 const TYPE_LABEL = computed(() => ({ internal: t("documents.meetingNote.types.internal"), external: t("documents.meetingNote.types.external") }));
 const TYPE_TONE = { internal: "accent", external: "outline" };
@@ -79,7 +94,10 @@ const formatDateTime = (date) =>
 const togglePin = async () => {
   pinBusy.value = true;
   try {
-    note.value.is_pinned = await store.togglePin(note.value.id);
+    // The store flips the pin on this note and its list row.
+    await store.togglePin(note.value.id);
+  } catch (err) {
+    toast.error(t("common.toast.error"), err?.response?.data?.message || "");
   } finally {
     pinBusy.value = false;
   }
@@ -93,8 +111,15 @@ const handleDelete = async () => {
     }))
   )
     return;
-  await store.deleteMeetingNote(note.value.id);
-  router.push({ name: "admin.meeting-notes.dashboard" });
+  const number = note.value.document_number;
+  try {
+    // Removes the row from the list too, so it doesn't reload.
+    await store.deleteMeetingNote(note.value.id);
+    toast.success(t("documents.meetingNote.list.toast.deleted"), number);
+    router.push({ name: "admin.meeting-notes.dashboard" });
+  } catch (err) {
+    toast.error(t("common.toast.error"), err?.response?.data?.message || "");
+  }
 };
 </script>
 
@@ -150,7 +175,8 @@ const handleDelete = async () => {
             </div>
           </div>
 
-          <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 shrink-0">
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <UiButton :icon="FileText" :loading="viewingPdf" @click="viewPdf">{{ $t("documents.shared.viewPdf") }}</UiButton>
             <UiButton
               variant="secondary"
               :icon="FileDown"
@@ -172,7 +198,15 @@ const handleDelete = async () => {
               :icon="Pencil"
               :to="{ name: 'admin.meeting-notes.edit', params: { id: note.id } }"
             >{{ $t("common.actions.edit") }}</UiButton>
-            <UiButton v-if="can('meeting-note-delete')" variant="danger" :icon="Trash2" @click="handleDelete">{{ $t("common.actions.delete") }}</UiButton>
+            <UiButton
+              v-if="can('meeting-note-delete')"
+              variant="ghost"
+              :icon="Trash2"
+              class="!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft"
+              :title="$t('common.actions.delete')"
+              :aria-label="$t('documents.shared.deleteItem', { number: note.document_number })"
+              @click="handleDelete"
+            />
           </div>
         </div>
       </div>
