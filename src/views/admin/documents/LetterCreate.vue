@@ -5,7 +5,9 @@ import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { Settings, Plus, Trash2, Info, CheckCircle2, ArrowLeft, Save } from "lucide-vue-next";
 import { useLetterStore } from "@/stores/letter";
-import { useEmployeeStore } from "@/stores/employee";
+import { useLookupStore } from "@/stores/lookups";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
+import { invalidate } from "@/composables/useStaleFetch";
 import { can } from "@/helpers/permissionHelper";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
@@ -14,8 +16,9 @@ import { UiPageHeader, UiButton, UiCard, UiInput, UiSelect, UiSwitch, UiAlert, U
 const { t } = useI18n();
 const store = useLetterStore();
 const { letterCodes, divisionCodes } = storeToRefs(store);
-const employeeStore = useEmployeeStore();
-const { employees } = storeToRefs(employeeStore);
+// The whole employee list from the shared lookup cache (not
+// employeeStore.employees, which other pages fill with their own subset).
+const lookups = useLookupStore();
 const router = useRouter();
 const route = useRoute();
 
@@ -133,52 +136,59 @@ const errorMessage = ref("");
 const loadingLetter = ref(false);
 const existingLetterNumber = ref("");
 
-onMounted(async () => {
-  await Promise.all([
-    store.fetchLetterCodes(),
-    store.fetchDivisionCodes(),
-    employeeStore.fetchEmployees({ limit: 200 }),
-  ]);
+// Everything the form needs in one wave: the codes, the employee picker
+// and (when editing) the letter itself.
+const fillForm = (letter) => {
+  existingLetterNumber.value = letter.letter_number;
+  form.value.letter_code_id = letter.letter_code_id;
+  form.value.division_code_id = letter.division_code_id;
+  form.value.type = letter.type;
+  form.value.date = letter.date;
+  form.value.subject = letter.subject;
+  form.value.recipient = letter.recipient || "";
+  form.value.employee_id = letter.employee_id || "";
+  form.value.body = letter.body || "";
+  form.value.signatory_name = letter.signatory_name || "";
+  form.value.signatory_title = letter.signatory_title || "";
+  form.value.second_party_name = letter.second_party_name || "";
+  form.value.second_party_signatory_name = letter.second_party_signatory_name || "";
+  form.value.second_party_signatory_title = letter.second_party_signatory_title || "";
+  form.value.template = letter.template || "primary";
+  form.value.use_signature = !!letter.use_signature;
 
-  if (isEditMode.value) {
-    loadingLetter.value = true;
-    try {
-      const letter = await store.fetchLetter(editingId.value);
-      existingLetterNumber.value = letter.letter_number;
-      form.value.letter_code_id = letter.letter_code_id;
-      form.value.division_code_id = letter.division_code_id;
-      form.value.type = letter.type;
-      form.value.date = letter.date;
-      form.value.subject = letter.subject;
-      form.value.recipient = letter.recipient || "";
-      form.value.employee_id = letter.employee_id || "";
-      form.value.body = letter.body || "";
-      form.value.signatory_name = letter.signatory_name || "";
-      form.value.signatory_title = letter.signatory_title || "";
-      form.value.second_party_name = letter.second_party_name || "";
-      form.value.second_party_signatory_name = letter.second_party_signatory_name || "";
-      form.value.second_party_signatory_title = letter.second_party_signatory_title || "";
-      form.value.template = letter.template || "primary";
-      form.value.use_signature = !!letter.use_signature;
-
-      if (letter.items?.length) {
-        useItems.value = true;
-        items.value = letter.items.map((i) => ({
-          description: i.description || "",
-          specification: i.specification || "",
-          qty: i.qty || "",
-          price: i.price || 0,
-        }));
-      }
-      if (letter.second_party_name) {
-        useSecondParty.value = true;
-      }
-    } catch (error) {
-      errorMessage.value = t("documents.letter.form.errors.load");
-    } finally {
-      loadingLetter.value = false;
-    }
+  if (letter.items?.length) {
+    useItems.value = true;
+    items.value = letter.items.map((i) => ({
+      description: i.description || "",
+      specification: i.specification || "",
+      qty: i.qty || "",
+      price: i.price || 0,
+    }));
   }
+  if (letter.second_party_name) {
+    useSecondParty.value = true;
+  }
+};
+
+// Unsaved-changes guard: compares against the form as loaded.
+const snapshot = () => JSON.stringify([form.value, useItems.value, useSecondParty.value, useItems.value ? items.value : null]);
+let pristine = snapshot();
+let saved = false;
+useUnsavedGuard(() => !saved && !loadingLetter.value && snapshot() !== pristine);
+
+onMounted(async () => {
+  if (isEditMode.value) loadingLetter.value = true;
+  const [, , letter] = await Promise.allSettled([
+    store.ensureCodes(),
+    lookups.ensure("employees"),
+    isEditMode.value ? store.fetchLetter(editingId.value) : Promise.resolve(null),
+  ]);
+  if (isEditMode.value) {
+    if (letter.status === "fulfilled" && letter.value) fillForm(letter.value);
+    else errorMessage.value = t("documents.letter.form.errors.load");
+    loadingLetter.value = false;
+  }
+  pristine = snapshot();
 });
 
 const selectedCode = computed(() => {
@@ -239,7 +249,9 @@ const handleSubmit = async () => {
       if (useItems.value) {
         payload.items = items.value.filter((i) => i.description);
       }
+      // The store puts the saved letter in place in the list.
       await store.updateLetter(editingId.value, payload);
+      saved = true;
       router.push({ name: "admin.letters.dashboard" });
       return;
     }
@@ -254,6 +266,9 @@ const handleSubmit = async () => {
       payload.second_party_signatory_title = null;
     }
     await store.createLetter(payload);
+    // The list shows the new letter after a quiet refresh.
+    invalidate("letters");
+    saved = true;
     router.push({ name: "admin.letters.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
@@ -272,7 +287,7 @@ const letterCodeOptions = computed(() => letterCodes.value.map((c) => ({ value: 
 const divisionCodeOptions = computed(() => divisionCodes.value.map((c) => ({ value: c.id, label: `${c.code} - ${c.name}` })));
 const employeeOptions = computed(() => [
   { value: "", label: t("documents.letter.form.noEmployee") },
-  ...employees.value.map((emp) => ({ value: emp.id, label: `${emp.user?.name} (${emp.code})` })),
+  ...lookups.employees.map((emp) => ({ value: emp.id, label: `${emp.user?.name} (${emp.code})` })),
 ]);
 const summaryRows = computed(() => {
   const division = divisionCodes.value.find((c) => c.id === Number(form.value.division_code_id));

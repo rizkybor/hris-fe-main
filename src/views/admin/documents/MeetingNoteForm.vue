@@ -1,12 +1,15 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { ArrowLeft, Paperclip, X, FileText, Plus, UserPlus, Search, Users } from "lucide-vue-next";
 import { UiPageHeader, UiButton, UiInput, UiSelect, UiAlert } from "@/components/ui";
 import { useMeetingNoteStore } from "@/stores/meetingNote";
-import { useEmployeeStore } from "@/stores/employee";
+import { useLookupStore } from "@/stores/lookups";
+import { usePolling } from "@/composables/usePolling";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
+import { invalidate } from "@/composables/useStaleFetch";
 import { useAuthStore } from "@/stores/auth";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import PresenceIndicator from "@/components/common/PresenceIndicator.vue";
@@ -15,10 +18,11 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useMeetingNoteStore();
-const employeeStore = useEmployeeStore();
+// The whole employee list from the shared lookup cache (not
+// employeeStore.employees, which other pages fill with their own subset).
+const lookups = useLookupStore();
 const authStore = useAuthStore();
 
-const { employees } = storeToRefs(employeeStore);
 const { error, activeViewers } = storeToRefs(store);
 
 // The creator doesn't check themselves in as an Internal Attendee -- they
@@ -27,7 +31,7 @@ const { error, activeViewers } = storeToRefs(store);
 // attendee at all.
 const selectableEmployees = computed(() => {
   const selfId = authStore.user?.employee_profile?.id;
-  return employees.value.filter((employee) => employee.id !== selfId);
+  return lookups.employees.filter((employee) => employee.id !== selfId);
 });
 
 const isEditing = computed(() => !!route.params.id);
@@ -69,40 +73,51 @@ const filteredEmployees = computed(() => {
   return selectableEmployees.value.filter((employee) => (employee.user?.name || employee.name || "").toLowerCase().includes(q));
 });
 
-let heartbeatTimer = null;
+// Unsaved-changes guard: compares against the form as loaded.
+const snapshot = () =>
+  JSON.stringify([form.value, actionItems.value, externalAttendees.value, newAttachments.value.length, removeAttachmentIds.value]);
+const loaded = ref(!isEditing.value);
+let pristine = snapshot();
+let saved = false;
+useUnsavedGuard(() => !saved && loaded.value && snapshot() !== pristine);
 
+// Presence heartbeat while editing: lets other collaborators see this note
+// is being edited right now (polling-based, see PresenceIndicator). Paused
+// while the browser tab is hidden, stopped when the page closes.
+const pingPresence = () => {
+  if (!isEditing.value || !loaded.value) return;
+  store.sendHeartbeat(route.params.id, true);
+  store.fetchActiveViewers(route.params.id);
+};
+usePolling(pingPresence, 8000);
+
+const fillForm = (note) => {
+  form.value = {
+    document_number: note.document_number,
+    title: note.title,
+    meeting_type: note.meeting_type,
+    meeting_date: toLocalInput(note.meeting_date),
+    body: note.body || "",
+    attendee_employee_ids: (note.attendees || [])
+      .map((a) => a.id)
+      .filter((id) => id !== authStore.user?.employee_profile?.id),
+  };
+  actionItems.value = (note.action_items || []).map((item) => ({ ...item }));
+  externalAttendees.value = (note.external_attendees || []).map((att) => ({ ...att }));
+  existingAttachments.value = note.attachments || [];
+};
+
+// The attendee picker and (when editing) the note load together.
 onMounted(async () => {
-  await employeeStore.fetchEmployees({});
-
-  if (isEditing.value) {
-    const note = await store.fetchMeetingNote(route.params.id);
-    form.value = {
-      document_number: note.document_number,
-      title: note.title,
-      meeting_type: note.meeting_type,
-      meeting_date: toLocalInput(note.meeting_date),
-      body: note.body || "",
-      attendee_employee_ids: (note.attendees || [])
-        .map((a) => a.id)
-        .filter((id) => id !== authStore.user?.employee_profile?.id),
-    };
-    actionItems.value = note.action_items || [];
-    externalAttendees.value = note.external_attendees || [];
-    existingAttachments.value = note.attachments || [];
-
-    // Presence heartbeat: let other collaborators know this document is
-    // being edited right now (polling-based, see PresenceIndicator).
-    store.sendHeartbeat(route.params.id, true);
-    store.fetchActiveViewers(route.params.id);
-    heartbeatTimer = setInterval(() => {
-      store.sendHeartbeat(route.params.id, true);
-      store.fetchActiveViewers(route.params.id);
-    }, 8000);
-  }
-});
-
-onUnmounted(() => {
-  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  const [, note] = await Promise.allSettled([
+    lookups.ensure("employees"),
+    isEditing.value ? store.fetchMeetingNote(route.params.id) : Promise.resolve(null),
+  ]);
+  if (!isEditing.value || note.status !== "fulfilled" || !note.value) return;
+  fillForm(note.value);
+  loaded.value = true;
+  pristine = snapshot();
+  pingPresence();
 });
 
 const toggleAttendee = (employeeId) => {
@@ -173,9 +188,13 @@ const handleSubmit = async () => {
   saving.value = true;
   try {
     const formData = buildFormData();
+    // The store keeps the saved note (the detail page opens with it, no
+    // reload) and puts it in place in the list.
     const note = isEditing.value
       ? await store.updateMeetingNote(route.params.id, formData)
       : await store.createMeetingNote(formData);
+    if (!isEditing.value) invalidate("meeting-notes");
+    saved = true;
     router.push({ name: "admin.meeting-notes.detail", params: { id: note.id } });
   } catch (err) {
     console.error(err);

@@ -1,6 +1,10 @@
 import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
+import { invalidate } from "@/composables/useStaleFetch";
+import { openBlobPdf } from "@/utils/pdfTab";
+
+let listSeq = 0; // latest fetchProposals call
 
 export const useProposalStore = defineStore("proposal", {
   state: () => ({
@@ -11,6 +15,8 @@ export const useProposalStore = defineStore("proposal", {
       per_page: 10,
       total: 0,
     },
+    // Params of the list currently held (null until the first load).
+    listKey: null,
     loading: false,
     saving: false,
     error: null,
@@ -18,17 +24,28 @@ export const useProposalStore = defineStore("proposal", {
 
   actions: {
     async fetchProposals(params = {}) {
+      // Only the latest request writes the list (search and filters can
+      // change while an older request is still in flight).
+      const seq = ++listSeq;
       this.loading = true;
       this.error = null;
       try {
         const { data } = await axiosInstance.get("/proposals", { params });
+        if (seq !== listSeq) return;
         this.proposals = data.data.data;
         this.meta = data.data.meta;
+        this.listKey = JSON.stringify(params);
       } catch (error) {
-        this.error = handleError(error);
+        if (seq === listSeq) this.error = handleError(error);
       } finally {
-        this.loading = false;
+        if (seq === listSeq) this.loading = false;
       }
+    },
+
+    // Puts saved fields into the listed row, if it's on the page held.
+    patchRow(id, fields) {
+      const row = this.proposals.find((p) => String(p.id) === String(id));
+      if (row && fields) Object.assign(row, fields);
     },
 
     async fetchProposal(id) {
@@ -40,6 +57,7 @@ export const useProposalStore = defineStore("proposal", {
       this.saving = true;
       try {
         const { data } = await axiosInstance.post("/proposals", payload);
+        invalidate("proposals-list"); // the new one belongs at the top
         return data.data;
       } finally {
         this.saving = false;
@@ -50,6 +68,7 @@ export const useProposalStore = defineStore("proposal", {
       this.saving = true;
       try {
         const { data } = await axiosInstance.put(`/proposals/${id}`, payload);
+        this.patchRow(id, data.data);
         return data.data;
       } finally {
         this.saving = false;
@@ -58,12 +77,16 @@ export const useProposalStore = defineStore("proposal", {
 
     async duplicateProposal(id) {
       const { data } = await axiosInstance.post(`/proposals/${id}/duplicate`);
+      invalidate("proposals-list");
       return data.data;
     },
 
     async deleteProposal(id) {
       await axiosInstance.delete(`/proposals/${id}`);
+      const before = this.proposals.length;
       this.proposals = this.proposals.filter((p) => p.id !== id);
+      if (this.proposals.length < before && this.meta) this.meta = { ...this.meta, total: Math.max(0, (this.meta.total ?? 1) - 1) };
+      invalidate("proposals-list"); // other pages shift by one
     },
 
     // ----- Share link -----
@@ -89,20 +112,12 @@ export const useProposalStore = defineStore("proposal", {
       return data.data; // { public_id, url }
     },
 
-    // Opens the PDF in the browser's own viewer in a new tab. The window is
-    // opened before the request so popup blockers treat it as part of the
-    // click, then pointed at the PDF once it arrives.
-    async viewPdf(id) {
-      const tab = window.open("", "_blank");
-      try {
-        const response = await axiosInstance.get(`/proposals/${id}/export-pdf`, { responseType: "blob" });
-        const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
-        if (tab) tab.location.href = url;
-        else window.open(url, "_blank");
-      } catch (error) {
-        tab?.close();
-        throw error;
-      }
+    // Opens the PDF in the browser's own viewer in a new tab. The tab is
+    // opened as part of the click (pop-up blockers allow that) and pointed
+    // at the PDF once it arrives; a caller that must await something first
+    // (e.g. saving) opens the tab itself and passes it in.
+    viewPdf(id, tab = window.open("", "_blank")) {
+      return openBlobPdf(tab, () => axiosInstance.get(`/proposals/${id}/export-pdf`, { responseType: "blob" }));
     },
 
     async downloadPdf(id, filename) {

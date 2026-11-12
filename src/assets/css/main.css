@@ -1396,10 +1396,6 @@ button:disabled,
   height: 1.5rem !important;
 }
 
-.\!h-9 {
-  height: 2.25rem !important;
-}
-
 .\!h-auto {
   height: auto !important;
 }
@@ -1754,10 +1750,6 @@ button:disabled,
 
 .\!w-6 {
   width: 1.5rem !important;
-}
-
-.\!w-9 {
-  width: 2.25rem !important;
 }
 
 .\!w-auto {
@@ -4551,6 +4543,11 @@ button:disabled,
 .\!text-ui-faint {
   --tw-text-opacity: 1 !important;
   color: rgb(var(--ui-faint) / var(--tw-text-opacity, 1)) !important;
+}
+
+.\!text-ui-warn {
+  --tw-text-opacity: 1 !important;
+  color: rgb(var(--ui-warn) / var(--tw-text-opacity, 1)) !important;
 }
 
 .text-\[\#0C51D9\] {
@@ -7578,10 +7575,6 @@ html {
 
   .md\:w-\[320px\] {
     width: 320px;
-  }
-
-  .md\:w-\[340px\] {
-    width: 340px;
   }
 
   .md\:w-\[420px\] {

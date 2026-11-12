@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -21,6 +21,7 @@ import { useDocumentLetterStore } from "@/stores/documentLetter";
 import { useAuthStore } from "@/stores/auth";
 import { can } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useToastStore } from "@/stores/toast";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { UiPageHeader, UiButton, UiBadge, UiAlert, UiModal, UiInput } from "@/components/ui";
 
@@ -30,6 +31,7 @@ const router = useRouter();
 const store = useDocumentLetterStore();
 const authStore = useAuthStore();
 const alertModal = useAlertModalStore();
+const toast = useToastStore();
 
 const { currentDocumentLetter: memo, loading } = storeToRefs(store);
 
@@ -37,8 +39,27 @@ const busy = ref(false);
 const isRejectModalOpen = ref(false);
 const rejectionReason = ref("");
 
-const load = () => store.fetchDocumentLetter(route.params.id);
+// A memo already in the store (just saved, or opened before) shows at once
+// and refreshes quietly; the skeleton is only for a memo not loaded yet.
+const load = () => store.fetchDocumentLetter(route.params.id).catch(() => {});
 onMounted(load);
+watch(() => route.params.id, (id) => id && load());
+
+// The API returns the saved memo after each action; the store puts it in
+// place (here and in the list), so nothing reloads.
+const runAction = async (action, doneMessage) => {
+  busy.value = true;
+  try {
+    await action();
+    toast.success(doneMessage, memo.value?.document_number || "");
+    return true;
+  } catch (err) {
+    toast.error(t("common.toast.error"), err?.response?.data?.message || "");
+    return false;
+  } finally {
+    busy.value = false;
+  }
+};
 
 const isAuthor = computed(() => memo.value?.creator?.id === authStore.user?.id);
 const isFinanceManager = computed(() => authStore.user?.roles?.includes("finance"));
@@ -64,24 +85,12 @@ const formatDateTime = (date) =>
 const handleSubmit = async () => {
   if (!(await alertModal.confirm(t("documents.memo.detail.submitConfirm"), { type: "info", confirmText: t("common.actions.submit") })))
     return;
-  busy.value = true;
-  try {
-    await store.submitDocumentLetter(memo.value.id);
-    await load();
-  } finally {
-    busy.value = false;
-  }
+  await runAction(() => store.submitDocumentLetter(memo.value.id), t("documents.memo.detail.toast.submitted"));
 };
 
 const handleApprove = async () => {
   if (!(await alertModal.confirm(t("documents.memo.detail.approveConfirm"), { type: "success", confirmText: t("common.actions.approve") }))) return;
-  busy.value = true;
-  try {
-    await store.approveDocumentLetter(memo.value.id);
-    await load();
-  } finally {
-    busy.value = false;
-  }
+  await runAction(() => store.approveDocumentLetter(memo.value.id), t("documents.memo.detail.toast.approved"));
 };
 
 const openRejectModal = () => {
@@ -91,13 +100,21 @@ const openRejectModal = () => {
 
 const handleReject = async () => {
   if (!rejectionReason.value.trim()) return;
-  busy.value = true;
+  const ok = await runAction(() => store.rejectDocumentLetter(memo.value.id, rejectionReason.value.trim()), t("documents.memo.detail.toast.rejected"));
+  if (ok) isRejectModalOpen.value = false;
+};
+
+// Opened straight from the click (no await before it) so the new tab isn't
+// treated as a popup.
+const viewingPdf = ref(false);
+const handleViewPdf = async () => {
+  viewingPdf.value = true;
   try {
-    await store.rejectDocumentLetter(memo.value.id, rejectionReason.value.trim());
-    isRejectModalOpen.value = false;
-    await load();
+    await store.viewPdf(memo.value.id);
+  } catch {
+    toast.error(t("documents.shared.pdfFailed"));
   } finally {
-    busy.value = false;
+    viewingPdf.value = false;
   }
 };
 
@@ -106,6 +123,8 @@ const handleDownload = async () => {
   downloading.value = true;
   try {
     await store.downloadPdf(memo.value.id, memo.value.document_number);
+  } catch {
+    toast.error(t("documents.shared.pdfFailed"));
   } finally {
     downloading.value = false;
   }
@@ -151,9 +170,15 @@ const handleDownload = async () => {
           </span>
         </template>
         <template #actions>
-          <UiButton variant="secondary" :icon="Download" :loading="downloading" @click="handleDownload">
-            {{ downloading ? $t("documents.shared.downloading") : $t("common.actions.downloadPdf") }}
-          </UiButton>
+          <UiButton variant="secondary" :icon="FileText" :loading="viewingPdf" @click="handleViewPdf">{{ $t("documents.shared.viewPdf") }}</UiButton>
+          <UiButton
+            variant="secondary"
+            :icon="Download"
+            :loading="downloading"
+            :title="$t('common.actions.downloadPdf')"
+            :aria-label="$t('common.actions.downloadPdf')"
+            @click="handleDownload"
+          />
           <UiButton v-if="canEdit" variant="secondary" :icon="Pencil" :to="{ name: 'admin.official-memos.edit', params: { id: memo.id } }">{{ $t("common.actions.edit") }}</UiButton>
           <UiButton v-if="canSubmit" :icon="Send" :disabled="busy" @click="handleSubmit">{{ $t("common.actions.submit") }}</UiButton>
           <UiButton v-if="canApprove" variant="danger" :icon="XCircle" :disabled="busy" @click="openRejectModal">{{ $t("common.actions.reject") }}</UiButton>

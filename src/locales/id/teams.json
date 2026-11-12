@@ -8,7 +8,6 @@
   "list": {
     "title": "Semua Tim",
     "itemLabel": "tim",
-    "importCsv": "Impor CSV",
     "addTeam": "Tambah Tim",
     "searchPlaceholder": "Cari nama, ketua, status...",
     "allDepartments": "Semua Departemen",
