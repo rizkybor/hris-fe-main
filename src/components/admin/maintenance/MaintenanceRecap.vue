@@ -193,7 +193,7 @@ const trendSeries = computed(() => [
                 </span>
               </div>
               <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
-                <div class="h-full rounded-full" :class="barClass(u)" :style="{ width: `${Math.min(100, Math.max(2, u.used_percent))}%` }"></div>
+                <div class="ui-bar-fill h-full rounded-full" :class="barClass(u)" :style="{ width: `${Math.min(100, Math.max(2, u.used_percent))}%` }"></div>
               </div>
               <p v-if="u.overage > 0" class="text-ui-cap text-ui-bad font-medium mt-0.5 flex items-center gap-1">
                 <AlertTriangle class="w-3 h-3" />{{ $t("maintenance.common.overQuota", { hours: h(u.overage) }) }}

@@ -386,11 +386,11 @@ const handleCheckIn = async () => {
     });
 
     if (attendance?.status === "overtime") {
-      await alertModal.alert(t("clock.alerts.overtimeIn"), { type: "success" });
+      await alertModal.alert(t("clock.alerts.overtimeIn"), { type: "success", celebrate: true });
     } else if (attendance?.status === "late" && attendance?.late_minutes) {
       await alertModal.alert(t("clock.alerts.lateIn", { n: attendance.late_minutes }, attendance.late_minutes), { type: "warning" });
     } else {
-      await alertModal.alert(t("clock.alerts.successIn"), { type: "success" });
+      await alertModal.alert(t("clock.alerts.successIn"), { type: "success", celebrate: true });
     }
     resetForNextAction();
     await fetchTodayAttendance();
@@ -419,7 +419,7 @@ const handleCheckOut = async () => {
       check_out_photo: capturedPhotoData.value,
     });
 
-    await alertModal.alert(t("clock.alerts.successOut"), { type: "success" });
+    await alertModal.alert(t("clock.alerts.successOut"), { type: "success", celebrate: true });
     resetForNextAction();
     await fetchTodayAttendance();
   } catch (error) {

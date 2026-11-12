@@ -247,7 +247,7 @@ const onDelete = () => {
           :aria-label="$t('projects.card.progress')"
         >
           <div
-            class="h-full rounded-full transition-all duration-300"
+            class="ui-bar-fill h-full rounded-full transition-all duration-300"
             :class="progress >= 100 ? 'bg-ui-ok' : 'bg-ui-ink'"
             :style="{ width: `${progress}%` }"
           ></div>

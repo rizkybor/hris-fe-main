@@ -348,7 +348,7 @@ onMounted(async () => {
                 <span class="text-ui-ink font-medium tabular-nums">{{ projectProgress }}%</span>
               </div>
               <div class="h-1.5 rounded-full bg-ui-subtle mt-1.5 overflow-hidden">
-                <div class="h-full rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${projectProgress}%` }"></div>
+                <div class="ui-bar-fill h-full rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${projectProgress}%` }"></div>
               </div>
               <p class="text-ui-cap text-ui-faint mt-1 truncate">
                 {{ projectHealth ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}
@@ -437,7 +437,7 @@ onMounted(async () => {
               <span class="text-ui-small text-ui-ink tabular-nums">{{ projectProgress }}%</span>
             </div>
             <div class="h-1.5 rounded-full bg-ui-subtle mt-2 overflow-hidden">
-              <div class="h-full rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${projectProgress}%` }"></div>
+              <div class="ui-bar-fill h-full rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${projectProgress}%` }"></div>
             </div>
             <p class="text-ui-cap text-ui-muted mt-1.5">
               {{ projectHealth ? $t("projects.detail.expectedByNow", { n: projectHealth.expectedProgress }) : $t("projects.detail.projectCompletion") }}

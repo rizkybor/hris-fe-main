@@ -194,7 +194,7 @@ const openContract = (contract) => router.push({ name: "admin.maintenance.detail
               {{ $t("maintenance.common.leftOf", { total: formatHours(row.current_period.total) }) }}
             </p>
             <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden mt-1.5">
-              <div class="h-full rounded-full" :class="barClass(row.current_period)" :style="{ width: `${Math.min(row.current_period.used_percent, 100)}%` }"></div>
+              <div class="ui-bar-fill h-full rounded-full" :class="barClass(row.current_period)" :style="{ width: `${Math.min(row.current_period.used_percent, 100)}%` }"></div>
             </div>
           </div>
           <p v-else class="text-ui-cap text-ui-muted">{{ $t("maintenance.common.noQuotaThisMonth", { status: CONTRACT_STATUS[row.status]?.label.toLowerCase() }) }}</p>
@@ -239,7 +239,7 @@ const openContract = (contract) => router.push({ name: "admin.maintenance.detail
                     <span class="text-ui-muted shrink-0 inline-flex items-center gap-1"><PiggyBank class="w-3.5 h-3.5 text-ui-faint" />{{ formatHours(row.balance_hours) }}</span>
                   </div>
                   <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden mt-1.5">
-                    <div class="h-full rounded-full" :class="barClass(row.current_period)" :style="{ width: `${Math.min(row.current_period.used_percent, 100)}%` }"></div>
+                    <div class="ui-bar-fill h-full rounded-full" :class="barClass(row.current_period)" :style="{ width: `${Math.min(row.current_period.used_percent, 100)}%` }"></div>
                   </div>
                 </div>
                 <p v-else class="text-ui-cap text-ui-muted mt-2">

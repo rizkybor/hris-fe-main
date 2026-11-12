@@ -186,5 +186,9 @@
     "label": "Gunakan tanda tangan (TTD)",
     "hint": "Menambahkan tanda tangan penanda tangan ke PDF.",
     "availableFor": "Tersedia untuk {names}, dengan atau tanpa gelar."
+  },
+  "presence": {
+    "viewing": "{names} sedang melihat",
+    "editing": "{names} sedang mengubah"
   }
 }

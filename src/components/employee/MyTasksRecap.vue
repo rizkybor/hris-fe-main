@@ -121,8 +121,8 @@ const maxOpen = computed(() => Math.max(1, ...groups.value.map((g) => g.open)));
               </span>
             </div>
             <div class="w-full h-2 bg-ui-subtle rounded-full overflow-hidden flex gap-0.5">
-              <div v-if="g.overdue" class="h-full rounded-full bg-ui-bad" :style="{ width: `${(g.overdue / maxOpen) * 100}%` }"></div>
-              <div v-if="g.open - g.overdue" class="h-full rounded-full bg-ui-accent" :style="{ width: `${((g.open - g.overdue) / maxOpen) * 100}%` }"></div>
+              <div v-if="g.overdue" class="ui-bar-fill h-full rounded-full bg-ui-bad" :style="{ width: `${(g.overdue / maxOpen) * 100}%` }"></div>
+              <div v-if="g.open - g.overdue" class="ui-bar-fill h-full rounded-full bg-ui-accent" :style="{ width: `${((g.open - g.overdue) / maxOpen) * 100}%` }"></div>
             </div>
           </div>
           <p class="text-ui-cap text-ui-muted flex flex-wrap gap-x-3 gap-y-1">

@@ -459,7 +459,7 @@ onBeforeUnmount(() => {
           <template #cell-progress="{ row }">
             <div v-if="row.progress" class="flex items-center gap-2.5">
               <div class="flex-1 max-w-[110px] h-1.5 bg-ui-subtle rounded-full overflow-hidden">
-                <div class="h-full bg-ui-ok rounded-full transition-all" :style="{ width: `${progressPct(row)}%` }"></div>
+                <div class="ui-bar-fill h-full bg-ui-ok rounded-full transition-all" :style="{ width: `${progressPct(row)}%` }"></div>
               </div>
               <span class="text-ui-cap text-ui-muted tabular-nums whitespace-nowrap">{{ $t("staffTasks.progressDone", { done: row.progress.done, total: row.progress.total }) }}</span>
             </div>
@@ -509,7 +509,7 @@ onBeforeUnmount(() => {
                 </div>
                 <div v-if="row.progress" class="flex items-center gap-2.5 mt-2.5">
                   <div class="flex-1 h-1.5 bg-ui-subtle rounded-full overflow-hidden">
-                    <div class="h-full bg-ui-ok rounded-full transition-all" :style="{ width: `${progressPct(row)}%` }"></div>
+                    <div class="ui-bar-fill h-full bg-ui-ok rounded-full transition-all" :style="{ width: `${progressPct(row)}%` }"></div>
                   </div>
                   <span class="text-ui-cap text-ui-muted tabular-nums whitespace-nowrap">{{ $t("staffTasks.progressDone", { done: row.progress.done, total: row.progress.total }) }}</span>
                 </div>

@@ -200,7 +200,7 @@ const todayISO = new Date().toISOString().split("T")[0];
             <ArrowLeft class="w-4 h-4" /> {{ $t("clients.detail.title") }}
           </button>
           <div class="flex items-center gap-2 flex-wrap mt-0.5">
-            <h1 class="text-ui-h1 text-ui-ink truncate">{{ client?.name || $t("clients.detail.title") }}</h1>
+            <h1 class="text-ui-h1 text-ui-ink truncate" :title="client?.name">{{ client?.name || $t("clients.detail.title") }}</h1>
             <UiBadge v-if="client?.type" tone="neutral">{{ client.type }}</UiBadge>
             <UiBadge v-if="client?.field" tone="outline">{{ client.field }}</UiBadge>
           </div>

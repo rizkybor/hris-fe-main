@@ -240,6 +240,9 @@ const matrixColumns = computed(() =>
 );
 const permByAction = (group, label) => group.permissions.find((p) => p.action === label);
 const otherPerms = (group) => group.permissions.filter((p) => !MATRIX_LABELS.includes(p.action));
+// Modules with none of the standard actions (e.g. Dashboard Widgets) spread
+// their own permissions across the whole row instead of one narrow column.
+const hasMatrix = (group) => matrixColumns.value.some((col) => permByAction(group, col.label));
 const groupState = (group) => {
   const n = selectedInGroup(group);
   return n === 0 ? "none" : n === group.permissions.length ? "all" : "some";
@@ -313,7 +316,7 @@ async function handleDelete() {
               <span class="text-ui-ink font-medium tabular-nums">{{ roleCoverage(row) }}%</span>
             </div>
             <div class="w-full bg-ui-subtle rounded-full h-1.5">
-              <div class="h-1.5 rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${roleCoverage(row)}%` }"></div>
+              <div class="ui-bar-fill h-1.5 rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${roleCoverage(row)}%` }"></div>
             </div>
           </div>
         </template>
@@ -347,7 +350,7 @@ async function handleDelete() {
                 <Users class="w-3 h-3" />{{ $t("settings.roles.userCount", { n: row.users_count }, row.users_count) }} · {{ $t("settings.roles.permissionCount", { n: row.permissions.length }, row.permissions.length) }} · {{ roleCoverage(row) }}%
               </p>
               <div class="w-full bg-ui-subtle rounded-full h-1 mt-2">
-                <div class="h-1 rounded-full bg-ui-ink" :style="{ width: `${roleCoverage(row)}%` }"></div>
+                <div class="ui-bar-fill h-1 rounded-full bg-ui-ink" :style="{ width: `${roleCoverage(row)}%` }"></div>
               </div>
             </div>
             <div class="flex items-center gap-0.5 shrink-0">
@@ -392,12 +395,21 @@ async function handleDelete() {
 
           <!-- Desktop: module x action matrix -->
           <div v-if="filteredGroups.length" class="hidden sm:block border border-ui-line rounded-ui-card">
-            <table class="w-full border-collapse">
+            <!-- Fixed column widths: the table always fits the modal (long
+                 permission names truncate with a tooltip instead of pushing
+                 the table past the modal's edge). -->
+            <table class="w-full border-collapse table-fixed">
+              <colgroup>
+                <col class="w-10" />
+                <col class="w-[30%]" />
+                <col v-for="col in matrixColumns" :key="col.label" class="w-12" />
+                <col />
+              </colgroup>
               <thead>
                 <tr>
                   <th class="sticky -top-5 z-10 bg-ui-surface w-10 pl-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line rounded-tl-ui-card">#</th>
                   <th class="sticky -top-5 z-10 bg-ui-surface px-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line">{{ $t("settings.roles.module") }}</th>
-                  <th v-for="col in matrixColumns" :key="col.label" class="sticky -top-5 z-10 bg-ui-surface px-2 h-10 text-center text-ui-cap font-medium text-ui-muted border-b border-ui-line w-[60px]">{{ col.short }}</th>
+                  <th v-for="col in matrixColumns" :key="col.label" class="sticky -top-5 z-10 bg-ui-surface px-1 h-10 text-center text-ui-cap font-medium text-ui-muted border-b border-ui-line truncate" :title="col.name">{{ col.short }}</th>
                   <th class="sticky -top-5 z-10 bg-ui-surface px-3 h-10 text-left text-ui-cap font-medium text-ui-muted border-b border-ui-line rounded-tr-ui-card">{{ $t("settings.roles.other") }}</th>
                 </tr>
               </thead>
@@ -411,8 +423,8 @@ async function handleDelete() {
                   <td class="pl-3 h-11 text-ui-cap text-ui-faint tabular-nums border-b border-ui-line">
                     {{ sectionedGroups.slice(0, sIndex).reduce((n, s) => n + s.groups.length, 0) + gIndex + 1 }}
                   </td>
-                  <td class="px-3 h-11 border-b border-ui-line">
-                    <label class="flex items-center gap-2 text-ui-small font-medium text-ui-ink">
+                  <td class="px-3 py-1.5 h-11 border-b border-ui-line">
+                    <label class="flex items-center gap-2 min-w-0 text-ui-small font-medium text-ui-ink">
                       <input
                         type="checkbox"
                         class="w-4 h-4 accent-[rgb(var(--ui-ink))]"
@@ -420,11 +432,28 @@ async function handleDelete() {
                         :indeterminate.prop="groupState(group) === 'some'"
                         @change="toggleGroup(group)"
                       />
-                      <span class="flex-1 min-w-0 truncate">{{ moduleLabel(group) }}</span>
-                      <span class="text-ui-cap text-ui-faint font-normal tabular-nums">{{ selectedInGroup(group) }}/{{ group.permissions.length }}</span>
+                      <!-- Name over its count, so the name gets the full width. -->
+                      <span class="flex-1 min-w-0 leading-tight">
+                        <span class="block truncate" :title="moduleLabel(group)">{{ moduleLabel(group) }}</span>
+                        <span class="block text-ui-cap text-ui-faint font-normal tabular-nums">{{ selectedInGroup(group) }}/{{ group.permissions.length }}</span>
+                      </span>
                     </label>
                   </td>
-                  <td v-for="col in matrixColumns" :key="col.label" class="px-2 h-11 text-center border-b border-ui-line">
+                  <!-- No standard actions: its permissions span the row, two per line. -->
+                  <td v-if="!hasMatrix(group)" :colspan="matrixColumns.length + 1" class="px-3 py-2 border-b border-ui-line">
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                      <label v-for="perm in otherPerms(group)" :key="perm.id" class="flex items-center gap-1.5 min-w-0 text-ui-cap text-ui-text" :title="actionLabel(group, perm)">
+                        <input
+                          type="checkbox"
+                          class="w-3.5 h-3.5 shrink-0 accent-[rgb(var(--ui-ink))]"
+                          :checked="form.permissions.includes(perm.name)"
+                          @change="togglePermission(perm.name)"
+                        />
+                        <span class="truncate">{{ actionLabel(group, perm) }}</span>
+                      </label>
+                    </div>
+                  </td>
+                  <td v-for="col in (hasMatrix(group) ? matrixColumns : [])" :key="col.label" class="px-1 h-11 text-center border-b border-ui-line">
                     <input
                       v-if="permByAction(group, col.label)"
                       type="checkbox"
@@ -435,16 +464,16 @@ async function handleDelete() {
                     />
                     <span v-else class="text-ui-line-strong" aria-hidden="true">–</span>
                   </td>
-                  <td class="px-3 py-2 border-b border-ui-line">
-                    <div class="flex flex-wrap gap-x-3 gap-y-1">
-                      <label v-for="perm in otherPerms(group)" :key="perm.id" class="inline-flex items-center gap-1.5 text-ui-cap text-ui-text whitespace-nowrap">
+                  <td v-if="hasMatrix(group)" class="px-3 py-2 border-b border-ui-line">
+                    <div class="flex flex-col gap-1">
+                      <label v-for="perm in otherPerms(group)" :key="perm.id" class="flex items-center gap-1.5 min-w-0 text-ui-cap text-ui-text" :title="actionLabel(group, perm)">
                         <input
                           type="checkbox"
-                          class="w-3.5 h-3.5 accent-[rgb(var(--ui-ink))]"
+                          class="w-3.5 h-3.5 shrink-0 accent-[rgb(var(--ui-ink))]"
                           :checked="form.permissions.includes(perm.name)"
                           @change="togglePermission(perm.name)"
                         />
-                        {{ actionLabel(group, perm) }}
+                        <span class="truncate">{{ actionLabel(group, perm) }}</span>
                       </label>
                     </div>
                   </td>
@@ -471,7 +500,7 @@ async function handleDelete() {
                     <span class="text-ui-cap text-ui-faint tabular-nums">{{ selectedInGroup(group) }}/{{ group.permissions.length }}</span>
                   </label>
                   <div class="grid grid-cols-2 gap-x-3 gap-y-2 px-3 py-2.5">
-                    <label v-for="perm in group.permissions" :key="perm.id" class="flex items-center gap-2 text-ui-small text-ui-text">
+                    <label v-for="perm in group.permissions" :key="perm.id" class="flex items-center gap-2 min-w-0 text-ui-small text-ui-text" :title="actionLabel(group, perm)">
                       <input
                         type="checkbox"
                         class="w-4 h-4 accent-[rgb(var(--ui-ink))]"

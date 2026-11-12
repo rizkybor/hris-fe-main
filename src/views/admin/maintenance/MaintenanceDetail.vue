@@ -444,8 +444,9 @@ const HISTORY_COLUMNS = computed(() => [
           </span>
           <span class="block mt-1.5 text-ui-cap">
             {{ $t("maintenance.detail.unusedHours") }} <span class="text-ui-ink font-medium">{{ policyLabel(contract.leftover_policy) }}</span>
+            <!-- Explicit space: Vue drops the newline between the span and this text. -->
             <template v-if="contract.leftover_policy === 'bank'">
-              {{ $t("maintenance.detail.cap", { value: contract.bank_cap_hours != null ? formatHours(contract.bank_cap_hours) : $t("maintenance.detail.none") }) }}
+              {{ " " }}{{ $t("maintenance.detail.cap", { value: contract.bank_cap_hours != null ? formatHours(contract.bank_cap_hours) : $t("maintenance.detail.none") }) }}
               {{ $t("maintenance.detail.expireAfter", { value: contract.bank_expiry_months ? $t("maintenance.detail.months", { n: contract.bank_expiry_months }, contract.bank_expiry_months) : $t("maintenance.common.never") }) }}
             </template>
             <template v-if="contract.overage_rate"><span class="tabular-nums">{{ $t("maintenance.detail.overage", { rate: formatRupiah(contract.overage_rate) }) }}</span></template>
@@ -469,7 +470,7 @@ const HISTORY_COLUMNS = computed(() => [
             </div>
             <p class="text-ui-h1 tabular-nums mt-1.5" :class="current.overage > 0 ? 'text-ui-bad' : 'text-ui-ink'">{{ formatHours(current.remaining) }}</p>
             <div class="w-full h-2 bg-ui-subtle rounded-full overflow-hidden mt-2.5">
-              <div class="h-full rounded-full" :class="barClass(current)" :style="{ width: `${Math.min(current.used_percent, 100)}%` }"></div>
+              <div class="ui-bar-fill h-full rounded-full" :class="barClass(current)" :style="{ width: `${Math.min(current.used_percent, 100)}%` }"></div>
             </div>
             <p v-if="current.overage > 0" class="text-ui-cap text-ui-bad font-medium mt-1.5 flex items-center gap-1">
               <AlertTriangle class="w-3.5 h-3.5 shrink-0" />
@@ -553,7 +554,7 @@ const HISTORY_COLUMNS = computed(() => [
 
             <div v-if="period && periodOpen" class="flex flex-col sm:flex-row sm:items-center gap-2 border border-ui-line rounded-ui-control px-3 py-2.5 text-ui-small">
               <span class="text-ui-text">{{ $t("maintenance.detail.atMonthEnd") }}</span>
-              <UiSelect v-model="leftoverChoice" :options="leftoverOptions" :disabled="!can('maintenance-adjust')" class="sm:w-[380px]" :aria-label="$t('maintenance.detail.unusedAtMonthEnd')" />
+              <UiSelect v-model="leftoverChoice" :options="leftoverOptions" :disabled="!can('maintenance-adjust')" class="sm:flex-1 sm:max-w-[520px]" :aria-label="$t('maintenance.detail.unusedAtMonthEnd')" />
             </div>
             <p v-else-if="period" class="text-ui-small text-ui-text border border-ui-line rounded-ui-control px-3 py-2.5">
               {{ $t("maintenance.detail.closedUnused") }} <strong class="text-ui-ink font-medium">{{ leftoverResult(period) }}</strong>

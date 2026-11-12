@@ -216,7 +216,7 @@ onMounted(() => {
           </div>
 
           <h3 class="text-ui-h3 text-ui-ink mt-3 break-words">{{ announcement.title }}</h3>
-          <p class="text-ui-body text-ui-text whitespace-pre-line line-clamp-4 mt-1.5 flex-1">{{ announcement.body }}</p>
+          <p class="text-ui-body text-ui-text whitespace-pre-line break-words line-clamp-4 mt-1.5 flex-1">{{ announcement.body }}</p>
 
           <div class="flex items-center gap-2 mt-4 pt-3 border-t border-ui-line text-ui-cap text-ui-muted min-w-0">
             <Avatar :alt="announcement.created_by?.name ?? ''" size="w-6 h-6" icon-size="w-3 h-3" />

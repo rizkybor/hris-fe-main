@@ -308,7 +308,7 @@ const lastSaved = computed(() => {
               <ArrowLeft class="w-4 h-4" />
             </button>
             <div class="min-w-0 flex-1">
-              <h1 class="text-ui-h3 text-ui-ink truncate">{{ $t("documents.hub.links.proposal.title") }} — {{ doc.title || $t("documents.proposal.editor.untitled") }}</h1>
+              <h1 class="text-ui-h3 text-ui-ink truncate" :title="doc.title">{{ $t("documents.hub.links.proposal.title") }} — {{ doc.title || $t("documents.proposal.editor.untitled") }}</h1>
               <p class="text-ui-cap text-ui-muted truncate">
                 {{ doc.client_name }}<span v-if="!isDirty && lastSaved"> · {{ lastSaved }}</span>
               </p>

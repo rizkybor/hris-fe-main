@@ -69,7 +69,7 @@ const tone = computed(() => {
           aria-valuemax="100"
           :aria-label="$t('licenses.period.progressLabel')"
         >
-          <div class="h-full rounded-full transition-all duration-500" :class="tone.bar" :style="{ width: `${percent}%` }"></div>
+          <div class="ui-bar-fill h-full rounded-full transition-all duration-500" :class="tone.bar" :style="{ width: `${percent}%` }"></div>
         </div>
         <div class="flex items-center justify-between text-ui-cap text-ui-muted mt-1.5 tabular-nums">
           <span>{{ $t("licenses.period.percentUsed", { n: percent }) }}</span>

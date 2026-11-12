@@ -69,7 +69,7 @@ const createQuery = () => ({ new: 1, ...(props.clientId ? { client_id: props.cli
             <strong class="text-ui-small font-medium text-ui-ink tabular-nums">{{ formatHours(c.current_period.remaining) }}</strong> {{ $t("maintenance.common.leftOf", { total: formatHours(c.current_period.total) }) }} · {{ formatMonth(c.current_period.month) }}
           </p>
           <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden mt-1.5">
-            <div class="h-full rounded-full" :style="{ width: `${Math.min(c.current_period.used_percent, 100)}%`, backgroundColor: usageColor(c.current_period) }"></div>
+            <div class="ui-bar-fill h-full rounded-full" :style="{ width: `${Math.min(c.current_period.used_percent, 100)}%`, backgroundColor: usageColor(c.current_period) }"></div>
           </div>
         </template>
         <div class="flex items-center justify-between text-ui-cap text-ui-muted mt-2.5">
