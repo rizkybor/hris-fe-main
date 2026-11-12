@@ -313,7 +313,7 @@ async function handleDelete() {
               <span class="text-ui-ink font-medium tabular-nums">{{ roleCoverage(row) }}%</span>
             </div>
             <div class="w-full bg-ui-subtle rounded-full h-1.5">
-              <div class="h-1.5 rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${roleCoverage(row)}%` }"></div>
+              <div class="ui-bar-fill h-1.5 rounded-full bg-ui-ink transition-all duration-300" :style="{ width: `${roleCoverage(row)}%` }"></div>
             </div>
           </div>
         </template>
@@ -347,7 +347,7 @@ async function handleDelete() {
                 <Users class="w-3 h-3" />{{ $t("settings.roles.userCount", { n: row.users_count }, row.users_count) }} · {{ $t("settings.roles.permissionCount", { n: row.permissions.length }, row.permissions.length) }} · {{ roleCoverage(row) }}%
               </p>
               <div class="w-full bg-ui-subtle rounded-full h-1 mt-2">
-                <div class="h-1 rounded-full bg-ui-ink" :style="{ width: `${roleCoverage(row)}%` }"></div>
+                <div class="ui-bar-fill h-1 rounded-full bg-ui-ink" :style="{ width: `${roleCoverage(row)}%` }"></div>
               </div>
             </div>
             <div class="flex items-center gap-0.5 shrink-0">

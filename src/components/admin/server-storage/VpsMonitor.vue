@@ -306,7 +306,7 @@ const step = (delta) => {
                     <span class="text-ui-muted tabular-nums truncate">{{ m.text }} · <strong class="font-semibold" :class="TONE_TEXT[usageTone(m.pct)]">{{ m.pct ?? "-" }}%</strong></span>
                   </div>
                   <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
-                    <div class="h-full rounded-full" :class="TONE_BAR[usageTone(m.pct)]" :style="{ width: `${Math.min(m.pct || 0, 100)}%` }"></div>
+                    <div class="ui-bar-fill h-full rounded-full" :class="TONE_BAR[usageTone(m.pct)]" :style="{ width: `${Math.min(m.pct || 0, 100)}%` }"></div>
                   </div>
                 </div>
               </div>

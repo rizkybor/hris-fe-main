@@ -25,6 +25,9 @@ export const useAlertModalStore = defineStore("alertModal", {
     confirmText: "OK",
     cancelText: "Cancel",
     type: "info", // 'success' | 'danger' | 'warning' | 'info'
+    // A drawn, animated check instead of the still icon (success only) --
+    // for the moments worth a little celebration, e.g. clocking in.
+    celebrate: false,
     resolver: null,
   }),
 
@@ -37,6 +40,7 @@ export const useAlertModalStore = defineStore("alertModal", {
         this.confirmText = options.confirmText ?? t("common.confirm.ok");
         this.cancelText = options.cancelText ?? t("common.actions.cancel");
         this.type = options.type ?? "info";
+        this.celebrate = !!options.celebrate;
         this.visible = true;
         this.resolver = resolve;
 
@@ -53,6 +57,7 @@ export const useAlertModalStore = defineStore("alertModal", {
         this.confirmText = options.confirmText ?? t("common.actions.confirm");
         this.cancelText = options.cancelText ?? t("common.actions.cancel");
         this.type = options.type ?? "danger";
+        this.celebrate = false;
         this.visible = true;
         this.resolver = resolve;
 

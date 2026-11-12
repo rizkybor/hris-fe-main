@@ -645,7 +645,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                           </div>
                           <div class="flex items-center gap-1.5 mt-1 pl-[60px]">
                             <div class="w-8 h-1 rounded-full bg-ui-subtle overflow-hidden shrink-0">
-                              <div class="h-full rounded-full" :class="laneFull(lane) ? 'bg-ui-warn' : 'bg-ui-ink'" :style="{ width: `${lanePercent(lane)}%` }"></div>
+                              <div class="ui-bar-fill h-full rounded-full" :class="laneFull(lane) ? 'bg-ui-warn' : 'bg-ui-ink'" :style="{ width: `${lanePercent(lane)}%` }"></div>
                             </div>
                             <span class="text-ui-cap text-ui-muted whitespace-nowrap tabular-nums">
                               <span class="font-medium" :class="laneFull(lane) ? 'text-ui-warn' : 'text-ui-ink'">{{ lane.devices_used }}/{{ lane.max_devices }}</span> {{ $t("licenses.dashboard.devices") }}<template v-if="lane.keys_summary"> &middot; {{ $t("licenses.dashboard.keysUsed", { total: lane.keys_summary.total, used: laneUsed(lane) }) }}</template>
@@ -668,7 +668,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                           <span :class="license.status === 'expired' ? 'text-ui-bad font-medium' : ''">{{ formatDate(license.expires_at) }}</span>
                         </p>
                         <div class="mt-1.5 h-1 w-full rounded-full bg-ui-subtle overflow-hidden" :title="$t('licenses.dashboard.periodUsed', { n: elapsed(license) })">
-                          <div class="h-full rounded-full transition-all" :class="periodBarClass(license)" :style="{ width: `${elapsed(license)}%` }"></div>
+                          <div class="ui-bar-fill h-full rounded-full transition-all" :class="periodBarClass(license)" :style="{ width: `${elapsed(license)}%` }"></div>
                         </div>
                       </div>
                     </td>
@@ -796,7 +796,7 @@ const activeFilterCount = computed(() => [filters.value.status, filters.value.pl
                         <span :class="license.status === 'expired' ? 'text-ui-bad font-medium' : ''">{{ formatDate(license.expires_at) }}</span>
                       </div>
                       <div class="mt-1 h-1 w-full rounded-full bg-ui-subtle overflow-hidden">
-                        <div class="h-full rounded-full" :class="periodBarClass(license)" :style="{ width: `${elapsed(license)}%` }"></div>
+                        <div class="ui-bar-fill h-full rounded-full" :class="periodBarClass(license)" :style="{ width: `${elapsed(license)}%` }"></div>
                       </div>
                     </div>
 

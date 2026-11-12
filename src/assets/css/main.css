@@ -5919,6 +5919,22 @@ html {
    card in both themes (--ui-tray), so the inner cards read as
    separate objects instead of blending into their container. */
 
+/* Progress bars fill in from the left when they appear (transform only,
+   once). Put on the bar's fill element; its width stays as it is. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .ui-bar-fill {
+    transform-origin: left center;
+    animation: ui-bar-grow 750ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes ui-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
 /* Small feedback: press (buttons) and lift (clickable cards) */
 
 .ui-press {

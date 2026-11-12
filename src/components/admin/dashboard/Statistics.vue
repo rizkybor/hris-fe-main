@@ -147,7 +147,7 @@ const toneClass = (tone) => (tone === "danger" ? "text-ui-bad" : tone === "warni
         </div>
 
         <div class="my-5">
-          <p class="text-ui-display tabular-nums break-words">
+          <p v-count-up class="text-ui-display tabular-nums break-words">
             {{ formatValue(hero) }}<span v-if="hero.suffix" class="text-white/50 text-ui-h1">{{ hero.suffix }}</span>
           </p>
           <div v-if="hero.delta" class="mt-2.5 flex flex-wrap items-center gap-2 text-ui-cap">
@@ -162,7 +162,7 @@ const toneClass = (tone) => (tone === "danger" ? "text-ui-bad" : tone === "warni
 
         <div>
           <div v-if="hero.progress !== undefined" class="w-full h-1.5 bg-white/15 rounded-full overflow-hidden mb-2">
-            <div class="h-full rounded-full bg-white" :style="{ width: `${Math.min(hero.progress, 100)}%` }"></div>
+            <div class="ui-bar-fill h-full rounded-full bg-white" :style="{ width: `${Math.min(hero.progress, 100)}%` }"></div>
           </div>
           <p class="text-white/65 text-ui-cap flex items-center gap-1">
             <AlertTriangle v-if="hero.tone" class="w-3.5 h-3.5 text-[rgb(252_211_77)]" />{{ hero.sub }}
@@ -181,11 +181,11 @@ const toneClass = (tone) => (tone === "danger" ? "text-ui-bad" : tone === "warni
           <component :is="ICONS[m.key]" class="w-4 h-4 text-ui-faint shrink-0" />
           <p class="text-ui-small text-ui-muted truncate">{{ m.label }}</p>
         </div>
-        <p class="text-ui-h1 text-ui-ink tabular-nums mt-1.5 truncate" :title="showAmount && m.format === 'rupiah' && m.value != null ? formatRupiah(m.value) : undefined">
+        <p v-count-up class="text-ui-h1 text-ui-ink tabular-nums mt-1.5 truncate" :title="showAmount && m.format === 'rupiah' && m.value != null ? formatRupiah(m.value) : undefined">
           {{ formatValue(m, true) }}<span v-if="m.suffix" class="text-ui-muted text-ui-h2">{{ m.suffix }}</span>
         </p>
         <div v-if="m.progress !== undefined" class="w-full h-1 bg-ui-subtle rounded-full overflow-hidden mt-2">
-          <div class="h-full rounded-full bg-ui-accent" :style="{ width: `${Math.min(m.progress, 100)}%` }"></div>
+          <div class="ui-bar-fill h-full rounded-full bg-ui-accent" :style="{ width: `${Math.min(m.progress, 100)}%` }"></div>
         </div>
         <div class="mt-auto pt-2 space-y-1">
           <p v-if="m.delta" class="flex flex-wrap items-center gap-1.5 text-ui-cap">

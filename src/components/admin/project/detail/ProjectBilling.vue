@@ -159,8 +159,8 @@ const formatDate = (d) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(loca
           <!-- Progress of the project value -->
           <div v-if="bar">
             <div class="flex h-2 rounded-full overflow-hidden bg-ui-subtle gap-[2px]">
-              <div v-if="bar.paid" class="h-full bg-ui-ok" :style="{ width: `${bar.paid}%` }"></div>
-              <div v-if="bar.invoiced" class="h-full bg-ui-warn" :style="{ width: `${bar.invoiced}%` }"></div>
+              <div v-if="bar.paid" class="ui-bar-fill h-full bg-ui-ok" :style="{ width: `${bar.paid}%` }"></div>
+              <div v-if="bar.invoiced" class="ui-bar-fill h-full bg-ui-warn" :style="{ width: `${bar.invoiced}%` }"></div>
             </div>
             <p class="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-ui-cap text-ui-muted tabular-nums">
               <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-ui-ok"></span>{{ $t("projects.billing.bar.paid", { n: Math.round(bar.paid) }) }}</span>

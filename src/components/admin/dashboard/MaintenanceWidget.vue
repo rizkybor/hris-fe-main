@@ -105,7 +105,7 @@ const barColor = (p) => (p.overage > 0 ? uiColor("bad") : p.used_percent >= 75 ?
             </span>
           </div>
           <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
-            <div class="h-full rounded-full" :style="{ width: `${Math.min(c.period.used_percent, 100)}%`, backgroundColor: barColor(c.period) }"></div>
+            <div class="ui-bar-fill h-full rounded-full" :style="{ width: `${Math.min(c.period.used_percent, 100)}%`, backgroundColor: barColor(c.period) }"></div>
           </div>
         </RouterLink>
       </div>

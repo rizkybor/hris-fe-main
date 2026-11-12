@@ -40,7 +40,7 @@ const valueClass = computed(() => TONES[props.tone] || "text-ui-ink");
       <p class="text-ui-small text-ui-muted truncate">{{ label }}</p>
     </div>
     <Skeleton v-if="loading" class="mt-2" width="96px" height="28px" rounded="6px" />
-    <p v-else class="text-ui-h1 tabular-nums mt-1.5 truncate" :class="valueClass"><slot>{{ value }}</slot></p>
+    <p v-else v-count-up class="text-ui-h1 tabular-nums mt-1.5 truncate" :class="valueClass"><slot>{{ value }}</slot></p>
     <p v-if="hint || $slots.hint" class="text-ui-cap text-ui-muted mt-1 truncate"><slot name="hint">{{ hint }}</slot></p>
   </component>
 </template>

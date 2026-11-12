@@ -243,7 +243,7 @@ const tiles = computed(() => {
                   </span>
                 </div>
                 <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
-                  <div class="h-full rounded-full bg-ui-accent" :style="{ width: `${Math.max(2, (c.monthly_value / clientMax) * 100)}%` }"></div>
+                  <div class="ui-bar-fill h-full rounded-full bg-ui-accent" :style="{ width: `${Math.max(2, (c.monthly_value / clientMax) * 100)}%` }"></div>
                 </div>
               </div>
               <p v-if="data.client_count > clients.length" class="text-ui-cap text-ui-muted">

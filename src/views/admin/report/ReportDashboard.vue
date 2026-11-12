@@ -1392,7 +1392,7 @@ const mobileCard = (row) => {
                     >{{ Math.round(row.period.used_percent) }}%</span>
                   </div>
                   <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
-                    <div class="h-full rounded-full" :style="{ width: `${Math.min(100, Math.max(2, row.period.used_percent))}%`, backgroundColor: usageColor(row.period) }"></div>
+                    <div class="ui-bar-fill h-full rounded-full" :style="{ width: `${Math.min(100, Math.max(2, row.period.used_percent))}%`, backgroundColor: usageColor(row.period) }"></div>
                   </div>
                   <p v-if="row.period.overage > 0" class="text-ui-cap text-ui-bad mt-0.5">{{ $t('reports.maintenance.overQuota', { hours: formatHours(row.period.overage) }) }}</p>
                 </div>

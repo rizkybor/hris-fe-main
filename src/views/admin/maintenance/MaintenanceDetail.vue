@@ -469,7 +469,7 @@ const HISTORY_COLUMNS = computed(() => [
             </div>
             <p class="text-ui-h1 tabular-nums mt-1.5" :class="current.overage > 0 ? 'text-ui-bad' : 'text-ui-ink'">{{ formatHours(current.remaining) }}</p>
             <div class="w-full h-2 bg-ui-subtle rounded-full overflow-hidden mt-2.5">
-              <div class="h-full rounded-full" :class="barClass(current)" :style="{ width: `${Math.min(current.used_percent, 100)}%` }"></div>
+              <div class="ui-bar-fill h-full rounded-full" :class="barClass(current)" :style="{ width: `${Math.min(current.used_percent, 100)}%` }"></div>
             </div>
             <p v-if="current.overage > 0" class="text-ui-cap text-ui-bad font-medium mt-1.5 flex items-center gap-1">
               <AlertTriangle class="w-3.5 h-3.5 shrink-0" />

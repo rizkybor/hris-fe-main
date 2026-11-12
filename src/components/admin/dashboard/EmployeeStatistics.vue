@@ -120,7 +120,7 @@ onMounted(() => {
         </div>
         <div class="my-auto py-4">
           <Skeleton v-if="loading" dark width="110px" height="38px" rounded="8px" />
-          <p v-else class="text-ui-display tabular-nums">{{ statistics.attendance_rate }}%</p>
+          <p v-else v-count-up class="text-ui-display tabular-nums">{{ statistics.attendance_rate }}%</p>
           <p class="text-ui-small text-white/65 mt-1">{{ $t("dashboard.myOverview.daysOf", { present: statistics.present_days, total: currentDayOfMonth }) }}</p>
         </div>
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-ui-cap text-white/65">
