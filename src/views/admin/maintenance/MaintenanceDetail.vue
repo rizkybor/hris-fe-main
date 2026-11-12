@@ -444,8 +444,9 @@ const HISTORY_COLUMNS = computed(() => [
           </span>
           <span class="block mt-1.5 text-ui-cap">
             {{ $t("maintenance.detail.unusedHours") }} <span class="text-ui-ink font-medium">{{ policyLabel(contract.leftover_policy) }}</span>
+            <!-- Explicit space: Vue drops the newline between the span and this text. -->
             <template v-if="contract.leftover_policy === 'bank'">
-              {{ $t("maintenance.detail.cap", { value: contract.bank_cap_hours != null ? formatHours(contract.bank_cap_hours) : $t("maintenance.detail.none") }) }}
+              {{ " " }}{{ $t("maintenance.detail.cap", { value: contract.bank_cap_hours != null ? formatHours(contract.bank_cap_hours) : $t("maintenance.detail.none") }) }}
               {{ $t("maintenance.detail.expireAfter", { value: contract.bank_expiry_months ? $t("maintenance.detail.months", { n: contract.bank_expiry_months }, contract.bank_expiry_months) : $t("maintenance.common.never") }) }}
             </template>
             <template v-if="contract.overage_rate"><span class="tabular-nums">{{ $t("maintenance.detail.overage", { rate: formatRupiah(contract.overage_rate) }) }}</span></template>

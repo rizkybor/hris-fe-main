@@ -500,7 +500,7 @@ async function handleDelete() {
                     <span class="text-ui-cap text-ui-faint tabular-nums">{{ selectedInGroup(group) }}/{{ group.permissions.length }}</span>
                   </label>
                   <div class="grid grid-cols-2 gap-x-3 gap-y-2 px-3 py-2.5">
-                    <label v-for="perm in group.permissions" :key="perm.id" class="flex items-center gap-2 text-ui-small text-ui-text">
+                    <label v-for="perm in group.permissions" :key="perm.id" class="flex items-center gap-2 min-w-0 text-ui-small text-ui-text" :title="actionLabel(group, perm)">
                       <input
                         type="checkbox"
                         class="w-4 h-4 accent-[rgb(var(--ui-ink))]"
