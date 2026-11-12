@@ -165,14 +165,6 @@ const formatDate = (date) =>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5" @click.stop>
             <UiButton
-              variant="secondary"
-              size="sm"
-              :icon="FileText"
-              :loading="viewingId === row.id"
-              :aria-label="$t('documents.shared.viewPdfItem', { number: row.document_number })"
-              @click="handleViewPdf(row)"
-            >{{ $t("documents.shared.pdf") }}</UiButton>
-            <UiButton
               v-if="canEditRow(row)"
               variant="ghost"
               size="sm"
@@ -181,6 +173,14 @@ const formatDate = (date) =>
               :title="$t('common.actions.edit')"
               :aria-label="$t('documents.shared.editItem', { number: row.document_number })"
             />
+            <UiButton
+              variant="secondary"
+              size="sm"
+              :icon="FileText"
+              :loading="viewingId === row.id"
+              :aria-label="$t('documents.shared.viewPdfItem', { number: row.document_number })"
+              @click="handleViewPdf(row)"
+            >{{ $t("documents.shared.pdf") }}</UiButton>
             <UiButton
               v-if="canDeleteRow(row)"
               variant="ghost"

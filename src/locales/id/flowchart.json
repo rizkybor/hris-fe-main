@@ -16,7 +16,11 @@
     "by": "oleh {name}",
     "itemLabel": "flowchart",
     "deleteConfirm": "Hapus flowchart \"{name}\"? Tindakan ini tidak bisa dibatalkan.",
-    "deleteFailed": "Gagal menghapus flowchart."
+    "deleteFailed": "Gagal menghapus flowchart.",
+    "refreshing": "Memperbarui…",
+    "deleted": "Flowchart dihapus",
+    "editItem": "Ubah {name}",
+    "deleteItem": "Hapus {name}"
   },
   "editor": {
     "untitled": "Flowchart Tanpa Judul",

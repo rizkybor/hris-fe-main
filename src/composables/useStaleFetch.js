@@ -18,9 +18,16 @@
 // - invalidate("staff-tasks") from anywhere marks matching keys stale.
 // Revisits within maxAge make no request; returning to the browser tab
 // refetches when the data is older than maxAge.
+//
+// A store keeps one copy of a list, so a fresh key isn't enough: if the
+// list was last fetched for another view (page 2, another filter) the store
+// holds those rows. The first element of an array key names the list
+// ("staff-tasks"); a revisit whose key differs from that list's last fetch
+// always refreshes (quietly, behind what's shown).
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const fetchedAt = new Map(); // serialized key -> timestamp
+const lastFetched = new Map(); // list name -> serialized key the store holds now
 
 const serialize = (key) => (typeof key === "string" ? key : JSON.stringify(key));
 
@@ -34,16 +41,22 @@ export function useStaleFetch(fetcher, { key = () => "default", hasData = () => 
   let run = 0;
 
   const refresh = async ({ force = false } = {}) => {
-    const k = serialize(key());
+    const raw = key();
+    const k = serialize(raw);
+    const list = Array.isArray(raw) ? serialize(raw[0]) : k;
     const age = Date.now() - (fetchedAt.get(k) ?? 0);
     const showing = hasData();
-    if (!force && showing && age < maxAge) return;
+    const holdsThisView = lastFetched.get(list) === k;
+    if (!force && showing && age < maxAge && holdsThisView) return;
     const id = ++run;
     if (showing) refreshing.value = true;
     else loading.value = true;
     try {
       await fetcher();
       fetchedAt.set(k, Date.now());
+      // Only the latest request decides what the store now holds (stores
+      // drop out-of-order replies).
+      if (id === run) lastFetched.set(list, k);
     } finally {
       // Only the latest request clears the flags.
       if (id === run) {

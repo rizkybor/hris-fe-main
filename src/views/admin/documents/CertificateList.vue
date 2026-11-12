@@ -184,14 +184,6 @@ const formatDate = (date) =>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5" @click.stop>
             <UiButton
-              variant="secondary"
-              size="sm"
-              :icon="FileText"
-              :loading="viewingId === row.id"
-              :aria-label="$t('documents.shared.viewPdfItem', { number: row.certificate_number })"
-              @click="handleViewPdf(row)"
-            >{{ $t("documents.shared.pdf") }}</UiButton>
-            <UiButton
               variant="ghost"
               size="sm"
               :icon="Download"
@@ -200,6 +192,14 @@ const formatDate = (date) =>
               :aria-label="$t('documents.shared.downloadPdfItem', { number: row.certificate_number })"
               @click="handleDownload(row)"
             />
+            <UiButton
+              variant="secondary"
+              size="sm"
+              :icon="FileText"
+              :loading="viewingId === row.id"
+              :aria-label="$t('documents.shared.viewPdfItem', { number: row.certificate_number })"
+              @click="handleViewPdf(row)"
+            >{{ $t("documents.shared.pdf") }}</UiButton>
             <UiButton
               v-if="can('certificate-delete')"
               variant="ghost"
