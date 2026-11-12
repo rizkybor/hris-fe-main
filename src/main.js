@@ -1,3 +1,4 @@
+import countUp from '@/directives/countUp'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
@@ -23,6 +24,8 @@ window.addEventListener('unhandledrejection', (event) => {
 })
 
 const app = createApp(App)
+// Stat numbers count up when they appear (see directives/countUp.js).
+app.directive('count-up', countUp)
 app.use(i18n)
 
 app.use(createPinia())

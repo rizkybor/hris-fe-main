@@ -20,6 +20,8 @@ const autoId = useId();
 const fieldId = computed(() => props.id || `ui-select-${autoId}`);
 const items = computed(() => props.options.map((o) => (typeof o === "object" && o !== null ? o : { value: o, label: String(o) })));
 const empty = computed(() => model.value === "" || model.value === null || model.value === undefined);
+// Long option labels end in an ellipsis; the full label is the tooltip.
+const selectedLabel = computed(() => items.value.find((o) => o.value === model.value)?.label || undefined);
 </script>
 
 <template>
@@ -35,8 +37,9 @@ const empty = computed(() => model.value === "" || model.value === null || model
         :disabled="disabled"
         :aria-invalid="!!error || undefined"
         :aria-describedby="error || hint ? `${fieldId}-help` : undefined"
+        :title="selectedLabel"
         :class="[
-          'w-full h-[38px] pl-3 pr-9 appearance-none bg-ui-surface text-ui-body border rounded-ui-control transition-shadow',
+          'w-full h-[38px] pl-3 pr-9 appearance-none text-ellipsis bg-ui-surface text-ui-body border rounded-ui-control transition-shadow',
           'focus:outline-none focus:border-ui-accent focus:shadow-ui-focus disabled:bg-ui-subtle disabled:text-ui-muted',
           error ? 'border-ui-bad/50' : 'border-ui-line-strong',
           empty && placeholder ? 'text-ui-faint' : 'text-ui-ink',

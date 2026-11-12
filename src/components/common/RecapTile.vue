@@ -19,7 +19,7 @@ defineProps({
       <component :is="icon" v-if="icon" class="w-4 h-4 text-ui-faint shrink-0" />
       <p class="text-ui-small text-ui-muted truncate">{{ label }}</p>
     </div>
-    <p class="text-ui-h2 sm:text-ui-h1 tabular-nums mt-1 truncate" :class="valueClass" :title="String(value)">{{ value }}</p>
+    <p v-count-up class="text-ui-h2 sm:text-ui-h1 tabular-nums mt-1 truncate" :class="valueClass" :title="String(value)">{{ value }}</p>
     <p v-if="sub" class="text-ui-cap text-ui-muted mt-0.5 truncate">{{ sub }}</p>
     <p v-if="alert" class="text-ui-cap font-medium text-ui-bad mt-0.5 flex items-center gap-1 truncate">
       <AlertTriangle class="w-3 h-3 shrink-0" />{{ alert }}

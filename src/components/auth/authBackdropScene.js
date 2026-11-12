@@ -6,6 +6,10 @@
 // resolution so they stay crisp on Retina screens. The light leans gently toward the pointer. At most 30 fps, pixel
 // ratio capped, paused while the tab is hidden or the panel is off screen.
 // Loaded on demand from AuthBackdrop.vue.
+//
+// Sky: setSky() (from skyPhase.js, once a minute) retints the aurora for the
+// time of day, fades the motes (stars) out by day and moves a small sun
+// across the sky. All of it is a few uniforms per frame.
 
 const FRAME_MS = 1000 / 30;
 const MOTES = 190;
@@ -25,6 +29,13 @@ uniform float uTime;
 uniform float uAspect;
 uniform vec2 uPointer;
 uniform float uPointerAmt;
+uniform vec3 uDeep;
+uniform vec3 uBright;
+uniform float uGlow;
+uniform float uTimeSun;
+uniform vec2 uSunPos;
+uniform float uSunAmt;
+uniform float uSunWarm;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -57,17 +68,34 @@ void main() {
   vec2 d = vec2((vUv.x - uPointer.x) * uAspect, vUv.y - uPointer.y);
   float glow = exp(-dot(d, d) * 4.5) * uPointerAmt;
 
-  float light = (ribbon * 1.1 + n * 0.3) * calm + glow * 0.75 * (0.5 + n);
-  vec3 deep = vec3(0.12, 0.36, 0.85);   // brand blue
-  vec3 bright = vec3(0.32, 0.72, 0.98); // cyan accent
-  vec3 color = mix(deep, bright, smoothstep(0.45, 1.0, ribbon + glow * 0.6));
-  gl_FragColor = vec4(color, clamp(light * 0.62, 0.0, 0.72));
+  float light = ((ribbon * 1.1 + n * 0.3) * calm) * uGlow + glow * 0.75 * (0.5 + n);
+  vec3 color = mix(uDeep, uBright, smoothstep(0.45, 1.0, ribbon + glow * 0.6));
+  // Sun: a bright disc, a soft halo that lights the sky around it, slow
+  // rays and two faint lens ghosts toward the centre.
+  float sunLight = 0.0;
+  vec3 sunCol = mix(vec3(1.0, 0.98, 0.9), vec3(1.0, 0.74, 0.45), uSunWarm);
+  if (uSunAmt > 0.001) {
+    vec2 sd = vec2((vUv.x - uSunPos.x) * uAspect, vUv.y - uSunPos.y);
+    float r = length(sd);
+    float disc = 1.0 - smoothstep(0.009, 0.019, r);
+    float halo = exp(-r * r * 220.0) * 0.55 + exp(-r * r * 14.0) * 0.22;
+    float ang = atan(sd.y, sd.x);
+    float rays = (pow(max(0.0, sin(ang * 9.0 + uTimeSun * 0.06)), 10.0) + pow(max(0.0, sin(ang * 14.0 - uTimeSun * 0.04 + 1.7)), 14.0) * 0.6) * exp(-r * 10.0) * 0.18;
+    vec2 toCentre = vec2(0.5, 0.5) - uSunPos;
+    vec2 g1 = vec2((vUv.x - (uSunPos.x + toCentre.x * 0.7)) * uAspect, vUv.y - (uSunPos.y + toCentre.y * 0.7));
+    vec2 g2 = vec2((vUv.x - (uSunPos.x + toCentre.x * 1.25)) * uAspect, vUv.y - (uSunPos.y + toCentre.y * 1.25));
+    float ghosts = (1.0 - smoothstep(0.02, 0.035, length(g1))) * 0.07 + (1.0 - smoothstep(0.045, 0.07, length(g2))) * 0.045;
+    sunLight = (disc + halo + rays + ghosts) * uSunAmt;
+    color = mix(color, sunCol, clamp(sunLight, 0.0, 1.0));
+  }
+  gl_FragColor = vec4(color, clamp(max(light * 0.62, sunLight * 0.95), 0.0, 0.97));
 }`;
 
 const MOTE_VERTEX = `
 attribute vec4 aSeed; // x, y start (0..1), speed, phase
 uniform float uTime;
 uniform float uScale;
+uniform float uStars;
 varying float vTwinkle;
 varying float vFade;
 void main() {
@@ -75,7 +103,7 @@ void main() {
   float y = fract(aSeed.y + uTime * speed);
   float x = aSeed.x + sin(uTime * (0.25 + aSeed.z * 0.4) + aSeed.w * 6.283) * 0.025;
   vTwinkle = 0.55 + 0.45 * sin(uTime * (1.2 + aSeed.z * 2.0) + aSeed.w * 6.283);
-  vFade = smoothstep(0.0, 0.12, y) * (1.0 - smoothstep(0.8, 1.0, y));
+  vFade = smoothstep(0.0, 0.12, y) * (1.0 - smoothstep(0.8, 1.0, y)) * uStars;
   gl_PointSize = (2.6 + aSeed.z * 3.4) * uScale;
   gl_Position = vec4(x * 2.0 - 1.0, y * 2.0 - 1.0, 0.0, 1.0);
 }`;
@@ -137,6 +165,13 @@ export function start(host, onReady) {
   const uAspect = au("uAspect");
   const uPointer = au("uPointer");
   const uPointerAmt = au("uPointerAmt");
+  const uDeep = au("uDeep");
+  const uBright = au("uBright");
+  const uGlow = au("uGlow");
+  const uTimeSun = au("uTimeSun");
+  const uSunPos = au("uSunPos");
+  const uSunAmt = au("uSunAmt");
+  const uSunWarm = au("uSunWarm");
   ga.useProgram(aurora.program);
   ga.bindBuffer(ga.ARRAY_BUFFER, quad);
   ga.enableVertexAttribArray(aPos);
@@ -153,9 +188,11 @@ export function start(host, onReady) {
   const aSeed = gm.getAttribLocation(motes.program, "aSeed");
   const uTimeM = gm.getUniformLocation(motes.program, "uTime");
   const uScale = gm.getUniformLocation(motes.program, "uScale");
+  const uStars = gm.getUniformLocation(motes.program, "uStars");
   gm.useProgram(motes.program);
   gm.enableVertexAttribArray(aSeed);
   gm.vertexAttribPointer(aSeed, 4, gm.FLOAT, false, 0, 0);
+
 
   // The aurora is soft, so it renders at a reduced resolution; the motes
   // at the device's own (up to 2x) so they stay sharp.
@@ -188,6 +225,16 @@ export function start(host, onReady) {
   };
   window.addEventListener("pointermove", onMove, { passive: true });
 
+  // Sky state: targets come from setSky(), current values ease toward them
+  // (a few seconds) so a change of phase never pops.
+  const sky = {
+    deep: [0.12, 0.36, 0.85], bright: [0.32, 0.72, 0.98], glow: 1, stars: 1, sunX: 0.8, sunY: 0.8, sunAmt: 0, sunWarm: 0,
+    target: { deep: [0.12, 0.36, 0.85], bright: [0.32, 0.72, 0.98], glow: 1, stars: 1, sunX: 0.8, sunY: 0.8, sunAmt: 0, sunWarm: 0 },
+  };
+  const setSky = (s) => {
+    sky.target = { deep: s.deep, bright: s.bright, glow: s.glow, stars: s.stars, sunX: s.sun.x, sunY: s.sun.y, sunAmt: s.sun.amount, sunWarm: s.sun.warm };
+  };
+
   let raf = 0;
   let last = 0;
   let elapsed = 0;
@@ -205,17 +252,28 @@ export function start(host, onReady) {
     pointer.x += (pointer.tx - pointer.x) * k;
     pointer.y += (pointer.ty - pointer.y) * k;
     pointer.amt += (pointer.target - pointer.amt) * k;
+    const ks = 1 - Math.exp(-dt * 0.6);
+    for (const key of ["deep", "bright"]) sky[key] = sky[key].map((v, i) => v + (sky.target[key][i] - v) * ks);
+    for (const key of ["glow", "stars", "sunX", "sunY", "sunAmt", "sunWarm"]) sky[key] += (sky.target[key] - sky[key]) * ks;
 
     ga.clear(ga.COLOR_BUFFER_BIT);
     ga.uniform1f(uTimeA, elapsed);
     ga.uniform1f(uAspect, auroraLayer.canvas.width / auroraLayer.canvas.height);
     ga.uniform2f(uPointer, pointer.x, pointer.y);
     ga.uniform1f(uPointerAmt, pointer.amt);
+    ga.uniform3fv(uDeep, sky.deep);
+    ga.uniform3fv(uBright, sky.bright);
+    ga.uniform1f(uGlow, sky.glow);
+    ga.uniform1f(uTimeSun, elapsed);
+    ga.uniform2f(uSunPos, sky.sunX, sky.sunY);
+    ga.uniform1f(uSunAmt, sky.sunAmt);
+    ga.uniform1f(uSunWarm, sky.sunWarm);
     ga.drawArrays(ga.TRIANGLES, 0, 3);
 
     gm.clear(gm.COLOR_BUFFER_BIT);
     gm.uniform1f(uTimeM, elapsed);
     gm.uniform1f(uScale, MOTE_DPR);
+    gm.uniform1f(uStars, Math.max(0.12, sky.stars)); // a few motes stay, as dust
     gm.drawArrays(gm.POINTS, 0, MOTES);
 
     if (!ready) {
@@ -244,7 +302,7 @@ export function start(host, onReady) {
   document.addEventListener("visibilitychange", sync);
   sync();
 
-  return () => {
+  const stop = () => {
     pause();
     window.removeEventListener("pointermove", onMove);
     document.removeEventListener("visibilitychange", sync);
@@ -261,4 +319,6 @@ export function start(host, onReady) {
       canvas.remove();
     }
   };
+  stop.setSky = setSky;
+  return stop;
 }

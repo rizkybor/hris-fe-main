@@ -52,8 +52,8 @@ const HEALTH_TONES = { overdue: "bad", critical: "bad", "at-risk": "warn", behin
             <p class="text-ui-body font-medium text-ui-ink truncate">{{ project.name }}</p>
             <div class="mt-1.5 flex items-center gap-2">
               <div class="relative h-1 flex-1 max-w-[160px] bg-ui-subtle rounded-full overflow-hidden">
-                <div class="absolute inset-y-0 left-0 bg-ui-line-strong" :style="{ width: `${Math.min(health.expectedProgress, 100)}%` }"></div>
-                <div class="absolute inset-y-0 left-0 bg-ui-ink rounded-full" :style="{ width: `${Math.min(health.actualProgress, 100)}%` }"></div>
+                <div class="ui-bar-fill absolute inset-y-0 left-0 bg-ui-line-strong" :style="{ width: `${Math.min(health.expectedProgress, 100)}%` }"></div>
+                <div class="ui-bar-fill absolute inset-y-0 left-0 bg-ui-ink rounded-full" :style="{ width: `${Math.min(health.actualProgress, 100)}%` }"></div>
               </div>
               <span class="text-ui-cap text-ui-muted tabular-nums">{{ $t("dashboard.projectsAtRisk.progress", { actual: health.actualProgress, expected: health.expectedProgress }) }}</span>
             </div>

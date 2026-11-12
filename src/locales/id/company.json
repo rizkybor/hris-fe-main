@@ -11,9 +11,8 @@
     "npwp": "NPWP",
     "legalNameOptional": "Nama legal (opsional)",
     "npwpOptional": "NPWP (opsional)",
-    "missionPerLine": "Misi (satu per baris)",
-    "missionPlaceholder": "Tulis satu misi per baris",
-    "branchesPlaceholder": "Tulis satu cabang per baris"
+    "missionPlaceholder": "Tulis misi",
+    "branchesPlaceholder": "Nama cabang atau anak perusahaan"
   },
   "empty": {
     "title": "Belum ada data perusahaan",
@@ -24,6 +23,20 @@
     "editTitle": "Ubah Informasi Perusahaan",
     "identity": "Identitas Perusahaan",
     "visionMission": "Visi & Misi",
-    "contact": "Kontak & Lokasi"
+    "contact": "Kontak & Lokasi",
+    "addMission": "Tambah misi",
+    "addBranch": "Tambah cabang"
+  },
+  "hero": {
+    "since": "Berdiri {date}",
+    "years": "{n} tahun berkarya",
+    "branches": "{n} cabang"
+  },
+  "contact": "Kontak",
+  "openMaps": "Buka di Google Maps",
+  "copiedLabel": "{label} disalin",
+  "toast": {
+    "saved": "Profil perusahaan disimpan",
+    "created": "Profil perusahaan dibuat"
   }
 }

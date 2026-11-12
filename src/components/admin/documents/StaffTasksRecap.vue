@@ -138,8 +138,8 @@ const trendSeries = computed(() => STATUSES.value.map((s) => ({ name: s.label, d
                 </span>
               </div>
               <div class="w-full h-2 bg-ui-subtle rounded-full overflow-hidden flex gap-0.5">
-                <div v-if="s.done" class="h-full rounded-full bg-ui-ok" :style="{ width: `${(s.done / s.total) * 100}%` }"></div>
-                <div v-if="s.overdue" class="h-full rounded-full bg-ui-bad" :style="{ width: `${(s.overdue / s.total) * 100}%` }"></div>
+                <div v-if="s.done" class="ui-bar-fill h-full rounded-full bg-ui-ok" :style="{ width: `${(s.done / s.total) * 100}%` }"></div>
+                <div v-if="s.overdue" class="ui-bar-fill h-full rounded-full bg-ui-bad" :style="{ width: `${(s.overdue / s.total) * 100}%` }"></div>
               </div>
             </div>
             <p class="text-ui-cap text-ui-muted flex flex-wrap gap-x-3 gap-y-1">

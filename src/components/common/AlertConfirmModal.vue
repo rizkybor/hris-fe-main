@@ -7,7 +7,7 @@ import UiConfirmDialog from "@/components/ui/UiConfirmDialog.vue";
 import { useAlertModalStore } from "@/stores/alertModal";
 
 const store = useAlertModalStore();
-const { visible, mode, title, message, confirmText, cancelText, type } = storeToRefs(store);
+const { visible, mode, title, message, confirmText, cancelText, type, celebrate } = storeToRefs(store);
 </script>
 
 <template>
@@ -15,6 +15,7 @@ const { visible, mode, title, message, confirmText, cancelText, type } = storeTo
     :open="visible"
     :mode="mode"
     :type="type"
+    :celebrate="celebrate"
     :title="title"
     :message="message"
     :confirm-text="confirmText"

@@ -82,7 +82,7 @@ const usageTiles = computed(() => {
         <p class="flex items-center gap-1.5 text-ui-small text-ui-muted"><component :is="t.icon" class="w-4 h-4 text-ui-faint" /> {{ t.label }}</p>
         <p class="text-ui-h1 tabular-nums mt-1" :class="TONE_TEXT[usageTone(t.pct)]">{{ t.pct }}%</p>
         <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden mt-2">
-          <div class="h-full rounded-full" :class="TONE_BAR[usageTone(t.pct)]" :style="{ width: `${Math.min(t.pct || 0, 100)}%` }"></div>
+          <div class="ui-bar-fill h-full rounded-full" :class="TONE_BAR[usageTone(t.pct)]" :style="{ width: `${Math.min(t.pct || 0, 100)}%` }"></div>
         </div>
         <p class="text-ui-cap text-ui-muted mt-2 leading-snug">{{ t.sub }}</p>
       </div>
@@ -144,7 +144,7 @@ const usageTiles = computed(() => {
             <span class="text-ui-ink font-medium tabular-nums shrink-0">{{ formatBytes(item.bytes) }}</span>
           </div>
           <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
-            <div class="h-full rounded-full bg-ui-accent" :style="{ width: `${breakdownTotal ? Math.min((item.bytes / breakdownTotal) * 100, 100) : 0}%` }"></div>
+            <div class="ui-bar-fill h-full rounded-full bg-ui-accent" :style="{ width: `${breakdownTotal ? Math.min((item.bytes / breakdownTotal) * 100, 100) : 0}%` }"></div>
           </div>
         </div>
       </div>

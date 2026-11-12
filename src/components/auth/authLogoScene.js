@@ -13,6 +13,17 @@
 // spray of blue/white sparks. Three quick clicks: it glows white, takes off
 // and flutters around the whole screen like a butterfly for a few seconds with
 // sparks trailing from its wings, then lands back in place.
+//
+// Idle: after 20 s without any activity on the page (pointer, touch, keys,
+// scroll) it does one sudden manoeuvre -- a dart to the side, a backflip or a
+// startled zig-zag spin, never the same one twice in a row -- and repeats
+// roughly every 20 s while the page stays idle. Timed in animation time, so
+// a hidden tab doesn't save one up for when you come back.
+//
+// Wind: every fast movement (idle manoeuvres, the click spin, the flight)
+// leaves thin streaks of air behind the butterfly's outline that stretch and
+// fade in about half a second. Slow motion (the float, the flap, tilting
+// toward the pointer) stays calm.
 import {
   AmbientLight,
   BufferAttribute,
@@ -332,6 +343,216 @@ export async function start(host, onReady) {
     sparkGeo.attributes.alpha.needsUpdate = true;
   };
 
+  // ---- Wind: wisps of air shed by the moving butterfly ----
+  // Points around the butterfly's outline keep a short history of where they
+  // have been. When one moves fast during a manoeuvre, a click spin or the
+  // flight, a wisp is laid along the path it actually traced: an arc for a
+  // spin or flip, a straight dash for a dart. Left behind in the air, each
+  // wisp drifts back, wavers a little and widens as it dissolves, fading in
+  // and out softly. Plain pointer tilting never sheds wind.
+  const WISPS = 70;
+  const SEG = 10; // points per wisp = frames of path history
+  const wispPts = new Float32Array(WISPS * SEG * 3);
+  const wispDrift = new Float32Array(WISPS * 3); // slow drift, back along the motion
+  const wispSeed = new Float32Array(WISPS);
+  const wispAge = new Float32Array(WISPS).fill(1);
+  const wispLife = new Float32Array(WISPS).fill(1);
+  // The path is drawn as a smooth curve through those points (Catmull-Rom),
+  // RES samples long, so it bends without corners.
+  const RES = 24;
+  const windPos = new Float32Array(WISPS * RES * 2 * 3);
+  const windUv = new Float32Array(WISPS * RES * 2 * 2);
+  const windAlpha = new Float32Array(WISPS * RES * 2);
+  const windIndex = [];
+  for (let w = 0; w < WISPS; w++) {
+    for (let i = 0; i < RES; i++) {
+      const v = (w * RES + i) * 2;
+      windUv.set([i / (RES - 1), -1, i / (RES - 1), 1], v * 2); // x: head 0 -> tail 1
+      if (i < RES - 1) windIndex.push(v, v + 1, v + 2, v + 2, v + 1, v + 3);
+    }
+  }
+  const curve = new Float32Array(RES * 3); // scratch: one wisp's smoothed path
+  let nextWisp = 0;
+  let liveWind = 0;
+  const windGeo = new BufferGeometry();
+  windGeo.setAttribute("position", new BufferAttribute(windPos, 3));
+  windGeo.setAttribute("aUv", new BufferAttribute(windUv, 2));
+  windGeo.setAttribute("aAlpha", new BufferAttribute(windAlpha, 1));
+  windGeo.setIndex(windIndex);
+  const windMat = new ShaderMaterial({
+    side: DoubleSide, // a ribbon faces either way depending on its direction
+    vertexShader: `
+      attribute vec2 aUv;
+      attribute float aAlpha;
+      varying vec2 vUv;
+      varying float vAlpha;
+      void main() {
+        vUv = aUv;
+        vAlpha = aAlpha;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: `
+      varying vec2 vUv;
+      varying float vAlpha;
+      void main() {
+        // A puff of air, not a line: a gaussian falloff across, and both
+        // ends taper away (fullest a third of the way in).
+        float across = exp(-vUv.y * vUv.y * 3.2);
+        float along = smoothstep(0.0, 0.32, vUv.x) * pow(1.0 - vUv.x, 1.4);
+        float a = vAlpha * across * along * 1.9;
+        if (a < 0.003) discard;
+        gl_FragColor = vec4(mix(vec3(0.74, 0.86, 1.0), vec3(1.0), 0.5 * (1.0 - vUv.x)), a);
+      }`,
+    transparent: true,
+    depthWrite: false,
+  });
+  const wind = new Mesh(windGeo, windMat);
+  wind.frustumCulled = false;
+  scene.add(wind);
+
+  // Outline points (logo space) and their recent world positions.
+  const TRACK = 10;
+  const trackLocal = Array.from({ length: TRACK }, (_, i) => {
+    const a = (i / TRACK) * Math.PI * 2;
+    return new Vector3(Math.cos(a) * W * 0.46, Math.sin(a) * H * 0.42, 0);
+  });
+  const trackHist = new Float32Array(TRACK * SEG * 3); // newest first
+  let histFilled = 0; // frames of history available (0 after a reset)
+  const now3 = new Vector3();
+  const WIND_MIN_SPEED = 420; // units/s
+  const resetWind = () => (histFilled = 0);
+
+  const shedWisp = (t, speed) => {
+    const w = nextWisp;
+    nextWisp = (nextWisp + 1) % WISPS;
+    // Scatter the copy sideways a little so wisps don't stack on one line.
+    const h0 = t * SEG * 3;
+    const hx = trackHist[h0] - trackHist[h0 + 3];
+    const hy = trackHist[h0 + 1] - trackHist[h0 + 4];
+    const hl = Math.hypot(hx, hy) || 1;
+    const off = (Math.random() - 0.5) * W * 0.07;
+    const ox = (-hy / hl) * off;
+    const oy = (hx / hl) * off;
+    // Only as much path as the speed earns (slow edges, short wisps).
+    const maxLen = Math.min(W * 0.55, Math.max(W * 0.1, speed * 0.16));
+    let len = 0;
+    let lx = trackHist[h0];
+    let ly = trackHist[h0 + 1];
+    let lz = trackHist[h0 + 2];
+    for (let i = 0; i < SEG; i++) {
+      const src = h0 + Math.min(i, histFilled - 1) * 3;
+      let x = trackHist[src];
+      let y = trackHist[src + 1];
+      let z = trackHist[src + 2];
+      const step = Math.hypot(x - lx, y - ly, z - lz);
+      if (len + step > maxLen && step > 0) {
+        const keep = Math.max(0, (maxLen - len) / step);
+        x = lx + (x - lx) * keep;
+        y = ly + (y - ly) * keep;
+        z = lz + (z - lz) * keep;
+      } else len += step;
+      wispPts.set([x + ox, y + oy, z], (w * SEG + i) * 3);
+      lx = x;
+      ly = y;
+      lz = z;
+    }
+    // Drift back along the motion, slowly, with a little lift.
+    const k = 0.35 / Math.max(1, hl);
+    wispDrift.set([-hx * k * 30, -hy * k * 30 + 14, 0], w * 3);
+    wispSeed[w] = Math.random() * 100;
+    wispAge[w] = 0;
+    wispLife[w] = 0.8 + Math.random() * 0.35;
+    liveWind = WISPS;
+  };
+
+  // `active`: a manoeuvre, click spin or flight is under way.
+  const sampleWind = (dt, active) => {
+    logo.updateMatrixWorld(true);
+    for (let t = 0; t < TRACK; t++) {
+      now3.copy(trackLocal[t]).applyMatrix4(logo.matrixWorld);
+      const h0 = t * SEG * 3;
+      const speed = histFilled ? Math.hypot(now3.x - trackHist[h0], now3.y - trackHist[h0 + 1], now3.z - trackHist[h0 + 2]) / dt : 0;
+      trackHist.copyWithin(h0 + 3, h0, h0 + (SEG - 1) * 3); // shift history back
+      trackHist.set([now3.x, now3.y, now3.z], h0);
+      if (!active || histFilled < 3 || speed < WIND_MIN_SPEED) continue;
+      const chance = Math.min(0.38, (speed - WIND_MIN_SPEED) / 2400) * (flight ? 0.4 : 1);
+      if (Math.random() < chance) shedWisp(t, speed);
+    }
+    histFilled = Math.min(SEG, histFilled + 1);
+  };
+
+  const catmull = (p0, p1, p2, p3, t) => {
+    const t2 = t * t;
+    return 0.5 * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (3 * p1 - p0 - 3 * p2 + p3) * t2 * t);
+  };
+  const updateWind = (dt) => {
+    if (!liveWind) return;
+    let alive = 0;
+    const w0 = 2.2 / ppu; // a fine ~2 CSS px band (feathered in the shader)
+    for (let w = 0; w < WISPS; w++) {
+      const v0 = w * RES * 2;
+      if (wispAge[w] >= wispLife[w]) {
+        windAlpha.fill(0, v0, v0 + RES * 2);
+        continue;
+      }
+      alive++;
+      wispAge[w] += dt;
+      const k = Math.min(1, wispAge[w] / wispLife[w]);
+      // Breathes in gently, lingers, then thins away.
+      const alpha = 0.3 * smooth(0, 0.28, k) * (1 - smooth(0.35, 1, k));
+      const width = w0 * (0.8 + 0.8 * smooth(0, 1, k)); // spreads a little as it dissolves
+      const slow = Math.exp(-wispAge[w] * 1.6); // drift eases off
+      const dx = wispDrift[w * 3] * slow * dt;
+      const dy = wispDrift[w * 3 + 1] * slow * dt;
+      const seed = wispSeed[w];
+      const base = w * SEG * 3;
+      for (let i = 0; i < SEG; i++) {
+        wispPts[base + i * 3] += dx;
+        wispPts[base + i * 3 + 1] += dy;
+      }
+      // Smooth curve through the control points.
+      for (let i = 0; i < RES; i++) {
+        const u = (i / (RES - 1)) * (SEG - 1);
+        const j = Math.min(SEG - 2, Math.floor(u));
+        const t = u - j;
+        const i0 = base + Math.max(0, j - 1) * 3;
+        const i1 = base + j * 3;
+        const i2 = base + (j + 1) * 3;
+        const i3 = base + Math.min(SEG - 1, j + 2) * 3;
+        for (let c = 0; c < 3; c++) curve[i * 3 + c] = catmull(wispPts[i0 + c], wispPts[i1 + c], wispPts[i2 + c], wispPts[i3 + c], t);
+      }
+      for (let i = 0; i < RES; i++) {
+        const along = i / (RES - 1);
+        const a = Math.max(0, i - 1) * 3;
+        const b = Math.min(RES - 1, i + 1) * 3;
+        let tx = curve[b] - curve[a];
+        let ty = curve[b + 1] - curve[a + 1];
+        const tl = Math.hypot(tx, ty) || 1;
+        tx /= tl;
+        ty /= tl;
+        // A slow, long sway that grows as the air loses its shape.
+        const wave = Math.sin(seed + along * 4.2 + wispAge[w] * 3.2) * W * 0.016 * smooth(0, 1, k) * (0.25 + along);
+        const cx = curve[i * 3] - ty * wave;
+        const cy = curve[i * 3 + 1] + tx * wave;
+        const ww = width * (1 - 0.5 * along);
+        windPos.set([cx + ty * ww, cy - tx * ww, curve[i * 3 + 2], cx - ty * ww, cy + tx * ww, curve[i * 3 + 2]], (v0 + i * 2) * 3);
+      }
+      windAlpha.fill(alpha, v0, v0 + RES * 2);
+    }
+    liveWind = alive;
+    windGeo.attributes.position.needsUpdate = true;
+    windGeo.attributes.aAlpha.needsUpdate = true;
+  };
+  // Box <-> full-screen switch: wisps still in the air move with the
+  // coordinate change so they don't jump; the path history starts over.
+  const shiftWind = (x, y) => {
+    for (let i = 0; i < WISPS * SEG; i++) {
+      wispPts[i * 3] += x;
+      wispPts[i * 3 + 1] += y;
+    }
+    resetWind();
+  };
+
   // ---- Flight (three quick clicks) ----
   // The canvas leaves its box for a full-screen layer that lets clicks
   // through, glows white, flutters around the screen like a butterfly with
@@ -356,6 +577,7 @@ export async function start(host, onReady) {
     };
     hovering = false;
     pointerIn = false;
+    shiftWind(flight.home.x, flight.home.y);
     canvas.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;z-index:40;pointer-events:none;display:block";
     document.body.appendChild(canvas);
     renderer.setPixelRatio(FLIGHT_DPR);
@@ -370,6 +592,7 @@ export async function start(host, onReady) {
     host.appendChild(canvas);
     canvas.style.cssText = "display:block;width:100%;height:100%";
     logo.position.set(0, logo.position.y - home.y, 0);
+    shiftWind(-home.x, -home.y);
     logo.rotation.order = "XYZ";
     logo.rotation.z = 0;
     renderer.setPixelRatio(BOX_DPR);
@@ -444,6 +667,53 @@ export async function start(host, onReady) {
   canvas.addEventListener("pointerleave", onLeave);
   canvas.addEventListener("pointerdown", onDown);
 
+  // ---- Idle manoeuvre ----
+  const IDLE_S = 20;
+  const MANEUVERS = { dart: 1.5, salto: 1.6, startle: 1.35 }; // name -> seconds
+  let idleSince = 0; // animation clock at the last activity
+  let nextIdleAt = IDLE_S;
+  let maneuver = null; // { kind, start, dir }
+  let lastKind = null;
+  const ACTIVITY = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"];
+  const onActivity = () => {
+    idleSince = clock;
+    nextIdleAt = IDLE_S;
+    // Someone's back: let a manoeuvre in progress wrap up quicker, by easing
+    // its tempo up rather than cutting it off.
+    if (maneuver) maneuver.rush = true;
+  };
+  ACTIVITY.forEach((type) => window.addEventListener(type, onActivity, { passive: true }));
+  const startManeuver = () => {
+    const kinds = Object.keys(MANEUVERS).filter((k) => k !== lastKind);
+    const kind = kinds[Math.floor(Math.random() * kinds.length)];
+    lastKind = kind;
+    maneuver = { kind, p: 0, rate: 1, rush: false, dir: Math.random() < 0.5 ? -1 : 1 };
+    host.dataset.maneuver = kind; // lets tests (and devtools) see it happen
+    excite = 1; // a sudden burst of wing beats
+    burst();
+  };
+  const easeOutBack = (x) => 1 + 2.2 * (x - 1) ** 3 + 1.2 * (x - 1) ** 2;
+  const easeInOut = (x) => (x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2);
+  // Offsets added on top of the resting pose, p = 0..1 through the manoeuvre.
+  const maneuverPose = ({ kind, dir }, p) => {
+    if (kind === "dart") {
+      // Shoot out to one side, banked into it, then spring back past home.
+      const env = p < 0.18 ? easeOutCubic(p / 0.18) : 1 - easeOutBack((p - 0.18) / 0.82);
+      return { x: dir * W * 0.15 * env, y: H * 0.05 * Math.sin(Math.PI * Math.min(1, p / 0.6)), rx: 0, ry: dir * 0.35 * env, rz: -dir * 0.55 * env };
+    }
+    if (kind === "salto") {
+      // A crouch, a jump and a quick backflip, landing with a small bounce.
+      const crouch = p < 0.12 ? -Math.sin((Math.PI * p) / 0.12) * H * 0.04 : 0;
+      const air = p >= 0.12 && p < 0.86 ? Math.sin((Math.PI * (p - 0.12)) / 0.74) * H * 0.18 : 0;
+      const bounce = p >= 0.86 ? Math.sin((Math.PI * (p - 0.86)) / 0.14) ** 2 * H * 0.02 : 0; // eases to rest
+      const flip = p >= 0.12 && p < 0.86 ? -Math.PI * 2 * easeInOut((p - 0.12) / 0.74) : 0;
+      return { x: 0, y: crouch + air + bounce, rx: flip, ry: 0, rz: 0 };
+    }
+    // startle: two sharp zig-zags while it whips round once.
+    const fade = 1 - easeInOut(p);
+    return { x: dir * W * 0.1 * Math.sin(p * Math.PI * 3) * fade, y: H * 0.03 * Math.sin(p * Math.PI * 6) * fade, rx: 0, ry: dir * Math.PI * 2 * easeOutCubic(p), rz: 0.3 * Math.sin(p * Math.PI * 3) * fade };
+  };
+
   // ---- Loop ----
   let raf = 0;
   let last = 0;
@@ -451,8 +721,19 @@ export async function start(host, onReady) {
   let clock = 0; // seconds of animated time (stands still while paused)
   let phase = 0;
   let hoverAmt = 0;
+  let hoverV = 0;
   let tiltX = 0;
   let tiltY = 0;
+  let tiltVX = 0;
+  let tiltVY = 0;
+  // Critically damped spring: starts and stops without a jolt (an exponential
+  // ease jumps to full speed the moment the target moves).
+  const SPRING_K = 28;
+  const spring = (x, v, target, dt) => {
+    const a = SPRING_K * (target - x) - 2 * Math.sqrt(SPRING_K) * v;
+    const nv = v + a * dt;
+    return [x + nv * dt, nv];
+  };
   const ease = (from, to, dt, rate) => from + (to - from) * (1 - Math.exp(-dt * rate));
   const easeOutCubic = (p) => 1 - (1 - p) ** 3;
 
@@ -464,10 +745,14 @@ export async function start(host, onReady) {
     clock += dt;
     const t = clock;
 
-    hoverAmt = ease(hoverAmt, hovering ? 1 : 0, dt, 6);
+    for (let s = 0, n = Math.ceil(dt / 0.02); s < n; s++) [hoverAmt, hoverV] = spring(hoverAmt, hoverV, hovering ? 1 : 0, dt / n);
     excite *= Math.exp(-dt * 1.4);
-    tiltY = ease(tiltY, pointerIn ? ndc.x * 0.35 : 0, dt, 4);
-    tiltX = ease(tiltX, pointerIn ? -ndc.y * 0.22 : 0, dt, 4);
+    // Toward the pointer, and back to rest when it leaves, on a spring.
+    // Sub-stepped so a slow frame can't make it overshoot.
+    for (let s = 0, n = Math.ceil(dt / 0.02); s < n; s++) {
+      [tiltY, tiltVY] = spring(tiltY, tiltVY, pointerIn ? ndc.x * 0.35 : 0, dt / n);
+      [tiltX, tiltVX] = spring(tiltX, tiltVX, pointerIn ? -ndc.y * 0.22 : 0, dt / n);
+    }
 
     // Flight progress: 0 at home, 1 out flying around the screen.
     let fly = 0;
@@ -578,14 +863,35 @@ export async function start(host, onReady) {
       }
       if (flight.t >= FLIGHT_S && (liveSparks === 0 || flight.t >= FLIGHT_S + 1)) endFlight();
     } else {
-      logo.rotation.y = 0.32 * Math.sin(t * 0.33) * (1 - hoverAmt * 0.6) + tiltY + spin;
-      logo.rotation.x = -0.12 + 0.06 * Math.sin(t * 0.47) + tiltX;
-      logo.position.y = bob;
+      // Idle long enough (and not busy with a click spin): a sudden manoeuvre.
+      if (!maneuver && sp >= 1 && t - idleSince >= nextIdleAt) {
+        startManeuver();
+        nextIdleAt = t - idleSince + 16 + Math.random() * 8; // again in ~20 s if still idle
+      }
+      let m = { x: 0, y: 0, rx: 0, ry: 0, rz: 0 };
+      if (maneuver) {
+        maneuver.rate = ease(maneuver.rate, maneuver.rush ? 2.2 : 1, dt, 5);
+        maneuver.p += (dt / MANEUVERS[maneuver.kind]) * maneuver.rate;
+        const mp = maneuver.p;
+        if (mp >= 1) {
+          maneuver = null;
+          delete host.dataset.maneuver;
+        }
+        else m = maneuverPose(maneuver, mp);
+      }
+      logo.rotation.y = 0.32 * Math.sin(t * 0.33) * (1 - hoverAmt * 0.6) + tiltY + spin + m.ry;
+      logo.rotation.x = -0.12 + 0.06 * Math.sin(t * 0.47) + tiltX + m.rx;
+      logo.rotation.z = m.rz;
+      logo.position.x = m.x;
+      logo.position.y = bob + m.y;
       logo.scale.setScalar(1 + 0.05 * hoverAmt + 0.06 * excite);
     }
     const glow = 0.32 + 0.18 * hoverAmt + 0.35 * excite + Math.max(0, flash);
     faceMaterials.forEach((m) => (m.emissiveIntensity = glow));
 
+    // Wind only from real moves; tilting toward the pointer stays calm.
+    sampleWind(dt, !!flight || !!maneuver || sp < 1);
+    updateWind(dt);
     updateSparks(dt);
     syncPlanes();
     renderer.render(scene, camera);
@@ -601,9 +907,12 @@ export async function start(host, onReady) {
     canvas.removeEventListener("pointermove", onMove);
     canvas.removeEventListener("pointerleave", onLeave);
     canvas.removeEventListener("pointerdown", onDown);
+    ACTIVITY.forEach((type) => window.removeEventListener(type, onActivity));
     window.removeEventListener("resize", resize);
     sparkGeo.dispose();
     sparkMat.dispose();
+    windGeo.dispose();
+    windMat.dispose();
     hitArea.geometry.dispose();
     hitArea.material.dispose();
     ro.disconnect();

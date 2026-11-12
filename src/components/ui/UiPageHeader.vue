@@ -11,7 +11,7 @@ defineProps({
   <div class="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
     <div class="flex-1 min-w-0">
       <slot name="eyebrow" />
-      <h1 class="text-ui-h1 text-ui-ink truncate">{{ title }}</h1>
+      <h1 class="text-ui-h1 text-ui-ink truncate" :title="title">{{ title }}</h1>
       <p v-if="subtitle || $slots.subtitle" class="text-ui-small text-ui-muted mt-1"><slot name="subtitle">{{ subtitle }}</slot></p>
     </div>
     <div v-if="$slots.actions" class="flex flex-wrap items-center gap-2 shrink-0"><slot name="actions" /></div>

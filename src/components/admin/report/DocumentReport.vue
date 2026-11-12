@@ -168,7 +168,7 @@ const breakdownTypes = computed(() => (props.data?.types || []).filter((t) => ![
           <div v-for="t in types" :key="t.key" class="grid grid-cols-[110px_1fr_32px] sm:grid-cols-[130px_1fr_36px] items-center gap-2 text-ui-cap">
             <span class="text-ui-text font-medium truncate">{{ t.label }}</span>
             <div class="h-2 bg-ui-subtle rounded-full overflow-hidden">
-              <div v-if="t.count" class="h-full rounded-full" :style="{ width: `${Math.max(3, (t.count / typeMax) * 100)}%`, backgroundColor: BLUE }"></div>
+              <div v-if="t.count" class="ui-bar-fill h-full rounded-full" :style="{ width: `${Math.max(3, (t.count / typeMax) * 100)}%`, backgroundColor: BLUE }"></div>
             </div>
             <span class="text-ui-ink font-medium text-right tabular-nums">{{ t.count }}</span>
           </div>
@@ -225,7 +225,7 @@ const breakdownTypes = computed(() => (props.data?.types || []).filter((t) => ![
           <div v-for="b in proposal.breakdown" :key="b.value" class="grid grid-cols-[80px_1fr_32px] items-center gap-2 text-ui-cap">
             <span class="text-ui-text font-medium">{{ b.label }}</span>
             <div class="h-2 bg-ui-subtle rounded-full overflow-hidden">
-              <div v-if="b.count" class="h-full rounded-full" :style="{ width: `${Math.max(3, (b.count / proposalMax) * 100)}%`, backgroundColor: colorOf(b.value) }"></div>
+              <div v-if="b.count" class="ui-bar-fill h-full rounded-full" :style="{ width: `${Math.max(3, (b.count / proposalMax) * 100)}%`, backgroundColor: colorOf(b.value) }"></div>
             </div>
             <span class="text-ui-ink font-medium text-right tabular-nums">{{ b.count }}</span>
           </div>
@@ -247,7 +247,7 @@ const breakdownTypes = computed(() => (props.data?.types || []).filter((t) => ![
             <div
               v-for="b in t.breakdown.filter((x) => x.count)"
               :key="b.value"
-              class="h-full"
+              class="ui-bar-fill h-full"
               :style="{ width: `${(b.count / t.count) * 100}%`, backgroundColor: colorOf(b.value) }"
               :title="`${b.label}: ${b.count}`"
             ></div>

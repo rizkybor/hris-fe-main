@@ -186,5 +186,9 @@
     "label": "Use signature",
     "hint": "Stamps the signatory's signature onto the PDF.",
     "availableFor": "Available for {names}, with or without degrees."
+  },
+  "presence": {
+    "viewing": "{names} is viewing",
+    "editing": "{names} is editing"
   }
 }

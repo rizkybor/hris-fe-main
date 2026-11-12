@@ -11,9 +11,8 @@
     "npwp": "NPWP",
     "legalNameOptional": "Legal name (optional)",
     "npwpOptional": "NPWP (optional)",
-    "missionPerLine": "Mission (one per line)",
-    "missionPlaceholder": "Enter one mission per line",
-    "branchesPlaceholder": "Enter one branch per line"
+    "missionPlaceholder": "Write a mission",
+    "branchesPlaceholder": "Branch or subsidiary name"
   },
   "empty": {
     "title": "No company data yet",
@@ -24,6 +23,20 @@
     "editTitle": "Edit Company Information",
     "identity": "Company identity",
     "visionMission": "Vision & Mission",
-    "contact": "Contact & Location"
+    "contact": "Contact & Location",
+    "addMission": "Add mission",
+    "addBranch": "Add branch"
+  },
+  "hero": {
+    "since": "Founded {date}",
+    "years": "{n} year in business | {n} years in business",
+    "branches": "{n} branch | {n} branches"
+  },
+  "contact": "Contact",
+  "openMaps": "Open in Google Maps",
+  "copiedLabel": "{label} copied",
+  "toast": {
+    "saved": "Company profile saved",
+    "created": "Company profile created"
   }
 }

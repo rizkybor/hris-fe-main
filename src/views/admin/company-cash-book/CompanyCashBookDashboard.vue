@@ -407,7 +407,7 @@ const deleteMessage = computed(
   () => t("finance.cashBook.delete.message", { name: transactionToDelete.value?.description ?? "" })
 );
 const fieldClass =
-  "w-full h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink tabular-nums placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
+  "w-full min-w-0 h-[38px] px-3 bg-ui-surface text-ui-body text-ui-ink tabular-nums placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
 </script>
 
 <template>
@@ -539,7 +539,7 @@ const fieldClass =
         </div>
 
         <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
-          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 lg:w-[340px]">
+          <div class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 lg:w-[340px]">
             <input v-model="filters.start_date" type="date" :class="fieldClass" :aria-label="$t('finance.cashBook.fromDate')" />
             <span class="text-ui-cap text-ui-muted">{{ $t('finance.cashBook.to') }}</span>
             <input v-model="filters.end_date" type="date" :min="filters.start_date || undefined" :class="fieldClass" :aria-label="$t('finance.cashBook.toDate')" />

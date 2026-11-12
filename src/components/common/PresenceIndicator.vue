@@ -26,8 +26,7 @@ const others = computed(() => props.viewers.filter((v) => !v.is_self));
     </div>
     <span class="text-ui-cap text-ui-muted flex items-center gap-1">
       <component :is="others.some((v) => v.is_editing) ? Pencil : Eye" class="w-3.5 h-3.5" />
-      {{ others.map((v) => v.name).join(", ") }}
-      {{ others.some((v) => v.is_editing) ? "editing" : "viewing" }}
+      {{ $t(others.some((v) => v.is_editing) ? "common.presence.editing" : "common.presence.viewing", { names: others.map((v) => v.name).join(", ") }) }}
     </span>
   </div>
 </template>

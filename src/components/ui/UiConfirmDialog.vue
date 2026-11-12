@@ -16,6 +16,9 @@ const props = defineProps({
   cancelText: { type: String, default: "" }, // default: common.actions.cancel
   loading: { type: Boolean, default: false },
   zIndex: { type: Number, default: 200 },
+  // success only: the check draws itself in (ring, then tick, a small pop
+  // and one soft pulse). Still icon when the device asks for less motion.
+  celebrate: { type: Boolean, default: false },
 });
 const emit = defineEmits(["confirm", "cancel"]);
 
@@ -44,7 +47,14 @@ const onOpenChange = (value) => {
   <UiModal :open="open" size="sm" :z-index="zIndex" :persistent="loading" @update:open="onOpenChange">
     <template #header>
       <div class="flex items-start gap-3.5 flex-1 min-w-0">
-        <span :class="['w-10 h-10 shrink-0 rounded-full inline-flex items-center justify-center', tone.box]">
+        <span v-if="celebrate && type === 'success'" :class="['ui-check relative w-10 h-10 shrink-0 rounded-full inline-flex items-center justify-center', tone.box]">
+          <span class="ui-check__pulse" aria-hidden="true"></span>
+          <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle class="ui-check__ring" cx="12" cy="12" r="9.5" pathLength="1" />
+            <path class="ui-check__tick" d="M7.8 12.4l2.9 2.9 5.6-6" pathLength="1" />
+          </svg>
+        </span>
+        <span v-else :class="['w-10 h-10 shrink-0 rounded-full inline-flex items-center justify-center', tone.box]">
           <component :is="tone.icon" class="w-5 h-5" />
         </span>
         <div class="min-w-0 pt-0.5">
@@ -60,3 +70,62 @@ const onOpenChange = (value) => {
     </template>
   </UiModal>
 </template>
+
+<style scoped>
+/* Drawn check (celebrate): transform/opacity and a stroke draw only, once. */
+.ui-check {
+  animation: ui-check-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.ui-check__ring,
+.ui-check__tick {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.ui-check__ring {
+  animation: ui-check-draw 420ms 80ms ease-out forwards;
+}
+.ui-check__tick {
+  animation: ui-check-draw 300ms 420ms ease-out forwards;
+}
+.ui-check__pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid currentColor;
+  opacity: 0;
+  animation: ui-check-pulse 900ms 560ms ease-out;
+}
+@keyframes ui-check-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+@keyframes ui-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ui-check-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  to {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-check,
+  .ui-check__ring,
+  .ui-check__tick,
+  .ui-check__pulse {
+    animation: none;
+  }
+  .ui-check__ring,
+  .ui-check__tick {
+    stroke-dashoffset: 0;
+  }
+}
+</style>
