@@ -2,31 +2,31 @@ import { defineStore } from "pinia";
 import axios from "axios";
 import { ref } from "vue";
 
+// The company profile ("Tentang Perusahaan"): one record. Saving returns the
+// saved record, which replaces the one shown -- no refetch, no skeleton.
+// Create/update throw on failure so the page can keep the form open and say
+// so (it shows its own translated messages).
 export const useCompanyAboutStore = defineStore("companyAbout", () => {
   const company = ref(null);
   const loading = ref(false);
-  const success = ref(null);
   const error = ref(null);
 
-  // GET: Fetch company (mengambil data pertama)
-  const fetchCompany = async () => {
-    loading.value = true;
-    success.value = null;
+  // GET: the first company record. `quiet` keeps what's shown while it loads.
+  const fetchCompany = async ({ quiet = false } = {}) => {
+    if (!quiet || !company.value) loading.value = true;
     error.value = null;
     try {
       const { data } = await axios.get("/company-about");
-
       company.value = data.data?.[0] || null;
     } catch (err) {
       console.error(err);
       error.value = err.response?.data?.message || err.message;
-      company.value = null;
+      if (!quiet) company.value = null;
     } finally {
       loading.value = false;
     }
   };
 
-  // GET by ID
   const fetchCompanyById = async (id) => {
     loading.value = true;
     try {
@@ -40,61 +40,26 @@ export const useCompanyAboutStore = defineStore("companyAbout", () => {
     }
   };
 
-  // POST: Create
   const createCompany = async (payload) => {
-    loading.value = true;
-    try {
-      const { data } = await axios.post("/company-about", payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      company.value = data.data;
-      success.value = "Company created successfully!";
-    } catch (err) {
-      console.error(err);
-      error.value = err.response?.data?.message || err.message;
-    } finally {
-      loading.value = false;
-    }
+    const { data } = await axios.post("/company-about", payload, { headers: { "Content-Type": "application/json" } });
+    company.value = data.data ?? company.value;
+    return company.value;
   };
 
-  // PUT: Update
   const updateCompany = async (id, payload) => {
-    loading.value = true;
-    try {
-      const { data } = await axios.put(`/company-about/${id}`, payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      company.value = data.data;
-      success.value = "Company updated successfully!";
-    } catch (err) {
-      console.error(err);
-      error.value = err.response?.data?.message || err.message;
-    } finally {
-      loading.value = false;
-    }
+    const { data } = await axios.put(`/company-about/${id}`, payload, { headers: { "Content-Type": "application/json" } });
+    company.value = data.data ?? company.value;
+    return company.value;
   };
 
-  // DELETE: Delete
   const deleteCompany = async (id) => {
-    loading.value = true;
-    try {
-      await axios.delete(`/company-about/${id}`);
-      company.value = null;
-      success.value = "Company deleted successfully!";
-    } catch (err) {
-      console.error(err);
-      error.value = err.response?.data?.message || err.message;
-    } finally {
-      loading.value = false;
-    }
+    await axios.delete(`/company-about/${id}`);
+    company.value = null;
   };
 
   return {
     company,
     loading,
-    success,
     error,
     fetchCompany,
     fetchCompanyById,

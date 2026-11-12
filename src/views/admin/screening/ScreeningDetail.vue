@@ -266,7 +266,7 @@ const iconBtn = "ui-press w-8 h-8 inline-flex items-center justify-center rounde
           <UiButton variant="secondary" :icon="ArrowLeft" :to="{ name: 'admin.screening.dashboard' }" :aria-label="$t('common.actions.back')" class="!px-0 w-9 shrink-0" />
           <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <h1 class="text-ui-h1 text-ui-ink truncate">{{ s.company || s.contact_name || $t("screening.unnamedClient") }}</h1>
+              <h1 class="text-ui-h1 text-ui-ink truncate" :title="s.company || s.contact_name">{{ s.company || s.contact_name || $t("screening.unnamedClient") }}</h1>
               <UiStatusSelect v-if="canEdit" :model-value="s.status" :options="statusOptions" :label="$t('common.labels.status')" :busy="saving" @change="setStatus" />
               <UiBadge v-else :tone="STATUS_TONE[s.status] || 'neutral'" dot>{{ SCREENING_STATUS[s.status]?.label }}</UiBadge>
             </div>

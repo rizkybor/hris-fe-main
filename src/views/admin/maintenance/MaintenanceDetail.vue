@@ -553,7 +553,7 @@ const HISTORY_COLUMNS = computed(() => [
 
             <div v-if="period && periodOpen" class="flex flex-col sm:flex-row sm:items-center gap-2 border border-ui-line rounded-ui-control px-3 py-2.5 text-ui-small">
               <span class="text-ui-text">{{ $t("maintenance.detail.atMonthEnd") }}</span>
-              <UiSelect v-model="leftoverChoice" :options="leftoverOptions" :disabled="!can('maintenance-adjust')" class="sm:w-[380px]" :aria-label="$t('maintenance.detail.unusedAtMonthEnd')" />
+              <UiSelect v-model="leftoverChoice" :options="leftoverOptions" :disabled="!can('maintenance-adjust')" class="sm:flex-1 sm:max-w-[520px]" :aria-label="$t('maintenance.detail.unusedAtMonthEnd')" />
             </div>
             <p v-else-if="period" class="text-ui-small text-ui-text border border-ui-line rounded-ui-control px-3 py-2.5">
               {{ $t("maintenance.detail.closedUnused") }} <strong class="text-ui-ink font-medium">{{ leftoverResult(period) }}</strong>
