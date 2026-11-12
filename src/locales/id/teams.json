@@ -12,7 +12,8 @@
     "addTeam": "Tambah Tim",
     "searchPlaceholder": "Cari nama, ketua, status...",
     "allDepartments": "Semua Departemen",
-    "empty": "Tim tidak ditemukan"
+    "empty": "Tim tidak ditemukan",
+    "refreshing": "Memperbarui…"
   },
   "card": {
     "members": "{n} anggota",

@@ -3,65 +3,56 @@ import Statistic from "@/components/admin/team/Statistic.vue";
 import CardList from "@/components/admin/team/CardList.vue";
 import Pagination from "@/components/admin/team/Pagination.vue";
 import { useTeamStore } from "@/stores/team";
-import { useOptionStore } from "@/stores/option";
+import { useLookupStore } from "@/stores/lookups";
 import { storeToRefs } from "pinia";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { debounce } from "lodash-es";
 import { useI18n } from "vue-i18n";
 import { Upload, Plus, SearchIcon, Users2 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
-import { UiPageHeader, UiButton, UiInput, UiChips, UiSelect, UiEmpty } from "@/components/ui";
+import { UiPageHeader, UiButton, UiInput, UiChips, UiSelect, UiEmpty, UiSpinner } from "@/components/ui";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
 
 const teamStore = useTeamStore();
-const { teams, meta, loading, success } = storeToRefs(teamStore);
-const { fetchTeamsPaginated } = teamStore;
+const { teams, meta, success } = storeToRefs(teamStore);
 
-const optionStore = useOptionStore();
-const { departments } = storeToRefs(optionStore);
-const { fetchDepartments } = optionStore;
+// Filter options come from the shared lookup cache, loaded alongside the
+// list instead of before it.
+const lookups = useLookupStore();
+lookups.ensure("systemOptions", "departments").catch(() => {});
 
-const serverOptions = ref({
-  page: 1,
-  row_per_page: 10,
+// Search, filters and page live in the URL (and are remembered), so coming
+// back from a team restores the same view.
+const list = useListState("teams", { search: "", status: "", department: "", page: 1, per_page: 10 });
+
+const params = computed(() => ({
+  page: list.page,
+  row_per_page: list.per_page,
+  search: list.search || null,
+  status: list.status,
+  department: list.department,
+}));
+
+// Show what the store already has for these params; refresh quietly.
+const { loading, refreshing } = useStaleFetch(() => teamStore.fetchTeamsPaginated(params.value), {
+  key: () => ["teams", params.value],
+  hasData: () => teamStore.teamsListKey !== null,
 });
 
-const filters = ref({
-  search: null,
-  status: "",
-  department: "",
-});
-
-const fetchData = async () => {
-  await fetchTeamsPaginated({
-    ...serverOptions.value,
-    ...filters.value,
-  });
-};
-
-onMounted(async () => {
-  await fetchDepartments();
-  fetchData();
-});
-
-watch(
-  filters,
-  debounce(() => {
-    serverOptions.value.page = 1; // Reset to first page when filtering
-    fetchData();
-  }, 300),
-  { deep: true }
-);
+// The input updates instantly; the list (and URL) follow after a pause.
+const searchInput = ref(list.search);
+const applySearch = debounce((v) => (list.search = v || ""), 300);
+watch(searchInput, (v) => applySearch(v));
+watch(() => list.search, (v) => { if (v !== (searchInput.value || "")) searchInput.value = v; });
 
 const handlePageChange = (page) => {
-  serverOptions.value.page = page;
-  fetchData();
+  list.page = page;
 };
 
 const handlePerPageChange = (perPage) => {
-  serverOptions.value.row_per_page = perPage;
-  serverOptions.value.page = 1;
-  fetchData();
+  list.per_page = perPage; // resets page to 1
 };
 
 // Presentation-only option lists for the filter controls.
@@ -75,7 +66,7 @@ const statusOptions = computed(() => [
 ]);
 const departmentOptions = computed(() => [
   { value: "", label: t("teams.list.allDepartments") },
-  ...(departments.value || []).map((d) => ({ value: d.value, label: d.label })),
+  ...lookups.systemOptionsFor("departments").map((d) => ({ value: d.value, label: d.label })),
 ]);
 </script>
 
@@ -96,41 +87,49 @@ const departmentOptions = computed(() => [
     <Alert type="success" :title="success" :show="success" @close="teamStore.clearMessages()" />
 
     <!-- Team List Section -->
-    <section class="space-y-4">
+    <!-- One card (toolbar, cards on a tray, pagination), same as Projects and Employees -->
+    <section class="sm:bg-ui-surface sm:border sm:border-ui-line sm:rounded-ui-card">
       <!-- Toolbar -->
-      <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+      <div class="flex flex-col lg:flex-row lg:items-center gap-3 sm:p-4 sm:px-5 sm:border-b sm:border-ui-line">
         <UiInput
-          v-model="filters.search"
+          v-model="searchInput"
           :icon="SearchIcon"
           :placeholder="$t('teams.list.searchPlaceholder')"
           class="lg:w-80"
         />
-        <UiChips v-model="filters.status" :options="statusOptions" class="flex-1" />
-        <UiSelect v-model="filters.department" :options="departmentOptions" class="lg:w-56" />
+        <UiChips v-model="list.status" :options="statusOptions" class="flex-1" />
+        <UiSelect v-model="list.department" :options="departmentOptions" class="lg:w-56" />
+        <span v-if="refreshing" class="inline-flex items-center gap-1.5 text-ui-cap text-ui-muted shrink-0" role="status">
+          <UiSpinner size="14px" :center="false" />{{ $t("teams.list.refreshing") }}
+        </span>
       </div>
 
+      <div class="pt-4 sm:p-5 sm:ui-tray">
       <!-- Teams Grid -->
       <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 xl:grid-cols-3" />
 
       <div
-        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 ui-stagger"
+        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 ui-stagger transition-opacity"
+        :class="refreshing ? 'opacity-60' : ''"
+        :aria-busy="refreshing || undefined"
         v-else-if="teams.length > 0"
       >
         <CardList v-for="team in teams" :key="team.id" :data="team" />
       </div>
 
       <!-- Empty State -->
-      <div v-else class="bg-ui-surface border border-ui-line rounded-ui-card">
-        <UiEmpty :icon="Users2" :title="$t('teams.list.empty')" />
+      <UiEmpty v-else :icon="Users2" :title="$t('teams.list.empty')" />
       </div>
 
       <!-- Pagination -->
-      <Pagination
-        :meta="meta"
-        :loading="loading"
-        @page-change="handlePageChange"
-        @per-page-change="handlePerPageChange"
-      />
+      <div class="pt-4 sm:py-3.5 sm:px-5 sm:border-t sm:border-ui-line">
+        <Pagination
+          :meta="meta"
+          :loading="loading"
+          @page-change="handlePageChange"
+          @per-page-change="handlePerPageChange"
+        />
+      </div>
     </section>
   </div>
 </template>

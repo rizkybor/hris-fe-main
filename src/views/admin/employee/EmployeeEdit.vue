@@ -5,6 +5,12 @@ import { useEmployeeStore } from "@/stores/employee";
 import { storeToRefs } from "pinia";
 import { ArrowRight, ArrowLeft, Save } from "lucide-vue-next";
 import { UiButton } from "@/components/ui";
+import { useLookupStore } from "@/stores/lookups";
+import { useToastStore } from "@/stores/toast";
+import { invalidate } from "@/composables/useStaleFetch";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
+import { loadWizardLookups } from "@/components/admin/employee/create/wizardLookups";
+import { useI18n } from "vue-i18n";
 
 import Step1PersonalInfo from "@/components/admin/employee/create/steps/Step1PersonalInfo.vue";
 import Step2JobInfo from "@/components/admin/employee/create/steps/Step2JobInfo.vue";
@@ -12,6 +18,7 @@ import Step3EmergencyContact from "@/components/admin/employee/create/steps/Step
 import Step4Preview from "@/components/admin/employee/create/steps/Step4Preview.vue";
 import ErrorModal from "@/components/admin/employee/create/ErrorModal.vue";
 
+const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const employeeStore = useEmployeeStore();
@@ -84,6 +91,18 @@ const normalizeRupiah = (value: any) => {
   return String(value).replace(/[^0-9]/g, "");
 };
 
+// Ask before leaving with unsaved edits. The baseline is taken once the
+// employee has loaded (salary compared as digits: the Job step formats it).
+const saved = ref(false);
+const loadedForm = ref<string | null>(null);
+const serializeForm = () =>
+  JSON.stringify([
+    step1Data.value,
+    { ...step2Data.value, monthly_salary: normalizeRupiah(step2Data.value.monthly_salary) },
+    step3Data.value,
+  ]);
+useUnsavedGuard(() => !saved.value && loadedForm.value !== null && serializeForm() !== loadedForm.value);
+
 // Load employee data
 const loadEmployeeData = async () => {
   try {
@@ -154,6 +173,7 @@ const loadEmployeeData = async () => {
       }
       step3Data.value.preferred_language = employee.preferred_language || "";
       step3Data.value.additional_notes = employee.additional_notes || "";
+      loadedForm.value = serializeForm();
     }
   } catch (err) {
     console.error("Error loading employee data:", err);
@@ -242,8 +262,17 @@ const handleSubmit = async () => {
     const employeeId = route.params.id as string;
     await employeeStore.updateEmployee(employeeId, formData);
 
-    // Redirect to employee list on success
-    router.push({ name: "admin.employees" });
+    // Lists that show this employee are stale now.
+    invalidate("adm-employees:");
+    const lookups = useLookupStore();
+    lookups.invalidate("employees");
+    lookups.invalidate("teams"); // member counts
+
+    // Back to the employee's profile, with a toast instead of the list banner.
+    employeeStore.clearMessages();
+    useToastStore().success(t("employees.wizard.edit.saved"));
+    saved.value = true;
+    router.push({ name: "admin.employees.detail", params: { id: employeeId } });
   } catch (err) {
     console.error("Error updating employee:", err);
     // Show error modal when validation fails
@@ -257,8 +286,10 @@ const closeErrorModal = () => {
   showErrorModal.value = false;
 };
 
+// The employee and the wizard's option lists load in parallel.
 onMounted(() => {
   loadEmployeeData();
+  loadWizardLookups();
 });
 </script>
 

@@ -54,7 +54,8 @@
       "updated": "Subscription updated",
       "deleted": "Subscription deleted",
       "invoiceNumber": "Invoice No. {number}"
-    }
+    },
+    "moreServices": "+{n} more"
   },
   "recap": {
     "perMonth": "per month",
@@ -80,7 +81,9 @@
     "forecast": "Projected billing, next 12 months",
     "forecastHint": "Each active subscription's due dates rolled forward by its cycle",
     "forecastTotal": "12-month total",
-    "expectedBilling": "Expected billing"
+    "expectedBilling": "Expected billing",
+    "showAnalysis": "Show analysis",
+    "hideAnalysis": "Hide analysis"
   },
   "form": {
     "addTitle": "Add Subscription",

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
-import { storeToRefs } from "pinia";
-import { useOptionStore } from "@/stores/option";
+import { useLookupStore } from "@/stores/lookups";
+import { loadWizardLookups } from "@/components/admin/employee/create/wizardLookups";
 import {
   User,
   Phone,
@@ -97,11 +97,11 @@ const removeQueuedDocument = (index: number) => {
 
 const isImage = (file: File) => file.type.startsWith("image/");
 
-const optionStore = useOptionStore();
-const { preferredLanguages } = storeToRefs(optionStore);
+const lookups = useLookupStore();
+const preferredLanguages = computed(() => lookups.systemOptionsFor("preferred-languages"));
 
 onMounted(() => {
-  optionStore.fetchPreferredLanguages();
+  loadWizardLookups(); // cached: no request when the wizard already loaded them
 });
 
 // Presentation only: keep a blank, re-selectable first option.

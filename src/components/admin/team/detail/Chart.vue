@@ -1,6 +1,6 @@
 <script setup>
 import { UserPlus, TrendingUp } from "lucide-vue-next";
-import { computed, onMounted, ref, watch, defineAsyncComponent } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch, defineAsyncComponent } from "vue";
 import { useI18n } from "vue-i18n";
 import { useTeamStore } from "@/stores/team";
 import { storeToRefs } from "pinia";
@@ -17,12 +17,43 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  // The detail page passes the route id and loads the data itself, in
+  // parallel with the team; without it this component loads it once the
+  // team is known (the old behaviour).
+  teamId: {
+    type: [String, Number],
+    default: null,
+  },
 });
 
 const { t } = useI18n();
 const teamStore = useTeamStore();
-const { teamChartData, loadingTeamChart } = storeToRefs(teamStore);
+const { teamChartData, loadingTeamChart: storeLoading, teamChartId } = storeToRefs(teamStore);
 const { fetchTeamChartData } = teamStore;
+
+const id = computed(() => props.teamId ?? props.team?.id ?? null);
+// Never draw another team's data while this one's loads.
+const loadingTeamChart = computed(() => storeLoading.value || (id.value != null && teamChartId.value !== String(id.value)));
+
+// apexcharts (~158 kB gzip) is only downloaded once the charts scroll near
+// the viewport, so a visit that never reaches them doesn't pay for it.
+const root = ref(null);
+const inView = ref(typeof IntersectionObserver === "undefined");
+let observer = null;
+onMounted(() => {
+  if (inView.value || !root.value) return;
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        inView.value = true;
+        observer.disconnect();
+      }
+    },
+    { rootMargin: "200px 0px" }
+  );
+  observer.observe(root.value);
+});
+onBeforeUnmount(() => observer?.disconnect());
 
 const memberGrowthOptions = ref({
   chart: {
@@ -102,7 +133,7 @@ const taskGrowthSeries = computed(() => [
 ]);
 
 const updateCharts = () => {
-  if (teamChartData.value.months.length > 0) {
+  if (teamChartData.value?.months?.length > 0) {
     // Update member growth chart
     memberGrowthOptions.value.xaxis.categories = teamChartData.value.months;
     memberGrowthData.value = teamChartData.value.member_growth;
@@ -113,30 +144,19 @@ const updateCharts = () => {
   }
 };
 
-const loadChartData = async () => {
-  if (props.team?.id) {
-    await fetchTeamChartData(props.team.id);
-    updateCharts();
-  }
-};
-
-onMounted(async () => {
-  await loadChartData();
-});
-
-watch(() => props.team?.id, async (newId) => {
-  if (newId) {
-    await loadChartData();
-  }
-}, { immediate: true });
+watch(
+  () => (props.teamId == null ? props.team?.id : null),
+  (teamId) => teamId && fetchTeamChartData(teamId),
+  { immediate: true }
+);
 
 watch(teamChartData, () => {
   updateCharts();
-}, { deep: true });
+}, { deep: true, immediate: true });
 </script>
 
 <template>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+  <div ref="root" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
     <!-- Team Growth Chart (Employee Joining) -->
     <section class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6 min-w-0">
       <div class="flex items-start gap-3 mb-4">
@@ -151,7 +171,7 @@ watch(teamChartData, () => {
 
       <!-- Chart Container -->
       <div class="relative">
-        <div v-if="loadingTeamChart" class="flex items-center justify-center" style="height: 250px">
+        <div v-if="loadingTeamChart || !inView" class="flex items-center justify-center" style="height: 250px">
           <UiSpinner :center="false" />
         </div>
         <VueApexCharts
@@ -178,7 +198,7 @@ watch(teamChartData, () => {
 
       <!-- Chart Container -->
       <div class="relative">
-        <div v-if="loadingTeamChart" class="flex items-center justify-center" style="height: 250px">
+        <div v-if="loadingTeamChart || !inView" class="flex items-center justify-center" style="height: 250px">
           <UiSpinner :center="false" />
         </div>
         <VueApexCharts

@@ -1,14 +1,17 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
+import { useRouter } from "vue-router";
 import { can } from "@/helpers/permissionHelper";
 import { formatDate } from "@/utils/dateUtils";
-import { Calendar, Crown, Edit, Eye, Users, ShieldCheck, AlertTriangle, Trash2, Building2, Flag } from "lucide-vue-next";
+import { localeTag } from "@/i18n";
+import { AlertTriangle, Building2, Calendar, Edit, Flag, MoreHorizontal, Trash2, Users } from "lucide-vue-next";
 import { getProjectHealth } from "@/utils/projectHealth";
-import { UiBadge, UiButton } from "@/components/ui";
+import { UiBadge } from "@/components/ui";
 import Avatar from "@/components/common/Avatar.vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
+const router = useRouter();
 
 const props = defineProps({
   data: {
@@ -19,13 +22,7 @@ const props = defineProps({
 
 const emit = defineEmits(["delete"]);
 
-const health = computed(() => getProjectHealth(props.data));
-
-const PRIORITY = {
-  high: { key: "high", tone: "bad" },
-  medium: { key: "medium", tone: "warn" },
-  low: { key: "low", tone: "neutral" },
-};
+const detailRoute = computed(() => ({ name: "admin.projects.detail", params: { id: props.data.id } }));
 
 const STATUS = {
   draft: { key: "draft", tone: "neutral" },
@@ -35,11 +32,6 @@ const STATUS = {
   completed: { key: "completed", tone: "ok" },
   cancelled: { key: "cancelled", tone: "outline" },
 };
-
-const priority = computed(() => {
-  const p = PRIORITY[props.data.priority] || PRIORITY.medium;
-  return { label: t(`projects.priority.${p.key}`), tone: p.tone };
-});
 const status = computed(() => {
   const s = STATUS[props.data.status];
   return s
@@ -47,16 +39,16 @@ const status = computed(() => {
     : { label: props.data.status, tone: "neutral" };
 });
 
+// Priority is only worth a badge when it asks for attention.
+const priorityLabel = computed(() =>
+  ["high", "urgent"].includes(props.data.priority) ? t(`projects.priority.${props.data.priority}`) : null
+);
+
 const progress = computed(() => Math.max(0, Math.min(100, props.data.progress ?? 0)));
-const progressColor = computed(() => {
-  if (progress.value >= 100) return "bg-ui-ok";
-  return "bg-ui-ink";
-});
 
-// Health level -> badge tone (always shown with its label).
+// Overdue / critical / at-risk / behind only -- on-track projects get no chip.
+const health = computed(() => getProjectHealth(props.data));
 const HEALTH_TONE = { overdue: "bad", critical: "bad", "at-risk": "warn", behind: "warn" };
-
-// Overdue / at-risk / behind only -- on-track projects need no badge.
 const healthText = computed(() => {
   if (!health.value || health.value.level === "on-track") return null;
   const d = health.value.daysRemaining;
@@ -66,26 +58,28 @@ const healthText = computed(() => {
 });
 
 const team = computed(() => {
-  if (props.data.teams?.length) return props.data.teams.map((t) => t.name).join(", ");
+  if (props.data.teams?.length) return props.data.teams.map((x) => x.name).join(", ");
   if (props.data.members?.length) return props.data.members.map((m) => m.name).join(", ");
   return null;
 });
+const leaderName = computed(() => props.data.leader?.user?.name || null);
 
+// "15 Jul – 6 Nov 2026" when both dates fall in the same year; "Since 13 Sep
+// 2026" when there is no end date yet.
 const timeline = computed(() => {
-  const start = props.data.start_date ? formatDate(props.data.start_date) : "-";
-  const end = props.data.end_date ? formatDate(props.data.end_date) : t("projects.card.noEndDate");
-  return `${start} – ${end}`;
+  const { start_date: start, end_date: end } = props.data;
+  if (!start && !end) return null;
+  if (!end) return t("projects.card.since", { date: formatDate(start) });
+  const endText = formatDate(end);
+  if (!start) return `– ${endText}`;
+  const sameYear = end && new Date(start).getFullYear() === new Date(end).getFullYear();
+  const startText = sameYear
+    ? new Date(start).toLocaleDateString(localeTag(), { day: "numeric", month: "short" })
+    : formatDate(start);
+  return `${startText} – ${endText}`;
 });
 
-const aftercare = computed(() => {
-  const parts = [];
-  if (props.data.warranty_period_months) parts.push(t("projects.card.warrantyMonths", { n: props.data.warranty_period_months }));
-  if (props.data.retention_period_months) parts.push(t("projects.card.retentionMonths", { n: props.data.retention_period_months }));
-  return parts.join(" · ");
-});
-
-// Missing or broken photos fall back to a branded placeholder with the
-// project's initials instead of a broken-image icon.
+// Missing or broken photos fall back to the project's initials.
 const photoFailed = ref(false);
 const initials = computed(() =>
   (props.data.name || "?")
@@ -95,116 +89,194 @@ const initials = computed(() =>
     .map((w) => w[0].toUpperCase())
     .join("")
 );
+
+// ----- ⋯ actions menu (edit / delete) -----
+const canEdit = computed(() => can("project-edit"));
+const canDelete = computed(() => can("project-delete"));
+const hasActions = computed(() => canEdit.value || canDelete.value);
+
+const menuOpen = ref(false);
+const root = ref(null);
+const trigger = ref(null);
+const menu = ref(null);
+const items = () => [...(menu.value?.querySelectorAll('[role="menuitem"]') ?? [])];
+
+const onDocPointer = (e) => {
+  if (!root.value?.contains(e.target)) closeMenu(false);
+};
+const openMenu = async () => {
+  menuOpen.value = true;
+  document.addEventListener("pointerdown", onDocPointer);
+  await nextTick();
+  items()[0]?.focus();
+};
+const closeMenu = (refocus = true) => {
+  if (!menuOpen.value) return;
+  menuOpen.value = false;
+  document.removeEventListener("pointerdown", onDocPointer);
+  if (refocus) trigger.value?.focus();
+};
+const toggleMenu = () => (menuOpen.value ? closeMenu() : openMenu());
+onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocPointer));
+
+const onMenuKey = (e) => {
+  const list = items();
+  const i = list.indexOf(document.activeElement);
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    const step = e.key === "ArrowDown" ? 1 : -1;
+    list[(i + step + list.length) % list.length]?.focus();
+  } else if (e.key === "Home" || e.key === "End") {
+    e.preventDefault();
+    list[e.key === "Home" ? 0 : list.length - 1]?.focus();
+  } else if (e.key === "Escape") {
+    e.preventDefault();
+    closeMenu();
+  } else if (e.key === "Tab") {
+    closeMenu(false);
+  }
+};
+
+const onEdit = () => {
+  closeMenu(false);
+  router.push({ name: "admin.projects.edit", params: { id: props.data.id } });
+};
+const onDelete = () => {
+  closeMenu();
+  emit("delete", props.data);
+};
 </script>
 
 <template>
-  <div
-    class="ui-lift bg-ui-surface border border-ui-line rounded-ui-card hover:border-ui-line-strong flex flex-col h-full min-w-0 p-[18px]"
+  <!-- The name link stretches over the whole card (after:inset-0), so the card
+       is one link target without nesting the menu button inside an <a>. -->
+  <article
+    ref="root"
+    data-project-card
+    class="group relative ui-lift bg-ui-surface border border-ui-line rounded-ui-card hover:border-ui-line-strong flex flex-col h-full min-w-0 p-4 sm:p-[18px]"
+    :class="{ 'z-20': menuOpen }"
   >
-    <!-- Photo / initials, title, client, status -->
+    <!-- Header: photo / initials, name, client, status, actions -->
     <div class="flex items-start gap-3">
-      <div class="w-10 h-10 shrink-0 rounded-[10px] overflow-hidden bg-ui-subtle border border-ui-line flex items-center justify-center">
+      <div class="w-9 h-9 shrink-0 rounded-[9px] overflow-hidden bg-ui-subtle border border-ui-line flex items-center justify-center">
         <img
           v-if="data.photo && !photoFailed"
           class="w-full h-full object-cover"
           :src="data.photo"
-          :alt="data.name"
+          alt=""
           loading="lazy"
           @error="photoFailed = true"
         />
-        <span v-else class="text-ui-small font-semibold text-ui-ink">{{ initials }}</span>
+        <span v-else class="text-ui-cap font-semibold text-ui-ink" aria-hidden="true">{{ initials }}</span>
       </div>
       <div class="flex-1 min-w-0">
         <RouterLink
-          :to="{ name: 'admin.projects.detail', params: { id: data.id } }"
-          class="block text-ui-h3 text-ui-ink truncate hover:text-ui-accent"
+          :to="detailRoute"
+          class="block text-ui-h3 text-ui-ink truncate group-hover:text-ui-accent focus:outline-none after:absolute after:inset-0 after:rounded-ui-card after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-ui-accent"
           :title="data.name"
         >{{ data.name }}</RouterLink>
-        <p class="text-ui-cap text-ui-muted flex items-center gap-1 mt-0.5 min-w-0">
-          <Building2 class="w-3.5 h-3.5 shrink-0" />
+        <p class="text-ui-cap flex items-center gap-1 mt-0.5 min-w-0" :class="data.client?.name ? 'text-ui-muted' : 'text-ui-faint'">
+          <Building2 class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
           <span class="truncate">{{ data.client?.name || $t("projects.card.noClient") }}</span>
+          <!-- Priority only when it needs attention, inline so the header stays one height -->
+          <span v-if="priorityLabel" class="shrink-0 inline-flex items-center gap-0.5 ml-1.5 text-ui-bad font-medium">
+            <Flag class="w-3 h-3" aria-hidden="true" /><span class="sr-only">{{ $t("projects.fields.priority") }}:</span>{{ priorityLabel }}
+          </span>
         </p>
       </div>
       <UiBadge :tone="status.tone" dot class="shrink-0">{{ status.label }}</UiBadge>
+
+      <div v-if="hasActions" class="relative z-10 -mr-1.5 -mt-1 shrink-0">
+        <button
+          ref="trigger"
+          type="button"
+          class="ui-press w-7 h-7 inline-flex items-center justify-center rounded-ui-control text-ui-muted hover:text-ui-ink hover:bg-ui-hover focus:outline-none focus-visible:shadow-ui-focus"
+          :class="{ 'bg-ui-hover text-ui-ink': menuOpen }"
+          aria-haspopup="menu"
+          :aria-expanded="menuOpen"
+          :aria-label="$t('projects.card.actions', { name: data.name })"
+          @click="toggleMenu"
+          @keydown.down.prevent="openMenu"
+        >
+          <MoreHorizontal class="w-4 h-4" />
+        </button>
+        <Transition name="ui-pop">
+          <div
+            v-if="menuOpen"
+            ref="menu"
+            role="menu"
+            class="absolute right-0 top-full mt-1 w-40 bg-ui-surface border border-ui-line rounded-ui-card shadow-ui-overlay p-1 origin-top-right"
+            @keydown="onMenuKey"
+          >
+            <button
+              v-if="canEdit"
+              type="button"
+              role="menuitem"
+              tabindex="-1"
+              class="w-full flex items-center gap-2.5 px-2.5 h-9 text-ui-small text-left rounded-[6px] text-ui-ink hover:bg-ui-hover focus:bg-ui-hover focus:outline-none"
+              @click="onEdit"
+            >
+              <Edit class="w-4 h-4 text-ui-muted" /> {{ $t("common.actions.edit") }}
+            </button>
+            <button
+              v-if="canDelete"
+              type="button"
+              role="menuitem"
+              tabindex="-1"
+              class="w-full flex items-center gap-2.5 px-2.5 h-9 text-ui-small text-left rounded-[6px] text-ui-bad hover:bg-ui-bad-soft focus:bg-ui-bad-soft focus:outline-none"
+              @click="onDelete"
+            >
+              <Trash2 class="w-4 h-4" /> {{ $t("common.actions.delete") }}
+            </button>
+          </div>
+        </Transition>
+      </div>
     </div>
 
-    <!-- Two lines reserved so every card's progress bar lines up -->
-    <p class="text-ui-cap text-ui-muted mt-3 line-clamp-2 h-8">
-      {{ data.description || $t("projects.card.noDescription") }}
-    </p>
+    <p v-if="data.description" class="text-ui-cap text-ui-muted mt-2.5 line-clamp-2">{{ data.description }}</p>
 
-    <!-- Progress -->
-    <div class="mt-3">
-      <div class="flex items-center justify-between gap-2 mb-1.5 min-h-[22px]">
-        <span class="text-ui-cap text-ui-muted">{{ $t("projects.card.progress") }}</span>
-        <div class="flex items-center gap-1.5">
-          <UiBadge v-if="healthText" :tone="HEALTH_TONE[health.level] || 'warn'">
-            <AlertTriangle class="w-3 h-3" />{{ healthText }}
-          </UiBadge>
-          <span class="text-ui-small font-semibold text-ui-ink tabular-nums">{{ progress }}%</span>
+    <!-- Progress and meta sit at the bottom so cards in a row line up -->
+    <div class="mt-auto pt-4">
+      <div class="flex items-center gap-2.5">
+        <div
+          class="flex-1 min-w-[48px] bg-ui-subtle rounded-full h-1.5 overflow-hidden"
+          role="progressbar"
+          :aria-valuenow="progress"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :aria-label="$t('projects.card.progress')"
+        >
+          <div
+            class="h-full rounded-full transition-all duration-300"
+            :class="progress >= 100 ? 'bg-ui-ok' : 'bg-ui-ink'"
+            :style="{ width: `${progress}%` }"
+          ></div>
         </div>
+        <UiBadge v-if="healthText" :tone="HEALTH_TONE[health.level] || 'warn'" class="shrink-0">
+          <AlertTriangle class="w-3 h-3" aria-hidden="true" />{{ healthText }}
+        </UiBadge>
+        <span class="text-ui-small font-semibold text-ui-ink tabular-nums shrink-0 min-w-[2.25rem] text-right">{{ progress }}%</span>
       </div>
-      <div class="w-full bg-ui-subtle rounded-full h-1.5 overflow-hidden">
-        <div class="h-full rounded-full transition-all duration-300" :class="progressColor" :style="{ width: `${progress}%` }"></div>
+
+      <div class="flex items-center gap-2 mt-3.5 pt-3.5 border-t border-ui-line text-ui-cap min-w-0">
+        <span
+          v-if="leaderName"
+          class="shrink-0"
+          :title="$t('projects.card.ledBy', { name: leaderName })"
+        >
+          <Avatar :src="data.leader?.user?.profile_photo" :alt="leaderName" size="w-6 h-6" icon-size="w-3 h-3" />
+          <span class="sr-only">{{ $t("projects.card.ledBy", { name: leaderName }) }}</span>
+        </span>
+        <Users v-else class="w-3.5 h-3.5 text-ui-faint shrink-0" aria-hidden="true" />
+        <span
+          class="truncate min-w-0 flex-1"
+          :class="team ? 'text-ui-text' : 'text-ui-faint'"
+          :title="team || ''"
+        >{{ team || $t("projects.card.notAssigned") }}</span>
+        <span v-if="timeline" class="shrink-0 inline-flex items-center gap-1 text-ui-muted tabular-nums whitespace-nowrap">
+          <Calendar class="w-3.5 h-3.5 text-ui-faint" aria-hidden="true" />{{ timeline }}
+        </span>
       </div>
     </div>
-
-    <!-- Details: same rows on every card -->
-    <dl class="mt-4 mb-4 space-y-2 text-ui-cap">
-      <div class="flex items-center gap-2 min-w-0">
-        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><Users class="w-3.5 h-3.5" />{{ $t("common.labels.team") }}</dt>
-        <dd class="text-ui-ink font-medium truncate" :title="team || ''">{{ team || $t("projects.card.notAssigned") }}</dd>
-      </div>
-      <div class="flex items-center gap-2 min-w-0">
-        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><Calendar class="w-3.5 h-3.5" />{{ $t("projects.card.timeline") }}</dt>
-        <dd class="text-ui-ink font-medium truncate tabular-nums">{{ timeline }}</dd>
-      </div>
-      <div class="flex items-center gap-2 min-w-0">
-        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><ShieldCheck class="w-3.5 h-3.5" />{{ $t("projects.card.aftercare") }}</dt>
-        <dd class="font-medium truncate" :class="aftercare ? 'text-ui-ink' : 'text-ui-faint'">{{ aftercare || $t("common.labels.none") }}</dd>
-      </div>
-      <div class="flex items-center gap-2 min-w-0">
-        <dt class="flex items-center gap-1.5 text-ui-muted w-20 shrink-0"><Flag class="w-3.5 h-3.5" />{{ $t("projects.fields.priority") }}</dt>
-        <dd class="min-w-0"><UiBadge :tone="priority.tone">{{ priority.label }}</UiBadge></dd>
-      </div>
-    </dl>
-
-    <!-- Leader + actions, pinned to the bottom so they line up across a row -->
-    <div class="flex items-center gap-2 pt-3.5 mt-auto border-t border-ui-line">
-      <div v-if="data.leader" class="relative shrink-0 mr-1" :title="`${data.leader?.user?.name} · ${$t('projects.fields.leader')}`">
-        <Avatar :src="data.leader?.user?.profile_photo" :alt="data.leader?.user?.name" size="w-8 h-8" icon-size="w-4 h-4" />
-        <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-ui-surface border border-ui-line rounded-full flex items-center justify-center">
-          <Crown class="w-2.5 h-2.5 text-ui-warn" />
-        </div>
-      </div>
-      <UiButton
-        variant="secondary"
-        size="sm"
-        class="flex-1"
-        :icon="Eye"
-        :to="{ name: 'admin.projects.detail', params: { id: data.id } }"
-      >
-        {{ $t("common.actions.viewDetails") }}
-      </UiButton>
-      <RouterLink
-        v-if="can('project-edit')"
-        :to="{ name: 'admin.projects.edit', params: { id: data.id } }"
-        class="ui-press w-[30px] h-[30px] shrink-0 inline-flex items-center justify-center border border-ui-line-strong rounded-[7px] text-ui-muted hover:text-ui-ink hover:bg-ui-subtle"
-        :title="$t('common.actions.edit')"
-        :aria-label="$t('projects.card.editProject')"
-      >
-        <Edit class="w-3.5 h-3.5" />
-      </RouterLink>
-      <button
-        v-if="can('project-delete')"
-        type="button"
-        @click="emit('delete', data)"
-        class="ui-press w-[30px] h-[30px] shrink-0 inline-flex items-center justify-center border border-ui-line-strong rounded-[7px] text-ui-muted hover:text-ui-bad hover:border-ui-bad/30 hover:bg-ui-bad-soft"
-        :title="$t('common.actions.delete')"
-        :aria-label="$t('projects.card.deleteProject')"
-      >
-        <Trash2 class="w-3.5 h-3.5" />
-      </button>
-    </div>
-  </div>
+  </article>
 </template>

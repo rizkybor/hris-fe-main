@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, computed } from "vue";
 import {
   TrendingUp,
   Users,
@@ -14,11 +14,16 @@ import {
 import { useEmployeeStore } from "@/stores/employee";
 import SkeletonStatCards from "@/components/common/skeleton/SkeletonStatCards.vue";
 import { UiStat } from "@/components/ui";
+import { useStaleFetch } from "@/composables/useStaleFetch";
 
 const employeeStore = useEmployeeStore();
 
-onMounted(() => {
-  employeeStore.fetchStatistics();
+// Cached between visits; refreshed quietly (its own flags, not the store's
+// loadingStatistics, which the detail page also toggles).
+const { loading } = useStaleFetch(() => employeeStore.fetchStatistics(), {
+  key: () => "adm-employees:stats",
+  hasData: () => employeeStore.statisticsLoaded,
+  maxAge: 60_000,
 });
 
 // Computed properties for statistics
@@ -32,7 +37,6 @@ const onLeave = computed(() => employeeStore.statistics.on_leave);
 const onLeaveChange = computed(() => employeeStore.statistics.on_leave_change);
 const averageSalary = computed(() => employeeStore.statistics.average_salary);
 const newEmployees = computed(() => employeeStore.statistics.new_employees);
-const loading = computed(() => employeeStore.loadingStatistics);
 
 // Hidden by default -- salary is sensitive, revealed only on demand.
 const isSalaryVisible = ref(false);

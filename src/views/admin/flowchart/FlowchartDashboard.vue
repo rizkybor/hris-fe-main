@@ -75,7 +75,7 @@ const handleDelete = async (flowchart) => {
         </p>
       </div>
 
-      <div class="p-3 sm:p-5">
+      <div class="p-3 sm:p-5 ui-tray">
         <SkeletonCardGrid v-if="loading" :count="6" />
 
         <UiEmpty

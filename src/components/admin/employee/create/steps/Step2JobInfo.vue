@@ -24,11 +24,9 @@ import {
   Users,
 } from "lucide-vue-next";
 import { ref, computed, onMounted, watch, h } from "vue";
-import { useTeamStore } from "@/stores/team";
-import { useOptionStore } from "@/stores/option";
-import { useRoleStore } from "@/stores/role";
+import { useLookupStore } from "@/stores/lookups";
+import { loadWizardLookups } from "@/components/admin/employee/create/wizardLookups";
 import { getRoleLabel } from "@/utils/badgeUtils";
-import { storeToRefs } from "pinia";
 import RightSidebarStep2 from "@/components/admin/employee/create/RightSidebarStep2.vue";
 import { useI18n } from "vue-i18n";
 
@@ -47,18 +45,17 @@ const form = computed({
   set: (value) => emit("update:modelValue", value),
 });
 
-// Team store
-const teamStore = useTeamStore();
-const { teams } = storeToRefs(teamStore);
-
-// Option store
-const optionStore = useOptionStore();
-const { employmentTypes, jobStatuses, workLocations, skillLevels, ptkpStatuses, bankNames } =
-  storeToRefs(optionStore);
-
-// Role store -- system roles are manager-configurable via Settings > Roles & Permissions
-const roleStore = useRoleStore();
-const { roles: systemRoles } = storeToRefs(roleStore);
+// Teams, roles and option lists come from the shared lookups cache (the
+// wizard loads them once in parallel when it opens; see wizardLookups.js).
+// System roles are manager-configurable via Settings > Roles & Permissions.
+const lookups = useLookupStore();
+const teams = computed<any[]>(() => lookups.teams);
+const systemRoles = computed<any[]>(() => lookups.roles);
+const employmentTypes = computed(() => lookups.systemOptionsFor("employment-types"));
+const jobStatuses = computed(() => lookups.systemOptionsFor("job-statuses"));
+const workLocations = computed(() => lookups.systemOptionsFor("work-locations"));
+const ptkpStatuses = computed(() => lookups.systemOptionsFor("ptkp-statuses"));
+const bankNames = computed(() => lookups.systemOptionsFor("bank-names"));
 const roleOptions = computed(() =>
   systemRoles.value
     // Super Admin is a single, fixed system account (seeded directly) --
@@ -93,15 +90,8 @@ const handleRemoveTeam = () => {
   form.value.team_id = "";
 };
 
-onMounted(async () => {
-  await teamStore.fetchTeams();
-  await optionStore.fetchEmploymentTypes();
-  await optionStore.fetchJobStatuses();
-  await optionStore.fetchWorkLocations();
-  await optionStore.fetchSkillLevels();
-  await optionStore.fetchPtkpStatuses();
-  await optionStore.fetchBankNames();
-  await roleStore.fetchRoles();
+onMounted(() => {
+  loadWizardLookups(); // no request when the wizard already loaded them
   if (form.value.monthly_salary) {
     form.value.monthly_salary = formatRupiah(form.value.monthly_salary);
   }

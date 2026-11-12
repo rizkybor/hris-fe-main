@@ -499,7 +499,7 @@ const fieldClass =
             <p class="text-ui-small font-medium text-ui-ink">{{ $t('finance.cashBook.spendingByPerson') }}<span v-if="filters.start_date || filters.end_date || filters.search" class="text-ui-faint font-normal"> · {{ $t('finance.cashBook.filtered') }}</span></p>
             <p class="text-ui-cap text-ui-muted">{{ $t("common.labels.total") }} <span class="tabular-nums text-ui-ink font-medium">{{ masked(spendingTotal) }}</span></p>
           </div>
-          <div v-if="spendingByEmployee.length" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 ui-stagger">
+          <div v-if="spendingByEmployee.length" class="ui-tray rounded-ui-control p-2.5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 ui-stagger">
             <button
               v-for="person in spendingByEmployee"
               :key="person.employee_id ?? 'none'"

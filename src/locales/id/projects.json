@@ -81,17 +81,12 @@
   "card": {
     "healthLeft": "{label} · sisa {n} hr",
     "healthOverdue": "Lewat {n} hr",
-    "noEndDate": "Tanpa tanggal selesai",
-    "warrantyMonths": "Garansi {n} bln",
-    "retentionMonths": "Retensi {n} bln",
     "noClient": "Tanpa klien",
-    "noDescription": "Tidak ada deskripsi.",
     "progress": "Progres",
     "notAssigned": "Belum ditugaskan",
-    "timeline": "Linimasa",
-    "aftercare": "Purnajual",
-    "editProject": "Ubah proyek",
-    "deleteProject": "Hapus proyek"
+    "actions": "Aksi untuk {name}",
+    "ledBy": "Dipimpin {name}",
+    "since": "Sejak {date}"
   },
   "taskStatus": {
     "todo": "To Do",

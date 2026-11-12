@@ -1,5 +1,9 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useListState } from "@/composables/useListState";
+import { useVisitedTabs } from "@/composables/useVisitedTabs";
+import { invalidate } from "@/composables/useStaleFetch";
+import { useLookupStore } from "@/stores/lookups";
 import { useRoute, useRouter } from "vue-router";
 import { useTeamStore } from "@/stores/team";
 import { storeToRefs } from "pinia";
@@ -41,9 +45,14 @@ const team = ref({});
 const showDeleteModal = ref(false);
 const showAllMembers = ref(false);
 
-// Presentation-only: which tab of the detail page is showing. Panels use
-// v-show so the statistic/chart children mount (and fetch) exactly once.
-const activeTab = ref("overview");
+// The tab is in the URL (?tab=members) so a reload or shared link opens it;
+// each tab mounts on first open and is then kept (v-show).
+const tabState = useListState("team-detail", { tab: "overview" }, { remember: false });
+const activeTab = computed({
+  get: () => (["overview", "members"].includes(tabState.tab) ? tabState.tab : "overview"),
+  set: (v) => (tabState.tab = v),
+});
+const visited = useVisitedTabs(() => activeTab.value);
 const tabs = computed(() => [
   { key: "overview", label: t("teams.detail.tabs.overview") },
   { key: "members", label: t("teams.detail.tabs.members"), count: (team.value.members || []).length },
@@ -74,13 +83,19 @@ const handleDeleteTeam = async () => {
   await deleteTeam(id);
 
   if (success.value) {
+    invalidate("teams");
+    useLookupStore().invalidate("teams");
     showDeleteModal.value = false;
     router.push({ name: "admin.teams" });
   }
 };
 
-onMounted(async () => {
-  await handleFetchTeam();
+// Statistics and chart data only need the id from the route, so all three
+// load at once instead of waiting for the team.
+onMounted(() => {
+  teamStore.fetchTeamStatistics(id);
+  teamStore.fetchTeamChartData(id);
+  handleFetchTeam();
 });
 </script>
 
@@ -114,10 +129,10 @@ onMounted(async () => {
     </div>
 
     <!-- Overview -->
-    <div v-show="activeTab === 'overview'" class="space-y-5">
-      <Statistic :team="team" />
+    <div v-if="visited.has('overview')" v-show="activeTab === 'overview'" class="space-y-5">
+      <Statistic :team="team" :team-id="id" />
 
-      <Chart :team="team" />
+      <Chart :team="team" :team-id="id" />
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start">
         <!-- Team Responsibilities -->
@@ -247,7 +262,7 @@ onMounted(async () => {
     </div>
 
     <!-- Team Members -->
-    <section v-show="activeTab === 'members'" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
+    <section v-if="visited.has('members')" v-show="activeTab === 'members'" class="bg-ui-surface border border-ui-line rounded-ui-card p-5 sm:p-6">
       <div class="flex items-start justify-between gap-3 mb-4">
         <div class="flex items-start gap-3">
           <Users class="w-4 h-4 text-ui-faint mt-0.5 shrink-0" />
@@ -270,7 +285,7 @@ onMounted(async () => {
       <!-- Members Grid -->
       <div
         v-if="visibleMembers.length"
-        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4"
+        class="ui-tray rounded-ui-control p-3 sm:p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4"
       >
         <!-- Team Member Card -->
         <div

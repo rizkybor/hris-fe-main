@@ -2,36 +2,61 @@
 import Statisctics from "@/components/admin/employee/list/Statisctics.vue";
 import CardList from "@/components/admin/employee/list/CardList.vue";
 import { useEmployeeStore } from "@/stores/employee";
-import { useOptionStore } from "@/stores/option";
+import { useLookupStore } from "@/stores/lookups";
 import { storeToRefs } from "pinia";
 import { ref, onMounted, watch, computed } from "vue";
 import { debounce } from "lodash-es";
-import {
-  Search,
-  Building,
-  Briefcase,
-  CheckCircle,
-  ChevronDown,
-  Upload,
-  UserPlus,
-  AlertTriangle,
-  Users,
-  X,
-} from "lucide-vue-next";
+import { Search, UserPlus, AlertTriangle, Users, X } from "lucide-vue-next";
 import Pagination from "@/components/admin/team/Pagination.vue";
 import { can } from "@/helpers/permissionHelper";
 import Alert from "@/components/common/Alert.vue";
 import SkeletonCardGrid from "@/components/common/skeleton/SkeletonCardGrid.vue";
 import { UiButton, UiEmpty, UiInput, UiPageHeader, UiSelect } from "@/components/ui";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch, invalidate } from "@/composables/useStaleFetch";
 import { useI18n } from "vue-i18n";
 
 const { t, te } = useI18n();
 
 const employeeStore = useEmployeeStore();
-const { employees, meta, loading, success } = storeToRefs(employeeStore);
-const { fetchEmployeesPaginated, fetchContractAlerts } = employeeStore;
+// listRows/listMeta belong to this page only (employees is shared with pickers).
+const { listRows: employees, listMeta: meta, contractAlerts, success } = storeToRefs(employeeStore);
 
-const contractAlerts = ref([]);
+const lookups = useLookupStore();
+const employmentTypes = computed(() => lookups.systemOptionsFor("employment-types"));
+const jobStatuses = computed(() => lookups.systemOptionsFor("job-statuses"));
+
+// Search, filters, page and page size survive leaving and coming back (URL + remembered).
+const list = useListState("employees", { q: "", type: "", status: "", page: 1, per: 10 });
+
+const params = computed(() => ({
+  page: list.page,
+  row_per_page: list.per,
+  ...(list.q ? { search: list.q } : {}),
+  type: list.type,
+  status: list.status,
+}));
+
+// Show what the store already has (instant back-navigation), refresh quietly.
+// Only the last loaded query counts as fresh: the store holds one page at a time.
+const { loading, refreshing } = useStaleFetch(
+  async () => {
+    await employeeStore.fetchEmployeeList(params.value);
+    invalidate("adm-employees:list");
+  },
+  {
+    key: () => ["adm-employees:list", params.value],
+    hasData: () => employeeStore.listLoaded,
+    maxAge: 30_000,
+  }
+);
+
+useStaleFetch(() => employeeStore.fetchContractAlerts().catch(() => {}), {
+  key: () => "adm-employees:alerts",
+  hasData: () => employeeStore.contractAlertsLoaded,
+  maxAge: 5 * 60_000,
+});
+
 const showContractAlerts = ref(true);
 
 const alertLabel = (row) => {
@@ -45,51 +70,33 @@ const alertLabel = (row) => {
   return parts.join(" • ");
 };
 
-const optionStore = useOptionStore();
-const { employmentTypes, jobStatuses } = storeToRefs(optionStore);
-const { fetchEmploymentTypes, fetchJobStatuses } = optionStore;
-
-const serverOptions = ref({
-  page: 1,
-  row_per_page: 10,
+// Filter options are cached lookups (shared with the wizard), loaded alongside the list.
+onMounted(() => {
+  lookups.ensureAll([
+    ["systemOptions", "employment-types"],
+    ["systemOptions", "job-statuses"],
+  ]).catch(() => {});
 });
 
-const filters = ref({
-  search: null,
-  type: "",
-  status: "",
-});
-
-const fetchData = async () => {
-  await fetchEmployeesPaginated({
-    ...serverOptions.value,
-    ...filters.value,
-  });
-};
-
-onMounted(async () => {
-  await fetchData();
-  await fetchEmploymentTypes();
-  await fetchJobStatuses();
-  try {
-    contractAlerts.value = await fetchContractAlerts();
-  } catch (error) {
-    console.error("Failed to fetch contract alerts:", error);
-  }
-});
-
+// Typing is debounced before it becomes list state (and a request).
+const searchText = ref(list.q);
+const applySearch = debounce((value) => {
+  list.q = (value ?? "").trim();
+}, 300);
+watch(searchText, applySearch);
 watch(
-  filters,
-  debounce(() => {
-    serverOptions.value.page = 1; // Reset to first page when filtering
-    fetchData();
-  }, 300),
-  { deep: true }
+  () => list.q,
+  (q) => {
+    if (q !== (searchText.value ?? "").trim()) searchText.value = q;
+  }
 );
 
 const handlePageChange = (page) => {
-  serverOptions.value.page = page;
-  fetchData();
+  list.page = page;
+};
+
+const handlePerPageChange = (perPage) => {
+  list.per = perPage; // resets the page to 1
 };
 
 // Known option values get a translated label; anything else keeps the API label.
@@ -107,12 +114,6 @@ const statusOptions = computed(() => [
   { value: "", label: t("employees.list.allStatus") },
   ...(jobStatuses.value || []).map((s) => ({ value: s.value, label: enumLabel("jobStatus", s) })),
 ]);
-
-const handlePerPageChange = (perPage) => {
-  serverOptions.value.row_per_page = perPage;
-  serverOptions.value.page = 1;
-  fetchData();
-};
 </script>
 
 <template>
@@ -122,7 +123,6 @@ const handlePerPageChange = (perPage) => {
         {{ $t("employees.list.subtitle", { from: meta.from, to: meta.to, total: meta.total }) }}
       </template>
       <template #actions>
-        <UiButton variant="secondary" :icon="Upload" class="flex-1 sm:flex-none">{{ $t("employees.list.importCsv") }}</UiButton>
         <UiButton
           v-if="can('employee-create')"
           :icon="UserPlus"
@@ -161,23 +161,25 @@ const handlePerPageChange = (perPage) => {
       </div>
     </div>
 
-    <Alert type="success" :title="success" :show="success" @close="employeeStore.clearMessages()" />
+    <Alert type="success" :title="success" :show="!!success" @close="employeeStore.clearMessages()" />
 
+    <!-- Employee list: one card (toolbar, cards on a tray, pagination), same as Projects and Teams -->
+    <section class="sm:bg-ui-surface sm:border sm:border-ui-line sm:rounded-ui-card">
     <!-- Toolbar -->
-    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
+    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5 sm:p-4 sm:px-5 sm:border-b sm:border-ui-line">
       <UiInput
-        :model-value="filters.search ?? ''"
-        @update:model-value="filters.search = $event"
+        v-model="searchText"
         :icon="Search"
         :placeholder="$t('employees.list.searchPlaceholder')"
         class="flex-1 lg:max-w-md"
       />
       <div class="grid grid-cols-2 sm:flex sm:items-center gap-2.5">
-        <UiSelect v-model="filters.type" :options="typeOptions" class="sm:w-44" />
-        <UiSelect v-model="filters.status" :options="statusOptions" class="sm:w-44" />
+        <UiSelect v-model="list.type" :options="typeOptions" class="sm:w-44" />
+        <UiSelect v-model="list.status" :options="statusOptions" class="sm:w-44" />
       </div>
     </div>
 
+    <div class="pt-4 sm:p-5 sm:ui-tray">
     <!-- Employee Grid -->
     <SkeletonCardGrid
       v-if="loading"
@@ -185,16 +187,17 @@ const handlePerPageChange = (perPage) => {
       cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
     />
 
-    <div v-else-if="employees.length === 0" class="bg-ui-surface border border-ui-line rounded-ui-card">
-      <UiEmpty
-        :icon="Users"
-        :title="$t('employees.list.empty')"
-      />
-    </div>
+    <UiEmpty
+      v-else-if="employees.length === 0"
+      :icon="Users"
+      :title="$t('employees.list.empty')"
+    />
 
     <div
       v-else
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 ui-stagger"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 ui-stagger transition-opacity"
+      :class="refreshing ? 'opacity-60' : ''"
+      :aria-busy="refreshing"
     >
       <CardList
         v-for="employee in employees"
@@ -202,15 +205,17 @@ const handlePerPageChange = (perPage) => {
         :data="employee"
       />
     </div>
+    </div>
 
     <!-- Pagination -->
-    <div class="bg-ui-surface border border-ui-line rounded-ui-card px-4 py-3 sm:px-5">
+    <div class="pt-4 sm:py-3.5 sm:px-5 sm:border-t sm:border-ui-line">
       <Pagination
         :meta="meta"
-        :loading="loading"
+        :loading="loading || refreshing"
         @page-change="handlePageChange"
         @per-page-change="handlePerPageChange"
       />
     </div>
+    </section>
   </div>
 </template>

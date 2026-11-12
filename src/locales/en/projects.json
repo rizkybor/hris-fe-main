@@ -81,17 +81,12 @@
   "card": {
     "healthLeft": "{label} · {n}d left",
     "healthOverdue": "{n}d overdue",
-    "noEndDate": "No end date",
-    "warrantyMonths": "{n} mo warranty",
-    "retentionMonths": "{n} mo retention",
     "noClient": "No client",
-    "noDescription": "No description.",
     "progress": "Progress",
     "notAssigned": "Not assigned",
-    "timeline": "Timeline",
-    "aftercare": "Aftercare",
-    "editProject": "Edit project",
-    "deleteProject": "Delete project"
+    "actions": "Actions for {name}",
+    "ledBy": "Led by {name}",
+    "since": "Since {date}"
   },
   "taskStatus": {
     "todo": "To Do",

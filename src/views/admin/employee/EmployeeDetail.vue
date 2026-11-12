@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch, nextTick } from "vue";
 import { getStatusColor, getLevelColor } from "@/utils/styleHelpers.js";
 import { formatDateLong as formatDate } from "@/utils/dateUtils.js";
 import {
@@ -12,7 +12,12 @@ import EmployeeFiles from "@/components/admin/employee/EmployeeFiles.vue";
 import Avatar from "@/components/common/Avatar.vue";
 import { useRoute, useRouter } from "vue-router";
 import { useEmployeeStore } from "@/stores/employee";
-import { useLetterStore } from "@/stores/letter";
+import { axiosInstance } from "@/plugins/axios";
+import { useToastStore } from "@/stores/toast";
+import { useLookupStore } from "@/stores/lookups";
+import { useListState } from "@/composables/useListState";
+import { useVisitedTabs } from "@/composables/useVisitedTabs";
+import { invalidate } from "@/composables/useStaleFetch";
 import { usePerformanceReviewStore } from "@/stores/performanceReview";
 import { useResignationStore } from "@/stores/resignation";
 import { can, hasAnyRole } from "@/helpers/permissionHelper";
@@ -68,14 +73,20 @@ const enumLabel = (group: string, value: any) => {
 const route = useRoute();
 const router = useRouter();
 const employeeStore = useEmployeeStore();
-const { loading, performanceStatistics, success } = storeToRefs(employeeStore);
+const { success } = storeToRefs(employeeStore);
 const alertModal = useAlertModalStore();
+const toast = useToastStore();
 
-const letterStore = useLetterStore();
+// This page's own data and flags (the store's loading/loadingStatistics are
+// shared with the list and other pages).
+const loading = ref(true); // first load of this employee: skeleton
+const deleting = ref(false);
+const EMPTY_STATS = { tasks_completed: 0, attendance_rate: 0, projects_count: 0, performance_score: 0 };
+const performanceStatistics = ref<any>({ ...EMPTY_STATS });
 const disciplinaryLetters = ref<any[]>([]);
 
 const reviewStore = usePerformanceReviewStore();
-const { reviews: performanceReviews } = storeToRefs(reviewStore);
+const performanceReviews = ref<any[]>([]);
 const showReviewModal = ref(false);
 const reviewForm = ref({
   period: "",
@@ -104,7 +115,9 @@ const resignError = ref("");
 const employee = ref<any>(null);
 const showDeleteModal = ref(false);
 
-const activeTab = ref("overview");
+// The open tab lives in the URL (?tab=documents) so reload, back and shared
+// links keep it; per record, so it isn't remembered across employees.
+const tabState = useListState("employee-detail", { tab: "overview" }, { remember: false });
 const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
 const tabs = computed(() => {
   const list = [
@@ -119,27 +132,82 @@ const tabs = computed(() => {
   }
   return list;
 });
-
-// Load employee data
-const loadEmployee = async () => {
-  try {
-    const employeeId = route.params.id as string;
-    employee.value = await employeeStore.fetchEmployee(employeeId);
-    // Load performance statistics
-    await employeeStore.fetchPerformanceStatistics(employeeId);
-
-    const [letters] = await Promise.all([
-      letterStore.fetchLetters({ employee_id: employeeId, row_per_page: 50 }),
-      reviewStore.fetchReviews({ employee_id: employeeId, row_per_page: 20 }),
-      resignationStore.fetchEmployeeResignation(employeeId).catch(() => {}),
-    ]);
-    disciplinaryLetters.value = (letterStore.letters ?? []).filter((l: any) =>
-      ["SP1", "SP2", "SP3"].includes(l.letter_code?.code)
-    );
-  } catch (error) {
-    console.error("Error loading employee:", error);
-    router.push({ name: "admin.employees" });
+const activeTab = computed({
+  get: () => (tabs.value.some((tab) => tab.id === tabState.tab) ? tabState.tab : "overview"),
+  set: (id: string) => {
+    tabState.tab = id;
+  },
+});
+// Tabs mount on first open (Documents fetches its files only then).
+const visitedTabs = useVisitedTabs(() => activeTab.value);
+// A deep-linked tab (?tab=documents) is scrolled into view in the phone tab strip.
+watch(
+  () => !!employee.value,
+  async (shown) => {
+    if (!shown || activeTab.value === "overview") return;
+    await nextTick();
+    (tabScrollRef.value as HTMLElement | null)
+      ?.querySelector('[aria-selected="true"]')
+      ?.scrollIntoView({ block: "nearest", inline: "center" });
   }
+);
+
+const SP_CODES = ["SP1", "SP2", "SP3"];
+
+// Everything the page shows starts at once from the route id; the header
+// renders as soon as the employee arrives, the rest fills in as it lands.
+let loadSeq = 0;
+const loadEmployee = async (employeeId: string) => {
+  const seq = ++loadSeq;
+  const current = () => seq === loadSeq;
+  loading.value = true;
+  employee.value = null;
+  performanceStatistics.value = { ...EMPTY_STATS };
+  performanceReviews.value = [];
+  disciplinaryLetters.value = [];
+  resignationStore.$patch({ current: null, assetsToReturn: [] });
+
+  const employeeReq = employeeStore.fetchEmployee(employeeId);
+  employeeStore
+    .fetchPerformanceStatistics(employeeId)
+    .then((stats: any) => current() && stats && (performanceStatistics.value = stats))
+    .catch(() => {});
+  // Direct request: letterStore.letters belongs to the Letters list page.
+  axiosInstance
+    .get("/letters", { params: { employee_id: employeeId, row_per_page: 50 } })
+    .then(({ data }) => {
+      if (!current()) return;
+      disciplinaryLetters.value = (data?.data?.data ?? []).filter((l: any) => SP_CODES.includes(l.letter_code?.code));
+    })
+    .catch((error) => console.error("Error loading letters:", error));
+  reviewStore
+    .fetchReviews({ employee_id: employeeId, row_per_page: 20 })
+    .then((list: any) => current() && (performanceReviews.value = list ?? []))
+    .catch(() => {});
+  if (can("employee-edit")) {
+    // Only the Offboarding tab (employee-edit) shows it.
+    resignationStore.fetchEmployeeResignation(employeeId).catch(() => {});
+  }
+
+  const data = await employeeReq;
+  if (!current()) return;
+  loading.value = false;
+  if (data) employee.value = data;
+  else router.push({ name: "admin.employees" });
+};
+
+// Insert a saved review where the server's order (newest period first) puts it.
+const upsertReview = (review: any) => {
+  const rest = performanceReviews.value.filter((r) => r.id !== review.id);
+  performanceReviews.value = [review, ...rest].sort((a, b) =>
+    String(b.period_start ?? "").localeCompare(String(a.period_start ?? ""))
+  );
+};
+
+// Lists/counters that include this employee are stale after a change.
+const markListsStale = () => {
+  invalidate("adm-employees:");
+  useLookupStore().invalidate("employees");
 };
 
 const openReviewModal = () => {
@@ -160,12 +228,18 @@ const submitReview = async () => {
   reviewError.value = "";
   reviewSubmitting.value = true;
   try {
-    await reviewStore.createReview({
+    const created = await reviewStore.createReview({
       ...reviewForm.value,
       employee_id: route.params.id,
     });
     showReviewModal.value = false;
-    await reviewStore.fetchReviews({ employee_id: route.params.id, row_per_page: 20 });
+    // The API returns the saved review: show it without refetching the list.
+    if (created?.id) upsertReview(created);
+    else {
+      const list = await reviewStore.fetchReviews({ employee_id: route.params.id, row_per_page: 20 });
+      performanceReviews.value = list ?? [];
+    }
+    toast.success(t("employees.detail.reviews.saved"));
   } catch (error: any) {
     const data = error?.response?.data;
     reviewError.value = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : t("employees.detail.reviews.saveFailed"));
@@ -189,9 +263,17 @@ const submitResignation = async () => {
   resignError.value = "";
   resignSubmitting.value = true;
   try {
-    await resignationStore.initiateResignation(route.params.id as string, resignForm.value);
+    const type = resignForm.value.type;
+    const created = await resignationStore.initiateResignation(route.params.id as string, resignForm.value);
     showResignModal.value = false;
-    await Promise.all([loadEmployee(), resignationStore.fetchEmployeeResignation(route.params.id as string)]);
+    // Patch from the response (the API also sets the job status) instead of
+    // reloading the whole page behind a skeleton.
+    if (created) resignationStore.$patch({ current: created });
+    if (employee.value?.job_information) {
+      employee.value.job_information.status = type === "terminated" ? "terminated" : "resigned";
+    }
+    markListsStale();
+    toast.success(t("employees.detail.offboarding.started"));
   } catch (error: any) {
     const data = error?.response?.data;
     resignError.value = data?.message || t("employees.detail.offboarding.processFailed");
@@ -204,8 +286,9 @@ const completeOffboarding = async () => {
   if (!resignation.value) return;
   if (!(await alertModal.confirm(t("employees.detail.offboarding.confirmComplete")))) return;
   try {
-    await resignationStore.completeOffboarding(resignation.value.id);
-    await resignationStore.fetchEmployeeResignation(route.params.id as string);
+    const updated = await resignationStore.completeOffboarding(resignation.value.id);
+    resignationStore.$patch({ current: { ...resignation.value, ...(updated || {}), status: "completed" } });
+    toast.success(t("employees.detail.offboarding.completedOk"));
   } catch (error) {
     await alertModal.alert(t("employees.detail.offboarding.completeFailed"), { type: "danger" });
   }
@@ -247,13 +330,19 @@ const backupEmployee = async () => {
 };
 
 const handleDeleteEmployee = async () => {
+  deleting.value = true;
   try {
     await employeeStore.deleteEmployee(route.params.id as string);
     if (success.value) {
       showDeleteModal.value = false;
+      employeeStore.removeFromList(route.params.id as string);
+      markListsStale();
       router.push({ name: "admin.employees" });
     }
-  } catch (error) {}
+  } catch (error) {
+  } finally {
+    deleting.value = false;
+  }
 };
 
 // Blocking login is separate from Resignation/Termination and from
@@ -293,6 +382,7 @@ const handleToggleAccountStatus = async () => {
     if (employee.value && updated?.user) {
       employee.value.user.is_active = updated.user.is_active;
     }
+    invalidate("adm-employees:list"); // the list card shows the login badge
     await alertModal.alert(
       isActive ? t("employees.detail.account.deactivatedOk") : t("employees.detail.account.activatedOk"),
       { type: "success" }
@@ -306,8 +396,15 @@ const handleToggleAccountStatus = async () => {
 };
 
 onMounted(() => {
-  loadEmployee();
+  loadEmployee(route.params.id as string);
 });
+// Another employee opened while this page stays mounted (same route).
+watch(
+  () => route.params.id,
+  (id, old) => {
+    if (id && id !== old && route.name === "admin.employees.detail") loadEmployee(id as string);
+  }
+);
 
 // ---- Presentation-only helpers (template layout) ----
 const JOB_STATUS_TONES: Record<string, string> = { active: "ok", on_leave: "warn", resigned: "bad" };
@@ -579,7 +676,7 @@ const emergencyRows = computed(() => {
     </div>
 
     <!-- Documents Tab -->
-    <div v-show="activeTab === 'documents'" class="ui-anim-fade-up">
+    <div v-if="visitedTabs.has('documents')" v-show="activeTab === 'documents'" class="ui-anim-fade-up">
       <EmployeeFiles :employee-id="route.params.id" />
     </div>
 
@@ -776,7 +873,7 @@ const emergencyRows = computed(() => {
       :confirmText="$t('employees.detail.danger.delete')"
       :cancelText="$t('common.actions.cancel')"
       type="danger"
-      :loading="loading"
+      :loading="deleting"
       @confirm="handleDeleteEmployee"
       @cancel="showDeleteModal = false"
     />

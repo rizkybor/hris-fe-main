@@ -12,8 +12,10 @@ import { UiStat } from "@/components/ui";
 
 const teamStore = useTeamStore();
 
-onMounted(() => {
-  teamStore.fetchStatistics();
+let loadedOnce = teamStore.statistics.total > 0;
+onMounted(async () => {
+  await teamStore.fetchStatistics();
+  loadedOnce = true;
 });
 
 // Computed properties for statistics
@@ -25,7 +27,9 @@ const members = computed(() => teamStore.statistics.members);
 const membersChange = computed(() => teamStore.statistics.members_change);
 const averageSize = computed(() => teamStore.statistics.average_size);
 const newTeams = computed(() => teamStore.statistics.new_teams);
-const loading = computed(() => teamStore.loadingStatistics);
+// Skeleton only on the first load; revisits keep the last numbers while
+// they refresh quietly.
+const loading = computed(() => teamStore.loadingStatistics && !loadedOnce);
 </script>
 
 <template>
