@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";
+import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import { VueFlow, useVueFlow, MarkerType, ConnectionMode, getRectOfNodes } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
@@ -75,7 +75,13 @@ const {
   addEdges,
   updateNodeData,
   onNodesInitialized,
+  onNodesChange,
+  onEdgesChange,
+  selectionKeyCode,
 } = useVueFlow(flowId);
+// Set on the store rather than as a prop: Vue Flow declares that prop as
+// Boolean | null, so a key name there trips a prop-type warning.
+selectionKeyCode.value = "Shift";
 
 const name = ref(t("flowchart.editor.untitled"));
 const description = ref("");
@@ -174,7 +180,26 @@ const recordHistory = debounce(() => {
   historyIndex.value = history.value.length - 1;
 }, 300);
 
-watch([nodes, edges], recordHistory, { deep: true });
+// What can change the diagram, without a deep watcher: a deep watch over
+// the nodes walked every Vue Flow runtime field of every node on each drag
+// frame (most of the drag's CPU time on a 50-shape chart). Instead:
+// - arrays replaced (add, delete, duplicate, undo/redo, load, edge edits);
+// - Vue Flow's own changes (drag, resize, connect, keyboard delete);
+//   selection-only changes never alter the snapshot, so they're skipped;
+// - text / colour edits, which write node.data (small objects) or an
+//   edge's label / ends.
+// recordHistory is debounced, so a drag still becomes one undo step.
+const onFlowChanges = (changes) => {
+  if (changes.some((c) => c.type !== "select")) recordHistory();
+};
+watch([nodes, edges], recordHistory);
+onNodesChange(onFlowChanges);
+onEdgesChange(onFlowChanges);
+watch(() => nodes.value.map((n) => n.data), recordHistory, { deep: true });
+watch(
+  () => edges.value.map((e) => `${e.source}|${e.target}|${e.sourceHandle}|${e.targetHandle}|${e.label ?? ""}|${e.type}`).join("\n"),
+  recordHistory
+);
 
 const restore = (state) => {
   restoring = true;
@@ -495,7 +520,7 @@ watch(flowchartId, (id, oldId) => {
   }
 });
 
-const nodeTypes = { flowchart: FlowchartNode };
+const nodeTypes = { flowchart: markRaw(FlowchartNode) };
 // Default canvas chrome follows the design tokens; shape colours stay as
 // the user picked them.
 const CHROME = {
@@ -740,7 +765,6 @@ const updatedLabel = computed(() => {
           :elements-selectable="!isReadonly"
           :edges-updatable="!isReadonly"
           :delete-key-code="isReadonly ? null : ['Delete', 'Backspace']"
-          selection-key-code="Shift"
           multi-selection-key-code="Shift"
           :min-zoom="0.2"
           :max-zoom="3"

@@ -16,7 +16,11 @@
     "by": "by {name}",
     "itemLabel": "flowcharts",
     "deleteConfirm": "Delete flowchart \"{name}\"? This action cannot be undone.",
-    "deleteFailed": "Failed to delete flowchart."
+    "deleteFailed": "Failed to delete flowchart.",
+    "refreshing": "Updating…",
+    "deleted": "Flowchart deleted",
+    "editItem": "Edit {name}",
+    "deleteItem": "Delete {name}"
   },
   "editor": {
     "untitled": "Untitled Flowchart",

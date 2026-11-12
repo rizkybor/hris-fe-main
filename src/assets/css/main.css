@@ -2134,8 +2134,8 @@ button:disabled,
   max-width: 300px;
 }
 
-.max-w-\[320px\] {
-  max-width: 320px;
+.max-w-\[340px\] {
+  max-width: 340px;
 }
 
 .max-w-\[360px\] {
@@ -2771,10 +2771,6 @@ button:disabled,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.whitespace-normal {
-  white-space: normal;
 }
 
 .whitespace-nowrap {
@@ -7657,6 +7653,10 @@ html {
     justify-content: space-between;
   }
 
+  .md\:gap-3 {
+    gap: 0.75rem;
+  }
+
   .md\:gap-8 {
     gap: 2rem;
   }
@@ -7858,10 +7858,6 @@ html {
 
   .lg\:ml-auto {
     margin-left: auto;
-  }
-
-  .lg\:mr-auto {
-    margin-right: auto;
   }
 
   .lg\:block {
