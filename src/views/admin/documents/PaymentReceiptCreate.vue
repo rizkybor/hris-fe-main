@@ -1,8 +1,7 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { storeToRefs } from "pinia";
 import { ArrowLeft, Check } from "lucide-vue-next";
 import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader, UiSelect, UiSwitch } from "@/components/ui";
 import { usePaymentReceiptStore } from "@/stores/paymentReceipt";
@@ -10,14 +9,17 @@ import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import { SIGNATORIES } from "@/utils/signatories";
 import { bareName } from "@/utils/personName";
 import { useInvoiceStore } from "@/stores/invoice";
-import { useProjectCalculatorStore } from "@/stores/projectCalculator";
+import { useLookupStore } from "@/stores/lookups";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
 
 const { t } = useI18n();
 const store = usePaymentReceiptStore();
 const invoiceStore = useInvoiceStore();
-const { invoices } = storeToRefs(invoiceStore);
-const calculatorStore = useProjectCalculatorStore();
-const { pphTypes } = storeToRefs(calculatorStore);
+// The invoice picker keeps its own list: writing it into
+// invoiceStore.invoices would replace the Invoice page's list.
+const invoices = ref([]);
+const lookups = useLookupStore();
+const pphTypes = computed(() => lookups.pphTypes);
 const router = useRouter();
 const route = useRoute();
 
@@ -52,40 +54,53 @@ const applyPph23 = ref(false);
 const submitting = ref(false);
 const errorMessage = ref("");
 
-onMounted(async () => {
-  await Promise.all([
-    invoiceStore.fetchInvoices({ row_per_page: 100 }),
-    calculatorStore.fetchPphTypes(),
-  ]);
+const fillForm = (receipt) => {
+  existingReceiptNumber.value = receipt.receipt_number;
+  form.value.client_code = receipt.client_code || "";
+  form.value.date = receipt.date;
+  form.value.amount = receipt.amount;
+  form.value.pph23_type = receipt.pph23_type;
+  form.value.pph23_percent = receipt.pph23_percent;
+  form.value.pph23_amount = receipt.pph23_amount;
+  form.value.received_from = receipt.received_from || "";
+  form.value.for_payment_of = receipt.for_payment_of || "";
+  form.value.invoice_id = receipt.invoice_id || "";
+  form.value.payment_status = receipt.payment_status || "paid";
+  form.value.recipient_name = receipt.recipient_name || "";
+  form.value.use_signature = !!receipt.use_signature;
 
-  if (isEditMode.value) {
-    try {
-      const receipt = await store.fetchReceipt(editingId.value);
-      existingReceiptNumber.value = receipt.receipt_number;
-      form.value.client_code = receipt.client_code || "";
-      form.value.date = receipt.date;
-      form.value.amount = receipt.amount;
-      form.value.pph23_type = receipt.pph23_type;
-      form.value.pph23_percent = receipt.pph23_percent;
-      form.value.pph23_amount = receipt.pph23_amount;
-      form.value.received_from = receipt.received_from || "";
-      form.value.for_payment_of = receipt.for_payment_of || "";
-      form.value.invoice_id = receipt.invoice_id || "";
-      form.value.payment_status = receipt.payment_status || "paid";
-      form.value.recipient_name = receipt.recipient_name || "";
-      form.value.use_signature = !!receipt.use_signature;
-
-      if (receipt.pph23_amount) {
-        applyPph23.value = true;
-        grossAmount.value = Number(receipt.amount) + Number(receipt.pph23_amount);
-      } else {
-        grossAmount.value = Number(receipt.amount);
-      }
-    } catch (error) {
-      errorMessage.value = t("documents.receipt.form.errors.load");
-    }
+  if (receipt.pph23_amount) {
+    applyPph23.value = true;
+    grossAmount.value = Number(receipt.amount) + Number(receipt.pph23_amount);
+  } else {
+    grossAmount.value = Number(receipt.amount);
   }
-});
+};
+
+// Everything the page needs in one wave: the invoice picker, PPh types
+// and, when editing, the receipt itself.
+const loadingRecord = ref(isEditMode.value);
+invoiceStore
+  .fetchInvoiceOptions({ row_per_page: 100 })
+  .then((list) => (invoices.value = list))
+  .catch(() => {});
+lookups.ensure("pphTypes").catch(() => {});
+if (isEditMode.value) {
+  store
+    .fetchReceipt(editingId.value)
+    .then(fillForm)
+    .catch(() => (errorMessage.value = t("documents.receipt.form.errors.load")))
+    .finally(() => {
+      loadingRecord.value = false;
+      markSaved();
+    });
+}
+
+// Leaving with unsaved edits asks first.
+const snapshot = () => JSON.stringify([form.value, applyPph23.value, grossAmount.value]);
+const savedState = ref(snapshot());
+const markSaved = () => (savedState.value = snapshot());
+useUnsavedGuard(() => !loadingRecord.value && snapshot() !== savedState.value);
 
 const recomputePph23 = () => {
   if (!applyPph23.value) {
@@ -197,7 +212,12 @@ const handleSubmit = async () => {
         recipient_name: form.value.recipient_name,
         use_signature: form.value.use_signature,
       };
-      await store.updateReceipt(editingId.value, payload);
+      const updated = await store.updateReceipt(editingId.value, payload);
+      // The list shows the saved row without reloading (the response has no
+      // relations, so the invoice number comes from the picker).
+      const invoice = invoices.value.find((i) => i.id === Number(payload.invoice_id));
+      store.patchRow(editingId.value, { ...updated, invoice: invoice ? { id: invoice.id, invoice_number: invoice.invoice_number } : null });
+      markSaved();
       router.push({ name: "admin.payment-receipts.dashboard" });
       return;
     }
@@ -209,6 +229,7 @@ const handleSubmit = async () => {
       delete payload.receipt_number;
     }
     await store.createReceipt(payload);
+    markSaved();
     router.push({ name: "admin.payment-receipts.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
@@ -253,7 +274,7 @@ const onApplyPph23 = (value) => {
       <template #actions>
         <div class="hidden sm:flex items-center gap-2">
           <UiButton variant="secondary" :to="{ name: 'admin.payment-receipts.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
-          <UiButton type="submit" form="receipt-form" :icon="Check" :loading="submitting">
+          <UiButton type="submit" form="receipt-form" :icon="Check" :loading="submitting" :disabled="loadingRecord">
             {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.receipt.form.update") : $t("documents.receipt.form.save")) }}
           </UiButton>
         </div>
@@ -371,7 +392,7 @@ const onApplyPph23 = (value) => {
           </dl>
           <UiAlert v-if="errorMessage" tone="bad" :title="errorMessage" class="mt-4" />
           <div class="mt-5 grid gap-2">
-            <UiButton type="submit" size="lg" block :icon="Check" :loading="submitting">
+            <UiButton type="submit" size="lg" block :icon="Check" :loading="submitting" :disabled="loadingRecord">
               {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.receipt.form.update") : $t("documents.receipt.form.save")) }}
             </UiButton>
             <UiButton variant="secondary" block :to="{ name: 'admin.payment-receipts.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>

@@ -5,6 +5,8 @@ import { useRoute, useRouter } from "vue-router";
 import { User, ShieldCheck, Paperclip, X, FileText, ArrowLeft, Save, ArrowRight } from "lucide-vue-next";
 import { useDocumentLetterStore } from "@/stores/documentLetter";
 import { useAuthStore } from "@/stores/auth";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
+import { invalidate } from "@/composables/useStaleFetch";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import { UiPageHeader, UiButton, UiCard, UiInput, UiAlert, UiBadge } from "@/components/ui";
@@ -31,17 +33,35 @@ const newAttachments = ref([]);
 const existingAttachments = ref([]);
 const removeAttachmentIds = ref([]);
 
+// Unsaved-changes guard: compares against the form as loaded.
+const snapshot = () => JSON.stringify([form.value, newAttachments.value.length, removeAttachmentIds.value]);
+const loaded = ref(!isEditing.value);
+let pristine = snapshot();
+let saved = false;
+useUnsavedGuard(() => !saved && loaded.value && snapshot() !== pristine);
+
+const fillForm = (memo) => {
+  form.value = {
+    document_number: memo.document_number,
+    subject: memo.subject,
+    document_date: memo.document_date?.slice(0, 10),
+    body: memo.body,
+    use_signature: !!memo.use_signature,
+  };
+  existingAttachments.value = memo.attachments || [];
+  loaded.value = true;
+  pristine = snapshot();
+};
+
 onMounted(async () => {
-  if (isEditing.value) {
-    const memo = await store.fetchDocumentLetter(route.params.id);
-    form.value = {
-      document_number: memo.document_number,
-      subject: memo.subject,
-      document_date: memo.document_date?.slice(0, 10),
-      body: memo.body,
-      use_signature: !!memo.use_signature,
-    };
-    existingAttachments.value = memo.attachments || [];
+  if (!isEditing.value) return;
+  // Opened from its detail page: the memo is already in the store.
+  const cached = store.currentDocumentLetter;
+  if (String(cached?.id) === String(route.params.id)) return fillForm(cached);
+  try {
+    fillForm(await store.fetchDocumentLetter(route.params.id));
+  } catch {
+    /* the store's error shows in the alert below */
   }
 });
 
@@ -75,9 +95,13 @@ const handleSubmit = async () => {
   saving.value = true;
   try {
     const formData = buildFormData();
+    // The store keeps the saved memo (the detail page opens with it, no
+    // reload) and puts it in place in the list.
     const memo = isEditing.value
       ? await store.updateDocumentLetter(route.params.id, formData)
       : await store.createDocumentLetter(formData);
+    if (!isEditing.value) invalidate("official-memos");
+    saved = true;
     router.push({ name: "admin.official-memos.detail", params: { id: memo.id } });
   } catch (err) {
     console.error(err);

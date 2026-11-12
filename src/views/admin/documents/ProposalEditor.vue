@@ -27,7 +27,7 @@ import ShareProposalModal from "@/components/admin/documents/ShareProposalModal.
 import FlowchartPickerModal from "@/components/admin/documents/FlowchartPickerModal.vue";
 import RichTextEditor from "@/components/common/RichTextEditor.vue";
 import { useProposalStore } from "@/stores/proposal";
-import { useClientStore } from "@/stores/client";
+import { useLookupStore } from "@/stores/lookups";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { errorMessage } from "@/helpers/errorHelper";
 import { PROPOSAL_STATUSES, proposalStatus } from "@/utils/proposalStatus";
@@ -36,10 +36,11 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useProposalStore();
-const clientStore = useClientStore();
+const lookups = useLookupStore();
 const alertModal = useAlertModalStore();
 const { saving } = storeToRefs(store);
-const { clients } = storeToRefs(clientStore);
+// The client picker comes from the shared cache (no request when fresh).
+const clients = computed(() => lookups.clients);
 
 const loading = ref(true);
 const proposal = ref(null);
@@ -72,6 +73,8 @@ const fromProposal = (p) => ({
 
 const load = async () => {
   loading.value = true;
+  // Loaded alongside the proposal, not after it.
+  lookups.ensure("clients").catch(() => {});
   try {
     const data = await store.fetchProposal(route.params.id);
     proposal.value = data;
@@ -83,7 +86,6 @@ const load = async () => {
   } finally {
     loading.value = false;
   }
-  if (clients.value.length === 0) clientStore.fetchAllClient();
 };
 
 // Untitled sections are free-form blocks: they don't get a number, same as
@@ -194,15 +196,21 @@ const save = async () => {
 };
 
 // The PDF is built from what's saved, so unsaved edits are saved first.
+// The viewer tab is opened right away, inside the click (pop-up blockers
+// would stop one opened after the save), and closed again if saving fails.
 const openPdf = async (download = false) => {
-  if (isDirty.value && !(await save())) return;
+  const tab = download ? null : window.open("", "_blank");
+  if (isDirty.value && !(await save())) {
+    tab?.close();
+    return;
+  }
   pdfBusy.value = true;
   try {
     if (download) {
       const name = `Proposal Penawaran - ${doc.value.title} - ${doc.value.client_name}`.replace(/[\\/:*?"<>|]/g, "-");
       await store.downloadPdf(route.params.id, name);
     } else {
-      await store.viewPdf(route.params.id);
+      await store.viewPdf(route.params.id, tab);
     }
   } catch (error) {
     await alertModal.alert(errorMessage(error, t("documents.proposal.errors.pdf")), { type: "danger" });

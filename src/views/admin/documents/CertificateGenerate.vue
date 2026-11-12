@@ -7,6 +7,8 @@ import { Settings, Plus, Trash2, Hash, ClipboardPaste, ArrowLeft, Award } from "
 import { useCertificateStore } from "@/stores/certificate";
 import SignatureToggle from "@/components/common/SignatureToggle.vue";
 import { can } from "@/helpers/permissionHelper";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
+import { invalidate } from "@/composables/useStaleFetch";
 import { UiPageHeader, UiButton, UiCard, UiInput, UiSelect, UiAlert, UiBadge, UiSpinner } from "@/components/ui";
 
 const { t } = useI18n();
@@ -37,9 +39,14 @@ const submitting = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
 
-onMounted(async () => {
-  await store.fetchTemplates();
-});
+// Templates are fetched once per session (Settings keeps the list in step).
+onMounted(() => store.ensureTemplates().catch(() => {}));
+
+// Unsaved-changes guard: anything typed since the page opened.
+const snapshot = () => JSON.stringify([form.value, recipients.value]);
+const pristine = snapshot();
+let generated = false;
+useUnsavedGuard(() => !generated && snapshot() !== pristine);
 
 const addRecipient = () => recipients.value.push({ name: "" });
 const removeRecipient = (i) => recipients.value.splice(i, 1);
@@ -105,6 +112,9 @@ const handleSubmit = async () => {
     successMessage.value = result.isZip
       ? t("documents.certificate.generate.successBulk", { n: cleanRecipients.length, filename: result.filename })
       : t("documents.certificate.generate.successSingle", { filename: result.filename });
+    generated = true;
+    // The history and its counters show the new certificates on return.
+    invalidate("certificates");
     recipients.value = [{ name: "" }];
     preview.value = null;
     setTimeout(() => router.push({ name: "admin.certificates.dashboard" }), 1500);

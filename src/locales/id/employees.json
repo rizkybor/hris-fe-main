@@ -48,7 +48,6 @@
   "list": {
     "title": "Semua Karyawan",
     "subtitle": "Menampilkan {from} - {to} dari {total} karyawan",
-    "importCsv": "Impor CSV",
     "addEmployee": "Tambah Karyawan",
     "alertsTitle": "{n} karyawan akan habis masa kontrak/probation dalam 30 hari",
     "probationEnds": "Probation berakhir dalam {n} hari",

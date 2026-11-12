@@ -48,7 +48,6 @@
   "list": {
     "title": "All Employees",
     "subtitle": "Showing {from} - {to} of {total} employees",
-    "importCsv": "Import CSV",
     "addEmployee": "Add Employee",
     "alertsTitle": "{n} employee's contract/probation ends within 30 days | {n} employees' contracts/probation end within 30 days",
     "probationEnds": "Probation ends in {n} day | Probation ends in {n} days",

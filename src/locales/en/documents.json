@@ -57,7 +57,9 @@
       "columns": {
         "number": "Certificate No.",
         "title": "Title",
-        "recipient": "Recipient"
+        "recipient": "Recipient",
+        "certificate": "Recipient",
+        "issued": "Issued"
       },
       "stats": {
         "total": "Total Certificates",
@@ -70,7 +72,11 @@
       "emptyTitle": "No Certificates yet",
       "itemLabel": "certificates",
       "deleteTitle": "Delete Certificate?",
-      "deleteMessage": "\"{number}\" will be permanently deleted along with its PDF file."
+      "deleteMessage": "\"{number}\" will be permanently deleted along with its PDF file.",
+      "batch": "Batch",
+      "toast": {
+        "deleted": "Certificate deleted"
+      }
     }
   },
   "comments": {
@@ -182,7 +188,12 @@
     "addItem": "Add Item",
     "position": "Position",
     "summary": "Summary",
-    "selectSignatory": "- Select signatory -"
+    "selectSignatory": "- Select signatory -",
+    "pdf": "PDF",
+    "pdfFailed": "Couldn't open the PDF. Please try again in a moment.",
+    "refreshing": "Updating…",
+    "noMatchTitle": "Nothing matches these filters",
+    "noMatchHint": "Try another keyword or status."
   },
   "invoice": {
     "form": {
@@ -239,7 +250,12 @@
       "receiptPrefix": "Receipt:",
       "emptyTitle": "No Invoices yet",
       "itemLabel": "invoices",
-      "deleteTitle": "Delete Invoice?"
+      "deleteTitle": "Delete Invoice?",
+      "toast": {
+        "cancelled": "Invoice cancelled",
+        "markedPaid": "Invoice marked as paid",
+        "deleted": "Invoice deleted"
+      }
     }
   },
   "letter": {
@@ -297,7 +313,8 @@
       "create": "Create Letter",
       "searchPlaceholder": "Search letter number, subject...",
       "columns": {
-        "number": "Letter No."
+        "number": "Letter No.",
+        "letter": "Letter"
       },
       "cancelLetter": "Cancel letter",
       "cancelConfirm": "Cancel Letter \"{number}\"? The number stays recorded and is labeled CANCELLED.",
@@ -306,7 +323,11 @@
       "emptyTitle": "No Letters yet",
       "itemLabel": "letters",
       "deleteTitle": "Delete Letter?",
-      "deleteMessage": "\"{number}\" will be permanently deleted from the system. For an already-issued letter, it's better to use \"Cancel\" so the number stays recorded in the register."
+      "deleteMessage": "\"{number}\" will be permanently deleted from the system. For an already-issued letter, it's better to use \"Cancel\" so the number stays recorded in the register.",
+      "toast": {
+        "cancelled": "Letter cancelled",
+        "deleted": "Letter deleted"
+      }
     }
   },
   "memo": {
@@ -319,7 +340,13 @@
       "noMatchMessage": "Try another number, subject or status.",
       "emptyTitle": "No Official Memo yet",
       "itemLabel": "memos",
-      "deleteConfirm": "Delete Official Memo \"{number}\"? This action cannot be undone."
+      "deleteConfirm": "Delete Official Memo \"{number}\"? This action cannot be undone.",
+      "columns": {
+        "memo": "Memo"
+      },
+      "toast": {
+        "deleted": "Memo deleted"
+      }
     },
     "fields": {
       "number": "Memo Number",
@@ -355,7 +382,12 @@
       "rejectedBy": "Rejected by {name}",
       "rejectTitle": "Reject Official Memo?",
       "rejectDescription": "Provide a rejection reason so the author knows what needs to be fixed.",
-      "rejectPlaceholder": "Example: Budget doesn't match the Q3 allocation..."
+      "rejectPlaceholder": "Example: Budget doesn't match the Q3 allocation...",
+      "toast": {
+        "submitted": "Memo submitted for approval",
+        "approved": "Memo approved",
+        "rejected": "Memo rejected"
+      }
     }
   },
   "receipt": {
@@ -371,7 +403,12 @@
       "cancelConfirm": "Cancel Payment Receipt \"{number}\"?",
       "emptyTitle": "No Payment Receipts yet",
       "itemLabel": "receipts",
-      "deleteTitle": "Delete Payment Receipt?"
+      "deleteTitle": "Delete Payment Receipt?",
+      "forInvoice": "For {number}",
+      "toast": {
+        "cancelled": "Payment receipt cancelled",
+        "deleted": "Payment receipt deleted"
+      }
     },
     "fields": {
       "receivedFrom": "Received From"
@@ -425,7 +462,11 @@
       "cancelConfirm": "Cancel PO \"{number}\"? The number stays recorded and cannot be reused.",
       "emptyTitle": "No purchase orders found.",
       "itemLabel": "POs",
-      "deleteTitle": "Delete Purchase Order?"
+      "deleteTitle": "Delete Purchase Order?",
+      "toast": {
+        "cancelled": "Purchase order cancelled",
+        "deleted": "Purchase order deleted"
+      }
     },
     "types": {
       "E": "External (E)",
@@ -475,7 +516,8 @@
       "searchPlaceholder": "Search number, title...",
       "allTypes": "All Types",
       "columns": {
-        "meetingTime": "Meeting Time"
+        "meetingTime": "Meeting Time",
+        "note": "Meeting"
       },
       "pinned": "Pinned to Dashboard",
       "pinnedBadge": "Pinned",
@@ -485,7 +527,10 @@
       "noMatchMessage": "Try another keyword or type.",
       "emptyTitle": "No Meeting Note yet",
       "itemLabel": "notes",
-      "deleteConfirm": "Delete Meeting Note \"{number}\"? This action cannot be undone."
+      "deleteConfirm": "Delete Meeting Note \"{number}\"? This action cannot be undone.",
+      "toast": {
+        "deleted": "Meeting note deleted"
+      }
     },
     "fields": {
       "number": "Document Number",
@@ -559,6 +604,9 @@
         "create": "Couldn't create the proposal.",
         "duplicate": "Couldn't duplicate the proposal.",
         "delete": "Couldn't delete the proposal."
+      },
+      "toast": {
+        "deleted": "Proposal deleted"
       }
     },
     "create": {

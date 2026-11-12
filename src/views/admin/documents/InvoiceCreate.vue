@@ -1,68 +1,50 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { storeToRefs } from "pinia";
 import { Plus, Trash2, ArrowLeft, Check } from "lucide-vue-next";
 import { UiAlert, UiButton, UiCard, UiInput, UiPageHeader, UiSelect, UiSwitch } from "@/components/ui";
 import { useInvoiceStore } from "@/stores/invoice";
-import { useBankAccountStore } from "@/stores/bankAccount";
-import { useProjectStore } from "@/stores/project";
-import { useProjectCalculatorStore } from "@/stores/projectCalculator";
+import { useLookupStore } from "@/stores/lookups";
+import { useUnsavedGuard } from "@/composables/useUnsavedGuard";
 
 const { t } = useI18n();
 const store = useInvoiceStore();
 const router = useRouter();
 const route = useRoute();
-const bankAccountStore = useBankAccountStore();
-const { bankAccounts } = storeToRefs(bankAccountStore);
-const projectStore = useProjectStore();
-const { projects } = storeToRefs(projectStore);
-const calculatorStore = useProjectCalculatorStore();
-const { pphTypes } = storeToRefs(calculatorStore);
+// Pickers come from the shared lookup cache (no request when fresh) --
+// never from projectStore.projects, which is the Projects page's list.
+const lookups = useLookupStore();
+const bankAccounts = computed(() => lookups.bankAccounts);
+const projects = computed(() => lookups.projects);
+const pphTypes = computed(() => lookups.pphTypes);
 
 const editingId = computed(() => route.params.id || null);
 const isEditMode = computed(() => !!editingId.value);
 const existingInvoiceNumber = ref("");
 
-onMounted(async () => {
-  await Promise.all([
-    bankAccountStore.fetchBankAccounts(),
-    projectStore.fetchProjects(),
-    calculatorStore.fetchPphTypes(),
-  ]);
-
-  if (isEditMode.value) {
-    try {
-      const invoice = await store.fetchInvoice(editingId.value);
-      existingInvoiceNumber.value = invoice.invoice_number;
-      form.value.project_id = invoice.project_id || "";
-      form.value.faktur_pajak_number = invoice.faktur_pajak_number || "";
-      form.value.client_code = invoice.client_code || "";
-      form.value.client_name = invoice.client_name || "";
-      form.value.client_pic = invoice.client_pic || "";
-      form.value.client_email = invoice.client_email || "";
-      form.value.client_phone = invoice.client_phone || "";
-      form.value.client_npwp = invoice.client_npwp || "";
-      form.value.date = invoice.date;
-      form.value.items = invoice.items?.length ? invoice.items : form.value.items;
-      form.value.ppn_percentage = invoice.ppn_percentage || 0;
-      form.value.admin_fee = invoice.admin_fee || 0;
-      form.value.icann_fee = invoice.icann_fee || 0;
-      form.value.bank_name = invoice.bank_name || "";
-      form.value.bank_account = invoice.bank_account || "";
-      form.value.terms = invoice.terms || "";
-      form.value.pph23_type = invoice.pph23_type;
-      form.value.pph23_percent = invoice.pph23_percent;
-
-      if (invoice.pph23_type) {
-        applyPph23.value = true;
-      }
-    } catch (error) {
-      errorMessage.value = t("documents.invoice.form.errors.load");
-    }
-  }
-});
+const fillForm = (invoice) => {
+  existingInvoiceNumber.value = invoice.invoice_number;
+  form.value.project_id = invoice.project_id || "";
+  form.value.faktur_pajak_number = invoice.faktur_pajak_number || "";
+  form.value.client_code = invoice.client_code || "";
+  form.value.client_name = invoice.client_name || "";
+  form.value.client_pic = invoice.client_pic || "";
+  form.value.client_email = invoice.client_email || "";
+  form.value.client_phone = invoice.client_phone || "";
+  form.value.client_npwp = invoice.client_npwp || "";
+  form.value.date = invoice.date;
+  form.value.items = invoice.items?.length ? invoice.items : form.value.items;
+  form.value.ppn_percentage = invoice.ppn_percentage || 0;
+  form.value.admin_fee = invoice.admin_fee || 0;
+  form.value.icann_fee = invoice.icann_fee || 0;
+  form.value.bank_name = invoice.bank_name || "";
+  form.value.bank_account = invoice.bank_account || "";
+  form.value.terms = invoice.terms || "";
+  form.value.pph23_type = invoice.pph23_type;
+  form.value.pph23_percent = invoice.pph23_percent;
+  if (invoice.pph23_type) applyPph23.value = true;
+};
 
 // Purely informational heads-up that the client is expected to withhold
 // PPh 23 on payment -- never touches subtotal/total, which stay the
@@ -95,6 +77,27 @@ const form = ref({
 
 const submitting = ref(false);
 const errorMessage = ref("");
+
+// Everything the page needs in one wave: the pickers and, when editing,
+// the invoice itself.
+const loadingRecord = ref(isEditMode.value);
+lookups.ensureAll(["bankAccounts", "projects", "pphTypes"]).catch(() => {});
+if (isEditMode.value) {
+  store
+    .fetchInvoice(editingId.value)
+    .then(fillForm)
+    .catch(() => (errorMessage.value = t("documents.invoice.form.errors.load")))
+    .finally(() => {
+      loadingRecord.value = false;
+      markSaved();
+    });
+}
+
+// Leaving with unsaved edits asks first.
+const snapshot = () => JSON.stringify([form.value, applyPph23.value]);
+const savedState = ref(snapshot());
+const markSaved = () => (savedState.value = snapshot());
+useUnsavedGuard(() => !loadingRecord.value && snapshot() !== savedState.value);
 
 const addItem = () => form.value.items.push({ description: "", quantity: "", rate: "", total: 0 });
 const removeItem = (i) => form.value.items.splice(i, 1);
@@ -155,7 +158,12 @@ const handleSubmit = async () => {
         pph23_type: form.value.pph23_type,
         pph23_percent: form.value.pph23_percent,
       };
-      await store.updateInvoice(editingId.value, payload);
+      const updated = await store.updateInvoice(editingId.value, payload);
+      // The list shows the saved row without reloading (the response has
+      // no relations, so the project name comes from the picker).
+      const project = projects.value.find((p) => String(p.id) === String(payload.project_id));
+      store.patchRow(editingId.value, { ...updated, project: project ? { id: project.id, name: project.name } : null });
+      markSaved();
       router.push({ name: "admin.invoices.dashboard" });
       return;
     }
@@ -167,6 +175,7 @@ const handleSubmit = async () => {
       delete payload.invoice_number;
     }
     await store.createInvoice(payload);
+    markSaved();
     router.push({ name: "admin.invoices.dashboard" });
   } catch (error) {
     const data = error?.response?.data;
@@ -205,7 +214,7 @@ const onApplyPph23 = (value) => {
       <template #actions>
         <div class="hidden sm:flex items-center gap-2">
           <UiButton variant="secondary" :to="{ name: 'admin.invoices.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
-          <UiButton type="submit" form="invoice-form" :icon="Check" :loading="submitting">
+          <UiButton type="submit" form="invoice-form" :icon="Check" :loading="submitting" :disabled="loadingRecord">
             {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.invoice.form.update") : $t("documents.invoice.form.save")) }}
           </UiButton>
         </div>
@@ -374,7 +383,7 @@ const onApplyPph23 = (value) => {
           </dl>
           <UiAlert v-if="errorMessage" tone="bad" :title="errorMessage" class="mt-4" />
           <div class="mt-5 grid gap-2">
-            <UiButton type="submit" size="lg" block :icon="Check" :loading="submitting">
+            <UiButton type="submit" size="lg" block :icon="Check" :loading="submitting" :disabled="loadingRecord">
               {{ submitting ? $t("common.actions.saving") : (isEditMode ? $t("documents.invoice.form.update") : $t("documents.invoice.form.save")) }}
             </UiButton>
             <UiButton variant="secondary" block :to="{ name: 'admin.invoices.dashboard' }">{{ $t("common.actions.cancel") }}</UiButton>
