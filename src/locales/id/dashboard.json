@@ -7,23 +7,6 @@
       "night": "Selamat malam, {name}"
     },
     "fallbackName": "Rekan",
-    "subtitle": {
-      "superadmin": "Ringkasan konfigurasi sistem Anda.",
-      "manager": "Begini kondisi perusahaan hari ini.",
-      "operational_director": "Ringkasan operasional & tenaga kerja Anda.",
-      "hr": "Ringkasan karyawan & tenaga kerja Anda.",
-      "finance": "Ringkasan penggajian & keuangan Anda.",
-      "staff": "Ringkasan pekerjaan pribadi Anda.",
-      "default": "Inilah yang terjadi hari ini."
-    },
-    "roles": {
-      "superadmin": "Super Admin",
-      "manager": "Manajer",
-      "operational_director": "Direktur Operasional",
-      "hr": "HR",
-      "finance": "Manajer Keuangan",
-      "staff": "Staf"
-    },
     "clockInOut": "Absen masuk / pulang",
     "announcements": "Pengumuman",
     "new": "Baru",
@@ -50,22 +33,7 @@
   },
   "layout": {
     "loadError": "Widget dasbor gagal dimuat.",
-    "editing": "Mengatur tata letak dasbor",
-    "editingHint": "Seret widget untuk mengubah urutan · perubahan hanya berlaku untuk Anda",
-    "reset": "Atur ulang",
-    "resetTitle": "Atur Ulang Tata Letak",
-    "resetConfirm": "Kembalikan dasbor ke urutan dan ukuran widget bawaan?",
-    "empty": "Belum ada widget untuk peran Anda.",
-    "sizeOf": "Ukuran {name}",
-    "dragToReorder": "Seret untuk mengubah urutan: {name}",
-    "sizes": {
-      "small": "Kecil (1/3 lebar)",
-      "medium": "Sedang (1/2 lebar)",
-      "large": "Besar (lebar penuh)"
-    },
-    "saving": "Menyimpan tata letak…",
-    "saved": "Tata letak tersimpan",
-    "saveError": "Tata letak gagal disimpan"
+    "empty": "Belum ada widget untuk peran Anda."
   },
   "quickLinks": {
     "empty": "Belum ada tautan cepat.",

@@ -2,6 +2,9 @@ import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
 
+// Latest request id per list (fixedCostData / sdmResourceData / infraToolsData).
+const listSeq = {};
+
 export const useCompanyFinanceStore = defineStore("company-finance", {
   state: () => ({
     saldo: {
@@ -132,8 +135,10 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       }
     },
 
-    async fetchStatistics() {
-      this.loadingStatistics = true;
+    // quiet: keep the figures on screen (no skeleton) while they refresh,
+    // e.g. after a create/update/delete.
+    async fetchStatistics({ quiet = false } = {}) {
+      if (!quiet) this.loadingStatistics = true;
       this.error = null;
 
       try {
@@ -147,43 +152,61 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       }
     },
 
-    /* ================= FIXED COST ACTION METHODS ================= */
-    async fetchFixedCostPaginated(params) {
+    // Shared by the three operational-cost lists. Only the latest request
+    // per list may write its rows (a slow older response is dropped).
+    async _fetchList(key, url, { page = 1, per_page = 10, search = "" } = {}) {
+      const id = (listSeq[key] = (listSeq[key] ?? 0) + 1);
       this.loading = true;
-
       try {
-        const response = await axiosInstance.get("/fixed-costs/all/paginated", {
-          params: {
-            page: params.page || 1,
-            row_per_page: params.per_page || 10,
-            search: params.search || "",
-          },
+        const response = await axiosInstance.get(url, {
+          params: { page: page || 1, row_per_page: per_page || 10, search: search || "" },
         });
-
-        // Menyimpan data yang diterima
-        this.fixedCostData.items = response.data.data.data;
-        this.fixedCostData.meta = response.data.data.meta;
+        if (id !== listSeq[key]) return;
+        this[key].items = response.data.data.data;
+        this[key].meta = response.data.data.meta;
       } catch (error) {
-        // Menangani error jika ada
-        this.error = handleError(error);
+        if (id === listSeq[key]) this.error = handleError(error);
       } finally {
-        // Mengubah status loading menjadi false setelah request selesai
-        this.loading = false;
+        if (id === listSeq[key]) this.loading = false;
       }
     },
 
-    // Create new the Fixed Cost
-    async createFixedCost(payload) {
+    // Replace a row in place from the API response (keeps the page).
+    patchRow(key, row) {
+      if (!row?.id) return false;
+      const index = this[key].items.findIndex((item) => item.id === row.id);
+      if (index === -1) return false;
+      this[key].items.splice(index, 1, { ...this[key].items[index], ...row });
+      return true;
+    },
+
+    // Drop a deleted row and keep the pagination counts honest.
+    removeRow(key, id) {
+      const list = this[key];
+      const before = list.items.length;
+      list.items = list.items.filter((item) => item.id !== id);
+      if (list.items.length === before || !list.meta) return;
+      const total = Math.max(0, (Number(list.meta.total) || 0) - 1);
+      const perPage = Number(list.meta.per_page) || 10;
+      list.meta = {
+        ...list.meta,
+        total,
+        last_page: Math.max(1, Math.ceil(total / perPage)),
+        to: list.meta.to ? Math.max(0, list.meta.to - 1) : list.meta.to,
+      };
+    },
+
+    async _mutate(request, after) {
       this.loading = true;
-
       try {
-        const response = await axiosInstance.post("fixed-costs", payload);
-
+        const response = await request();
         this.success = response.data.message;
+        after?.(response.data.data);
         // Dashboard summary cards must reflect the true grand total, not
-        // just whatever page of the list happens to be loaded -- refetch
-        // the real aggregate from /company-finances/statistic.
-        await this.fetchStatistics();
+        // just whatever page of the list happens to be loaded -- refresh
+        // the real aggregate from /company-finances/statistic, quietly.
+        this.fetchStatistics({ quiet: true });
+        return response.data.data;
       } catch (error) {
         this.error = handleError(error);
         throw error;
@@ -192,234 +215,79 @@ export const useCompanyFinanceStore = defineStore("company-finance", {
       }
     },
 
-    // Edit update the Fixed Cost
-    async updateFixedCost(id, payload) {
-      this.loading = true;
+    /* ================= FIXED COST ACTION METHODS ================= */
+    fetchFixedCostPaginated(params = {}) {
+      return this._fetchList("fixedCostData", "/fixed-costs/all/paginated", params);
+    },
 
-      try {
-        const response = await axiosInstance.post(`fixed-costs/${id}`, {
-          ...payload,
-          _method: "PUT",
-        });
+    // Create new the Fixed Cost. Resolves to the created record.
+    createFixedCost(payload) {
+      return this._mutate(() => axiosInstance.post("fixed-costs", payload));
+    },
 
-        this.success = response.data.message;
-        await this.fetchStatistics();
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
-      }
+    // Edit update the Fixed Cost. Patches the row from the response.
+    updateFixedCost(id, payload) {
+      return this._mutate(
+        () => axiosInstance.post(`fixed-costs/${id}`, { ...payload, _method: "PUT" }),
+        (row) => this.patchRow("fixedCostData", row)
+      );
     },
 
     // Delete the Fixed Cost
     async deleteFixedCost(id) {
-      this.loading = true;
-
-      try {
-        await axiosInstance.delete(`/fixed-costs/${id}`);
-
-        // Hapus dari state lokal
-        this.fixedCostData.items = this.fixedCostData.items.filter(
-          (item) => item.id !== id
-        );
-
-        // Dashboard summary cards must reflect the true grand total, not
-        // just whatever page of the list happens to be loaded -- refetch
-        // the real aggregate from /company-finances/statistic.
-        await this.fetchStatistics();
-
-        this.success = "Fixed Cost item deleted successfully";
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
-      }
+      await this._mutate(
+        () => axiosInstance.delete(`/fixed-costs/${id}`),
+        () => this.removeRow("fixedCostData", id)
+      );
+      this.success = "Fixed Cost item deleted successfully";
     },
 
     /* ================= SDM RESOURCE ACTION METHODS ================= */
-    async fetchSdmResourcePaginated(params) {
-      this.loading = true;
-      try {
-        const response = await axiosInstance.get(
-          "/sdm-resources/all/paginated",
-          {
-            params: {
-              page: params.page || 1,
-              row_per_page: params.per_page || 10,
-              search: params.search || "",
-            },
-          }
-        );
-
-        // Menyimpan data yang diterima
-        this.sdmResourceData.items = response.data.data.data;
-        this.sdmResourceData.meta = response.data.data.meta;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchSdmResourcePaginated(params = {}) {
+      return this._fetchList("sdmResourceData", "/sdm-resources/all/paginated", params);
     },
 
-    // Create new the SDM Resources
-    async createSdmResource(payload) {
-      this.loading = true;
-
-      try {
-        const response = await axiosInstance.post("sdm-resources", payload);
-
-        this.success = response.data.message;
-        await this.fetchStatistics();
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
-      }
+    createSdmResource(payload) {
+      return this._mutate(() => axiosInstance.post("sdm-resources", payload));
     },
 
-    // Edit update the Sdm Resources
-    async updateSdmResource(id, payload) {
-      this.loading = true;
-
-      try {
-        const response = await axiosInstance.post(`sdm-resources/${id}`, {
-          ...payload,
-          _method: "PUT",
-        });
-
-        this.success = response.data.message;
-        await this.fetchStatistics();
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
-      }
+    updateSdmResource(id, payload) {
+      return this._mutate(
+        () => axiosInstance.post(`sdm-resources/${id}`, { ...payload, _method: "PUT" }),
+        (row) => this.patchRow("sdmResourceData", row)
+      );
     },
 
-    // Delete the Sdm Resources
     async deleteSdmResource(id) {
-      this.loading = true;
-
-      try {
-        await axiosInstance.delete(`/sdm-resources/${id}`);
-
-        this.sdmResourceData.items = this.sdmResourceData.items.filter(
-          (item) => item.id !== id
-        );
-
-        // Dashboard summary cards must reflect the true grand total, not
-        // just whatever page of the list happens to be loaded -- refetch
-        // the real aggregate from /company-finances/statistic.
-        await this.fetchStatistics();
-
-        this.success = "SDM Resource item deleted successfully";
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
-      }
+      await this._mutate(
+        () => axiosInstance.delete(`/sdm-resources/${id}`),
+        () => this.removeRow("sdmResourceData", id)
+      );
+      this.success = "SDM Resource item deleted successfully";
     },
 
     /* ================= INFRA TOOLS ACTION METHODS ================= */
-    async fetchInfraToolsPaginated({
-      page = 1,
-      per_page = 10,
-      search = "",
-    } = {}) {
-      this.loading = true;
-      try {
-        const response = await axiosInstance.get(
-          "/infrastructure-tools/all/paginated",
-          {
-            params: {
-              page,
-              row_per_page: per_page,
-              search,
-            },
-          }
-        );
-
-        // Simpan data & meta
-        this.infraToolsData.items = response.data.data.data;
-        this.infraToolsData.meta = response.data.data.meta;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchInfraToolsPaginated(params = {}) {
+      return this._fetchList("infraToolsData", "/infrastructure-tools/all/paginated", params);
     },
 
-    // Create new the Infra Tools
-    async createInfraTools(payload) {
-      this.loading = true;
-
-      try {
-        const response = await axiosInstance.post(
-          "infrastructure-tools",
-          payload
-        );
-
-        this.success = response.data.message;
-        await this.fetchStatistics();
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
-      }
+    createInfraTools(payload) {
+      return this._mutate(() => axiosInstance.post("infrastructure-tools", payload));
     },
 
-    // Edit update the Infra Tools
-    async updateInfraTools(id, payload) {
-      this.loading = true;
-
-      try {
-        const response = await axiosInstance.post(
-          `infrastructure-tools/${id}`,
-          {
-            ...payload,
-            _method: "PUT",
-          }
-        );
-
-        this.success = response.data.message;
-        await this.fetchStatistics();
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
-      }
+    updateInfraTools(id, payload) {
+      return this._mutate(
+        () => axiosInstance.post(`infrastructure-tools/${id}`, { ...payload, _method: "PUT" }),
+        (row) => this.patchRow("infraToolsData", row)
+      );
     },
 
-    // Delete the Infra Tools
     async deleteInfraTools(id) {
-      this.loading = true;
-
-      try {
-        await axiosInstance.delete(`/infrastructure-tools/${id}`);
-
-        this.infraToolsData.items = this.infraToolsData.items.filter(
-          (item) => item.id !== id
-        );
-
-        // Dashboard summary cards must reflect the true grand total, not
-        // just whatever page of the list happens to be loaded -- refetch
-        // the real aggregate from /company-finances/statistic.
-        await this.fetchStatistics();
-
-        this.success = "Infrastructure item deleted successfully";
-      } catch (error) {
-        this.error = handleError(error);
-        throw error;
-      } finally {
-        this.loading = false;
-      }
+      await this._mutate(
+        () => axiosInstance.delete(`/infrastructure-tools/${id}`),
+        () => this.removeRow("infraToolsData", id)
+      );
+      this.success = "Infrastructure item deleted successfully";
     },
   },
 });

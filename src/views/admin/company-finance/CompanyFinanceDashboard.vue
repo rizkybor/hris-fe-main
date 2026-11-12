@@ -1,3 +1,9 @@
+<script>
+// Which search/page each list in the store was loaded for (store state
+// outlives the page; this tells a revisit whether it still matches).
+const shownKey = {};
+</script>
+
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { debounce } from "lodash-es";
@@ -11,6 +17,10 @@ import DeleteConfirmationModal from "@/components/common/ConfirmationModal.vue";
 import { Eye, Edit, Trash2, Wallet, Users, Server, Search, Plus } from "lucide-vue-next";
 import { UiPageHeader, UiInput, UiButton, UiBadge, UiTable } from "@/components/ui";
 import { useCompanyFinanceStore } from "@/stores/companyFinance";
+import { useSdmFieldStore } from "@/stores/sdmField";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch, invalidate } from "@/composables/useStaleFetch";
+import { useVisitedTabs } from "@/composables/useVisitedTabs";
 import Pagination from "@/components/common/Pagination.vue";
 import { operationalCostStatusLabel, expiryState } from "@/utils/operationalCostStatus";
 import { useI18n } from "vue-i18n";
@@ -25,7 +35,27 @@ const tabs = computed(() => [
   { key: "sdm", label: t("finance.categories.sdmResource"), icon: Users },
   { key: "infra", label: t("finance.categories.infraTools"), icon: Server },
 ]);
-const activeTab = ref("fixed");
+const TAB_KEYS = ["fixed", "sdm", "infra"];
+// Tab, each tab's search and page, and the chart year survive leaving the
+// page and a reload (URL query + remembered per browser).
+const list = useListState("operational-costs", {
+  tab: "fixed",
+  fixedQ: "",
+  sdmQ: "",
+  infraQ: "",
+  fixedPage: 1,
+  sdmPage: 1,
+  infraPage: 1,
+  year: new Date().getFullYear(),
+});
+if (!TAB_KEYS.includes(list.tab)) list.tab = "fixed";
+const activeTab = computed({
+  get: () => list.tab,
+  set: (tab) => (list.tab = tab),
+});
+// Only the tabs that have been opened load their list.
+const visited = useVisitedTabs(() => list.tab);
+const sdmFieldStore = useSdmFieldStore();
 
 // ----- Presentation only -----
 const statusTone = (status) => (status === "active" ? "ok" : "neutral");
@@ -72,22 +102,59 @@ const showSectionAlert = (section, type, title, message) => {
   }, 3000);
 };
 
-// Fetch data ketika komponen di-mount
+/* =======================
+   LISTS (one stale-while-revalidate fetch per tab, own loading flags)
+======================= */
+const perPage = 5;
+const LISTS = {
+  fixed: { data: () => store.fixedCostData, fetch: (p) => store.fetchFixedCostPaginated(p), q: "fixedQ", page: "fixedPage" },
+  sdm: { data: () => store.sdmResourceData, fetch: (p) => store.fetchSdmResourcePaginated(p), q: "sdmQ", page: "sdmPage" },
+  infra: { data: () => store.infraToolsData, fetch: (p) => store.fetchInfraToolsPaginated(p), q: "infraQ", page: "infraPage" },
+};
+const listParams = (tab) => ({ page: list[LISTS[tab].page], per_page: perPage, search: list[LISTS[tab].q] });
+const listKey = (tab) => JSON.stringify(listParams(tab));
+const fetchTab = async (tab) => {
+  if (!visited.has(tab)) return;
+  const key = listKey(tab);
+  await LISTS[tab].fetch(listParams(tab));
+  if (key === listKey(tab)) shownKey[tab] = key;
+};
+const useTabList = (tab) =>
+  useStaleFetch(() => fetchTab(tab), {
+    // Idle until the tab is first opened; then refetches on search/page.
+    key: () => (visited.has(tab) ? ["op-costs", tab, listParams(tab)] : `op-costs:${tab}:idle`),
+    hasData: () => visited.has(tab) && (LISTS[tab].data().items?.length ?? 0) > 0,
+  });
+const { loading: fixedLoading, refreshing: fixedRefreshing, refresh: refreshFixed } = useTabList("fixed");
+const { loading: sdmLoading, refreshing: sdmRefreshing, refresh: refreshSdm } = useTabList("sdm");
+const { loading: infraLoading, refreshing: infraRefreshing, refresh: refreshInfra } = useTabList("infra");
+const REFRESH = { fixed: refreshFixed, sdm: refreshSdm, infra: refreshInfra };
+const BUSY = { fixed: () => fixedLoading.value || fixedRefreshing.value, sdm: () => sdmLoading.value || sdmRefreshing.value, infra: () => infraLoading.value || infraRefreshing.value };
+// The store may hold another search/page for this tab (fresh by age):
+// keep it on screen dimmed and load the right one.
 onMounted(() => {
-  fetchFixedCostData();
-  fetchSdmResourcesData();
-  fetchInfraToolsData();
+  const tab = list.tab;
+  if (!BUSY[tab]() && LISTS[tab].data().items?.length && shownKey[tab] !== listKey(tab)) REFRESH[tab]({ force: true });
 });
 
-/* ================= FIX COST ACTION METHODS ================= */
-const fetchFixedCostData = async (page = 1) => {
-  await store.fetchFixedCostPaginated({
-    page,
-    per_page: perPage,
-    search: fixedSearch.value,
-  });
-  fixedPage.value = page;
+const goToPage = (tab, page) => (list[LISTS[tab].page] = page);
+
+// After a mutation: other pages of this tab are stale; the current page is
+// refreshed quietly (create) or only when the row couldn't be patched.
+const afterSave = (tab, { mode, patched }) => {
+  invalidate(`"op-costs","${tab}"`);
+  if (mode === "add" || !patched) REFRESH[tab]({ force: true });
 };
+const afterDelete = (tab) => {
+  invalidate(`"op-costs","${tab}"`);
+  const data = LISTS[tab].data();
+  const page = list[LISTS[tab].page];
+  if (!data.items.length && page > 1) goToPage(tab, page - 1);
+  else if ((data.meta?.total ?? 0) > page * perPage - 1 && data.items.length < perPage) REFRESH[tab]({ force: true });
+};
+const hasRow = (tab, id) => LISTS[tab].data().items.some((item) => item.id === id);
+
+/* ================= FIX COST ACTION METHODS ================= */
 
 const addFixedCost = () => {
   fixedCostMode.value = "add";
@@ -96,6 +163,7 @@ const addFixedCost = () => {
 };
 
 const submitFixedCost = async ({ mode, id, payload }) => {
+  let patched = false;
   try {
     loading.value = true;
 
@@ -110,7 +178,8 @@ const submitFixedCost = async ({ mode, id, payload }) => {
     }
 
     if (mode === "edit") {
-      await store.updateFixedCost(id, payload);
+      const row = await store.updateFixedCost(id, payload);
+      patched = !!row && hasRow("fixed", id);
       showSectionAlert(
         fixedAlert,
         "success",
@@ -119,7 +188,7 @@ const submitFixedCost = async ({ mode, id, payload }) => {
       );
     }
 
-    await fetchFixedCostData();
+    afterSave("fixed", { mode, patched });
     showAddFixedCost.value = false;
   } catch (error) {
     showSectionAlert(
@@ -153,6 +222,7 @@ const deleteFixedCostHandler = (item) => {
     onConfirm: async () => {
       try {
         await store.deleteFixedCost(item.id);
+        afterDelete("fixed");
 
         showSectionAlert(
           fixedAlert,
@@ -174,14 +244,6 @@ const deleteFixedCostHandler = (item) => {
 };
 
 /* ================= SDM ACTION METHODS ================= */
-const fetchSdmResourcesData = async (page = 1) => {
-  await store.fetchSdmResourcePaginated({
-    page,
-    per_page: perPage,
-    search: sdmSearch.value,
-  });
-  sdmPage.value = page;
-};
 
 const addSdm = () => {
   sdmResourceMode.value = "add";
@@ -190,6 +252,7 @@ const addSdm = () => {
 };
 
 const submitSdm = async ({ mode, id, payload }) => {
+  let patched = false;
   try {
     loading.value = true;
     if (mode === "add") {
@@ -203,7 +266,11 @@ const submitSdm = async ({ mode, id, payload }) => {
     }
 
     if (mode === "edit") {
-      await store.updateSdmResource(id, payload);
+      const row = await store.updateSdmResource(id, payload);
+      patched = !!row && hasRow("sdm", id);
+      // The API may return the old field relation; name it from the picked field.
+      const field = sdmFieldStore.fields.find((f) => f.id === payload.sdm_field_id);
+      if (patched && field) store.patchRow("sdmResourceData", { id, sdm_field_name: field.name });
       showSectionAlert(
         sdmAlert,
         "success",
@@ -212,7 +279,7 @@ const submitSdm = async ({ mode, id, payload }) => {
       );
     }
 
-    await fetchSdmResourcesData();
+    afterSave("sdm", { mode, patched });
     showAddSdmResource.value = false;
   } catch (error) {
     showSectionAlert(
@@ -246,6 +313,7 @@ const deleteSdmHandler = (item) => {
     onConfirm: async () => {
       try {
         await store.deleteSdmResource(item.id);
+        afterDelete("sdm");
 
         showSectionAlert(
           sdmAlert,
@@ -267,14 +335,6 @@ const deleteSdmHandler = (item) => {
 };
 
 /* ================= INFRA ACTION METHODS ================= */
-const fetchInfraToolsData = async (page = 1) => {
-  await store.fetchInfraToolsPaginated({
-    page,
-    per_page: perPage,
-    search: infraSearch.value,
-  });
-  infraPage.value = page;
-};
 
 const addInfra = () => {
   infraMode.value = "add";
@@ -283,6 +343,7 @@ const addInfra = () => {
 };
 
 const submitInfra = async ({ mode, id, payload }) => {
+  let patched = false;
   try {
     loading.value = true;
 
@@ -297,7 +358,8 @@ const submitInfra = async ({ mode, id, payload }) => {
     }
 
     if (mode === "edit") {
-      await store.updateInfraTools(id, payload);
+      const row = await store.updateInfraTools(id, payload);
+      patched = !!row && hasRow("infra", id);
       showSectionAlert(
         infraAlert,
         "success",
@@ -306,7 +368,7 @@ const submitInfra = async ({ mode, id, payload }) => {
       );
     }
 
-    await fetchInfraToolsData();
+    afterSave("infra", { mode, patched });
     showAddInfra.value = false;
   } catch (error) {
     showSectionAlert(
@@ -340,6 +402,7 @@ const deleteInfraHandler = (item) => {
     onConfirm: async () => {
       try {
         await store.deleteInfraTools(item.id);
+        afterDelete("infra");
 
         showSectionAlert(
           infraAlert,
@@ -403,27 +466,27 @@ const deletePayload = ref({
 });
 
 /* =======================
-   PAGINATION STATE
+   SEARCH (debounced into the list state; resets that tab's page)
 ======================= */
-const perPage = 5;
-const fixedPage = ref(1);
-const sdmPage = ref(1);
-const infraPage = ref(1);
-
-/* =======================
-   SEARCH STATE
-======================= */
-const fixedSearch = ref("");
-const sdmSearch = ref("");
-const infraSearch = ref("");
+const fixedSearch = ref(list.fixedQ);
+const sdmSearch = ref(list.sdmQ);
+const infraSearch = ref(list.infraQ);
+const bindSearch = (input, tab) =>
+  watch(
+    input,
+    debounce((value) => {
+      if (value === list[LISTS[tab].q]) return;
+      list[LISTS[tab].q] = value;
+      list[LISTS[tab].page] = 1;
+    }, 300)
+  );
+bindSearch(fixedSearch, "fixed");
+bindSearch(sdmSearch, "sdm");
+bindSearch(infraSearch, "infra");
 
 /* =======================
    HELPERS
 ======================= */
-const paginate = (data, page) =>
-  data.slice((page - 1) * perPage, page * perPage);
-
-const pageCount = (data) => Math.ceil(data.length / perPage);
 
 const formatDate = (date) => {
   if (!date) return "-";
@@ -450,73 +513,16 @@ const confirmDelete = async () => {
 /* =======================
    COMPUTED
 ======================= */
-const filteredFixed = computed(() => {
-  if (store.fixedCostData && store.fixedCostData.items) {
-    return store.fixedCostData.items.filter((item) =>
-      item.financial_items
-        .toLowerCase()
-        .includes(fixedSearch.value.toLowerCase())
-    );
-  }
-  return [];
-});
-
-const filteredSdm = computed(() => {
-  if (store.sdmResourceData && store.sdmResourceData.items) {
-    return store.sdmResourceData.items.filter((item) =>
-      item.sdm_component.toLowerCase().includes(sdmSearch.value.toLowerCase())
-    );
-  }
-  return [];
-});
-
-const filteredInfra = computed(() => {
-  if (store.infraToolsData && store.infraToolsData.items) {
-    return store.infraToolsData.items.filter((item) =>
-      item.tech_stack_component
-        .toLowerCase()
-        .includes(infraSearch.value.toLowerCase())
-    );
-  }
-  return [];
-});
-
-const fixedPageCount = computed(
-  () => store.fixedCostData?.meta?.last_page || 1
-);
-
 const fixedCostPaginated = computed(() => store.fixedCostData.items || []);
 const sdmResourcePaginated = computed(() => store.sdmResourceData.items || []);
 const infraPaginated = computed(() => store.infraToolsData.items || []);
-
-/* =======================
-   WATCH SEARCH DEBOUNCE
-======================= */
-watch(
-  fixedSearch,
-  debounce(() => {
-    fetchFixedCostData(1);
-  }, 300)
-);
-watch(
-  sdmSearch,
-  debounce(() => {
-    fetchSdmResourcesData(1);
-  }, 300)
-);
-watch(
-  infraSearch,
-  debounce(() => {
-    fetchInfraToolsData(1);
-  }, 300)
-);
 </script>
 
 <template>
   <div class="p-1 sm:p-3 lg:p-5 space-y-5">
     <UiPageHeader :title="$t('finance.page.title')" :subtitle="$t('finance.page.subtitle')" />
 
-    <Statistics v-if="can('company-finance-statistic')" />
+    <Statistics v-if="can('company-finance-statistic')" v-model:year="list.year" />
 
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <!-- Tabs: underline on desktop, scrolling chips on phones -->
@@ -565,8 +571,9 @@ watch(
         <UiTable
           :columns="fixedColumns"
           :rows="fixedCostPaginated"
-          :meta="{ current_page: fixedPage, per_page: perPage }"
-          :loading="store.loading"
+          :meta="{ current_page: list.fixedPage, per_page: perPage }"
+          :loading="fixedLoading"
+          :class="fixedRefreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
           :skeleton-rows="4"
           :empty-text="$t('finance.table.empty', { kind: $t('finance.categories.fixedCost') })"
         >
@@ -621,7 +628,7 @@ watch(
         </UiTable>
 
         <div v-if="store.fixedCostData.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
-          <Pagination :meta="store.fixedCostData.meta" :loading="store.loading" :item-label="$t('finance.itemLabel')" @page-change="fetchFixedCostData" />
+          <Pagination :meta="store.fixedCostData.meta" :loading="fixedLoading" :item-label="$t('finance.itemLabel')" @page-change="(page) => goToPage('fixed', page)" />
         </div>
       </div>
 
@@ -644,8 +651,9 @@ watch(
         <UiTable
           :columns="sdmColumns"
           :rows="sdmResourcePaginated"
-          :meta="{ current_page: sdmPage, per_page: perPage }"
-          :loading="store.loading"
+          :meta="{ current_page: list.sdmPage, per_page: perPage }"
+          :loading="sdmLoading"
+          :class="sdmRefreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
           :skeleton-rows="4"
           :empty-text="$t('finance.table.empty', { kind: $t('finance.categories.sdmResource') })"
         >
@@ -704,7 +712,7 @@ watch(
         </UiTable>
 
         <div v-if="store.sdmResourceData.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
-          <Pagination :meta="store.sdmResourceData.meta" :loading="store.loading" :item-label="$t('finance.itemLabel')" @page-change="fetchSdmResourcesData" />
+          <Pagination :meta="store.sdmResourceData.meta" :loading="sdmLoading" :item-label="$t('finance.itemLabel')" @page-change="(page) => goToPage('sdm', page)" />
         </div>
       </div>
 
@@ -727,8 +735,9 @@ watch(
         <UiTable
           :columns="infraColumns"
           :rows="infraPaginated"
-          :meta="{ current_page: infraPage, per_page: perPage }"
-          :loading="store.loading"
+          :meta="{ current_page: list.infraPage, per_page: perPage }"
+          :loading="infraLoading"
+          :class="infraRefreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
           :skeleton-rows="4"
           :empty-text="$t('finance.table.empty', { kind: $t('finance.categories.infraTools') })"
         >
@@ -788,7 +797,7 @@ watch(
         </UiTable>
 
         <div v-if="store.infraToolsData.meta?.total" class="px-4 sm:px-5 pb-4 border-t border-ui-line">
-          <Pagination :meta="store.infraToolsData.meta" :loading="store.loading" :item-label="$t('finance.itemLabel')" @page-change="fetchInfraToolsData" />
+          <Pagination :meta="store.infraToolsData.meta" :loading="infraLoading" :item-label="$t('finance.itemLabel')" @page-change="(page) => goToPage('infra', page)" />
         </div>
       </div>
     </section>

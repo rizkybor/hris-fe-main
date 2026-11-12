@@ -2,6 +2,32 @@ import { defineStore } from "pinia";
 import { axiosInstance } from '@/plugins/axios';
 import { handleError } from "@/helpers/errorHelper";
 
+// Payroll generation runs on a queue (GeneratePayrollJob / GenerateThrPayrollJob)
+// and the POST only answers { status: "processing" } -- no id. Generations
+// started from this browser are tracked here (and in sessionStorage, so a
+// reload keeps watching) until the API shows the run finished:
+//   - new period: check-period reports it exists and isn't "processing"
+//   - regenerate: GET /payrolls/{id} has a newer updated_at than before
+// The job writes "processing" inside its DB transaction, so other requests
+// usually never see that status; this tracking is what makes "done" visible.
+const PENDING_KEY = "hris-payroll-generations";
+const PENDING_MAX_AGE = 15 * 60 * 1000; // job timeout is 10 min
+const readPending = () => {
+    try {
+        return JSON.parse(sessionStorage.getItem(PENDING_KEY) || "[]").filter((g) => Date.now() - g.startedAt < PENDING_MAX_AGE);
+    } catch {
+        return [];
+    }
+};
+const writePending = (list) => {
+    try {
+        sessionStorage.setItem(PENDING_KEY, JSON.stringify(list));
+    } catch {
+        /* storage unavailable: tracking lasts for this page only */
+    }
+};
+let listRequest = 0;
+
 export const usePayrollStore = defineStore("payroll", {
     state: () => ({
         payrolls: [],
@@ -20,6 +46,13 @@ export const usePayrollStore = defineStore("payroll", {
             per_page: 10,
             total: 0
         },
+        // The admin payroll list's own meta/flag: `meta` is shared with My
+        // Payslips and the detail page's employee list.
+        payrollsMeta: { current_page: 1, last_page: 1, per_page: 10, total: 0 },
+        payrollsLoaded: false,
+        statisticsLoaded: false,
+        // Queued generations started here: [{ key, type, month: "YYYY-MM", id, baseline, startedAt }]
+        pendingGenerations: readPending(),
         loading: false,
         loadingStatistics: false,
         error: null,
@@ -29,17 +62,83 @@ export const usePayrollStore = defineStore("payroll", {
     actions: {
         async fetchPayrolls(params) {
             this.loading = true;
+            const id = ++listRequest;
 
             try {
                 const response = await axiosInstance.get('/payrolls/all/paginated', { params });
 
-                this.payrolls = response.data.data.data;
-                this.meta = response.data.data.meta;
+                // An older request (previous page/search) must not overwrite a newer one.
+                if (id !== listRequest) return;
+                // Fallbacks keep the list (and the polling check on it) safe
+                // when the response has no rows.
+                this.payrolls = response.data?.data?.data ?? [];
+                this.meta = response.data?.data?.meta ?? this.meta;
+                this.payrollsMeta = response.data?.data?.meta ?? this.payrollsMeta;
+                this.payrollsLoaded = true;
             } catch (error) {
                 this.error = handleError(error);
             } finally {
-                this.loading = false;
+                if (id === listRequest) this.loading = false;
             }
+        },
+
+        // Merge fields into a payroll row of the list (e.g. after mark-as-paid).
+        patchPayroll(id, fields) {
+            const row = this.payrolls.find((p) => String(p.id) === String(id));
+            if (row) Object.assign(row, fields);
+        },
+
+        trackGeneration({ type, month, id = null, baseline = null }) {
+            const key = `${type}:${month}`;
+            this.pendingGenerations = [
+                ...this.pendingGenerations.filter((g) => g.key !== key),
+                { key, type, month, id, baseline, startedAt: Date.now() },
+            ];
+            writePending(this.pendingGenerations);
+        },
+
+        isGenerating(payroll) {
+            if (!payroll) return false;
+            if (payroll.status === "processing") return true;
+            const month = String(payroll.salary_month || payroll.period || "").slice(0, 7);
+            return this.pendingGenerations.some((g) => (g.id && String(g.id) === String(payroll.id)) || (g.type === (payroll.type || "monthly") && g.month === month));
+        },
+
+        // One quiet check per tracked generation. Resolves to the finished
+        // ones ({ type, month, id, payroll? }) and to the ones given up on.
+        async checkGenerations() {
+            const finished = [];
+            const expired = [];
+            const still = [];
+            await Promise.all(this.pendingGenerations.map(async (g) => {
+                if (Date.now() - g.startedAt > PENDING_MAX_AGE) {
+                    expired.push(g);
+                    return;
+                }
+                try {
+                    if (g.id) {
+                        const response = await axiosInstance.get(`/payrolls/${g.id}`);
+                        const p = response.data.data;
+                        const replaced = g.baseline
+                            ? p.updated_at !== g.baseline
+                            : Date.parse(p.updated_at) > g.startedAt; // no baseline: newer than the click
+                        if (p.status !== "processing" && replaced) finished.push({ ...g, payroll: p });
+                        else still.push(g);
+                    } else {
+                        const response = await axiosInstance.get('/payrolls/check-period', { params: { salary_month: g.month, type: g.type } });
+                        const c = response.data.data;
+                        if (c.exists && c.status !== "processing") finished.push({ ...g, id: c.id });
+                        else still.push(g);
+                    }
+                } catch {
+                    still.push(g); // try again on the next tick
+                }
+            }));
+            // Keep generations tracked meanwhile (started while this ran).
+            const done = new Set([...finished, ...expired].map((g) => g.key));
+            this.pendingGenerations = this.pendingGenerations.filter((g) => !done.has(g.key));
+            writePending(this.pendingGenerations);
+            return { finished, expired };
         },
 
         async fetchPayroll(id) {
@@ -251,6 +350,7 @@ export const usePayrollStore = defineStore("payroll", {
                 const response = await axiosInstance.get('/payrolls/statistics');
 
                 this.statistics = response.data.data;
+                this.statisticsLoaded = true;
             } catch (error) {
                 this.error = handleError(error);
             } finally {

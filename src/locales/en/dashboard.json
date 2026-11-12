@@ -7,23 +7,6 @@
       "night": "Good evening, {name}"
     },
     "fallbackName": "there",
-    "subtitle": {
-      "superadmin": "Here's your system configuration overview.",
-      "manager": "Here's how the company is doing today.",
-      "operational_director": "Here's your operations & workforce snapshot.",
-      "hr": "Here's your people & workforce snapshot.",
-      "finance": "Here's your payroll & finance snapshot.",
-      "staff": "Here's your personal work overview.",
-      "default": "Here's what's happening today."
-    },
-    "roles": {
-      "superadmin": "Super Admin",
-      "manager": "Manager",
-      "operational_director": "Operational Director",
-      "hr": "HR",
-      "finance": "Finance Manager",
-      "staff": "Staff"
-    },
     "clockInOut": "Clock in / out",
     "announcements": "Announcements",
     "new": "New",
@@ -50,22 +33,7 @@
   },
   "layout": {
     "loadError": "Couldn't load your dashboard widgets.",
-    "editing": "Editing dashboard layout",
-    "editingHint": "Drag widgets to reorder · changes are saved for you only",
-    "reset": "Reset",
-    "resetTitle": "Reset Layout",
-    "resetConfirm": "Reset your dashboard back to the default widget order and sizes?",
-    "empty": "No widgets available for your role yet.",
-    "sizeOf": "Size of {name}",
-    "dragToReorder": "Drag to reorder: {name}",
-    "sizes": {
-      "small": "Small (1/3 width)",
-      "medium": "Medium (1/2 width)",
-      "large": "Large (full width)"
-    },
-    "saving": "Saving layout…",
-    "saved": "Layout saved",
-    "saveError": "Couldn't save layout"
+    "empty": "No widgets available for your role yet."
   },
   "quickLinks": {
     "empty": "No quick links available.",

@@ -67,6 +67,8 @@ const infraActive = computed(
   () => statisticsData.value.infrastructure.summary.total_infra_active
 );
 
+const hasStatistics = () => !!store.statistics?.fixed_cost_byMonth?.length || Number(store.statistics?.fixed_cost?.summary?.total_actual) > 0 || Number(store.statistics?.sdm_resource?.summary?.total_actual) > 0;
+
 // Helper format Rupiah
 const formatRp = (value: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -75,8 +77,9 @@ const formatRp = (value: number) =>
     minimumFractionDigits: 0,
   }).format(value);
 
+// Revisits show the figures already loaded and refresh them quietly.
 onMounted(() => {
-  store.fetchStatistics();
+  store.fetchStatistics({ quiet: hasStatistics() });
 });
 
 // Hidden by default -- these figures are sensitive, revealed only on demand.
@@ -115,7 +118,8 @@ const chartSeries = computed(() => [
 ]);
 
 const currentYear = new Date().getFullYear();
-const selectedYear = ref(currentYear);
+// v-model:year from the page (kept in its list state); local when unbound.
+const selectedYear = defineModel<number>("year", { default: () => new Date().getFullYear() });
 
 const MONTHS = [
   "01",
@@ -202,7 +206,20 @@ const chartOptions = computed(() => ({
   dataLabels: { enabled: false },
 }));
 
-const yearOptions = [2025, 2026, 2027, 2028, 2029, 2030];
+// From the earliest year with data to the current (or selected) year.
+const yearOptions = computed(() => {
+  const years = new Set<number>([currentYear, Number(selectedYear.value)]);
+  for (const list of [statisticsData.value.fixed_cost_byMonth, statisticsData.value.sdm_resource_byMonth, statisticsData.value.infrastructure_byMonth]) {
+    for (const item of list || []) {
+      const y = Number(String(item?.month ?? "").slice(0, 4));
+      if (y > 1900) years.add(y);
+    }
+  }
+  // Continuous range (newest first) so a year without data is still pickable.
+  const min = Math.min(...years);
+  const max = Math.max(...years);
+  return Array.from({ length: max - min + 1 }, (_, i) => max - i);
+});
 </script>
 
 <template>

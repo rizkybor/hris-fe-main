@@ -17,7 +17,8 @@ const TTL_MS = 5 * 60 * 1000;
 
 const SOURCES = {
   clients: () => axiosInstance.get("/clients").then((r) => r.data.data ?? []),
-  projects: () => axiosInstance.get("/projects/all/paginated", { params: { row_per_page: 100 } }).then((r) => r.data.data?.data ?? []),
+  // The whole list (pickers and filters must offer every project; includes budget).
+  projects: () => axiosInstance.get("/projects/all/paginated", { params: { row_per_page: 1000 } }).then((r) => r.data.data?.data ?? []),
   bankAccounts: () => axiosInstance.get("/bank-accounts").then((r) => r.data.data ?? []),
   pphTypes: () => axiosInstance.get("/options/pph-types").then((r) => r.data.data ?? []),
   employees: () => axiosInstance.get("employees").then((r) => r.data.data ?? []),

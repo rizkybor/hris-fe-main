@@ -4,14 +4,14 @@ import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/stores/auth";
 import { useGreetingStore } from "@/stores/greeting";
 import { useAnnouncementStore } from "@/stores/announcement";
-import { getRoleLabel } from "@/utils/badgeUtils";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
 import { can } from "@/helpers/permissionHelper";
+import { quoteForDate } from "@/utils/dailyQuote";
 import { UiBadge, UiButton } from "@/components/ui";
 import { SparklesIcon, PartyPopper, Cake, CalendarClock, Megaphone, Pin, Clock } from "lucide-vue-next";
 
-const { t, te } = useI18n();
+const { t, locale } = useI18n();
 const authStore = useAuthStore();
 const greetingStore = useGreetingStore();
 const { todayGreetings } = storeToRefs(greetingStore);
@@ -31,32 +31,15 @@ const greetingIcon = (type) => GREETING_ICONS[type] ?? SparklesIcon;
 
 const userName = computed(() => authStore.user?.name?.split(",")[0] || t("dashboard.welcome.fallbackName"));
 
-const primaryRole = computed(() => {
-  const roles = authStore.user?.roles || [];
-  if (roles.includes("superadmin")) return "superadmin";
-  if (roles.includes("manager")) return "manager";
-  if (roles.includes("operational_director")) return "operational_director";
-  if (roles.includes("hr")) return "hr";
-  if (roles.includes("finance")) return "finance";
-  if (roles.includes("staff")) return "staff";
-  return roles[0];
-});
-
 const greeting = computed(() => {
   const hour = new Date().getHours();
   const part = hour < 11 ? "morning" : hour < 15 ? "afternoon" : hour < 19 ? "evening" : "night";
   return t(`dashboard.welcome.greeting.${part}`, { name: userName.value });
 });
 
-const roleSubtitle = computed(() => {
-  const key = `dashboard.welcome.subtitle.${primaryRole.value}`;
-  return primaryRole.value && te(key) ? t(key) : t("dashboard.welcome.subtitle.default");
-});
-
-const roleLabel = computed(() => {
-  const key = `dashboard.welcome.roles.${primaryRole.value}`;
-  return te(key) ? t(key) : getRoleLabel(primaryRole.value);
-});
+// A motivational quote with its source, a different one every day (and
+// never the same twice in a week, see utils/dailyQuote.js).
+const quote = computed(() => quoteForDate(new Date(), locale.value));
 
 const todayLabel = computed(() =>
   new Date().toLocaleDateString(localeTag(), {
@@ -71,12 +54,12 @@ const todayLabel = computed(() =>
 <template>
   <div class="flex flex-col lg:flex-row lg:items-end gap-5">
     <div class="flex-1 min-w-0">
-      <div class="flex flex-wrap items-center gap-2 mb-1.5">
-        <p class="text-ui-small text-ui-muted capitalize">{{ todayLabel }}</p>
-        <UiBadge v-if="primaryRole" tone="outline">{{ roleLabel }}</UiBadge>
-      </div>
+      <p class="text-ui-small text-ui-muted capitalize mb-1.5">{{ todayLabel }}</p>
       <h1 class="text-ui-h1 sm:text-ui-display text-ui-ink">{{ greeting }}</h1>
-      <p class="text-ui-small text-ui-muted mt-1">{{ roleSubtitle }}</p>
+      <blockquote class="mt-1.5 max-w-2xl text-ui-small text-ui-muted">
+        <span class="italic">&ldquo;{{ quote.text }}&rdquo;</span>
+        <cite class="not-italic text-ui-faint whitespace-nowrap"> &mdash; {{ quote.source }}</cite>
+      </blockquote>
 
       <div v-if="todayGreetings.length > 0" class="mt-3 flex flex-wrap gap-2">
         <span

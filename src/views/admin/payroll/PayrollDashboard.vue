@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { usePayrollStore } from "@/stores/payroll";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
+import { debounce } from "lodash-es";
 import {
   DollarSign,
   UserCheck,
@@ -18,36 +19,113 @@ import {
   Trash2,
   RefreshCw,
   CheckCircle,
+  Search,
+  Loader2,
 } from "lucide-vue-next";
 import Alert from "@/components/common/Alert.vue";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import { can, hasAnyRole } from "@/helpers/permissionHelper";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useToastStore } from "@/stores/toast";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
+import { usePolling } from "@/composables/usePolling";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
-import { UiBadge, UiButton, UiEmpty, UiPageHeader, UiStat, UiTable } from "@/components/ui";
+import { UiAlert, UiBadge, UiButton, UiEmpty, UiInput, UiPageHeader, UiPagination, UiStat, UiTable } from "@/components/ui";
 
 const { t } = useI18n();
 
 const router = useRouter();
 const payrollStore = usePayrollStore();
 const alertModal = useAlertModalStore();
-const { payrolls, statistics, loading, success } = storeToRefs(payrollStore);
+const toast = useToastStore();
+const { payrolls, payrollsMeta, statistics, success } = storeToRefs(payrollStore);
 
-const fetchList = () => payrollStore.fetchPayrolls({ page: 1, row_per_page: 10 });
+const PER_PAGE = 10;
+// Page + search live in the URL and are remembered, so coming back from a
+// period's detail restores the same page.
+const list = useListState("payroll", { q: "", page: 1 });
 
-onMounted(async () => {
-  await payrollStore.fetchStatistics();
-  await fetchList();
-});
+// Search box: typed text is debounced into the list state (~300 ms).
+const searchInput = ref(list.q);
+const pushSearch = debounce((v) => { list.q = v.trim(); }, 300);
+watch(searchInput, (v) => pushSearch(v));
+watch(() => list.q, (v) => { if (v !== searchInput.value.trim()) searchInput.value = v; });
+
+const listParams = computed(() => ({
+  page: list.page,
+  row_per_page: PER_PAGE,
+  ...(list.q ? { search: list.q } : {}),
+}));
+
+// Statistics and the list load in parallel; a revisit shows what the store
+// already has and refreshes quietly.
+const { loading: statsLoading, refresh: refreshStats } = useStaleFetch(
+  () => payrollStore.fetchStatistics(),
+  { key: () => "payroll-stats", hasData: () => payrollStore.statisticsLoaded }
+);
+const { loading: listLoading, refreshing: listRefreshing, refresh: refreshList } = useStaleFetch(
+  () => payrollStore.fetchPayrolls(listParams.value),
+  { key: () => ["payroll-list", listParams.value], hasData: () => payrollStore.payrollsLoaded }
+);
+
+const refreshAllQuietly = () => Promise.all([refreshList({ force: true }), refreshStats({ force: true })]);
 
 // Deleting a paid payroll, or re-generating one that already has details,
 // overrides data that's already been processed/paid out -- restricted to
 // the same trusted roles server-side enforces.
 const canManagePayroll = computed(() => hasAnyRole(["superadmin", "manager", "finance"]));
 
+const typeLabel = (type) => (type === "thr" ? "THR" : t("payroll.common.payroll"));
+const monthLabel = (month) => formatDate(`${month}-01T00:00:00`);
+
+// ---- Queued generation: refresh quietly until it's done ------------------
+const isGenerating = (row) => payrollStore.isGenerating(row);
+const anyGenerating = computed(
+  () => payrollStore.pendingGenerations.length > 0 || payrolls.value.some((p) => p.status === "processing")
+);
+
+let polling = false;
+const pollTick = async () => {
+  if (polling) return;
+  polling = true;
+  try {
+    const before = new Map(payrolls.value.map((p) => [p.id, p.status]));
+    const { finished, expired } = payrollStore.pendingGenerations.length
+      ? await payrollStore.checkGenerations()
+      : { finished: [], expired: [] };
+    const listProcessing = payrolls.value.some((p) => p.status === "processing");
+    if (finished.length || listProcessing) {
+      // Silent: no skeleton, no dimming -- the rows just update.
+      await Promise.all([payrollStore.fetchPayrolls(listParams.value), finished.length ? payrollStore.fetchStatistics() : null]);
+    }
+    const announced = new Set(finished.map((g) => String(g.id)));
+    for (const g of finished) {
+      toast.success(t("payroll.generation.doneTitle", { label: typeLabel(g.type) }), t("payroll.generation.doneMessage", { period: monthLabel(g.month) }));
+    }
+    // Rows the API itself showed as processing that are done now.
+    const flipped = payrolls.value.filter((p) => before.get(p.id) === "processing" && p.status !== "processing" && !announced.has(String(p.id)));
+    for (const p of flipped) {
+      toast.success(t("payroll.generation.doneTitle", { label: typeLabel(p.type) }), t("payroll.generation.doneMessage", { period: formatDate(p.period || p.salary_month) }));
+    }
+    if (flipped.length && !finished.length) payrollStore.fetchStatistics();
+    for (const g of expired) {
+      toast.info(t("payroll.generation.slowTitle"), t("payroll.generation.slowMessage", { period: monthLabel(g.month) }));
+    }
+  } finally {
+    polling = false;
+  }
+};
+const poller = usePolling(pollTick, 5000);
+onMounted(() => {
+  // usePolling starts on mount; run only while something is generating.
+  if (!anyGenerating.value) poller.pause();
+});
+watch(anyGenerating, (on) => (on ? poller.resume() : poller.pause()));
+
 const handleDeletePayroll = async (payroll) => {
-  const label = payroll.type === "thr" ? "THR" : t("payroll.common.payroll");
+  const label = typeLabel(payroll.type);
   const ok = await alertModal.confirm(
     t("payroll.dashboard.deleteConfirm", { label, period: formatDate(payroll.period || payroll.salary_month) }),
     { type: "danger", confirmText: t("common.actions.delete") }
@@ -56,8 +134,12 @@ const handleDeletePayroll = async (payroll) => {
 
   try {
     await payrollStore.deletePayroll(payroll.id);
-    await payrollStore.fetchStatistics();
-    await fetchList();
+    payrollStore.clearMessages();
+    // Drop the row now; meta/totals and the next row are server-side.
+    payrollStore.payrolls = payrollStore.payrolls.filter((p) => p.id !== payroll.id);
+    if (!payrollStore.payrolls.length && list.page > 1) list.page -= 1;
+    else refreshAllQuietly();
+    toast.success(t("payroll.dashboard.deleted", { label }));
   } catch (error) {
     await alertModal.alert(
       error?.response?.data?.message || t("payroll.dashboard.deleteFailed"),
@@ -67,14 +149,14 @@ const handleDeletePayroll = async (payroll) => {
 };
 
 const handleRegenerate = async (payroll) => {
-  const label = payroll.type === "thr" ? "THR" : t("payroll.common.payroll");
+  const label = typeLabel(payroll.type);
   const ok = await alertModal.confirm(
     t("payroll.dashboard.regenerateConfirm", { label, period: formatDate(payroll.period || payroll.salary_month) }),
     { type: "warning", confirmText: t("payroll.common.regenerate") }
   );
   if (!ok) return;
 
-  const salaryMonth = new Date(payroll.salary_month).toISOString().slice(0, 7);
+  const salaryMonth = String(payroll.salary_month).slice(0, 7);
   const payload = { salary_month: salaryMonth, regenerate: true };
 
   try {
@@ -83,12 +165,9 @@ const handleRegenerate = async (payroll) => {
     } else {
       await payrollStore.generatePayroll(payload);
     }
-    await alertModal.alert(
-      t("payroll.dashboard.regenerateQueued", { label }),
-      { type: "success" }
-    );
-    await payrollStore.fetchStatistics();
-    await fetchList();
+    payrollStore.clearMessages();
+    payrollStore.trackGeneration({ type: payroll.type || "monthly", month: salaryMonth, id: payroll.id, baseline: payroll.updated_at });
+    toast.info(t("payroll.generation.queuedTitle", { label }), t("payroll.generation.queuedMessage"));
   } catch (error) {
     await alertModal.alert(
       error?.response?.data?.message || t("payroll.dashboard.regenerateFailed", { label }),
@@ -170,7 +249,7 @@ const viewDetails = (id) => {
         class="col-span-2 lg:col-span-1"
         :label="$t('payroll.dashboard.stats.totalAmount')"
         :icon="DollarSign"
-        :loading="loading"
+        :loading="statsLoading"
         :hint="salaryChangeHint"
       >
         <span class="inline-flex items-center gap-1.5">
@@ -186,16 +265,16 @@ const viewDetails = (id) => {
           </button>
         </span>
       </UiStat>
-      <UiStat :label="$t('payroll.dashboard.stats.employeesPaid')" :icon="UserCheck" :loading="loading" :value="statistics.total_payroll ?? 0" :hint="$t('payroll.dashboard.stats.thisMonth')" />
+      <UiStat :label="$t('payroll.dashboard.stats.employeesPaid')" :icon="UserCheck" :loading="statsLoading" :value="statistics.total_payroll ?? 0" :hint="$t('payroll.dashboard.stats.thisMonth')" />
       <UiStat
         :label="$t('payroll.dashboard.stats.pending')"
         :icon="Clock"
-        :loading="loading"
+        :loading="statsLoading"
         :value="statistics.pending_review ?? 0"
         :tone="statistics.pending_review ? 'warn' : ''"
         :hint="$t('payroll.dashboard.stats.needApproval')"
       />
-      <UiStat :label="$t('payroll.dashboard.stats.averageSalary')" :icon="Banknote" :loading="loading" :hint="$t('payroll.dashboard.stats.perEmployee')">
+      <UiStat :label="$t('payroll.dashboard.stats.averageSalary')" :icon="Banknote" :loading="statsLoading" :hint="$t('payroll.dashboard.stats.perEmployee')">
         <span class="inline-flex items-center gap-1.5">
           <span>{{ isAverageSalaryVisible ? formatRupiahCompact(statistics.average_salary) : "Rp ••••••" }}</span>
           <button
@@ -209,23 +288,45 @@ const viewDetails = (id) => {
           </button>
         </span>
       </UiStat>
-      <UiStat :label="$t('payroll.dashboard.stats.finalized')" :icon="CheckCircle" :loading="loading" :value="statistics.finalized ?? 0" :hint="$t('payroll.dashboard.stats.thisMonth')" />
+      <UiStat :label="$t('payroll.dashboard.stats.finalized')" :icon="CheckCircle" :loading="statsLoading" :value="statistics.finalized ?? 0" :hint="$t('payroll.dashboard.stats.thisMonth')" />
     </div>
 
-    <Alert type="success" :title="success" :show="success" @close="payrollStore.clearMessages()" />
+    <Alert type="success" :title="success" :show="!!success" @close="payrollStore.clearMessages()" />
+
+    <!-- Queued generations started from this browser -->
+    <UiAlert v-if="payrollStore.pendingGenerations.length" tone="info" :title="$t('payroll.generation.runningTitle')">
+      <span v-for="g in payrollStore.pendingGenerations" :key="g.key" class="inline-flex items-center gap-1.5 mr-4 font-medium text-ui-ink">
+        <Loader2 class="w-3.5 h-3.5 animate-spin" />{{ typeLabel(g.type) }} · {{ monthLabel(g.month) }}
+      </span>
+      <span class="block mt-1">{{ $t("payroll.generation.runningHint") }}</span>
+    </UiAlert>
 
     <!-- Monthly Payroll Periods -->
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
-      <div class="px-4 sm:px-5 pt-4 pb-3 border-b border-ui-line">
-        <h2 class="text-ui-h2 text-ui-ink">{{ $t("payroll.dashboard.periodsTitle") }}</h2>
-        <p class="text-ui-cap text-ui-muted">{{ $t("payroll.dashboard.periodsSubtitle") }}</p>
+      <div class="px-4 sm:px-5 pt-4 pb-3 border-b border-ui-line flex flex-col md:flex-row md:items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <h2 class="text-ui-h2 text-ui-ink flex items-center gap-2">
+            {{ $t("payroll.dashboard.periodsTitle") }}
+            <Loader2 v-if="listRefreshing" class="w-4 h-4 text-ui-faint animate-spin" :aria-label="$t('payroll.dashboard.refreshing')" />
+          </h2>
+          <p class="text-ui-cap text-ui-muted">{{ $t("payroll.dashboard.periodsSubtitle") }}</p>
+        </div>
+        <UiInput
+          v-model="searchInput"
+          :icon="Search"
+          :placeholder="$t('payroll.dashboard.searchPlaceholder')"
+          :aria-label="$t('payroll.dashboard.searchPlaceholder')"
+          class="md:w-[300px]"
+        />
       </div>
 
       <UiTable
         :columns="columns"
         :rows="payrolls"
-        :loading="loading"
+        :meta="payrollsMeta"
+        :loading="listLoading"
         :skeleton-rows="4"
+        :class="listRefreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
         clickable
         @row-click="(row) => viewDetails(row.id)"
       >
@@ -245,7 +346,10 @@ const viewDetails = (id) => {
           <span class="text-ui-muted">{{ formatProcessedDate(row.created_at) }}</span>
         </template>
         <template #cell-status="{ row }">
-          <UiBadge :tone="statusOf(row.status).tone" dot>{{ statusOf(row.status).label }}</UiBadge>
+          <UiBadge v-if="isGenerating(row)" tone="warn">
+            <Loader2 class="w-3 h-3 animate-spin" />{{ $t("payroll.status.processing") }}
+          </UiBadge>
+          <UiBadge v-else :tone="statusOf(row.status).tone" dot>{{ statusOf(row.status).label }}</UiBadge>
         </template>
         <template #cell-total_amount="{ row }">
           <span class="tabular-nums text-ui-ink font-medium">{{ isTotalAmountVisible ? formatRupiahCompact(row.total_amount) : "Rp ••••••" }}</span>
@@ -267,7 +371,10 @@ const viewDetails = (id) => {
               </p>
               <div class="flex items-center gap-1.5 mt-1.5">
                 <UiBadge v-if="row.type === 'thr'" tone="accent">THR</UiBadge>
-                <UiBadge :tone="statusOf(row.status).tone" dot>{{ statusOf(row.status).label }}</UiBadge>
+                <UiBadge v-if="isGenerating(row)" tone="warn">
+                  <Loader2 class="w-3 h-3 animate-spin" />{{ $t("payroll.status.processing") }}
+                </UiBadge>
+                <UiBadge v-else :tone="statusOf(row.status).tone" dot>{{ statusOf(row.status).label }}</UiBadge>
               </div>
             </div>
             <div class="text-right shrink-0">
@@ -299,11 +406,22 @@ const viewDetails = (id) => {
         </template>
 
         <template #empty>
-          <UiEmpty :icon="Calendar" :title="$t('payroll.dashboard.empty.title')" :message="$t('payroll.dashboard.empty.message')" compact>
+          <UiEmpty v-if="list.q" :icon="Search" :title="$t('payroll.dashboard.emptySearch.title')" :message="$t('payroll.dashboard.emptySearch.message')" compact>
+            <UiButton variant="secondary" size="sm" @click="searchInput = ''">{{ $t("payroll.dashboard.emptySearch.clear") }}</UiButton>
+          </UiEmpty>
+          <UiEmpty v-else :icon="Calendar" :title="$t('payroll.dashboard.empty.title')" :message="$t('payroll.dashboard.empty.message')" compact>
             <UiButton v-if="can('payroll-create')" :icon="Plus" size="sm" :to="{ name: 'admin.payroll.create' }">{{ $t("payroll.dashboard.createNew") }}</UiButton>
           </UiEmpty>
         </template>
       </UiTable>
+
+      <UiPagination
+        v-if="payrollsMeta?.total > 0"
+        :meta="payrollsMeta"
+        :item-label="$t('payroll.dashboard.itemLabel')"
+        :disabled="listLoading"
+        @change="(p) => (list.page = p)"
+      />
     </section>
   </div>
 </template>

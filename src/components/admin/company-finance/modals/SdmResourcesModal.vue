@@ -2,7 +2,7 @@
 import UsageStatusFields from "./UsageStatusFields.vue";
 import { UiModal, UiInput, UiSelect, UiButton } from "@/components/ui";
 import { useI18n } from "vue-i18n";
-import { reactive, watch, computed, onMounted } from "vue";
+import { reactive, watch, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useSdmFieldStore } from "@/stores/sdmField";
 
@@ -22,9 +22,12 @@ const props = defineProps({
 const sdmFieldStore = useSdmFieldStore();
 const { fields } = storeToRefs(sdmFieldStore);
 
-onMounted(() => {
-  if (fields.value.length === 0) sdmFieldStore.fetchFields();
-});
+// The field list is only needed once the modal opens (cached afterwards).
+watch(
+  () => props.show,
+  (show) => show && sdmFieldStore.ensureFields(),
+  { immediate: true }
+);
 
 const fieldOptions = computed(() => fields.value.map((f) => ({ value: f.id, label: f.name })));
 
