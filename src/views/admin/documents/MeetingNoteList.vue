@@ -170,14 +170,6 @@ const formatDateTime = (date) =>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5" @click.stop>
             <UiButton
-              variant="secondary"
-              size="sm"
-              :icon="FileText"
-              :loading="viewingId === row.id"
-              :aria-label="$t('documents.shared.viewPdfItem', { number: row.document_number })"
-              @click="handleViewPdf(row)"
-            >{{ $t("documents.shared.pdf") }}</UiButton>
-            <UiButton
               v-if="can('meeting-note-pin')"
               variant="ghost"
               size="sm"
@@ -188,6 +180,14 @@ const formatDateTime = (date) =>
               :aria-label="row.is_pinned ? $t('documents.meetingNote.list.unpin') : $t('documents.meetingNote.list.pin')"
               @click="togglePin(row)"
             />
+            <UiButton
+              variant="secondary"
+              size="sm"
+              :icon="FileText"
+              :loading="viewingId === row.id"
+              :aria-label="$t('documents.shared.viewPdfItem', { number: row.document_number })"
+              @click="handleViewPdf(row)"
+            >{{ $t("documents.shared.pdf") }}</UiButton>
             <UiButton
               v-if="can('meeting-note-delete')"
               variant="ghost"

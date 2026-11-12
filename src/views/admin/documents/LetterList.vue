@@ -195,13 +195,15 @@ const formatDate = (date) =>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5" @click.stop>
             <UiButton
-              variant="secondary"
+              v-if="can('letter-edit') && row.status !== 'cancelled'"
+              variant="ghost"
               size="sm"
-              :icon="FileText"
-              :loading="viewingId === row.id"
-              :aria-label="$t('documents.shared.viewPdfItem', { number: row.letter_number })"
-              @click="handleViewPdf(row)"
-            >{{ $t("documents.shared.pdf") }}</UiButton>
+              :icon="Ban"
+              class="!text-ui-faint hover:!text-ui-warn hover:!bg-ui-warn-soft"
+              :title="$t('documents.letter.list.cancelLetter')"
+              :aria-label="$t('documents.shared.cancelItem', { number: row.letter_number })"
+              @click="handleCancel(row)"
+            />
             <UiButton
               variant="ghost"
               size="sm"
@@ -212,15 +214,13 @@ const formatDate = (date) =>
               @click="handleDownload(row)"
             />
             <UiButton
-              v-if="can('letter-edit') && row.status !== 'cancelled'"
-              variant="ghost"
+              variant="secondary"
               size="sm"
-              :icon="Ban"
-              class="!text-ui-faint hover:!text-ui-warn hover:!bg-ui-warn-soft"
-              :title="$t('documents.letter.list.cancelLetter')"
-              :aria-label="$t('documents.shared.cancelItem', { number: row.letter_number })"
-              @click="handleCancel(row)"
-            />
+              :icon="FileText"
+              :loading="viewingId === row.id"
+              :aria-label="$t('documents.shared.viewPdfItem', { number: row.letter_number })"
+              @click="handleViewPdf(row)"
+            >{{ $t("documents.shared.pdf") }}</UiButton>
             <UiButton
               v-if="can('letter-delete')"
               variant="ghost"

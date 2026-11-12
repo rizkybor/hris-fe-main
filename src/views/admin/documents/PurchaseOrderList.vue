@@ -201,9 +201,10 @@ const quietDelete = "!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft";
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5" @click.stop>
-            <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.po_number })" :title="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.po_number })" @click="handleDownload(row)" />
+            <!-- Status actions first, so View and Delete line up on the right -->
             <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" :title="$t('documents.purchaseOrder.list.cancelPo')" :aria-label="$t('documents.shared.cancelItem', { number: row.po_number })" @click="handleCancel(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.po_number })" @click="handleDownload(row)" />
+            <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.po_number })" :title="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)">{{ $t("documents.shared.pdf") }}</UiButton>
             <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" :class="['w-[30px] !px-0', quietDelete]" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('documents.shared.deleteItem', { number: row.po_number })" @click="confirmDelete(row)" />
           </div>
         </template>
@@ -226,7 +227,7 @@ const quietDelete = "!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft";
               <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
             </div>
             <div class="flex items-center gap-1 mt-2 pl-8" @click.stop>
-              <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.po_number })" @click="handleViewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
+              <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.po_number })" @click="handleViewPdf(row)">{{ $t("documents.shared.pdf") }}</UiButton>
               <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.po_number })" @click="handleDownload(row)" />
               <UiButton v-if="can('purchase-order-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" :aria-label="$t('documents.shared.cancelItem', { number: row.po_number })" @click="handleCancel(row)" />
               <UiButton v-if="can('purchase-order-delete')" variant="ghost" size="sm" :class="['w-[30px] !px-0 ml-auto', quietDelete]" :icon="Trash2" :aria-label="$t('documents.shared.deleteItem', { number: row.po_number })" @click="confirmDelete(row)" />

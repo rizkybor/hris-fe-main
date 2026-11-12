@@ -23,8 +23,10 @@ export async function openBlobPdf(tab, request) {
     }
     const response = await request();
     const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
-    if (tab && !tab.closed) tab.location.href = url;
-    else window.open(url, "_blank");
+    // No tab (the browser blocked it): try once more. A tab the user has
+    // closed meanwhile stays closed.
+    if (!tab) window.open(url, "_blank");
+    else if (!tab.closed) tab.location.href = url;
   } catch (error) {
     tab?.close();
     throw error;

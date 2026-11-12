@@ -136,7 +136,7 @@ const subline = (row) => [row.invoice_number, row.project?.name].filter(Boolean)
 const receiptNote = (row) => {
   const receipts = row.receipts || [];
   if (!receipts.length) return "";
-  return `${t("documents.invoice.list.receiptPrefix")} ${receipts[0].receipt_number}${receipts.length > 1 ? ` +${receipts.length - 1}` : ""}`;
+  return `${receipts[0].receipt_number}${receipts.length > 1 ? ` +${receipts.length - 1}` : ""}`;
 };
 
 const statusOptions = computed(() =>
@@ -224,14 +224,15 @@ const quietDelete = "!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft";
         </template>
         <template #cell-status="{ row }">
           <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
-          <p v-if="receiptNote(row)" class="mt-1 font-mono text-ui-cap text-ui-muted whitespace-nowrap">{{ receiptNote(row) }}</p>
+          <p v-if="receiptNote(row)" class="mt-1 text-ui-cap text-ui-muted whitespace-nowrap">{{ $t("documents.invoice.list.receiptPrefix") }} <span class="font-mono">{{ receiptNote(row) }}</span></p>
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5" @click.stop>
-            <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.invoice_number })" :title="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
-            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.invoice_number })" @click="handleDownload(row)" />
+            <!-- Status actions first, so View and Delete line up on the right -->
             <UiButton v-if="can('invoice-edit') && row.status === 'unpaid'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-ok" :icon="CheckCircle2" :title="$t('documents.invoice.list.markPaid')" :aria-label="$t('documents.invoice.list.markPaid')" @click="handleMarkPaid(row)" />
             <UiButton v-if="can('invoice-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0 hover:text-ui-warn" :icon="Ban" :title="$t('documents.invoice.list.cancelInvoice')" :aria-label="$t('documents.shared.cancelItem', { number: row.invoice_number })" @click="handleCancel(row)" />
+            <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :title="$t('common.actions.downloadPdf')" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.invoice_number })" @click="handleDownload(row)" />
+            <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.invoice_number })" :title="$t('documents.shared.viewPdf')" @click="handleViewPdf(row)">{{ $t("documents.shared.pdf") }}</UiButton>
             <UiButton v-if="can('invoice-delete')" variant="ghost" size="sm" :class="['w-[30px] !px-0', quietDelete]" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('documents.shared.deleteItem', { number: row.invoice_number })" @click="confirmDelete(row)" />
           </div>
         </template>
@@ -253,11 +254,11 @@ const quietDelete = "!text-ui-faint hover:!text-ui-bad hover:!bg-ui-bad-soft";
             <div class="flex items-center gap-2 mt-2 pl-8">
               <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                 <UiBadge :tone="statusTone(row.status)" dot>{{ statusLabel(row.status) }}</UiBadge>
-                <span v-if="receiptNote(row)" class="font-mono text-ui-cap text-ui-muted truncate">{{ receiptNote(row) }}</span>
+                <span v-if="receiptNote(row)" class="text-ui-cap text-ui-muted truncate">{{ $t("documents.invoice.list.receiptPrefix") }} <span class="font-mono">{{ receiptNote(row) }}</span></span>
               </div>
             </div>
             <div class="flex items-center gap-1 mt-2 pl-8" @click.stop>
-              <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.invoice_number })" @click="handleViewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
+              <UiButton variant="secondary" size="sm" :icon="FileText" :loading="viewingId === row.id" :aria-label="$t('documents.shared.viewPdfItem', { number: row.invoice_number })" @click="handleViewPdf(row)">{{ $t("documents.shared.pdf") }}</UiButton>
               <UiButton variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Download" :loading="downloadingId === row.id" :aria-label="$t('documents.shared.downloadPdfItem', { number: row.invoice_number })" @click="handleDownload(row)" />
               <UiButton v-if="can('invoice-edit') && row.status === 'unpaid'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="CheckCircle2" :aria-label="$t('documents.invoice.list.markPaid')" @click="handleMarkPaid(row)" />
               <UiButton v-if="can('invoice-edit') && row.status !== 'cancelled'" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Ban" :aria-label="$t('documents.shared.cancelItem', { number: row.invoice_number })" @click="handleCancel(row)" />

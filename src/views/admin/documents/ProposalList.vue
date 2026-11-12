@@ -187,7 +187,7 @@ const onShared = (updated) => store.patchRow(updated.id, { status: updated.statu
           :icon="Search"
           :placeholder="$t('documents.proposal.list.searchPlaceholder')"
           :aria-label="$t('documents.proposal.list.searchPlaceholder')"
-          class="w-full lg:w-[280px] shrink-0"
+          class="w-full lg:w-[320px] shrink-0"
         />
         <UiChips v-model="statusFilter" :options="STATUS_OPTIONS" size="sm" class="min-w-0 lg:flex-1" />
         <span v-if="refreshing" class="inline-flex items-center gap-1.5 text-ui-cap text-ui-muted shrink-0" role="status">
@@ -231,7 +231,7 @@ const onShared = (updated) => store.patchRow(updated.id, { status: updated.statu
         </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-0.5" @click.stop>
-            <UiButton variant="secondary" size="sm" :icon="FileText" :loading="busyId === `pdf-${row.id}`" :title="$t('documents.shared.viewPdf')" :aria-label="$t('documents.shared.viewPdfItem', { number: row.title })" @click="viewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
+            <UiButton variant="secondary" size="sm" :icon="FileText" :loading="busyId === `pdf-${row.id}`" :title="$t('documents.shared.viewPdf')" :aria-label="$t('documents.shared.viewPdfItem', { number: row.title })" @click="viewPdf(row)">{{ $t("documents.shared.pdf") }}</UiButton>
             <UiButton v-if="can('proposal-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Share2" :title="$t('documents.proposal.list.shareHint')" :aria-label="$t('common.actions.share')" @click="sharingId = row.id" />
             <UiButton v-if="canCreate" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Copy" :loading="busyId === `dup-${row.id}`" :title="$t('common.actions.duplicate')" :aria-label="$t('common.actions.duplicate')" @click="duplicate(row)" />
             <UiButton v-if="can('proposal-delete')" variant="ghost" size="sm" :class="['w-[30px] !px-0', quietDelete]" :icon="Trash2" :title="$t('common.actions.delete')" :aria-label="$t('documents.shared.deleteItem', { number: row.title })" @click="handleDelete(row)" />
@@ -253,7 +253,7 @@ const onShared = (updated) => store.patchRow(updated.id, { status: updated.statu
               {{ formatDate(row.proposal_date) }}<template v-if="row.letter_number"> · <span class="font-mono">{{ row.letter_number }}</span></template>
             </p>
             <div class="flex items-center gap-1 mt-2 pl-8" @click.stop>
-              <UiButton variant="secondary" size="sm" :icon="FileText" :loading="busyId === `pdf-${row.id}`" :aria-label="$t('documents.shared.viewPdfItem', { number: row.title })" @click="viewPdf(row)">{{ $t("common.actions.view") }}</UiButton>
+              <UiButton variant="secondary" size="sm" :icon="FileText" :loading="busyId === `pdf-${row.id}`" :aria-label="$t('documents.shared.viewPdfItem', { number: row.title })" @click="viewPdf(row)">{{ $t("documents.shared.pdf") }}</UiButton>
               <UiButton v-if="can('proposal-edit')" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Share2" :aria-label="$t('common.actions.share')" @click="sharingId = row.id" />
               <UiButton v-if="canCreate" variant="ghost" size="sm" class="w-[30px] !px-0" :icon="Copy" :loading="busyId === `dup-${row.id}`" :aria-label="$t('common.actions.duplicate')" @click="duplicate(row)" />
               <UiButton v-if="can('proposal-delete')" variant="ghost" size="sm" :class="['w-[30px] !px-0 ml-auto', quietDelete]" :icon="Trash2" :aria-label="$t('documents.shared.deleteItem', { number: row.title })" @click="handleDelete(row)" />
