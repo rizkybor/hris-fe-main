@@ -13,6 +13,12 @@
 // spray of blue/white sparks. Three quick clicks: it glows white, takes off
 // and flutters around the whole screen like a butterfly for a few seconds with
 // sparks trailing from its wings, then lands back in place.
+//
+// Idle: after 20 s without any activity on the page (pointer, touch, keys,
+// scroll) it does one sudden manoeuvre -- a dart to the side, a backflip or a
+// startled zig-zag spin, never the same one twice in a row -- and repeats
+// roughly every 20 s while the page stays idle. Timed in animation time, so
+// a hidden tab doesn't save one up for when you come back.
 import {
   AmbientLight,
   BufferAttribute,
@@ -444,6 +450,50 @@ export async function start(host, onReady) {
   canvas.addEventListener("pointerleave", onLeave);
   canvas.addEventListener("pointerdown", onDown);
 
+  // ---- Idle manoeuvre ----
+  const IDLE_S = 20;
+  const MANEUVERS = { dart: 1.5, salto: 1.6, startle: 1.35 }; // name -> seconds
+  let idleSince = 0; // animation clock at the last activity
+  let nextIdleAt = IDLE_S;
+  let maneuver = null; // { kind, start, dir }
+  let lastKind = null;
+  const ACTIVITY = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"];
+  const onActivity = () => {
+    idleSince = clock;
+    nextIdleAt = IDLE_S;
+  };
+  ACTIVITY.forEach((type) => window.addEventListener(type, onActivity, { passive: true }));
+  const startManeuver = () => {
+    const kinds = Object.keys(MANEUVERS).filter((k) => k !== lastKind);
+    const kind = kinds[Math.floor(Math.random() * kinds.length)];
+    lastKind = kind;
+    maneuver = { kind, start: clock, dir: Math.random() < 0.5 ? -1 : 1 };
+    host.dataset.maneuver = kind; // lets tests (and devtools) see it happen
+    excite = 1; // a sudden burst of wing beats
+    burst();
+  };
+  const easeOutBack = (x) => 1 + 2.2 * (x - 1) ** 3 + 1.2 * (x - 1) ** 2;
+  const easeInOut = (x) => (x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2);
+  // Offsets added on top of the resting pose, p = 0..1 through the manoeuvre.
+  const maneuverPose = ({ kind, dir }, p) => {
+    if (kind === "dart") {
+      // Shoot out to one side, banked into it, then spring back past home.
+      const env = p < 0.18 ? easeOutCubic(p / 0.18) : 1 - easeOutBack((p - 0.18) / 0.82);
+      return { x: dir * W * 0.15 * env, y: H * 0.05 * Math.sin(Math.PI * Math.min(1, p / 0.6)), rx: 0, ry: dir * 0.35 * env, rz: -dir * 0.55 * env };
+    }
+    if (kind === "salto") {
+      // A crouch, a jump and a quick backflip, landing with a small bounce.
+      const crouch = p < 0.12 ? -Math.sin((Math.PI * p) / 0.12) * H * 0.04 : 0;
+      const air = p >= 0.12 && p < 0.86 ? Math.sin((Math.PI * (p - 0.12)) / 0.74) * H * 0.18 : 0;
+      const bounce = p >= 0.86 ? Math.sin((Math.PI * (p - 0.86)) / 0.14) * H * 0.025 : 0;
+      const flip = p >= 0.12 && p < 0.86 ? -Math.PI * 2 * easeInOut((p - 0.12) / 0.74) : 0;
+      return { x: 0, y: crouch + air + bounce, rx: flip, ry: 0, rz: 0 };
+    }
+    // startle: two sharp zig-zags while it whips round once.
+    const fade = 1 - easeInOut(p);
+    return { x: dir * W * 0.1 * Math.sin(p * Math.PI * 3) * fade, y: H * 0.03 * Math.sin(p * Math.PI * 6) * fade, rx: 0, ry: dir * Math.PI * 2 * easeOutCubic(p), rz: 0.3 * Math.sin(p * Math.PI * 3) * fade };
+  };
+
   // ---- Loop ----
   let raf = 0;
   let last = 0;
@@ -578,9 +628,25 @@ export async function start(host, onReady) {
       }
       if (flight.t >= FLIGHT_S && (liveSparks === 0 || flight.t >= FLIGHT_S + 1)) endFlight();
     } else {
-      logo.rotation.y = 0.32 * Math.sin(t * 0.33) * (1 - hoverAmt * 0.6) + tiltY + spin;
-      logo.rotation.x = -0.12 + 0.06 * Math.sin(t * 0.47) + tiltX;
-      logo.position.y = bob;
+      // Idle long enough (and not busy with a click spin): a sudden manoeuvre.
+      if (!maneuver && sp >= 1 && t - idleSince >= nextIdleAt) {
+        startManeuver();
+        nextIdleAt = t - idleSince + 16 + Math.random() * 8; // again in ~20 s if still idle
+      }
+      let m = { x: 0, y: 0, rx: 0, ry: 0, rz: 0 };
+      if (maneuver) {
+        const mp = (t - maneuver.start) / MANEUVERS[maneuver.kind];
+        if (mp >= 1) {
+          maneuver = null;
+          delete host.dataset.maneuver;
+        }
+        else m = maneuverPose(maneuver, mp);
+      }
+      logo.rotation.y = 0.32 * Math.sin(t * 0.33) * (1 - hoverAmt * 0.6) + tiltY + spin + m.ry;
+      logo.rotation.x = -0.12 + 0.06 * Math.sin(t * 0.47) + tiltX + m.rx;
+      logo.rotation.z = m.rz;
+      logo.position.x = m.x;
+      logo.position.y = bob + m.y;
       logo.scale.setScalar(1 + 0.05 * hoverAmt + 0.06 * excite);
     }
     const glow = 0.32 + 0.18 * hoverAmt + 0.35 * excite + Math.max(0, flash);
@@ -601,6 +667,7 @@ export async function start(host, onReady) {
     canvas.removeEventListener("pointermove", onMove);
     canvas.removeEventListener("pointerleave", onLeave);
     canvas.removeEventListener("pointerdown", onDown);
+    ACTIVITY.forEach((type) => window.removeEventListener(type, onActivity));
     window.removeEventListener("resize", resize);
     sparkGeo.dispose();
     sparkMat.dispose();
