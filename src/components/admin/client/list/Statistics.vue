@@ -8,11 +8,13 @@ import { UiStat } from "@/components/ui";
 
 /* ================= STORE ================= */
 const clientStore = useClientStore();
-const { loading, statistics } = storeToRefs(clientStore);
+const { loadingStatistics, statistics } = storeToRefs(clientStore);
 
 /* ================= FETCH ================= */
+// The Clients page loads /clients/statistic once (it also feeds the
+// Type/Field filters); load it here only when nothing else has.
 onMounted(() => {
-  clientStore.fetchClientStatistics();
+  if (!statistics.value && !loadingStatistics.value) clientStore.fetchClientStatistics();
 });
 
 /* ================= COMPUTED ================= */
@@ -105,7 +107,7 @@ watch(
       :icon="Briefcase"
       :value="totalClient"
       :hint="$t('clients.stats.totalHint')"
-      :loading="loading && !statistics"
+      :loading="loadingStatistics && !statistics"
     />
 
     <!-- By type / by field -->

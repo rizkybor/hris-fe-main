@@ -1,5 +1,7 @@
 <script setup>
 import { onMounted, ref, computed, watch } from "vue";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
 import { debounce } from "lodash-es";
 import { storeToRefs } from "pinia";
 import {
@@ -24,7 +26,7 @@ import {
   UserRound,
 } from "lucide-vue-next";
 import { useCompanyCashTransactionStore } from "@/stores/companyCashTransaction";
-import { useProjectStore } from "@/stores/project";
+import { useLookupStore } from "@/stores/lookups";
 import { formatRupiah } from "@/utils/formatUtils";
 import { can } from "@/helpers/permissionHelper";
 import Pagination from "@/components/common/Pagination.vue";
@@ -46,30 +48,45 @@ const {
   spendingByEmployee,
   employeeOptions,
   meta,
-  loading,
+  refreshing: storeRefreshing,
   saving,
 } = storeToRefs(store);
 
-const projectStore = useProjectStore();
-const { projects } = storeToRefs(projectStore);
+// Project filter: the complete, cached project list (not projectStore's
+// paginated Projects page).
+const lookups = useLookupStore();
 
 const canManage = computed(() => can("company-cash-book-create"));
 
+// ===== Tab, filters, period and page: kept in the URL + remembered =====
+const FILTER_DEFAULTS = { search: "", project_id: "", type: "", source: "", employee_id: "", start_date: "", end_date: "" };
+const filters = useListState("cash-book", { tab: "all", ...FILTER_DEFAULTS, page: 1, per: 15 });
+if (!["all", "spending"].includes(filters.tab)) filters.tab = "all";
+
 // ===== Tabs: every transaction, or Spending (on behalf of an employee) =====
-const activeTab = ref("all");
+const activeTab = computed(() => filters.tab);
 const isSpendingTab = computed(() => activeTab.value === "spending");
 const switchTab = (tab) => {
-  if (activeTab.value === tab) return;
-  activeTab.value = tab;
-  // Filters that don't apply to the other tab are cleared; dates/search stay.
-  filters.value = { ...filters.value, project_id: "", type: "", source: "", employee_id: "" };
+  if (filters.tab === tab) return;
+  // One change set = one request. Filters that don't apply to the other
+  // tab are cleared; dates/search stay.
+  Object.assign(filters, { tab, project_id: "", type: "", source: "", employee_id: "" });
 };
 
 // ===== Filters =====
-const emptyFilters = () => ({ search: "", project_id: "", type: "", source: "", employee_id: "", start_date: "", end_date: "" });
-const filters = ref(emptyFilters());
-const hasFilters = computed(() => Object.values(filters.value).some(Boolean));
-const resetFilters = () => (filters.value = emptyFilters());
+// The search box is debounced into the list state.
+const searchInput = ref(filters.search);
+watch(
+  searchInput,
+  debounce((value) => {
+    if (value !== filters.search) filters.search = value;
+  }, 300)
+);
+const hasFilters = computed(() => Object.keys(FILTER_DEFAULTS).some((key) => Boolean(filters[key])));
+const resetFilters = () => {
+  searchInput.value = "";
+  Object.assign(filters, FILTER_DEFAULTS);
+};
 
 // Quick ranges for the date filter (WIB calendar days).
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -82,22 +99,22 @@ const activePeriod = computed(() => {
   const now = new Date();
   return PERIODS.value.find((p) => {
     const [a, b] = p.range(now).map(ymd);
-    return filters.value.start_date === a && filters.value.end_date === b;
+    return filters.start_date === a && filters.end_date === b;
   })?.key;
 });
 const applyPeriod = (p) => {
   if (activePeriod.value === p.key) {
-    filters.value = { ...filters.value, start_date: "", end_date: "" };
+    Object.assign(filters, { start_date: "", end_date: "" });
     return;
   }
   const [a, b] = p.range(new Date()).map(ymd);
-  filters.value = { ...filters.value, start_date: a, end_date: b };
+  Object.assign(filters, { start_date: a, end_date: b });
 };
 
-const fetchData = (page = 1, rowPerPage = null) => {
-  const f = filters.value;
+const requestParams = computed(() => {
+  const f = filters;
   const spending = isSpendingTab.value;
-  store.fetchAll({
+  return {
     search: f.search.trim() || undefined,
     category: spending ? "spending" : undefined,
     employee_id: spending ? f.employee_id || undefined : undefined,
@@ -106,25 +123,36 @@ const fetchData = (page = 1, rowPerPage = null) => {
     source: spending ? undefined : f.source || undefined,
     start_date: f.start_date || undefined,
     end_date: f.end_date && (!f.start_date || f.end_date >= f.start_date) ? f.end_date : undefined,
-    page,
-    row_per_page: rowPerPage || meta.value.per_page || 15,
-  });
-};
+    page: f.page,
+    row_per_page: f.per || 15,
+  };
+});
 
-const refetch = debounce(() => fetchData(1), 300);
-watch(filters, refetch, { deep: true });
-watch(activeTab, () => fetchData(1));
+// One request per change (tab, filter, page). A revisit shows the rows
+// already loaded and refreshes quietly; the skeleton is only for a first load.
+const { loading, refreshing: listRefreshing, refresh } = useStaleFetch(() => store.fetchAll(requestParams.value, { quiet: true }), {
+  key: () => ["cash-book", requestParams.value],
+  hasData: () => transactions.value.length > 0,
+});
+// The store may still hold another page/filter set (e.g. coming back from
+// the menu, where the page starts at 1 again): show it dimmed and refresh.
+onMounted(() => {
+  if (!loading.value && !listRefreshing.value && transactions.value.length && JSON.stringify(store.lastParams) !== JSON.stringify(requestParams.value)) refresh({ force: true });
+});
+const isRefreshing = computed(() => listRefreshing.value || storeRefreshing.value);
+const goToPage = (page) => (filters.page = page);
 
 // Spending summary card: click a person to show only their spending.
 const filterByEmployee = (employeeId) => {
-  filters.value = { ...filters.value, employee_id: filters.value.employee_id === employeeId ? "" : employeeId };
+  const id = String(employeeId);
+  filters.employee_id = filters.employee_id === id ? "" : id;
 };
 // Debit without spending, and Debit including it (= totalDebit).
 const debitOnly = computed(() => Number(totalDebit.value || 0) - Number(totalSpending.value || 0));
 const spendingTotal = computed(() => spendingByEmployee.value.reduce((sum, row) => sum + Number(row.total || 0), 0));
 
 const handlePerPageChange = (rowPerPage) => {
-  fetchData(1, rowPerPage);
+  filters.per = Number(rowPerPage) || 15; // also resets the page to 1
 };
 
 const isFormModalOpen = ref(false);
@@ -331,10 +359,14 @@ const handleBalanceSubmit = async () => {
 };
 
 onMounted(() => {
-  fetchData();
-  projectStore.fetchProjects({ limit: 200 });
-  store.fetchEmployeeOptions();
+  if (!employeeOptions.value.length) store.fetchEmployeeOptions();
 });
+// The project filter only shows on the "all" tab.
+watch(
+  isSpendingTab,
+  (spending) => !spending && lookups.ensure("projects").catch(() => {}),
+  { immediate: true }
+);
 
 // Hidden by default -- balance figures are sensitive, revealed only on demand.
 const isBalanceVisible = ref(false);
@@ -346,8 +378,8 @@ const TABS = computed(() => [
 ]);
 const masked = (value) => (isBalanceVisible.value ? formatRupiah(value) : "Rp ••••••");
 const filteredSuffix = computed(() => (hasFilters.value || isSpendingTab.value ? ` · ${t("finance.cashBook.filtered")}` : ""));
-const employeeFilterOptions = computed(() => [{ value: "", label: t("finance.cashBook.filters.everyone") }, ...employeeOptions.value.map((e) => ({ value: e.id, label: e.name }))]);
-const projectFilterOptions = computed(() => [{ value: "", label: t("finance.cashBook.filters.allProjects") }, ...(projects.value || []).map((p) => ({ value: p.id, label: p.name }))]);
+const employeeFilterOptions = computed(() => [{ value: "", label: t("finance.cashBook.filters.everyone") }, ...employeeOptions.value.map((e) => ({ value: String(e.id), label: e.name }))]);
+const projectFilterOptions = computed(() => [{ value: "", label: t("finance.cashBook.filters.allProjects") }, ...(lookups.projects || []).map((p) => ({ value: String(p.id), label: p.name }))]);
 const TYPE_FILTER_OPTIONS = computed(() => [
   { value: "", label: t("finance.cashBook.filters.allTypes") },
   { value: "debit", label: t("finance.cashBook.debitIn") },
@@ -467,7 +499,7 @@ const fieldClass =
             <p class="text-ui-small font-medium text-ui-ink">{{ $t('finance.cashBook.spendingByPerson') }}<span v-if="filters.start_date || filters.end_date || filters.search" class="text-ui-faint font-normal"> · {{ $t('finance.cashBook.filtered') }}</span></p>
             <p class="text-ui-cap text-ui-muted">{{ $t("common.labels.total") }} <span class="tabular-nums text-ui-ink font-medium">{{ masked(spendingTotal) }}</span></p>
           </div>
-          <div v-if="spendingByEmployee.length" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 ui-stagger">
+          <div v-if="spendingByEmployee.length" class="ui-tray rounded-ui-control p-2.5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 ui-stagger">
             <button
               v-for="person in spendingByEmployee"
               :key="person.employee_id ?? 'none'"
@@ -493,7 +525,7 @@ const fieldClass =
           :class="isSpendingTab ? 'lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]' : 'lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,0.9fr)]'"
         >
           <UiInput
-            v-model="filters.search"
+            v-model="searchInput"
             :icon="Search"
             :placeholder="isSpendingTab ? $t('finance.cashBook.search.spending') : $t('finance.cashBook.search.all')"
             class="col-span-2 lg:col-span-1"
@@ -539,7 +571,7 @@ const fieldClass =
         <UiButton v-if="hasFilters" variant="secondary" size="sm" :icon="RotateCcw" @click="resetFilters">{{ $t("common.actions.clearFilters") }}</UiButton>
       </UiEmpty>
 
-      <UiTable v-else :columns="tableColumns" :rows="displayedTransactions" :meta="meta" :loading="loading" :skeleton-rows="6">
+      <UiTable v-else :columns="tableColumns" :rows="displayedTransactions" :meta="meta" :loading="loading" :skeleton-rows="6" :class="isRefreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'" :aria-busy="isRefreshing || undefined">
         <template #cell-transaction_date="{ row }">
           <span class="text-ui-muted whitespace-nowrap tabular-nums">{{ formatDate(row.transaction_date) }}</span>
         </template>
@@ -648,7 +680,7 @@ const fieldClass =
           :meta="meta"
           :loading="loading"
           :item-label="$t('finance.cashBook.itemLabel')"
-          @page-change="fetchData"
+          @page-change="goToPage"
           @per-page-change="handlePerPageChange"
         />
       </div>

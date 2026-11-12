@@ -3,13 +3,13 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { debounce } from "lodash-es";
-import { Plus, Search, SearchX, Inbox, Building2, FolderKanban, PiggyBank, Sparkles, AlertTriangle, ChevronRight } from "lucide-vue-next";
+import { Plus, Search, SearchX, Inbox, PiggyBank, AlertTriangle, ChevronRight } from "lucide-vue-next";
 import { useMaintenanceStore } from "@/stores/maintenance";
 import { useLookupStore } from "@/stores/lookups";
 import { useListState } from "@/composables/useListState";
 import { useStaleFetch } from "@/composables/useStaleFetch";
 import { can } from "@/helpers/permissionHelper";
-import { formatHours, formatMonth, CONTRACT_STATUS } from "@/utils/maintenance";
+import { formatHours, CONTRACT_STATUS } from "@/utils/maintenance";
 import { UiPageHeader, UiButton, UiBadge, UiInput, UiSelect, UiChips, UiTable, UiEmpty, UiAlert } from "@/components/ui";
 import ContractFormModal from "@/components/admin/maintenance/ContractFormModal.vue";
 import MaintenanceRecap from "@/components/admin/maintenance/MaintenanceRecap.vue";
@@ -113,6 +113,9 @@ const statusChips = computed(() => [
   ...Object.entries(CONTRACT_STATUS).map(([value, s]) => ({ value, label: s.label })),
 ]);
 const clientOptions = computed(() => [{ value: "", label: t("maintenance.list.allClients") }, ...clients.value.map((c) => ({ value: c.id, label: c.name }))]);
+// One muted line under the contract name: client · project.
+const subline = (row) => [row.client?.name || "-", row.project?.name].filter(Boolean).join(" · ");
+
 const COLUMNS = computed(() => [
   { key: "name", label: t("maintenance.list.columns.contract") },
   { key: "status", label: t("common.labels.status") },
@@ -174,10 +177,7 @@ const openContract = (contract) => router.push({ name: "admin.maintenance.detail
               class="block text-ui-ink font-medium truncate hover:text-ui-accent"
               @click.stop
             >{{ row.name }}</RouterLink>
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-ui-cap text-ui-muted min-w-0">
-              <span class="inline-flex items-center gap-1 min-w-0 max-w-full"><Building2 class="w-3 h-3 shrink-0 text-ui-faint" /><span class="truncate">{{ row.client?.name || "-" }}</span></span>
-              <span v-if="row.project" class="inline-flex items-center gap-1 min-w-0 max-w-full"><FolderKanban class="w-3 h-3 shrink-0 text-ui-faint" /><span class="truncate">{{ row.project.name }}</span></span>
-            </div>
+            <p class="mt-0.5 text-ui-cap text-ui-muted truncate" :title="subline(row)">{{ subline(row) }}</p>
           </div>
         </template>
         <template #cell-status="{ row }">
@@ -185,19 +185,17 @@ const openContract = (contract) => router.push({ name: "admin.maintenance.detail
         </template>
         <template #cell-quota="{ row }">
           <div v-if="row.current_period" class="min-w-[200px] py-2">
-            <div class="flex items-baseline justify-between gap-2 text-ui-cap">
-              <span class="text-ui-muted tabular-nums">
-                <strong class="text-ui-ink font-medium">{{ formatHours(row.current_period.remaining) }}</strong>
-                {{ $t("maintenance.common.leftOf", { total: formatHours(row.current_period.total) }) }}
-              </span>
-              <span class="text-ui-faint">{{ formatMonth(row.current_period.month) }}</span>
-            </div>
+            <!-- One line: hours left, or the overage in red when over quota -->
+            <p v-if="row.current_period.overage > 0" class="text-ui-cap text-ui-bad font-medium tabular-nums flex items-center gap-1">
+              <AlertTriangle class="w-3 h-3 shrink-0" />{{ $t("maintenance.common.overQuota", { hours: formatHours(row.current_period.overage) }) }}
+            </p>
+            <p v-else class="text-ui-cap text-ui-muted tabular-nums">
+              <strong class="text-ui-ink font-medium">{{ formatHours(row.current_period.remaining) }}</strong>
+              {{ $t("maintenance.common.leftOf", { total: formatHours(row.current_period.total) }) }}
+            </p>
             <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden mt-1.5">
               <div class="h-full rounded-full" :class="barClass(row.current_period)" :style="{ width: `${Math.min(row.current_period.used_percent, 100)}%` }"></div>
             </div>
-            <p v-if="row.current_period.overage > 0" class="text-ui-cap text-ui-bad font-medium mt-1 flex items-center gap-1">
-              <AlertTriangle class="w-3 h-3 shrink-0" />{{ $t("maintenance.common.overQuota", { hours: formatHours(row.current_period.overage) }) }}
-            </p>
           </div>
           <p v-else class="text-ui-cap text-ui-muted">{{ $t("maintenance.common.noQuotaThisMonth", { status: CONTRACT_STATUS[row.status]?.label.toLowerCase() }) }}</p>
         </template>
@@ -205,11 +203,12 @@ const openContract = (contract) => router.push({ name: "admin.maintenance.detail
           <p class="text-ui-ink font-medium tabular-nums whitespace-nowrap inline-flex items-center gap-1.5">
             <PiggyBank class="w-3.5 h-3.5 text-ui-faint" />{{ formatHours(row.balance_hours) }}
           </p>
-          <p v-if="row.open_features" class="text-ui-cap text-ui-muted whitespace-nowrap">
-            {{ $t("maintenance.common.features", { n: row.open_features }, row.open_features) }}
-          </p>
+          <!-- One note at most: hours about to expire beat the open-feature count -->
           <p v-if="row.expiring_soon?.hours > 0" class="text-ui-cap text-ui-warn font-medium whitespace-nowrap">
             {{ $t("maintenance.common.expiring", { hours: formatHours(row.expiring_soon.hours) }) }}
+          </p>
+          <p v-else-if="row.open_features" class="text-ui-cap text-ui-muted whitespace-nowrap">
+            {{ $t("maintenance.common.features", { n: row.open_features }, row.open_features) }}
           </p>
         </template>
         <template #cell-go>
@@ -226,36 +225,34 @@ const openContract = (contract) => router.push({ name: "admin.maintenance.detail
                   <p class="text-ui-body font-medium text-ui-ink line-clamp-2 break-words">{{ row.name }}</p>
                   <UiBadge :tone="STATUS_TONE[row.status] || 'neutral'" dot class="shrink-0">{{ CONTRACT_STATUS[row.status]?.label }}</UiBadge>
                 </div>
-                <p class="text-ui-cap text-ui-muted truncate mt-0.5">
-                  {{ row.client?.name || "-" }}<template v-if="row.project"> · {{ row.project.name }}</template>
-                </p>
+                <p class="text-ui-cap text-ui-muted truncate mt-0.5">{{ subline(row) }}</p>
 
                 <div v-if="row.current_period" class="mt-2.5">
-                  <div class="flex items-baseline justify-between gap-2 text-ui-cap">
-                    <span class="text-ui-muted tabular-nums">
+                  <div class="flex items-baseline justify-between gap-2 text-ui-cap tabular-nums">
+                    <span v-if="row.current_period.overage > 0" class="text-ui-bad font-medium">
+                      {{ $t("maintenance.common.overQuota", { hours: formatHours(row.current_period.overage) }) }}
+                    </span>
+                    <span v-else class="text-ui-muted">
                       <strong class="text-ui-ink font-medium">{{ formatHours(row.current_period.remaining) }}</strong>
                       {{ $t("maintenance.common.leftOf", { total: formatHours(row.current_period.total) }) }}
                     </span>
-                    <span class="text-ui-faint">{{ formatMonth(row.current_period.month) }}</span>
+                    <span class="text-ui-muted shrink-0 inline-flex items-center gap-1"><PiggyBank class="w-3.5 h-3.5 text-ui-faint" />{{ formatHours(row.balance_hours) }}</span>
                   </div>
                   <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden mt-1.5">
                     <div class="h-full rounded-full" :class="barClass(row.current_period)" :style="{ width: `${Math.min(row.current_period.used_percent, 100)}%` }"></div>
                   </div>
-                  <p v-if="row.current_period.overage > 0" class="text-ui-cap text-ui-bad font-medium mt-1">
-                    {{ $t("maintenance.common.overQuota", { hours: formatHours(row.current_period.overage) }) }}
-                  </p>
                 </div>
-                <p v-else class="text-ui-cap text-ui-muted bg-ui-subtle rounded-ui-control px-2.5 py-2 mt-2.5">
+                <p v-else class="text-ui-cap text-ui-muted mt-2">
                   {{ $t("maintenance.common.noQuotaThisMonth", { status: CONTRACT_STATUS[row.status]?.label.toLowerCase() }) }}
+                  · {{ $t("maintenance.common.balance", { hours: formatHours(row.balance_hours) }) }}
                 </p>
 
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-ui-cap text-ui-muted">
-                  <span class="inline-flex items-center gap-1 tabular-nums"><PiggyBank class="w-3.5 h-3.5 text-ui-faint" /> {{ $t("maintenance.common.balance", { hours: formatHours(row.balance_hours) }) }}</span>
-                  <span v-if="row.open_features" class="inline-flex items-center gap-1"><Sparkles class="w-3.5 h-3.5 text-ui-faint" /> {{ $t("maintenance.common.features", { n: row.open_features }, row.open_features) }}</span>
-                  <span v-if="row.expiring_soon?.hours > 0" class="inline-flex items-center gap-1 text-ui-warn font-medium">
-                    <AlertTriangle class="w-3.5 h-3.5" /> {{ $t("maintenance.common.expiring", { hours: formatHours(row.expiring_soon.hours) }) }}
-                  </span>
-                </div>
+                <p v-if="row.expiring_soon?.hours > 0" class="mt-1.5 text-ui-cap text-ui-warn font-medium inline-flex items-center gap-1">
+                  <AlertTriangle class="w-3.5 h-3.5" /> {{ $t("maintenance.common.expiring", { hours: formatHours(row.expiring_soon.hours) }) }}
+                </p>
+                <p v-else-if="row.open_features" class="mt-1.5 text-ui-cap text-ui-muted">
+                  {{ $t("maintenance.common.features", { n: row.open_features }, row.open_features) }}
+                </p>
               </div>
             </div>
           </div>

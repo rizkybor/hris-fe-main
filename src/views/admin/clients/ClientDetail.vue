@@ -1,5 +1,7 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useListState } from "@/composables/useListState";
+import { invalidate } from "@/composables/useStaleFetch";
 import { useRoute, useRouter } from "vue-router";
 import {
   Briefcase,
@@ -61,31 +63,60 @@ const formatDate = (date) =>
       })
     : "-";
 
+// true once the full evaluation list is here, so the average can be
+// worked out locally after adding or deleting one.
+const evaluationsLoaded = ref(false);
 const loadEvaluations = async () => {
   evaluationsLoading.value = true;
   try {
     evaluations.value = await clientsStore.fetchClientEvaluations(route.params.id);
+    evaluationsLoaded.value = true;
   } catch (err) {
-    // Non-fatal -- the client detail itself already loaded successfully.
+    // Non-fatal -- the client detail itself can still load.
   } finally {
     evaluationsLoading.value = false;
   }
 };
 
+// The client and its evaluations load at once.
 onMounted(async () => {
+  const evaluationsRequest = loadEvaluations();
   try {
     client.value = await clientsStore.fetchClientById(route.params.id);
     if (!client.value) {
       error.value = t("clients.form.notFound");
       return;
     }
-    await loadEvaluations();
   } catch (err) {
     error.value = t("clients.detail.loadFailed");
   } finally {
     loading.value = false;
   }
+  await evaluationsRequest;
 });
+
+// Same ordering as the API (newest evaluation date first).
+const byDateDesc = (a, b) => String(b.evaluated_at || "").localeCompare(String(a.evaluated_at || "")) || (b.id || 0) - (a.id || 0);
+
+// Average and count from the list we hold (the API rounds to 2 decimals
+// too). Without the list, ask the server quietly instead.
+const syncRating = async () => {
+  if (evaluationsLoaded.value) {
+    const n = evaluations.value.length;
+    const avg = n ? Math.round((evaluations.value.reduce((sum, e) => sum + Number(e.rating || 0), 0) / n) * 100) / 100 : null;
+    client.value = { ...client.value, average_rating: avg, evaluations_count: n };
+  } else {
+    const fresh = await clientsStore.fetchClientById(route.params.id);
+    if (fresh) client.value = fresh;
+  }
+  // The client list shows the rating: patch its row, and let it refresh
+  // on the next visit.
+  const id = String(route.params.id);
+  clientsStore.clientsData.items = clientsStore.clientsData.items.map((item) =>
+    String(item.id) === id ? { ...item, average_rating: client.value.average_rating, evaluations_count: client.value.evaluations_count } : item
+  );
+  invalidate("clients");
+};
 
 const openEvaluationModal = () => {
   evaluationForm.value = { rating: 5, notes: "", evaluated_at: new Date().toISOString().split("T")[0] };
@@ -99,13 +130,14 @@ const closeEvaluationModal = () => {
 const submitEvaluation = async () => {
   submittingEvaluation.value = true;
   try {
-    await clientsStore.createClientEvaluation({
+    const saved = await clientsStore.createClientEvaluation({
       client_id: route.params.id,
       ...evaluationForm.value,
     });
-    await loadEvaluations();
-    client.value = await clientsStore.fetchClientById(route.params.id);
+    if (saved) evaluations.value = [...evaluations.value, saved].sort(byDateDesc);
+    else await loadEvaluations();
     closeEvaluationModal();
+    syncRating();
   } catch (err) {
     await alertModal.alert(
       err?.response?.data?.message || t("clients.detail.saveEvaluationFailed"),
@@ -125,8 +157,8 @@ const deleteEvaluation = async (id) => {
 
   try {
     await clientsStore.deleteClientEvaluation(id);
-    await loadEvaluations();
-    client.value = await clientsStore.fetchClientById(route.params.id);
+    evaluations.value = evaluations.value.filter((e) => e.id !== id);
+    syncRating();
   } catch (err) {
     await alertModal.alert(
       err?.response?.data?.message || t("clients.detail.deleteEvaluationFailed"),
@@ -135,8 +167,14 @@ const deleteEvaluation = async (id) => {
   }
 };
 
-// Presentation only: tabs, project status tones, header initials.
-const activeTab = ref("overview");
+// The tab is in the URL (?tab=evaluations) so a reload or shared link opens it.
+const tabState = useListState("client-detail", { tab: "overview" }, { remember: false });
+const activeTab = computed({
+  get: () => (["overview", "evaluations", "projects"].includes(tabState.tab) ? tabState.tab : "overview"),
+  set: (v) => (tabState.tab = v),
+});
+
+// Presentation only: project status tones, header initials.
 const PROJECT_TONE = { active: "info", completed: "ok", cancelled: "bad", "on-hold": "warn", overdue: "bad" };
 const clientInitials = (name) =>
   (name || "").replace(/^(PT|CV)\.?\s+/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "—";

@@ -136,7 +136,8 @@
     "title": "Appearance",
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "switchTo": "Switch to {mode}"
   },
   "language": {
     "title": "Language",

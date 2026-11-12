@@ -40,12 +40,10 @@ import {
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { debounce } from "lodash-es";
 import { useTeamStore } from "@/stores/team";
-import { useOptionStore } from "@/stores/option";
-import { useEmployeeStore } from "@/stores/employee";
+import { useLookupStore } from "@/stores/lookups";
+import { invalidate } from "@/composables/useStaleFetch";
 import { storeToRefs } from "pinia";
-import { axiosInstance } from "@/plugins/axios";
 import router from "@/router";
 import { useRoute } from "vue-router";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -66,13 +64,10 @@ const teamStore = useTeamStore();
 const { loading, error, success } = storeToRefs(teamStore);
 const { updateTeam, fetchTeam, addMember, removeMember } = teamStore;
 
-const employeeStore = useEmployeeStore();
-const { employees } = storeToRefs(employeeStore);
-const { fetchEmployees } = employeeStore;
-
-const optionStore = useOptionStore();
-const { departments } = storeToRefs(optionStore);
-const { fetchDepartments } = optionStore;
+// Departments and employees come from the shared lookup cache (one request
+// each, reused across pages) instead of overwriting employeeStore.employees.
+const lookups = useLookupStore();
+const departments = computed(() => lookups.systemOptionsFor("departments"));
 
 const form = ref({
   id: "",
@@ -94,10 +89,8 @@ const searchLead = ref("");
 const selectedLead = ref(null);
 const initialLoading = ref(true);
 
-// Full roster for the member picker, kept separate from employeeStore.employees
-// (used by the Team Lead search modal, which fetches a limited/filtered slice)
-// so this picker doesn't fight it over the same shared state.
-const memberCandidates = ref([]);
+// Full roster for the member picker (and the Team Lead modal below).
+const memberCandidates = computed(() => lookups.employees);
 const memberSearch = ref("");
 // Set while a checkbox's add-member/remove-member request is in flight, so
 // that row can be disabled and the click can't be double-fired.
@@ -111,6 +104,21 @@ const selectableMemberCandidates = computed(() => {
     (employee) => employee.id !== leadEmployeeId,
   );
 });
+// Team Lead modal: filtered in the browser from the same roster, so typing
+// doesn't send a request per pause.
+const leadCandidates = computed(() => {
+  const q = searchLead.value.trim().toLowerCase();
+  if (!q) return lookups.employees;
+  return lookups.employees.filter((employee) =>
+    [employee.user?.name, employee.user?.email, employee.job_information?.job_title]
+      .some((v) => (v || "").toLowerCase().includes(q)),
+  );
+});
+// Loaded when the modal opens (no request if the roster is already cached).
+watch(leadModal, (open) => {
+  if (open) lookups.ensure("employees").catch(() => {});
+});
+
 const filteredMemberCandidates = computed(() => {
   if (!memberSearch.value.trim()) return selectableMemberCandidates.value;
   const q = memberSearch.value.trim().toLowerCase();
@@ -163,6 +171,8 @@ const handleSubmit = async () => {
   await updateTeam(id, form.value);
 
   if (success.value) {
+    invalidate("teams");
+    lookups.invalidate("teams");
     router.back();
   }
 };
@@ -209,32 +219,19 @@ const removeResponsibility = (idx) => {
   );
 };
 
+// The team record and both lookups load at once (they don't depend on
+// each other).
 onMounted(async () => {
   try {
-    await fetchDepartments();
-    await fetchEmployees({
-      limit: 6,
-    });
-
-    const { data } = await axiosInstance.get("employees");
-    memberCandidates.value = data.data;
-
-    await handleFetchTeam();
+    await Promise.all([
+      handleFetchTeam(),
+      lookups.ensureAll([["systemOptions", "departments"], "employees"]).catch(() => {}),
+    ]);
   } finally {
     initialLoading.value = false;
   }
 });
 
-watch(
-  searchLead,
-  debounce(() => {
-    fetchEmployees({
-      limit: 6,
-      search: searchLead.value,
-    });
-  }, 300),
-  { deep: true },
-);
 </script>
 
 <template>
@@ -692,7 +689,7 @@ watch(
           type="button"
           class="lead-card ui-press w-full text-left border border-ui-line rounded-ui-control hover:bg-ui-hover hover:border-ui-line-strong transition-colors p-3 cursor-pointer focus:outline-none focus-visible:shadow-ui-focus"
           :class="selectedLead?.id === employee.id ? 'border-ui-ink' : ''"
-          v-for="employee in employees"
+          v-for="employee in leadCandidates"
           :key="employee.id"
           @click="handleSelectLead(employee)"
         >
@@ -717,7 +714,7 @@ watch(
 
       <!-- No Results Message -->
       <UiEmpty
-        v-if="employees.length === 0"
+        v-if="leadCandidates.length === 0"
         compact
         :icon="SearchX"
         :title="$t('teams.form.lead.noEmployees')"

@@ -198,7 +198,7 @@ const handleDelete = async () => {
         <UiInput v-model="searchQuery" :icon="Search" :placeholder="$t('files.searchPlaceholder')" class="w-full sm:w-72" />
       </div>
 
-      <div class="p-4 sm:p-5">
+      <div class="p-4 sm:p-5 ui-tray">
         <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 xl:grid-cols-3" />
 
         <div v-else-if="archives.length" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 ui-stagger">

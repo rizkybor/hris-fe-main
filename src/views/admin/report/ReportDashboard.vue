@@ -1,5 +1,18 @@
+<script>
+// One response per (tab, filters, page), kept while the app is open so
+// switching back to a tab or filter shows it at once (refreshed after
+// REPORT_MAX_AGE, on demand or when the browser tab regains focus).
+const reportCache = new Map(); // JSON [tab, params] -> { data, at }
+const loadedTabs = new Set(); // tabs whose report data is in the store
+const shownKey = {}; // tab -> cache key of the data the store holds
+const REPORT_MAX_AGE = 60_000;
+</script>
+
 <script setup>
-import { onMounted, ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
+import { debounce } from "lodash-es";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import {
@@ -22,7 +35,6 @@ import {
   Search,
 } from "lucide-vue-next";
 import { useReportStore } from "@/stores/report";
-import { useProjectStore } from "@/stores/project";
 import { useOptionStore } from "@/stores/option";
 import { useAlertModalStore } from "@/stores/alertModal";
 import { can, hasAnyRole } from "@/helpers/permissionHelper";
@@ -42,8 +54,6 @@ const { t, te } = useI18n();
 
 const router = useRouter();
 const reportStore = useReportStore();
-const projectStore = useProjectStore();
-const { projects } = storeToRefs(projectStore);
 const optionStore = useOptionStore();
 const { employmentTypes } = storeToRefs(optionStore);
 const {
@@ -60,7 +70,6 @@ const {
   documents,
   staffRaport,
   staffRaportDetail,
-  loading,
   exporting,
   downloadingPdf,
 } = storeToRefs(reportStore);
@@ -104,7 +113,8 @@ const handleDeleteRow = async (row) => {
   deletingRowId.value = id;
   try {
     await reportStore.deleteRow(activeTab.value, id);
-    await loadReport(reportMeta.value?.current_page || 1);
+    forgetTab(activeTab.value);
+    await refresh({ force: true });
   } catch (error) {
     await alertModal.alert(error?.response?.data?.message || t("reports.delete.rowFailed"), { type: "danger" });
   } finally {
@@ -144,7 +154,9 @@ const handleDeleteRange = async () => {
   try {
     const result = await reportStore.deleteByRange(activeTab.value, deleteRangeStart.value, deleteRangeEnd.value);
     showDeleteRangeModal.value = false;
-    await loadReport(1);
+    forgetTab(activeTab.value);
+    if (list.page !== 1) list.page = 1;
+    else await refresh({ force: true });
     const skippedNote = result?.skipped?.length ? ` ${t("reports.delete.skipped", { n: result.skipped.length }, result.skipped.length)}` : "";
     await alertModal.alert(`${t("reports.delete.deleted", { n: result?.deleted ?? 0 }, result?.deleted ?? 0)}${skippedNote}`, { type: "success" });
   } catch (error) {
@@ -160,16 +172,40 @@ const handleDeleteRange = async () => {
 // fixed screen-size breakpoint.
 const { scrollRef: tabScrollRef, showLeftFade: showTabLeftFade, showRightFade: showTabRightFade, updateFade: updateTabFade } = useScrollFade();
 
-const activeTab = ref("attendance");
-const startDate = ref("");
-const endDate = ref("");
-const projectStatus = ref("");
-const subscriptionStatus = ref("");
+// Tab, dates, statuses, finance source, month, search and page survive
+// leaving the page and a reload (URL query + remembered per browser).
+const list = useListState("reports", {
+  tab: "attendance",
+  start: "",
+  end: "",
+  projectStatus: "",
+  subscriptionStatus: "",
+  maintenanceStatus: "",
+  month: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`,
+  source: "cash_book",
+  q: "",
+  employmentType: "",
+  page: 1,
+});
+if (!tabs.value.some((tab) => tab.key === list.tab)) list.tab = "attendance";
+const field = (key) => computed({ get: () => list[key], set: (value) => (list[key] = value) });
+const activeTab = field("tab");
+const startDate = field("start");
+const endDate = field("end");
+const projectStatus = field("projectStatus");
+const subscriptionStatus = field("subscriptionStatus");
 // Maintenance Lists: contract status + which month's quota use to show.
-const maintenanceStatus = ref("");
-const maintenanceMonth = ref(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`);
-const staffRaportSearch = ref("");
-const staffRaportEmploymentType = ref("");
+const maintenanceStatus = field("maintenanceStatus");
+const maintenanceMonth = field("month");
+const staffRaportEmploymentType = field("employmentType");
+// Staff search: typed freely, sent ~350 ms after the last keystroke.
+const staffRaportSearch = ref(list.q);
+watch(
+  staffRaportSearch,
+  debounce((value) => {
+    if (value !== list.q) list.q = value;
+  }, 350)
+);
 
 const canExport = computed(() => can("report-export"));
 
@@ -178,12 +214,11 @@ const FINANCE_SOURCES = computed(() => [
   { key: "cash_book", label: t("reports.finance.cashBook") },
   { key: "operational_cost", label: t("reports.finance.operationalCost") },
 ]);
-const financeSource = ref("cash_book");
+const financeSource = field("source");
 const isOperationalCost = computed(() => activeTab.value === "finance" && financeSource.value === "operational_cost");
 const setFinanceSource = (key) => {
   if (financeSource.value === key) return;
   financeSource.value = key;
-  loadReport(1);
 };
 
 // Staff Raport detail modal
@@ -537,7 +572,7 @@ const filterParams = computed(() => {
   }
   if (activeTab.value === "project" && projectStatus.value) params.status = projectStatus.value;
   if (activeTab.value === "staff_raport") {
-    if (staffRaportSearch.value) params.search = staffRaportSearch.value;
+    if (list.q) params.search = list.q;
     if (staffRaportEmploymentType.value) params.employment_type = staffRaportEmploymentType.value;
   }
   if (activeTab.value === "maintenance") {
@@ -559,46 +594,81 @@ const reportMeta = computed(() => {
   return null;
 });
 
-async function loadReport(page = 1) {
-  switch (activeTab.value) {
-    case "attendance":
-      await reportStore.fetchAttendanceReport({ ...filterParams.value, page });
-      break;
-    case "payroll":
-      await reportStore.fetchPayrollReport({ ...filterParams.value, page });
-      break;
-    case "employee":
-      await reportStore.fetchEmployeeReport();
-      break;
-    case "finance":
-      await reportStore.fetchFinanceReport({ ...filterParams.value, page });
-      break;
-    case "pph21":
-      await reportStore.fetchPph21Report(filterParams.value);
-      break;
-    case "ppn":
-      await reportStore.fetchPpnReport(filterParams.value);
-      break;
-    case "project":
-      await reportStore.fetchProjectReport({ ...filterParams.value, page });
-      break;
-    case "pph23":
-      await reportStore.fetchPph23Report(filterParams.value);
-      break;
-    case "subscription":
-      await reportStore.fetchSubscriptionReport(filterParams.value);
-      break;
-    case "maintenance":
-      await reportStore.fetchMaintenanceReport(filterParams.value);
-      break;
-    case "documents":
-      await reportStore.fetchDocumentReport(filterParams.value);
-      break;
-    case "staff_raport":
-      await reportStore.fetchStaffRaport({ ...filterParams.value, page });
-      break;
+const REPORT_STATE = {
+  attendance: "attendance",
+  payroll: "payroll",
+  employee: "employee",
+  finance: "finance",
+  pph21: "pph21",
+  ppn: "ppn",
+  project: "project",
+  pph23: "pph23",
+  subscription: "subscription",
+  maintenance: "maintenance",
+  documents: "documents",
+  staff_raport: "staffRaport",
+};
+const FETCHERS = {
+  attendance: (p) => reportStore.fetchAttendanceReport(p),
+  payroll: (p) => reportStore.fetchPayrollReport(p),
+  employee: () => reportStore.fetchEmployeeReport(),
+  finance: (p) => reportStore.fetchFinanceReport(p),
+  pph21: (p) => reportStore.fetchPph21Report(p),
+  ppn: (p) => reportStore.fetchPpnReport(p),
+  project: (p) => reportStore.fetchProjectReport(p),
+  pph23: (p) => reportStore.fetchPph23Report(p),
+  subscription: (p) => reportStore.fetchSubscriptionReport(p),
+  maintenance: (p) => reportStore.fetchMaintenanceReport(p),
+  documents: (p) => reportStore.fetchDocumentReport(p),
+  staff_raport: (p) => reportStore.fetchStaffRaport(p),
+};
+const PAGED_TABS = ["attendance", "payroll", "finance", "project", "staff_raport"];
+
+// Exactly what is sent for the active tab (the cache key).
+const requestParams = computed(() => {
+  if (activeTab.value === "employee") return {};
+  return PAGED_TABS.includes(activeTab.value) ? { ...filterParams.value, page: list.page } : filterParams.value;
+});
+const requestKey = computed(() => JSON.stringify([activeTab.value, requestParams.value]));
+
+const forgetTab = (tab) => {
+  for (const key of reportCache.keys()) if (key.startsWith(`["${tab}"`)) reportCache.delete(key);
+};
+
+async function fetchReport() {
+  const tab = activeTab.value;
+  const key = requestKey.value;
+  const stateKey = REPORT_STATE[tab];
+  if (!stateKey) return;
+  const hit = reportCache.get(key);
+  if (hit && Date.now() - hit.at < REPORT_MAX_AGE) {
+    reportStore.applyCached(stateKey, hit.data);
+    loadedTabs.add(tab);
+    shownKey[tab] = key;
+    return;
+  }
+  const applied = await FETCHERS[tab](requestParams.value);
+  if (applied) {
+    reportCache.set(key, { data: reportStore[stateKey], at: Date.now() });
+    loadedTabs.add(tab);
+    shownKey[tab] = key;
   }
 }
+
+// Skeleton only for a tab never loaded; otherwise the last data stays on
+// screen (dimmed) while the new one loads. Only the latest request clears
+// the flags (and the store drops older responses).
+const { loading, refreshing, refresh } = useStaleFetch(fetchReport, {
+  key: () => ["reports", requestKey.value],
+  hasData: () => loadedTabs.has(activeTab.value),
+  maxAge: REPORT_MAX_AGE,
+});
+const goToPage = (page) => (list.page = page);
+// Coming back with other filters/page than the data in the store (fresh by
+// age, but for another key): show it from the cache or refresh quietly.
+onMounted(() => {
+  if (!loading.value && !refreshing.value && loadedTabs.has(activeTab.value) && shownKey[activeTab.value] !== requestKey.value) refresh({ force: true });
+});
 
 async function handleExport() {
   try {
@@ -608,15 +678,12 @@ async function handleExport() {
   }
 }
 
-watch(activeTab, () => {
-  loadReport();
-});
-
-onMounted(() => {
-  loadReport();
-  projectStore.fetchProjects({ limit: 200 });
-  optionStore.fetchEmploymentTypes();
-});
+// Employment types are only needed by the Staff Raport filter.
+watch(
+  () => activeTab.value === "staff_raport",
+  (isRaport) => isRaport && !employmentTypes.value?.length && optionStore.fetchEmploymentTypes(),
+  { immediate: true }
+);
 
 // ----- Presentation only: table columns, row keys, row clicks and the
 // phone card for each report. -----
@@ -972,17 +1039,17 @@ const mobileCard = (row) => {
             </div>
 
             <div v-if="activeTab !== 'employee' && !isOperationalCost" class="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-end gap-2 sm:gap-3">
-              <UiInput v-if="activeTab === 'maintenance'" v-model="maintenanceMonth" :label="$t('common.labels.month')" type="month" class="sm:w-[180px]" @change="loadReport(1)" />
+              <UiInput v-if="activeTab === 'maintenance'" v-model="maintenanceMonth" :label="$t('common.labels.month')" type="month" class="sm:w-[180px]" />
               <UiSelect
                 v-if="activeTab === 'maintenance'"
                 v-model="maintenanceStatus"
                 :label="$t('common.labels.status')"
                 :options="[{ value: '', label: $t('common.labels.allStatuses') }, ...Object.keys(CONTRACT_STATUS).map((key) => ({ value: key, label: contractStatusLabel(key) }))]"
                 class="sm:w-[180px]"
-                @change="loadReport(1)"
+               
               />
-              <UiInput v-if="!['subscription', 'maintenance'].includes(activeTab)" v-model="startDate" :label="$t('common.labels.startDate')" type="date" class="sm:w-[170px]" @change="loadReport(1)" />
-              <UiInput v-if="!['subscription', 'maintenance'].includes(activeTab)" v-model="endDate" :label="$t('common.labels.endDate')" type="date" class="sm:w-[170px]" @change="loadReport(1)" />
+              <UiInput v-if="!['subscription', 'maintenance'].includes(activeTab)" v-model="startDate" :label="$t('common.labels.startDate')" type="date" class="sm:w-[170px]" />
+              <UiInput v-if="!['subscription', 'maintenance'].includes(activeTab)" v-model="endDate" :label="$t('common.labels.endDate')" type="date" class="sm:w-[170px]" />
               <UiSelect
                 v-if="activeTab === 'subscription'"
                 v-model="subscriptionStatus"
@@ -994,7 +1061,7 @@ const mobileCard = (row) => {
                   { value: 'cancelled', label: subscriptionStatusLabel.cancelled },
                 ]"
                 class="col-span-2 sm:w-[200px]"
-                @change="loadReport(1)"
+               
               />
               <UiSelect
                 v-if="activeTab === 'project'"
@@ -1005,7 +1072,7 @@ const mobileCard = (row) => {
                   ...['draft', 'planning', 'active', 'on_hold', 'completed', 'cancelled'].map((v) => ({ value: v, label: enumLabel('projectStatus', v) })),
                 ]"
                 class="col-span-2 sm:w-[180px]"
-                @change="loadReport(1)"
+               
               />
               <UiInput
                 v-if="activeTab === 'staff_raport'"
@@ -1014,7 +1081,6 @@ const mobileCard = (row) => {
                 :icon="Search"
                 :placeholder="$t('reports.staff.searchPlaceholder')"
                 class="col-span-2 sm:w-[240px]"
-                @input="loadReport(1)"
               />
               <UiSelect
                 v-if="activeTab === 'staff_raport'"
@@ -1022,7 +1088,7 @@ const mobileCard = (row) => {
                 :label="$t('reports.columns.employmentType')"
                 :options="[{ value: '', label: $t('reports.staff.allEmploymentTypes') }, ...(employmentTypes || [])]"
                 class="col-span-2 sm:w-[220px]"
-                @change="loadReport(1)"
+               
               />
             </div>
           </div>
@@ -1107,6 +1173,8 @@ const mobileCard = (row) => {
               :row-key="tableRowKey"
               :meta="reportMeta"
               :loading="loading"
+              :class="refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
+              :aria-busy="refreshing || undefined"
               :skeleton-rows="6"
               :clickable="rowsClickable"
               @row-click="onRowClick"
@@ -1396,7 +1464,7 @@ const mobileCard = (row) => {
             </UiTable>
 
             <div v-if="reportMeta && reportMeta.total > 0" class="px-4 pb-3 border-t border-ui-line">
-              <Pagination :meta="reportMeta" :loading="loading" :item-label="$t('reports.itemLabel')" @page-change="loadReport" />
+              <Pagination :meta="reportMeta" :loading="loading" :item-label="$t('reports.itemLabel')" @page-change="goToPage" />
             </div>
           </section>
         </template>

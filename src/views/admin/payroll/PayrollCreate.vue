@@ -12,6 +12,7 @@ import {
   Check,
 } from "lucide-vue-next";
 import { useAlertModalStore } from "@/stores/alertModal";
+import { useToastStore } from "@/stores/toast";
 import { useI18n } from "vue-i18n";
 import { localeTag } from "@/i18n";
 import { UiAlert, UiButton, UiInput, UiPageHeader } from "@/components/ui";
@@ -22,6 +23,7 @@ const router = useRouter();
 const route = useRoute();
 const payrollStore = usePayrollStore();
 const alertModal = useAlertModalStore();
+const toast = useToastStore();
 const { loading, error } = storeToRefs(payrollStore);
 
 // "?type=thr" lets the dashboard's "Generate THR" shortcut land here
@@ -48,6 +50,7 @@ const handleSubmit = async () => {
     const check = await payrollStore.checkPeriod(form.value.salary_month, payrollType.value);
 
     let regenerate = false;
+    let baseline = null;
 
     if (check.exists) {
       if (!check.can_regenerate) {
@@ -64,6 +67,9 @@ const handleSubmit = async () => {
       );
       if (!ok) return;
       regenerate = true;
+      // updated_at before the job runs, so the dashboard can tell when the
+      // queued regeneration has replaced it.
+      baseline = (await payrollStore.fetchPayroll(check.id).catch(() => null))?.updated_at ?? null;
     } else {
       const ok = await alertModal.confirm(
         t("payroll.create.newConfirm", { label, period }),
@@ -78,6 +84,15 @@ const handleSubmit = async () => {
     } else {
       await payrollStore.generatePayroll(payload);
     }
+    // Queued: the dashboard watches it and says when it's done.
+    payrollStore.clearMessages();
+    payrollStore.trackGeneration({
+      type: payrollType.value,
+      month: form.value.salary_month,
+      id: regenerate ? check.id : null,
+      baseline,
+    });
+    toast.info(t("payroll.generation.queuedTitle", { label }), t("payroll.generation.queuedMessage"));
     router.push({ name: "admin.payroll.dashboard" });
   } catch (error) {
     console.error("Error creating payroll:", error);

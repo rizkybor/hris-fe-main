@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { Users, UserPlus, Plus, Check } from "lucide-vue-next";
+import { Users, UserPlus, Plus, Check, User } from "lucide-vue-next";
 import { UiButton, UiStat } from "@/components/ui";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useEmployeeStore } from "@/stores/employee";
 
 const router = useRouter();
+const route = useRoute();
+// Set by the create wizard when the API returned the new employee.
+const newEmployeeId = typeof route.query.id === "string" ? route.query.id : null;
 
 const employeeStore = useEmployeeStore();
 const { statistics, loadingStatistics } = storeToRefs(employeeStore);
@@ -17,6 +20,10 @@ onMounted(() => {
 
 const goToEmployees = () => {
   router.push({ name: "admin.employees" });
+};
+
+const goToProfile = () => {
+  router.push({ name: "admin.employees.detail", params: { id: newEmployeeId } });
 };
 
 const addAnotherEmployee = () => {
@@ -41,7 +48,10 @@ const addAnotherEmployee = () => {
         </p>
 
         <div class="flex flex-col gap-2.5 mt-7">
-          <UiButton size="lg" block :icon-right="Users" @click="goToEmployees">
+          <UiButton v-if="newEmployeeId" size="lg" block :icon-right="User" @click="goToProfile">
+            {{ $t("employees.success.viewProfile") }}
+          </UiButton>
+          <UiButton :variant="newEmployeeId ? 'secondary' : 'primary'" size="lg" block :icon-right="Users" @click="goToEmployees">
             {{ $t("employees.success.viewAll") }}
           </UiButton>
           <UiButton variant="secondary" size="lg" block :icon-right="Plus" @click="addAnotherEmployee">

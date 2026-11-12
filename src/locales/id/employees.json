@@ -82,7 +82,8 @@
     "viewAll": "Lihat Semua Karyawan",
     "addAnother": "Tambah Karyawan Lain",
     "totalEmployees": "Total Karyawan",
-    "addedThisMonth": "Ditambahkan Bulan Ini"
+    "addedThisMonth": "Ditambahkan Bulan Ini",
+    "viewProfile": "Lihat Profil"
   },
   "wizard": {
     "addTitle": "Tambah Karyawan Baru",
@@ -125,7 +126,8 @@
       "jobHint": "Perbarui informasi pekerjaan",
       "emergencyHint": "Perbarui informasi kontak darurat",
       "submit": "Perbarui Karyawan",
-      "submitting": "Memperbarui..."
+      "submitting": "Memperbarui...",
+      "saved": "Karyawan diperbarui"
     },
     "next": "Berikutnya: {step}",
     "nextSteps": {
@@ -474,7 +476,8 @@
       "strengthsLabel": "Kelebihan",
       "improvementsLabel": "Area Perbaikan",
       "goalsLabel": "Target Periode Berikutnya",
-      "save": "Simpan Penilaian"
+      "save": "Simpan Penilaian",
+      "saved": "Penilaian disimpan"
     },
     "warnings": {
       "title": "Riwayat Surat Peringatan",
@@ -504,7 +507,9 @@
       "submissionDate": "Tanggal Pengajuan",
       "lastWorkingDayLabel": "Hari Kerja Terakhir",
       "processing": "Memproses...",
-      "process": "Proses"
+      "process": "Proses",
+      "started": "Proses offboarding dimulai",
+      "completedOk": "Offboarding selesai"
     },
     "account": {
       "title": "Akses Login Akun",

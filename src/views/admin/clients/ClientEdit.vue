@@ -6,6 +6,8 @@ import { UiPageHeader, UiButton, UiInput, UiBadge, UiEmpty } from "@/components/
 import Alert from "@/components/common/Alert.vue";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
 import { useClientStore } from "@/stores/client";
+import { useLookupStore } from "@/stores/lookups";
+import { invalidate } from "@/composables/useStaleFetch";
 import { errorMessage } from "@/helpers/errorHelper";
 import { useI18n } from "vue-i18n";
 
@@ -14,6 +16,7 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const clientsStore = useClientStore();
+const lookups = useLookupStore();
 
 const initialLoading = ref(true);
 const submitting = ref(false);
@@ -64,14 +67,15 @@ const loadClient = async () => {
 
 onMounted(() => {
   loadClient();
-  if (clientsStore.clients.length === 0) clientsStore.fetchAllClient();
+  if (!clientsStore.statistics && !clientsStore.loadingStatistics) clientsStore.fetchClientStatistics();
 });
 
 // Suggests values already used by other clients (via a <datalist>, so the
 // browser's native "pick one or just keep typing" behavior handles the
 // "recommend but allow a new value" requirement for free).
+// From the light /clients/statistic summary, not the full client list.
 const uniqueValues = (key) =>
-  [...new Set(clientsStore.clients.map((c) => c[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  [...new Set((clientsStore.statistics?.[`by_${key}`] || []).map((c) => c[key]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
 
 const clientTypeOptions = computed(() => uniqueValues("type"));
 const clientFieldOptions = computed(() => uniqueValues("field"));
@@ -87,7 +91,18 @@ const submit = async () => {
 
   submitting.value = true;
   try {
-    await clientsStore.updateClient(route.params.id, form.value);
+    clientsStore.error = null;
+    const saved = await clientsStore.updateClient(route.params.id, form.value);
+    if (!saved) {
+      // The store keeps the error instead of throwing.
+      const e = clientsStore.error;
+      error.value = (typeof e === "string" && e) || (e && typeof e === "object" && Object.values(e).flat().join(" ")) || t("clients.form.updateFailed");
+      return;
+    }
+    // Pickers and filters elsewhere pick the change up without a reload:
+    // the store patched clientsStore.clients; mark the cached lists stale.
+    lookups.invalidate("clients");
+    invalidate("clients");
     success.value = t("clients.form.updated");
 
     setTimeout(() => {

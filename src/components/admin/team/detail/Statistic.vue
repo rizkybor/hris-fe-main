@@ -1,6 +1,6 @@
 <script setup>
 import { CheckCircle, TrendingUp, Users, Folder } from "lucide-vue-next";
-import { onMounted, watch } from "vue";
+import { computed, watch } from "vue";
 import { useTeamStore } from "@/stores/team";
 import { storeToRefs } from "pinia";
 import { UiStat } from "@/components/ui";
@@ -10,31 +10,27 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  // The detail page passes the route id and loads the numbers itself, in
+  // parallel with the team; without it this component loads them once the
+  // team is known (the old behaviour).
+  teamId: {
+    type: [String, Number],
+    default: null,
+  },
 });
 
 const teamStore = useTeamStore();
-const { teamStatistics, loadingTeamStatistics } = storeToRefs(teamStore);
-const { fetchTeamStatistics } = teamStore;
+const { teamStatistics, loadingTeamStatistics, teamStatisticsId } = storeToRefs(teamStore);
 
-const loadStatistics = async () => {
-  if (props.team?.id) {
-    try {
-      await fetchTeamStatistics(props.team.id);
-    } catch (error) {
-      console.error('Failed to load statistics:', error);
-    }
-  }
-};
+const id = computed(() => props.teamId ?? props.team?.id ?? null);
+// Never show another team's numbers while this one's load.
+const loading = computed(() => loadingTeamStatistics.value || (id.value != null && teamStatisticsId.value !== String(id.value)));
 
-onMounted(async () => {
-  await loadStatistics();
-});
-
-watch(() => props.team?.id, async (newId) => {
-  if (newId) {
-    await loadStatistics();
-  }
-}, { immediate: true });
+watch(
+  () => (props.teamId == null ? props.team?.id : null),
+  (teamId) => teamId && teamStore.fetchTeamStatistics(teamId),
+  { immediate: true }
+);
 </script>
 <template>
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ui-stagger">
@@ -42,18 +38,18 @@ watch(() => props.team?.id, async (newId) => {
       :label="$t('teams.detail.stats.activeMembers')"
       :icon="Users"
       :value="teamStatistics.active_members || 0"
-      :loading="loadingTeamStatistics"
+      :loading="loading"
     >
       <template #hint>
         <span
           class="text-ui-ok"
-          v-if="!loadingTeamStatistics && teamStatistics.active_members >= team.expected_size"
+          v-if="!loading && teamStatistics.active_members >= team.expected_size"
         >
           {{ $t("teams.detail.stats.fullCapacity") }}
         </span>
         <span
           class="text-ui-bad"
-          v-if="!loadingTeamStatistics && teamStatistics.active_members < team.expected_size"
+          v-if="!loading && teamStatistics.active_members < team.expected_size"
         >
           {{ $t("teams.detail.stats.membersNeeded", { n: team.expected_size - teamStatistics.active_members }, team.expected_size - teamStatistics.active_members) }}
         </span>
@@ -64,7 +60,7 @@ watch(() => props.team?.id, async (newId) => {
       :label="$t('teams.detail.stats.projectsAssigned')"
       :icon="Folder"
       :value="teamStatistics.projects_assigned || 0"
-      :loading="loadingTeamStatistics"
+      :loading="loading"
       :hint="$t('teams.detail.stats.inProgress', { n: teamStatistics.projects_in_progress || 0 })"
     />
 
@@ -72,7 +68,7 @@ watch(() => props.team?.id, async (newId) => {
       :label="$t('teams.detail.stats.performance')"
       :icon="TrendingUp"
       :value="`${teamStatistics.team_performance || 0}%`"
-      :loading="loadingTeamStatistics"
+      :loading="loading"
     >
       <template #hint>
         <span :class="(teamStatistics.team_performance || 0) >= 80 ? 'text-ui-ok' : 'text-ui-warn'">
@@ -85,7 +81,7 @@ watch(() => props.team?.id, async (newId) => {
       :label="$t('teams.detail.stats.completionRate')"
       :icon="CheckCircle"
       :value="`${teamStatistics.completion_rate || 0}%`"
-      :loading="loadingTeamStatistics"
+      :loading="loading"
       :hint="$t('teams.stats.thisMonthHint')"
     />
   </div>

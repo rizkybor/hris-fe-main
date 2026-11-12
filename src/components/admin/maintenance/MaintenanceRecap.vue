@@ -1,6 +1,6 @@
 <script setup>
 import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
-import { Wrench, Timer, AlertTriangle, PiggyBank } from "lucide-vue-next";
+import { Wrench, Timer, AlertTriangle, PiggyBank, ChartPie, ChevronDown } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
 import { formatHours, formatMonth, LOG_CATEGORIES } from "@/utils/maintenance";
 import RecapSection from "@/components/common/RecapSection.vue";
@@ -33,6 +33,25 @@ const load = async () => {
 };
 onMounted(load);
 watch(() => props.refreshKey, load);
+
+// Same as the Subscriptions recap: the tiles answer the everyday questions,
+// the charts sit behind "Show analysis" -- closed by default, remembered per
+// browser, and not rendered (no chart download) while closed.
+const ANALYSIS_KEY = "maintenance-recap-analysis-open";
+const analysisOpen = ref(false);
+try {
+  analysisOpen.value = localStorage.getItem(ANALYSIS_KEY) === "1";
+} catch {
+  /* storage unavailable */
+}
+const toggleAnalysis = () => {
+  analysisOpen.value = !analysisOpen.value;
+  try {
+    localStorage.setItem(ANALYSIS_KEY, analysisOpen.value ? "1" : "0");
+  } catch {
+    /* storage unavailable */
+  }
+};
 
 const h = (v) => formatHours(v);
 const pctOf = (used, total) => (total > 0 ? Math.round((used / total) * 100) : used > 0 ? 100 : 0);
@@ -137,6 +156,19 @@ const trendSeries = computed(() => [
         <RecapTile v-for="t in tiles" :key="t.key" v-bind="t" />
       </div>
 
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 h-8 -ml-1 px-1 rounded-ui-control text-ui-cap font-medium text-ui-muted hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
+        :aria-expanded="analysisOpen"
+        aria-controls="maintenance-recap-analysis"
+        @click="toggleAnalysis"
+      >
+        <ChartPie class="w-3.5 h-3.5" />
+        {{ analysisOpen ? $t("maintenance.recap.hideAnalysis") : $t("maintenance.recap.showAnalysis") }}
+        <ChevronDown class="w-3.5 h-3.5 transition-transform duration-ui-fast" :class="{ 'rotate-180': analysisOpen }" />
+      </button>
+
+      <div v-if="analysisOpen" id="maintenance-recap-analysis" class="ui-anim-fade space-y-3">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <!-- Quota use per contract -->
         <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
@@ -200,6 +232,7 @@ const trendSeries = computed(() => [
         <div class="-mx-2">
           <VueApexCharts type="bar" height="220" :options="trendOptions" :series="trendSeries" />
         </div>
+      </div>
       </div>
     </template>
   </RecapSection>

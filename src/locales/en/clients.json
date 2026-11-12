@@ -13,7 +13,8 @@
     "unnamed": "Unnamed Client",
     "empty": "No clients found",
     "deleteConfirm": "Delete client \"{name}\"? This action cannot be undone.",
-    "deleteFailed": "Failed to delete client."
+    "deleteFailed": "Failed to delete client.",
+    "refreshing": "Updating…"
   },
   "stats": {
     "total": "Total Clients",

@@ -82,7 +82,8 @@
     "viewAll": "View All Employees",
     "addAnother": "Add Another Employee",
     "totalEmployees": "Total Employees",
-    "addedThisMonth": "Added This Month"
+    "addedThisMonth": "Added This Month",
+    "viewProfile": "View Profile"
   },
   "wizard": {
     "addTitle": "Add New Employee",
@@ -125,7 +126,8 @@
       "jobHint": "Update the job information",
       "emergencyHint": "Update the emergency contact information",
       "submit": "Update Employee",
-      "submitting": "Updating..."
+      "submitting": "Updating...",
+      "saved": "Employee updated"
     },
     "next": "Next: {step}",
     "nextSteps": {
@@ -474,7 +476,8 @@
       "strengthsLabel": "Strengths",
       "improvementsLabel": "Areas for Improvement",
       "goalsLabel": "Goals for Next Period",
-      "save": "Save Review"
+      "save": "Save Review",
+      "saved": "Review saved"
     },
     "warnings": {
       "title": "Warning Letter History",
@@ -504,7 +507,9 @@
       "submissionDate": "Submission Date",
       "lastWorkingDayLabel": "Last Working Day",
       "processing": "Processing...",
-      "process": "Process"
+      "process": "Process",
+      "started": "Offboarding started",
+      "completedOk": "Offboarding completed"
     },
     "account": {
       "title": "Account Login Access",

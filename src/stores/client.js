@@ -2,6 +2,19 @@ import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
 
+let listReq = 0; // latest fetchClientPaginated call
+
+// Keep the full list (pickers, e.g. Proposals) in step after a create/edit
+// without refetching it: only when it has been loaded already.
+const upsert = (list, item) => {
+  if (!item || !list.length) return list;
+  const i = list.findIndex((c) => String(c.id) === String(item.id));
+  if (i === -1) return [item, ...list];
+  const next = [...list];
+  next[i] = { ...next[i], ...item };
+  return next;
+};
+
 export const useClientStore = defineStore("clients", {
   state: () => ({
     // Master Data
@@ -33,6 +46,7 @@ export const useClientStore = defineStore("clients", {
       meta: { current_page: 1, per_page: 10, total: 0, last_page: 1 },
     },
     statistics: null,
+    loadingStatistics: false,
     loading: false,
     error: null,
     success: null,
@@ -54,16 +68,19 @@ export const useClientStore = defineStore("clients", {
 
     async fetchClientPaginated(params) {
       this.loading = true;
+      const req = ++listReq;
       try {
         const response = await axiosInstance.get("/clients/all/paginated", {
           params: {
-            row_per_page: params.per_page || 10,
+            // Callers send either row_per_page (the API's name) or per_page.
+            row_per_page: params.row_per_page || params.per_page || 10,
             search: params.search || "",
             page: params.page || 1,
             type: params.type || undefined,
             field: params.field || undefined,
           },
         });
+        if (req !== listReq) return; // a newer request owns the list
         this.clientsData.items = response.data.data.data;
         this.clientsData.meta = response.data.data.meta;
       } catch (error) {
@@ -90,6 +107,8 @@ export const useClientStore = defineStore("clients", {
       try {
         const response = await axiosInstance.post("/clients", payload);
         this.success = response.data.message;
+        this.clients = upsert(this.clients, response.data.data);
+        return response.data.data;
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -102,6 +121,11 @@ export const useClientStore = defineStore("clients", {
       try {
         const response = await axiosInstance.put(`/clients/${id}`, payload);
         this.success = response.data.message;
+        this.clients = upsert(this.clients, response.data.data);
+        this.clientsData.items = this.clientsData.items.map((item) =>
+          String(item.id) === String(id) ? { ...item, ...response.data.data } : item
+        );
+        return response.data.data;
       } catch (error) {
         this.error = handleError(error);
       } finally {
@@ -113,12 +137,27 @@ export const useClientStore = defineStore("clients", {
       this.loading = true;
       try {
         await axiosInstance.delete(`/clients/${id}`);
+        const before = this.clientsData.items.length;
         this.clientsData.items = this.clientsData.items.filter(
           (item) => item.id !== id
         );
+        if (this.clientsData.items.length < before) {
+          const meta = this.clientsData.meta || {};
+          const total = Math.max(0, (meta.total || 0) - 1);
+          const perPage = meta.per_page || 10;
+          this.clientsData.meta = {
+            ...meta,
+            total,
+            to: meta.to ? Math.max(meta.from ? meta.from - 1 : 0, meta.to - 1) : meta.to,
+            last_page: Math.max(1, Math.ceil(total / perPage)),
+          };
+        }
+        this.clients = this.clients.filter((c) => c.id !== id);
         this.success = "Client deleted successfully";
+        return true;
       } catch (error) {
         this.error = handleError(error);
+        return false;
       } finally {
         this.loading = false;
       }
@@ -126,6 +165,7 @@ export const useClientStore = defineStore("clients", {
 
     async fetchClientStatistics() {
       this.loading = true;
+      this.loadingStatistics = true;
       try {
         const response = await axiosInstance.get("/clients/statistic");
         this.statistics = response.data.data;
@@ -133,6 +173,7 @@ export const useClientStore = defineStore("clients", {
         this.error = handleError(error);
       } finally {
         this.loading = false;
+        this.loadingStatistics = false;
       }
     },
 

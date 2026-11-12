@@ -1,6 +1,6 @@
 <script setup>
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { RefreshCw, Wallet, CalendarRange, CalendarClock, Users } from "lucide-vue-next";
+import { RefreshCw, Wallet, CalendarRange, CalendarClock, Users, ChartPie, ChevronDown } from "lucide-vue-next";
 import { axiosInstance } from "@/plugins/axios";
 import { formatRupiah, formatRupiahCompact } from "@/utils/formatUtils";
 import RecapSection from "@/components/common/RecapSection.vue";
@@ -53,6 +53,26 @@ onMounted(() => {
 });
 onBeforeUnmount(() => mq?.removeEventListener("change", onMq));
 watch(() => props.refreshKey, load);
+
+// The four tiles answer the everyday questions; the charts below them are
+// for the occasional deeper look, so they sit behind "Show analysis" --
+// closed by default, remembered per browser. Closed means not rendered, so
+// the chart library isn't even downloaded until someone opens it.
+const ANALYSIS_KEY = "subscriptions-recap-analysis-open";
+const analysisOpen = ref(false);
+try {
+  analysisOpen.value = localStorage.getItem(ANALYSIS_KEY) === "1";
+} catch {
+  /* storage unavailable */
+}
+const toggleAnalysis = () => {
+  analysisOpen.value = !analysisOpen.value;
+  try {
+    localStorage.setItem(ANALYSIS_KEY, analysisOpen.value ? "1" : "0");
+  } catch {
+    /* storage unavailable */
+  }
+};
 
 // ----- Service type donut -----
 // Fixed categorical order, assigned by the type's position in the options
@@ -168,69 +188,83 @@ const tiles = computed(() => {
         <RecapTile v-for="t in tiles" :key="t.key" v-bind="t" />
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <!-- Value by service type -->
-        <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-          <p class="text-ui-h3 text-ui-ink">{{ $t("subscriptions.recap.byType") }}</p>
-          <p class="text-ui-cap text-ui-muted mb-2">{{ $t("subscriptions.recap.activeOnly") }}</p>
-          <p v-if="!slices.length" class="text-ui-small text-ui-muted py-10 text-center">{{ $t("subscriptions.recap.noActive") }}</p>
-          <div v-else class="flex flex-col sm:flex-row items-center gap-4">
-            <div class="w-48 shrink-0">
-              <VueApexCharts type="donut" height="200" :options="donutOptions" :series="slices.map((s) => s.monthly_value)" />
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 h-8 -ml-1 px-1 rounded-ui-control text-ui-cap font-medium text-ui-muted hover:text-ui-ink focus:outline-none focus-visible:shadow-ui-focus"
+        :aria-expanded="analysisOpen"
+        aria-controls="subscriptions-recap-analysis"
+        @click="toggleAnalysis"
+      >
+        <ChartPie class="w-3.5 h-3.5" />
+        {{ analysisOpen ? $t("subscriptions.recap.hideAnalysis") : $t("subscriptions.recap.showAnalysis") }}
+        <ChevronDown class="w-3.5 h-3.5 transition-transform duration-ui-fast" :class="{ 'rotate-180': analysisOpen }" />
+      </button>
+
+      <div v-if="analysisOpen" id="subscriptions-recap-analysis" class="ui-anim-fade space-y-3">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <!-- Value by service type -->
+          <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
+            <p class="text-ui-h3 text-ui-ink">{{ $t("subscriptions.recap.byType") }}</p>
+            <p class="text-ui-cap text-ui-muted mb-2">{{ $t("subscriptions.recap.activeOnly") }}</p>
+            <p v-if="!slices.length" class="text-ui-small text-ui-muted py-10 text-center">{{ $t("subscriptions.recap.noActive") }}</p>
+            <div v-else class="flex flex-col sm:flex-row items-center gap-4">
+              <div class="w-48 shrink-0">
+                <VueApexCharts type="donut" height="200" :options="donutOptions" :series="slices.map((s) => s.monthly_value)" />
+              </div>
+              <!-- The legend doubles as the table: every slice named with its value. -->
+              <ul class="w-full space-y-2 text-ui-cap">
+                <li v-for="s in slices" :key="s.type" class="flex items-center gap-2 min-w-0">
+                  <span class="w-2.5 h-2.5 rounded-sm shrink-0" :style="{ backgroundColor: s.color }"></span>
+                  <span class="text-ui-ink font-medium truncate flex-1">{{ s.label }}</span>
+                  <span class="text-ui-muted shrink-0 tabular-nums">{{ s.count }}×</span>
+                  <span class="text-ui-ink font-medium shrink-0 tabular-nums text-right">{{ formatRupiahCompact(s.monthly_value) }}</span>
+                  <span class="text-ui-muted shrink-0 w-11 text-right tabular-nums">{{ pct(s.monthly_value) }}%</span>
+                </li>
+              </ul>
             </div>
-            <!-- The legend doubles as the table: every slice named with its value. -->
-            <ul class="w-full space-y-2 text-ui-cap">
-              <li v-for="s in slices" :key="s.type" class="flex items-center gap-2 min-w-0">
-                <span class="w-2.5 h-2.5 rounded-sm shrink-0" :style="{ backgroundColor: s.color }"></span>
-                <span class="text-ui-ink font-medium truncate flex-1">{{ s.label }}</span>
-                <span class="text-ui-muted shrink-0 tabular-nums">{{ s.count }}×</span>
-                <span class="text-ui-ink font-medium shrink-0 tabular-nums text-right">{{ formatRupiahCompact(s.monthly_value) }}</span>
-                <span class="text-ui-muted shrink-0 w-11 text-right tabular-nums">{{ pct(s.monthly_value) }}%</span>
-              </li>
-            </ul>
+          </div>
+
+          <!-- Top clients -->
+          <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p class="text-ui-h3 text-ui-ink">{{ $t("subscriptions.recap.topClients") }}</p>
+                <p class="text-ui-cap text-ui-muted mb-3">{{ $t("subscriptions.recap.activeOnly") }}</p>
+              </div>
+              <Users class="w-4 h-4 text-ui-faint shrink-0" />
+            </div>
+            <p v-if="!clients.length" class="text-ui-small text-ui-muted py-10 text-center">{{ $t("subscriptions.recap.noActive") }}</p>
+            <div v-else class="space-y-3">
+              <div v-for="c in clients" :key="c.client">
+                <div class="flex items-baseline justify-between gap-2 text-ui-cap mb-1">
+                  <span class="text-ui-ink font-medium truncate">{{ c.client }}</span>
+                  <span class="shrink-0 text-ui-muted">
+                    <span class="text-ui-ink font-medium tabular-nums">{{ formatRupiahCompact(c.monthly_value) }}</span> · {{ c.count }}
+                  </span>
+                </div>
+                <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
+                  <div class="h-full rounded-full bg-ui-accent" :style="{ width: `${Math.max(2, (c.monthly_value / clientMax) * 100)}%` }"></div>
+                </div>
+              </div>
+              <p v-if="data.client_count > clients.length" class="text-ui-cap text-ui-muted">
+                {{ $t("subscriptions.recap.moreClients", { n: data.client_count - clients.length }, data.client_count - clients.length) }}
+              </p>
+            </div>
           </div>
         </div>
 
-        <!-- Top clients -->
+        <!-- Forecast -->
         <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-          <div class="flex items-start justify-between gap-2">
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 mb-1">
             <div>
-              <p class="text-ui-h3 text-ui-ink">{{ $t("subscriptions.recap.topClients") }}</p>
-              <p class="text-ui-cap text-ui-muted mb-3">{{ $t("subscriptions.recap.activeOnly") }}</p>
+              <p class="text-ui-h3 text-ui-ink">{{ $t("subscriptions.recap.forecast") }}</p>
+              <p class="text-ui-cap text-ui-muted">{{ $t("subscriptions.recap.forecastHint") }}</p>
             </div>
-            <Users class="w-4 h-4 text-ui-faint shrink-0" />
+            <p class="text-ui-cap text-ui-muted shrink-0">{{ $t("subscriptions.recap.forecastTotal") }} <strong class="text-ui-ink font-medium tabular-nums">{{ formatRupiah(forecastTotal) }}</strong></p>
           </div>
-          <p v-if="!clients.length" class="text-ui-small text-ui-muted py-10 text-center">{{ $t("subscriptions.recap.noActive") }}</p>
-          <div v-else class="space-y-3">
-            <div v-for="c in clients" :key="c.client">
-              <div class="flex items-baseline justify-between gap-2 text-ui-cap mb-1">
-                <span class="text-ui-ink font-medium truncate">{{ c.client }}</span>
-                <span class="shrink-0 text-ui-muted">
-                  <span class="text-ui-ink font-medium tabular-nums">{{ formatRupiahCompact(c.monthly_value) }}</span> · {{ c.count }}
-                </span>
-              </div>
-              <div class="w-full h-1.5 bg-ui-subtle rounded-full overflow-hidden">
-                <div class="h-full rounded-full bg-ui-accent" :style="{ width: `${Math.max(2, (c.monthly_value / clientMax) * 100)}%` }"></div>
-              </div>
-            </div>
-            <p v-if="data.client_count > clients.length" class="text-ui-cap text-ui-muted">
-              {{ $t("subscriptions.recap.moreClients", { n: data.client_count - clients.length }, data.client_count - clients.length) }}
-            </p>
+          <div class="-mx-2">
+            <VueApexCharts type="bar" height="220" :options="forecastOptions" :series="[{ name: $t('subscriptions.recap.expectedBilling'), data: forecast.map((f) => f.amount) }]" />
           </div>
-        </div>
-      </div>
-
-      <!-- Forecast -->
-      <div class="bg-ui-surface border border-ui-line rounded-ui-card p-4 sm:p-5 min-w-0">
-        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 mb-1">
-          <div>
-            <p class="text-ui-h3 text-ui-ink">{{ $t("subscriptions.recap.forecast") }}</p>
-            <p class="text-ui-cap text-ui-muted">{{ $t("subscriptions.recap.forecastHint") }}</p>
-          </div>
-          <p class="text-ui-cap text-ui-muted shrink-0">{{ $t("subscriptions.recap.forecastTotal") }} <strong class="text-ui-ink font-medium tabular-nums">{{ formatRupiah(forecastTotal) }}</strong></p>
-        </div>
-        <div class="-mx-2">
-          <VueApexCharts type="bar" height="220" :options="forecastOptions" :series="[{ name: $t('subscriptions.recap.expectedBilling'), data: forecast.map((f) => f.amount) }]" />
         </div>
       </div>
     </template>

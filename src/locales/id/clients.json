@@ -13,7 +13,8 @@
     "unnamed": "Klien tanpa nama",
     "empty": "Klien tidak ditemukan",
     "deleteConfirm": "Hapus klien \"{name}\"? Tindakan ini tidak dapat dibatalkan.",
-    "deleteFailed": "Gagal menghapus klien."
+    "deleteFailed": "Gagal menghapus klien.",
+    "refreshing": "Memperbarui…"
   },
   "stats": {
     "total": "Total Klien",

@@ -136,7 +136,8 @@
     "title": "Tampilan",
     "light": "Terang",
     "dark": "Gelap",
-    "system": "Sistem"
+    "system": "Sistem",
+    "switchTo": "Ganti ke {mode}"
   },
   "language": {
     "title": "Bahasa",

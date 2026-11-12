@@ -2,6 +2,8 @@ import { defineStore } from "pinia";
 import { axiosInstance } from '@/plugins/axios';
 import { handleError } from "@/helpers/errorHelper";
 
+let listSeq = 0; // latest fetchEmployeeList request
+
 export const useEmployeeStore = defineStore("employee", {
     state: () => ({
         employees: [],
@@ -41,6 +43,14 @@ export const useEmployeeStore = defineStore("employee", {
         // User id the cached My Team data belongs to (stores aren't reset on
         // logout, so pages check it before showing cached data).
         myTeamFor: null,
+        // Admin employee list (EmployeeList only). Kept apart from `employees`,
+        // which other pages overwrite with their own picker lists.
+        listRows: [],
+        listMeta: { current_page: 1, last_page: 1, per_page: 10, total: 0 },
+        listLoaded: false,
+        statisticsLoaded: false,
+        contractAlerts: [],
+        contractAlertsLoaded: false,
         loading: false,
         loadingLatest: false,
         loadingStatistics: false,
@@ -75,6 +85,31 @@ export const useEmployeeStore = defineStore("employee", {
                 this.error = handleError(error);
             } finally {
                 this.loading = false;
+            }
+        },
+
+        // The admin list page: fills listRows/listMeta; a response that comes
+        // back after a newer request (fast filter/page changes) is dropped.
+        async fetchEmployeeList(params) {
+            const seq = ++listSeq;
+            try {
+                const response = await axiosInstance.get('/employees/all/paginated', { params });
+                if (seq !== listSeq) return;
+                // Fallbacks keep the list safe when a response has no rows.
+                this.listRows = response.data?.data?.data ?? [];
+                this.listMeta = response.data?.data?.meta ?? this.listMeta;
+                this.listLoaded = true;
+            } catch (error) {
+                if (seq === listSeq) this.error = handleError(error);
+            }
+        },
+
+        // Drop a deleted employee from the cached admin list.
+        removeFromList(id) {
+            const before = this.listRows.length;
+            this.listRows = this.listRows.filter((e) => String(e.id) !== String(id));
+            if (this.listRows.length !== before && this.listMeta?.total) {
+                this.listMeta = { ...this.listMeta, total: this.listMeta.total - 1 };
             }
         },
 
@@ -192,6 +227,7 @@ export const useEmployeeStore = defineStore("employee", {
                 const response = await axiosInstance.get('/employees/statistics');
 
                 this.statistics = response.data.data;
+                this.statisticsLoaded = true;
             } catch (error) {
                 this.error = handleError(error);
             } finally {
@@ -205,6 +241,8 @@ export const useEmployeeStore = defineStore("employee", {
                     params: { days_ahead: daysAhead },
                 });
 
+                this.contractAlerts = response.data.data ?? [];
+                this.contractAlertsLoaded = true;
                 return response.data.data;
             } catch (error) {
                 this.error = handleError(error);

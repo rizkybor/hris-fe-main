@@ -12,7 +12,8 @@
     "addTeam": "Add Team",
     "searchPlaceholder": "Search teams by name, lead, status...",
     "allDepartments": "All Departments",
-    "empty": "No teams found"
+    "empty": "No teams found",
+    "refreshing": "Updating…"
   },
   "card": {
     "members": "{n} member | {n} members",

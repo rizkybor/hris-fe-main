@@ -103,7 +103,9 @@
     "byCategoryHint": "Work logged this month, by category",
     "noWork": "No work logged this month yet.",
     "trend": "Hours available vs used, last 6 months",
-    "trendHint": "Available = quota + carried over + adjustments, across all contracts"
+    "trendHint": "Available = quota + carried over + adjustments, across all contracts",
+    "showAnalysis": "Show analysis",
+    "hideAnalysis": "Hide analysis"
   },
   "contractForm": {
     "editTitle": "Edit Maintenance Contract",

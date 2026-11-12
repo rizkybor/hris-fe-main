@@ -54,7 +54,8 @@
       "updated": "Langganan diperbarui",
       "deleted": "Langganan dihapus",
       "invoiceNumber": "Invoice No. {number}"
-    }
+    },
+    "moreServices": "+{n} lainnya"
   },
   "recap": {
     "perMonth": "per bulan",
@@ -80,7 +81,9 @@
     "forecast": "Proyeksi tagihan, 12 bulan ke depan",
     "forecastHint": "Tanggal jatuh tempo tiap langganan aktif diproyeksikan sesuai siklusnya",
     "forecastTotal": "Total 12 bulan",
-    "expectedBilling": "Perkiraan tagihan"
+    "expectedBilling": "Perkiraan tagihan",
+    "showAnalysis": "Lihat analisis",
+    "hideAnalysis": "Sembunyikan analisis"
   },
   "form": {
     "addTitle": "Tambah Langganan",

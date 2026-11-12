@@ -4,12 +4,15 @@ import Statistics from "@/components/admin/client/list/Statistics.vue";
 import Pagination from "@/components/admin/team/Pagination.vue";
 import Alert from "@/components/common/Alert.vue";
 import { storeToRefs } from "pinia";
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, watch, computed } from "vue";
+import { useListState } from "@/composables/useListState";
+import { useStaleFetch } from "@/composables/useStaleFetch";
+import { useLookupStore } from "@/stores/lookups";
 import { debounce } from "lodash-es";
 import { can } from "@/helpers/permissionHelper";
 import { useRouter } from "vue-router";
 import { Plus, Briefcase, Search, SearchX, ChevronDown, Edit, Trash2, Star, Mail, Phone } from "lucide-vue-next";
-import { UiPageHeader, UiButton, UiInput, UiSelect, UiTable, UiBadge, UiEmpty } from "@/components/ui";
+import { UiPageHeader, UiButton, UiInput, UiSelect, UiTable, UiBadge, UiEmpty, UiSpinner } from "@/components/ui";
 import { useClientStore } from "@/stores/client";
 import { useAlertModalStore } from "@/stores/alertModal";
 import Skeleton from "@/components/common/skeleton/Skeleton.vue";
@@ -18,66 +21,60 @@ import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
 const clientsStore = useClientStore();
-const { clientsData, clients, success, error, loading } = storeToRefs(clientsStore);
+const { clientsData, statistics, success, error } = storeToRefs(clientsStore);
 const { fetchClientPaginated, deleteClient } = clientsStore;
 const alertModal = useAlertModalStore();
+const lookups = useLookupStore();
 
-const serverOptions = ref({
-  page: 1,
-  row_per_page: 10,
-});
+// Search, filters, page and rows per page live in the URL (and are
+// remembered), so coming back from a client restores the same view.
+const list = useListState("clients", { search: "", type: "", field: "", page: 1, per_page: 10 });
 
-const filters = ref({
-  search: "",
-  type: "",
-  field: "",
-});
+const params = computed(() => ({
+  page: list.page,
+  row_per_page: list.per_page,
+  search: list.search,
+  type: list.type,
+  field: list.field,
+}));
 
-// Options for the Type/Field filters -- drawn from the full (unpaginated)
-// client list, which is already fetched for pickers elsewhere, so every
-// value in use shows up here even if it's not on the current page.
-const uniqueValues = (key) =>
-  [...new Set(clients.value.map((c) => c[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-
-const clientTypeOptions = computed(() => uniqueValues("type"));
-const clientFieldOptions = computed(() => uniqueValues("field"));
-
-// Fetch data
-const fetchData = async () => {
-  await fetchClientPaginated({
-    ...serverOptions.value,
-    ...filters.value,
-  });
-};
-
-onMounted(() => {
-  fetchData();
-  if (clients.value.length === 0) clientsStore.fetchAllClient();
-});
-
-// Watch filters with debounce
-watch(
-  filters,
-  debounce(() => {
-    serverOptions.value.page = 1;
-    fetchData();
-  }, 300),
-  { deep: true }
+// Show what the store already has; refresh quietly behind it.
+let listShown = false;
+const { loading, refreshing, refresh } = useStaleFetch(
+  async () => {
+    await fetchClientPaginated(params.value);
+    listShown = true;
+  },
+  {
+    key: () => ["clients", params.value],
+    hasData: () => listShown || clientsData.value.items.length > 0,
+  }
 );
+
+// Options for the Type/Field filters: every value in use, from the light
+// /clients/statistic summary (grouped counts) instead of the full client
+// list with its relations. The Statistics strip reads the same data.
+clientsStore.fetchClientStatistics();
+const uniqueValues = (rows, key) =>
+  [...new Set((rows || []).map((r) => r[key]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
+const clientTypeOptions = computed(() => uniqueValues(statistics.value?.by_type, "type"));
+const clientFieldOptions = computed(() => uniqueValues(statistics.value?.by_field, "field"));
+
+// The input updates instantly; the list (and URL) follow after a pause.
+const searchInput = ref(list.search);
+const applySearch = debounce((v) => (list.search = v || ""), 300);
+watch(searchInput, (v) => applySearch(v));
+watch(() => list.search, (v) => { if (v !== (searchInput.value || "")) searchInput.value = v; });
 
 // Pagination handlers
 const handlePageChange = (page) => {
-  serverOptions.value.page = page;
-  fetchData();
+  list.page = page;
 };
 
 const handlePerPageChange = (perPage) => {
-  serverOptions.value.row_per_page = perPage;
-  serverOptions.value.page = 1;
-  fetchData();
+  list.per_page = perPage; // resets page to 1
 };
 
-// Computed properties sesuai store
 const clientsList = computed(() => clientsData.value?.items || []);
 const clientsMeta = computed(() => clientsData.value?.meta || {});
 
@@ -106,11 +103,19 @@ const handleDelete = async (client) => {
   );
   if (!ok) return;
 
-  try {
-    await deleteClient(client.id);
-    await fetchData();
-  } catch (error) {
+  // The store removes the row and lowers meta.total from the response.
+  const deleted = await deleteClient(client.id);
+  if (!deleted) {
     await alertModal.alert(t("clients.list.deleteFailed"), { type: "danger" });
+    return;
+  }
+  lookups.invalidate("clients");
+  clientsStore.fetchClientStatistics(); // counts + filter options, quietly
+  const meta = clientsMeta.value;
+  if (clientsList.value.length === 0 && list.page > 1) {
+    list.page = list.page - 1; // the page emptied: show the previous one
+  } else if ((meta.total || 0) > ((meta.current_page || 1) - 1) * (meta.per_page || 10) + clientsList.value.length) {
+    refresh({ force: true }); // pull the next client up into this page
   }
 };
 </script>
@@ -133,10 +138,13 @@ const handleDelete = async (client) => {
     <!-- Clients -->
     <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
       <div class="px-4 sm:px-5 py-3.5 grid grid-cols-2 md:flex md:items-center gap-2 border-b border-ui-line">
-        <UiInput v-model="filters.search" :icon="Search" :placeholder="$t('clients.list.searchPlaceholder')" class="col-span-2 md:flex-1 md:max-w-[360px]" />
+        <UiInput v-model="searchInput" :icon="Search" :placeholder="$t('clients.list.searchPlaceholder')" class="col-span-2 md:flex-1 md:max-w-[360px]" />
         <span class="hidden md:block md:flex-1"></span>
-        <UiSelect v-model="filters.type" :options="typeSelectOptions" class="md:w-[180px]" :aria-label="$t('common.labels.type')" />
-        <UiSelect v-model="filters.field" :options="fieldSelectOptions" class="md:w-[180px]" :aria-label="$t('clients.fields.fieldShort')" />
+        <span v-if="refreshing" class="col-span-2 md:col-span-1 inline-flex items-center gap-1.5 text-ui-cap text-ui-muted shrink-0" role="status">
+          <UiSpinner size="14px" :center="false" />{{ $t("clients.list.refreshing") }}
+        </span>
+        <UiSelect v-model="list.type" :options="typeSelectOptions" class="md:w-[180px]" :aria-label="$t('common.labels.type')" />
+        <UiSelect v-model="list.field" :options="fieldSelectOptions" class="md:w-[180px]" :aria-label="$t('clients.fields.fieldShort')" />
       </div>
 
       <UiTable
@@ -145,6 +153,7 @@ const handleDelete = async (client) => {
         :meta="clientsMeta"
         :loading="loading"
         :skeleton-rows="6"
+        :class="refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'"
         clickable
         @row-click="goToDetail"
       >
@@ -204,7 +213,7 @@ const handleDelete = async (client) => {
       </UiTable>
 
       <div class="border-t border-ui-line px-4 sm:px-5 py-3">
-        <Pagination :meta="clientsMeta" :loading="loading" @page-change="handlePageChange" @per-page-change="handlePerPageChange" />
+        <Pagination :meta="clientsMeta" :loading="loading || refreshing" @page-change="handlePageChange" @per-page-change="handlePerPageChange" />
       </div>
     </section>
   </div>

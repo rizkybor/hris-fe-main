@@ -2,6 +2,9 @@ import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 import { handleError } from "@/helpers/errorHelper";
 
+// Latest request id per report key, plus the latest overall (for `loading`).
+const requestSeq = { all: 0 };
+
 export const useReportStore = defineStore("report", {
   state: () => ({
     attendance: { period: null, summary: {}, rows: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 } },
@@ -24,160 +27,83 @@ export const useReportStore = defineStore("report", {
   }),
 
   actions: {
-    async fetchAttendanceReport(params = {}) {
+    // Shared by every report fetch. Only the latest request for a report may
+    // write its data or clear `loading`, so a slow older response (e.g. an
+    // earlier search) never overwrites a newer one. Resolves to true when
+    // this response was applied.
+    async _load(key, url, params = {}) {
+      const id = ++requestSeq.all;
+      const own = (requestSeq[key] = id);
       this.loading = true;
       this.error = null;
       try {
-        const { data } = await axiosInstance.get("/reports/attendance", { params });
-        this.attendance = data.data;
+        const { data } = await axiosInstance.get(url, { params });
+        if (own !== requestSeq[key]) return false;
+        this[key] = data.data;
+        return true;
       } catch (error) {
-        this.error = handleError(error);
+        if (own === requestSeq[key]) this.error = handleError(error);
+        return false;
       } finally {
-        this.loading = false;
+        if (id === requestSeq.all) this.loading = false;
       }
     },
 
-    async fetchPayrollReport(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/payroll", { params });
-        this.payroll = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    // Show a cached response (the page keeps one per tab + filters). Counts
+    // as the latest for that report, so an older request still in flight
+    // can't overwrite it.
+    applyCached(key, data) {
+      requestSeq[key] = ++requestSeq.all;
+      this[key] = data;
+      this.loading = false;
     },
 
-    async fetchEmployeeReport(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/employee", { params });
-        this.employee = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchAttendanceReport(params = {}) {
+      return this._load("attendance", "/reports/attendance", params);
     },
 
-    async fetchFinanceReport(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/finance", { params });
-        this.finance = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchPayrollReport(params = {}) {
+      return this._load("payroll", "/reports/payroll", params);
     },
 
-    async fetchPph21Report(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/pph21", { params });
-        this.pph21 = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchEmployeeReport(params = {}) {
+      return this._load("employee", "/reports/employee", params);
     },
 
-    async fetchPpnReport(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/ppn", { params });
-        this.ppn = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchFinanceReport(params = {}) {
+      return this._load("finance", "/reports/finance", params);
     },
 
-    async fetchProjectReport(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/project", { params });
-        this.project = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchPph21Report(params = {}) {
+      return this._load("pph21", "/reports/pph21", params);
     },
 
-    async fetchPph23Report(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/pph23", { params });
-        this.pph23 = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchPpnReport(params = {}) {
+      return this._load("ppn", "/reports/ppn", params);
     },
 
-    async fetchDocumentReport(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/documents", { params });
-        this.documents = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchProjectReport(params = {}) {
+      return this._load("project", "/reports/project", params);
     },
 
-    async fetchMaintenanceReport(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/maintenance", { params });
-        this.maintenance = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchPph23Report(params = {}) {
+      return this._load("pph23", "/reports/pph23", params);
     },
 
-    async fetchSubscriptionReport(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/subscription", { params });
-        this.subscription = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchDocumentReport(params = {}) {
+      return this._load("documents", "/reports/documents", params);
     },
 
-    async fetchStaffRaport(params = {}) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const { data } = await axiosInstance.get("/reports/staff-raport", { params });
-        this.staffRaport = data.data;
-      } catch (error) {
-        this.error = handleError(error);
-      } finally {
-        this.loading = false;
-      }
+    fetchMaintenanceReport(params = {}) {
+      return this._load("maintenance", "/reports/maintenance", params);
+    },
+
+    fetchSubscriptionReport(params = {}) {
+      return this._load("subscription", "/reports/subscription", params);
+    },
+
+    fetchStaffRaport(params = {}) {
+      return this._load("staffRaport", "/reports/staff-raport", params);
     },
 
     async fetchStaffRaportDetail(employeeId, params = {}) {
