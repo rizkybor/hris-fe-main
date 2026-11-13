@@ -1,6 +1,3 @@
-// Option lists the employee wizard (create + edit) needs, from the shared
-// lookups cache: loaded in parallel once when the wizard opens, so entering
-// the Job / Emergency steps later renders at once with no requests.
 import { useLookupStore } from "@/stores/lookups";
 
 export const WIZARD_LOOKUPS = [

@@ -1,17 +1,3 @@
-// Shared cache for the option lists forms need (clients, projects to pick
-// from, bank accounts, PPh types, employees, staff, configurable options,
-// teams, roles and the system option lists under /options/<type>).
-// Each list is fetched once and reused across pages for TTL_MS; concurrent
-// calls share one request. Kept apart from the feature stores on purpose:
-// e.g. projectStore.projects is the paginated Projects list, so forms that
-// filled their project picker from it showed only that page.
-//
-//   const lookups = useLookupStore();
-//   await lookups.ensure("clients");             // no request if fresh
-//   lookups.clients                               // reactive list
-//   lookups.ensure("options", "subscription_service_type"); lookups.optionsFor("subscription_service_type")
-//   lookups.ensure("systemOptions", "employment-types"); lookups.systemOptionsFor("employment-types")
-//   lookups.invalidate("clients")                 // after creating a client
 import { defineStore } from "pinia";
 import { axiosInstance } from "@/plugins/axios";
 
@@ -28,9 +14,6 @@ const SOURCES = {
   options: (category) => axiosInstance.get("/configurable-options", { params: { category } }).then((r) => r.data.data ?? []),
   teams: () => axiosInstance.get("teams").then((r) => r.data.data ?? []),
   roles: () => axiosInstance.get("/roles").then((r) => r.data.data ?? []),
-  // System option lists: /options/<type>, e.g. "employment-types",
-  // "job-statuses", "work-locations", "skill-levels", "ptkp-statuses",
-  // "bank-names", "departments", "preferred-languages", "leave-types".
   systemOptions: (type) => axiosInstance.get(`/options/${type}`).then((r) => r.data.data ?? []),
 };
 

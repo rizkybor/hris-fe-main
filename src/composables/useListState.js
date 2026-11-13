@@ -1,17 +1,3 @@
-// List state (search, filters, tab, sort, page) that survives leaving and
-// coming back: kept in the URL query (shareable, back/forward, reload) and
-// remembered per browser (localStorage "hris-list:<key>") so opening the
-// menu again restores the last view.
-//
-//   const list = useListState("staff-tasks", { q: "", status: "", mine: true, page: 1 });
-//   list.q = "invoice";            // plain reactive fields, v-model friendly
-//   list.isDirty / list.reset()    // anything differs from the defaults?
-//
-// Field types follow the defaults: string, number, boolean, or string[]
-// (comma-joined in the URL). Values equal to the default are left out of the
-// URL. Changing any field other than `page` resets `page` to 1 (when the
-// list has a page field). Query keys this list doesn't own are kept as is,
-// so deep links like ?task=12 keep working.
 import { computed, reactive, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 

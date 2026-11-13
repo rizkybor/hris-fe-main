@@ -77,14 +77,8 @@ const removeService = (index) => {
 
 const serviceErrors = (index, field) => props.errors[`services.${index}.${field}`];
 
-// Collapsible so the (now required) invoice-billing fields don't crowd out
-// the subscription's own details by default -- expanded by default since
-// Bank Account/Account Number here are required to save.
 const showInvoiceConfig = ref(true);
 
-// Purely informational heads-up that the client is expected to withhold
-// PPh 23 on payment -- never touches subtotal/total, mirroring the same
-// toggle on the manual Invoice Create form.
 const applyPph23 = ref(false);
 
 const handleBankNameChange = () => {
@@ -109,10 +103,6 @@ const toggleApplyPph23 = () => {
   }
 };
 
-// With several services, each optionally carries its own VAT/PPN% (0% if
-// left blank) -- the invoice-level field becomes a computed "Total VAT /
-// PPN (%)" (blended rate) instead of one flat user-entered rate. With a
-// single service, form.ppn_percentage is that one rate as before.
 const isMultiService = computed(() => form.services.length > 1);
 
 const ppnAmount = computed(() => {
@@ -129,23 +119,12 @@ const totalPpnPercentage = computed(() => {
   return totalAmount.value > 0 ? Math.round((ppnAmount.value / totalAmount.value) * 10000) / 100 : 0;
 });
 
-// One service's own amount + its own VAT/PPN + its own ICANN fee, shown
-// inline on its row so it's clear each service is taxed (and surcharged)
-// on its own amount rather than the whole subscription.
 const serviceTotal = (service) =>
   Math.round((Number(service.amount) || 0) * (1 + (Number(service.ppn_percentage) || 0) / 100)) +
   (Number(service.icann_fee) || 0);
 
-// With several services, "Subtotal" is the sum of each service's own
-// amount + its own VAT/PPN (i.e. sum of serviceTotal() above minus ICANN
-// fees, which are shown as their own line) rather than summing amounts
-// and VAT separately -- same total, presented the way a multi-service
-// invoice is actually itemized.
 const servicesSubtotal = computed(() => totalAmount.value + ppnAmount.value);
 
-// Optional pass-through registrar fee (e.g. ICANN's fee on a domain) --
-// not taxed, added on top same as Admin Fee, available regardless of how
-// many services there are since even a single domain service can have one.
 const icannFeeTotal = computed(() => form.services.reduce((sum, s) => sum + (Number(s.icann_fee) || 0), 0));
 
 const invoiceTotal = computed(
@@ -153,10 +132,6 @@ const invoiceTotal = computed(
 );
 const pph23EstimatedAmount = computed(() => Math.round((invoiceTotal.value * (Number(form.pph23_percent) || 0)) / 100));
 
-// Maintenance is the only service type that's ever tied to a Project --
-// clearing project_id when no row is website_maintenance anymore avoids
-// silently submitting a stale project link for a domain/SaaS-only
-// subscription.
 watch(
   () => form.services.map((s) => s.service_type),
   (types) => {
@@ -240,9 +215,6 @@ const submit = () => {
     if (!service.notes) delete service.notes;
     return service;
   });
-  // With multiple services, the invoice-level rate is a computed blend of
-  // each service's own -- the backend recomputes this too, but send the
-  // same number so what's displayed here matches what gets saved.
   if (isMultiService.value) payload.ppn_percentage = totalPpnPercentage.value;
   if (!payload.project_id) delete payload.project_id;
   if (!payload.notes) delete payload.notes;
@@ -526,9 +498,6 @@ const submit = () => {
           <!-- Totals -->
           <dl class="bg-ui-subtle rounded-ui-control px-4 py-3 text-ui-small text-ui-text space-y-1.5">
             <template v-if="isMultiService">
-              <!-- Each service is taxed on its own amount at its own rate
-                   (see the per-row total above) -- Subtotal here is the
-                   sum of those, not amount and VAT summed separately. -->
               <div class="flex justify-between gap-3"><dt>{{ $t("subscriptions.form.subtotalServices") }}</dt><dd class="tabular-nums text-right">Rp {{ servicesSubtotal.toLocaleString("id-ID") }}</dd></div>
             </template>
             <template v-else>

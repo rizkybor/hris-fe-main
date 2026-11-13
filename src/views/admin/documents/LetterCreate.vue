@@ -25,11 +25,6 @@ const route = useRoute();
 const editingId = computed(() => route.params.id || null);
 const isEditMode = computed(() => !!editingId.value);
 
-// Reference templates for structured letter types, so the body & required
-// sections don't have to be built from scratch every time. Deliberately
-// limited to the letter types actually used often -- the rest of the
-// (much longer) Kode Surat list still works fine, it just starts from a
-// blank body instead of a pre-filled one.
 const TEMPLATES = {
   SPK: {
     body:
@@ -202,9 +197,6 @@ const applyTemplate = () => {
   const template = TEMPLATES[selectedCode.value];
   if (!template) return;
 
-  // Templates are authored as plain text with \n line breaks; the editor
-  // is HTML-based (contenteditable), so those need to become real <br>
-  // tags or they'd render collapsed onto one line.
   form.value.body = template.body.replace(/\n/g, "<br>");
   useItems.value = template.useItems;
   useSecondParty.value = template.useSecondParty;
@@ -213,10 +205,6 @@ const applyTemplate = () => {
 const addItem = () => items.value.push({ description: "", specification: "", qty: "", price: 0 });
 const removeItem = (i) => items.value.splice(i, 1);
 
-// The editor is a contenteditable div, not a real <textarea>, so the
-// native `required` attribute doesn't apply to it -- checked manually
-// here instead. An empty contenteditable can still hold stray tags
-// (e.g. "<br>"), so strip markup before checking for real content.
 const isBodyEmpty = () => !form.value.body.replace(/<[^>]*>/g, "").trim();
 
 const handleSubmit = async () => {
@@ -230,9 +218,6 @@ const handleSubmit = async () => {
   submitting.value = true;
   try {
     if (isEditMode.value) {
-      // Classification fields (code/division/type/date) are baked into the
-      // already-issued letter_number and intentionally not editable -- only
-      // content fields go in the update payload.
       const payload = {
         subject: form.value.subject,
         recipient: form.value.recipient,

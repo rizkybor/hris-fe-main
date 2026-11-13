@@ -78,9 +78,6 @@ const moveShine = (e) => {
 </template>
 
 <style scoped>
-/* Headline shine. The letters are filled with a radial light centred on the
-   pointer (soft blue at the pointer, fading back to plain white), clipped to
-   the text; --shine-r grows in on hover and shrinks away on leave. */
 @property --shine-r {
   syntax: "<length>";
   inherits: false;

@@ -1,21 +1,3 @@
-/**
- * Deadline risk formula
- * -----------------------------------------------------------------------
- * Parameters:
- *   totalDurationDays = end_date - start_date                 (planned length of the project)
- *   elapsedDays       = today - start_date, clamped [0, totalDurationDays]
- *   daysRemaining     = end_date - today                      (negative once overdue)
- *   expectedProgress  = elapsedDays / totalDurationDays * 100  (where a linear pace should be by now)
- *   progressGap       = expectedProgress - actualProgress     (positive = behind the expected pace)
- *
- * Thresholds (tunable):
- *   CRITICAL_DAYS_LEFT / CRITICAL_MIN_PROGRESS   -> e.g. "2 days left but only 40% done"
- *   AT_RISK_DAYS_LEFT / AT_RISK_MIN_PROGRESS     -> deadline is close and completion isn't near
- *   AT_RISK_PROGRESS_GAP                         -> way behind the linear pace regardless of deadline proximity
- *   BEHIND_PROGRESS_GAP                          -> mildly behind the linear pace
- *
- * Levels, evaluated in order (most severe wins): overdue > critical > at-risk > behind > on-track.
- */
 export const RISK_THRESHOLDS = {
   CRITICAL_DAYS_LEFT: 3,
   CRITICAL_MIN_PROGRESS: 80,
@@ -29,10 +11,6 @@ import { t as translate } from "@/i18n";
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
-/**
- * @param {{ start_date: string, end_date: string, status: string, progress: number }} project
- * @returns {null | { level: string, label: string, message: string, daysRemaining: number, expectedProgress: number, actualProgress: number }}
- */
 export const getProjectHealth = (project) => {
   const { start_date, end_date, status } = project || {};
   if (!start_date || !end_date || status === "completed" || status === "cancelled") return null;

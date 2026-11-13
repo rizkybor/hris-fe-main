@@ -1,13 +1,4 @@
 <script setup>
-// Appearance toggle: a tab hugging the right screen edge, narrow at rest so
-// it doesn't get in the way (on phones especially), in the opposite colours
-// of the page so it always stands out, showing the icon of the mode a tap
-// switches to. A tap switches straight to the next mode (Light → Dark →
-// System → Light) and slides the tab further out with the new mode's name;
-// after a short pause it tucks back in. Hover or keyboard focus also brings
-// it out on desktop. Press and drag (or ↑/↓ when focused) moves it up and
-// down the edge; the spot is remembered per browser. By default it sits in
-// the bottom-right corner, above the tab bar on phones.
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Sun, Moon, Monitor } from "lucide-vue-next";
@@ -167,9 +158,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* A tab flush with the right edge (rounded on the left only). Resting it is
-   narrow with a small icon; out (after a tap, on hover or keyboard focus) it
-   stays on the edge and just slides further out, icon at full size. */
 .theme-toggle__button {
   width: 28px;
   height: 48px;

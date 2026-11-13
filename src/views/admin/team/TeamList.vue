@@ -86,10 +86,10 @@ const departmentOptions = computed(() => [
     <Alert type="success" :title="success" :show="success" @close="teamStore.clearMessages()" />
 
     <!-- Team List Section -->
-    <!-- One card (toolbar, cards on a tray, pagination), same as Projects and Employees -->
-    <section class="sm:bg-ui-surface sm:border sm:border-ui-line sm:rounded-ui-card">
+    <!-- Toolbar, cards and pagination straight on the page (no frame), same as Projects and Employees -->
+    <section class="space-y-4">
       <!-- Toolbar -->
-      <div class="flex flex-col lg:flex-row lg:items-center gap-3 sm:p-4 sm:px-5 sm:border-b sm:border-ui-line">
+      <div class="flex flex-col lg:flex-row lg:items-center gap-3">
         <UiInput
           v-model="searchInput"
           :icon="SearchIcon"
@@ -103,7 +103,7 @@ const departmentOptions = computed(() => [
         </span>
       </div>
 
-      <div class="pt-4 sm:p-5 sm:ui-tray">
+      <div>
       <!-- Teams Grid -->
       <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 xl:grid-cols-3" />
 
@@ -121,7 +121,7 @@ const departmentOptions = computed(() => [
       </div>
 
       <!-- Pagination -->
-      <div class="pt-4 sm:py-3.5 sm:px-5 sm:border-t sm:border-ui-line">
+      <div class="pt-1">
         <Pagination
           :meta="meta"
           :loading="loading"

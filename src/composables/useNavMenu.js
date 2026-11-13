@@ -1,6 +1,3 @@
-// Main menu as data, shared by the desktop sidebar and the phone "More"
-// sheet so both always list the same links with the same permission and
-// active rules. Labels come from the nav.* locale namespace.
 import { computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -45,9 +42,6 @@ import { useLicenseManagerStore } from "@/stores/licenseManager";
 export function useNavMenu() {
   const { t } = useI18n();
 
-  // A section header only renders when at least one item inside it is
-  // visible to the current user's permissions - otherwise it's a dangling
-  // label with nothing underneath it.
   const showMyWorkspace = computed(() =>
     canOneOf([
       "profile-menu",
@@ -93,9 +87,6 @@ export function useNavMenu() {
     canOneOf(["company-about-menu", "asset-menu", "files-company-menu", "credential-account-list", "announcement-menu"])
   );
 
-  // License Manager: Overview, then one entry per active product (loaded
-  // from the API). Products are managed on the overview.
-  // Versions (release history) has its own module, license-release-*.
   const showLicenseManager = computed(() => canOneOf(["license-manager-menu", "license-release-menu"]));
   const canListLicenses = computed(() => can("license-manager-list"));
   const canSeeVersions = computed(() => can("license-release-menu"));
@@ -116,11 +107,6 @@ export function useNavMenu() {
 
   const showInsights = computed(() => canOneOf(["analytics-menu", "history-menu"]));
 
-  // ---------------------------------------------------------------------------
-  // Menu (redesign): the same links, permissions and active rules as before,
-  // as data. `show` is evaluated against the current user's permissions;
-  // `active` against the current route.
-  // ---------------------------------------------------------------------------
   const startsWith = (...prefixes) => () => prefixes.some((p) => route.name?.startsWith(p));
   const isRoute = (name) => () => route.name === name;
 

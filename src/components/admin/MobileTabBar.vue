@@ -1,8 +1,5 @@
 <script setup>
 import { useI18n } from "vue-i18n";
-// Bottom tab bar for phones and tablets (below lg), like a native app.
-// Shows up to four destinations the user may open (same permissions as
-// the sidebar) plus "More", which opens the full menu drawer.
 import { computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { House, Clock, ListChecks, Wallet, CircleUserRound, LayoutGrid } from "lucide-vue-next";

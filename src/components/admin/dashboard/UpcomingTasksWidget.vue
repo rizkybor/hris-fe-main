@@ -16,10 +16,6 @@ const router = useRouter();
 const taskStore = useTaskStore();
 const staffTaskStore = useStaffTaskStore();
 
-// Unifies the two independent task sources (Project Tasks and the daily
-// Assigned Tasks a supervisor hands out via Business Documents) into one
-// due-date-sorted list -- previously this widget only ever showed Project
-// Tasks, silently hiding anything from the Assigned side.
 const upcomingTasks = computed(() => {
   const projectTasks = taskStore.myTasks
     .filter((t) => t.status !== "done" && t.status !== "cancelled")

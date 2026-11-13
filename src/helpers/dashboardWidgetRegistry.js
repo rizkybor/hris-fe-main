@@ -1,11 +1,5 @@
 import { defineAsyncComponent } from "vue";
 
-// Frontend counterpart to hris-api-main's App\Support\DashboardWidgetRegistry
-// -- keys must match exactly, since the backend is the source of truth for
-// which widgets a user has permission to add to their dashboard, and this
-// registry is only responsible for turning an approved key into an actual
-// component + its display title/grid span. `titleKey` is an i18n key,
-// rendered with $t() where the title is shown.
 export const DASHBOARD_WIDGET_REGISTRY = {
   key_metrics: {
     titleKey: "dashboard.widgets.keyMetrics",

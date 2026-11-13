@@ -1,11 +1,3 @@
-// Interface language: Indonesian (default) or English. The choice is kept
-// per browser (localStorage "hris-locale"). Messages live in
-// src/locales/<locale>/<namespace>.json and are loaded automatically, so a
-// key is written as t("namespace.path.to.key"); English is the fallback
-// when an Indonesian string is missing.
-//
-// Amounts in Rupiah keep the Indonesian format in both languages; dates
-// and other numbers follow the selected language through localeTag().
 import { createI18n } from "vue-i18n";
 
 const STORAGE_KEY = "hris-locale";

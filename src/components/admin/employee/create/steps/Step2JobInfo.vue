@@ -45,9 +45,6 @@ const form = computed({
   set: (value) => emit("update:modelValue", value),
 });
 
-// Teams, roles and option lists come from the shared lookups cache (the
-// wizard loads them once in parallel when it opens; see wizardLookups.js).
-// System roles are manager-configurable via Settings > Roles & Permissions.
 const lookups = useLookupStore();
 const teams = computed<any[]>(() => lookups.teams);
 const systemRoles = computed<any[]>(() => lookups.roles);

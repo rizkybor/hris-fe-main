@@ -1,10 +1,4 @@
 <script setup>
-// Detail panel that opens next to a list instead of navigating away: slides
-// in from the right from `sm` up, a bottom sheet on phones. v-model:open.
-// Optional prev/next (buttons + J/K or ↑/↓ while the panel has focus) to walk
-// through the list without closing, and `to` for an "open full page" link.
-// Esc and the backdrop close it; body scroll is locked while open; focus
-// moves into the panel and back afterwards.
 import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { ChevronDown, ChevronUp, Maximize2, X } from "lucide-vue-next";
 

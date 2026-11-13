@@ -103,9 +103,6 @@ export const useMaintenanceStore = defineStore("maintenance", {
 
     // ----- Patching the open detail from responses (no double reloads) -----
 
-    // A month's totals changed: update it in the contract (periods list and
-    // current month) and in the open month, keeping the open month's logs
-    // and adjustments.
     patchPeriod(fields) {
       if (!fields?.id) return;
       const { logs, adjustments, ...totals } = fields; // eslint-disable-line no-unused-vars

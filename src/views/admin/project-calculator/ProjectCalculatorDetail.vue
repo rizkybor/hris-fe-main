@@ -27,15 +27,9 @@ const router = useRouter();
 const store = useProjectCalculatorStore();
 const lookups = useLookupStore();
 
-// Opened from the list or right after saving, the store already holds the
-// full record: it shows at once (a just-saved/just-opened one makes no
-// request, a list row is refreshed quietly behind it).
 const calc = ref(store.cachedCalculation(route.params.id));
 const loading = ref(!calc.value);
 
-// Infrastructure Tools can be shown per month or per year. Snapshots saved
-// before annual_fee was captured (or a tool with only one of the two fees
-// filled in) fall back to monthly x 12 / annual / 12, flagged as estimates.
 const infraPeriod = ref("monthly");
 
 const infraFee = (tool) => {
@@ -329,10 +323,6 @@ const printQuote = () => window.print();
         </aside>
       </div>
 
-      <!-- Team Rate Setup snapshot -- frozen as it stood when this estimate
-           was saved, not the live/shared setting (which may have changed
-           since). Older estimates saved before this existed simply won't
-           have one. -->
       <section
         v-if="calc.rate_setting_snapshot && calc.scenario !== 'landing_page'"
         class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden print:border-0"

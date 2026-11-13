@@ -10,9 +10,6 @@ const props = defineProps({
   rounded: { type: String, default: "rounded-full" },
 });
 
-// Consistent color per person -- same name always lands on the same swatch,
-// so a given teammate reads as "the same person" across the app even
-// without a photo.
 const PALETTE = [
   { bg: "bg-ui-accent-soft", text: "text-ui-accent" },
   { bg: "bg-ui-info-soft", text: "text-ui-info" },
@@ -52,9 +49,6 @@ const colors = computed(() => {
   return PALETTE[Math.abs(hash) % PALETTE.length];
 });
 
-// Tailwind's default spacing scale is linear (n * 0.25rem), so the "w-N"
-// class in `size` is enough to derive a proportional font size for the
-// initials -- keeps them readable whether the avatar is w-8 or w-32.
 const initialsFontSize = computed(() => {
   const arbitrary = props.size.match(/w-\[(\d+)px\]/);
   if (arbitrary) {

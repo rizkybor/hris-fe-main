@@ -18,9 +18,6 @@ const { bankAccounts } = storeToRefs(store);
 const newBankAccount = ref({ bank_name: "", bank_code: "", account_number: "", swift_code: "" });
 const errorMessage = ref("");
 
-// Short enough to fetch in full (also needed in full by the Invoice form's
-// Bank Name dropdown), so paginate client-side rather than add a second
-// paginated endpoint -- same approach as Letter & Division Codes.
 const page = ref(1);
 
 const paginate = (items, p) => ({

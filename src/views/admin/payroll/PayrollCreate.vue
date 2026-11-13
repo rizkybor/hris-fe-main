@@ -26,9 +26,6 @@ const alertModal = useAlertModalStore();
 const toast = useToastStore();
 const { loading, error } = storeToRefs(payrollStore);
 
-// "?type=thr" lets the dashboard's "Generate THR" shortcut land here
-// pre-selected, without needing a whole separate page for what's really
-// the same one-field form.
 const payrollType = ref(route.query.type === "thr" ? "thr" : "monthly");
 
 const form = ref({

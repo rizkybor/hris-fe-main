@@ -1,6 +1,3 @@
-// Repeats `fn` every `intervalMs` while the page is mounted, paused while the
-// browser tab is hidden (and run once right away when it becomes visible
-// again if a tick was missed). Returns { pause, resume }.
 import { onBeforeUnmount, onMounted } from "vue";
 
 export function usePolling(fn, intervalMs, { immediate = false } = {}) {

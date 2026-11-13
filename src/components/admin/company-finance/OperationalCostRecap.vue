@@ -14,10 +14,6 @@ const { t } = useI18n();
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
-// Recap above the Operational Cost lists: the monthly total and each
-// category's figure (items "In use" only), with the yearly trend behind
-// "Show analysis". The store refreshes the figures quietly after every
-// create / edit / delete, so this follows the lists on its own.
 const store = useCompanyFinanceStore();
 
 // v-model:year from the page (kept in its list state).
@@ -72,9 +68,6 @@ const tiles = computed(() => {
   ];
 });
 
-// Same as the Subscriptions recap: the tiles answer the everyday questions,
-// the trend sits behind "Show analysis" -- closed by default, remembered per
-// browser, and not rendered (no chart download) while closed.
 const ANALYSIS_KEY = "operational-costs-recap-analysis-open";
 const analysisOpen = ref(false);
 try {

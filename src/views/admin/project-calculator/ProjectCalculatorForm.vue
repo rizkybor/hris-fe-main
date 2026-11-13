@@ -41,10 +41,6 @@ const pphTypes = computed(() => lookups.pphTypes);
 const isEditing = computed(() => !!route.params.id);
 const loadingCalculation = ref(false);
 
-// Landing Page's Development rate and Margin Jual aren't company-wide
-// configurable (only Server/Design pricing is) -- these are just the
-// pre-filled defaults for a new calculation, matching
-// ProjectCalculatorService::DEFAULT_RATE_DEVELOPER/DEFAULT_MARGIN_PERCENT.
 const DEFAULT_RATE_DEVELOPER = 100000;
 const DEFAULT_MARGIN_PERCENT = 30;
 
@@ -99,10 +95,6 @@ const form = ref({
 
 const errorMessage = ref("");
 
-// Elevates the sticky list header (shadow + blur) only once it's actually
-// pinned to the top of the viewport, rather than looking "stuck" all the
-// time -- a tiny sentinel just above it flips isHeaderStuck the instant it
-// scrolls out of view.
 const stickySentinel = ref(null);
 const isHeaderStuck = ref(false);
 let stickyObserver = null;
@@ -117,12 +109,6 @@ onMounted(() => {
 });
 onUnmounted(() => stickyObserver?.disconnect());
 
-// Inline styles rather than Tailwind classes for the sticky positioning,
-// backdrop blur, and shadow specifically -- this project's dev-mode
-// Tailwind build was silently failing to compile several of these classes
-// (confirmed via the browser's own CSSOM) while everything else compiled
-// fine, for reasons that didn't reproduce as a config issue. Inline styles
-// sidestep that class-generation step entirely.
 const stickyHeaderStyle = computed(() => ({
   top: "-12px",
   marginLeft: "-24px",
@@ -143,11 +129,6 @@ const stickyHeaderStyle = computed(() => ({
       }),
 }));
 
-// "Load from Previous Estimate" -- lets a new estimate reuse the Module
-// List / New Feature line items already saved on an earlier one, instead
-// of retyping them. Create mode only; kept as a self-contained picker
-// (own list/search state) rather than reusing `store.calculations`, which
-// belongs to the dashboard list view.
 const referenceModal = ref(false);
 const referenceCalculations = ref([]);
 const referenceSearch = ref("");
@@ -238,9 +219,6 @@ const markClean = () => (baseline.value = JSON.stringify(form.value));
 useUnsavedGuard(() => baseline.value !== null && JSON.stringify(form.value) !== baseline.value);
 
 onMounted(async () => {
-  // One wave: rate setups (reused when the dashboard just loaded them), PPh
-  // types (shared cache) and, when editing, the estimate (reused when it was
-  // just opened or saved).
   if (isEditing.value) loadingCalculation.value = true;
   const [, , calcResult] = await Promise.allSettled([
     store.ensureRateSettings(),
@@ -373,9 +351,6 @@ const computedItems = computed(() => {
   });
 });
 
-// Landing Page's own math -- mirrors ProjectCalculatorService::calculateLandingPage()
-// exactly (server cost + design cost + development cost, marked up by its
-// own margin), since it isn't an hourly-items scenario like Feature/Build.
 const landingPageServerCost = computed(() =>
   form.value.server_type === "dedicated"
     ? Number(landingPageRateSetting.value.server_dedicated_price || 0)
@@ -446,11 +421,6 @@ const ppnAmount = computed(() =>
 );
 const totalWithPpn = computed(() => grandTotal.value + ppnAmount.value);
 
-// PPh is withheld by the client, not added -- it reduces what the company
-// actually receives in cash (netReceived), it never changes what the
-// client is invoiced (totalWithPpn/grandTotal). Its base (DPP) is the
-// service fee only, never the PPN portion, since PPN isn't the company's
-// income.
 const handlePphTypeChange = () => {
   const selected = pphTypes.value.find((t) => t.value === form.value.pph_type);
   if (selected?.default_rate !== null && selected?.default_rate !== undefined) {
@@ -639,15 +609,8 @@ const submit = async () => {
 
         <!-- Items -->
         <section v-if="form.scenario !== 'landing_page'" class="bg-ui-surface border border-ui-line rounded-ui-card">
-          <!-- Sentinel: a 1px marker just above the sticky header. The
-               IntersectionObserver watching it flips isHeaderStuck the
-               instant it scrolls out of view, i.e. exactly when the header
-               below actually becomes pinned. -->
           <div ref="stickySentinel" class="h-px -mb-px"></div>
 
-          <!-- Sticky so "Add Feature/Module" stays reachable while scrolling
-               through a long item list. Gains a soft shadow only once
-               actually pinned (isHeaderStuck). -->
           <div
             class="sticky top-0 z-10 bg-ui-surface border-b border-ui-line px-4 sm:px-6 pt-4 pb-3 transition-shadow duration-ui-base"
             :class="isHeaderStuck ? 'shadow-ui-raised' : 'rounded-t-ui-card'"

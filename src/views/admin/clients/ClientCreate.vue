@@ -20,13 +20,6 @@ const loading = ref(false);
 const error = ref("");
 const success = ref("");
 
-// Suggests values already used by other clients (via a <datalist>, so the
-// browser's native "pick one or just keep typing" behavior handles the
-// "recommend but allow a new value" requirement for free) -- no dedicated
-// backend endpoint needed since the full client list is already fetched
-// for pickers elsewhere.
-// The values come from the light /clients/statistic summary (grouped
-// counts), not the full client list with its relations.
 onMounted(() => {
   if (!clientsStore.statistics && !clientsStore.loadingStatistics) clientsStore.fetchClientStatistics();
 });

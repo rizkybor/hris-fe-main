@@ -1,7 +1,3 @@
-// Appearance: "light", "dark" or "system" (follows the OS). The choice is
-// kept in localStorage; the resolved theme is written to <html data-theme>,
-// which input.css uses to swap the --ui-* tokens. index.html applies the
-// saved choice before the app mounts, so there is no light flash.
 import { ref, computed } from "vue";
 
 const STORAGE_KEY = "hris-theme";
@@ -28,6 +24,7 @@ const resolved = computed(() => (mode.value === "system" ? (systemDark.value ? "
 
 const apply = () => {
   document.documentElement.dataset.theme = resolved.value;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", resolved.value === "dark" ? "#121823" : "#FFFFFF");
   themeRevision.value += 1;
 };
 

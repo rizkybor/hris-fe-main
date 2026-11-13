@@ -1,7 +1,3 @@
-// Design-token colours for places that need a real colour string instead
-// of a Tailwind class (ApexCharts options, canvas, inline SVG). Reads the
-// `--ui-*` RGB channels from :root at call time, so charts follow the
-// palette and the light/dark theme without hard-coded hex values.
 import { themeRevision } from "@/composables/useTheme";
 
 export const uiColor = (name, alpha = 1) => {

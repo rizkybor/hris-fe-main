@@ -62,9 +62,6 @@ const taskStore = useTaskStore();
 const assetStore = useAssetStore();
 const reviewStore = usePerformanceReviewStore();
 
-// assetStore/reviewStore are plain (untyped) JS Pinia stores, so their
-// state infers as never[] when consumed from this <script setup lang="ts">
-// block -- cast to any[] here rather than typing the stores themselves.
 const myAssets = computed(() => assetStore.myAssets as any[]);
 const myReviews = computed(() => reviewStore.myReviews as any[]);
 const router = useRouter();
@@ -82,9 +79,6 @@ const acknowledgeReview = (review: any) =>
     success: t("profile.view.reviews.acknowledgedToast"),
   });
 
-// The profile lives in the employee store, so a revisit shows it at once
-// and refreshes quietly. Cached data only counts for the signed-in user
-// (stores aren't reset on logout).
 const myUserId = computed(() => authStore.user?.id ?? null);
 const profile = computed<any>(() => {
   const p: any = employeeStore.myProfile;
@@ -93,12 +87,6 @@ const profile = computed<any>(() => {
 const profileNotFound = ref(false);
 const performanceStatistics = computed<any>(() => (profile.value ? employeeStore.myPerformanceStatistics : null) || {});
 
-// These three mirror PHP behavior exactly (ucwords() and Str::limit()'s
-// defaults) so the ID card preview's job title/phone/email match the
-// downloaded PDF's content character-for-character, rather than relying on
-// this app's own capitalize() helper (which only capitalizes the first
-// letter of the whole string, not each word) or CSS ellipsis (which
-// truncates by pixel width, not by the same character count as the PDF).
 const idCardUcwords = (str: string) => (str || "").replace(/(^|\s)\S/g, (c: string) => c.toUpperCase());
 const idCardStrLimit = (str: string, limit: number, end = "...") => (str.length > limit ? str.slice(0, limit) + end : str);
 const idCardJobTitle = computed(() => idCardStrLimit(idCardUcwords(profile.value?.job_information?.job_title || "-"), 32));
@@ -110,16 +98,6 @@ const idCardPhoto = computed(() => profile.value?.user?.profile_photo || "");
 const idCardNameTop = computed(() => (idCardPhoto.value && !idCardPhotoFailed.value ? 139 : 90));
 const idCardPhotoFailed = ref(false);
 
-// Mirrors the PHP line-splitting in id-card.blade.php exactly, so the ID
-// card preview breaks the name onto the same two lines, at the same
-// position, as the downloaded PDF -- rather than leaving it to the
-// browser's own text wrapping, which could pick different break points.
-//
-// The degree/title suffix (e.g. ", S.Kom.") is treated as part of the word
-// it's attached to, never split from it. Line 1 always takes the first two
-// name words; everything after that -- including the trailing degree --
-// goes to line 2. A name of two words or fewer (with or without a degree)
-// fits entirely on line 1.
 const ID_CARD_NAME_MAX_CHARS = 28; // = $maxChars in id-card.blade.php
 const idCardNameLines = computed(() => {
   const name = (profile.value?.user?.name ?? "-").trim();
@@ -176,9 +154,6 @@ const downloadIdCard = async () => {
   }
 };
 
-// Everything the page shows, in parallel. The statistics need the employee
-// id: known from the cached profile on a revisit (parallel), otherwise
-// requested right after the profile arrives.
 const loadProfile = async () => {
   const knownId = profile.value?.id;
   const side = [
@@ -611,9 +586,6 @@ const emergencyRows = computed(() => {
     <!-- ID Card Tab -->
     <div v-show="activeTab === 'idcard'" class="mb-6 ui-anim-fade-up">
       <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
-        <!-- Stage: both sides at true size (54 x 85.6 mm). The card
-             coordinates are the pt values of id-card.blade.php, so the
-             preview and the PDF line up exactly. -->
         <section class="bg-ui-surface border border-ui-line rounded-ui-card overflow-hidden">
           <header class="flex items-start gap-3 px-5 pt-[18px] pb-3.5 border-b border-ui-line">
             <div class="flex-1 min-w-0">

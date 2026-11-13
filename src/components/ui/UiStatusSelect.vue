@@ -1,10 +1,4 @@
 <script setup>
-// A status badge that is also the control to change it: looks like UiBadge
-// (tone + dot + label), clicking opens the native select over it (works with
-// keyboard and on phones). v-model holds the value; `change` fires with the
-// new value so the caller can send it (see utils/optimistic.js). The
-// invisible select reaches 8px above/below the 24px badge, so the tap
-// target is 40px tall without changing the look.
 import { computed } from "vue";
 import { ChevronDown } from "lucide-vue-next";
 

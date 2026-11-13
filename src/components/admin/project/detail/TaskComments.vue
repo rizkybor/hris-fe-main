@@ -65,9 +65,6 @@ const loadComments = () => {
   if (props.taskId) commentStore.fetchComments(props.taskId);
 };
 
-// The dropdown is teleported to <body> so it always renders on top of the
-// modal (and isn't clipped by the modal's scrollable body), positioned
-// above the textarea and nudged sideways from it.
 const updateMentionDropdownPosition = () => {
   const el = textareaRef.value;
   if (!el) return;
@@ -81,9 +78,6 @@ const updateMentionDropdownPosition = () => {
   };
 };
 
-// Same treatment as the mention dropdown: teleported to <body>, anchored to
-// the emoji button's own position so it stays put above the comment box
-// regardless of the modal's scroll/overflow.
 const updateEmojiPickerPosition = () => {
   const el = emojiButtonRef.value;
   if (!el) return;
@@ -130,10 +124,6 @@ watch(() => props.taskId, loadComments);
 
 const searchMentions = debounce(async () => {
   try {
-    // Scoped to this project's team assignments, plus Manager/Finance
-    // Manager/Operational Director who are always mentionable regardless
-    // of project membership -- matches who is actually allowed to be
-    // mentioned on this project's tasks (see EmployeeProfileRepository).
     const { data } = await axiosInstance.get("employees", {
       params: { search: mentionQuery.value, project_id: props.projectId, limit: 5 },
     });
@@ -234,10 +224,6 @@ const handleDelete = async (comment) => {
   }
 };
 
-// A fixed palette of vivid, readable text/background pairs (never plain
-// black or white) -- picked per mentioned name via a stable hash, so the
-// same person always gets the same color across every comment instead of
-// re-randomizing on every render.
 const MENTION_COLORS = ["text-ui-accent bg-ui-accent-soft"];
 
 const mentionColorClass = (name) => {
@@ -250,9 +236,6 @@ const mentionColorClass = (name) => {
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// Splits a comment body into text/mention/url/email segments so mentions,
-// links, and emails can be rendered as real elements without ever using
-// v-html (avoids XSS entirely).
 const renderSegments = (comment) => {
   const body = comment.body;
   const names = (comment.mentioned_employees || [])
@@ -294,9 +277,6 @@ const sortedComments = computed(() =>
   [...comments.value].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
 );
 
-// Group into top-level threads with their replies (any depth) flattened
-// chronologically underneath, so replying to an earlier reply still surfaces
-// in the same thread instead of forming deep nested indentation.
 const threads = computed(() => {
   const all = sortedComments.value;
   const byId = new Map(all.map((c) => [c.id, c]));
@@ -318,9 +298,6 @@ const threads = computed(() => {
   }));
 });
 
-// Deep-link support: clicking a mention notification lands here with
-// ?comment=<id> on the task's ?task=<id> query. Scroll that comment into
-// view and briefly highlight it, once, the first time it appears.
 const highlightCommentId = computed(() => (route.query.comment ? Number(route.query.comment) : null));
 const scrolledToComment = ref(false);
 watch(highlightCommentId, () => {

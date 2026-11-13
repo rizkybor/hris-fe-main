@@ -115,9 +115,6 @@ export const useCertificateStore = defineStore("certificate", {
       return data.data;
     },
 
-    // The generate endpoint streams a raw file (PDF for a single recipient,
-    // ZIP for bulk) rather than JSON, so it must be requested as a blob and
-    // the resulting file triggered as a download manually.
     async generate(payload) {
       this.error = null;
       try {

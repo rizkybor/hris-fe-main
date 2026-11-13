@@ -70,11 +70,6 @@ const showMarkAsPaidModal = ref(false);
 const paymentDate = ref(new Date().toISOString().split("T")[0]);
 const markingAsPaid = ref(false);
 
-// Manual per-employee override -- lets Superadmin/HR/Finance correct one
-// employee's payroll when their actual situation doesn't match the
-// automatic generation formula (e.g. a special-case bonus/deduction, or a
-// startup arrangement where they're paid a cut of a project instead of a
-// fixed figure).
 const showEditModal = ref(false);
 const editingEmployee = ref(null);
 const editForm = ref({
@@ -135,10 +130,6 @@ const fetchPositions = async () => {
   }
 };
 
-// API detail -> table row. Working days and the paid status come from the
-// statistics / summary (see `rows`), so all mount requests can run at once.
-// `prev` fills what an update response leaves out (it doesn't load the
-// employee's bank information).
 const toRow = (detail, prev = {}) => {
   const emp = detail.employee || {};
   const bank = emp.bank_information;
@@ -252,17 +243,10 @@ const filteredEmployees = computed(() => {
   return employees.value.map((e) => ({ ...e, total_work_days: workDays, status }));
 });
 
-// THR rows have no attendance data (eligibility is tenure-based, not
-// attendance-based -- see PayrollRepository::generateThrPayroll()), so the
-// Attendance column is swapped for Months of Service instead.
 const isThr = computed(() => payroll.value?.type === "thr");
 
 const canEditPayroll = computed(() => can("payroll-edit") && payroll.value?.status !== "paid");
 
-// Deleting a detail row, deleting/regenerating a paid payroll -- these
-// override data that's already been processed/paid, so (unlike the plain
-// edit above) they stay available regardless of paid status, but only for
-// the roles the backend itself trusts to do that.
 const canManagePayroll = computed(() => hasAnyRole(["superadmin", "manager", "finance"]));
 
 // ---- Queued (re)generation: refresh quietly until it's done ---------------
@@ -359,9 +343,6 @@ const openEditModal = async (emp) => {
   };
   showEditModal.value = true;
 
-  // The complete project list (with budget) from the shared lookup cache --
-  // not projectStore.projects, which is whatever page the Projects screen
-  // last loaded. No request while the cache is fresh.
   if (!lookups.projects.length) loadingProjects.value = true;
   try {
     await lookups.ensure("projects");
@@ -611,9 +592,6 @@ const attendanceTone = (emp) => {
   return pct >= 90 ? "text-ui-ok" : pct >= 80 ? "text-ui-warn" : "text-ui-bad";
 };
 
-// Per-employee breakdown sheet (same reading order as the employee payslip:
-// earnings, deductions, ink take-home band). Uses the same split as
-// deductionBreakdown() above.
 const showBreakdown = ref(false);
 const breakdownEmp = ref(null);
 const openBreakdown = (emp) => {

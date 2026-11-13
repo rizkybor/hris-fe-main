@@ -28,9 +28,6 @@ const lookups = useLookupStore();
 const alertModal = useAlertModalStore();
 const toast = useToastStore();
 
-// Configurable via Settings -> Dropdown Options (category
-// "subscription_service_type"). The page needs it for the row labels and
-// the type filter; the modal's other pickers load when it opens.
 const SERVICE_TYPE_CATEGORY = "subscription_service_type";
 lookups.ensure("options", SERVICE_TYPE_CATEGORY).catch(() => {});
 const serviceTypeOptions = computed(() => lookups.optionsFor(SERVICE_TYPE_CATEGORY).filter((opt) => opt.is_active));
@@ -38,9 +35,6 @@ const serviceTypeLabel = computed(() =>
   serviceTypeOptions.value.reduce((acc, opt) => ({ ...acc, [opt.value]: opt.label }), {})
 );
 
-// Search, status (incl. the "due" / "overdue" views), type and page live
-// in the URL and are remembered; the list shows what the store has and
-// refreshes quietly.
 const list = useListState("subscriptions", { q: "", status: "", type: "", page: 1 });
 const search = ref(list.q);
 watch(search, debounce((v) => (list.q = v.trim()), 300));
@@ -48,9 +42,6 @@ watch(() => list.q, (v) => v !== search.value.trim() && (search.value = v));
 const statusFilter = computed({ get: () => list.status, set: (v) => (list.status = v) });
 const serviceTypeFilter = computed({ get: () => list.type, set: (v) => (list.type = v) });
 
-// "Due in 30 days" / "Overdue" aren't API filters, but the API sorts by
-// next_due_date, so the first rows of the active list are exactly the ones
-// due soonest: fetch one large page of active rows and keep the due ones.
 const DUE_VIEWS = ["due", "overdue"];
 const dueView = computed(() => (DUE_VIEWS.includes(list.status) ? list.status : ""));
 const params = computed(() =>
@@ -89,11 +80,6 @@ const STATUS_TONE = {
   cancelled: "neutral",
 };
 
-// "cancelled" is still the stored value (matches the backend enum and
-// existing data) -- only the displayed label changed. "Expired" was
-// dropped as a separate status since it behaved identically to
-// "cancelled"/Not Active everywhere (both just block invoice generation),
-// so keeping both only added confusion with no functional difference.
 const STATUS_LABEL = computed(() => ({
   active: t("subscriptions.status.active"),
   postponed: t("subscriptions.status.postponed"),
@@ -109,9 +95,6 @@ const dueBadge = (subscription) => {
   return null;
 };
 
-// One badge per row: the due callout when there is one (it only appears
-// for active subscriptions, so it already says "active, and due soon"),
-// otherwise the plain status.
 const rowBadge = (subscription) =>
   dueBadge(subscription) || {
     label: STATUS_LABEL.value[subscription.status] || subscription.status,
@@ -122,9 +105,6 @@ const rowBadge = (subscription) =>
 // (or past) it -- a wider heads-up than dueBadge's 7-day callout.
 const isNearDue = (subscription) => subscription.status === "active" && daysUntil(subscription) <= 30;
 
-// The muted line under the name: client and the first service type, with
-// "+N" for the rest. The full list (with product names and the project)
-// stays in its tooltip and in the edit modal.
 const serviceName = (service) => serviceTypeLabel.value[service.service_type] || service.service_type;
 const rowContext = (subscription) => {
   const services = subscription.services || [];
@@ -143,9 +123,6 @@ const rowContextTitle = (subscription) =>
     .filter(Boolean)
     .join("\n");
 
-// The backend's daily H-30 job records which due date it already emailed
-// contact@ about; once that matches the current next_due_date, this cycle's
-// reminder has gone out.
 const reminderSent = (subscription) =>
   !!subscription.due_reminder_sent_for &&
   !!subscription.next_due_date &&
@@ -251,9 +228,6 @@ const handleDelete = async (subscription) => {
   }
 };
 
-// The API returns the new invoice, not the subscription: the row follows
-// the same rule the backend applies (next due date moves one cycle on,
-// one more invoice), and the recap refreshes quietly.
 const advanceDueDate = (value, cycle) => {
   const [y, m, d] = String(value).slice(0, 10).split("-").map(Number);
   const next = new Date(Date.UTC(y, m - 1 + (cycle === "yearly" ? 12 : 1), d));

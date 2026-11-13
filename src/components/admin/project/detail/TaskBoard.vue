@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
-import { Plus, Search, ChevronDown, Inbox, X, User, AlertTriangle, CornerDownLeft } from "lucide-vue-next";
+import { Plus, Search, ChevronDown, Inbox, X, User, AlertTriangle, CornerDownLeft, KanbanSquare, List } from "lucide-vue-next";
 import { VueDraggableNext } from "vue-draggable-next";
 import { useTaskStore } from "@/stores/task";
 import { useAuthStore } from "@/stores/auth";
@@ -10,6 +10,7 @@ import { can } from "@/helpers/permissionHelper";
 import TaskCard from "./TaskCard.vue";
 import TaskDetailModal from "./TaskDetailModal.vue";
 import TaskCreateModal from "./TaskCreateModal.vue";
+import TaskListView from "./TaskListView.vue";
 import { UiAlert, UiButton, UiInput, UiSelect } from "@/components/ui";
 import { useListState } from "@/composables/useListState";
 import { useI18n } from "vue-i18n";
@@ -23,11 +24,6 @@ const authStore = useAuthStore();
 const { tasks: allTasks, loading } = storeToRefs(taskStore);
 const { fetchProjectTasks, moveTask, createTask, deleteTask } = taskStore;
 
-// Kanban columns are data-driven (not one hand-copied block per status)
-// so a 250+ task board only ever changes the number of items filtered per
-// column, never the amount of markup. "cancelled" is a real, selectable
-// TaskStatus value that previously had no column at all -- tasks set to
-// it just vanished from the board.
 const COLUMNS = [
   { status: "todo", labelKey: "projects.taskStatus.todo" },
   { status: "in_progress", labelKey: "projects.taskStatus.inProgress" },
@@ -36,10 +32,6 @@ const COLUMNS = [
   { status: "cancelled", labelKey: "projects.taskStatus.cancelled" },
 ];
 
-// Cards actually rendered per column, at any one time -- capped and grown
-// in pages, so a column with 100+ tasks never mounts more than a few dozen
-// TaskCard components at once. Reset to the page size whenever the filter
-// (search) changes, so a narrowed search doesn't stay oddly capped.
 const PAGE_SIZE = 40;
 
 // Presentation only: column status dot (the label always sits next to it).
@@ -60,6 +52,12 @@ const filters = useListState(
   { q: "", priority: "", type: "", assignee: "", mine: false, overdue: false },
   { remember: false }
 );
+
+const view = useListState("project-tasks-view", { view: "board", sort: "position" });
+const VIEW_OPTIONS = [
+  { value: "board", icon: KanbanSquare, labelKey: "projects.tasks.view.board" },
+  { value: "list", icon: List, labelKey: "projects.tasks.view.list" },
+];
 
 const searchQuery = ref(filters.q);
 let searchDebounceTimer = null;
@@ -113,25 +111,9 @@ const filteredTasks = computed(() => {
   return tasks;
 });
 
-// Sorted by position explicitly (not just "whatever order the fetch
-// returned") -- a drag mutates a task's `.position` value in place without
-// moving it within the underlying `tasks` array, so anything that re-reads
-// this array later (search, a resync after a failed move, Load More) needs
-// a real sort to still reflect the true order, not just the original
-// fetch's order.
 const columnTasks = (status) =>
   filteredTasks.value.filter((task) => task.status === status).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 
-// The array actually bound to each column's VueDraggableNext -- a stable
-// reactive array vue-draggable-next mutates directly (splice) during a
-// drag, not a fresh computed re-filter on every read. This matters: Sortable
-// hands back a `newIndex` that only means anything relative to the exact
-// array it was just dragging, so the neighbor lookup in onColumnChange has
-// to read from this same array, not re-derive one from scratch (which
-// would still show the pre-drop order and silently miscompute the new
-// position). Explicitly (re)synced from columnTasks() whenever the store's
-// tasks change (fetch, create, edit, move response), on filter change, and
-// on Load More -- never mutated mid-drag by anything but vue-draggable-next.
 const columnVisible = reactive(Object.fromEntries(COLUMNS.map((c) => [c.status, []])));
 const syncColumn = (status) => {
   columnVisible[status] = columnTasks(status).slice(0, visibleCounts[status]);
@@ -163,10 +145,6 @@ const clearFilters = () => {
   filters.reset();
 };
 
-// Every task type used anywhere in this project, most-recently-defined
-// color first -- powers the Create/Edit forms' type suggestion list so
-// naming stays consistent across a project's tasks without a separate
-// "manage task types" screen.
 const typeSuggestions = computed(() => {
   const seen = new Map();
   allTasks.value.forEach((task) => {
@@ -196,6 +174,8 @@ const overdueCount = computed(() => allTasks.value.filter(isOverdue).length);
 
 const selectedTaskId = ref(null);
 const isCreateModalOpen = ref(false);
+// A side panel is open: the board/list has less room (toolbar wraps, list goes compact).
+const panelOpen = computed(() => !!selectedTaskId.value || isCreateModalOpen.value);
 const createStatus = ref("todo");
 const actionError = ref("");
 
@@ -204,7 +184,9 @@ const selectedTask = computed(() => {
   return allTasks.value.find((task) => task.id === selectedTaskId.value) || null;
 });
 
+// One side panel at a time: opening a task closes the new-task form.
 const openTaskDetail = (task) => {
+  isCreateModalOpen.value = false;
   selectedTaskId.value = task.id;
 };
 const closeTaskDetail = () => {
@@ -215,10 +197,6 @@ const closeTaskDetail = () => {
   }
 };
 
-// Deep-link support: My Tasks (and anywhere else) can link straight to a
-// specific task's detail modal via ?task=<id> on the project detail route,
-// instead of only being reachable by clicking its Kanban card. Opens once,
-// as soon as the task is in the store (cached or freshly loaded).
 let deepLinkDone = false;
 const openTaskFromQuery = () => {
   const taskId = route.query.task ? Number(route.query.task) : null;
@@ -233,8 +211,26 @@ watch(() => allTasks.value.length, openTaskFromQuery, { immediate: true });
 
 // The column "+" opens the form with that column's status preset.
 const openCreateModal = (status = "todo") => {
+  if (selectedTaskId.value) closeTaskDetail();
   createStatus.value = status;
   isCreateModalOpen.value = true;
+};
+
+// List view: the status changed in a row -- same move as dropping the card
+// into another column (placed by the server, put back if it fails).
+const changeStatusFromList = async (task, status) => {
+  if (task.status === status) return;
+  const before = { status: task.status, position: task.position };
+  actionError.value = "";
+  try {
+    await moveTask(task.id, { status });
+  } catch {
+    actionError.value = errorText("projects.tasks.moveFailed");
+    task.status = before.status;
+    task.position = before.position;
+    taskStore.patchMyTasks(task.id, { status: before.status });
+    syncAllColumns();
+  }
 };
 const closeCreateModal = () => {
   isCreateModalOpen.value = false;
@@ -281,11 +277,6 @@ const handleDeleteTask = async (taskId) => {
   }
 };
 
-// vue-draggable-next mutates columnVisible[status] in place (splice) during
-// a drag -- no computed get/set wrapper involved, so what onColumnChange
-// reads below is the exact post-drop array Sortable's newIndex indexes into.
-// The move is applied locally first; the response's status/position are
-// patched in by the store (no board refetch), a failure puts it back.
 const onColumnChange = async (status, event) => {
   const entry = event.added || event.moved;
   if (!entry) return; // "removed" alone is handled by the target column's "added"/"moved"
@@ -303,12 +294,6 @@ const onColumnChange = async (status, event) => {
     syncAllColumns();
   };
 
-  // Dropping a card into a DIFFERENT column ignores the exact drop slot --
-  // the backend places it by priority cluster within that column instead
-  // (same rule the API already applies when a task's status changes via
-  // the edit form), so e.g. an Urgent task dragged in always lands above
-  // any Medium/Low task there, regardless of where it was visually dropped.
-  // A same-column reorder still honors the exact drop position untouched.
   if (isCrossColumnMove) {
     try {
       await moveTask(task.id, { status });
@@ -343,10 +328,6 @@ const onColumnChange = async (status, event) => {
   }
 };
 
-// Auto-load the next page of a column once its "load more" sentinel
-// scrolls into view, with the visible button below as a reliable fallback
-// (same IntersectionObserver-driven pattern already used elsewhere in this
-// app for a sticky header).
 const sentinelEls = {};
 const setSentinelRef = (el, status) => {
   sentinelEls[status] = el;
@@ -385,17 +366,20 @@ onUnmounted(() => sentinelObserver?.disconnect());
 </script>
 
 <template>
-  <div class="space-y-4">
-    <!-- Toolbar: search + filters + create -->
-    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
+  <!-- The board/list and, beside it, the task panel (new task / detail). -->
+  <div class="flex items-start gap-4">
+  <div class="flex-1 min-w-0 space-y-4">
+    <!-- Toolbar: search + filters + view + create -->
+    <div class="flex gap-2.5" :class="panelOpen ? 'flex-col lg:flex-row lg:flex-wrap lg:items-center' : 'flex-col lg:flex-row lg:items-center'">
       <UiInput
         v-model="searchQuery"
         :icon="Search"
         :placeholder="$t('projects.tasks.searchPlaceholder')"
-        class="flex-1 min-w-0 lg:max-w-sm"
+        class="flex-1 min-w-0"
+        :class="panelOpen ? 'lg:min-w-[200px]' : 'lg:max-w-sm'"
       />
 
-      <div class="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] -mx-1 px-1">
+      <div class="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] -mx-1 px-1" :class="panelOpen && 'lg:order-last lg:w-full'">
         <button
           v-if="myEmployeeId"
           type="button"
@@ -428,9 +412,25 @@ onUnmounted(() => sentinelObserver?.disconnect());
         <UiButton v-if="hasActiveFilters" variant="ghost" :icon="X" class="shrink-0" @click="clearFilters">{{ $t("common.actions.clear") }}</UiButton>
       </div>
 
-      <UiButton v-if="can('task-create')" :icon="Plus" class="w-full lg:w-auto lg:ml-auto shrink-0" @click="openCreateModal()">
-        {{ $t("projects.tasks.createNew") }}
-      </UiButton>
+      <div class="flex items-center gap-2 lg:ml-auto shrink-0">
+        <!-- Board / List -->
+        <div class="inline-flex items-center p-0.5 rounded-ui-control bg-ui-subtle border border-ui-line" role="group" :aria-label="$t('projects.tasks.view.label')">
+          <button
+            v-for="option in VIEW_OPTIONS"
+            :key="option.value"
+            type="button"
+            :aria-pressed="view.view === option.value"
+            class="ui-press inline-flex items-center gap-1.5 h-[32px] px-2.5 rounded-[7px] text-ui-small font-medium transition-colors focus:outline-none focus-visible:shadow-ui-focus"
+            :class="view.view === option.value ? 'bg-ui-surface text-ui-ink shadow-ui-raised' : 'text-ui-muted hover:text-ui-ink'"
+            @click="view.view = option.value"
+          >
+            <component :is="option.icon" class="w-4 h-4" />{{ $t(option.labelKey) }}
+          </button>
+        </div>
+        <UiButton v-if="can('task-create')" :icon="Plus" class="flex-1 lg:flex-none" @click="openCreateModal()">
+          {{ $t("projects.tasks.createNew") }}
+        </UiButton>
+      </div>
     </div>
 
     <div v-if="actionError" class="relative">
@@ -445,8 +445,24 @@ onUnmounted(() => sentinelObserver?.disconnect());
       </button>
     </div>
 
-    <!-- Task Management Columns: side by side, snapping sideways on phones -->
-    <div class="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1 scroll-px-1">
+    <!-- List view -->
+    <TaskListView
+      v-if="view.view === 'list'"
+      :tasks="filteredTasks"
+      :columns="COLUMNS"
+      :loading="boardLoading"
+      :is-overdue="isOverdue"
+      :sort="view.sort"
+      :compact="panelOpen"
+      :selected-id="selectedTaskId"
+      @update:sort="(value) => (view.sort = value)"
+      @open="openTaskDetail"
+      @create="openCreateModal"
+      @status="changeStatusFromList"
+    />
+
+    <!-- Board view: columns side by side, snapping sideways on phones -->
+    <div v-else class="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1 scroll-px-1">
       <div
         v-for="column in COLUMNS"
         :key="column.status"
@@ -531,7 +547,9 @@ onUnmounted(() => sentinelObserver?.disconnect());
       </div>
     </div>
 
-    <!-- Task Detail Modal: only mounted while a task is open -->
+  </div>
+
+    <!-- Task panel: detail / edit (only mounted while a task is open) -->
     <TaskDetailModal
       v-if="selectedTask"
       :task="selectedTask"
@@ -542,7 +560,7 @@ onUnmounted(() => sentinelObserver?.disconnect());
       @deleted="handleDeleteTask"
     />
 
-    <!-- Task Create Modal -->
+    <!-- Task panel: new task -->
     <TaskCreateModal
       :is-open="isCreateModalOpen"
       :initial-status="createStatus"

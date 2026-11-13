@@ -1,8 +1,4 @@
 <script setup>
-// Location fields of a license (both categories). Country is a searchable
-// ISO list; Indonesia gets cascading Province → City/Regency → District →
-// Village selects (stored as codes, names filled in), other countries free
-// text. Then postal code and street address.
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { Globe, MapPin, Map as MapIcon, Building, Home, Mail as MailIcon } from "lucide-vue-next";

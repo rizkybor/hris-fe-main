@@ -25,10 +25,6 @@ const authStore = useAuthStore();
 
 const { error, activeViewers } = storeToRefs(store);
 
-// The creator doesn't check themselves in as an Internal Attendee -- they
-// can already comment/be mentioned on their own note regardless (see
-// MeetingNoteCommentController) -- so don't offer them as a pickable
-// attendee at all.
 const selectableEmployees = computed(() => {
   const selfId = authStore.user?.employee_profile?.id;
   return lookups.employees.filter((employee) => employee.id !== selfId);
@@ -37,9 +33,6 @@ const selectableEmployees = computed(() => {
 const isEditing = computed(() => !!route.params.id);
 const saving = ref(false);
 
-// <input type="datetime-local"> works in the browser's local time with no
-// zone ("2026-10-20T10:00"), while the API stores and returns UTC -- convert
-// both ways so the form shows the same time as the detail page and list.
 const toLocalInput = (value) => {
   const date = value ? new Date(value) : new Date();
   if (Number.isNaN(date.getTime())) return "";
@@ -81,9 +74,6 @@ let pristine = snapshot();
 let saved = false;
 useUnsavedGuard(() => !saved && loaded.value && snapshot() !== pristine);
 
-// Presence heartbeat while editing: lets other collaborators see this note
-// is being edited right now (polling-based, see PresenceIndicator). Paused
-// while the browser tab is hidden, stopped when the page closes.
 const pingPresence = () => {
   if (!isEditing.value || !loaded.value) return;
   store.sendHeartbeat(route.params.id, true);

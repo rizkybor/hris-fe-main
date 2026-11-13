@@ -14,9 +14,6 @@ const employeeStore = useEmployeeStore();
 const { loading } = storeToRefs(employeeStore);
 const { fetchEmployees } = employeeStore;
 
-// employeeStore is a plain (untyped) JS store, so its `employees` state
-// infers as `never[]` when consumed from this <script setup lang="ts">
-// block -- cast to `any[]` here rather than typing the store itself.
 const employees = computed(() => employeeStore.employees as any[]);
 
 const router = useRouter();

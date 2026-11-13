@@ -33,22 +33,12 @@ const confirmLogout = async () => {
   if (ok) await authStore.logout();
 };
 
-// Page enter: the page's root element rises in on every navigation. The
-// RouterView stays a direct child of <main> (no wrapper), so pages that use
-// h-full still size against <main> and main's bottom padding (room for the
-// phone tab bar) still applies to long pages. The class is re-applied
-// instead of re-keying the RouterView, so pages keep their component
-// instance and state exactly as before.
 const route = useRoute();
 const mainEl = ref(null);
 const playPageEnter = async () => {
   await nextTick();
   const el = mainEl.value?.firstElementChild;
   if (!el) return;
-  // A new page root just gets the class. The same root (e.g. only a param
-  // changed) drops it and gets it back two frames later, so the browser sees
-  // the change and restarts the animation — without forcing a synchronous
-  // layout of the whole page (reading offsetWidth did that).
   if (!el.classList.contains("ui-page-enter")) {
     el.classList.add("ui-page-enter");
     return;

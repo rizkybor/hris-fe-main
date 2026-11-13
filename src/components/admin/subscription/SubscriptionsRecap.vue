@@ -13,9 +13,6 @@ const { t } = useI18n();
 
 const VueApexCharts = defineAsyncComponent(() => import("vue3-apexcharts"));
 
-// Recap above the Subscriptions list: totals, value by service type (donut),
-// biggest clients, and billing expected over the next 12 months. Amounts are
-// monthly-equivalent -- a yearly subscription counts as 1/12 per month.
 const props = defineProps({
   // Same option list the page filters by (Settings > Dropdown Options).
   serviceTypeOptions: { type: Array, default: () => [] },
@@ -54,10 +51,6 @@ onMounted(() => {
 onBeforeUnmount(() => mq?.removeEventListener("change", onMq));
 watch(() => props.refreshKey, load);
 
-// The four tiles answer the everyday questions; the charts below them are
-// for the occasional deeper look, so they sit behind "Show analysis" --
-// closed by default, remembered per browser. Closed means not rendered, so
-// the chart library isn't even downloaded until someone opens it.
 const ANALYSIS_KEY = "subscriptions-recap-analysis-open";
 const analysisOpen = ref(false);
 try {
@@ -74,11 +67,6 @@ const toggleAnalysis = () => {
   }
 };
 
-// ----- Service type donut -----
-// Fixed categorical order, assigned by the type's position in the options
-// list (never by value rank), so a type keeps its colour as values change.
-// Token colours (accent, ink and their lighter steps, ok, warn); "Other" is
-// the neutral line colour.
 const PALETTE = [uiColor("accent"), uiColor("ink"), uiColor("ok"), uiColor("warn"), uiColor("accent", 0.45), uiColor("ink", 0.45)];
 const OTHER_COLOR = uiColor("line-strong");
 const typeLabel = (type) => props.serviceTypeOptions.find((o) => o.value === type)?.label || type || t("subscriptions.recap.other");

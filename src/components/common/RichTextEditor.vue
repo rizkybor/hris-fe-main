@@ -36,13 +36,7 @@ const props = defineProps({
   modelValue: { type: String, default: "" },
   placeholder: { type: String, default: "Tulis isi dokumen di sini..." },
   disabled: { type: Boolean, default: false },
-  // Optional `async (file) => url`. When given, the toolbar gets an Insert
-  // Image button that uploads the picked file and places it at the caret;
-  // editors without it (letters, memos...) are unchanged.
   uploadImage: { type: Function, default: null },
-  // Optional `async () => ({ url, id, name }) | null` that lets the user
-  // pick a saved flowchart; it's inserted at the caret as an image linked
-  // to its source (data-flowchart-id) plus a caption.
   insertFlowchart: { type: Function, default: null },
 });
 const emit = defineEmits(["update:modelValue"]);
@@ -73,9 +67,6 @@ onMounted(() => {
   if (editorRef.value) {
     editorRef.value.innerHTML = props.modelValue || "";
   }
-  // Chrome wraps new lines in <div> by default when Enter is pressed in a
-  // contenteditable, not <p> -- forcing this makes every new paragraph a
-  // real <p>, which is what the PDF's first-line-indent CSS targets.
   document.execCommand("defaultParagraphSeparator", false, "p");
   document.addEventListener("selectionchange", trackSelection);
 });
@@ -86,9 +77,6 @@ onBeforeUnmount(() => {
   document.removeEventListener("mouseup", onResizeMouseUp);
 });
 
-// Only re-sync from outside when the value actually diverges (e.g. loading
-// an existing document) -- otherwise every keystroke's own emit would
-// bounce back and reset the caret position.
 watch(
   () => props.modelValue,
   (value) => {
@@ -111,10 +99,6 @@ const onInput = () => {
   emit("update:modelValue", cleanHtml());
 };
 
-// ===== Image size & alignment =====
-// Clicking an image (e.g. an inserted flowchart) selects it and shows a size
-// / alignment bar under the toolbar. Width is stored as a percentage of the
-// text width (inline style), so the PDF keeps the same proportion.
 const selectedImage = ref(null);
 const imageWidth = ref(100);
 const IMAGE_SIZES = [
@@ -182,9 +166,6 @@ const removeSelectedImage = () => {
   onInput();
 };
 
-// The link popover needs the caret position that existed *before* the
-// popover's own input stole focus, so the selection is captured on every
-// change and restored right before wrapSelectionInLink() runs.
 const trackSelection = () => {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0 || !editorRef.value) return;
@@ -194,9 +175,6 @@ const trackSelection = () => {
   }
 };
 
-// Walks up from a selection node to the nearest table cell, stopping at the
-// editor boundary -- used both to toggle the row/column controls and to
-// locate which cell/row/table a table edit should apply to.
 const closestCell = (node) => {
   let el = node?.nodeType === Node.TEXT_NODE ? node.parentElement : node;
   while (el && el !== editorRef.value) {
@@ -224,10 +202,6 @@ const restoreSelection = () => {
   selection.addRange(savedSelection);
 };
 
-// contenteditable does nothing with Tab by default -- it just moves focus
-// off the editor. Mirror the common word-processor behavior instead: inside
-// a list, Tab/Shift+Tab change nesting level; anywhere else, Tab inserts a
-// fixed-width indent at the caret.
 const closestListItem = (node) => {
   let el = node?.nodeType === Node.TEXT_NODE ? node.parentElement : node;
   while (el && el !== editorRef.value) {
@@ -278,9 +252,6 @@ const pickFlowchart = async () => {
   try {
     const picked = await props.insertFlowchart();
     if (!picked) return;
-    // Inserted as its own blocks right after the paragraph holding the
-    // caret (never merged into a line of text), so it can be sized and
-    // aligned on its own.
     const name = picked.name || "Flowchart";
     const imgBlock = document.createElement("p");
     const img = document.createElement("img");
@@ -455,13 +426,6 @@ const applyRowColor = (color) => {
   onInput();
 };
 
-// --- Column width / row height resizing -----------------------------
-// Plain <td>/<th> widths are driven by the browser's table auto-layout
-// (widest content wins), so there's no single element to resize. A
-// <colgroup> gives each column its own resizable element; it's built
-// lazily off the current rendered widths the first time a column is
-// dragged, then the table is pinned to table-layout: fixed so those
-// widths actually stick.
 const RESIZE_EDGE_PX = 6;
 let resizeState = null;
 
@@ -897,9 +861,6 @@ const FORMAT_OPTIONS = [
   content: attr(data-placeholder);
   color: rgb(var(--ui-faint));
 }
-/* Indentation is left to the Align/Indent controls (and Tab) instead of
-   being auto-applied to every paragraph -- matches the PDF, where
-   .body-content no longer forces a first-line-indent either. */
 .rich-text-editor :deep(p),
 .rich-text-editor > :deep(div) {
   margin: 0 0 0.5em 0;

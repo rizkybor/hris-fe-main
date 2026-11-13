@@ -189,8 +189,9 @@ const handleDelete = async () => {
     </div>
 
     <!-- ================= ARCHIVE LIST ================= -->
-    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
-      <div class="px-4 sm:px-5 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3 border-b border-ui-line">
+    <!-- Heading + search, cards and pagination straight on the page (no frame). -->
+    <section class="space-y-4 min-w-0">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
         <div class="flex-1 min-w-0">
           <h2 class="text-ui-h2 text-ui-ink">{{ $t("files.listTitle") }}</h2>
           <p class="text-ui-cap text-ui-muted tabular-nums">{{ $t("files.totalFiles", { n: pagination.total }, pagination.total) }}</p>
@@ -198,7 +199,7 @@ const handleDelete = async () => {
         <UiInput v-model="searchQuery" :icon="Search" :placeholder="$t('files.searchPlaceholder')" class="w-full sm:w-72" />
       </div>
 
-      <div class="p-4 sm:p-5 ui-tray">
+      <div>
         <SkeletonCardGrid v-if="loading" :count="6" cols="grid-cols-1 md:grid-cols-2 xl:grid-cols-3" />
 
         <div v-else-if="archives.length" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 ui-stagger">
@@ -280,7 +281,7 @@ const handleDelete = async () => {
       </div>
 
       <!-- Pagination -->
-      <UiPagination v-if="archives.length > 0" :meta="pagination" :item-label="$t('files.itemLabel')" :disabled="loading" @change="goToPage" />
+      <UiPagination v-if="archives.length > 0" flat :meta="pagination" :item-label="$t('files.itemLabel')" :disabled="loading" @change="goToPage" />
     </section>
 
     <!-- Delete Confirmation Modal -->

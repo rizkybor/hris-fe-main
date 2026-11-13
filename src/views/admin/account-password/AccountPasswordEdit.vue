@@ -40,16 +40,10 @@ const form = ref({
   notes: "",
 });
 
-/* =====================
- * UI helpers
- * ===================== */
 const togglePassword = () => {
   showPassword.value = !showPassword.value;
 };
 
-/* =====================
- * Submit update
- * ===================== */
 const submit = async () => {
   error.value = "";
   success.value = "";
@@ -97,9 +91,6 @@ const submit = async () => {
   }
 };
 
-/* =====================
- * Fetch initial data
- * ===================== */
 const loadData = async () => {
   loading.value = true;
   error.value = "";
@@ -115,10 +106,6 @@ const loadData = async () => {
 
 onMounted(loadData);
 
-/* =====================
- * Sync store → form
- * (aman saat fetch ulang)
- * ===================== */
 watch(
   () => store.currentAccount,
   (data) => {

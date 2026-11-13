@@ -39,19 +39,12 @@ const { setting: attendanceSetting } = storeToRefs(attendanceSettingStore);
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
-// Only Work Location = Office employees are geofenced server-side (see
-// AttendanceRepository::guardOfficeGeofence()) -- this mirrors that same
-// condition so Remote/Hybrid employees aren't shown a distance check that
-// will never actually apply to them.
 const isOfficeWorker = computed(() => user.value?.employee_profile?.job_information?.work_location === "office");
 
 const hasOfficeCoordinates = computed(
   () => attendanceSetting.value.office_latitude != null && attendanceSetting.value.office_longitude != null
 );
 
-// Sat/Sun aren't scheduled work days -- Clock In/Out is disabled on them
-// unless Superadmin/Manager opened it up in Settings, in which case a
-// weekend clock-in is recorded as overtime instead of a normal day.
 const isWeekend = computed(() => {
   const day = new Date().getDay(); // 0 = Sunday, 6 = Saturday
   return day === 0 || day === 6;
@@ -97,10 +90,6 @@ const isCheckedIn = computed(() => {
   return todayAttendance.value?.check_in && !todayAttendance.value?.check_out;
 });
 
-// Clock Out is only allowed once a full 8-hour shift has elapsed since
-// Clock In -- mirrors the same rule enforced server-side in
-// AttendanceRepository::checkOut(). `currentTime` (ticking every second via
-// updateClock) is read here purely to keep this reactive minute-by-minute.
 const MIN_WORK_MINUTES_BEFORE_CHECK_OUT = 8 * 60;
 
 const elapsedWorkMinutes = computed(() => {
@@ -573,10 +562,6 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Office Location Reference -- only meaningful for Work
-               Location = Office employees, who are the only ones actually
-               geofenced server-side (see AttendanceRepository::
-               guardOfficeGeofence()). -->
           <div
             v-if="isOfficeWorker && hasOfficeCoordinates"
             class="flex items-start gap-3 pt-3 border-t border-ui-line"
@@ -643,9 +628,6 @@ onUnmounted(() => {
         <!-- Late arrival notice -->
         <UiAlert v-if="lateInfo" tone="warn">{{ lateInfo }}</UiAlert>
 
-        <!-- Action: sticks just above the tab bar on phones so it stays in
-             thumb reach (sticky offsets count from main's bottom padding,
-             which already clears the tab bar). -->
         <div
           class="mt-auto sticky -bottom-4 lg:static z-10 -mx-3 sm:mx-0 px-3 sm:px-0 pt-3 pb-1 lg:pt-1 bg-ui-surface border-t border-ui-line lg:border-0 space-y-3"
         >

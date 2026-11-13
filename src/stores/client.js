@@ -568,10 +568,6 @@ export const useClientStore = defineStore("clients", {
       }
     },
 
-    // Success/error persist in this store across route changes (Pinia
-    // stores are singletons) -- without this, a stale message set by a
-    // create/update/delete resurfaces every time the list remounts, e.g.
-    // navigating away and back, since it's never otherwise cleared.
     clearMessages() {
       this.success = null;
       this.error = null;

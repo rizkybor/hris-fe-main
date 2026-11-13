@@ -30,9 +30,6 @@ import { localeTag } from "@/i18n";
 
 const { t, te } = useI18n();
 
-// Key Metrics: the backend picks the set for the user's role (business for
-// Manager/Operational Director, cash for Finance, people for HR) and drops
-// any metric the user can't otherwise open. The first metric is the hero.
 const data = ref(null);
 const loading = ref(true);
 const failed = ref(false);
@@ -109,7 +106,7 @@ const toneClass = (tone) => (tone === "danger" ? "text-ui-bad" : tone === "warni
 </script>
 
 <template>
-  <DashboardWidgetCard :title="$t('dashboard.widgets.keyMetrics')" :subtitle="data ? `${profileLabel(data.profile)} · ${data.period}` : $t('dashboard.keyMetrics.overview')">
+  <DashboardWidgetCard frameless :title="$t('dashboard.widgets.keyMetrics')" :subtitle="data ? `${profileLabel(data.profile)} · ${data.period}` : $t('dashboard.keyMetrics.overview')">
     <template #actions>
       <button
         v-if="hasRupiah"

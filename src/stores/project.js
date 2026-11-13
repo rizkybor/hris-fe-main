@@ -138,11 +138,6 @@ export const useProjectStore = defineStore("project", {
             }
         },
 
-        // Project Inspect: a rich-text note only the Project Leader may
-        // write (enforced server-side in ProjectController::update()) --
-        // a dedicated, single-field action rather than routing it through
-        // updateProject() so the Detail page's inline editor doesn't need
-        // to resend the whole form (photo included) just to save a note.
         async updateInspectNote(id, note) {
             this.error = null;
 
@@ -173,9 +168,6 @@ export const useProjectStore = defineStore("project", {
             }
         },
 
-        // Concurrent callers share one request; data younger than 30s is
-        // reused unless `force`. `loadingStatistics` is only set while there
-        // is nothing to show yet, so a refresh never flashes skeletons.
         async fetchStatistics({ force = false } = {}) {
             if (statisticsRequest) return statisticsRequest;
             if (!force && Date.now() - this.statisticsFetchedAt < STATISTICS_MAX_AGE) return;
@@ -213,9 +205,6 @@ export const useProjectStore = defineStore("project", {
             window.URL.revokeObjectURL(url);
         },
 
-        // Success/error persist across route changes (Pinia stores are
-        // singletons) -- without this, a stale message resurfaces every
-        // time the list remounts, since nothing else ever clears it.
         clearMessages() {
             this.success = null;
             this.error = null;

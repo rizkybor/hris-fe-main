@@ -46,10 +46,6 @@ const fillForm = (invoice) => {
   if (invoice.pph23_type) applyPph23.value = true;
 };
 
-// Purely informational heads-up that the client is expected to withhold
-// PPh 23 on payment -- never touches subtotal/total, which stay the
-// actual invoiced amount. The real withholding is recorded later on the
-// Payment Receipt once payment actually happens.
 const applyPph23 = ref(false);
 
 const form = ref({

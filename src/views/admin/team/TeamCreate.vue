@@ -85,9 +85,6 @@ const selectedLead = ref(null);
 // Full roster for the member picker (and the Team Lead modal below).
 const memberCandidates = computed(() => lookups.employees);
 const memberSearch = ref("");
-// The Team Lead is already implicitly a member (the backend auto-adds
-// them as one on create), so offering them again in this picker would
-// just be a confusing duplicate pick.
 const selectableMemberCandidates = computed(() => {
   const leadEmployeeId = selectedLead.value?.id;
   return memberCandidates.value.filter(

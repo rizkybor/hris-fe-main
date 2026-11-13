@@ -1,7 +1,4 @@
 <script setup>
-// Add / edit a License Manager product in a modal: name, code (read-only on
-// edit), key prefix, description, active, and the app icon (upload with
-// preview, replace, remove). Emits "saved" with the product from the API.
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { Trash2, Save, ImagePlus, RefreshCw, ScrollText, Eye, Code2 } from "lucide-vue-next";

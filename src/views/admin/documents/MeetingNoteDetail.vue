@@ -26,14 +26,8 @@ const toast = useToastStore();
 
 const { currentMeetingNote: note, loading, activeViewers } = storeToRefs(store);
 
-// Pin/unpin is a shared toggle (pinning surfaces the note on every Internal
-// Attendee's dashboard, not just the clicker's own), so only the note's
-// creator may control it -- matches MeetingNoteController::togglePin().
 const isCreator = computed(() => note.value?.creator?.id === authStore.user?.id);
 
-// @mention targets for the comment composer: Internal Attendees plus the
-// note's own creator (who can comment/be mentioned even if they didn't
-// check themselves in as an attendee -- see MeetingNoteCommentController).
 const mentionableEmployees = computed(() => {
   const attendees = note.value?.attendees || [];
   const creatorEmployeeId = note.value?.creator?.employee_id;

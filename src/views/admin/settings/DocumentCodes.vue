@@ -19,9 +19,6 @@ const newLetterCode = ref({ code: "", name: "" });
 const newDivisionCode = ref({ code: "", name: "" });
 const errorMessage = ref("");
 
-// Both lists are short enough (fetched in full already for the Letter
-// Create dropdowns) that paginating them client-side, rather than adding
-// a second paginated endpoint, keeps this simple.
 const letterCodePage = ref(1);
 const divisionCodePage = ref(1);
 

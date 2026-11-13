@@ -23,9 +23,6 @@ const router = useRouter();
 const toast = useToastStore();
 const { flowcharts, meta } = storeToRefs(store);
 
-// Search and page live in the URL and are remembered, so coming back from
-// a flowchart restores the same view; the cards show what the store already
-// has and refresh quietly.
 const list = useListState("flowcharts", { q: "", page: 1 });
 const search = ref(list.q);
 watch(search, debounce((v) => (list.q = v.trim()), 300));
@@ -72,9 +69,10 @@ const handleDelete = async (flowchart) => {
       </template>
     </UiPageHeader>
 
-    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0 overflow-hidden">
+    <!-- Toolbar, cards and pagination straight on the page (no frame). -->
+    <section class="space-y-4 min-w-0">
       <!-- Toolbar -->
-      <div class="px-4 sm:px-5 py-3 flex flex-col md:flex-row md:items-center gap-2.5 md:gap-3 border-b border-ui-line">
+      <div class="flex flex-col md:flex-row md:items-center gap-2.5 md:gap-3">
         <UiInput
           v-model="search"
           type="search"
@@ -91,7 +89,7 @@ const handleDelete = async (flowchart) => {
         </p>
       </div>
 
-      <div class="p-3 sm:p-5 ui-tray transition-opacity" :class="{ 'opacity-60': refreshing }" :aria-busy="refreshing || undefined">
+      <div class="transition-opacity" :class="{ 'opacity-60': refreshing }" :aria-busy="refreshing || undefined">
         <SkeletonCardGrid v-if="loading" :count="6" />
 
         <UiEmpty
@@ -195,7 +193,7 @@ const handleDelete = async (flowchart) => {
         </ul>
       </div>
 
-      <UiPagination v-if="meta.total" :meta="meta" :item-label="$t('flowchart.list.itemLabel')" :disabled="loading" @change="(p) => (list.page = p)" />
+      <UiPagination v-if="meta.total" flat :meta="meta" :item-label="$t('flowchart.list.itemLabel')" :disabled="loading" @change="(p) => (list.page = p)" />
     </section>
   </div>
 </template>

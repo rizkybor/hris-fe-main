@@ -163,10 +163,10 @@ const statusOptions = computed(() => [
 
     <Alert type="success" :title="success" :show="!!success" @close="employeeStore.clearMessages()" />
 
-    <!-- Employee list: one card (toolbar, cards on a tray, pagination), same as Projects and Teams -->
-    <section class="sm:bg-ui-surface sm:border sm:border-ui-line sm:rounded-ui-card">
+    <!-- Employee list: toolbar, cards and pagination straight on the page (no frame), same as Projects and Teams -->
+    <section class="space-y-4">
     <!-- Toolbar -->
-    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5 sm:p-4 sm:px-5 sm:border-b sm:border-ui-line">
+    <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
       <UiInput
         v-model="searchText"
         :icon="Search"
@@ -179,7 +179,7 @@ const statusOptions = computed(() => [
       </div>
     </div>
 
-    <div class="pt-4 sm:p-5 sm:ui-tray">
+    <div>
     <!-- Employee Grid -->
     <SkeletonCardGrid
       v-if="loading"
@@ -208,7 +208,7 @@ const statusOptions = computed(() => [
     </div>
 
     <!-- Pagination -->
-    <div class="pt-4 sm:py-3.5 sm:px-5 sm:border-t sm:border-ui-line">
+    <div class="pt-1">
       <Pagination
         :meta="meta"
         :loading="loading || refreshing"

@@ -1,8 +1,3 @@
-// Asks before leaving a page with unsaved changes: in-app navigation shows
-// the app's confirm dialog, closing/reloading the browser tab shows the
-// browser's own prompt.
-//
-//   useUnsavedGuard(() => itemsDirty.value);
 import { onBeforeUnmount, onMounted } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
 import { useAlertModalStore } from "@/stores/alertModal";

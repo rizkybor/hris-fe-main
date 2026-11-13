@@ -39,9 +39,6 @@ const alertModal = useAlertModalStore();
 const { servers, loading, loaded, error } = storeToRefs(store);
 const canManage = computed(() => can("server-storage-manage"));
 
-// Agents report every 5 minutes; refresh the cards every minute while the
-// page is open and the browser tab visible (a missed tick runs on return).
-// A revisit shows the list the store already has and refreshes it quietly.
 onMounted(() => store.fetchServers({ silent: loaded.value }));
 usePolling(() => store.fetchServers({ silent: true }), 60000);
 
@@ -178,9 +175,6 @@ const TONE_TEXT = { ok: "text-ui-ink", warn: "text-ui-warn", bad: "text-ui-bad",
 const field =
   "w-full bg-ui-surface text-ui-body text-ui-ink placeholder:text-ui-faint border border-ui-line-strong rounded-ui-control px-3 transition-shadow focus:outline-none focus:border-ui-accent focus:shadow-ui-focus";
 
-// ===== Detail =====
-// Keep only the id: the drawer always shows the store's current server, so
-// polling and edits update an open detail too.
 const detailId = ref(null);
 const detail = computed(() => servers.value.find((s) => s.id === detailId.value) || null);
 const detailOpen = computed({
@@ -226,9 +220,10 @@ const step = (delta) => {
       />
     </div>
 
-    <section class="bg-ui-surface border border-ui-line rounded-ui-card min-w-0">
+    <!-- Toolbar and server cards straight on the page (no frame), like the other lists. -->
+    <section class="space-y-4 min-w-0">
       <!-- Toolbar -->
-      <div class="flex flex-col sm:flex-row sm:items-center gap-3 px-4 sm:px-5 py-3.5 border-b border-ui-line">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
         <div class="flex items-center gap-2 flex-1 min-w-0">
           <h3 class="text-ui-h3 text-ui-ink">VPS</h3>
           <UiBadge tone="neutral">{{ summary.total }}</UiBadge>
@@ -250,7 +245,7 @@ const step = (delta) => {
         </div>
       </div>
 
-      <div class="p-4 sm:p-5 ui-tray rounded-b-ui-card">
+      <div>
         <UiAlert v-if="error" tone="bad" :title="error" class="mb-4" />
 
         <UiSpinner v-if="loading && !loaded" />

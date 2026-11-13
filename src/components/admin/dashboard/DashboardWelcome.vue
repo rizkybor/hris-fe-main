@@ -28,6 +28,8 @@ onMounted(() => {
 
 const GREETING_ICONS = { holiday: PartyPopper, birthday: Cake, meeting: CalendarClock, custom: SparklesIcon };
 const greetingIcon = (type) => GREETING_ICONS[type] ?? SparklesIcon;
+const GREETING_TONES = { holiday: "bg-ui-ok-soft text-ui-ok", birthday: "bg-ui-warn-soft text-ui-warn", meeting: "bg-ui-accent-soft text-ui-accent" };
+const greetingTone = (type) => GREETING_TONES[type] ?? "bg-ui-accent-soft text-ui-accent";
 
 const userName = computed(() => authStore.user?.name?.split(",")[0] || t("dashboard.welcome.fallbackName"));
 
@@ -52,51 +54,57 @@ const todayLabel = computed(() =>
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row lg:items-end gap-5">
-    <div class="flex-1 min-w-0">
-      <p class="text-ui-small text-ui-muted capitalize mb-1.5">{{ todayLabel }}</p>
+  <div class="flex flex-col lg:flex-row lg:items-stretch gap-5">
+    <!-- Date with today's greetings, the greeting, then clock in/out -->
+    <div class="flex-1 min-w-0 flex flex-col">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2 mb-2">
+        <p class="text-ui-small text-ui-muted capitalize">{{ todayLabel }}</p>
+        <span
+          v-for="item in todayGreetings"
+          :key="item.id"
+          class="ui-anim-fade-up inline-flex items-center gap-2 h-7 pl-1 pr-3 rounded-full bg-ui-surface border border-ui-line max-w-full"
+        >
+          <span class="w-5 h-5 rounded-full flex items-center justify-center shrink-0" :class="greetingTone(item.type)">
+            <component :is="greetingIcon(item.type)" class="w-3 h-3" />
+          </span>
+          <span class="text-ui-cap font-medium text-ui-ink truncate">{{ item.message }}</span>
+        </span>
+      </div>
       <h1 class="text-ui-h1 sm:text-ui-display text-ui-ink">{{ greeting }}</h1>
       <blockquote class="mt-1.5 max-w-2xl text-ui-small text-ui-muted">
         <span class="italic">&ldquo;{{ quote.text }}&rdquo;</span>
         <cite class="not-italic text-ui-faint whitespace-nowrap"> &mdash; {{ quote.source }}</cite>
       </blockquote>
 
-      <div v-if="todayGreetings.length > 0" class="mt-3 flex flex-wrap gap-2">
-        <span
-          v-for="item in todayGreetings"
-          :key="item.id"
-          class="ui-anim-fade-up inline-flex items-center gap-2 h-7 px-3 rounded-full bg-ui-ok-soft text-ui-ok max-w-full"
-        >
-          <component :is="greetingIcon(item.type)" class="w-3.5 h-3.5 shrink-0" />
-          <span class="text-ui-cap font-medium truncate">{{ item.message }}</span>
-        </span>
+      <div v-if="can('attendance-check-in')" class="mt-4 lg:mt-auto lg:pt-4">
+        <UiButton :to="{ name: 'employee.attendance.clock' }" :icon="Clock" class="w-full sm:w-auto">
+          {{ $t("dashboard.welcome.clockInOut") }}
+        </UiButton>
       </div>
     </div>
 
-    <div class="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3 lg:items-end shrink-0">
-      <UiButton v-if="can('attendance-check-in')" :to="{ name: 'employee.attendance.clock' }" variant="secondary" :icon="Clock">{{ $t("dashboard.welcome.clockInOut") }}</UiButton>
-
-      <!-- Announcements -->
-      <RouterLink
-        v-if="announcements.length > 0"
-        :to="{ name: 'admin.announcements.dashboard' }"
-        class="ui-lift group w-full sm:w-80 rounded-ui-card bg-ui-surface border border-ui-line hover:border-ui-line-strong p-4"
-      >
-        <div class="flex items-center gap-2 mb-2">
-          <Megaphone class="w-4 h-4 text-ui-faint" />
-          <p class="text-ui-h3 text-ui-ink">{{ $t("dashboard.welcome.announcements") }}</p>
-          <UiBadge tone="accent" class="ml-auto">{{ $t("dashboard.welcome.new") }}</UiBadge>
-        </div>
-        <ul class="space-y-1.5">
-          <li v-for="item in announcements" :key="item.id" class="min-w-0">
-            <div class="flex items-center gap-1.5 min-w-0">
-              <Pin v-if="item.is_pinned" class="w-3 h-3 text-ui-warn shrink-0" :aria-label="$t('dashboard.welcome.pinned')" />
-              <p class="text-ui-small font-medium text-ui-ink truncate">{{ item.title }}</p>
-            </div>
-            <p class="text-ui-cap text-ui-muted truncate">{{ item.body }}</p>
-          </li>
-        </ul>
-      </RouterLink>
-    </div>
+    <!-- Announcements -->
+    <RouterLink
+      v-if="announcements.length > 0"
+      :to="{ name: 'admin.announcements.dashboard' }"
+      class="ui-lift group w-full lg:w-[360px] lg:self-start shrink-0 flex flex-col rounded-ui-card bg-ui-surface border border-ui-line hover:border-ui-line-strong p-4"
+    >
+      <div class="flex items-center gap-2 mb-2.5">
+        <span class="w-7 h-7 rounded-ui-control bg-ui-accent-soft text-ui-accent flex items-center justify-center shrink-0">
+          <Megaphone class="w-3.5 h-3.5" />
+        </span>
+        <p class="text-ui-h3 text-ui-ink">{{ $t("dashboard.welcome.announcements") }}</p>
+        <UiBadge tone="accent" class="ml-auto">{{ $t("dashboard.welcome.new") }}</UiBadge>
+      </div>
+      <ul class="divide-y divide-ui-line">
+        <li v-for="item in announcements" :key="item.id" class="min-w-0 py-2 first:pt-0 last:pb-0">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <Pin v-if="item.is_pinned" class="w-3 h-3 text-ui-warn shrink-0" :aria-label="$t('dashboard.welcome.pinned')" />
+            <p class="text-ui-small font-medium text-ui-ink truncate group-hover:text-ui-accent">{{ item.title }}</p>
+          </div>
+          <p class="text-ui-cap text-ui-muted truncate">{{ item.body }}</p>
+        </li>
+      </ul>
+    </RouterLink>
   </div>
 </template>

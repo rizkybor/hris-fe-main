@@ -31,10 +31,6 @@ export const useAttendanceSettingStore = defineStore("attendanceSetting", {
             }
         },
 
-        // Accepts a partial payload (e.g. { allow_weekend_check_in } or
-        // { office_latitude, office_longitude, office_radius_meters }) --
-        // the backend only requires allow_weekend_check_in, the geofence
-        // fields are all optional/independent of it.
         async updateSetting(payload) {
             this.error = null;
             try {

@@ -33,9 +33,6 @@ const { staffTasks, meta, summary, summaryFailed, detailLoading } = storeToRefs(
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
-// ----- List state: search, summary filter, page, page size -----
-// Kept in the URL + remembered per browser. `filter` is the API's bucket
-// (same rules as the summary tiles), so a tile's count is the list total.
 const PER_PAGE = [10, 25, 50, 100];
 const FILTERS = ["overdue", "due_this_week", "open", "done"];
 const list = useListState("staff-tasks", { q: "", filter: "", page: 1, per: 10 });
@@ -251,10 +248,6 @@ const handleDelete = async (task) => {
   }
 };
 
-// ----- Detail drawer -----
-// Opens at once with the row's data; the full record loads behind it.
-// ?task=<id> in the URL (deep link, reload, back button); ?comment=<id>
-// highlights a comment in the thread.
 const detailId = ref(null);
 const drawerOpen = ref(false);
 const detail = computed(() => {
@@ -325,9 +318,6 @@ watch(
   }
 );
 
-// The comment composer needs {id, name} for its @mention list -- assignees
-// plus the task's creator (if not already one), matching Meeting Note's
-// "attendees + creator" mention-eligibility pattern on the backend.
 const commentAssignees = computed(() => {
   if (!detail.value) return [];
   const result = (detail.value.assignees || []).map((a) => ({ id: a.employee_id, name: a.name }));

@@ -87,11 +87,6 @@ const { updateProject, fetchProject } = projectStore;
 
 const authStore = useAuthStore();
 
-// Project Inspect is a Project Leader-only field (enforced server-side
-// too, see ProjectController::update()) -- kept out of `form` entirely so
-// a non-leader's submit never sends the `inspect_note` key at all, rather
-// than sending a stale/empty value that would otherwise trip the
-// backend's leader check on every edit.
 const isLeader = ref(false);
 const inspectNoteDraft = ref("");
 
@@ -146,11 +141,6 @@ const searchLeader = ref("");
 const selectedLeader = ref(null);
 const initialLoading = ref(true);
 
-// "By Team" locks the leader/members to a single Team's own data (see
-// ProjectRepository::applyTeamAssignment on the backend); "By Employee"
-// picks both individually. Switching modes clears whichever fields the
-// other mode owns so a stale pick from before the switch never gets
-// submitted silently.
 const setAssignmentMode = (mode) => {
   form.value.team_assignment_mode = mode;
   if (mode === "team") {
@@ -163,9 +153,6 @@ const setAssignmentMode = (mode) => {
   }
 };
 
-// The Team list (fetchTeams) only carries members_count, not the actual
-// member roster -- fetch the full detail whenever the picked team changes
-// so the preview can show real names.
 const selectedTeamDetail = ref(null);
 watch(
   () => form.value.team_id,
@@ -178,9 +165,6 @@ watch(
 // the Project Leader modal below, which filters it locally.
 const memberCandidates = computed(() => lookups.employees);
 const memberSearch = ref("");
-// The Project Leader shouldn't also be pickable as a Member -- they're
-// already the project's owner, so offering them again here would just be
-// a confusing duplicate pick.
 const selectableMemberCandidates = computed(() =>
   memberCandidates.value.filter((employee) => employee.id !== form.value.project_leader_id)
 );
@@ -227,9 +211,6 @@ const handleFetchProject = async () => {
   form.value.client_id = response.client_id ?? "";
   form.value.additional_access = response.additional_access || [];
 
-  // ProjectResource includes inspect_note, but it's tracked separately
-  // (see isLeader/inspectNoteDraft above) so it's never accidentally
-  // present in `form` -- strip it back out of this bulk-assigned copy.
   delete form.value.inspect_note;
   const myEmployeeId = authStore.user?.employee_profile?.id;
   isLeader.value = !!myEmployeeId && myEmployeeId === response.leader?.id;

@@ -1,8 +1,4 @@
 <script setup>
-// Phones and tablets: the full menu as a bottom sheet, opened from the tab
-// bar's "More". Profile card, menu search, grouped lists (same data as the
-// desktop sidebar via useNavMenu), Settings and Sign out. Drag the handle
-// down, tap the backdrop or press Esc to close; it also closes on navigation.
 import { computed, ref, watch, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
